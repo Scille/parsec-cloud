@@ -83,7 +83,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(
             QCoreApplication.translate(
-                "ClaimUserWidget", "Please wait while the device is registered."
+                "ClaimDeviceWidget", "Please wait while the device is registered."
             )
         )
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
@@ -101,14 +101,14 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             show_error(
                 self,
                 QCoreApplication.translate(
-                    "ClaimUserWidget", "No invitation found for this device."
+                    "ClaimDeviceWidget", "No invitation found for this device."
                 ),
             )
         else:
             show_error(
                 self,
                 QCoreApplication.translate(
-                    "ClaimUserWidget", "Can not claim this user ({})."
+                    "ClaimDeviceWidget", "Can not claim this device ({})."
                 ).format(status),
             )
 
@@ -201,7 +201,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
                 show_error(
                     self,
                     QCoreApplication.translate(
-                        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+                        "ClaimDeviceWidget", "Password must be at least 8 caracters long."
                     ),
                 )
                 return

@@ -69,24 +69,29 @@
         <translation>Impossible de démarrer cette organisation.</translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="156"/>
+        <location filename="../bootstrap_organization_widget.py" line="157"/>
         <source>Passwords don&apos;t match</source>
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="169"/>
+        <location filename="../bootstrap_organization_widget.py" line="178"/>
         <source>URL or device is invalid.</source>
         <translation>L&apos;URL ou l&apos;appareil sont invalides.</translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="200"/>
+        <location filename="../bootstrap_organization_widget.py" line="209"/>
         <source>Can not register the new user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="231"/>
+        <location filename="../bootstrap_organization_widget.py" line="240"/>
         <source>Password strength: {}</source>
         <translation>Sûreté du mot de passe : {}</translation>
+    </message>
+    <message>
+        <location filename="../bootstrap_organization_widget.py" line="165"/>
+        <source>Password must be at least 8 caracters long.</source>
+        <translation>Le mot de passe doit faire au moins 8 caractères de long.</translation>
     </message>
 </context>
 <context>
@@ -235,7 +240,7 @@
         <translation>L&apos;appareil a été enregistré. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="142"/>
+        <location filename="../claim_device_widget.py" line="143"/>
         <source>Password strength: {}</source>
         <translation>Sûreté du mot de passe : {}</translation>
     </message>
@@ -245,14 +250,34 @@
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="208"/>
+        <location filename="../claim_device_widget.py" line="217"/>
         <source>URL or device is invalid.</source>
         <translation>L&apos;URL ou l&apos;appareil sont invalides.</translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="243"/>
+        <location filename="../claim_device_widget.py" line="252"/>
         <source>Can not register the new device.</source>
         <translation>Impossible d&apos;enregistrer le nouvel appareil.</translation>
+    </message>
+    <message>
+        <location filename="../claim_device_widget.py" line="84"/>
+        <source>Please wait while the device is registered.</source>
+        <translation>Veuillez patientez pendant que l&apos;appareil est enregistré.</translation>
+    </message>
+    <message>
+        <location filename="../claim_device_widget.py" line="101"/>
+        <source>No invitation found for this device.</source>
+        <translation>Aucune invitation trouvée pour cet appareil.</translation>
+    </message>
+    <message>
+        <location filename="../claim_device_widget.py" line="108"/>
+        <source>Can not claim this device ({}).</source>
+        <translation>Impossible d&apos;enregister cet appareil ({}).</translation>
+    </message>
+    <message>
+        <location filename="../claim_device_widget.py" line="201"/>
+        <source>Password must be at least 8 caracters long.</source>
+        <translation>Le mot de passe doit faire au moins 8 caractères de long.</translation>
     </message>
 </context>
 <context>
@@ -338,7 +363,7 @@
     <message>
         <location filename="../claim_device_widget.py" line="101"/>
         <source>No invitation found for this device.</source>
-        <translation>Aucune invitation trouvée pour cet appareil.</translation>
+        <translation type="obsolete">Aucune invitation trouvée pour cet appareil.</translation>
     </message>
     <message>
         <location filename="../claim_user_widget.py" line="106"/>
@@ -361,24 +386,34 @@
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="204"/>
+        <location filename="../claim_user_widget.py" line="212"/>
         <source>URL or device is invalid.</source>
         <translation>L&apos;URL ou l&apos;appareil sont invalides.</translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="236"/>
+        <location filename="../claim_user_widget.py" line="244"/>
         <source>Can not register the new user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
         <location filename="../claim_device_widget.py" line="84"/>
         <source>Please wait while the device is registered.</source>
-        <translation>Veuillez patientez pendant que l&apos;appareil est enregistré.</translation>
+        <translation type="obsolete">Veuillez patientez pendant que l&apos;appareil est enregistré.</translation>
     </message>
     <message>
         <location filename="../claim_user_widget.py" line="84"/>
         <source>Please wait while the user is registered.</source>
         <translation>Veuillez patienter pendant que l&apos;utilisateur est enregistré.</translation>
+    </message>
+    <message>
+        <location filename="../claim_user_widget.py" line="142"/>
+        <source>Password strength: {}</source>
+        <translation>Sûreté du mot de passe : {}</translation>
+    </message>
+    <message>
+        <location filename="../claim_user_widget.py" line="199"/>
+        <source>Password must be at least 8 caracters long.</source>
+        <translation>Le mot de passe doit faire au moins 8 caractères de long.</translation>
     </message>
 </context>
 <context>
@@ -389,17 +424,17 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="53"/>
+        <location filename="../devices_widget.py" line="56"/>
         <source>Show info</source>
         <translation>Informations</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="56"/>
+        <location filename="../devices_widget.py" line="59"/>
         <source>Revoke</source>
         <translation>Révoquer</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="63"/>
+        <location filename="../devices_widget.py" line="66"/>
         <source>
 
 This device has been revoked.</source>
@@ -426,37 +461,37 @@ L&apos;appareil a été révoqué.</translation>
         <translation>Rechercher un appareil</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="98"/>
+        <location filename="../devices_widget.py" line="101"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="98"/>
+        <location filename="../devices_widget.py" line="101"/>
         <source>Are you sure you want to revoke device &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir révoquer cet appareil?</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="116"/>
+        <location filename="../devices_widget.py" line="119"/>
         <source>Device &quot;{}&quot; has been revoked.</source>
         <translation>L&apos;appareil &quot;{}&quot; a été révoqué.</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="124"/>
+        <location filename="../devices_widget.py" line="127"/>
         <source>Device &quot;{}&quot; has already been revoked.</source>
         <translation>L&apos;appareil &quot;{}&quot; a déjà été révoqué.</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="131"/>
+        <location filename="../devices_widget.py" line="134"/>
         <source>Device &quot;{}&quot; not found.</source>
         <translation>L&apos;appareil &quot;{}&quot; n&apos;a pas été trouvé.</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="138"/>
+        <location filename="../devices_widget.py" line="141"/>
         <source>You don&apos;t have the permission to revoke this device.</source>
         <translation>Vous n&apos;avez pas l&apos;autorisation de révoquer cet appareil.</translation>
     </message>
     <message>
-        <location filename="../devices_widget.py" line="145"/>
+        <location filename="../devices_widget.py" line="148"/>
         <source>Can not revoke this device.</source>
         <translation>Impossible de révoquer cet appareil.</translation>
     </message>
@@ -1223,7 +1258,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="236"/>
+        <location filename="../main_window.py" line="235"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
@@ -1273,7 +1308,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="258"/>
+        <location filename="../main_window.py" line="257"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
@@ -1308,7 +1343,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Déconnecté</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="275"/>
+        <location filename="../main_window.py" line="274"/>
         <source>Parsec is still running.</source>
         <translation>Parsec est toujours ouvert.</translation>
     </message>
@@ -1318,34 +1353,34 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Connecté</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="168"/>
+        <location filename="../main_window.py" line="167"/>
         <source>The mounpoint has been unmounted, you will now be logged off.</source>
         <translation>Le point de montage a été démonté, vous allez être déconnecté.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="238"/>
+        <location filename="../main_window.py" line="237"/>
         <source>User not registered in the backend.</source>
         <translation>L&apos;utilisateur n&apos;est pas enregistré sur le backend.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="243"/>
+        <location filename="../main_window.py" line="242"/>
         <source>Mountpoint already in use.</source>
         <translation>Le point de montage est déjà utilisé.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="209"/>
+        <location filename="../main_window.py" line="208"/>
         <source>This device has been revoked.</source>
         <translation>Cet appareil a été révoqué.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="223"/>
+        <location filename="../main_window.py" line="222"/>
         <source>Can not login ({})</source>
         <translation>Impossible de se connecter ({})</translation>
     </message>
     <message>
         <location filename="../main_window.py" line="58"/>
         <source>Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data on the cloud</source>
-        <translation>Parsec - Community Edition - {} - Enclaves souveraines pour le partage de données sensibles sur le cloud</translation>
+        <translation type="obsolete">Parsec - Community Edition - {} - Enclaves souveraines pour le partage de données sensibles sur le cloud</translation>
     </message>
 </context>
 <context>
@@ -1418,6 +1453,11 @@ L&apos;appareil a été révoqué.</translation>
         <location filename="../forms/mount_widget.ui" line="14"/>
         <source>Form</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="74"/>
+        <source>Can not acces this file.</source>
+        <translation>Impossible d&apos;accéder à ce fichier.</translation>
     </message>
 </context>
 <context>
@@ -1601,22 +1641,22 @@ L&apos;appareil a été révoqué.</translation>
 <context>
     <name>PasswordStrength</name>
     <message>
-        <location filename="../password_validation.py" line="9"/>
+        <location filename="../password_validation.py" line="10"/>
         <source>Very weak</source>
         <translation>Très faible</translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="10"/>
+        <location filename="../password_validation.py" line="11"/>
         <source>Weak</source>
         <translation>Faible</translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="12"/>
+        <location filename="../password_validation.py" line="13"/>
         <source>Good</source>
         <translation>Bon</translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="13"/>
+        <location filename="../password_validation.py" line="14"/>
         <source>Strong</source>
         <translation>Fort</translation>
     </message>
@@ -1626,9 +1666,14 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Très fort</translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="11"/>
+        <location filename="../password_validation.py" line="12"/>
         <source>Average</source>
         <translation>Moyen</translation>
+    </message>
+    <message>
+        <location filename="../password_validation.py" line="9"/>
+        <source>Too short</source>
+        <translation>Trop court</translation>
     </message>
 </context>
 <context>
@@ -2247,22 +2292,22 @@ Vous n&apos;avez plus qu&apos;à vous lancer, car la sécurité n&apos;attend pa
         <translation></translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="54"/>
+        <location filename="../users_widget.py" line="57"/>
         <source>Show info</source>
         <translation>Informations</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="57"/>
+        <location filename="../users_widget.py" line="60"/>
         <source>Revoke</source>
         <translation>Révoquer</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="63"/>
+        <location filename="../users_widget.py" line="66"/>
         <source>Created on {}</source>
         <translation>Créé le {}</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="67"/>
+        <location filename="../users_widget.py" line="70"/>
         <source>
 
 This user has been revoked.</source>
@@ -2324,37 +2369,37 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Ajouter un utilisateur</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="115"/>
+        <location filename="../users_widget.py" line="118"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="115"/>
+        <location filename="../users_widget.py" line="118"/>
         <source>Are you sure you want to revoke user &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir révoquer l&apos;utilisateur &quot;{}&quot;?</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="135"/>
+        <location filename="../users_widget.py" line="138"/>
         <source>User &quot;{}&quot; has been revoked.</source>
         <translation>L&apos;utilisateur &quot;{}&quot; a été révoqué.</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="143"/>
+        <location filename="../users_widget.py" line="146"/>
         <source>User &quot;{}&quot; has already been revoked.</source>
         <translation>L&apos;utilisateur &quot;{}&quot; a déjà été révoqué.</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="150"/>
+        <location filename="../users_widget.py" line="153"/>
         <source>User &quot;{}&quot; not found.</source>
         <translation>L&apos;utilisateur &quot;{}&quot; n&apos;a pas été trouvé.</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="157"/>
+        <location filename="../users_widget.py" line="160"/>
         <source>You don&apos;t have the permission to revoke this user.</source>
         <translation>Vous n&apos;avez pas les permissions suffisantes pour révoquer cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="164"/>
+        <location filename="../users_widget.py" line="167"/>
         <source>Can not revoke this user.</source>
         <translation>Impossible de révoquer cet utilisateur.</translation>
     </message>
@@ -2384,15 +2429,15 @@ Cet utilisateur a été révoqué.</translation>
     <message>
         <location filename="../forms/workspace_button.ui" line="507"/>
         <source>Workspace information</source>
-        <translation>Informations sur l&apos;espace de travail</translation>
+        <translation type="obsolete">Informations sur l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="579"/>
+        <location filename="../forms/workspace_button.ui" line="507"/>
         <source>Share the workspace</source>
         <translation>Partager l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="645"/>
+        <location filename="../forms/workspace_button.ui" line="573"/>
         <source>Delete the workspace</source>
         <translation>Supprimer l&apos;espace de travail</translation>
     </message>
@@ -2402,12 +2447,12 @@ Cet utilisateur a été révoqué.</translation>
         <translation>Cet espace de travail est vide.</translation>
     </message>
     <message>
-        <location filename="../workspace_button.py" line="81"/>
+        <location filename="../workspace_button.py" line="76"/>
         <source> (shared)</source>
         <translation> (partagé)</translation>
     </message>
     <message>
-        <location filename="../workspace_button.py" line="83"/>
+        <location filename="../workspace_button.py" line="78"/>
         <source> (shared by {})</source>
         <translation> (partagé par {})</translation>
     </message>
@@ -2506,7 +2551,7 @@ Cet utilisateur a été révoqué.</translation>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="126"/>
+        <location filename="../workspaces_widget.py" line="118"/>
         <source>New workspace</source>
         <translation>Nouvel espace de travail</translation>
     </message>
@@ -2526,22 +2571,22 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Renommer</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="95"/>
+        <location filename="../workspaces_widget.py" line="87"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="95"/>
+        <location filename="../workspaces_widget.py" line="87"/>
         <source>Enter workspace new name</source>
         <translation>Entrez le nouveau nom de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="137"/>
+        <location filename="../workspaces_widget.py" line="129"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="116"/>
+        <location filename="../workspaces_widget.py" line="108"/>
         <source>Can not rename the workspace.</source>
         <translation>Impossible de renommer l&apos;espace de travail.</translation>
     </message>
@@ -2571,12 +2616,12 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="126"/>
+        <location filename="../workspaces_widget.py" line="118"/>
         <source>Enter new workspace name</source>
         <translation>Entrez le nom du nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="126"/>
+        <location filename="../workspaces_widget.py" line="118"/>
         <source>Workspace name</source>
         <translation>Nom de l&apos;espace de travail</translation>
     </message>
@@ -2606,7 +2651,7 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Ajouter un nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="91"/>
+        <location filename="../workspaces_widget.py" line="83"/>
         <source>Not yet implemented.</source>
         <translation>Cette fonctionnalité n&apos;est pas encore implémentée.</translation>
     </message>
@@ -2616,7 +2661,7 @@ Cet utilisateur a été révoqué.</translation>
 
 Created by {}.
 </source>
-        <translation>{}
+        <translation type="obsolete">{}
 
 Crée par {}.
 </translation>
@@ -2624,17 +2669,17 @@ Crée par {}.
     <message>
         <location filename="../workspaces_widget.py" line="83"/>
         <source>Shared with {} people.</source>
-        <translation>Partagé avec {} personne(s).</translation>
+        <translation type="obsolete">Partagé avec {} personne(s).</translation>
     </message>
     <message>
         <location filename="../workspaces_widget.py" line="87"/>
         <source>Not shared.</source>
-        <translation>Non partagé.</translation>
+        <translation type="obsolete">Non partagé.</translation>
     </message>
     <message>
         <location filename="../workspaces_widget.py" line="81"/>
         <source>Shared with one person.</source>
-        <translation>Partagé avec une personne.</translation>
+        <translation type="obsolete">Partagé avec une personne.</translation>
     </message>
     <message>
         <location filename="../workspace_sharing_dialog.py" line="83"/>

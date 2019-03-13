@@ -140,7 +140,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                QCoreApplication.translate("ClaimDeviceWidget", "Password strength: {}").format(
+                QCoreApplication.translate("ClaimUserWidget", "Password strength: {}").format(
                     PASSWORD_STRENGTH_TEXTS[score]
                 )
             )
@@ -199,7 +199,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
                 show_error(
                     self,
                     QCoreApplication.translate(
-                        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+                        "ClaimUserWidget", "Password must be at least 8 caracters long."
                     ),
                 )
                 return
