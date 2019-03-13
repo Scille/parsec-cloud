@@ -137,7 +137,7 @@ async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev):
     def _wait_for_fuse_ready_thread():
         fuse_thread_started.wait()
         while not need_stop:
-            time.sleep(0.1)
+            time.sleep(0.01)
             try:
                 if mountpoint.stat().st_dev != initial_st_dev:
                     break
