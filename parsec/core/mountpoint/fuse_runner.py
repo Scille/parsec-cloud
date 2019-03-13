@@ -3,10 +3,12 @@
 import trio
 import time
 import errno
+import signal
 import threading
 from pathlib import Path
 from fuse import FUSE
 from structlog import get_logger
+from contextlib import contextmanager
 
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
@@ -17,6 +19,21 @@ __all__ = ("fuse_mountpoint_runner",)
 
 
 logger = get_logger()
+
+
+@contextmanager
+def _reset_signals(signals=None):
+    if signals is None:
+        signals = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGPIPE)
+    saved = {sig: signal.getsignal(sig) for sig in signals}
+    try:
+        yield
+    finally:
+        for sig, handler in saved.items():
+            try:
+                signal.signal(sig, handler)
+            except ValueError:
+                pass
 
 
 def _bootstrap_mountpoint(mountpoint):
@@ -93,11 +110,12 @@ async def fuse_mountpoint_runner(
                 finally:
                     fuse_thread_stopped.set()
 
-            nursery.start_soon(
-                lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
-            )
+            with _reset_signals():
+                nursery.start_soon(
+                    lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
+                )
 
-            await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
+                await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
 
             event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
             task_status.started(abs_mountpoint)
