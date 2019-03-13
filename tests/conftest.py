@@ -35,7 +35,7 @@ from tests.postgresql import (
     bootstrap_postgresql_testbed,
     reset_postgresql_testbed,
 )
-from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
+from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper, offline
 from tests.event_bus_spy import SpiedEventBus
 from tests.fixtures import *  # noqa
 
@@ -119,14 +119,14 @@ def mock_crypto(request):
             data = password + salt
             return data[:size] + b"\x00" * (size - len(data))
 
-        from parsec.crypto import argon2i
+        from parsec.crypto.raw import argon2i
 
         vanilla_kdf = argon2i.kdf
 
         def unmock():
-            return patch("parsec.crypto.argon2i.kdf", new=vanilla_kdf)
+            return patch("parsec.crypto.raw.argon2i.kdf", new=vanilla_kdf)
 
-        with patch("parsec.crypto.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
+        with patch("parsec.crypto.raw.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
             yield unmock
 
 
@@ -195,6 +195,9 @@ class AppServer:
     entry_point = attr.ib()
     addr = attr.ib()
     connection_factory = attr.ib()
+
+    def offline(self):
+        return offline(self.addr)
 
 
 @pytest.fixture
@@ -335,15 +338,15 @@ def backend_factory(
             # mock clock with autothreshold. We should detect this and do something here...
             await backend.init(nursery)
 
-            if populated:
-                with freeze_time("2000-01-01"):
-                    binder = backend_data_binder_factory(backend)
-                    await binder.bind_organization(coolorg, alice)
-                    await binder.bind_organization(otherorg, otheralice)
-                    await binder.bind_device(alice2)
-                    await binder.bind_device(bob)
-
             try:
+                if populated:
+                    with freeze_time("2000-01-01"):
+                        binder = backend_data_binder_factory(backend)
+                        await binder.bind_organization(coolorg, alice)
+                        await binder.bind_organization(otherorg, otheralice)
+                        await binder.bind_device(alice2)
+                        await binder.bind_device(bob)
+
                 yield backend
 
             finally:

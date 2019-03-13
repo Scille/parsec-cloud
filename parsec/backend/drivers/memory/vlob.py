@@ -119,7 +119,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         return changed
 
     async def create(
-        self, organization_id: OrganizationID, author: DeviceID, id: UUID, group: UUID, blob: bytes
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        id: UUID,
+        group: UUID,
+        timestamp: pendulum.Pendulum,
+        blob: bytes,
     ) -> None:
         self._create_group_if_needed(organization_id, group, author.user_id)
         if not self._can_write(organization_id, author.user_id, group):
@@ -130,7 +136,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         if id in vlobs:
             raise VlobAlreadyExistsError()
 
-        vlobs[id] = Vlob(group, [(blob, author, pendulum.now())])
+        vlobs[id] = Vlob(group, [(blob, author, timestamp)])
 
         self._update_group(organization_id, author, group, id)
 
@@ -151,7 +157,13 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobVersionError()
 
     async def update(
-        self, organization_id: OrganizationID, author: DeviceID, id: UUID, version: int, blob: bytes
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        id: UUID,
+        version: int,
+        timestamp: pendulum.Pendulum,
+        blob: bytes,
     ) -> None:
         vlob = self._get_vlob(organization_id, id)
 
@@ -159,7 +171,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobAccessError()
 
         if version - 1 == vlob.current_version:
-            vlob.data.append((blob, author, pendulum.now()))
+            vlob.data.append((blob, author, timestamp))
         else:
             raise VlobVersionError()
 
@@ -184,7 +196,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         write_right: bool,
     ) -> None:
         try:
-            await self._user_component.get_user(organization_id, user)
+            self._user_component._get_user(organization_id, user)
         except UserNotFoundError:
             raise VlobNotFoundError(f"User `{user}` doesn't exist")
         group = self._get_group(organization_id, id)

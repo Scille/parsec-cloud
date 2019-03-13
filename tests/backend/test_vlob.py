@@ -2,7 +2,7 @@
 
 import pytest
 from uuid import UUID
-from pendulum import Pendulum
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocole import (
     packb,
@@ -28,10 +28,11 @@ async def vlob_group_check(sock, to_check):
     return vlob_group_check_serializer.rep_loads(raw_rep)
 
 
-async def vlob_create(sock, group, id, blob, check_rep=True):
+async def vlob_create(sock, group, id, blob, timestamp=None, check_rep=True):
+    timestamp = timestamp or pendulum_now()
     await sock.send(
         vlob_create_serializer.req_dumps(
-            {"cmd": "vlob_create", "group": group, "id": id, "blob": blob}
+            {"cmd": "vlob_create", "group": group, "id": id, "timestamp": timestamp, "blob": blob}
         )
     )
     raw_rep = await sock.recv()
@@ -49,10 +50,17 @@ async def vlob_read(sock, id, version=None):
     return vlob_read_serializer.rep_loads(raw_rep)
 
 
-async def vlob_update(sock, id, version, blob, check_rep=True):
+async def vlob_update(sock, id, version, blob, timestamp=None, check_rep=True):
+    timestamp = timestamp or pendulum_now()
     await sock.send(
         vlob_update_serializer.req_dumps(
-            {"cmd": "vlob_update", "id": id, "version": version, "blob": blob}
+            {
+                "cmd": "vlob_update",
+                "id": id,
+                "version": version,
+                "timestamp": timestamp,
+                "blob": blob,
+            }
         )
     )
     raw_rep = await sock.recv()
@@ -65,16 +73,15 @@ async def vlob_update(sock, id, version, blob, check_rep=True):
 @pytest.fixture
 async def vlobs(backend, alice):
     ids = (UUID("00000000000000000000000000000001"), UUID("00000000000000000000000000000002"))
-    with freeze_time("2000-01-02"):
-        await backend.vlob.create(
-            alice.organization_id, alice.device_id, ids[0], GROUP_ID, b"1 blob v1"
-        )
-    with freeze_time("2000-01-03"):
-        await backend.vlob.update(alice.organization_id, alice.device_id, ids[0], 2, b"1 blob v2")
-    with freeze_time("2000-01-04"):
-        await backend.vlob.create(
-            alice.organization_id, alice.device_id, ids[1], GROUP_ID, b"2 blob v1"
-        )
+    await backend.vlob.create(
+        alice.organization_id, alice.device_id, ids[0], GROUP_ID, Pendulum(2000, 1, 2), b"1 blob v1"
+    )
+    await backend.vlob.update(
+        alice.organization_id, alice.device_id, ids[0], 2, Pendulum(2000, 1, 3), b"1 blob v2"
+    )
+    await backend.vlob.create(
+        alice.organization_id, alice.device_id, ids[1], GROUP_ID, Pendulum(2000, 1, 4), b"2 blob v1"
+    )
     return ids
 
 
@@ -92,6 +99,18 @@ async def test_vlob_create_and_read(alice, alice_backend_sock, alice2_backend_so
         "author": alice.device_id,
         "timestamp": Pendulum(2000, 1, 2),
     }
+
+
+@pytest.mark.trio
+async def test_vlob_create_bad_timestamp(alice, alice_backend_sock):
+    blob = b"Initial commit."
+    d1 = Pendulum(2000, 1, 1)
+    with freeze_time(d1):
+        d2 = d1.add(seconds=3600)
+        rep = await vlob_create(
+            alice_backend_sock, GROUP_ID, VLOB_ID, blob, timestamp=d2, check_rep=False
+        )
+    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
 
 
 @pytest.mark.parametrize(
@@ -201,6 +220,18 @@ async def test_read_bad_version(alice_backend_sock, vlobs):
 @pytest.mark.trio
 async def test_vlob_update_ok(alice_backend_sock, vlobs):
     await vlob_update(alice_backend_sock, vlobs[0], version=3, blob=b"Next version.")
+
+
+@pytest.mark.trio
+async def test_vlob_update_bad_timestamp(alice, alice_backend_sock, vlobs):
+    blob = b"Initial commit."
+    d1 = Pendulum(2000, 1, 1)
+    with freeze_time(d1):
+        d2 = d1.add(seconds=3600)
+        rep = await vlob_update(
+            alice_backend_sock, vlobs[0], version=3, blob=blob, timestamp=d2, check_rep=False
+        )
+    assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
 
 
 @pytest.mark.trio

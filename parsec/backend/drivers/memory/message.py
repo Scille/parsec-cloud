@@ -2,6 +2,7 @@
 
 from typing import List, Tuple
 from collections import defaultdict
+from pendulum import Pendulum
 
 from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
@@ -14,10 +15,15 @@ class MemoryMessageComponent(BaseMessageComponent):
         self._organizations = defaultdict(lambda: defaultdict(list))
 
     async def send(
-        self, organization_id: OrganizationID, sender: DeviceID, recipient: UserID, body: bytes
+        self,
+        organization_id: OrganizationID,
+        sender: DeviceID,
+        recipient: UserID,
+        timestamp: Pendulum,
+        body: bytes,
     ) -> None:
         messages = self._organizations[organization_id]
-        messages[recipient].append((sender, body))
+        messages[recipient].append((sender, timestamp, body))
         index = len(messages[recipient])
         self.event_bus.send(
             "message.received",

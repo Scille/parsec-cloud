@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 from PyQt5.QtCore import Qt, pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
-from parsec.trustchain import certify_device_revocation
+from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
@@ -130,10 +131,13 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                 self.core.fs.backend_cmds.user_get, user_button.name
             )
             for device in user_info.devices.values():
-                certified_revocation = certify_device_revocation(
-                    self.core.device.device_id, self.core.device.signing_key, device.device_id
+                revoked_device_certificate = build_revoked_device_certificate(
+                    self.core.device.device_id,
+                    self.core.device.signing_key,
+                    device.device_id,
+                    pendulum.now(),
                 )
-                self.portal.run(self.core.fs.backend_cmds.device_revoke, certified_revocation)
+                self.portal.run(self.core.fs.backend_cmds.device_revoke, revoked_device_certificate)
             user_button.is_revoked = True
             show_info(
                 self,

@@ -3,9 +3,9 @@
 import pytest
 from unittest.mock import ANY
 
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.sharing import (
     SharingRecipientError,
+    SharingBackendOffline,
     SharingBackendMessageError,
     SharingNotAWorkspace,
     SharingNeedAdminRightError,
@@ -187,7 +187,7 @@ async def test_share_workspace_then_rename_it(running_backend, bob, alice_fs, bo
 async def test_share_backend_offline(alice_fs, bob):
     await alice_fs.workspace_create("/w")
 
-    with pytest.raises(BackendNotAvailable):
+    with pytest.raises(SharingBackendOffline):
         await alice_fs.share(
             "/w", recipient=bob.user_id, admin_right=True, read_right=True, write_right=True
         )

@@ -8,8 +8,7 @@ import pendulum
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.crypto import SigningKey
-from parsec.trustchain import certify_user, certify_device
+from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
 from parsec.types import BackendOrganizationBootstrapAddr, DeviceID
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
@@ -58,10 +57,10 @@ async def _trio_bootstrap_organization(
             save_device_with_password(config.config_dir, device, password)
 
             now = pendulum.now()
-            certified_user = certify_user(
+            user_certificate = build_user_certificate(
                 None, root_signing_key, device.user_id, device.public_key, now
             )
-            certified_device = certify_device(
+            device_certificate = build_device_certificate(
                 None, root_signing_key, device_id, device.verify_key, now
             )
 
@@ -70,8 +69,8 @@ async def _trio_bootstrap_organization(
                     bootstrap_addr.organization_id,
                     bootstrap_addr.bootstrap_token,
                     root_verify_key,
-                    certified_user,
-                    certified_device,
+                    user_certificate,
+                    device_certificate,
                 )
             qt_on_done.emit()
         except DeviceConfigAleadyExists:

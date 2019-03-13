@@ -4,7 +4,7 @@ import trio
 import pytest
 import pendulum
 
-from parsec.trustchain import certify_device
+from parsec.crypto import build_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocole import packb, device_create_serializer, ping_serializer
 
@@ -26,13 +26,13 @@ async def device_create(sock, **kwargs):
 @pytest.mark.trio
 async def test_device_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, alice_nd):
     now = pendulum.now()
-    certified_device = certify_device(
-        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
+    device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now
     )
 
     with backend.event_bus.listen() as spy:
         rep = await device_create(
-            alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
+            alice_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
         )
         assert rep == {"status": "ok"}
 
@@ -58,28 +58,28 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
 @pytest.mark.trio
 async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd):
     now = pendulum.now()
-    certified_device = certify_device(
-        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
+    device_certificate = build_device_certificate(
+        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now
     )
 
     rep = await device_create(
-        alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
+        alice_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
     )
     assert rep == {
         "status": "invalid_certification",
-        "reason": "Certifier is not the authenticated device.",
+        "reason": "Invalid certification data (Signature was forged or corrupt).",
     }
 
 
 @pytest.mark.trio
 async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
     now = pendulum.now()
-    certified_device = certify_device(
-        alice.device_id, alice.signing_key, alice2.device_id, alice2.verify_key, now=now
+    device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, alice2.device_id, alice2.verify_key, now
     )
 
     rep = await device_create(
-        alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
+        alice_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
     )
     assert rep == {
         "status": "already_exists",
@@ -90,12 +90,12 @@ async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
 @pytest.mark.trio
 async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
     now = pendulum.now()
-    certified_device = certify_device(
-        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
+    device_certificate = build_device_certificate(
+        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now
     )
 
     rep = await device_create(
-        bob_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
+        bob_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
     )
     assert rep == {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
@@ -103,15 +103,15 @@ async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
 @pytest.mark.trio
 async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd):
     now = pendulum.Pendulum(2000, 1, 1)
-    certified_device = certify_device(
-        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
+    device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now
     )
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await device_create(
-            alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
+            alice_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
         )
         assert rep == {
             "status": "invalid_certification",
-            "reason": "Invalid certification data (Timestamp is too old.).",
+            "reason": "Invalid timestamp in certification.",
         }

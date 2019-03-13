@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from unittest.mock import ANY
 from pendulum import Pendulum
 from async_generator import asynccontextmanager
 
+from parsec.types import DeviceID
 from parsec.api.protocole import user_get_invitation_creator_serializer, user_claim_serializer
-from parsec.backend.user import User, UserInvitation, INVITATION_VALIDITY, PEER_EVENT_MAX_WAIT
+from parsec.backend.user import User, Device, UserInvitation, PEER_EVENT_MAX_WAIT
 
 from tests.common import freeze_time
 
@@ -37,39 +37,6 @@ async def user_claim(sock, **kwargs):
     raw_rep = await sock.recv()
     rep = user_claim_serializer.rep_loads(raw_rep)
     reps.append(rep)
-
-
-@pytest.mark.trio
-async def test_user_get_invitation_creator_too_late(anonymous_backend_sock, mallory_invitation):
-    with freeze_time(mallory_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
-        rep = await user_get_invitation_creator(
-            anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
-        )
-    assert rep == {"status": "not_found"}
-
-
-@pytest.mark.trio
-async def test_user_get_invitation_creator_unknown(anonymous_backend_sock, mallory):
-    rep = await user_get_invitation_creator(anonymous_backend_sock, invited_user_id=mallory.user_id)
-    assert rep == {"status": "not_found"}
-
-
-@pytest.mark.trio
-async def test_user_get_invitation_creator_ok(anonymous_backend_sock, mallory_invitation):
-    with freeze_time(mallory_invitation.created_on):
-        rep = await user_get_invitation_creator(
-            anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
-        )
-    assert rep == {
-        "status": "ok",
-        "user_id": mallory_invitation.creator.user_id,
-        "created_on": Pendulum(2000, 1, 1),
-        "certified_user": ANY,
-        "user_certifier": None,
-    }
-
-
-# TODO: user_get_invitation_creator with a creator not certified by root
 
 
 @pytest.mark.trio
@@ -159,8 +126,13 @@ async def test_user_claim_already_exists(
         alice.organization_id,
         User(
             user_id=mallory_invitation.user_id,
-            certified_user=b"<foo>",
+            user_certificate=b"<foo>",
             user_certifier=alice.device_id,
+        ),
+        Device(
+            device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
+            device_certificate=b"<bar>",
+            device_certifier=alice.device_id,
         ),
     )
 

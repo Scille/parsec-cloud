@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import trio
 from async_generator import asynccontextmanager
 
-from parsec.core.backend_connection import backend_cmds_factory
-from parsec.core.encryption_manager import EncryptionManager
+from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import FS
 
 from tests.common import freeze_time, InMemoryLocalStorage
@@ -48,32 +47,25 @@ def bob_local_storage(local_storage_factory, bob):
 
 
 @pytest.fixture
-def encryption_manager_factory():
+def remote_devices_manager_factory():
     @asynccontextmanager
-    async def _encryption_manager_factory(device, local_storage=None):
-        local_storage = local_storage or InMemoryLocalStorage()
+    async def _remote_devices_manager_factory(device):
         async with backend_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-            em = EncryptionManager(device, local_storage, cmds)
-            async with trio.open_nursery() as nursery:
-                await em.init(nursery)
-                try:
-                    yield em
-                finally:
-                    await em.teardown()
+            yield RemoteDevicesManager(cmds, device.root_verify_key)
 
-    return _encryption_manager_factory
+    return _remote_devices_manager_factory
 
 
 @pytest.fixture
-async def encryption_manager(running_backend, encryption_manager_factory, alice):
-    async with encryption_manager_factory(alice) as em:
-        yield em
+async def remote_devices_manager(remote_devices_manager_factory, alice):
+    async with remote_devices_manager_factory(alice) as rdm:
+        yield rdm
 
 
 @pytest.fixture
-def fs_factory(encryption_manager_factory, local_storage_factory, event_bus_factory):
+def fs_factory(local_storage_factory, event_bus_factory):
     @asynccontextmanager
     async def _fs_factory(device, local_storage=None, event_bus=None):
         if not event_bus:
@@ -81,8 +73,11 @@ def fs_factory(encryption_manager_factory, local_storage_factory, event_bus_fact
 
         local_storage = local_storage or local_storage_factory(device)
 
-        async with encryption_manager_factory(device, local_storage) as em:
-            fs = FS(device, local_storage, em.backend_cmds, em, event_bus)
+        async with backend_cmds_factory(
+            device.organization_addr, device.device_id, device.signing_key
+        ) as cmds:
+            rdm = RemoteDevicesManager(cmds, device.root_verify_key)
+            fs = FS(device, local_storage, cmds, rdm, event_bus)
             yield fs
 
     return _fs_factory
@@ -141,4 +136,10 @@ async def alice2_backend_cmds(running_backend, alice2):
 @pytest.fixture
 async def bob_backend_cmds(running_backend, bob):
     async with backend_cmds_factory(bob.organization_addr, bob.device_id, bob.signing_key) as cmds:
+        yield cmds
+
+
+@pytest.fixture
+async def anonymous_backend_cmds(running_backend, coolorg):
+    async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
         yield cmds

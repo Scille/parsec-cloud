@@ -3,7 +3,7 @@
 import pendulum
 import itertools
 from triopg.exceptions import UniqueViolationError
-from typing import Tuple, Dict, List, Optional
+from typing import Tuple, List, Optional
 
 from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
@@ -11,7 +11,6 @@ from parsec.backend.user import (
     BaseUserComponent,
     User,
     Device,
-    DevicesMapping,
     UserInvitation,
     DeviceInvitation,
     UserError,
@@ -48,16 +47,23 @@ WHERE
             if result != "UPDATE 1":
                 raise UserError(f"Update error: {result}")
 
-    async def create_user(self, organization_id: OrganizationID, user: User) -> None:
+    async def create_user(
+        self, organization_id: OrganizationID, user: User, first_device: Device
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                await self._create_user(conn, organization_id, user)
+                await self._create_user(conn, organization_id, user, first_device)
                 await send_signal(
-                    conn, "user.created", organization_id=organization_id, user_id=user.user_id
+                    conn,
+                    "user.created",
+                    organization_id=organization_id,
+                    user_id=user.user_id,
+                    first_device_id=first_device.device_id,
                 )
 
-    @staticmethod
-    async def _create_user(conn, organization_id: OrganizationID, user: User) -> None:
+    async def _create_user(
+        self, conn, organization_id: OrganizationID, user: User, first_device: Device
+    ) -> None:
         try:
             result = await conn.execute(
                 """
@@ -65,7 +71,7 @@ INSERT INTO user_ (
     organization,
     user_id,
     is_admin,
-    certified_user,
+    user_certificate,
     user_certifier,
     created_on
 )
@@ -78,7 +84,7 @@ SELECT
                 organization_id,
                 user.user_id,
                 user.is_admin,
-                user.certified_user,
+                user.user_certificate,
                 user.user_certifier,
                 user.created_on,
             )
@@ -88,42 +94,7 @@ SELECT
         if result != "INSERT 0 1":
             raise UserError(f"Insertion error: {result}")
 
-        await conn.executemany(
-            """
-INSERT INTO device (
-    organization,
-    user_,
-    device_id,
-    certified_device,
-    device_certifier,
-    created_on,
-    revoked_on,
-    certified_revocation,
-    revocation_certifier
-)
-SELECT
-    get_organization_internal_id($1),
-    get_user_internal_id($1, $2),
-    $3, $4,
-    get_device_internal_id($1, $5),
-    $6, $7, $8,
-    get_device_internal_id($1, $9)
-""",
-            [
-                (
-                    organization_id,
-                    device.user_id,
-                    device.device_id,
-                    device.certified_device,
-                    device.device_certifier,
-                    device.created_on,
-                    device.revoked_on,
-                    device.certified_revocation,
-                    device.revocation_certifier,
-                )
-                for device in user.devices.values()
-            ],
-        )
+        await self._create_device(conn, organization_id, first_device, first_device=True)
 
     async def create_device(
         self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
@@ -139,20 +110,23 @@ SELECT
                     encrypted_answer=encrypted_answer,
                 )
 
-    async def _create_device(self, conn, organization_id: OrganizationID, device: Device) -> None:
-        existing_devices = await conn.fetch(
-            """
-SELECT device_id FROM device
-WHERE user_ = get_user_internal_id($1, $2)
-            """,
-            organization_id,
-            device.user_id,
-        )
-        if not existing_devices:
-            raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
+    async def _create_device(
+        self, conn, organization_id: OrganizationID, device: Device, first_device: bool = False
+    ) -> None:
+        if not first_device:
+            existing_devices = await conn.fetch(
+                """
+    SELECT device_id FROM device
+    WHERE user_ = get_user_internal_id($1, $2)
+                """,
+                organization_id,
+                device.user_id,
+            )
+            if not existing_devices:
+                raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
 
-        if device.device_id in itertools.chain(*existing_devices):
-            raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
+            if device.device_id in itertools.chain(*existing_devices):
+                raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
 
         result = await conn.execute(
             """
@@ -160,12 +134,12 @@ INSERT INTO device (
     organization,
     user_,
     device_id,
-    certified_device,
+    device_certificate,
     device_certifier,
     created_on,
     revoked_on,
-    certified_revocation,
-    revocation_certifier
+    revoked_device_certificate,
+    revoked_device_certifier
 )
 SELECT
     get_organization_internal_id($1),
@@ -178,28 +152,23 @@ SELECT
             organization_id,
             device.user_id,
             device.device_id,
-            device.certified_device,
+            device.device_certificate,
             device.device_certifier,
             device.created_on,
             device.revoked_on,
-            device.certified_revocation,
-            device.revocation_certifier,
+            device.revoked_device_certificate,
+            device.revoked_device_certifier,
         )
 
         if result != "INSERT 0 1":
             raise UserError(f"Insertion error: {result}")
-
-    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
-        async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                return await self._get_user(conn, organization_id, user_id)
 
     async def _get_user(self, conn, organization_id: OrganizationID, user_id: UserID) -> User:
         user_result = await conn.fetchrow(
             """
 SELECT
     is_admin,
-    certified_user,
+    user_certificate,
     get_device_id(user_certifier) as user_certifier,
     created_on
 FROM user_
@@ -213,61 +182,78 @@ WHERE
         if not user_result:
             raise UserNotFoundError(user_id)
 
+        return User(
+            user_id=UserID(user_id),
+            is_admin=user_result[0],
+            user_certificate=user_result[1],
+            user_certifier=user_result[2],
+            created_on=user_result[3],
+        )
+
+    async def _get_device(
+        self, conn, organization_id: OrganizationID, device_id: DeviceID
+    ) -> Device:
+        data = await conn.fetchrow(
+            """
+SELECT
+    device_certificate,
+    get_device_id(device_certifier) as device_certifier,
+    created_on,
+    revoked_on,
+    revoked_device_certificate,
+    get_device_id(revoked_device_certifier) as revoked_device_certifier
+FROM device
+WHERE
+    organization = get_organization_internal_id($1)
+    AND device_id = $2
+""",
+            organization_id,
+            device_id,
+        )
+
+        return Device(device_id, *data)
+
+    async def _get_user_devices(
+        self, conn, organization_id: OrganizationID, user_id: UserID
+    ) -> Tuple[Device]:
         devices_results = await conn.fetch(
             """
 SELECT
     device_id,
-    certified_device,
+    device_certificate,
     get_device_id(device_certifier) as device_certifier,
     created_on,
     revoked_on,
-    certified_revocation,
-    get_device_id(revocation_certifier) as revocation_certifier
+    revoked_device_certificate,
+    get_device_id(revoked_device_certifier) as revoked_device_certifier
 FROM device
 WHERE user_ = get_user_internal_id($1, $2)
 """,
             organization_id,
             user_id,
         )
-        devices = DevicesMapping(
-            *[Device(DeviceID(d_id), *d_data) for d_id, *d_data in devices_results]
-        )
 
-        return User(
-            user_id=UserID(user_id),
-            is_admin=user_result[0],
-            certified_user=user_result[1],
-            user_certifier=user_result[2],
-            created_on=user_result[3],
-            devices=devices,
-        )
+        return tuple([Device(DeviceID(d_id), *d_data) for d_id, *d_data in devices_results])
 
     async def _get_trustchain(
-        self, conn, organization_id: OrganizationID, user: User
-    ) -> Dict[DeviceID, Device]:
+        self, conn, organization_id: OrganizationID, *device_ids: Tuple[DeviceID]
+    ) -> Tuple[Device]:
         # TODO: it's time to do a super awesome SQL query fetching everything
         # in one go...
         devices = {}
-        devices_to_fetch = []
-        if user.user_certifier:
-            devices_to_fetch.append(user.user_certifier)
-        for device in user.devices.values():
-            if device.device_certifier:
-                devices_to_fetch.append(device.device_certifier)
-            if device.revocation_certifier:
-                devices_to_fetch.append(device.revocation_certifier)
+        devices_to_fetch = [*device_ids]
 
         while devices_to_fetch:
             results = await conn.fetch(
                 """
 SELECT
     device_id,
-    certified_device,
+    device_certificate,
     get_device_id(device_certifier) as device_certifier,
     created_on,
     revoked_on,
-    certified_revocation,
-    get_device_id(revocation_certifier) as revocation_certifier
+    revoked_device_certificate,
+    get_device_id(revoked_device_certifier) as revoked_device_certifier
 FROM device
 WHERE
     organization = get_organization_internal_id($1)
@@ -284,27 +270,52 @@ WHERE
             for device in devices.values():
                 if device.device_certifier and device.device_certifier not in devices:
                     devices_to_fetch.append(device.device_certifier)
-                if device.revocation_certifier and device.revocation_certifier not in devices:
-                    devices_to_fetch.append(device.revocation_certifier)
+                if (
+                    device.revoked_device_certifier
+                    and device.revoked_device_certifier not in devices
+                ):
+                    devices_to_fetch.append(device.revoked_device_certifier)
 
-        return devices
+        return tuple(devices.values())
+
+    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                return await self._get_user(conn, organization_id, user_id)
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Dict[DeviceID, Device]]:
+    ) -> Tuple[User, Tuple[Device]]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 user = await self._get_user(conn, organization_id, user_id)
-                trustchain = await self._get_trustchain(conn, organization_id, user)
+                trustchain = await self._get_trustchain(conn, organization_id, user.user_certifier)
                 return user, trustchain
 
-    # async def get_device(self, device_id: DeviceID) -> Device:
-    #     raise NotImplementedError()
+    async def get_user_with_devices_and_trustchain(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                user = await self._get_user(conn, organization_id, user_id)
+                user_devices = await self._get_user_devices(conn, organization_id, user_id)
+                trustchain = await self._get_trustchain(
+                    conn,
+                    organization_id,
+                    user.user_certifier,
+                    *[device.device_certifier for device in user_devices],
+                    *[device.revoked_device_certifier for device in user_devices],
+                )
+                return user, user_devices, trustchain
 
-    # async def get_device_with_trustchain(
-    #     self, device_id: DeviceID
-    # ) -> Tuple[Device, Dict[DeviceID, Device]]:
-    #     raise NotImplementedError()
+    async def get_user_with_device(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> Tuple[User, Device]:
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                user = await self._get_user(conn, organization_id, device_id.user_id)
+                device = await self._get_device(conn, organization_id, device_id)
+                return user, device
 
     async def find(
         self,
@@ -624,8 +635,8 @@ WHERE
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        certified_revocation: bytes,
-        revocation_certifier: DeviceID,
+        revoked_device_certificate: bytes,
+        revoked_device_certifier: DeviceID,
         revoked_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         async with self.dbh.pool.acquire() as conn:
@@ -634,8 +645,8 @@ WHERE
                 result = await conn.execute(
                     """
 UPDATE device SET
-    certified_revocation = $3,
-    revocation_certifier = get_device_internal_id($1, $4),
+    revoked_device_certificate = $3,
+    revoked_device_certifier = get_device_internal_id($1, $4),
     revoked_on = $5
 WHERE
     organization = get_organization_internal_id($1)
@@ -644,8 +655,8 @@ WHERE
 """,
                     organization_id,
                     device_id,
-                    certified_revocation,
-                    revocation_certifier,
+                    revoked_device_certificate,
+                    revoked_device_certifier,
                     revoked_on or pendulum.now(),
                 )
 

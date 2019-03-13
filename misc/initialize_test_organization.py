@@ -116,10 +116,10 @@ async def amain(
         save_device_with_password(config_dir, alice_device, password, force=force)
 
         now = pendulum.now()
-        certified_user = certify_user(
+        user_certificate = certify_user(
             None, root_signing_key, alice_device.user_id, alice_device.public_key, now
         )
-        certified_device = certify_device(
+        device_certificate = certify_device(
             None, root_signing_key, alice_device_id, alice_device.verify_key, now
         )
 
@@ -127,8 +127,8 @@ async def amain(
             organization_bootstrap_addr.organization_id,
             organization_bootstrap_addr.bootstrap_token,
             root_verify_key,
-            certified_user,
-            certified_device,
+            user_certificate,
+            device_certificate,
         )
 
     # Create a workspace for Alice

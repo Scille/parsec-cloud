@@ -2,11 +2,16 @@
 
 import pytest
 import trio
+import pendulum
 
 from parsec.types import DeviceID
-from parsec.crypto import PrivateKey, SigningKey
-from parsec.trustchain import certify_device
-from parsec.core.types import RemoteUser
+from parsec.crypto import (
+    PrivateKey,
+    SigningKey,
+    build_device_certificate,
+    unsecure_read_user_certificate,
+)
+from parsec.core.types import UnverifiedRemoteUser
 from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (
     generate_device_encrypted_claim,
@@ -27,23 +32,30 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
         claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
 
         assert claim["token"] == token
-        certified_device = certify_device(
-            alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"]
+        device_certificate = build_device_certificate(
+            alice.device_id,
+            alice.signing_key,
+            claim["device_id"],
+            claim["verify_key"],
+            pendulum.now(),
         )
         encrypted_answer = generate_device_encrypted_answer(
             claim["answer_public_key"], alice.private_key, alice.user_manifest_access
         )
         with trio.fail_after(1):
-            await alice_backend_cmds.device_create(certified_device, encrypted_answer)
+            await alice_backend_cmds.device_create(device_certificate, encrypted_answer)
 
     async def _alice_nd_claim():
         async with backend_anonymous_cmds_factory(alice.organization_addr) as cmds:
-            invitation_creator = await cmds.device_get_invitation_creator(nd_id)
-            assert isinstance(invitation_creator, RemoteUser)
+            invitation_creator, trustchain = await cmds.device_get_invitation_creator(nd_id)
+            assert isinstance(invitation_creator, UnverifiedRemoteUser)
+            assert trustchain == []
+
+            creator = unsecure_read_user_certificate(invitation_creator.user_certificate)
 
             answer_private_key = PrivateKey.generate()
             encrypted_claim = generate_device_encrypted_claim(
-                creator_public_key=invitation_creator.public_key,
+                creator_public_key=creator.public_key,
                 token=token,
                 device_id=nd_id,
                 verify_key=nd_signing_key.verify_key,

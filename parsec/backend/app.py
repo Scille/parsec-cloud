@@ -209,8 +209,7 @@ class BackendApp:
                 expected_rvk = hs.answer_data["rvk"]
                 try:
                     organization = await self.organization.get(organization_id)
-                    user = await self.user.get_user(organization_id, device_id.user_id)
-                    device = user.devices[device_id.device_name]
+                    user, device = await self.user.get_user_with_device(organization_id, device_id)
 
                 except (OrganizationNotFoundError, UserNotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()

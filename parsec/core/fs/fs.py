@@ -19,6 +19,7 @@ from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.sharing import Sharing
 from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 
 class FS:
@@ -27,7 +28,7 @@ class FS:
         device: LocalDevice,
         local_storage: LocalStorage,
         backend_cmds: BackendCmdsPool,
-        encryption_manager,
+        remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
     ):
         self.device = device
@@ -37,11 +38,11 @@ class FS:
 
         self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
         self._local_file_fs = LocalFileFS(device, local_storage, self._local_folder_fs, event_bus)
-        self._remote_loader = RemoteLoader(backend_cmds, encryption_manager, local_storage)
+        self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
         self._syncer = Syncer(
             device,
             backend_cmds,
-            encryption_manager,
+            remote_devices_manager,
             self._local_folder_fs,
             self._local_file_fs,
             event_bus,
@@ -49,7 +50,7 @@ class FS:
         self._sharing = Sharing(
             device,
             backend_cmds,
-            encryption_manager,
+            remote_devices_manager,
             self._local_folder_fs,
             self._syncer,
             self._remote_loader,

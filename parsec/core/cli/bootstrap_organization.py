@@ -9,8 +9,7 @@ from pathlib import Path
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey
-from parsec.trustchain import certify_user, certify_device
+from parsec.crypto import SigningKey, build_device_certificate, build_user_certificate
 from parsec.core.config import get_default_config_dir
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
@@ -30,8 +29,12 @@ async def _bootstrap_organization(
         save_device_with_password(config_dir, device, password, force=force)
 
     now = pendulum.now()
-    certified_user = certify_user(None, root_signing_key, device.user_id, device.public_key, now)
-    certified_device = certify_device(None, root_signing_key, device_id, device.verify_key, now)
+    user_certificate = build_user_certificate(
+        None, root_signing_key, device.user_id, device.public_key, now
+    )
+    device_certificate = build_device_certificate(
+        None, root_signing_key, device_id, device.verify_key, now
+    )
 
     async with spinner(f"Sending {device_display} to server"):
         async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
@@ -39,8 +42,8 @@ async def _bootstrap_organization(
                 organization_bootstrap_addr.organization_id,
                 organization_bootstrap_addr.bootstrap_token,
                 root_verify_key,
-                certified_user,
-                certified_device,
+                user_certificate,
+                device_certificate,
             )
 
     organization_addr_display = click.style(organization_addr, fg="yellow")

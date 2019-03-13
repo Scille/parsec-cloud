@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from unittest.mock import ANY
 from pendulum import Pendulum
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID
 from parsec.api.protocole import device_get_invitation_creator_serializer, device_claim_serializer
-from parsec.backend.user import Device, DeviceInvitation, INVITATION_VALIDITY, PEER_EVENT_MAX_WAIT
+from parsec.backend.user import Device, DeviceInvitation, PEER_EVENT_MAX_WAIT
 
 from tests.common import freeze_time
 
@@ -40,41 +39,6 @@ async def device_claim(sock, **kwargs):
     raw_rep = await sock.recv()
     rep = device_claim_serializer.rep_loads(raw_rep)
     reps.append(rep)
-
-
-@pytest.mark.trio
-async def test_device_get_invitation_creator_too_late(anonymous_backend_sock, alice_nd_invitation):
-    with freeze_time(alice_nd_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
-        rep = await device_get_invitation_creator(
-            anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
-        )
-    assert rep == {"status": "not_found"}
-
-
-@pytest.mark.trio
-async def test_device_get_invitation_creator_unknown(anonymous_backend_sock, mallory):
-    rep = await device_get_invitation_creator(
-        anonymous_backend_sock, invited_device_id=mallory.device_id
-    )
-    assert rep == {"status": "not_found"}
-
-
-@pytest.mark.trio
-async def test_device_get_invitation_creator_ok(anonymous_backend_sock, alice_nd_invitation):
-    with freeze_time(alice_nd_invitation.created_on):
-        rep = await device_get_invitation_creator(
-            anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
-        )
-    assert rep == {
-        "status": "ok",
-        "user_id": alice_nd_invitation.creator.user_id,
-        "created_on": Pendulum(2000, 1, 1),
-        "certified_user": ANY,
-        "user_certifier": None,
-    }
-
-
-# TODO: device_get_invitation_creator with a creator not certified by root
 
 
 @pytest.mark.trio
@@ -169,7 +133,7 @@ async def test_device_claim_already_exists(
         alice.organization_id,
         Device(
             device_id=alice_nd_invitation.device_id,
-            certified_device=b"<foo>",
+            device_certificate=b"<foo>",
             device_certifier=alice.device_id,
         ),
     )

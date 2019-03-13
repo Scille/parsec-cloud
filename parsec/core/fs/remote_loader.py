@@ -2,14 +2,14 @@
 
 from hashlib import sha256
 
-from parsec.crypto import decrypt_raw_with_secret_key
+from parsec.crypto import decrypt_raw_with_secret_key, decrypt_and_verify_signed_msg_with_secret_key
 from parsec.core.types import BlockAccess, ManifestAccess, remote_manifest_serializer
 
 
 class RemoteLoader:
-    def __init__(self, backend_cmds, encryption_manager, local_storage):
+    def __init__(self, backend_cmds, remote_devices_manager, local_storage):
         self.backend_cmds = backend_cmds
-        self.encryption_manager = encryption_manager
+        self.remote_devices_manager = remote_devices_manager
         self.local_storage = local_storage
 
     async def load_block(self, access: BlockAccess) -> None:
@@ -30,12 +30,15 @@ class RemoteLoader:
         self.local_storage.set_clean_block(access, block)
 
     async def load_manifest(self, access: ManifestAccess) -> None:
-        _, blob = await self.backend_cmds.vlob_read(access.id)
-        raw_remote_manifest = await self.encryption_manager.decrypt_with_secret_key(
-            access.key, blob
+        args = await self.backend_cmds.vlob_read(access.id)
+        expected_author_id, expected_timestamp, expected_version, blob = args
+        author = await self.remote_devices_manager.get_device(expected_author_id)
+        raw = decrypt_and_verify_signed_msg_with_secret_key(
+            access.key, blob, expected_author_id, author.verify_key, expected_timestamp
         )
-        # TODO: handle and/or document exceptions
-        remote_manifest = remote_manifest_serializer.loads(raw_remote_manifest)
-        local_manifest = remote_manifest.to_local()
+        remote_manifest = remote_manifest_serializer.loads(raw)
+        # TODO: better exception !
+        assert remote_manifest.version == expected_version
 
+        local_manifest = remote_manifest.to_local()
         self.local_storage.set_clean_manifest(access, local_manifest)

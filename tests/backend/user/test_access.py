@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from unittest.mock import ANY
 from pendulum import Pendulum
 
 from parsec.api.protocole import packb, user_get_serializer, user_find_serializer
@@ -49,21 +48,15 @@ async def test_api_user_get_ok(access_testbed):
         "status": "ok",
         "is_admin": False,
         "user_id": device.user_id,
-        "certified_user": ANY,
-        "user_certifier": None,
-        "created_on": Pendulum(2000, 1, 1),
-        "devices": {
-            device.device_name: {
+        "user_certificate": binder.certificates_store.get_user(device),
+        "devices": [
+            {
                 "device_id": device.device_id,
-                "created_on": Pendulum(2000, 1, 1),
-                "revoked_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
-                "certified_device": ANY,
-                "device_certifier": None,
+                "revoked_device_certificate": None,
+                "device_certificate": binder.certificates_store.get_device(device),
             }
-        },
-        "trustchain": {},
+        ],
+        "trustchain": [],
     }
 
 
@@ -72,6 +65,7 @@ async def test_api_user_get_ok_deep_trustchain(
     access_testbed, organization_factory, local_device_factory
 ):
     binder, org, godfrey1, sock = access_testbed
+    certificates_store = binder.certificates_store
     d1 = Pendulum(2000, 1, 1)
     d2 = Pendulum(2000, 1, 2)
 
@@ -95,80 +89,52 @@ async def test_api_user_get_ok_deep_trustchain(
         await binder.bind_revocation(mike2, certifier=ph2)
 
     rep = await user_get(sock, mike2.device_id.user_id)
+    rep["trustchain"] = sorted(rep["trustchain"], key=lambda x: x["device_id"])
+    rep["devices"] = sorted(rep["devices"], key=lambda x: x["device_id"])
     assert rep == {
         "status": "ok",
         "is_admin": False,
         "user_id": mike2.device_id.user_id,
-        "certified_user": ANY,
-        "user_certifier": roger1.device_id,
-        "created_on": d1,
-        "devices": {
-            mike1.device_id.device_name: {
+        "user_certificate": certificates_store.get_user(mike2),
+        "devices": [
+            {
                 "device_id": mike1.device_id,
-                "created_on": d1,
-                "revoked_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
-                "certified_device": ANY,
-                "device_certifier": roger1.device_id,
+                "device_certificate": certificates_store.get_device(mike1),
+                "revoked_device_certificate": None,
             },
-            mike2.device_id.device_name: {
+            {
                 "device_id": mike2.device_id,
-                "created_on": d1,
-                "revoked_on": d2,
-                "certified_revocation": ANY,
-                "revocation_certifier": ph2.device_id,
-                "certified_device": ANY,
-                "device_certifier": mike1.device_id,
+                "device_certificate": certificates_store.get_device(mike2),
+                "revoked_device_certificate": certificates_store.get_revoked_device(mike2),
             },
-        },
-        "trustchain": {
-            godfrey1.device_id: {
+        ],
+        "trustchain": [
+            {
                 "device_id": godfrey1.device_id,
-                "created_on": d1,
-                "revoked_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
-                "certified_device": ANY,
-                "device_certifier": None,
+                "device_certificate": certificates_store.get_device(godfrey1),
+                "revoked_device_certificate": None,
             },
-            mike1.device_id: {
+            {
                 "device_id": mike1.device_id,
-                "created_on": d1,
-                "revoked_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
-                "certified_device": ANY,
-                "device_certifier": roger1.device_id,
+                "device_certificate": certificates_store.get_device(mike1),
+                "revoked_device_certificate": None,
             },
-            roger1.device_id: {
-                "device_id": roger1.device_id,
-                "created_on": d1,
-                "revoked_on": d2,
-                "certified_revocation": ANY,
-                "revocation_certifier": ph1.device_id,
-                "certified_device": ANY,
-                "device_certifier": godfrey1.device_id,
-            },
-            ph1.device_id: {
+            {
                 "device_id": ph1.device_id,
-                "created_on": d1,
-                "revoked_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
-                "certified_device": ANY,
-                "device_certifier": godfrey1.device_id,
+                "device_certificate": certificates_store.get_device(ph1),
+                "revoked_device_certificate": None,
             },
-            ph2.device_id: {
+            {
                 "device_id": ph2.device_id,
-                "created_on": d1,
-                "revoked_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
-                "certified_device": ANY,
-                "device_certifier": ph1.device_id,
+                "device_certificate": certificates_store.get_device(ph2),
+                "revoked_device_certificate": None,
             },
-        },
+            {
+                "device_id": roger1.device_id,
+                "device_certificate": certificates_store.get_device(roger1),
+                "revoked_device_certificate": certificates_store.get_revoked_device(roger1),
+            },
+        ],
     }
 
 

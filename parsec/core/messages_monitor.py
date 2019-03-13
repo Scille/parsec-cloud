@@ -3,8 +3,7 @@
 import trio
 from structlog import get_logger
 
-from parsec.core.fs.sharing import SharingError
-from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.fs.sharing import SharingError, SharingBackendOffline
 
 
 logger = get_logger()
@@ -54,7 +53,7 @@ async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TA
                         except SharingError:
                             logger.exception("Invalid message from backend")
 
-            except BackendNotAvailable:
+            except SharingBackendOffline:
                 pass
             process_message_cancel_scope = None
             msg_arrived.clear()

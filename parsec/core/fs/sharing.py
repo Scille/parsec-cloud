@@ -2,20 +2,34 @@
 
 from structlog import get_logger
 from itertools import count
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UserID, DeviceID
 from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, OneOfSchema, fields
+from parsec.crypto import CryptoError, encrypt_signed_msg_for, decrypt_and_verify_signed_msg_for
 from parsec.core.types import FsPath, WorkspaceEntry, ManifestAccess
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_workspace_manifest
-from parsec.core.encryption_manager import EncryptionManagerError
-from parsec.core.backend_connection import BackendCmdsBadResponse, BackendCmdsNotAllowed
+from parsec.core.remote_devices_manager import (
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerBackendOffline,
+)
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendCmdsBadResponse,
+    BackendCmdsNotAllowed,
+    BackendNotAvailable,
+)
 
 
 logger = get_logger()
 
 
 class SharingError(Exception):
+    pass
+
+
+class SharingBackendOffline(Exception):
     pass
 
 
@@ -76,7 +90,7 @@ class Sharing:
         self,
         device,
         backend_cmds,
-        encryption_manager,
+        remote_devices_manager,
         local_folder_fs,
         syncer,
         remote_loader,
@@ -84,7 +98,7 @@ class Sharing:
     ):
         self.device = device
         self.backend_cmds = backend_cmds
-        self.encryption_manager = encryption_manager
+        self.remote_devices_manager = remote_devices_manager
         self.local_folder_fs = local_folder_fs
         self.syncer = syncer
         self.remote_loader = remote_loader
@@ -93,7 +107,7 @@ class Sharing:
     async def share(
         self,
         path: FsPath,
-        recipient: UserID,
+        recipient_id: UserID,
         admin_right=False,
         read_right=False,
         write_right=False,
@@ -108,7 +122,7 @@ class Sharing:
             FSManifestLocalMiss: If path is not available in local
             ValueError: If path is not a valid absolute path
         """
-        if self.device.user_id == recipient:
+        if self.device.user_id == recipient_id:
             raise SharingRecipientError("Cannot share to oneself.")
 
         # First retreive the manifest and make sure it is a workspace
@@ -123,14 +137,19 @@ class Sharing:
         # Note this is not done in a strictly atomic way so this information
         # can be erronous (consider it more of a UX helper than something to
         # rely on)
-        if recipient not in manifest.participants:
-            participants = sorted({*manifest.participants, recipient})
+        if recipient_id not in manifest.participants:
+            participants = sorted({*manifest.participants, recipient_id})
             manifest = manifest.evolve_and_mark_updated(participants=participants)
             self.local_folder_fs.set_dirty_manifest(access, manifest)
 
         # Make sure there is no placeholder in the path and the entry
         # is up to date
-        await self.syncer.sync(path, recursive=False)
+        try:
+            # TODO: handle other exceptions
+            await self.syncer.sync(path, recursive=False)
+
+        except BackendNotAvailable as exc:
+            raise SharingBackendOffline(*exc.args) from exc
 
         # Actual sharing is done in two steps:
         # 1) update access rights for the vlob group corresponding to the workspace
@@ -143,25 +162,28 @@ class Sharing:
         try:
             await self.backend_cmds.vlob_group_update_rights(
                 access.id,
-                recipient,
+                recipient_id,
                 admin_right=admin_right,
                 read_right=read_right,
                 write_right=write_right,
             )
+
+        except BackendNotAvailable as exc:
+            raise SharingBackendOffline(*exc.args) from exc
 
         except BackendCmdsNotAllowed as exc:
             raise SharingNeedAdminRightError(
                 "Admin right on the workspace is mandatory to share it"
             ) from exc
 
-        except BackendCmdsBadResponse as exc:
+        except BackendConnectionError as exc:
             raise SharingBackendMessageError(
                 f"Error while trying to set vlob group rights in backend: {exc}"
             ) from exc
 
         # Step 2)
 
-        # Build the sharing message...
+        # Build the sharing message
         msg = {
             "type": "share",
             "author": self.device.device_id,
@@ -175,7 +197,7 @@ class Sharing:
             msg["key"] = access.key
 
         try:
-            raw = sharing_message_content_serializer.dumps(msg)
+            raw_msg = sharing_message_content_serializer.dumps(msg)
 
         except SerdeError as exc:
             # TODO: Do we really want to log the message content ? Wouldn't
@@ -184,17 +206,39 @@ class Sharing:
             logger.error("Cannot dump sharing message", msg=msg, errors=exc.errors)
             raise SharingError("Internal error") from exc
 
+        # Retrieve recipient public key
         try:
-            ciphered = await self.encryption_manager.encrypt_for(recipient, raw)
+            recipient = await self.remote_devices_manager.get_user(recipient_id)
 
-        except EncryptionManagerError as exc:
-            raise SharingRecipientError(f"Cannot create message for `{recipient}`") from exc
+        except RemoteDevicesManagerBackendOffline as exc:
+            raise SharingBackendOffline(*exc.args) from exc
 
-        # ...And finally send the message
+        except RemoteDevicesManagerError as exc:
+            raise SharingRecipientError(f"Cannot retrieve `{recipient_id}`: {exc}") from exc
+
+        now = pendulum_now()
+
+        # Encrypt&sign message
         try:
-            await self.backend_cmds.message_send(recipient=recipient, body=ciphered)
+            ciphered = encrypt_signed_msg_for(
+                self.device.device_id, self.device.signing_key, recipient.public_key, raw_msg, now
+            )
 
-        except BackendCmdsBadResponse as exc:
+        except CryptoError as exc:
+            raise SharingRecipientError(
+                f"Cannot create message for `{recipient_id}`: {exc}"
+            ) from exc
+
+        # And finally send the message
+        try:
+            await self.backend_cmds.message_send(
+                recipient=recipient_id, timestamp=now, body=ciphered
+            )
+
+        except BackendNotAvailable as exc:
+            raise SharingBackendOffline(*exc.arg) from exc
+
+        except BackendConnectionError as exc:
             raise SharingBackendMessageError(
                 f"Error while trying to send sharing message to backend: {exc}"
             ) from exc
@@ -233,13 +277,17 @@ class Sharing:
                 return user_manifest_access, user_manifest
 
             except FSManifestLocalMiss:
-                await self.remote_loader.load_manifest(user_manifest_access)
+                try:
+                    await self.remote_loader.load_manifest(user_manifest_access)
+
+                except BackendNotAvailable as exc:
+                    raise SharingBackendOffline(*exc.arg) from exc
 
     async def process_last_messages(self):
         """
         Raises:
             SharingError
-            BackendNotAvailable
+            SharingBackendOffline
             SharingBackendMessageError
         """
 
@@ -248,13 +296,16 @@ class Sharing:
         try:
             messages = await self.backend_cmds.message_get(offset=initial_last_processed_message)
 
-        except BackendCmdsBadResponse as exc:
+        except BackendNotAvailable as exc:
+            raise SharingBackendOffline(*exc.args) from exc
+
+        except BackendConnectionError as exc:
             raise SharingBackendMessageError(f"Cannot retreive user messages: {exc}") from exc
 
         new_last_processed_message = initial_last_processed_message
-        for msg_count, msg_sender, msg_body in messages:
+        for msg_count, msg_sender, msg_timestamp, msg_body in messages:
             try:
-                await self._process_message(msg_sender, msg_body)
+                await self._process_message(msg_sender, msg_timestamp, msg_body)
                 new_last_processed_message = msg_count
 
             except SharingError as exc:
@@ -267,24 +318,32 @@ class Sharing:
             )
             self.local_folder_fs.set_dirty_manifest(user_manifest_access, user_manifest)
 
-    async def _process_message(self, sender_id: DeviceID, ciphered: bytes):
+    async def _process_message(self, sender_id: DeviceID, timestamp: Pendulum, ciphered: bytes):
         """
         Raises:
             SharingRecipientError
             SharingInvalidMessageError
         """
-        expected_user_id, expected_device_name = sender_id.split("@")
+        # Retrieve recipient public key
         try:
-            real_sender_id, raw = await self.encryption_manager.decrypt_for_self(ciphered)
+            sender = await self.remote_devices_manager.get_device(sender_id)
 
-        except EncryptionManagerError as exc:
-            raise SharingRecipientError(f"Cannot decrypt message from `{sender_id}`") from exc
+        except RemoteDevicesManagerBackendOffline as exc:
+            raise SharingBackendOffline(*exc.args) from exc
 
-        if real_sender_id != sender_id:
-            raise SharingRecipientError(
-                f"Message was said to be send by `{sender_id}`, "
-                f" but is signed by {real_sender_id}"
+        except RemoteDevicesManagerError as exc:
+            raise SharingRecipientError(f"Cannot retrieve `{sender_id}`: {exc}") from exc
+
+        # Decrypt&verify message
+        try:
+            raw = decrypt_and_verify_signed_msg_for(
+                self.device.private_key, ciphered, sender_id, sender.verify_key, timestamp
             )
+
+        except CryptoError as exc:
+            raise SharingRecipientError(
+                f"Cannot decrypt&validate message from `{sender_id}`: {exc}"
+            ) from exc
 
         try:
             msg = generic_message_content_serializer.loads(raw)
