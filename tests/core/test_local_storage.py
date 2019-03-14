@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from collections import OrderedDict
 import pytest
+from tests.common import freeze_time
+from unittest import mock
+
 from parsec.core.local_storage import LocalStorage
 from parsec.core.local_storage import DEFAULT_BLOCK_SIZE as block_size
 from parsec.core.persistent_storage import LocalStorageMissingEntry
 from parsec.core.types import LocalUserManifest, ManifestAccess
-from tests.common import freeze_time
-from unittest import mock
 
 
 @pytest.fixture
@@ -82,14 +84,16 @@ def test_local_storage_exit(update_block_accessed_on_mock, set_clean_block_mock,
 
     def _run_local_storage(persisted):
         with LocalStorage(tmpdir, max_memory_cache_size=3 * block_size) as local_storage:
-            local_storage.clean_block_cache = {
-                access.id: {
-                    "access": access,
-                    "accessed_on": "2019",
-                    "block": b"data",
-                    "persisted": persisted,
+            local_storage.clean_block_cache = OrderedDict(
+                {
+                    access.id: {
+                        "access": access,
+                        "accessed_on": "2019",
+                        "block": b"data",
+                        "persisted": persisted,
+                    }
                 }
-            }
+            )
 
     _run_local_storage(False)
 
@@ -128,7 +132,7 @@ def test_set_clean_manifest(clear_dirty_manifest_mock, local_storage):
     local_storage.set_clean_manifest(access, manifest, False)
     clear_dirty_manifest_mock.assert_not_called()
     assert local_storage.manifest_cache[access.id] == manifest
-    local_storage.manifest_cache = {}
+    local_storage.manifest_cache = OrderedDict()
     # Force clear
     local_storage.set_clean_manifest(access, manifest, True)
     clear_dirty_manifest_mock.assert_called_once_with(access)
@@ -147,36 +151,30 @@ def test_set_dirty_manifest(local_storage):
 def test_clear_manifest(clear_dirty_manifest_mock, clear_clean_manifest_mock, local_storage):
     access = ManifestAccess()
     manifest = LocalUserManifest(author=123, base_version=1, is_placeholder=False, need_sync=False)
-    local_storage.manifest_cache == {access.id: manifest}
+    local_storage.manifest_cache == OrderedDict({access.id: manifest})
     local_storage.clear_manifest(access)
     clear_clean_manifest_mock.assert_called_once_with(access)
     clear_dirty_manifest_mock.assert_not_called()
     clear_clean_manifest_mock.reset_mock()
-    assert local_storage.manifest_cache == {}
+    assert local_storage.manifest_cache == OrderedDict()
 
-    local_storage.manifest_cache == {access.id: manifest}
+    local_storage.manifest_cache == OrderedDict({access.id: manifest})
     clear_clean_manifest_mock.side_effect = LocalStorageMissingEntry(access)
     local_storage.clear_manifest(access)
     clear_clean_manifest_mock.assert_called_once_with(access)
     clear_dirty_manifest_mock.assert_called_once_with(access)
-    assert local_storage.manifest_cache == {}
+    assert local_storage.manifest_cache == OrderedDict()
 
     clear_clean_manifest_mock.side_effect = LocalStorageMissingEntry(access)
     clear_dirty_manifest_mock.side_effect = LocalStorageMissingEntry(access)
     local_storage.clear_manifest(access)
 
 
-@mock.patch("random.choice")
-def test_add_block_in_dirty_cache(choice_mock, local_storage):
-    def mock_choice(key):
-        return key
-
+def test_add_block_in_dirty_cache(local_storage):
     access_1 = ManifestAccess()
     access_2 = ManifestAccess()
     access_3 = ManifestAccess()
     access_4 = ManifestAccess()
-
-    choice_mock.side_effect = lambda _: mock_choice(access_1.id)
 
     local_storage.add_block_in_dirty_cache(access_1, b"data_1")
     local_storage.add_block_in_dirty_cache(access_2, b"data_2")
@@ -210,32 +208,34 @@ def test_get_block(
 
     # Block in dirty cache
     access = ManifestAccess()
-    local_storage.clean_block_cache = {}
-    local_storage.dirty_block_cache = {
-        access.id: {"access": access, "accessed_on": None, "block": b"data_1", "persisted": False}
-    }
+    local_storage.clean_block_cache = OrderedDict()
+    local_storage.dirty_block_cache = OrderedDict(
+        {access.id: {"access": access, "accessed_on": None, "block": b"data_1", "persisted": False}}
+    )
     with freeze_time("2000-01-01"):
         local_storage.get_block(access)
     update_block_accessed_on_mock.assert_not_called()
 
     # Block in clean cache
-    local_storage.clean_block_cache = {
-        access.id: {
-            "access": access,
-            "accessed_on": "2000-01-01T00:00:00+00:00",
-            "block": b"data_1",
-            "persisted": False,
+    local_storage.clean_block_cache = OrderedDict(
+        {
+            access.id: {
+                "access": access,
+                "accessed_on": "2000-01-01T00:00:00+00:00",
+                "block": b"data_1",
+                "persisted": False,
+            }
         }
-    }
-    local_storage.dirty_block_cache = {}
+    )
+    local_storage.dirty_block_cache = OrderedDict()
     with freeze_time("2000-01-02"):
         local_storage.get_block(access)
     update_block_accessed_on_mock.assert_not_called()
     assert local_storage.clean_block_cache[access.id]["accessed_on"] == "2000-01-02T00:00:00+00:00"
 
     # Block in dirty persisted storage
-    local_storage.clean_block_cache = {}
-    local_storage.dirty_block_cache = {}
+    local_storage.clean_block_cache = OrderedDict()
+    local_storage.dirty_block_cache = OrderedDict()
     local_storage.get_block(access)
     update_block_accessed_on_mock.assert_not_called()
     get_clean_block_mock.assert_not_called()
@@ -244,8 +244,8 @@ def test_get_block(
 
     # Block in clean persisted storage
     get_dirty_block_mock.side_effect = LocalStorageMissingEntry(access)
-    local_storage.clean_block_cache = {}
-    local_storage.dirty_block_cache = {}
+    local_storage.clean_block_cache = OrderedDict()
+    local_storage.dirty_block_cache = OrderedDict()
     local_storage.get_block(access)
     update_block_accessed_on_mock.assert_not_called()
     get_clean_block_mock.assert_called_once_with(access)
@@ -258,26 +258,18 @@ def test_get_block(
 def test_set_dirty_block(set_dirty_block_mock, local_storage):
     access = ManifestAccess()
     local_storage.set_dirty_block(access, b"data")
-    assert local_storage.clean_block_cache == {}
+    assert local_storage.clean_block_cache == OrderedDict()
     assert local_storage.dirty_block_cache == {access.id: b"data"}
     set_dirty_block_mock.assert_called_once_with(access, b"data")
 
 
-@mock.patch("random.choice")
 @mock.patch("parsec.core.persistent_storage.PersistentStorage.set_clean_block")
 @mock.patch("parsec.core.persistent_storage.PersistentStorage.update_block_accessed_on")
-def test_set_clean_block(
-    update_block_accessed_on_mock, set_clean_block_mock, choice_mock, local_storage
-):
-    def mock_choice(key):
-        return key
-
+def test_set_clean_block(update_block_accessed_on_mock, set_clean_block_mock, local_storage):
     access_1 = ManifestAccess()
     access_2 = ManifestAccess()
     access_3 = ManifestAccess()
     access_4 = ManifestAccess()
-
-    choice_mock.side_effect = lambda _: mock_choice(access_1.id)
 
     local_storage.set_clean_block(access_1, b"data_1")
     local_storage.set_clean_block(access_2, b"data_2")
@@ -302,7 +294,7 @@ def test_set_clean_block(
             "persisted": False,
         },
     }
-    assert local_storage.dirty_block_cache == {}
+    assert local_storage.dirty_block_cache == OrderedDict()
     set_clean_block_mock.assert_not_called()
 
     # Garbage collector (remove not persisted block)
@@ -316,14 +308,12 @@ def test_set_clean_block(
         "block": b"data_4",
         "persisted": False,
     }
-    assert local_storage.dirty_block_cache == {}
+    assert local_storage.dirty_block_cache == OrderedDict()
     set_clean_block_mock.assert_called_once_with(access_1, b"data_1")
     set_clean_block_mock.reset_mock()
     update_block_accessed_on_mock.assert_not_called()
 
     # Garbage collector (remove persisted block)
-    choice_mock.side_effect = lambda _: mock_choice(access_2.id)
-
     local_storage.clean_block_cache[access_2.id]["persisted"] = True
     local_storage.clean_block_cache[access_2.id]["accessed_on"] = "2019"
     assert len(local_storage.clean_block_cache) == 3
@@ -336,7 +326,7 @@ def test_set_clean_block(
         "block": b"data_1",
         "persisted": False,
     }
-    assert local_storage.dirty_block_cache == {}
+    assert local_storage.dirty_block_cache == OrderedDict()
     set_clean_block_mock.assert_not_called()
     update_block_accessed_on_mock.assert_called_once_with(True, access_2, "2019")
 

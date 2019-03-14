@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from collections import OrderedDict
 import hashlib
-import random
 
 import pendulum
 from structlog import get_logger
@@ -39,8 +39,8 @@ class LocalStorage:
     def __init__(self, path, max_memory_cache_size: int = DEFAULT_MAX_CACHE_SIZE, **kwargs):
         self.local_symkey = None
         self.manifest_cache = {}
-        self.clean_block_cache = {}
-        self.dirty_block_cache = {}
+        self.clean_block_cache = OrderedDict()
+        self.dirty_block_cache = OrderedDict()
         self.persistent_storage = PersistentStorage(path, **kwargs)
         self.max_cache_size = max_memory_cache_size
 
@@ -133,8 +133,7 @@ class LocalStorage:
 
     def add_block_in_dirty_cache(self, access: BlockAccess, block: bytes):
         if self.get_nb_blocks(False) >= self.block_limit:
-            key = random.choice(list(self.dirty_block_cache.keys()))
-            del self.dirty_block_cache[key]
+            self.dirty_block_cache.popitem(last=False)
         self.dirty_block_cache[access.id] = block
 
     def get_block(self, access: BlockAccess) -> bytes:
@@ -145,6 +144,7 @@ class LocalStorage:
             pass
         try:
             self.clean_block_cache[access.id]["accessed_on"] = str(now())
+            self.clean_block_cache.move_to_end(access.id)
             return self.clean_block_cache[access.id]["block"]
         except KeyError:
             pass
@@ -168,8 +168,7 @@ class LocalStorage:
 
     def set_clean_block(self, access: BlockAccess, block: bytes) -> None:
         if self.get_nb_blocks(True) >= self.block_limit:
-            key = random.choice(list(self.clean_block_cache.keys()))
-            deleted = self.clean_block_cache.pop(key)
+            _, deleted = self.clean_block_cache.popitem(last=False)
             if deleted["persisted"]:
                 self.persistent_storage.update_block_accessed_on(
                     True, deleted["access"], deleted["accessed_on"]
