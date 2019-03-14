@@ -23,6 +23,10 @@ logger = get_logger()
 
 @contextmanager
 def _reset_signals(signals=None):
+    """A context that save the current signal handlers restore them when leaving.
+
+    By default, it does so for SIGINT, SIGTERM, SIGHUP and SIGPIPE.
+    """
     if signals is None:
         signals = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGPIPE)
     saved = {sig: signal.getsignal(sig) for sig in signals}
@@ -110,11 +114,16 @@ async def fuse_mountpoint_runner(
                 finally:
                     fuse_thread_stopped.set()
 
+            # The fusepy runner (FUSE) relies on the `fuse_main_real` function from libfuse
+            # This function is high-level helper on top of the libfuse API that is intended
+            # for simple application. As such, it sets some signal handlers to exit cleanly
+            # after a SIGTINT, a SIGTERM or a SIGHUP. This is, however, not compatible with
+            # our multi-instance multi-threaded application. A simple workaround here is to
+            # restore the signals to their previous state once the fuse instance is started.
             with _reset_signals():
                 nursery.start_soon(
                     lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
                 )
-
                 await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
 
             event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
