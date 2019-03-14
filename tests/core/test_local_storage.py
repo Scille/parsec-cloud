@@ -75,14 +75,6 @@ def test_get_nb_blocks(clean, local_storage):
 #     assert result is None
 
 
-@mock.patch("parsec.core.persistent_storage.PersistentStorage.delete_invalid_blocks")
-def test_local_storage_enter(delete_invalid_blocks_mock, tmpdir):
-    delete_invalid_blocks_mock
-
-    with LocalStorage(tmpdir, max_memory_cache_size=3 * block_size):
-        delete_invalid_blocks_mock.assert_called_once()
-
-
 @mock.patch("parsec.core.persistent_storage.PersistentStorage.set_clean_block")
 @mock.patch("parsec.core.persistent_storage.PersistentStorage.update_block_accessed_on")
 def test_local_storage_exit(update_block_accessed_on_mock, set_clean_block_mock, tmpdir):
@@ -224,8 +216,7 @@ def test_get_block(
     }
     with freeze_time("2000-01-01"):
         local_storage.get_block(access)
-    update_block_accessed_on_mock.assert_called_with(False, access, "2000-01-01T00:00:00+00:00")
-    update_block_accessed_on_mock.reset_mock()
+    update_block_accessed_on_mock.assert_not_called()
 
     # Block in clean cache
     local_storage.clean_block_cache = {
@@ -256,7 +247,7 @@ def test_get_block(
     local_storage.clean_block_cache = {}
     local_storage.dirty_block_cache = {}
     local_storage.get_block(access)
-    update_block_accessed_on_mock.assert_called_once_with(True, access, None)
+    update_block_accessed_on_mock.assert_not_called()
     get_clean_block_mock.assert_called_once_with(access)
     get_dirty_block_mock.assert_called_once_with(access)
 
@@ -354,6 +345,8 @@ def test_set_clean_block(
 def test_clear_dirty_block(clear_dirty_block_mock, local_storage):
     access = ManifestAccess()
     local_storage.clear_dirty_block(access)
+    clear_dirty_block_mock.assert_called_once_with(access)
+    clear_dirty_block_mock.side_effect = LocalStorageMissingEntry(access)
     local_storage.clear_dirty_block(access)
 
 
@@ -361,4 +354,6 @@ def test_clear_dirty_block(clear_dirty_block_mock, local_storage):
 def test_clear_clean_block(clear_clean_block_mock, local_storage):
     access = ManifestAccess()
     local_storage.clear_clean_block(access)
+    clear_clean_block_mock.assert_called_once_with(access)
+    clear_clean_block_mock.side_effect = LocalStorageMissingEntry(access)
     local_storage.clear_clean_block(access)

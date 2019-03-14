@@ -273,10 +273,6 @@ class PersistentStorage:
 
     # Generic block operations
 
-    def delete_invalid_blocks(self):
-        with self.open_clean_cursor() as cursor:
-            cursor.execute("""DELETE FROM blocks WHERE accessed_on IS NULL""")
-
     def update_block_accessed_on(self, clean: bool, access: Access, accessed_on):
         conn = self.clean_conn if clean else self.dirty_conn
         with self._open_cursor(conn) as cursor:

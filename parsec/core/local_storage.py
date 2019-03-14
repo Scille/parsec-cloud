@@ -46,7 +46,6 @@ class LocalStorage:
 
     def __enter__(self):
         self.persistent_storage.__enter__()
-        self.persistent_storage.delete_invalid_blocks()
         return self
 
     def __exit__(self, *args):
@@ -141,12 +140,9 @@ class LocalStorage:
     def get_block(self, access: BlockAccess) -> bytes:
         result = None
         try:
-            result = self.dirty_block_cache[access.id]
+            return self.dirty_block_cache[access.id]
         except KeyError:
             pass
-        else:
-            self.persistent_storage.update_block_accessed_on(False, access, str(now()))
-            return result
         try:
             self.clean_block_cache[access.id]["accessed_on"] = str(now())
             return self.clean_block_cache[access.id]["block"]
@@ -156,7 +152,6 @@ class LocalStorage:
             result = self.persistent_storage.get_dirty_block(access)
         except LocalStorageMissingEntry:
             result = self.persistent_storage.get_clean_block(access)
-            self.persistent_storage.update_block_accessed_on(True, access, None)
             self.clean_block_cache[access.id] = {
                 "access": access,
                 "accessed_on": str(now()),
