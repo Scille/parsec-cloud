@@ -2,7 +2,7 @@
 ParSec
 ===============================
 
-.. image:: https://img.shields.io/travis/Scille/parsec-cloud.svg
+.. image:: https://travis-ci.org/Scille/parsec-cloud.svg?branch=master
         :target: https://travis-ci.org/Scille/parsec-cloud
         :alt: Travis CI Status
 
