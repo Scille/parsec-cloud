@@ -133,17 +133,17 @@ async def test_concurrent_devices_agreed_on_root_manifest(
 @pytest.mark.trio
 @pytest.mark.backend_not_populated
 async def test_reloading_v0_user_manifest(
-    running_backend, backend_data_binder, local_db_factory, fs_factory, coolorg, alice
+    running_backend, backend_data_binder, local_storage_factory, fs_factory, coolorg, alice
 ):
     # Initialize backend and local storage
     with freeze_time("2000-01-01"):
         await backend_data_binder.bind_organization(
             coolorg, alice, initial_user_manifest_in_v0=True
         )
-    local_db = local_db_factory(alice, user_manifest_in_v0=True)
+    local_storage = local_storage_factory(alice, user_manifest_in_v0=True)
 
     # Create a workspace without syncronizing
-    async with fs_factory(alice, local_db) as fs:
+    async with fs_factory(alice, local_storage) as fs:
         with freeze_time("2000-01-02"):
             stat = await fs.workspace_create("/foo")
 
@@ -151,7 +151,7 @@ async def test_reloading_v0_user_manifest(
     # local_storage.clear_memory_cache()
 
     # Reload version 0 manifest
-    async with fs_factory(alice, local_db) as fs:
+    async with fs_factory(alice, local_storage) as fs:
         with freeze_time("2000-01-02"):
             stat = await fs.stat("/")
 
@@ -167,11 +167,10 @@ async def test_reloading_v0_user_manifest(
             "children": ["foo"],
         }
 
-    # TODO: clean manifest cache once it's been moved to local storage
-    # local_storage.clear_memory_cache()
+    local_storage.manifest_cache.clear()
 
     # Syncronize version 0 manifest
-    async with fs_factory(alice, local_db) as fs:
+    async with fs_factory(alice, local_storage) as fs:
         with freeze_time("2000-01-03"):
             await fs.sync("/")
 
