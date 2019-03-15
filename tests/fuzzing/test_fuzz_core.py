@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import pytest
 import trio
 import attr
@@ -231,6 +232,7 @@ async def _fuzzer_cmd(id, core, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
+@pytest.mark.skipif(os.name == "nt", reason="TODO: Cause freeze in winfsp so far...")
 async def test_fuzz_core(running_backend, alice_core):
     await alice_core.fs.workspace_create("/w")
     try:
