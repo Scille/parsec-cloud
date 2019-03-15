@@ -6,9 +6,21 @@ from uuid import uuid4
 from hashlib import sha256
 from typing import Union
 
+from parsec.types import UserID
 from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import AccessID, serializer_factory, EntryNameField
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class UserAccess:
+    id: AccessID
+    key: SymetricKey
+
+    @classmethod
+    def from_block(cls, user_id: UserID, key: SymetricKey) -> "UserAccess":
+        access_id = sha256(user_id.encode("utf8")).hexdigest()
+        return cls(id=access_id, key=key)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -87,7 +99,7 @@ class DirtyBlockAccessSchema(UnknownCheckedSchema):
 dirty_block_access_serializer = serializer_factory(DirtyBlockAccessSchema)
 
 
-Access = Union[ManifestAccess, BlockAccess, DirtyBlockAccess]
+Access = Union[UserAccess, ManifestAccess, BlockAccess, DirtyBlockAccess]
 
 
 # Not stricly speaking an access, but close enough...

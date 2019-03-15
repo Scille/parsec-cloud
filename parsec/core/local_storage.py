@@ -1,17 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import hashlib
+from typing import Dict
 
 from structlog import get_logger
 
-from parsec.types import UserID
 from parsec.core.types import (
     Access,
     LocalManifest,
     local_manifest_serializer,
     remote_user_serializer,
     BlockAccess,
-    ManifestAccess,
 )
 from .persistent_storage import PersistentStorage, LocalStorageMissingEntry
 
@@ -27,7 +25,6 @@ class LocalStorage:
     """
 
     def __init__(self, path, **kwargs):
-        self.local_symkey = None
         self.manifest_cache = {}
         self.persistent_storage = PersistentStorage(path, **kwargs)
 
@@ -40,18 +37,11 @@ class LocalStorage:
 
     # User interface
 
-    def _build_remote_user_local_access(self, user_id: UserID) -> ManifestAccess:
-        return ManifestAccess(
-            id=hashlib.sha256(user_id.encode("utf8")).hexdigest(), key=self.local_symkey
-        )
-
-    def get_user(self, user_id):
-        access = self._build_remote_user_local_access(user_id)
+    def get_user(self, access: Access) -> Dict:
         raw_user_data = self.persistent_storage.get_user(access)
         return remote_user_serializer.loads(raw_user_data)
 
-    def set_user(self, user_id, user):
-        access = self._build_remote_user_local_access(user_id)
+    def set_user(self, access: Access, user: Dict) -> None:
         raw = remote_user_serializer.dumps(user)
         self.persistent_storage.set_user(access, raw)
 
@@ -71,7 +61,7 @@ class LocalStorage:
         self.manifest_cache[access.id] = manifest
         return manifest
 
-    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False):
+    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False) -> None:
         # Remove the corresponding local manifest if it exists
         if force:
             try:
@@ -83,7 +73,7 @@ class LocalStorage:
         self.persistent_storage.set_clean_manifest(access, raw)
         self.manifest_cache[access.id] = manifest
 
-    def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
+    def set_dirty_manifest(self, access: Access, manifest: LocalManifest) -> None:
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:
@@ -92,7 +82,7 @@ class LocalStorage:
         self.persistent_storage.set_dirty_manifest(access, raw)
         self.manifest_cache[access.id] = manifest
 
-    def clear_manifest(self, access: Access):
+    def clear_manifest(self, access: Access) -> None:
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:

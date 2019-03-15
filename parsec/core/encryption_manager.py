@@ -13,9 +13,9 @@ from parsec.crypto import (
     decrypt_with_secret_key,
 )
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.types import RemoteDevice, RemoteUser
 from parsec.core.local_storage import LocalStorageMissingEntry
 from parsec.core.backend_connection import BackendCmdsBadResponse
+from parsec.core.types import RemoteDevice, RemoteUser, UserAccess
 
 
 class EncryptionManagerError(Exception):
@@ -52,8 +52,6 @@ class EncryptionManager(BaseAsyncComponent):
         self.device = device
         self.backend_cmds = backend_cmds
         self.local_storage = local_storage
-        # TODO: clean this up
-        self.local_storage.local_symkey = self.device.local_symkey
         self._mem_cache = {}
 
     async def _init(self, nursery):
@@ -61,6 +59,9 @@ class EncryptionManager(BaseAsyncComponent):
 
     async def _teardown(self):
         pass
+
+    def _create_user_access(self, user_id: UserID) -> UserAccess:
+        return UserAccess(user_id, self.device.local_symkey)
 
     async def _populate_remote_user_cache(self, user_id: UserID):
         try:
@@ -73,11 +74,11 @@ class EncryptionManager(BaseAsyncComponent):
                 raise
 
         validate_user_with_trustchain(user, trustchain, self.device.root_verify_key)
-        self.local_storage.set_user(user_id, user)
+        self.local_storage.set_user(self._create_user_access(user_id), user)
 
     def _fetch_remote_user_from_local(self, user_id: UserID):
         try:
-            return self.local_storage.get_user(user_id)
+            return self.local_storage.get_user(self._create_user_access(user_id))
         except LocalStorageMissingEntry:
             return None
 
