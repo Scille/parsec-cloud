@@ -261,7 +261,7 @@ extra_requirements = {
     "core": [
         PYQT_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.4.1;platform_system=="Windows"',
+        'winfspy==0.4.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
     ],
     "backend": [

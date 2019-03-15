@@ -91,8 +91,8 @@ async def winfsp_mountpoint_runner(
         named_streams=0,
         read_only_volume=0,
         post_cleanup_when_modified_only=1,
-        pass_query_directory_file_name=1,
-        device_control=1,
+        pass_query_directory_file_name=0,  # TODO: implement `operations.get_dir_info_by_name`
+        device_control=0,
         um_file_context_is_user_context2=1,
         file_system_name="parsec-mnt",
         prefix="",
