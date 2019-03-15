@@ -13,6 +13,7 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
+@pytest.mark.skipif(os.name == "nt", reason="TODO: Cause freeze in winfsp so far...")
 def test_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
     tentative = 0
 
