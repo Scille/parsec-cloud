@@ -80,6 +80,9 @@ class EventBus:
         return EventBusConnectionContext(self)
 
     def send(self, event, **kwargs):
+        # Do not log meta events (event.connected and event.disconnected)
+        if "event_name" not in kwargs:
+            logger.debug("Send event", event_name=event, **kwargs)
         for cb in self._event_handlers[event]:
             cb(event, **kwargs)
 
