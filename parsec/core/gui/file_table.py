@@ -10,7 +10,6 @@ from PyQt5.QtWidgets import (
     QStyledItemDelegate,
     QStyleOptionViewItem,
     QStyle,
-    QTableWidgetItem,
 )
 
 from parsec.core.gui.file_items import (
@@ -86,7 +85,8 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = ParentFolderTableItem()
         self.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Folder"))
+        item = CustomTableItem(QCoreApplication.translate("FilesWidget", "Parent Folder"))
+        item.setData(Qt.UserRole, chr(0))
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
@@ -103,7 +103,8 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = ParentWorkspaceTableItem()
         self.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Workspace"))
+        item = CustomTableItem(QCoreApplication.translate("FilesWidget", "Parent Workspace"))
+        item.setData(Qt.UserRole, chr(0))
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
@@ -120,7 +121,8 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced)
         self.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(folder_name)
+        item = CustomTableItem(folder_name)
+        item.setData(Qt.UserRole, folder_name)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
@@ -137,7 +139,8 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, file_name)
         self.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(file_name)
+        item = CustomTableItem(file_name)
+        item.setData(Qt.UserRole, file_name)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem(created_on.format("%x %X"))
         item.setData(Qt.UserRole, created_on)
