@@ -10,6 +10,21 @@ HEADER = "# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille
 HEADER_RE = re.compile(
     r"^# Parsec Cloud \(https://parsec.cloud\) Copyright \(c\) AGPLv3 2019 Scille SAS$"
 )
+SKIP_PATHES = (
+    pathlib.Path("parsec/core/gui/_resources_rc.py"),
+    pathlib.Path("parsec/core/gui/ui/"),
+)
+
+
+def need_skip(path):
+    for skip_path in SKIP_PATHES:
+        try:
+            path.relative_to(skip_path)
+            return True
+
+        except ValueError:
+            pass
+    return False
 
 
 def get_files():
@@ -19,6 +34,8 @@ def get_files():
         path = pathlib.Path(scan)
         if path.is_dir():
             for f in pathlib.Path(path).glob("**/*.py"):
+                if need_skip(f):
+                    continue
                 yield f
         elif path.is_file():
             yield path
