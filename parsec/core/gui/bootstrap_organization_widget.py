@@ -11,8 +11,16 @@ from PyQt5.QtWidgets import QWidget
 from parsec.crypto import SigningKey
 from parsec.trustchain import certify_user, certify_device
 from parsec.types import BackendOrganizationBootstrapAddr, DeviceID
-from parsec.core.backend_connection import BackendCmdsBadResponse, backend_anonymous_cmds_factory
-from parsec.core.devices_manager import generate_new_device, save_device_with_password
+from parsec.core.backend_connection import (
+    BackendCmdsBadResponse,
+    backend_anonymous_cmds_factory,
+    BackendHandshakeError,
+)
+from parsec.core.devices_manager import (
+    generate_new_device,
+    save_device_with_password,
+    DeviceConfigAleadyExists,
+)
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui import validators
@@ -66,8 +74,14 @@ async def _trio_bootstrap_organization(
                     certified_device,
                 )
             qt_on_done.emit()
+        except DeviceConfigAleadyExists:
+            qt_on_error.emit("already-exists")
+        except BackendHandshakeError:
+            qt_on_error.emit("invalid-url")
         except BackendCmdsBadResponse as e:
             qt_on_error.emit(e.status)
+        except:
+            qt_on_error.emit("")
 
 
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
@@ -104,12 +118,28 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.trio_portal = None
         self.button_cancel.hide()
         self.check_infos("")
-        show_error(
-            self,
-            QCoreApplication.translate(
-                "BootstrapOrganizationWidget", "Can not bootstrap this organization."
-            ).format(status),
-        )
+        if status == "invalid-url":
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "BootstrapOrganizationWidget",
+                    "This organization does not exist (is the URL correct ?).",
+                ).format(status),
+            )
+        elif status == "already-exists":
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "BootstrapOrganizationWidget", "This user already exists."
+                ).format(status),
+            )
+        else:
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "BootstrapOrganizationWidget", "Can not bootstrap this organization."
+                ).format(status),
+            )
 
     def on_bootstrap_finished(self):
         self.thread.join()
