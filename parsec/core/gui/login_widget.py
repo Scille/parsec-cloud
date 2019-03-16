@@ -3,7 +3,7 @@
 import os
 
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QCompleter
+from PyQt5.QtWidgets import QWidget
 
 from parsec.core import devices_manager
 from parsec.core.gui import settings
@@ -24,7 +24,6 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.setupUi(self)
         self.core_config = core_config
         self.button_login.clicked.connect(self.emit_login)
-        self.devices = {}
         self.reset()
 
     def keyPressEvent(self, event):
@@ -33,7 +32,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         event.accept()
 
     def emit_login(self):
-        organization_id, device_id, _ = self.devices[self.line_edit_device.text()]
+        organization_id, device_id, _ = self.devices[self.combo_login.currentText()]
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             self.login_with_password_clicked.emit(
                 organization_id, device_id, self.line_edit_password.text()
@@ -51,6 +50,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         if os.name == "nt":
             self.check_box_use_pkcs11.hide()
         self.line_edit_password.setText("")
+        self.combo_login.clear()
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
         self.line_edit_pkcs11_pin.setText("")
@@ -61,25 +61,13 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.widget_pkcs11.hide()
         devices = devices_manager.list_available_devices(self.core_config.config_dir)
         # Display devices in `<organization>:<device_id>` format
-        self.devices = {f"{o}:{d}": (o, d, t) for o, d, t in devices}
-        if len(self.devices) == 1:
-            self.line_edit_device.setText(next(iter(self.devices)))
-            self.line_edit_password.setFocus()
-        elif len(self.devices) > 1:
-            last_device = settings.get_value("last_device")
-            if last_device and last_device in self.devices:
-                self.line_edit_device.setText(last_device)
-                self.line_edit_password.setFocus()
-            else:
-                self.line_edit_device.setFocus()
-        else:
-            self.line_edit_device.setText("")
-            self.line_edit_device.setFocus()
-        completer = QCompleter(self.devices.keys())
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
-        completer.setFilterMode(Qt.MatchContains)
-        completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
-        self.line_edit_device.setCompleter(completer)
+        self.devices = {}
+        for o, d, t in devices:
+            self.combo_login.addItem(f"{o}:{d}")
+            self.devices[f"{o}:{d}"] = (o, d, t)
+        last_device = settings.get_value("last_device")
+        if last_device and last_device in self.devices:
+            self.combo_login.setCurrentText(last_device)
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
