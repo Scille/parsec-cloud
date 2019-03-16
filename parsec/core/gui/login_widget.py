@@ -129,7 +129,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.claim_device_widget.hide()
         self.login_widget.hide()
         self.button_bootstrap_instead.hide()
-        self.button_login_instead.show()
+        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+            self.button_login_instead.hide()
+        else:
+            self.button_login_instead.show()
         self.button_register_user_instead.show()
         self.button_register_device_instead.show()
         self.bootstrap_organization.reset()
@@ -139,7 +142,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.hide()
         self.claim_device_widget.hide()
         self.bootstrap_organization.hide()
-        self.button_login_instead.show()
+        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+            self.button_login_instead.hide()
+        else:
+            self.button_login_instead.show()
         self.button_register_user_instead.hide()
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
@@ -150,7 +156,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.hide()
         self.claim_user_widget.hide()
         self.bootstrap_organization.hide()
-        self.button_login_instead.show()
+        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+            self.button_login_instead.hide()
+        else:
+            self.button_login_instead.show()
         self.button_register_user_instead.show()
         self.button_register_device_instead.hide()
         self.button_bootstrap_instead.show()
@@ -158,12 +167,11 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.claim_device_widget.show()
 
     def reset(self):
-        self.show_login_widget()
-        self.button_login_instead.hide()
-        self.button_register_user_instead.show()
-        self.button_register_device_instead.show()
-        self.button_bootstrap_instead.show()
         self.claim_user_widget.reset()
         self.claim_device_widget.reset()
         self.bootstrap_organization.reset()
         self.login_widget.reset()
+        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+            self.show_bootstrap_widget()
+        else:
+            self.show_login_widget()
