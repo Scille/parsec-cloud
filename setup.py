@@ -25,7 +25,7 @@ exec(open("parsec/_version.py", encoding="utf-8").read())
 def fix_pyqt_import():
     # PyQt5-sip is a distinct pip package that provides PyQt5.sip
     # However it setuptools handles `setup_requires` by downloading the
-    # dependencies in the `./.eggs` directory wihtout really installing
+    # dependencies in the `./.eggs` directory without really installing
     # them. This causes `import PyQt5.sip` to fail given the `PyQt5` folder
     # doesn't contains `sip.so`...
     import sys

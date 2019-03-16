@@ -28,13 +28,16 @@ build_script:
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
-  - pip install -U coveralls
-  - pip install .[core,backend,dev]
+  - pip install -U coveralls wheel
+  - python setup.py bdist_wheel
+  - ps: pip install (ls dist/parsec_cloud-*.whl)[core,backend,dev]
 
 test_script:
   # Uncomment this for RDP debug
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - py.test tests/ -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runmountpoint -x --postgresql --log-level=DEBUG -vvv
+  - mkdir empty
+  - cd empty
+  - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --runmountpoint -x --postgresql --log-level=DEBUG -vvv
 
 # TODO: re-enable me !
 # on_success:

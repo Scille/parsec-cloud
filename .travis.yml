@@ -11,17 +11,19 @@ addons:
     packages:
     - postgresql-server-dev-9.5
 install:
-- pip install -U coveralls
-- pip install .[all]
+- pip install -U coveralls wheel
+- python setup.py bdist_wheel
+- pip install $(ls dist/parsec_cloud-*.whl)[all]
 before_script:
 - sudo modprobe fuse
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
-- flake8
+- flake8 setup.py parsec tests
 - ./misc/license_headers.py check
-- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runmountpoint --log-level=DEBUG -vvv
-- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --postgresql --log-level=DEBUG -vvv
+- mkdir empty && cd empty
+- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv
+- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv
 after_success:
 - coveralls
 deploy:
