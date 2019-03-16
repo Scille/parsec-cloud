@@ -172,6 +172,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.bootstrap_organization.reset()
         self.login_widget.reset()
         if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
-            self.show_bootstrap_widget()
+            self.show_claim_user_widget()
         else:
             self.show_login_widget()
