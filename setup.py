@@ -245,6 +245,7 @@ test_requirements = [
     "pytest-cov",
     "pytest-xdist",
     "pytest-trio>=0.5.1",
+    "pytest-qt",
     "tox",
     "wheel",
     "Sphinx",
