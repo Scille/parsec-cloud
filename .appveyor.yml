@@ -40,8 +40,9 @@ test_script:
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - mkdir empty
   - cd empty
+  # No sed ? Hold my beer !
+  - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/', '../parsec/core/gui/'))"
   - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --runmountpoint -x --postgresql --log-level=DEBUG -vvv
 
-# TODO: re-enable me !
-# on_success:
-#   - coveralls
+on_success:
+  - coveralls
