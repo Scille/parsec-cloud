@@ -28,7 +28,7 @@ build_script:
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
-  - pip install -U coveralls wheel
+  - pip install -U wheel
   - python setup.py bdist_wheel
   # TODO: insert a sarcastic comment about lacking wildcard support, powershell
   # treating stderr output as error, impossibility to set variable from command
@@ -45,4 +45,5 @@ test_script:
   - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --runmountpoint -x --postgresql --log-level=DEBUG -vvv -x
 
 on_success:
-  - coveralls
+  - ps: if ($COVERALLS_REPO_TOKEN -ne "") { pip install -U --user coveralls }
+  - ps: if ($COVERALLS_REPO_TOKEN -ne "") { python -m coveralls }
