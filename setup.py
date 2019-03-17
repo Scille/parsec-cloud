@@ -246,6 +246,7 @@ test_requirements = [
     "pytest-xdist",
     "pytest-trio>=0.5.1",
     "pytest-qt",
+    "pluggy==0.7.1",  # see https://github.com/pytest-dev/pytest/issues/3753
     "tox",
     "wheel",
     "Sphinx",
