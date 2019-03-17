@@ -18,14 +18,16 @@ install:
 before_script:
 - sudo modprobe fuse
 script:
+- set -e  # stop build as soon as a command fails
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
 - flake8 setup.py parsec tests
 - ./misc/license_headers.py check
 - mkdir empty && cd empty
 - sed -i 's#parsec/core/gui/#../parsec/core/gui/#' ../setup.cfg  # fix path
-- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv
-- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv
+- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv -x
+- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv -x
+- set +e
 after_success:
 - coveralls
 deploy:
