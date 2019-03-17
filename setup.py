@@ -27,14 +27,14 @@ def fix_pyqt_import():
     # However it setuptools handles `setup_requires` by downloading the
     # dependencies in the `./.eggs` directory without really installing
     # them. This causes `import PyQt5.sip` to fail given the `PyQt5` folder
-    # doesn't contains `sip.so`...
+    # doesn't contains `sip.so` (or `sip.pyd` on windows)...
     import sys
     import glob
     import importlib
 
     for module_name, path_glob in (
         ("PyQt5", ".eggs/*PyQt5*/PyQt5/__init__.py"),
-        ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.so"),
+        ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.*"),
     ):
         # If the module has already been installed in the environment
         # setuptools won't populate the `.eggs` directory and we have
