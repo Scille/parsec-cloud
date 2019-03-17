@@ -25,16 +25,16 @@ exec(open("parsec/_version.py", encoding="utf-8").read())
 def fix_pyqt_import():
     # PyQt5-sip is a distinct pip package that provides PyQt5.sip
     # However it setuptools handles `setup_requires` by downloading the
-    # dependencies in the `./.eggs` directory wihtout really installing
+    # dependencies in the `./.eggs` directory without really installing
     # them. This causes `import PyQt5.sip` to fail given the `PyQt5` folder
-    # doesn't contains `sip.so`...
+    # doesn't contains `sip.so` (or `sip.pyd` on windows)...
     import sys
     import glob
     import importlib
 
     for module_name, path_glob in (
         ("PyQt5", ".eggs/*PyQt5*/PyQt5/__init__.py"),
-        ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.so"),
+        ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.*"),
     ):
         # If the module has already been installed in the environment
         # setuptools won't populate the `.eggs` directory and we have
@@ -245,6 +245,8 @@ test_requirements = [
     "pytest-cov",
     "pytest-xdist",
     "pytest-trio>=0.5.1",
+    "pytest-qt",
+    "pluggy==0.7.1",  # see https://github.com/pytest-dev/pytest/issues/3753
     "tox",
     "wheel",
     "Sphinx",

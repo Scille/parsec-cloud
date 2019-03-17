@@ -28,14 +28,22 @@ build_script:
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
-  - pip install -U coveralls
-  - pip install .[core,backend,dev]
+  - pip install -U wheel
+  - python setup.py bdist_wheel
+  # TODO: insert a sarcastic comment about lacking wildcard support, powershell
+  # treating stderr output as error, impossibility to set variable from command
+  # output and how unjustified windows crazinesses waste my time in general
+  - python -c "import os, glob; cmd = 'pip install {}[core,backend,dev]'.format(glob.glob('dist/parsec_cloud-*.whl')[0]); print(cmd); raise SystemExit(os.system(cmd))"
 
 test_script:
   # Uncomment this for RDP debug
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - py.test tests/ -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runmountpoint -x --postgresql --log-level=DEBUG -vvv
+  - mkdir empty
+  - cd empty
+  # No sed ? Hold my beer !
+  - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/', '../parsec/core/gui/'))"
+  - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow -x --postgresql --log-level=DEBUG -vvv -x
 
-# TODO: re-enable me !
-# on_success:
-#   - coveralls
+on_success:
+  - python -c "import os; os.environ.get('COVERALLS_REPO_TOKEN') and os.system('pip install -U --user coveralls')"
+  - python -c "import os; os.environ.get('COVERALLS_REPO_TOKEN') and os.system('python -m coveralls')"

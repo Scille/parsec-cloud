@@ -56,6 +56,7 @@ def pytest_addoption(parser):
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
     parser.addoption("--runmountpoint", action="store_true", help="Don't skip FUSE/WinFSP tests")
+    parser.addoption("--rungui", action="store_true", help="Don't skip GUI tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -97,6 +98,9 @@ def pytest_runtest_setup(item):
             pytest.skip("need --runmountpoint option to run")
         elif not get_mountpoint_runner():
             pytest.skip("FUSE/WinFSP not available")
+    if item.get_closest_marker("gui"):
+        if not item.config.getoption("--rungui"):
+            pytest.skip("need --rungui option to run")
 
 
 @pytest.fixture(autouse=True, scope="session", name="unmock_crypto")

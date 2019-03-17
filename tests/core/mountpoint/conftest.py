@@ -29,6 +29,7 @@ def mountpoint_service_factory(tmpdir, alice, fs_factory):
             self.base_mountpoint = pathlib.Path(base_mountpoint)
             # Provide a default workspace given we cannot create it through FUSE
             self.default_workspace_name = "w"
+            self._task = None
             self._portal = None
             self._need_stop = trio.Event()
             self._stopped = trio.Event()
