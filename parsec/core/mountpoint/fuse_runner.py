@@ -3,6 +3,7 @@
 import trio
 import time
 import errno
+import ctypes
 import signal
 import threading
 from pathlib import Path
@@ -29,15 +30,12 @@ def _reset_signals(signals=None):
     """
     if signals is None:
         signals = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGPIPE)
-    saved = {sig: signal.getsignal(sig) for sig in signals}
+    saved = {sig: ctypes.pythonapi.PyOS_getsig(sig) for sig in signals}
     try:
         yield
     finally:
         for sig, handler in saved.items():
-            try:
-                signal.signal(sig, handler)
-            except ValueError:
-                pass
+            ctypes.pythonapi.PyOS_setsig(sig, handler)
 
 
 def _bootstrap_mountpoint(mountpoint):
