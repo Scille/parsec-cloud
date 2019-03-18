@@ -9,8 +9,6 @@ services:
   - postgresql96
 
 environment:
-  COVERALLS_REPO_TOKEN:
-    secure: W4++xmF7Q6ientAUP2crOR/1HDfmqanOk2NycHPjNVnCE7oS33FL4TwPJZEZw8Lc
   PGINSTALLATION: C:\Program Files\PostgreSQL\9.6\bin
 
   matrix:
@@ -41,9 +39,9 @@ test_script:
   - mkdir empty
   - cd empty
   # No sed ? Hold my beer !
-  - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/', '../parsec/core/gui/'))"
+  - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/*', 'parsec/core/gui/*,../parsec/core/gui/*'))"
   - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow -x --postgresql --log-level=DEBUG -vvv -x
 
 on_success:
-  - python -c "import os; os.environ.get('COVERALLS_REPO_TOKEN') and os.system('pip install -U --user coveralls')"
-  - python -c "import os; os.environ.get('COVERALLS_REPO_TOKEN') and os.system('python -m coveralls')"
+  - pip install -U --user codecov
+  - python -m codecov

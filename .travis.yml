@@ -12,7 +12,7 @@ addons:
     packages:
     - postgresql-server-dev-9.5
 install:
-- pip install -U coveralls wheel
+- pip install -U wheel
 - python setup.py bdist_wheel
 - pip install $(ls dist/parsec_cloud-*.whl)[all]
 before_script:
@@ -24,12 +24,13 @@ script:
 - flake8 setup.py parsec tests
 - ./misc/license_headers.py check
 - mkdir empty && cd empty
-- sed -i 's#parsec/core/gui/#../parsec/core/gui/#' ../setup.cfg  # fix path
+- sed -i 's#omit = \(.*\)#omit = \1,../\1#' ../setup.cfg  # fix path
 - py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv -x
 - py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv -x
 - set +e
 after_success:
-- coveralls
+- pip install -U codecov
+- codecov
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
