@@ -39,7 +39,7 @@ test_script:
   - mkdir empty
   - cd empty
   # No sed ? Hold my beer !
-  - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/', '../parsec/core/gui/'))"
+  - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/*', 'parsec/core/gui/*,../parsec/core/gui/*'))"
   - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow -x --postgresql --log-level=DEBUG -vvv -x
 
 on_success:
