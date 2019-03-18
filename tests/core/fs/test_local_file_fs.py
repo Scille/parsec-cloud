@@ -160,7 +160,7 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir, hypothesis_settings, local_db_factory, local_file_fs_factory, alice
+    tmpdir, hypothesis_settings, local_storage_factory, local_file_fs_factory, alice
 ):
     tentative = 0
 
@@ -171,8 +171,8 @@ def test_file_operations(
             tentative += 1
 
             self.device = alice
-            self.local_db = local_db_factory(self.device)
-            self.local_file_fs = local_file_fs_factory(self.device, self.local_db)
+            self.local_storage = local_storage_factory(self.device)
+            self.local_file_fs = local_file_fs_factory(self.device, self.local_storage)
             self.access = ManifestAccess()
             manifest = LocalFileManifest(self.device.device_id)
             self.local_file_fs.local_folder_fs.set_dirty_manifest(self.access, manifest)

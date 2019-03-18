@@ -11,14 +11,13 @@ from parsec.core.types import (
     WorkspaceEntry,
     LocalDevice,
     LocalManifest,
-    local_manifest_serializer,
     ManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalUserManifest,
 )
-from parsec.core.local_db import LocalDB, LocalDBMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
@@ -45,12 +44,11 @@ class FSMultiManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(self, device: LocalDevice, local_db: LocalDB, event_bus: EventBus):
+    def __init__(self, device: LocalDevice, local_storage: LocalStorage, event_bus: EventBus):
         self.local_author = device.device_id
         self.root_access = device.user_manifest_access
-        self._local_db = local_db
+        self._local_storage = local_storage
         self.event_bus = event_bus
-        self._manifests_cache = {}
         self._hot_files = {}
 
     def _register_hot_file(self, access_id, hot_file):
@@ -59,15 +57,56 @@ class LocalFolderFS:
     def _delete_hot_file(self, access_id):
         self._hot_files.pop(access_id, None)
 
+    # Manifest methods
+
+    def get_manifest(self, access: Access) -> LocalManifest:
+        try:
+            return self._local_storage.get_manifest(access)
+        except LocalStorageMissingEntry as exc:
+            # Last chance: if we are looking for the user manifest, we can
+            # fake to know it version 0, which is useful during boostrap step
+            if access == self.root_access:
+                manifest = LocalUserManifest(self.local_author)
+                self.set_dirty_manifest(access, manifest)
+                return manifest
+            raise FSManifestLocalMiss(access) from exc
+        # TODO: move this block to the right place
+        # if is_workspace_manifest(manifest):
+        #     path, *_ = self.get_entry_path(access.id)
+        #     self.event_bus.send("fs.workspace.loaded", path=str(path), id=access.id)
+
+    def get_user_manifest(self) -> LocalUserManifest:
+        """
+        Same as `get_manifest`, unlike this cannot fail given user manifest is
+        always available.
+        """
+        try:
+            return self.get_manifest(self.root_access)
+
+        except FSManifestLocalMiss as exc:
+            raise RuntimeError("Should never occurs !!!") from exc
+
+    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False):
+        # Always keep the user manifest locally
+        if access == self.root_access:
+            return self.set_dirty_manifest(access, manifest)
+        self._local_storage.set_clean_manifest(access, manifest, force)
+
+    def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
+        self._local_storage.set_dirty_manifest(access, manifest)
+
+    def clear_manifest(self, access: Access):
+        self._local_storage.clear_manifest(access)
+
     def get_local_vlob_groups(self) -> List[UUID]:
         # vlob_group_id is either the id of the user manifest or of a workpace manifest
         vlob_groups = [self.root_access.id]
         try:
-            root_manifest = self._get_manifest_read_only(self.root_access)
+            root_manifest = self.get_user_manifest()
             # Currently workspace can only direct children of the user manifest
             for child_access in root_manifest.children.values():
                 try:
-                    child_manifest = self._get_manifest_read_only(child_access)
+                    child_manifest = self.get_manifest(child_access)
                 except FSManifestLocalMiss:
                     continue
                 if is_workspace_manifest(child_manifest):
@@ -95,85 +134,6 @@ class LocalFolderFS:
 
         return _recursive_dump(self.root_access)
 
-    def _get_raw_manifest_from_local_db(self, access: Access) -> LocalManifest:
-        # Try local manifest first, although it should not matter
-        try:
-            return self._local_db.get_dirty_manifest(access)
-        # Then remote manifest
-        except LocalDBMissingEntry:
-            return self._local_db.get_clean_manifest(access)
-
-    def _get_manifest_read_only(self, access: Access) -> LocalManifest:
-        try:
-            return self._manifests_cache[access.id]
-        except KeyError:
-            pass
-        try:
-            raw = self._get_raw_manifest_from_local_db(access)
-        except LocalDBMissingEntry as exc:
-            # Last chance: if we are looking for the user manifest, we can
-            # fake to know it version 0, which is useful during boostrap step
-            if access == self.root_access:
-                manifest = LocalUserManifest(self.local_author)
-            else:
-                raise FSManifestLocalMiss(access) from exc
-        else:
-            manifest = local_manifest_serializer.loads(raw)
-        self._manifests_cache[access.id] = manifest
-        # TODO: shouldn't be processed in multiple places like this...
-        if is_workspace_manifest(manifest):
-            path, *_ = self.get_entry_path(access.id)
-            self.event_bus.send("fs.workspace.loaded", path=str(path), id=access.id)
-        return manifest
-
-    def get_user_manifest(self) -> LocalUserManifest:
-        """
-        Same as `get_manifest`, unlike this cannot fail given user manifest is
-        always available.
-        """
-        try:
-            return self._get_manifest_read_only(self.root_access)
-
-        except FSManifestLocalMiss as exc:
-            raise RuntimeError("Should never occurs !!!") from exc
-
-    def get_manifest(self, access: Access) -> LocalManifest:
-        return self._get_manifest_read_only(access)
-
-    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False):
-        # Always keep the user manifest locally
-        if access == self.root_access:
-            return self.set_dirty_manifest(access, manifest)
-        # Remove the corresponding local manifest if it exists
-        if force:
-            try:
-                self._local_db.clear_dirty_manifest(access)
-            except LocalDBMissingEntry:
-                pass
-        # Serialize and set remote manifest
-        raw = local_manifest_serializer.dumps(manifest)
-        self._local_db.set_clean_manifest(access, raw)
-        self._manifests_cache[access.id] = manifest
-
-    def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
-        try:
-            self._local_db.clear_clean_manifest(access)
-        except LocalDBMissingEntry:
-            pass
-        raw = local_manifest_serializer.dumps(manifest)
-        self._local_db.set_dirty_manifest(access, raw)
-        self._manifests_cache[access.id] = manifest
-
-    def mark_outdated_manifest(self, access: Access):
-        try:
-            self._local_db.clear_clean_manifest(access)
-        except LocalDBMissingEntry:
-            try:
-                self._local_db.clear_dirty_manifest(access)
-            except LocalDBMissingEntry:
-                pass
-        self._manifests_cache.pop(access.id, None)
-
     def get_vlob_group(self, path: FsPath) -> UUID:
         # The vlob group is used to notify other clients that we modified an entry.
         # We try to use the id of workspace containing the modification as
@@ -197,12 +157,12 @@ class LocalFolderFS:
             FSEntryNotFound: If the entry is not present in local
         """
         if entry_id == self.root_access.id:
-            return FsPath("/"), self.root_access, self.get_manifest(self.root_access)
+            return FsPath("/"), self.root_access, self.get_user_manifest()
 
         # Brute force style
         def _recursive_search(access, path):
             try:
-                manifest = self._get_manifest_read_only(access)
+                manifest = self.get_manifest(access)
             except FSManifestLocalMiss:
                 return
             if access.id == entry_id:
@@ -227,7 +187,7 @@ class LocalFolderFS:
         self, path: FsPath, collector=None
     ) -> Tuple[Access, LocalManifest]:
         curr_access = self.root_access
-        curr_manifest = self._get_manifest_read_only(curr_access)
+        curr_manifest = self.get_manifest(curr_access)
         if collector:
             collector(curr_access, curr_manifest)
 
@@ -242,7 +202,7 @@ class LocalFolderFS:
             except KeyError:
                 raise FileNotFoundError(2, "No such file or directory", str(hop))
 
-            curr_manifest = self._get_manifest_read_only(curr_access)
+            curr_manifest = self.get_manifest(curr_access)
 
             if not is_folderish_manifest(curr_manifest):
                 raise NotADirectoryError(20, "Not a directory", str(hop))
@@ -254,7 +214,7 @@ class LocalFolderFS:
         except KeyError:
             raise FileNotFoundError(2, "No such file or directory", str(dest))
 
-        curr_manifest = self._get_manifest_read_only(curr_access)
+        curr_manifest = self.get_manifest(curr_access)
 
         if collector:
             collector(curr_access, curr_manifest)
@@ -514,7 +474,7 @@ class LocalFolderFS:
         # (but we endup leaking old files manifests), we should replace
         # this by a clean ref counting strategy.
         if item_access.id not in self._hot_files:
-            self.mark_outdated_manifest(item_access)
+            self.clear_manifest(item_access)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
     def delete(self, path: FsPath) -> None:
@@ -705,7 +665,7 @@ class LocalFolderFS:
 
                 for child_name, child_access in manifest.children.items():
                     try:
-                        child_manifest = self._get_manifest_read_only(child_access)
+                        child_manifest = self.get_manifest(child_access)
                     except FSManifestLocalMiss as exc:
                         manifests_miss.append(exc.access)
                     else:

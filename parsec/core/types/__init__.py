@@ -5,6 +5,7 @@ from typing import Union
 from parsec.core.types.base import TrustSeed, AccessID, EntryName, FileDescriptor, FsPath
 from parsec.core.types.access import (
     Access,
+    UserAccess,
     ManifestAccess,
     BlockAccess,
     DirtyBlockAccess,
@@ -45,6 +46,7 @@ __all__ = (
     "FileDescriptor",
     "FsPath",
     "Access",
+    "UserAccess",
     "ManifestAccess",
     "BlockAccess",
     "DirtyBlockAccess",

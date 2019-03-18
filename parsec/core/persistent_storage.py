@@ -23,16 +23,31 @@ DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
 DEFAULT_BLOCK_SIZE = 2 ** 16
 
 
-class LocalDBError(Exception):
+class LocalStorageError(Exception):
     pass
 
 
-class LocalDBMissingEntry(LocalDBError):
+class LocalStorageMissingEntry(LocalStorageError):
     def __init__(self, access):
         self.access = access
 
 
-class LocalDB:
+class PersistentStorage:
+    """Manage the access to the persistent storage.
+
+    That includes:
+    - the sqlite database for clean data (manifests and block metadata)
+    - the sqlite database for dirty data (user, manifests and block metadata)
+    - the clean block files
+    - the dirty block files
+
+    The only data that might be subject to garbage collection is the clean
+    blocks since they are large and non-sensitive.
+
+    The data is always bytes, this class doesn't have knowledge about object
+    types nor serialization processes.
+    """
+
     def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
         self.dirty_conn = None
         self.clean_conn = None
@@ -176,7 +191,7 @@ class LocalDB:
             )
             user_row = cursor.fetchone()
         if not user_row or pendulum.parse(user_row[2]).add(hours=1) <= now():
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
         access_id, blob, created_on = user_row
         return decrypt_raw_with_secret_key(access.key, blob)
 
@@ -207,7 +222,7 @@ class LocalDB:
             )
             manifest_row = cursor.fetchone()
         if not manifest_row:
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(access.key, blob)
 
@@ -228,7 +243,7 @@ class LocalDB:
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted:
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
 
     # Clean manifest operations
 
@@ -268,7 +283,7 @@ class LocalDB:
             changes, = cursor.fetchone()
 
         if not changes:
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
 
         ciphered = self._read_file(access, path)
         return decrypt_raw_with_secret_key(access.key, ciphered)
@@ -297,7 +312,7 @@ class LocalDB:
             changes, = cursor.fetchone()
 
         if not changes:
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
 
         self._remove_file(access, path)
 
@@ -335,7 +350,7 @@ class LocalDB:
         try:
             return filepath.read_bytes()
         except FileNotFoundError:
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
 
     def _write_file(self, access: Access, content: bytes, path: Path):
         filepath = path / str(access.id)
@@ -346,7 +361,7 @@ class LocalDB:
         try:
             filepath.unlink()
         except FileNotFoundError:
-            raise LocalDBMissingEntry(access)
+            raise LocalStorageMissingEntry(access)
 
     # Garbage collection
 
