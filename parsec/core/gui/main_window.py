@@ -67,8 +67,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.login_widget.login_with_password_clicked.connect(self.login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
 
-        self.mountpoint_stopped.connect(self._qt_on_mountpoint_stopped)
-
         self.show_login_widget()
 
         if not settings.get_value("global/no_check_version", "false"):
@@ -162,15 +160,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def _on_mountpoint_stopped(self, event, mountpoint):
         self.mountpoint_stopped.emit()
-
-    def _qt_on_mountpoint_stopped(self):
-        show_error(
-            self,
-            QCoreApplication.translate(
-                "MainWindow", "The mounpoint has been unmounted, you will now be logged off."
-            ),
-        )
-        self.logout()
 
     def stop_core(self):
         if self.core:

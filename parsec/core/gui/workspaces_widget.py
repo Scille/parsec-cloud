@@ -109,6 +109,9 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "Can not rename the workspace."),
             )
+        else:
+            self.portal.run(self.core.mountpoint_manager.unmount_workspace, current_file_path[1:])
+            self.portal.run(self.core.mountpoint_manager.mount_workspace, new_name)
 
     def share_workspace(self, workspace_button):
         d = WorkspaceSharingDialog(workspace_button.name, self.core, self.portal)
