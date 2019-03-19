@@ -686,6 +686,7 @@ class LocalFolderFS:
         # corresponding accesses
 
         def _recursive_process_copy_map(copy_map):
+            access = copy_map["access"]
             manifest = copy_map["manifest"]
 
             cpy_access = ManifestAccess()
@@ -709,6 +710,16 @@ class LocalFolderFS:
                 cpy_manifest = LocalFolderManifest(author=self.local_author, children=cpy_children)
 
             self.set_dirty_manifest(cpy_access, cpy_manifest)
+
+            # TODO: If a file is opened while being moved, we cannot
+            # drop the file manifest given a subsequent read/write would
+            # need it.
+            # The `LocalFolderFS._hot_files` is kind of a hack around this
+            # (but we endup leaking old files manifests), we should replace
+            # this by a clean ref counting strategy.
+
+            if access.id not in self._hot_files:
+                self.clear_manifest(access)
             return cpy_access
 
         return _recursive_process_copy_map(copy_map)
