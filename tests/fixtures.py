@@ -28,6 +28,8 @@ from parsec.backend.user import (
     new_user_factory as new_backend_user_factory,
 )
 
+from tests.common import freeze_time
+
 
 @attr.s
 class OrganizationFullData:
@@ -129,8 +131,15 @@ def otheralice(local_device_factory, otherorg):
 
 
 @pytest.fixture
-def alice(local_device_factory):
-    return local_device_factory("alice@dev1")
+def alice(local_device_factory, initial_user_manifest_state):
+    device = local_device_factory("alice@dev1")
+    # Force alice user manifest v1 to be signed by user alice@dev1
+    # This is needed given backend_factory bind alice@dev1 then alice@dev2,
+    # hence user manifest v1 is stored in backend at a time when alice@dev2
+    # doesn't exists.
+    with freeze_time("2000-01-01"):
+        initial_user_manifest_state.force_user_manifest_v1_generation(device)
+    return device
 
 
 @pytest.fixture
@@ -190,6 +199,9 @@ class InitialUserManifestState:
                 "generated_on": now,
             }
             return self._v1[device.user_id]
+
+    def force_user_manifest_v1_generation(self, device):
+        self._generate_or_retrieve_user_manifest_v1(device)
 
     def get_user_manifest_v1_for_device(self, device, ciphered=False):
         data = self._generate_or_retrieve_user_manifest_v1(device)
