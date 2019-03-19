@@ -13,6 +13,7 @@ from parsec.core.types import (
     ManifestAccess,
     BlockAccess,
 )
+from parsec.core.fs.local_folder_fs import FSEntryNotFound
 from parsec.core.fs.merge_folders import find_conflicting_name_for_child_entry
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
 from parsec.core.fs.local_file_fs import Buffer, DirtyBlockBuffer, BlockBuffer, NullFillerBuffer
@@ -64,6 +65,7 @@ class FileSyncerMixin(BaseSyncer):
             while buffers:
                 bs = buffers.pop()
                 if isinstance(bs.buffer, BlockBuffer):
+                    # TODO: look in local storage first
                     buff = await self._backend_block_read(bs.buffer.access)
                 elif isinstance(bs.buffer, DirtyBlockBuffer):
                     buff = self.local_file_fs.get_block(bs.buffer.access)
@@ -198,6 +200,14 @@ class FileSyncerMixin(BaseSyncer):
             blocks=blocks, size=sync_map.size  # TODO: useful ?
         )
 
+        # Make sure the corresponding entry still exists
+        # TODO: this is a hack, this should be replaced at some point
+        try:
+            self.local_folder_fs.get_entry_path(access.id)
+        except FSEntryNotFound:
+            logger.warning("Error while synchronizing a non-referenced file", access_id=access.id)
+            return
+
         # Upload the file manifest as new vlob version
         try:
             if is_placeholder_manifest(manifest):
@@ -232,6 +242,16 @@ class FileSyncerMixin(BaseSyncer):
             # await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
         else:
 
+            # Make sure the corresponding entry still exists
+            # TODO: this is a hack, this should be replaced at some point
+            try:
+                self.local_folder_fs.get_entry_path(access.id)
+            except FSEntryNotFound:
+                logger.warning(
+                    "Error while synchronizing a non-referenced file", access_id=access.id
+                )
+                return
+
             # The vlob has been successfully uploaded - clean up the dirty blocks
             for dirty_block in manifest.dirty_blocks:
                 self.local_file_fs.clear_dirty_block(dirty_block)
@@ -243,7 +263,7 @@ class FileSyncerMixin(BaseSyncer):
 
             self._sync_file_merge_back(access, manifest, to_sync_manifest)
 
-        return to_sync_manifest
+        return
 
     async def _sync_file(self, path: FsPath, access: Access, manifest: LocalFileManifest) -> None:
         """
