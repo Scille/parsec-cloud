@@ -59,7 +59,9 @@ async def logged_core_factory(
             config.backend_max_connections,
         ) as backend_cmds_pool:
 
-            with LocalStorage(config.data_base_dir / device.device_id) as local_storage:
+            with LocalStorage(
+                config.data_base_dir / f"{device.organization_id}#{device.device_id}"
+            ) as local_storage:
 
                 encryption_manager = EncryptionManager(device, local_storage, backend_cmds_pool)
                 fs = FS(device, local_storage, backend_cmds_pool, encryption_manager, event_bus)
