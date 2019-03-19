@@ -3,10 +3,13 @@
 import trio
 import time
 import errno
+import ctypes
+import signal
 import threading
 from pathlib import Path
 from fuse import FUSE
 from structlog import get_logger
+from contextlib import contextmanager
 
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
@@ -17,6 +20,22 @@ __all__ = ("fuse_mountpoint_runner",)
 
 
 logger = get_logger()
+
+
+@contextmanager
+def _reset_signals(signals=None):
+    """A context that save the current signal handlers restore them when leaving.
+
+    By default, it does so for SIGINT, SIGTERM, SIGHUP and SIGPIPE.
+    """
+    if signals is None:
+        signals = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGPIPE)
+    saved = {sig: ctypes.pythonapi.PyOS_getsig(sig) for sig in signals}
+    try:
+        yield
+    finally:
+        for sig, handler in saved.items():
+            ctypes.pythonapi.PyOS_setsig(sig, handler)
 
 
 def _bootstrap_mountpoint(mountpoint):
@@ -93,11 +112,17 @@ async def fuse_mountpoint_runner(
                 finally:
                     fuse_thread_stopped.set()
 
-            nursery.start_soon(
-                lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
-            )
-
-            await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
+            # The fusepy runner (FUSE) relies on the `fuse_main_real` function from libfuse
+            # This function is high-level helper on top of the libfuse API that is intended
+            # for simple application. As such, it sets some signal handlers to exit cleanly
+            # after a SIGTINT, a SIGTERM or a SIGHUP. This is, however, not compatible with
+            # our multi-instance multi-threaded application. A simple workaround here is to
+            # restore the signals to their previous state once the fuse instance is started.
+            with _reset_signals():
+                nursery.start_soon(
+                    lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
+                )
+                await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
 
             event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
             task_status.started(abs_mountpoint)
@@ -119,7 +144,7 @@ async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev):
     def _wait_for_fuse_ready_thread():
         fuse_thread_started.wait()
         while not need_stop:
-            time.sleep(0.1)
+            time.sleep(0.01)
             try:
                 if mountpoint.stat().st_dev != initial_st_dev:
                     break
