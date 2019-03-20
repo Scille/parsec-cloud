@@ -17,7 +17,7 @@ from parsec.core.devices_manager import (
     load_device_with_pkcs11,
 )
 
-from parsec.core.mountpoint import MountpointConfigurationError
+from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
 from parsec.core.backend_connection import BackendHandshakeError, BackendDeviceRevokedError
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
@@ -213,16 +213,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self,
                 QCoreApplication.translate("MainWindow", "User not registered in the backend."),
             )
-        except (RuntimeError, MountpointConfigurationError):
+        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
             show_error(self, QCoreApplication.translate("MainWindow", "Mountpoint already in use."))
         except Exception as exc:
             import traceback
 
             traceback.print_exc()
-            show_error(
-                self,
-                QCoreApplication.translate("MainWindow", "Can not login ({})").format(type(exc)),
-            )
+            show_error(self, QCoreApplication.translate("MainWindow", "Can not login"))
+            logger.error("Error while trying to log in: {}".format(str(exc)))
 
     def login_with_pkcs11(self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
@@ -233,13 +231,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_central_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
+        except BackendDeviceRevokedError:
+            show_error(
+                self, QCoreApplication.translate("MainWindow", "This device has been revoked.")
+            )
         except BackendHandshakeError:
             show_error(
                 self,
                 QCoreApplication.translate("MainWindow", "User not registered in the backend."),
             )
-        except RuntimeError:
+        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
             show_error(self, QCoreApplication.translate("MainWindow", "Mountpoint already in use."))
+        except Exception as exc:
+            import traceback
+
+            traceback.print_exc()
+            show_error(self, QCoreApplication.translate("MainWindow", "Can not login."))
+            logger.error("Error while trying to log in: {}".format(str(exc)))
 
     def close_app(self):
         self.close_requested = True
