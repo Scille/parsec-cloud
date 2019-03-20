@@ -102,6 +102,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if settings.get_value("global/first_launch", "true"):
             self.show_starting_guide()
             settings.set_value("global/first_launch", False)
+            r = ask_question(
+                self,
+                QCoreApplication.translate("MainWindow", "Data collection"),
+                QCoreApplication.translate(
+                    "MainWindow",
+                    "Do you authorize Parsec to send data to help us improve your experience ?",
+                ),
+            )
+            settings.set_value("global/collect_data", r)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:

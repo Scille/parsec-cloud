@@ -52,6 +52,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             self.combo_languages.setCurrentText(current)
         no_check_version = settings.get_value("global/no_check_version", "false")
         self.check_box_check_at_startup.setChecked(not no_check_version)
+        self.check_box_collect_data.setChecked(settings.get_value("global/collect_data", "false"))
 
     def save(self):
         settings.set_value("global/tray_enabled", self.checkbox_tray.isChecked())
@@ -59,3 +60,4 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         settings.set_value(
             "global/no_check_version", not self.check_box_check_at_startup.isChecked()
         )
+        settings.set_value("global/collect_data", self.check_box_collect_data.isChecked())

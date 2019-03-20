@@ -43,10 +43,6 @@ def run_gui(config: CoreConfig):
     f = QFont("Arial")
     app.setFont(f)
 
-    # splash = QSplashScreen(QPixmap(':/logos/images/logos/parsec.png'))
-    # splash.show()
-    # app.processEvents()
-
     lang.switch_language()
 
     win = MainWindow(core_config=config)
@@ -59,6 +55,5 @@ def run_gui(config: CoreConfig):
     timer.timeout.connect(lambda: None)
 
     win.showMaximized()
-    # splash.finish(win)
 
     return app.exec_()
