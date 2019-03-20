@@ -16,6 +16,7 @@ from parsec.crypto import (
 )
 from parsec.core.backend_connection import (
     BackendCmdsPool,
+    BackendAnonymousCmds,
     BackendConnectionError,
     BackendNotAvailable,
     BackendCmdsNotFound,
@@ -205,7 +206,12 @@ class RemoteDevicesManager:
     a cache of them for a limited duration.
     """
 
-    def __init__(self, backend_cmds, root_verify_key, cache_validity=DEFAULT_CACHE_VALIDITY):
+    def __init__(
+        self,
+        backend_cmds: BackendCmdsPool,
+        root_verify_key: VerifyKey,
+        cache_validity: int = DEFAULT_CACHE_VALIDITY,
+    ):
         self._backend_cmds = backend_cmds
         self._devices = {}
         self._users = {}
@@ -318,7 +324,7 @@ class RemoteDevicesManager:
 
 
 async def get_device_invitation_creator(
-    backend_cmds: BackendCmdsPool, root_verify_key: VerifyKey, new_device_id: DeviceID
+    backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
 ) -> VerifiedRemoteUser:
     try:
         uv_user, trustchain = await backend_cmds.device_get_invitation_creator(new_device_id)
@@ -342,7 +348,7 @@ async def get_device_invitation_creator(
 
 
 async def get_user_invitation_creator(
-    backend_cmds: BackendCmdsPool, root_verify_key: VerifyKey, new_user_id: DeviceID
+    backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
 ) -> VerifiedRemoteUser:
     try:
         uv_user, trustchain = await backend_cmds.user_get_invitation_creator(new_user_id)

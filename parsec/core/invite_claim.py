@@ -20,7 +20,7 @@ from parsec.crypto import (
 from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, fields
 from parsec.core.types import LocalDevice, Access
 from parsec.core.types.access import ManifestAccessSchema
-from parsec.core.backend_connection import BackendCmdsPool
+from parsec.core.backend_connection import BackendCmdsPool, BackendAnonymousCmds
 from parsec.core.devices_manager import generate_new_device
 from parsec.core.remote_devices_manager import (
     get_user_invitation_creator,
@@ -177,7 +177,9 @@ def generate_invitation_token():
     return token_hex(8)
 
 
-async def claim_user(cmds: BackendCmdsPool, new_device_id: DeviceID, token: str) -> LocalDevice:
+async def claim_user(
+    cmds: BackendAnonymousCmds, new_device_id: DeviceID, token: str
+) -> LocalDevice:
     """
     Raises:
         InviteClaimError
@@ -199,7 +201,9 @@ async def claim_user(cmds: BackendCmdsPool, new_device_id: DeviceID, token: str)
     return device
 
 
-async def claim_device(cmds: BackendCmdsPool, new_device_id: DeviceID, token: str) -> LocalDevice:
+async def claim_device(
+    cmds: BackendAnonymousCmds, new_device_id: DeviceID, token: str
+) -> LocalDevice:
     """
     Raises:
         InviteClaimError
