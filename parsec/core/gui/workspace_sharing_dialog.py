@@ -40,7 +40,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.checkbox_write.setChecked(write)
         self.checkbox_admin.setChecked(admin)
         self.is_current_user = is_current_user
-        if self.is_current_user or self.is_creator or not can_change_permissions:
+        if self.is_current_user or not can_change_permissions:
             self.checkbox_read.setDisabled(True)
             self.checkbox_write.setDisabled(True)
             self.checkbox_admin.setDisabled(True)
