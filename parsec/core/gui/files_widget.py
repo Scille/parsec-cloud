@@ -363,6 +363,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         row = self.table_files.currentRow()
         name_item = self.table_files.item(row, 1)
         type_item = self.table_files.item(row, 0)
+        if not name_item or not type_item:
+            return
         file_type = type_item.data(Qt.UserRole)
         if file_type == FileType.ParentFolder or file_type == FileType.ParentWorkspace:
             return
