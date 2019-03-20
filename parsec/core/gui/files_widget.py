@@ -297,6 +297,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         def _inner_delete_item():
             name_item = self.table_files.item(row, 1)
             type_item = self.table_files.item(row, 0)
+            if not name_item or type_item:
+                return
             QCoreApplication.processEvents()
             result = ask_question(
                 self,
