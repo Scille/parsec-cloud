@@ -24,7 +24,8 @@ script:
 - ./misc/license_headers.py check
 - mkdir empty && cd empty
 - sed -i 's#omit = \(.*\)#omit = \1,../\1#' ../setup.cfg  # fix path
-- xvfb-run py.test ../tests/gui --cov=parsec --cov-config=../setup.cfg --rungui --log-level=DEBUG -vvv -x
+# TODO: cause freeze
+# - xvfb-run py.test ../tests/gui --cov=parsec --cov-config=../setup.cfg --rungui --log-level=DEBUG -vvv -x
 - py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv -x
 - py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv -x
 - set +e
