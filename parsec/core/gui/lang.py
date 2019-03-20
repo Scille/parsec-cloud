@@ -24,7 +24,8 @@ def switch_language(lang_key=None):
         lang_key = get_locale_language()
         logger.info(f"No language in settings, trying local language '{lang_key}'")
     if lang_key not in LANGUAGES.values():
-        logger.info(f"Language '{lang_key}' unavailable, defaulting to English")
+        if lang_key != "en":
+            logger.info(f"Language '{lang_key}' unavailable, defaulting to English")
         lang_key = "en"
     translator = QTranslator()
     path = f":/translations/translations/parsec_{lang_key}.qm"
