@@ -46,15 +46,14 @@ QCheckBox::indicator
 width: 15px;
 height: 15px;
 background-color: rgb(255, 255, 255);
-border: 2px solid rgb(46, 46,46);
+border: 2px solid rgb(46, 46, 46);
 color: black;
 }
 
 QCheckBox::indicator:checked
 {
 image: url(:/icons/images/icons/checked.png)
-}
-</string>
+}</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
@@ -124,6 +123,9 @@ image: url(:/icons/images/icons/checked.png)
         </item>
         <item>
          <widget class="QCheckBox" name="checkbox_read">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -139,6 +141,9 @@ image: url(:/icons/images/icons/checked.png)
         </item>
         <item>
          <widget class="QCheckBox" name="checkbox_write">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>

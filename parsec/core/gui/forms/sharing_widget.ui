@@ -38,7 +38,15 @@ QCheckBox::indicator:checked
 {
 image: url(:/icons/images/icons/checked.png)
 }
-</string>
+
+QCheckBox::indicator:disabled
+{
+width: 15px;
+height: 15px;
+background-color: rgb(200, 200, 200);
+border: 2px solid rgb(125, 125, 125);
+color: rgb(125, 125, 125);
+}</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">

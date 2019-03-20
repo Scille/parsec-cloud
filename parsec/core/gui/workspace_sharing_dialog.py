@@ -16,18 +16,21 @@ from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 class SharingWidget(QWidget, Ui_SharingWidget):
     remove_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, name, is_current_user, admin, read, write, *args, **kwargs):
+    def __init__(self, name, is_current_user, is_creator, admin, read, write, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.label_name.setText(name)
+        if is_creator:
+            self.label_name.setText(f"<b>{name}</b>")
+        else:
+            self.label_name.setText(name)
         self.checkbox_read.setChecked(read)
         self.checkbox_write.setChecked(write)
         self.checkbox_admin.setChecked(admin)
         self.is_current_user = is_current_user
         if is_current_user:
-            self.checkbox_read.hide()
-            self.checkbox_write.hide()
-            self.checkbox_admin.hide()
+            self.checkbox_read.setDisabled(True)
+            self.checkbox_write.setDisabled(True)
+            self.checkbox_admin.setDisabled(True)
         self.read_start_state = read
         self.write_start_state = write
         self.admin_start_state = admin
@@ -123,7 +126,14 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 self.checkbox_read.isChecked(),
                 self.checkbox_write.isChecked(),
             )
-            self.add_participant(user, False)
+            self.add_participant(
+                user,
+                False,
+                False,
+                admin=self.checkbox_admin.isChecked(),
+                read=self.checkbox_read.isChecked(),
+                write=self.checkbox_write.isChecked(),
+            )
             self.checkbox_admin.setChecked(True)
             self.checkbox_read.setChecked(True)
             self.checkbox_write.setChecked(True)
@@ -145,13 +155,14 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 ).format(self.name, user),
             )
 
-    def add_participant(self, participant, is_current_user):
+    def add_participant(self, participant, is_current_user, is_creator, admin, read, write):
         w = SharingWidget(
             name=participant,
             is_current_user=is_current_user,
-            admin=True,
-            read=True,
-            write=True,
+            is_creator=is_creator,
+            admin=admin,
+            read=read,
+            write=write,
             parent=self,
         )
         self.scroll_content.layout().insertWidget(0, w)
@@ -227,6 +238,15 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.scroll_content.layout().removeItem(item)
             w.setParent(None)
         QCoreApplication.processEvents()
-        ws_infos = self.portal.run(self.core.fs.stat, os.path.join("/", self.name))
-        for p in ws_infos["participants"]:
-            self.add_participant(p, p == self.core.device.user_id)
+        path = os.path.join("/", self.name)
+        stat = self.portal.run(self.core.fs.stat, path)
+        sharing_info = self.portal.run(self.core.fs.get_permissions, path)
+        for user, permissions in sharing_info.items():
+            self.add_participant(
+                user,
+                user == self.core.device.user_id,
+                stat["creator"] == user,
+                admin=permissions["admin_right"],
+                read=permissions["read_right"],
+                write=permissions["write_right"],
+            )
