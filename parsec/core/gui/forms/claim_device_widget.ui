@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>607</width>
-    <height>722</height>
+    <height>723</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -85,6 +85,11 @@ QPushButton
 border: 1px solid rgb(255, 255, 255);
 color: rgb(255, 255, 255);
 padding: 7px;
+}
+
+QPushButton:pressed
+{
+background-color: rgb(32, 85, 176);
 }
 
 QLabel

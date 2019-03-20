@@ -74,6 +74,11 @@ color: rgb(255, 255, 255);
 padding: 7px;
 }
 
+QPushButton:pressed
+{
+background-color: rgb(32, 85, 176);
+}
+
 QLabel
 {
 color: rgb(255, 255, 255);
@@ -576,6 +581,9 @@ image: url(:/icons/images/icons/checked.png)
               <font>
                <pointsize>13</pointsize>
               </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Cancel</string>

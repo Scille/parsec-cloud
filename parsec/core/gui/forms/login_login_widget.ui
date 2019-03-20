@@ -480,6 +480,12 @@ image: url(:/icons/images/icons/checked.png)
 border: 1px solid rgb(255, 255, 255);
 color: rgb(255, 255, 255);
 padding: 7px;
+background-color: rgb(12, 65, 156);
+}
+
+QPushButton#button_login:pressed
+{
+background-color: rgb(32, 85, 176);
 }</string>
              </property>
              <property name="text">
