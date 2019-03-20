@@ -12,6 +12,7 @@ from parsec.core.config import CoreConfig
 try:
     from parsec.core.gui import lang
     from parsec.core.gui.main_window import MainWindow
+    from parsec.core.gui.trio_thread import run_trio_thread
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
@@ -45,15 +46,16 @@ def run_gui(config: CoreConfig):
 
     lang.switch_language()
 
-    win = MainWindow(core_config=config)
+    with run_trio_thread() as portal:
 
-    # QTimer wakes up the event loop periodically which allows us to close
-    # the window even when it is in background.
-    signal.signal(signal.SIGINT, kill_window(win))
-    timer = QTimer()
-    timer.start(400)
-    timer.timeout.connect(lambda: None)
+        win = MainWindow(portal, core_config=config)
+        # QTimer wakes up the event loop periodically which allows us to close
+        # the window even when it is in background.
+        signal.signal(signal.SIGINT, kill_window(win))
+        timer = QTimer()
+        timer.start(400)
+        timer.timeout.connect(lambda: None)
 
-    win.showMaximized()
+        win.showMaximized()
 
-    return app.exec_()
+        return app.exec_()

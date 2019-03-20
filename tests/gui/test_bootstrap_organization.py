@@ -5,13 +5,15 @@ from PyQt5 import QtCore
 
 from parsec.types import BackendOrganizationBootstrapAddr
 from parsec.core.gui.main_window import MainWindow
+from parsec.core.gui.trio_thread import run_trio_thread
 
 
 @pytest.fixture
 def gui(qtbot, core_config):
-    main_w = MainWindow(core_config)
-    qtbot.addWidget(main_w)
-    return main_w
+    with run_trio_thread() as portal:
+        main_w = MainWindow(portal, core_config)
+        qtbot.addWidget(main_w)
+        yield main_w
 
 
 @pytest.fixture
