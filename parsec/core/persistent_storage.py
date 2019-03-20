@@ -37,7 +37,7 @@ class PersistentStorage:
 
     That includes:
     - the sqlite database for clean data (manifests and block metadata)
-    - the sqlite database for dirty data (user, manifests and block metadata)
+    - the sqlite database for dirty data (manifests and block metadata)
     - the clean block files
     - the dirty block files
 
@@ -132,14 +132,6 @@ class PersistentStorage:
     def create_db(self):
         with self.open_dirty_cursor() as dirty_cursor, self.open_clean_cursor() as clean_cursor:
 
-            # User table
-            dirty_cursor.execute(
-                """CREATE TABLE IF NOT EXISTS users
-                    (access_id UUID PRIMARY KEY NOT NULL,
-                     blob BYTEA NOT NULL,
-                     inserted_on TIMESTAMPTZ);"""
-            )
-
             for cursor in (dirty_cursor, clean_cursor):
 
                 # Manifest tables
@@ -180,30 +172,6 @@ class PersistentStorage:
             for f in os.listdir(cache)
             if os.path.isfile(os.path.join(cache, f))
         )
-
-    # User operations
-
-    def get_user(self, access: Access):
-        with self.open_dirty_cursor() as cursor:
-            cursor.execute(
-                "SELECT access_id, blob, inserted_on FROM users WHERE access_id = ?",
-                (str(access.id),),
-            )
-            user_row = cursor.fetchone()
-        if not user_row or pendulum.parse(user_row[2]).add(hours=1) <= now():
-            raise LocalStorageMissingEntry(access)
-        access_id, blob, created_on = user_row
-        return decrypt_raw_with_secret_key(access.key, blob)
-
-    def set_user(self, access: Access, raw: bytes):
-        assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(access.key, raw)
-        with self.open_dirty_cursor() as cursor:
-            cursor.execute(
-                """INSERT OR REPLACE INTO users (access_id, blob, inserted_on)
-                VALUES (?, ?, ?)""",
-                (str(access.id), ciphered, str(now())),
-            )
 
     # Generic manifest operations
 
