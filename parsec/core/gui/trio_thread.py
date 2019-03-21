@@ -49,7 +49,9 @@ class QtToTrioJob:
                 except Exception as exc:
                     logger.exception("Uncatched error", exc_info=exc)
                     self.status = "crashed"
-                    self.exc = exc
+                    self.exc = JobResultError(
+                        "crashed", exc=exc, info=f"Unexpected error: {repr(exc)}"
+                    )
 
         finally:
             self._done.set()
@@ -69,52 +71,31 @@ class QtToTrioJobScheduler:
     def __init__(self):
         self._portal = None
         self._cancel_scope = None
-        self._started = threading.Event()
+        self.started = threading.Event()
 
-    async def _start(self):
-        assert not self._started.is_set()
+    async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
+        assert not self.started.is_set()
 
         self._portal = trio.BlockingTrioPortal()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(100)
         async with trio.open_nursery() as nursery, recv_job_channel:
             self._cancel_scope = nursery.cancel_scope
-            self._started.set()
+            self.started.set()
+            task_status.started()
             while True:
                 job = await recv_job_channel.receive()
                 assert job.status is None
                 await nursery.start(job._run_fn)
 
-    def start(self):
-        self._thread = threading.Thread(target=trio.run, args=[self._start])
-        self._thread.setName("TrioLoop")
-        self._thread.start()
-        self._started.wait()
-
-    def teardown(self):
-        async def _teardown():
-            self._cancel_scope.cancel()
-            await self._send_job_channel.aclose()
-
-        self._portal.run(_teardown)
-        self._thread.join()
+    async def _teardown(self):
+        self._cancel_scope.cancel()
+        await self._send_job_channel.aclose()
 
     def run(self, afn, *args):
         return self._portal.run(afn, *args)
 
     def run_sync(self, fn, *args):
         return self._portal.run(fn, *args)
-
-    def run2(self, afn, *args, on_done=None, on_error=None):
-        async def _inner():
-            try:
-                ret = afn(on_error, *args)
-                on_done.emit(ret)
-
-            except Exception as exc:
-                logger.exception("Unexpected error", exc_info=exc)
-                on_error.emit(repr(exc))
-
-        return self._portal.run(afn)
 
     def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
         job = QtToTrioJob(qt_on_success, qt_on_error, fn, *args, **kwargs)
@@ -125,9 +106,14 @@ class QtToTrioJobScheduler:
 @contextmanager
 def run_trio_thread():
     job_scheduler = QtToTrioJobScheduler()
-    job_scheduler.start()
+    thread = threading.Thread(target=trio.run, args=[job_scheduler._start])
+    thread.setName("TrioLoop")
+    thread.start()
+    job_scheduler.started.wait()
+
     try:
         yield job_scheduler
 
     finally:
-        job_scheduler.teardown()
+        job_scheduler._portal.run(job_scheduler._teardown)
+        thread.join()

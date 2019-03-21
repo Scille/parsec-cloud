@@ -85,7 +85,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.layout.insertWidget(0, self.login_widget)
         self.bootstrap_organization = BootstrapOrganizationWidget(self.portal, core_config)
         self.layout.insertWidget(0, self.bootstrap_organization)
-        self.claim_user_widget = ClaimUserWidget(core_config)
+        self.claim_user_widget = ClaimUserWidget(self.portal, core_config)
         self.layout.insertWidget(0, self.claim_user_widget)
         self.claim_device_widget = ClaimDeviceWidget(core_config)
         self.layout.insertWidget(0, self.claim_device_widget)

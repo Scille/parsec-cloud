@@ -46,7 +46,9 @@ STATUS_TO_ERRMSG = {
     "bad-device_name": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
     "bad-user_id": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
 }
-DEFAULT_ERRMSG = _translate("BootstrapOrganizationWidget", "Can not bootstrap this organization.")
+DEFAULT_ERRMSG = _translate(
+    "BootstrapOrganizationWidget", "Can not bootstrap this organization ({info})."
+)
 
 
 async def _do_bootstrap_organization(
@@ -108,11 +110,11 @@ async def _do_bootstrap_organization(
     except BackendHandshakeError:
         raise JobResultError("invalid-url")
 
-    except BackendNotAvailable:
-        raise JobResultError("backend-offline")
+    except BackendNotAvailable as exc:
+        raise JobResultError("backend-offline", info=str(exc))
 
     except BackendCmdsBadResponse as exc:
-        raise JobResultError("refused-by-backend", exc=exc)
+        raise JobResultError("refused-by-backend", info=str(exc))
 
 
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
@@ -145,7 +147,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_cancel.hide()
         self.check_infos()
         errmsg = STATUS_TO_ERRMSG.get(self.bootstrap_job.status, DEFAULT_ERRMSG)
-        show_error(self, errmsg)
+        show_error(self, errmsg.format(**self.bootstrap_job.exc.params))
+        self.bootstrap_job = None
 
     def on_bootstrap_success(self):
         assert self.bootstrap_job.is_finished()
@@ -159,6 +162,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
                 "The organization and the user have been created. You can now login.",
             ),
         )
+        self.bootstrap_job = None
         self.organization_bootstrapped.emit()
 
     def bootstrap_clicked(self):
