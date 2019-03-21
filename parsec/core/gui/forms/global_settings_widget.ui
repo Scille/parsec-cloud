@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>428</width>
+    <width>521</width>
     <height>482</height>
    </rect>
   </property>
@@ -143,7 +143,7 @@ background: none;
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>388</width>
+        <width>481</width>
         <height>368</height>
        </rect>
       </property>
@@ -513,7 +513,7 @@ color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Data collection</string>
+               <string>Error reporting</string>
               </property>
              </widget>
             </item>
@@ -525,9 +525,9 @@ color: rgb(255, 255, 255);
              <number>20</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="check_box_collect_data">
+             <widget class="QCheckBox" name="check_box_send_data">
               <property name="text">
-               <string>Authorize data collection</string>
+               <string>Send information when Parsec encounters an error.</string>
               </property>
              </widget>
             </item>

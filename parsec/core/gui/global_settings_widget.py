@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui import settings
 from parsec.core.gui import lang
+from parsec.core.gui import sentry_logging
 from parsec.core.gui.custom_widgets import show_info
 from parsec.core.gui.new_version import NewVersionDialog, new_version_available
 from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
@@ -52,7 +53,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             self.combo_languages.setCurrentText(current)
         no_check_version = settings.get_value("global/no_check_version", "false")
         self.check_box_check_at_startup.setChecked(not no_check_version)
-        self.check_box_collect_data.setChecked(settings.get_value("global/collect_data", "false"))
+        self.check_box_send_data.setChecked(settings.get_value("global/sentry_logging", "true"))
 
     def save(self):
         settings.set_value("global/tray_enabled", self.checkbox_tray.isChecked())
@@ -60,4 +61,5 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         settings.set_value(
             "global/no_check_version", not self.check_box_check_at_startup.isChecked()
         )
-        settings.set_value("global/collect_data", self.check_box_collect_data.isChecked())
+        settings.set_value("global/sentry_logging", self.check_box_send_data.isChecked())
+        sentry_logging.init(self.core_config)

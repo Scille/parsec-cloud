@@ -62,7 +62,22 @@ def configure_logging(log_level=None, log_format=None, log_file=None, log_filter
         root_logger.setLevel(log_level.upper())
 
 
+def sentry_logging_activated():
+    root_logger = logging.getLogger()
+    return len([handler for handler in root_logger.handlers if isinstance(handler, SentryHandler)]) > 0
+
+
 def configure_sentry_logging(sentry_url):
+    if sentry_logging_activated():
+        return
     sentry_handler = SentryHandler(sentry_url, level="WARNING")
     root_logger = logging.getLogger()
     root_logger.addHandler(sentry_handler)
+
+
+def disable_sentry_logging():
+    root_logger = logging.getLogger()
+    sentry_handlers = [handler for handler in root_logger.handlers if isinstance(handler, SentryHandler)]
+
+    for sentry_handler in sentry_handlers:
+        root_logger.removeHandler(sentry_handler)

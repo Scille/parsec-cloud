@@ -21,6 +21,7 @@ from parsec.core.mountpoint import MountpointConfigurationError, MountpointDrive
 from parsec.core.backend_connection import BackendHandshakeError, BackendDeviceRevokedError
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
+from parsec.core.gui import sentry_logging
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.custom_widgets import ask_question, show_error
@@ -104,13 +105,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             settings.set_value("global/first_launch", False)
             r = ask_question(
                 self,
-                QCoreApplication.translate("MainWindow", "Data collection"),
+                QCoreApplication.translate("MainWindow", "Error reporting"),
                 QCoreApplication.translate(
                     "MainWindow",
-                    "Do you authorize Parsec to send data to help us improve your experience ?",
+                    "Do you authorize Parsec to send data when it encounters an error to help us improve your experience ?",
                 ),
             )
-            settings.set_value("global/collect_data", r)
+            settings.set_value("global/sentry_logging", r)
+        sentry_logging.init(self.core_config)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
