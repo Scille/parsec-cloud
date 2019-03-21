@@ -90,9 +90,13 @@ class LocalFolderFS:
         # Always keep the user manifest locally
         if access == self.root_access:
             return self.set_dirty_manifest(access, manifest)
+        if manifest.need_sync:
+            raise ValueError("The given manifest is not a clean manifest.")
         self._local_storage.set_clean_manifest(access, manifest, force)
 
     def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
+        if access != self.root_access and not manifest.need_sync:
+            raise ValueError("The given manifest is not a dirty manifest.")
         self._local_storage.set_dirty_manifest(access, manifest)
 
     def clear_manifest(self, access: Access):

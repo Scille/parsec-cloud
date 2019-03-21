@@ -112,7 +112,7 @@ class FileSyncerMixin(BaseSyncer):
         self.local_folder_fs.set_dirty_manifest(moved_access, diverged_manifest)
         self.local_folder_fs.set_dirty_manifest(parent_access, parent_manifest)
         target_manifest = target_remote_manifest.to_local()
-        self.local_folder_fs.set_dirty_manifest(access, target_manifest)
+        self.local_folder_fs.set_clean_manifest(access, target_manifest, force=True)
 
         self.event_bus.send(
             "fs.entry.file_update_conflicted",
