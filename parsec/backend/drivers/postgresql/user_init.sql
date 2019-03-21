@@ -11,7 +11,7 @@ CREATE TABLE user_ (
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     user_id VARCHAR(32) NOT NULL,
     is_admin BOOLEAN NOT NULL,
-    certified_user BYTEA NOT NULL,
+    user_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
     user_certifier INTEGER,
     created_on TIMESTAMPTZ NOT NULL,
@@ -25,16 +25,16 @@ CREATE TABLE device (
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
     device_id VARCHAR(65) NOT NULL,
-    certified_device BYTEA NOT NULL,
+    device_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
     device_certifier INTEGER REFERENCES device (_id),
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not yet revoked
     revoked_on TIMESTAMPTZ,
     -- NULL if not yet revoked
-    certified_revocation BYTEA,
+    revoked_device_certificate BYTEA,
     -- NULL if certifier is the Root Verify Key
-    revocation_certifier INTEGER REFERENCES device (_id),
+    revoked_device_certifier INTEGER REFERENCES device (_id),
 
     UNIQUE(organization, device_id),
     UNIQUE(user_, device_id)

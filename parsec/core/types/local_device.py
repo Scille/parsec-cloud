@@ -6,7 +6,7 @@ from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.serde import UnknownCheckedSchema, fields, post_load
 from parsec.core.types.base import serializer_factory
-from parsec.core.types.access import ManifestAccessSchema
+from parsec.core.types.access import Access, ManifestAccessSchema
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -16,7 +16,7 @@ class LocalDevice:
     device_id: DeviceID
     signing_key: SigningKey
     private_key: PrivateKey
-    user_manifest_access: dict  # TODO: Better typing
+    user_manifest_access: Access
     local_symkey: bytes
 
     def __repr__(self):

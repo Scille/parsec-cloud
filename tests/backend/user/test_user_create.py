@@ -4,7 +4,7 @@ import pytest
 import trio
 import pendulum
 
-from parsec.trustchain import certify_user, certify_device
+from parsec.crypto import build_user_certificate, build_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocole import user_create_serializer
 
@@ -25,18 +25,18 @@ async def test_user_create_ok(
     backend, backend_sock_factory, alice_backend_sock, alice, mallory, is_admin
 ):
     now = pendulum.now()
-    certified_user = certify_user(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=now
+    user_certificate = build_user_certificate(
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now
     )
-    certified_device = certify_device(
-        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now=now
+    device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now
     )
 
     with backend.event_bus.listen() as spy:
         rep = await user_create(
             alice_backend_sock,
-            certified_user=certified_user,
-            certified_device=certified_device,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
             is_admin=is_admin,
         )
         assert rep == {"status": "ok"}
@@ -45,7 +45,11 @@ async def test_user_create_ok(
             # No guarantees this event occurs before the command's return
             await spy.wait(
                 "user.created",
-                kwargs={"organization_id": alice.organization_id, "user_id": mallory.user_id},
+                kwargs={
+                    "organization_id": alice.organization_id,
+                    "user_id": mallory.user_id,
+                    "first_device_id": mallory.device_id,
+                },
             )
 
     # Make sure mallory can connect now
@@ -58,43 +62,43 @@ async def test_user_create_ok(
 @pytest.mark.trio
 async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
-    good_certified_user = certify_user(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=now
+    good_user_certificate = build_user_certificate(
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now
     )
-    good_certified_device = certify_device(
-        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now=now
+    good_device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now
     )
-    bad_certified_user = certify_user(
-        bob.device_id, bob.signing_key, mallory.user_id, mallory.public_key, now=now
+    bad_user_certificate = build_user_certificate(
+        bob.device_id, bob.signing_key, mallory.user_id, mallory.public_key, now
     )
-    bad_certified_device = certify_device(
-        bob.device_id, bob.signing_key, mallory.device_id, mallory.verify_key, now=now
+    bad_device_certificate = build_device_certificate(
+        bob.device_id, bob.signing_key, mallory.device_id, mallory.verify_key, now
     )
 
     for cu, cd in [
-        (good_certified_user, bad_certified_device),
-        (bad_certified_user, good_certified_device),
-        (bad_certified_user, bad_certified_device),
+        (good_user_certificate, bad_device_certificate),
+        (bad_user_certificate, good_device_certificate),
+        (bad_user_certificate, bad_device_certificate),
     ]:
-        rep = await user_create(alice_backend_sock, certified_user=cu, certified_device=cd)
+        rep = await user_create(alice_backend_sock, user_certificate=cu, device_certificate=cd)
         assert rep == {
             "status": "invalid_certification",
-            "reason": "Certifier is not the authenticated device.",
+            "reason": "Invalid certification data (Signature was forged or corrupt).",
         }
 
 
 @pytest.mark.trio
 async def test_user_create_not_matching_user_device(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
-    certified_user = certify_user(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=now
+    user_certificate = build_user_certificate(
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now
     )
-    certified_device = certify_device(
-        alice.device_id, alice.signing_key, bob.device_id, mallory.verify_key, now=now
+    device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, bob.device_id, mallory.verify_key, now
     )
 
     rep = await user_create(
-        alice_backend_sock, certified_user=certified_user, certified_device=certified_device
+        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
     )
     assert rep == {
         "status": "invalid_data",
@@ -105,44 +109,51 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
 @pytest.mark.trio
 async def test_user_create_already_exists(alice_backend_sock, alice, bob):
     now = pendulum.now()
-    certified_user = certify_user(
-        alice.device_id, alice.signing_key, bob.user_id, bob.public_key, now=now
+    user_certificate = build_user_certificate(
+        alice.device_id, alice.signing_key, bob.user_id, bob.public_key, now
     )
-    certified_device = certify_device(
-        alice.device_id, alice.signing_key, bob.device_id, bob.verify_key, now=now
+    device_certificate = build_device_certificate(
+        alice.device_id, alice.signing_key, bob.device_id, bob.verify_key, now
     )
 
     rep = await user_create(
-        alice_backend_sock, certified_user=certified_user, certified_device=certified_device
+        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
     )
     assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
+
+
+@pytest.mark.trio
+async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, mallory):
+    date1 = pendulum.Pendulum(2000, 1, 1)
+    date2 = date1.add(seconds=1)
+    cu = build_user_certificate(
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, date1
+    )
+    cd = build_device_certificate(
+        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, date2
+    )
+    with freeze_time(date1):
+        rep = await user_create(alice_backend_sock, user_certificate=cu, device_certificate=cd)
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Device and User certifications must have the same timestamp.",
+        }
 
 
 @pytest.mark.trio
 async def test_user_create_certify_too_old(alice_backend_sock, alice, mallory):
     too_old = pendulum.Pendulum(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
-    good_certified_user = certify_user(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=now
+    cu = build_user_certificate(
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, too_old
     )
-    good_certified_device = certify_device(
-        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now=now
-    )
-    bad_certified_user = certify_user(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=too_old
-    )
-    bad_certified_device = certify_device(
-        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now=too_old
+    cd = build_device_certificate(
+        alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, too_old
     )
 
     with freeze_time(now):
-        for cu, cd in [
-            (good_certified_user, bad_certified_device),
-            (bad_certified_user, good_certified_device),
-            (bad_certified_user, bad_certified_device),
-        ]:
-            rep = await user_create(alice_backend_sock, certified_user=cu, certified_device=cd)
-            assert rep == {
-                "status": "invalid_certification",
-                "reason": "Invalid certification data (Timestamp is too old.).",
-            }
+        rep = await user_create(alice_backend_sock, user_certificate=cu, device_certificate=cd)
+        assert rep == {
+            "status": "invalid_certification",
+            "reason": "Invalid timestamp in certification.",
+        }

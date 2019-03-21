@@ -21,10 +21,10 @@ from parsec.core.types.local_manifests import (
     local_manifest_serializer,
 )
 from parsec.core.types.remote_device import (
-    RemoteDevice,
-    RemoteDevicesMapping,
-    RemoteUser,
-    remote_user_serializer,
+    UnverifiedRemoteUser,
+    UnverifiedRemoteDevice,
+    VerifiedRemoteUser,
+    VerifiedRemoteDevice,
 )
 from parsec.core.types.remote_manifests import (
     FileManifest,
@@ -40,29 +40,35 @@ Manifest = Union[LocalManifest, RemoteManifest]
 
 
 __all__ = (
+    # base
     "TrustSeed",
     "AccessID",
     "EntryName",
     "FileDescriptor",
     "FsPath",
+    # access
     "Access",
     "UserAccess",
     "ManifestAccess",
     "BlockAccess",
     "DirtyBlockAccess",
     "WorkspaceEntry",
+    # local_device
     "LocalDevice",
     "local_device_serializer",
+    # local_manifests
     "LocalFileManifest",
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
     "LocalManifest",
     "local_manifest_serializer",
-    "RemoteDevice",
-    "RemoteDevicesMapping",
-    "RemoteUser",
-    "remote_user_serializer",
+    # remote_device
+    "UnverifiedRemoteUser",
+    "UnverifiedRemoteDevice",
+    "VerifiedRemoteUser",
+    "VerifiedRemoteDevice",
+    # remote_manifests
     "FileManifest",
     "FolderManifest",
     "WorkspaceManifest",

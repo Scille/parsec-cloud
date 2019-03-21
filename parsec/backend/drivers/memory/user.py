@@ -2,16 +2,17 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Optional, Dict
 from collections import defaultdict
 
-from parsec.types import UserID, DeviceID, OrganizationID
+from parsec.types import UserID, DeviceID, DeviceName, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.user import (
+    user_get_revoked_on,
+    user_is_revoked,
     BaseUserComponent,
     User,
     Device,
-    DevicesMapping,
     UserInvitation,
     DeviceInvitation,
     UserAlreadyExistsError,
@@ -23,6 +24,7 @@ from parsec.backend.user import (
 @attr.s
 class OrganizationStore:
     _users = attr.ib(factory=dict)
+    _devices = attr.ib(factory=lambda: defaultdict(dict))
     _invitations = attr.ib(factory=dict)
     _device_configuration_tries = attr.ib(factory=dict)
     _unconfigured_devices = attr.ib(factory=dict)
@@ -38,17 +40,25 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> None:
         org = self._organizations[organization_id]
 
-        user = await self.get_user(organization_id, user_id)
+        user = self._get_user(organization_id, user_id)
         org._users[user_id] = user.evolve(is_admin=is_admin)
 
-    async def create_user(self, organization_id: OrganizationID, user: User) -> None:
+    async def create_user(
+        self, organization_id: OrganizationID, user: User, first_device: Device
+    ) -> None:
         org = self._organizations[organization_id]
 
         if user.user_id in org._users:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
 
         org._users[user.user_id] = user
-        self.event_bus.send("user.created", organization_id=organization_id, user_id=user.user_id)
+        org._devices[first_device.user_id][first_device.device_name] = first_device
+        self.event_bus.send(
+            "user.created",
+            organization_id=organization_id,
+            user_id=user.user_id,
+            first_device_id=first_device.device_id,
+        )
 
     async def create_device(
         self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
@@ -58,13 +68,11 @@ class MemoryUserComponent(BaseUserComponent):
         if device.user_id not in org._users:
             raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
 
-        user = org._users[device.user_id]
-        if device.device_name in user.devices:
+        user_devices = org._devices[device.user_id]
+        if device.device_name in user_devices:
             raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
 
-        org._users[device.user_id] = user.evolve(
-            devices=DevicesMapping(*user.devices.values(), device)
-        )
+        user_devices[device.device_name] = device
         self.event_bus.send(
             "device.created",
             organization_id=organization_id,
@@ -78,16 +86,17 @@ class MemoryUserComponent(BaseUserComponent):
         async def _recursive_extract_creators(device_id):
             if not device_id or device_id in trustchain:
                 return
-            device = await self.get_device(organization_id, device_id)
+            device = await self._get_device(organization_id, device_id)
             trustchain[device_id] = device
             await _recursive_extract_creators(device.device_certifier)
-            await _recursive_extract_creators(device.revocation_certifier)
+            await _recursive_extract_creators(device.revoked_device_certifier)
 
         for device_id in devices_ids:
             await _recursive_extract_creators(device_id)
-        return trustchain
 
-    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
+        return tuple(trustchain.values())
+
+    def _get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         org = self._organizations[organization_id]
 
         try:
@@ -96,34 +105,53 @@ class MemoryUserComponent(BaseUserComponent):
         except KeyError:
             raise UserNotFoundError(user_id)
 
+    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
+        return self._get_user(organization_id, user_id)
+
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Dict[DeviceID, Device]]:
-        user = await self.get_user(organization_id, user_id)
+    ) -> Tuple[User, Tuple[Device]]:
+        user = self._get_user(organization_id, user_id)
+        trustchain = await self._get_trustchain(organization_id, user.user_certifier)
+        return user, trustchain
+
+    async def get_user_with_devices_and_trustchain(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
+        user = self._get_user(organization_id, user_id)
+        user_devices = self._get_user_devices(organization_id, user_id)
+        user_devices = tuple(user_devices.values())
         trustchain = await self._get_trustchain(
             organization_id,
             user.user_certifier,
-            *[device.device_certifier for device in user.devices.values()],
-            *[device.revocation_certifier for device in user.devices.values()],
+            *[device.device_certifier for device in user_devices],
+            *[device.revoked_device_certifier for device in user_devices],
         )
-        return user, trustchain
+        return user, user_devices, trustchain
 
-    async def get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
-        user = await self.get_user(organization_id, device_id.user_id)
+    async def _get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
+        org = self._organizations[organization_id]
+
         try:
-            return user.devices[device_id.device_name]
+            return org._devices[device_id.user_id][device_id.device_name]
 
         except KeyError:
             raise UserNotFoundError(device_id)
 
-    async def get_device_with_trustchain(
+    def _get_user_devices(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> Dict[DeviceName, Device]:
+        org = self._organizations[organization_id]
+        # Make sure user exists
+        self._get_user(organization_id, user_id)
+        return org._devices[user_id]
+
+    async def get_user_with_device(
         self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> Tuple[Device, Dict[DeviceID, Device]]:
-        device = await self.get_device(organization_id, device_id)
-        trustchain = await self._get_trustchain(
-            organization_id, device.device_certifier, device.revocation_certifier
-        )
-        return device, trustchain
+    ) -> Tuple[User, Device]:
+        user = self._get_user(organization_id, device_id.user_id)
+        device = await self._get_device(organization_id, device_id)
+        return user, device
 
     async def find(
         self,
@@ -142,7 +170,11 @@ class MemoryUserComponent(BaseUserComponent):
             results = users.keys()
 
         if omit_revoked:
-            results = [user_id for user_id in results if not users[user_id].is_revoked()]
+            results = [
+                user_id
+                for user_id in results
+                if not user_is_revoked(org._devices[user_id].values())
+            ]
 
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
@@ -196,9 +228,10 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> None:
         org = self._organizations[organization_id]
 
-        user = await self.get_user(organization_id, invitation.device_id.user_id)
-        if invitation.device_id.device_name in user.devices:
+        user_devices = self._get_user_devices(organization_id, invitation.device_id.user_id)
+        if invitation.device_id.device_name in user_devices:
             raise UserAlreadyExistsError(f"Device `{invitation.device_id}` already exists")
+
         org._invitations[invitation.device_id] = invitation
 
     async def get_device_invitation(
@@ -206,13 +239,13 @@ class MemoryUserComponent(BaseUserComponent):
     ) -> DeviceInvitation:
         org = self._organizations[organization_id]
 
-        try:
-            org._users[device_id.user_id].devices[device_id.device_name]
+        user_devices = self._get_user_devices(organization_id, device_id.user_id)
+        if device_id.device_name in user_devices:
             raise UserAlreadyExistsError(device_id)
-        except KeyError:
-            pass
+
         try:
             return org._invitations[device_id]
+
         except KeyError:
             raise UserNotFoundError(device_id)
 
@@ -242,29 +275,21 @@ class MemoryUserComponent(BaseUserComponent):
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        certified_revocation: bytes,
-        revocation_certifier: DeviceID,
+        revoked_device_certificate: bytes,
+        revoked_device_certifier: DeviceID,
         revoked_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
-        org = self._organizations[organization_id]
-
-        user = await self.get_user(organization_id, device_id.user_id)
+        user_devices = self._get_user_devices(organization_id, device_id.user_id)
         try:
-            if user.devices[device_id.device_name].revoked_on:
+            if user_devices[device_id.device_name].revoked_on:
                 raise UserAlreadyRevokedError()
 
         except KeyError:
             raise UserNotFoundError(device_id)
 
-        patched_devices = []
-        for device in user.devices.values():
-            if device.device_id == device_id:
-                device = device.evolve(
-                    revoked_on=revoked_on or pendulum.now(),
-                    certified_revocation=certified_revocation,
-                    revocation_certifier=revocation_certifier,
-                )
-            patched_devices.append(device)
-
-        user = org._users[device_id.user_id] = user.evolve(devices=DevicesMapping(*patched_devices))
-        return user.get_revoked_on()
+        user_devices[device_id.device_name] = user_devices[device_id.device_name].evolve(
+            revoked_on=revoked_on or pendulum.now(),
+            revoked_device_certificate=revoked_device_certificate,
+            revoked_device_certifier=revoked_device_certifier,
+        )
+        return user_get_revoked_on(user_devices.values())

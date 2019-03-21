@@ -1,16 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Dict
-
 from structlog import get_logger
 
-from parsec.core.types import (
-    Access,
-    LocalManifest,
-    local_manifest_serializer,
-    remote_user_serializer,
-    BlockAccess,
-)
+from parsec.core.types import Access, LocalManifest, local_manifest_serializer, BlockAccess
 from .persistent_storage import PersistentStorage, LocalStorageMissingEntry
 
 logger = get_logger()
@@ -34,16 +26,6 @@ class LocalStorage:
 
     def __exit__(self, *args):
         self.persistent_storage.__exit__(*args)
-
-    # User interface
-
-    def get_user(self, access: Access) -> Dict:
-        raw_user_data = self.persistent_storage.get_user(access)
-        return remote_user_serializer.loads(raw_user_data)
-
-    def set_user(self, access: Access, user: Dict) -> None:
-        raw = remote_user_serializer.dumps(user)
-        self.persistent_storage.set_user(access, raw)
 
     # Manifest interface
 

@@ -46,6 +46,13 @@ vlob_group_check_serializer = CmdSerializer(VlobGroupCheckReqSchema, VlobGroupCh
 class VlobCreateReqSchema(BaseReqSchema):
     group = fields.UUID(required=True)
     id = fields.UUID(required=True)
+    # If blob contains a signed message, it timestamp cannot be directly enforced
+    # by the backend (given the message is probably also encrypted).
+    # Hence the timestamp is passed in clear so backend can reject the message
+    # if it considers the timestamp invalid. On top of that each client asking
+    # for the message will receive the declared timestamp to check against
+    # the actual timestamp within the message.
+    timestamp = fields.DateTime(required=True)
     blob = fields.Bytes(required=True)
 
 
@@ -73,6 +80,7 @@ vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
 
 class VlobUpdateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
+    timestamp = fields.DateTime(required=True)
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
 

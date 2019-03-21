@@ -4,12 +4,17 @@ import attr
 import pytest
 import pendulum
 from collections import defaultdict
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey, encrypt_with_secret_key
-from parsec.trustchain import certify_user, certify_device, certify_device_revocation
+from parsec.crypto import (
+    SigningKey,
+    encrypt_signed_msg_with_secret_key,
+    build_user_certificate,
+    build_device_certificate,
+    build_revoked_device_certificate,
+)
 from parsec.core.types import (
     LocalDevice,
     remote_manifest_serializer,
@@ -17,7 +22,13 @@ from parsec.core.types import (
     LocalUserManifest,
 )
 from parsec.core.devices_manager import generate_new_device
-from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
+from parsec.backend.user import (
+    User as BackendUser,
+    Device as BackendDevice,
+    new_user_factory as new_backend_user_factory,
+)
+
+from tests.common import freeze_time
 
 
 @attr.s
@@ -120,8 +131,15 @@ def otheralice(local_device_factory, otherorg):
 
 
 @pytest.fixture
-def alice(local_device_factory):
-    return local_device_factory("alice@dev1")
+def alice(local_device_factory, initial_user_manifest_state):
+    device = local_device_factory("alice@dev1")
+    # Force alice user manifest v1 to be signed by user alice@dev1
+    # This is needed given backend_factory bind alice@dev1 then alice@dev2,
+    # hence user manifest v1 is stored in backend at a time when alice@dev2
+    # doesn't exists.
+    with freeze_time("2000-01-01"):
+        initial_user_manifest_state.force_user_manifest_v1_generation(device)
+    return device
 
 
 @pytest.fixture
@@ -154,44 +172,52 @@ class InitialUserManifestState:
 
             remote_user_manifest = user_manifest.to_remote()
             access = device.user_manifest_access
+            now = pendulum.now()
 
-            ciphered = encrypt_with_secret_key(
+            ciphered = encrypt_signed_msg_with_secret_key(
                 device.device_id,
                 device.signing_key,
                 access.key,
                 local_manifest_serializer.dumps(user_manifest),
+                now,
             )
 
-            remote_ciphered = encrypt_with_secret_key(
+            remote_ciphered = encrypt_signed_msg_with_secret_key(
                 device.device_id,
                 device.signing_key,
                 access.key,
                 remote_manifest_serializer.dumps(remote_user_manifest),
+                now,
             )
 
-            self._v1[device.user_id] = (
-                user_manifest,
-                remote_user_manifest,
-                ciphered,
-                remote_ciphered,
-            )
+            self._v1[device.user_id] = {
+                "in_device": user_manifest,
+                "in_backend": remote_user_manifest,
+                "ciphered_in_device": ciphered,
+                "ciphered_in_backend": remote_ciphered,
+                "generated_by": device.device_id,
+                "generated_on": now,
+            }
             return self._v1[device.user_id]
 
+    def force_user_manifest_v1_generation(self, device):
+        self._generate_or_retrieve_user_manifest_v1(device)
+
     def get_user_manifest_v1_for_device(self, device, ciphered=False):
-        in_device, _, ciphered_in_device, _ = self._generate_or_retrieve_user_manifest_v1(device)
+        data = self._generate_or_retrieve_user_manifest_v1(device)
         if ciphered:
-            return ciphered_in_device
+            return data["ciphered_in_device"]
 
         else:
-            return in_device
+            return data["in_device"]
 
     def get_user_manifest_v1_for_backend(self, device, ciphered=False):
-        _, in_backend, _, ciphered_in_backend = self._generate_or_retrieve_user_manifest_v1(device)
+        data = self._generate_or_retrieve_user_manifest_v1(device)
         if ciphered:
-            return ciphered_in_backend
+            return data["ciphered_in_backend"], data["generated_by"], data["generated_on"]
 
         else:
-            return in_backend
+            return data["in_backend"], data["generated_by"], data["generated_on"]
 
 
 @pytest.fixture
@@ -209,7 +235,7 @@ def initial_user_manifest_state():
 
 def local_device_to_backend_user(
     device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData]
-) -> BackendUser:
+) -> Tuple[BackendUser, BackendDevice]:
     if isinstance(certifier, OrganizationFullData):
         certifier_id = None
         certifier_signing_key = certifier.root_signing_key
@@ -218,28 +244,69 @@ def local_device_to_backend_user(
         certifier_signing_key = certifier.signing_key
 
     now = pendulum.now()
-    certified_user = certify_user(
+    user_certificate = build_user_certificate(
         certifier_id, certifier_signing_key, device.user_id, device.public_key, now
     )
-    certified_device = certify_device(
+    device_certificate = build_device_certificate(
         certifier_id, certifier_signing_key, device.device_id, device.verify_key, now
     )
     return new_backend_user_factory(
         device_id=device.device_id,
         is_admin=False,
         certifier=certifier_id,
-        certified_user=certified_user,
-        certified_device=certified_device,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
     )
 
 
+class CertificatesStore:
+    def __init__(self):
+        self._user_certificates = {}
+        self._device_certificates = {}
+        self._revoked_device_certificates = {}
+
+    def store_user(self, organization_id, user_id, certif):
+        key = (organization_id, user_id)
+        assert key not in self._user_certificates
+        self._user_certificates[key] = certif
+
+    def store_device(self, organization_id, device_id, certif):
+        key = (organization_id, device_id)
+        assert key not in self._device_certificates
+        self._device_certificates[key] = certif
+
+    def store_revoked_device(self, organization_id, device_id, certif):
+        key = (organization_id, device_id)
+        assert key not in self._revoked_device_certificates
+        self._revoked_device_certificates[key] = certif
+
+    def get_user(self, local_user):
+        key = (local_user.organization_id, local_user.user_id)
+        return self._user_certificates[key]
+
+    def get_device(self, local_device):
+        key = (local_device.organization_id, local_device.device_id)
+        return self._device_certificates[key]
+
+    def get_revoked_device(self, local_device):
+        key = (local_device.organization_id, local_device.device_id)
+        return self._revoked_device_certificates.get(key)
+
+
 @pytest.fixture
-def backend_data_binder_factory(backend_addr, initial_user_manifest_state):
+def certificates_store(backend_data_binder_factory, backend):
+    binder = backend_data_binder_factory(backend)
+    return binder.certificates_store
+
+
+@pytest.fixture
+def backend_data_binder_factory(request, backend_addr, initial_user_manifest_state):
     class BackendDataBinder:
         def __init__(self, backend, backend_addr=backend_addr):
             self.backend = backend
             self.backend_addr = backend_addr
             self.binded_local_devices = []
+            self.certificates_store = CertificatesStore()
 
         def get_device(self, device_id):
             for d in self.binded_local_devices:
@@ -257,22 +324,36 @@ def backend_data_binder_factory(backend_addr, initial_user_manifest_state):
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(org.organization_id, bootstrap_token)
             if first_device:
-                backend_user = local_device_to_backend_user(first_device, org)
+                backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
                 await self.backend.organization.bootstrap(
-                    org.organization_id, backend_user, bootstrap_token, org.root_verify_key
+                    org.organization_id,
+                    backend_user,
+                    backend_first_device,
+                    bootstrap_token,
+                    org.root_verify_key,
+                )
+                self.certificates_store.store_user(
+                    org.organization_id, backend_user.user_id, backend_user.user_certificate
+                )
+                self.certificates_store.store_device(
+                    org.organization_id,
+                    backend_first_device.device_id,
+                    backend_first_device.device_certificate,
                 )
                 self.binded_local_devices.append(first_device)
 
                 if not initial_user_manifest_in_v0:
-                    ciphered = initial_user_manifest_state.get_user_manifest_v1_for_backend(
+                    args = initial_user_manifest_state.get_user_manifest_v1_for_backend(
                         first_device, ciphered=True
                     )
+                    ciphered, generated_by, generated_on = args
                     access = first_device.user_manifest_access
                     await self.backend.vlob.create(
                         first_device.organization_id,
-                        first_device.device_id,
+                        generated_by,
                         access.id,
                         access.id,
+                        generated_on,
                         ciphered,
                     )
 
@@ -292,35 +373,60 @@ def backend_data_binder_factory(backend_addr, initial_user_manifest_state):
                 except StopIteration:
                     raise RuntimeError(f"Organization `{device.organization_id}` not bootstrapped")
 
-            backend_user = local_device_to_backend_user(device, certifier)
+            backend_user, backend_device = local_device_to_backend_user(device, certifier)
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device
-                await self.backend.user.create_device(
-                    device.organization_id, backend_user.devices[device.device_name]
+                await self.backend.user.create_device(device.organization_id, backend_device)
+                self.certificates_store.store_device(
+                    device.organization_id,
+                    backend_device.device_id,
+                    backend_device.device_certificate,
                 )
 
             else:
                 # Add device and user
-                await self.backend.user.create_user(device.organization_id, backend_user)
+                await self.backend.user.create_user(
+                    device.organization_id, backend_user, backend_device
+                )
+                self.certificates_store.store_user(
+                    device.organization_id, backend_user.user_id, backend_user.user_certificate
+                )
+                self.certificates_store.store_device(
+                    device.organization_id,
+                    backend_device.device_id,
+                    backend_device.device_certificate,
+                )
 
                 if not initial_user_manifest_in_v0:
-                    ciphered = initial_user_manifest_state.get_user_manifest_v1_for_backend(
+                    args = initial_user_manifest_state.get_user_manifest_v1_for_backend(
                         device, ciphered=True
                     )
+                    ciphered, generated_by, generated_on = args
                     access = device.user_manifest_access
                     await self.backend.vlob.create(
-                        device.organization_id, device.device_id, access.id, access.id, ciphered
+                        device.organization_id,
+                        generated_by,
+                        access.id,
+                        access.id,
+                        generated_on,
+                        ciphered,
                     )
 
             self.binded_local_devices.append(device)
 
         async def bind_revocation(self, device: LocalDevice, certifier: LocalDevice):
-            certified_revocation = certify_device_revocation(
-                certifier.device_id, certifier.signing_key, device.device_id
+            revoked_device_certificate = build_revoked_device_certificate(
+                certifier.device_id, certifier.signing_key, device.device_id, pendulum.now()
             )
             await self.backend.user.revoke_device(
-                device.organization_id, device.device_id, certified_revocation, certifier.device_id
+                device.organization_id,
+                device.device_id,
+                revoked_device_certificate,
+                certifier.device_id,
+            )
+            self.certificates_store.store_revoked_device(
+                device.organization_id, device.device_id, revoked_device_certificate
             )
 
     # Binder must be unique per backend

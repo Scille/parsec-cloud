@@ -4,8 +4,12 @@ import pytest
 import trio
 import pendulum
 
-from parsec.trustchain import certify_user, certify_device
-from parsec.core.types import RemoteUser
+from parsec.crypto import (
+    build_user_certificate,
+    build_device_certificate,
+    unsecure_read_user_certificate,
+)
+from parsec.core.types import UnverifiedRemoteUser
 from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
 
@@ -25,30 +29,25 @@ async def test_user_invite_then_claim_ok(
         assert claim["token"] == token
 
         now = pendulum.now()
-        certified_user = certify_user(
-            alice.device_id,
-            alice.signing_key,
-            claim["device_id"].user_id,
-            claim["public_key"],
-            now=now,
+        user_certificate = build_user_certificate(
+            alice.device_id, alice.signing_key, claim["device_id"].user_id, claim["public_key"], now
         )
-        certified_device = certify_device(
-            alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now=now
+        device_certificate = build_device_certificate(
+            alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now
         )
         with trio.fail_after(1):
-            await alice_backend_cmds.user_create(certified_user, certified_device, False)
+            await alice_backend_cmds.user_create(user_certificate, device_certificate, False)
 
     async def _mallory_claim():
         async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
-            invitation_creator = await cmds.user_get_invitation_creator(mallory.user_id)
-            assert isinstance(invitation_creator, RemoteUser)
+            invitation_creator, trustchain = await cmds.user_get_invitation_creator(mallory.user_id)
+            assert isinstance(invitation_creator, UnverifiedRemoteUser)
+            assert trustchain == []
+
+            creator = unsecure_read_user_certificate(invitation_creator.user_certificate)
 
             encrypted_claim = generate_user_encrypted_claim(
-                invitation_creator.public_key,
-                token,
-                mallory.device_id,
-                mallory.public_key,
-                mallory.verify_key,
+                creator.public_key, token, mallory.device_id, mallory.public_key, mallory.verify_key
             )
             with trio.fail_after(1):
                 await cmds.user_claim(mallory.user_id, encrypted_claim)

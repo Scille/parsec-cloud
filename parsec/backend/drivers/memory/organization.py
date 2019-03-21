@@ -2,7 +2,7 @@
 
 from parsec.types import OrganizationID
 from parsec.crypto import VerifyKey
-from parsec.backend.user import BaseUserComponent, UserError, User
+from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -33,7 +33,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         return self._organizations[id]
 
     async def bootstrap(
-        self, id: OrganizationID, user: User, bootstrap_token: str, root_verify_key: VerifyKey
+        self,
+        id: OrganizationID,
+        user: User,
+        first_device: Device,
+        bootstrap_token: str,
+        root_verify_key: VerifyKey,
     ) -> None:
         organization = await self.get(id)
         if organization.is_bootstrapped():
@@ -43,7 +48,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             raise OrganizationInvalidBootstrapTokenError()
 
         try:
-            await self.user_component.create_user(id, user)
+            await self.user_component.create_user(id, user, first_device)
 
         except UserError as exc:
             raise OrganizationFirstUserCreationError(exc) from exc

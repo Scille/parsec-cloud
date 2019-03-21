@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pendulum
+from pendulum import Pendulum
 from typing import List, Tuple
 
 from parsec.types import UserID, DeviceID, OrganizationID
@@ -13,7 +13,12 @@ class PGMessageComponent(BaseMessageComponent):
         self.dbh = dbh
 
     async def send(
-        self, organization_id: OrganizationID, sender: DeviceID, recipient: UserID, body: bytes
+        self,
+        organization_id: OrganizationID,
+        sender: DeviceID,
+        recipient: UserID,
+        timestamp: Pendulum,
+        body: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -22,7 +27,7 @@ class PGMessageComponent(BaseMessageComponent):
 INSERT INTO message (
     organization,
     recipient,
-    created_on,
+    timestamp,
     index,
     sender,
     body
@@ -44,7 +49,7 @@ RETURNING index
                     recipient,
                     sender,
                     body,
-                    pendulum.now(),
+                    timestamp,
                 )
 
                 await send_signal(
@@ -58,11 +63,11 @@ RETURNING index
 
     async def get(
         self, organization_id: OrganizationID, recipient: UserID, offset: int
-    ) -> List[Tuple[DeviceID, bytes]]:
+    ) -> List[Tuple[DeviceID, Pendulum, bytes]]:
         async with self.dbh.pool.acquire() as conn:
             data = await conn.fetch(
                 """
-SELECT get_device_id(sender), body
+SELECT get_device_id(sender), timestamp, body
 FROM message
 WHERE recipient = get_user_internal_id($1, $2)
 ORDER BY _id ASC OFFSET $3
@@ -71,4 +76,4 @@ ORDER BY _id ASC OFFSET $3
                 recipient,
                 offset,
             )
-        return [(DeviceID(d[0]), d[1]) for d in data]
+        return [(DeviceID(d[0]), d[1], d[2]) for d in data]

@@ -3,10 +3,55 @@
 import pytest
 import trio
 import threading
+from functools import partial
 from inspect import iscoroutinefunction
 from contextlib import contextmanager
 
 from parsec.utils import start_task
+
+
+class ExecutionInThreadTimeout:
+    pass
+
+
+class ExecutionInThread:
+    def __init__(self, cb, *params):
+        self.params = params
+        self.cb = cb
+        self._thread = None
+        self._retval = None
+        self._ready = threading.Event()
+
+    def join(self, timeout=None):
+        assert self._thread
+
+        self._thread.join(timeout=timeout)
+        if self._thread.is_alive():
+            raise ExecutionInThreadTimeout()
+        type, value = self._retval
+        if type == "exception":
+            raise value
+        else:
+            return value
+
+    def run(self):
+        assert not self._thread
+
+        def _controlled_cb():
+            try:
+                res = self.cb(*self.params, ready=self._ready.set)
+
+            except Exception as exc:
+                self._ready.set()
+                self._retval = ("exception", exc)
+
+            else:
+                self._retval = ("result", res)
+
+        self._thread = threading.Thread(target=_controlled_cb, daemon=True)
+        self._thread.setName("ExecutionInThread")
+        self._thread.start()
+        self._ready.wait()
 
 
 @pytest.fixture
@@ -32,11 +77,17 @@ def backend_service_factory(backend_factory):
                 raise RuntimeError("Port not yet available, is service started ?")
             return f"ws://127.0.0.1:{self.port}"
 
-        def execute(self, cb):
+        def execute(self, cb, **params):
+            cooked_cb = partial(cb, self._task.value, **params)
             if iscoroutinefunction(cb):
-                self._portal.run(cb, self._task.value)
+                self._portal.run(cooked_cb)
             else:
-                self._portal.run_sync(cb, self._task.value)
+                self._portal.run_sync(cooked_cb)
+
+        def execute_in_thread(self, cb):
+            execution = ExecutionInThread(self.execute, cb)
+            execution.run()
+            return execution
 
         def start(self, **backend_factory_params):
             async def _start():

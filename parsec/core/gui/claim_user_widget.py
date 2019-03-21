@@ -52,8 +52,12 @@ async def _trio_claim_user(
             else:
                 devices_manager.save_device_with_password(config.config_dir, device, password)
             qt_on_done.emit()
+
         except BackendCmdsBadResponse as e:
             qt_on_error.emit(e.status)
+
+        except Exception as e:
+            qt_on_error.emit(str(e))
 
 
 class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):

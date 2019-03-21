@@ -2,8 +2,14 @@
 
 import trio
 from uuid import UUID
+import pendulum
 
-from parsec.crypto import decrypt_raw_with_secret_key, encrypt_raw_with_secret_key
+from parsec.crypto import (
+    encrypt_signed_msg_with_secret_key,
+    decrypt_raw_with_secret_key,
+    encrypt_raw_with_secret_key,
+    decrypt_and_verify_signed_msg_with_secret_key,
+)
 from parsec.core.backend_connection import BackendCmdsBadResponse
 from parsec.core.types import (
     FsPath,
@@ -29,7 +35,7 @@ class BaseSyncer:
         self,
         device,
         backend_cmds,
-        encryption_manager,
+        remote_devices_manager,
         local_folder_fs,
         local_file_fs,
         event_bus,
@@ -40,7 +46,7 @@ class BaseSyncer:
         self.local_folder_fs = local_folder_fs
         self.local_file_fs = local_file_fs
         self.backend_cmds = backend_cmds
-        self.encryption_manager = encryption_manager
+        self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
         self.block_size = block_size
 
@@ -222,17 +228,29 @@ class BaseSyncer:
         return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
-        _, blob = await self.backend_cmds.vlob_read(access.id, version)
-        raw = await self.encryption_manager.decrypt_with_secret_key(access.key, blob)
-        return remote_manifest_serializer.loads(raw)
+        args = await self.backend_cmds.vlob_read(access.id, version)
+        expected_author_id, expected_timestamp, expected_version, blob = args
+        author = await self.remote_devices_manager.get_device(expected_author_id)
+        raw = decrypt_and_verify_signed_msg_with_secret_key(
+            access.key, blob, expected_author_id, author.verify_key, expected_timestamp
+        )
+        manifest = remote_manifest_serializer.loads(raw)
+        # TODO: better exception !
+        assert manifest.version == expected_version
+        return manifest
 
     async def _backend_vlob_create(self, vlob_group, access, manifest):
         assert manifest.version == 1
-        ciphered = self.encryption_manager.encrypt_with_secret_key(
-            access.key, remote_manifest_serializer.dumps(manifest)
+        now = pendulum.now()
+        ciphered = encrypt_signed_msg_with_secret_key(
+            self.device.device_id,
+            self.device.signing_key,
+            access.key,
+            remote_manifest_serializer.dumps(manifest),
+            now,
         )
         try:
-            await self.backend_cmds.vlob_create(vlob_group, access.id, ciphered)
+            await self.backend_cmds.vlob_create(vlob_group, access.id, now, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise SyncConcurrencyError(access)
@@ -240,11 +258,16 @@ class BaseSyncer:
 
     async def _backend_vlob_update(self, access, manifest):
         assert manifest.version > 1
-        ciphered = self.encryption_manager.encrypt_with_secret_key(
-            access.key, remote_manifest_serializer.dumps(manifest)
+        now = pendulum.now()
+        ciphered = encrypt_signed_msg_with_secret_key(
+            self.device.device_id,
+            self.device.signing_key,
+            access.key,
+            remote_manifest_serializer.dumps(manifest),
+            now,
         )
         try:
-            await self.backend_cmds.vlob_update(access.id, manifest.version, ciphered)
+            await self.backend_cmds.vlob_update(access.id, manifest.version, now, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":
                 raise SyncConcurrencyError(access)

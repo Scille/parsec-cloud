@@ -2,6 +2,7 @@
 
 import trio
 import pytest
+import pendulum
 from uuid import UUID
 
 from parsec.backend.block import BlockTimeoutError
@@ -14,7 +15,10 @@ BLOCK_DATA = b"Hodi ho !"
 
 
 async def _create_vlob_group(backend, user, vlob_id, vlob_group_id):
-    await backend.vlob.create(user.organization_id, user.device_id, vlob_id, vlob_group_id, b"")
+    now = pendulum.now()
+    await backend.vlob.create(
+        user.organization_id, user.device_id, vlob_id, vlob_group_id, now, b""
+    )
     return vlob_group_id
 
 

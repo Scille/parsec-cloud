@@ -1,19 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+# Given `parsec.types` depends on this module, we cannot put it inside
+# package `parsec.crypto` (which in turn depends of `parsec.types`)
+
+from typing import NewType
 from base64 import b32decode, b32encode
 from nacl.public import PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.exceptions import CryptoError
 
 
-__all__ = (
-    "PrivateKey",
-    "PublicKey",
-    "SigningKey",
-    "VerifyKey",
-    "export_root_verify_key",
-    "import_root_verify_key",
-)
+SymetricKey = NewType("SymetricKey", bytes)
+HashDigest = NewType("HashDigest", bytes)
 
 
 # Basically just add comparison support to nacl keys

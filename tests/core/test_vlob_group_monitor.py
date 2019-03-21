@@ -8,7 +8,9 @@ from tests.common import create_shared_workspace
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("folder", "file"))
-async def test_vlob_group_notif_on_new_entry_sync(type, running_backend, alice_core, alice2_fs):
+async def test_vlob_group_notif_on_new_entry_sync(
+    type, running_backend, alice_core, alice2_fs, monitor
+):
     await create_shared_workspace("/w", alice_core, alice2_fs)
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
 

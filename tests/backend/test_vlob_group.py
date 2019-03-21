@@ -3,6 +3,7 @@
 import pytest
 from uuid import UUID
 import trio
+from pendulum import Pendulum
 from itertools import combinations_with_replacement
 
 from parsec.api.protocole import (
@@ -15,6 +16,7 @@ from tests.backend.test_events import events_subscribe, events_listen_nowait
 from tests.backend.test_vlob import vlob_update
 
 
+NOW = Pendulum(2000, 1, 1)
 VLOB_ID = UUID("00000000000000000000000000000001")
 OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")
@@ -60,7 +62,7 @@ async def group_poll(sock, id, last_checkpoint):
 
 @pytest.mark.trio
 async def test_vlob_group_lazy_created_by_new_vlob(backend, alice, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     rep = await group_poll(alice_backend_sock, GROUP_ID, 0)
     assert rep == {"status": "ok", "current_checkpoint": 1, "changes": {VLOB_ID: 1}}
@@ -68,8 +70,8 @@ async def test_vlob_group_lazy_created_by_new_vlob(backend, alice, alice_backend
 
 @pytest.mark.trio
 async def test_vlob_group_updated_by_vlob(backend, alice, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
-    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, b"v2")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
+    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, NOW, b"v2")
 
     for last_checkpoint in (0, 1):
         rep = await group_poll(alice_backend_sock, GROUP_ID, last_checkpoint)
@@ -78,8 +80,8 @@ async def test_vlob_group_updated_by_vlob(backend, alice, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_vlob_group_poll_checkpoint_up_to_date(backend, alice, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
-    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, b"v2")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
+    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, NOW, b"v2")
 
     rep = await group_poll(alice_backend_sock, GROUP_ID, 2)
     assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {}}
@@ -114,7 +116,7 @@ async def test_vlob_group_update_rights_not_found(bob, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_vlob_group_update_rights_bad_user(backend, alice, mallory, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     rep = await group_update_rights(alice_backend_sock, GROUP_ID, mallory.user_id, True, True, True)
     assert rep == {"status": "not_found", "reason": "User `mallory` doesn't exist"}
@@ -122,7 +124,7 @@ async def test_vlob_group_update_rights_bad_user(backend, alice, mallory, alice_
 
 @pytest.mark.trio
 async def test_vlob_group_remove_rights_idempotent(backend, alice, bob, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, False, False, False)
     assert rep == {"status": "ok"}
@@ -139,7 +141,7 @@ async def test_vlob_group_remove_rights_idempotent(backend, alice, bob, alice_ba
 
 @pytest.mark.trio
 async def test_vlob_group_need_admin_to_share(backend, alice, bob, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     # Only read right...
     rep = await group_update_rights(alice_backend_sock, GROUP_ID, alice.user_id, False, True, True)
@@ -163,7 +165,7 @@ async def test_vlob_group_need_admin_to_share(backend, alice, bob, alice_backend
 
 @pytest.mark.trio
 async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock, bob_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     # At first only Alice is allowed
 
@@ -237,7 +239,7 @@ async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock,
 @pytest.mark.trio
 async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alice2):
     # Not listened events
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, b"v1")
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     # Start listening events
     await events_subscribe(alice_backend_sock, vlob_group_updated=[GROUP_ID, OTHER_GROUP_ID])
@@ -246,10 +248,10 @@ async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alic
     with backend.event_bus.listen() as spy:
 
         await backend.vlob.create(
-            alice.organization_id, alice2.device_id, OTHER_VLOB_ID, OTHER_GROUP_ID, b"v1"
+            alice.organization_id, alice2.device_id, OTHER_VLOB_ID, OTHER_GROUP_ID, NOW, b"v1"
         )
-        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 2, b"v2")
-        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 3, b"v3")
+        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 2, NOW, b"v2")
+        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 3, NOW, b"v3")
 
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
@@ -293,7 +295,7 @@ async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alic
 
     # Ignore self events
 
-    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 4, b"v4")
+    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 4, NOW, b"v4")
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
@@ -301,10 +303,15 @@ async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alic
     # Group id not subscribed to
 
     await backend.vlob.create(
-        alice.organization_id, alice2.device_id, YET_ANOTHER_VLOB_ID, YET_ANOTHER_GROUP_ID, b"v1"
+        alice.organization_id,
+        alice2.device_id,
+        YET_ANOTHER_VLOB_ID,
+        YET_ANOTHER_GROUP_ID,
+        NOW,
+        b"v1",
     )
     await backend.vlob.update(
-        alice.organization_id, alice2.device_id, YET_ANOTHER_VLOB_ID, 2, b"v2"
+        alice.organization_id, alice2.device_id, YET_ANOTHER_VLOB_ID, 2, NOW, b"v2"
     )
 
     rep = await events_listen_nowait(alice_backend_sock)

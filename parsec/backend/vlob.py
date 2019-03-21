@@ -15,6 +15,7 @@ from parsec.api.protocole import (
     vlob_group_poll_serializer,
 )
 from parsec.backend.utils import catch_protocole_errors
+from parsec.crypto import timestamps_in_the_ballpark
 
 
 class VlobError(Exception):
@@ -49,6 +50,11 @@ class BaseVlobComponent:
     @catch_protocole_errors
     async def api_vlob_create(self, client_ctx, msg):
         msg = vlob_create_serializer.req_load(msg)
+
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(msg["timestamp"], now):
+            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+
         try:
             await self.create(client_ctx.organization_id, client_ctx.device_id, **msg)
 
@@ -91,6 +97,10 @@ class BaseVlobComponent:
     @catch_protocole_errors
     async def api_vlob_update(self, client_ctx, msg):
         msg = vlob_update_serializer.req_load(msg)
+
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(msg["timestamp"], now):
+            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
 
         try:
             await self.update(client_ctx.organization_id, client_ctx.device_id, **msg)
@@ -217,7 +227,13 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def create(
-        self, organization_id: OrganizationID, author: DeviceID, id: UUID, group: UUID, blob: bytes
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        id: UUID,
+        group: UUID,
+        timestamp: pendulum.Pendulum,
+        blob: bytes,
     ) -> None:
         """
         Raises:

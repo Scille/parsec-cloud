@@ -2,19 +2,20 @@
 
 import trio
 import attr
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 import pendulum
 
-from parsec.types import UserID, DeviceID, OrganizationID, FrozenDict
-from parsec.crypto import VerifyKey, PublicKey
-from parsec.trustchain import (
-    unsecure_certified_device_extract_verify_key,
-    unsecure_certified_user_extract_public_key,
-    certified_extract_parts,
-    validate_payload_certified_user,
-    validate_payload_certified_device,
-    validate_payload_certified_device_revocation,
-    TrustChainError,
+from parsec.types import UserID, DeviceID, OrganizationID
+from parsec.crypto import (
+    CryptoError,
+    VerifyKey,
+    PublicKey,
+    verify_user_certificate,
+    verify_device_certificate,
+    verify_revoked_device_certificate,
+    unsecure_read_device_certificate,
+    unsecure_read_user_certificate,
+    timestamps_in_the_ballpark,
 )
 from parsec.api.protocole import (
     user_get_serializer,
@@ -72,21 +73,16 @@ class Device:
 
     @property
     def verify_key(self) -> VerifyKey:
-        return unsecure_certified_device_extract_verify_key(self.certified_device)
+        return unsecure_read_device_certificate(self.device_certificate).verify_key
 
     device_id: DeviceID
-    certified_device: bytes
+    device_certificate: bytes
     device_certifier: Optional[DeviceID]
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None
-    certified_revocation: bytes = None
-    revocation_certifier: DeviceID = None
-
-
-class DevicesMapping(FrozenDict):
-    def __init__(self, *devices: Device):
-        super().__init__({d.device_name: d for d in devices})
+    revoked_device_certificate: bytes = None
+    revoked_device_certifier: DeviceID = None
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -99,55 +95,54 @@ class User:
 
     @property
     def public_key(self) -> PublicKey:
-        return unsecure_certified_user_extract_public_key(self.certified_user)
+        return unsecure_read_user_certificate(self.user_certificate).public_key
 
     user_id: UserID
-    certified_user: bytes
+    user_certificate: bytes
     user_certifier: Optional[DeviceID]
     is_admin: bool = False
-    devices: DevicesMapping = attr.ib(factory=DevicesMapping)
-
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
-    def is_revoked(self) -> bool:
-        now = pendulum.now()
-        for d in self.devices.values():
-            if not d.revoked_on or d.revoked_on > now:
-                return False
-        return True
 
-    def get_revoked_on(self) -> Optional[pendulum.Pendulum]:
-        revocations = [d.revoked_on for d in self.devices.values()]
-        if not revocations or None in revocations:
-            return None
-        else:
-            return sorted(revocations)[-1]
+def user_is_revoked(devices: List[Device]) -> bool:
+    now = pendulum.now()
+    for d in devices:
+        if not d.revoked_on or d.revoked_on > now:
+            return False
+    return True
+
+
+def user_get_revoked_on(devices: List[Device]) -> Optional[pendulum.Pendulum]:
+    revocations = [d.revoked_on for d in devices]
+    if not revocations or None in revocations:
+        return None
+    else:
+        return sorted(revocations)[-1]
 
 
 def new_user_factory(
     device_id: DeviceID,
     is_admin: bool,
     certifier: Optional[DeviceID],
-    certified_user: bytes,
-    certified_device: bytes,
+    user_certificate: bytes,
+    device_certificate: bytes,
     now: pendulum.Pendulum = None,
-) -> User:
+) -> Tuple[User, Device]:
     now = now or pendulum.now()
-    return User(
+    user = User(
         user_id=device_id.user_id,
         is_admin=is_admin,
-        certified_user=certified_user,
+        user_certificate=user_certificate,
         user_certifier=certifier,
-        devices=DevicesMapping(
-            Device(
-                device_id=device_id,
-                certified_device=certified_device,
-                device_certifier=certifier,
-                created_on=now,
-            )
-        ),
         created_on=now,
     )
+    first_device = Device(
+        device_id=device_id,
+        device_certificate=device_certificate,
+        device_certifier=certifier,
+        created_on=now,
+    )
+    return user, first_device
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -188,7 +183,7 @@ class BaseUserComponent:
         msg = user_get_serializer.req_load(msg)
 
         try:
-            user, trustchain = await self.get_user_with_trustchain(
+            user, devices, trustchain = await self.get_user_with_devices_and_trustchain(
                 client_ctx.organization_id, msg["user_id"]
             )
         except UserNotFoundError:
@@ -199,10 +194,8 @@ class BaseUserComponent:
                 "status": "ok",
                 "user_id": user.user_id,
                 "is_admin": user.is_admin,
-                "created_on": user.created_on,
-                "certified_user": user.certified_user,
-                "user_certifier": user.user_certifier,
-                "devices": user.devices,
+                "user_certificate": user.user_certificate,
+                "devices": devices,
                 "trustchain": trustchain,
             }
         )
@@ -227,9 +220,7 @@ class BaseUserComponent:
     async def api_user_invite(self, client_ctx, msg):
         # is_admin could have changed in db since the creation of the connection
         try:
-            user, _ = await self.get_user_with_trustchain(
-                client_ctx.organization_id, client_ctx.device_id.user_id
-            )
+            user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
 
         except UserNotFoundError:
             raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
@@ -292,9 +283,7 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "user_id": user.user_id,
-                "created_on": user.created_on,
-                "certified_user": user.certified_user,
-                "user_certifier": user.user_certifier,
+                "user_certificate": user.user_certificate,
                 "trustchain": trustchain,
             }
         )
@@ -326,7 +315,7 @@ class BaseUserComponent:
 
         send_channel, recv_channel = trio.open_memory_channel(1000)
 
-        def _on_organization_events(event, organization_id, user_id):
+        def _on_organization_events(event, organization_id, user_id, first_device_id=None):
             if organization_id == client_ctx.organization_id:
                 send_channel.send_nowait((event, user_id))
 
@@ -372,61 +361,53 @@ class BaseUserComponent:
         msg = user_create_serializer.req_load(msg)
 
         try:
-            u_certifier_id, u_payload = certified_extract_parts(msg["certified_user"])
-            d_certifier_id, d_payload = certified_extract_parts(msg["certified_device"])
+            d_data = verify_device_certificate(
+                msg["device_certificate"], client_ctx.device_id, client_ctx.verify_key
+            )
+            u_data = verify_user_certificate(
+                msg["user_certificate"], client_ctx.device_id, client_ctx.verify_key
+            )
 
-        except TrustChainError as exc:
+        except CryptoError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if u_certifier_id != client_ctx.device_id or d_certifier_id != client_ctx.device_id:
+        if u_data.certified_on != d_data.certified_on:
             return {
-                "status": "invalid_certification",
-                "reason": "Certifier is not the authenticated device.",
+                "status": "invalid_data",
+                "reason": "Device and User certifications must have the same timestamp.",
             }
 
-        try:
-            now = pendulum.now()
-            u_data = validate_payload_certified_user(client_ctx.verify_key, u_payload, now)
-            d_data = validate_payload_certified_device(client_ctx.verify_key, d_payload, now)
-
-        except TrustChainError as exc:
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(u_data.certified_on, now):
             return {
                 "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
+                "reason": f"Invalid timestamp in certification.",
             }
 
-        if u_data["user_id"] != d_data["device_id"].user_id:
+        if u_data.user_id != d_data.device_id.user_id:
             return {
                 "status": "invalid_data",
                 "reason": "Device and User must have the same user ID.",
             }
 
-        if u_data["timestamp"] != d_data["timestamp"]:
-            return {
-                "status": "invalid_data",
-                "reason": "Device and User must have the same timestamp.",
-            }
-
         try:
             user = User(
-                user_id=u_data["user_id"],
+                user_id=u_data.user_id,
                 is_admin=msg["is_admin"],
-                certified_user=msg["certified_user"],
-                user_certifier=u_certifier_id,
-                devices=DevicesMapping(
-                    Device(
-                        device_id=d_data["device_id"],
-                        certified_device=msg["certified_device"],
-                        device_certifier=d_certifier_id,
-                        created_on=d_data["timestamp"],
-                    )
-                ),
-                created_on=u_data["timestamp"],
+                user_certificate=msg["user_certificate"],
+                user_certifier=u_data.certified_by,
+                created_on=u_data.certified_on,
             )
-            await self.create_user(client_ctx.organization_id, user)
+            first_devices = Device(
+                device_id=d_data.device_id,
+                device_certificate=msg["device_certificate"],
+                device_certifier=d_data.certified_by,
+                created_on=d_data.certified_on,
+            )
+            await self.create_user(client_ctx.organization_id, user, first_devices)
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
@@ -492,9 +473,7 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "user_id": user.user_id,
-                "created_on": user.created_on,
-                "certified_user": user.certified_user,
-                "user_certifier": user.user_certifier,
+                "user_certificate": user.user_certificate,
                 "trustchain": trustchain,
             }
         )
@@ -576,36 +555,31 @@ class BaseUserComponent:
         msg = device_create_serializer.req_load(msg)
 
         try:
-            certifier_id, payload = certified_extract_parts(msg["certified_device"])
-        except TrustChainError as exc:
+            data = verify_device_certificate(
+                msg["device_certificate"], client_ctx.device_id, client_ctx.verify_key
+            )
+
+        except CryptoError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if certifier_id != client_ctx.device_id:
+        if not timestamps_in_the_ballpark(data.certified_on, pendulum.now()):
             return {
                 "status": "invalid_certification",
-                "reason": "Certifier is not the authenticated device.",
+                "reason": f"Invalid timestamp in certification.",
             }
 
-        try:
-            data = validate_payload_certified_device(client_ctx.verify_key, payload, pendulum.now())
-        except TrustChainError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if data["device_id"].user_id != client_ctx.user_id:
+        if data.device_id.user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
         try:
             device = Device(
-                device_id=data["device_id"],
-                certified_device=msg["certified_device"],
-                device_certifier=certifier_id,
-                created_on=data["timestamp"],
+                device_id=data.device_id,
+                device_certificate=msg["device_certificate"],
+                device_certifier=data.certified_by,
+                created_on=data.certified_on,
             )
             await self.create_device(
                 client_ctx.organization_id, device, encrypted_answer=msg["encrypted_answer"]
@@ -620,37 +594,28 @@ class BaseUserComponent:
         msg = device_revoke_serializer.req_load(msg)
 
         try:
-            certifier_id, payload = certified_extract_parts(msg["certified_revocation"])
-        except TrustChainError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if certifier_id != client_ctx.device_id:
-            return {
-                "status": "invalid_certification",
-                "reason": "Certifier is not the authenticated device.",
-            }
-
-        try:
-            data = validate_payload_certified_device_revocation(
-                client_ctx.verify_key, payload, pendulum.now()
+            data = verify_revoked_device_certificate(
+                msg["revoked_device_certificate"], client_ctx.device_id, client_ctx.verify_key
             )
-        except TrustChainError as exc:
+
+        except CryptoError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if client_ctx.device_id.user_id != data["device_id"].user_id:
-            try:
-                user, _ = await self.get_user_with_trustchain(
-                    client_ctx.organization_id, client_ctx.device_id.user_id
-                )
+        if not timestamps_in_the_ballpark(data.certified_on, pendulum.now()):
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
+            }
 
-            except UserNotFoundError:
-                raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
+        if client_ctx.device_id.user_id != data.device_id.user_id:
+            try:
+                user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
+
+            except UserNotFoundError as exc:
+                raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !") from exc
 
             if not user.is_admin:
                 return {
@@ -661,10 +626,10 @@ class BaseUserComponent:
         try:
             user_revoked_on = await self.revoke_device(
                 client_ctx.organization_id,
-                data["device_id"],
-                msg["certified_revocation"],
-                certifier_id,
-                data["timestamp"],
+                data.device_id,
+                msg["revoked_device_certificate"],
+                data.certified_by,
+                data.certified_on,
             )
 
         except UserNotFoundError:
@@ -673,7 +638,7 @@ class BaseUserComponent:
         except UserAlreadyRevokedError:
             return {
                 "status": "already_revoked",
-                "reason": f"Device `{data['device_id']}` already revoked",
+                "reason": f"Device `{data.device_id}` already revoked",
             }
 
         return device_revoke_serializer.rep_dump(
@@ -691,7 +656,9 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def create_user(self, organization_id: OrganizationID, user: User) -> None:
+    async def create_user(
+        self, organization_id: OrganizationID, user: User, first_device: Device
+    ) -> None:
         """
         Raises:
             UserAlreadyExistsError
@@ -716,23 +683,25 @@ class BaseUserComponent:
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Dict[DeviceID, Device]]:
+    ) -> Tuple[User, Tuple[Device]]:
         """
         Raises:
             UserNotFoundError
         """
         raise NotImplementedError()
 
-    async def get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
+    async def get_user_with_devices_and_trustchain(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
         """
         Raises:
             UserNotFoundError
         """
         raise NotImplementedError()
 
-    async def get_device_with_trustchain(
+    async def get_user_with_device(
         self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> Tuple[Device, Dict[DeviceID, Device]]:
+    ) -> Tuple[User, Device]:
         """
         Raises:
             UserNotFoundError
@@ -828,8 +797,8 @@ class BaseUserComponent:
         self,
         organization_id: OrganizationID,
         device_id: DeviceID,
-        certified_revocation: bytes,
-        revocation_certifier: DeviceID,
+        revoked_device_certificate: bytes,
+        revoked_device_certifier: DeviceID,
         revoked_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         """

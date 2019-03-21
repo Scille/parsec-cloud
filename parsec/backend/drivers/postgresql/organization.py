@@ -4,7 +4,7 @@ from triopg import UniqueViolationError
 
 from parsec.types import OrganizationID
 from parsec.crypto import VerifyKey
-from parsec.backend.user import BaseUserComponent, UserError, User
+from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -66,6 +66,7 @@ WHERE organization_id = $1
         self,
         organization_id: OrganizationID,
         user: User,
+        first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
     ) -> None:
@@ -80,7 +81,9 @@ WHERE organization_id = $1
                     raise OrganizationInvalidBootstrapTokenError()
 
                 try:
-                    await self.user_component._create_user(conn, organization_id, user)
+                    await self.user_component._create_user(
+                        conn, organization_id, user, first_device
+                    )
                 except UserError as exc:
                     raise OrganizationFirstUserCreationError(exc) from exc
 

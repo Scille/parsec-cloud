@@ -256,7 +256,13 @@ ORDER BY vlob_id, version DESC
         return changed
 
     async def create(
-        self, organization_id: OrganizationID, author: DeviceID, id: UUID, group: UUID, blob: bytes
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        id: UUID,
+        group: UUID,
+        timestamp: pendulum.Pendulum,
+        blob: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -337,7 +343,7 @@ RETURNING _id
                     vlob_internal_id,
                     blob,
                     author,
-                    pendulum.now(),
+                    timestamp,
                 )
 
                 await self._vlob_updated(
@@ -413,7 +419,13 @@ WHERE
         return data[1:]
 
     async def update(
-        self, organization_id: OrganizationID, author: DeviceID, id: UUID, version: int, blob: bytes
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        id: UUID,
+        version: int,
+        timestamp: pendulum.Pendulum,
+        blob: bytes,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -466,7 +478,7 @@ RETURNING (
                         version,
                         blob,
                         author,
-                        pendulum.now(),
+                        timestamp,
                     )
 
                 except UniqueViolationError:

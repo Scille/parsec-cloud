@@ -5,7 +5,7 @@ import pendulum
 from unittest.mock import ANY
 
 from parsec.types import UserID
-from parsec.trustchain import certify_user, certify_device
+from parsec.crypto import build_user_certificate, build_device_certificate
 
 from parsec.api.protocole import organization_create_serializer, organization_bootstrap_serializer
 
@@ -24,15 +24,15 @@ async def organization_create(sock, organization_id):
 
 
 async def organization_bootstrap(
-    sock, bootstrap_token, certified_user, certified_device, root_verify_key
+    sock, bootstrap_token, user_certificate, device_certificate, root_verify_key
 ):
     raw_rep = await sock.send(
         organization_bootstrap_serializer.req_dumps(
             {
                 "cmd": "organization_bootstrap",
                 "bootstrap_token": bootstrap_token,
-                "certified_user": certified_user,
-                "certified_device": certified_device,
+                "user_certificate": user_certificate,
+                "device_certificate": device_certificate,
                 "root_verify_key": root_verify_key,
             }
         )
@@ -75,14 +75,14 @@ async def test_organization_create_and_bootstrap(
 
     # Use an existing user name to make sure they didn't mix together
     newalice = local_device_factory("alice@dev1", neworg)
-    backend_newalice = local_device_to_backend_user(newalice, neworg)
+    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
     async with backend_sock_factory(backend, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
             bootstrap_token,
-            backend_newalice.certified_user,
-            backend_newalice.devices[newalice.device_name].certified_device,
+            backend_newalice.user_certificate,
+            backend_newalice_first_device.device_certificate,
             neworg.root_verify_key,
         )
     assert rep == {"status": "ok"}
@@ -133,15 +133,19 @@ async def test_organization_bootstrap_bad_data(
     verify_key = newalice.verify_key
 
     now = pendulum.now()
-    good_cu = certify_user(None, root_signing_key, good_user_id, public_key, now)
-    good_cd = certify_device(None, root_signing_key, good_device_id, verify_key, now)
+    good_cu = build_user_certificate(None, root_signing_key, good_user_id, public_key, now)
+    good_cd = build_device_certificate(None, root_signing_key, good_device_id, verify_key, now)
 
     bad_now = now - pendulum.interval(seconds=1)
-    bad_now_cu = certify_user(None, root_signing_key, good_user_id, public_key, bad_now)
-    bad_now_cd = certify_device(None, root_signing_key, good_device_id, verify_key, bad_now)
-    bad_id_cu = certify_user(None, root_signing_key, bad_user_id, public_key, now)
-    bad_key_cu = certify_user(None, bad_root_signing_key, good_user_id, public_key, now)
-    bad_key_cd = certify_device(None, bad_root_signing_key, good_device_id, verify_key, now)
+    bad_now_cu = build_user_certificate(None, root_signing_key, good_user_id, public_key, bad_now)
+    bad_now_cd = build_device_certificate(
+        None, root_signing_key, good_device_id, verify_key, bad_now
+    )
+    bad_id_cu = build_user_certificate(None, root_signing_key, bad_user_id, public_key, now)
+    bad_key_cu = build_user_certificate(None, bad_root_signing_key, good_user_id, public_key, now)
+    bad_key_cd = build_device_certificate(
+        None, bad_root_signing_key, good_device_id, verify_key, now
+    )
 
     for i, (status, organization_id, *params) in enumerate(
         [

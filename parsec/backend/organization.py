@@ -6,15 +6,15 @@ from typing import Optional
 from secrets import token_hex
 
 from parsec.types import OrganizationID
-from parsec.crypto import VerifyKey
-from parsec.trustchain import (
-    TrustChainError,
-    certified_extract_parts,
-    validate_payload_certified_user,
-    validate_payload_certified_device,
+from parsec.crypto import (
+    CryptoError,
+    VerifyKey,
+    verify_device_certificate,
+    verify_user_certificate,
+    timestamps_in_the_ballpark,
 )
 from parsec.api.protocole import organization_create_serializer, organization_bootstrap_serializer
-from parsec.backend.user import new_user_factory, User
+from parsec.backend.user import new_user_factory, User, Device
 from parsec.backend.utils import catch_protocole_errors, anonymous_api
 
 
@@ -81,47 +81,48 @@ class BaseOrganizationComponent:
         root_verify_key = msg["root_verify_key"]
 
         try:
-            u_certifier_id, u_payload = certified_extract_parts(msg["certified_user"])
-            d_certifier_id, d_payload = certified_extract_parts(msg["certified_device"])
+            u_data = verify_user_certificate(msg["user_certificate"], None, root_verify_key)
+            d_data = verify_device_certificate(msg["device_certificate"], None, root_verify_key)
 
-        except TrustChainError as exc:
+        except CryptoError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        try:
-            now = pendulum.now()
-            u_data = validate_payload_certified_user(root_verify_key, u_payload, now)
-            d_data = validate_payload_certified_device(root_verify_key, d_payload, now)
-        except TrustChainError as exc:
+        if u_data.certified_on != d_data.certified_on:
             return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
+                "status": "invalid_data",
+                "reason": "Device and user certificates must have the same timestamp.",
             }
 
-        if u_data["user_id"] != d_data["device_id"].user_id:
+        if u_data.user_id != d_data.device_id.user_id:
             return {
                 "status": "invalid_data",
                 "reason": "Device and user must have the same user ID.",
             }
 
-        if u_data["timestamp"] != d_data["timestamp"]:
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(u_data.certified_on, now):
             return {
-                "status": "invalid_data",
-                "reason": "Device and user must have the same timestamp.",
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
             }
 
-        user = new_user_factory(
-            device_id=d_data["device_id"],
+        user, first_device = new_user_factory(
+            device_id=d_data.device_id,
             is_admin=True,
             certifier=None,
-            certified_user=msg["certified_user"],
-            certified_device=msg["certified_device"],
+            user_certificate=msg["user_certificate"],
+            device_certificate=msg["device_certificate"],
         )
         try:
             await self.bootstrap(
-                client_ctx.organization_id, user, msg["bootstrap_token"], root_verify_key
+                client_ctx.organization_id,
+                user,
+                first_device,
+                msg["bootstrap_token"],
+                root_verify_key,
             )
 
         except OrganizationAlreadyBootstrappedError:
@@ -150,7 +151,12 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def bootstrap(
-        self, id: OrganizationID, user: User, bootstrap_token: str, root_verify_key: VerifyKey
+        self,
+        id: OrganizationID,
+        user: User,
+        first_device: Device,
+        bootstrap_token: str,
+        root_verify_key: VerifyKey,
     ) -> None:
         """
         Raises:
