@@ -1,4 +1,4 @@
-from parsec.logging import configure_sentry_logging, disable_sentry_logging, sentry_logging_activated
+from parsec.logging import configure_sentry_logging, disable_sentry_logging
 
 from parsec.core.gui import settings
 

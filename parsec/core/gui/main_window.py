@@ -108,7 +108,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 QCoreApplication.translate("MainWindow", "Error reporting"),
                 QCoreApplication.translate(
                     "MainWindow",
-                    "Do you authorize Parsec to send data when it encounters an error to help us improve your experience ?",
+                    "Do you authorize Parsec to send data when it encounters an error to help "
+                    "us improve your experience ?",
                 ),
             )
             settings.set_value("global/sentry_logging", r)
