@@ -233,7 +233,7 @@ requirements = [
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
-    "raven==6.8.0",  # Sentry support
+    "sentry-sdk==0.7.7",
     "structlog==18.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
