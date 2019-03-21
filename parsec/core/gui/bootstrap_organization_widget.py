@@ -30,16 +30,23 @@ from parsec.core.gui.password_validation import (
 from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganizationWidget
 
 
+_translate = QCoreApplication.translate
+
+
 STATUS_TO_ERRMSG = {
-    "invalid-url": "This organization does not exist (is the URL correct ?).",
-    "user-exists": "This user already exists.",
-    "password-mismatch": "Passwords don't match.",
-    "password-size": "Password must be at least 8 caracters long.",
-    "bad-url": "URL or device is invalid.",
-    "bad-device_name": "URL or device is invalid.",
-    "bad-user_id": "URL or device is invalid.",
+    "invalid-url": _translate(
+        "BootstrapOrganizationWidget", "This organization does not exist (is the URL correct ?)."
+    ),
+    "user-exists": _translate("BootstrapOrganizationWidget", "This user already exists."),
+    "password-mismatch": _translate("BootstrapOrganizationWidget", "Passwords don't match."),
+    "password-size": _translate(
+        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+    ),
+    "bad-url": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
+    "bad-device_name": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
+    "bad-user_id": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
 }
-DEFAULT_ERRMSG = "Can not bootstrap this organization."
+DEFAULT_ERRMSG = _translate("BootstrapOrganizationWidget", "Can not bootstrap this organization.")
 
 
 async def _do_bootstrap_organization(
@@ -138,7 +145,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_cancel.hide()
         self.check_infos()
         errmsg = STATUS_TO_ERRMSG.get(self.bootstrap_job.status, DEFAULT_ERRMSG)
-        show_error(self, QCoreApplication.translate("BootstrapOrganizationWidget", errmsg))
+        show_error(self, errmsg)
 
     def on_bootstrap_success(self):
         assert self.bootstrap_job.is_finished()
