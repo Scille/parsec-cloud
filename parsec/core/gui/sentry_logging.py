@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from parsec.logging import configure_sentry_logging, disable_sentry_logging
 
 from parsec.core.gui import settings
