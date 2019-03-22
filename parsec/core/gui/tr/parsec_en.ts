@@ -798,11 +798,6 @@ This device has been revoked.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="167"/>
-        <source>The mounpoint has been unmounted, you will now be logged off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../main_window.py" line="237"/>
         <source>User not registered in the backend.</source>
         <translation type="unfinished"></translation>

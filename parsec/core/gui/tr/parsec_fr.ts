@@ -1353,11 +1353,6 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Connecté</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="167"/>
-        <source>The mounpoint has been unmounted, you will now be logged off.</source>
-        <translation>Le point de montage a été démonté, vous allez être déconnecté.</translation>
-    </message>
-    <message>
         <location filename="../main_window.py" line="237"/>
         <source>User not registered in the backend.</source>
         <translation>L&apos;utilisateur n&apos;est pas enregistré sur le backend.</translation>
