@@ -22,6 +22,10 @@ ENTRIES = {
         "encode": lambda raw: "true" if raw else "false",
         "decode": lambda raw: raw.lower() == "true",
     },
+    "global/sentry_logging": {
+        "encode": lambda raw: "true" if raw else "false",
+        "decode": lambda raw: raw.lower() == "true",
+    },
     "global/no_check_version": {
         "encode": lambda raw: "true" if raw else "false",
         "decode": lambda raw: raw.lower() == "true",
