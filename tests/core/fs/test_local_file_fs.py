@@ -31,7 +31,7 @@ def foo_txt(alice, local_folder_fs):
         manifest = LocalFileManifest(
             author=alice.device_id, is_placeholder=False, need_sync=False, base_version=1
         )
-    local_folder_fs.set_dirty_manifest(access, manifest)
+    local_folder_fs.set_clean_manifest(access, manifest)
     return File(local_folder_fs, access)
 
 
@@ -140,7 +140,7 @@ def test_block_not_loaded_entry(local_folder_fs, local_file_fs, foo_txt):
     foo_manifest = foo_manifest.evolve(
         blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
     )
-    local_folder_fs.set_dirty_manifest(foo_txt.access, foo_manifest)
+    local_folder_fs.set_clean_manifest(foo_txt.access, foo_manifest)
 
     fd = local_file_fs.open(foo_txt.access)
     with pytest.raises(FSBlocksLocalMiss) as exc:
@@ -174,7 +174,7 @@ def test_file_operations(
             self.local_storage = local_storage_factory(self.device)
             self.local_file_fs = local_file_fs_factory(self.device, self.local_storage)
             self.access = ManifestAccess()
-            manifest = LocalFileManifest(self.device.device_id)
+            manifest = LocalFileManifest(self.device.device_id, need_sync=True)
             self.local_file_fs.local_folder_fs.set_dirty_manifest(self.access, manifest)
 
             self.fd = self.local_file_fs.open(self.access)
