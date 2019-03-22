@@ -54,7 +54,7 @@ async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TA
                             logger.exception("Invalid message from backend")
 
             except SharingBackendOffline:
-                pass
+                backend_online_event.clear()
             process_message_cancel_scope = None
             msg_arrived.clear()
             await backend_online_event.wait()

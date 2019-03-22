@@ -58,7 +58,7 @@ class SyncMonitor(BaseAsyncComponent):
             try:
                 await self._monitoring()
             except BackendNotAvailable:
-                pass
+                self._backend_online_event.clear()
             self._monitoring_cancel_scope = None
             self.event_bus.send("sync_monitor.disconnected")
 
