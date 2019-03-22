@@ -46,6 +46,37 @@ def get_default_mountpoint_base_dir(environ: dict):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class GuiConfig:
+    last_device: Optional[str] = None
+    tray_enabled: bool = True
+    language: Optional[str] = "en"
+    first_launch: bool = True
+    check_version: bool = True
+    sentry_logging: bool = True
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+
+def gui_config_factory(
+    last_device: str = None,
+    tray_enabled: bool = True,
+    language: str = "en",
+    first_launch: bool = True,
+    check_version: bool = True,
+    sentry_logging: bool = True,
+) -> GuiConfig:
+    return GuiConfig(
+        last_device=last_device,
+        tray_enabled=tray_enabled,
+        language=language,
+        first_launch=first_launch,
+        check_version=check_version,
+        sentry_logging=sentry_logging,
+    )
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class CoreConfig:
     config_dir: Path
     data_base_dir: Path
@@ -65,6 +96,8 @@ class CoreConfig:
     ssl_keyfile: Optional[str] = None
     ssl_certfile: Optional[str] = None
 
+    gui: GuiConfig = GuiConfig()
+
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
@@ -80,6 +113,7 @@ def config_factory(
     debug: bool = False,
     ssl_keyfile: str = None,
     ssl_certfile: str = None,
+    gui: GuiConfig = GuiConfig(),
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
@@ -92,6 +126,7 @@ def config_factory(
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
+        gui=gui,
     )
 
 
@@ -126,7 +161,13 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
-    return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
+    return config_factory(
+        config_dir=config_dir,
+        gui=gui_config_factory(**data_conf.pop("gui", {})),
+        **data_conf,
+        **extra_config,
+        environ=os.environ,
+    )
 
 
 def reload_config(config: CoreConfig) -> CoreConfig:
@@ -134,14 +175,25 @@ def reload_config(config: CoreConfig) -> CoreConfig:
 
 
 def save_config(config: CoreConfig):
-    (config.config_dir / "config.json").write_text(
+    config_path = config.config_dir
+    config_path.mkdir(parents=True, exist_ok=True)
+    config_path /= "config.json"
+    config_path.touch(exist_ok=True)
+    config_path.write_text(
         json.dumps(
             {
                 "data_base_dir": str(config.data_base_dir),
                 "cache_base_dir": str(config.cache_base_dir),
                 "mountpoint_base_dir": str(config.mountpoint_base_dir),
                 "backend_watchdog": config.backend_watchdog,
-                "sentry_url": config.sentry_url,
+                "gui": {
+                    "last_device": config.gui.last_device,
+                    "tray_enabled": config.gui.tray_enabled,
+                    "language": config.gui.language,
+                    "first_launch": config.gui.first_launch,
+                    "check_version": config.gui.check_version,
+                    "sentry_logging": config.gui.sentry_logging,
+                },
             }
         )
     )

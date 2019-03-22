@@ -5,7 +5,7 @@ import os
 from PyQt5.QtCore import pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.gui import settings
+from parsec.core.config import save_config
 from parsec.core.gui import lang
 from parsec.core.gui import sentry_logging
 from parsec.core.gui.custom_widgets import show_info
@@ -39,27 +39,25 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             )
 
     def init(self):
-        tray_enabled = settings.get_value("global/tray_enabled", None)
-        if tray_enabled is None:
-            settings.set_value("global/tray_enabled", True)
-            tray_enabled = True
-        self.checkbox_tray.setChecked(tray_enabled)
+        self.checkbox_tray.setChecked(self.core_config.gui.tray_enabled)
         current = None
         for lg, key in lang.LANGUAGES.items():
             self.combo_languages.addItem(lg, key)
-            if key == settings.get_value("global/language"):
+            if key == self.core_config.gui.language:
                 current = lg
         if current:
             self.combo_languages.setCurrentText(current)
-        no_check_version = settings.get_value("global/no_check_version", "false")
-        self.check_box_check_at_startup.setChecked(not no_check_version)
-        self.check_box_send_data.setChecked(settings.get_value("global/sentry_logging", "true"))
+        self.check_box_check_at_startup.setChecked(self.core_config.gui.check_version)
+        self.check_box_send_data.setChecked(self.core_config.gui.sentry_logging)
 
     def save(self):
-        settings.set_value("global/tray_enabled", self.checkbox_tray.isChecked())
-        settings.set_value("global/language", self.combo_languages.currentData())
-        settings.set_value(
-            "global/no_check_version", not self.check_box_check_at_startup.isChecked()
+        self.core_config = self.core_config.evolve(
+            gui=self.core_config.gui.evolve(
+                tray_enabled=self.checkbox_tray.isChecked(),
+                language=self.combo_languages.currentData(),
+                check_version=self.check_box_check_at_startup.isChecked(),
+                sentry_logging=self.check_box_send_data.isChecked(),
+            )
         )
-        settings.set_value("global/sentry_logging", self.check_box_send_data.isChecked())
+        save_config(self.core_config)
         sentry_logging.init(self.core_config)

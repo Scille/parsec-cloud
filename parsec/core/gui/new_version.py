@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import QDialog
 
 from parsec import __version__
 
+from parsec.core.config import save_config
 from parsec.core.gui import desktop
-from parsec.core.gui import settings
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 
 
@@ -19,9 +19,10 @@ RELEASE_URL = "https://github.com/Scille/parsec-build/releases/latest"
 
 
 class NewVersionDialog(QDialog, Ui_NewVersionDialog):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.core_config = core_config
         self.button_download.clicked.connect(self.download)
         self.button_ignore.clicked.connect(self.ignore)
         self.setWindowFlags(Qt.SplashScreen)
@@ -32,7 +33,10 @@ class NewVersionDialog(QDialog, Ui_NewVersionDialog):
 
     def ignore(self):
         if self.check_box_no_reminder.isChecked():
-            settings.set_value("global/no_check_version", True)
+            self.core_config = self.core_config.evolve(
+                gui=self.core_config.gui.evolve(check_version=False)
+            )
+            save_config(self.core_config)
         self.reject()
 
 

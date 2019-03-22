@@ -43,7 +43,7 @@ def run_gui(config: CoreConfig):
     f = QFont("Arial")
     app.setFont(f)
 
-    lang.switch_language()
+    lang.switch_language(config)
 
     win = MainWindow(core_config=config)
 
