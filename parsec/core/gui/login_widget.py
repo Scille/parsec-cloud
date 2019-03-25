@@ -75,16 +75,17 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(str, str, str)
     login_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
-    def __init__(self, core_config, *args, **kwargs):
+    def __init__(self, portal, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.portal = portal
         self.setupUi(self)
 
         self.core_config = core_config
         self.login_widget = LoginLoginWidget(core_config)
         self.layout.insertWidget(0, self.login_widget)
-        self.bootstrap_organization = BootstrapOrganizationWidget(core_config)
+        self.bootstrap_organization = BootstrapOrganizationWidget(self.portal, core_config)
         self.layout.insertWidget(0, self.bootstrap_organization)
-        self.claim_user_widget = ClaimUserWidget(core_config)
+        self.claim_user_widget = ClaimUserWidget(self.portal, core_config)
         self.layout.insertWidget(0, self.claim_user_widget)
         self.claim_device_widget = ClaimDeviceWidget(core_config)
         self.layout.insertWidget(0, self.claim_device_widget)

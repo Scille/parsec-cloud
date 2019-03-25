@@ -1,8 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import threading
-import queue
 import pendulum
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
@@ -13,6 +10,7 @@ from parsec.types import BackendOrganizationBootstrapAddr, DeviceID
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     backend_anonymous_cmds_factory,
+    BackendNotAvailable,
     BackendHandshakeError,
 )
 from parsec.core.devices_manager import (
@@ -20,6 +18,7 @@ from parsec.core.devices_manager import (
     save_device_with_password,
     DeviceConfigAleadyExists,
 )
+from parsec.core.gui.trio_thread import JobResultError
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui import validators
@@ -31,67 +30,104 @@ from parsec.core.gui.password_validation import (
 from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganizationWidget
 
 
-async def _trio_bootstrap_organization(
-    queue,
-    qt_on_done,
-    qt_on_error,
-    config,
-    bootstrap_addr,
-    device_id,
-    use_pkcs11,
-    password=None,
-    pkcs11_token=None,
-    pkcs11_key=None,
+_translate = QCoreApplication.translate
+
+
+STATUS_TO_ERRMSG = {
+    "invalid-url": _translate(
+        "BootstrapOrganizationWidget", "This organization does not exist (is the URL correct ?)."
+    ),
+    "user-exists": _translate("BootstrapOrganizationWidget", "This user already exists."),
+    "password-mismatch": _translate("BootstrapOrganizationWidget", "Passwords don't match."),
+    "password-size": _translate(
+        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+    ),
+    "bad-url": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
+    "bad-device_name": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
+    "bad-user_id": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
+}
+DEFAULT_ERRMSG = _translate(
+    "BootstrapOrganizationWidget", "Can not bootstrap this organization ({info})."
+)
+
+
+async def _do_bootstrap_organization(
+    config_dir,
+    use_pkcs11: bool,
+    password: str,
+    password_check: str,
+    user_id: str,
+    device_name: str,
+    bootstrap_addr: str,
+    pkcs11_token: int,
+    pkcs11_key: int,
 ):
-    portal = trio.BlockingTrioPortal()
-    queue.put(portal)
-    with trio.CancelScope() as cancel_scope:
-        queue.put(cancel_scope)
-        try:
-            root_signing_key = SigningKey.generate()
-            root_verify_key = root_signing_key.verify_key
-            organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
+    if not use_pkcs11:
+        if password != password_check:
+            raise JobResultError("password-mismatch")
+        if len(password) < 8:
+            raise JobResultError("password-size")
 
-            device = generate_new_device(device_id, organization_addr)
+    try:
+        bootstrap_addr = BackendOrganizationBootstrapAddr(bootstrap_addr)
+    except ValueError:
+        raise JobResultError("bad-url")
 
-            save_device_with_password(config.config_dir, device, password)
+    try:
+        device_id = DeviceID(f"{user_id}@{device_name}")
+    except ValueError:
+        raise JobResultError("bad-device_name")
 
-            now = pendulum.now()
-            user_certificate = build_user_certificate(
-                None, root_signing_key, device.user_id, device.public_key, now
+    try:
+        root_signing_key = SigningKey.generate()
+        root_verify_key = root_signing_key.verify_key
+        organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
+
+        device = generate_new_device(device_id, organization_addr)
+
+        save_device_with_password(config_dir, device, password)
+
+        now = pendulum.now()
+        user_certificate = build_user_certificate(
+            None, root_signing_key, device.user_id, device.public_key, now
+        )
+        device_certificate = build_device_certificate(
+            None, root_signing_key, device_id, device.verify_key, now
+        )
+
+        async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
+            await cmds.organization_bootstrap(
+                bootstrap_addr.organization_id,
+                bootstrap_addr.bootstrap_token,
+                root_verify_key,
+                user_certificate,
+                device_certificate,
             )
-            device_certificate = build_device_certificate(
-                None, root_signing_key, device_id, device.verify_key, now
-            )
 
-            async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
-                await cmds.organization_bootstrap(
-                    bootstrap_addr.organization_id,
-                    bootstrap_addr.bootstrap_token,
-                    root_verify_key,
-                    user_certificate,
-                    device_certificate,
-                )
-            qt_on_done.emit()
-        except DeviceConfigAleadyExists:
-            qt_on_error.emit("already-exists")
-        except BackendHandshakeError:
-            qt_on_error.emit("invalid-url")
-        except BackendCmdsBadResponse as e:
-            qt_on_error.emit(e.status)
-        except:
-            qt_on_error.emit("")
+    except DeviceConfigAleadyExists:
+        raise JobResultError("user-exists")
+
+    except BackendHandshakeError:
+        raise JobResultError("invalid-url")
+
+    except BackendNotAvailable as exc:
+        raise JobResultError("backend-offline", info=str(exc))
+
+    except BackendCmdsBadResponse as exc:
+        raise JobResultError("refused-by-backend", info=str(exc))
 
 
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
-    bootstrap_successful = pyqtSignal()
-    bootstrap_error = pyqtSignal(str)
+    bootstrap_success = pyqtSignal()
+    bootstrap_error = pyqtSignal()
     organization_bootstrapped = pyqtSignal()
 
-    def __init__(self, core_config, *args, **kwargs):
+    def __init__(self, portal, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.portal = portal
         self.core_config = core_config
+        self.bootstrap_job = None
         self.button_cancel.hide()
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
         self.button_cancel.clicked.connect(self.cancel_bootstrap)
@@ -102,49 +138,21 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
-        self.bootstrap_successful.connect(self.on_bootstrap_finished)
+        self.bootstrap_success.connect(self.on_bootstrap_success)
         self.bootstrap_error.connect(self.on_bootstrap_error)
 
-        self.thread = None
-        self.cancel_scope = None
-        self.trio_portal = None
-        self.queue = queue.Queue(2)
-
-    def on_bootstrap_error(self, status):
-        self.thread.join()
-        self.thread = None
-        self.cancel_scope = None
-        self.trio_portal = None
+    def on_bootstrap_error(self):
+        assert self.bootstrap_job.is_finished()
+        assert self.bootstrap_job.status != "ok"
         self.button_cancel.hide()
-        self.check_infos("")
-        if status == "invalid-url":
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "BootstrapOrganizationWidget",
-                    "This organization does not exist (is the URL correct ?).",
-                ).format(status),
-            )
-        elif status == "already-exists":
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "BootstrapOrganizationWidget", "This user already exists."
-                ).format(status),
-            )
-        else:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "BootstrapOrganizationWidget", "Can not bootstrap this organization."
-                ).format(status),
-            )
+        self.check_infos()
+        errmsg = STATUS_TO_ERRMSG.get(self.bootstrap_job.status, DEFAULT_ERRMSG)
+        show_error(self, errmsg.format(**self.bootstrap_job.exc.params))
+        self.bootstrap_job = None
 
-    def on_bootstrap_finished(self):
-        self.thread.join()
-        self.thread = None
-        self.cancel_scope = None
-        self.trio_portal = None
+    def on_bootstrap_success(self):
+        assert self.bootstrap_job.is_finished()
+        assert self.bootstrap_job.status == "ok"
         self.button_bootstrap.setDisabled(False)
         self.button_cancel.hide()
         show_info(
@@ -154,105 +162,37 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
                 "The organization and the user have been created. You can now login.",
             ),
         )
+        self.bootstrap_job = None
         self.organization_bootstrapped.emit()
 
-    def _thread_bootstrap_organization(
-        self, addr, device_id, use_pkcs11, password=None, pkcs11_token=None, pkcs11_key=None
-    ):
-        trio.run(
-            _trio_bootstrap_organization,
-            self.queue,
-            self.bootstrap_successful,
-            self.bootstrap_error,
-            self.core_config,
-            addr,
-            device_id,
-            use_pkcs11,
-            password,
-            pkcs11_token,
-            pkcs11_key,
-        )
-
     def bootstrap_clicked(self):
-        use_pkcs11 = True
-
-        if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
-            use_pkcs11 = False
-            if (
-                len(self.line_edit_password.text()) > 0
-                or len(self.line_edit_password_check.text()) > 0
-            ):
-                if self.line_edit_password.text() != self.line_edit_password_check.text():
-                    show_error(
-                        self,
-                        QCoreApplication.translate(
-                            "BootstrapOrganizationWidget", "Passwords don't match"
-                        ),
-                    )
-                    return
-            if len(self.line_edit_password.text()) < 8:
-                show_error(
-                    self,
-                    QCoreApplication.translate(
-                        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
-                    ),
-                )
-                return
-        try:
-            backend_addr = BackendOrganizationBootstrapAddr(self.line_edit_url.text())
-            device_id = DeviceID(
-                "{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text())
-            )
-        except:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "BootstrapOrganizationWidget", "URL or device is invalid."
-                ),
-            )
-            return
-        try:
-            args = None
-            if use_pkcs11:
-                args = (
-                    backend_addr,
-                    device_id,
-                    True,
-                    None,
-                    int(self.line_edit_pkcs11_token.text()),
-                    int(self.line_edit_pkcs11.key.text()),
-                )
-            else:
-                args = (backend_addr, device_id, False, self.line_edit_password.text())
-            self.button_cancel.show()
-            self.thread = threading.Thread(target=self._thread_bootstrap_organization, args=args)
-            self.thread.start()
-            self.trio_portal = self.queue.get()
-            self.cancel_scope = self.queue.get()
-            self.button_bootstrap.setDisabled(True)
-        except:
-            import traceback
-
-            traceback.print_exc()
-
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "BootstrapOrganizationWidget", "Can not register the new user."
-                ),
-            )
+        assert not self.bootstrap_job
+        self.bootstrap_job = self.portal.submit_job(
+            self.bootstrap_success,
+            self.bootstrap_error,
+            _do_bootstrap_organization,
+            config_dir=self.core_config.config_dir,
+            use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),
+            password=self.line_edit_password.text(),
+            password_check=self.line_edit_password_check.text(),
+            user_id=self.line_edit_login.text(),
+            device_name=self.line_edit_device.text(),
+            bootstrap_addr=self.line_edit_url.text(),
+            pkcs11_token=int(self.combo_pkcs11_token.currentText()),
+            pkcs11_key=int(self.combo_pkcs11_key.currentText()),
+        )
+        self.button_cancel.show()
+        self.button_bootstrap.setDisabled(True)
 
     def cancel_bootstrap(self):
-        self.trio_portal.run_sync(self.cancel_scope.cancel)
-        self.thread.join()
-        self.thread = None
-        self.cancel_scope = None
-        self.trio_portal = None
+        assert self.bootstrap_job
+        self.bootstrap_job.cancel_and_join()
+        self.bootstrap_job = None
         self.button_cancel.hide()
         self.button_bootstrap.setDisabled(False)
-        self.check_infos("")
+        self.check_infos()
 
-    def check_infos(self, _):
+    def check_infos(self, _=""):
         if (
             len(self.line_edit_login.text())
             and len(self.line_edit_device.text())

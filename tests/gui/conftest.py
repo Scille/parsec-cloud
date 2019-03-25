@@ -1,170 +1,189 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from unittest.mock import patch
+from functools import wraps, partial
 import trio
+from trio.testing import trio_test as vanilla_trio_test
+import queue
 import threading
-from functools import partial
-from inspect import iscoroutinefunction
-from contextlib import contextmanager
 
-from parsec.utils import start_task
+from parsec.core.gui.main_window import MainWindow
+from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 
 
-class ExecutionInThreadTimeout:
-    pass
+_qt_thread_gateway = None
 
 
-class ExecutionInThread:
-    def __init__(self, cb, *params):
-        self.params = params
-        self.cb = cb
-        self._thread = None
-        self._retval = None
-        self._ready = threading.Event()
+# Must be an async fixture to be actually called after
+# `_qt_thread_gateway` has been configured
+@pytest.fixture
+async def qt_thread_gateway(trio_in_side_thread):
+    return _qt_thread_gateway
 
-    def join(self, timeout=None):
-        assert self._thread
 
-        self._thread.join(timeout=timeout)
-        if self._thread.is_alive():
-            raise ExecutionInThreadTimeout()
-        type, value = self._retval
-        if type == "exception":
-            raise value
-        else:
-            return value
+class ThreadAsyncGateway:
+    def __init__(self):
+        self._portal = None
+        self._action_req_queue = queue.Queue(1)
+        self._lock = trio.Lock()
 
-    def run(self):
-        assert not self._thread
+    def _send_action_req(self, type, action):
+        return self._action_req_queue.put_nowait((type, action))
 
-        def _controlled_cb():
+    def _recv_action_req(self):
+        return self._action_req_queue.get()
+
+    def run_action_pump(self):
+        while True:
+            action, rep_callback = self._recv_action_req()
+            if action == "stop":
+                type, value = rep_callback
+                if type == "exc":
+                    raise value
+                else:
+                    return value
+
             try:
-                res = self.cb(*self.params, ready=self._ready.set)
+                rep = action()
+                rep_callback("ret", rep)
 
             except Exception as exc:
-                self._ready.set()
-                self._retval = ("exception", exc)
+                rep_callback("exc", exc)
+
+    async def stop_action_pump(self, type, value):
+        async with self._lock:
+            self._send_action_req("stop", (type, value))
+
+    async def send_action(self, action):
+        portal = trio.BlockingTrioPortal()
+        rep_sender, rep_receiver = trio.open_memory_channel(1)
+
+        def _rep_callback(type, value):
+            portal.run_sync(rep_sender.send_nowait, (type, value))
+
+        async with self._lock:
+            self._send_action_req(action, _rep_callback)
+            type, value = await rep_receiver.receive()
+            if type == "exc":
+                raise value
+            else:
+                return value
+
+
+# Not an async fixture (and doesn't depend on an async fixture either)
+# this fixture will actually be executed *before* pytest-trio setup
+# the trio loop, giving us a chance to monkeypatch it !
+@pytest.fixture
+def trio_in_side_thread():
+    def _trio_test(fn):
+        @vanilla_trio_test
+        @wraps(fn)
+        async def inner_wrapper(**kwargs):
+            try:
+                ret = await fn(**kwargs)
+
+            except Exception as exc:
+                await _qt_thread_gateway.stop_action_pump("exc", exc)
 
             else:
-                self._retval = ("result", res)
+                await _qt_thread_gateway.stop_action_pump("value", ret)
 
-        self._thread = threading.Thread(target=_controlled_cb, daemon=True)
-        self._thread.setName("ExecutionInThread")
-        self._thread.start()
-        self._ready.wait()
+        @wraps(fn)
+        def outer_wrapper(**kwargs):
+            global _qt_thread_gateway
+            assert not _qt_thread_gateway
+            _qt_thread_gateway = ThreadAsyncGateway()
+
+            thread = threading.Thread(target=partial(inner_wrapper, **kwargs))
+            thread.start()
+            try:
+                _qt_thread_gateway.run_action_pump()
+
+            finally:
+                thread.join()
+                _qt_thread_gateway = None
+
+        return outer_wrapper
+
+    with patch("pytest_trio.plugin.trio_test", new=_trio_test):
+        yield
 
 
 @pytest.fixture
-def backend_service_factory(backend_factory):
-    """
-    Run a trio loop with backend in a separate thread to allow blocking
-    operations from the Qt loop.
-    """
-
-    class BackendService:
-        def __init__(self):
-            self.port = None
-            self._portal = None
-            self._task = None
-            self._need_stop = trio.Event()
-            self._stopped = trio.Event()
-            self._need_start = trio.Event()
-            self._started = trio.Event()
-            self._ready = threading.Event()
-
-        def get_url(self):
-            if self.port is None:
-                raise RuntimeError("Port not yet available, is service started ?")
-            return f"ws://127.0.0.1:{self.port}"
-
-        def execute(self, cb, **params):
-            cooked_cb = partial(cb, self._task.value, **params)
-            if iscoroutinefunction(cb):
-                self._portal.run(cooked_cb)
-            else:
-                self._portal.run_sync(cooked_cb)
-
-        def execute_in_thread(self, cb):
-            execution = ExecutionInThread(self.execute, cb)
-            execution.run()
-            return execution
-
-        def start(self, **backend_factory_params):
-            async def _start():
-                self._need_start.set()
-                await self._started.wait()
-
-            self._backend_factory_params = backend_factory_params
-            self._portal.run(_start)
-
-        def stop(self):
-            async def _stop():
-                if self._started.is_set():
-                    self._need_stop.set()
-                    await self._stopped.wait()
-
-            self._portal.run(_stop)
-
-        def init(self):
-            self._thread = threading.Thread(target=trio.run, args=(self._service,))
-            self._thread.setName("BackendService")
-            self._thread.start()
-            self._ready.wait()
-
-        async def _teardown(self):
-            self._nursery.cancel_scope.cancel()
-
-        def teardown(self):
-            if not self._portal:
-                return
-            self.stop()
-            self._portal.run(self._teardown)
-            self._thread.join()
-
-        async def _service(self):
-            self._portal = trio.BlockingTrioPortal()
-
-            async def _backend_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
-                async with backend_factory(**self._backend_factory_params) as backend:
-                    async with trio.open_nursery() as nursery:
-                        listeners = await nursery.start(trio.serve_tcp, backend.handle_client, 0)
-                        self.port = listeners[0].socket.getsockname()[1]
-                        task_status.started(backend)
-                        await trio.sleep_forever()
-
-            async with trio.open_nursery() as self._nursery:
-                self._ready.set()
-                while True:
-                    await self._need_start.wait()
-                    self._need_stop.clear()
-                    self._stopped.clear()
-
-                    self._task = await start_task(self._nursery, _backend_controlled_cb)
-                    self._started.set()
-
-                    await self._need_stop.wait()
-                    self._need_start.clear()
-                    self._started.clear()
-                    await self._task.cancel_and_join()
-                    self._stopped.set()
-
-    @contextmanager
-    def _backend_service_factory():
-        backend_service = BackendService()
-        backend_service.init()
-        try:
-            yield backend_service
-
-        finally:
-            backend_service.teardown()
-
-    return _backend_service_factory
+async def aqtbot(qtbot, qt_thread_gateway):
+    return AsyncQtBot(qtbot, qt_thread_gateway)
 
 
-@pytest.fixture
-def backend_service(backend_service_factory):
-    with backend_service_factory() as backend:
-        yield backend
+class CtxManagerAsyncWrapped:
+    def __init__(self, qtbot, qt_thread_gateway, fnname, *args, **kwargs):
+        self.qtbot = qtbot
+        self.qt_thread_gateway = qt_thread_gateway
+        self.fnname = fnname
+        self.args = args
+        self.kwargs = kwargs
+        self.ctx = None
+
+    async def __aenter__(self):
+        def _action_enter():
+            self.ctx = getattr(self.qtbot, self.fnname)(*self.args, **self.kwargs)
+            self.ctx.__enter__()
+
+        await self.qt_thread_gateway.send_action(_action_enter)
+
+    async def __aexit__(self, exc_type, exc, tb):
+        def _action_exit():
+            self.ctx.__exit__(exc_type, exc, tb)
+
+        await self.qt_thread_gateway.send_action(_action_exit)
+
+
+class AsyncQtBot:
+    def __init__(self, qtbot, qt_thread_gateway):
+        self.qtbot = qtbot
+        self.qt_thread_gateway = qt_thread_gateway
+
+        def _autowrap(fnname):
+            async def wrapper(*args, **kwargs):
+                def _action():
+                    return getattr(self.qtbot, fnname)(*args, **kwargs)
+
+                return await self.qt_thread_gateway.send_action(_action)
+
+            wrapper.__name__ = f"{fnname}"
+            return wrapper
+
+        self.key_click = _autowrap("keyClick")
+        self.key_clicks = _autowrap("keyClicks")
+        self.key_event = _autowrap("keyEvent")
+        self.key_press = _autowrap("keyPress")
+        self.key_release = _autowrap("keyRelease")
+        # self.key_to_ascii = self.qtbot.keyToAscii  # available ?
+        self.mouse_click = _autowrap("mouseClick")
+        self.mouse_d_click = _autowrap("mouseDClick")
+        self.mouse_move = _autowrap("mouseMove")
+        self.mouse_press = _autowrap("mousePress")
+        self.mouse_release = _autowrap("mouseRelease")
+
+        self.add_widget = _autowrap("add_widget")
+        self.stop = _autowrap("stop")
+        self.wait = _autowrap("wait")
+
+        def _autowrap_ctx_manager(fnname):
+            def wrapper(*args, **kwargs):
+                return CtxManagerAsyncWrapped(
+                    self.qtbot, self.qt_thread_gateway, fnname, *args, **kwargs
+                )
+
+            wrapper.__name__ = f"{fnname}"
+            return wrapper
+
+        self.wait_signal = _autowrap_ctx_manager("wait_signal")
+        self.wait_signals = _autowrap_ctx_manager("wait_signals")
+        self.assert_not_emitted = _autowrap_ctx_manager("assert_not_emitted")
+        self.wait_active = _autowrap_ctx_manager("wait_active")
+        self.wait_exposed = _autowrap_ctx_manager("wait_exposed")
+        self.capture_exceptions = _autowrap_ctx_manager("capture_exceptions")
 
 
 @pytest.fixture
@@ -181,4 +200,27 @@ def autoclose_dialog(monkeypatch):
     monkeypatch.setattr(
         "parsec.core.gui.custom_widgets.MessageDialog.exec_", _dialog_exec, raising=False
     )
-    yield spy
+    return spy
+
+
+@pytest.fixture
+async def qt_to_trio_job_scheduler():
+    async with trio.open_nursery() as nursery:
+        job_scheduler = QtToTrioJobScheduler()
+        await nursery.start(job_scheduler._start)
+        try:
+            yield job_scheduler
+
+        finally:
+            await job_scheduler._teardown()
+
+
+@pytest.fixture
+async def gui(qtbot, qt_thread_gateway, core_config, qt_to_trio_job_scheduler):
+    def _create_main_window():
+        main_w = MainWindow(qt_to_trio_job_scheduler, core_config)
+        qtbot.add_widget(main_w)
+        main_w.showMaximized()
+        return main_w
+
+    return await qt_thread_gateway.send_action(_create_main_window)

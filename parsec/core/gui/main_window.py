@@ -36,12 +36,12 @@ logger = get_logger()
 class MainWindow(QMainWindow, Ui_MainWindow):
     mountpoint_stopped = pyqtSignal()
 
-    def __init__(self, core_config, *args, **kwargs):
+    def __init__(self, portal, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.current_device = None
         self.core_config = core_config
-        self.portal = None
+        self.portal = portal
         self.core = None
         self.cancel_scope = None
         self.core_thread = None
@@ -50,7 +50,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.close_requested = False
         self.tray = None
 
-        self.login_widget = LoginWidget(core_config=self.core_config, parent=self)
+        self.login_widget = LoginWidget(self.portal, core_config=self.core_config, parent=self)
         self.widget_center.layout().addWidget(self.login_widget)
         self.central_widget = CentralWidget(core_config=self.core_config, parent=self)
         self.widget_center.layout().addWidget(self.central_widget)
