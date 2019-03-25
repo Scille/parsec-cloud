@@ -126,7 +126,10 @@ class LocalFolderFS:
                 manifest = self.get_manifest(access)
             except FSManifestLocalMiss:
                 return dump_data
-            dump_data.update(attr.asdict(manifest))
+            manifest_data = attr.asdict(manifest)
+            # TODO: due to legacy reason, workspaces is provided by `manifest.children`
+            manifest_data.pop("workspaces", None)
+            dump_data.update(manifest_data)
             if is_user_manifest(manifest):
                 dump_data["children"] = {}
 
@@ -428,10 +431,6 @@ class LocalFolderFS:
             raise PermissionError(
                 13, "Permission denied (workspace must be direct root child)", str(src), str(dst)
             )
-
-        # No point in raising a FileExistsError in this case
-        if src == dst:
-            return
 
         root_manifest = self.get_user_manifest()
         if dst.name in root_manifest.children:

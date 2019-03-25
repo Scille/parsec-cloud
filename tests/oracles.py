@@ -146,6 +146,9 @@ def oracle_fs_factory(tmpdir):
             if not self._is_workspace(src) or not self._is_workspace(dst):
                 return "invalid_path"
 
+            if dst.exists():
+                return "invalid_path"
+
             try:
                 src.rename(str(dst))
             except OSError:
