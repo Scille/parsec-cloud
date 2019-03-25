@@ -19,7 +19,7 @@ def timestamp():
 # TODO: replace by a function
 # TODO: BaseAsyncComponent seems not needed
 class SyncMonitor(BaseAsyncComponent):
-    def __init__(self, backend_online, fs, event_bus):
+    def __init__(self, fs, event_bus):
         super().__init__()
         self.fs = fs
         self.event_bus = event_bus
@@ -27,13 +27,11 @@ class SyncMonitor(BaseAsyncComponent):
         self._running = False
 
         self._backend_online_event = trio.Event()
+        self._backend_online_event.set()
         self._monitoring_cancel_scope = None
 
         self.event_bus.connect("backend.online", self._on_backend_online)
         self.event_bus.connect("backend.offline", self._on_backend_offline)
-
-        if backend_online:
-            self._on_backend_online(None)
 
     def _on_backend_online(self, event):
         self._backend_online_event.set()
@@ -58,7 +56,7 @@ class SyncMonitor(BaseAsyncComponent):
             try:
                 await self._monitoring()
             except BackendNotAvailable:
-                pass
+                self._backend_online_event.clear()
             self._monitoring_cancel_scope = None
             self.event_bus.send("sync_monitor.disconnected")
 
@@ -130,7 +128,7 @@ class SyncMonitor(BaseAsyncComponent):
                 del updated_entries[id]
 
 
-async def monitor_sync(backend_online, fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_sync(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     with event_bus.connection_context() as event_bus_ctx:
-        sync_monitor = SyncMonitor(backend_online, fs, event_bus_ctx)
+        sync_monitor = SyncMonitor(fs, event_bus_ctx)
         await sync_monitor.run(task_status=task_status)

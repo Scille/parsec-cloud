@@ -9,9 +9,10 @@ from parsec.core.fs.sharing import SharingError, SharingBackendOffline
 logger = get_logger()
 
 
-async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_messages(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     msg_arrived = trio.Event()
     backend_online_event = trio.Event()
+    backend_online_event.set()
     process_message_cancel_scope = None
 
     def _on_msg_arrived(event, index=None):
@@ -32,9 +33,6 @@ async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TA
         ("backend.offline", _on_backend_offline),
     ):
 
-        if backend_online:
-            _on_backend_online(None)
-
         task_status.started()
         while True:
             try:
@@ -54,7 +52,7 @@ async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TA
                             logger.exception("Invalid message from backend")
 
             except SharingBackendOffline:
-                pass
+                backend_online_event.clear()
             process_message_cancel_scope = None
             msg_arrived.clear()
             await backend_online_event.wait()
