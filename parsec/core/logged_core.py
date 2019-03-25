@@ -59,7 +59,9 @@ async def logged_core_factory(
             config.backend_max_connections,
         ) as backend_cmds_pool:
 
-            with LocalStorage(config.data_base_dir / device.device_id) as local_storage:
+            with LocalStorage(
+                config.data_base_dir / f"{device.organization_id}#{device.device_id}"
+            ) as local_storage:
 
                 remote_devices_manager = RemoteDevicesManager(
                     backend_cmds_pool, device.root_verify_key
