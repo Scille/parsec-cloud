@@ -20,7 +20,7 @@ from parsec.core.config import save_config
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
 from parsec.core.backend_connection import BackendHandshakeError, BackendDeviceRevokedError
 from parsec.core import logged_core_factory
-from parsec.core.gui import sentry_logging
+from parsec.core.gui import telemetry
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.custom_widgets import ask_question, show_error
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.show_login_widget()
 
-        if self.core_config.gui.check_version:
+        if self.core_config.gui_check_version_at_startup:
             if new_version_available():
                 d = NewVersionDialog(parent=self)
                 d.exec_()
@@ -79,7 +79,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         s.exec_()
 
     def add_tray_icon(self):
-        if not QSystemTrayIcon.isSystemTrayAvailable() or not self.core_config.gui.tray_enabled:
+        if not QSystemTrayIcon.isSystemTrayAvailable() or not self.core_config.gui_tray_enabled:
             return
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
@@ -95,7 +95,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def showMaximized(self):
         super().showMaximized()
         QCoreApplication.processEvents()
-        if self.core_config.gui.first_launch:
+        if self.core_config.gui_first_launch:
             self.show_starting_guide()
             r = ask_question(
                 self,
@@ -106,11 +106,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     "us improve your experience ?",
                 ),
             )
-            self.core_config = self.core_config.evolve(
-                gui=self.core_config.gui.evolve(first_launch=False, sentry_logging=r)
-            )
-        sentry_logging.init(self.core_config)
-        save_config(self.core_config)
+            self.core_config = self.core_config.evolve(gui_first_launch=False, telemetry_enabled=r)
+            save_config(self.core_config)
+        telemetry.init(self.core_config)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -163,13 +161,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.core.event_bus.connect("mountpoint.stopped", self._on_mountpoint_stopped)
         self.central_widget.set_core_attributes(core=self.core, portal=self.portal)
         self.core_config = self.core_config.evolve(
-            gui=self.core_config.gui.evolve(
-                last_device="{}:{}".format(
-                    self.core.device.organization_addr.organization_id, self.core.device.device_id
-                )
+            gui_last_device="{}:{}".format(
+                self.core.device.organization_addr.organization_id, self.core.device.device_id
             )
         )
-        print(self.core_config.gui.last_device)
         save_config(self.core_config)
 
     def _on_mountpoint_stopped(self, event, mountpoint):
@@ -258,7 +253,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         if (
-            not self.core_config.gui.tray_enabled
+            not self.core_config.gui_tray_enabled
             or not QSystemTrayIcon.isSystemTrayAvailable()
             or self.close_requested
             or self.core_config.debug

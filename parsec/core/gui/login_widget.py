@@ -64,7 +64,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         for o, d, t in devices:
             self.combo_login.addItem(f"{o}:{d}")
             self.devices[f"{o}:{d}"] = (o, d, t)
-        last_device = self.core_config.gui.last_device
+        last_device = self.core_config.gui_last_device
         if last_device and last_device in self.devices:
             self.combo_login.setCurrentText(last_device)
         self.line_edit_password.setFocus()

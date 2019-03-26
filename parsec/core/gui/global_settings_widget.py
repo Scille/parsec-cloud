@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.config import save_config
 from parsec.core.gui import lang
-from parsec.core.gui import sentry_logging
+from parsec.core.gui import telemetry
 from parsec.core.gui.custom_widgets import show_info
 from parsec.core.gui.new_version import NewVersionDialog, new_version_available
 from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
@@ -39,25 +39,23 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             )
 
     def init(self):
-        self.checkbox_tray.setChecked(self.core_config.gui.tray_enabled)
+        self.checkbox_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None
         for lg, key in lang.LANGUAGES.items():
             self.combo_languages.addItem(lg, key)
-            if key == self.core_config.gui.language:
+            if key == self.core_config.gui_language:
                 current = lg
         if current:
             self.combo_languages.setCurrentText(current)
-        self.check_box_check_at_startup.setChecked(self.core_config.gui.check_version)
-        self.check_box_send_data.setChecked(self.core_config.gui.sentry_logging)
+        self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
+        self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
 
     def save(self):
         self.core_config = self.core_config.evolve(
-            gui=self.core_config.gui.evolve(
-                tray_enabled=self.checkbox_tray.isChecked(),
-                language=self.combo_languages.currentData(),
-                check_version=self.check_box_check_at_startup.isChecked(),
-                sentry_logging=self.check_box_send_data.isChecked(),
-            )
+            telemetry_enabled=self.check_box_send_data.isChecked(),
+            gui_tray_enabled=self.checkbox_tray.isChecked(),
+            gui_language=self.combo_languages.currentData(),
+            gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
         )
         save_config(self.core_config)
-        sentry_logging.init(self.core_config)
+        telemetry.init(self.core_config)

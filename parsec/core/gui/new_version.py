@@ -34,7 +34,7 @@ class NewVersionDialog(QDialog, Ui_NewVersionDialog):
     def ignore(self):
         if self.check_box_no_reminder.isChecked():
             self.core_config = self.core_config.evolve(
-                gui=self.core_config.gui.evolve(check_version=False)
+                gui=self.core_config.evolve(gui_check_version_at_startup=False)
             )
             save_config(self.core_config)
         self.reject()

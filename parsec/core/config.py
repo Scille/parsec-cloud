@@ -46,37 +46,6 @@ def get_default_mountpoint_base_dir(environ: dict):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class GuiConfig:
-    last_device: Optional[str] = None
-    tray_enabled: bool = True
-    language: Optional[str] = "en"
-    first_launch: bool = True
-    check_version: bool = True
-    sentry_logging: bool = True
-
-    def evolve(self, **kwargs):
-        return attr.evolve(self, **kwargs)
-
-
-def gui_config_factory(
-    last_device: str = None,
-    tray_enabled: bool = True,
-    language: str = "en",
-    first_launch: bool = True,
-    check_version: bool = True,
-    sentry_logging: bool = True,
-) -> GuiConfig:
-    return GuiConfig(
-        last_device=last_device,
-        tray_enabled=tray_enabled,
-        language=language,
-        first_launch=first_launch,
-        check_version=check_version,
-        sentry_logging=sentry_logging,
-    )
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
 class CoreConfig:
     config_dir: Path
     data_base_dir: Path
@@ -92,11 +61,16 @@ class CoreConfig:
     mountpoint_enabled: bool = False
 
     sentry_url: Optional[str] = None
+    telemetry_enabled: bool = True
 
     ssl_keyfile: Optional[str] = None
     ssl_certfile: Optional[str] = None
 
-    gui: GuiConfig = GuiConfig()
+    gui_last_device: Optional[str] = None
+    gui_tray_enabled: bool = True
+    gui_language: Optional[str] = "en"
+    gui_first_launch: bool = True
+    gui_check_version_at_startup: bool = True
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -110,10 +84,15 @@ def config_factory(
     mountpoint_enabled: bool = False,
     backend_watchdog: int = 0,
     backend_max_connections: int = 4,
+    telemetry_enabled: bool = True,
     debug: bool = False,
     ssl_keyfile: str = None,
     ssl_certfile: str = None,
-    gui: GuiConfig = GuiConfig(),
+    gui_last_device: str = None,
+    gui_tray_enabled: bool = True,
+    gui_language: str = "en",
+    gui_first_launch: bool = True,
+    gui_check_version_at_startup: bool = True,
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
@@ -126,7 +105,11 @@ def config_factory(
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
-        gui=gui,
+        gui_last_device=gui_last_device,
+        gui_tray_enabled=gui_tray_enabled,
+        gui_language=gui_language,
+        gui_first_launch=gui_first_launch,
+        gui_check_version_at_startup=gui_check_version_at_startup,
     )
 
 
@@ -161,13 +144,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
-    return config_factory(
-        config_dir=config_dir,
-        gui=gui_config_factory(**data_conf.pop("gui", {})),
-        **data_conf,
-        **extra_config,
-        environ=os.environ,
-    )
+    return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
 def reload_config(config: CoreConfig) -> CoreConfig:
@@ -185,15 +162,13 @@ def save_config(config: CoreConfig):
                 "data_base_dir": str(config.data_base_dir),
                 "cache_base_dir": str(config.cache_base_dir),
                 "mountpoint_base_dir": str(config.mountpoint_base_dir),
+                "telemetry_enabled": config.telemetry_enabled,
                 "backend_watchdog": config.backend_watchdog,
-                "gui": {
-                    "last_device": config.gui.last_device,
-                    "tray_enabled": config.gui.tray_enabled,
-                    "language": config.gui.language,
-                    "first_launch": config.gui.first_launch,
-                    "check_version": config.gui.check_version,
-                    "sentry_logging": config.gui.sentry_logging,
-                },
+                "gui_last_device": config.gui_last_device,
+                "gui_tray_enabled": config.gui_tray_enabled,
+                "gui_language": config.gui_language,
+                "gui_first_launch": config.gui_first_launch,
+                "gui_check_version_at_startup": config.gui_check_version_at_startup,
             }
         )
     )
