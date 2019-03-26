@@ -17,7 +17,8 @@ class JobResultError(Exception):
 
 
 class QtToTrioJob:
-    def __init__(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
+    def __init__(self, portal, qt_on_success, qt_on_error, fn, *args, **kwargs):
+        self._portal = portal
         self._qt_on_success = qt_on_success
         self._qt_on_error = qt_on_error
         self._fn = fn
@@ -48,6 +49,11 @@ class QtToTrioJob:
                     self.status = exc.status
                     self.exc = exc
 
+                except trio.Cancelled as exc:
+                    self.status = "cancelled"
+                    self.exc = exc
+                    raise
+
                 except Exception as exc:
                     logger.exception("Uncatched error", exc_info=exc)
                     self.status = "crashed"
@@ -77,7 +83,6 @@ class QtToTrioJobScheduler:
 
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
-
         self._portal = trio.BlockingTrioPortal()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(100)
         async with trio.open_nursery() as nursery, recv_job_channel:
@@ -89,20 +94,25 @@ class QtToTrioJobScheduler:
                 assert job.status is None
                 await nursery.start(job._run_fn)
 
-    async def _teardown(self):
+    async def _stop(self):
         self._cancel_scope.cancel()
         await self._send_job_channel.aclose()
 
+    def stop(self):
+        self._portal.run(self._stop)
+
+    def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
+        job = QtToTrioJob(self._portal, qt_on_success, qt_on_error, fn, *args, **kwargs)
+        self._portal.run_sync(self._send_job_channel.send_nowait, job)
+        return job
+
+    # TODO: needed by legacy widget
     def run(self, afn, *args):
         return self._portal.run(afn, *args)
 
+    # TODO: needed by legacy widget
     def run_sync(self, fn, *args):
-        return self._portal.run(fn, *args)
-
-    def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
-        job = QtToTrioJob(qt_on_success, qt_on_error, fn, *args, **kwargs)
-        self._portal.run_sync(self._send_job_channel.send_nowait, job)
-        return job
+        return self._portal.run_sync(fn, *args)
 
 
 @contextmanager
@@ -117,5 +127,5 @@ def run_trio_thread():
         yield job_scheduler
 
     finally:
-        job_scheduler._portal.run(job_scheduler._teardown)
+        job_scheduler.stop()
         thread.join()

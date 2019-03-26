@@ -28,21 +28,25 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
-    def __init__(self, core_config, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, jobs_ctx, event_bus, config, **kwargs):
+        super().__init__(**kwargs)
         self.setupUi(self)
+
+        self.jobs_ctx = jobs_ctx
+        self.event_bus = event_bus
+        self.config = config
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
 
-        self.mount_widget = MountWidget(parent=self)
+        self.mount_widget = MountWidget(jobs_ctx, event_bus, config, parent=self)
         self.mount_widget.reset_taskbar.connect(self.reset_taskbar)
         self.widget_central.layout().insertWidget(0, self.mount_widget)
         self.users_widget = UsersWidget(parent=self)
         self.widget_central.layout().insertWidget(0, self.users_widget)
         self.devices_widget = DevicesWidget(parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
-        self.settings_widget = SettingsWidget(core_config=core_config, parent=self)
+        self.settings_widget = SettingsWidget(core_config=config, parent=self)
         self.widget_central.layout().insertWidget(0, self.settings_widget)
         self.notification_center = NotificationCenterWidget(parent=self)
         self.button_notif = NotificationTaskbarButton()

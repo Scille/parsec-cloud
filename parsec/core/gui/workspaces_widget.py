@@ -8,7 +8,7 @@ from PyQt5.QtCore import QCoreApplication, pyqtSignal
 
 from parsec.core.types import FsPath
 from parsec.core.fs import FSEntryNotFound
-from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted
+from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import show_error, show_warning, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
@@ -23,9 +23,14 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
 
     COLUMNS_NUMBER = 3
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, jobs_ctx, event_bus, config, **kwargs):
+        super().__init__(**kwargs)
         self.setupUi(self)
+
+        self.jobs_ctx = jobs_ctx
+        self.event_bus = event_bus
+        self.config = config
+
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.taskbar_buttons = []
         button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
@@ -62,7 +67,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         button.file_clicked.connect(self.open_workspace_file)
         try:
             self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
-        except MountpointAlreadyMounted:
+        except (MountpointAlreadyMounted, MountpointDisabled):
             pass
 
     def open_workspace_file(self, workspace_name, file_name, is_dir):
@@ -70,7 +75,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
             self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
         except MountpointAlreadyMounted:
             pass
-        except:
+        except Exception:
             show_error(self, QCoreApplication.translate("MountWidget", "Can not acces this file."))
             return
         path = FsPath("/") / workspace_name / file_name

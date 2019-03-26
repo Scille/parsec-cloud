@@ -22,6 +22,7 @@ else:
         """
         Run parsec GUI
         """
+        config = config.evolve(mountpoint_enabled=True)
         _run_gui(config)
 
 

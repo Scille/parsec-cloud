@@ -204,7 +204,7 @@ def autoclose_dialog(monkeypatch):
 
 
 @pytest.fixture
-async def qt_to_trio_job_scheduler():
+async def jobs_ctx():
     async with trio.open_nursery() as nursery:
         job_scheduler = QtToTrioJobScheduler()
         await nursery.start(job_scheduler._start)
@@ -212,15 +212,17 @@ async def qt_to_trio_job_scheduler():
             yield job_scheduler
 
         finally:
-            await job_scheduler._teardown()
+            await job_scheduler._stop()
 
 
 @pytest.fixture
-async def gui(qtbot, qt_thread_gateway, core_config, qt_to_trio_job_scheduler):
+async def gui(qtbot, qt_thread_gateway, jobs_ctx, event_bus, core_config):
+    core_config = core_config.evolve(gui_check_version_at_startup=False, gui_first_launch=False)
+
     def _create_main_window():
-        nonlocal core_config
-        core_config = core_config.evolve(gui_check_version_at_startup=False, gui_first_launch=False)
-        main_w = MainWindow(qt_to_trio_job_scheduler, core_config)
+        # Pass minimize_on_close to avoid having test blocked by the
+        # closing confirmation prompt
+        main_w = MainWindow(jobs_ctx, event_bus, core_config, minimize_on_close=True)
         qtbot.add_widget(main_w)
         main_w.showMaximized()
         return main_w

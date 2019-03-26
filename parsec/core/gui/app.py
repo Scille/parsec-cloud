@@ -8,9 +8,12 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
 
 from parsec.core.config import CoreConfig
+from parsec.event_bus import EventBus
 
 try:
     from parsec.core.gui import lang
+    from parsec.core.gui.new_version import CheckNewVersion
+    from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
     from parsec.core.gui.trio_thread import run_trio_thread
 except ImportError as exc:
@@ -22,15 +25,6 @@ You must install the parsec package or run `python setup.py generate_pyqt_forms`
 
 
 logger = get_logger()
-
-
-def kill_window(window):
-    def _inner_kill_window(*args):
-        window.force_close = True
-        window.close_app()
-        QApplication.quit()
-
-    return _inner_kill_window
 
 
 def run_gui(config: CoreConfig):
@@ -46,16 +40,34 @@ def run_gui(config: CoreConfig):
 
     lang.switch_language(config)
 
-    with run_trio_thread() as portal:
+    event_bus = EventBus()
+    with run_trio_thread() as jobs_ctx:
 
-        win = MainWindow(portal, core_config=config)
+        if systray_available() and config.gui_tray_enabled:
+            win = MainWindow(
+                jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, minimize_on_close=True
+            )
+            systray = Systray(parent=win)
+            systray.on_close.connect(win.close_app)
+            systray.on_show.connect(win.show_top)
+
+        else:
+            win = MainWindow(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config)
+
+        if config.gui_check_version_at_startup:
+            CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
+
+        win.showMaximized()
+
+        def kill_window(*args):
+            win.close_app(force=True)
+            QApplication.quit()
+
+        signal.signal(signal.SIGINT, kill_window)
         # QTimer wakes up the event loop periodically which allows us to close
         # the window even when it is in background.
-        signal.signal(signal.SIGINT, kill_window(win))
         timer = QTimer()
         timer.start(400)
         timer.timeout.connect(lambda: None)
-
-        win.showMaximized()
 
         return app.exec_()

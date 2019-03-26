@@ -57,6 +57,10 @@ class UserFS:
             event_bus,
         )
 
+    def list_workspaces(self):
+        user_manifest = self._local_folder_fs.get_user_manifest()
+        return [w.name for w in user_manifest.workspaces]
+
     def get_workspace(self, workpace_name: str):
         workspace_entry = self._local_folder_fs._retrieve_workspace_entry(workpace_name)
         if not workspace_entry:
