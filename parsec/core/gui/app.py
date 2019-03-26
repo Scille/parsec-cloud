@@ -44,7 +44,7 @@ def run_gui(config: CoreConfig):
     f = QFont("Arial")
     app.setFont(f)
 
-    lang.switch_language()
+    lang.switch_language(config)
 
     with run_trio_thread() as portal:
 

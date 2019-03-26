@@ -5,7 +5,6 @@ from structlog import get_logger
 from PyQt5.QtCore import QTranslator, QCoreApplication
 
 from parsec.core.gui.desktop import get_locale_language
-from parsec.core.gui import settings
 
 
 LANGUAGES = {"English": "en", "Français": "fr"}
@@ -15,11 +14,11 @@ _current_translator = None
 logger = get_logger()
 
 
-def switch_language(lang_key=None):
+def switch_language(core_config, lang_key=None):
     global _current_translator
 
     if not lang_key:
-        lang_key = settings.get_value("global/language")
+        lang_key = core_config.gui_language
     if not lang_key:
         lang_key = get_locale_language()
         logger.info(f"No language in settings, trying local language '{lang_key}'")
@@ -37,7 +36,6 @@ def switch_language(lang_key=None):
         return False
 
     QCoreApplication.removeTranslator(_current_translator)
-    settings.set_value("global/language", lang_key)
     _current_translator = translator
     QCoreApplication.processEvents()
     return True

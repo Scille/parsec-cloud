@@ -61,9 +61,16 @@ class CoreConfig:
     mountpoint_enabled: bool = False
 
     sentry_url: Optional[str] = None
+    telemetry_enabled: bool = True
 
     ssl_keyfile: Optional[str] = None
     ssl_certfile: Optional[str] = None
+
+    gui_last_device: Optional[str] = None
+    gui_tray_enabled: bool = True
+    gui_language: Optional[str] = "en"
+    gui_first_launch: bool = True
+    gui_check_version_at_startup: bool = True
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -77,9 +84,15 @@ def config_factory(
     mountpoint_enabled: bool = False,
     backend_watchdog: int = 0,
     backend_max_connections: int = 4,
+    telemetry_enabled: bool = True,
     debug: bool = False,
     ssl_keyfile: str = None,
     ssl_certfile: str = None,
+    gui_last_device: str = None,
+    gui_tray_enabled: bool = True,
+    gui_language: str = "en",
+    gui_first_launch: bool = True,
+    gui_check_version_at_startup: bool = True,
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
@@ -92,6 +105,11 @@ def config_factory(
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
+        gui_last_device=gui_last_device,
+        gui_tray_enabled=gui_tray_enabled,
+        gui_language=gui_language,
+        gui_first_launch=gui_first_launch,
+        gui_check_version_at_startup=gui_check_version_at_startup,
     )
 
 
@@ -134,14 +152,23 @@ def reload_config(config: CoreConfig) -> CoreConfig:
 
 
 def save_config(config: CoreConfig):
-    (config.config_dir / "config.json").write_text(
+    config_path = config.config_dir
+    config_path.mkdir(parents=True, exist_ok=True)
+    config_path /= "config.json"
+    config_path.touch(exist_ok=True)
+    config_path.write_text(
         json.dumps(
             {
                 "data_base_dir": str(config.data_base_dir),
                 "cache_base_dir": str(config.cache_base_dir),
                 "mountpoint_base_dir": str(config.mountpoint_base_dir),
+                "telemetry_enabled": config.telemetry_enabled,
                 "backend_watchdog": config.backend_watchdog,
-                "sentry_url": config.sentry_url,
+                "gui_last_device": config.gui_last_device,
+                "gui_tray_enabled": config.gui_tray_enabled,
+                "gui_language": config.gui_language,
+                "gui_first_launch": config.gui_first_launch,
+                "gui_check_version_at_startup": config.gui_check_version_at_startup,
             }
         )
     )
