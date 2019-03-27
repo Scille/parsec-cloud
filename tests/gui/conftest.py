@@ -218,6 +218,8 @@ async def qt_to_trio_job_scheduler():
 @pytest.fixture
 async def gui(qtbot, qt_thread_gateway, core_config, qt_to_trio_job_scheduler):
     def _create_main_window():
+        nonlocal core_config
+        core_config = core_config.evolve(gui_check_version_at_startup=False, gui_first_launch=False)
         main_w = MainWindow(qt_to_trio_job_scheduler, core_config)
         qtbot.add_widget(main_w)
         main_w.showMaximized()
