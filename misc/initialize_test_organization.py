@@ -17,11 +17,7 @@ from parsec.core.backend_connection import (
     backend_administration_cmds_factory,
     backend_anonymous_cmds_factory,
 )
-from parsec.core.devices_manager import (
-    generate_new_device,
-    save_device_with_password,
-    load_device_with_password,
-)
+from parsec.core.local_device import generate_new_device, save_device_with_password
 from parsec.core.invite_claim import (
     generate_invitation_token,
     invite_and_create_device,
@@ -165,6 +161,7 @@ async def amain(
     # Invite Bob in
 
     token = generate_invitation_token()
+    bob_device = None
 
     async def invite_task():
         async with backend_cmds_factory(
@@ -175,6 +172,7 @@ async def amain(
             )
 
     async def claim_task():
+        nonlocal bob_device
         async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
             bob_device = await retry_claim(claim_user, cmds, bob_device_id, token)
             save_device_with_password(config_dir, bob_device, password, force=force)
@@ -184,10 +182,6 @@ async def amain(
         nursery.start_soon(claim_task)
 
     # Create bob workspace and share with Alice
-
-    bob_device = load_device_with_password(
-        config.config_dir, organization_id, bob_device_id, password
-    )
 
     async with logged_core_factory(config, bob_device) as core:
         await core.fs.workspace_create(f"/{bob_workspace}")

@@ -2,7 +2,6 @@
 
 from typing import List, Tuple
 from pathlib import Path
-import shutil
 
 from parsec.types import DeviceID, OrganizationID, BackendOrganizationAddr
 from parsec.serde import SerdeValidationError, SerdePackingError
@@ -38,21 +37,12 @@ def generate_new_device(
     )
 
 
-def _slugify(organization_id, device_id):
-    return f"{organization_id}#{device_id}"
-
-
-def _unslugify(slug):
-    raworg, rawdev = slug.split("#")
-    return (OrganizationID(raworg), DeviceID(rawdev))
-
-
-def get_key_file(config_dir: Path, organization_id: OrganizationID, device_id: DeviceID) -> Path:
-    slug = _slugify(organization_id, device_id)
+def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
+    slug = device.slug
     return config_dir / slug / f"{slug}.keys"
 
 
-def list_available_devices(config_dir: Path) -> List[Tuple[OrganizationID, DeviceID, str]]:
+def list_available_devices(config_dir: Path) -> List[Tuple[OrganizationID, DeviceID, str, Path]]:
     try:
         candidate_pathes = list(config_dir.iterdir())
     except FileNotFoundError:
@@ -61,15 +51,17 @@ def list_available_devices(config_dir: Path) -> List[Tuple[OrganizationID, Devic
     # Sanity checks
     devices = []
     for device_path in candidate_pathes:
+        slug = device_path.name
         try:
-            organization_id, device_id = _unslugify(device_path.name)
+            organization_id, device_id = LocalDevice.load_slug(slug)
 
         except ValueError:
             continue
 
+        key_file = device_path / f"{slug}.keys"
         try:
-            cipher = get_cipher_info(config_dir, organization_id, device_id)
-            devices.append((organization_id, device_id, cipher))
+            cipher = get_cipher_info(key_file)
+            devices.append((organization_id, device_id, cipher, key_file))
 
         except (LocalDeviceNotFoundError, LocalDeviceCryptoError):
             continue
@@ -77,7 +69,7 @@ def list_available_devices(config_dir: Path) -> List[Tuple[OrganizationID, Devic
     return devices
 
 
-def get_cipher_info(config_dir: Path, organization_id: OrganizationID, device_id: DeviceID) -> str:
+def get_cipher_info(key_file: Path) -> str:
     """
     Raises:
         LocalDeviceNotFoundError
@@ -86,7 +78,6 @@ def get_cipher_info(config_dir: Path, organization_id: OrganizationID, device_id
     from .pkcs11_cipher import PKCS11DeviceDecryptor
     from .cipher import PasswordDeviceDecryptor
 
-    key_file = get_key_file(config_dir, organization_id, device_id)
     try:
         ciphertext = key_file.read_bytes()
     except OSError:
@@ -102,9 +93,7 @@ def get_cipher_info(config_dir: Path, organization_id: OrganizationID, device_id
     raise LocalDeviceCryptoError(f"Unknown cipher for {key_file}")
 
 
-def load_device_with_password(
-    config_dir: Path, organization_id: OrganizationID, device_id: DeviceID, password: str
-) -> LocalDevice:
+def load_device_with_password(key_file: Path, password: str) -> LocalDevice:
     """
         LocalDeviceNotFoundError
         LocalDeviceCryptoError
@@ -112,7 +101,7 @@ def load_device_with_password(
         LocalDevicePackingError
     """
     decryptor = PasswordDeviceDecryptor(password)
-    return _load_device(config_dir, organization_id, device_id, decryptor)
+    return _load_device(key_file, decryptor)
 
 
 def save_device_with_password(
@@ -129,14 +118,7 @@ def save_device_with_password(
     _save_device(config_dir, device, encryptor, force)
 
 
-def load_device_with_pkcs11(
-    config_dir: Path,
-    organization_id: OrganizationID,
-    device_id: DeviceID,
-    token_id: int,
-    key_id: int,
-    pin: str,
-) -> LocalDevice:
+def load_device_with_pkcs11(key_file: Path, token_id: int, key_id: int, pin: str) -> LocalDevice:
     """
         LocalDeviceNotFoundError
         LocalDeviceCryptoError
@@ -144,7 +126,7 @@ def load_device_with_pkcs11(
         LocalDevicePackingError
     """
     decryptor = PKCS11DeviceDecryptor(token_id, key_id, pin)
-    return _load_device(config_dir, organization_id, device_id, decryptor)
+    return _load_device(key_file, decryptor)
 
 
 def save_device_with_pkcs11(
@@ -161,12 +143,7 @@ def save_device_with_pkcs11(
     _save_device(config_dir, device, encryptor)
 
 
-def _load_device(
-    config_dir: Path,
-    organization_id: OrganizationID,
-    device_id: DeviceID,
-    decryptor: BaseLocalDeviceDecryptor,
-) -> LocalDevice:
+def _load_device(key_file: Path, decryptor: BaseLocalDeviceDecryptor) -> LocalDevice:
     """
     Raises:
         LocalDeviceNotFoundError
@@ -174,8 +151,6 @@ def _load_device(
         LocalDeviceValidationError
         LocalDevicePackingError
     """
-    key_file = get_key_file(config_dir, organization_id, device_id)
-
     try:
         ciphertext = key_file.read_bytes()
     except OSError as exc:
@@ -202,7 +177,7 @@ def _save_device(
         LocalDeviceValidationError
         LocalDevicePackingError
     """
-    key_file = get_key_file(config_dir, device.organization_id, device.device_id)
+    key_file = get_key_file(config_dir, device)
     if key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(
             f"Device `{device.organization_id}:{device.device_id}` already exists"
@@ -213,6 +188,7 @@ def _save_device(
 
     except SerdeValidationError as exc:
         raise LocalDeviceValidationError(str(exc)) from exc
+
     except SerdePackingError as exc:
         raise LocalDevicePackingError(str(exc)) from exc
 
@@ -223,17 +199,3 @@ def _save_device(
 
     except OSError as exc:
         raise LocalDeviceError(f"Cannot save {key_file}: {exc}") from exc
-
-
-def remove_device(
-    config_dir: Path, device: LocalDevice, encryptor: BaseLocalDeviceEncryptor, force: bool = False
-) -> None:
-    """
-    Raises:
-        LocalDeviceNotFoundError
-    """
-    device_config_dir = get_key_file(config_dir, device.organization_id, device.device_id).parent
-    try:
-        shutil.rmtree(device_config_dir)
-    except FileNotFoundError as exc:
-        raise LocalDeviceNotFoundError(str(exc)) from exc

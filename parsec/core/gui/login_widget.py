@@ -15,8 +15,8 @@ from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
 
 class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
-    login_with_password_clicked = pyqtSignal(str, str, str)
-    login_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
+    login_with_password_clicked = pyqtSignal(object, str)
+    login_with_pkcs11_clicked = pyqtSignal(object, str, int, int)
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,15 +31,12 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         event.accept()
 
     def emit_login(self):
-        organization_id, device_id, _ = self.devices[self.combo_login.currentText()]
+        *_, key_file = self.devices[self.combo_login.currentText()]
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
-            self.login_with_password_clicked.emit(
-                organization_id, device_id, self.line_edit_password.text()
-            )
+            self.login_with_password_clicked.emit(key_file, self.line_edit_password.text())
         else:
             self.login_with_pkcs11_clicked.emit(
-                organization_id,
-                device_id,
+                key_file,
                 self.line_edit_pkcs11_pin.text(),
                 int(self.combo_pkcs11_key.currentText()),
                 int(self.combo_pkcs11_token.currentText()),
@@ -61,9 +58,9 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         devices = list_available_devices(self.core_config.config_dir)
         # Display devices in `<organization>:<device_id>` format
         self.devices = {}
-        for o, d, t in devices:
+        for o, d, t, kf in devices:
             self.combo_login.addItem(f"{o}:{d}")
-            self.devices[f"{o}:{d}"] = (o, d, t)
+            self.devices[f"{o}:{d}"] = (o, d, t, kf)
         last_device = self.core_config.gui_last_device
         if last_device and last_device in self.devices:
             self.combo_login.setCurrentText(last_device)
@@ -71,8 +68,8 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
-    login_with_password_clicked = pyqtSignal(str, str, str)
-    login_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
+    login_with_password_clicked = pyqtSignal(object, str)
+    login_with_pkcs11_clicked = pyqtSignal(object, str, int, int)
 
     def __init__(self, portal, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -100,15 +97,11 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_settings.clicked.connect(self.show_settings)
         self.reset()
 
-    def emit_login_with_password(self, organization_id, device_id, password):
-        self.login_with_password_clicked.emit(organization_id, device_id, password)
+    def emit_login_with_password(self, key_file, password):
+        self.login_with_password_clicked.emit(key_file, password)
 
-    def emit_login_with_pkcs11(
-        self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token
-    ):
-        self.login_with_pkcs11_clicked.emit(
-            organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token
-        )
+    def emit_login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
+        self.login_with_pkcs11_clicked.emit(key_file, pkcs11_pin, pkcs11_key, pkcs11_token)
 
     def show_settings(self):
         settings_dialog = SettingsDialog(self.core_config, parent=self)
