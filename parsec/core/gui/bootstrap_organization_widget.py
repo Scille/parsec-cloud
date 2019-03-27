@@ -13,10 +13,10 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendHandshakeError,
 )
-from parsec.core.devices_manager import (
+from parsec.core.local_device import (
     generate_new_device,
     save_device_with_password,
-    DeviceConfigAleadyExists,
+    LocalDeviceAlreadyExistsError,
 )
 from parsec.core.gui.trio_thread import JobResultError
 from parsec.core.gui.custom_widgets import show_error, show_info
@@ -78,23 +78,26 @@ async def _do_bootstrap_organization(
     except ValueError:
         raise JobResultError("bad-device_name")
 
+    root_signing_key = SigningKey.generate()
+    root_verify_key = root_signing_key.verify_key
+    organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
+
     try:
-        root_signing_key = SigningKey.generate()
-        root_verify_key = root_signing_key.verify_key
-        organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
-
         device = generate_new_device(device_id, organization_addr)
-
         save_device_with_password(config_dir, device, password)
 
-        now = pendulum.now()
-        user_certificate = build_user_certificate(
-            None, root_signing_key, device.user_id, device.public_key, now
-        )
-        device_certificate = build_device_certificate(
-            None, root_signing_key, device_id, device.verify_key, now
-        )
+    except LocalDeviceAlreadyExistsError:
+        raise JobResultError("user-exists")
 
+    now = pendulum.now()
+    user_certificate = build_user_certificate(
+        None, root_signing_key, device.user_id, device.public_key, now
+    )
+    device_certificate = build_device_certificate(
+        None, root_signing_key, device_id, device.verify_key, now
+    )
+
+    try:
         async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
                 bootstrap_addr.organization_id,
@@ -103,9 +106,6 @@ async def _do_bootstrap_organization(
                 user_certificate,
                 device_certificate,
             )
-
-    except DeviceConfigAleadyExists:
-        raise JobResultError("user-exists")
 
     except BackendHandshakeError:
         raise JobResultError("invalid-url")

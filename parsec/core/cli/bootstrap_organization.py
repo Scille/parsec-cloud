@@ -12,7 +12,7 @@ from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey, build_device_certificate, build_user_certificate
 from parsec.core.config import get_default_config_dir
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
-from parsec.core.devices_manager import generate_new_device, save_device_with_password
+from parsec.core.local_device import generate_new_device, save_device_with_password
 
 
 async def _bootstrap_organization(

@@ -1,25 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields, SerdeError
+from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.crypto import (
     CryptoError,
     derivate_secret_key_from_password,
     encrypt_raw_with_secret_key,
     decrypt_raw_with_secret_key,
 )
-
-
-class CipherError(Exception):
-    pass
+from parsec.core.local_device.exceptions import (
+    LocalDevicePackingError,
+    LocalDeviceValidationError,
+    LocalDeviceCryptoError,
+)
 
 
 class BaseLocalDeviceEncryptor:
     def encrypt(self, plain: bytes) -> bytes:
+        """
+        Raises:
+            LocalDeviceCryptoError
+            LocalDeviceValidationError
+            LocalDevicePackingError
+        """
         raise NotImplementedError()
 
 
 class BaseLocalDeviceDecryptor:
     def decrypt(self, ciphered: bytes) -> bytes:
+        """
+        Raises:
+            LocalDeviceCryptoError
+            LocalDeviceValidationError
+            LocalDevicePackingError
+        """
         raise NotImplementedError()
 
     @staticmethod
@@ -33,7 +46,11 @@ class PasswordPayloadSchema(UnknownCheckedSchema):
     ciphertext = fields.Bytes(required=True)
 
 
-password_payload_serializer = Serializer(PasswordPayloadSchema)
+password_payload_serializer = Serializer(
+    PasswordPayloadSchema,
+    validation_exc=LocalDeviceValidationError,
+    packing_exc=LocalDevicePackingError,
+)
 
 
 class PasswordDeviceEncryptor(BaseLocalDeviceEncryptor):
@@ -43,16 +60,18 @@ class PasswordDeviceEncryptor(BaseLocalDeviceEncryptor):
     def encrypt(self, plaintext: bytes) -> bytes:
         """
         Raises:
-            CipherError
+            LocalDeviceCryptoError
+            LocalDeviceValidationError
+            LocalDevicePackingError
         """
         try:
             key, salt = derivate_secret_key_from_password(self.password)
-
             ciphertext = encrypt_raw_with_secret_key(key, plaintext)
-            return password_payload_serializer.dumps({"salt": salt, "ciphertext": ciphertext})
 
-        except (CryptoError, SerdeError) as exc:
-            raise CipherError(str(exc)) from exc
+        except CryptoError as exc:
+            raise LocalDeviceCryptoError(str(exc)) from exc
+
+        return password_payload_serializer.dumps({"salt": salt, "ciphertext": ciphertext})
 
 
 class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
@@ -62,15 +81,17 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
     def decrypt(self, ciphertext: bytes) -> bytes:
         """
         Raises:
-            CipherError
+            LocalDeviceCryptoError
+            LocalDeviceValidationError
+            LocalDevicePackingError
         """
+        payload = password_payload_serializer.loads(ciphertext)
         try:
-            payload = password_payload_serializer.loads(ciphertext)
             key, _ = derivate_secret_key_from_password(self.password, payload["salt"])
             return decrypt_raw_with_secret_key(key, payload["ciphertext"])
 
-        except (CryptoError, SerdeError) as exc:
-            raise CipherError(str(exc)) from exc
+        except CryptoError as exc:
+            raise LocalDeviceCryptoError(str(exc)) from exc
 
     @staticmethod
     def can_decrypt(ciphertext: bytes) -> bool:
@@ -78,5 +99,5 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
             password_payload_serializer.loads(ciphertext)
             return True
 
-        except SerdeError:
+        except (LocalDeviceValidationError, LocalDevicePackingError):
             return False
