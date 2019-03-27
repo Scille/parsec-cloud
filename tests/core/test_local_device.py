@@ -58,19 +58,20 @@ def test_list_devices(mocked_pkcs11, organization_factory, local_device_factory,
 
     # Also add dummy stuff that should be ignored
     (config_dir / "bad1").touch()
-    (config_dir / "bad2#user@dev").mkdir()
-    bad_dir = config_dir / "bad3#user@dev"
-    bad_dir.mkdir()
-    (bad_dir / "bad3#user@dev.keys").write_bytes(b"dummy")
+    (config_dir / "373955f566#corp#bob@laptop").mkdir()
+    dummy_slug = "a54ed6df3a#corp#alice@laptop"
+    (config_dir / dummy_slug).mkdir()
+    (config_dir / dummy_slug / f"{dummy_slug}.keys").write_bytes(b"dummy")
 
     devices = list_available_devices(config_dir)
+
     assert set(devices) == {
-        (o1d11.organization_id, o1d11.device_id, "password"),
-        (o1d12.organization_id, o1d12.device_id, "password"),
-        (o1d21.organization_id, o1d21.device_id, "password"),
-        (o2d11.organization_id, o2d11.device_id, "pkcs11"),
-        (o2d12.organization_id, o2d12.device_id, "pkcs11"),
-        (o2d21.organization_id, o2d21.device_id, "pkcs11"),
+        (o1d11.organization_id, o1d11.device_id, "password", get_key_file(config_dir, o1d11)),
+        (o1d12.organization_id, o1d12.device_id, "password", get_key_file(config_dir, o1d12)),
+        (o1d21.organization_id, o1d21.device_id, "password", get_key_file(config_dir, o1d21)),
+        (o2d11.organization_id, o2d11.device_id, "pkcs11", get_key_file(config_dir, o2d11)),
+        (o2d12.organization_id, o2d12.device_id, "pkcs11", get_key_file(config_dir, o2d12)),
+        (o2d21.organization_id, o2d21.device_id, "pkcs11", get_key_file(config_dir, o2d21)),
     }
 
 
@@ -79,9 +80,8 @@ def test_password_save_and_load(path_exists, config_dir, alice):
     config_dir = config_dir if path_exists else config_dir / "dummy"
     save_device_with_password(config_dir, alice, "S3Cr37")
 
-    alice_reloaded = load_device_with_password(
-        config_dir, alice.organization_id, alice.device_id, "S3Cr37"
-    )
+    key_file = get_key_file(config_dir, alice)
+    alice_reloaded = load_device_with_password(key_file, "S3Cr37")
     assert alice == alice_reloaded
 
 
@@ -89,16 +89,18 @@ def test_load_bad_password(config_dir, alice):
     save_device_with_password(config_dir, alice, "S3Cr37")
 
     with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_password(config_dir, alice.organization_id, alice.device_id, "dummy")
+        key_file = get_key_file(config_dir, alice)
+        load_device_with_password(key_file, "dummy")
 
 
 def test_load_bad_data(config_dir, alice):
-    alice_key = get_key_file(config_dir, alice.organization_id, alice.device_id)
+    alice_key = get_key_file(config_dir, alice)
     alice_key.parent.mkdir()
     alice_key.write_bytes(b"dummy")
 
     with pytest.raises(LocalDevicePackingError):
-        load_device_with_password(config_dir, alice.organization_id, alice.device_id, "S3Cr37")
+        key_file = get_key_file(config_dir, alice)
+        load_device_with_password(key_file, "S3Cr37")
 
 
 def test_password_save_already_existing(config_dir, alice):
@@ -110,7 +112,8 @@ def test_password_save_already_existing(config_dir, alice):
 
 def test_password_load_not_found(config_dir, alice):
     with pytest.raises(LocalDeviceNotFoundError):
-        load_device_with_password(config_dir, alice.organization_id, alice.device_id, "S3Cr37")
+        key_file = get_key_file(config_dir, alice)
+        load_device_with_password(key_file, "S3Cr37")
 
 
 def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
@@ -120,9 +123,8 @@ def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
         save_device_with_password(config_dir, device, f"S3Cr37-{device.organization_id}")
 
     for device in devices:
-        device_reloaded = load_device_with_password(
-            config_dir, device.organization_id, device.device_id, f"S3Cr37-{device.organization_id}"
-        )
+        key_file = get_key_file(config_dir, device)
+        device_reloaded = load_device_with_password(key_file, f"S3Cr37-{device.organization_id}")
         assert device == device_reloaded
 
 
@@ -155,9 +157,8 @@ def test_pkcs11_save_and_load(mocked_pkcs11, config_dir, alice, bob):
 
     save_device_with_pkcs11(config_dir, alice, token_id, key_id)
 
-    alice_reloaded = load_device_with_pkcs11(
-        config_dir, alice.organization_id, alice.device_id, token_id, key_id, pin
-    )
+    key_file = get_key_file(config_dir, alice)
+    alice_reloaded = load_device_with_pkcs11(key_file, token_id, key_id, pin)
     assert alice_reloaded == alice
 
     with pytest.raises(LocalDeviceCryptoError):
@@ -167,14 +168,10 @@ def test_pkcs11_save_and_load(mocked_pkcs11, config_dir, alice, bob):
         save_device_with_pkcs11(config_dir, bob, token_id, 42)
 
     with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_pkcs11(
-            config_dir, alice.organization_id, alice.device_id, token_id, key_id, "foo"
-        )
+        load_device_with_pkcs11(key_file, token_id, key_id, "foo")
 
     with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_pkcs11(config_dir, alice.organization_id, alice.device_id, 42, key_id, pin)
+        load_device_with_pkcs11(key_file, 42, key_id, pin)
 
     with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_pkcs11(
-            config_dir, alice.organization_id, alice.device_id, token_id, 42, pin
-        )
+        load_device_with_pkcs11(key_file, token_id, 42, pin)

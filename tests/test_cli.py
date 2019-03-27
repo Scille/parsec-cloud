@@ -42,14 +42,16 @@ def test_share_workspace(alice, bob):
 
     factory_mock.return_value.fs.share = share
 
-    with patch("parsec.core.cli.utils.get_cipher_info") as cipher_mock:
+    with patch("parsec.core.cli.utils.list_available_devices") as list_mock:
         with patch("parsec.core.cli.utils.load_device_with_password") as load_mock:
             with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
-                cipher_mock.return_value = "password"
+                list_mock.return_value = [
+                    (bob.organization_id, bob.device_id, "password", MagicMock())
+                ]
                 runner = CliRunner()
                 args = (
                     "core share_workspace --password bla "
-                    f"--device={bob.organization_id}:{bob.device_id} "
+                    f"--device={bob.device_id} "
                     f"ws1 {alice.user_id}"
                 )
                 result = runner.invoke(cli, args)
@@ -57,8 +59,8 @@ def test_share_workspace(alice, bob):
     assert result.exit_code == 0
     assert result.output == ""
 
-    cipher_mock.assert_called_once_with(ANY, bob.organization_id, bob.device_id)
-    load_mock.assert_called_once_with(ANY, bob.organization_id, bob.device_id, "bla")
+    list_mock.assert_called_once_with(ANY)
+    load_mock.assert_called_once_with(ANY, "bla")
     factory_mock.assert_called_once_with(ANY, load_mock.return_value)
     share_mock.assert_called_once_with("/ws1", alice.user_id)
 

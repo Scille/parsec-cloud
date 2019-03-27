@@ -193,11 +193,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.stop_core()
         self.show_login_widget()
 
-    def login_with_password(self, organization_id, device_id, password):
+    def login_with_password(self, key_file, password):
         try:
-            self.current_device = load_device_with_password(
-                self.core_config.config_dir, organization_id, device_id, password
-            )
+            self.current_device = load_device_with_password(key_file, password)
             self.start_core()
             self.show_central_widget()
         except LocalDeviceError:
@@ -220,10 +218,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, QCoreApplication.translate("MainWindow", "Can not login"))
             logger.error("Error while trying to log in: {}".format(str(exc)))
 
-    def login_with_pkcs11(self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
+    def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
             self.current_device = load_device_with_pkcs11(
-                self.core_config.config_dir, organization_id, device_id
+                key_file, token_id=pkcs11_token, key_id=pkcs11_key, pin=pkcs11_pin
             )
             self.start_core()
             self.show_central_widget()

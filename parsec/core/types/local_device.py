@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+from typing import Tuple
+from hashlib import sha256
 
-from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.types import BackendOrganizationAddr, OrganizationID, DeviceID
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.serde import UnknownCheckedSchema, fields, post_load
 from parsec.core.types.base import serializer_factory
@@ -24,6 +26,22 @@ class LocalDevice:
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
+
+    @property
+    def slug(self):
+        # Add a hash to avoid clash when the backend is reseted
+        # and we recreate a device with same organization/device_id
+        # organization and device_id than a previous one
+        hash_part = sha256(self.root_verify_key.encode()).hexdigest()[:10]
+        return f"{hash_part}#{self.organization_id}#{self.device_id}"
+
+    @staticmethod
+    def load_slug(slug: str) -> Tuple[OrganizationID, DeviceID]:
+        """
+        Raises: ValueError
+        """
+        _, raw_org_id, raw_device_id = slug.split("#")
+        return OrganizationID(raw_org_id), DeviceID(raw_device_id)
 
     @property
     def root_verify_key(self):
