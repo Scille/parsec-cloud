@@ -3,7 +3,6 @@
 import trio
 from trio.hazmat import current_clock
 
-from parsec.core.base import BaseAsyncComponent
 from parsec.core.backend_connection import BackendNotAvailable
 
 
@@ -16,9 +15,7 @@ def timestamp():
     return current_clock().current_time()
 
 
-# TODO: replace by a function
-# TODO: BaseAsyncComponent seems not needed
-class SyncMonitor(BaseAsyncComponent):
+class SyncMonitor:
     def __init__(self, fs, event_bus):
         super().__init__()
         self.fs = fs
