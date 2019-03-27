@@ -78,7 +78,7 @@ def test_fs_online_idempotent_sync(
 
         @initialize(target=GoodFolderPath)
         async def init_good_folder_pathes(self):
-            return multiple("/", "/w/", "/w/good_folder/")
+            return multiple("/w/", "/w/good_folder/")
 
         @initialize(target=GoodFilePath)
         async def init_good_file_pathes(self):

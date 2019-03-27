@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
@@ -41,7 +40,7 @@ def compare_fs_dumps(entry_1, entry_2):
 
 
 @pytest.mark.slow
-def test_fs_online_concurrent_tree_and_sync(
+def test_fs_online_concurrent_user(
     hypothesis_settings,
     backend_addr,
     backend_factory,
@@ -51,9 +50,8 @@ def test_fs_online_concurrent_tree_and_sync(
     alice,
     alice2,
 ):
-    class FSOnlineConcurrentTreeAndSync(TrioRuleBasedStateMachine):
-        Files = Bundle("file")
-        Folders = Bundle("folder")
+    class FSOnlineConcurrentUser(TrioRuleBasedStateMachine):
+        Workspaces = Bundle("workspace")
         FSs = Bundle("fs")
 
         async def start_fs(self, device, local_storage):
@@ -79,7 +77,7 @@ def test_fs_online_concurrent_tree_and_sync(
         def fs2(self):
             return self.fs2_controller.fs
 
-        @initialize(target=Folders)
+        @initialize(target=Workspaces)
         async def init(self):
             self.device1 = alice
             self.device2 = alice2
@@ -96,77 +94,34 @@ def test_fs_online_concurrent_tree_and_sync(
 
             return "/w"
 
-        @initialize(target=FSs, force_after_init=Folders)
+        @initialize(target=FSs, force_after_init=Workspaces)
         async def register_fs1(self, force_after_init):
             return self.fs1
 
-        @initialize(target=FSs, force_after_init=Folders)
+        @initialize(target=FSs, force_after_init=Workspaces)
         async def register_fs2(self, force_after_init):
             return self.fs2
 
-        @rule(target=Files, fs=FSs, parent=Folders, name=st_entry_name)
-        async def create_file(self, fs, parent, name):
-            path = os.path.join(parent, name)
+        @rule(target=Workspaces, fs=FSs, name=st_entry_name)
+        async def create_workspace(self, fs, name):
+            path = f"/{name}"
             try:
-                await fs.file_create(path=path)
+                await fs.workspace_create(path=path)
             except OSError:
                 pass
             return path
 
-        @rule(target=Folders, fs=FSs, parent=Folders, name=st_entry_name)
-        async def create_folder(self, fs, parent, name):
-            path = os.path.join(parent, name)
+        @rule(target=Workspaces, fs=FSs, src=Workspaces, dst_name=st_entry_name)
+        async def rename_workspace(self, fs, src, dst_name):
+            dst = f"/{dst_name}"
             try:
-                await fs.folder_create(path=path)
-            except OSError:
-                pass
-            return path
-
-        @rule(fs=FSs, path=Files)
-        async def update_file(self, fs, path):
-            try:
-                await fs.file_write(path, offset=0, content=b"a")
-            except OSError:
-                pass
-
-        @rule(fs=FSs, path=Files)
-        async def delete_file(self, fs, path):
-            # TODO: separate delete file from delete folder
-            try:
-                await fs.delete(path=path)
-            except OSError:
-                pass
-            return path
-
-        @rule(fs=FSs, path=Folders)
-        async def delete_folder(self, fs, path):
-            # TODO: separate delete file from delete folder
-            try:
-                await fs.delete(path=path)
-            except OSError:
-                pass
-            return path
-
-        @rule(target=Files, fs=FSs, src=Files, dst_parent=Folders, dst_name=st_entry_name)
-        async def move_file(self, fs, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
-            try:
-                await fs.move(src, dst)
-            except OSError:
-                pass
-            return dst
-
-        @rule(target=Folders, fs=FSs, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
-        async def move_folder(self, fs, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
-            try:
-                await fs.move(src, dst)
+                await fs.workspace_rename(src, dst)
             except OSError:
                 pass
             return dst
 
         @rule()
-        async def sync_all_the_files(self):
+        async def sync(self):
             # Send two syncs in a row given file conflict results are not synced
             # once created
 
@@ -185,4 +140,4 @@ def test_fs_online_concurrent_tree_and_sync(
             fs_dump_2 = self.fs2._local_folder_fs.dump()
             compare_fs_dumps(fs_dump_1, fs_dump_2)
 
-    run_state_machine_as_test(FSOnlineConcurrentTreeAndSync, settings=hypothesis_settings)
+    run_state_machine_as_test(FSOnlineConcurrentUser, settings=hypothesis_settings)

@@ -70,14 +70,15 @@ def test_fs_online_tree_and_sync(
         @initialize(target=Folders)
         async def init(self):
             self.oracle_fs = oracle_fs_with_sync_factory()
+            self.oracle_fs.create_workspace("/w")
             self.device = alice
             self.local_storage = local_storage_factory(self.device)
 
             await self.start_backend()
             await self.restart_fs(self.device, self.local_storage)
-            await self.fs.sync("/")
+            await self.fs.workspace_create("/w")
 
-            return "/"
+            return "/w"
 
         @rule()
         async def restart(self):
@@ -126,17 +127,6 @@ def test_fs_online_tree_and_sync(
                     await self.fs.folder_create(path=path)
             return path
 
-        @rule(target=Folders, parent=Folders, name=st_entry_name)
-        async def create_workspace(self, parent, name):
-            path = os.path.join(parent, name)
-            expected_status = self.oracle_fs.create_workspace(path)
-            if expected_status == "ok":
-                await self.fs.workspace_create(path=path)
-            else:
-                with pytest.raises(OSError):
-                    await self.fs.workspace_create(path=path)
-            return path
-
         @rule(path=Files)
         async def delete_file(self, path):
             # TODO: separate delete file from delete folder
@@ -179,17 +169,6 @@ def test_fs_online_tree_and_sync(
             else:
                 with pytest.raises(OSError):
                     await self.fs.move(src, dst)
-            return dst
-
-        @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
-        async def rename_workspace(self, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
-            expected_status = self.oracle_fs.rename_workspace(src, dst)
-            if expected_status == "ok":
-                await self.fs.workspace_rename(src, dst)
-            else:
-                with pytest.raises(OSError):
-                    await self.fs.workspace_rename(src, dst)
             return dst
 
         async def _stat(self, path):

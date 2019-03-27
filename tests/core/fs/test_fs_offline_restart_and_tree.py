@@ -83,17 +83,6 @@ def test_fs_offline_restart_and_tree(
                     await self.fs.folder_create(path=path)
             return path
 
-        @rule(target=Folders, name=st_entry_name)
-        async def create_workspace(self, name):
-            path = os.path.join("/", name)
-            expected_status = self.oracle_fs.create_workspace(path)
-            if expected_status == "ok":
-                await self.fs.workspace_create(path)
-            else:
-                with pytest.raises(OSError):
-                    await self.fs.workspace_create(path)
-            return path
-
         @rule(path=Files)
         async def delete_file(self, path):
             # TODO: separate delete file from delete folder
@@ -137,7 +126,5 @@ def test_fs_offline_restart_and_tree(
                 with pytest.raises(OSError):
                     await self.fs.move(src, dst)
             return dst
-
-        # TODO: test workspace_rename as well ?
 
     run_state_machine_as_test(FSOfflineRestartAndTree, settings=hypothesis_settings)

@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import math
-import inspect
 from typing import Dict
 from uuid import UUID
 
@@ -10,15 +9,7 @@ from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice, FsPath
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendCmdsPool
-from parsec.core.fs.local_folder_fs import (
-    FSManifestLocalMiss,
-    FSMultiManifestLocalMiss,
-    LocalFolderFS,
-)
-from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
-from parsec.core.fs.syncer import Syncer
-from parsec.core.fs.sharing import Sharing
-from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.userfs import UserFS
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 
@@ -36,147 +27,161 @@ class FS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
 
-        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
-        self._local_file_fs = LocalFileFS(device, local_storage, self._local_folder_fs, event_bus)
-        self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
-        self._syncer = Syncer(
-            device,
-            backend_cmds,
-            remote_devices_manager,
-            self._local_folder_fs,
-            self._local_file_fs,
-            event_bus,
-        )
-        self._sharing = Sharing(
-            device,
-            backend_cmds,
-            remote_devices_manager,
-            self._local_folder_fs,
-            self._syncer,
-            self._remote_loader,
-            event_bus,
+        self._user_fs = UserFS(
+            device, local_storage, backend_cmds, remote_devices_manager, event_bus
         )
 
-    async def _load_and_retry(self, fn, *args, **kwargs):
-        while True:
-            try:
-                if inspect.iscoroutinefunction(fn):
-                    return await fn(*args, **kwargs)
-                else:
-                    return fn(*args, **kwargs)
+        self._fds = {}
 
-            except FSManifestLocalMiss as exc:
-                await self._remote_loader.load_manifest(exc.access)
+    def _put_fd(self, workspace, fd):
+        self._fds[fd] = workspace
+        return fd
 
-            except FSMultiManifestLocalMiss as exc:
-                for access in exc.accesses:
-                    await self._remote_loader.load_manifest(access)
+    def _pop_fd(self, fd):
+        return self._fds.pop(fd), fd
 
-            except FSBlocksLocalMiss as exc:
-                for access in exc.accesses:
-                    await self._remote_loader.load_block(access)
+    def _get_fd(self, fd):
+        return self._fds.get(fd), fd
+
+    @property
+    def _local_folder_fs(self):
+        return self._user_fs._local_folder_fs
+
+    @property
+    def _syncer(self):
+        return self._user_fs._syncer
+
+    def _split_path(self, path):
+        path = FsPath(path)
+        if path.is_root():
+            return None, None
+        else:
+            _, workspace_name, *parts = path.parts
+            return workspace_name, FsPath("/" + "/".join(parts))
+
+    def _get_workspace(self, path):
+        workspace_name, subpath = self._split_path(path)
+        assert workspace_name
+        workspace = self._user_fs.get_workspace(workspace_name)
+        return workspace, subpath
 
     async def stat(self, path: str) -> dict:
-        cooked_path = FsPath(path)
-        return await self._load_and_retry(self._local_folder_fs.stat, cooked_path)
+        workspace_name, subpath = self._split_path(path)
+        if not workspace_name:
+            return await self._user_fs.stat()
+
+        else:
+            return await self._user_fs.get_workspace(workspace_name).stat(subpath)
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
-        fd = await self.file_fd_open(path, "rw")
-        try:
-            if offset:
-                await self.file_fd_seek(fd, offset)
-            return await self.file_fd_write(fd, content)
-        finally:
-            await self.file_fd_close(fd)
+        workspace, subpath = self._get_workspace(path)
+        return await workspace.file_write(subpath, content, offset)
 
     async def file_truncate(self, path: str, length: int) -> None:
-        fd = await self.file_fd_open(path, "w")
-        try:
-            await self.file_fd_truncate(fd, length)
-        finally:
-            await self.file_fd_close(fd)
+        workspace, subpath = self._get_workspace(path)
+        return await workspace.file_truncate(subpath, length)
 
     async def file_read(self, path: str, size: int = math.inf, offset: int = 0) -> bytes:
-        fd = await self.file_fd_open(path, "r")
-        try:
-            if offset:
-                await self.file_fd_seek(fd, offset)
-            return await self.file_fd_read(fd, size)
-        finally:
-            await self.file_fd_close(fd)
+        workspace, subpath = self._get_workspace(path)
+        return await workspace.file_read(subpath, size, offset)
 
     async def file_fd_open(self, path: str, mode="rw") -> int:
-        cooked_path = FsPath(path)
-        access = await self._load_and_retry(self._local_folder_fs.get_access, cooked_path, mode)
-        return self._local_file_fs.open(access)
+        workspace, subpath = self._get_workspace(path)
+        fd = await workspace.file_fd_open(subpath, mode)
+        return self._put_fd(workspace, fd)
 
     async def file_fd_close(self, fd: int) -> None:
-        self._local_file_fs.close(fd)
+        workspace, fd = self._pop_fd(fd)
+        await workspace.file_fd_close(fd)
 
     async def file_fd_seek(self, fd: int, offset: int) -> None:
-        self._local_file_fs.seek(fd, offset)
+        workspace, fd = self._get_fd(fd)
+        await workspace.file_fd_seek(fd, offset)
 
     async def file_fd_truncate(self, fd: int, length: int) -> None:
-        self._local_file_fs.truncate(fd, length)
+        workspace, fd = self._get_fd(fd)
+        await workspace.file_fd_truncate(fd, length)
 
     async def file_fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
-        return self._local_file_fs.write(fd, content, offset)
+        workspace, fd = self._get_fd(fd)
+        return await workspace.file_fd_write(fd, content, offset)
 
     async def file_fd_flush(self, fd: int) -> None:
-        self._local_file_fs.flush(fd)
+        workspace, fd = self._get_fd(fd)
+        await workspace.file_fd_flush(fd)
 
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
-        return await self._load_and_retry(self._local_file_fs.read, fd, size, offset)
+        workspace, fd = self._get_fd(fd)
+        return await workspace.file_fd_read(fd, size, offset)
 
     async def touch(self, path: str) -> UUID:
-        cooked_path = FsPath(path)
-        return await self._load_and_retry(self._local_folder_fs.touch, cooked_path)
+        return await self.file_create(path)
 
     async def file_create(self, path: str) -> UUID:
-        return await self.touch(path)
+        workspace, subpath = self._get_workspace(path)
+        return await workspace.file_create(subpath)
 
     async def mkdir(self, path: str) -> UUID:
-        cooked_path = FsPath(path)
-        return await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path)
+        return await self.folder_create(path)
 
     async def folder_create(self, path: str) -> UUID:
-        return await self.mkdir(path)
+        workspace, subpath = self._get_workspace(path)
+        return await workspace.folder_create(subpath)
 
     async def workspace_create(self, path: str) -> UUID:
         cooked_path = FsPath(path)
-        return await self._load_and_retry(self._local_folder_fs.workspace_create, cooked_path)
+        assert cooked_path.is_workspace()
+        return await self._user_fs.workspace_create(cooked_path.workspace)
 
     async def workspace_rename(self, src: str, dst: str) -> None:
         cooked_src = FsPath(src)
         cooked_dst = FsPath(dst)
-        await self._load_and_retry(self._local_folder_fs.workspace_rename, cooked_src, cooked_dst)
+        assert cooked_src.is_workspace()
+        assert cooked_dst.is_workspace()
+        await self._user_fs.workspace_rename(cooked_src.workspace, cooked_dst.workspace)
 
     async def move(self, src: str, dst: str, overwrite: bool = True) -> None:
-        cooked_src = FsPath(src)
-        cooked_dst = FsPath(dst)
-        await self._load_and_retry(self._local_folder_fs.move, cooked_src, cooked_dst, overwrite)
+        workspace, subpath_src = self._get_workspace(src)
+        workspace_dst, subpath_dst = self._get_workspace(dst)
+        assert workspace
+        assert workspace.workpace_name == workspace_dst.workpace_name
+        await workspace.move(subpath_src, subpath_dst)
 
     async def delete(self, path: str) -> None:
-        cooked_path = FsPath(path)
-        await self._load_and_retry(self._local_folder_fs.delete, cooked_path)
+        workspace, subpath = self._get_workspace(path)
+        await workspace.delete(subpath)
 
     async def sync(self, path: str, recursive: bool = True) -> None:
-        cooked_path = FsPath(path)
-        await self._load_and_retry(self._syncer.sync, cooked_path, recursive=recursive)
+        workspace_name, subpath = self._split_path(path)
+        if not workspace_name:
+            await self._user_fs.sync(recursive=recursive)
+
+        else:
+            workspace = self._user_fs.get_workspace(workspace_name)
+            await workspace.sync(subpath, recursive)
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
     async def sync_by_id(self, entry_id: UUID) -> None:
         assert isinstance(entry_id, UUID)
-        await self._load_and_retry(self._syncer.sync_by_id, entry_id)
+        for workspace_name in self._user_fs.list_workspaces():
+            workspace = self._user_fs.get_workspace(workspace_name)
+            try:
+                return await workspace.sync_by_id(entry_id)
+            except Exception:  # TODO: better exception
+                pass
 
     # TODO: do we really need this ? or should we optimize `sync(path='/')` ?
     async def full_sync(self) -> None:
-        await self._load_and_retry(self._syncer.full_sync)
+        await self._user_fs.full_sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:
         assert isinstance(id, UUID)
-        path, _, _ = await self._load_and_retry(self._local_folder_fs.get_entry_path, id)
-        return path
+        for workspace_name in self._user_fs.list_workspaces():
+            workspace = self._user_fs.get_workspace(workspace_name)
+            try:
+                return await workspace.get_entry_path(id)
+            except Exception:  # TODO: better exception
+                pass
 
     async def share(
         self,
@@ -187,10 +192,15 @@ class FS:
         write_right: bool = True,
     ) -> None:
         cooked_path = FsPath(path)
-        await self._load_and_retry(
-            self._sharing.share,
-            cooked_path,
-            recipient,
+        if not cooked_path.is_workspace():
+            # Will fail with correct exception
+            workpace_name = path
+        else:
+            workpace_name = cooked_path.workspace
+
+        await self._user_fs.workspace_share(
+            workpace_name,
+            recipient=UserID(recipient),
             admin_right=admin_right,
             read_right=read_right,
             write_right=write_right,
@@ -198,8 +208,8 @@ class FS:
 
     async def get_permissions(self, path: str) -> Dict[UserID, Dict]:
         cooked_path = FsPath(path)
-        permissions = await self._load_and_retry(self._sharing.get_permissions, cooked_path)
-        return permissions
+        assert cooked_path.is_workspace()
+        return await self._user_fs.workspace_get_permissions(cooked_path.workspace)
 
     async def process_last_messages(self) -> None:
-        await self._sharing.process_last_messages()
+        await self._user_fs.process_last_messages()
