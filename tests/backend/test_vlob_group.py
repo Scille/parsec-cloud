@@ -255,8 +255,46 @@ async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alic
 
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
+            # On top of that, other `vlob_group.updated` has been triggered
+            # before us (i.g. during alice user vlob creation). In case of slow
+            # database those events could pop only now, hence shadowing the ones
+            # we are waiting for. To avoid this we have to specify event params.
             await spy.wait_multiple(
-                ["vlob_group.updated", "vlob_group.updated", "vlob_group.updated"]
+                [
+                    (
+                        "vlob_group.updated",
+                        {
+                            "organization_id": alice2.organization_id,
+                            "author": alice2.device_id,
+                            "id": OTHER_GROUP_ID,
+                            "checkpoint": 1,
+                            "src_id": OTHER_VLOB_ID,
+                            "src_version": 1,
+                        },
+                    ),
+                    (
+                        "vlob_group.updated",
+                        {
+                            "organization_id": alice2.organization_id,
+                            "author": alice2.device_id,
+                            "id": GROUP_ID,
+                            "checkpoint": 2,
+                            "src_id": VLOB_ID,
+                            "src_version": 2,
+                        },
+                    ),
+                    (
+                        "vlob_group.updated",
+                        {
+                            "organization_id": alice2.organization_id,
+                            "author": alice2.device_id,
+                            "id": GROUP_ID,
+                            "checkpoint": 3,
+                            "src_id": VLOB_ID,
+                            "src_version": 3,
+                        },
+                    ),
+                ]
             )
 
     reps = [
