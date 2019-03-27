@@ -21,7 +21,7 @@ def _pinged_callback_factory(client_ctx, pings):
         try:
             client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
         except trio.WouldBlock:
-            client_ctx.logger.warning("event queue is full")
+            client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
     return _on_pinged
 
@@ -47,7 +47,7 @@ def _vlob_group_updated_callback_factory(client_ctx, vlob_group_ids):
         try:
             client_ctx.send_events_channel.send_nowait(msg)
         except trio.WouldBlock:
-            client_ctx.logger.warning("event queue is full")
+            client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
     return _on_vlob_group_updated
 
@@ -64,7 +64,7 @@ def _message_received_callback_factory(client_ctx):
         try:
             client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
         except trio.WouldBlock:
-            client_ctx.logger.warning("event queue is full")
+            client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
     return _on_message_received
 

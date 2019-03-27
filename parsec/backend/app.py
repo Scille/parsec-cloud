@@ -41,7 +41,7 @@ from parsec.backend.organization import OrganizationNotFoundError
 logger = get_logger()
 
 
-@attr.s
+@attr.s(slots=True, repr=False)
 class LoggedClientContext:
     transport = attr.ib()
     organization_id = attr.ib()
@@ -52,6 +52,13 @@ class LoggedClientContext:
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
     channels = attr.ib(factory=lambda: trio.open_memory_channel(100))
+
+    def __repr__(self):
+        return (
+            f"LoggedClientContext(conn={self.conn_id}, "
+            f"org={self.organization_id}, "
+            f"device={self.device_id})"
+        )
 
     def __attrs_post_init__(self):
         self.conn_id = self.transport.conn_id
@@ -78,13 +85,16 @@ class LoggedClientContext:
         return receive_channel
 
 
-@attr.s
+@attr.s(slots=True, repr=False)
 class AnonymousClientContext:
     transport = attr.ib()
     organization_id = attr.ib()
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
     device_id = None
+
+    def __repr__(self):
+        return f"AnonymousClientContext(conn={self.conn_id}, org={self.organization_id})"
 
     def __attrs_post_init__(self):
         self.conn_id = self.transport.conn_id
@@ -304,8 +314,12 @@ class BackendApp:
 
             client_ctx.logger.debug("handshake done")
 
-            with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
+            if hasattr(client_ctx, "event_bus_ctx"):
+                with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
+                    await self._handle_client_loop(transport, client_ctx)
+
+            else:
                 await self._handle_client_loop(transport, client_ctx)
 
         except TransportClosedByPeer:
