@@ -6,8 +6,8 @@ from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.types import BackendOrganizationAddr, DeviceID
-from parsec.core.devices_manager import (
-    DeviceConfigAleadyExists,
+from parsec.core.local_device import (
+    LocalDeviceAlreadyExistsError,
     save_device_with_password,
     save_device_with_pkcs11,
 )
@@ -76,14 +76,6 @@ async def _do_claim_device(
         async with backend_anonymous_cmds_factory(organization_addr) as cmds:
             device = await core_claim_device(cmds, device_id, token)
 
-        if use_pkcs11:
-            save_device_with_pkcs11(config_dir, device, pkcs11_token, pkcs11_key)
-        else:
-            save_device_with_password(config_dir, device, password)
-
-    except DeviceConfigAleadyExists:
-        raise JobResultError("device-exists")
-
     except BackendHandshakeError:
         raise JobResultError("invalid-url")
 
@@ -92,6 +84,15 @@ async def _do_claim_device(
 
     except BackendCmdsBadResponse as exc:
         raise JobResultError("refused-by-backend", info=str(exc))
+
+    try:
+        if use_pkcs11:
+            save_device_with_pkcs11(config_dir, device, pkcs11_token, pkcs11_key)
+        else:
+            save_device_with_password(config_dir, device, password)
+
+    except LocalDeviceAlreadyExistsError:
+        raise JobResultError("device-exists")
 
 
 class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):

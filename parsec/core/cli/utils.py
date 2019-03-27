@@ -9,11 +9,11 @@ from pathlib import Path
 from parsec.types import DeviceID, OrganizationID
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core.config import get_default_config_dir, load_config
-from parsec.core.devices_manager import (
+from parsec.core.local_device import (
     get_cipher_info,
     load_device_with_password,
     load_device_with_pkcs11,
-    DeviceManagerError,
+    LocalDeviceError,
 )
 
 
@@ -87,7 +87,7 @@ def core_config_and_device_options(fn):
         organization_id, device_id, slugname = kwargs["device"]
         try:
             cipher = get_cipher_info(config.config_dir, organization_id, device_id)
-        except DeviceManagerError as exc:
+        except LocalDeviceError as exc:
             raise SystemExit(f"Error with device {device_id}: {exc}")
 
         try:
@@ -112,7 +112,7 @@ def core_config_and_device_options(fn):
                     config.config_dir, organization_id, device_id, password
                 )
 
-        except DeviceManagerError as exc:
+        except LocalDeviceError as exc:
             raise SystemExit(f"Cannot load device {slugname}: {exc}")
 
         kwargs["device"] = device

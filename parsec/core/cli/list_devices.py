@@ -5,7 +5,7 @@ import click
 from pathlib import Path
 
 from parsec.core.config import get_default_config_dir
-from parsec.core.devices_manager import list_available_devices
+from parsec.core.local_device import list_available_devices
 
 
 @click.command()

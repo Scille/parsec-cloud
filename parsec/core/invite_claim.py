@@ -21,7 +21,7 @@ from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, fields
 from parsec.core.types import LocalDevice, Access
 from parsec.core.types.access import ManifestAccessSchema
 from parsec.core.backend_connection import BackendCmdsPool, BackendAnonymousCmds
-from parsec.core.devices_manager import generate_new_device
+from parsec.core.local_device import generate_new_device
 from parsec.core.remote_devices_manager import (
     get_user_invitation_creator,
     get_device_invitation_creator,

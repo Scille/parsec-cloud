@@ -21,7 +21,7 @@ from parsec.core.types import (
     local_manifest_serializer,
     LocalUserManifest,
 )
-from parsec.core.devices_manager import generate_new_device
+from parsec.core.local_device import generate_new_device
 from parsec.backend.user import (
     User as BackendUser,
     Device as BackendDevice,

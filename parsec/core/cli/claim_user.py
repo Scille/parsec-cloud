@@ -7,7 +7,7 @@ import click
 from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.core.cli.utils import core_config_options
-from parsec.core.devices_manager import save_device_with_password, save_device_with_pkcs11
+from parsec.core.local_device import save_device_with_password, save_device_with_pkcs11
 from parsec.core.invite_claim import claim_user as actual_claim_user
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 

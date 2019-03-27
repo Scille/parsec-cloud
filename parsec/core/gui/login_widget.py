@@ -5,7 +5,7 @@ import os
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core import devices_manager
+from parsec.core.local_device import list_available_devices
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
@@ -58,7 +58,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
-        devices = devices_manager.list_available_devices(self.core_config.config_dir)
+        devices = list_available_devices(self.core_config.config_dir)
         # Display devices in `<organization>:<device_id>` format
         self.devices = {}
         for o, d, t in devices:
@@ -130,7 +130,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.claim_device_widget.hide()
         self.login_widget.hide()
         self.button_bootstrap_instead.hide()
-        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+        if len(list_available_devices(self.core_config.config_dir)) == 0:
             self.button_login_instead.hide()
         else:
             self.button_login_instead.show()
@@ -143,7 +143,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.hide()
         self.claim_device_widget.hide()
         self.bootstrap_organization.hide()
-        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+        if len(list_available_devices(self.core_config.config_dir)) == 0:
             self.button_login_instead.hide()
         else:
             self.button_login_instead.show()
@@ -157,7 +157,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.hide()
         self.claim_user_widget.hide()
         self.bootstrap_organization.hide()
-        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+        if len(list_available_devices(self.core_config.config_dir)) == 0:
             self.button_login_instead.hide()
         else:
             self.button_login_instead.show()
@@ -172,7 +172,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.claim_device_widget.reset()
         self.bootstrap_organization.reset()
         self.login_widget.reset()
-        if len(devices_manager.list_available_devices(self.core_config.config_dir)) == 0:
+        if len(list_available_devices(self.core_config.config_dir)) == 0:
             self.show_claim_user_widget()
         else:
             self.show_login_widget()

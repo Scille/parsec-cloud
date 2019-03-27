@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields, SerdeError
-from parsec.core.devices_manager.cipher import (
-    CipherError,
-    BaseLocalDeviceEncryptor,
-    BaseLocalDeviceDecryptor,
+from parsec.serde import Serializer, UnknownCheckedSchema, fields
+from parsec.core.local_device.exceptions import (
+    LocalDevicePackingError,
+    LocalDeviceValidationError,
+    LocalDeviceCryptoError,
 )
-from parsec.core.devices_manager.pkcs11_tools import (
+from parsec.core.local_device.cipher import BaseLocalDeviceEncryptor, BaseLocalDeviceDecryptor
+from parsec.core.local_device.pkcs11_tools import (
     DevicePKCS11Error,
     encrypt_data,
     decrypt_data,
@@ -19,7 +20,11 @@ class PKCS11PayloadSchema(UnknownCheckedSchema):
     ciphertext = fields.Bytes(required=True)
 
 
-pkcs11_payload_serializer = Serializer(PKCS11PayloadSchema)
+pkcs11_payload_serializer = Serializer(
+    PKCS11PayloadSchema,
+    validation_exc=LocalDeviceValidationError,
+    packing_exc=LocalDevicePackingError,
+)
 
 
 class PKCS11DeviceEncryptor(BaseLocalDeviceEncryptor):
@@ -32,14 +37,17 @@ class PKCS11DeviceEncryptor(BaseLocalDeviceEncryptor):
     def encrypt(self, plaintext: bytes) -> bytes:
         """
         Raises:
-            CipherError
+            LocalDeviceCryptoError
+            LocalDeviceValidationError
+            LocalDevicePackingError
         """
         try:
             ciphertext = encrypt_data(self.token_id, self.key_id, plaintext)
-            return pkcs11_payload_serializer.dumps({"ciphertext": ciphertext})
 
-        except (DevicePKCS11Error, SerdeError) as exc:
-            raise CipherError(str(exc)) from exc
+        except DevicePKCS11Error as exc:
+            raise LocalDeviceCryptoError(str(exc)) from exc
+
+        return pkcs11_payload_serializer.dumps({"ciphertext": ciphertext})
 
 
 class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
@@ -53,14 +61,16 @@ class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
     def decrypt(self, ciphertext: bytes) -> bytes:
         """
         Raises:
-            CipherError
+            LocalDeviceCryptoError
+            LocalDeviceValidationError
+            LocalDevicePackingError
         """
+        payload = pkcs11_payload_serializer.loads(ciphertext)
         try:
-            payload = pkcs11_payload_serializer.loads(ciphertext)
             return decrypt_data(self.pin, self.token_id, self.key_id, payload["ciphertext"])
 
-        except (DevicePKCS11Error, SerdeError) as exc:
-            raise CipherError(str(exc)) from exc
+        except DevicePKCS11Error as exc:
+            raise LocalDeviceCryptoError(str(exc)) from exc
 
     @staticmethod
     def can_decrypt(ciphertext: bytes) -> bool:
@@ -68,5 +78,5 @@ class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
             pkcs11_payload_serializer.loads(ciphertext)
             return True
 
-        except SerdeError:
+        except (LocalDeviceValidationError, LocalDevicePackingError):
             return False

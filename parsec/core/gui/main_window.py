@@ -11,8 +11,8 @@ from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
-from parsec.core.devices_manager import (
-    DeviceManagerError,
+from parsec.core.local_device import (
+    LocalDeviceError,
     load_device_with_password,
     load_device_with_pkcs11,
 )
@@ -200,7 +200,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.start_core()
             self.show_central_widget()
-        except DeviceManagerError:
+        except LocalDeviceError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
         except BackendDeviceRevokedError:
             show_error(
@@ -227,7 +227,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.start_core()
             self.show_central_widget()
-        except DeviceManagerError:
+        except LocalDeviceError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
         except BackendDeviceRevokedError:
             show_error(
