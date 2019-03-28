@@ -155,3 +155,7 @@ class Transport:
             else:
                 self.logger.warning("Unexpected event", ws_event=event)
                 raise TransportError(f"Unexpected event: {event}")
+
+    async def ping(self):
+        self.ws.ping()
+        await self._net_send()
