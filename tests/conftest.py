@@ -232,9 +232,11 @@ def server_factory(tcp_stream_spy):
     return _server_factory
 
 
-@pytest.fixture(scope="session")
-def backend_addr(unused_tcp_port):
-    return BackendAddr(f"ws://127.0.0.1:{unused_tcp_port}")
+@pytest.fixture()
+def backend_addr(tcp_stream_spy):
+    # Depending on tcp_stream_spy fixture prevent from doing real connection
+    # attempt (which can be long to resolve) when backend is not running
+    return BackendAddr("ws://127.0.0.1:9999")
 
 
 @pytest.fixture()

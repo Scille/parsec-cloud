@@ -75,7 +75,7 @@ async def test_bootstrap_organization_unknown_error(
     login_w = gui.login_widget
 
     def _broken(*args, **kwargs):
-        raise RuntimeError("Ooops...")
+        raise RuntimeError()
 
     monkeypatch.setattr(
         "parsec.core.gui.bootstrap_organization_widget.build_user_certificate", _broken
@@ -86,9 +86,6 @@ async def test_bootstrap_organization_unknown_error(
             login_w.bootstrap_organization.button_bootstrap, QtCore.Qt.LeftButton
         )
     assert autoclose_dialog.dialogs == [
-        (
-            "Error",
-            "Can not bootstrap this organization (Unexpected error: RuntimeError('Ooops...',)).",
-        )
+        ("Error", "Can not bootstrap this organization (Unexpected error: RuntimeError()).")
     ]
     # TODO: Make a log is emitted

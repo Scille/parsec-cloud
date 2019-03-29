@@ -85,13 +85,13 @@ async def test_claim_user_unknown_error(monkeypatch, aqtbot, gui, autoclose_dial
     claim_w = gui.login_widget.claim_user_widget
 
     async def _broken(*args, **kwargs):
-        raise RuntimeError("Ooops...")
+        raise RuntimeError()
 
     monkeypatch.setattr("parsec.core.gui.claim_user_widget.core_claim_user", _broken)
 
     async with aqtbot.wait_signal(claim_w.claim_error):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
-        ("Error", "Can not claim this user (Unexpected error: RuntimeError('Ooops...',)).")
+        ("Error", "Can not claim this user (Unexpected error: RuntimeError()).")
     ]
     # TODO: Make sure a log is emitted
