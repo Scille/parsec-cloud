@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QDialog
 from parsec import __version__
 from parsec.core.config import save_config
 from parsec.core.gui import desktop
+from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 
 
@@ -50,8 +51,8 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.check_new_version_success.connect(self.on_check_new_version_success)
 
         self.check_new_version_job = jobs_ctx.submit_job(
-            self.check_new_version_success,
-            self.check_new_version_error,
+            ThreadSafeQtSignal(self, "check_new_version_success"),
+            ThreadSafeQtSignal(self, "check_new_version_error"),
             _do_check_new_version,
             url=self.config.gui_check_version_url,
         )

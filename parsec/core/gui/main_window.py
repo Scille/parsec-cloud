@@ -3,7 +3,7 @@
 import trio
 from functools import partial
 from structlog import get_logger
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow
 
 from parsec import __version__ as PARSEC_VERSION
@@ -18,7 +18,7 @@ from parsec.core.mountpoint import MountpointConfigurationError, MountpointDrive
 from parsec.core.backend_connection import BackendHandshakeError, BackendDeviceRevokedError
 from parsec.core import logged_core_factory
 from parsec.core.gui import telemetry
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.custom_widgets import ask_question, show_error
@@ -29,7 +29,7 @@ from parsec.core.gui.ui.main_window import Ui_MainWindow
 logger = get_logger()
 
 
-async def _do_run_core(config, device, event_bus, core_started):
+async def _do_run_core(config, device, event_bus, qt_on_ready):
     async with logged_core_factory(config=config, device=device, event_bus=event_bus) as core:
         if config.mountpoint_enabled:
             await core.mountpoint_manager.mount_all()
@@ -38,7 +38,7 @@ async def _do_run_core(config, device, event_bus, core_started):
         core_jobs_ctx = QtToTrioJobScheduler()
         async with trio.open_nursery() as nursery:
             await nursery.start(core_jobs_ctx._start)
-            core_started.emit(core, core_jobs_ctx)
+            qt_on_ready.emit(core, core_jobs_ctx)
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -112,21 +112,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.show()
         self.raise_()
 
-    def start_core(self, device):
-        # TODO: useful ?
-        # self.config = self.config.evolve(mountpoint_enabled=True)
+    @pyqtSlot(object, object)
+    def _core_ready(self, core, core_jobs_ctx):
+        self.run_core_ready.emit(core, core_jobs_ctx)
 
+    def start_core(self, device):
         assert not self.runing_core_job
         assert not self.core
         assert not self.core_jobs_ctx
+
         self.runing_core_job = self.jobs_ctx.submit_job(
-            self.run_core_success,
-            self.run_core_error,
+            ThreadSafeQtSignal(self, "run_core_success"),
+            ThreadSafeQtSignal(self, "run_core_error"),
             _do_run_core,
             self.config,
             device,
             self.event_bus,
-            self.run_core_ready,
+            ThreadSafeQtSignal(self, "run_core_ready", object, object),
         )
 
     def on_run_core_ready(self, core, core_jobs_ctx):

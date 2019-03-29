@@ -19,7 +19,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.invite_claim import claim_device as core_claim_device
 from parsec.core.gui import validators
-from parsec.core.gui.trio_thread import JobResultError
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.claim_dialog import ClaimDialog
@@ -190,8 +190,8 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
     def claim_clicked(self):
         assert not self.claim_device_job
         self.claim_device_job = self.portal.submit_job(
-            self.claim_success,
-            self.claim_error,
+            ThreadSafeQtSignal(self, "claim_success"),
+            ThreadSafeQtSignal(self, "claim_error"),
             _do_claim_device,
             config_dir=self.core_config.config_dir,
             use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),

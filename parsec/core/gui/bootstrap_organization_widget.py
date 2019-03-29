@@ -18,7 +18,7 @@ from parsec.core.local_device import (
     save_device_with_password,
     LocalDeviceAlreadyExistsError,
 )
-from parsec.core.gui.trio_thread import JobResultError
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui import validators
@@ -168,8 +168,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
         self.bootstrap_job = self.portal.submit_job(
-            self.bootstrap_success,
-            self.bootstrap_error,
+            ThreadSafeQtSignal(self, "bootstrap_success"),
+            ThreadSafeQtSignal(self, "bootstrap_error"),
             _do_bootstrap_organization,
             config_dir=self.core_config.config_dir,
             use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),

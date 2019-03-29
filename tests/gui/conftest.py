@@ -8,6 +8,7 @@ from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
 
+from parsec.event_bus import EventBus
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 
@@ -71,6 +72,18 @@ class ThreadAsyncGateway:
                 return value
 
 
+# TODO: Running the trio loop in a QThread shouldn't be needed
+# make sure it's the case, then remove this dead code
+# class TrioQThread(QThread):
+#     def __init__(self, fn, *args):
+#         super().__init__()
+#         self.fn = fn
+#         self.args = args
+
+#     def run(self):
+#         self.fn(*self.args)
+
+
 # Not an async fixture (and doesn't depend on an async fixture either)
 # this fixture will actually be executed *before* pytest-trio setup
 # the trio loop, giving us a chance to monkeypatch it !
@@ -97,10 +110,13 @@ def trio_in_side_thread():
 
             thread = threading.Thread(target=partial(inner_wrapper, **kwargs))
             thread.start()
+            # thread = TrioQThread(partial(inner_wrapper, **kwargs))
+            # thread.start()
             try:
                 _qt_thread_gateway.run_action_pump()
 
             finally:
+                # thread.wait()
                 thread.join()
                 _qt_thread_gateway = None
 
@@ -216,15 +232,28 @@ async def jobs_ctx():
 
 
 @pytest.fixture
-async def gui(qtbot, qt_thread_gateway, jobs_ctx, event_bus, core_config):
-    core_config = core_config.evolve(gui_check_version_at_startup=False, gui_first_launch=False)
+def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
+    async def _gui_factory(event_bus=None, core_config=core_config):
+        # First start popup blocks the test
+        # Check version and mountpoint are useless for most tests
+        core_config = core_config.evolve(
+            gui_check_version_at_startup=False, gui_first_launch=False, mountpoint_enabled=False
+        )
+        event_bus = event_bus or EventBus()
 
-    def _create_main_window():
-        # Pass minimize_on_close to avoid having test blocked by the
-        # closing confirmation prompt
-        main_w = MainWindow(jobs_ctx, event_bus, core_config, minimize_on_close=True)
-        qtbot.add_widget(main_w)
-        main_w.showMaximized()
-        return main_w
+        def _create_main_window():
+            # Pass minimize_on_close to avoid having test blocked by the
+            # closing confirmation prompt
+            main_w = MainWindow(jobs_ctx, event_bus, core_config, minimize_on_close=True)
+            qtbot.add_widget(main_w)
+            main_w.showMaximized()
+            return main_w
 
-    return await qt_thread_gateway.send_action(_create_main_window)
+        return await qt_thread_gateway.send_action(_create_main_window)
+
+    return _gui_factory
+
+
+@pytest.fixture
+async def gui(gui_factory, event_bus, core_config):
+    return await gui_factory(event_bus, core_config)
