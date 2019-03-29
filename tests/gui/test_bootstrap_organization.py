@@ -24,7 +24,7 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
     login_w = gui.login_widget
     assert not login_w.bootstrap_organization.isVisible()
     await aqtbot.mouse_click(login_w.button_bootstrap_instead, QtCore.Qt.LeftButton)
-    # assert login_w.bootstrap_organization.isVisible()
+    assert login_w.bootstrap_organization.isVisible()
 
     await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_login, user_id)
     await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_password, password)
@@ -39,7 +39,6 @@ async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_di
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
 
     login_w = gui.login_widget
-    # await aqtbot.stop()
     async with aqtbot.wait_signal(login_w.bootstrap_organization.organization_bootstrapped):
         await aqtbot.mouse_click(
             login_w.bootstrap_organization.button_bootstrap, QtCore.Qt.LeftButton

@@ -2,14 +2,12 @@
 
 import os
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.config import save_config
 from parsec.core.gui import lang
 from parsec.core.gui import telemetry
-from parsec.core.gui.custom_widgets import show_info
-from parsec.core.gui.new_version import NewVersionDialog, new_version_available
 from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
 
 
@@ -24,19 +22,20 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         if os.name != "nt":
             self.widget_version.hide()
         self.button_save.clicked.connect(self.save_clicked)
-        self.button_check_version.clicked.connect(self.check_version)
+        # self.button_check_version.clicked.connect(self.check_version)
 
-    def check_version(self):
-        if new_version_available():
-            d = NewVersionDialog(parent=self)
-            d.exec_()
-        else:
-            show_info(
-                self,
-                QCoreApplication.translate(
-                    "GlobalSettings", "You have the most recent version of Parsec."
-                ),
-            )
+    # TODO: re-enable me asap !
+    # def check_version(self):
+    #     if new_version_available():
+    #         d = NewVersionDialog(parent=self)
+    #         d.exec_()
+    #     else:
+    #         show_info(
+    #             self,
+    #             QCoreApplication.translate(
+    #                 "GlobalSettings", "You have the most recent version of Parsec."
+    #             ),
+    #         )
 
     def init(self):
         self.checkbox_tray.setChecked(self.core_config.gui_tray_enabled)

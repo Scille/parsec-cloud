@@ -5,6 +5,7 @@ import trio
 import threading
 from inspect import iscoroutinefunction
 from structlog import get_logger
+from PyQt5.QtCore import pyqtBoundSignal, Q_ARG, QMetaObject, Qt
 
 
 logger = get_logger()
@@ -16,13 +17,33 @@ class JobResultError(Exception):
         self.params = kwargs
 
 
+class ThreadSafeQtSignal:
+    def __init__(self, qobj, signal_name, *args_types):
+        signal = getattr(qobj, signal_name)
+        assert isinstance(signal, pyqtBoundSignal)
+        self.qobj = qobj
+        self.signal_name = signal_name
+        self.args_types = args_types
+
+    def emit(self, *args):
+        assert len(self.args_types) == len(args)
+        cooked_args = [Q_ARG(t, v) for t, v in zip(self.args_types, args)]
+        QMetaObject.invokeMethod(self.qobj, self.signal_name, Qt.QueuedConnection, *cooked_args)
+
+
 class QtToTrioJob:
-    def __init__(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
+    def __init__(self, portal, fn, args, kwargs, qt_on_success, qt_on_error):
+        self._portal = portal
+        assert isinstance(qt_on_success, ThreadSafeQtSignal)
+        assert len(qt_on_success.args_types) == 0
         self._qt_on_success = qt_on_success
+        assert isinstance(qt_on_error, ThreadSafeQtSignal)
+        assert len(qt_on_error.args_types) == 0
         self._qt_on_error = qt_on_error
         self._fn = fn
         self._args = args
         self._kwargs = kwargs
+
         self.cancel_scope = None
         self._done = threading.Event()
         self.status = None
@@ -47,6 +68,11 @@ class QtToTrioJob:
                 except JobResultError as exc:
                     self.status = exc.status
                     self.exc = exc
+
+                except trio.Cancelled as exc:
+                    self.status = "cancelled"
+                    self.exc = exc
+                    raise
 
                 except Exception as exc:
                     logger.exception("Uncatched error", exc_info=exc)
@@ -77,7 +103,6 @@ class QtToTrioJobScheduler:
 
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
-
         self._portal = trio.BlockingTrioPortal()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(100)
         async with trio.open_nursery() as nursery, recv_job_channel:
@@ -89,20 +114,39 @@ class QtToTrioJobScheduler:
                 assert job.status is None
                 await nursery.start(job._run_fn)
 
-    async def _teardown(self):
+    async def _stop(self):
         self._cancel_scope.cancel()
         await self._send_job_channel.aclose()
 
+    def stop(self):
+        self._portal.run(self._stop)
+
+    def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
+        # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
+        assert not [x for x in args if isinstance(x, pyqtBoundSignal)]
+        assert not [v for v in kwargs.values() if isinstance(v, pyqtBoundSignal)]
+        job = QtToTrioJob(self._portal, fn, args, kwargs, qt_on_success, qt_on_error)
+        self._portal.run_sync(self._send_job_channel.send_nowait, job)
+        return job
+
+    # TODO: needed by legacy widget
     def run(self, afn, *args):
         return self._portal.run(afn, *args)
 
+    # TODO: needed by legacy widget
     def run_sync(self, fn, *args):
-        return self._portal.run(fn, *args)
+        return self._portal.run_sync(fn, *args)
 
-    def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
-        job = QtToTrioJob(qt_on_success, qt_on_error, fn, *args, **kwargs)
-        self._portal.run_sync(self._send_job_channel.send_nowait, job)
-        return job
+
+# TODO: Running the trio loop in a QThread shouldn't be needed
+# make sure it's the case, then remove this dead code
+# class QtToTrioJobSchedulerThread(QThread):
+#     def __init__(self, job_scheduler):
+#         super().__init__()
+#         self.job_scheduler = job_scheduler
+
+#     def run(self):
+#         trio.run(self.job_scheduler._start)
 
 
 @contextmanager
@@ -111,11 +155,14 @@ def run_trio_thread():
     thread = threading.Thread(target=trio.run, args=[job_scheduler._start])
     thread.setName("TrioLoop")
     thread.start()
+    # thread = QtToTrioJobSchedulerThread(job_scheduler)
+    # thread.start()
     job_scheduler.started.wait()
 
     try:
         yield job_scheduler
 
     finally:
-        job_scheduler._portal.run(job_scheduler._teardown)
+        job_scheduler.stop()
         thread.join()
+        # thread.wait()

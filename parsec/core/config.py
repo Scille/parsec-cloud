@@ -71,6 +71,8 @@ class CoreConfig:
     gui_language: Optional[str] = "en"
     gui_first_launch: bool = True
     gui_check_version_at_startup: bool = True
+    gui_check_version_url: str = "https://github.com/Scille/parsec-build/releases/latest"
+    gui_confirmation_before_close: bool = True
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -100,8 +102,11 @@ def config_factory(
         data_base_dir=data_base_dir or get_default_data_base_dir(environ),
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
-        debug=debug,
+        mountpoint_enabled=mountpoint_enabled,
         backend_watchdog=backend_watchdog,
+        backend_max_connections=backend_max_connections,
+        telemetry_enabled=telemetry_enabled,
+        debug=debug,
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
@@ -169,6 +174,7 @@ def save_config(config: CoreConfig):
                 "gui_language": config.gui_language,
                 "gui_first_launch": config.gui_first_launch,
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
-            }
+            },
+            indent=True,
         )
     )

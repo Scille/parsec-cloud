@@ -40,9 +40,8 @@ async def alice_invite(running_backend, backend, alice):
 
 async def _gui_ready_for_claim(aqtbot, gui, invitation):
     claim_w = gui.login_widget.claim_user_widget
-    # assert not claim_w.isVisible()
-    await aqtbot.mouse_click(gui.login_widget.button_register_user_instead, QtCore.Qt.LeftButton)
-    # assert claim_w.isVisible()
+    # Claim user page is the default if there is no devices available
+    assert claim_w.isVisible()
 
     await aqtbot.key_clicks(claim_w.line_edit_login, invitation.get("user_id", ""))
     await aqtbot.key_clicks(claim_w.line_edit_device, invitation.get("device_name", ""))

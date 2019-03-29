@@ -12,11 +12,16 @@ from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 class MountWidget(CoreWidget, Ui_MountWidget):
     reset_taskbar = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, jobs_ctx, event_bus, config, **kwargs):
+        super().__init__(**kwargs)
         self.setupUi(self)
+
+        self.jobs_ctx = jobs_ctx
+        self.event_bus = event_bus
+        self.config = config
+
         self.files_widget = FilesWidget(parent=self)
-        self.workspaces_widget = WorkspacesWidget(parent=self)
+        self.workspaces_widget = WorkspacesWidget(jobs_ctx, event_bus, config, parent=self)
         self.layout_content.addWidget(self.files_widget)
         self.layout_content.addWidget(self.workspaces_widget)
         self.files_widget.hide()
