@@ -4,7 +4,6 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
-from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.invite_claim import invite_and_create_user
 
 
@@ -21,12 +20,7 @@ async def alice_invite(running_backend, backend, alice):
     await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     async def _invite():
-        async with backend_cmds_factory(
-            alice.organization_addr, alice.device_id, alice.signing_key
-        ) as cmds:
-            await invite_and_create_user(
-                alice, cmds, invitation["user_id"], invitation["token"], True
-            )
+        await invite_and_create_user(alice, invitation["user_id"], invitation["token"], True)
 
     async with trio.open_nursery() as nursery:
         with backend.event_bus.listen() as spy:

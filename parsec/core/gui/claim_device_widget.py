@@ -11,13 +11,11 @@ from parsec.core.local_device import (
     save_device_with_password,
     save_device_with_pkcs11,
 )
-from parsec.core.backend_connection import (
-    BackendCmdsBadResponse,
-    backend_anonymous_cmds_factory,
-    BackendNotAvailable,
-    BackendHandshakeError,
+from parsec.core.invite_claim import (
+    claim_device as core_claim_device,
+    InviteClaimError,
+    InviteClaimBackendOfflineError,
 )
-from parsec.core.invite_claim import claim_device as core_claim_device
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
@@ -73,16 +71,12 @@ async def _do_claim_device(
         raise JobResultError("bad-device_name")
 
     try:
-        async with backend_anonymous_cmds_factory(organization_addr) as cmds:
-            device = await core_claim_device(cmds, device_id, token)
+        device = await core_claim_device(organization_addr, device_id, token)
 
-    except BackendHandshakeError:
-        raise JobResultError("invalid-url")
-
-    except BackendNotAvailable as exc:
+    except InviteClaimBackendOfflineError as exc:
         raise JobResultError("backend-offline", info=str(exc))
 
-    except BackendCmdsBadResponse as exc:
+    except InviteClaimError as exc:
         raise JobResultError("refused-by-backend", info=str(exc))
 
     try:

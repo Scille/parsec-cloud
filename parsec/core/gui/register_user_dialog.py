@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
 import threading
 import queue
-
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
-import trio
-
-from parsec.core.backend_connection import BackendCmdsBadResponse
-from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
-
+from parsec.core.invite_claim import (
+    InviteClaimError,
+    generate_invitation_token,
+    invite_and_create_user,
+)
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
 from parsec.core.gui.custom_widgets import show_warning, show_info
@@ -18,14 +18,14 @@ from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 
 
 async def _handle_invite_and_create_user(
-    queue, qt_on_done, qt_on_error, core, username, token, is_admin
+    queue, qt_on_done, qt_on_error, device, new_user_id, token, is_admin
 ):
     try:
         with trio.CancelScope() as cancel_scope:
             queue.put(cancel_scope)
-            await invite_and_create_user(core.device, core.backend_cmds, username, token, is_admin)
+            await invite_and_create_user(device, new_user_id, token, is_admin)
             qt_on_done.emit()
-    except BackendCmdsBadResponse as exc:
+    except InviteClaimError as exc:
         qt_on_error.emit(exc.status)
     except:
         qt_on_error.emit(None)
@@ -154,7 +154,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 self.register_queue,
                 self.on_registered,
                 self.on_register_error,
-                self.core,
+                self.core.device,
                 username,
                 token,
                 is_admin,
