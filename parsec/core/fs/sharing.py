@@ -12,7 +12,7 @@ from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerError,
-    RemoteDevicesManagerBackendOffline,
+    RemoteDevicesManagerBackendOfflineError,
 )
 from parsec.core.backend_connection import (
     BackendConnectionError,
@@ -210,7 +210,7 @@ class Sharing:
         try:
             recipient = await self.remote_devices_manager.get_user(recipient_id)
 
-        except RemoteDevicesManagerBackendOffline as exc:
+        except RemoteDevicesManagerBackendOfflineError as exc:
             raise SharingBackendOffline(*exc.args) from exc
 
         except RemoteDevicesManagerError as exc:
@@ -328,7 +328,7 @@ class Sharing:
         try:
             sender = await self.remote_devices_manager.get_device(sender_id)
 
-        except RemoteDevicesManagerBackendOffline as exc:
+        except RemoteDevicesManagerBackendOfflineError as exc:
             raise SharingBackendOffline(*exc.args) from exc
 
         except RemoteDevicesManagerError as exc:

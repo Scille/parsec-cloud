@@ -33,15 +33,23 @@ class RemoteDevicesManagerError(Exception):
     pass
 
 
-class RemoteDevicesManagerBackendOffline(RemoteDevicesManagerError):
+class RemoteDevicesManagerBackendOfflineError(RemoteDevicesManagerError):
     pass
 
 
-class RemoteDevicesManagerNotFound(RemoteDevicesManagerError):
+class RemoteDevicesManagerValidationError(RemoteDevicesManagerError):
     pass
 
 
-class RemoteDevicesManagerInvalidTrustchain(RemoteDevicesManagerError):
+class RemoteDevicesManagerPackingError(RemoteDevicesManagerError):
+    pass
+
+
+class RemoteDevicesManagerNotFoundError(RemoteDevicesManagerError):
+    pass
+
+
+class RemoteDevicesManagerInvalidTrustchainError(RemoteDevicesManagerError):
     pass
 
 
@@ -49,13 +57,24 @@ DEFAULT_CACHE_VALIDITY = 60 * 60  # 1h
 
 
 def _verify_devices(root_verify_key, *uv_devices):
+    """
+    Raises:
+        RemoteDevicesManagerInvalidTrustchainError
+    """
     verified_devices = {}
 
     # First convert to VerifiedRemoteDevice to easily access metadata
     # (obviously those VerifiedRemoteDevice are not verified at all so far !)
     all_devices = {}
     for uv_device in uv_devices:
-        d_certif = unsecure_read_device_certificate(uv_device.device_certificate)
+        try:
+            d_certif = unsecure_read_device_certificate(uv_device.device_certificate)
+
+        except CryptoError as exc:
+            raise RemoteDevicesManagerInvalidTrustchainError(
+                f"Invalid format for device certificate: {exc}"
+            ) from exc
+
         params = {
             "fetched_on": uv_device.fetched_on,
             "device_id": d_certif.device_id,
@@ -66,11 +85,18 @@ def _verify_devices(root_verify_key, *uv_devices):
             "revoked_device_certificate": uv_device.revoked_device_certificate,
         }
         if uv_device.revoked_device_certificate:
-            r_certif = unsecure_read_revoked_device_certificate(
-                uv_device.revoked_device_certificate
-            )
+            try:
+                r_certif = unsecure_read_revoked_device_certificate(
+                    uv_device.revoked_device_certificate
+                )
+
+            except CryptoError as exc:
+                raise RemoteDevicesManagerInvalidTrustchainError(
+                    f"Invalid format for revoked device certificate: {exc}"
+                ) from exc
+
             if r_certif.device_id != d_certif.device_id:
-                raise RemoteDevicesManagerInvalidTrustchain(
+                raise RemoteDevicesManagerInvalidTrustchainError(
                     f"Mismatch device_id in creation (`{d_certif.device_id}`)"
                     f" and revocation (`{r_certif.device_id}`) certificates"
                 )
@@ -91,7 +117,9 @@ def _verify_devices(root_verify_key, *uv_devices):
             d_certif, uv_device = all_devices[device_id]
 
         except KeyError:
-            raise RemoteDevicesManagerInvalidTrustchain(f"{path}: Device not provided by backend")
+            raise RemoteDevicesManagerInvalidTrustchainError(
+                f"{path}: Device not provided by backend"
+            )
 
         # Verify user certif
         if d_certif.certified_by is None:
@@ -112,12 +140,12 @@ def _verify_devices(root_verify_key, *uv_devices):
             )
 
         except CryptoError as exc:
-            raise RemoteDevicesManagerInvalidTrustchain(
+            raise RemoteDevicesManagerInvalidTrustchainError(
                 f"{sub_path}: invalid certificate: {exc}"
             ) from exc
 
         if certifier_revoked_on and d_certif.certified_on > certifier_revoked_on:
-            raise RemoteDevicesManagerInvalidTrustchain(
+            raise RemoteDevicesManagerInvalidTrustchainError(
                 f"{sub_path}: Signature ({d_certif.certified_on}) is "
                 f"posterior to device revocation {certifier_revoked_on})"
             )
@@ -132,12 +160,12 @@ def _verify_devices(root_verify_key, *uv_devices):
                 )
 
             except CryptoError as exc:
-                raise RemoteDevicesManagerInvalidTrustchain(
+                raise RemoteDevicesManagerInvalidTrustchainError(
                     f"{sub_path}: invalid certificate: {exc}"
                 ) from exc
 
             if revoker.revoked_on and d_certif.revoked_on > revoker.revoked_on:
-                raise RemoteDevicesManagerInvalidTrustchain(
+                raise RemoteDevicesManagerInvalidTrustchainError(
                     f"{sub_path}: Signature ({d_certif.revoked_on}) is "
                     f"posterior to device revocation {revoker.revoked_on})"
                 )
@@ -154,7 +182,18 @@ def _verify_devices(root_verify_key, *uv_devices):
 
 
 def _verify_user(root_verify_key, uv_user, verified_devices):
-    u_certif = unsecure_read_user_certificate(uv_user.user_certificate)
+    """
+    Raises:
+        RemoteDevicesManagerInvalidTrustchainError
+    """
+    try:
+        u_certif = unsecure_read_user_certificate(uv_user.user_certificate)
+
+    except CryptoError as exc:
+        raise RemoteDevicesManagerInvalidTrustchainError(
+            f"Invalid format for user certificate: {exc}"
+        ) from exc
+
     # `_load_devices` must be called before `_load_user` for this to work
     if u_certif.certified_by is None:
         # Certified by root
@@ -168,7 +207,7 @@ def _verify_user(root_verify_key, uv_user, verified_devices):
             certifier = verified_devices[u_certif.certified_by]
 
         except KeyError:
-            raise RemoteDevicesManagerInvalidTrustchain(
+            raise RemoteDevicesManagerInvalidTrustchainError(
                 f"{sub_path}: Device not provided by backend"
             )
         certifier_verify_key = certifier.verify_key
@@ -180,12 +219,12 @@ def _verify_user(root_verify_key, uv_user, verified_devices):
         )
 
     except CryptoError as exc:
-        raise RemoteDevicesManagerInvalidTrustchain(
+        raise RemoteDevicesManagerInvalidTrustchainError(
             f"{sub_path}: invalid certificate: {exc}"
         ) from exc
 
     if certifier_revoked_on and u_certif.certified_on > certifier_revoked_on:
-        raise RemoteDevicesManagerInvalidTrustchain(
+        raise RemoteDevicesManagerInvalidTrustchainError(
             f"{sub_path}: Signature ({u_certif.certified_on}) is posterior "
             f"to device revocation {certifier_revoked_on})"
         )
@@ -221,10 +260,10 @@ class RemoteDevicesManager:
     async def get_user(self, user_id: UserID) -> VerifiedRemoteUser:
         """
         Raises:
-            RemoteDeviceManagerError
-            RemoteDeviceManagerOffline
-            RemoteDevicesManagerNotFound
-            RemoteDevicesManagerInvalidTrustchain
+            RemoteDevicesManagerError
+            RemoteDevicesManagerBackendOfflineError
+            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerInvalidTrustchainError
         """
         try:
             verified_user = self._users[user_id]
@@ -239,12 +278,12 @@ class RemoteDevicesManager:
             uv_user, uv_devices, trustchain = await self._backend_cmds.user_get(user_id)
 
         except BackendNotAvailable as exc:
-            raise RemoteDevicesManagerBackendOffline(
+            raise RemoteDevicesManagerBackendOfflineError(
                 f"User `{user_id}` is not in local cache and we are offline."
             ) from exc
 
         except BackendCmdsNotFound as exc:
-            raise RemoteDevicesManagerNotFound(
+            raise RemoteDevicesManagerNotFoundError(
                 f"User `{user_id}` doesn't exist in backend"
             ) from exc
 
@@ -265,10 +304,10 @@ class RemoteDevicesManager:
     async def get_device(self, device_id: DeviceID) -> VerifiedRemoteDevice:
         """
         Raises:
-            RemoteDeviceManagerError
-            RemoteDeviceManagerOffline
-            RemoteDevicesManagerNotFound
-            RemoteDevicesManagerInvalidTrustchain
+            RemoteDevicesManagerError
+            RemoteDevicesManagerBackendOfflineError
+            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerInvalidTrustchainError
         """
         try:
             verified_device = self._devices[device_id]
@@ -283,12 +322,12 @@ class RemoteDevicesManager:
             uv_user, uv_devices, trustchain = await self._backend_cmds.user_get(device_id.user_id)
 
         except BackendNotAvailable as exc:
-            raise RemoteDevicesManagerBackendOffline(
+            raise RemoteDevicesManagerBackendOfflineError(
                 f"Device `{device_id}` is not in local cache and we are offline."
             ) from exc
 
         except BackendCmdsNotFound as exc:
-            raise RemoteDevicesManagerNotFound(
+            raise RemoteDevicesManagerNotFoundError(
                 f"User `{device_id.user_id}` doesn't exist in backend"
             ) from exc
 
@@ -302,7 +341,7 @@ class RemoteDevicesManager:
             verified_device = next(vd for vd in verified_devices if vd.device_id == device_id)
 
         except StopIteration:
-            raise RemoteDevicesManagerNotFound(
+            raise RemoteDevicesManagerNotFoundError(
                 f"User `{device_id.user_id}` doesn't have a device `{device_id}`"
             )
 
@@ -313,11 +352,19 @@ class RemoteDevicesManager:
     def _load_devices(
         self, *uv_devices: Tuple[UnverifiedRemoteDevice]
     ) -> Tuple[VerifiedRemoteDevice]:
+        """
+        Raises:
+            RemoteDevicesManagerInvalidTrustchainError
+        """
         verified_devices = _verify_devices(self.root_verify_key, *uv_devices)
         self._devices.update(verified_devices)
         return tuple(verified_devices.values())
 
     def _load_user(self, uv_user: UnverifiedRemoteUser) -> VerifiedRemoteUser:
+        """
+        Raises:
+            RemoteDevicesManagerInvalidTrustchainError
+        """
         verified_user = _verify_user(self.root_verify_key, uv_user, self._devices)
         self._users[verified_user.user_id] = verified_user
         return verified_user
@@ -326,14 +373,21 @@ class RemoteDevicesManager:
 async def get_device_invitation_creator(
     backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
 ) -> VerifiedRemoteUser:
+    """
+    Raises:
+        RemoteDevicesManagerError
+        RemoteDevicesManagerBackendOfflineError
+        RemoteDevicesManagerNotFoundError
+        RemoteDevicesManagerInvalidTrustchainError
+    """
     try:
         uv_user, trustchain = await backend_cmds.device_get_invitation_creator(new_device_id)
 
     except BackendNotAvailable as exc:
-        raise RemoteDevicesManagerBackendOffline(*exc.args) from exc
+        raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
 
     except BackendCmdsNotFound as exc:
-        raise RemoteDevicesManagerNotFound(
+        raise RemoteDevicesManagerNotFoundError(
             f"User `{new_device_id}` doesn't exist in backend"
         ) from exc
 
@@ -350,14 +404,21 @@ async def get_device_invitation_creator(
 async def get_user_invitation_creator(
     backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
 ) -> VerifiedRemoteUser:
+    """
+    Raises:
+        RemoteDevicesManagerError
+        RemoteDevicesManagerBackendOfflineError
+        RemoteDevicesManagerNotFoundError
+        RemoteDevicesManagerInvalidTrustchainError
+    """
     try:
         uv_user, trustchain = await backend_cmds.user_get_invitation_creator(new_user_id)
 
     except BackendNotAvailable as exc:
-        raise RemoteDevicesManagerBackendOffline(*exc.args) from exc
+        raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
 
     except BackendCmdsNotFound as exc:
-        raise RemoteDevicesManagerNotFound(
+        raise RemoteDevicesManagerNotFoundError(
             f"User `{new_user_id}` doesn't exist in backend"
         ) from exc
 

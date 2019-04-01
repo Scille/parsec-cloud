@@ -10,8 +10,8 @@ from parsec.crypto import (
     build_revoked_device_certificate,
 )
 from parsec.core.remote_devices_manager import (
-    RemoteDevicesManagerBackendOffline,
-    RemoteDevicesManagerInvalidTrustchain,
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerInvalidTrustchainError,
     _verify_devices,
     _verify_user,
     UnverifiedRemoteDevice,
@@ -28,7 +28,7 @@ async def test_retrieve_device(running_backend, remote_devices_manager, bob):
     d1 = Pendulum(2000, 1, 1)
     with freeze_time(d1):
         # Offline with no cache
-        with pytest.raises(RemoteDevicesManagerBackendOffline):
+        with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
                 await remote_devices_manager.get_device(bob.device_id)
 
@@ -45,7 +45,7 @@ async def test_retrieve_device(running_backend, remote_devices_manager, bob):
     d2 = d1.add(remote_devices_manager.cache_validity + 1)
     with freeze_time(d2):
         # Offline with cache expired
-        with pytest.raises(RemoteDevicesManagerBackendOffline):
+        with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
                 await remote_devices_manager.get_device(bob.device_id)
 
@@ -60,7 +60,7 @@ async def test_retrieve_user(running_backend, remote_devices_manager, bob):
     d1 = Pendulum(2000, 1, 1)
     with freeze_time(d1):
         # Offline with no cache
-        with pytest.raises(RemoteDevicesManagerBackendOffline):
+        with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
                 await remote_devices_manager.get_user(bob.user_id)
 
@@ -77,7 +77,7 @@ async def test_retrieve_user(running_backend, remote_devices_manager, bob):
     d2 = d1.add(remote_devices_manager.cache_validity + 1)
     with freeze_time(d2):
         # Offline with cache expired
-        with pytest.raises(RemoteDevicesManagerBackendOffline):
+        with pytest.raises(RemoteDevicesManagerBackendOfflineError):
             with running_backend.offline():
                 await remote_devices_manager.get_user(bob.user_id)
 
@@ -276,12 +276,12 @@ def test_verify_user_with_trustchain_broken_chain(trustchain_ctx_factory):
     verified_devices = _verify_devices(ctx.root_verify_key, *ctx.remote_devices.values())
 
     verified_devices.pop("mallory@dev1")
-    with pytest.raises(RemoteDevicesManagerInvalidTrustchain) as exc:
+    with pytest.raises(RemoteDevicesManagerInvalidTrustchainError) as exc:
         _verify_user(ctx.root_verify_key, ctx.remote_user, verified_devices)
     assert exc.value.args == ("`alice` <-create- `mallory@dev1`: Device not provided by backend",)
 
     ctx.remote_devices.pop("mallory@dev1")
-    with pytest.raises(RemoteDevicesManagerInvalidTrustchain) as exc:
+    with pytest.raises(RemoteDevicesManagerInvalidTrustchainError) as exc:
         _verify_devices(ctx.root_verify_key, *ctx.remote_devices.values())
     assert exc.value.args == (
         "`bob@dev1` <-revoke- `mallory@dev1`: Device not provided by backend",
@@ -299,7 +299,7 @@ def test_verify_user_with_trustchain_with_invalid_device_creation(trustchain_ctx
         todo_user={"id": "alice"},
     )
 
-    with pytest.raises(RemoteDevicesManagerInvalidTrustchain) as exc:
+    with pytest.raises(RemoteDevicesManagerInvalidTrustchainError) as exc:
         _verify_devices(ctx.root_verify_key, *ctx.remote_devices.values())
     assert exc.value.args == (
         "`alice@dev1` <-create- `bob@dev2`: Signature (2000-01-03T00:00:00+00:00)"
@@ -320,7 +320,7 @@ def test_verify_user_with_trustchain_with_invalid_user_creation(trustchain_ctx_f
 
     verified_devices = _verify_devices(ctx.root_verify_key, *ctx.remote_devices.values())
 
-    with pytest.raises(RemoteDevicesManagerInvalidTrustchain) as exc:
+    with pytest.raises(RemoteDevicesManagerInvalidTrustchainError) as exc:
         _verify_user(ctx.root_verify_key, ctx.remote_user, verified_devices)
     assert exc.value.args == (
         "`alice` <-create- `bob@dev2`: Signature (2000-01-03T00:00:00+00:00)"
@@ -339,7 +339,7 @@ def test_verify_user_with_trustchain_with_invalid_revocation(trustchain_ctx_fact
         todo_user={"id": "alice"},
     )
 
-    with pytest.raises(RemoteDevicesManagerInvalidTrustchain) as exc:
+    with pytest.raises(RemoteDevicesManagerInvalidTrustchainError) as exc:
         _verify_devices(ctx.root_verify_key, *ctx.remote_devices.values())
     assert exc.value.args == (
         "`alice@dev1` <-revoke- `bob@dev2`: Signature (2000-01-03T00:00:00+00:00)"
