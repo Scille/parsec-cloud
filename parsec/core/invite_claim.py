@@ -23,7 +23,7 @@ from parsec.core.types.access import ManifestAccessSchema
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
-    backend_cmds_factory,
+    backend_cmds_pool_factory,
     backend_anonymous_cmds_factory,
 )
 from parsec.core.local_device import generate_new_device
@@ -371,7 +371,7 @@ async def invite_and_create_device(
         InviteClaimCryptoError
         InviteClaimInvalidTokenError
     """
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         device.organization_addr, device.device_id, device.signing_key
     ) as cmds:
         try:
@@ -425,7 +425,7 @@ async def invite_and_create_user(
         InviteClaimCryptoError
         InviteClaimInvalidTokenError
     """
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         device.organization_addr, device.device_id, device.signing_key
     ) as cmds:
         try:

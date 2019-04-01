@@ -3,7 +3,7 @@
 import pytest
 from async_generator import asynccontextmanager
 
-from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import FS
 
@@ -50,7 +50,7 @@ def bob_local_storage(local_storage_factory, bob):
 def remote_devices_manager_factory():
     @asynccontextmanager
     async def _remote_devices_manager_factory(device):
-        async with backend_cmds_factory(
+        async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
             yield RemoteDevicesManager(cmds, device.root_verify_key)
@@ -73,7 +73,7 @@ def fs_factory(local_storage_factory, event_bus_factory):
 
         local_storage = local_storage or local_storage_factory(device)
 
-        async with backend_cmds_factory(
+        async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
@@ -119,7 +119,7 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 
 @pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         yield cmds
@@ -127,7 +127,7 @@ async def alice_backend_cmds(running_backend, alice):
 
 @pytest.fixture
 async def alice2_backend_cmds(running_backend, alice2):
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         alice2.organization_addr, alice2.device_id, alice2.signing_key
     ) as cmds:
         yield cmds
@@ -135,7 +135,9 @@ async def alice2_backend_cmds(running_backend, alice2):
 
 @pytest.fixture
 async def bob_backend_cmds(running_backend, bob):
-    async with backend_cmds_factory(bob.organization_addr, bob.device_id, bob.signing_key) as cmds:
+    async with backend_cmds_pool_factory(
+        bob.organization_addr, bob.device_id, bob.signing_key
+    ) as cmds:
         yield cmds
 
 

@@ -12,7 +12,7 @@ from parsec.crypto import (
     unsecure_read_user_certificate,
 )
 from parsec.core.types import UnverifiedRemoteUser
-from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (
     generate_device_encrypted_claim,
     extract_device_encrypted_claim,
@@ -80,6 +80,6 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
         nursery.start_soon(_alice_nd_claim)
 
     # Now alice's new device should be able to connect to backend
-    async with backend_cmds_factory(alice.organization_addr, nd_id, nd_signing_key) as cmds:
+    async with backend_cmds_pool_factory(alice.organization_addr, nd_id, nd_signing_key) as cmds:
         pong = await cmds.ping("Hello World !")
         assert pong == "Hello World !"

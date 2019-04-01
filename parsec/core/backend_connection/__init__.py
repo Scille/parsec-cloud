@@ -34,7 +34,7 @@ from parsec.core.backend_connection.event_listener import backend_listen_events
 from parsec.core.backend_connection.monitor import monitor_backend_connection
 from parsec.core.backend_connection.porcelain import (
     BackendCmdsPool,
-    backend_cmds_factory,
+    backend_cmds_pool_factory,
     BackendAnonymousCmds,
     backend_anonymous_cmds_factory,
     BackendAdministrationCmds,
@@ -75,7 +75,7 @@ __all__ = (
     "BackendCmdsInvalidResponse",
     "BackendCmdsBadResponse",
     "BackendCmdsPool",
-    "backend_cmds_factory",
+    "backend_cmds_pool_factory",
     "BackendAnonymousCmds",
     "backend_anonymous_cmds_factory",
     "BackendAdministrationCmds",

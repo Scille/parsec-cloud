@@ -13,7 +13,7 @@ from parsec.core.backend_connection.exceptions import (
     BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
 )
-from parsec.core.backend_connection.porcelain import backend_cmds_factory
+from parsec.core.backend_connection.porcelain import backend_cmds_pool_factory
 
 
 MAX_COOLDOWN = 30
@@ -125,7 +125,7 @@ class BackendEventsManager:
 
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.CancelScope() as cancel_scope:
-            async with backend_cmds_factory(
+            async with backend_cmds_pool_factory(
                 self.device.organization_addr,
                 self.device.device_id,
                 self.device.signing_key,

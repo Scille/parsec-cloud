@@ -11,7 +11,7 @@ from parsec.core.invite_claim import (
     invite_and_create_device,
     claim_device,
 )
-from parsec.core.backend_connection import backend_cmds_factory
+from parsec.core.backend_connection import backend_cmds_pool_factory
 
 
 @pytest.mark.trio
@@ -37,7 +37,7 @@ async def test_invite_claim_user(running_backend, backend, alice):
         nursery.start_soon(_from_mallory)
 
     # Now connect as the new user
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         new_device.organization_addr, new_device.device_id, new_device.signing_key
     ) as cmds:
         await cmds.ping("foo")
@@ -66,7 +66,7 @@ async def test_invite_claim_device(running_backend, backend, alice):
         nursery.start_soon(_from_mallory)
 
     # Now connect as the new device
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         new_device.organization_addr, new_device.device_id, new_device.signing_key
     ) as cmds:
         await cmds.ping("foo")

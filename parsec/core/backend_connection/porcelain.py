@@ -16,7 +16,7 @@ from parsec.core.backend_connection import cmds
 
 
 __all__ = (
-    "backend_cmds_factory",
+    "backend_cmds_pool_factory",
     "BackendCmdsPool",
     "backend_anonymous_cmds_factory",
     "BackendAnonymousCmds",
@@ -124,8 +124,7 @@ class BackendAdministrationCmds:
 
 
 @asynccontextmanager
-# TODO: rename in backend_cmds_pool_factory
-async def backend_cmds_factory(
+async def backend_cmds_pool_factory(
     addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max_pool: int = 4
 ) -> BackendCmdsPool:
     """
