@@ -49,6 +49,13 @@ from parsec.core.backend_connection.exceptions import (
 
 
 async def _send_cmd(transport, serializer, **req):
+    """
+    Raises:
+        BackendCmdsInvalidRequest
+        BackendCmdsInvalidResponse
+        BackendNotAvailable
+        BackendCmdsBadResponse
+    """
     transport.logger.info("Request", cmd=req["cmd"])
 
     def _shorten_data(data):
