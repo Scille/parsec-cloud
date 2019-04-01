@@ -106,6 +106,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.config = self.config.evolve(gui_first_launch=False, telemetry_enabled=r)
             # TODO: send gui.config.changed event instead
             save_config(self.config)
+        self.login_widget.core_config = self.config
         telemetry.init(self.config)
 
     def show_top(self):
