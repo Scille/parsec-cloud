@@ -145,24 +145,12 @@ async def _do_handshade(transport: Transport, ch):
         raise BackendHandshakeError(exc) from exc
 
 
-async def ping_transport(transport):
-    try:
-        await transport.ping()
-    except TransportError:
-        transport.logger.warning("Ping failed")
-
-
-async def keep_alive(transport, nursery):
-    with trio.CancelScope() as nursery.cancel_scope:
-        while True:
-            transport.logger.debug("Send ping")
-            await ping_transport(transport)
-            await trio.sleep(30)
-
-
 @asynccontextmanager
 async def authenticated_transport_factory(
-    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
+    addr: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    watchdog_time: int = None,
 ) -> Transport:
     """
     Raises:
@@ -171,15 +159,26 @@ async def authenticated_transport_factory(
         BackendHandshakeError
         BackendDeviceRevokedError
     """
+    async def _keep_alive(transport, cancel_scope):
+        with cancel_scope:
+            while True:
+                await trio.sleep(watchdog_time)
+                transport.logger.debug("Send ping")
+                await transport.ping()
+
     transport = await _connect(addr, device_id, signing_key)
     transport.logger = transport.logger.bind(device_id=device_id)
     async with trio.open_nursery() as nursery:
-        nursery.start_soon(keep_alive, transport, nursery)
+        cancel_scope = None
+        if watchdog_time:
+            cancel_scope = trio.CancelScope()
+            nursery.start_soon(_keep_alive, transport, cancel_scope)
         try:
             yield transport
 
         finally:
-            nursery.cancel_scope.cancel()
+            if cancel_scope:
+                cancel_scope.cancel()
             await transport.aclose()
 
 
@@ -220,23 +219,35 @@ async def administration_transport_factory(addr: BackendAddr, token: str) -> Tra
 
 
 class TransportPool:
-    def __init__(self, addr, device_id, signing_key, max):
+    def __init__(self, addr, device_id, signing_key, max, watchdog_time: int = None):
         self.addr = addr
         self.device_id = device_id
         self.signing_key = signing_key
         self.transports = []
+        self.watchdog_time = watchdog_time
         self._closed = False
         self._lock = trio.Semaphore(max)
         self._cancel_scope = None
 
-    async def keep_alive(self, nursery):
-        with trio.CancelScope() as nursery.cancel_scope:
-            async with trio.open_nursery() as nursery:
-                while True:
+    async def keep_alive(self, cancel_scope):
+        with cancel_scope:
+            while True:
+                dead_transports = []
+
+                await trio.sleep(self.watchdog_time)
+
+                async def _ping(transport):
+                    try:
+                        await transport.ping()
+                    except TransportError:
+                        dead_transports.append(transport)
+
+                async with self._lock:
                     for transport in self.transports:
-                        transport.logger.debug("Send ping")
-                        nursery.start_soon(ping_transport, transport)
-                    await trio.sleep(30)
+                        await _ping(transport)
+
+                async with self._lock:
+                    self.transports = [t for t in self.transports if t not in dead_transports]
 
     @asynccontextmanager
     async def acquire(self, force_fresh=False):
@@ -279,20 +290,28 @@ class TransportPool:
 
 @asynccontextmanager
 async def transport_pool_factory(
-    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max: int = 4
+    addr: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    max: int = 4,
+    watchdog_time: int = 30,
 ) -> TransportPool:
     """
     Raises: nothing !
     """
-    pool = TransportPool(addr, device_id, signing_key, max)
-    async with trio.open_nursery() as nursery:
-        nursery.start_soon(pool.keep_alive, nursery)
+    pool = TransportPool(addr, device_id, signing_key, max, watchdog_time)
+    async with trio.open_nursery() as nursery_1:
+        cancel_scope = None
+        if watchdog_time:
+            cancel_scope = trio.CancelScope()
+            nursery_1.start_soon(pool.keep_alive, cancel_scope)
         try:
             yield pool
 
         finally:
-            nursery.cancel_scope.cancel()
+            if cancel_scope:
+                cancel_scope.cancel()
             pool._closed = True
-            async with trio.open_nursery() as nursery:
+            async with trio.open_nursery() as nursery_2:
                 for transport in pool.transports:
-                    nursery.start_soon(transport.aclose)
+                    nursery_2.start_soon(transport.aclose)
