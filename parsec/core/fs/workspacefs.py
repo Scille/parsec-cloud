@@ -80,7 +80,7 @@ class WorkspaceFS:
 
     async def file_fd_open(self, path: FsPath, mode="rw") -> int:
         path = self._cook_path(path)
-        access = await self._load_and_retry(self._local_folder_fs.get_access, path, mode)
+        access = await self._load_and_retry(self._local_folder_fs.get_file_access, path, mode)
         return self._file_transactions.open(access)
 
     async def file_fd_close(self, fd: int) -> None:

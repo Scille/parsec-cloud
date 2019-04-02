@@ -254,6 +254,13 @@ class LocalFolderFS:
         access, _ = self._retrieve_entry_read_only(path)
         return access
 
+    def get_file_access(self, path: FsPath, mode="rw") -> Access:
+        access = self.get_access(path, mode)
+        manifest = self.get_manifest(access)
+        if not is_file_manifest(manifest):
+            raise IsADirectoryError(21, "Is a directory")
+        return access
+
     def stat(self, path: FsPath) -> dict:
         access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
