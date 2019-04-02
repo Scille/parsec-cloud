@@ -65,14 +65,14 @@ async def test_retrieve_user(running_backend, remote_devices_manager, bob):
                 await remote_devices_manager.get_user(bob.user_id)
 
         # Online
-        device = await remote_devices_manager.get_user(bob.user_id)
-        assert device.user_id == bob.user_id
-        assert device.public_key == bob.public_key
+        user = await remote_devices_manager.get_user(bob.user_id)
+        assert user.user_id == bob.user_id
+        assert user.public_key == bob.public_key
 
         # Offline with cache
         with running_backend.offline():
-            device2 = await remote_devices_manager.get_user(bob.user_id)
-            assert device2 is device
+            user2 = await remote_devices_manager.get_user(bob.user_id)
+            assert user2 is user
 
     d2 = d1.add(remote_devices_manager.cache_validity + 1)
     with freeze_time(d2):
@@ -82,9 +82,31 @@ async def test_retrieve_user(running_backend, remote_devices_manager, bob):
                 await remote_devices_manager.get_user(bob.user_id)
 
         # Online with cache expired
-        device = await remote_devices_manager.get_user(bob.user_id)
-        assert device.user_id == bob.user_id
-        assert device.public_key == bob.public_key
+        user = await remote_devices_manager.get_user(bob.user_id)
+        assert user.user_id == bob.user_id
+        assert user.public_key == bob.public_key
+
+
+@pytest.mark.trio
+async def test_retrieve_user_and_devices(running_backend, remote_devices_manager, alice, alice2):
+    d1 = Pendulum(2000, 1, 1)
+    with freeze_time(d1):
+        # Offline
+        with pytest.raises(RemoteDevicesManagerBackendOfflineError):
+            with running_backend.offline():
+                await remote_devices_manager.get_user_and_devices(alice.user_id)
+
+        # Online
+        user, devices = await remote_devices_manager.get_user_and_devices(alice.user_id)
+        assert user.user_id == alice.user_id
+        assert user.public_key == alice.public_key
+        assert len(devices) == 2
+        assert {d.device_id for d in devices} == {alice.device_id, alice2.device_id}
+
+        # Offline (cache is never used)
+        with pytest.raises(RemoteDevicesManagerBackendOfflineError):
+            with running_backend.offline():
+                await remote_devices_manager.get_user_and_devices(alice.user_id)
 
 
 @pytest.fixture

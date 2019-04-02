@@ -274,6 +274,21 @@ class RemoteDevicesManager:
         except KeyError:
             pass
 
+        verified_user, _ = await self.get_user_and_devices(user_id)
+        return verified_user
+
+    async def get_user_and_devices(
+        self, user_id: UserID
+    ) -> Tuple[VerifiedRemoteUser, Tuple[VerifiedRemoteDevice]]:
+        """
+        Note: unlike `get_user` and `get_device`, this method don't rely on cache
+        considering only part of the devices to retreive could be in cache.
+        Raises:
+            RemoteDevicesManagerError
+            RemoteDevicesManagerBackendOfflineError
+            RemoteDevicesManagerNotFoundError
+            RemoteDevicesManagerInvalidTrustchainError
+        """
         try:
             uv_user, uv_devices, trustchain = await self._backend_cmds.user_get(user_id)
 
@@ -292,14 +307,15 @@ class RemoteDevicesManager:
                 f"Failed to fetch user `{user_id}` from the backend: {exc}"
             ) from exc
 
-        self._load_devices(*uv_devices, *trustchain)
+        all_verified_devices = self._load_devices(*uv_devices, *trustchain)
+        verified_devices = [vd for vd in all_verified_devices if vd.device_id.user_id == user_id]
         verified_user = self._load_user(uv_user)
         if verified_user.user_id != user_id:
             raise RemoteDevicesManagerError(
                 f"Backend returned user `{verified_user.user_id}` while we "
                 f"were asking for `{user_id}`"
             )
-        return verified_user
+        return verified_user, verified_devices
 
     async def get_device(self, device_id: DeviceID) -> VerifiedRemoteDevice:
         """
