@@ -271,7 +271,13 @@ class PathElement:
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_folder_operations(
-    tmpdir, hypothesis_settings, local_storage_factory, local_folder_fs_factory, alice
+    tmpdir,
+    hypothesis_settings,
+    local_storage_factory,
+    local_folder_fs_factory,
+    alice,
+    file_transactions_factory,
+    alice_backend_cmds,
 ):
     tentative = 0
 
@@ -290,7 +296,12 @@ def test_folder_operations(
             self.last_step_id_to_path = set()
             self.device = alice
             self.local_storage = local_storage_factory(self.device)
-            self.local_folder_fs = local_folder_fs_factory(self.device, self.local_storage)
+            self.file_transactions = file_transactions_factory(
+                self.device, self.local_storage, alice_backend_cmds
+            )
+            self.local_folder_fs = local_folder_fs_factory(
+                self.device, self.local_storage, self.file_transactions
+            )
 
             self.folder_oracle = pathlib.Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
