@@ -159,6 +159,7 @@ async def authenticated_transport_factory(
         BackendHandshakeError
         BackendDeviceRevokedError
     """
+
     async def _keep_alive(transport, cancel_scope):
         with cancel_scope:
             while True:
@@ -229,7 +230,7 @@ class TransportPool:
         self._lock = trio.Semaphore(max)
         self._cancel_scope = None
 
-    async def keep_alive(self, cancel_scope):
+    async def _keep_alive(self, cancel_scope):
         with cancel_scope:
             while True:
                 dead_transports = []
@@ -304,7 +305,7 @@ async def transport_pool_factory(
         cancel_scope = None
         if watchdog_time:
             cancel_scope = trio.CancelScope()
-            nursery_1.start_soon(pool.keep_alive, cancel_scope)
+            nursery_1.start_soon(pool._keep_alive, cancel_scope)
         try:
             yield pool
 
