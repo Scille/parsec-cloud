@@ -8,6 +8,7 @@ from parsec.event_bus import EventBus
 from parsec.core.types import (
     FsPath,
     Access,
+    BlockAccess,
     WorkspaceEntry,
     LocalDevice,
     LocalManifest,
@@ -25,6 +26,7 @@ from parsec.core.fs.utils import (
     is_workspace_manifest,
     is_user_manifest,
 )
+from parsec.core.fs.file_transactions import FileTransactions
 
 
 class FSEntryNotFound(Exception):
@@ -44,24 +46,24 @@ class FSMultiManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(self, device: LocalDevice, local_storage: LocalStorage, event_bus: EventBus):
+    def __init__(
+        self,
+        device: LocalDevice,
+        local_storage: LocalStorage,
+        file_transactions: FileTransactions,
+        event_bus: EventBus,
+    ):
         self.local_author = device.device_id
         self.root_access = device.user_manifest_access
-        self._local_storage = local_storage
+        self.local_storage = local_storage
+        self.file_transactions = file_transactions
         self.event_bus = event_bus
-        self._hot_files = {}
-
-    def _register_hot_file(self, access_id, hot_file):
-        self._hot_files[access_id] = hot_file
-
-    def _delete_hot_file(self, access_id):
-        self._hot_files.pop(access_id, None)
 
     # Manifest methods
 
     def get_manifest(self, access: Access) -> LocalManifest:
         try:
-            return self._local_storage.get_manifest(access)
+            return self.local_storage.get_manifest(access)
         except LocalStorageMissingEntry as exc:
             # Last chance: if we are looking for the user manifest, we can
             # fake to know it version 0, which is useful during boostrap step
@@ -92,15 +94,15 @@ class LocalFolderFS:
             return self.set_dirty_manifest(access, manifest)
         if manifest.need_sync:
             raise ValueError("The given manifest is not a clean manifest.")
-        self._local_storage.set_clean_manifest(access, manifest, force)
+        self.local_storage.set_clean_manifest(access, manifest, force)
 
     def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
         if access != self.root_access and not manifest.need_sync:
             raise ValueError("The given manifest is not a dirty manifest.")
-        self._local_storage.set_dirty_manifest(access, manifest)
+        self.local_storage.set_dirty_manifest(access, manifest)
 
     def clear_manifest(self, access: Access):
-        self._local_storage.clear_manifest(access)
+        self.local_storage.clear_manifest(access)
 
     def get_local_vlob_groups(self) -> List[UUID]:
         # vlob_group_id is either the id of the user manifest or of a workpace manifest
@@ -255,13 +257,8 @@ class LocalFolderFS:
     def stat(self, path: FsPath) -> dict:
         access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
-            hf = self._hot_files.get(access.id)
-            if hf:
-                size = hf.size
-                need_sync = hf.pending_writes or manifest.need_sync
-            else:
-                size = manifest.size
-                need_sync = manifest.need_sync
+            size = manifest.size
+            need_sync = manifest.need_sync
 
             return {
                 "id": access.id,
@@ -470,14 +467,8 @@ class LocalFolderFS:
 
         parent_manifest = parent_manifest.evolve_children_and_mark_updated({path.name: None})
         self.set_dirty_manifest(parent_access, parent_manifest)
-        # TODO: If a file is opened while getting removed, we cannot
-        # drop the file manifest given a subsequent read/write would
-        # need it.
-        # The `LocalFolderFS._hot_files` is kind of a hack around this
-        # (but we endup leaking old files manifests), we should replace
-        # this by a clean ref counting strategy.
-        if item_access.id not in self._hot_files:
-            self.clear_manifest(item_access)
+        if is_file_manifest(item_manifest):
+            self.file_transactions.deleted(item_access, item_manifest)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
     def delete(self, path: FsPath) -> None:
@@ -694,11 +685,21 @@ class LocalFolderFS:
 
             cpy_access = ManifestAccess()
             if is_file_manifest(manifest):
+
+                # Temporary hack: copy the dirty blocks
+                # Recursive move will be remove in the local_folder_fs refactoring
+                new_dirty_blocks = []
+                for access in manifest.dirty_blocks:
+                    content = self.local_storage.get_block(access)
+                    new_access = BlockAccess.from_block(content, access.offset)
+                    self.local_storage.set_dirty_block(new_access, content)
+                    new_dirty_blocks.append(new_access)
+
                 cpy_manifest = LocalFileManifest(
                     author=self.local_author,
                     size=manifest.size,
                     blocks=manifest.blocks,
-                    dirty_blocks=manifest.dirty_blocks,
+                    dirty_blocks=new_dirty_blocks,
                 )
 
             else:
@@ -714,15 +715,11 @@ class LocalFolderFS:
 
             self.set_dirty_manifest(cpy_access, cpy_manifest)
 
-            # TODO: If a file is opened while being moved, we cannot
-            # drop the file manifest given a subsequent read/write would
-            # need it.
-            # The `LocalFolderFS._hot_files` is kind of a hack around this
-            # (but we endup leaking old files manifests), we should replace
-            # this by a clean ref counting strategy.
-
-            if access.id not in self._hot_files:
+            if is_file_manifest(manifest):
+                self.file_transactions.deleted(access, manifest)
+            else:
                 self.clear_manifest(access)
+
             return cpy_access
 
         return _recursive_process_copy_map(copy_map)
