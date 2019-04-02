@@ -10,7 +10,7 @@ from parsec.crypto import (
     unsecure_read_user_certificate,
 )
 from parsec.core.types import UnverifiedRemoteUser
-from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
 
 
@@ -60,7 +60,7 @@ async def test_user_invite_then_claim_ok(
         nursery.start_soon(_mallory_claim)
 
     # Now mallory should be able to connect to backend
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         mallory.organization_addr, mallory.device_id, mallory.signing_key
     ) as cmds:
         pong = await cmds.ping("Hello World !")

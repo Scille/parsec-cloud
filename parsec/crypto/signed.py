@@ -97,9 +97,9 @@ def verify_signed_msg(
     Returns: The plain text message.
 
     Raises:
-         CryptoError: if signature was forged or otherwise corrupt.
-         CryptoSignatureAuthorMismatchError
-         CryptoSignatureTimestampMismatchError
+        CryptoError: if signature was forged or otherwise corrupt.
+        CryptoSignatureAuthorMismatchError
+        CryptoSignatureTimestampMismatchError
     """
     wrapped_msg = author_verifykey.verify(signed_msg)
     meta = wrapped_msg_serializer.loads(wrapped_msg)

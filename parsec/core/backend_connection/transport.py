@@ -47,6 +47,13 @@ async def _connect(
     signing_key: Optional[SigningKey] = None,
     administration_token: Optional[str] = None,
 ):
+    """
+    Raises:
+        BackendConnectionError
+        BackendNotAvailable
+        BackendHandshakeError
+        BackendDeviceRevokedError
+    """
     if administration_token:
         if not isinstance(addr, BackendAddr):
             raise BackendConnectionError(f"Invalid url format `{addr}`")
@@ -142,6 +149,13 @@ async def _do_handshade(transport: Transport, ch):
 async def authenticated_transport_factory(
     addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
 ) -> Transport:
+    """
+    Raises:
+        BackendConnectionError
+        BackendNotAvailable
+        BackendHandshakeError
+        BackendDeviceRevokedError
+    """
     transport = await _connect(addr, device_id, signing_key)
     transport.logger = transport.logger.bind(device_id=device_id)
     try:
@@ -153,6 +167,13 @@ async def authenticated_transport_factory(
 
 @asynccontextmanager
 async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transport:
+    """
+    Raises:
+        BackendConnectionError
+        BackendNotAvailable
+        BackendHandshakeError
+        BackendDeviceRevokedError
+    """
     transport = await _connect(addr)
     transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
@@ -164,6 +185,13 @@ async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transpor
 
 @asynccontextmanager
 async def administration_transport_factory(addr: BackendAddr, token: str) -> Transport:
+    """
+    Raises:
+        BackendConnectionError
+        BackendNotAvailable
+        BackendHandshakeError
+        BackendDeviceRevokedError
+    """
     transport = await _connect(addr, administration_token=token)
     transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
@@ -184,6 +212,14 @@ class TransportPool:
 
     @asynccontextmanager
     async def acquire(self, force_fresh=False):
+        """
+        Raises:
+            BackendConnectionError
+            BackendNotAvailable
+            BackendHandshakeError
+            BackendDeviceRevokedError
+            trio.ClosedResourceError: if used after having being closed
+        """
         async with self._lock:
             transport = None
             if not force_fresh:
@@ -217,6 +253,9 @@ class TransportPool:
 async def transport_pool_factory(
     addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max: int = 4
 ) -> TransportPool:
+    """
+    Raises: nothing !
+    """
     pool = TransportPool(addr, device_id, signing_key, max)
     try:
         yield pool

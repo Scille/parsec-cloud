@@ -16,7 +16,7 @@ from parsec.core.backend_connection import cmds
 
 
 __all__ = (
-    "backend_cmds_factory",
+    "backend_cmds_pool_factory",
     "BackendCmdsPool",
     "backend_anonymous_cmds_factory",
     "BackendAnonymousCmds",
@@ -124,15 +124,25 @@ class BackendAdministrationCmds:
 
 
 @asynccontextmanager
-async def backend_cmds_factory(
+async def backend_cmds_pool_factory(
     addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max_pool: int = 4
 ) -> BackendCmdsPool:
+    """
+    Raises: nothing !
+    """
     async with transport_pool_factory(addr, device_id, signing_key, max_pool) as transport_pool:
         yield BackendCmdsPool(addr, transport_pool)
 
 
 @asynccontextmanager
 async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> BackendAnonymousCmds:
+    """
+    Raises:
+        BackendConnectionError
+        BackendNotAvailable
+        BackendHandshakeError
+        BackendDeviceRevokedError
+    """
     try:
         async with anonymous_transport_factory(addr) as transport:
             yield BackendAnonymousCmds(addr, transport)
@@ -144,6 +154,13 @@ async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> Backe
 async def backend_administration_cmds_factory(
     addr: BackendAddr, token: str
 ) -> BackendAdministrationCmds:
+    """
+    Raises:
+        BackendConnectionError
+        BackendNotAvailable
+        BackendHandshakeError
+        BackendDeviceRevokedError
+    """
     try:
         async with administration_transport_factory(addr, token) as transport:
             yield BackendAdministrationCmds(addr, transport)

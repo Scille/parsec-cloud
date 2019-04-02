@@ -81,9 +81,11 @@ def verify_device_certificate(
 ) -> CertifiedDeviceData:
     """
     Raises:
+        CryptoError: if signature was forged or otherwise corrupt.
         CryptoWrappedMsgValidationError
         CryptoWrappedMsgPackingError
         CryptoSignatureAuthorMismatchError
+        CryptoSignatureTimestampMismatchError
     """
     _, timestamp = unsecure_extract_signed_msg_meta(device_certificate)
     content = verify_signed_msg(
@@ -98,9 +100,11 @@ def verify_revoked_device_certificate(
 ) -> CertifiedRevokedDeviceData:
     """
     Raises:
+        CryptoError: if signature was forged or otherwise corrupt.
         CryptoWrappedMsgValidationError
         CryptoWrappedMsgPackingError
         CryptoSignatureAuthorMismatchError
+        CryptoSignatureTimestampMismatchError
     """
     _, timestamp = unsecure_extract_signed_msg_meta(revoked_device_certificate)
     content = verify_signed_msg(
@@ -115,9 +119,11 @@ def verify_user_certificate(
 ) -> CertifiedUserData:
     """
     Raises:
+        CryptoError: if signature was forged or otherwise corrupt.
         CryptoWrappedMsgValidationError
         CryptoWrappedMsgPackingError
         CryptoSignatureAuthorMismatchError
+        CryptoSignatureTimestampMismatchError
     """
     _, timestamp = unsecure_extract_signed_msg_meta(user_certificate)
     content = verify_signed_msg(user_certificate, expected_author_id, author_verify_key, timestamp)
