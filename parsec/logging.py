@@ -3,7 +3,10 @@
 import re
 import structlog
 import logging
-from raven.handlers.logging import SentryHandler
+import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
+
+from parsec import __version__
 
 
 def configure_logging(log_level=None, log_format=None, log_file=None, log_filter=None):
@@ -62,26 +65,13 @@ def configure_logging(log_level=None, log_format=None, log_file=None, log_filter
         root_logger.setLevel(log_level.upper())
 
 
-def sentry_logging_activated():
-    root_logger = logging.getLogger()
-    return (
-        len([handler for handler in root_logger.handlers if isinstance(handler, SentryHandler)]) > 0
-    )
-
-
 def configure_sentry_logging(sentry_url):
-    if sentry_logging_activated():
-        return
-    sentry_handler = SentryHandler(sentry_url, level="WARNING")
-    root_logger = logging.getLogger()
-    root_logger.addHandler(sentry_handler)
+    sentry_logging = LoggingIntegration(
+        level=logging.WARNING,  # Capture warning and above as breadcrumbs
+        event_level=logging.ERROR,  # Send errors as events
+    )
+    sentry_sdk.init(dsn=sentry_url, integrations=[sentry_logging], release=__version__)
 
 
 def disable_sentry_logging():
-    root_logger = logging.getLogger()
-    sentry_handlers = [
-        handler for handler in root_logger.handlers if isinstance(handler, SentryHandler)
-    ]
-
-    for sentry_handler in sentry_handlers:
-        root_logger.removeHandler(sentry_handler)
+    sentry_sdk.init(dsn=None)
