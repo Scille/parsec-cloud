@@ -3,7 +3,7 @@
 from hashlib import sha256
 
 from parsec.crypto import decrypt_raw_with_secret_key, decrypt_and_verify_signed_msg_with_secret_key
-from parsec.core.types import BlockAccess, ManifestAccess, remote_manifest_serializer
+from parsec.core.types import LocalManifest, BlockAccess, ManifestAccess, remote_manifest_serializer
 
 
 class RemoteLoader:
@@ -12,7 +12,7 @@ class RemoteLoader:
         self.remote_devices_manager = remote_devices_manager
         self.local_storage = local_storage
 
-    async def load_block(self, access: BlockAccess) -> None:
+    async def load_block(self, access: BlockAccess) -> bytes:
         """
         Raises:
             BackendConnectionError
@@ -28,8 +28,9 @@ class RemoteLoader:
         assert sha256(block).hexdigest() == access.digest, access
 
         self.local_storage.set_clean_block(access, block)
+        return block
 
-    async def load_manifest(self, access: ManifestAccess) -> None:
+    async def load_manifest(self, access: ManifestAccess) -> LocalManifest:
         args = await self.backend_cmds.vlob_read(access.id)
         expected_author_id, expected_timestamp, expected_version, blob = args
         author = await self.remote_devices_manager.get_device(expected_author_id)
@@ -42,3 +43,5 @@ class RemoteLoader:
 
         local_manifest = remote_manifest.to_local()
         self.local_storage.set_clean_manifest(access, local_manifest)
+
+        return local_manifest
