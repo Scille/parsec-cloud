@@ -6,7 +6,6 @@ import pendulum
 
 from parsec.api.protocole import ServerHandshake
 from parsec.crypto import build_revoked_device_certificate
-from parsec.backend.events import EventsComponent
 from parsec.api.transport import Transport
 from parsec.core.backend_connection import (
     BackendNotAvailable,

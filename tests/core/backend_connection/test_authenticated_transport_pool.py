@@ -3,14 +3,8 @@
 import pytest
 import trio
 
-from unittest.mock import patch
 from parsec.api.transport import Transport, TransportError
-from parsec.core.backend_connection import (
-    authenticated_transport_pool_factory,
-    backend_cmds_pool_factory,
-    backend_anonymous_cmds_factory,
-    backend_administration_cmds_factory,
-)
+from parsec.core.backend_connection import authenticated_transport_pool_factory
 
 
 @pytest.fixture

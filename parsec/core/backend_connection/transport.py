@@ -30,7 +30,6 @@ from parsec.core.backend_connection.exceptions import (
 
 
 __all__ = (
-    "authenticated_transport_factory",
     "anonymous_transport_factory",
     "administration_transport_factory",
     "authenticated_transport_pool_factory",
