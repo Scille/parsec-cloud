@@ -44,7 +44,10 @@ async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_di
             login_w.bootstrap_organization.button_bootstrap, QtCore.Qt.LeftButton
         )
     assert autoclose_dialog.dialogs == [
-        ("Information", "The organization and the user have been created. You can now login.")
+        (
+            "Information",
+            "The organization and the user have been created. You will now be logged in.",
+        )
     ]
 
 

@@ -53,7 +53,7 @@ async def test_claim_user(aqtbot, gui, autoclose_dialog, alice_invite):
     async with aqtbot.wait_signal(claim_w.user_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
-        ("Information", "The user has been registered. You can now login.")
+        ("Information", "The user has been created. You will now be logged in.")
     ]
 
 
