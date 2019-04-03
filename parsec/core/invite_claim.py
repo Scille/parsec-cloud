@@ -372,7 +372,7 @@ async def invite_and_create_device(
         InviteClaimInvalidTokenError
     """
     async with backend_cmds_pool_factory(
-        device.organization_addr, device.device_id, device.signing_key
+        device.organization_addr, device.device_id, device.signing_key, max=1
     ) as cmds:
         try:
             encrypted_claim = await cmds.device_invite(new_device_name)
@@ -426,7 +426,7 @@ async def invite_and_create_user(
         InviteClaimInvalidTokenError
     """
     async with backend_cmds_pool_factory(
-        device.organization_addr, device.device_id, device.signing_key
+        device.organization_addr, device.device_id, device.signing_key, max=1
     ) as cmds:
         try:
             encrypted_claim = await cmds.user_invite(user_id)

@@ -7,7 +7,7 @@ from parsec.types import DeviceID, BackendOrganizationAddr, BackendAddr
 from parsec.crypto import SigningKey
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.transport import (
-    transport_pool_factory,
+    authenticated_transport_pool_factory,
     anonymous_transport_factory,
     administration_transport_factory,
     TransportError,
@@ -125,12 +125,18 @@ class BackendAdministrationCmds:
 
 @asynccontextmanager
 async def backend_cmds_pool_factory(
-    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max_pool: int = 4
+    addr: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    max_pool: int = 4,
+    watchdog_time: int = 30,
 ) -> BackendCmdsPool:
     """
     Raises: nothing !
     """
-    async with transport_pool_factory(addr, device_id, signing_key, max_pool) as transport_pool:
+    async with authenticated_transport_pool_factory(
+        addr, device_id, signing_key, max_pool, watchdog_time
+    ) as transport_pool:
         yield BackendCmdsPool(addr, transport_pool)
 
 

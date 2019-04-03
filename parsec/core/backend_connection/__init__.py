@@ -24,11 +24,10 @@ from parsec.core.backend_connection.exceptions import (
     BackendCmdsBadMessage,
 )
 from parsec.core.backend_connection.transport import (
-    authenticated_transport_factory,
     anonymous_transport_factory,
     administration_transport_factory,
-    transport_pool_factory,
-    TransportPool,
+    authenticated_transport_pool_factory,
+    AuthenticatedTransportPool,
 )
 from parsec.core.backend_connection.event_listener import backend_listen_events
 from parsec.core.backend_connection.monitor import monitor_backend_connection
@@ -64,11 +63,10 @@ __all__ = (
     "BackendCmdsNoEvents",
     "BackendCmdsTimeout",
     "BackendCmdsBadMessage",
-    "authenticated_transport_factory",
     "anonymous_transport_factory",
     "administration_transport_factory",
-    "transport_pool_factory",
-    "TransportPool",
+    "authenticated_transport_pool_factory",
+    "AuthenticatedTransportPool",
     "backend_listen_events",
     "monitor_backend_connection",
     "BackendCmdsInvalidRequest",
