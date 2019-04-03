@@ -264,9 +264,6 @@ class LocalFolderFS:
     def stat(self, path: FsPath) -> dict:
         access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
-            size = manifest.size
-            need_sync = manifest.need_sync
-
             return {
                 "id": access.id,
                 "type": "file",
@@ -275,8 +272,8 @@ class LocalFolderFS:
                 "updated": manifest.updated,
                 "base_version": manifest.base_version,
                 "is_placeholder": manifest.is_placeholder,
-                "need_sync": need_sync,
-                "size": size,
+                "need_sync": manifest.need_sync,
+                "size": manifest.size,
             }
 
         elif is_workspace_manifest(manifest):
