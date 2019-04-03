@@ -22,14 +22,14 @@ def mocked_transport_ping(monkeypatch):
     send_ping, recv_ping = trio.open_memory_channel(1)
     vanilla_ping = Transport.ping
 
-    async def mocked_ping(transport):
+    async def _mocked_ping(transport):
         await send_ping.send(transport)
         hook = getattr(recv_ping, "hook", None)
         if hook:
             await hook(transport)
         return await vanilla_ping(transport)
 
-    monkeypatch.setattr(Transport, "ping", mocked_ping)
+    monkeypatch.setattr(Transport, "ping", _mocked_ping)
 
     return recv_ping
 
