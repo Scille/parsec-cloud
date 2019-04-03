@@ -5,7 +5,7 @@ import os
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.types import BackendOrganizationAddr, DeviceID, OrganizationID
 from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
     save_device_with_password,
@@ -19,7 +19,7 @@ from parsec.core.invite_claim import (
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
     get_password_strength,
@@ -90,7 +90,7 @@ async def _do_claim_user(
 
 
 class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
-    user_claimed = pyqtSignal()
+    user_claimed = pyqtSignal(OrganizationID, DeviceID, str)
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
@@ -135,14 +135,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         assert self.claim_user_job.status == "ok"
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
-        show_info(
-            self,
-            QCoreApplication.translate(
-                "ClaimUserWidget", "The user has been registered. You can now login."
-            ),
-        )
         self.claim_user_job = None
-        self.user_claimed.emit()
+
+        backend_addr = BackendOrganizationAddr(self.line_edit_url.text())
+        device = DeviceID("{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text()))
+        self.user_claimed.emit(backend_addr.organization_id, device, self.line_edit_password.text())
 
     def cancel_claim(self):
         if self.claim_user_job:

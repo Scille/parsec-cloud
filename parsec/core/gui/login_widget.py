@@ -2,7 +2,7 @@
 
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QCoreApplication
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.local_device import list_available_devices
@@ -10,6 +10,7 @@ from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.settings_dialog import SettingsDialog
+from parsec.core.gui.custom_widgets import show_info
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
@@ -91,11 +92,56 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_bootstrap_instead.clicked.connect(self.show_bootstrap_widget)
         self.login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
-        self.claim_user_widget.user_claimed.connect(self.show_login_widget)
-        self.bootstrap_organization.organization_bootstrapped.connect(self.show_login_widget)
+        self.claim_user_widget.user_claimed.connect(self.user_claimed)
+        self.bootstrap_organization.organization_bootstrapped.connect(
+            self.organization_bootstrapped
+        )
         self.claim_device_widget.device_claimed.connect(self.show_login_widget)
         self.button_settings.clicked.connect(self.show_settings)
         self.reset()
+
+    def organization_bootstrapped(self, organization, device, password):
+        devices = list_available_devices(self.core_config.config_dir)
+        if len(devices) == 1:
+            if devices[0][0] == organization and devices[0][1] == device:
+                show_info(
+                    self,
+                    QCoreApplication.translate(
+                        "LoginWidget",
+                        "The organization and the user have been created. "
+                        "You will now be logged in.",
+                    ),
+                )
+                self.emit_login_with_password(devices[0][3], password)
+        else:
+            show_info(
+                self,
+                QCoreApplication.translate(
+                    "LoginWidget",
+                    "The organization and the user have been created. You can now log in.",
+                ),
+            )
+            self.show_login_widget()
+
+    def user_claimed(self, organization, device, password):
+        devices = list_available_devices(self.core_config.config_dir)
+        if len(devices) == 1:
+            if devices[0][0] == organization and devices[0][1] == device:
+                show_info(
+                    self,
+                    QCoreApplication.translate(
+                        "LoginWidget", "The user has been created. You will now be logged in."
+                    ),
+                )
+                self.emit_login_with_password(devices[0][3], password)
+        else:
+            show_info(
+                self,
+                QCoreApplication.translate(
+                    "LoginWidget", "The user has been created. You can now log in."
+                ),
+            )
+            self.show_login_widget()
 
     def emit_login_with_password(self, key_file, password):
         self.login_with_password_clicked.emit(key_file, password)

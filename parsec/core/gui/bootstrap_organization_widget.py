@@ -6,7 +6,7 @@ from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
-from parsec.types import BackendOrganizationBootstrapAddr, DeviceID
+from parsec.types import BackendOrganizationBootstrapAddr, DeviceID, OrganizationID
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     backend_anonymous_cmds_factory,
@@ -19,7 +19,7 @@ from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
 )
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui import validators
 from parsec.core.gui.password_validation import (
@@ -120,7 +120,7 @@ async def _do_bootstrap_organization(
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_success = pyqtSignal()
     bootstrap_error = pyqtSignal()
-    organization_bootstrapped = pyqtSignal()
+    organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
     def __init__(self, portal, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -155,15 +155,12 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job.status == "ok"
         self.button_bootstrap.setDisabled(False)
         self.button_cancel.hide()
-        show_info(
-            self,
-            QCoreApplication.translate(
-                "BootstrapOrganizationWidget",
-                "The organization and the user have been created. You can now login.",
-            ),
-        )
         self.bootstrap_job = None
-        self.organization_bootstrapped.emit()
+        bootstrap_addr = BackendOrganizationBootstrapAddr(self.line_edit_url.text())
+        device = DeviceID("{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text()))
+        self.organization_bootstrapped.emit(
+            bootstrap_addr.organization_id, device, self.line_edit_password.text()
+        )
 
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
