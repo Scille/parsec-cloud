@@ -1,58 +1,57 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import threading
-import queue
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
     InviteClaimError,
-    generate_invitation_token,
-    invite_and_create_device,
+    generate_invitation_token as core_generate_invitation_token,
+    invite_and_create_device as core_invite_and_create_device,
 )
+from parsec.types import BackendOrganizationAddr, DeviceName
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
+from parsec.core.gui.custom_widgets import show_warning, show_info, show_error
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 
-async def _handle_invite_and_create_device(
-    queue, qt_on_done, qt_on_error, device, new_device_name, token
-):
+STATUS_TO_ERRMSG = {
+    "already_exists": _("This device already exists."),
+    "timeout": _("Device took too much time to register."),
+}
+
+DEFAULT_ERRMSG = _("Can not register this device ({info}).")
+
+
+async def _do_registration(device, new_device_name, token):
     try:
-        with trio.CancelScope() as cancel_scope:
-            queue.put(cancel_scope)
-            await invite_and_create_device(device, new_device_name, token)
-            qt_on_done.emit()
+        await core_invite_and_create_device(device, new_device_name, token)
     except InviteClaimError as exc:
-        qt_on_error.emit(exc.status)
-    except:
-        qt_on_error.emit(None)
+        raise JobResultError("registration-invite-error", info=str(exc))
 
 
 class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
-    on_registered = pyqtSignal()
-    on_register_error = pyqtSignal(str)
+    device_registered = pyqtSignal(BackendOrganizationAddr, DeviceName, str)
+    registration_success = pyqtSignal()
+    registration_error = pyqtSignal()
 
     def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
         self.portal = portal
-        self.cancel_scope = None
-        self.register_thread = None
-        self.register_queue = queue.Queue(1)
+        self.registration_job = None
         self.widget_registration.hide()
         self.button_cancel.hide()
         self.button_register.clicked.connect(self.register_device)
-        self.button_cancel.clicked.connect(self.cancel_register_device)
+        self.button_cancel.clicked.connect(self.cancel_registration)
         self.button_copy_device.clicked.connect(self.copy_field(self.line_edit_device))
         self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
         self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
-        self.on_registered.connect(self.device_registered)
-        self.on_register_error.connect(self.register_error)
+        self.registration_success.connect(self.on_registration_success)
+        self.registration_error.connect(self.on_registration_error)
         self.line_edit_device_name.setValidator(validators.DeviceNameValidator())
         self.closing_allowed = True
 
@@ -62,10 +61,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
 
         return _inner_copy_field
 
-    def register_error(self, status):
-        self.register_thread.join()
-        self.register_thread = None
-        self.cancel_scope = None
+    def on_registration_error(self):
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_device.setText("")
@@ -74,19 +70,25 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_register.show()
         self.line_edit_device_name.show()
         self.closing_allowed = True
-        if status is None:
-            show_warning(self, _("Unknown error."))
-        elif status == "already_exists":
-            show_warning(self, _("This device already exists."))
-        elif status == "timeout":
-            show_warning(self, _("Device took too much time to register."))
-        else:
-            show_warning(self, _("Can not register this device ({}).").format(status))
 
-    def device_registered(self):
-        self.register_thread.join()
-        self.register_thread = None
+        if self.registration_job:
+            assert self.registration_job.is_finished()
+            if self.registration_job.status == "cancelled":
+                return
+            assert self.registration_job.status != "ok"
+            errmsg = STATUS_TO_ERRMSG.get(self.registration_job.status, DEFAULT_ERRMSG)
+            show_error(self, errmsg.format(**self.registration_job.exc.params))
+
+    def on_registration_success(self):
+        assert self.registration_job.is_finished()
+        assert self.registration_job.status == "ok"
         show_info(self, _("Device has been registered. You may now close this window."))
+        self.registration_job = None
+        self.device_registered.emit(
+            BackendOrganizationAddr(self.line_edit_url.text()),
+            DeviceName(self.line_edit_device.text()),
+            self.line_edit_token.text(),
+        )
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_device.setText("")
@@ -96,11 +98,10 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.line_edit_device_name.show()
         self.closing_allowed = True
 
-    def cancel_register_device(self):
-        self.portal.run_sync(self.cancel_scope.cancel)
-        self.cancel_scope = None
-        self.register_thread.join()
-        self.register_thread = None
+    def cancel_registration(self):
+        if self.registration_job:
+            self.registration_job.cancel_and_join()
+            self.registration_job = None
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_device.setText("")
@@ -124,23 +125,12 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             event.accept()
 
     def register_device(self):
-        def _run_registration(device_name, token):
-            self.portal.run(
-                _handle_invite_and_create_device,
-                self.register_queue,
-                self.on_registered,
-                self.on_register_error,
-                self.core.device,
-                device_name,
-                token,
-            )
-
         if not self.line_edit_device_name.text():
             show_warning(self, _("Please enter a device name."))
             return
 
         try:
-            token = generate_invitation_token()
+            token = core_generate_invitation_token()
             self.line_edit_device.setText(self.line_edit_device_name.text())
             self.line_edit_device.setCursorPosition(0)
             self.line_edit_token.setText(token)
@@ -149,11 +139,14 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             self.line_edit_url.setCursorPosition(0)
             self.button_cancel.setFocus()
             self.widget_registration.show()
-            self.register_thread = threading.Thread(
-                target=_run_registration, args=(self.line_edit_device_name.text(), token)
+            self.registration_job = self.portal.submit_job(
+                ThreadSafeQtSignal(self, "registration_success"),
+                ThreadSafeQtSignal(self, "registration_error"),
+                _do_registration,
+                device=self.core.device,
+                new_device_name=self.line_edit_device_name.text(),
+                token=token,
             )
-            self.register_thread.start()
-            self.cancel_scope = self.register_queue.get()
             self.button_cancel.show()
             self.line_edit_device_name.hide()
             self.button_register.hide()
