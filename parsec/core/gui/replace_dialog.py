@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
 
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.replace_dialog import Ui_ReplaceDialog
 
 
@@ -11,9 +12,7 @@ class ReplaceDialog(QDialog, Ui_ReplaceDialog):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.label_message.setText(
-            QCoreApplication.translate(
-                "ReplaceDialog", 'The file "{}" already exists.\nDo you want to replace it ?'
-            ).format(dst)
+            _('The file "{}" already exists.\nDo you want to replace it ?').format(dst)
         )
         self.button_skip.clicked.connect(self.skip_clicked)
         self.button_replace.clicked.connect(self.replace_clicked)

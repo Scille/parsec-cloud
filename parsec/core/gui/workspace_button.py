@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
+
+from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
@@ -73,11 +75,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         if self.shared_with:
             if self.is_owner:
-                display += QCoreApplication.translate("WorkspaceButton", " (shared)")
+                display += _(" (shared)")
             else:
-                display += QCoreApplication.translate("WorkspaceButton", " (shared by {})").format(
-                    self.creator
-                )
+                display += _(" (shared by {})").format(self.creator)
         self.label_workspace.setText(display)
         self.label_workspace.setToolTip(self.workspace_name)
 

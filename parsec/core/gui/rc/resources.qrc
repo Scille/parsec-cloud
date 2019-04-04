@@ -113,8 +113,8 @@
         <file>images/logos/parsec_white_medium.png</file>
     </qresource>
     <qresource prefix="/translations">
-        <file>translations/parsec_fr.qm</file>
-        <file>translations/parsec_en.qm</file>
+        <file>translations/parsec_en.mo</file>
+        <file>translations/parsec_fr.mo</file>
     </qresource>
     <qresource prefix="/fonts">
         <file>fonts/ProximaNova.otf</file>

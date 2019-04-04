@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication
+from parsec.core.gui.lang import translate as _
 
 
 traditional = [
@@ -114,11 +114,11 @@ def size(bytes, system=traditional):
 
 def get_filesize(bytesize):
     SYSTEM = [
-        (1024 ** 4, QCoreApplication.translate("FileSize", " TB")),
-        (1024 ** 3, QCoreApplication.translate("FileSize", " GB")),
-        (1024 ** 2, QCoreApplication.translate("FileSize", " MB")),
-        (1024 ** 1, QCoreApplication.translate("FileSize", " KB")),
-        (1024 ** 0, QCoreApplication.translate("FileSize", " B")),
+        (1024 ** 4, _(" TB")),
+        (1024 ** 3, _(" GB")),
+        (1024 ** 2, _(" MB")),
+        (1024 ** 1, _(" KB")),
+        (1024 ** 0, _(" B")),
     ]
 
     return size(bytesize, system=SYSTEM)

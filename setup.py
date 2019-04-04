@@ -127,8 +127,8 @@ class GeneratePyQtForms(Command):
             d.invoke()
 
 
-class GeneratePyQtTranslations(Command):
-    description = "Generates ui translation files"
+class ExtractTranslations(Command):
+    description = "Extract translation strings"
 
     user_options = []
 
@@ -141,8 +141,8 @@ class GeneratePyQtTranslations(Command):
     def run(self):
         import os
         import pathlib
-        import subprocess
         from unittest.mock import patch
+        from babel.messages.frontend import CommandLineInterface
 
         fix_pyqt_import()
         try:
@@ -152,28 +152,81 @@ class GeneratePyQtTranslations(Command):
             return
 
         self.announce("Generating ui translation files", level=distutils.log.INFO)
-        rc_dir = "parsec/core/gui/rc/translations"
-        os.makedirs(rc_dir, exist_ok=True)
-        new_args = ["pylupdate", "parsec/core/gui/parsec-gui.pro"]
+        ui_dir = pathlib.Path("parsec/core/gui")
+        tr_dir = ui_dir / "tr"
+        os.makedirs(tr_dir, exist_ok=True)
+
+        new_args = ["pylupdate", str(ui_dir / "parsec-gui.pro")]
         with patch("sys.argv", new_args):
             pylupdate_main()
-        tr_dir = pathlib.Path("parsec/core/gui/tr")
-        for f in tr_dir.iterdir():
-            subprocess.call(
-                [
-                    "lrelease",
-                    "-compress",
-                    str(f),
-                    "-qm",
-                    os.path.join(rc_dir, "{}.qm".format(f.stem)),
-                ],
-                stdout=subprocess.DEVNULL,
-            )
+
+        files = [str(f) for f in ui_dir.iterdir() if f.is_file() and f.suffix == ".py"]
+        files.append(str(tr_dir / "parsec_en.ts"))
+        args = [
+            "_",
+            "extract",
+            "-s",
+            "-F",
+            ".babel.cfg",
+            "--omit-header",
+            "-o",
+            str(tr_dir / "translation.pot"),
+            *files,
+        ]
+        CommandLineInterface().run(args)
+        languages = ["fr", "en"]
+        for lang in languages:
+            args = [
+                "_",
+                "update",
+                "-i",
+                str(tr_dir / "translation.pot"),
+                "-o",
+                str(tr_dir / f"parsec_{lang}.po"),
+                "-l",
+                lang,
+            ]
+            CommandLineInterface().run(args)
+
+
+class CompileTranslations(Command):
+    description = "Compile translations"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import os
+        import pathlib
+        from babel.messages.frontend import CommandLineInterface
+
+        self.announce("Compiling ui translation files", level=distutils.log.INFO)
+        ui_dir = pathlib.Path("parsec/core/gui")
+        tr_dir = ui_dir / "tr"
+        rc_dir = ui_dir / "rc" / "translations"
+        os.makedirs(rc_dir, exist_ok=True)
+        languages = ["fr", "en"]
+        for lang in languages:
+            args = [
+                "_",
+                "compile",
+                "-i",
+                str(tr_dir / f"parsec_{lang}.po"),
+                "-o",
+                str(rc_dir / f"parsec_{lang}.mo"),
+            ]
+            CommandLineInterface().run(args)
 
 
 class build_py_with_pyqt(build_py):
     def run(self):
         self.run_command("generate_pyqt_forms")
+        self.run_command("compile_translations")
         self.run_command("generate_pyqt_resources_bundle")
         return super().run()
 
@@ -299,7 +352,8 @@ setup(
     cmdclass={
         "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
         "generate_pyqt_forms": GeneratePyQtForms,
-        "generate_pyqt_translations": GeneratePyQtTranslations,
+        "extract_translations": ExtractTranslations,
+        "compile_translations": CompileTranslations,
         "generate_pyqt": build_py_with_pyqt,
         "build_py": build_py_with_pyqt,
     },
@@ -319,7 +373,10 @@ setup(
             )
         ],
     },
-    entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
+    entry_points={
+        "console_scripts": ["parsec = parsec.cli:cli"],
+        "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],
+    },
     options={"build_exe": build_exe_options},
     executables=[Executable("parsec/cli.py", targetName="parsec")],
     license="AGPLv3",

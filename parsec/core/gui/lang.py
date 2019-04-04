@@ -1,8 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import io
+import gettext
+
 from structlog import get_logger
 
-from PyQt5.QtCore import QTranslator, QCoreApplication
+from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream
 
 from parsec.core.gui.desktop import get_locale_language
 
@@ -14,8 +17,20 @@ _current_translator = None
 logger = get_logger()
 
 
+def qt_translate(_, string):
+    return translate(string)
+
+
+def translate(string):
+    if _current_translator:
+        return _current_translator.gettext(string)
+    return gettext.gettext(string)
+
+
 def switch_language(core_config, lang_key=None):
     global _current_translator
+
+    QCoreApplication.translate = qt_translate
 
     if not lang_key:
         lang_key = core_config.gui_language
@@ -26,16 +41,22 @@ def switch_language(core_config, lang_key=None):
         if lang_key != "en":
             logger.info(f"Language '{lang_key}' unavailable, defaulting to English")
         lang_key = "en"
-    translator = QTranslator()
-    path = f":/translations/translations/parsec_{lang_key}.qm"
-    if not translator.load(path):
+
+    rc_file = QFile(f":/translations/translations/parsec_{lang_key}.mo")
+    if not rc_file.open(QIODevice.ReadOnly):
         logger.warning(f"Unable to load the translations for language '{lang_key}'")
         return False
-    if not QCoreApplication.installTranslator(translator):
-        logger.warning(f"Failed to install the translator for language '{lang_key}'")
-        return False
 
-    QCoreApplication.removeTranslator(_current_translator)
-    _current_translator = translator
-    QCoreApplication.processEvents()
+    try:
+        data_stream = QDataStream(rc_file)
+        out_stream = io.BytesIO()
+        content = data_stream.readRawData(rc_file.size())
+        out_stream.write(content)
+        out_stream.seek(0)
+        _current_translator = gettext.GNUTranslations(out_stream)
+        _current_translator.install()
+    except:
+        return False
+    finally:
+        rc_file.close()
     return True

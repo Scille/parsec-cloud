@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QDialog, QCompleter, QWidget
 from parsec.core.fs.sharing import SharingRecipientError
 
 from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, show_info
-
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
@@ -109,22 +109,12 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if not user:
             return
         if user == self.core.device.user_id:
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "WorkspaceSharing", "You can not share a workspace with yourself."
-                ).format(user),
-            )
+            show_warning(self, _("You can not share a workspace with yourself.").format(user))
             return
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
             if item and item.widget() and item.widget().name == user:
-                show_warning(
-                    self,
-                    QCoreApplication.translate(
-                        "WorkspaceSharing", 'This workspace is already shared with "{}".'
-                    ).format(user),
-                )
+                show_warning(self, _('This workspace is already shared with "{}".').format(user))
                 return
         try:
             self.portal.run(
@@ -149,20 +139,14 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.checkbox_write.setChecked(True)
         except SharingRecipientError:
             show_warning(
-                self,
-                QCoreApplication.translate(
-                    "WorkspaceSharing", 'Can not share the workspace "{}" with this user.'
-                ).format(self.name),
+                self, _('Can not share the workspace "{}" with this user.').format(self.name)
             )
         except:
             import traceback
 
             traceback.print_exc()
             show_error(
-                self,
-                QCoreApplication.translate(
-                    "WorkspaceSharing", 'Can not share the workspace "{}" with "{}".'
-                ).format(self.name, user),
+                self, _('Can not share the workspace "{}" with "{}".').format(self.name, user)
             )
 
     def add_participant(
@@ -212,18 +196,14 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if errors:
             show_error(
                 self,
-                QCoreApplication.translate(
-                    "WorkspaceSharing",
+                _(
                     "Permissions could not be updated for the following users: {}".format(
                         "\n".join(errors)
-                    ),
+                    )
                 ),
             )
         elif updated:
-            show_info(
-                self,
-                QCoreApplication.translate("WorkspaceSharing", "Permissions have been updated."),
-            )
+            show_info(self, _("Permissions have been updated."))
         self.reset()
 
     def has_changes(self):
@@ -238,12 +218,11 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if self.has_changes():
             r = ask_question(
                 parent=self,
-                title=QCoreApplication.translate("WorkspaceSharing", "Are you sure?"),
-                message=QCoreApplication.translate(
-                    "WorkspaceSharing",
+                title=_("Are you sure?"),
+                message=_(
                     "You have made some modifications, but have not applied them by clicking "
                     '"Apply". Are you sure you want to close this window and discard these '
-                    "modifications?",
+                    "modifications?"
                 ),
             )
             if r:

@@ -1,44 +1,5 @@
 # Used only for translations
 
-SOURCES += app.py \
-           bootstrap_organization_widget.py \
-           central_widget.py \
-           claim_device_widget.py \
-           claim_dialog.py \
-           claim_user_widget.py \
-           core_widget.py \
-           custom_widgets.py \
-           desktop.py \
-           devices_widget.py \
-           file_items.py \
-           file_size.py \
-           files_widget.py \
-           file_table.py \
-           global_settings_widget.py \
-           lang.py \
-           loading_dialog.py \
-           login_widget.py \
-           main_window.py \
-           menu_widget.py \
-           mount_widget.py \
-           network_settings_widget.py \
-           new_version.py \
-           notification_center_widget.py \
-           notification_widget.py \
-           password_validation.py \
-           register_device_dialog.py \
-           register_user_dialog.py \
-           replace_dialog.py \
-           settings_dialog.py \
-           settings_widget.py \
-           starting_guide_dialog.py \
-           users_widget.py \
-           validators.py \
-           workspace_button.py \
-           workspaces_widget.py \
-           workspace_sharing_dialog.py
-
-
 TRANSLATIONS += tr/parsec_fr.ts \
                 tr/parsec_en.ts
 

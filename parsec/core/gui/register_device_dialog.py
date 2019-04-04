@@ -3,7 +3,7 @@
 import trio
 import threading
 import queue
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
@@ -13,6 +13,7 @@ from parsec.core.invite_claim import (
 )
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 
@@ -74,36 +75,18 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.line_edit_device_name.show()
         self.closing_allowed = True
         if status is None:
-            show_warning(self, QCoreApplication.translate("RegisterUserDialog", "Unknown error."))
+            show_warning(self, _("Unknown error."))
         elif status == "already_exists":
-            show_warning(
-                self,
-                QCoreApplication.translate("RegisterDeviceDialog", "This device already exists."),
-            )
+            show_warning(self, _("This device already exists."))
         elif status == "timeout":
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "RegisterDeviceDialog", "Device took too much time to register."
-                ),
-            )
+            show_warning(self, _("Device took too much time to register."))
         else:
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "RegisterDeviceDialog", "Can not register this device ({})."
-                ).format(status),
-            )
+            show_warning(self, _("Can not register this device ({}).").format(status))
 
     def device_registered(self):
         self.register_thread.join()
         self.register_thread = None
-        show_info(
-            self,
-            QCoreApplication.translate(
-                "RegisterDeviceDialog", "Device has been registered. You may now close this window."
-            ),
-        )
+        show_info(self, _("Device has been registered. You may now close this window."))
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_device.setText("")
@@ -131,10 +114,9 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         if not self.closing_allowed:
             show_warning(
                 self,
-                QCoreApplication.translate(
-                    "RegisterDeviceDialog",
+                _(
                     "Can not close this window while waiting for the new device to register. "
-                    "Please cancel first.",
+                    "Please cancel first."
                 ),
             )
             event.ignore()
@@ -154,10 +136,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             )
 
         if not self.line_edit_device_name.text():
-            show_warning(
-                self,
-                QCoreApplication.translate("RegisterDeviceDialog", "Please enter a device name."),
-            )
+            show_warning(self, _("Please enter a device name."))
             return
 
         try:
@@ -180,9 +159,4 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             self.button_register.hide()
             self.closing_allowed = False
         except:
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "RegisterDeviceDialog", "Could not register the device."
-                ),
-            )
+            show_warning(self, _("Could not register the device."))

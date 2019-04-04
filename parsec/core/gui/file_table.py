@@ -2,7 +2,7 @@
 
 import pendulum
 
-from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QTableWidget,
@@ -20,6 +20,7 @@ from parsec.core.gui.file_items import (
     FolderTableItem,
     FileType,
 )
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_size import get_filesize
 
 
@@ -85,7 +86,7 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = ParentFolderTableItem()
         self.setItem(row_idx, 0, item)
-        item = CustomTableItem(QCoreApplication.translate("FilesWidget", "Parent Folder"))
+        item = CustomTableItem(_("Parent Folder"))
         item.setData(Qt.UserRole, chr(0))
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
@@ -103,7 +104,7 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = ParentWorkspaceTableItem()
         self.setItem(row_idx, 0, item)
-        item = CustomTableItem(QCoreApplication.translate("FilesWidget", "Parent Workspace"))
+        item = CustomTableItem(_("Parent Workspace"))
         item.setData(Qt.UserRole, chr(0))
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()

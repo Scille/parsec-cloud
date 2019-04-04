@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication
-
 from zxcvbn import zxcvbn
+
+from parsec.core.gui.lang import translate as _
 
 
 PASSWORD_STRENGTH_TEXTS = [
-    QCoreApplication.translate("PasswordStrength", "Too short"),
-    QCoreApplication.translate("PasswordStrength", "Very weak"),
-    QCoreApplication.translate("PasswordStrength", "Weak"),
-    QCoreApplication.translate("PasswordStrength", "Average"),
-    QCoreApplication.translate("PasswordStrength", "Good"),
-    QCoreApplication.translate("PasswordStrength", "Strong"),
+    _("Too short"),
+    _("Very weak"),
+    _("Weak"),
+    _("Average"),
+    _("Good"),
+    _("Strong"),
 ]
 
 PASSWORD_CSS = {
