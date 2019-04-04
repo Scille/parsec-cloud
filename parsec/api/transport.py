@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import uuid4
+import trio
 from trio import BrokenResourceError
 from structlog import get_logger
 from wsproto.frame_protocol import CloseReason
@@ -11,6 +12,7 @@ from wsproto.events import (
     ConnectionRequested,
     BytesReceived,
     PingReceived,
+    PongReceived,
 )
 
 
@@ -38,6 +40,7 @@ class Transport:
     def __init__(self, stream, ws):
         self.stream = stream
         self.ws = ws
+        self.keepalive_time = 0
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
@@ -127,14 +130,23 @@ class Transport:
         self.ws.send_data(msg)
         await self._net_send()
 
-    async def recv(self) -> bytes:
+    async def recv(self, keepalive: bool = False) -> bytes:
         """
         Raises:
             TransportError
         """
         data = bytearray()
         while True:
-            event = await self._next_ws_event()
+            if keepalive:
+                with trio.move_on_after(self.keepalive_time) as cancel_scope:
+                    event = await self._next_ws_event()
+                if cancel_scope.cancel_called:
+                    self.logger.debug("Sending keep alive ping")
+                    self.ws.ping()
+                    await self._net_send()
+                    continue
+            else:
+                event = await self._next_ws_event()
 
             if isinstance(event, ConnectionClosed):
                 self.logger.debug("Connection closed", code=event.code, reason=event.reason)
@@ -152,10 +164,10 @@ class Transport:
                 self.logger.debug("Received ping and sending pong")
                 await self._net_send()
 
+            elif isinstance(event, PongReceived):
+                # Nothing to do \o/
+                self.logger.debug("Received pong")
+
             else:
                 self.logger.warning("Unexpected event", ws_event=event)
                 raise TransportError(f"Unexpected event: {event}")
-
-    async def ping(self):
-        self.ws.ping()
-        await self._net_send()

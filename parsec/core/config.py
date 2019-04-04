@@ -53,7 +53,7 @@ class CoreConfig:
     mountpoint_base_dir: Path
 
     debug: bool = False
-    backend_watchdog: int = 0
+    backend_connection_keepalive: int = 0
     backend_max_connections: int = 4
 
     invitation_token_size: int = 8
@@ -84,7 +84,7 @@ def config_factory(
     cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     mountpoint_enabled: bool = False,
-    backend_watchdog: int = 0,
+    backend_connection_keepalive: int = 30,
     backend_max_connections: int = 4,
     telemetry_enabled: bool = True,
     debug: bool = False,
@@ -103,7 +103,7 @@ def config_factory(
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
         mountpoint_enabled=mountpoint_enabled,
-        backend_watchdog=backend_watchdog,
+        backend_connection_keepalive=backend_connection_keepalive,
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
         debug=debug,
@@ -168,7 +168,7 @@ def save_config(config: CoreConfig):
                 "cache_base_dir": str(config.cache_base_dir),
                 "mountpoint_base_dir": str(config.mountpoint_base_dir),
                 "telemetry_enabled": config.telemetry_enabled,
-                "backend_watchdog": config.backend_watchdog,
+                "backend_connection_keepalive": config.backend_connection_keepalive,
                 "gui_last_device": config.gui_last_device,
                 "gui_tray_enabled": config.gui_tray_enabled,
                 "gui_language": config.gui_language,

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 from typing import Tuple, List, Dict, Iterable, Optional
 from uuid import UUID
 import pendulum
@@ -49,7 +48,7 @@ from parsec.core.backend_connection.exceptions import (
 )
 
 
-async def _send_cmd(transport, serializer, **req):
+async def _send_cmd(transport, serializer, keepalive=False, **req):
     """
     Raises:
         BackendCmdsInvalidRequest
@@ -73,7 +72,7 @@ async def _send_cmd(transport, serializer, **req):
 
     try:
         await transport.send(raw_req)
-        raw_rep = await transport.recv()
+        raw_rep = await transport.recv(keepalive)
 
     except TransportError as exc:
         transport.logger.info("Request failed (backend not available)", cmd=req["cmd"])
@@ -121,20 +120,10 @@ async def events_subscribe(
     )
 
 
-async def events_listen(transport: Transport, wait: bool = True, watchdog_time: int = 30) -> dict:
-    async def _watchdog():
-        await trio.sleep(watchdog_time)
-        await transport.ping()
-
-    async with trio.open_nursery() as nursery:
-        if wait:
-            # In wait mode the transport can be disconnected while waiting for an
-            # answer from the backend, hence it's useful to force the connection
-            # alive with pings.
-            nursery.start_soon(_watchdog)
-        rep = await _send_cmd(transport, events_listen_serializer, cmd="events_listen", wait=wait)
-        nursery.cancel_scope.cancel()
-
+async def events_listen(transport: Transport, wait: bool = True) -> dict:
+    rep = await _send_cmd(
+        transport, events_listen_serializer, keepalive=wait, cmd="events_listen", wait=wait
+    )
     rep.pop("status")
     return rep
 

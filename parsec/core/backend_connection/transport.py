@@ -181,13 +181,14 @@ async def administration_transport_factory(addr: BackendAddr, token: str) -> Tra
 
 
 class AuthenticatedTransportPool:
-    def __init__(self, addr, device_id, signing_key, max):
+    def __init__(self, addr, device_id, signing_key, max_pool, keepalive_time):
         self.addr = addr
         self.device_id = device_id
         self.signing_key = signing_key
+        self.keepalive_time = keepalive_time
         self.transports = []
         self._closed = False
-        self._lock = trio.Semaphore(max)
+        self._lock = trio.Semaphore(max_pool)
 
     @asynccontextmanager
     async def acquire(self, force_fresh=False):
@@ -213,6 +214,7 @@ class AuthenticatedTransportPool:
                     raise trio.ClosedResourceError()
 
                 transport = await _connect(self.addr, self.device_id, self.signing_key)
+                transport.keepalive_time = self.keepalive_time
                 transport.logger = transport.logger.bind(device_id=self.device_id)
 
             try:
@@ -234,36 +236,15 @@ async def authenticated_transport_pool_factory(
     addr: BackendOrganizationAddr,
     device_id: DeviceID,
     signing_key: SigningKey,
-    max: int = 4,
-    watchdog_time: int = 30,
+    max_pool: int = 4,
+    keepalive_time: int = 30,
 ) -> AuthenticatedTransportPool:
     """
     Raises: nothing !
     """
-
-    async def _watchdog(pool):
-        while True:
-            await trio.sleep(watchdog_time)
-            # Here we take advantage of the fact the pool stores the transports
-            # in a fifo queue with last used at the back of the queue.
-            checked = []
-            while True:
-                try:
-                    async with pool.acquire() as transport:
-                        if transport in checked:
-                            break
-                        await transport.ping()
-                except TransportError:
-                    pass
-                checked.append(transport)
-
-    pool = AuthenticatedTransportPool(addr, device_id, signing_key, max)
+    pool = AuthenticatedTransportPool(addr, device_id, signing_key, max_pool, keepalive_time)
     try:
-        async with trio.open_nursery() as nursery:
-            if watchdog_time:
-                nursery.start_soon(_watchdog, pool)
-            yield pool
-            nursery.cancel_scope.cancel()
+        yield pool
 
     finally:
         pool._closed = True

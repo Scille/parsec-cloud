@@ -56,7 +56,8 @@ async def logged_core_factory(
             device.organization_addr,
             device.device_id,
             device.signing_key,
-            config.backend_max_connections,
+            max_pool=config.backend_max_connections,
+            keepalive_time=config.backend_connection_keepalive,
         ) as backend_cmds_pool:
 
             with LocalStorage(config.data_base_dir / device.slug) as local_storage:

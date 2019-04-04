@@ -129,13 +129,13 @@ async def backend_cmds_pool_factory(
     device_id: DeviceID,
     signing_key: SigningKey,
     max_pool: int = 4,
-    watchdog_time: int = 30,
+    keepalive_time: int = 30,
 ) -> BackendCmdsPool:
     """
     Raises: nothing !
     """
     async with authenticated_transport_pool_factory(
-        addr, device_id, signing_key, max_pool, watchdog_time
+        addr, device_id, signing_key, max_pool, keepalive_time
     ) as transport_pool:
         yield BackendCmdsPool(addr, transport_pool)
 
