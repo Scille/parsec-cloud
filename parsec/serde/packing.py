@@ -41,7 +41,7 @@ def unpackb(raw_data: bytes, exc_cls=SerdePackingError) -> dict:
 
     def _ext_hook(code, data):
         if code == 1:
-            return Pendulum.fromtimestamp(struct_unpack("!d", data)[0])
+            return Pendulum.utcfromtimestamp(struct_unpack("!d", data)[0])
         elif code == 2:
             return UUID(bytes=data)
 
