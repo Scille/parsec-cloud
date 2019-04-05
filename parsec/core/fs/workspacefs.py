@@ -80,6 +80,7 @@ class WorkspaceFS:
 
     async def file_fd_open(self, path: FsPath, mode="rw") -> int:
         path = self._cook_path(path)
+        # XXX: Move to fs_transactions after during next refactoring
         access = await self._load_and_retry(self._local_folder_fs.get_file_access, path, mode)
         return self._file_transactions.open(access)
 

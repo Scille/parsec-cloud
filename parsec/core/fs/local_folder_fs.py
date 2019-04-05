@@ -26,7 +26,6 @@ from parsec.core.fs.utils import (
     is_workspace_manifest,
     is_user_manifest,
 )
-from parsec.core.fs.file_transactions import FileTransactions
 
 
 class FSEntryNotFound(Exception):
@@ -46,17 +45,10 @@ class FSMultiManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(
-        self,
-        device: LocalDevice,
-        local_storage: LocalStorage,
-        file_transactions: FileTransactions,
-        event_bus: EventBus,
-    ):
+    def __init__(self, device: LocalDevice, local_storage: LocalStorage, event_bus: EventBus):
         self.local_author = device.device_id
         self.root_access = device.user_manifest_access
         self.local_storage = local_storage
-        self.file_transactions = file_transactions
         self.event_bus = event_bus
 
     # Manifest methods
@@ -472,7 +464,7 @@ class LocalFolderFS:
         parent_manifest = parent_manifest.evolve_children_and_mark_updated({path.name: None})
         self.set_dirty_manifest(parent_access, parent_manifest)
         if is_file_manifest(item_manifest):
-            self.file_transactions.deleted(item_access, item_manifest)
+            self.local_storage.remove_file_reference(item_access, item_manifest)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
     def delete(self, path: FsPath) -> None:
@@ -720,7 +712,7 @@ class LocalFolderFS:
             self.set_dirty_manifest(cpy_access, cpy_manifest)
 
             if is_file_manifest(manifest):
-                self.file_transactions.deleted(access, manifest)
+                self.local_storage.remove_file_reference(access, manifest)
             else:
                 self.clear_manifest(access)
 

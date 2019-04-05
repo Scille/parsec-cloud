@@ -38,9 +38,7 @@ class UserFS:
 
         self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
         self._file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
-        self._local_folder_fs = LocalFolderFS(
-            device, local_storage, self._file_transactions, event_bus
-        )
+        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
         self._syncer = Syncer(
             device,
             backend_cmds,

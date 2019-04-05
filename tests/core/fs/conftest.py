@@ -9,15 +9,15 @@ from parsec.core.fs.remote_loader import RemoteLoader
 
 @pytest.fixture
 def local_folder_fs_factory(event_bus):
-    def _local_folder_fs_factory(device, local_storage, file_transactions):
-        return LocalFolderFS(device, local_storage, file_transactions, event_bus)
+    def _local_folder_fs_factory(device, local_storage):
+        return LocalFolderFS(device, local_storage, event_bus)
 
     return _local_folder_fs_factory
 
 
 @pytest.fixture
-def local_folder_fs(local_folder_fs_factory, alice, alice_local_storage, file_transactions):
-    return local_folder_fs_factory(alice, alice_local_storage, file_transactions)
+def local_folder_fs(local_folder_fs_factory, alice, alice_local_storage):
+    return local_folder_fs_factory(alice, alice_local_storage)
 
 
 @pytest.fixture
