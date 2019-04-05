@@ -181,13 +181,13 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
         if self.portal and self.core:
             try:
                 current_device = self.core.device
-                user_info, _ = self.portal.run(
-                    self.core.backend_cmds.user_get, self.core.device.user_id
+                _, devices = self.portal.run(
+                    self.core.remote_devices_manager.get_user_and_devices, self.core.device.user_id
                 )
-                for device_name, device in user_info.devices.items():
+                for device in devices:
                     self.add_device(
-                        device_name,
-                        is_current_device=device_name == current_device.device_name,
+                        device.device_name,
+                        is_current_device=device.device_name == current_device.device_name,
                         is_revoked=bool(device.revoked_on),
                         revoked_on=device.revoked_on,
                     )
