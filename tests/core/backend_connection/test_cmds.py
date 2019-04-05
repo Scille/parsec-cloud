@@ -151,6 +151,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
                 await backend_received_cmd.wait()
 
             # Now advance time until ping is requested
+            await trio.testing.wait_all_tasks_blocked()
             mock_clock.jump(2)
             with trio.fail_after(2):
                 backend_transport, event = await next_ping_related_event()
@@ -160,6 +161,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
                 assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
+            await trio.testing.wait_all_tasks_blocked()
             mock_clock.jump(2)
             with trio.fail_after(1):
                 backend_transport2, event = await next_ping_related_event()
