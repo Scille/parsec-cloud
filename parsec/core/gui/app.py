@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QApplication
 from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
 
+
 try:
     from parsec.core.gui import lang
     from parsec.core.gui.new_version import CheckNewVersion

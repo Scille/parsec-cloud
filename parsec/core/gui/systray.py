@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMenu, QSystemTrayIcon
+
+from parsec.core.gui.lang import translate as _
 
 
 def systray_available() -> bool:
@@ -14,10 +15,8 @@ class Systray(QSystemTrayIcon):
         super().__init__(**kwargs)
 
         self.menu = QMenu()
-        self.show_action = self.menu.addAction(
-            QCoreApplication.translate("MainWindow", "Show window")
-        )
-        self.close_action = self.menu.addAction(QCoreApplication.translate("MainWindow", "Exit"))
+        self.show_action = self.menu.addAction(_("Show window"))
+        self.close_action = self.menu.addAction(_("Exit"))
 
         self.on_show = self.show_action.triggered
         self.on_close = self.close_action.triggered

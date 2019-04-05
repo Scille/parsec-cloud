@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, QSize
+from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
@@ -10,6 +10,7 @@ from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import NotificationTaskbarButton
 from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
@@ -118,32 +119,18 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":
-            self.new_notification.emit(
-                "WARNING",
-                QCoreApplication.translate("CentralWidget", "Disconnected from the backend."),
-            )
+            self.new_notification.emit("WARNING", _("Disconnected from the backend."))
         elif event == "backend.connection.ready":
-            self.new_notification.emit(
-                "INFO", QCoreApplication.translate("CentralWidget", "Connected to the backend.")
-            )
+            self.new_notification.emit("INFO", _("Connected to the backend."))
         elif event == "mountpoint.stopped":
-            self.new_notification.emit(
-                "ERROR",
-                QCoreApplication.translate("CentralWidget", "Mountpoint has been unmounted."),
-            )
+            self.new_notification.emit("ERROR", _("Mountpoint has been unmounted."))
         elif event == "sharing.new":
             self.new_notification.emit(
-                "INFO",
-                QCoreApplication.translate(
-                    "CentralWidget", "Workspace '{}' shared with you"
-                ).format(kwargs["path"]),
+                "INFO", _("Workspace '{}' shared with you").format(kwargs["path"])
             )
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(
-                "WARNING",
-                QCoreApplication.translate(
-                    "CentralWidget", "Conflict while syncing file '{}'."
-                ).format(kwargs["path"]),
+                "WARNING", _("Conflict while syncing file '{}'.").format(kwargs["path"])
             )
 
     def close_notification_center(self):
@@ -161,16 +148,12 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def _on_connection_state_changed(self, state):
         if state:
-            self.menu.label_connection_text.setText(
-                QCoreApplication.translate("CentralWidget", "Connected")
-            )
+            self.menu.label_connection_text.setText(_("Connected"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_online.png")
             )
         else:
-            self.menu.label_connection_text.setText(
-                QCoreApplication.translate("CentralWidget", "Disconnected")
-            )
+            self.menu.label_connection_text.setText(_("Disconnected"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
@@ -208,7 +191,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
     def show_mount_widget(self):
         self.hide_all_widgets()
         self.menu.button_files.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("CentralWidget", "Documents"))
+        self.label_title.setText(_("Documents"))
         self.mount_widget.reset()
         self.mount_widget.show()
         self.reset_taskbar()
@@ -216,7 +199,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
     def show_users_widget(self):
         self.hide_all_widgets()
         self.menu.button_users.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("CentralWidget", "Users"))
+        self.label_title.setText(_("Users"))
         self.users_widget.reset()
         self.users_widget.show()
         self.reset_taskbar()
@@ -224,7 +207,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
     def show_devices_widget(self):
         self.hide_all_widgets()
         self.menu.button_devices.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("CentralWidget", "Devices"))
+        self.label_title.setText(_("Devices"))
         self.devices_widget.reset()
         self.devices_widget.show()
         self.reset_taskbar()
@@ -232,7 +215,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
     def show_settings_widget(self):
         self.hide_all_widgets()
         self.menu.button_settings.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("CentralWidget", "Settings"))
+        self.label_title.setText(_("Settings"))
         self.settings_widget.reset()
         self.settings_widget.show()
         self.reset_taskbar()

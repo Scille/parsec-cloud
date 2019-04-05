@@ -3,7 +3,7 @@
 import trio
 import threading
 import queue
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
@@ -13,6 +13,7 @@ from parsec.core.invite_claim import (
 )
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 
@@ -75,39 +76,19 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.line_edit_username.show()
         self.closing_allowed = True
         if status is None:
-            show_warning(self, QCoreApplication.translate("RegisterUserDialog", "Unknown error."))
+            show_warning(self, _("Unknown error."))
         elif status == "invalid_role":
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "RegisterUserDialog", "Only admins can invite a new user."
-                ),
-            )
+            show_warning(self, _("Only admins can invite a new user."))
         elif status == "timeout":
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "RegisterUserDialog", "User took too much time to register."
-                ),
-            )
+            show_warning(self, _("User took too much time to register."))
         else:
-            show_warning(
-                self,
-                QCoreApplication.translate("RegisterUserDialog", "Unhandled response {}").format(
-                    status
-                ),
-            )
+            show_warning(self, _("Unhandled response {}").format(status))
 
     def user_registered(self):
         self.register_thread.join()
         self.register_thread = None
         self.cancel_scope = None
-        show_info(
-            self,
-            QCoreApplication.translate(
-                "RegisterUserDialog", "User has been registered. You may now close this window."
-            ),
-        )
+        show_info(self, _("User has been registered. You may now close this window."))
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_user.setText("")
@@ -137,10 +118,9 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         if not self.closing_allowed:
             show_warning(
                 self,
-                QCoreApplication.translate(
-                    "RegisterUserDialog",
+                _(
                     "Can not close this window while waiting for the new user to register. "
-                    "Please cancel first.",
+                    "Please cancel first."
                 ),
             )
             event.ignore()
@@ -161,19 +141,12 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             )
 
         if not self.line_edit_username.text():
-            show_warning(
-                self, QCoreApplication.translate("RegisterUserDialog", "Please enter a username.")
-            )
+            show_warning(self, _("Please enter a username."))
             return
 
         users = self.portal.run(self.core.fs.backend_cmds.user_find, self.line_edit_username.text())
         if len(users):
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "RegisterUserDialog", "A user with the same name already exists."
-                ),
-            )
+            show_warning(self, _("A user with the same name already exists."))
             return
         try:
             token = generate_invitation_token()
@@ -200,7 +173,4 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             import traceback
 
             traceback.print_exc()
-            show_warning(
-                self,
-                QCoreApplication.translate("RegisterUserDialog", "Could not register the user."),
-            )
+            show_warning(self, _("Could not register the user."))

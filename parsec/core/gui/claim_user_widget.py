@@ -2,7 +2,7 @@
 
 import os
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.types import BackendOrganizationAddr, DeviceID, OrganizationID
@@ -20,6 +20,7 @@ from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
     get_password_strength,
@@ -27,19 +28,6 @@ from parsec.core.gui.password_validation import (
     PASSWORD_CSS,
 )
 from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
-
-_translate = QCoreApplication.translate
-
-
-STATUS_TO_ERRMSG = {
-    "not_found": _translate("ClaimUserWidget", "No invitation found for this user."),
-    "password-mismatch": _translate("ClaimUserWidget", "Passwords don't match."),
-    "password-size": _translate("ClaimUserWidget", "Password must be at least 8 caracters long."),
-    "bad-url": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-    "bad-device_name": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-    "bad-user_id": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-}
-DEFAULT_ERRMSG = _translate("ClaimUserWidget", "Can not claim this user ({info}).")
 
 
 async def _do_claim_user(
@@ -112,11 +100,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
         self.claim_dialog = ClaimDialog(parent=self)
-        self.claim_dialog.setText(
-            QCoreApplication.translate(
-                "ClaimUserWidget", "Please wait while the user is registered."
-            )
-        )
+        self.claim_dialog.setText(_("Please wait while the user is registered."))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
 
@@ -126,7 +110,18 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
         self.check_infos()
-        errmsg = STATUS_TO_ERRMSG.get(self.claim_user_job.status, DEFAULT_ERRMSG)
+
+        status = self.claim_user_job.status
+        if status == "not_found":
+            errmsg = _("No invitation found for this user.")
+        elif status == "password-mismatch":
+            errmsg = _("Passwords don't match.")
+        elif status == "password-size":
+            errmsg = _("Password must be at least 8 caracters long.")
+        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
+            errmsg = _("URL or device is invalid.")
+        else:
+            errmsg = _("Can not claim this user ({info}).")
         show_error(self, errmsg.format(**self.claim_user_job.exc.params))
         self.claim_user_job = None
 
@@ -154,9 +149,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                QCoreApplication.translate("ClaimUserWidget", "Password strength: {}").format(
-                    PASSWORD_STRENGTH_TEXTS[score]
-                )
+                _("Password strength: {}").format(PASSWORD_STRENGTH_TEXTS[score])
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

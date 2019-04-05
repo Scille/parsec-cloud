@@ -2,7 +2,7 @@
 
 import pathlib
 
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal, QSize, QPoint
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QSize, QPoint
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QColor, QPen
 from PyQt5.QtWidgets import (
     QFileDialog,
@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
     QLabel,
 )
 
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.input_dialog import Ui_InputDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
@@ -67,9 +68,7 @@ def get_user_name(parent, portal, core, title, message, exclude=None):
             self.portal = portal
             self.label_title.setText(title)
             self.label_message.setText(message)
-            self.line_edit_text.setPlaceholderText(
-                QCoreApplication.translate("GetUserName", "User name")
-            )
+            self.line_edit_text.setPlaceholderText(_("User name"))
             self.setWindowFlags(Qt.SplashScreen)
             self.exclude = exclude or []
             self.timer = QTimer()
@@ -139,31 +138,20 @@ class MessageDialog(QDialog, Ui_MessageDialog):
 
 def show_info(parent, text):
     m = MessageDialog(
-        QPixmap(":/icons/images/icons/info.png"),
-        QCoreApplication.translate("Message", "Information"),
-        text,
-        parent=parent,
+        QPixmap(":/icons/images/icons/info.png"), _("Information"), text, parent=parent
     )
     return m.exec_()
 
 
 def show_warning(parent, text):
     m = MessageDialog(
-        QPixmap(":/icons/images/icons/warning.png"),
-        QCoreApplication.translate("Message", "Warning"),
-        text,
-        parent=parent,
+        QPixmap(":/icons/images/icons/warning.png"), _("Warning"), text, parent=parent
     )
     return m.exec_()
 
 
 def show_error(parent, text):
-    m = MessageDialog(
-        QPixmap(":/icons/images/icons/error.png"),
-        QCoreApplication.translate("Message", "Error"),
-        text,
-        parent=parent,
-    )
+    m = MessageDialog(QPixmap(":/icons/images/icons/error.png"), _("Error"), text, parent=parent)
     return m.exec_()
 
 

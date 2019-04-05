@@ -1,0 +1,830 @@
+# English translations for PROJECT.
+# Copyright (C) 2019 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2019-04-05 13:30+0200\n"
+"PO-Revision-Date: 2019-04-04 15:23+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+msgid "Select files to import"
+msgstr ""
+
+msgid "Select a directory to import"
+msgstr ""
+
+msgid "A folder with the same name already exists."
+msgstr ""
+
+msgid "Confirmation"
+msgstr ""
+
+msgid "Are you sure you want to delete \"{}\" ?"
+msgstr ""
+
+msgid "Can not delete \"{}\""
+msgstr ""
+
+msgid "Folder name"
+msgstr ""
+
+msgid "Enter new folder name"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Open in explorer"
+msgstr ""
+
+msgid "Rename"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "New name"
+msgstr ""
+
+msgid "Enter file new name"
+msgstr ""
+
+msgid "Can not rename."
+msgstr ""
+
+msgid ""
+"The file \"{}\" already exists.\n"
+"Do you want to replace it ?"
+msgstr ""
+
+msgid "Too short"
+msgstr ""
+
+msgid "Very weak"
+msgstr ""
+
+msgid "Weak"
+msgstr ""
+
+msgid "Average"
+msgstr ""
+
+msgid "Good"
+msgstr ""
+
+msgid "Strong"
+msgstr ""
+
+msgid " (shared)"
+msgstr ""
+
+msgid " (shared by {})"
+msgstr ""
+
+msgid "Unknown error."
+msgstr ""
+
+msgid "This device already exists."
+msgstr ""
+
+msgid "Device took too much time to register."
+msgstr ""
+
+msgid "Can not register this device ({})."
+msgstr ""
+
+msgid "Device has been registered. You may now close this window."
+msgstr ""
+
+msgid ""
+"Can not close this window while waiting for the new device to register. "
+"Please cancel first."
+msgstr ""
+
+msgid "Please enter a device name."
+msgstr ""
+
+msgid "Could not register the device."
+msgstr ""
+
+msgid "Please wait while the user is registered."
+msgstr ""
+
+msgid "No invitation found for this user."
+msgstr ""
+
+msgid "Passwords don't match."
+msgstr ""
+
+msgid "Password must be at least 8 caracters long."
+msgstr ""
+
+msgid "URL or device is invalid."
+msgstr ""
+
+msgid "Can not claim this user ({info})."
+msgstr ""
+
+msgid "Password strength: {}"
+msgstr ""
+
+msgid "Show info"
+msgstr ""
+
+msgid "Revoke"
+msgstr ""
+
+msgid "This device has been revoked."
+msgstr ""
+
+msgid "Are you sure you want to revoke device \"{}\" ?"
+msgstr ""
+
+msgid "Device \"{}\" has been revoked."
+msgstr ""
+
+msgid "Device \"{}\" has already been revoked."
+msgstr ""
+
+msgid "Device \"{}\" not found."
+msgstr ""
+
+msgid "You don't have the permission to revoke this device."
+msgstr ""
+
+msgid "Can not revoke this device."
+msgstr ""
+
+msgid "Can not acces this file."
+msgstr ""
+
+msgid "Not yet implemented."
+msgstr ""
+
+msgid "Enter workspace new name"
+msgstr ""
+
+msgid "Workspace name"
+msgstr ""
+
+msgid "A workspace with the same name already exists."
+msgstr ""
+
+msgid "Can not rename the workspace."
+msgstr ""
+
+msgid "New workspace"
+msgstr ""
+
+msgid "Enter new workspace name"
+msgstr ""
+
+msgid "Created on {}"
+msgstr ""
+
+msgid "This user has been revoked."
+msgstr ""
+
+msgid "Are you sure you want to revoke user \"{}\" ?"
+msgstr ""
+
+msgid "User \"{}\" has been revoked."
+msgstr ""
+
+msgid "User \"{}\" has already been revoked."
+msgstr ""
+
+msgid "User \"{}\" not found."
+msgstr ""
+
+msgid "You don't have the permission to revoke this user."
+msgstr ""
+
+msgid "Can not revoke this user."
+msgstr ""
+
+msgid " TB"
+msgstr ""
+
+msgid " GB"
+msgstr ""
+
+msgid " MB"
+msgstr ""
+
+msgid " KB"
+msgstr ""
+
+msgid " B"
+msgstr ""
+
+msgid "Welcome!"
+msgstr ""
+
+msgid ""
+"Parsec allows you to store data in the cloud with a very high security "
+"level.\n"
+"Find out more by letting us guide you step by step!"
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/cloud-computing.png"
+msgstr ""
+
+msgid "Workspaces"
+msgstr ""
+
+msgid ""
+"Arrange all your files by workspaces, a clear interface for an easy to "
+"use and simple process."
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/workspaces.png"
+msgstr ""
+
+msgid "Documents"
+msgstr ""
+
+msgid ""
+"In your workspaces, see and manage all your files, just as with a regular"
+" file explorer. A lightweight display to increase your productivity!"
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/documents.png"
+msgstr ""
+
+msgid "Sharing"
+msgstr ""
+
+msgid ""
+"Share your workspaces with a few clicks. See who can access it, and what "
+"others share with you.\n"
+"Everything shared with you automatically appears."
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/page4.png"
+msgstr ""
+
+msgid "Manage your devices"
+msgstr ""
+
+msgid ""
+"See and manage thee devices you trust. Those are the key to the guaranted"
+" security of your files."
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/devices.png"
+msgstr ""
+
+msgid "Manage the users"
+msgstr ""
+
+msgid ""
+"And for the administrators ? You can manage all users and their "
+"privileges, add users, or revoke them."
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/users.png"
+msgstr ""
+
+msgid "Even offline"
+msgstr ""
+
+msgid ""
+"No network ? Not a problem. You can access all your files. Modifications "
+"will be saved locally until your device comes online again."
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/offline_en.png"
+msgstr ""
+
+msgid "Now it's your turn !"
+msgstr ""
+
+msgid ""
+"Create your first workspace, import your files, share your documents.\n"
+"Security waits for no one!"
+msgstr ""
+
+msgid ":/screenshots/images/screenshots/your_turn.png"
+msgstr ""
+
+msgid "End"
+msgstr ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "Parent Folder"
+msgstr ""
+
+msgid "Parent Workspace"
+msgstr ""
+
+msgid "This organization does not exist (is the URL correct ?)."
+msgstr ""
+
+msgid "This user already exists."
+msgstr ""
+
+msgid "Can not bootstrap this organization ({info})."
+msgstr ""
+
+msgid "Show window"
+msgstr ""
+
+msgid "Exit"
+msgstr ""
+
+msgid ""
+"The organization and the user have been created. You will now be logged "
+"in."
+msgstr ""
+
+msgid "The organization and the user have been created. You can now log in."
+msgstr ""
+
+msgid "The user has been created. You will now be logged in."
+msgstr ""
+
+msgid "The user has been created. You can now log in."
+msgstr ""
+
+msgid "Please wait while the device is registered."
+msgstr ""
+
+msgid "No invitation found for this device."
+msgstr ""
+
+msgid "Can not claim this device ({info})."
+msgstr ""
+
+msgid "The device has been registered. You can now login."
+msgstr ""
+
+msgid "Global"
+msgstr ""
+
+msgid "Network"
+msgstr ""
+
+msgid "Modification will take effect the next time you start the application."
+msgstr ""
+
+msgid "Disconnected from the backend."
+msgstr ""
+
+msgid "Connected to the backend."
+msgstr ""
+
+msgid "Mountpoint has been unmounted."
+msgstr ""
+
+msgid "Workspace '{}' shared with you"
+msgstr ""
+
+msgid "Conflict while syncing file '{}'."
+msgstr ""
+
+msgid "Connected"
+msgstr ""
+
+msgid "Disconnected"
+msgstr ""
+
+msgid "Users"
+msgstr ""
+
+msgid "Devices"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Cancelling..."
+msgstr ""
+
+msgid "Only admins can invite a new user."
+msgstr ""
+
+msgid "User took too much time to register."
+msgstr ""
+
+msgid "Unhandled response {}"
+msgstr ""
+
+msgid "User has been registered. You may now close this window."
+msgstr ""
+
+msgid ""
+"Can not close this window while waiting for the new user to register. "
+"Please cancel first."
+msgstr ""
+
+msgid "Please enter a username."
+msgstr ""
+
+msgid "A user with the same name already exists."
+msgstr ""
+
+msgid "Could not register the user."
+msgstr ""
+
+msgid "You can not share a workspace with yourself."
+msgstr ""
+
+msgid "This workspace is already shared with \"{}\"."
+msgstr ""
+
+msgid "Can not share the workspace \"{}\" with this user."
+msgstr ""
+
+msgid "Can not share the workspace \"{}\" with \"{}\"."
+msgstr ""
+
+msgid "Permissions could not be updated for the following users: {}"
+msgstr ""
+
+msgid "Permissions have been updated."
+msgstr ""
+
+msgid "Are you sure?"
+msgstr ""
+
+msgid ""
+"You have made some modifications, but have not applied them by clicking "
+"\"Apply\". Are you sure you want to close this window and discard these "
+"modifications?"
+msgstr ""
+
+msgid "User name"
+msgstr ""
+
+msgid "Information"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid ""
+"Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive"
+" data on the cloud"
+msgstr ""
+
+msgid "Error reporting"
+msgstr ""
+
+msgid ""
+"Do you authorize Parsec to send data when it encounters an error to help "
+"us improve your experience ?"
+msgstr ""
+
+msgid "Authentication failed."
+msgstr ""
+
+msgid "User not registered in the backend."
+msgstr ""
+
+msgid "Mountpoint already in use."
+msgstr ""
+
+msgid "Can not login"
+msgstr ""
+
+msgid "Can not login."
+msgstr ""
+
+msgid "Are you sure you want to quit ?"
+msgstr ""
+
+msgid "Parsec is still running."
+msgstr ""
+
+msgid "Form"
+msgstr ""
+
+msgid ""
+"To bootstrap an organization, create one on the website and paste the "
+"information."
+msgstr ""
+
+msgid "Device name"
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Password check"
+msgstr ""
+
+msgid "PKCS #11 Token"
+msgstr ""
+
+msgid "PKCS #11 Key"
+msgstr ""
+
+msgid "Authenticate using PKCS #11"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Bootstrap"
+msgstr ""
+
+msgid ""
+"To register a new device, you need an existing device to declare a new "
+"device and get the resulting token."
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Dialog"
+msgstr ""
+
+msgid ""
+"To register a new user, you need another user to create an account and "
+"get a token."
+msgstr ""
+
+msgid "Search devices"
+msgstr ""
+
+msgid "Search files or folders"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Updated"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Behavior"
+msgstr ""
+
+msgid "Close button minimizes Parsec in the tray"
+msgstr ""
+
+msgid "Localization"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "Check for new version at startup"
+msgstr ""
+
+msgid "Check for new version now"
+msgstr ""
+
+msgid "Send information when Parsec encounters an error."
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Ok"
+msgstr ""
+
+msgid "Importing"
+msgstr ""
+
+msgid "Identifier"
+msgstr ""
+
+msgid "PKCS #11 PIN"
+msgstr ""
+
+msgid "Log In"
+msgstr ""
+
+msgid "Register a new account"
+msgstr ""
+
+msgid "Register a new device"
+msgstr ""
+
+msgid "Bootstrap an organization"
+msgstr ""
+
+msgid "Parsec"
+msgstr ""
+
+msgid "   Documents"
+msgstr ""
+
+msgid "   Users"
+msgstr ""
+
+msgid "   Devices"
+msgstr ""
+
+msgid "   Settings"
+msgstr ""
+
+msgid "   Log Out"
+msgstr ""
+
+msgid "Proxy"
+msgstr ""
+
+msgid "Proxy type"
+msgstr ""
+
+msgid "No proxy"
+msgstr ""
+
+msgid "HTTP"
+msgstr ""
+
+msgid "Socks4"
+msgstr ""
+
+msgid "Socks5"
+msgstr ""
+
+msgid "Host"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Speed limits"
+msgstr ""
+
+msgid "Upload"
+msgstr ""
+
+msgid "No limit"
+msgstr ""
+
+msgid "Limit to"
+msgstr ""
+
+msgid "10"
+msgstr ""
+
+msgid "kb/s"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Misc"
+msgstr ""
+
+msgid "Number of simultaneous connections"
+msgstr ""
+
+msgid "A new version of Parsec is available !"
+msgstr ""
+
+msgid "Don't remind me in the future"
+msgstr ""
+
+msgid "Ignore"
+msgstr ""
+
+msgid "Notifications"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "Register new device"
+msgstr ""
+
+msgid "Use the following information to set up your new device:"
+msgstr ""
+
+msgid "..."
+msgstr ""
+
+msgid "Do not close this window while the device registers."
+msgstr ""
+
+msgid "Register the device"
+msgstr ""
+
+msgid "Register new user"
+msgstr ""
+
+msgid "User is administrator"
+msgstr ""
+
+msgid "Transmit the following information to the user:"
+msgstr ""
+
+msgid "Do not close this window while the user registers."
+msgstr ""
+
+msgid "Register the user"
+msgstr ""
+
+msgid "Skip"
+msgstr ""
+
+msgid "Replace"
+msgstr ""
+
+msgid "Do the same for all files"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Search users"
+msgstr ""
+
+msgid "You are this workspace's owner."
+msgstr ""
+
+msgid "This workspace is shared."
+msgstr ""
+
+msgid "This workspace is empty."
+msgstr ""
+
+msgid "Rename the workspace"
+msgstr ""
+
+msgid "Share the workspace"
+msgstr ""
+
+msgid "Delete the workspace"
+msgstr ""
+
+msgid "Manage workspace sharing"
+msgstr ""
+
+msgid "Share with"
+msgstr ""
+
+msgid "User can administer"
+msgstr ""
+
+msgid "User can read"
+msgstr ""
+
+msgid "User can write"
+msgstr ""
+
+msgid "Share"
+msgstr ""
+
+msgid "Admin"
+msgstr ""
+
+msgid "Read"
+msgstr ""
+
+msgid "Write"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+#~ msgid "URL or user is invalid."
+#~ msgstr ""
+

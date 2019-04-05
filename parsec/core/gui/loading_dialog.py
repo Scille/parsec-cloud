@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
 
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.loading_dialog import Ui_LoadingDialog
 
 
@@ -32,4 +33,4 @@ class LoadingDialog(QDialog, Ui_LoadingDialog):
 
     def set_cancel_state(self):
         self.label.setText("")
-        self.label_status.setText(QCoreApplication.translate("LoadingDialog", "Cancelling..."))
+        self.label_status.setText(_("Cancelling..."))

@@ -14,6 +14,7 @@ from parsec.core.gui.file_items import FileType
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.loading_dialog import LoadingDialog
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.replace_dialog import ReplaceDialog
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.fs import FSEntryNotFound
@@ -240,10 +241,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     # slot
     def import_files_clicked(self):
-        paths, _ = QFileDialog.getOpenFileNames(
-            self,
-            QCoreApplication.translate("FilesWidget", "Select files to import"),
-            str(pathlib.Path.home()),
+        paths, x = QFileDialog.getOpenFileNames(
+            self, _("Select files to import"), str(pathlib.Path.home())
         )
         if not paths:
             return
@@ -253,9 +252,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     # slot
     def import_folder_clicked(self):
         path = QFileDialog.getExistingDirectory(
-            self,
-            QCoreApplication.translate("FilesWidget", "Select a directory to import"),
-            str(pathlib.Path.home()),
+            self, _("Select a directory to import"), str(pathlib.Path.home())
         )
         if not path:
             return
@@ -285,12 +282,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             )
             return True
         except FileExistsError:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "FilesWidget", "A folder with the same name already exists."
-                ),
-            )
+            show_error(self, _("A folder with the same name already exists."))
             return False
 
     def delete_item(self, row):
@@ -302,10 +294,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             QCoreApplication.processEvents()
             result = ask_question(
                 self,
-                QCoreApplication.translate("FilesWidget", "Confirmation"),
-                QCoreApplication.translate(
-                    "FilesWidget", 'Are you sure you want to delete "{}" ?'
-                ).format(name_item.text()),
+                _("Confirmation"),
+                _('Are you sure you want to delete "{}" ?').format(name_item.text()),
             )
             if not result:
                 return
@@ -317,9 +307,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                     self.portal.run(self.core.fs.delete, path)
                 self.table_files.removeRow(row)
             except:
-                show_error(
-                    self, QCoreApplication.translate('Can not delete "{}"').format(name_item.text())
-                )
+                show_error(self, _('Can not delete "{}"').format(name_item.text()))
 
         return _inner_delete_item
 
@@ -337,10 +325,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     # slot
     def create_folder_clicked(self):
         folder_name = get_text(
-            self,
-            QCoreApplication.translate("FilesWidget", "Folder name"),
-            QCoreApplication.translate("FilesWidget", "Enter new folder name"),
-            placeholder="Name",
+            self, _("Folder name"), _("Enter new folder name"), placeholder="Name"
         )
         if not folder_name:
             return
@@ -372,13 +357,13 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             return
         menu = QMenu(self.table_files)
         if file_type == FileType.File:
-            action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open"))
+            action = menu.addAction(_("Open"))
         else:
-            action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open in explorer"))
+            action = menu.addAction(_("Open in explorer"))
         action.triggered.connect(self.open_file(name_item.text()))
-        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
+        action = menu.addAction(_("Rename"))
         action.triggered.connect(self.rename(name_item, type_item))
-        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Delete"))
+        action = menu.addAction(_("Delete"))
         action.triggered.connect(self.delete_item(row))
         menu.exec_(global_pos)
 
@@ -387,8 +372,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         def _inner_rename():
             new_name = get_text(
                 self,
-                QCoreApplication.translate("FilesWidget", "New name"),
-                QCoreApplication.translate("FilesWidget", "Enter file new name"),
+                _("New name"),
+                _("Enter file new name"),
                 placeholder="File name",
                 default_text=name_item.text(),
             )
@@ -408,7 +393,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                         os.path.join("/", self.workspace, self.current_directory, new_name),
                     )
             except:
-                show_error(self, QCoreApplication.translate("FilesWidget", "Can not rename."))
+                show_error(self, _("Can not rename."))
 
         return _inner_rename
 

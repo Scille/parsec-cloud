@@ -2,7 +2,7 @@
 
 import pendulum
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
@@ -21,6 +21,7 @@ from parsec.core.local_device import (
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.desktop import get_default_device
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators
 from parsec.core.gui.password_validation import (
     get_password_strength,
@@ -28,27 +29,6 @@ from parsec.core.gui.password_validation import (
     PASSWORD_CSS,
 )
 from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganizationWidget
-
-
-_translate = QCoreApplication.translate
-
-
-STATUS_TO_ERRMSG = {
-    "invalid-url": _translate(
-        "BootstrapOrganizationWidget", "This organization does not exist (is the URL correct ?)."
-    ),
-    "user-exists": _translate("BootstrapOrganizationWidget", "This user already exists."),
-    "password-mismatch": _translate("BootstrapOrganizationWidget", "Passwords don't match."),
-    "password-size": _translate(
-        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
-    ),
-    "bad-url": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-    "bad-device_name": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-    "bad-user_id": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-}
-DEFAULT_ERRMSG = _translate(
-    "BootstrapOrganizationWidget", "Can not bootstrap this organization ({info})."
-)
 
 
 async def _do_bootstrap_organization(
@@ -146,7 +126,20 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job.status != "ok"
         self.button_cancel.hide()
         self.check_infos()
-        errmsg = STATUS_TO_ERRMSG.get(self.bootstrap_job.status, DEFAULT_ERRMSG)
+
+        status = self.bootstrap_job.status
+        if status == "invalid-url":
+            errmsg = _("This organization does not exist (is the URL correct ?).")
+        elif status == "user-exists":
+            errmsg = _("This user already exists.")
+        elif status == "password-mismatch":
+            errmsg = _("Passwords don't match.")
+        elif status == "password-size":
+            errmsg = _("Password must be at least 8 caracters long.")
+        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
+            errmsg = _("URL or device is invalid.")
+        else:
+            errmsg = _("Can not bootstrap this organization ({info}).")
         show_error(self, errmsg.format(**self.bootstrap_job.exc.params))
         self.bootstrap_job = None
 
@@ -204,9 +197,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                QCoreApplication.translate(
-                    "BootstrapOrganizationWidget", "Password strength: {}"
-                ).format(PASSWORD_STRENGTH_TEXTS[score])
+                _("Password strength: {}").format(PASSWORD_STRENGTH_TEXTS[score])
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

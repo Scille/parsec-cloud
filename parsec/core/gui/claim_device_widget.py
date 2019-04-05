@@ -2,7 +2,7 @@
 
 import os
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.types import BackendOrganizationAddr, DeviceID
@@ -20,6 +20,7 @@ from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
     get_password_strength,
@@ -27,19 +28,6 @@ from parsec.core.gui.password_validation import (
     PASSWORD_CSS,
 )
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
-
-_translate = QCoreApplication.translate
-
-
-STATUS_TO_ERRMSG = {
-    "not_found": _translate("ClaimDeviceWidget", "No invitation found for this device."),
-    "password-mismatch": _translate("ClaimDeviceWidget", "Passwords don't match."),
-    "password-size": _translate("ClaimDeviceWidget", "Password must be at least 8 caracters long."),
-    "bad-url": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-    "bad-device_name": _translate("BootstrapOrganizationWidget", "URL or device is invalid."),
-    "bad-user_id": _translate("BootstrapOrganizationWidget", "URL or user is invalid."),
-}
-DEFAULT_ERRMSG = _translate("ClaimDeviceWidget", "Can not claim this device ({info}).")
 
 
 async def _do_claim_device(
@@ -112,11 +100,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
         self.claim_dialog = ClaimDialog(parent=self)
-        self.claim_dialog.setText(
-            QCoreApplication.translate(
-                "ClaimDeviceWidget", "Please wait while the device is registered."
-            )
-        )
+        self.claim_dialog.setText(_("Please wait while the device is registered."))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
 
@@ -126,7 +110,17 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
         self.check_infos()
-        errmsg = STATUS_TO_ERRMSG.get(self.claim_device_job.status, DEFAULT_ERRMSG)
+        status = self.claim_device_job.status
+        if status == "not_found":
+            errmsg = _("No invitation found for this device.")
+        elif status == "password-mismatch":
+            errmsg = _("Passwords don't match.")
+        elif status == "password-size":
+            errmsg = _("Password must be at least 8 caracters long.")
+        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
+            errmsg = (_("URL or device is invalid."),)
+        else:
+            errmsg = _("Can not claim this device ({info}).")
         show_error(self, errmsg.format(**self.claim_device_job.exc.params))
         self.claim_device_job = None
 
@@ -135,12 +129,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         assert self.claim_device_job.status == "ok"
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
-        show_info(
-            self,
-            QCoreApplication.translate(
-                "ClaimDeviceWidget", "The device has been registered. You can now login."
-            ),
-        )
+        show_info(self, _("The device has been registered. You can now login."))
         self.claim_device_job = None
         self.device_claimed.emit()
 
@@ -157,9 +146,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                QCoreApplication.translate("ClaimDeviceWidget", "Password strength: {}").format(
-                    PASSWORD_STRENGTH_TEXTS[score]
-                )
+                _("Password strength: {}").format(PASSWORD_STRENGTH_TEXTS[score])
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

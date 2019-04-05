@@ -4,13 +4,14 @@ import os
 from uuid import UUID
 import pathlib
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 
 from parsec.core.types import FsPath
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import show_error, show_warning, get_text, TaskbarButton
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -76,7 +77,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         except MountpointAlreadyMounted:
             pass
         except Exception:
-            show_error(self, QCoreApplication.translate("MountWidget", "Can not acces this file."))
+            show_error(self, _("Can not acces this file."))
             return
         path = FsPath("/") / workspace_name / file_name
         desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
@@ -85,15 +86,12 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         return self.taskbar_buttons
 
     def delete_workspace(self, workspace_button):
-        show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))
+        show_warning(self, _("Not yet implemented."))
 
     def rename_workspace(self, workspace_button):
         current_file_path = os.path.join("/", workspace_button.name)
         new_name = get_text(
-            self,
-            QCoreApplication.translate("WorkspacesWidget", "New name"),
-            QCoreApplication.translate("WorkspacesWidget", "Enter workspace new name"),
-            placeholder=QCoreApplication.translate("WorkspacesWidget", "Workspace name"),
+            self, _("New name"), _("Enter workspace new name"), placeholder=_("Workspace name")
         )
         if not new_name:
             return
@@ -103,17 +101,9 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
             )
             workspace_button.name = new_name
         except FileExistsError:
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "WorkspacesWidget", "A workspace with the same name already exists."
-                ),
-            )
+            show_warning(self, _("A workspace with the same name already exists."))
         except:
-            show_error(
-                self,
-                QCoreApplication.translate("WorkspacesWidget", "Can not rename the workspace."),
-            )
+            show_error(self, _("Can not rename the workspace."))
         else:
             self.portal.run(self.core.mountpoint_manager.unmount_workspace, current_file_path[1:])
             self.portal.run(self.core.mountpoint_manager.mount_workspace, new_name)
@@ -124,22 +114,14 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
 
     def create_workspace_clicked(self):
         workspace_name = get_text(
-            self,
-            QCoreApplication.translate("WorkspacesWidget", "New workspace"),
-            QCoreApplication.translate("WorkspacesWidget", "Enter new workspace name"),
-            QCoreApplication.translate("WorkspacesWidget", "Workspace name"),
+            self, _("New workspace"), _("Enter new workspace name"), _("Workspace name")
         )
         if not workspace_name:
             return
         try:
             self.portal.run(self.core.fs.workspace_create, os.path.join("/", workspace_name))
         except FileExistsError:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "WorkspacesWidget", "A workspace with the same name already exists."
-                ),
-            )
+            show_error(self, _("A workspace with the same name already exists."))
             return
 
     def reset(self):
