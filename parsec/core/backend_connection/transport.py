@@ -30,11 +30,10 @@ from parsec.core.backend_connection.exceptions import (
 
 
 __all__ = (
-    "authenticated_transport_factory",
     "anonymous_transport_factory",
     "administration_transport_factory",
-    "transport_pool_factory",
-    "TransportPool",
+    "authenticated_transport_pool_factory",
+    "AuthenticatedTransportPool",
 )
 
 
@@ -146,26 +145,6 @@ async def _do_handshade(transport: Transport, ch):
 
 
 @asynccontextmanager
-async def authenticated_transport_factory(
-    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
-) -> Transport:
-    """
-    Raises:
-        BackendConnectionError
-        BackendNotAvailable
-        BackendHandshakeError
-        BackendDeviceRevokedError
-    """
-    transport = await _connect(addr, device_id, signing_key)
-    transport.logger = transport.logger.bind(device_id=device_id)
-    try:
-        yield transport
-
-    finally:
-        await transport.aclose()
-
-
-@asynccontextmanager
 async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transport:
     """
     Raises:
@@ -201,14 +180,15 @@ async def administration_transport_factory(addr: BackendAddr, token: str) -> Tra
         await transport.aclose()
 
 
-class TransportPool:
-    def __init__(self, addr, device_id, signing_key, max):
+class AuthenticatedTransportPool:
+    def __init__(self, addr, device_id, signing_key, max_pool, keepalive_time):
         self.addr = addr
         self.device_id = device_id
         self.signing_key = signing_key
+        self.keepalive_time = keepalive_time
         self.transports = []
         self._closed = False
-        self._lock = trio.Semaphore(max)
+        self._lock = trio.Semaphore(max_pool)
 
     @asynccontextmanager
     async def acquire(self, force_fresh=False):
@@ -224,7 +204,8 @@ class TransportPool:
             transport = None
             if not force_fresh:
                 try:
-                    transport = self.transports.pop()
+                    # Fifo style to retreive oldest first
+                    transport = self.transports.pop(0)
                 except IndexError:
                     pass
 
@@ -233,6 +214,7 @@ class TransportPool:
                     raise trio.ClosedResourceError()
 
                 transport = await _connect(self.addr, self.device_id, self.signing_key)
+                transport.keepalive_time = self.keepalive_time
                 transport.logger = transport.logger.bind(device_id=self.device_id)
 
             try:
@@ -250,13 +232,17 @@ class TransportPool:
 
 
 @asynccontextmanager
-async def transport_pool_factory(
-    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max: int = 4
-) -> TransportPool:
+async def authenticated_transport_pool_factory(
+    addr: BackendOrganizationAddr,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    max_pool: int = 4,
+    keepalive_time: int = 30,
+) -> AuthenticatedTransportPool:
     """
     Raises: nothing !
     """
-    pool = TransportPool(addr, device_id, signing_key, max)
+    pool = AuthenticatedTransportPool(addr, device_id, signing_key, max_pool, keepalive_time)
     try:
         yield pool
 
