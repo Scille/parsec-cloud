@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Tuple
 from itertools import count
 from collections import defaultdict
 
@@ -175,7 +176,7 @@ class LocalStorage:
         self.file_references[cursor.access].add(fd)
         return fd
 
-    def load_file_descriptor(self, fd: FileDescriptor) -> (FileCursor, LocalFileManifest):
+    def load_file_descriptor(self, fd: FileDescriptor) -> Tuple[FileCursor, LocalFileManifest]:
         self.assert_consistent_file_descriptor(fd)
         try:
             cursor = self.open_cursors[fd]
