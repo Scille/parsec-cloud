@@ -7,1159 +7,872 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-04-04 15:25+0200\n"
+"POT-Creation-Date: 2019-04-05 13:30+0200\n"
 "PO-Revision-Date: 2019-04-04 15:32+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-"X-Generator: Poedit 2.2.1\n"
 
-#: parsec/core/gui/files_widget.py:246
 msgid "Select files to import"
 msgstr "Sélectionnez les fichiers à importer"
 
-#: parsec/core/gui/files_widget.py:258
 msgid "Select a directory to import"
 msgstr "Sélectionnez un répertoire à importer"
 
-#: parsec/core/gui/files_widget.py:291
 msgid "A folder with the same name already exists."
 msgstr "Un répertoire du même nom existe déjà."
 
-#: parsec/core/gui/devices_widget.py:107 parsec/core/gui/files_widget.py:305
-#: parsec/core/gui/main_window.py:241 parsec/core/gui/users_widget.py:123
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: parsec/core/gui/files_widget.py:306
 msgid "Are you sure you want to delete \"{}\" ?"
 msgstr "Êtes-vous sûr de vouloir supprimer \"{}\" ?"
 
-#: parsec/core/gui/files_widget.py:320
 msgid "Can not delete \"{}\""
 msgstr "Impossible de supprimer \"{}\""
 
-#: parsec/core/gui/files_widget.py:340
 msgid "Folder name"
 msgstr "Nom du répertoire"
 
-#: parsec/core/gui/files_widget.py:341
 msgid "Enter new folder name"
 msgstr "Entrez un nouveau nom de répertoire"
 
-#: parsec/core/gui/files_widget.py:374
 msgid "Open"
 msgstr "Ouvrir"
 
-#: parsec/core/gui/files_widget.py:376
 msgid "Open in explorer"
 msgstr "Ouvrir dans l'explorateur"
 
-#: parsec/core/gui/files_widget.py:378
 msgid "Rename"
 msgstr "Renommer"
 
-#: parsec/core/gui/files_widget.py:380
 msgid "Delete"
 msgstr "Supprimer"
 
-#: parsec/core/gui/files_widget.py:389 parsec/core/gui/workspaces_widget.py:95
 msgid "New name"
 msgstr "Nouveau nom"
 
-#: parsec/core/gui/files_widget.py:390
 msgid "Enter file new name"
 msgstr "Entrez un nouveau nom de fichier"
 
-#: parsec/core/gui/files_widget.py:410
 msgid "Can not rename."
 msgstr "Impossible de renommer."
 
-#: parsec/core/gui/replace_dialog.py:15
 msgid ""
 "The file \"{}\" already exists.\n"
 "Do you want to replace it ?"
 msgstr "Le fichier \"{}\" existe déjà. Voulez-vous le remplacer ?"
 
-#: parsec/core/gui/password_validation.py:9
 msgid "Too short"
 msgstr "Trop court"
 
-#: parsec/core/gui/password_validation.py:10
 msgid "Very weak"
 msgstr "Très faible"
 
-#: parsec/core/gui/password_validation.py:11
 msgid "Weak"
 msgstr "Faible"
 
-#: parsec/core/gui/password_validation.py:12
 msgid "Average"
 msgstr "Moyen"
 
-#: parsec/core/gui/password_validation.py:13
 msgid "Good"
 msgstr "Bon"
 
-#: parsec/core/gui/password_validation.py:14
 msgid "Strong"
 msgstr "Excellent"
 
-#: parsec/core/gui/workspace_button.py:78
 msgid " (shared)"
 msgstr " (partagé)"
 
-#: parsec/core/gui/workspace_button.py:80
 msgid " (shared by {})"
 msgstr " (partagé par {})"
 
-#: parsec/core/gui/register_device_dialog.py:78
-#: parsec/core/gui/register_user_dialog.py:79
 msgid "Unknown error."
 msgstr "Erreur inconnue."
 
-#: parsec/core/gui/register_device_dialog.py:82
 msgid "This device already exists."
 msgstr "Cet appareil existe déjà."
 
-#: parsec/core/gui/register_device_dialog.py:87
 msgid "Device took too much time to register."
 msgstr "L'appareil a été trop long à s'enregistrer."
 
-#: parsec/core/gui/register_device_dialog.py:93
 msgid "Can not register this device ({})."
 msgstr "Impossible d'enregistrer cet appareil ({})."
 
-#: parsec/core/gui/register_device_dialog.py:102
 msgid "Device has been registered. You may now close this window."
 msgstr "L'appareil a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
 
-#: parsec/core/gui/register_device_dialog.py:132
 msgid ""
-"Can not close this window while waiting for the new device to register. Please "
-"cancel first."
+"Can not close this window while waiting for the new device to register. "
+"Please cancel first."
 msgstr ""
 "Cette fenêtre ne peut pas être fermée tant que l'appareil n'a pas été "
 "enregistré. Veuillez annuler d'abord."
 
-#: parsec/core/gui/register_device_dialog.py:155
 msgid "Please enter a device name."
 msgstr "Entrez un nom d'appareil."
 
-#: parsec/core/gui/register_device_dialog.py:181
 msgid "Could not register the device."
 msgstr "Impossible d'enregistrer l'appareil."
 
-#: parsec/core/gui/claim_user_widget.py:34
-msgid "No invitation found for this user."
-msgstr "Aucune invitation trouvée pour cet utilisateur."
-
-#: parsec/core/gui/bootstrap_organization_widget.py:39
-#: parsec/core/gui/claim_device_widget.py:35
-#: parsec/core/gui/claim_user_widget.py:35
-msgid "Passwords don't match."
-msgstr "Les mots de passe ne correspondent pas."
-
-#: parsec/core/gui/bootstrap_organization_widget.py:40
-#: parsec/core/gui/claim_device_widget.py:36
-#: parsec/core/gui/claim_user_widget.py:36
-msgid "Password must be at least 8 caracters long."
-msgstr "Un mot de passe doit faire au moins 8 caractères de long."
-
-#: parsec/core/gui/bootstrap_organization_widget.py:43
-#: parsec/core/gui/bootstrap_organization_widget.py:44
-#: parsec/core/gui/bootstrap_organization_widget.py:45
-#: parsec/core/gui/claim_device_widget.py:37
-#: parsec/core/gui/claim_device_widget.py:38
-#: parsec/core/gui/claim_user_widget.py:37 parsec/core/gui/claim_user_widget.py:38
-#: parsec/core/gui/claim_user_widget.py:39
-msgid "URL or device is invalid."
-msgstr "L'URL ou l'appareil sont invalides."
-
-#: parsec/core/gui/claim_user_widget.py:41
-msgid "Can not claim this user ({info})."
-msgstr "Impossible d'enregistrer cet utilisateur ({info})."
-
-#: parsec/core/gui/claim_user_widget.py:115
 msgid "Please wait while the user is registered."
 msgstr "Veuillez patienter pendant que l'utilisateur est enregistré."
 
-#: parsec/core/gui/bootstrap_organization_widget.py:205
-#: parsec/core/gui/claim_device_widget.py:157
-#: parsec/core/gui/claim_user_widget.py:155
+msgid "No invitation found for this user."
+msgstr "Aucune invitation trouvée pour cet utilisateur."
+
+msgid "Passwords don't match."
+msgstr "Les mots de passe ne correspondent pas."
+
+msgid "Password must be at least 8 caracters long."
+msgstr "Un mot de passe doit faire au moins 8 caractères de long."
+
+msgid "URL or device is invalid."
+msgstr "L'URL ou l'appareil sont invalides."
+
+msgid "Can not claim this user ({info})."
+msgstr "Impossible d'enregistrer cet utilisateur ({info})."
+
 msgid "Password strength: {}"
 msgstr "Force du mot de passe: {}"
 
-#: parsec/core/gui/devices_widget.py:59 parsec/core/gui/users_widget.py:59
 msgid "Show info"
 msgstr "Informations"
 
-#: parsec/core/gui/devices_widget.py:62 parsec/core/gui/users_widget.py:62
 msgid "Revoke"
 msgstr "Révoquer"
 
-#: parsec/core/gui/devices_widget.py:70 parsec/core/gui/main_window.py:176
-#: parsec/core/gui/main_window.py:208
 msgid "This device has been revoked."
 msgstr "Cet appareil a été révoqué."
 
-#: parsec/core/gui/devices_widget.py:108
 msgid "Are you sure you want to revoke device \"{}\" ?"
 msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
 
-#: parsec/core/gui/devices_widget.py:125
 msgid "Device \"{}\" has been revoked."
 msgstr "L'appareil \"{}\" a été révoqué."
 
-#: parsec/core/gui/devices_widget.py:133
 msgid "Device \"{}\" has already been revoked."
 msgstr "L'appareil \"{}\" a déjà été révoqué."
 
-#: parsec/core/gui/devices_widget.py:139
 msgid "Device \"{}\" not found."
 msgstr "L'appareil \"{}\" n'a pas été trouvé."
 
-#: parsec/core/gui/devices_widget.py:146
 msgid "You don't have the permission to revoke this device."
 msgstr "Vous n'avez pas l'autorisation de révoquer cet appareil."
 
-#: parsec/core/gui/devices_widget.py:151
 msgid "Can not revoke this device."
 msgstr "Impossible de révoquer cet appareil."
 
-#: parsec/core/gui/workspaces_widget.py:80
 msgid "Can not acces this file."
 msgstr "Impossible d'accéder à ce fichier."
 
-#: parsec/core/gui/workspaces_widget.py:89
 msgid "Not yet implemented."
 msgstr "Non implémenté."
 
-#: parsec/core/gui/workspaces_widget.py:96
 msgid "Enter workspace new name"
 msgstr "Entrez le nouveau nom de l'espace de travail"
 
-#: parsec/core/gui/workspaces_widget.py:97 parsec/core/gui/workspaces_widget.py:130
 msgid "Workspace name"
 msgstr "Nom de l'espace de travail"
 
-#: parsec/core/gui/workspaces_widget.py:109
-#: parsec/core/gui/workspaces_widget.py:139
 msgid "A workspace with the same name already exists."
 msgstr "Un espace de travail du même nom existe déjà."
 
-#: parsec/core/gui/workspaces_widget.py:115
 msgid "Can not rename the workspace."
 msgstr "Impossible de renommer cet espace de travail."
 
-#: parsec/core/gui/workspaces_widget.py:128
 msgid "New workspace"
 msgstr "Nouvel espace de travail"
 
-#: parsec/core/gui/workspaces_widget.py:129
 msgid "Enter new workspace name"
 msgstr "Entrez le nom du nouvel espace de travail"
 
-#: parsec/core/gui/users_widget.py:68
 msgid "Created on {}"
 msgstr "Crée le {}"
 
-#: parsec/core/gui/users_widget.py:73
 msgid "This user has been revoked."
 msgstr "Cet utilisateur a été révoqué."
 
-#: parsec/core/gui/users_widget.py:124
 msgid "Are you sure you want to revoke user \"{}\" ?"
 msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
 
-#: parsec/core/gui/users_widget.py:145
 msgid "User \"{}\" has been revoked."
 msgstr "L'utilisateur \"{}\" a été révoqué."
 
-#: parsec/core/gui/users_widget.py:153
 msgid "User \"{}\" has already been revoked."
 msgstr "L'utilisateur \"{}\" a déjà été révoqué."
 
-#: parsec/core/gui/users_widget.py:159
 msgid "User \"{}\" not found."
 msgstr "L'utilisateur \"{}\" n'a pas été trouvé."
 
-#: parsec/core/gui/users_widget.py:166
 msgid "You don't have the permission to revoke this user."
 msgstr "Vous n'avez pas l'autorisation de révoquer cet utilisateur."
 
-#: parsec/core/gui/users_widget.py:170
 msgid "Can not revoke this user."
 msgstr "Impossible de révoquer cet utilisateur."
 
-#: parsec/core/gui/file_size.py:117
 msgid " TB"
 msgstr " To"
 
-#: parsec/core/gui/file_size.py:118
 msgid " GB"
 msgstr " Go"
 
-#: parsec/core/gui/file_size.py:119
 msgid " MB"
 msgstr " Mo"
 
-#: parsec/core/gui/file_size.py:120
 msgid " KB"
 msgstr " Ko"
 
-#: parsec/core/gui/file_size.py:121
 msgid " B"
 msgstr " o"
 
-#: parsec/core/gui/starting_guide_dialog.py:18
 msgid "Welcome!"
 msgstr "Bienvenue!"
 
-#: parsec/core/gui/starting_guide_dialog.py:19
 msgid ""
-"Parsec allows you to store data in the cloud with a very high security level.\n"
+"Parsec allows you to store data in the cloud with a very high security "
+"level.\n"
 "Find out more by letting us guide you step by step!"
 msgstr ""
-"Parsec permet de stocker vos fichiers dans le Cloud avec un très haut niveau de "
-"sécurité.\n"
+"Parsec permet de stocker vos fichiers dans le Cloud avec un très haut "
+"niveau de sécurité.\n"
 "Découvrez Parsec en vous laissant guider pas à pas !"
 
-#: parsec/core/gui/starting_guide_dialog.py:23
 msgid ":/screenshots/images/screenshots/cloud-computing.png"
 msgstr ":/screenshots/images/screenshots/cloud-computing.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:28
 msgid "Workspaces"
 msgstr "Espaces de travail"
 
-#: parsec/core/gui/starting_guide_dialog.py:29
 msgid ""
-"Arrange all your files by workspaces, a clear interface for an easy to use and "
-"simple process."
+"Arrange all your files by workspaces, a clear interface for an easy to "
+"use and simple process."
 msgstr ""
-"Organisez tous vos fichiers par espace de travail, une interface claire pour une "
-"utilisation simple et efficace."
+"Organisez tous vos fichiers par espace de travail, une interface claire "
+"pour une utilisation simple et efficace."
 
-#: parsec/core/gui/starting_guide_dialog.py:32
 msgid ":/screenshots/images/screenshots/workspaces.png"
 msgstr ":/screenshots/images/screenshots/workspaces.png"
 
-#: parsec/core/gui/central_widget.py:210
-#: parsec/core/gui/starting_guide_dialog.py:37
 msgid "Documents"
 msgstr "Documents"
 
-#: parsec/core/gui/starting_guide_dialog.py:38
 msgid ""
-"In your workspaces, see and manage all your files, just as with a regular file "
-"explorer. A lightweight display to increase your productivity!"
+"In your workspaces, see and manage all your files, just as with a regular"
+" file explorer. A lightweight display to increase your productivity!"
 msgstr ""
-"Dans votre espace de travail, tous vos fichiers sont présents, comme si vous "
-"étiez dans votre explorateur de fichiers. Un affichage léger pour plus de "
-"productivité !"
+"Dans votre espace de travail, tous vos fichiers sont présents, comme si "
+"vous étiez dans votre explorateur de fichiers. Un affichage léger pour "
+"plus de productivité !"
 
-#: parsec/core/gui/starting_guide_dialog.py:41
 msgid ":/screenshots/images/screenshots/documents.png"
 msgstr ":/screenshots/images/screenshots/documents.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:46
 msgid "Sharing"
 msgstr "Partage"
 
-#: parsec/core/gui/starting_guide_dialog.py:47
 msgid ""
-"Share your workspaces with a few clicks. See who can access it, and what others "
-"share with you.\n"
+"Share your workspaces with a few clicks. See who can access it, and what "
+"others share with you.\n"
 "Everything shared with you automatically appears."
 msgstr ""
-"Partagez vos espaces de travail en quelques clics. Voyez rapidement qui peut y "
-"accéder.\n"
+"Partagez vos espaces de travail en quelques clics. Voyez rapidement qui "
+"peut y accéder.\n"
 "Ce qu'on vous partage s'affiche automatiquement dans votre interface."
 
-#: parsec/core/gui/starting_guide_dialog.py:50
 msgid ":/screenshots/images/screenshots/page4.png"
 msgstr ":/screenshots/images/screenshots/page4.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:55
 msgid "Manage your devices"
 msgstr "Gestion de périphériques"
 
-#: parsec/core/gui/starting_guide_dialog.py:56
 msgid ""
-"See and manage thee devices you trust. Those are the key to the guaranted "
-"security of your files."
+"See and manage thee devices you trust. Those are the key to the guaranted"
+" security of your files."
 msgstr ""
-"Visualisez et gérez aisément vos différents périphériques de confiance, qui sont "
-"la clé de la sécurisation assurée de vos fichiers."
+"Visualisez et gérez aisément vos différents périphériques de confiance, "
+"qui sont la clé de la sécurisation assurée de vos fichiers."
 
-#: parsec/core/gui/starting_guide_dialog.py:59
 msgid ":/screenshots/images/screenshots/devices.png"
 msgstr ":/screenshots/images/screenshots/devices.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:64
 msgid "Manage the users"
 msgstr "Gestion des utilisateurs"
 
-#: parsec/core/gui/starting_guide_dialog.py:65
 msgid ""
-"And for the administrators ? You can manage all users and their privileges, add "
-"users, or revoke them."
+"And for the administrators ? You can manage all users and their "
+"privileges, add users, or revoke them."
 msgstr ""
-"Et pour les administrateurs ? Vous pouvez gérer la totalité des utilisateurs et "
-"leurs droits, en ajouter, en révoquer, ..."
+"Et pour les administrateurs ? Vous pouvez gérer la totalité des "
+"utilisateurs et leurs droits, en ajouter, en révoquer, ..."
 
-#: parsec/core/gui/starting_guide_dialog.py:68
 msgid ":/screenshots/images/screenshots/users.png"
 msgstr ":/screenshots/images/screenshots/users.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:73
 msgid "Even offline"
 msgstr "Même hors-ligne"
 
-#: parsec/core/gui/starting_guide_dialog.py:74
 msgid ""
-"No network ? Not a problem. You can access all your files. Modifications will be "
-"saved locally until your device comes online again."
+"No network ? Not a problem. You can access all your files. Modifications "
+"will be saved locally until your device comes online again."
 msgstr ""
-"Un soucis de réseau ? Aucun problème ! Vous avez accès à tous vos fichiers. Vos "
-"modifications sont sauvegardées localement, tout se synchronisera au retour du "
-"réseau !"
+"Un soucis de réseau ? Aucun problème ! Vous avez accès à tous vos "
+"fichiers. Vos modifications sont sauvegardées localement, tout se "
+"synchronisera au retour du réseau !"
 
-#: parsec/core/gui/starting_guide_dialog.py:77
 msgid ":/screenshots/images/screenshots/offline_en.png"
 msgstr ":/screenshots/images/screenshots/offline_fr.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:82
 msgid "Now it's your turn !"
 msgstr "À vous de jouer !"
 
-#: parsec/core/gui/starting_guide_dialog.py:83
 msgid ""
 "Create your first workspace, import your files, share your documents.\n"
 "Security waits for no one!"
 msgstr ""
-"Créez votre premier espace de travail, importez vos fichiers, partagez vos "
-"documents, ...\n"
+"Créez votre premier espace de travail, importez vos fichiers, partagez "
+"vos documents, ...\n"
 "Vous n'avez plus qu'à vous lancer, car la sécurité n'attend pas !"
 
-#: parsec/core/gui/starting_guide_dialog.py:86
 msgid ":/screenshots/images/screenshots/your_turn.png"
 msgstr ":/screenshots/images/screenshots/your_turn.png"
 
-#: parsec/core/gui/starting_guide_dialog.py:133
 msgid "End"
 msgstr "Terminer"
 
-#: parsec/core/gui/starting_guide_dialog.py:138
-#: parsec/core/gui/starting_guide_dialog.py:158
 msgid "Continue"
 msgstr "Continuer"
 
-#: parsec/core/gui/starting_guide_dialog.py:153 parsec/core/gui/tr/parsec_en.ts:438
 msgid "Start"
 msgstr "Commencer"
 
-#: parsec/core/gui/file_table.py:89
 msgid "Parent Folder"
 msgstr "Répertoire parent"
 
-#: parsec/core/gui/file_table.py:107
 msgid "Parent Workspace"
 msgstr "Espace de travail parent"
 
-#: parsec/core/gui/bootstrap_organization_widget.py:35
 msgid "This organization does not exist (is the URL correct ?)."
 msgstr "Cette organisation n'existe pas (l'URL est-elle correcte ?)"
 
-#: parsec/core/gui/bootstrap_organization_widget.py:38
 msgid "This user already exists."
 msgstr "Cet utilisateur existe déjà."
 
-#: parsec/core/gui/bootstrap_organization_widget.py:47
 msgid "Can not bootstrap this organization ({info})."
 msgstr "Impossible de démarrer l'organisation ({info})."
 
-#: parsec/core/gui/systray.py:18
 msgid "Show window"
 msgstr "Afficher la fenêtre"
 
-#: parsec/core/gui/systray.py:20
 msgid "Exit"
 msgstr "Quitter"
 
-#: parsec/core/gui/login_widget.py:110
-msgid "The organization and the user have been created. You will now be logged in."
+msgid ""
+"The organization and the user have been created. You will now be logged "
+"in."
 msgstr ""
-"L'organisation et l'utilisateur ont été crées. Vous allez maintenant être "
-"connecté."
+"L'organisation et l'utilisateur ont été crées. Vous allez maintenant être"
+" connecté."
 
-#: parsec/core/gui/login_widget.py:118
 msgid "The organization and the user have been created. You can now log in."
 msgstr ""
-"L'organisation et l'utilisateur ont été crées. Vous pouvez maintenant vous "
-"connecter."
+"L'organisation et l'utilisateur ont été crées. Vous pouvez maintenant "
+"vous connecter."
 
-#: parsec/core/gui/login_widget.py:129
 msgid "The user has been created. You will now be logged in."
 msgstr "L'utilisateur a été crée. Vous allez maintenant être connecté."
 
-#: parsec/core/gui/login_widget.py:136
 msgid "The user has been created. You can now log in."
 msgstr "L'utilisateur a été crée. Vous pouvez maintenant vous connecter."
 
-#: parsec/core/gui/claim_device_widget.py:34
-msgid "No invitation found for this device."
-msgstr "Aucune invitation trouvée pour cet utilisateur."
-
-#: parsec/core/gui/claim_device_widget.py:39
-msgid "URL or user is invalid."
-msgstr "L'URL ou l'utilisateur sont invalides."
-
-#: parsec/core/gui/claim_device_widget.py:41
-msgid "Can not claim this device ({info})."
-msgstr "Impossible d'enregistrer cet appareil ({info})."
-
-#: parsec/core/gui/claim_device_widget.py:115
 msgid "Please wait while the device is registered."
 msgstr "Veuillez patienter pendant l'enregistrer de l'appareil."
 
-#: parsec/core/gui/claim_device_widget.py:138
+msgid "No invitation found for this device."
+msgstr "Aucune invitation trouvée pour cet utilisateur."
+
+msgid "Can not claim this device ({info})."
+msgstr "Impossible d'enregistrer cet appareil ({info})."
+
 msgid "The device has been registered. You can now login."
 msgstr "L'appareil a été enregistré. Vous pouvez maintenant vous connecter."
 
-#: parsec/core/gui/settings_widget.py:22
 msgid "Global"
 msgstr "Globale"
 
-#: parsec/core/gui/settings_widget.py:28
 msgid "Network"
 msgstr "Réseau"
 
-#: parsec/core/gui/settings_widget.py:38
 msgid "Modification will take effect the next time you start the application."
 msgstr ""
-"Les modifications seront prises en compte au prochain lancement de l'application."
+"Les modifications seront prises en compte au prochain lancement de "
+"l'application."
 
-#: parsec/core/gui/central_widget.py:124
 msgid "Disconnected from the backend."
 msgstr "Déconnecté du serveur."
 
-#: parsec/core/gui/central_widget.py:128
 msgid "Connected to the backend."
 msgstr "Connecté au serveur."
 
-#: parsec/core/gui/central_widget.py:133
 msgid "Mountpoint has been unmounted."
 msgstr "Le point de montage a été perdu."
 
-#: parsec/core/gui/central_widget.py:138
 msgid "Workspace '{}' shared with you"
 msgstr "Espace de travail '{}' partagé avec vous"
 
-#: parsec/core/gui/central_widget.py:144
 msgid "Conflict while syncing file '{}'."
 msgstr "Conflit lors de la synchronisation de '{}'."
 
-#: parsec/core/gui/central_widget.py:164
 msgid "Connected"
 msgstr "Connecté"
 
-#: parsec/core/gui/central_widget.py:171 parsec/core/gui/tr/parsec_en.ts:442
 msgid "Disconnected"
 msgstr "Déconnecté"
 
-#: parsec/core/gui/central_widget.py:218
 msgid "Users"
 msgstr "Utilisateurs"
 
-#: parsec/core/gui/central_widget.py:226
 msgid "Devices"
 msgstr "Appareils"
 
-#: parsec/core/gui/central_widget.py:234 parsec/core/gui/tr/parsec_en.ts:14
-#: parsec/core/gui/tr/parsec_en.ts:388
 msgid "Settings"
 msgstr "Configuration"
 
-#: parsec/core/gui/loading_dialog.py:36
 msgid "Cancelling..."
 msgstr "Annulation..."
 
-#: parsec/core/gui/register_user_dialog.py:83
 msgid "Only admins can invite a new user."
 msgstr "Seuls les administrateurs peuvent inviter un nouvel utilisateur."
 
-#: parsec/core/gui/register_user_dialog.py:89
 msgid "User took too much time to register."
 msgstr "L'utilisateur a été trop long à s'enregistrer."
 
-#: parsec/core/gui/register_user_dialog.py:95
 msgid "Unhandled response {}"
 msgstr "Réponse non gérée {}"
 
-#: parsec/core/gui/register_user_dialog.py:106
 msgid "User has been registered. You may now close this window."
 msgstr ""
-"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
+"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette "
+"fenêtre."
 
-#: parsec/core/gui/register_user_dialog.py:138
 msgid ""
-"Can not close this window while waiting for the new user to register. Please "
-"cancel first."
+"Can not close this window while waiting for the new user to register. "
+"Please cancel first."
 msgstr ""
 "Cette fenêtre ne peut pas être fermée tant que l'utilisateur n'a pas été "
 "enregistré. Veuillez annuler d'abord."
 
-#: parsec/core/gui/register_user_dialog.py:161
 msgid "Please enter a username."
 msgstr "Entrez un nom d'utilisateur."
 
-#: parsec/core/gui/register_user_dialog.py:169
 msgid "A user with the same name already exists."
 msgstr "Un utilisateur du même nom existe déjà."
 
-#: parsec/core/gui/register_user_dialog.py:200
 msgid "Could not register the user."
 msgstr "Impossible d'enregistrer l'utilisateur."
 
-#: parsec/core/gui/workspace_sharing_dialog.py:114
 msgid "You can not share a workspace with yourself."
 msgstr "Vous ne pouvez pas partager un espace de travail avec vous-même."
 
-#: parsec/core/gui/workspace_sharing_dialog.py:123
 msgid "This workspace is already shared with \"{}\"."
 msgstr "Cet espace de travail est déjà partagé avec \"{}\"."
 
-#: parsec/core/gui/workspace_sharing_dialog.py:151
 msgid "Can not share the workspace \"{}\" with this user."
 msgstr "Impossible de partager l'espace de travail \"{}\" avec cet utilisateur."
 
-#: parsec/core/gui/workspace_sharing_dialog.py:160
 msgid "Can not share the workspace \"{}\" with \"{}\"."
 msgstr "Impossible de partager l'espace de travail \"{}\" avec \"{}\"."
 
-#: parsec/core/gui/workspace_sharing_dialog.py:212
 msgid "Permissions could not be updated for the following users: {}"
 msgstr ""
-"Les permissions n'ont pas pu être mises à jour pour les utilisateurs suivants : "
-"{}"
+"Les permissions n'ont pas pu être mises à jour pour les utilisateurs "
+"suivants : {}"
 
-#: parsec/core/gui/workspace_sharing_dialog.py:219
 msgid "Permissions have been updated."
 msgstr "Les permissions ont été mises à jour."
 
-#: parsec/core/gui/workspace_sharing_dialog.py:235
 msgid "Are you sure?"
 msgstr "Êtes-vous sûr ?"
 
-#: parsec/core/gui/workspace_sharing_dialog.py:236
 msgid ""
-"You have made some modifications, but have not applied them by clicking \"Apply"
-"\". Are you sure you want to close this window and discard these modifications?"
+"You have made some modifications, but have not applied them by clicking "
+"\"Apply\". Are you sure you want to close this window and discard these "
+"modifications?"
 msgstr ""
-"Vous avez effectué des modifications mais ne les avez pas appliqué en cliquant "
-"sur \"Appliquer\". Êtes-vous sûr de vouloir fermer cette fenêtre et annuler les "
-"modifications ?"
+"Vous avez effectué des modifications mais ne les avez pas appliqué en "
+"cliquant sur \"Appliquer\". Êtes-vous sûr de vouloir fermer cette fenêtre"
+" et annuler les modifications ?"
 
-#: parsec/core/gui/custom_widgets.py:72 parsec/core/gui/tr/parsec_en.ts:172
-#: parsec/core/gui/tr/parsec_en.ts:180 parsec/core/gui/tr/parsec_en.ts:190
-#: parsec/core/gui/tr/parsec_en.ts:215
 msgid "User name"
 msgstr "Nom d'utilisateur"
 
-#: parsec/core/gui/custom_widgets.py:144
 msgid "Information"
 msgstr "Informations"
 
-#: parsec/core/gui/custom_widgets.py:154
 msgid "Warning"
 msgstr "Alerte"
 
-#: parsec/core/gui/custom_widgets.py:164
 msgid "Error"
 msgstr "Erreur"
 
-#: parsec/core/gui/main_window.py:77
 msgid ""
-"Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data "
-"on the cloud"
+"Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive"
+" data on the cloud"
 msgstr ""
-"Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de "
-"données sensibles sur le cloud"
+"Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage "
+"de données sensibles sur le cloud"
 
-#: parsec/core/gui/main_window.py:100 parsec/core/gui/tr/parsec_en.ts:516
 msgid "Error reporting"
 msgstr "Rapport d'erreur"
 
-#: parsec/core/gui/main_window.py:101
 msgid ""
-"Do you authorize Parsec to send data when it encounters an error to help us "
-"improve your experience ?"
+"Do you authorize Parsec to send data when it encounters an error to help "
+"us improve your experience ?"
 msgstr ""
-"Autorisez-vous Parsec à envoyer des données en cas d'erreur pour nous permettre "
-"d'améliorer votre expérience ?"
+"Autorisez-vous Parsec à envoyer des données en cas d'erreur pour nous "
+"permettre d'améliorer votre expérience ?"
 
-#: parsec/core/gui/main_window.py:172 parsec/core/gui/main_window.py:204
 msgid "Authentication failed."
 msgstr "L'authentification a échoué."
 
-#: parsec/core/gui/main_window.py:182 parsec/core/gui/main_window.py:214
 msgid "User not registered in the backend."
 msgstr "L'utilisateur n'est pas enregistré sur le serveur."
 
-#: parsec/core/gui/main_window.py:186 parsec/core/gui/main_window.py:218
 msgid "Mountpoint already in use."
 msgstr "Le point de montage est déjà utilisé."
 
-#: parsec/core/gui/main_window.py:192
 msgid "Can not login"
 msgstr "Impossible de se connecter."
 
-#: parsec/core/gui/main_window.py:224
 msgid "Can not login."
 msgstr "Impossible de se connecter."
 
-#: parsec/core/gui/main_window.py:242
 msgid "Are you sure you want to quit ?"
 msgstr "Êtes-vous sûr de vouloir fermer l'application ?"
 
-#: parsec/core/gui/main_window.py:247
 msgid "Parsec is still running."
 msgstr "Parsec est toujours ouvert."
 
-#: parsec/core/gui/tr/parsec_en.ts:14 parsec/core/gui/tr/parsec_en.ts:20
-#: parsec/core/gui/tr/parsec_en.ts:23 parsec/core/gui/tr/parsec_en.ts:26
-#: parsec/core/gui/tr/parsec_en.ts:31 parsec/core/gui/tr/parsec_en.ts:32
 msgid "Form"
 msgstr ""
 
-#: parsec/core/gui/tr/parsec_en.ts:34
 msgid ""
 "To bootstrap an organization, create one on the website and paste the "
 "information."
 msgstr ""
-"Pour démarrer une organisation, créez en une sur le site web et copiez ici les "
-"informations."
+"Pour démarrer une organisation, créez en une sur le site web et copiez "
+"ici les informations."
 
-#: parsec/core/gui/tr/parsec_en.ts:206 parsec/core/gui/tr/parsec_en.ts:212
-#: parsec/core/gui/tr/parsec_en.ts:220 parsec/core/gui/tr/parsec_en.ts:230
 msgid "Device name"
 msgstr "Nom de l'appareil"
 
-#: parsec/core/gui/tr/parsec_en.ts:181 parsec/core/gui/tr/parsec_en.ts:190
-#: parsec/core/gui/tr/parsec_en.ts:257 parsec/core/gui/tr/parsec_en.ts:289
-#: parsec/core/gui/tr/parsec_en.ts:307
 msgid "URL"
 msgstr "URL"
 
-#: parsec/core/gui/tr/parsec_en.ts:228 parsec/core/gui/tr/parsec_en.ts:315
-#: parsec/core/gui/tr/parsec_en.ts:347 parsec/core/gui/tr/parsec_en.ts:365
-#: parsec/core/gui/tr/parsec_en.ts:405
 msgid "Password"
 msgstr "Mot de passe"
 
-#: parsec/core/gui/tr/parsec_en.ts:364 parsec/core/gui/tr/parsec_en.ts:396
-#: parsec/core/gui/tr/parsec_en.ts:414
 msgid "Password check"
 msgstr "Vérification du mot de passe"
 
-#: parsec/core/gui/tr/parsec_en.ts:355 parsec/core/gui/tr/parsec_en.ts:466
-#: parsec/core/gui/tr/parsec_en.ts:495 parsec/core/gui/tr/parsec_en.ts:516
 msgid "PKCS #11 Token"
 msgstr "Jeton PKCS #11"
 
-#: parsec/core/gui/tr/parsec_en.ts:398 parsec/core/gui/tr/parsec_en.ts:509
-#: parsec/core/gui/tr/parsec_en.ts:538 parsec/core/gui/tr/parsec_en.ts:559
 msgid "PKCS #11 Key"
 msgstr "Clef PKCS #11"
 
-#: parsec/core/gui/tr/parsec_en.ts:439 parsec/core/gui/tr/parsec_en.ts:550
-#: parsec/core/gui/tr/parsec_en.ts:579 parsec/core/gui/tr/parsec_en.ts:600
 msgid "Authenticate using PKCS #11"
 msgstr "S'authentifier en utilisant PKCS #11"
 
-#: parsec/core/gui/tr/parsec_en.ts:137 parsec/core/gui/tr/parsec_en.ts:164
-#: parsec/core/gui/tr/parsec_en.ts:381 parsec/core/gui/tr/parsec_en.ts:390
-#: parsec/core/gui/tr/parsec_en.ts:589
 msgid "Cancel"
 msgstr "Annuler"
 
-#: parsec/core/gui/tr/parsec_en.ts:607
 msgid "Bootstrap"
 msgstr "Démarrer"
 
-#: parsec/core/gui/tr/parsec_en.ts:45
 msgid ""
-"To register a new device, you need an existing device to declare a new device "
-"and get the resulting token."
+"To register a new device, you need an existing device to declare a new "
+"device and get the resulting token."
 msgstr ""
 "Pour enregistrer un nouvel appareil, il faut le déclarer en utilisant un "
 "appareil existant et copier ici le jeton."
 
-#: parsec/core/gui/tr/parsec_en.ts:218 parsec/core/gui/tr/parsec_en.ts:227
-#: parsec/core/gui/tr/parsec_en.ts:252 parsec/core/gui/tr/parsec_en.ts:270
 msgid "Token"
 msgstr "Jeton"
 
-#: parsec/core/gui/tr/parsec_en.ts:621 parsec/core/gui/tr/parsec_en.ts:642
 msgid "Register"
 msgstr "Enregistrer"
 
-#: parsec/core/gui/tr/parsec_en.ts:14 parsec/core/gui/tr/parsec_en.ts:20
-#: parsec/core/gui/tr/parsec_en.ts:26 parsec/core/gui/tr/parsec_en.ts:32
 msgid "Dialog"
 msgstr ""
 
-#: parsec/core/gui/tr/parsec_en.ts:47
 msgid ""
-"To register a new user, you need another user to create an account and get a "
-"token."
+"To register a new user, you need another user to create an account and "
+"get a token."
 msgstr ""
-"Pour enregistrer un nouvel utilisateur, un administrateur doit le déclarer et "
-"vous fournir un jeton."
+"Pour enregistrer un nouvel utilisateur, un administrateur doit le "
+"déclarer et vous fournir un jeton."
 
-#: parsec/core/gui/tr/parsec_en.ts:65
 msgid "Search devices"
 msgstr "Rechercher un appareil"
 
-#: parsec/core/gui/tr/parsec_en.ts:190
 msgid "Search files or folders"
 msgstr "Rechercher un fichier ou un répertoire"
 
-#: parsec/core/gui/tr/parsec_en.ts:339
 msgid "Name"
 msgstr "Nom"
 
-#: parsec/core/gui/tr/parsec_en.ts:344
 msgid "Created"
 msgstr "Crée"
 
-#: parsec/core/gui/tr/parsec_en.ts:349
 msgid "Updated"
 msgstr "Modifié"
 
-#: parsec/core/gui/tr/parsec_en.ts:354
 msgid "Size"
 msgstr "Taille"
 
-#: parsec/core/gui/tr/parsec_en.ts:209
 msgid "Behavior"
 msgstr "Comportement"
 
-#: parsec/core/gui/tr/parsec_en.ts:223
 msgid "Close button minimizes Parsec in the tray"
 msgstr "Le bouton de fermeture place Parsec dans la barre de tâches"
 
-#: parsec/core/gui/tr/parsec_en.ts:287
 msgid "Localization"
 msgstr "Internationalisation"
 
-#: parsec/core/gui/tr/parsec_en.ts:303
 msgid "Language"
 msgstr "Langue"
 
-#: parsec/core/gui/tr/parsec_en.ts:385
 msgid "Version"
 msgstr "Version"
 
-#: parsec/core/gui/tr/parsec_en.ts:401
 msgid "Check for new version at startup"
 msgstr "Vérifier si une nouvelle version est disponible au démarrage"
 
-#: parsec/core/gui/tr/parsec_en.ts:440
 msgid "Check for new version now"
 msgstr "Vérifier si une nouvelle version est disponible"
 
-#: parsec/core/gui/tr/parsec_en.ts:530
 msgid "Send information when Parsec encounters an error."
 msgstr "Envoyer des informations quand Parsec rencontre une erreur."
 
-#: parsec/core/gui/tr/parsec_en.ts:613 parsec/core/gui/tr/parsec_en.ts:824
 msgid "Save"
 msgstr "Sauvegarder"
 
-#: parsec/core/gui/tr/parsec_en.ts:255
 msgid "Ok"
 msgstr "Ok"
 
-#: parsec/core/gui/tr/parsec_en.ts:62
 msgid "Importing"
 msgstr "En cours d'importation"
 
-#: parsec/core/gui/tr/parsec_en.ts:170
 msgid "Identifier"
 msgstr "Identifiant"
 
-#: parsec/core/gui/tr/parsec_en.ts:306
 msgid "PKCS #11 PIN"
 msgstr "PIN PKCS #11"
 
-#: parsec/core/gui/tr/parsec_en.ts:353 parsec/core/gui/tr/parsec_en.ts:492
 msgid "Log In"
 msgstr "Se connecter"
 
-#: parsec/core/gui/tr/parsec_en.ts:309
 msgid "Register a new account"
 msgstr "Enregistrer un nouvel utilisateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:331
 msgid "Register a new device"
 msgstr "Enregistrer un nouvel appareil"
 
-#: parsec/core/gui/tr/parsec_en.ts:372
 msgid "Bootstrap an organization"
 msgstr "Démarrer une organisation"
 
-#: parsec/core/gui/tr/parsec_en.ts:14
 msgid "Parsec"
 msgstr "Parsec"
 
-#: parsec/core/gui/tr/parsec_en.ts:187
 msgid "   Documents"
 msgstr " Documents"
 
-#: parsec/core/gui/tr/parsec_en.ts:243
 msgid "   Users"
 msgstr " Utilisateurs"
 
-#: parsec/core/gui/tr/parsec_en.ts:299
 msgid "   Devices"
 msgstr " Appareils"
 
-#: parsec/core/gui/tr/parsec_en.ts:358
 msgid "   Settings"
 msgstr " Configuration"
 
-#: parsec/core/gui/tr/parsec_en.ts:628
 msgid "   Log Out"
 msgstr " Se déconnecter"
 
-#: parsec/core/gui/tr/parsec_en.ts:227
 msgid "Proxy"
 msgstr "Proxy"
 
-#: parsec/core/gui/tr/parsec_en.ts:246
 msgid "Proxy type"
 msgstr "Type de proxy"
 
-#: parsec/core/gui/tr/parsec_en.ts:266
 msgid "No proxy"
 msgstr "Aucun proxy"
 
-#: parsec/core/gui/tr/parsec_en.ts:271
 msgid "HTTP"
 msgstr "HTTP"
 
-#: parsec/core/gui/tr/parsec_en.ts:276
 msgid "Socks4"
 msgstr "Socks4"
 
-#: parsec/core/gui/tr/parsec_en.ts:281
 msgid "Socks5"
 msgstr "Socks5"
 
-#: parsec/core/gui/tr/parsec_en.ts:332
 msgid "Host"
 msgstr "Hôte"
 
-#: parsec/core/gui/tr/parsec_en.ts:354
 msgid "Port"
 msgstr "Port"
 
-#: parsec/core/gui/tr/parsec_en.ts:380
 msgid "Username"
 msgstr "Nom d'utilisateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:474
 msgid "Speed limits"
 msgstr "Limite de vitesse"
 
-#: parsec/core/gui/tr/parsec_en.ts:488
 msgid "Upload"
 msgstr "Ascendant"
 
-#: parsec/core/gui/tr/parsec_en.ts:577
 msgid "No limit"
 msgstr "Aucune limite"
 
-#: parsec/core/gui/tr/parsec_en.ts:592
 msgid "Limit to"
 msgstr "Limité à"
 
-#: parsec/core/gui/tr/parsec_en.ts:623
 msgid "10"
 msgstr "10"
 
-#: parsec/core/gui/tr/parsec_en.ts:636
 msgid "kb/s"
 msgstr "Ko/s"
 
-#: parsec/core/gui/tr/parsec_en.ts:147 parsec/core/gui/tr/parsec_en.ts:570
 msgid "Download"
 msgstr "Descendant"
 
-#: parsec/core/gui/tr/parsec_en.ts:699
 msgid "Misc"
 msgstr "Divers"
 
-#: parsec/core/gui/tr/parsec_en.ts:713
 msgid "Number of simultaneous connections"
 msgstr "Nombre de connexions simultanées"
 
-#: parsec/core/gui/tr/parsec_en.ts:91
 msgid "A new version of Parsec is available !"
 msgstr "Une nouvelle version de Parsec est disponible !"
 
-#: parsec/core/gui/tr/parsec_en.ts:212
 msgid "Don't remind me in the future"
 msgstr "Ne pas me le rappeler à l'avenir"
 
-#: parsec/core/gui/tr/parsec_en.ts:250
 msgid "Ignore"
 msgstr "Ignorer"
 
-#: parsec/core/gui/tr/parsec_en.ts:151
 msgid "Notifications"
 msgstr "Notifications"
 
-#: parsec/core/gui/tr/parsec_en.ts:268
 msgid "No"
 msgstr "Non"
 
-#: parsec/core/gui/tr/parsec_en.ts:308
 msgid "Yes"
 msgstr "Oui"
 
-#: parsec/core/gui/tr/parsec_en.ts:29
 msgid "Register new device"
 msgstr "Enregistrer un nouvel appareil"
 
-#: parsec/core/gui/tr/parsec_en.ts:155
 msgid "Use the following information to set up your new device:"
 msgstr "Utilisez les informations suivantes pour enregistrer votre nouvel appareil"
 
-#: parsec/core/gui/tr/parsec_en.ts:291 parsec/core/gui/tr/parsec_en.ts:300
 msgid "..."
 msgstr "..."
 
-#: parsec/core/gui/tr/parsec_en.ts:320
 msgid "Do not close this window while the device registers."
 msgstr "Ne fermez pas cette fenêtre pendant que l'appareil s'enregistre."
 
-#: parsec/core/gui/tr/parsec_en.ts:372
 msgid "Register the device"
 msgstr "Enregistrer l'appareil"
 
-#: parsec/core/gui/tr/parsec_en.ts:26
 msgid "Register new user"
 msgstr "Enregistrer un nouvel utilisateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:137
 msgid "User is administrator"
 msgstr "L'utilisateur est un administrateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:164
 msgid "Transmit the following information to the user:"
 msgstr "Transmettez les informations suivantes à l'utilisateur :"
 
-#: parsec/core/gui/tr/parsec_en.ts:329
 msgid "Do not close this window while the user registers."
 msgstr "Ne fermez pas cette fenêtre pendant que l'utilisateur s'enregistre."
 
-#: parsec/core/gui/tr/parsec_en.ts:399
 msgid "Register the user"
 msgstr "Enregistrer l'utilisateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:246
 msgid "Skip"
 msgstr "Passer"
 
-#: parsec/core/gui/tr/parsec_en.ts:281
 msgid "Replace"
 msgstr "Remplacer"
 
-#: parsec/core/gui/tr/parsec_en.ts:323
 msgid "Do the same for all files"
 msgstr "Utiliser la même action pour tous les fichiers"
 
-#: parsec/core/gui/tr/parsec_en.ts:87 parsec/core/gui/tr/parsec_en.ts:574
 msgid "Close"
 msgstr "Fermer"
 
-#: parsec/core/gui/tr/parsec_en.ts:365
 msgid "Back"
 msgstr "Retour"
 
-#: parsec/core/gui/tr/parsec_en.ts:96
 msgid "Search users"
 msgstr "Rechercher un utilisateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:163
 msgid "You are this workspace's owner."
 msgstr "Vous êtes le propriétaire de l'espace de travail."
 
-#: parsec/core/gui/tr/parsec_en.ts:191
 msgid "This workspace is shared."
 msgstr "Cet espace de travail est partagé."
 
-#: parsec/core/gui/tr/parsec_en.ts:268
 msgid "This workspace is empty."
 msgstr "Cet espace de travail est vide."
 
-#: parsec/core/gui/tr/parsec_en.ts:441
 msgid "Rename the workspace"
 msgstr "Renommer l'espace de travail"
 
-#: parsec/core/gui/tr/parsec_en.ts:507
 msgid "Share the workspace"
 msgstr "Partager l'espace de travail"
 
-#: parsec/core/gui/tr/parsec_en.ts:573
 msgid "Delete the workspace"
 msgstr "Supprimer l'espace de travail"
 
-#: parsec/core/gui/tr/parsec_en.ts:14
 msgid "Manage workspace sharing"
 msgstr "Gérer le partage de l'espace de travail"
 
-#: parsec/core/gui/tr/parsec_en.ts:115
 msgid "Share with"
 msgstr "Partagé avec"
 
-#: parsec/core/gui/tr/parsec_en.ts:141
 msgid "User can administer"
 msgstr "Administrateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:159
 msgid "User can read"
 msgstr "Lecture"
 
-#: parsec/core/gui/tr/parsec_en.ts:180
 msgid "User can write"
 msgstr "Écriture"
 
-#: parsec/core/gui/tr/parsec_en.ts:244
 msgid "Share"
 msgstr "Partager"
 
-#: parsec/core/gui/tr/parsec_en.ts:327
 msgid "Admin"
 msgstr "Administrateur"
 
-#: parsec/core/gui/tr/parsec_en.ts:357
 msgid "Read"
 msgstr "Lecture"
 
-#: parsec/core/gui/tr/parsec_en.ts:387
 msgid "Write"
 msgstr "Écriture"
 
-#: parsec/core/gui/tr/parsec_en.ts:506
 msgid "Apply"
 msgstr "Appliquer"
+
+#~ msgid "URL or user is invalid."
+#~ msgstr "L'URL ou l'utilisateur sont invalides."
+

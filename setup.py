@@ -166,6 +166,7 @@ class ExtractTranslations(Command):
             "_",
             "extract",
             "-s",
+            "--no-location",
             "-F",
             ".babel.cfg",
             "--omit-header",

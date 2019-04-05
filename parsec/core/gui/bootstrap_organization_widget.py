@@ -31,18 +31,6 @@ from parsec.core.gui.password_validation import (
 from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganizationWidget
 
 
-STATUS_TO_ERRMSG = {
-    "invalid-url": _("This organization does not exist (is the URL correct ?)."),
-    "user-exists": _("This user already exists."),
-    "password-mismatch": _("Passwords don't match."),
-    "password-size": _("Password must be at least 8 caracters long."),
-    "bad-url": _("URL or device is invalid."),
-    "bad-device_name": _("URL or device is invalid."),
-    "bad-user_id": _("URL or device is invalid."),
-}
-DEFAULT_ERRMSG = _("Can not bootstrap this organization ({info}).")
-
-
 async def _do_bootstrap_organization(
     config_dir,
     use_pkcs11: bool,
@@ -138,7 +126,20 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job.status != "ok"
         self.button_cancel.hide()
         self.check_infos()
-        errmsg = STATUS_TO_ERRMSG.get(self.bootstrap_job.status, DEFAULT_ERRMSG)
+
+        status = self.bootstrap_job.status
+        if status == "invalid-url":
+            errmsg = _("This organization does not exist (is the URL correct ?).")
+        elif status == "user-exists":
+            errmsg = _("This user already exists.")
+        elif status == "password-mismatch":
+            errmsg = _("Passwords don't match.")
+        elif status == "password-size":
+            errmsg = _("Password must be at least 8 caracters long.")
+        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
+            errmsg = _("URL or device is invalid.")
+        else:
+            errmsg = _("Can not bootstrap this organization ({info}).")
         show_error(self, errmsg.format(**self.bootstrap_job.exc.params))
         self.bootstrap_job = None
 

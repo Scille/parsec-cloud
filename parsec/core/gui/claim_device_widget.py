@@ -30,17 +30,6 @@ from parsec.core.gui.password_validation import (
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 
 
-STATUS_TO_ERRMSG = {
-    "not_found": _("No invitation found for this device."),
-    "password-mismatch": _("Passwords don't match."),
-    "password-size": _("Password must be at least 8 caracters long."),
-    "bad-url": _("URL or device is invalid."),
-    "bad-device_name": _("URL or device is invalid."),
-    "bad-user_id": _("URL or user is invalid."),
-}
-DEFAULT_ERRMSG = _("Can not claim this device ({info}).")
-
-
 async def _do_claim_device(
     config_dir,
     use_pkcs11: bool,
@@ -121,7 +110,17 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
         self.check_infos()
-        errmsg = STATUS_TO_ERRMSG.get(self.claim_device_job.status, DEFAULT_ERRMSG)
+        status = self.claim_device_job.status
+        if status == "not_found":
+            errmsg = _("No invitation found for this device.")
+        elif status == "password-mismatch":
+            errmsg = _("Passwords don't match.")
+        elif status == "password-size":
+            errmsg = _("Password must be at least 8 caracters long.")
+        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
+            errmsg = (_("URL or device is invalid."),)
+        else:
+            errmsg = _("Can not claim this device ({info}).")
         show_error(self, errmsg.format(**self.claim_device_job.exc.params))
         self.claim_device_job = None
 
