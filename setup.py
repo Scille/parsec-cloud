@@ -311,14 +311,15 @@ test_requirements = [
 
 
 PYQT_DEP = "PyQt5==5.11.2"
+BABEL_DEP = "Babel==2.6.0",
 extra_requirements = {
     "pkcs11": ["python-pkcs11==0.5.0", "pycrypto==2.6.1"],
     "core": [
         PYQT_DEP,
+        BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
         'winfspy==0.4.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
-        "Babel==2.6.0",
     ],
     "backend": [
         # PostgreSQL
@@ -347,7 +348,7 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(),
     package_dir={"parsec": "parsec"},
-    setup_requires=[PYQT_DEP],  # To generate resources bundle
+    setup_requires=[PYQT_DEP, BABEL_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
