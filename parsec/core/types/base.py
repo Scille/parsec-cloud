@@ -7,8 +7,7 @@ from pathlib import PurePosixPath
 
 from parsec.serde import Serializer, fields
 
-
-__all__ = ("TrustSeed", "AccessID", "EntryName", "EntryNameField", "FileDescriptor", "FsPath")
+__all__ = ("TrustSeed", "AccessID", "EntryName", "EntryNameField", "FsPath")
 
 
 def serializer_factory(schema_cls):
@@ -18,7 +17,6 @@ def serializer_factory(schema_cls):
 
 TrustSeed = NewType("TrustSeed", str)
 AccessID = NewType("AccessID", UUID)
-FileDescriptor = NewType("FileDescriptor", int)
 
 
 class EntryName(str):

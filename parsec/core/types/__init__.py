@@ -2,7 +2,7 @@
 
 from typing import Union
 
-from parsec.core.types.base import TrustSeed, AccessID, EntryName, FileDescriptor, FsPath
+from parsec.core.types.base import TrustSeed, AccessID, EntryName, FsPath
 from parsec.core.types.access import (
     Access,
     UserAccess,
@@ -34,6 +34,7 @@ from parsec.core.types.remote_manifests import (
     RemoteManifest,
     remote_manifest_serializer,
 )
+from parsec.core.types.local_file import FileCursor, FileDescriptor
 
 
 Manifest = Union[LocalManifest, RemoteManifest]
@@ -76,4 +77,7 @@ __all__ = (
     "RemoteManifest",
     "remote_manifest_serializer",
     "Manifest",
+    # local file
+    "FileCursor",
+    "FileDescriptor",
 )

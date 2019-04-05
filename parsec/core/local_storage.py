@@ -1,11 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from itertools import count
+from collections import defaultdict
+
+import trio
 from structlog import get_logger
 
-from parsec.core.types import Access, LocalManifest, local_manifest_serializer, BlockAccess
-from .persistent_storage import PersistentStorage, LocalStorageMissingEntry
+from parsec.core.types import (
+    FileDescriptor,
+    Access,
+    BlockAccess,
+    LocalManifest,
+    LocalFileManifest,
+    FileCursor,
+    local_manifest_serializer,
+)
+from parsec.core.persistent_storage import PersistentStorage, LocalStorageMissingEntry
+
 
 logger = get_logger()
+
+
+class FSInvalidFileDescriptor(Exception):
+    pass
 
 
 class LocalStorage:
@@ -17,6 +34,14 @@ class LocalStorage:
     """
 
     def __init__(self, path, **kwargs):
+
+        # Cursors and file descriptors
+        self.open_cursors = {}
+        self.file_locks = defaultdict(trio.Lock)
+        self.file_references = defaultdict(set)
+        self.file_descriptor_counter = count(1)
+
+        # Manifest and block storage
         self.manifest_cache = {}
         self.persistent_storage = PersistentStorage(path, **kwargs)
 
@@ -99,3 +124,66 @@ class LocalStorage:
             self.persistent_storage.clear_clean_block(access)
         except LocalStorageMissingEntry:
             pass
+
+    # File management interface
+
+    def assert_consistent_file_access(self, access, manifest=None):
+        try:
+            local_manifest = self.get_manifest(access)
+        except LocalStorageMissingEntry:
+            local_manifest = None
+        if manifest and local_manifest:
+            assert local_manifest == manifest
+        if manifest or local_manifest:
+            assert isinstance(manifest or local_manifest, LocalFileManifest)
+
+    def assert_consistent_file_descriptor(self, fd, manifest=None):
+        cursor = self.open_cursors.get(fd)
+        if cursor is not None:
+            return self.assert_consistent_file_access(cursor.access, manifest)
+        if manifest is not None:
+            assert isinstance(manifest, LocalFileManifest)
+
+    def create_file_descriptor(self, cursor: FileCursor) -> FileDescriptor:
+        self.assert_consistent_file_access(cursor.access)
+        fd = next(self.file_descriptor_counter)
+        self.open_cursors[fd] = cursor
+        self.file_references[cursor.access].add(fd)
+        return fd
+
+    def load_file_descriptor(self, fd: FileDescriptor) -> (FileCursor, LocalFileManifest):
+        self.assert_consistent_file_descriptor(fd)
+        try:
+            cursor = self.open_cursors[fd]
+        except KeyError:
+            raise FSInvalidFileDescriptor(fd)
+        manifest = self.get_manifest(cursor.access)
+        return cursor, manifest
+
+    def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
+        self.assert_consistent_file_descriptor(fd, manifest)
+        try:
+            cursor = self.open_cursors.pop(fd)
+        except KeyError:
+            raise FSInvalidFileDescriptor(fd)
+        self.file_references[cursor.access].discard(fd)
+        self.cleanup_unreferenced_file(cursor.access, manifest)
+
+    def add_file_reference(self, access: Access) -> None:
+        self.assert_consistent_file_access(access)
+        self.file_references[access].add(access)
+
+    def remove_file_reference(self, access: Access, manifest: LocalFileManifest) -> None:
+        self.assert_consistent_file_access(access, manifest)
+        self.file_references[access].discard(access)
+        self.cleanup_unreferenced_file(access, manifest)
+
+    def cleanup_unreferenced_file(self, access: Access, manifest: LocalFileManifest) -> None:
+        self.assert_consistent_file_access(access, manifest)
+        if self.file_references[access]:
+            return
+        self.clear_manifest(access)
+        for block_access in manifest.dirty_blocks:
+            self.clear_dirty_block(block_access)
+        for block_access in manifest.blocks:
+            self.clear_clean_block(block_access)

@@ -3,18 +3,23 @@
 import attr
 from math import inf
 from typing import Optional
-from collections import defaultdict
 
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.types import Access, BlockAccess, LocalFileManifest
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
+from parsec.core.types import Access, BlockAccess, LocalFileManifest, FileCursor
+from parsec.core.local_storage import (
+    LocalStorage,
+    LocalStorageMissingEntry,
+    FSInvalidFileDescriptor,
+)
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
     merge_buffers_with_limits,
 )
+
+__all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 
 
 # Helpers
@@ -63,16 +68,6 @@ class BlockBuffer(Buffer):
     data = attr.ib(default=None, type=Optional[bytes])
 
 
-@attr.s(slots=True)
-class FileCursor:
-    access = attr.ib(type=Access)
-    offset = attr.ib(default=0, type=int)
-
-
-class FSInvalidFileDescriptor(Exception):
-    pass
-
-
 class FileTransactions:
     def __init__(
         self, local_storage: LocalStorage, remote_loader: RemoteLoader, event_bus: EventBus
@@ -81,63 +76,14 @@ class FileTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-        # TODO: move those attributes in the local storage
-        # Those transaction classes should be stateless
-        # It would also help a lot with the tests.
-        self._opened_cursors = {}
-        self._references = defaultdict(set)
-        self._next_fd = 1
-
     # Helpers
 
-    def _get_cursor(self, fd: FileDescriptor) -> FileCursor:
+    async def _load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
         try:
-            return self._opened_cursors[fd]
-        except KeyError:
-            raise FSInvalidFileDescriptor(fd)
-
-    async def _get_cursor_and_manifest(self, fd: FileDescriptor) -> LocalFileManifest:
-        cursor = self._get_cursor(fd)
-        # Fetch the manifest
-        try:
-            manifest = self.local_storage.get_manifest(cursor.access)
+            return self.local_storage.load_file_descriptor(fd)
         except LocalStorageMissingEntry as exc:
-            manifest = await self.remote_loader.load_manifest(exc.access)
-        # Make sure fd still exists
-        assert cursor == self._get_cursor(fd)
-        return cursor, manifest
-
-    def _manifest_cleanup(
-        self,
-        access: Access,
-        manifest: LocalFileManifest,
-        closing_fd: Optional[FileDescriptor] = None,
-    ) -> None:
-        # Get current references
-        references = self._references[access].copy()
-        if closing_fd is not None:
-            references -= {closing_fd}
-
-        # A reference still exists
-        if references:
-            if closing_fd is not None:
-                self._references[access].discard(closing_fd)
-                self._opened_cursors.pop(closing_fd, None)
-            return
-
-        # Clean up the local storage
-        self.local_storage.clear_manifest(access)
-        for access in manifest.dirty_blocks:
-            self.local_storage.clear_dirty_block(access)
-        # We probably want to clear the clean blocks too
-        # Let's do that after the local_folder_fs refactoring
-        # for access in manifest.blocks:
-        #     self.local_storage.clear_clean_block(access)
-
-        # Clean up references
-        self._references.pop(access, None)
-        if closing_fd is not None:
-            del self._opened_cursors[closing_fd]
+            await self.remote_loader.load_manifest(exc.access)
+            return self.local_storage.load_file_descriptor(fd)
 
     def _attempt_read(self, manifest: LocalFileManifest, start: int, end: int):
         missing = []
@@ -166,39 +112,25 @@ class FileTransactions:
 
         return data, missing
 
-    # Atomic helpers for folder transactions
+    # Temporary helper
 
-    def open(self, access: Access) -> FileDescriptor:
+    def open(self, access: Access):
         cursor = FileCursor(access)
-        fd = self._next_fd
-        self._opened_cursors[fd] = cursor
-        self._next_fd += 1
-
-        # Add a reference to access as the file exists
-        self._references[access].add(access)
-        # Add a reference to the open file descriptor
-        self._references[access].add(fd)
-
-        return fd
-
-    def deleted(self, access: Access, manifest: LocalFileManifest):
-        # Remove the reference to access as the file no longer exists
-        self._references[access].discard(access)
-        # Perform the clean up routine
-        self._manifest_cleanup(access, manifest)
+        self.local_storage.add_file_reference(access)
+        return self.local_storage.create_file_descriptor(cursor)
 
     # Atomic transactions
 
     async def close(self, fd: FileDescriptor) -> None:
         # Fetch
-        cursor, manifest = await self._get_cursor_and_manifest(fd)
+        cursor, manifest = await self._load_file_descriptor(fd)
 
         # Atomic change
-        self._manifest_cleanup(cursor.access, manifest, closing_fd=fd)
+        self.local_storage.remove_file_descriptor(fd, manifest)
 
     async def seek(self, fd: FileDescriptor, offset: int) -> None:
         # Fetch
-        cursor, manifest = await self._get_cursor_and_manifest(fd)
+        cursor, manifest = await self._load_file_descriptor(fd)
 
         # Prepare
         offset = normalize_offset(offset, cursor, manifest)
@@ -208,7 +140,7 @@ class FileTransactions:
 
     async def write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
         # Fetch
-        cursor, manifest = await self._get_cursor_and_manifest(fd)
+        cursor, manifest = await self._load_file_descriptor(fd)
 
         # No-op
         if not content:
@@ -237,7 +169,7 @@ class FileTransactions:
 
     async def truncate(self, fd: FileDescriptor, length: int) -> None:
         # Fetch
-        cursor, manifest = await self._get_cursor_and_manifest(fd)
+        cursor, manifest = await self._load_file_descriptor(fd)
 
         # No-op
         if manifest.size == length:
@@ -264,7 +196,7 @@ class FileTransactions:
         while True:
 
             # Fetch
-            cursor, manifest = await self._get_cursor_and_manifest(fd)
+            cursor, manifest = await self._load_file_descriptor(fd)
 
             # No-op
             offset = normalize_offset(offset, cursor, manifest)
