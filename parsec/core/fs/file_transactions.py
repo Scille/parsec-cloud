@@ -4,6 +4,8 @@ import attr
 from math import inf
 from typing import Optional
 
+from async_generator import asynccontextmanager
+
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -78,12 +80,14 @@ class FileTransactions:
 
     # Helpers
 
-    async def _load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
+    @asynccontextmanager
+    async def _load_and_lock_file(self, fd: FileDescriptor) -> LocalFileManifest:
         try:
-            return self.local_storage.load_file_descriptor(fd)
+            self.local_storage.load_file_descriptor(fd)
         except LocalStorageMissingEntry as exc:
             await self.remote_loader.load_manifest(exc.access)
-            return self.local_storage.load_file_descriptor(fd)
+        async with self.local_storage.load_and_lock_file(fd) as (cursor, manifest):
+            yield cursor, manifest
 
     def _attempt_read(self, manifest: LocalFileManifest, start: int, end: int):
         missing = []
@@ -122,104 +126,105 @@ class FileTransactions:
     # Atomic transactions
 
     async def close(self, fd: FileDescriptor) -> None:
-        # Fetch
-        cursor, manifest = await self._load_file_descriptor(fd)
+        # Fetch and lock
+        async with self._load_and_lock_file(fd) as (cursor, manifest):
 
-        # Atomic change
-        self.local_storage.remove_file_descriptor(fd, manifest)
+            # Atomic change
+            self.local_storage.remove_file_descriptor(fd, manifest)
 
     async def seek(self, fd: FileDescriptor, offset: int) -> None:
-        # Fetch
-        cursor, manifest = await self._load_file_descriptor(fd)
+        # Fetch and lock
+        async with self._load_and_lock_file(fd) as (cursor, manifest):
 
-        # Prepare
-        offset = normalize_offset(offset, cursor, manifest)
+            # Prepare
+            offset = normalize_offset(offset, cursor, manifest)
 
-        # Atomic change
-        cursor.offset = offset
+            # Atomic change
+            cursor.offset = offset
 
     async def write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
-        # Fetch
-        cursor, manifest = await self._load_file_descriptor(fd)
+        # Fetch and lock
+        async with self._load_and_lock_file(fd) as (cursor, manifest):
 
-        # No-op
-        if not content:
-            return 0
+            # No-op
+            if not content:
+                return 0
 
-        # Prepare
-        offset = normalize_offset(offset, cursor, manifest)
-        start, padded_content = pad_content(offset, manifest.size, content)
-        block_access = BlockAccess.from_block(padded_content, start)
+            # Prepare
+            offset = normalize_offset(offset, cursor, manifest)
+            start, padded_content = pad_content(offset, manifest.size, content)
+            block_access = BlockAccess.from_block(padded_content, start)
 
-        new_offset = offset + len(content)
-        new_size = max(manifest.size, new_offset)
+            new_offset = offset + len(content)
+            new_size = max(manifest.size, new_offset)
 
-        manifest = manifest.evolve_and_mark_updated(
-            dirty_blocks=(*manifest.dirty_blocks, block_access), size=new_size
-        )
+            manifest = manifest.evolve_and_mark_updated(
+                dirty_blocks=(*manifest.dirty_blocks, block_access), size=new_size
+            )
 
-        # Atomic change
-        self.local_storage.set_dirty_block(block_access, padded_content)
-        self.local_storage.set_dirty_manifest(cursor.access, manifest)
-        cursor.offset = new_offset
+            # Atomic change
+            self.local_storage.set_dirty_block(block_access, padded_content)
+            self.local_storage.set_dirty_manifest(cursor.access, manifest)
+            cursor.offset = new_offset
 
         # Notify
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
         return len(content)
 
     async def truncate(self, fd: FileDescriptor, length: int) -> None:
-        # Fetch
-        cursor, manifest = await self._load_file_descriptor(fd)
+        # Fetch and lock
+        async with self._load_and_lock_file(fd) as (cursor, manifest):
 
-        # No-op
-        if manifest.size == length:
-            return
+            # No-op
+            if manifest.size == length:
+                return
 
-        # Prepare
-        dirty_blocks = manifest.dirty_blocks
-        start, padded_content = pad_content(length, manifest.size)
-        block_access = BlockAccess.from_block(padded_content, start)
-        if padded_content:
-            dirty_blocks += (block_access,)
-        manifest = manifest.evolve_and_mark_updated(dirty_blocks=dirty_blocks, size=length)
+            # Prepare
+            dirty_blocks = manifest.dirty_blocks
+            start, padded_content = pad_content(length, manifest.size)
+            block_access = BlockAccess.from_block(padded_content, start)
+            if padded_content:
+                dirty_blocks += (block_access,)
+            manifest = manifest.evolve_and_mark_updated(dirty_blocks=dirty_blocks, size=length)
 
-        # Atomic change
-        if padded_content:
-            self.local_storage.set_dirty_block(block_access, padded_content)
-        self.local_storage.set_dirty_manifest(cursor.access, manifest)
+            # Atomic change
+            if padded_content:
+                self.local_storage.set_dirty_block(block_access, padded_content)
+            self.local_storage.set_dirty_manifest(cursor.access, manifest)
 
         # Notify
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
 
     async def read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
         # Loop over attemps
+        missing = []
         while True:
 
-            # Fetch
-            cursor, manifest = await self._load_file_descriptor(fd)
-
-            # No-op
-            offset = normalize_offset(offset, cursor, manifest)
-            if offset is not None and offset > manifest.size:
-                return b""
-
-            # Prepare
-            start = offset
-            end = min(offset + size, manifest.size)
-            data, missing = self._attempt_read(manifest, start, end)
-
-            # Fetch
+            # Load missing block
             for access in missing:
                 await self.remote_loader.load_block(access)
 
-            # Retry
-            if missing:
-                continue
+            # Fetch and lock
+            async with self._load_and_lock_file(fd) as (cursor, manifest):
 
-            # Atomic change
-            cursor.offset = end
+                # No-op
+                offset = normalize_offset(offset, cursor, manifest)
+                if offset is not None and offset > manifest.size:
+                    return b""
 
-            return data
+                # Prepare
+                start = offset
+                end = min(offset + size, manifest.size)
+                data, missing = self._attempt_read(manifest, start, end)
+
+                # Retry
+                if missing:
+                    continue
+
+                # Atomic change
+                cursor.offset = end
+
+                return data
 
     async def flush(self, fd: FileDescriptor) -> None:
         # No-op
