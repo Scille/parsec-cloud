@@ -17,11 +17,16 @@ class FileType(IntEnum):
 
 class CustomTableItem(QTableWidgetItem):
     def __lt__(self, other):
-        return (
-            self.data(Qt.UserRole) is not None
-            and other.data(Qt.UserRole) is not None
-            and self.data(Qt.UserRole) < other.data(Qt.UserRole)
-        )
+        self_type = self.data(Qt.UserRole + 1)
+        other_type = other.data(Qt.UserRole + 1)
+        self_data = self.data(Qt.UserRole)
+        other_data = other.data(Qt.UserRole)
+
+        if self_type == FileType.ParentWorkspace or self_type == FileType.ParentFolder:
+            return False
+        elif other_type == FileType.ParentWorkspace or other_type == FileType.ParentFolder:
+            return False
+        return self_data < other_data
 
 
 class IconTableItem(CustomTableItem):
@@ -91,22 +96,11 @@ class FileTableItem(IconTableItem):
         super().__init__(
             is_synced, QPixmap(":/icons/images/icons/{}.png".format(icon)), "", *args, **kwargs
         )
-        self.setData(Qt.UserRole, FileType.File)
-
-
-class ParentFolderTableItem(CustomTableItem):
-    def __init__(self, *args, **kwargs):
-        super().__init__(QIcon(":/icons/images/icons/folder-up.png"), "", *args, **kwargs)
-        self.setData(Qt.UserRole, FileType.ParentFolder)
-
-
-class ParentWorkspaceTableItem(CustomTableItem):
-    def __init__(self, *args, **kwargs):
-        super().__init__(QIcon(":/icons/images/icons/folder-up.png"), "", *args, **kwargs)
-        self.setData(Qt.UserRole, FileType.ParentWorkspace)
+        self.setData(Qt.UserRole + 1, FileType.File)
 
 
 class FolderTableItem(IconTableItem):
     def __init__(self, is_synced, *args, **kwargs):
         super().__init__(is_synced, QPixmap(":/icons/images/icons/folder.png"), "", *args, **kwargs)
-        self.setData(Qt.UserRole, FileType.Folder)
+        self.setData(Qt.UserRole, 0)
+        self.setData(Qt.UserRole + 1, FileType.Folder)

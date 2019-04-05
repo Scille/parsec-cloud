@@ -270,7 +270,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def filter_files(self, pattern):
         pattern = pattern.lower()
         for i in range(self.table_files.rowCount()):
-            file_type = self.table_files.item(i, 0).data(Qt.UserRole)
+            file_type = self.table_files.item(i, 0).data(Qt.UserRole + 1)
             name_item = self.table_files.item(i, 1)
             if file_type != FileType.ParentFolder and file_type != FileType.ParentWorkspace:
                 if pattern not in name_item.text().lower():
@@ -305,7 +305,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 return
             path = os.path.join("/", self.workspace, self.current_directory, name_item.text())
             try:
-                if type_item.data(Qt.UserRole) == FileType.Folder:
+                if type_item.data(Qt.UserRole + 1) == FileType.Folder:
                     self._delete_folder(path)
                 else:
                     self.portal.run(self.core.fs.delete, path)
@@ -356,7 +356,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         type_item = self.table_files.item(row, 0)
         if not name_item or not type_item:
             return
-        file_type = type_item.data(Qt.UserRole)
+        file_type = type_item.data(Qt.UserRole + 1)
         if file_type == FileType.ParentFolder or file_type == FileType.ParentWorkspace:
             return
         menu = QMenu(self.table_files)
@@ -384,7 +384,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             if not new_name:
                 return
             try:
-                if type_item.data(Qt.UserRole) == FileType.Folder:
+                if type_item.data(Qt.UserRole + 1) == FileType.Folder:
                     self.portal.run(
                         self.core.fs.move,
                         os.path.join("/", self.workspace, self.current_directory, name_item.text()),
@@ -413,7 +413,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def item_double_clicked(self, row, column):
         name_item = self.table_files.item(row, 1)
         type_item = self.table_files.item(row, 0)
-        file_type = type_item.data(Qt.UserRole)
+        file_type = type_item.data(Qt.UserRole + 1)
         try:
             if file_type == FileType.ParentFolder:
                 self.load(os.path.dirname(self.current_directory))

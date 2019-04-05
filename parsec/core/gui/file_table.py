@@ -12,15 +12,8 @@ from PyQt5.QtWidgets import (
     QStyle,
 )
 
-from parsec.core.gui.file_items import (
-    FileTableItem,
-    CustomTableItem,
-    ParentFolderTableItem,
-    ParentWorkspaceTableItem,
-    FolderTableItem,
-    FileType,
-)
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.file_items import FileTableItem, CustomTableItem, FolderTableItem, FileType
 from parsec.core.gui.file_size import get_filesize
 
 
@@ -71,12 +64,12 @@ class FileTable(QTableWidget):
         selected = self.selectedItems()
         for item in self.previous_selection:
             if item.column() == 0:
-                file_type = item.data(Qt.UserRole)
+                file_type = item.data(Qt.UserRole + 1)
                 if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
                     item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
         for item in selected:
             if item.column() == 0:
-                file_type = item.data(Qt.UserRole)
+                file_type = item.data(Qt.UserRole + 1)
                 if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
                     item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
         self.previous_selection = selected
@@ -84,37 +77,39 @@ class FileTable(QTableWidget):
     def add_parent_folder(self):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = ParentFolderTableItem()
+        item = CustomTableItem(QIcon(":/icons/images/icons/folder-up.png"), "")
+        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("Parent Folder"))
-        item.setData(Qt.UserRole, chr(0))
+        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, -2)
+        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
         self.setItem(row_idx, 4, item)
 
     def add_parent_workspace(self):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = ParentWorkspaceTableItem()
+        item = CustomTableItem(QIcon(":/icons/images/icons/folder-up.png"), "")
+        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("Parent Workspace"))
-        item.setData(Qt.UserRole, chr(0))
+        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, -2)
+        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
         self.setItem(row_idx, 4, item)
 
     def add_folder(self, folder_name, is_synced):
@@ -124,33 +119,42 @@ class FileTable(QTableWidget):
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(folder_name)
         item.setData(Qt.UserRole, folder_name)
+        item.setData(Qt.UserRole + 1, FileType.Folder)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        item.setData(Qt.UserRole + 1, FileType.Folder)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        item.setData(Qt.UserRole + 1, FileType.Folder)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
         item.setData(Qt.UserRole, -1)
+        item.setData(Qt.UserRole + 1, FileType.Folder)
         self.setItem(row_idx, 4, item)
 
     def add_file(self, file_name, file_size, created_on, updated_on, is_synced):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, file_name)
+        item.setData(Qt.UserRole, 1)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(file_name)
         item.setData(Qt.UserRole, file_name)
+        item.setData(Qt.UserRole + 1, FileType.File)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem(created_on.format("%x %X"))
         item.setData(Qt.UserRole, created_on)
+        item.setData(Qt.UserRole + 1, FileType.File)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem(updated_on.format("%x %X"))
         item.setData(Qt.UserRole, updated_on)
+        item.setData(Qt.UserRole + 1, FileType.File)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem(get_filesize(file_size))
         item.setData(Qt.UserRole, file_size)
+        item.setData(Qt.UserRole + 1, FileType.File)
         self.setItem(row_idx, 4, item)
 
     def dropEvent(self, event):
@@ -160,7 +164,7 @@ class FileTable(QTableWidget):
         rows = set([i.row() for i in self.selectedIndexes() if i != target_row])
         if not rows:
             return
-        file_type = self.item(target_row, 0).data(Qt.UserRole)
+        file_type = self.item(target_row, 0).data(Qt.UserRole + 1)
         target_name = self.item(target_row, 1).text()
 
         if file_type != FileType.ParentFolder and file_type != FileType.Folder:
