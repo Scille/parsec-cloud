@@ -4,7 +4,10 @@ from itertools import count
 from collections import defaultdict
 
 import trio
+from trio import hazmat
+
 from structlog import get_logger
+from async_generator import asynccontextmanager
 
 from parsec.core.types import (
     FileDescriptor,
@@ -37,12 +40,13 @@ class LocalStorage:
 
         # Cursors and file descriptors
         self.open_cursors = {}
-        self.file_locks = defaultdict(trio.Lock)
         self.file_references = defaultdict(set)
         self.file_descriptor_counter = count(1)
 
         # Manifest and block storage
         self.manifest_cache = {}
+        self.locking_tasks = {}
+        self.access_locks = defaultdict(trio.Lock)
         self.persistent_storage = PersistentStorage(path, **kwargs)
 
     def __enter__(self):
@@ -51,6 +55,21 @@ class LocalStorage:
 
     def __exit__(self, *args):
         self.persistent_storage.__exit__(*args)
+
+    # Locking helpers
+
+    @asynccontextmanager
+    async def lock_access(self, access: Access):
+        async with self.access_locks[access]:
+            try:
+                self.locking_tasks[access] = hazmat.current_task()
+                yield
+            finally:
+                del self.locking_tasks[access]
+
+    def check_lock_status(self, access: Access) -> None:
+        task = self.locking_tasks.get(access)
+        assert task is None or task == hazmat.current_task()
 
     # Manifest interface
 
@@ -69,6 +88,7 @@ class LocalStorage:
         return manifest
 
     def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False) -> None:
+        self.check_lock_status(access)
         # Remove the corresponding local manifest if it exists
         if force:
             try:
@@ -81,6 +101,7 @@ class LocalStorage:
         self.manifest_cache[access.id] = manifest
 
     def set_dirty_manifest(self, access: Access, manifest: LocalManifest) -> None:
+        self.check_lock_status(access)
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:
@@ -90,6 +111,7 @@ class LocalStorage:
         self.manifest_cache[access.id] = manifest
 
     def clear_manifest(self, access: Access) -> None:
+        self.check_lock_status(access)
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:
@@ -159,6 +181,12 @@ class LocalStorage:
             raise FSInvalidFileDescriptor(fd)
         manifest = self.get_manifest(cursor.access)
         return cursor, manifest
+
+    @asynccontextmanager
+    async def load_and_lock_file(self, fd: FileDescriptor):
+        cursor, manifest = self.load_file_descriptor(fd)
+        async with self.lock_access(cursor.access):
+            yield cursor, manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
         self.assert_consistent_file_descriptor(fd, manifest)
