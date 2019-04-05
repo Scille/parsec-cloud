@@ -241,12 +241,11 @@ requirements = [
 
 
 test_requirements = [
-    "pytest==4.2.0",
-    "pytest-cov",
-    "pytest-xdist",
-    "pytest-trio>=0.5.1",
-    "pytest-qt",
-    "pluggy==0.7.1",  # see https://github.com/pytest-dev/pytest/issues/3753
+    "pytest==4.4.0",
+    "pytest-cov==2.6.1",
+    "pytest-xdist==1.28.0",
+    "pytest-trio==0.5.2",
+    "pytest-qt==3.2.2",
     "tox",
     "wheel",
     "Sphinx",
