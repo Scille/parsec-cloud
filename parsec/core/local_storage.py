@@ -43,10 +43,12 @@ class LocalStorage:
         self.file_references = defaultdict(set)
         self.file_descriptor_counter = count(1)
 
-        # Manifest and block storage
-        self.manifest_cache = {}
+        # Locking structures
         self.locking_tasks = {}
         self.access_locks = defaultdict(trio.Lock)
+
+        # Manifest and block storage
+        self.manifest_cache = {}
         self.persistent_storage = PersistentStorage(path, **kwargs)
 
     def __enter__(self):
