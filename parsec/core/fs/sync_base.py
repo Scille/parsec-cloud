@@ -37,14 +37,14 @@ class BaseSyncer:
         backend_cmds,
         remote_devices_manager,
         local_folder_fs,
-        local_file_fs,
+        local_storage,
         event_bus,
         block_size=DEFAULT_BLOCK_SIZE,
     ):
         self._lock = trio.Lock()
         self.device = device
         self.local_folder_fs = local_folder_fs
-        self.local_file_fs = local_file_fs
+        self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus

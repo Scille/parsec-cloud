@@ -14,11 +14,11 @@ from parsec.core.fs.local_folder_fs import (
     FSMultiManifestLocalMiss,
     LocalFolderFS,
 )
-from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.sharing import Sharing
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs import WorkspaceFS
+from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 
 
@@ -36,15 +36,15 @@ class UserFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
 
-        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
-        self._local_file_fs = LocalFileFS(device, local_storage, self._local_folder_fs, event_bus)
         self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
+        self._file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
+        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
         self._syncer = Syncer(
             device,
             backend_cmds,
             remote_devices_manager,
             self._local_folder_fs,
-            self._local_file_fs,
+            local_storage,
             event_bus,
         )
         self._sharing = Sharing(
@@ -72,7 +72,7 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             _local_folder_fs=self._local_folder_fs,
-            _local_file_fs=self._local_file_fs,
+            _file_transactions=self._file_transactions,
             _remote_loader=self._remote_loader,
             _syncer=self._syncer,
         )
@@ -91,10 +91,6 @@ class UserFS:
             except FSMultiManifestLocalMiss as exc:
                 for access in exc.accesses:
                     await self._remote_loader.load_manifest(access)
-
-            except FSBlocksLocalMiss as exc:
-                for access in exc.accesses:
-                    await self._remote_loader.load_block(access)
 
     async def stat(self) -> dict:
         cooked_path = FsPath("/")

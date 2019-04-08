@@ -3,7 +3,8 @@
 import pytest
 
 from parsec.core.fs.local_folder_fs import LocalFolderFS
-from parsec.core.fs.local_file_fs import LocalFileFS
+from parsec.core.fs.file_transactions import FileTransactions
+from parsec.core.fs.remote_loader import RemoteLoader
 
 
 @pytest.fixture
@@ -20,16 +21,15 @@ def local_folder_fs(local_folder_fs_factory, alice, alice_local_storage):
 
 
 @pytest.fixture
-def local_file_fs_factory(local_folder_fs_factory, event_bus):
-    def _local_file_fs_factory(device, local_storage, local_folder_fs=None):
-        local_folder_fs = local_folder_fs or local_folder_fs_factory(device, local_storage)
-        return LocalFileFS(device, local_storage, local_folder_fs, event_bus)
+def file_transactions_factory(event_bus, remote_devices_manager_factory):
+    def _file_transactions_factory(device, local_storage, backend_cmds):
+        remote_devices_manager = remote_devices_manager_factory(device)
+        remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
+        return FileTransactions(local_storage, remote_loader, event_bus)
 
-    return _local_file_fs_factory
+    return _file_transactions_factory
 
 
 @pytest.fixture
-def local_file_fs(local_folder_fs, local_file_fs_factory, alice, alice_local_storage):
-    # local_folder_fs contains a cache, so cannot have multiple instances
-    # for a single device.
-    return local_file_fs_factory(alice, alice_local_storage, local_folder_fs=local_folder_fs)
+def file_transactions(file_transactions_factory, alice, alice_local_storage, alice_backend_cmds):
+    return file_transactions_factory(alice, alice_local_storage, alice_backend_cmds)

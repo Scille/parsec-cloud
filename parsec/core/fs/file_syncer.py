@@ -16,7 +16,7 @@ from parsec.core.types import (
 from parsec.core.fs.local_folder_fs import FSEntryNotFound
 from parsec.core.fs.merge_folders import find_conflicting_name_for_child_entry
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
-from parsec.core.fs.local_file_fs import Buffer, DirtyBlockBuffer, BlockBuffer, NullFillerBuffer
+from parsec.core.fs.file_transactions import Buffer, DirtyBlockBuffer, BlockBuffer
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
 from parsec.core.fs.utils import is_file_manifest, is_placeholder_manifest
 
@@ -68,10 +68,7 @@ class FileSyncerMixin(BaseSyncer):
                     # TODO: look in local storage first
                     buff = await self._backend_block_read(bs.buffer.access)
                 elif isinstance(bs.buffer, DirtyBlockBuffer):
-                    buff = self.local_file_fs.get_block(bs.buffer.access)
-                else:
-                    assert isinstance(bs.buffer, NullFillerBuffer)
-                    buff = bs.buffer.data
+                    buff = self.local_storage.get_block(bs.buffer.access)
                 assert buff
                 data[bs.start - cs.start : bs.end - cs.start] = buff[
                     bs.buffer_slice_start : bs.buffer_slice_end
@@ -184,7 +181,7 @@ class FileSyncerMixin(BaseSyncer):
 
                     # The block has been successfully uploaded
                     # Keep it in the remote storage
-                    self.local_file_fs.set_clean_block(block_access, data)
+                    self.local_storage.set_clean_block(block_access, data)
 
         if len(spaces) < 2:
             await _process_spaces()
@@ -254,12 +251,12 @@ class FileSyncerMixin(BaseSyncer):
 
             # The vlob has been successfully uploaded - clean up the dirty blocks
             for dirty_block in manifest.dirty_blocks:
-                self.local_file_fs.clear_dirty_block(dirty_block)
+                self.local_storage.clear_dirty_block(dirty_block)
 
             # Also clean up the outdated blocks from the remote cache
             outdated_blocks = set(manifest.blocks) - set(to_sync_manifest.blocks)
             for remote_block in outdated_blocks:
-                self.local_file_fs.clear_clean_block(remote_block)
+                self.local_storage.clear_clean_block(remote_block)
 
             self._sync_file_merge_back(access, manifest, to_sync_manifest)
 
