@@ -71,6 +71,28 @@ class BlockBuffer(Buffer):
 
 
 class FileTransactions:
+    """A stateless class to centralize all file transactions.
+
+    The actual state is stored in the local storage and file transactions
+    have access to the remote loader to download missing resources.
+
+    The exposed transactions all take a file descriptor as first argument.
+    The file descriptors correspond to a file cursor which points to a file
+    on the file system (using access and manifest).
+
+    The corresponding file is locked while performing the change (i.e. between
+    the reading and writing of the file cursor and manifest) in order to avoid
+    race conditions and data corruption.
+
+    The table below lists the effects of the 6 file transactions:
+    - close    -> remove file descriptor from local storage
+    - seek     -> affects cursor offset
+    - write    -> affects cursor offset, file content and possibly file size
+    - truncate -> affects file size and possibly file content
+    - read     -> affects cursor offset
+    - flush    -> no-op
+    """
+
     def __init__(
         self, local_storage: LocalStorage, remote_loader: RemoteLoader, event_bus: EventBus
     ):
@@ -200,7 +222,9 @@ class FileTransactions:
         missing = []
         while True:
 
-            # Load missing block
+            # Load missing blocks
+            # TODO: add a `load_blocks` method to the remote loader
+            # to download the blocks in a concurrent way.
             for access in missing:
                 await self.remote_loader.load_block(access)
 
