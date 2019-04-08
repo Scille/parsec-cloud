@@ -62,7 +62,7 @@ class LocalStorage:
     # Locking helpers
 
     @asynccontextmanager
-    async def lock_access(self, access: Access):
+    async def _lock_access(self, access: Access):
         async with self.access_locks[access]:
             try:
                 self.locking_tasks[access] = hazmat.current_task()
@@ -70,7 +70,7 @@ class LocalStorage:
             finally:
                 del self.locking_tasks[access]
 
-    def check_lock_status(self, access: Access) -> None:
+    def _check_lock_status(self, access: Access) -> None:
         task = self.locking_tasks.get(access)
         assert task is None or task == hazmat.current_task()
 
@@ -91,7 +91,7 @@ class LocalStorage:
         return manifest
 
     def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False) -> None:
-        self.check_lock_status(access)
+        self._check_lock_status(access)
         # Remove the corresponding local manifest if it exists
         if force:
             try:
@@ -104,7 +104,7 @@ class LocalStorage:
         self.manifest_cache[access.id] = manifest
 
     def set_dirty_manifest(self, access: Access, manifest: LocalManifest) -> None:
-        self.check_lock_status(access)
+        self._check_lock_status(access)
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:
@@ -114,7 +114,7 @@ class LocalStorage:
         self.manifest_cache[access.id] = manifest
 
     def clear_manifest(self, access: Access) -> None:
-        self.check_lock_status(access)
+        self._check_lock_status(access)
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:
@@ -152,7 +152,7 @@ class LocalStorage:
 
     # File management interface
 
-    def assert_consistent_file_access(self, access, manifest=None):
+    def _assert_consistent_file_access(self, access, manifest=None):
         try:
             local_manifest = self.get_manifest(access)
         except LocalStorageMissingEntry:
@@ -162,22 +162,22 @@ class LocalStorage:
         if manifest or local_manifest:
             assert isinstance(manifest or local_manifest, LocalFileManifest)
 
-    def assert_consistent_file_descriptor(self, fd, manifest=None):
+    def _assert_consistent_file_descriptor(self, fd, manifest=None):
         cursor = self.open_cursors.get(fd)
         if cursor is not None:
-            return self.assert_consistent_file_access(cursor.access, manifest)
+            return self._assert_consistent_file_access(cursor.access, manifest)
         if manifest is not None:
             assert isinstance(manifest, LocalFileManifest)
 
     def create_file_descriptor(self, cursor: FileCursor) -> FileDescriptor:
-        self.assert_consistent_file_access(cursor.access)
+        self._assert_consistent_file_access(cursor.access)
         fd = next(self.file_descriptor_counter)
         self.open_cursors[fd] = cursor
         self.file_references[cursor.access].add(fd)
         return fd
 
     def load_file_descriptor(self, fd: FileDescriptor) -> Tuple[FileCursor, LocalFileManifest]:
-        self.assert_consistent_file_descriptor(fd)
+        self._assert_consistent_file_descriptor(fd)
         try:
             cursor = self.open_cursors[fd]
         except KeyError:
@@ -188,11 +188,11 @@ class LocalStorage:
     @asynccontextmanager
     async def load_and_lock_file(self, fd: FileDescriptor):
         cursor, manifest = self.load_file_descriptor(fd)
-        async with self.lock_access(cursor.access):
+        async with self._lock_access(cursor.access):
             yield cursor, manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
-        self.assert_consistent_file_descriptor(fd, manifest)
+        self._assert_consistent_file_descriptor(fd, manifest)
         try:
             cursor = self.open_cursors.pop(fd)
         except KeyError:
@@ -201,16 +201,16 @@ class LocalStorage:
         self.cleanup_unreferenced_file(cursor.access, manifest)
 
     def add_file_reference(self, access: Access) -> None:
-        self.assert_consistent_file_access(access)
+        self._assert_consistent_file_access(access)
         self.file_references[access].add(access)
 
     def remove_file_reference(self, access: Access, manifest: LocalFileManifest) -> None:
-        self.assert_consistent_file_access(access, manifest)
+        self._assert_consistent_file_access(access, manifest)
         self.file_references[access].discard(access)
         self.cleanup_unreferenced_file(access, manifest)
 
     def cleanup_unreferenced_file(self, access: Access, manifest: LocalFileManifest) -> None:
-        self.assert_consistent_file_access(access, manifest)
+        self._assert_consistent_file_access(access, manifest)
         if self.file_references[access]:
             return
         self.clear_manifest(access)
