@@ -54,6 +54,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.reload)
+        self.default_import_path = str(pathlib.Path.home())
         self.table_files.file_moved.connect(self.on_file_moved)
         self.table_files.init()
 
@@ -242,17 +243,19 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     # slot
     def import_files_clicked(self):
         paths, x = QFileDialog.getOpenFileNames(
-            self, _("Select files to import"), str(pathlib.Path.home())
+            self, _("Select files to import"), self.default_import_path
         )
         if not paths:
             return
         files, total_size = self.get_files(paths)
+        f = files[0][0]
+        self.default_import_path = str(f.parent)
         self.import_all(files, total_size)
 
     # slot
     def import_folder_clicked(self):
         path = QFileDialog.getExistingDirectory(
-            self, _("Select a directory to import"), str(pathlib.Path.home())
+            self, _("Select a directory to import"), self.default_import_path
         )
         if not path:
             return
@@ -260,6 +263,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         files, total_size = self.get_folder(
             p, os.path.join("/", self.workspace, self.current_directory, p.name)
         )
+        self.default_import_path = str(p)
         self.import_all(files, total_size)
 
     # slot
