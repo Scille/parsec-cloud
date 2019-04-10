@@ -28,6 +28,12 @@ You must install the parsec package or run `python setup.py generate_pyqt_forms`
 logger = get_logger()
 
 
+def before_quit(systray):
+    def _before_quit():
+        systray.hide()
+    return _before_quit
+    
+
 def run_gui(config: CoreConfig):
     logger.info("Starting UI")
 
@@ -43,7 +49,7 @@ def run_gui(config: CoreConfig):
 
     event_bus = EventBus()
     with run_trio_thread() as jobs_ctx:
-
+        systray = None
         if systray_available() and config.gui_tray_enabled:
             win = MainWindow(
                 jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, minimize_on_close=True
@@ -51,7 +57,7 @@ def run_gui(config: CoreConfig):
             systray = Systray(parent=win)
             systray.on_close.connect(win.close_app)
             systray.on_show.connect(win.show_top)
-
+            app.aboutToQuit.connect(before_quit(systray))
         else:
             win = MainWindow(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config)
 
