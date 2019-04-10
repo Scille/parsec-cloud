@@ -2,6 +2,7 @@
 
 import attr
 import pendulum
+from uuid import UUID
 from typing import Tuple, Dict, List, Union
 
 from parsec.types import DeviceID, UserID, FrozenDict
@@ -181,8 +182,6 @@ class LocalWorkspaceManifest(LocalFolderManifest):
         super().__attrs_post_init__()
         if not self.creator:
             object.__setattr__(self, "creator", self.author.user_id)
-        if not self.participants:
-            object.__setattr__(self, "participants", (self.creator,))
 
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(
@@ -226,16 +225,16 @@ class LocalUserManifest:
     last_processed_message: int = 0
     workspaces: List[WorkspaceEntry] = attr.ib(converter=tuple, default=())
 
+    # TODO: remove this legacy stuff
+    @property
+    def children(self):
+        return {w.name: w.access for w in self.workspaces if not w.is_revoked()}
+
     def __attrs_post_init__(self):
         if not self.created:
             object.__setattr__(self, "created", pendulum.now())
         if not self.updated:
             object.__setattr__(self, "updated", self.created)
-
-    # TODO: remove me once per-workspace-fs rework has been done
-    @property
-    def children(self):
-        return {w.name: w.access for w in self.workspaces}
 
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.UserManifest(
@@ -244,9 +243,12 @@ class LocalUserManifest:
             created=self.created,
             updated=self.updated,
             last_processed_message=self.last_processed_message,
-            workspaces=self.workspaces,
+            workspaces=tuple(self.workspaces),
             **data,
         )
+
+    def get_workspace_entry(self, workspace_id: UUID) -> WorkspaceEntry:
+        return next((w for w in self.workspaces if w.access.id == workspace_id), None)
 
     def evolve_and_mark_updated(self, **data) -> "LocalUserManifest":
         if "updated" not in data:
@@ -266,6 +268,7 @@ class LocalUserManifest:
         return self.evolve(workspaces=tuple(workspaces.values()))
 
 
+# TODO: rename base_version ==> version since we don't have base_author and base_updated ?
 class LocalUserManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_user_manifest", required=True)

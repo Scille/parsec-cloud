@@ -124,9 +124,19 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
             self.new_notification.emit("INFO", _("Connected to the backend."))
         elif event == "mountpoint.stopped":
             self.new_notification.emit("ERROR", _("Mountpoint has been unmounted."))
-        elif event == "sharing.new":
+        elif event == "sharing.granted":
             self.new_notification.emit(
-                "INFO", _("Workspace '{}' shared with you").format(kwargs["path"])
+                "INFO", _("Workspace '{}' shared with you").format(kwargs["new_entry"].name)
+            )
+        elif event == "sharing.updated":
+            self.new_notification.emit(
+                "INFO",
+                _("Workspace '{}' sharing rights have changed").format(kwargs["new_entry"].name),
+            )
+        elif event == "sharing.revoked":
+            self.new_notification.emit(
+                "INFO",
+                _("Workspace '{}' no longer shared with you").format(kwargs["previous_entry"].name),
             )
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(

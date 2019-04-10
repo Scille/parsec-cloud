@@ -90,6 +90,7 @@ async def fuse_mountpoint_runner(
         async with trio.open_nursery() as nursery:
 
             def _run_fuse_thread():
+                logger.info("Starting fuse thread...", mountpoint=mountpoint)
                 try:
                     fuse_thread_started.set()
                     FUSE(

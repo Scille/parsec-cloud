@@ -5,7 +5,7 @@ import os
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QCompleter, QWidget
 
-from parsec.core.fs.sharing import SharingRecipientError
+from parsec.core.fs import FSError
 
 from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, show_info
 from parsec.core.gui.lang import translate as _
@@ -137,7 +137,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.checkbox_admin.setChecked(True)
             self.checkbox_read.setChecked(True)
             self.checkbox_write.setChecked(True)
-        except SharingRecipientError:
+        except FSError:
             show_warning(
                 self, _('Can not share the workspace "{}" with this user.').format(self.name)
             )
@@ -183,11 +183,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                         w.write_rights,
                     )
                     updated = True
-                except SharingRecipientError:
-                    errors.append(w.name)
-                    import traceback
-
-                    traceback.print_exc()
                 except:
                     errors.append(w.name)
                     import traceback

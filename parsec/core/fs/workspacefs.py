@@ -11,7 +11,7 @@ from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestL
 class WorkspaceFS:
     def __init__(
         self,
-        workpace_name,
+        workspace_name,
         device,
         local_storage,
         backend_cmds,
@@ -21,7 +21,7 @@ class WorkspaceFS:
         _remote_loader,
         _syncer,
     ):
-        self.workpace_name = workpace_name
+        self.workspace_name = workspace_name
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
@@ -32,7 +32,7 @@ class WorkspaceFS:
         self._syncer = _syncer
 
     def _cook_path(self, relative_path=""):
-        return FsPath(f"/{self.workpace_name}/{relative_path}")
+        return FsPath(f"/{self.workspace_name}/{relative_path}")
 
     async def _load_and_retry(self, fn, *args, **kwargs):
         while True:

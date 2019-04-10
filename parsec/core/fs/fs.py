@@ -9,8 +9,9 @@ from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice, FsPath
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendCmdsPool
-from parsec.core.fs.userfs import UserFS
 from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.fs.userfs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 
 class FS:
@@ -59,19 +60,51 @@ class FS:
             _, workspace_name, *parts = path.parts
             return workspace_name, FsPath("/" + "/".join(parts))
 
+    def _get_workspace_entry_from_name(self, workspace_name):
+        # Obviously broken if multiple workspaces have the same name :'(
+        try:
+            return next(
+                w for w in self._user_fs.get_user_manifest().workspaces if w.name == workspace_name
+            )
+        except StopIteration:
+            raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}")
+
     def _get_workspace(self, path):
         workspace_name, subpath = self._split_path(path)
         assert workspace_name
-        workspace = self._user_fs.get_workspace(workspace_name)
+        workspace_entry = self._get_workspace_entry_from_name(workspace_name)
+        try:
+            workspace = self._user_fs.get_workspace(workspace_entry.access.id)
+        except FSWorkspaceNotFoundError as exc:
+            raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}") from exc
+
         return workspace, subpath
+
+    def _iter_workspaces(self):
+        um = self._user_fs.get_user_manifest()
+        for w_entry in um.workspaces:
+            yield self._user_fs.get_workspace(w_entry.access.id)
 
     async def stat(self, path: str) -> dict:
         workspace_name, subpath = self._split_path(path)
         if not workspace_name:
-            return await self._user_fs.stat()
+            um = self._user_fs.get_user_manifest()
+            return {
+                "type": "root",
+                "id": self._user_fs.user_manifest_access.id,
+                "is_folder": True,
+                "created": um.created,
+                "updated": um.updated,
+                "base_version": um.base_version,
+                "is_placeholder": um.is_placeholder,
+                "need_sync": um.need_sync,
+                # Only list workspace we still have access to
+                "children": sorted(um.children.keys()),
+            }
 
         else:
-            return await self._user_fs.get_workspace(workspace_name).stat(subpath)
+            workspace, _ = self._get_workspace(f"/{workspace_name}")
+            return await workspace.stat(subpath)
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
         workspace, subpath = self._get_workspace(path)
@@ -130,6 +163,14 @@ class FS:
 
     async def workspace_create(self, path: str) -> UUID:
         cooked_path = FsPath(path)
+        try:
+            _, _ = self._get_workspace(path)
+        except FileNotFoundError:
+            pass
+        else:
+            # A workspace with this name already exists (shouldn't be a trouble,
+            # except for legacy tests using oracle...)
+            raise FileExistsError(17, "File exists", path)
         assert cooked_path.is_workspace()
         return await self._user_fs.workspace_create(cooked_path.workspace)
 
@@ -138,13 +179,22 @@ class FS:
         cooked_dst = FsPath(dst)
         assert cooked_src.is_workspace()
         assert cooked_dst.is_workspace()
-        await self._user_fs.workspace_rename(cooked_src.workspace, cooked_dst.workspace)
+        workspace_entry = self._get_workspace_entry_from_name(cooked_src.workspace)
+        try:
+            _, _ = self._get_workspace(dst)
+        except FileNotFoundError:
+            pass
+        else:
+            # A workspace with this name already exists (shouldn't be a trouble,
+            # except for legacy tests using oracle...)
+            raise FileExistsError(17, "File exists", dst)
+        await self._user_fs.workspace_rename(workspace_entry.access.id, cooked_dst.workspace)
 
     async def move(self, src: str, dst: str, overwrite: bool = True) -> None:
         workspace, subpath_src = self._get_workspace(src)
         workspace_dst, subpath_dst = self._get_workspace(dst)
         assert workspace
-        assert workspace.workpace_name == workspace_dst.workpace_name
+        assert workspace.workspace_name == workspace_dst.workspace_name
         await workspace.move(subpath_src, subpath_dst)
 
     async def delete(self, path: str) -> None:
@@ -154,17 +204,24 @@ class FS:
     async def sync(self, path: str, recursive: bool = True) -> None:
         workspace_name, subpath = self._split_path(path)
         if not workspace_name:
-            await self._user_fs.sync(recursive=recursive)
+            if recursive:
+                await self.full_sync()
+            else:
+                await self._user_fs.sync()
 
         else:
-            workspace = self._user_fs.get_workspace(workspace_name)
+            workspace, _ = self._get_workspace(f"/{workspace_name}")
+            stat = await workspace.stat("/")
+            if stat["is_placeholder"]:
+                await self._user_fs.sync()
             await workspace.sync(subpath, recursive)
+            await self._user_fs.sync()
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
     async def sync_by_id(self, entry_id: UUID) -> None:
         assert isinstance(entry_id, UUID)
-        for workspace_name in self._user_fs.list_workspaces():
-            workspace = self._user_fs.get_workspace(workspace_name)
+        for workspace_name in [w["name"] for w in self._user_fs.stat()["workspaces"]]:
+            workspace, _ = self._get_workspace(f"/{workspace_name}")
             try:
                 return await workspace.sync_by_id(entry_id)
             except Exception:  # TODO: better exception
@@ -172,12 +229,14 @@ class FS:
 
     # TODO: do we really need this ? or should we optimize `sync(path='/')` ?
     async def full_sync(self) -> None:
-        await self._user_fs.full_sync()
+        await self._user_fs.sync()
+        for workspace in self._iter_workspaces():
+            await workspace.sync("/", recursive=True)
+        await self._user_fs.sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:
         assert isinstance(id, UUID)
-        for workspace_name in self._user_fs.list_workspaces():
-            workspace = self._user_fs.get_workspace(workspace_name)
+        for workspace in self._iter_workspaces():
             try:
                 return await workspace.get_entry_path(id)
             except Exception:  # TODO: better exception
@@ -194,12 +253,12 @@ class FS:
         cooked_path = FsPath(path)
         if not cooked_path.is_workspace():
             # Will fail with correct exception
-            workpace_name = path
+            workspace_name = path
         else:
-            workpace_name = cooked_path.workspace
+            workspace_name = cooked_path.workspace
 
         await self._user_fs.workspace_share(
-            workpace_name,
+            workspace_name,
             recipient=UserID(recipient),
             admin_right=admin_right,
             read_right=read_right,

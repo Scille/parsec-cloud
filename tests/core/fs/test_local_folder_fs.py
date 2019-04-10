@@ -3,6 +3,7 @@
 import os
 import attr
 import pytest
+from unittest.mock import ANY
 from pendulum import Pendulum
 import pathlib
 from string import ascii_lowercase
@@ -69,7 +70,9 @@ def test_workspace_create(local_folder_fs, alice):
         "updated": Pendulum(2000, 1, 2),
         "children": [],
         "creator": alice.user_id,
-        "participants": [alice.user_id],
+        # TODO: participants&creator fields are deprecated
+        # "participants": [alice.user_id],
+        "participants": ANY,
     }
 
 
@@ -95,7 +98,10 @@ def test_file_create(local_folder_fs, alice):
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 3),
         "creator": alice.user_id,
-        "participants": [alice.user_id],
+        # "participants": [alice.user_id],
+        # TODO: participants&creator fields are deprecated
+        # "participants": [alice.user_id],
+        "participants": ANY,
         "children": ["foo.txt"],
     }
 
@@ -159,7 +165,7 @@ def test_rename_but_cannot_move_workspace(local_folder_fs):
     assert old_name_stat == new_name_stat
 
 
-def test_folder_file_outside_workpace_not_ok(local_folder_fs):
+def test_folder_file_outside_workspace_not_ok(local_folder_fs):
     with pytest.raises(PermissionError):
         local_folder_fs.touch(FsPath("/foo"))
     with pytest.raises(PermissionError):
@@ -219,7 +225,10 @@ def test_access_not_loaded_entry(alice, bob, local_folder_fs):
         "need_sync": True,
         "children": [],
         "creator": bob.user_id,
-        "participants": [bob.user_id],
+        # "participants": [bob.user_id],
+        # TODO: participants&creator fields are deprecated
+        # "participants": [alice.user_id],
+        "participants": ANY,
     }
 
 

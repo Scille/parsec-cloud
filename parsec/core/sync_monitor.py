@@ -3,7 +3,7 @@
 import trio
 from trio.hazmat import current_clock
 
-from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.fs import FSBackendOfflineError
 
 
 MIN_WAIT = 1
@@ -52,7 +52,7 @@ class SyncMonitor:
             await self._backend_online_event.wait()
             try:
                 await self._monitoring()
-            except BackendNotAvailable:
+            except FSBackendOfflineError:
                 self._backend_online_event.clear()
             self._monitoring_cancel_scope = None
             self.event_bus.send("sync_monitor.disconnected")
