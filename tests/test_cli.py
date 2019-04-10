@@ -181,7 +181,8 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### Create another user #######")
         with _running(
             "core invite_user "
-            f"--config-dir={config_dir} --device={alice1_slug} --password={password} {bob1.user_id}",
+            f"--config-dir={config_dir} --device={alice1_slug} "
+            f"--password={password} {bob1.user_id}",
             wait_for="Invitation token:",
         ) as p:
             stdout = p.live_stdout.read()
