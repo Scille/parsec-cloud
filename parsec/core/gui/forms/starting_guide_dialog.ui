@@ -347,7 +347,7 @@ border-bottom-left-radius: 20px;
 border-bottom-right-radius: 20px;
 border-top-left-radius: 20px;
 border-top-right-radius: 20px;
-font-size: 10px;
+font-size: 15px;
 font-weight: bold;
 }</string>
        </property>
