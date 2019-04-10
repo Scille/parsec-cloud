@@ -28,7 +28,7 @@ def test_version():
     assert f"parsec, version {parsec.__version__}\n" in result.output
 
 
-def test_share_workspace(alice, bob):
+def test_share_workspace(tmpdir, alice, bob):
     # Mocking
     factory_mock = MagicMock()
     share_mock = MagicMock()
@@ -51,11 +51,12 @@ def test_share_workspace(alice, bob):
                 runner = CliRunner()
                 args = (
                     "core share_workspace --password bla "
-                    f"--device={bob.device_id} "
+                    f"--device={bob.device_id} --config-dir={tmpdir} "
                     f"ws1 {alice.user_id}"
                 )
                 result = runner.invoke(cli, args)
 
+    print(result.output)
     assert result.exit_code == 0
     assert result.output == ""
 
