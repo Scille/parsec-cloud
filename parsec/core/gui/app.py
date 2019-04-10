@@ -31,8 +31,9 @@ logger = get_logger()
 def before_quit(systray):
     def _before_quit():
         systray.hide()
+
     return _before_quit
-    
+
 
 def run_gui(config: CoreConfig):
     logger.info("Starting UI")
