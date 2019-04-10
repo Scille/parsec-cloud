@@ -29,6 +29,7 @@ def test_version():
 
 
 def test_share_workspace(tmpdir, alice, bob):
+    config_dir = tmpdir.strpath
     # Mocking
     factory_mock = MagicMock()
     share_mock = MagicMock()
@@ -51,7 +52,7 @@ def test_share_workspace(tmpdir, alice, bob):
                 runner = CliRunner()
                 args = (
                     "core share_workspace --password bla "
-                    f"--device={bob.device_id} --config-dir={tmpdir} "
+                    f"--device={bob.device_id} --config-dir={config_dir} "
                     f"ws1 {alice.user_id}"
                 )
                 result = runner.invoke(cli, args)
@@ -148,6 +149,7 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
+    config_dir = tmpdir.strpath
     org = alice.organization_id
     alice1_slug = f"{alice.organization_id}:{alice.device_id}"
     alice2_slug = f"{alice2.organization_id}:{alice2.device_id}"
@@ -173,13 +175,13 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### Bootstrap organization #######")
         _run(
             "core bootstrap_organization "
-            f"{alice1} --addr={url} --config-dir={tmpdir} --password={password}"
+            f"{alice1} --addr={url} --config-dir={config_dir} --password={password}"
         )
 
         print("####### Create another user #######")
         with _running(
             "core invite_user "
-            f"--config-dir={tmpdir} --device={alice1_slug} --password={password} {bob1.user_id}",
+            f"--config-dir={config_dir} --device={alice1_slug} --password={password} {bob1.user_id}",
             wait_for="Invitation token:",
         ) as p:
             stdout = p.live_stdout.read()
@@ -188,14 +190,14 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
 
             _run(
                 "core claim_user "
-                f"--config-dir={tmpdir} --addr={url} --token={token} "
+                f"--config-dir={config_dir} --addr={url} --token={token} "
                 f"--password={password} {bob1}"
             )
 
         print("####### Create another device #######")
         with _running(
             "core invite_device "
-            f"--config-dir={tmpdir} --device={alice1_slug} --password={password}"
+            f"--config-dir={config_dir} --device={alice1_slug} --password={password}"
             f" {alice2.device_name}",
             wait_for="Invitation token:",
         ) as p:
@@ -205,12 +207,12 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
 
             _run(
                 "core claim_device "
-                f"--config-dir={tmpdir} --addr={url} --token={token} "
+                f"--config-dir={config_dir} --addr={url} --token={token} "
                 f"--password={password} {alice2}"
             )
 
         print("####### List users #######")
-        p = _run(f"core list_devices --config-dir={tmpdir}")
+        p = _run(f"core list_devices --config-dir={config_dir}")
         stdout = p.stdout.decode()
         assert alice1 in stdout
         assert alice2 in stdout
@@ -219,9 +221,9 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### New users can communicate with backend #######")
         _run(
             "core create_workspace wksp1 "
-            f"--config-dir={tmpdir} --device={bob1_slug} --password={password}"
+            f"--config-dir={config_dir} --device={bob1_slug} --password={password}"
         )
         _run(
             "core create_workspace wksp2 "
-            f"--config-dir={tmpdir} --device={alice2_slug} --password={password}"
+            f"--config-dir={config_dir} --device={alice2_slug} --password={password}"
         )
