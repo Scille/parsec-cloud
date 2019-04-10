@@ -40,6 +40,7 @@ class RemoteLoader:
         remote_manifest = remote_manifest_serializer.loads(raw)
         # TODO: better exception !
         assert remote_manifest.version == expected_version
+        # TODO: also store access id in remote_manifest and check it here
 
         local_manifest = remote_manifest.to_local()
         self.local_storage.set_clean_manifest(access, local_manifest)
