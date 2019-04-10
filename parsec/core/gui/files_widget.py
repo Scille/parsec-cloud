@@ -310,8 +310,13 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 else:
                     self.portal.run(self.core.fs.delete, path)
                 self.table_files.removeRow(row)
+            except PermissionError:
+                show_error(
+                    self,
+                    _("You don't have enough permission to delete '{}'.".format(name_item.text())),
+                )
             except:
-                show_error(self, _('Can not delete "{}"').format(name_item.text()))
+                show_error(self, _('Can not delete "{}".').format(name_item.text()))
 
         return _inner_delete_item
 
