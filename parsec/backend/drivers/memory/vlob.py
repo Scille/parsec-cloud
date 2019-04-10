@@ -202,7 +202,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         group = self._get_group(organization_id, id)
         if not group.rights.get(author, (False, False, False))[0]:
             raise VlobAccessError()
-        if not read_right and not write_right:
+        if not admin_right and not read_right and not write_right:
             group.rights.pop(user, None)
         else:
             group.rights[user] = (admin_right, read_right, write_right)

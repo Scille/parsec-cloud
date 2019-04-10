@@ -140,6 +140,26 @@ async def test_vlob_group_remove_rights_idempotent(backend, alice, bob, alice_ba
 
 
 @pytest.mark.trio
+async def test_vlob_group_change_to_admin_only(backend, alice, bob, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
+
+    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, True, True, True)
+    assert rep == {"status": "ok"}
+
+    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, True, False, False)
+    assert rep == {"status": "ok"}
+
+    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
+    assert rep == {
+        "status": "ok",
+        "users": {
+            "alice": {"admin_right": True, "read_right": True, "write_right": True},
+            "bob": {"admin_right": True, "read_right": False, "write_right": False},
+        },
+    }
+
+
+@pytest.mark.trio
 async def test_vlob_group_need_admin_to_share(backend, alice, bob, alice_backend_sock):
     await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
