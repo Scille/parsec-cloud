@@ -29,7 +29,8 @@ def test_version():
 
 
 def test_share_workspace(tmpdir, alice, bob):
-    config_dir = tmpdir.strpath
+    # As usual Windows path require a big hack...
+    config_dir = tmpdir.strpath.replace("\\", "\\\\")
     # Mocking
     factory_mock = MagicMock()
     share_mock = MagicMock()
@@ -149,7 +150,8 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
-    config_dir = tmpdir.strpath
+    # As usual Windows path require a big hack...
+    config_dir = tmpdir.strpath.replace("\\", "\\\\")
     org = alice.organization_id
     alice1_slug = f"{alice.organization_id}:{alice.device_id}"
     alice2_slug = f"{alice2.organization_id}:{alice2.device_id}"
