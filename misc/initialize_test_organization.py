@@ -13,7 +13,6 @@ from parsec.core import logged_core_factory
 from parsec.logging import configure_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
-    backend_cmds_factory,
     backend_administration_cmds_factory,
     backend_anonymous_cmds_factory,
 )
@@ -25,7 +24,7 @@ from parsec.core.invite_claim import (
     claim_device,
     claim_user,
 )
-from parsec.core.remote_devices_manager import RemoteDevicesManagerNotFound
+from parsec.core.remote_devices_manager import RemoteDevicesManagerNotFoundError
 from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 
 
@@ -33,7 +32,7 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
     for i in itertools.count():
         try:
             return await corofn(*args)
-        except RemoteDevicesManagerNotFound:
+        except RemoteDevicesManagerNotFoundError:
             if i >= retries:
                 raise
             await trio.sleep(tick)
@@ -144,15 +143,13 @@ async def amain(
     other_alice_slugid = f"{organization_id}:{other_alice_device_id}"
 
     async def invite_task():
-        async with backend_cmds_factory(
-            alice_device.organization_addr, alice_device.device_id, alice_device.signing_key
-        ) as cmds:
-            await invite_and_create_device(alice_device, cmds, other_device_name, token)
+        await invite_and_create_device(alice_device, other_device_name, token)
 
     async def claim_task():
-        async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
-            other_alice_device = await retry_claim(claim_device, cmds, other_alice_device_id, token)
-            save_device_with_password(config_dir, other_alice_device, password, force=force)
+        other_alice_device = await retry_claim(
+            claim_device, alice_device.organization_addr, other_alice_device_id, token
+        )
+        save_device_with_password(config_dir, other_alice_device, password, force=force)
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(invite_task)
@@ -164,18 +161,14 @@ async def amain(
     bob_device = None
 
     async def invite_task():
-        async with backend_cmds_factory(
-            alice_device.organization_addr, alice_device.device_id, alice_device.signing_key
-        ) as cmds:
-            await invite_and_create_user(
-                alice_device, cmds, bob_device_id.user_id, token, is_admin=True
-            )
+        await invite_and_create_user(alice_device, bob_device_id.user_id, token, is_admin=True)
 
     async def claim_task():
         nonlocal bob_device
-        async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
-            bob_device = await retry_claim(claim_user, cmds, bob_device_id, token)
-            save_device_with_password(config_dir, bob_device, password, force=force)
+        bob_device = await retry_claim(
+            claim_user, alice_device.organization_addr, bob_device_id, token
+        )
+        save_device_with_password(config_dir, bob_device, password, force=force)
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(invite_task)
