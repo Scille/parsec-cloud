@@ -23,8 +23,8 @@ from parsec.core.invite_claim import (
     invite_and_create_user,
     claim_device,
     claim_user,
+    InviteClaimError,
 )
-from parsec.core.remote_devices_manager import RemoteDevicesManagerNotFoundError
 from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 
 
@@ -32,7 +32,7 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
     for i in itertools.count():
         try:
             return await corofn(*args)
-        except RemoteDevicesManagerNotFoundError:
+        except InviteClaimError:
             if i >= retries:
                 raise
             await trio.sleep(tick)
