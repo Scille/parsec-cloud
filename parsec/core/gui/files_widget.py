@@ -5,7 +5,7 @@ import os
 import pathlib
 from uuid import UUID
 
-from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication, QDialog
 
 from parsec.core.types import FsPath
@@ -295,7 +295,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             type_item = self.table_files.item(row, 0)
             if not name_item or not type_item:
                 return
-            QCoreApplication.processEvents()
             result = ask_question(
                 self,
                 _("Confirmation"),
@@ -309,6 +308,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                     self._delete_folder(path)
                 else:
                     self.portal.run(self.core.fs.delete, path)
+                self.table_files.clearSelection()
                 self.table_files.removeRow(row)
             except PermissionError:
                 show_error(
@@ -453,16 +453,27 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     # slot
     def _on_fs_synced_qt(self, event, id, path):
-        # if path == "/":
-        #     return
-        # hops = [x for x in path.split("/")[2:] if x]
-        # if self.current_directory:
-        #     current_hops = [
-        #         x for x in self.current_directory.split("/") if x
-        #     ]
-        # else:
-        #     current_hops = []
-        pass
+        if path is None:
+            try:
+                path = self.portal.run(self.core.fs.get_entry_path, id)
+            except FSEntryNotFound:
+                return
+
+        path = pathlib.Path(path)
+        parent = path.parent
+        current_path = pathlib.Path("/") / self.workspace / self.current_directory
+
+        if path == "/" or parent != current_path:
+            return
+
+        for i in range(self.table_files.rowCount()):
+            name_item = self.table_files.item(i, 1)
+            if name_item.text() == path.name:
+                icon_item = self.table_files.item(i, 0)
+                file_type = icon_item.data(Qt.UserRole + 1)
+                if file_type == FileType.File or file_type == FileType.Folder:
+                    icon_item.is_synced = True
+                    return
 
     # slot
     def _on_fs_updated_qt(self, event, id):
@@ -474,7 +485,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             return
 
         # Modifications on root is handled by workspace_widget
-        if path == "/":
+        if path is None or path == "/":
             return
 
         modified_hops = [x for x in path.parts if x != "/"]
