@@ -38,7 +38,6 @@
         <file>images/icons/cancel_white.png</file>
         <file>images/icons/checked_white.png</file>
         <file>images/icons/folder-up.png</file>
-        <file>images/icons/folder-up_selected.png</file>
         <file>images/icons/parsec.png</file>
         <file>images/icons/white_cross.png</file>
         <file>images/icons/garbage_workspace.png</file>
@@ -105,6 +104,7 @@
         <file>images/icons/personal-computer.png</file>
         <file>images/icons/devices.png</file>
         <file>images/icons/documents.png</file>
+        <file>images/icons/folder-up_selected.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
