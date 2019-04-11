@@ -135,16 +135,11 @@ background-color: rgb(255, 255, 255);
       </property>
       <item>
        <widget class="QLabel" name="label_title">
-        <property name="font">
-         <font>
-          <pointsize>22</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
         <property name="styleSheet">
          <string notr="true">QLabel#label_title
 {
+font-size: 33px;
+font-weight: 750;
 color: rgb(14, 71, 153);
 }</string>
         </property>
@@ -158,12 +153,12 @@ color: rgb(14, 71, 153);
       </item>
       <item>
        <widget class="QLabel" name="label_doc">
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
+        <property name="styleSheet">
+         <string notr="true">QLabel#label_doc
+{
+font-size: 19px;
+font-weight: 700;
+}</string>
         </property>
         <property name="text">
          <string/>
@@ -341,13 +336,6 @@ color: rgb(14, 71, 153);
          <height>16777215</height>
         </size>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>13</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="styleSheet">
         <string notr="true">QPushButton#button_previous
 {
@@ -359,6 +347,8 @@ border-bottom-left-radius: 20px;
 border-bottom-right-radius: 20px;
 border-top-left-radius: 20px;
 border-top-right-radius: 20px;
+font-size: 15px;
+font-weight: bold;
 }</string>
        </property>
        <property name="text">
@@ -414,13 +404,6 @@ border: 0;
          <height>16777215</height>
         </size>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>13</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="styleSheet">
         <string notr="true">QPushButton#button_next
 {
@@ -432,6 +415,8 @@ border-bottom-left-radius: 20px;
 border-bottom-right-radius: 20px;
 border-top-left-radius: 20px;
 border-top-right-radius: 20px;
+font-size: 15px;
+font-weight: bold;
 }</string>
        </property>
        <property name="text">
