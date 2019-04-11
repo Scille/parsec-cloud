@@ -459,11 +459,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             except FSEntryNotFound:
                 return
 
+        if path is None:
+            return
+
         path = pathlib.Path(path)
         parent = path.parent
         current_path = pathlib.Path("/") / self.workspace / self.current_directory
 
-        if path == "/" or parent != current_path:
+        if path == pathlib.Path("/") or parent != current_path:
             return
 
         for i in range(self.table_files.rowCount()):
@@ -485,7 +488,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             return
 
         # Modifications on root is handled by workspace_widget
-        if path is None or path == "/":
+        if path is None or path == pathlib.Path("/"):
             return
 
         modified_hops = [x for x in path.parts if x != "/"]
