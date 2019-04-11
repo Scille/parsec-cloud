@@ -8,6 +8,10 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtGui import QIcon, QPixmap, QPainter
 
 
+NAME_DATA_INDEX = Qt.UserRole
+TYPE_DATA_INDEX = Qt.UserRole + 1
+
+
 class FileType(IntEnum):
     ParentWorkspace = 1
     ParentFolder = 2
@@ -17,10 +21,10 @@ class FileType(IntEnum):
 
 class CustomTableItem(QTableWidgetItem):
     def __lt__(self, other):
-        self_type = self.data(Qt.UserRole + 1)
-        other_type = other.data(Qt.UserRole + 1)
-        self_data = self.data(Qt.UserRole)
-        other_data = other.data(Qt.UserRole)
+        self_type = self.data(TYPE_DATA_INDEX)
+        other_type = other.data(TYPE_DATA_INDEX)
+        self_data = self.data(NAME_DATA_INDEX)
+        other_data = other.data(NAME_DATA_INDEX)
 
         if self_type == FileType.ParentWorkspace or self_type == FileType.ParentFolder:
             return False
@@ -107,11 +111,11 @@ class FileTableItem(IconTableItem):
         ext = pathlib.Path(file_name).suffix
         icon = self.EXTENSIONS.get(ext, "file_unknown")
         super().__init__(is_synced, ":/icons/images/icons/{}.png".format(icon), "", *args, **kwargs)
-        self.setData(Qt.UserRole + 1, FileType.File)
+        self.setData(TYPE_DATA_INDEX, FileType.File)
 
 
 class FolderTableItem(IconTableItem):
     def __init__(self, is_synced, *args, **kwargs):
         super().__init__(is_synced, ":/icons/images/icons/folder.png", "", *args, **kwargs)
-        self.setData(Qt.UserRole, 0)
-        self.setData(Qt.UserRole + 1, FileType.Folder)
+        self.setData(NAME_DATA_INDEX, 0)
+        self.setData(TYPE_DATA_INDEX, FileType.Folder)

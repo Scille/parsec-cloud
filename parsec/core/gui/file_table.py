@@ -13,7 +13,14 @@ from PyQt5.QtWidgets import (
 )
 
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.file_items import FileTableItem, CustomTableItem, FolderTableItem, FileType
+from parsec.core.gui.file_items import (
+    FileTableItem,
+    CustomTableItem,
+    FolderTableItem,
+    FileType,
+    NAME_DATA_INDEX,
+    TYPE_DATA_INDEX,
+)
 from parsec.core.gui.file_size import get_filesize
 
 
@@ -64,12 +71,12 @@ class FileTable(QTableWidget):
         selected = self.selectedItems()
         for item in self.previous_selection:
             if item.column() == 0:
-                file_type = item.data(Qt.UserRole + 1)
+                file_type = item.data(TYPE_DATA_INDEX)
                 if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
                     item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
         for item in selected:
             if item.column() == 0:
-                file_type = item.data(Qt.UserRole + 1)
+                file_type = item.data(TYPE_DATA_INDEX)
                 if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
                     item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
         self.previous_selection = selected
@@ -78,38 +85,38 @@ class FileTable(QTableWidget):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = CustomTableItem(QIcon(":/icons/images/icons/folder-up.png"), "")
-        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("Parent Folder"))
-        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole + 1, FileType.ParentFolder)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         self.setItem(row_idx, 4, item)
 
     def add_parent_workspace(self):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = CustomTableItem(QIcon(":/icons/images/icons/folder-up.png"), "")
-        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("Parent Workspace"))
-        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole + 1, FileType.ParentWorkspace)
+        item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         self.setItem(row_idx, 4, item)
 
     def add_folder(self, folder_name, is_synced):
@@ -118,43 +125,43 @@ class FileTable(QTableWidget):
         item = FolderTableItem(is_synced)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(folder_name)
-        item.setData(Qt.UserRole, folder_name)
-        item.setData(Qt.UserRole + 1, FileType.Folder)
+        item.setData(NAME_DATA_INDEX, folder_name)
+        item.setData(TYPE_DATA_INDEX, FileType.Folder)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
-        item.setData(Qt.UserRole + 1, FileType.Folder)
+        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(TYPE_DATA_INDEX, FileType.Folder)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
-        item.setData(Qt.UserRole + 1, FileType.Folder)
+        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(TYPE_DATA_INDEX, FileType.Folder)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
-        item.setData(Qt.UserRole, -1)
-        item.setData(Qt.UserRole + 1, FileType.Folder)
+        item.setData(NAME_DATA_INDEX, -1)
+        item.setData(TYPE_DATA_INDEX, FileType.Folder)
         self.setItem(row_idx, 4, item)
 
     def add_file(self, file_name, file_size, created_on, updated_on, is_synced):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, file_name)
-        item.setData(Qt.UserRole, 1)
+        item.setData(NAME_DATA_INDEX, 1)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(file_name)
-        item.setData(Qt.UserRole, file_name)
-        item.setData(Qt.UserRole + 1, FileType.File)
+        item.setData(NAME_DATA_INDEX, file_name)
+        item.setData(TYPE_DATA_INDEX, FileType.File)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem(created_on.format("%x %X"))
-        item.setData(Qt.UserRole, created_on)
-        item.setData(Qt.UserRole + 1, FileType.File)
+        item.setData(NAME_DATA_INDEX, created_on)
+        item.setData(TYPE_DATA_INDEX, FileType.File)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem(updated_on.format("%x %X"))
-        item.setData(Qt.UserRole, updated_on)
-        item.setData(Qt.UserRole + 1, FileType.File)
+        item.setData(NAME_DATA_INDEX, updated_on)
+        item.setData(TYPE_DATA_INDEX, FileType.File)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem(get_filesize(file_size))
-        item.setData(Qt.UserRole, file_size)
-        item.setData(Qt.UserRole + 1, FileType.File)
+        item.setData(NAME_DATA_INDEX, file_size)
+        item.setData(TYPE_DATA_INDEX, FileType.File)
         self.setItem(row_idx, 4, item)
 
     def dropEvent(self, event):
@@ -164,7 +171,7 @@ class FileTable(QTableWidget):
         rows = set([i.row() for i in self.selectedIndexes() if i != target_row])
         if not rows:
             return
-        file_type = self.item(target_row, 0).data(Qt.UserRole + 1)
+        file_type = self.item(target_row, 0).data(TYPE_DATA_INDEX)
         target_name = self.item(target_row, 1).text()
 
         if file_type != FileType.ParentFolder and file_type != FileType.Folder:

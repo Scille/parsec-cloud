@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication, QDialog
 
 from parsec.core.types import FsPath
 from parsec.core.gui import desktop
-from parsec.core.gui.file_items import FileType
+from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.loading_dialog import LoadingDialog
@@ -270,7 +270,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def filter_files(self, pattern):
         pattern = pattern.lower()
         for i in range(self.table_files.rowCount()):
-            file_type = self.table_files.item(i, 0).data(Qt.UserRole + 1)
+            file_type = self.table_files.item(i, 0).data(TYPE_DATA_INDEX)
             name_item = self.table_files.item(i, 1)
             if file_type != FileType.ParentFolder and file_type != FileType.ParentWorkspace:
                 if pattern not in name_item.text().lower():
@@ -304,7 +304,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 return
             path = os.path.join("/", self.workspace, self.current_directory, name_item.text())
             try:
-                if type_item.data(Qt.UserRole + 1) == FileType.Folder:
+                if type_item.data(TYPE_DATA_INDEX) == FileType.Folder:
                     self._delete_folder(path)
                 else:
                     self.portal.run(self.core.fs.delete, path)
@@ -361,7 +361,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         type_item = self.table_files.item(row, 0)
         if not name_item or not type_item:
             return
-        file_type = type_item.data(Qt.UserRole + 1)
+        file_type = type_item.data(TYPE_DATA_INDEX)
         if file_type == FileType.ParentFolder or file_type == FileType.ParentWorkspace:
             return
         menu = QMenu(self.table_files)
@@ -389,7 +389,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             if not new_name:
                 return
             try:
-                if type_item.data(Qt.UserRole + 1) == FileType.Folder:
+                if type_item.data(TYPE_DATA_INDEX) == FileType.Folder:
                     self.portal.run(
                         self.core.fs.move,
                         os.path.join("/", self.workspace, self.current_directory, name_item.text()),
@@ -418,7 +418,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def item_double_clicked(self, row, column):
         name_item = self.table_files.item(row, 1)
         type_item = self.table_files.item(row, 0)
-        file_type = type_item.data(Qt.UserRole + 1)
+        file_type = type_item.data(TYPE_DATA_INDEX)
         try:
             if file_type == FileType.ParentFolder:
                 self.load(os.path.dirname(self.current_directory))
@@ -473,7 +473,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             name_item = self.table_files.item(i, 1)
             if name_item.text() == path.name:
                 icon_item = self.table_files.item(i, 0)
-                file_type = icon_item.data(Qt.UserRole + 1)
+                file_type = icon_item.data(TYPE_DATA_INDEX)
                 if file_type == FileType.File or file_type == FileType.Folder:
                     icon_item.is_synced = True
                     return
