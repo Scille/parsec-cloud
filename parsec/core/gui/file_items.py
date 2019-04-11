@@ -32,8 +32,25 @@ class CustomTableItem(QTableWidgetItem):
 class IconTableItem(CustomTableItem):
     def __init__(self, is_synced, pixmap, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.base_pixmap = pixmap
+        self.synced_pixmap = self._draw_synced_pixmap(pixmap)
+        self.unsynced_pixmap = self._draw_unsynced_pixmap(pixmap)
         self.is_synced = is_synced
+
+    def _draw_synced_pixmap(self, source):
+        p = QPixmap(source)
+        m = QPixmap(":/icons/images/icons/checked.png")
+        painter = QPainter(p)
+        painter.drawPixmap(p.width() - 50, 0, 50, 50, m)
+        painter.end()
+        return p
+
+    def _draw_unsynced_pixmap(self, source):
+        p = QPixmap(source)
+        m = QPixmap(":/icons/images/icons/menu_cancel.png")
+        painter = QPainter(p)
+        painter.drawPixmap(p.width() - 50, 0, 50, 50, m)
+        painter.end()
+        return p
 
     @property
     def is_synced(self):
@@ -42,14 +59,10 @@ class IconTableItem(CustomTableItem):
     @is_synced.setter
     def is_synced(self, value):
         self._is_synced = value
-        p = self.base_pixmap
         if self._is_synced:
-            m = QPixmap(":/icons/images/icons/checked.png")
+            self.setIcon(QIcon(self.synced_pixmap))
         else:
-            m = QPixmap(":/icons/images/icons/menu_cancel.png")
-        painter = QPainter(p)
-        painter.drawPixmap(p.width() - 50, 0, 50, 50, m)
-        self.setIcon(QIcon(p))
+            self.setIcon(QIcon(self.unsynced_pixmap))
 
 
 class FileTableItem(IconTableItem):
@@ -93,14 +106,12 @@ class FileTableItem(IconTableItem):
     def __init__(self, is_synced, file_name, *args, **kwargs):
         ext = pathlib.Path(file_name).suffix
         icon = self.EXTENSIONS.get(ext, "file_unknown")
-        super().__init__(
-            is_synced, QPixmap(":/icons/images/icons/{}.png".format(icon)), "", *args, **kwargs
-        )
+        super().__init__(is_synced, ":/icons/images/icons/{}.png".format(icon), "", *args, **kwargs)
         self.setData(Qt.UserRole + 1, FileType.File)
 
 
 class FolderTableItem(IconTableItem):
     def __init__(self, is_synced, *args, **kwargs):
-        super().__init__(is_synced, QPixmap(":/icons/images/icons/folder.png"), "", *args, **kwargs)
+        super().__init__(is_synced, ":/icons/images/icons/folder.png", "", *args, **kwargs)
         self.setData(Qt.UserRole, 0)
         self.setData(Qt.UserRole + 1, FileType.Folder)

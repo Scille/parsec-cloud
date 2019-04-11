@@ -164,6 +164,8 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return
+        if not path:
+            return
 
         # We are only interested into modification of root manifest given we
         # don't care about the date of modification of the workspaces)
