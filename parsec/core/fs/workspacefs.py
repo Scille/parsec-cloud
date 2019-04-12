@@ -57,8 +57,14 @@ class WorkspaceFS:
                     await self._remote_loader.load_manifest(access)
 
     async def stat(self, path: FsPath) -> dict:
+        # XXX: stat is tricky to move at the moment, because
+        # it used in the tests to check the workpace rights
+        # and other workspace specific info. This is no longer
+        # a job for stat: stat is only about the entry information.
         path = self._cook_path(path)
         return await self._load_and_retry(self._local_folder_fs.stat, path)
+
+    # High-level file operations
 
     async def file_write(self, path: FsPath, content: bytes, offset: int = 0) -> int:
         fd = await self.file_fd_open(path, "rw")
@@ -85,6 +91,10 @@ class WorkspaceFS:
         finally:
             await self.file_fd_close(fd)
 
+    # File descriptor operations
+    # XXX: they should all be renamed `fd_close` and so on.
+    # Except for `file_fd_open` which should be called `file_open`
+
     async def file_fd_open(self, path: FsPath, mode="rw") -> int:
         return await self._entry_transactions.open(path, mode=mode)
 
@@ -106,9 +116,10 @@ class WorkspaceFS:
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
         return await self._file_transactions.read(fd, size, offset)
 
+    # Entry operations
+
     async def file_create(self, path: FsPath) -> UUID:
-        path = self._cook_path(path)
-        return await self._load_and_retry(self._local_folder_fs.touch, path)
+        return await self._entry_transactions.create(path)
 
     async def folder_create(self, path: FsPath) -> UUID:
         path = self._cook_path(path)

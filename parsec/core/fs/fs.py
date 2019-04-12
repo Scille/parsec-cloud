@@ -152,7 +152,8 @@ class FS:
 
     async def file_create(self, path: str) -> UUID:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_create(subpath)
+        fd = await workspace.file_create(subpath)
+        return self._put_fd(workspace, fd)
 
     async def mkdir(self, path: str) -> UUID:
         return await self.folder_create(path)
