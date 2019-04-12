@@ -61,7 +61,7 @@ def _extract_raid5_blockstore_config(environ):
 
 
 def _extract_raid_blockstore_config(type, environ):
-    assert type in (0, 1)
+    assert type in (0, 1, 5)
 
     blockstore_configs = []
     flat_blockstore_environ_vars = ["TYPE"] + [
