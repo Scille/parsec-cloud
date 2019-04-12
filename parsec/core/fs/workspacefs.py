@@ -35,7 +35,7 @@ class WorkspaceFS:
 
         self._file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
         self._entry_transactions = EntryTransactions(
-            workspace_entry, local_storage, self._remote_loader, event_bus
+            self.device, workspace_entry, local_storage, self._remote_loader, event_bus
         )
 
     def _cook_path(self, relative_path=""):

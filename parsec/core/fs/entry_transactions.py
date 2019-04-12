@@ -10,15 +10,12 @@ from parsec.event_bus import EventBus
 from parsec.core.types import (
     FsPath,
     Access,
-    BlockAccess,
     WorkspaceEntry,
     LocalDevice,
     LocalManifest,
     ManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
-    LocalWorkspaceManifest,
-    LocalUserManifest,
     FileCursor,
 )
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
@@ -27,7 +24,6 @@ from parsec.core.fs.utils import (
     is_folder_manifest,
     is_folderish_manifest,
     is_workspace_manifest,
-    is_user_manifest,
 )
 from parsec.core.fs.remote_loader import RemoteLoader
 
@@ -44,11 +40,13 @@ def from_errno(errno, message=None, filename=None, filename2=None):
 class EntryTransactions:
     def __init__(
         self,
+        device: LocalDevice,
         workspace_entry: WorkspaceEntry,
         local_storage: LocalStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
     ):
+        self.local_author = device.device_id
         self.workspace_entry = workspace_entry
         self.local_storage = local_storage
         self.remote_loader = remote_loader
@@ -70,9 +68,10 @@ class EntryTransactions:
 
     async def _get_entry(self, path: FsPath) -> Tuple[Access, LocalManifest]:
         # Root access and manifest
+        assert path.parts[0] == "/"
         access = self.workspace_entry.access
         manifest = await self._get_manifest(access)
-        assert path.parts[0] == "/"
+        assert is_workspace_manifest(manifest)
 
         # Follow the path
         for name in path.parts[1:]:
