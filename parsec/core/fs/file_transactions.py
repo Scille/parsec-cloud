@@ -103,13 +103,26 @@ class FileTransactions:
     # Helpers
 
     @asynccontextmanager
-    async def _load_and_lock_file(self, fd: FileDescriptor) -> LocalFileManifest:
+    async def _load_and_lock_file(self, fd: FileDescriptor):
+        # Get the corresponding access
         try:
-            self.local_storage.load_file_descriptor(fd)
+            cursor, _ = self.local_storage.load_file_descriptor(fd)
+            access = cursor.access
+
+        # Download the corresponding manifest if it's missing
         except LocalStorageMissingEntry as exc:
             await self.remote_loader.load_manifest(exc.access)
-        async with self.local_storage.load_and_lock_file(fd) as (cursor, manifest):
-            yield cursor, manifest
+            access = exc.access
+
+        # Try to lock the access
+        try:
+            async with self.local_storage.lock_manifest(access):
+                yield self.local_storage.load_file_descriptor(fd)
+
+        # The entry has been deleted while we were waiting for the lock
+        except LocalStorageMissingEntry:
+            assert fd not in self.local_storage.open_cursors
+            raise FSInvalidFileDescriptor(fd)
 
     def _attempt_read(self, manifest: LocalFileManifest, start: int, end: int):
         missing = []

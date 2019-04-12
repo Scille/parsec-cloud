@@ -62,11 +62,11 @@ class LocalStorage:
     # Locking helpers
 
     @asynccontextmanager
-    async def _lock_access(self, access: Access):
+    async def lock_manifest(self, access: Access):
         async with self.access_locks[access]:
             try:
                 self.locking_tasks[access] = hazmat.current_task()
-                yield
+                yield self.get_manifest(access)
             finally:
                 del self.locking_tasks[access]
 
@@ -184,12 +184,6 @@ class LocalStorage:
             raise FSInvalidFileDescriptor(fd)
         manifest = self.get_manifest(cursor.access)
         return cursor, manifest
-
-    @asynccontextmanager
-    async def load_and_lock_file(self, fd: FileDescriptor):
-        cursor, manifest = self.load_file_descriptor(fd)
-        async with self._lock_access(cursor.access):
-            yield cursor, manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
         self._assert_consistent_file_descriptor(fd, manifest)
