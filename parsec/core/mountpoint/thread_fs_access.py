@@ -16,11 +16,7 @@ class ThreadFSAccess:
         return self._portal.run(self.fs.move, src, dst, overwrite)
 
     def file_create(self, path):
-        async def _do(path):
-            await self.fs.file_create(path)
-            return await self.fs.file_fd_open(path)
-
-        return self._portal.run(_do, path)
+        return self._portal.run(self.fs.file_create, path)
 
     def folder_create(self, path):
         return self._portal.run(self.fs.folder_create, path)

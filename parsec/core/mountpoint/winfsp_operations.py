@@ -157,8 +157,7 @@ class WinFSPOperations(BaseFileSystemOperations):
                 return OpenedFolder(file_name)
 
             else:
-                self.fs_access.file_create(file_name)
-                fd = self.fs_access.file_fd_open(file_name)
+                fd = self.fs_access.file_create(file_name)
                 return OpenedFile(file_name, fd)
 
     def get_security(self, file_context):

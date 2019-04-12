@@ -148,7 +148,8 @@ class FS:
         return await workspace.file_fd_read(fd, size, offset)
 
     async def touch(self, path: str) -> UUID:
-        return await self.file_create(path)
+        fd = await self.file_create(path)
+        await self.file_fd_close(fd)
 
     async def file_create(self, path: str) -> UUID:
         workspace, subpath = self._get_workspace(path)

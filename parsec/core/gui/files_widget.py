@@ -208,10 +208,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         fd_out = None
         try:
             try:
-                self.portal.run(self.core.fs.file_create, dst)
+                fd_out = self.portal.run(self.core.fs.file_create, dst)
             except FileExistsError:
                 pass
-            fd_out = self.portal.run(self.core.fs.file_fd_open, dst)
             with open(src, "rb") as fd_in:
                 i = 0
                 read_size = 0
