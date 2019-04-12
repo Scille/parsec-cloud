@@ -100,7 +100,13 @@ class FileTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    # Helpers
+    # Locking helper
+
+    # This logic should move to the local storage along with
+    # the remote loader. It would then be up to the local storage
+    # to download the missing blocks and manifests. This should
+    # simplify the code and helper gather all the sensitive methods
+    # in the same module
 
     @asynccontextmanager
     async def _load_and_lock_file(self, fd: FileDescriptor):
@@ -123,6 +129,8 @@ class FileTransactions:
         except LocalStorageMissingEntry:
             assert fd not in self.local_storage.open_cursors
             raise FSInvalidFileDescriptor(fd)
+
+    # Helpers
 
     def _attempt_read(self, manifest: LocalFileManifest, start: int, end: int):
         missing = []

@@ -52,13 +52,13 @@ class EntryTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    # Rights logic
+    # Right management helper
 
     def _check_write_rights(self, path: FsPath):
         if not self.workspace_entry.write_right:
             raise from_errno(errno.EACCES, str(path))
 
-    # Look-up logic
+    # Look-up helpers
 
     async def _get_manifest(self, access: Access) -> LocalManifest:
         try:
@@ -84,7 +84,13 @@ class EntryTransactions:
         # Return entry
         return Entry(access, manifest)
 
-    # Lock logic
+    # Locking helpers
+
+    # This logic should move to the local storage along with
+    # the remote loader. It would then be up to the local storage
+    # to download the missing manifests. This should simplify the
+    # code and help gather all the sensitive methods in the same
+    # module.
 
     @asynccontextmanager
     async def _lock_entry(self, path: FsPath):
