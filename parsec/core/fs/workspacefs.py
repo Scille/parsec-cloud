@@ -5,6 +5,7 @@ import inspect
 from uuid import UUID
 
 from parsec.core.types import FsPath
+from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
 
 
@@ -17,7 +18,6 @@ class WorkspaceFS:
         backend_cmds,
         event_bus,
         _local_folder_fs,
-        _file_transactions,
         _remote_loader,
         _syncer,
     ):
@@ -27,9 +27,10 @@ class WorkspaceFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self._local_folder_fs = _local_folder_fs
-        self._file_transactions = _file_transactions
         self._remote_loader = _remote_loader
         self._syncer = _syncer
+
+        self._file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
 
     def _cook_path(self, relative_path=""):
         return FsPath(f"/{self.workspace_name}/{relative_path}")
