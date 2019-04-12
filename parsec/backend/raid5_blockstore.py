@@ -26,7 +26,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                         _partial_blockstore_read,
                         nursery,
                         self.blockstores[-1],
-                        len(self.blockstores),
+                        len(self.blockstores) - 1,
                     )
                 else:
                     nursery.cancel_scope.cancel()
