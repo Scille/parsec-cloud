@@ -44,17 +44,21 @@ class FileTable(QTableWidget):
         self.previous_selection = []
 
     def init(self):
+        self.setColumnCount(5)
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
         h_header.setSectionResizeMode(0, QHeaderView.Fixed)
-        self.setColumnWidth(0, 60)
         h_header.setSectionResizeMode(1, QHeaderView.Stretch)
         h_header.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.setColumnWidth(2, 200)
         h_header.setSectionResizeMode(3, QHeaderView.Fixed)
-        self.setColumnWidth(3, 200)
         h_header.setSectionResizeMode(4, QHeaderView.Fixed)
+
+        self.setColumnWidth(0, 60)
+        self.setColumnWidth(2, 200)
+        self.setColumnWidth(3, 200)
         self.setColumnWidth(4, 100)
+
         v_header = self.verticalHeader()
         v_header.setSectionResizeMode(QHeaderView.Fixed)
         v_header.setDefaultSectionSize(48)

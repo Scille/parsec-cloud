@@ -63,11 +63,11 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.widget_notif.setGraphicsEffect(effect)
 
         self.new_notification.connect(self.on_new_notification)
-        self.menu.button_files.clicked.connect(self.show_mount_widget)
-        self.menu.button_users.clicked.connect(self.show_users_widget)
-        self.menu.button_settings.clicked.connect(self.show_settings_widget)
-        self.menu.button_devices.clicked.connect(self.show_devices_widget)
-        self.menu.button_logout.clicked.connect(self.logout_requested.emit)
+        self.menu.files_clicked.connect(self.show_mount_widget)
+        self.menu.users_clicked.connect(self.show_users_widget)
+        self.menu.settings_clicked.connect(self.show_settings_widget)
+        self.menu.devices_clicked.connect(self.show_devices_widget)
+        self.menu.logout_clicked.connect(self.logout_requested.emit)
         self.button_notif.clicked.connect(self.show_notification_center)
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.notification_center.close_requested.connect(self.close_notification_center)
@@ -81,20 +81,6 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.settings_widget.set_core_attributes(core, portal)
         self.notification_center.clear()
         self.button_notif.reset_notif_count()
-        # self.on_new_notification(
-        #     "ERROR", "An error message to test how it looks like."
-        # )
-        # self.on_new_notification(
-        #     "WARNING", "Another message but this time its a warning."
-        # )
-        # self.on_new_notification(
-        #     "INFO", "An information message, because we gotta test them all."
-        # )
-        # self.on_new_notification(
-        #     "ERROR",
-        #     "And another error message, but this one will be a little bit longer just "
-        #     "to see if the GUI can handle it.",
-        # )
 
     @CoreWidget.core.setter
     def core(self, c):
@@ -111,11 +97,9 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
                 self._core.event_bus.connect(e, self.handle_event)
             self._on_connection_state_changed(True)
             self.label_mountpoint.setText(str(self._core.config.mountpoint_base_dir))
-            self.menu.label_organization.setText(
-                self._core.device.organization_addr.organization_id
-            )
-            self.menu.label_username.setText(self._core.device.user_id)
-            self.menu.label_device.setText(self._core.device.device_name)
+            self.menu.organization = self._core.device.organization_addr.organization_id
+            self.menu.username = self._core.device.user_id
+            self.menu.device = self._core.device.device_name
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":
@@ -190,7 +174,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def show_mount_widget(self):
         self.hide_all_widgets()
-        self.menu.button_files.setChecked(True)
+        self.menu.activate_files()
         self.label_title.setText(_("Documents"))
         self.mount_widget.reset()
         self.mount_widget.show()
@@ -198,7 +182,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def show_users_widget(self):
         self.hide_all_widgets()
-        self.menu.button_users.setChecked(True)
+        self.menu.activate_users()
         self.label_title.setText(_("Users"))
         self.users_widget.reset()
         self.users_widget.show()
@@ -206,7 +190,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def show_devices_widget(self):
         self.hide_all_widgets()
-        self.menu.button_devices.setChecked(True)
+        self.menu.activate_devices()
         self.label_title.setText(_("Devices"))
         self.devices_widget.reset()
         self.devices_widget.show()
@@ -214,7 +198,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def show_settings_widget(self):
         self.hide_all_widgets()
-        self.menu.button_settings.setChecked(True)
+        self.menu.activate_settings()
         self.label_title.setText(_("Settings"))
         self.settings_widget.reset()
         self.settings_widget.show()
@@ -235,10 +219,6 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.settings_widget.hide()
         self.users_widget.hide()
         self.devices_widget.hide()
-        self.menu.button_files.setChecked(False)
-        self.menu.button_users.setChecked(False)
-        self.menu.button_settings.setChecked(False)
-        self.menu.button_devices.setChecked(False)
 
     def reset(self):
         self.notification_center.clear()
