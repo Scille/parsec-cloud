@@ -140,7 +140,7 @@ async def _fuzzer_cmd(id, core, fs_state):
     elif x < 20:
         path = fs_state.get_new_path()
         try:
-            await core.fs.file_create(path)
+            await core.fs.touch(path)
             fs_state.files.append(path)
             fs_state.add_stat(id, "file_create_ok", f"path={path}")
         except OSError as exc:

@@ -108,7 +108,7 @@ def test_fs_online_concurrent_tree_and_sync(
         async def create_file(self, fs, parent, name):
             path = os.path.join(parent, name)
             try:
-                await fs.file_create(path=path)
+                await fs.touch(path=path)
             except OSError:
                 pass
             return path

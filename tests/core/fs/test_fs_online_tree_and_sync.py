@@ -110,10 +110,10 @@ def test_fs_online_tree_and_sync(
             path = os.path.join(parent, name)
             expected_status = self.oracle_fs.create_file(path)
             if expected_status == "ok":
-                await self.fs.file_create(path=path)
+                await self.fs.touch(path=path)
             else:
                 with pytest.raises(OSError):
-                    await self.fs.file_create(path=path)
+                    await self.fs.touch(path=path)
             return path
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)

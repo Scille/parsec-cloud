@@ -49,7 +49,7 @@ def test_fs_offline_restart_and_rwfile(
             self.local_storage = local_storage_factory(alice)
             await self.restart_fs()
             await self.fs.workspace_create("/w")
-            await self.fs.file_create("/w/foo.txt")
+            await self.fs.touch("/w/foo.txt")
             self.file_oracle = FileOracle()
 
         @rule()

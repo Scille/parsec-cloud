@@ -132,7 +132,7 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
     # 1) Create&sync file
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
 
     with freeze_time("2000-01-03"):
         await alice_fs.file_write("/w/foo.txt", b"hello world !")
@@ -178,9 +178,9 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
     # 1) Create data
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
         await alice_fs.folder_create("/w/bar")
-        await alice_fs.file_create("/w/bar/wizz.txt")
+        await alice_fs.touch("/w/bar/wizz.txt")
         await alice_fs.folder_create("/w/bar/spam")
 
     # 2) Sync it
@@ -231,7 +231,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
     # 1) Both fs have things to sync
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
 
     with freeze_time("2000-01-03"):
         await alice2_fs.folder_create("/w/bar")
@@ -305,7 +305,7 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs
     # the newly created null bytes
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
 
     with freeze_time("2000-01-03"):
         await alice_fs.file_truncate("/w/foo.txt", length=24)
@@ -328,7 +328,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 1) Create existing items in both fs
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
         await alice_fs.file_write("/w/foo.txt", b"v1")
         await alice_fs.folder_create("/w/bar")
 
@@ -343,7 +343,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         await alice_fs.file_write("/w/foo.txt", b"alice's v2")
         await alice_fs.folder_create("/w/bar/from_alice")
         await alice_fs.folder_create("/w/bar/spam")
-        await alice_fs.file_create("/w/bar/buzz.txt")
+        await alice_fs.touch("/w/bar/buzz.txt")
 
     with freeze_time("2000-01-04"):
         # z_by_alice2_id = await alice2_fs.workspace_create("/z")
@@ -351,7 +351,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         await alice2_fs.file_write("/w/foo.txt", b"alice2's v2")
         await alice2_fs.folder_create("/w/bar/from_alice2")
         await alice2_fs.folder_create("/w/bar/spam")
-        await alice2_fs.file_create("/w/bar/buzz.txt")
+        await alice2_fs.touch("/w/bar/buzz.txt")
 
     # 3) Sync Alice first, should go fine
 

@@ -66,9 +66,9 @@ def test_fs_online_idempotent_sync(
             self.fs_controller = await self.start_fs(alice)
 
             await self.fs.workspace_create("/w")
-            await self.fs.file_create("/w/good_file.txt")
+            await self.fs.touch("/w/good_file.txt")
             await self.fs.folder_create("/w/good_folder")
-            await self.fs.file_create("/w/good_folder/good_sub_file.txt")
+            await self.fs.touch("/w/good_folder/good_sub_file.txt")
             await self.fs.sync("/")
 
             self.initial_fs_dump = self.fs._local_folder_fs.dump()
@@ -89,7 +89,7 @@ def test_fs_online_idempotent_sync(
             path = os.path.join(bad_parent, name)
             with pytest.raises(OSError):
                 if type == "file":
-                    await self.fs.file_create(path)
+                    await self.fs.touch(path)
                 else:
                     await self.fs.folder_create(path)
             return path
@@ -98,7 +98,7 @@ def test_fs_online_idempotent_sync(
         async def try_to_create_already_exists(self, type, path):
             with pytest.raises(OSError):
                 if type == "file":
-                    await self.fs.file_create(path)
+                    await self.fs.touch(path)
                 else:
                     await self.fs.folder_create(path)
 
