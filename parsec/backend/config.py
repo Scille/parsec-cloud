@@ -53,6 +53,13 @@ def _extract_raid1_blockstore_config(environ):
     return _extract_raid_blockstore_config(1, environ)
 
 
+def _extract_raid5_blockstore_config(environ):
+    raid_blockstore_config = _extract_raid_blockstore_config(5, environ)
+    if len(raid_blockstore_config.blockstores) < 3:
+        raise ValueError(f"RAID5 environ needs at least 3 blockstores")
+    return raid_blockstore_config
+
+
 def _extract_raid_blockstore_config(type, environ):
     assert type in (0, 1)
 
@@ -108,9 +115,11 @@ def _extract_blockstore_config(blockstore_type, environ):
         return _extract_raid0_blockstore_config(environ)
     elif blockstore_type == "RAID1":
         return _extract_raid1_blockstore_config(environ)
+    elif blockstore_type == "RAID5":
+        return _extract_raid5_blockstore_config(environ)
     else:
         raise ValueError(
-            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT`, `RAID0` or `RAID1`"
+            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT`, `RAID0`, `RAID1` or `RAID5`"
         )
 
 
