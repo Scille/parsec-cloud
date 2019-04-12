@@ -109,7 +109,7 @@ async def test_raid1_block_create_partial_failure(alice_backend_sock, backend, v
     backend.blockstore.blockstores[1].create = mock_create
 
     rep = await create(alice_backend_sock, BLOCK_ID, vlob_group, BLOCK_DATA)
-    rep == {"status": "timeout"}
+    assert rep == {"status": "timeout"}
 
 
 @pytest.mark.trio
