@@ -5,11 +5,7 @@ from uuid import UUID
 
 from parsec.types import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.block import (
-    BlockAlreadyExistsError,
-    BlockNotFoundError,
-    BlockTimeoutError,
-)
+from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
 class RAID5BlockStoreComponent(BaseBlockStoreComponent):
@@ -71,9 +67,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             block += subblock
         return bytes(block)
 
-    async def create(
-        self, organization_id: OrganizationID, id: UUID, block: bytes
-    ) -> None:
+    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         async def _subblockstore_create(blockstore, subblock):
             try:
                 await blockstore.create(organization_id, id, subblock)
