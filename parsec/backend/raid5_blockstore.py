@@ -21,9 +21,9 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             except (BlockNotFoundError, BlockTimeoutError):
                 if not exception_already_triggered:
                     exception_already_triggered = True
-                    self.blockstores += [None]
+                    subblocks += [None]
                     nursery.start_soon(
-                        _single_blockstore_read,
+                        _partial_blockstore_read,
                         nursery,
                         self.blockstores[-1],
                         len(self.blockstores),
@@ -32,7 +32,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     nursery.cancel_scope.cancel()
 
         exception_already_triggered = False
-        subblocks = [None] * (len(blockstores) - 1)
+        subblocks = [None] * (len(self.blockstores) - 1)
         async with trio.open_nursery() as nursery:
             for i, blockstore in enumerate(self.blockstores[0:-1]):
                 nursery.start_soon(_partial_blockstore_read, nursery, blockstore, i)
@@ -82,13 +82,13 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         nb_stores = (
             len(self.blockstores) - 1
         )  # number of stores without the one reserved for checksums
-        subblock_len = len(bytes) / nb_stores
-        if len(bytes) % nb_stores != 0:
+        subblock_len = len(block) // nb_stores
+        if len(block) % nb_stores != 0:
             subblock_len += 1
         subblocks = []
         for i in range(nb_stores):
             subblocks += [block[subblock_len * i : subblock_len * (i + 1)]]
-        padding = subblock_len * nb_stores - len(bytes)
+        padding = subblock_len * nb_stores - len(block)
 
         checksums = bytearray([padding])
         for i in range(subblock_len):
@@ -98,9 +98,9 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     xored ^= subblocks[j][i]
                 except IndexError:
                     pass
-            checksums += [xored]
+            checksums += bytearray([xored])
         subblocks += [bytes(checksums)]
 
         async with trio.open_nursery() as nursery:
-            for i, subblock in subblocks.enumerate():
+            for i, subblock in enumerate(subblocks):
                 nursery.start_soon(_subblockstore_create, self.blockstores[i], subblock)
