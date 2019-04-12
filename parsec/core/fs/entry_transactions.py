@@ -123,7 +123,7 @@ class EntryTransactions:
                     raise from_errno(errno.ENOTDIR, filename=str(path.parent))
 
                 # Child doesn't exist
-                if path.name in parent.manifest.children:
+                if path.name not in parent.manifest.children:
                     yield parent, None
                     return
 
@@ -202,7 +202,7 @@ class EntryTransactions:
             await self._get_entry(source)
 
         # Fetch and lock
-        async with self._lock_parent(destination) as (parent, child):
+        async with self._lock_parent_entry(destination) as (parent, child):
 
             # Source does not exist
             if source.name not in parent.manifest.children:
@@ -313,7 +313,7 @@ class EntryTransactions:
         self._check_write_rights(path)
 
         # Lock parent and child
-        async with self._lock_parent(path) as (parent, child):
+        async with self._lock_parent_entry(path) as (parent, child):
 
             # Destination already exists
             if child is not None:
@@ -329,8 +329,8 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            self.set_dirty_manifest(child_access, child_manifest)
-            self.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_dirty_manifest(child_access, child_manifest)
+            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
 
         # Send events
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
@@ -341,7 +341,7 @@ class EntryTransactions:
         self._check_write_rights(path)
 
         # Lock parent in write mode
-        async with self._lock_parent(path) as (parent, child):
+        async with self._lock_parent_entry(path) as (parent, child):
 
             # Destination already exists
             if child is not None:
@@ -357,8 +357,8 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            self.set_dirty_manifest(child_access, child_manifest)
-            self.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_dirty_manifest(child_access, child_manifest)
+            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
             fd = self._open(child_access)
 
         # Send events
