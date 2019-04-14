@@ -181,7 +181,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         self, organization_id: OrganizationID, author: UserID, id: UUID
     ) -> Dict[DeviceID, Tuple[bool, bool, bool]]:
         group = self._get_group(organization_id, id)
-        if not group.rights.get(author, (False, False, False))[1]:
+        author_rights = group.rights.get(author)
+        if not author_rights or author_rights == (False, False, False):
             raise VlobAccessError()
         return group.rights.copy()
 
