@@ -122,8 +122,7 @@ class WorkspaceFS:
         return await self._entry_transactions.create(path)
 
     async def folder_create(self, path: FsPath) -> UUID:
-        path = self._cook_path(path)
-        return await self._load_and_retry(self._local_folder_fs.mkdir, path)
+        return await self._entry_transactions.mkdir(path)
 
     async def move(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> None:
         src = self._cook_path(src)
