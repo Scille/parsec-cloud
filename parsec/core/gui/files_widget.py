@@ -6,7 +6,7 @@ import pathlib
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication, QDialog
+from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog
 
 from parsec.core.types import FsPath
 from parsec.core.gui import desktop
@@ -45,8 +45,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_create_folder.clicked.connect(self.create_folder_clicked)
         self.taskbar_buttons.append(button_create_folder)
-        self.table_files.customContextMenuRequested.connect(self.show_context_menu)
-        self.table_files.cellDoubleClicked.connect(self.item_double_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = ""
         self.workspace = None
@@ -56,7 +54,140 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.update_timer.timeout.connect(self.reload)
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.file_moved.connect(self.on_file_moved)
-        self.table_files.init()
+        self.table_files.item_activated.connect(self.item_activated)
+        self.table_files.rename_clicked.connect(self.rename_files)
+        self.table_files.delete_clicked.connect(self.delete_files)
+        self.table_files.open_clicked.connect(self.open_files)
+
+    def rename_files(self):
+        files = self.table_files.selected_files()
+        if len(files) == 1:
+            new_name = get_text(
+                self,
+                _("Rename a file"),
+                _("Enter file new name"),
+                placeholder="File name",
+                default_text=files[0][2],
+            )
+            if not new_name:
+                return
+            if not self.rename(files[0][1], files[0][2], new_name):
+                show_error(self, _('File "{}" could not be renamed.').format(files[0][2]))
+
+        else:
+            new_name = get_text(
+                self,
+                _("Rename {} files").format(len(files)),
+                _("Enter files new name (without extension)"),
+                placeholder="Files name",
+            )
+            if not new_name:
+                return
+            r = True
+            for i, f in enumerate(files, 1):
+                old_file = pathlib.Path(f[2])
+                r &= self.rename(
+                    f[1], f[2], "{}_{}{}".format(new_name, i, ".".join(old_file.suffixes))
+                )
+            if not r:
+                show_error(self, _("Some files could not be renamed."))
+
+    def rename(self, file_type, file_name, new_name):
+        try:
+            if file_type == FileType.Folder:
+                self.portal.run(
+                    self.core.fs.move,
+                    os.path.join("/", self.workspace, self.current_directory, file_name),
+                    os.path.join("/", self.workspace, self.current_directory, new_name),
+                )
+            else:
+                self.portal.run(
+                    self.core.fs.move,
+                    os.path.join("/", self.workspace, self.current_directory, file_name),
+                    os.path.join("/", self.workspace, self.current_directory, new_name),
+                )
+            return True
+        except:
+            return False
+
+    def delete_files(self):
+        files = self.table_files.selected_files()
+        if len(files) == 1:
+            result = ask_question(
+                self,
+                _("Confirmation"),
+                _('Are you sure you want to delete "{}"?').format(files[0][2]),
+            )
+        else:
+            result = ask_question(
+                self,
+                _("Confirmation"),
+                _("Are you sure you want to delete {} files?").format(len(files)),
+            )
+        if not result:
+            return
+        r = True
+        for f in files:
+            r &= self.delete_item(*f)
+            if r:
+                self.table_files.removeRow(f[0])
+        if not r:
+            if len(files) == 1:
+                show_error(self, _('Can not delete "{}".').format(f[2]))
+            else:
+                show_error(self, _("Some files could not be deleted."))
+        self.table_files.clearSelection()
+
+    def delete_item(self, row, file_type, file_name):
+        path = os.path.join("/", self.workspace, self.current_directory, file_name)
+        try:
+            if file_type == FileType.Folder:
+                self._delete_folder(path)
+            else:
+                self.portal.run(self.core.fs.delete, path)
+            return True
+        except:
+            return False
+
+    def _delete_folder(self, path):
+        result = self.portal.run(self.core.fs.stat, path)
+        for child in result.get("children", []):
+            child_path = os.path.join(path, child)
+            file_infos = self.portal.run(self.core.fs.stat, os.path.join(path, child))
+            if file_infos["is_folder"]:
+                self._delete_folder(child_path)
+            else:
+                self.portal.run(self.core.fs.delete, child_path)
+        self.portal.run(self.core.fs.delete, path)
+
+    def open_files(self):
+        files = self.table_files.selected_files()
+        if len(files) == 1:
+            self.open_file(files[0][2])
+        else:
+            result = ask_question(
+                self,
+                _("Confirmation"),
+                _("Are you sure you want to open {} files?").format(len(files)),
+            )
+            if not result:
+                return
+            for f in files:
+                self.open_file(f[2])
+
+    def open_file(self, file_name):
+        path = FsPath("/") / self.workspace / self.current_directory / file_name
+        desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
+
+    def item_activated(self, file_type, file_name):
+        if file_type == FileType.ParentFolder:
+            self.load(os.path.dirname(self.current_directory))
+        elif file_type == FileType.ParentWorkspace:
+            self.back_clicked.emit()
+        elif file_type == FileType.File:
+            self.open_file(file_name)
+        elif file_type == FileType.Folder:
+            self.load(os.path.join(os.path.join(self.current_directory, file_name)))
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
@@ -289,48 +420,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             show_error(self, _("A folder with the same name already exists."))
             return False
 
-    def delete_item(self, row):
-        def _inner_delete_item():
-            name_item = self.table_files.item(row, 1)
-            type_item = self.table_files.item(row, 0)
-            if not name_item or not type_item:
-                return
-            result = ask_question(
-                self,
-                _("Confirmation"),
-                _('Are you sure you want to delete "{}" ?').format(name_item.text()),
-            )
-            if not result:
-                return
-            path = os.path.join("/", self.workspace, self.current_directory, name_item.text())
-            try:
-                if type_item.data(TYPE_DATA_INDEX) == FileType.Folder:
-                    self._delete_folder(path)
-                else:
-                    self.portal.run(self.core.fs.delete, path)
-                self.table_files.clearSelection()
-                self.table_files.removeRow(row)
-            except PermissionError:
-                show_error(
-                    self,
-                    _("You don't have enough permission to delete '{}'.".format(name_item.text())),
-                )
-            except:
-                show_error(self, _('Can not delete "{}".').format(name_item.text()))
-
-        return _inner_delete_item
-
-    def _delete_folder(self, path):
-        result = self.portal.run(self.core.fs.stat, path)
-        for child in result.get("children", []):
-            child_path = os.path.join(path, child)
-            file_infos = self.portal.run(self.core.fs.stat, os.path.join(path, child))
-            if file_infos["is_folder"]:
-                self._delete_folder(child_path)
-            else:
-                self.portal.run(self.core.fs.delete, child_path)
-        self.portal.run(self.core.fs.delete, path)
-
     # slot
     def create_folder_clicked(self):
         folder_name = get_text(
@@ -352,86 +441,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         else:
             dst_path = os.path.join("/", self.workspace, dst, src)
         self.portal.run(self.core.fs.move, src_path, dst_path)
-
-    # slot
-    def show_context_menu(self, pos):
-        global_pos = self.table_files.mapToGlobal(pos)
-        row = self.table_files.currentRow()
-        name_item = self.table_files.item(row, 1)
-        type_item = self.table_files.item(row, 0)
-        if not name_item or not type_item:
-            return
-        file_type = type_item.data(TYPE_DATA_INDEX)
-        if file_type == FileType.ParentFolder or file_type == FileType.ParentWorkspace:
-            return
-        menu = QMenu(self.table_files)
-        if file_type == FileType.File:
-            action = menu.addAction(_("Open"))
-        else:
-            action = menu.addAction(_("Open in explorer"))
-        action.triggered.connect(self.open_file(name_item.text()))
-        action = menu.addAction(_("Rename"))
-        action.triggered.connect(self.rename(name_item, type_item))
-        action = menu.addAction(_("Delete"))
-        action.triggered.connect(self.delete_item(row))
-        menu.exec_(global_pos)
-
-    # slot
-    def rename(self, name_item, type_item):
-        def _inner_rename():
-            new_name = get_text(
-                self,
-                _("New name"),
-                _("Enter file new name"),
-                placeholder="File name",
-                default_text=name_item.text(),
-            )
-            if not new_name:
-                return
-            try:
-                if type_item.data(TYPE_DATA_INDEX) == FileType.Folder:
-                    self.portal.run(
-                        self.core.fs.move,
-                        os.path.join("/", self.workspace, self.current_directory, name_item.text()),
-                        os.path.join("/", self.workspace, self.current_directory, new_name),
-                    )
-                else:
-                    self.portal.run(
-                        self.core.fs.move,
-                        os.path.join("/", self.workspace, self.current_directory, name_item.text()),
-                        os.path.join("/", self.workspace, self.current_directory, new_name),
-                    )
-            except:
-                show_error(self, _("Can not rename."))
-
-        return _inner_rename
-
-    # slot
-    def open_file(self, file_name):
-        def _inner_open_file():
-            path = FsPath("/") / self.workspace / self.current_directory / file_name
-            desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
-
-        return _inner_open_file
-
-    # slot
-    def item_double_clicked(self, row, column):
-        name_item = self.table_files.item(row, 1)
-        type_item = self.table_files.item(row, 0)
-        file_type = type_item.data(TYPE_DATA_INDEX)
-        try:
-            if file_type == FileType.ParentFolder:
-                self.load(os.path.dirname(self.current_directory))
-            elif file_type == FileType.ParentWorkspace:
-                self.back_clicked.emit()
-            elif file_type == FileType.File:
-                self.open_file(name_item.text())()
-            elif file_type == FileType.Folder:
-                self.load(os.path.join(os.path.join(self.current_directory, name_item.text())))
-        except AttributeError:
-            # This can happen when updating the list: double click event gets processed after
-            # the item has been removed.
-            pass
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete:
