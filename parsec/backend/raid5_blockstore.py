@@ -56,7 +56,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 else:
                     for j in range(len(subblock)):
                         recover[j] ^= subblock[j]
-            if failed_blockstore_pos == len(subblocks) - 1 and subblocks[-1][0] != 0:
+            if failed_blockstore_pos == len(subblocks) - 2 and subblocks[-1][0] != 0:
                 subblocks[failed_blockstore_pos] = bytes(recover[0 : -subblocks[-1][0]])
             else:
                 subblocks[failed_blockstore_pos] = recover
