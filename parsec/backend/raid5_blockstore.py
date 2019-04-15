@@ -2,10 +2,13 @@
 
 import trio
 from uuid import UUID
+from structlog import get_logger
 
 from parsec.types import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
+
+logger = get_logger()
 
 
 class RAID5BlockStoreComponent(BaseBlockStoreComponent):
@@ -21,6 +24,9 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             except (BlockNotFoundError, BlockTimeoutError):
                 if not exception_already_triggered:  # Add the last parity subblock
                     exception_already_triggered = True
+                    logger.warning(
+                        "Failed to reach blockstore {} for block id {}".format(repr(blockstore), id)
+                    )
                     subblocks += [None]
                     nursery.start_soon(
                         _partial_blockstore_read,
