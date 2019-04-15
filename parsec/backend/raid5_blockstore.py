@@ -6,7 +6,11 @@ from structlog import get_logger
 
 from parsec.types import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
+from parsec.backend.block import (
+    BlockAlreadyExistsError,
+    BlockNotFoundError,
+    BlockTimeoutError,
+)
 
 logger = get_logger()
 
@@ -25,7 +29,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                 if not exception_already_triggered:  # Add the last parity subblock
                     exception_already_triggered = True
                     logger.warning(
-                        "Failed to reach blockstore {} for block id {}".format(repr(blockstore), id)
+                        f"Failed to reach blockstore {repr(blockstore)} for block id {id}"
                     )
                     subblocks += [None]
                     nursery.start_soon(
@@ -74,7 +78,9 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             block += subblock
         return bytes(block)
 
-    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
+    async def create(
+        self, organization_id: OrganizationID, id: UUID, block: bytes
+    ) -> None:
         async def _subblockstore_create(blockstore, subblock):
             try:
                 await blockstore.create(organization_id, id, subblock)
