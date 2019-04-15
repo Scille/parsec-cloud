@@ -164,7 +164,9 @@ async def test_raid5_block_create_partial_failure_2(alice_backend_sock, backend,
     await _test_raid5_block_create_partial_failure(alice_backend_sock, backend, vlob_group, 2)
 
 
-async def _test_raid5_block_create_partial_failure(alice_backend_sock, backend, vlob_group, failing_blockstore_pos):
+async def _test_raid5_block_create_partial_failure(
+    alice_backend_sock, backend, vlob_group, failing_blockstore_pos
+):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
         raise BlockTimeoutError()
@@ -178,7 +180,7 @@ async def _test_raid5_block_create_partial_failure(alice_backend_sock, backend, 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
 async def test_raid5_block_create_partial_exists_0(alice_backend_sock, alice, backend, vlob_group):
-   await _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, vlob_group, 0)
+    await _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, vlob_group, 0)
 
 
 @pytest.mark.trio
@@ -193,18 +195,20 @@ async def test_raid5_block_create_partial_exists_2(alice_backend_sock, alice, ba
     await _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, vlob_group, 2)
 
 
-async def _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, vlob_group, failing_blockstore_pos):
+async def _test_raid5_block_create_partial_exists(
+    alice_backend_sock, alice, backend, vlob_group, failing_blockstore_pos
+):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
     rep = await create(alice_backend_sock, BLOCK_ID, vlob_group, BLOCK_DATA)
     assert rep == {"status": "ok"}
 
 
-
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
 async def test_raid5_block_read_partial_failure_0(alice_backend_sock, alice, backend, block):
     await _test_raid5_block_read_partial_failure(alice_backend_sock, alice, backend, block, 0)
+
 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
@@ -217,12 +221,15 @@ async def test_raid5_block_read_partial_failure_1(alice_backend_sock, alice, bac
 async def test_raid5_block_read_partial_failure_2(alice_backend_sock, alice, backend, block):
     await _test_raid5_block_read_partial_failure(alice_backend_sock, alice, backend, block, 2)
 
-async def _test_raid5_block_read_partial_failure(alice_backend_sock, alice, backend, block, failing_blockstore_pos):
+
+async def _test_raid5_block_read_partial_failure(
+    alice_backend_sock, alice, backend, block, failing_blockstore_pos
+):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
         raise BlockTimeoutError()
 
-    backend.blockstore.blockstores[1].read = mock_read
+    backend.blockstore.blockstores[failing_blockstore_pos].read = mock_read
 
     rep = await read(alice_backend_sock, block)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
