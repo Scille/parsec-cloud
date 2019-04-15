@@ -19,7 +19,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             try:
                 subblocks[i] = await blockstore.read(organization_id, id)
             except (BlockNotFoundError, BlockTimeoutError):
-                if not exception_already_triggered:
+                if not exception_already_triggered:  # Add the last parity subblock
                     exception_already_triggered = True
                     subblocks += [None]
                     nursery.start_soon(
@@ -32,6 +32,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     nursery.cancel_scope.cancel()
 
         exception_already_triggered = False
+        # Don't fetch the parity subblock if not needed
         subblocks = [None] * (len(self.blockstores) - 1)
         async with trio.open_nursery() as nursery:
             for i, blockstore in enumerate(self.blockstores[0:-1]):
@@ -88,6 +89,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
         subblocks = []
         for i in range(nb_stores):
             subblocks += [block[subblock_len * i : subblock_len * (i + 1)]]
+        # how many bytes misses the last subblock compared to the other ones
         padding = subblock_len * nb_stores - len(block)
 
         checksums = bytearray([padding])
