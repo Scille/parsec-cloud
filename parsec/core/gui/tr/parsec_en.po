@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-04-05 13:30+0200\n"
+"POT-Creation-Date: 2019-04-15 12:36+0200\n"
 "PO-Revision-Date: 2019-04-04 15:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,6 +18,42 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
 
+msgid "Rename a file"
+msgstr ""
+
+msgid "Enter file new name"
+msgstr ""
+
+msgid "File \"{}\" could not be renamed."
+msgstr ""
+
+msgid "Rename {} files"
+msgstr ""
+
+msgid "Enter files new name (without extension)"
+msgstr ""
+
+msgid "Some files could not be renamed."
+msgstr ""
+
+msgid "Confirmation"
+msgstr ""
+
+msgid "Are you sure you want to delete \"{}\"?"
+msgstr ""
+
+msgid "Are you sure you want to delete {} files?"
+msgstr ""
+
+msgid "Can not delete \"{}\"."
+msgstr ""
+
+msgid "Some files could not be deleted."
+msgstr ""
+
+msgid "Are you sure you want to open {} files?"
+msgstr ""
+
 msgid "Select files to import"
 msgstr ""
 
@@ -27,40 +63,10 @@ msgstr ""
 msgid "A folder with the same name already exists."
 msgstr ""
 
-msgid "Confirmation"
-msgstr ""
-
-msgid "Are you sure you want to delete \"{}\" ?"
-msgstr ""
-
-msgid "Can not delete \"{}\""
-msgstr ""
-
 msgid "Folder name"
 msgstr ""
 
 msgid "Enter new folder name"
-msgstr ""
-
-msgid "Open"
-msgstr ""
-
-msgid "Open in explorer"
-msgstr ""
-
-msgid "Rename"
-msgstr ""
-
-msgid "Delete"
-msgstr ""
-
-msgid "New name"
-msgstr ""
-
-msgid "Enter file new name"
-msgstr ""
-
-msgid "Can not rename."
 msgstr ""
 
 msgid ""
@@ -170,6 +176,9 @@ msgid "Can not acces this file."
 msgstr ""
 
 msgid "Not yet implemented."
+msgstr ""
+
+msgid "New name"
 msgstr ""
 
 msgid "Enter workspace new name"
@@ -326,6 +335,15 @@ msgid "Continue"
 msgstr ""
 
 msgid "Start"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Rename"
+msgstr ""
+
+msgid "Delete"
 msgstr ""
 
 msgid "Parent Folder"
@@ -826,5 +844,17 @@ msgid "Apply"
 msgstr ""
 
 #~ msgid "URL or user is invalid."
+#~ msgstr ""
+
+#~ msgid "Are you sure you want to delete \"{}\" ?"
+#~ msgstr ""
+
+#~ msgid "Can not delete \"{}\""
+#~ msgstr ""
+
+#~ msgid "Open in explorer"
+#~ msgstr ""
+
+#~ msgid "Can not rename."
 #~ msgstr ""
 
