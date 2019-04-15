@@ -199,9 +199,13 @@ class FS:
         assert workspace.workspace_name == workspace_dst.workspace_name
         await workspace.move(subpath_src, subpath_dst)
 
-    async def delete(self, path: str) -> None:
+    async def file_delete(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        await workspace.delete(subpath)
+        await workspace.file_delete(subpath)
+
+    async def folder_delete(self, path: str) -> None:
+        workspace, subpath = self._get_workspace(path)
+        await workspace.folder_delete(subpath)
 
     async def sync(self, path: str, recursive: bool = True) -> None:
         workspace_name, subpath = self._split_path(path)

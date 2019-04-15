@@ -9,8 +9,11 @@ class ThreadFSAccess:
     def stat(self, path):
         return self._portal.run(self.fs.stat, path)
 
-    def delete(self, path):
-        return self._portal.run(self.fs.delete, path)
+    def file_delete(self, path):
+        return self._portal.run(self.fs.file_delete, path)
+
+    def folder_delete(self, path):
+        return self._portal.run(self.fs.folder_delete, path)
 
     def move(self, src, dst, overwrite):
         return self._portal.run(self.fs.move, src, dst, overwrite)

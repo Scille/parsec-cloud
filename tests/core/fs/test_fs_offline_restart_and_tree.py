@@ -85,24 +85,22 @@ def test_fs_offline_restart_and_tree(
 
         @rule(path=Files)
         async def delete_file(self, path):
-            # TODO: separate delete file from delete folder
-            expected_status = self.oracle_fs.delete(path)
+            expected_status = self.oracle_fs.unlink(path)
             if expected_status == "ok":
-                await self.fs.delete(path=path)
+                await self.fs.file_delete(path=path)
             else:
                 with pytest.raises(OSError):
-                    await self.fs.delete(path=path)
+                    await self.fs.file_delete(path=path)
             return path
 
         @rule(path=Folders)
         async def delete_folder(self, path):
-            # TODO: separate delete file from delete folder
-            expected_status = self.oracle_fs.delete(path)
+            expected_status = self.oracle_fs.rmdir(path)
             if expected_status == "ok":
-                await self.fs.delete(path=path)
+                await self.fs.folder_delete(path=path)
             else:
                 with pytest.raises(OSError):
-                    await self.fs.delete(path=path)
+                    await self.fs.folder_delete(path=path)
             return path
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)

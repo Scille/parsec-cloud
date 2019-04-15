@@ -192,8 +192,12 @@ class WinFSPOperations(BaseFileSystemOperations):
                 self.fs_access.file_fd_close(file_context.fd)
 
         if file_context.deleted:
-            with translate_error():
-                self.fs_access.delete(file_context.path)
+            if isinstance(file_context, OpenedFile):
+                with translate_error():
+                    self.fs_access.file_delete(file_context.path)
+            else:
+                with translate_error():
+                    self.fs_access.folder_delete(file_context.path)
 
     def get_file_info(self, file_context):
         with translate_error():

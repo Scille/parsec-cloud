@@ -290,7 +290,7 @@ class EntryTransactions:
             if child is None:
                 raise from_errno(errno.ENOENT, filename=str(path))
 
-            # Not a directory
+            # Not a file
             if not is_file_manifest(child.manifest):
                 raise from_errno(errno.EISDIR, str(path))
 

@@ -131,7 +131,7 @@ class FuseOperations(LoggingMixIn, Operations):
         path = self._localize_path(path)
 
         with translate_error():
-            self.fs_access.delete(path)
+            self.fs_access.file_delete(path)
 
     def mkdir(self, path, mode):
         path = self._localize_path(path)
@@ -144,10 +144,8 @@ class FuseOperations(LoggingMixIn, Operations):
     def rmdir(self, path):
         path = self._localize_path(path)
 
-        # TODO: check directory is empty
-        # TODO: check path is a directory
         with translate_error():
-            self.fs_access.delete(path)
+            self.fs_access.folder_delete(path)
 
         return 0
 

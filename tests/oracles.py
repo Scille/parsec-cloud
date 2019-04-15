@@ -101,6 +101,8 @@ def oracle_fs_factory(tmpdir):
 
         def unlink(self, path):
             path = self._cook_path(path)
+            if self._is_workspace(path):
+                return "invalid_path"
             try:
                 path.unlink()
             except OSError:
@@ -111,6 +113,8 @@ def oracle_fs_factory(tmpdir):
 
         def rmdir(self, path):
             path = self._cook_path(path)
+            if self._is_workspace(path):
+                return "invalid_path"
             try:
                 path.rmdir()
             except OSError:
@@ -303,6 +307,12 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
 
         def delete(self, path):
             return self.fs.delete(path)
+
+        def rmdir(self, path):
+            return self.fs.rmdir(path)
+
+        def unlink(self, path):
+            return self.fs.unlink(path)
 
         def move(self, src, dst):
             return self.fs.move(src, dst)

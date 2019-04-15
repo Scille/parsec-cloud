@@ -110,7 +110,9 @@ def test_fs_online_idempotent_sync(
         @rule(path=BadPath)
         async def try_to_delete(self, path):
             with pytest.raises(OSError):
-                await self.fs.delete(path)
+                await self.fs.file_delete(path)
+            with pytest.raises(OSError):
+                await self.fs.folder_delete(path)
 
         @rule(src=BadPath, dst_name=st_entry_name)
         async def try_to_move_bad_src(self, src, dst_name):

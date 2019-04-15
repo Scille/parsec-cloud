@@ -129,9 +129,11 @@ class WorkspaceFS:
         dst = self._cook_path(dst)
         await self._load_and_retry(self._local_folder_fs.move, src, dst, overwrite)
 
-    async def delete(self, path: FsPath) -> None:
-        path = self._cook_path(path)
-        await self._load_and_retry(self._local_folder_fs.delete, path)
+    async def file_delete(self, path: FsPath) -> None:
+        await self._entry_transactions.unlink(path)
+
+    async def folder_delete(self, path: FsPath) -> None:
+        await self._entry_transactions.rmdir(path)
 
     async def sync(self, path: FsPath, recursive: bool = True) -> None:
         path = self._cook_path(path)

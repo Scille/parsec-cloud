@@ -131,18 +131,16 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(fs=FSs, path=Files)
         async def delete_file(self, fs, path):
-            # TODO: separate delete file from delete folder
             try:
-                await fs.delete(path=path)
+                await fs.file_delete(path=path)
             except OSError:
                 pass
             return path
 
         @rule(fs=FSs, path=Folders)
         async def delete_folder(self, fs, path):
-            # TODO: separate delete file from delete folder
             try:
-                await fs.delete(path=path)
+                await fs.folder_delete(path=path)
             except OSError:
                 pass
             return path
