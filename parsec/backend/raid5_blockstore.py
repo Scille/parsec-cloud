@@ -24,9 +24,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             except (BlockNotFoundError, BlockTimeoutError):
                 if not exception_already_triggered:  # Add the last parity subblock
                     exception_already_triggered = True
-                    logger.warning(
-                        f"Failed to reach blockstore {i} of RAID 5 for block id {id}"
-                    )
+                    logger.warning(f"Failed to reach blockstore {i} of RAID 5 for block id {id}")
                     subblocks += [None]
                     nursery.start_soon(
                         _partial_blockstore_read,
