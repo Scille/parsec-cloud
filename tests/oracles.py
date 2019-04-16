@@ -181,6 +181,11 @@ def oracle_fs_factory(tmpdir):
             if self._is_workspace(src) or self._is_workspace(dst):
                 return "invalid_path"
 
+            # XXX: Temporary hack
+            # This method should be called rename
+            if src.parent != dst.parent:
+                return "invalid_path"
+
             try:
                 src.rename(str(dst))
             except OSError:

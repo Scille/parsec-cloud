@@ -133,9 +133,7 @@ class WorkspaceFS:
         return await self._entry_transactions.mkdir(path)
 
     async def move(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> None:
-        src = self._cook_path(src)
-        dst = self._cook_path(dst)
-        await self._load_and_retry(self._local_folder_fs.move, src, dst, overwrite)
+        await self._entry_transactions.rename(src, dst, overwrite)
 
     async def file_delete(self, path: FsPath) -> None:
         await self._entry_transactions.unlink(path)

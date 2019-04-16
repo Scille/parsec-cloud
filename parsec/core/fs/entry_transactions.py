@@ -209,6 +209,10 @@ class EntryTransactions:
                 raise from_errno(errno.ENOENT, filename=str(source))
             source_access = parent.manifest.children[source.name]
 
+            # Source and destination are the same
+            if source.name == destination.name:
+                return
+
             # Destination already exists
             if not overwrite and child is not None:
                 raise from_errno(errno.EEXIST, filename=str(destination))
