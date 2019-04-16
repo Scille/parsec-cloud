@@ -7,6 +7,9 @@ from parsec.crypto import CryptoError
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.api.protocole.base import ProtocoleError, InvalidMessageError, serializer_factory
 
+__api_version__ = None
+exec(open("parsec/_version.py", encoding="utf-8").read())
+
 
 class HandshakeError(ProtocoleError):
     pass
@@ -32,9 +35,22 @@ class HandshakeRevokedDevice(HandshakeError):
     pass
 
 
+class HandshakeAPIVersionError(Exception):
+    def __init__(self, expected_version=None):
+        self.expected_version = expected_version
+        if expected_version is not None:
+            self.message = f"Bad API version : expected version {expected_version}"
+        else:
+            self.message = "Bad API version"
+
+    def __str__(self):
+        return self.message
+
+
 class HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
+    api_version = fields.Integer(required=True)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -107,7 +123,7 @@ class ServerHandshake:
         self.state = "challenge"
 
         return handshake_challenge_serializer.dumps(
-            {"handshake": "challenge", "challenge": self.challenge}
+            {"handshake": "challenge", "challenge": self.challenge, "api_version": __api_version__}
         )
 
     def process_answer_req(self, req: bytes):
@@ -216,6 +232,10 @@ class BaseClientHandshake:
                     f"Bad `result` handshake: {data['result']} ({data['help']})"
                 )
 
+    def check_api_version(self, data):
+        if data["api_version"] != __api_version__:
+            raise HandshakeAPIVersionError(data["api_version"])
+
 
 @attr.s
 class AuthenticatedClientHandshake(BaseClientHandshake):
@@ -226,6 +246,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
 
     def process_challenge_req(self, req: bytes) -> bytes:
         data = handshake_challenge_serializer.loads(req)
+        self.check_api_version(data)
         answer = self.user_signkey.sign(data["challenge"])
         return handshake_answer_serializer.dumps(
             {
@@ -245,7 +266,8 @@ class AnonymousClientHandshake(BaseClientHandshake):
     root_verify_key = attr.ib(default=None)
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        handshake_challenge_serializer.loads(req)  # Sanity check
+        data = handshake_challenge_serializer.loads(req)  # Sanity check
+        self.check_api_version(data)
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
@@ -261,7 +283,8 @@ class AdministrationClientHandshake(BaseClientHandshake):
     token = attr.ib()
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        handshake_challenge_serializer.loads(req)  # Sanity check
+        data = handshake_challenge_serializer.loads(req)  # Sanity check
+        self.check_api_version(data)
         return handshake_answer_serializer.dumps(
             {"handshake": "answer", "type": "administration", "token": self.token}
         )

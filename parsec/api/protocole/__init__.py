@@ -12,6 +12,7 @@ from parsec.api.protocole.handshake import (
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
     HandshakeRevokedDevice,
+    HandshakeAPIVersionError,
     ServerHandshake,
     AuthenticatedClientHandshake,
     AnonymousClientHandshake,
