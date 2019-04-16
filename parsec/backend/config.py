@@ -119,7 +119,8 @@ def _extract_blockstore_config(blockstore_type, environ):
         return _extract_raid5_blockstore_config(environ)
     else:
         raise ValueError(
-            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT`, `RAID0`, `RAID1` or `RAID5`"
+            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, "
+            "`S3`, `SWIFT`, `RAID0`, `RAID1` or `RAID5`"
         )
 
 
