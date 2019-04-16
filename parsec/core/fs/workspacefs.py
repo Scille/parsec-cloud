@@ -38,24 +38,6 @@ class WorkspaceFS:
             self.device, workspace_entry, local_storage, self._remote_loader, event_bus
         )
 
-    def _cook_path(self, relative_path=""):
-        return FsPath(f"/{self.workspace_name}/{relative_path}")
-
-    async def _load_and_retry(self, fn, *args, **kwargs):
-        while True:
-            try:
-                if inspect.iscoroutinefunction(fn):
-                    return await fn(*args, **kwargs)
-                else:
-                    return fn(*args, **kwargs)
-
-            except FSManifestLocalMiss as exc:
-                await self._remote_loader.load_manifest(exc.access)
-
-            except FSMultiManifestLocalMiss as exc:
-                for access in exc.accesses:
-                    await self._remote_loader.load_manifest(access)
-
     async def get_workspace_info(self):
         try:
             manifest = self.local_storage.get_manifest(self.workspace_entry.access)
@@ -140,6 +122,26 @@ class WorkspaceFS:
 
     async def folder_delete(self, path: FsPath) -> None:
         await self._entry_transactions.rmdir(path)
+
+    # Left to migrate
+
+    def _cook_path(self, relative_path=""):
+        return FsPath(f"/{self.workspace_name}/{relative_path}")
+
+    async def _load_and_retry(self, fn, *args, **kwargs):
+        while True:
+            try:
+                if inspect.iscoroutinefunction(fn):
+                    return await fn(*args, **kwargs)
+                else:
+                    return fn(*args, **kwargs)
+
+            except FSManifestLocalMiss as exc:
+                await self._remote_loader.load_manifest(exc.access)
+
+            except FSMultiManifestLocalMiss as exc:
+                for access in exc.accesses:
+                    await self._remote_loader.load_manifest(access)
 
     async def sync(self, path: FsPath, recursive: bool = True) -> None:
         path = self._cook_path(path)
