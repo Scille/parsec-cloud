@@ -16,7 +16,6 @@ from parsec.core.types import (
     ManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
-    FileCursor,
 )
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.core.fs.utils import (
@@ -147,16 +146,9 @@ class EntryTransactions:
         # XXX
         pass
 
-    # Helpers
-
-    def _open(self, access: Access) -> FsPath:
-        cursor = FileCursor(access)
-        self.local_storage.add_file_reference(access)
-        return self.local_storage.create_file_descriptor(cursor)
-
     # Transactions
 
-    async def stat(self, path: FsPath):
+    async def entry_info(self, path: FsPath):
 
         # Fetch data
         access, manifest = await self._get_entry(path)
@@ -181,7 +173,7 @@ class EntryTransactions:
 
         return stats
 
-    async def rename(self, source: FsPath, destination: FsPath, overwrite: bool = True):
+    async def entry_rename(self, source: FsPath, destination: FsPath, overwrite: bool = True):
         # Check write rights
         self._check_write_rights(source)
 
@@ -250,7 +242,7 @@ class EntryTransactions:
         # Send event
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
 
-    async def rmdir(self, path: FsPath):
+    async def folder_delete(self, path: FsPath):
         # Check write rights
         self._check_write_rights(path)
 
@@ -283,7 +275,7 @@ class EntryTransactions:
         # Send event
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
 
-    async def unlink(self, path: FsPath):
+    async def file_delete(self, path: FsPath):
         # Check write rights
         self._check_write_rights(path)
 
@@ -312,7 +304,7 @@ class EntryTransactions:
         # Send event
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
 
-    async def mkdir(self, path: FsPath):
+    async def folder_create(self, path: FsPath):
         # Check write rights
         self._check_write_rights(path)
 
@@ -340,7 +332,7 @@ class EntryTransactions:
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
-    async def create(self, path: FsPath):
+    async def file_create(self, path: FsPath):
         # Check write rights
         self._check_write_rights(path)
 
@@ -363,7 +355,7 @@ class EntryTransactions:
             # ~ Atomic change
             self.local_storage.set_dirty_manifest(child_access, child_manifest)
             self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
-            fd = self._open(child_access)
+            fd = self.local_storage.create_cursor(child_access)
 
         # Send events
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
@@ -372,7 +364,7 @@ class EntryTransactions:
         # Return file descriptor
         return fd
 
-    async def open(self, path: FsPath, mode="rw"):
+    async def file_open(self, path: FsPath, mode="rw"):
         # Check write rights
         if "w" in mode:
             self._check_write_rights(path)
@@ -385,4 +377,4 @@ class EntryTransactions:
                 raise from_errno(errno.EISDIR, str(path))
 
             # Return file descriptor
-            return self._open(entry.access)
+            return self.local_storage.create_cursor(entry.access)

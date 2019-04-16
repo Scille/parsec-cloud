@@ -87,9 +87,9 @@ class FS:
 
     async def stat(self, path: str) -> dict:
         # XXX: This method should be splitted in several methods:
-        # - get_user_info()
-        # - get_workspace_info(workspace)
-        # - get_path_info(workspace, path)
+        # - user_info()
+        # - workspace_info(workspace)
+        # - entry_info(workspace, path)
         workspace_name, subpath = self._split_path(path)
 
         # User info
@@ -109,15 +109,15 @@ class FS:
             }
 
         workspace, _ = self._get_workspace(f"/{workspace_name}")
-        stat = await workspace.stat(subpath)
+        entry_info = await workspace.entry_info(subpath)
 
         # Workspace info
         if subpath.is_root():
-            workspace_info = await workspace.get_workspace_info()
-            return {**stat, **workspace_info}
+            workspace_info = await workspace.workspace_info()
+            return {**entry_info, **workspace_info}
 
-        # Path info
-        return stat
+        # Entry info
+        return entry_info
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
         workspace, subpath = self._get_workspace(path)
@@ -125,7 +125,7 @@ class FS:
 
     async def file_truncate(self, path: str, length: int) -> None:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_truncate(subpath, length)
+        return await workspace.file_resize(subpath, length)
 
     async def file_read(self, path: str, size: int = math.inf, offset: int = 0) -> bytes:
         workspace, subpath = self._get_workspace(path)
@@ -133,32 +133,32 @@ class FS:
 
     async def file_fd_open(self, path: str, mode="rw") -> int:
         workspace, subpath = self._get_workspace(path)
-        fd = await workspace.file_fd_open(subpath, mode)
+        fd = await workspace.file_open(subpath, mode)
         return self._put_fd(workspace, fd)
 
     async def file_fd_close(self, fd: int) -> None:
         workspace, fd = self._pop_fd(fd)
-        await workspace.file_fd_close(fd)
+        await workspace.fd_close(fd)
 
     async def file_fd_seek(self, fd: int, offset: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.file_fd_seek(fd, offset)
+        await workspace.fd_seek(fd, offset)
 
     async def file_fd_truncate(self, fd: int, length: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.file_fd_truncate(fd, length)
+        await workspace.fd_resize(fd, length)
 
     async def file_fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
         workspace, fd = self._get_fd(fd)
-        return await workspace.file_fd_write(fd, content, offset)
+        return await workspace.fd_write(fd, content, offset)
 
     async def file_fd_flush(self, fd: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.file_fd_flush(fd)
+        await workspace.fd_flush(fd)
 
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
         workspace, fd = self._get_fd(fd)
-        return await workspace.file_fd_read(fd, size, offset)
+        return await workspace.fd_read(fd, size, offset)
 
     async def touch(self, path: str) -> UUID:
         fd = await self.file_create(path)
@@ -210,7 +210,7 @@ class FS:
         workspace_dst, subpath_dst = self._get_workspace(dst)
         assert workspace
         assert workspace.workspace_name == workspace_dst.workspace_name
-        await workspace.move(subpath_src, subpath_dst)
+        await workspace.entry_rename(subpath_src, subpath_dst)
 
     async def file_delete(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)

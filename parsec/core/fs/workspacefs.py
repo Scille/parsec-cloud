@@ -38,7 +38,9 @@ class WorkspaceFS:
             self.device, workspace_entry, local_storage, self._remote_loader, event_bus
         )
 
-    async def get_workspace_info(self):
+    # Workspace info
+
+    async def workspace_info(self):
         try:
             manifest = self.local_storage.get_manifest(self.workspace_entry.access)
         except FSManifestLocalMiss as exc:
@@ -51,77 +53,79 @@ class WorkspaceFS:
             "participants": list(manifest.participants),
         }
 
+    # Entry operations
+
+    async def entry_info(self, path: FsPath) -> dict:
+        return await self._entry_transactions.entry_info(path)
+
+    async def entry_rename(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> None:
+        await self._entry_transactions.entry_rename(src, dst, overwrite)
+
+    # Folder operations
+
+    async def folder_create(self, path: FsPath) -> UUID:
+        return await self._entry_transactions.folder_create(path)
+
+    async def folder_delete(self, path: FsPath) -> None:
+        await self._entry_transactions.folder_delete(path)
+
+    # File operations
+
+    async def file_create(self, path: FsPath) -> UUID:
+        return await self._entry_transactions.file_create(path)
+
+    async def file_open(self, path: FsPath, mode="rw") -> int:
+        return await self._entry_transactions.file_open(path, mode=mode)
+
+    async def file_delete(self, path: FsPath) -> None:
+        await self._entry_transactions.file_delete(path)
+
+    # File descriptor operations
+
+    async def fd_close(self, fd: int) -> None:
+        await self._file_transactions.fd_close(fd)
+
+    async def fd_seek(self, fd: int, offset: int) -> None:
+        await self._file_transactions.fd_seek(fd, offset)
+
+    async def fd_resize(self, fd: int, length: int) -> None:
+        await self._file_transactions.fd_resize(fd, length)
+
+    async def fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
+        return await self._file_transactions.fd_write(fd, content, offset)
+
+    async def fd_flush(self, fd: int) -> None:
+        await self._file_transactions.fd_flush(fd)
+
+    async def fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
+        return await self._file_transactions.fd_read(fd, size, offset)
+
     # High-level file operations
 
     async def file_write(self, path: FsPath, content: bytes, offset: int = 0) -> int:
-        fd = await self.file_fd_open(path, "rw")
+        fd = await self.file_open(path, "rw")
         try:
             if offset:
-                await self.file_fd_seek(fd, offset)
-            return await self.file_fd_write(fd, content)
+                await self.fd_seek(fd, offset)
+            return await self.fd_write(fd, content)
         finally:
-            await self.file_fd_close(fd)
+            await self.fd_close(fd)
 
-    async def file_truncate(self, path: FsPath, length: int) -> None:
-        fd = await self.file_fd_open(path, "w")
+    async def file_resize(self, path: FsPath, length: int) -> None:
+        fd = await self.file_open(path, "w")
         try:
-            await self.file_fd_truncate(fd, length)
+            await self.fd_resize(fd, length)
         finally:
-            await self.file_fd_close(fd)
+            await self.fd_close(fd)
 
     async def file_read(self, path: FsPath, size: int = math.inf, offset: int = 0) -> bytes:
-        fd = await self.file_fd_open(path, "r")
+        fd = await self.file_open(path, "r")
         try:
             if offset:
-                await self.file_fd_seek(fd, offset)
-            return await self.file_fd_read(fd, size)
+                await self.fd_seek(fd, offset)
+            return await self.fd_read(fd, size)
         finally:
-            await self.file_fd_close(fd)
-
-    # File descriptor operations
-    # XXX: they should all be renamed `fd_close` and so on.
-    # Except for `file_fd_open` which should be called `file_open`
-
-    async def file_fd_open(self, path: FsPath, mode="rw") -> int:
-        return await self._entry_transactions.open(path, mode=mode)
-
-    async def file_fd_close(self, fd: int) -> None:
-        await self._file_transactions.close(fd)
-
-    async def file_fd_seek(self, fd: int, offset: int) -> None:
-        await self._file_transactions.seek(fd, offset)
-
-    async def file_fd_truncate(self, fd: int, length: int) -> None:
-        await self._file_transactions.truncate(fd, length)
-
-    async def file_fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
-        return await self._file_transactions.write(fd, content, offset)
-
-    async def file_fd_flush(self, fd: int) -> None:
-        await self._file_transactions.flush(fd)
-
-    async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
-        return await self._file_transactions.read(fd, size, offset)
-
-    # Entry operations
-
-    async def stat(self, path: FsPath) -> dict:
-        return await self._entry_transactions.stat(path)
-
-    async def file_create(self, path: FsPath) -> UUID:
-        return await self._entry_transactions.create(path)
-
-    async def folder_create(self, path: FsPath) -> UUID:
-        return await self._entry_transactions.mkdir(path)
-
-    async def move(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> None:
-        await self._entry_transactions.rename(src, dst, overwrite)
-
-    async def file_delete(self, path: FsPath) -> None:
-        await self._entry_transactions.unlink(path)
-
-    async def folder_delete(self, path: FsPath) -> None:
-        await self._entry_transactions.rmdir(path)
+            await self.fd_close(fd)
 
     # Left to migrate
 

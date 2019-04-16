@@ -212,3 +212,10 @@ class LocalStorage:
             self.clear_dirty_block(block_access)
         for block_access in manifest.blocks:
             self.clear_clean_block(block_access)
+
+    # Cursor helper
+
+    def create_cursor(self, access: Access) -> FileDescriptor:
+        cursor = FileCursor(access)
+        self.add_file_reference(access)
+        return self.create_file_descriptor(cursor)

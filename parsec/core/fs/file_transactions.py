@@ -168,14 +168,14 @@ class FileTransactions:
 
     # Atomic transactions
 
-    async def close(self, fd: FileDescriptor) -> None:
+    async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
 
-    async def seek(self, fd: FileDescriptor, offset: int) -> None:
+    async def fd_seek(self, fd: FileDescriptor, offset: int) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
@@ -185,7 +185,7 @@ class FileTransactions:
             # Atomic change
             cursor.offset = offset
 
-    async def write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
+    async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
@@ -214,7 +214,7 @@ class FileTransactions:
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
         return len(content)
 
-    async def truncate(self, fd: FileDescriptor, length: int) -> None:
+    async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
@@ -238,7 +238,7 @@ class FileTransactions:
         # Notify
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
 
-    async def read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
+    async def fd_read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
         # Loop over attemps
         missing = []
         while True:
@@ -271,6 +271,6 @@ class FileTransactions:
 
                 return data
 
-    async def flush(self, fd: FileDescriptor) -> None:
+    async def fd_flush(self, fd: FileDescriptor) -> None:
         # No-op
         pass
