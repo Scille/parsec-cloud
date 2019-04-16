@@ -23,8 +23,8 @@ class WorkspaceFS:
         _remote_loader,
         _syncer,
     ):
-        self.workpace_name = workspace_name
-        self.workpace_entry = workspace_entry
+        self.workspace_name = workspace_name
+        self.workspace_entry = workspace_entry
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
