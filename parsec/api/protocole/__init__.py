@@ -62,6 +62,7 @@ __all__ = (
     "HandshakeFailedChallenge",
     "HandshakeBadIdentity",
     "HandshakeRevokedDevice",
+    "HandshakeAPIVersionError",
     "ServerHandshake",
     "AuthenticatedClientHandshake",
     "AnonymousClientHandshake",
