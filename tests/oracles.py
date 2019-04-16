@@ -92,7 +92,7 @@ def oracle_fs_factory(tmpdir):
                 path.mkdir(exist_ok=False)
             except OSError:
                 return "invalid_path"
-            self._register_stat(path, "workspace" if workspace else "folder")
+            self._register_stat(path, "folder")
             self.entries_stats[path.parent]["need_sync"] = True
             return "ok"
 

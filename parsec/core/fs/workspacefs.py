@@ -56,13 +56,18 @@ class WorkspaceFS:
                 for access in exc.accesses:
                     await self._remote_loader.load_manifest(access)
 
-    async def stat(self, path: FsPath) -> dict:
-        # XXX: stat is tricky to move at the moment, because
-        # it used in the tests to check the workpace rights
-        # and other workspace specific info. This is no longer
-        # a job for stat: stat is only about the entry information.
-        path = self._cook_path(path)
-        return await self._load_and_retry(self._local_folder_fs.stat, path)
+    async def get_workspace_info(self):
+        try:
+            manifest = self.local_storage.get_manifest(self.workspace_entry.access)
+        except FSManifestLocalMiss as exc:
+            manifest = await self._remote_loader.load_manifest(exc.access)
+        return {
+            "admin_right": self.workspace_entry.admin_right,
+            "read_right": self.workspace_entry.read_right,
+            "write_right": self.workspace_entry.write_right,
+            "creator": manifest.creator,
+            "participants": list(manifest.participants),
+        }
 
     # High-level file operations
 
@@ -117,6 +122,9 @@ class WorkspaceFS:
         return await self._file_transactions.read(fd, size, offset)
 
     # Entry operations
+
+    async def stat(self, path: FsPath) -> dict:
+        return await self._entry_transactions.stat(path)
 
     async def file_create(self, path: FsPath) -> UUID:
         return await self._entry_transactions.create(path)

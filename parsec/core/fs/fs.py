@@ -86,7 +86,13 @@ class FS:
             yield self._user_fs.get_workspace(w_entry.access.id)
 
     async def stat(self, path: str) -> dict:
+        # XXX: This method should be splitted in several methods:
+        # - get_user_info()
+        # - get_workspace_info(workspace)
+        # - get_path_info(workspace, path)
         workspace_name, subpath = self._split_path(path)
+
+        # User info
         if not workspace_name:
             um = self._user_fs.get_user_manifest()
             return {
@@ -102,9 +108,16 @@ class FS:
                 "children": sorted(um.children.keys()),
             }
 
-        else:
-            workspace, _ = self._get_workspace(f"/{workspace_name}")
-            return await workspace.stat(subpath)
+        workspace, _ = self._get_workspace(f"/{workspace_name}")
+        stat = await workspace.stat(subpath)
+
+        # Workspace info
+        if subpath.is_root():
+            workspace_info = await workspace.get_workspace_info()
+            return {**stat, **workspace_info}
+
+        # Path info
+        return stat
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
         workspace, subpath = self._get_workspace(path)

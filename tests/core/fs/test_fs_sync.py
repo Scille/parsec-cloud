@@ -17,7 +17,8 @@ async def assert_same_fs(fs1, fs2):
         assert stat1 == stat2
 
         cooked_children = {}
-        if stat1["is_folder"]:
+        # XXX: type root should not exist
+        if stat1["type"] in ("folder", "root"):
             for child in stat1["children"]:
                 cooked_children[child] = await _recursive_assert(fs1, fs2, f"{path}/{child}")
             stat1["children"] = cooked_children
@@ -47,12 +48,11 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
 
     stat = await alice_fs.stat("/w")
     assert stat == {
-        "type": "workspace",
+        "type": "folder",
         "id": w_id,
         "admin_right": True,
         "read_right": True,
         "write_right": True,
-        "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
         "base_version": 2,
@@ -97,7 +97,6 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
         assert stat == {
             "type": "file",
             "id": ANY,
-            "is_folder": False,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -109,7 +108,6 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
         assert stat == {
             "type": "folder",
             "id": ANY,
-            "is_folder": True,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -565,13 +563,12 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
 
     stat = await alice_fs.stat("/w")
     assert stat == {
-        "type": "workspace",
+        "type": "folder",
         "id": w_id,
         "admin_right": True,
         "read_right": True,
         "write_right": True,
         "base_version": 2,
-        "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -613,7 +610,6 @@ async def test_create_already_existing_file_vlob(running_backend, alice_fs, alic
     assert stat == {
         "type": "file",
         "id": ANY,
-        "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -673,7 +669,6 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
     assert stat == {
         "type": "file",
         "id": ANY,
-        "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
