@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from pathlib import PureWindowsPath
 from contextlib import contextmanager
 from winfspy import (
     NTStatusError,
@@ -43,11 +44,8 @@ def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):
 def stat_to_file_attributes(stat):
     # TODO: consider using FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS/FILE_ATTRIBUTE_RECALL_ON_OPEN ?
     # (see https://docs.microsoft.com/en-us/windows/desktop/fileio/file-attribute-constants)
-    if stat["is_folder"]:
-        if stat["type"] == "root":
-            return FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE.FILE_ATTRIBUTE_READONLY
-        else:
-            return FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY
+    if stat["type"] == "folder":
+        return FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY
     else:
         return FILE_ATTRIBUTE.FILE_ATTRIBUTE_NORMAL
 
@@ -63,11 +61,8 @@ def stat_to_winfsp_attributes(stat):
         "index_number": stat["id"].int & 0xFFFFFFFF,  # uint64_t
     }
 
-    if stat["is_folder"]:
+    if stat["type"] == "folder":
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY
-        # TODO: remove this once per-workspace-fs rework has been done
-        if stat["type"] == "root":
-            attributes["file_attributes"] |= FILE_ATTRIBUTE.FILE_ATTRIBUTE_READONLY
         attributes["allocation_size"] = round_to_block_size(1)
         attributes["file_size"] = round_to_block_size(1)
 
@@ -83,6 +78,10 @@ class OpenedFolder:
     def __init__(self, path):
         self.path = path
         self.deleted = False
+
+    def is_root(self):
+        # TODO: update when _localize_path has been removed
+        return len(PureWindowsPath(self.path).parts) == 2
 
 
 class OpenedFile:
@@ -240,9 +239,9 @@ class WinFSPOperations(BaseFileSystemOperations):
     def can_delete(self, file_context, file_name: str) -> None:
         with translate_error():
             stat = self.fs_access.stat(file_context.path)
-            if not stat["is_folder"]:
+            if stat["type"] == "file":
                 return
-            if stat["type"] != "folder":
+            if file_context.is_root():
                 # Cannot remove root mountpoint !
                 raise NTStatusError(NTSTATUS.STATUS_RESOURCEMANAGER_READ_ONLY)
             if stat["children"]:
@@ -252,7 +251,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         with translate_error():
             stat = self.fs_access.stat(file_context.path)
 
-            if not stat["is_folder"]:
+            if stat["type"] == "file":
                 raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
 
             entries = []
