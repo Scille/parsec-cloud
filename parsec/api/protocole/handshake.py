@@ -6,9 +6,7 @@ from secrets import token_bytes
 from parsec.crypto import CryptoError
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.api.protocole.base import ProtocoleError, InvalidMessageError, serializer_factory
-
-__api_version__ = None
-exec(open("parsec/_version.py", encoding="utf-8").read())
+from parsec import __api_version__
 
 
 class HandshakeError(ProtocoleError):
