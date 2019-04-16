@@ -48,6 +48,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             self.combo_languages.setCurrentText(current)
         self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
         self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
+        self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
 
     def save(self):
         self.core_config = self.core_config.evolve(
@@ -55,6 +56,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             gui_tray_enabled=self.checkbox_tray.isChecked(),
             gui_language=self.combo_languages.currentData(),
             gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
+            gui_workspace_color=self.check_box_workspace_color.isChecked(),
         )
         save_config(self.core_config)
         telemetry.init(self.core_config)
