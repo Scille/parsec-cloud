@@ -175,14 +175,13 @@ def oracle_fs_factory(tmpdir):
             return "ok"
 
         def move(self, src, dst):
+            # XXX: This method should be called rename
             src = self._cook_path(src)
             dst = self._cook_path(dst)
 
             if self._is_workspace(src) or self._is_workspace(dst):
                 return "invalid_path"
 
-            # XXX: Temporary hack
-            # This method should be called rename
             if src.parent != dst.parent:
                 return "invalid_path"
 
@@ -192,22 +191,17 @@ def oracle_fs_factory(tmpdir):
                 return "invalid_path"
 
             if src != dst:
-                # Recursively move the path and it children by doing copy&delete
+                # Rename source and all entries within the source
                 for child_src, entry in self.entries_stats.copy().items():
-                    # Note `child_src` will also contain `src` itself here
                     try:
                         relative = child_src.relative_to(src)
                     except ValueError:
                         continue
                     child_dst = dst / relative
-                    self.entries_stats[child_dst] = {
-                        "type": self.entries_stats.pop(child_src)["type"],
-                        "base_version": 0,
-                        "is_placeholder": True,
-                        "need_sync": True,
-                    }
+                    entry = self.entries_stats.pop(child_src)
+                    self.entries_stats[child_dst] = entry
 
-                self.entries_stats[dst.parent]["need_sync"] = True
+                # The parent is the only modified entry
                 self.entries_stats[src.parent]["need_sync"] = True
 
             return "ok"
