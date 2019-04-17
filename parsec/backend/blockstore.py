@@ -77,5 +77,12 @@ def blockstore_factory(
 
         return RAID0BlockStoreComponent(blocks)
 
+    elif config.type == "RAID5":
+        from parsec.backend.raid5_blockstore import RAID5BlockStoreComponent
+
+        blocks = [blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores]
+
+        return RAID5BlockStoreComponent(blocks)
+
     else:
         raise ValueError(f"Unknown block store type `{config.type}`")
