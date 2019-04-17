@@ -88,7 +88,31 @@ async def test_register_user_modal_ok(
     await qt_thread_gateway.send_action(run_dialog)
 
 
-@pytest.mark.xfail
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_register_user_modal_invalid_user_id(
+    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+):
+    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
+
+    def run_dialog():
+        modal = RegisterUserDialog(
+            parent=logged_gui.central_widget.users_widget,
+            portal=logged_gui.central_widget.users_widget.portal,
+            core=logged_gui.central_widget.users_widget.core,
+        )
+        modal.show()
+        assert not modal.line_edit_token.text()
+        assert not modal.line_edit_url.text()
+        aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user" * 5)
+        aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
+        assert modal.line_edit_url.text()
+        assert modal.line_edit_username.text() == ("new_user" * 5)[:32]
+        assert modal.line_edit_token.text()
+
+    await qt_thread_gateway.send_action(run_dialog)
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_cancel(
@@ -110,7 +134,8 @@ async def test_register_user_modal_cancel(
         assert modal.line_edit_url.text()
         assert modal.line_edit_username.text() == "new_user"
         assert modal.line_edit_token.text()
-        aqtbot.qtbot.mouseClick(modal.button_cancel, QtCore.Qt.LeftButton)
+        with aqtbot.qtbot.waitSignal(modal.registration_error):
+            aqtbot.qtbot.mouseClick(modal.button_cancel, QtCore.Qt.LeftButton)
         assert not modal.widget_registration.isVisible()
 
     await qt_thread_gateway.send_action(run_dialog)
@@ -141,9 +166,7 @@ async def test_register_user_modal_offline(
 
     await qt_thread_gateway.send_action(run_dialog)
 
-    assert autoclose_dialog.dialogs == [
-        ("Error", "Can not invite this user ([Errno 111] Connection refused).")
-    ]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot invite a user without being online.")]
 
 
 @pytest.mark.gui
@@ -163,10 +186,11 @@ async def test_register_user_modal_already_registered(
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
         aqtbot.qtbot.keyClicks(modal.line_edit_username, "alice")
-        aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
+        with aqtbot.qtbot.waitSignal(modal.registration_error):
+            aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
-    assert autoclose_dialog.dialogs == [("Warning", "A user with the same name already exists.")]
+    assert autoclose_dialog.dialogs == [("Error", "A user with the same name already exists.")]
 
 
 @pytest.mark.gui
@@ -214,7 +238,7 @@ async def test_register_user_unknown_error(
         with aqtbot.qtbot.waitSignal(modal.registration_error):
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
         assert autoclose_dialog.dialogs == [
-            ("Error", "Can not register this user (Unexpected error: RuntimeError()).")
+            ("Error", "Cannot register this user (Unexpected error: RuntimeError()).")
         ]
 
     await qt_thread_gateway.send_action(run_dialog)

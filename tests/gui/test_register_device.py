@@ -87,7 +87,29 @@ async def test_register_device_modal_ok(
     await qt_thread_gateway.send_action(run_dialog)
 
 
-@pytest.mark.xfail
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_register_device_modal_invalid_device_name(
+    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+):
+    def run_dialog():
+        modal = RegisterDeviceDialog(
+            parent=logged_gui.central_widget.devices_widget,
+            portal=logged_gui.central_widget.devices_widget.portal,
+            core=logged_gui.central_widget.devices_widget.core,
+        )
+        modal.show()
+        assert not modal.line_edit_token.text()
+        assert not modal.line_edit_url.text()
+        aqtbot.qtbot.keyClicks(modal.line_edit_device_name, "new_device" * 4)
+        aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
+        assert modal.line_edit_url.text()
+        assert modal.line_edit_device_name.text() == ("new_device" * 4)[:32]
+        assert modal.line_edit_token.text()
+
+    await qt_thread_gateway.send_action(run_dialog)
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_device_modal_cancel(
@@ -107,7 +129,8 @@ async def test_register_device_modal_cancel(
         assert modal.line_edit_url.text()
         assert modal.line_edit_device_name.text() == "new_device"
         assert modal.line_edit_token.text()
-        aqtbot.qtbot.mouseClick(modal.button_cancel, QtCore.Qt.LeftButton)
+        with aqtbot.qtbot.waitSignal(modal.registration_error):
+            aqtbot.qtbot.mouseClick(modal.button_cancel, QtCore.Qt.LeftButton)
         assert not modal.widget_registration.isVisible()
 
     await qt_thread_gateway.send_action(run_dialog)
@@ -137,9 +160,7 @@ async def test_register_device_modal_offline(
 
     await qt_thread_gateway.send_action(run_dialog)
 
-    assert autoclose_dialog.dialogs == [
-        ("Error", "Can not register this device ([Errno 111] Connection refused).")
-    ]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot invite a device without being online.")]
 
 
 @pytest.mark.gui
@@ -164,7 +185,7 @@ async def test_register_device_modal_already_registered(
     assert autoclose_dialog.dialogs == [
         (
             "Error",
-            "Can not register this device (Cannot invite device: Backend error `already_exists`: "
+            "Cannot register this device (Cannot invite device: Backend error `already_exists`: "
             "Device `alice@dev1` already exists).",
         )
     ]
@@ -193,7 +214,7 @@ async def test_register_device_unknown_error(
         with aqtbot.qtbot.waitSignal(modal.registration_error):
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
         assert autoclose_dialog.dialogs == [
-            ("Error", "Can not register this device (Unexpected error: RuntimeError()).")
+            ("Error", "Cannot register this device (Unexpected error: RuntimeError()).")
         ]
 
     await qt_thread_gateway.send_action(run_dialog)

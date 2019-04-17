@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
+    InviteClaimBackendOfflineError,
     InviteClaimError,
     generate_invitation_token as core_generate_invitation_token,
     invite_and_create_device as core_invite_and_create_device,
@@ -19,17 +20,23 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 STATUS_TO_ERRMSG = {
     "already_exists": _("This device already exists."),
+    "registration-invite-offline": _("Cannot invite a device without being online."),
     "timeout": _("Device took too much time to register."),
 }
 
-DEFAULT_ERRMSG = _("Can not register this device ({info}).")
+DEFAULT_ERRMSG = _("Cannot register this device ({info}).")
 
 
 async def _do_registration(device, new_device_name, token):
+    new_device_name = DeviceName(new_device_name)
+
     try:
         await core_invite_and_create_device(device, new_device_name, token)
+    except InviteClaimBackendOfflineError:
+        raise JobResultError("registration-invite-offline")
     except InviteClaimError as exc:
         raise JobResultError("registration-invite-error", info=str(exc))
+    return {"device_name": new_device_name, "token": token}
 
 
 class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
@@ -83,12 +90,12 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         assert self.registration_job.is_finished()
         assert self.registration_job.status == "ok"
         show_info(self, _("Device has been registered. You may now close this window."))
-        self.registration_job = None
         self.device_registered.emit(
-            BackendOrganizationAddr(self.line_edit_url.text()),
-            DeviceName(self.line_edit_device.text()),
-            self.line_edit_token.text(),
+            self.core.device.organization_addr,
+            self.registration_job.ret["device_name"],
+            self.registration_job.ret["token"],
         )
+        self.registration_job = None
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_device.setText("")
@@ -116,7 +123,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             show_warning(
                 self,
                 _(
-                    "Can not close this window while waiting for the new device to register. "
+                    "Cannot close this window while waiting for the new device to register. "
                     "Please cancel first."
                 ),
             )
@@ -129,27 +136,24 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             show_warning(self, _("Please enter a device name."))
             return
 
-        try:
-            token = core_generate_invitation_token()
-            self.line_edit_device.setText(self.line_edit_device_name.text())
-            self.line_edit_device.setCursorPosition(0)
-            self.line_edit_token.setText(token)
-            self.line_edit_token.setCursorPosition(0)
-            self.line_edit_url.setText(self.core.device.organization_addr)
-            self.line_edit_url.setCursorPosition(0)
-            self.button_cancel.setFocus()
-            self.widget_registration.show()
-            self.registration_job = self.portal.submit_job(
-                ThreadSafeQtSignal(self, "registration_success"),
-                ThreadSafeQtSignal(self, "registration_error"),
-                _do_registration,
-                device=self.core.device,
-                new_device_name=self.line_edit_device_name.text(),
-                token=token,
-            )
-            self.button_cancel.show()
-            self.line_edit_device_name.hide()
-            self.button_register.hide()
-            self.closing_allowed = False
-        except:
-            show_warning(self, _("Could not register the device."))
+        token = core_generate_invitation_token()
+        self.line_edit_device.setText(self.line_edit_device_name.text())
+        self.line_edit_device.setCursorPosition(0)
+        self.line_edit_token.setText(token)
+        self.line_edit_token.setCursorPosition(0)
+        self.line_edit_url.setText(self.core.device.organization_addr)
+        self.line_edit_url.setCursorPosition(0)
+        self.button_cancel.setFocus()
+        self.widget_registration.show()
+        self.registration_job = self.portal.submit_job(
+            ThreadSafeQtSignal(self, "registration_success"),
+            ThreadSafeQtSignal(self, "registration_error"),
+            _do_registration,
+            device=self.core.device,
+            new_device_name=self.line_edit_device_name.text(),
+            token=token,
+        )
+        self.button_cancel.show()
+        self.line_edit_device_name.hide()
+        self.button_register.hide()
+        self.closing_allowed = False

@@ -4,12 +4,13 @@ from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
+    InviteClaimBackendOfflineError,
     InviteClaimError,
     generate_invitation_token as core_generate_invitation_token,
     invite_and_create_user as core_invite_and_create_user,
 )
-from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.types import BackendOrganizationAddr, UserID
+from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
 from parsec.core.gui.custom_widgets import show_warning, show_info, show_error
@@ -19,18 +20,32 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 
 STATUS_TO_ERRMSG = {
+    "registration-invite-already-exists": _("A user with the same name already exists."),
     "registration-invite-error": _("Only admins can invite a new user."),
+    "registration-invite-offline": _("Cannot invite a user without being online."),
     "timeout": _("User took too much time to register."),
 }
 
-DEFAULT_ERRMSG = _("Can not register this user ({info}).")
+DEFAULT_ERRMSG = _("Cannot register this user ({info}).")
 
 
-async def _do_registration(device, new_user_id, token, is_admin):
+async def _do_registration(core, device, new_user_id, token, is_admin):
+    new_user_id = UserID(new_user_id)
+
+    try:
+        users = await core.fs.backend_cmds.user_find(new_user_id)
+    except BackendNotAvailable:
+        raise JobResultError("registration-invite-offline")
+    if len(users):
+        raise JobResultError("registration-invite-already-exists")
+
     try:
         await core_invite_and_create_user(device, new_user_id, token, is_admin)
+    except InviteClaimBackendOfflineError:
+        raise JobResultError("registration-invite-offline")
     except InviteClaimError as exc:
         raise JobResultError("registration-invite-error", info=str(exc))
+    return {"user_id": new_user_id, "token": token}
 
 
 class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
@@ -90,12 +105,12 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 "RegisterUserDialog", "User has been registered. You may now close this window."
             ),
         )
-        self.registration_job = None
         self.user_registered.emit(
-            BackendOrganizationAddr(self.line_edit_url.text()),
-            UserID(self.line_edit_user.text()),
-            self.line_edit_token.text(),
+            self.core.device.organization_addr,
+            self.registration_job.ret["user_id"],
+            self.registration_job.ret["token"],
         )
+        self.registration_job = None
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
         self.line_edit_user.setText("")
@@ -125,7 +140,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             show_warning(
                 self,
                 _(
-                    "Can not close this window while waiting for the new user to register. "
+                    "Cannot close this window while waiting for the new user to register. "
                     "Please cancel first."
                 ),
             )
@@ -138,46 +153,27 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             show_warning(self, _("Please enter a username."))
             return
 
-        try:
-            users = self.portal.run(
-                self.core.fs.backend_cmds.user_find, self.line_edit_username.text()
-            )
-        except BackendNotAvailable as exc:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "RegisterUserDialog", f"Can not invite this user ({str(exc)})."
-                ),
-            )
-            self.registration_error.emit()
-            return
-
-        if len(users):
-            show_warning(self, _("A user with the same name already exists."))
-            return
-        try:
-            token = core_generate_invitation_token()
-            self.line_edit_user.setText(self.line_edit_username.text())
-            self.line_edit_user.setCursorPosition(0)
-            self.line_edit_token.setText(token)
-            self.line_edit_token.setCursorPosition(0)
-            self.line_edit_url.setText(self.core.device.organization_addr)
-            self.line_edit_url.setCursorPosition(0)
-            self.button_cancel.setFocus()
-            self.widget_registration.show()
-            self.registration_job = self.portal.submit_job(
-                ThreadSafeQtSignal(self, "registration_success"),
-                ThreadSafeQtSignal(self, "registration_error"),
-                _do_registration,
-                device=self.core.device,
-                new_user_id=self.line_edit_username.text(),
-                token=token,
-                is_admin=self.checkbox_is_admin.isChecked(),
-            )
-            self.button_cancel.show()
-            self.line_edit_username.hide()
-            self.checkbox_is_admin.hide()
-            self.button_register.hide()
-            self.closing_allowed = False
-        except:
-            show_warning(self, _("Could not register the user."))
+        token = core_generate_invitation_token()
+        self.line_edit_user.setText(self.line_edit_username.text())
+        self.line_edit_user.setCursorPosition(0)
+        self.line_edit_token.setText(token)
+        self.line_edit_token.setCursorPosition(0)
+        self.line_edit_url.setText(self.core.device.organization_addr)
+        self.line_edit_url.setCursorPosition(0)
+        self.button_cancel.setFocus()
+        self.widget_registration.show()
+        self.registration_job = self.portal.submit_job(
+            ThreadSafeQtSignal(self, "registration_success"),
+            ThreadSafeQtSignal(self, "registration_error"),
+            _do_registration,
+            core=self.core,
+            device=self.core.device,
+            new_user_id=self.line_edit_username.text(),
+            token=token,
+            is_admin=self.checkbox_is_admin.isChecked(),
+        )
+        self.button_cancel.show()
+        self.line_edit_username.hide()
+        self.checkbox_is_admin.hide()
+        self.button_register.hide()
+        self.closing_allowed = False
