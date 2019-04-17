@@ -74,6 +74,8 @@ class EntryTransactions:
 
         # Follow the path
         for name in path.parts[1:]:
+            if is_file_manifest(manifest):
+                raise from_errno(errno.ENOTDIR, filename=str(path))
             try:
                 access = manifest.children[name]
             except (AttributeError, KeyError):
