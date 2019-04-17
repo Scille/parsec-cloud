@@ -41,14 +41,11 @@ class HandshakeAPIVersionError(Exception):
         else:
             self.message = "Bad API version"
 
-    def __str__(self):
-        return self.message
-
 
 class HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
-    api_version = fields.Integer(required=True)
+    api_version = fields.SemVer(required=True)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)

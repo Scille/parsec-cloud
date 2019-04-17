@@ -15,6 +15,7 @@ from marshmallow.fields import (
     Boolean,
     Field,
 )
+import re
 
 from parsec.types import (
     DeviceID as _DeviceID,
@@ -53,6 +54,7 @@ __all__ = (
     "DeviceID",
     "UserID",
     "DeviceName",
+    "SemVer",
 )
 
 
@@ -264,6 +266,19 @@ class PublicKey(Field):
 
         except Exception:
             raise ValidationError("Invalid verify key.")
+
+
+class SemVer(Field):
+    default_error_messages = {"no_string": "Not a string.", "regex_failed": "String not a SemVer"}
+
+    def _serialize(self, value, attr, obj):
+        if not isinstance(value, str):
+            self.fail("no_string")
+        if not re.match("(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", value):
+            self.fail("regex_failed")
+        return value
+
+    _deserialize = _serialize
 
 
 SymetricKey = bytes_based_field_factory(bytes)
