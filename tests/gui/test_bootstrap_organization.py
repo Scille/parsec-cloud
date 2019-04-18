@@ -35,7 +35,7 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_dialog, monitor):
+async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_dialog):
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
 
     login_w = gui.login_widget
