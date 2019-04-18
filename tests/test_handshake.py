@@ -145,6 +145,7 @@ def tuple_to_semver(t):
 
 api_vt = tuple(map(int, __api_version__.split(".")))
 next_major_api_version = tuple_to_semver((api_vt[0] + 1,) + api_vt[1:])
+next_minor_api_version = tuple_to_semver((api_vt[0],) + (api_vt[1] + 1,) + (api_vt[2],))
 api_version_patch_0 = tuple_to_semver(api_vt[:2] + (0,))
 api_version_patch_1 = tuple_to_semver(api_vt[:2] + (1,))
 api_version_patch_2 = tuple_to_semver(api_vt[:2] + (2,))
@@ -165,9 +166,34 @@ def test_process_challenge_req_bad_semver(alice, req):
 @pytest.mark.parametrize(
     "req",
     [
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.1.1"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.0"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.1"},
+    ],
+)
+def test_process_challenge_req_bad_mocked_semver(alice, req, monkeypatch):
+    monkeypatch.setattr("parsec.__api_version__", "1.1.1")
+    from parsec import __api_version__ as mocked_core_api_version
+
+    assert mocked_core_api_version == "1.1.1"
+    ch = AuthenticatedClientHandshake(
+        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
+    )
+    with pytest.raises(HandshakeAPIVersionError):
+        ch.process_challenge_req(packb(req))
+
+
+@pytest.mark.parametrize(
+    "req",
+    [
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": api_version_patch_0},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": api_version_patch_1},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": api_version_patch_2},
+        {
+            "handshake": "challenge",
+            "challenge": b"1234567890",
+            "api_version": next_minor_api_version,
+        },
     ],
 )
 def test_process_challenge_req_good_semver(alice, req):

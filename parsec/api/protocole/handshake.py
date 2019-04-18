@@ -232,7 +232,7 @@ class BaseClientHandshake:
         local_version = tuple(map(int, __api_version__.split(".")))
         if remote_version[0] != local_version[0]:
             raise HandshakeAPIVersionError(data["api_version"])
-        if remote_version[1] > local_version[1]:
+        if remote_version[1] < local_version[1]:
             raise HandshakeAPIVersionError(data["api_version"])
 
 
