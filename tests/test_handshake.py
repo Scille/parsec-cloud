@@ -10,12 +10,14 @@ from parsec.api.protocole.handshake import (
     HandshakeBadAdministrationToken,
     HandshakeRVKMismatch,
     HandshakeRevokedDevice,
+    HandshakeAPIVersionError,
     ServerHandshake,
     BaseClientHandshake,
     AuthenticatedClientHandshake,
     AnonymousClientHandshake,
     AdministrationClientHandshake,
 )
+from parsec import __api_version__
 
 
 def test_good_handshake(alice):
@@ -109,11 +111,21 @@ def test_good_administration_handshake():
     "req",
     [
         {},
-        {"handshake": "foo", "challenge": b"1234567890"},
+        {"handshake": "foo", "challenge": b"1234567890", "api_version": __api_version__},
+        {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"handshake": "challenge", "challenge": b"1234567890", "foo": "bar"},
+        {"challenge": b"1234567890", "api_version": __api_version__},
+        {
+            "handshake": "challenge",
+            "challenge": b"1234567890",
+            "api_version": __api_version__,
+            "foo": "bar",
+        },
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": 42},
+        {"handshake": "challenge", "challenge": None, "api_version": __api_version__},
+        {"handshake": "challenge", "challenge": 42, "api_version": __api_version__},
+        {"handshake": "challenge", "challenge": b"1234567890"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "nosemver"},
     ],
 )
 def test_process_challenge_req_bad_format(alice, req):
@@ -122,6 +134,47 @@ def test_process_challenge_req_bad_format(alice, req):
     )
     with pytest.raises(InvalidMessageError):
         ch.process_challenge_req(packb(req))
+
+
+# 2-b) Client check API version
+
+
+def tuple_to_semver(t):
+    return ".".join(str(i) for i in t)
+
+
+api_vt = tuple(map(int, __api_version__.split(".")))
+next_major_api_version = tuple_to_semver((api_vt[0] + 1,) + api_vt[1:])
+api_version_patch_0 = tuple_to_semver(api_vt[:2] + (0,))
+api_version_patch_1 = tuple_to_semver(api_vt[:2] + (1,))
+api_version_patch_2 = tuple_to_semver(api_vt[:2] + (2,))
+
+
+@pytest.mark.parametrize(
+    "req",
+    [{"handshake": "challenge", "challenge": b"1234567890", "api_version": next_major_api_version}],
+)
+def test_process_challenge_req_bad_semver(alice, req):
+    ch = AuthenticatedClientHandshake(
+        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
+    )
+    with pytest.raises(HandshakeAPIVersionError):
+        ch.process_challenge_req(packb(req))
+
+
+@pytest.mark.parametrize(
+    "req",
+    [
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": api_version_patch_0},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": api_version_patch_1},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": api_version_patch_2},
+    ],
+)
+def test_process_challenge_req_good_semver(alice, req):
+    ch = AuthenticatedClientHandshake(
+        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
+    )
+    ch.process_challenge_req(packb(req))
 
 
 # 3) Server process answer
