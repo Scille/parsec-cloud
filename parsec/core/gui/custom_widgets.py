@@ -61,6 +61,7 @@ def get_text(parent, title, message, placeholder="", default_text="", completion
     return None
 
 
+# TODO: If this ever gets used again, it needs to transition to the new job system
 class UserInputDialog(QDialog, Ui_InputDialog):
     def __init__(self, portal, core, title, message, exclude=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,7 +79,7 @@ class UserInputDialog(QDialog, Ui_InputDialog):
         self.line_edit_text.textChanged.connect(self.text_changed)
 
     def text_changed(self, text):
-        # In order to avoid a segfault by making to many requests,
+        # In order to avoid a segfault by making too many requests,
         # we wait a little bit after the user has stopped pressing keys
         # to make the query.
         if len(text):
