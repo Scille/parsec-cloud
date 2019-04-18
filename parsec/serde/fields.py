@@ -274,7 +274,7 @@ class SemVer(Field):
     def _serialize(self, value, attr, obj):
         if not isinstance(value, str):
             self.fail("no_string")
-        if not re.match("(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", value):
+        if not re.match("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)", value):
             self.fail("regex_failed")
         return value
 
