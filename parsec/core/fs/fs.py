@@ -230,7 +230,7 @@ class FS:
 
         else:
             workspace, _ = self._get_workspace(f"/{workspace_name}")
-            stat = await workspace.stat("/")
+            stat = await workspace.entry_info(FsPath("/"))
             if stat["is_placeholder"]:
                 await self._user_fs.sync()
             await workspace.sync(subpath, recursive)
