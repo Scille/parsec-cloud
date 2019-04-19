@@ -145,7 +145,7 @@ class EntryTransactions:
     # Reverse lookup logic
 
     async def _get_path(self, access: Access) -> FsPath:
-        # XXX
+        # TODO
         pass
 
     # Transactions

@@ -86,7 +86,7 @@ class FS:
             yield self._user_fs.get_workspace(w_entry.access.id)
 
     async def stat(self, path: str) -> dict:
-        # XXX: This method should be splitted in several methods:
+        # TODO: This method should be splitted in several methods:
         # - user_info()
         # - workspace_info(workspace)
         # - entry_info(workspace, path)

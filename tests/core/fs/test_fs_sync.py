@@ -17,7 +17,7 @@ async def assert_same_fs(fs1, fs2):
         assert stat1 == stat2
 
         cooked_children = {}
-        # XXX: type root should not exist
+        # TODO: type root should not exist
         if stat1["type"] in ("folder", "root"):
             for child in stat1["children"]:
                 cooked_children[child] = await _recursive_assert(fs1, fs2, f"{path}/{child}")

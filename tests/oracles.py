@@ -175,7 +175,7 @@ def oracle_fs_factory(tmpdir):
             return "ok"
 
         def move(self, src, dst):
-            # XXX: This method should be called rename
+            # TODO: This method should be called rename
             src = self._cook_path(src)
             dst = self._cook_path(dst)
 
