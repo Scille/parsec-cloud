@@ -128,7 +128,7 @@ folder_manifest_serializer = serializer_factory(FolderManifestSchema)
 
 # Workspace manifest
 
-
+# TODO: remove creator and participants (use vlob_group api to determine this)
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class WorkspaceManifest(FolderManifest):
     creator: UserID

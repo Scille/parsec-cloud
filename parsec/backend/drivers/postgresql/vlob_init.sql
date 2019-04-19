@@ -117,6 +117,27 @@ END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
+CREATE FUNCTION user_has_vlob_group_any_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
+DECLARE
+BEGIN
+    RETURN EXISTS (
+        SELECT
+            true
+        FROM vlob_group_right
+        WHERE
+            vlob_group = vgroupinternalid
+            AND user_ = userinternalid
+            AND (
+                write_right = TRUE
+                OR read_right = TRUE
+                OR admin_right = TRUE
+            )
+        LIMIT 1
+    );
+END;
+$$ LANGUAGE plpgsql STABLE STRICT;
+
+
 CREATE FUNCTION get_vlob_group_internal_id(orgid VARCHAR, vgroupid UUID) RETURNS INTEGER AS $$
 DECLARE
 BEGIN

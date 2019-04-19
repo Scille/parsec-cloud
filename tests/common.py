@@ -171,7 +171,7 @@ async def create_shared_workspace(name, creator, *shared_with):
     Create a workspace and share it with the given Cores/FSs.
     This is more tricky than it seems given all Cores/FSs must agree on the
     workspace version and (only for the Cores) be ready to listen to the
-    workpace's vlob group events.
+    workspace's vlob group events.
     """
     spies = []
     fss = []

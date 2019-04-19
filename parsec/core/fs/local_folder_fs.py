@@ -97,7 +97,7 @@ class LocalFolderFS:
         self.local_storage.clear_manifest(access)
 
     def get_local_vlob_groups(self) -> List[UUID]:
-        # vlob_group_id is either the id of the user manifest or of a workpace manifest
+        # vlob_group_id is either the id of the user manifest or of a workspace manifest
         vlob_groups = [self.root_access.id]
         try:
             root_manifest = self.get_user_manifest()
@@ -335,7 +335,7 @@ class LocalFolderFS:
 
         if path.parent.is_root():
             raise PermissionError(
-                13, "Permission denied (only workpace allowed at root level)", str(path)
+                13, "Permission denied (only workspace allowed at root level)", str(path)
             )
 
         self._ensure_workspace_write_right(path.parts[1])
@@ -362,7 +362,7 @@ class LocalFolderFS:
 
         if path.parent.is_root():
             raise PermissionError(
-                13, "Permission denied (only workpace allowed at root level)", str(path)
+                13, "Permission denied (only workspace allowed at root level)", str(path)
             )
 
         self._ensure_workspace_write_right(path.parts[1])
@@ -513,7 +513,7 @@ class LocalFolderFS:
             if is_workspace_manifest(src_ro_manifest):
                 raise PermissionError(
                     13,
-                    "Permission denied (cannot move/copy workpace, must rename it)",
+                    "Permission denied (cannot move/copy workspace, must rename it)",
                     str(src),
                     str(dst),
                 )
@@ -542,7 +542,7 @@ class LocalFolderFS:
             if is_workspace_manifest(src_manifest):
                 raise PermissionError(
                     13,
-                    "Permission denied (cannot move/copy workpace, must rename it)",
+                    "Permission denied (cannot move/copy workspace, must rename it)",
                     str(src),
                     str(dst),
                 )
@@ -601,7 +601,7 @@ class LocalFolderFS:
             if is_workspace_manifest(src_manifest):
                 raise PermissionError(
                     13,
-                    "Permission denied (cannot move/copy workpace, must rename it)",
+                    "Permission denied (cannot move/copy workspace, must rename it)",
                     str(src),
                     str(dst),
                 )

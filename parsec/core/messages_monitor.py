@@ -3,13 +3,13 @@
 import trio
 from structlog import get_logger
 
-from parsec.core.fs.sharing import SharingError, SharingBackendOffline
+from parsec.core.fs import FSError, FSBackendOfflineError
 
 
 logger = get_logger()
 
 
-async def monitor_messages(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     msg_arrived = trio.Event()
     backend_online_event = trio.Event()
     backend_online_event.set()
@@ -39,20 +39,25 @@ async def monitor_messages(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORE
 
                 with trio.CancelScope() as process_message_cancel_scope:
                     event_bus.send("message_monitor.reconnection_message_processing.started")
-                    try:
-                        await fs.process_last_messages()
-                    finally:
-                        event_bus.send("message_monitor.reconnection_message_processing.done")
+                    await user_fs.process_last_messages()
+                    event_bus.send("message_monitor.reconnection_message_processing.done")
+
                     while True:
                         await msg_arrived.wait()
                         msg_arrived.clear()
                         try:
-                            await fs.process_last_messages()
-                        except SharingError:
+                            await user_fs.process_last_messages()
+
+                        except FSBackendOfflineError:
+                            raise
+
+                        except FSError:
                             logger.exception("Invalid message from backend")
 
-            except SharingBackendOffline:
-                backend_online_event.clear()
+            except FSBackendOfflineError:
+                pass
+
+            backend_online_event.clear()
             process_message_cancel_scope = None
             msg_arrived.clear()
             await backend_online_event.wait()

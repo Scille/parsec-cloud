@@ -4,7 +4,7 @@ import pytest
 from uuid import UUID
 import trio
 from pendulum import Pendulum
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement, product
 
 from parsec.api.protocole import (
     vlob_group_poll_serializer,
@@ -157,6 +157,28 @@ async def test_vlob_group_change_to_admin_only(backend, alice, bob, alice_backen
             "bob": {"admin_right": True, "read_right": False, "write_right": False},
         },
     }
+
+
+@pytest.mark.trio
+async def test_vlob_group_get_rights_with_partial_rights(
+    backend, alice, bob, alice_backend_sock, bob_backend_sock
+):
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
+
+    for rights in product((True, False), repeat=3):
+        rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, *rights)
+        assert rep == {"status": "ok"}
+
+        rep = await group_get_rights(bob_backend_sock, GROUP_ID)
+        if rights == (False, False, False):
+            assert rep["status"] == "not_allowed"
+        else:
+            assert rep["status"] == "ok"
+            assert rep["users"]["bob"] == {
+                "admin_right": rights[0],
+                "read_right": rights[1],
+                "write_right": rights[2],
+            }
 
 
 @pytest.mark.trio

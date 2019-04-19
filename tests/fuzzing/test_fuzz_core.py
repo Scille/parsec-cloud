@@ -8,7 +8,7 @@ from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
 
-from parsec.core.fs.sharing import SharingError
+from parsec.core.fs import FSError
 
 
 FUZZ_PARALLELISM = 10
@@ -225,7 +225,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             await core.fs.share(path, "bob")
             fs_state.add_stat(id, "share_ok", f"path={path}")
-        except (OSError, SharingError) as exc:
+        except FSError as exc:
             fs_state.add_stat(id, "share_bad", f"path={path}, raised {exc!r}")
 
 

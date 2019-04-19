@@ -3,7 +3,6 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import FsPath
 from parsec.core.backend_connection import BackendNotAvailable
 
 from tests.common import freeze_time, create_shared_workspace
@@ -55,10 +54,12 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
         "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
-        "base_version": 1,
+        "base_version": 2,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
-        "participants": [alice.user_id],
+        # TODO: participants&creator fields are deprecated
+        # "participants": [alice.user_id],
+        "participants": spy.ANY,
         "creator": alice.user_id,
         "children": [],
     }
@@ -285,7 +286,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
     assert final_wkps["children"].keys() == {"foo.txt", "bar"}
     assert final_wkps["children"]["bar"]["children"].keys() == {"spam"}
 
-    assert final_wkps["base_version"] == 3
+    assert final_wkps["base_version"] == 4
     assert final_wkps["children"]["bar"]["base_version"] == 2
     assert final_wkps["children"]["foo.txt"]["base_version"] == 1
 
@@ -318,6 +319,7 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs
 
 @pytest.mark.trio
 async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
+    # TODO: concurrency on workspace name is no longer possible
     # TODO: break this test down to reduce complexity
     await create_shared_workspace("/w", alice_fs, alice2_fs)
 
@@ -334,16 +336,16 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 2) Make both fs diverged
 
     with freeze_time("2000-01-03"):
-        z_by_alice_id = await alice_fs.workspace_create("/z")
-        z_by_alice = alice_fs._local_folder_fs.get_access(FsPath("/z"))
+        # z_by_alice_id = await alice_fs.workspace_create("/z")
+        # z_by_alice = alice_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice_fs.file_write("/w/foo.txt", b"alice's v2")
         await alice_fs.folder_create("/w/bar/from_alice")
         await alice_fs.folder_create("/w/bar/spam")
         await alice_fs.file_create("/w/bar/buzz.txt")
 
     with freeze_time("2000-01-04"):
-        z_by_alice2_id = await alice2_fs.workspace_create("/z")
-        z_by_alice2 = alice2_fs._local_folder_fs.get_access(FsPath("/z"))
+        # z_by_alice2_id = await alice2_fs.workspace_create("/z")
+        # z_by_alice2 = alice2_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice2_fs.file_write("/w/foo.txt", b"alice2's v2")
         await alice2_fs.folder_create("/w/bar/from_alice2")
         await alice2_fs.folder_create("/w/bar/spam")
@@ -357,6 +359,8 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     date_sync = Pendulum(2000, 1, 5)
     spy.assert_events_exactly_occured(
         [
+            # ("fs.entry.minimal_synced", {"path": "/z", "id": spy.ANY}, date_sync),
+            # ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
             ("fs.entry.minimal_synced", {"path": "/w/bar/buzz.txt", "id": spy.ANY}, date_sync),
             ("fs.entry.synced", {"path": "/w/bar", "id": spy.ANY}, date_sync),
             ("fs.entry.synced", {"path": "/w/bar/buzz.txt", "id": spy.ANY}, date_sync),
@@ -367,14 +371,12 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
             ("fs.entry.synced", {"path": "/w/bar", "id": spy.ANY}, date_sync),
             ("fs.entry.synced", {"path": "/w/bar/spam", "id": spy.ANY}, date_sync),
             ("fs.entry.synced", {"path": "/w/foo.txt", "id": spy.ANY}, date_sync),
-            ("fs.entry.minimal_synced", {"path": "/z", "id": spy.ANY}, date_sync),
-            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
-            ("fs.entry.synced", {"path": "/z", "id": spy.ANY}, date_sync),
+            # ("fs.entry.synced", {"path": "/z", "id": spy.ANY}, date_sync),
         ]
     )
-    stat = await alice_fs.stat("/z")
-    assert not stat["need_sync"]
-    assert stat["id"] == z_by_alice_id
+    # stat = await alice_fs.stat("/z")
+    # assert not stat["need_sync"]
+    # assert stat["id"] == z_by_alice_id
 
     # 4) Sync Alice2, with conflicts on `/z`, `/w/bar/buzz.txt` and `/w/bar/spam`
 
@@ -384,6 +386,9 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     date_sync = Pendulum(2000, 1, 6)
     spy.assert_events_exactly_occured(
         [
+            # ("fs.entry.minimal_synced", {"path": "/z", "id": spy.ANY}, date_sync),
+            # ("fs.entry.remote_changed", {"path": "/", "id": spy.ANY}, date_sync),
+            # ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
             ("fs.entry.minimal_synced", {"path": "/w/bar/buzz.txt", "id": spy.ANY}, date_sync),
             # Try to sync `/w/bar` with new entry `/w/bar/buzz.txt`, get alice's changes
             (
@@ -426,28 +431,27 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
             ("fs.entry.updated", {"id": spy.ANY}, date_sync),
             ("fs.entry.synced", {"path": "/w/foo.txt", "id": spy.ANY}, date_sync),
             ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, date_sync),
-            ("fs.entry.minimal_synced", {"path": "/z", "id": spy.ANY}, date_sync),
-            (
-                "fs.entry.name_conflicted",
-                {
-                    "path": "/z",
-                    "diverged_path": "/z (conflict 2000-01-06 00:00:00)",
-                    "original_id": spy.ANY,
-                    "diverged_id": spy.ANY,
-                },
-                date_sync,
-            ),
-            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
-            ("fs.entry.synced", {"path": "/z", "id": spy.ANY}, date_sync),
+            # TODO: concurrency on workspace name is no longer possible
+            # (
+            #     "fs.entry.name_conflicted",
+            #     {
+            #         "path": "/z",
+            #         "diverged_path": "/z (conflict 2000-01-06 00:00:00)",
+            #         "original_id": spy.ANY,
+            #         "diverged_id": spy.ANY,
+            #     },
+            #     date_sync,
+            # ),
+            # ("fs.entry.synced", {"path": "/z", "id": spy.ANY}, date_sync),
         ]
     )
-    stat = await alice2_fs.stat("/z")
-    assert not stat["need_sync"]
-    assert stat["id"] == z_by_alice_id
-
-    stat = await alice2_fs.stat("/z (conflict 2000-01-06 00:00:00)")
-    assert not stat["need_sync"]
-    assert stat["id"] == z_by_alice2_id
+    # TODO: concurrency on workspace name is no longer possible
+    # stat = await alice2_fs.stat("/z")
+    # assert not stat["need_sync"]
+    # assert stat["id"] == z_by_alice_id
+    # stat = await alice2_fs.stat("/z (conflict 2000-01-06 00:00:00)")
+    # assert not stat["need_sync"]
+    # assert stat["id"] == z_by_alice2_id
 
     # 4) Sync another time Alice2, needed for diverged files created from conflicts
     # Note name conflicts has already been synchronized given they are not
@@ -494,19 +498,23 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         [
             ("fs.entry.remote_changed", {"path": "/w/bar", "id": spy.ANY}, date_sync),
             ("fs.entry.remote_changed", {"path": "/w", "id": spy.ANY}, date_sync),
-            ("fs.entry.remote_changed", {"path": "/", "id": spy.ANY}, date_sync),
+            # TODO: concurrency on workspace name is no longer possible
+            # ("fs.entry.remote_changed", {"path": "/", "id": spy.ANY}, date_sync),
         ]
     )
 
     # 6) Finally compare the resulting fs
 
     final_fs = await assert_same_fs(alice_fs, alice2_fs)
-    assert final_fs["children"].keys() == {"w", "z", "z (conflict 2000-01-06 00:00:00)"}
-    # Make sure z conflict hasn't changed workspace access
-    current_z = alice_fs._local_folder_fs.get_access(FsPath("/z"))
-    assert current_z == z_by_alice
-    diverged_z = alice_fs._local_folder_fs.get_access(FsPath("/z (conflict 2000-01-06 00:00:00)"))
-    assert diverged_z == z_by_alice2
+    # TODO: concurrency on workspace name is no longer possible
+    assert final_fs["children"].keys() == {"w"}
+    # assert final_fs["children"].keys() == {"w", "z"}
+    # assert final_fs["children"].keys() == {"w", "z", "z (conflict 2000-01-06 00:00:00)"}
+    # # Make sure z conflict hasn't changed workspace access
+    # current_z = alice_fs._local_folder_fs.get_access(FsPath("/z"))
+    # assert current_z == z_by_alice
+    # diverged_z = alice_fs._local_folder_fs.get_access(FsPath("/z (conflict 2000-01-06 00:00:00)"))
+    # assert diverged_z == z_by_alice2
 
     final_wkps = final_fs["children"]["w"]
     assert final_wkps["children"].keys() == {
@@ -536,8 +544,8 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
 async def test_create_already_existing_folder_vlob(running_backend, alice, alice_fs, alice2_fs):
     # First create data locally
     with freeze_time("2000-01-02"):
-        # File and folder are handled basically the same
         w_id = await alice_fs.workspace_create("/w")
+        await alice_fs.folder_create("/w/x")
 
     vanilla_backend_vlob_create = alice_fs._syncer._backend_vlob_create
 
@@ -560,7 +568,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
         "admin_right": True,
         "read_right": True,
         "write_right": True,
-        "base_version": 1,
+        "base_version": 2,
         "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
@@ -568,7 +576,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
         "updated": Pendulum(2000, 1, 2),
         "creator": alice.user_id,
         "participants": [alice.user_id],
-        "children": [],
+        "children": ["x"],
     }
 
     await alice2_fs.sync("/")

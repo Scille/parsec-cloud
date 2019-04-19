@@ -68,7 +68,7 @@ RETURNING index
             async with conn.transaction():
                 ret = await conn.fetch(
                     """
-SELECT user_has_vlob_group_read_right(
+SELECT user_has_vlob_group_any_right(
         get_user_internal_id($1, $3),
         get_vlob_group_internal_id($1, $2)
     )

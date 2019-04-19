@@ -5,7 +5,7 @@ from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.fs import FS
+from parsec.core.fs import FS, UserFS
 
 from tests.common import freeze_time, InMemoryLocalStorage
 
@@ -59,8 +59,20 @@ def remote_devices_manager_factory():
 
 
 @pytest.fixture
-async def remote_devices_manager(remote_devices_manager_factory, alice):
+async def alice_remote_devices_manager(remote_devices_manager_factory, alice):
     async with remote_devices_manager_factory(alice) as rdm:
+        yield rdm
+
+
+@pytest.fixture
+async def alice2_remote_devices_manager(remote_devices_manager_factory, alice2):
+    async with remote_devices_manager_factory(alice2) as rdm:
+        yield rdm
+
+
+@pytest.fixture
+async def bob_remote_devices_manager(remote_devices_manager_factory, bob):
+    async with remote_devices_manager_factory(bob) as rdm:
         yield rdm
 
 
@@ -145,3 +157,38 @@ async def bob_backend_cmds(running_backend, bob):
 async def anonymous_backend_cmds(running_backend, coolorg):
     async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
         yield cmds
+
+
+@pytest.fixture
+def user_fs_factory(local_storage_factory, event_bus_factory):
+    @asynccontextmanager
+    async def _user_fs_factory(device, local_storage=None, event_bus=None):
+        event_bus = event_bus or event_bus_factory()
+        local_storage = local_storage or local_storage_factory(device)
+
+        async with backend_cmds_pool_factory(
+            device.organization_addr, device.device_id, device.signing_key
+        ) as cmds:
+            rdm = RemoteDevicesManager(cmds, device.root_verify_key)
+            user_fs = UserFS(device, local_storage, cmds, rdm, event_bus)
+            yield user_fs
+
+    return _user_fs_factory
+
+
+@pytest.fixture
+async def alice_user_fs(user_fs_factory, alice, alice_local_storage):
+    async with user_fs_factory(alice, local_storage=alice_local_storage) as user_fs:
+        yield user_fs
+
+
+@pytest.fixture
+async def alice2_user_fs(user_fs_factory, alice2, alice2_local_storage):
+    async with user_fs_factory(alice2, local_storage=alice2_local_storage) as user_fs:
+        yield user_fs
+
+
+@pytest.fixture
+async def bob_user_fs(user_fs_factory, bob, bob_local_storage):
+    async with user_fs_factory(bob, local_storage=bob_local_storage) as user_fs:
+        yield user_fs
