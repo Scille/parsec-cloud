@@ -13,7 +13,6 @@ from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestL
 class WorkspaceFS:
     def __init__(
         self,
-        workspace_name,
         workspace_entry,
         device,
         local_storage,
@@ -23,7 +22,6 @@ class WorkspaceFS:
         _remote_loader,
         _syncer,
     ):
-        self.workspace_name = workspace_name
         self.workspace_entry = workspace_entry
         self.device = device
         self.local_storage = local_storage
@@ -37,6 +35,10 @@ class WorkspaceFS:
         self._entry_transactions = EntryTransactions(
             self.device, workspace_entry, local_storage, self._remote_loader, event_bus
         )
+
+    @property
+    def workspace_name(self):
+        return self.workspace_entry.name
 
     # Workspace info
 
