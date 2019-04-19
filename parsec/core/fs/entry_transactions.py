@@ -109,6 +109,24 @@ class EntryTransactions:
 
     @asynccontextmanager
     async def _lock_parent_entry(self, path):
+        # This is the most complicated locking scenario.
+        # It requires locking the parent of the given entry and the entry itself
+        # if it exists.
+
+        # This is done in a two step process:
+        # - 1. Lock the parent (it must exist). While the parent is locked, no
+        #   children can be added, renamed or removed.
+        # - 2. Lock the children if exists. It it doesn't, there is nothing to lock
+        #   since the parent lock guarentees that it is not going to be added while
+        #   using the context.
+
+        # This double locking is only required for a single use case: the overwriting
+        # of empty directory during a move. We have to make sure that no one adds
+        # something to the directory while it is being overwritten.
+        # If read/write locks were to be implemented, the parent would be write locked
+        # and the child read locked. This means that despite locking two entries, only
+        # a single entry is modified at a time.
+
         # Source is root
         if path.is_root():
             raise from_errno(errno.EACCES, filename=str(path))
