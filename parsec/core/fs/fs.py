@@ -160,13 +160,14 @@ class FS:
         workspace, fd = self._get_fd(fd)
         return await workspace.fd_read(fd, size, offset)
 
-    async def touch(self, path: str) -> UUID:
-        fd = await self.file_create(path)
-        await self.file_fd_close(fd)
-
-    async def file_create(self, path: str) -> UUID:
+    async def touch(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        fd = await workspace.file_create(subpath)
+        _, fd = await workspace.file_create(subpath, open=False)
+        assert fd is None
+
+    async def file_create(self, path: str) -> None:
+        workspace, subpath = self._get_workspace(path)
+        _, fd = await workspace.file_create(subpath)
         return self._put_fd(workspace, fd)
 
     async def mkdir(self, path: str) -> UUID:

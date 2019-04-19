@@ -126,7 +126,7 @@ async def test_share_workspace_then_rename_it(
     # This should have not changed the workspace in any way
     bw = bob_user_fs.get_workspace(wid)
     aw = alice_user_fs.get_workspace(wid)
-    await bw.file_create(FsPath("/ping_bob.txt"))
+    await bw.file_create(FsPath("/ping_bob.txt"), open=False)
     await aw.folder_create(FsPath("/ping_alice"))
 
     await bw.sync("/")

@@ -8,6 +8,7 @@ from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.core.types import (
+    AccessID,
     FsPath,
     Access,
     WorkspaceEntry,
@@ -16,6 +17,7 @@ from parsec.core.types import (
     ManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
+    FileDescriptor,
 )
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.core.fs.utils import (
@@ -352,7 +354,7 @@ class EntryTransactions:
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
-    async def file_create(self, path: FsPath):
+    async def file_create(self, path: FsPath, open=True) -> Tuple[AccessID, FileDescriptor]:
         # Check write rights
         self._check_write_rights(path)
 
@@ -375,14 +377,14 @@ class EntryTransactions:
             # ~ Atomic change
             self.local_storage.set_dirty_manifest(child_access, child_manifest)
             self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
-            fd = self.local_storage.create_cursor(child_access)
+            fd = self.local_storage.create_cursor(child_access) if open else None
 
         # Send events
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
-        # Return file descriptor
-        return fd
+        # Return the access id of the created file and the file descriptor
+        return child_access.id, fd
 
     async def file_open(self, path: FsPath, mode="rw"):
         # Check write rights

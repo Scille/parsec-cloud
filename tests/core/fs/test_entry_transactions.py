@@ -46,7 +46,7 @@ async def test_root_entry_info(entry_transactions):
 async def test_file_create(file_transactions, entry_transactions, alice):
 
     with freeze_time("2000-01-02"):
-        fd = await entry_transactions.file_create(FsPath("/foo.txt"))
+        access_id, fd = await entry_transactions.file_create(FsPath("/foo.txt"))
         await file_transactions.fd_close(fd)
 
     assert fd == 1
@@ -100,7 +100,7 @@ async def test_rename_non_empty_folder(entry_transactions, file_transactions):
 @pytest.mark.trio
 async def test_cannot_replace_root(entry_transactions):
     with pytest.raises(PermissionError):
-        await entry_transactions.file_create(FsPath("/"))
+        await entry_transactions.file_create(FsPath("/"), open=False)
     with pytest.raises(PermissionError):
         await entry_transactions.folder_create(FsPath("/"))
 

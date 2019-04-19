@@ -2,9 +2,9 @@
 
 import math
 import inspect
-from uuid import UUID
+from typing import Tuple
 
-from parsec.core.types import FsPath
+from parsec.core.types import FsPath, AccessID, FileDescriptor
 from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.fs.entry_transactions import EntryTransactions
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
@@ -73,8 +73,8 @@ class WorkspaceFS:
 
     # File operations
 
-    async def file_create(self, path: FsPath) -> UUID:
-        return await self._entry_transactions.file_create(path)
+    async def file_create(self, path: FsPath, open: bool = True) -> Tuple[AccessID, FileDescriptor]:
+        return await self._entry_transactions.file_create(path, open=open)
 
     async def file_open(self, path: FsPath, mode="rw") -> int:
         return await self._entry_transactions.file_open(path, mode=mode)
