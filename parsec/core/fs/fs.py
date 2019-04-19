@@ -133,7 +133,7 @@ class FS:
 
     async def file_fd_open(self, path: str, mode="rw") -> int:
         workspace, subpath = self._get_workspace(path)
-        fd = await workspace.file_open(subpath, mode)
+        _, fd = await workspace.file_open(subpath, mode)
         return self._put_fd(workspace, fd)
 
     async def file_fd_close(self, fd: int) -> None:
@@ -170,10 +170,10 @@ class FS:
         _, fd = await workspace.file_create(subpath)
         return self._put_fd(workspace, fd)
 
-    async def mkdir(self, path: str) -> UUID:
-        return await self.folder_create(path)
+    async def mkdir(self, path: str) -> None:
+        await self.folder_create(path)
 
-    async def folder_create(self, path: str) -> UUID:
+    async def folder_create(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
         return await workspace.folder_create(subpath)
 

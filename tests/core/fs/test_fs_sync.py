@@ -74,10 +74,9 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
     await create_shared_workspace("w", alice_fs, alice2_fs)
     with freeze_time("2000-01-02"):
         if type == "file":
-            fd = await alice_fs.file_create("/w/foo")
-            await alice_fs.file_fd_close(fd)
+            await alice_fs.touch("/w/foo")
         else:
-            await alice_fs.folder_create("/w/foo")
+            await alice_fs.mkdir("/w/foo")
 
     with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):

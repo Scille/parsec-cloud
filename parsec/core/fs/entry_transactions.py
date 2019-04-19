@@ -164,13 +164,13 @@ class EntryTransactions:
 
     # Reverse lookup logic
 
-    async def _get_path(self, access: Access) -> FsPath:
+    async def _get_path(self, id: AccessID) -> FsPath:
         # TODO
         pass
 
     # Transactions
 
-    async def entry_info(self, path: FsPath):
+    async def entry_info(self, path: FsPath) -> dict:
 
         # Fetch data
         access, manifest = await self._get_entry(path)
@@ -195,7 +195,9 @@ class EntryTransactions:
 
         return stats
 
-    async def entry_rename(self, source: FsPath, destination: FsPath, overwrite: bool = True):
+    async def entry_rename(
+        self, source: FsPath, destination: FsPath, overwrite: bool = True
+    ) -> AccessID:
         # Check write rights
         self._check_write_rights(source)
 
@@ -264,7 +266,10 @@ class EntryTransactions:
         # Send event
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
 
-    async def folder_delete(self, path: FsPath):
+        # Return the access id of the renamed entry
+        return parent.manifest.children[source.name].id
+
+    async def folder_delete(self, path: FsPath) -> AccessID:
         # Check write rights
         self._check_write_rights(path)
 
@@ -297,7 +302,10 @@ class EntryTransactions:
         # Send event
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
 
-    async def file_delete(self, path: FsPath):
+        # Return the access id of the removed folder
+        return child.access.id
+
+    async def file_delete(self, path: FsPath) -> AccessID:
         # Check write rights
         self._check_write_rights(path)
 
@@ -326,7 +334,10 @@ class EntryTransactions:
         # Send event
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
 
-    async def folder_create(self, path: FsPath):
+        # Return the access id of the deleted file
+        return child.access.id
+
+    async def folder_create(self, path: FsPath) -> AccessID:
         # Check write rights
         self._check_write_rights(path)
 
@@ -353,6 +364,9 @@ class EntryTransactions:
         # Send events
         self.event_bus.send("fs.entry.updated", id=parent.access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
+
+        # Return the access id of the created folder
+        return child_access.id
 
     async def file_create(self, path: FsPath, open=True) -> Tuple[AccessID, FileDescriptor]:
         # Check write rights
@@ -386,7 +400,7 @@ class EntryTransactions:
         # Return the access id of the created file and the file descriptor
         return child_access.id, fd
 
-    async def file_open(self, path: FsPath, mode="rw"):
+    async def file_open(self, path: FsPath, mode="rw") -> Tuple[AccessID, FileDescriptor]:
         # Check write rights
         if "w" in mode:
             self._check_write_rights(path)
@@ -398,5 +412,5 @@ class EntryTransactions:
             if not is_file_manifest(entry.manifest):
                 raise from_errno(errno.EISDIR, str(path))
 
-            # Return file descriptor
-            return self.local_storage.create_cursor(entry.access)
+            # Return the access id of the open file and the file descriptor
+            return entry.access.id, self.local_storage.create_cursor(entry.access)

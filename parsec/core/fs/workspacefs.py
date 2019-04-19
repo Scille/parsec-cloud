@@ -60,27 +60,27 @@ class WorkspaceFS:
     async def entry_info(self, path: FsPath) -> dict:
         return await self._entry_transactions.entry_info(path)
 
-    async def entry_rename(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> None:
-        await self._entry_transactions.entry_rename(src, dst, overwrite)
+    async def entry_rename(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> AccessID:
+        return await self._entry_transactions.entry_rename(src, dst, overwrite)
 
     # Folder operations
 
-    async def folder_create(self, path: FsPath) -> UUID:
+    async def folder_create(self, path: FsPath) -> AccessID:
         return await self._entry_transactions.folder_create(path)
 
-    async def folder_delete(self, path: FsPath) -> None:
-        await self._entry_transactions.folder_delete(path)
+    async def folder_delete(self, path: FsPath) -> AccessID:
+        return await self._entry_transactions.folder_delete(path)
 
     # File operations
 
     async def file_create(self, path: FsPath, open: bool = True) -> Tuple[AccessID, FileDescriptor]:
         return await self._entry_transactions.file_create(path, open=open)
 
-    async def file_open(self, path: FsPath, mode="rw") -> int:
+    async def file_open(self, path: FsPath, mode="rw") -> Tuple[AccessID, FileDescriptor]:
         return await self._entry_transactions.file_open(path, mode=mode)
 
-    async def file_delete(self, path: FsPath) -> None:
-        await self._entry_transactions.file_delete(path)
+    async def file_delete(self, path: FsPath) -> AccessID:
+        return await self._entry_transactions.file_delete(path)
 
     # File descriptor operations
 
@@ -105,7 +105,7 @@ class WorkspaceFS:
     # High-level file operations
 
     async def file_write(self, path: FsPath, content: bytes, offset: int = 0) -> int:
-        fd = await self.file_open(path, "rw")
+        _, fd = await self.file_open(path, "rw")
         try:
             if offset:
                 await self.fd_seek(fd, offset)
@@ -114,14 +114,14 @@ class WorkspaceFS:
             await self.fd_close(fd)
 
     async def file_resize(self, path: FsPath, length: int) -> None:
-        fd = await self.file_open(path, "w")
+        _, fd = await self.file_open(path, "w")
         try:
             await self.fd_resize(fd, length)
         finally:
             await self.fd_close(fd)
 
     async def file_read(self, path: FsPath, size: int = math.inf, offset: int = 0) -> bytes:
-        fd = await self.file_open(path, "r")
+        _, fd = await self.file_open(path, "r")
         try:
             if offset:
                 await self.fd_seek(fd, offset)
@@ -154,11 +154,11 @@ class WorkspaceFS:
         await self._load_and_retry(self._syncer.sync, path, recursive=recursive)
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
-    async def sync_by_id(self, entry_id: UUID) -> None:
-        assert isinstance(entry_id, UUID)
+    async def sync_by_id(self, entry_id: AccessID) -> None:
+        assert isinstance(entry_id, AccessID)
         await self._load_and_retry(self._syncer.sync_by_id, entry_id)
 
-    async def get_entry_path(self, id: UUID) -> FsPath:
-        assert isinstance(id, UUID)
+    async def get_entry_path(self, id: AccessID) -> FsPath:
+        assert isinstance(id, AccessID)
         path, _, _ = await self._load_and_retry(self._local_folder_fs.get_entry_path, id)
         return path

@@ -3,7 +3,6 @@
 import os
 import errno
 import pathlib
-from unittest.mock import ANY
 from string import ascii_lowercase
 from contextlib import contextmanager
 
@@ -43,7 +42,7 @@ async def test_root_entry_info(entry_transactions):
 
 
 @pytest.mark.trio
-async def test_file_create(file_transactions, entry_transactions, alice):
+async def test_file_create(entry_transactions, file_transactions, alice):
 
     with freeze_time("2000-01-02"):
         access_id, fd = await entry_transactions.file_create(FsPath("/foo.txt"))
@@ -53,7 +52,7 @@ async def test_file_create(file_transactions, entry_transactions, alice):
     root_stat = await entry_transactions.entry_info(FsPath("/"))
     assert root_stat == {
         "type": "folder",
-        "id": ANY,
+        "id": entry_transactions.workspace_entry.access.id,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -65,7 +64,7 @@ async def test_file_create(file_transactions, entry_transactions, alice):
     foo_stat = await entry_transactions.entry_info(FsPath("/foo.txt"))
     assert foo_stat == {
         "type": "file",
-        "id": ANY,
+        "id": access_id,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -76,25 +75,44 @@ async def test_file_create(file_transactions, entry_transactions, alice):
 
 
 @pytest.mark.trio
-async def test_rename_non_empty_folder(entry_transactions, file_transactions):
-    with freeze_time("2000-01-02"):
-        await entry_transactions.folder_create(FsPath("/foo"))
-        await entry_transactions.folder_create(FsPath("/foo/bar"))
-        await entry_transactions.folder_create(FsPath("/foo/bar/zob"))
-        fd = await entry_transactions.file_create(FsPath("/foo/bar/zob/fizz.txt"))
-        await file_transactions.fd_close(fd)
-        fd = await entry_transactions.file_create(FsPath("/foo/spam.txt"))
-        await file_transactions.fd_close(fd)
+async def test_create_and_delete(entry_transactions, file_transactions):
+    foo_id = await entry_transactions.folder_create(FsPath("/foo"))
+    bar_id, fd = await entry_transactions.file_create(FsPath("/foo/bar"), open=False)
+    assert fd is None
 
-    await entry_transactions.entry_rename(FsPath("/foo"), FsPath("/foo2"))
+    bar_id_2 = await entry_transactions.file_delete(FsPath("/foo/bar"))
+    foo_id_2 = await entry_transactions.folder_delete(FsPath("/foo"))
+
+    assert bar_id == bar_id_2
+    assert foo_id == foo_id_2
+
+
+@pytest.mark.trio
+async def test_rename_non_empty_folder(entry_transactions, file_transactions):
+    foo_id = await entry_transactions.folder_create(FsPath("/foo"))
+    bar_id = await entry_transactions.folder_create(FsPath("/foo/bar"))
+    zob_id = await entry_transactions.folder_create(FsPath("/foo/bar/zob"))
+
+    fizz_id, fd = await entry_transactions.file_create(FsPath("/foo/bar/zob/fizz.txt"), open=False)
+    assert fd is None
+    spam_id, fd = await entry_transactions.file_create(FsPath("/foo/spam.txt"), open=False)
+    assert fd is None
+
+    foo2_id = await entry_transactions.entry_rename(FsPath("/foo"), FsPath("/foo2"))
+    assert foo2_id == foo_id
     stat = await entry_transactions.entry_info(FsPath("/"))
     assert stat["children"] == ["foo2"]
 
-    await entry_transactions.entry_info(FsPath("/foo2"))
-    await entry_transactions.entry_info(FsPath("/foo2/bar"))
-    await entry_transactions.entry_info(FsPath("/foo2/bar/zob"))
-    await entry_transactions.entry_info(FsPath("/foo2/bar/zob/fizz.txt"))
-    await entry_transactions.entry_info(FsPath("/foo2/spam.txt"))
+    info = await entry_transactions.entry_info(FsPath("/foo2"))
+    assert info["id"] == foo_id
+    info = await entry_transactions.entry_info(FsPath("/foo2/bar"))
+    assert info["id"] == bar_id
+    info = await entry_transactions.entry_info(FsPath("/foo2/bar/zob"))
+    assert info["id"] == zob_id
+    info = await entry_transactions.entry_info(FsPath("/foo2/bar/zob/fizz.txt"))
+    assert info["id"] == fizz_id
+    info = await entry_transactions.entry_info(FsPath("/foo2/spam.txt"))
+    assert info["id"] == spam_id
 
 
 @pytest.mark.trio
@@ -228,7 +246,7 @@ def test_folder_operations(
                 expected_exc = exc
 
             with expect_raises(expected_exc):
-                fd = await self.entry_transactions.file_create(path.to_parsec())
+                _, fd = await self.entry_transactions.file_create(path.to_parsec())
                 await self.file_transactions.fd_close(fd)
             return path
 
