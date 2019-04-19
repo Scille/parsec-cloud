@@ -93,21 +93,22 @@ async def test_register_device_modal_invalid_device_name(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
     def run_dialog():
-        modal = RegisterDeviceDialog(
-            parent=logged_gui.central_widget.devices_widget,
-            portal=logged_gui.central_widget.devices_widget.portal,
-            core=logged_gui.central_widget.devices_widget.core,
-        )
-        modal.show()
-        assert not modal.line_edit_token.text()
-        assert not modal.line_edit_url.text()
-        aqtbot.qtbot.keyClicks(modal.line_edit_device_name, "new_device" * 4)
-        aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
-        assert modal.line_edit_url.text()
-        assert modal.line_edit_device_name.text() == ("new_device" * 4)[:32]
-        assert modal.line_edit_token.text()
+        with patch("parsec.core.gui.register_device_dialog.DeviceName") as type_mock:
+            type_mock.side_effect = ValueError()
+            modal = RegisterDeviceDialog(
+                parent=logged_gui.central_widget.devices_widget,
+                portal=logged_gui.central_widget.devices_widget.portal,
+                core=logged_gui.central_widget.devices_widget.core,
+            )
+            modal.show()
+            assert not modal.line_edit_token.text()
+            assert not modal.line_edit_url.text()
+            aqtbot.qtbot.keyClicks(modal.line_edit_device_name, "new_device")
+            with aqtbot.qtbot.waitSignal(modal.registration_error):
+                aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
+    assert autoclose_dialog.dialogs == [("Error", "Bad device name.")]
 
 
 @pytest.mark.gui

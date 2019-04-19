@@ -19,6 +19,7 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 
 STATUS_TO_ERRMSG = {
+    "registration-invite-bad-value": _("Bad device name."),
     "already_exists": _("This device already exists."),
     "registration-invite-offline": _("Cannot invite a device without being online."),
     "timeout": _("Device took too much time to register."),
@@ -28,7 +29,10 @@ DEFAULT_ERRMSG = _("Cannot register this device ({info}).")
 
 
 async def _do_registration(device, new_device_name, token):
-    new_device_name = DeviceName(new_device_name)
+    try:
+        new_device_name = DeviceName(new_device_name)
+    except ValueError:
+        raise JobResultError("registration-invite-bad-value")
 
     try:
         await core_invite_and_create_device(device, new_device_name, token)

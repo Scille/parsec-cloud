@@ -20,6 +20,7 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 
 STATUS_TO_ERRMSG = {
+    "registration-invite-bad-value": _("Bad user id."),
     "registration-invite-already-exists": _("A user with the same name already exists."),
     "registration-invite-error": _("Only admins can invite a new user."),
     "registration-invite-offline": _("Cannot invite a user without being online."),
@@ -30,7 +31,10 @@ DEFAULT_ERRMSG = _("Cannot register this user ({info}).")
 
 
 async def _do_registration(core, device, new_user_id, token, is_admin):
-    new_user_id = UserID(new_user_id)
+    try:
+        new_user_id = UserID(new_user_id)
+    except ValueError:
+        raise JobResultError("registration-invite-bad-value")
 
     try:
         users = await core.fs.backend_cmds.user_find(new_user_id)

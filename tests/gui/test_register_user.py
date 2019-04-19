@@ -96,21 +96,22 @@ async def test_register_user_modal_invalid_user_id(
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
-        modal.show()
-        assert not modal.line_edit_token.text()
-        assert not modal.line_edit_url.text()
-        aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user" * 5)
-        aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
-        assert modal.line_edit_url.text()
-        assert modal.line_edit_username.text() == ("new_user" * 5)[:32]
-        assert modal.line_edit_token.text()
+        with patch("parsec.core.gui.register_user_dialog.UserID") as type_mock:
+            type_mock.side_effect = ValueError()
+            modal = RegisterUserDialog(
+                parent=logged_gui.central_widget.users_widget,
+                portal=logged_gui.central_widget.users_widget.portal,
+                core=logged_gui.central_widget.users_widget.core,
+            )
+            modal.show()
+            assert not modal.line_edit_token.text()
+            assert not modal.line_edit_url.text()
+            aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user" * 5)
+            with aqtbot.qtbot.waitSignal(modal.registration_error):
+                aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
+    assert autoclose_dialog.dialogs == [("Error", "Bad user id.")]
 
 
 @pytest.mark.gui
