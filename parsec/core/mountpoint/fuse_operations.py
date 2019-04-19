@@ -55,7 +55,7 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat = {}
         # Set it to 777 access
         fuse_stat["st_mode"] = 0
-        if stat["is_folder"]:
+        if stat["type"] == "folder":
             fuse_stat["st_mode"] |= S_IFDIR
             fuse_stat["st_size"] = 4096  # Because why not ?
             fuse_stat["st_nlink"] = 2
@@ -81,7 +81,7 @@ class FuseOperations(LoggingMixIn, Operations):
         with translate_error():
             stat = self.fs_access.stat(path)
 
-        if not stat["is_folder"]:
+        if stat["type"] == "file":
             raise FuseOSError(ENOTDIR)
 
         return [".", ".."] + list(stat["children"])
@@ -131,7 +131,7 @@ class FuseOperations(LoggingMixIn, Operations):
         path = self._localize_path(path)
 
         with translate_error():
-            self.fs_access.delete(path)
+            self.fs_access.file_delete(path)
 
     def mkdir(self, path, mode):
         path = self._localize_path(path)
@@ -144,10 +144,8 @@ class FuseOperations(LoggingMixIn, Operations):
     def rmdir(self, path):
         path = self._localize_path(path)
 
-        # TODO: check directory is empty
-        # TODO: check path is a directory
         with translate_error():
-            self.fs_access.delete(path)
+            self.fs_access.folder_delete(path)
 
         return 0
 

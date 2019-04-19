@@ -170,13 +170,12 @@ class UserFS:
         # TODO: WorkspaceFS shouldn't need workspace name (especially since it
         # could be changed at anytime !), pass the workspace entry object instead
         return WorkspaceFS(
-            workspace_entry.name,
+            workspace_entry,
             device=self.device,
             local_storage=self.local_storage,
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             _local_folder_fs=self._local_folder_fs,
-            _file_transactions=self._file_transactions,
             _remote_loader=self._remote_loader,
             _syncer=self._syncer,
         )

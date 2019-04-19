@@ -67,7 +67,7 @@ def test_fs_online_rwfile_and_sync(
             await self.start_backend()
             await self.restart_fs(self.device, self.local_storage)
             await self.fs.workspace_create("/w")
-            await self.fs.file_create("/w/foo.txt")
+            await self.fs.touch("/w/foo.txt")
             await self.fs.sync("/")
             self.file_oracle = FileOracle(base_version=1)
 

@@ -62,7 +62,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice, alice_fs, eve
     mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
 
     await alice_fs.workspace_create("/w")
-    await alice_fs.file_create("/w/bar.txt")
+    await alice_fs.touch("/w/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint}/bar.txt")
 
@@ -84,9 +84,9 @@ async def test_mountpoint_already_in_use(base_mountpoint, alice, alice_fs, alice
     mountpoint = str(base_mountpoint.absolute() / f"{alice.user_id}-w")
 
     await alice_fs.workspace_create("/w")
-    await alice_fs.file_create("/w/bar.txt")
+    await alice_fs.touch("/w/bar.txt")
     await alice2_fs.workspace_create("/w")
-    await alice2_fs.file_create("/w/bar.txt")
+    await alice2_fs.touch("/w/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint}/bar.txt")
 
@@ -119,7 +119,7 @@ async def test_mount_and_explore_workspace(
 
     await alice_fs.workspace_create("/w")
     await alice_fs.folder_create("/w/foo")
-    await alice_fs.file_create("/w/bar.txt")
+    await alice_fs.touch("/w/bar.txt")
     await alice_fs.file_write("/w/bar.txt", b"Hello world !")
 
     # Now we can start fuse
@@ -176,7 +176,7 @@ async def test_idempotent_mount(base_mountpoint, alice, alice_fs, event_bus, man
     # Populate a bit the fs first...
 
     await alice_fs.workspace_create("/w")
-    await alice_fs.file_create("/w/bar.txt")
+    await alice_fs.touch("/w/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint}/bar.txt")
 
@@ -213,7 +213,7 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 
     async with logged_core_factory(core_config, alice) as alice_core:
         await alice_core.fs.workspace_create("/w")
-        await alice_core.fs.file_create("/w/bar.txt")
+        await alice_core.fs.touch("/w/bar.txt")
 
         assert not await bar_txt.exists()
 
@@ -228,7 +228,7 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 def test_manifest_not_available(mountpoint_service):
     async def _bootstrap(fs, mountpoint_manager):
         await fs.workspace_create("/x")
-        await fs.file_create("/x/foo.txt")
+        await fs.touch("/x/foo.txt")
         foo_access = fs._local_folder_fs.get_access(FsPath("/x/foo.txt"))
         fs._local_folder_fs.clear_manifest(foo_access)
         await mountpoint_manager.mount_all()
@@ -251,8 +251,8 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice, alice_fs, event_bu
     # Populate a bit the fs first...
     await alice_fs.workspace_create("/mounted_wksp")
     await alice_fs.workspace_create("/not_mounted_wksp")
-    await alice_fs.file_create("/mounted_wksp/bar.txt")
-    await alice_fs.file_create("/not_mounted_wksp/foo.txt")
+    await alice_fs.touch("/mounted_wksp/bar.txt")
+    await alice_fs.touch("/not_mounted_wksp/foo.txt")
 
     # Now we can start fuse
     async with mountpoint_manager_factory(

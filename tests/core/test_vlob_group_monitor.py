@@ -17,7 +17,7 @@ async def test_vlob_group_notif_on_new_entry_sync(
     if type == "folder":
         await alice2_fs.folder_create("/w/foo")
     elif type == "file":
-        await alice2_fs.file_create("/w/foo")
+        await alice2_fs.touch("/w/foo")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
     vlob_group_id = dump_fs["children"]["w"]["access"]["id"]
@@ -93,7 +93,7 @@ async def test_vlob_group_notif_on_new_nested_entry_sync(
     if type == "folder":
         await alice2_fs.folder_create("/foo/bar")
     elif type == "file":
-        await alice2_fs.file_create("/foo/bar")
+        await alice2_fs.touch("/foo/bar")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
     vlob_group_id = dump_fs["children"]["foo"]["vlob_group_id"]

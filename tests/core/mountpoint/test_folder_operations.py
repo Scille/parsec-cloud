@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import attr
-import pytest
+import errno
 from pathlib import Path
 from string import ascii_lowercase
+
+import attr
+import pytest
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     Bundle,
@@ -47,6 +49,15 @@ class expect_raises:
             ) from exc_value
 
         return True
+
+
+def oracle_rename(src, dst):
+    """The oracle must behave differently than `src.rename`, as the
+    workspace file system does not support cross-directory renaming.
+    """
+    if src.parent != dst.parent:
+        raise OSError(errno.EXDEV, os.strerror(errno.EXDEV))
+    return src.rename(str(dst))
 
 
 @attr.s
@@ -178,7 +189,7 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
             expected_exc = None
             try:
-                src.to_oracle().rename(str(dst.to_oracle()))
+                oracle_rename(src.to_oracle(), dst.to_oracle())
             except OSError as exc:
                 expected_exc = exc
 

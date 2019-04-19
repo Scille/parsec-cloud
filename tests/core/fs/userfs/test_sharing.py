@@ -6,7 +6,7 @@ from uuid import uuid4
 from itertools import product
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, ManifestAccess, LocalUserManifest
+from parsec.core.types import WorkspaceEntry, ManifestAccess, LocalUserManifest, FsPath
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -96,8 +96,8 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
 
     aw = alice_user_fs.get_workspace(wid)
     bw = bob_user_fs.get_workspace(wid)
-    aw_stat = await aw.stat("/")
-    bw_stat = await bw.stat("/")
+    aw_stat = await aw.entry_info(FsPath("/"))
+    bw_stat = await bw.entry_info(FsPath("/"))
     # TODO: currently workspace minimal sync in userfs cannot
     # update need_sync field
     aw_stat.pop("need_sync")
@@ -126,15 +126,15 @@ async def test_share_workspace_then_rename_it(
     # This should have not changed the workspace in any way
     bw = bob_user_fs.get_workspace(wid)
     aw = alice_user_fs.get_workspace(wid)
-    await bw.file_create("ping_bob.txt")
-    await aw.folder_create("ping_alice")
+    await bw.file_create(FsPath("/ping_bob.txt"), open=False)
+    await aw.folder_create(FsPath("/ping_alice"))
 
     await bw.sync("/")
     await aw.sync("/")
     await bw.sync("/")
 
-    aw_stat = await aw.stat("/")
-    bw_stat = await bw.stat("/")
+    aw_stat = await aw.entry_info(FsPath("/"))
+    bw_stat = await bw.entry_info(FsPath("/"))
     assert aw_stat == bw_stat
     assert aw_stat["id"] == wid
 
@@ -328,13 +328,13 @@ async def test_share_with_sharing_name_already_taken(
 
     assert len(bob_user_fs.get_user_manifest().workspaces) == 3
 
-    b_aw_stat = await bob_user_fs.get_workspace(awid).stat("/")
-    a_aw_stat = await alice_user_fs.get_workspace(awid).stat("/")
+    b_aw_stat = await bob_user_fs.get_workspace(awid).entry_info(FsPath("/"))
+    a_aw_stat = await alice_user_fs.get_workspace(awid).entry_info(FsPath("/"))
     b_aw_stat.pop("need_sync")
     a_aw_stat.pop("need_sync")
     assert b_aw_stat == a_aw_stat
 
-    b_bw_stat = await bob_user_fs.get_workspace(bwid).stat("/")
+    b_bw_stat = await bob_user_fs.get_workspace(bwid).entry_info(FsPath("/"))
     assert b_bw_stat["id"] == bwid
     # TODO: currently workspaces with same name shadow each other
     # should be solve once legacy FS class is dropped
@@ -404,25 +404,30 @@ async def test_share_workspace_then_conflict_on_rights(
     assert am == expected
     assert a2m == am
 
-    a_w_stat = await alice_user_fs.get_workspace(wid).stat("/")
-    a2_w_stat = await alice2_user_fs.get_workspace(wid).stat("/")
-    # TODO: deprecated fields
-    a_w_stat.pop("participants")
-    a2_w_stat.pop("participants")
+    a_w_stat = await alice_user_fs.get_workspace(wid).entry_info(FsPath("/"))
+    a2_w_stat = await alice2_user_fs.get_workspace(wid).entry_info(FsPath("/"))
+
+    a_w_info = await alice_user_fs.get_workspace(wid).workspace_info()
+    a2_w_info = await alice2_user_fs.get_workspace(wid).workspace_info()
+    a_w_info.pop("participants")
+    a2_w_info.pop("participants")
+
     assert a_w_stat == {
-        "type": "workspace",
+        "type": "folder",
+        "is_placeholder": False,
         "id": wid,
-        "admin_right": False,
-        "read_right": True,
-        "write_right": False,
-        "is_folder": True,
         "created": ANY,
         "updated": ANY,
         "base_version": 1,
-        "is_placeholder": False,
         "need_sync": False,
         "children": [],
-        "creator": bob.user_id,
-        # "participants": [alice.user_id, bob.user_id],
     }
     assert a_w_stat == a2_w_stat
+
+    assert a_w_info == {
+        "admin_right": False,
+        "read_right": True,
+        "write_right": False,
+        "creator": bob.user_id,
+    }
+    assert a_w_info == a2_w_info

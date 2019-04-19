@@ -92,7 +92,7 @@ def oracle_fs_factory(tmpdir):
                 path.mkdir(exist_ok=False)
             except OSError:
                 return "invalid_path"
-            self._register_stat(path, "workspace" if workspace else "folder")
+            self._register_stat(path, "folder")
             self.entries_stats[path.parent]["need_sync"] = True
             return "ok"
 
@@ -101,6 +101,8 @@ def oracle_fs_factory(tmpdir):
 
         def unlink(self, path):
             path = self._cook_path(path)
+            if self._is_workspace(path):
+                return "invalid_path"
             try:
                 path.unlink()
             except OSError:
@@ -111,6 +113,8 @@ def oracle_fs_factory(tmpdir):
 
         def rmdir(self, path):
             path = self._cook_path(path)
+            if self._is_workspace(path):
+                return "invalid_path"
             try:
                 path.rmdir()
             except OSError:
@@ -171,10 +175,14 @@ def oracle_fs_factory(tmpdir):
             return "ok"
 
         def move(self, src, dst):
+            # TODO: This method should be called rename
             src = self._cook_path(src)
             dst = self._cook_path(dst)
 
             if self._is_workspace(src) or self._is_workspace(dst):
+                return "invalid_path"
+
+            if src.parent != dst.parent:
                 return "invalid_path"
 
             try:
@@ -183,22 +191,17 @@ def oracle_fs_factory(tmpdir):
                 return "invalid_path"
 
             if src != dst:
-                # Recursively move the path and it children by doing copy&delete
+                # Rename source and all entries within the source
                 for child_src, entry in self.entries_stats.copy().items():
-                    # Note `child_src` will also contain `src` itself here
                     try:
                         relative = child_src.relative_to(src)
                     except ValueError:
                         continue
                     child_dst = dst / relative
-                    self.entries_stats[child_dst] = {
-                        "type": self.entries_stats.pop(child_src)["type"],
-                        "base_version": 0,
-                        "is_placeholder": True,
-                        "need_sync": True,
-                    }
+                    entry = self.entries_stats.pop(child_src)
+                    self.entries_stats[child_dst] = entry
 
-                self.entries_stats[dst.parent]["need_sync"] = True
+                # The parent is the only modified entry
                 self.entries_stats[src.parent]["need_sync"] = True
 
             return "ok"
@@ -303,6 +306,12 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
 
         def delete(self, path):
             return self.fs.delete(path)
+
+        def rmdir(self, path):
+            return self.fs.rmdir(path)
+
+        def unlink(self, path):
+            return self.fs.unlink(path)
 
         def move(self, src, dst):
             return self.fs.move(src, dst)

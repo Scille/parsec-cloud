@@ -82,7 +82,7 @@ async def test_online_sync2(mock_clock, running_backend, core_factory, alice, al
         ):
 
             with freeze_time("2000-01-02"):
-                await alice_core.fs.file_create("/foo.txt")
+                await alice_core.fs.touch("/foo.txt")
 
             with freeze_time("2000-01-03"):
                 await alice_core.fs.file_write("/foo.txt", b"hello world !")
@@ -107,7 +107,7 @@ async def test_sync_then_clean_start(mock_clock, running_backend, core_factory, 
         async with wait_for_entries_synced(alice_core, ("/", "/foo.txt")):
 
             with freeze_time("2000-01-02"):
-                await alice_core.fs.file_create("/foo.txt")
+                await alice_core.fs.touch("/foo.txt")
 
             with freeze_time("2000-01-03"):
                 await alice_core.fs.file_write("/foo.txt", b"v1")
@@ -137,7 +137,7 @@ async def test_sync_then_fast_forward_on_start(
         await alice2_core2.login(alice2)
 
         with freeze_time("2000-01-02"):
-            await alice_core.fs.file_create("/foo.txt")
+            await alice_core.fs.touch("/foo.txt")
 
         with freeze_time("2000-01-03"):
             await alice_core.fs.file_write("/foo.txt", b"v1")
@@ -192,7 +192,7 @@ async def test_fast_forward_on_offline_during_sync(
                 alice_core, ("/", "/foo.txt")
             ):
                 with freeze_time("2000-01-02"):
-                    await alice_core.fs.file_create("/foo.txt")
+                    await alice_core.fs.touch("/foo.txt")
 
                 with freeze_time("2000-01-03"):
                     await alice_core.fs.file_write("/foo.txt", b"v1")

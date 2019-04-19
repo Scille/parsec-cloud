@@ -2,6 +2,7 @@
 
 import pytest
 from pendulum import Pendulum
+from unittest.mock import ANY
 
 from parsec.core.backend_connection import BackendNotAvailable
 
@@ -16,7 +17,8 @@ async def assert_same_fs(fs1, fs2):
         assert stat1 == stat2
 
         cooked_children = {}
-        if stat1["is_folder"]:
+        # TODO: type root should not exist
+        if stat1["type"] in ("folder", "root"):
             for child in stat1["children"]:
                 cooked_children[child] = await _recursive_assert(fs1, fs2, f"{path}/{child}")
             stat1["children"] = cooked_children
@@ -46,12 +48,11 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
 
     stat = await alice_fs.stat("/w")
     assert stat == {
-        "type": "workspace",
+        "type": "folder",
         "id": w_id,
         "admin_right": True,
         "read_right": True,
         "write_right": True,
-        "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
         "base_version": 2,
@@ -73,9 +74,9 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
     await create_shared_workspace("w", alice_fs, alice2_fs)
     with freeze_time("2000-01-02"):
         if type == "file":
-            obj_id = await alice_fs.file_create("/w/foo")
+            await alice_fs.touch("/w/foo")
         else:
-            obj_id = await alice_fs.folder_create("/w/foo")
+            await alice_fs.mkdir("/w/foo")
 
     with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
@@ -94,8 +95,7 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
     if type == "file":
         assert stat == {
             "type": "file",
-            "id": obj_id,
-            "is_folder": False,
+            "id": ANY,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -106,8 +106,7 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
     else:
         assert stat == {
             "type": "folder",
-            "id": obj_id,
-            "is_folder": True,
+            "id": ANY,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -130,7 +129,7 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
     # 1) Create&sync file
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
 
     with freeze_time("2000-01-03"):
         await alice_fs.file_write("/w/foo.txt", b"hello world !")
@@ -176,9 +175,9 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
     # 1) Create data
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
         await alice_fs.folder_create("/w/bar")
-        await alice_fs.file_create("/w/bar/wizz.txt")
+        await alice_fs.touch("/w/bar/wizz.txt")
         await alice_fs.folder_create("/w/bar/spam")
 
     # 2) Sync it
@@ -229,7 +228,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
     # 1) Both fs have things to sync
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
 
     with freeze_time("2000-01-03"):
         await alice2_fs.folder_create("/w/bar")
@@ -303,7 +302,7 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs
     # the newly created null bytes
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
 
     with freeze_time("2000-01-03"):
         await alice_fs.file_truncate("/w/foo.txt", length=24)
@@ -326,7 +325,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 1) Create existing items in both fs
 
     with freeze_time("2000-01-02"):
-        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.touch("/w/foo.txt")
         await alice_fs.file_write("/w/foo.txt", b"v1")
         await alice_fs.folder_create("/w/bar")
 
@@ -341,7 +340,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         await alice_fs.file_write("/w/foo.txt", b"alice's v2")
         await alice_fs.folder_create("/w/bar/from_alice")
         await alice_fs.folder_create("/w/bar/spam")
-        await alice_fs.file_create("/w/bar/buzz.txt")
+        await alice_fs.touch("/w/bar/buzz.txt")
 
     with freeze_time("2000-01-04"):
         # z_by_alice2_id = await alice2_fs.workspace_create("/z")
@@ -349,7 +348,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         await alice2_fs.file_write("/w/foo.txt", b"alice2's v2")
         await alice2_fs.folder_create("/w/bar/from_alice2")
         await alice2_fs.folder_create("/w/bar/spam")
-        await alice2_fs.file_create("/w/bar/buzz.txt")
+        await alice2_fs.touch("/w/bar/buzz.txt")
 
     # 3) Sync Alice first, should go fine
 
@@ -563,13 +562,12 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
 
     stat = await alice_fs.stat("/w")
     assert stat == {
-        "type": "workspace",
+        "type": "folder",
         "id": w_id,
         "admin_right": True,
         "read_right": True,
         "write_right": True,
         "base_version": 2,
-        "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -590,7 +588,8 @@ async def test_create_already_existing_file_vlob(running_backend, alice_fs, alic
 
     # First create data locally
     with freeze_time("2000-01-02"):
-        obj_id = await alice_fs.file_create("/w/foo.txt")
+        fd = await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.file_fd_close(fd)
 
     vanilla_backend_vlob_create = alice_fs._syncer._backend_vlob_create
 
@@ -609,8 +608,7 @@ async def test_create_already_existing_file_vlob(running_backend, alice_fs, alic
     stat = await alice_fs.stat("/w/foo.txt")
     assert stat == {
         "type": "file",
-        "id": obj_id,
-        "is_folder": False,
+        "id": ANY,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -630,7 +628,8 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
 
     with freeze_time("2000-01-02"):
         await alice_fs.workspace_create("/w")
-        obj_id = await alice_fs.file_create("/w/foo.txt")
+        fd = await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.file_fd_close(fd)
         await alice_fs.sync("/w/foo.txt")
 
     stat = await alice_fs.stat("/w/foo.txt")
@@ -668,8 +667,7 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
     stat = await alice_fs.stat("/w/foo.txt")
     assert stat == {
         "type": "file",
-        "id": obj_id,
-        "is_folder": False,
+        "id": ANY,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),

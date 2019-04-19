@@ -108,7 +108,7 @@ def test_fs_online_concurrent_tree_and_sync(
         async def create_file(self, fs, parent, name):
             path = os.path.join(parent, name)
             try:
-                await fs.file_create(path=path)
+                await fs.touch(path=path)
             except OSError:
                 pass
             return path
@@ -131,18 +131,16 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(fs=FSs, path=Files)
         async def delete_file(self, fs, path):
-            # TODO: separate delete file from delete folder
             try:
-                await fs.delete(path=path)
+                await fs.file_delete(path=path)
             except OSError:
                 pass
             return path
 
         @rule(fs=FSs, path=Folders)
         async def delete_folder(self, fs, path):
-            # TODO: separate delete file from delete folder
             try:
-                await fs.delete(path=path)
+                await fs.folder_delete(path=path)
             except OSError:
                 pass
             return path
@@ -167,19 +165,28 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule()
         async def sync_all_the_files(self):
-            # Send two syncs in a row given file conflict results are not synced
-            # once created
-
-            # Sync 1
-            await self.fs1.sync("/")
-            await self.fs1.sync("/")
-
-            # Sync 2
-            await self.fs2.sync("/")
-            await self.fs2.sync("/")
-
-            # Sync 1
-            await self.fs1.sync("/")
+            # Less than 4 retries causes the following test case to fail:
+            # ```python
+            # state = FSOnlineConcurrentTreeAndSync()
+            # async def steps():
+            #     v1 = await state.init()
+            #     v2 = await state.register_fs1(force_after_init=v1)
+            #     v3 = await state.register_fs2(force_after_init=v1)
+            #     v4 = await state.create_file(fs=v3, name='b', parent=v1)
+            #     await state.sync_all_the_files()
+            #     await state.update_file(fs=v3, path=v4)
+            #     await state.update_file(fs=v2, path=v4)
+            #     v5 = await state.create_file(fs=v3, name='a', parent=v1)
+            #     v6 = await state.create_file(fs=v3, name='a', parent=v1)
+            #     v7 = await state.move_file(dst_name='a', dst_parent=v1, fs=v2, src=v4)
+            #     await state.sync_all_the_files()
+            #     await state.teardown()
+            # state.trio_run(steps)
+            # ```
+            retries = 4
+            for _ in range(retries):
+                await self.fs1.sync("/")
+                await self.fs2.sync("/")
 
             fs_dump_1 = self.fs1._local_folder_fs.dump()
             fs_dump_2 = self.fs2._local_folder_fs.dump()

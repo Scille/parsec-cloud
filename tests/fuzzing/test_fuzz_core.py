@@ -140,7 +140,7 @@ async def _fuzzer_cmd(id, core, fs_state):
     elif x < 20:
         path = fs_state.get_new_path()
         try:
-            await core.fs.file_create(path)
+            await core.fs.touch(path)
             fs_state.files.append(path)
             fs_state.add_stat(id, "file_create_ok", f"path={path}")
         except OSError as exc:
@@ -204,9 +204,13 @@ async def _fuzzer_cmd(id, core, fs_state):
             fs_state.add_stat(id, "move_bad", f"src={old_path}, dst={new_path}, raised {exc!r}")
 
     elif x < 80:
-        path = fs_state.get_path()
         try:
-            await core.fs.delete(path)
+            if x < 85:
+                path = fs_state.get_file()
+                await core.fs.file_delete(path)
+            else:
+                path = fs_state.get_folder()
+                await core.fs.folder_delete(path)
             fs_state.remove_path(path)
             fs_state.add_stat(id, "delete_ok", f"path={path}")
         except OSError as exc:
