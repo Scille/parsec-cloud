@@ -96,6 +96,8 @@ async def _do_bootstrap_organization(
     except BackendCmdsBadResponse as exc:
         raise JobResultError("refused-by-backend", info=str(exc))
 
+    return device, password
+
 
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_success = pyqtSignal()
@@ -122,10 +124,9 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.bootstrap_error.connect(self.on_bootstrap_error)
 
     def on_bootstrap_error(self):
+        assert self.bootstrap_job
         assert self.bootstrap_job.is_finished()
         assert self.bootstrap_job.status != "ok"
-        self.button_cancel.hide()
-        self.check_infos()
 
         status = self.bootstrap_job.status
         if status == "invalid-url":
@@ -140,23 +141,27 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             errmsg = _("URL or device is invalid.")
         else:
             errmsg = _("Can not bootstrap this organization ({info}).")
+
         show_error(self, errmsg.format(**self.bootstrap_job.exc.params))
         self.bootstrap_job = None
+        self.check_infos()
 
     def on_bootstrap_success(self):
+        assert self.bootstrap_job
         assert self.bootstrap_job.is_finished()
         assert self.bootstrap_job.status == "ok"
+
         self.button_bootstrap.setDisabled(False)
         self.button_cancel.hide()
+        device, password = self.bootstrap_job.ret
         self.bootstrap_job = None
-        bootstrap_addr = BackendOrganizationBootstrapAddr(self.line_edit_url.text())
-        device = DeviceID("{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text()))
-        self.organization_bootstrapped.emit(
-            bootstrap_addr.organization_id, device, self.line_edit_password.text()
-        )
+        self.check_infos()
+
+        self.organization_bootstrapped.emit(device.organization_id, device.device_id, password)
 
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
+
         self.bootstrap_job = self.portal.submit_job(
             ThreadSafeQtSignal(self, "bootstrap_success"),
             ThreadSafeQtSignal(self, "bootstrap_error"),
@@ -171,22 +176,25 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             pkcs11_token=int(self.combo_pkcs11_token.currentText()),
             pkcs11_key=int(self.combo_pkcs11_key.currentText()),
         )
-        self.button_cancel.show()
-        self.button_bootstrap.setDisabled(True)
+        self.check_infos()
 
     def cancel_bootstrap(self):
-        assert self.bootstrap_job
-        self.bootstrap_job.cancel_and_join()
-        self.bootstrap_job = None
-        self.button_cancel.hide()
-        self.button_bootstrap.setDisabled(False)
+        if self.bootstrap_job:
+            self.bootstrap_job.cancel_and_join()
+            self.bootstrap_job = None
         self.check_infos()
 
     def check_infos(self, _=""):
+        if self.bootstrap_job:
+            self.button_cancel.show()
+        else:
+            self.button_cancel.hide()
+
         if (
             len(self.line_edit_login.text())
             and len(self.line_edit_device.text())
             and len(self.line_edit_url.text())
+            and not self.bootstrap_job
         ):
             self.button_bootstrap.setDisabled(False)
         else:
@@ -217,3 +225,4 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_cancel.hide()
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
+        self.check_infos()
