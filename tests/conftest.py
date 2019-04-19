@@ -212,22 +212,24 @@ def server_factory(tcp_stream_spy):
         if not url:
             url = f"ws://server-{count}.localhost:9999"
 
-        try:
-            async with trio.open_nursery() as nursery:
+        async with trio.open_nursery() as nursery:
 
-                def connection_factory(*args, **kwargs):
-                    right, left = trio.testing.memory_stream_pair()
-                    nursery.start_soon(entry_point, left)
-                    return right
+            def connection_factory(*args, **kwargs):
+                right, left = trio.testing.memory_stream_pair()
+                nursery.start_soon(entry_point, left)
+                return right
 
-                tcp_stream_spy.push_hook(url, connection_factory)
-
+            tcp_stream_spy.push_hook(url, connection_factory)
+            try:
                 yield AppServer(entry_point, url, connection_factory)
-
                 nursery.cancel_scope.cancel()
 
-        finally:
-            tcp_stream_spy.pop_hook(url)
+            finally:
+                # It's important to remove the hook just after having cancelled
+                # the nursery. Otherwise another coroutine trying to connect would
+                # end up with a `RuntimeError('Nursery is closed to new arrivals',)`
+                # given `connection_factory` make use of the now-closed nursery.
+                tcp_stream_spy.pop_hook(url)
 
     return _server_factory
 

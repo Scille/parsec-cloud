@@ -85,21 +85,39 @@ class BackendEventsManager:
         while True:
             try:
 
-                async with trio.open_nursery() as nursery:
-                    logger.info("Try to connect to backend...")
-                    self._subscribed_vlob_groups_changed.clear()
-                    event_pump_cancel_scope = await nursery.start(self._event_pump)
-                    backend_connection_failures = 0
-                    logger.info("Backend online")
-                    self._event_pump_ready()
-                    while True:
-                        await self._subscribed_vlob_groups_changed.wait()
+                try:
+
+                    async with trio.open_nursery() as nursery:
+                        logger.info("Try to connect to backend...")
                         self._subscribed_vlob_groups_changed.clear()
-                        new_cancel_scope = await nursery.start(self._event_pump)
+                        event_pump_cancel_scope = await nursery.start(self._event_pump)
+                        backend_connection_failures = 0
+                        logger.info("Backend online")
                         self._event_pump_ready()
-                        event_pump_cancel_scope.cancel()
-                        event_pump_cancel_scope = new_cancel_scope
-                        logger.info("Event listener restarted")
+                        while True:
+                            await self._subscribed_vlob_groups_changed.wait()
+                            self._subscribed_vlob_groups_changed.clear()
+                            new_cancel_scope = await nursery.start(self._event_pump)
+                            self._event_pump_ready()
+                            event_pump_cancel_scope.cancel()
+                            event_pump_cancel_scope = new_cancel_scope
+                            logger.info("Event listener restarted")
+
+                except trio.MultiError as exc:
+                    # MultiError can contains:
+                    # - only Cancelled exceptions (most likely case), this
+                    #   is taken care of by trio so we can safely reraise it
+                    # - a regular exception and multiple Cancelled, in such
+                    #  case we only reraise the regular exception to have
+                    #  lower exception handlers deal with it
+                    # - multiple regular exceptions... this case is unlikely and
+                    #  not well handled so far: we just let the MultiError pop
+                    #  up (which is likely to cause issue with upper layers...)
+                    # TODO: better multi-regular-exception handling !!!
+                    filtered_exc = trio.MultiError.filter(
+                        lambda x: None if isinstance(x, trio.Cancelled) else x, exc
+                    )
+                    raise filtered_exc if filtered_exc else exc
 
             except (TransportError, BackendNotAvailable) as exc:
                 # In case of connection failure, wait a bit and restart

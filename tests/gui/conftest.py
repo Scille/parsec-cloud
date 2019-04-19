@@ -96,8 +96,9 @@ def trio_in_side_thread():
             try:
                 ret = await fn(**kwargs)
 
-            except Exception as exc:
+            except BaseException as exc:
                 await _qt_thread_gateway.stop_action_pump("exc", exc)
+                raise
 
             else:
                 await _qt_thread_gateway.stop_action_pump("value", ret)
