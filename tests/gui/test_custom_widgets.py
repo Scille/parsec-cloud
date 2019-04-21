@@ -1,0 +1,24 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
+import pytest
+from PyQt5 import QtCore
+
+from parsec.core.gui import custom_widgets
+
+
+@pytest.mark.gui
+def test_file_line_edit(qtbot):
+
+    w = custom_widgets.FileLineEdit(parent=None)
+    qtbot.addWidget(w)
+
+    w.is_dir = True
+    w.setText("A_short_file_name.txt")
+    assert w.text() == "A_short_file_name.txt"
+
+    w.setText("A_longer_file_name_to_check_if_it_is_shortened.txt")
+    assert w.text() == "A_longer_file_name_to_check_if..."
+
+    with qtbot.waitSignal(w.clicked, timeout=500) as blocker:
+        qtbot.mouseClick(w, QtCore.Qt.LeftButton)
+    assert blocker.args == ["A_longer_file_name_to_check_if_it_is_shortened.txt", True]
