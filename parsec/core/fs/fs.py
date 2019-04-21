@@ -270,15 +270,14 @@ class FS:
         read_right: bool = True,
         write_right: bool = True,
     ) -> None:
-        cooked_path = FsPath(path)
-        if not cooked_path.is_workspace():
+        workspace_name, subpath = self._split_path(path)
+        if not subpath:
             # Will fail with correct exception
             workspace_name = path
-        else:
-            workspace_name = cooked_path.workspace
+        workspace_entry = self._get_workspace_entry_from_name(workspace_name)
 
         await self._user_fs.workspace_share(
-            workspace_name,
+            workspace_entry.access.id,
             recipient=UserID(recipient),
             admin_right=admin_right,
             read_right=read_right,
