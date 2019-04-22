@@ -137,7 +137,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
             user_id = self.core.device.user_id
             for workspace in result.get("children", []):
                 ws_infos = self.jobs_ctx.run(self.core.fs.stat, os.path.join("/", workspace))
-                ws_infos["participants"].remove(user_id)
+                # ws_infos["participants"].pop(user_id, None)
                 files = ws_infos["children"][:4]
                 display_files = {}
                 for f in files:

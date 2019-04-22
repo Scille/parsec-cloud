@@ -2,7 +2,7 @@
 
 import trio
 from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from uuid import UUID
 from structlog import get_logger
 
@@ -22,6 +22,7 @@ from parsec.core.types import (
     WorkspaceManifest,
     ManifestAccess,
     WorkspaceEntry,
+    WorkspaceRole,
     LocalUserManifest,
     remote_manifest_serializer,
 )
@@ -111,7 +112,7 @@ class UserFS:
             self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
             return user_manifest
 
-    async def workspace_refresh_rights(self, workspace_id: UUID) -> None:
+    async def workspace_refresh_roles(self, workspace_id: UUID) -> None:
         """
         Raises:
             FSError
@@ -122,36 +123,36 @@ class UserFS:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
         try:
-            rights = await self.backend_cmds.vlob_group_get_rights(workspace_id)
+            roles = await self.backend_cmds.vlob_group_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except BackendCmdsNotAllowed:
-            # Seems we lost all the access rights
-            self_rights = {"admin_right": False, "read_right": False, "write_right": False}
+            # Seems we lost all the access roles
+            self_role = None
 
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user rights: {exc}") from exc
+            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
         else:
             try:
-                self_rights = rights[self.device.user_id]
+                self_role = roles[self.device.user_id]
 
             except KeyError:
-                # We should never be here in theory given if we had no rights
+                # We should never be here in theory given if we had no roles
                 # backend was supposed to deny us the access !
                 logger.warning(
-                    "User not part of the rights returned by the backend",
+                    "User not part of the roles returned by the backend",
                     vlob_group=workspace_id,
                     device_id=self.device.device_id,
                 )
-                self_rights = {"admin_right": False, "read_right": False, "write_right": False}
+                self_role = None
 
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
-            updated_workspace_entry = workspace_entry.evolve(**self_rights)
+            updated_workspace_entry = workspace_entry.evolve(role=self_role)
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
@@ -447,12 +448,7 @@ class UserFS:
         )
 
     async def workspace_share(
-        self,
-        workspace_id: UUID,
-        recipient: UserID,
-        admin_right: bool = True,
-        read_right: bool = True,
-        write_right: bool = True,
+        self, workspace_id: UUID, recipient: UserID, role: Optional[WorkspaceRole]
     ) -> None:
         """
         Raises:
@@ -482,11 +478,11 @@ class UserFS:
         except RemoteDevicesManagerError as exc:
             raise FSError(f"Cannot retreive recipient: {exc}") from exc
 
-        # Note we don't bother to check workspace's access rights given they
+        # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
 
         # Actual sharing is done in two steps:
-        # 1) update access rights for the vlob group corresponding to the workspace
+        # 1) update access roles for the vlob group corresponding to the workspace
         # 2) communicate to the new collaborator through a message the access to
         #    the workspace manifest
         # Those two steps are not atomic, but this is not that much of a trouble
@@ -494,12 +490,8 @@ class UserFS:
 
         # Step 1)
         try:
-            await self.backend_cmds.vlob_group_update_rights(
-                workspace_entry.access.id,
-                recipient,
-                admin_right=admin_right,
-                read_right=read_right,
-                write_right=write_right,
+            await self.backend_cmds.vlob_group_update_roles(
+                workspace_entry.access.id, recipient, role=role
             )
 
         except BackendNotAvailable as exc:
@@ -507,17 +499,17 @@ class UserFS:
 
         except BackendCmdsNotAllowed as exc:
             raise FSSharingNotAllowedError(
-                "Admin right on the workspace is mandatory to share it"
+                "Must be Owner or Manager on the workspace is mandatory to share it"
             ) from exc
 
         except BackendConnectionError as exc:
-            raise FSError(f"Error while trying to set vlob group rights in backend: {exc}") from exc
+            raise FSError(f"Error while trying to set vlob group roles in backend: {exc}") from exc
 
         # Step 2)
 
         # Build the sharing message
         msg = {"id": workspace_entry.access.id, "name": workspace_entry.name}
-        if admin_right or read_right or write_right:
+        if role:
             msg["type"] = "sharing.granted"
             msg["key"] = workspace_entry.access.key
         else:
@@ -656,39 +648,39 @@ class UserFS:
             FSSharingNotAllowedError
         """
         # We cannot blindly trust the message sender ! Hence we first
-        # interrogate the backend to make sure he is a workspace admin.
-        # Note this means we refuse to process messages from a former-admin,
-        # even if the message was sent at a time the user was admin (in such
-        # case the user can still ask for another admin to re-do the sharing
+        # interrogate the backend to make sure he is a workspace manager/owner.
+        # Note this means we refuse to process messages from a former-manager,
+        # even if the message was sent at a time the user was manager (in such
+        # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            rights = await self.backend_cmds.vlob_group_get_rights(workspace_id)
+            roles = await self.backend_cmds.vlob_group_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except BackendCmdsNotAllowed:
-            # Seems we lost the access rights anyway, nothing to do then
+            # Seems we lost the access roles anyway, nothing to do then
             return
 
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user rights: {exc}") from exc
+            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
-        if not rights.get(sender.user_id, {}).get("admin_right", False):
+        if roles.get(sender.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
                 f"User {sender.user_id} cannot share workspace `{workspace_id}`"
-                " with us given he is not admin"
+                " with us (requires owner or manager right)"
             )
 
-        # Determine the access rights we have been given to
-        self_rights = rights.get(self.device.user_id)
+        # Determine the access roles we have been given to
+        self_role = roles.get(self.device.user_id)
 
         # Finally insert the new workspace entry into our user manifest
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
             name=f"{workspace_name} (shared by {sender.user_id})",
             access=ManifestAccess(id=workspace_id, key=workspace_key),
-            **self_rights,
+            role=self_role,
         )
 
         async with self._update_user_manifest_lock:
@@ -727,10 +719,10 @@ class UserFS:
         # Unlike when somebody grant us workspace access, here we should no
         # longer be able to access the workspace.
         # This also include workspace participants, hence we have no way
-        # verifying the sender is an admin... But this is not really a trouble:
+        # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.backend_cmds.vlob_group_get_rights(workspace_id)
+            await self.backend_cmds.vlob_group_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -740,7 +732,7 @@ class UserFS:
             pass
 
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user rights: {exc}") from exc
+            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
         else:
             # We still have access over the workspace, nothing to do then
@@ -754,9 +746,7 @@ class UserFS:
             if not existing_workspace_entry:
                 # No workspace entry, nothing to update then
                 return
-            workspace_entry = existing_workspace_entry.evolve(
-                read_right=False, write_right=False, admin_right=False, granted_on=pendulum_now()
-            )
+            workspace_entry = existing_workspace_entry.evolve(role=None, granted_on=pendulum_now())
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)

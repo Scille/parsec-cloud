@@ -3,9 +3,10 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
+from parsec.api.protocole import VlobGroupRole
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.drivers.memory.user import MemoryUserComponent, UserNotFoundError
@@ -31,7 +32,7 @@ class Vlob:
 @attr.s
 class VlobGroup:
     checkpoint = attr.ib(default=0)
-    rights = attr.ib(factory=dict)
+    roles = attr.ib(factory=dict)
     changes = attr.ib(factory=dict)
 
 
@@ -60,17 +61,24 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobNotFoundError(f"Group `{group_id}` doesn't exist")
 
     def _can_read(self, organization, user, group_id):
+        can_read_roles = (
+            VlobGroupRole.OWNER,
+            VlobGroupRole.MANAGER,
+            VlobGroupRole.CONTRIBUTOR,
+            VlobGroupRole.READER,
+        )
         try:
             group = self._get_group(organization, group_id)
-            return group.rights[user][1]
+            return group.roles[user] in can_read_roles
 
         except (VlobNotFoundError, KeyError):
             return False
 
     def _can_write(self, organization, user, group_id):
+        can_write_roles = (VlobGroupRole.OWNER, VlobGroupRole.MANAGER, VlobGroupRole.CONTRIBUTOR)
         try:
             group = self._get_group(organization, group_id)
-            return group.rights[user][2]
+            return group.roles[user] in can_write_roles
 
         except (VlobNotFoundError, KeyError):
             return False
@@ -79,7 +87,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         _, groups = self._organizations[organization]
         if id in groups:
             return
-        groups[id] = VlobGroup(rights={author: (True, True, True)})
+        groups[id] = VlobGroup(roles={author: VlobGroupRole.OWNER})
 
     def _update_group(self, organization_id, author, id, src_id, src_version=1):
         group = self._get_group(organization_id, id)
@@ -177,42 +185,52 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         self._update_group(organization_id, author, vlob.group, id, version)
 
-    async def get_group_rights(
+    async def get_group_roles(
         self, organization_id: OrganizationID, author: UserID, id: UUID
-    ) -> Dict[DeviceID, Tuple[bool, bool, bool]]:
+    ) -> Dict[DeviceID, VlobGroupRole]:
         group = self._get_group(organization_id, id)
-        author_rights = group.rights.get(author)
-        if not author_rights or author_rights == (False, False, False):
+        if author not in group.roles:
             raise VlobAccessError()
-        return group.rights.copy()
+        return group.roles.copy()
 
-    async def update_group_rights(
+    async def update_group_roles(
         self,
         organization_id: OrganizationID,
         author: UserID,
         id: UUID,
         user: UserID,
-        admin_right: bool,
-        read_right: bool,
-        write_right: bool,
+        role: Optional[VlobGroupRole],
     ) -> None:
+        if author == user:
+            raise VlobAccessError("Cannot modify our own role")
+
         try:
             self._user_component._get_user(organization_id, user)
         except UserNotFoundError:
             raise VlobNotFoundError(f"User `{user}` doesn't exist")
+
         group = self._get_group(organization_id, id)
-        if not group.rights.get(author, (False, False, False))[0]:
-            raise VlobAccessError()
-        if not admin_right and not read_right and not write_right:
-            group.rights.pop(user, None)
+
+        existing_user_role = group.roles.get(user)
+        if existing_user_role in (VlobGroupRole.MANAGER, VlobGroupRole.OWNER):
+            needed_roles = (VlobGroupRole.OWNER,)
         else:
-            group.rights[user] = (admin_right, read_right, write_right)
+            needed_roles = (VlobGroupRole.MANAGER, VlobGroupRole.OWNER)
+
+        author_role = group.roles.get(author)
+        if author_role not in needed_roles:
+            raise VlobAccessError()
+
+        if not role:
+            group.roles.pop(user, None)
+        else:
+            group.roles[user] = role
 
     async def poll_group(
         self, organization_id: OrganizationID, author: UserID, id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:
         group = self._get_group(organization_id, id)
-        if not group.rights.get(author, (False, False, False))[1]:
+        if author not in group.roles:
             raise VlobAccessError()
         changes_since_checkpoint = {
             src_id: src_version

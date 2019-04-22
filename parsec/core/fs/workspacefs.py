@@ -8,6 +8,8 @@ from parsec.core.types import FsPath, AccessID, FileDescriptor
 from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.fs.entry_transactions import EntryTransactions
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
+from parsec.core.fs.exceptions import FSBackendOfflineError, FSError
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 
 
 class WorkspaceFS:
@@ -43,14 +45,24 @@ class WorkspaceFS:
     # Workspace info
 
     async def workspace_info(self):
+        # try:
+        #     user_roles = await self.backend_cmds.vlob_group_get_roles(
+        #         self.workspace_entry.access.id
+        #     )
+
+        # except BackendNotAvailable as exc:
+        #     raise FSBackendOfflineError(str(exc)) from exc
+
+        # except BackendConnectionError as exc:
+        #     raise FSError(f"Cannot retreive workspace's vlob group rights: {exc}") from exc
+
+        # TODO: finish me !
         try:
             manifest = self.local_storage.get_manifest(self.workspace_entry.access)
         except FSManifestLocalMiss as exc:
             manifest = await self._remote_loader.load_manifest(exc.access)
         return {
-            "admin_right": self.workspace_entry.admin_right,
-            "read_right": self.workspace_entry.read_right,
-            "write_right": self.workspace_entry.write_right,
+            "role": self.workspace_entry.role,
             "creator": manifest.creator,
             "participants": list(manifest.participants),
         }

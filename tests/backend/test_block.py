@@ -6,7 +6,12 @@ import pendulum
 from uuid import UUID
 
 from parsec.backend.block import BlockTimeoutError
-from parsec.api.protocole import block_create_serializer, block_read_serializer, packb
+from parsec.api.protocole import (
+    block_create_serializer,
+    block_read_serializer,
+    packb,
+    VlobGroupRole,
+)
 
 
 BLOCK_ID = UUID("00000000000000000000000000000001")
@@ -64,14 +69,12 @@ async def test_block_no_read_access(backend, bob_backend_sock, alice, bob, vlob_
     assert rep == {"status": "not_allowed"}
 
     # Give access to bob
-    await backend.vlob.update_group_rights(
+    await backend.vlob.update_group_roles(
         alice.organization_id,
         author=alice.user_id,
         id=vlob_group,
         user=bob.user_id,
-        read_right=True,
-        write_right=False,
-        admin_right=False,
+        role=VlobGroupRole.READER,
     )
 
     rep = await read(bob_backend_sock, block)

@@ -6,7 +6,7 @@ from uuid import UUID
 
 from parsec.types import UserID
 from parsec.event_bus import EventBus
-from parsec.core.types import LocalDevice, FsPath
+from parsec.core.types import LocalDevice, FsPath, WorkspaceRole
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendCmdsPool
 from parsec.core.remote_devices_manager import RemoteDevicesManager
@@ -114,6 +114,11 @@ class FS:
         # Workspace info
         if subpath.is_root():
             workspace_info = await workspace.workspace_info()
+            # TODO: reeeeally hacky legacy compatibility...
+            role = workspace_info.pop("role")
+            workspace_info["read_right"] = role is not None
+            workspace_info["write_right"] = role != WorkspaceRole.READER
+            workspace_info["admin_right"] = role in (WorkspaceRole.MANAGER, WorkspaceRole.OWNER)
             return {**entry_info, **workspace_info}
 
         # Entry info
@@ -270,6 +275,16 @@ class FS:
         read_right: bool = True,
         write_right: bool = True,
     ) -> None:
+        # TODO: reeeeally hacky legacy compatibility...
+        if admin_right:
+            role = WorkspaceRole.OWNER
+        elif write_right:
+            role = WorkspaceRole.CONTRIBUTOR
+        elif read_right:
+            role = WorkspaceRole.READER
+        else:
+            role = None
+
         workspace_name, subpath = self._split_path(path)
         if not subpath:
             # Will fail with correct exception
@@ -277,11 +292,7 @@ class FS:
         workspace_entry = self._get_workspace_entry_from_name(workspace_name)
 
         await self._user_fs.workspace_share(
-            workspace_entry.access.id,
-            recipient=UserID(recipient),
-            admin_right=admin_right,
-            read_right=read_right,
-            write_right=write_right,
+            workspace_entry.access.id, recipient=UserID(recipient), role=role
         )
 
     async def get_permissions(self, path: str) -> Dict[UserID, Dict]:

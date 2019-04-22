@@ -3,17 +3,21 @@
 import pendulum
 from triopg import UniqueViolationError
 from uuid import UUID
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.backend.vlob import (
     BaseVlobComponent,
+    VlobGroupRole,
     VlobAccessError,
     VlobVersionError,
     VlobNotFoundError,
     VlobAlreadyExistsError,
 )
 from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
+
+
+_STR_TO_ROLE = {role.value: role for role in VlobGroupRole}
 
 
 class PGVlobComponent(BaseVlobComponent):
@@ -61,116 +65,118 @@ RETURNING index
             src_version=src_version,
         )
 
-    async def get_group_rights(
+    async def get_group_roles(
         self, organization_id: OrganizationID, author: UserID, id: UUID
-    ) -> Dict[DeviceID, Tuple[bool, bool, bool]]:
+    ) -> Dict[DeviceID, VlobGroupRole]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 ret = await conn.fetch(
                     """
-SELECT user_has_vlob_group_any_right(
-        get_user_internal_id($1, $3),
-        get_vlob_group_internal_id($1, $2)
-    )
-FROM vlob_group_right
-WHERE vlob_group = get_vlob_group_internal_id($1, $2)
-""",
-                    organization_id,
-                    id,
-                    author,
-                )
-                if not ret:
-                    raise VlobNotFoundError(f"Group `{id}` doesn't exist")
-                elif not ret[0][0]:
-                    raise VlobAccessError()
-
-                ret = await conn.fetch(
-                    """
 SELECT
     get_user_id(user_),
-    admin_right,
-    read_right,
-    write_right
-FROM vlob_group_right
+    role
+FROM vlob_group_user_role
 WHERE
     vlob_group = get_vlob_group_internal_id($1, $2)
-    and (admin_right OR read_right OR write_right)
 """,
                     organization_id,
                     id,
                 )
 
-        return {u: (aa, ra, wa) for u, aa, ra, wa in ret}
+                if not ret:
+                    # Existing group must have at least one owner user
+                    raise VlobNotFoundError(f"Group `{id}` doesn't exist")
+                roles = {user_id: _STR_TO_ROLE[role] for user_id, role in ret}
+                if author not in roles:
+                    raise VlobAccessError()
 
-    async def update_group_rights(
+        return roles
+
+    async def update_group_roles(
         self,
         organization_id: OrganizationID,
         author: UserID,
         id: UUID,
         user: UserID,
-        admin_right: bool,
-        read_right: bool,
-        write_right: bool,
+        role: Optional[VlobGroupRole],
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
+            if author == user:
+                raise VlobAccessError("Cannot modify our own role")
+
             async with conn.transaction():
                 ret = await conn.fetch(
                     """
+WITH _vlob_group_users AS (
+    SELECT
+        user_,
+        role
+    FROM vlob_group_user_role
+    WHERE
+        vlob_group = get_vlob_group_internal_id($1, $2)
+)
 SELECT
-    vlob_group,
-    get_user_internal_id($1, $4),
-    user_has_vlob_group_admin_right(
-        get_user_internal_id($1, $3),
-        get_vlob_group_internal_id($1, $2)
-    )
-FROM vlob_group_right
-WHERE vlob_group = get_vlob_group_internal_id($1, $2)
+    get_user_id(user_._id),
+    _vlob_group_users.role
+FROM user_
+LEFT JOIN _vlob_group_users
+ON user_._id = _vlob_group_users.user_
+WHERE
+    user_.organization = get_organization_internal_id($1)
 """,
                     organization_id,
                     id,
-                    author,
-                    user,
                 )
-                if not ret:
+
+                if all(x[1] is None for x in ret):
+                    # Existing group must have at least one owner user
                     raise VlobNotFoundError(f"Group `{id}` doesn't exist")
 
-                internal_vlob_group_id, internal_user_id, has_right = ret[0]
-                if not has_right:
-                    raise VlobAccessError()
-
-                if not internal_user_id:
+                try:
+                    existing_user_role = next(x[1] for x in ret if x[0] == user)
+                except StopIteration:
                     raise VlobNotFoundError(f"User `{user}` doesn't exist")
 
-                if not internal_vlob_group_id:
-                    raise VlobNotFoundError(f"Group `{id}` doesn't exist")
+                author_role = next(x[1] for x in ret if x[0] == author)
 
-                await conn.execute(
-                    """
-INSERT INTO vlob_group_right (
+                if existing_user_role in (VlobGroupRole.MANAGER.value, VlobGroupRole.OWNER.value):
+                    needed_roles = (VlobGroupRole.OWNER.value,)
+                else:
+                    needed_roles = (VlobGroupRole.MANAGER.value, VlobGroupRole.OWNER.value)
+
+                if author_role not in needed_roles:
+                    raise VlobAccessError()
+
+                if not role:
+                    ret = await conn.execute(
+                        """
+DELETE FROM vlob_group_user_role
+WHERE user_ = get_user_internal_id($1, $2)
+                        """,
+                        organization_id,
+                        user,
+                    )
+                else:
+                    await conn.execute(
+                        """
+INSERT INTO vlob_group_user_role(
     vlob_group,
     user_,
-    admin_right,
-    read_right,
-    write_right
+    role
 ) SELECT
-    $1,
-    $2,
-    $3,
-    $4,
-    $5
+    get_vlob_group_internal_id($1, $2),
+    get_user_internal_id($1, $3),
+    $4
 ON CONFLICT (vlob_group, user_)
 DO UPDATE
 SET
-    admin_right = excluded.admin_right,
-    read_right = excluded.read_right,
-    write_right = excluded.write_right
+    role = excluded.role
 """,
-                    internal_vlob_group_id,
-                    internal_user_id,
-                    admin_right,
-                    read_right,
-                    write_right,
-                )
+                        organization_id,
+                        id,
+                        user,
+                        role.value,
+                    )
 
     async def poll_group(
         self, organization_id: OrganizationID, author: UserID, id: UUID, checkpoint: int
@@ -179,11 +185,11 @@ SET
             async with conn.transaction():
                 ret = await conn.fetch(
                     """
-SELECT user_has_vlob_group_read_right(
-        get_user_internal_id($1, $3),
-        get_vlob_group_internal_id($1, $2)
-    )
-FROM vlob_group_right
+SELECT user_can_read_vlob(
+    get_user_internal_id($1, $3),
+    get_vlob_group_internal_id($1, $2)
+)
+FROM vlob_group_user_role
 WHERE vlob_group = get_vlob_group_internal_id($1, $2)
 """,
                     organization_id,
@@ -238,7 +244,7 @@ LEFT JOIN vlob ON vlob._id = vlob_atom.vlob
 WHERE
     organization = get_organization_internal_id($1)
     AND vlob_id = any($3::uuid[])
-    AND user_has_vlob_group_read_right(
+    AND user_can_read_vlob(
         get_user_internal_id($1, $2),
         vlob_group
     )
@@ -283,12 +289,12 @@ ON CONFLICT DO NOTHING
                 if ret == "INSERT 0 1":
                     await conn.execute(
                         """
-INSERT INTO vlob_group_right (
-    vlob_group, user_, admin_right, read_right, write_right
+INSERT INTO vlob_group_user_role(
+    vlob_group, user_, role
 ) SELECT
     get_vlob_group_internal_id($1, $2),
     get_user_internal_id($1, $3),
-    TRUE, TRUE, TRUE
+    'OWNER'
 """,
                         organization_id,
                         group,
@@ -307,7 +313,7 @@ SELECT
     get_vlob_group_internal_id($1, $3),
     $4
 WHERE
-    user_has_vlob_group_write_right(
+    user_can_write_vlob(
         get_user_internal_id($1, $2),
         get_vlob_group_internal_id($1, $3)
     )
@@ -359,7 +365,7 @@ RETURNING _id
                     data = await conn.fetchrow(
                         """
 SELECT
-    user_has_vlob_group_read_right(
+    user_can_read_vlob(
         get_user_internal_id($1, $2),
         vlob.vlob_group
     ),
@@ -384,7 +390,7 @@ ORDER BY version DESC
                     data = await conn.fetchrow(
                         """
 SELECT
-    user_has_vlob_group_read_right(
+    user_can_read_vlob(
         get_user_internal_id($1, $2),
         vlob.vlob_group
     ),
@@ -432,7 +438,7 @@ WHERE
                 previous = await conn.fetchrow(
                     """
 SELECT
-    user_has_vlob_group_write_right(
+    user_can_write_vlob(
         get_user_internal_id($1, $2),
         (SELECT vlob_group FROM vlob where _id = vlob)
     ),

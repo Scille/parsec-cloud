@@ -7,6 +7,7 @@ from unittest.mock import ANY
 
 from parsec.core.types import (
     WorkspaceEntry,
+    WorkspaceRole,
     LocalUserManifest,
     ManifestAccess,
     LocalWorkspaceManifest,
@@ -42,9 +43,7 @@ async def test_create_workspace(alice_user_fs, alice):
                 name="w1",
                 access=ManifestAccess(wid, ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
         ),
     )
@@ -93,9 +92,7 @@ async def test_rename_workspace(alice_user_fs, alice):
                 name="w2",
                 access=ManifestAccess(wid, ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
         ),
     )
@@ -159,9 +156,7 @@ async def test_sync(running_backend, alice2_user_fs, alice2):
                 name="w1",
                 access=ManifestAccess(wid, ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
         ),
     )
@@ -199,17 +194,13 @@ async def test_sync_under_concurrency(
                 name="wa",
                 access=ManifestAccess(waid, ANY),
                 granted_on=Pendulum(2000, 1, 3),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
             WorkspaceEntry(
                 name="wa2",
                 access=ManifestAccess(wa2id, ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
         ),
     )
@@ -259,9 +250,7 @@ async def test_sync_placeholder(
                         name="w1",
                         access=ManifestAccess(wid, ANY),
                         granted_on=Pendulum(2000, 1, 2),
-                        admin_right=True,
-                        read_right=True,
-                        write_right=True,
+                        role=WorkspaceRole.OWNER,
                     ),
                 ),
             )
@@ -309,9 +298,7 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
                 name="wa",
                 access=ManifestAccess(wid, ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
         ),
     )

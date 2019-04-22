@@ -4,9 +4,10 @@ import attr
 import pendulum
 from uuid import uuid4
 from hashlib import sha256
-from typing import Union
+from typing import Union, Optional
 
 from parsec.types import UserID
+from parsec.api.protocole.vlob import VlobGroupRole, _VlobGroupRoleField
 from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import AccessID, serializer_factory, EntryNameField
@@ -102,6 +103,10 @@ dirty_block_access_serializer = serializer_factory(DirtyBlockAccessSchema)
 Access = Union[UserAccess, ManifestAccess, BlockAccess, DirtyBlockAccess]
 
 
+# Republishing under a better name
+WorkspaceRole = VlobGroupRole
+
+
 # Not stricly speaking an access, but close enough...
 
 
@@ -110,12 +115,10 @@ class WorkspaceEntry:
     name: str
     access: ManifestAccess = attr.ib(factory=ManifestAccess)
     granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    read_right: bool = True
-    write_right: bool = True
-    admin_right: bool = True
+    role: Optional[WorkspaceRole] = WorkspaceRole.OWNER
 
     def is_revoked(self) -> bool:
-        return not (self.read_right or self.write_right or self.admin_right)
+        return self.role is None
 
     def evolve(self, **kwargs) -> "WorkspaceEntry":
         return attr.evolve(self, **kwargs)
@@ -130,9 +133,7 @@ class WorkspaceEntrySchema(UnknownCheckedSchema):
     name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
     access = fields.Nested(ManifestAccessSchema, required=True)
     granted_on = fields.DateTime(required=True)
-    read_right = fields.Boolean(required=True)
-    write_right = fields.Boolean(required=True)
-    admin_right = fields.Boolean(required=True)
+    role = _VlobGroupRoleField(allow_none=True, missing=None)
 
     @post_load
     def make_obj(self, data):

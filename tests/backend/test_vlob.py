@@ -332,3 +332,6 @@ async def test_vlob_group_check_other_organization(
     async with sock_from_other_organization_factory(backend) as sock:
         rep = await vlob_group_check(sock, [{"id": vlobs[0], "version": 1}])
         assert rep == {"status": "ok", "changed": []}
+
+
+# TODO: add per-role test on vlob_read/vlob_update

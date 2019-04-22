@@ -9,8 +9,9 @@ import pendulum
 
 from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
-from parsec.core import logged_core_factory
 from parsec.logging import configure_logging
+from parsec.core import logged_core_factory
+from parsec.core.types import WorkspaceRole
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
     backend_administration_cmds_factory,
@@ -178,12 +179,12 @@ async def amain(
 
     async with logged_core_factory(config, bob_device) as core:
         await core.fs.workspace_create(f"/{bob_workspace}")
-        await core.fs.share(f"/{bob_workspace}", alice_device_id.user_id)
+        await core.fs.share(f"/{bob_workspace}", alice_device_id.user_id, WorkspaceRole.MANAGER)
 
     # Share Alice workspace with bob
 
     async with logged_core_factory(config, alice_device) as core:
-        await core.fs.share(f"/{alice_workspace}", bob_device_id.user_id)
+        await core.fs.share(f"/{alice_workspace}", bob_device_id.user_id, WorkspaceRole.MANAGER)
 
     # Print out
 
