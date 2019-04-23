@@ -190,9 +190,6 @@ class UserFS:
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
-
-        # TODO: WorkspaceFS shouldn't need workspace name (especially since it
-        # could be changed at anytime !), pass the workspace entry object instead
         return WorkspaceFS(
             workspace_entry,
             device=self.device,
