@@ -288,8 +288,6 @@ class UserFS:
 
         # New things in remote, merge is needed
         target_um = target_um.to_local()
-        if diverged_um.base_version == 0:
-            base_um = None
 
         base_um = None
         while True:
@@ -301,7 +299,7 @@ class UserFS:
             # Merge and store result
             async with self._update_user_manifest_lock:
                 diverged_um = self.get_user_manifest()
-                if diverged_um.base_version != base_um.base_version:
+                if base_um and diverged_um.base_version != base_um.base_version:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
                 self.local_storage.set_dirty_manifest(self.user_manifest_access, merged)

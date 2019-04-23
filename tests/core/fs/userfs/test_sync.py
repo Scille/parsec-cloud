@@ -263,6 +263,89 @@ async def test_sync_placeholder(
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("dev2_has_changes", (False, True))
+async def test_concurrent_sync_placeholder(
+    running_backend,
+    backend_data_binder,
+    local_device_factory,
+    local_storage_factory,
+    user_fs_factory,
+    dev2_has_changes,
+):
+    device1 = local_device_factory("a@1")
+    local_storage1 = local_storage_factory(device1, user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(device1, initial_user_manifest_in_v0=True)
+
+    device2 = local_device_factory("a@2")
+    local_storage2 = local_storage_factory(device2, user_manifest_in_v0=True)
+    await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
+
+    async with user_fs_factory(device1, local_storage=local_storage1) as user_fs1, user_fs_factory(
+        device2, local_storage=local_storage2
+    ) as user_fs2:
+        with freeze_time("2000-01-01"):
+            w1id = await user_fs1.workspace_create("w1")
+        if dev2_has_changes:
+            with freeze_time("2000-01-02"):
+                w2id = await user_fs2.workspace_create("w2")
+
+        with freeze_time("2000-01-03"):
+            await user_fs1.sync()
+        with freeze_time("2000-01-04"):
+            await user_fs2.sync()
+        if dev2_has_changes:
+            with freeze_time("2000-01-03"):
+                await user_fs1.sync()
+
+        um1 = user_fs1.get_user_manifest()
+        um2 = user_fs2.get_user_manifest()
+        if dev2_has_changes:
+            expected_um = LocalUserManifest(
+                author=device2.device_id,
+                base_version=2,
+                need_sync=False,
+                is_placeholder=False,
+                created=Pendulum(2000, 1, 1),
+                updated=Pendulum(2000, 1, 2),
+                last_processed_message=0,
+                workspaces=(
+                    WorkspaceEntry(
+                        name="w1",
+                        access=ManifestAccess(w1id, ANY),
+                        granted_on=Pendulum(2000, 1, 1),
+                        role=WorkspaceRole.OWNER,
+                    ),
+                    WorkspaceEntry(
+                        name="w2",
+                        access=ManifestAccess(w2id, ANY),
+                        granted_on=Pendulum(2000, 1, 2),
+                        role=WorkspaceRole.OWNER,
+                    ),
+                ),
+            )
+        else:
+            expected_um = LocalUserManifest(
+                author=device1.device_id,
+                base_version=1,
+                need_sync=False,
+                is_placeholder=False,
+                created=Pendulum(2000, 1, 1),
+                updated=Pendulum(2000, 1, 1),
+                last_processed_message=0,
+                workspaces=(
+                    WorkspaceEntry(
+                        name="w1",
+                        access=ManifestAccess(w1id, ANY),
+                        granted_on=Pendulum(2000, 1, 1),
+                        role=WorkspaceRole.OWNER,
+                    ),
+                ),
+            )
+        assert um1 == expected_um
+        assert um1 == um2
+
+
+@pytest.mark.trio
 async def test_sync_not_needed(running_backend, alice_user_fs, alice2_user_fs, alice, alice2):
     um = alice_user_fs.get_user_manifest()
     await alice_user_fs.sync()
