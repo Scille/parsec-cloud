@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QStyledItemDelegate,
     QStyleOptionViewItem,
     QStyle,
+    QMenu,
 )
 
 from parsec.core.gui.lang import translate as _
@@ -38,12 +39,14 @@ class ItemDelegate(QStyledItemDelegate):
 
 class FileTable(QTableWidget):
     file_moved = pyqtSignal(str, str)
+    item_activated = pyqtSignal(FileType, str)
+    delete_clicked = pyqtSignal()
+    rename_clicked = pyqtSignal()
+    open_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.previous_selection = []
-
-    def init(self):
         self.setColumnCount(5)
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -65,6 +68,48 @@ class FileTable(QTableWidget):
         self.setItemDelegate(ItemDelegate())
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.itemSelectionChanged.connect(self.change_selection)
+        self.customContextMenuRequested.connect(self.show_context_menu)
+        self.cellDoubleClicked.connect(self.item_double_clicked)
+
+    def selected_files(self):
+        files = []
+        for r in self.selectedRanges():
+            for row in range(r.topRow(), r.bottomRow() + 1):
+                item = self.item(row, 1)
+                files.append((row, item.data(TYPE_DATA_INDEX), item.data(NAME_DATA_INDEX)))
+        return files
+
+    def show_context_menu(self, pos):
+        global_pos = self.mapToGlobal(pos)
+
+        row = self.currentRow()
+        item = self.item(row, 0)
+        if (
+            not item
+            or item.data(TYPE_DATA_INDEX) == FileType.ParentFolder
+            or item.data(TYPE_DATA_INDEX) == FileType.ParentWorkspace
+        ):
+            return
+
+        menu = QMenu(self)
+        action = menu.addAction(_("Open"))
+        action.triggered.connect(self.open_clicked.emit)
+        action = menu.addAction(_("Rename"))
+        action.triggered.connect(self.rename_clicked.emit)
+        action = menu.addAction(_("Delete"))
+        action.triggered.connect(self.delete_clicked.emit)
+        menu.exec_(global_pos)
+
+    def item_double_clicked(self, row, column):
+        name_item = self.item(row, 1)
+        type_item = self.item(row, 0)
+        file_type = type_item.data(TYPE_DATA_INDEX)
+        try:
+            self.item_activated.emit(file_type, name_item.data(NAME_DATA_INDEX))
+        except AttributeError:
+            # This can happen when updating the list: double click event gets processed after
+            # the item has been removed.
+            pass
 
     def clear(self):
         self.clearContents()
@@ -90,17 +135,22 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = CustomTableItem(QIcon(":/icons/images/icons/folder-up.png"), "")
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("Parent Folder"))
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
+        item.setFlags(Qt.ItemIsEnabled)
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         self.setItem(row_idx, 4, item)
 
@@ -109,18 +159,23 @@ class FileTable(QTableWidget):
         self.insertRow(row_idx)
         item = CustomTableItem(QIcon(":/icons/images/icons/folder-up.png"), "")
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("Parent Workspace"))
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
+        item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 4, item)
 
     def add_folder(self, folder_name, is_synced):

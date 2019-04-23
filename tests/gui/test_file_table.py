@@ -14,7 +14,6 @@ def test_file_table_parent_folder(qtbot):
     w = FileTable(parent=None)
     qtbot.addWidget(w)
 
-    w.init()
     assert w.rowCount() == 0
     assert w.columnCount() == 5
 
@@ -29,7 +28,6 @@ def test_file_table_parent_workspace(qtbot):
     w = FileTable(parent=None)
     qtbot.addWidget(w)
 
-    w.init()
     assert w.rowCount() == 0
     assert w.columnCount() == 5
 
@@ -43,7 +41,6 @@ def test_file_table_clear(qtbot):
 
     w = FileTable(parent=None)
     qtbot.addWidget(w)
-    w.init()
 
     w.add_parent_workspace()
     assert w.rowCount() == 1
@@ -56,7 +53,6 @@ def test_file_table_sort(qtbot):
 
     w = FileTable(parent=None)
     qtbot.addWidget(w)
-    w.init()
     w.add_parent_workspace()
     w.add_folder("Dir1", True)
     w.add_file(

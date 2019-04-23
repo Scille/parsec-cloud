@@ -827,12 +827,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/starting_guide_dialog.ui" line="365"/>
+        <location filename="../forms/starting_guide_dialog.ui" line="355"/>
         <source>Back</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/starting_guide_dialog.ui" line="438"/>
+        <location filename="../forms/starting_guide_dialog.ui" line="423"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
