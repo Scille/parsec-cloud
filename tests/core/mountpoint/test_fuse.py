@@ -37,7 +37,7 @@ def test_delete_then_close_file(mountpoint_service):
 @pytest.mark.mountpoint
 async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, event_bus):
     mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
-    await alice_fs.workspace_create("/w")
+    wid = await alice_fs.workspace_create("/w")
     await alice_fs.touch("/w/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint}/bar.txt")
@@ -47,7 +47,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, event_b
     ) as mountpoint_manager:
 
         with event_bus.listen() as spy:
-            await mountpoint_manager.mount_workspace("w")
+            await mountpoint_manager.mount_workspace(wid)
             command = f"fusermount -u {mountpoint}".split()
 
             returncode = await trio.Process(command).wait()
@@ -64,7 +64,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, event_b
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_fs, event_bus):
-    await alice_fs.workspace_create("/w")
+    wid = await alice_fs.workspace_create("/w")
 
     class ToughLuckError(Exception):
         pass
@@ -78,4 +78,4 @@ async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_fs, event_bus):
         ) as mountpoint_manager:
 
             with pytest.raises(MountpointDriverCrash):
-                await mountpoint_manager.mount_workspace("w")
+                await mountpoint_manager.mount_workspace(wid)

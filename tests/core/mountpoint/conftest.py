@@ -86,13 +86,13 @@ def mountpoint_service_factory(tmpdir, alice, fs_factory):
             async def _mountpoint_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
                 async with fs_factory(alice) as fs:
 
-                    await fs.workspace_create(f"/{self.default_workspace_name}")
+                    self.wid = await fs.workspace_create(f"/{self.default_workspace_name}")
 
                     async with mountpoint_manager_factory(
                         fs, fs.event_bus, self.base_mountpoint, debug=False
                     ) as mountpoint_manager:
 
-                        await mountpoint_manager.mount_workspace(self.default_workspace_name)
+                        await mountpoint_manager.mount_workspace(self.wid)
 
                         task_status.started((fs, mountpoint_manager))
                         await trio.sleep_forever()
