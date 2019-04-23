@@ -21,16 +21,21 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
 
     # Go do the bootstrap
 
-    login_w = gui.login_widget
-    assert not login_w.bootstrap_organization.isVisible()
-    await aqtbot.mouse_click(login_w.button_bootstrap_instead, QtCore.Qt.LeftButton)
-    assert login_w.bootstrap_organization.isVisible()
+    login_w = gui.test_get_login_widget()
+    assert login_w is not None
+    bootstrap_w = gui.test_get_bootstrap_organization_widget()
+    assert bootstrap_w is None
 
-    await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_login, user_id)
-    await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_password, password)
-    await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_password_check, password)
-    await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_url, organization_addr)
-    await aqtbot.key_clicks(login_w.bootstrap_organization.line_edit_device, device_name)
+    await aqtbot.mouse_click(login_w.button_bootstrap_instead, QtCore.Qt.LeftButton)
+
+    bootstrap_w = gui.test_get_bootstrap_organization_widget()
+    assert bootstrap_w is not None
+
+    await aqtbot.key_clicks(bootstrap_w.line_edit_login, user_id)
+    await aqtbot.key_clicks(bootstrap_w.line_edit_password, password)
+    await aqtbot.key_clicks(bootstrap_w.line_edit_password_check, password)
+    await aqtbot.key_clicks(bootstrap_w.line_edit_url, organization_addr)
+    await aqtbot.key_clicks(bootstrap_w.line_edit_device, device_name)
 
 
 @pytest.mark.gui
@@ -38,11 +43,9 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
 async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_dialog):
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
 
-    login_w = gui.login_widget
-    async with aqtbot.wait_signal(login_w.bootstrap_organization.organization_bootstrapped):
-        await aqtbot.mouse_click(
-            login_w.bootstrap_organization.button_bootstrap, QtCore.Qt.LeftButton
-        )
+    bootstrap_w = gui.test_get_bootstrap_organization_widget()
+    async with aqtbot.wait_signal(bootstrap_w.organization_bootstrapped):
+        await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
         (
             "Information",
@@ -59,11 +62,10 @@ async def test_bootstrap_organization_backend_offline(
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
 
     with running_backend.offline():
-        login_w = gui.login_widget
-        async with aqtbot.wait_signal(login_w.bootstrap_organization.bootstrap_error):
-            await aqtbot.mouse_click(
-                login_w.bootstrap_organization.button_bootstrap, QtCore.Qt.LeftButton
-            )
+        bootstrap_w = gui.test_get_bootstrap_organization_widget()
+
+        async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):
+            await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
         assert autoclose_dialog.dialogs == [
             ("Error", "Can not bootstrap this organization ([Errno 111] Connection refused).")
         ]
@@ -75,7 +77,7 @@ async def test_bootstrap_organization_unknown_error(
     monkeypatch, aqtbot, running_backend, gui, autoclose_dialog
 ):
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
-    login_w = gui.login_widget
+    bootstrap_w = gui.test_get_bootstrap_organization_widget()
 
     def _broken(*args, **kwargs):
         raise RuntimeError()
@@ -84,10 +86,8 @@ async def test_bootstrap_organization_unknown_error(
         "parsec.core.gui.bootstrap_organization_widget.build_user_certificate", _broken
     )
 
-    async with aqtbot.wait_signal(login_w.bootstrap_organization.bootstrap_error):
-        await aqtbot.mouse_click(
-            login_w.bootstrap_organization.button_bootstrap, QtCore.Qt.LeftButton
-        )
+    async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):
+        await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
         ("Error", "Can not bootstrap this organization (Unexpected error: RuntimeError()).")
     ]

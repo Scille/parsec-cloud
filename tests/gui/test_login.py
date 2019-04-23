@@ -14,18 +14,25 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     save_device_with_password(core_config.config_dir, alice, password)
 
     gui = await gui_factory()
-    lw = gui.login_widget
+    lw = gui.test_get_login_widget()
+    llw = gui.test_get_login_login_widget()
+
+    assert lw is not None
+    assert llw is not None
 
     # Available device is automatically selected for login
-    assert lw.login_widget.combo_login.currentText() == f"{alice.organization_id}:{alice.device_id}"
+    assert llw.combo_login.currentText() == f"{alice.organization_id}:{alice.device_id}"
 
     # Auth by password by default
-    assert lw.login_widget.check_box_use_pkcs11.checkState() == QtCore.Qt.Unchecked
+    assert llw.check_box_use_pkcs11.checkState() == QtCore.Qt.Unchecked
 
-    await aqtbot.key_clicks(lw.login_widget.line_edit_password, password)
+    await aqtbot.key_clicks(llw.line_edit_password, password)
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
-        await aqtbot.mouse_click(lw.login_widget.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
 
-    assert not lw.isVisible()
-    assert gui.central_widget.isVisible()
+    lw = gui.test_get_login_widget()
+    assert lw is None
+
+    cw = gui.test_get_central_widget()
+    assert cw is not None

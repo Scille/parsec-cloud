@@ -33,9 +33,10 @@ async def alice_invite(running_backend, backend, alice):
 
 
 async def _gui_ready_for_claim(aqtbot, gui, invitation):
-    claim_w = gui.login_widget.claim_user_widget
+    claim_w = gui.test_get_claim_user_widget()
+
     # Claim user page is the default if there is no devices available
-    assert claim_w.isVisible()
+    assert claim_w is not None
 
     await aqtbot.key_clicks(claim_w.line_edit_login, invitation.get("user_id", ""))
     await aqtbot.key_clicks(claim_w.line_edit_device, invitation.get("device_name", ""))
@@ -49,7 +50,10 @@ async def _gui_ready_for_claim(aqtbot, gui, invitation):
 @pytest.mark.trio
 async def test_claim_user(aqtbot, gui, autoclose_dialog, alice_invite):
     await _gui_ready_for_claim(aqtbot, gui, alice_invite)
-    claim_w = gui.login_widget.claim_user_widget
+    claim_w = gui.test_get_claim_user_widget()
+
+    assert claim_w is not None
+
     async with aqtbot.wait_signal(claim_w.user_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
@@ -61,7 +65,9 @@ async def test_claim_user(aqtbot, gui, autoclose_dialog, alice_invite):
 @pytest.mark.trio
 async def test_claim_user_offline(aqtbot, gui, autoclose_dialog, running_backend, alice_invite):
     await _gui_ready_for_claim(aqtbot, gui, alice_invite)
-    claim_w = gui.login_widget.claim_user_widget
+    claim_w = gui.test_get_claim_user_widget()
+
+    assert claim_w is not None
 
     with running_backend.offline():
         async with aqtbot.wait_signal(claim_w.claim_error):
@@ -76,7 +82,9 @@ async def test_claim_user_offline(aqtbot, gui, autoclose_dialog, running_backend
 @pytest.mark.trio
 async def test_claim_user_unknown_error(monkeypatch, aqtbot, gui, autoclose_dialog, alice_invite):
     await _gui_ready_for_claim(aqtbot, gui, alice_invite)
-    claim_w = gui.login_widget.claim_user_widget
+    claim_w = gui.test_get_claim_user_widget()
+
+    assert claim_w is not None
 
     async def _broken(*args, **kwargs):
         raise RuntimeError()
