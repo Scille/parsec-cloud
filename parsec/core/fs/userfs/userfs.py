@@ -2,7 +2,7 @@
 
 import trio
 from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional
+from typing import List, Dict, Tuple, Optional
 from uuid import UUID
 from structlog import get_logger
 
@@ -112,6 +112,29 @@ class UserFS:
             self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
             return user_manifest
 
+    async def workspace_get_roles(self, workspace_id: UUID) -> Dict[UserID, WorkspaceRole]:
+        """
+        Raises:
+            FSError
+            FSWorkspaceNotFoundError
+            FSBackendOfflineError
+        """
+        if not self.get_user_manifest().get_workspace_entry(workspace_id):
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+
+        try:
+            return await self.backend_cmds.vlob_group_get_roles(workspace_id)
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsNotAllowed:
+            # Seems we lost all the access roles
+            return {}
+
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
+
     async def workspace_refresh_roles(self, workspace_id: UUID) -> None:
         """
         Raises:
@@ -196,6 +219,7 @@ class UserFS:
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             self.local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
             self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
         return workspace_entry.access.id
@@ -216,6 +240,7 @@ class UserFS:
                 updated_workspace_entry
             )
             self.local_storage.set_dirty_manifest(self.user_manifest_access, updated_user_manifest)
+            self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
 
     async def _fetch_remote_user_manifest(self, version=None):
         """
@@ -595,6 +620,7 @@ class UserFS:
                         last_processed_message=new_last_processed_message
                     )
                     self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+                    self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
 
         return errors
 

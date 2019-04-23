@@ -116,12 +116,20 @@ class FS:
             workspace_info = await workspace.workspace_info()
             # TODO: reeeeally hacky legacy compatibility...
             role = workspace_info.pop("role")
-            workspace_info["read_right"] = role is not None
-            workspace_info["write_right"] = role != WorkspaceRole.READER
-            workspace_info["admin_right"] = role in (WorkspaceRole.MANAGER, WorkspaceRole.OWNER)
-            return {**entry_info, **workspace_info}
+            return {
+                **entry_info,
+                **workspace_info,
+                "is_folder": True,
+                "size": 0,
+                "read_right": role is not None,
+                "write_right": role != WorkspaceRole.READER,
+                "admin_right": role in (WorkspaceRole.MANAGER, WorkspaceRole.OWNER),
+            }
 
         # Entry info
+        entry_info["is_folder"] = entry_info["type"] != "file"
+        if entry_info["is_folder"]:
+            entry_info["size"] = 0
         return entry_info
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
@@ -245,8 +253,7 @@ class FS:
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
     async def sync_by_id(self, entry_id: UUID) -> None:
         assert isinstance(entry_id, UUID)
-        for workspace_name in [w["name"] for w in self._user_fs.stat()["workspaces"]]:
-            workspace, _ = self._get_workspace(f"/{workspace_name}")
+        for workspace in self._iter_workspaces():
             try:
                 return await workspace.sync_by_id(entry_id)
             except Exception:  # TODO: better exception
@@ -298,7 +305,19 @@ class FS:
     async def get_permissions(self, path: str) -> Dict[UserID, Dict]:
         cooked_path = FsPath(path)
         assert cooked_path.is_workspace()
-        return await self._user_fs.workspace_get_permissions(cooked_path.workspace)
+        workspace_entry = self._get_workspace_entry_from_name(cooked_path.workspace)
+        roles = await self._user_fs.workspace_get_roles(workspace_entry.access.id)
+        # TODO: reeeeally hacky legacy compatibility...
+        permissions = {}
+        for user_id, role in roles.items():
+            permissions[user_id] = {
+                "admin_right": role in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER),
+                "write_right": role != WorkspaceRole.READER,
+                "read_right": True,
+            }
+        print("PERMISSIONS", path, roles)
+        print("CONVERTED", permissions)
+        return permissions
 
     async def process_last_messages(self) -> None:
         await self._user_fs.process_last_messages()

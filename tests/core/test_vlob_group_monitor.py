@@ -33,7 +33,7 @@ async def test_vlob_group_notif_on_new_entry_sync(
                         "backend.vlob_group.updated",
                         {
                             "id": vlob_group_id,
-                            "checkpoint": 2,
+                            "checkpoint": 3,
                             "src_id": entry_id,
                             "src_version": 1,
                         },
@@ -43,9 +43,9 @@ async def test_vlob_group_notif_on_new_entry_sync(
                         "backend.vlob_group.updated",
                         {
                             "id": vlob_group_id,
-                            "checkpoint": 3,
+                            "checkpoint": 4,
                             "src_id": vlob_group_id,
-                            "src_version": 2,
+                            "src_version": 3,
                         },
                     ),
                     ("fs.entry.updated", {"id": vlob_group_id}),

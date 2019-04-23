@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+import trio
 
 
 @pytest.mark.trio
@@ -12,7 +13,8 @@ async def test_autosync_on_modification(mock_clock, running_backend, alice_core,
 
     with alice_core.event_bus.listen() as spy:
         await alice_core.fs.folder_create("/w/foo")
-        await spy.wait("fs.entry.synced", kwargs={"path": "/w/foo", "id": spy.ANY})
+        with trio.fail_after(60):  # autojump, so not *really* 60s
+            await spy.wait("fs.entry.synced", kwargs={"path": "/w/foo", "id": spy.ANY})
 
     await alice2_fs.sync("/")
 

@@ -50,6 +50,8 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
     assert stat == {
         "type": "folder",
         "id": w_id,
+        "is_folder": True,
+        "size": 0,
         "admin_right": True,
         "read_right": True,
         "write_right": True,
@@ -96,6 +98,7 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
         assert stat == {
             "type": "file",
             "id": ANY,
+            "is_folder": False,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -107,6 +110,8 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
         assert stat == {
             "type": "folder",
             "id": ANY,
+            "is_folder": True,
+            "size": 0,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -564,6 +569,8 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
     assert stat == {
         "type": "folder",
         "id": w_id,
+        "is_folder": True,
+        "size": 0,
         "admin_right": True,
         "read_right": True,
         "write_right": True,
@@ -609,6 +616,7 @@ async def test_create_already_existing_file_vlob(running_backend, alice_fs, alic
     assert stat == {
         "type": "file",
         "id": ANY,
+        "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -668,6 +676,7 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
     assert stat == {
         "type": "file",
         "id": ANY,
+        "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
