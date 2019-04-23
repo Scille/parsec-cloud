@@ -40,7 +40,8 @@ async def _do_registration(device, new_device_name, token):
         raise JobResultError("registration-invite-offline")
     except InviteClaimError as exc:
         raise JobResultError("registration-invite-error", info=str(exc))
-    return {"device_name": new_device_name, "token": token}
+
+    return new_device_name, token
 
 
 class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
@@ -94,11 +95,8 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         assert self.registration_job.is_finished()
         assert self.registration_job.status == "ok"
         show_info(self, _("Device has been registered. You may now close this window."))
-        self.device_registered.emit(
-            self.core.device.organization_addr,
-            self.registration_job.ret["device_name"],
-            self.registration_job.ret["token"],
-        )
+        new_device_name, token = self.registration_job.ret
+        self.device_registered.emit(self.core.device.organization_addr, new_device_name, token)
         self.registration_job = None
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")

@@ -10,7 +10,7 @@ from parsec.core.invite_claim import (
     invite_and_create_user as core_invite_and_create_user,
 )
 from parsec.types import BackendOrganizationAddr, UserID
-from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
 from parsec.core.gui.custom_widgets import show_warning, show_info, show_error
@@ -40,6 +40,8 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
         users = await core.fs.backend_cmds.user_find(new_user_id)
     except BackendNotAvailable:
         raise JobResultError("registration-invite-offline")
+    except BackendConnectionError as exc:
+        raise JobResultError("registration-invite-error", info=str(exc))
     if len(users):
         raise JobResultError("registration-invite-already-exists")
 
@@ -49,7 +51,8 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
         raise JobResultError("registration-invite-offline")
     except InviteClaimError as exc:
         raise JobResultError("registration-invite-error", info=str(exc))
-    return {"user_id": new_user_id, "token": token}
+
+    return new_user_id, token
 
 
 class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
@@ -109,11 +112,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 "RegisterUserDialog", "User has been registered. You may now close this window."
             ),
         )
-        self.user_registered.emit(
-            self.core.device.organization_addr,
-            self.registration_job.ret["user_id"],
-            self.registration_job.ret["token"],
-        )
+        new_user_id, token = self.registration_job.ret
+        self.user_registered.emit(self.core.device.organization_addr, new_user_id, token)
         self.registration_job = None
         self.line_edit_token.setText("")
         self.line_edit_url.setText("")
