@@ -104,11 +104,11 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_error = pyqtSignal()
     organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
-    def __init__(self, portal, core_config, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.portal = portal
-        self.core_config = core_config
+        self.jobs_ctx = jobs_ctx
+        self.config = config
         self.bootstrap_job = None
         self.button_cancel.hide()
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
@@ -122,6 +122,14 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
         self.bootstrap_success.connect(self.on_bootstrap_success)
         self.bootstrap_error.connect(self.on_bootstrap_error)
+
+        self.line_edit_device.setText(get_default_device())
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.addItem("0")
+        self.button_cancel.hide()
+        self.widget_pkcs11.hide()
+        self.label_password_strength.hide()
+        self.check_infos()
 
     def on_bootstrap_error(self):
         assert self.bootstrap_job
@@ -162,11 +170,11 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
 
-        self.bootstrap_job = self.portal.submit_job(
+        self.bootstrap_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "bootstrap_success"),
             ThreadSafeQtSignal(self, "bootstrap_error"),
             _do_bootstrap_organization,
-            config_dir=self.core_config.config_dir,
+            config_dir=self.config.config_dir,
             use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
@@ -210,19 +218,3 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:
             self.label_password_strength.hide()
-
-    def reset(self):
-        self.line_edit_login.setText("")
-        self.line_edit_password.setText("")
-        self.line_edit_password_check.setText("")
-        self.line_edit_url.setText("")
-        self.line_edit_device.setText(get_default_device())
-        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
-        self.combo_pkcs11_key.clear()
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.clear()
-        self.combo_pkcs11_token.addItem("0")
-        self.button_cancel.hide()
-        self.widget_pkcs11.hide()
-        self.label_password_strength.hide()
-        self.check_infos()

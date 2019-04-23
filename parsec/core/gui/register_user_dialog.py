@@ -60,11 +60,11 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
     registration_success = pyqtSignal()
     registration_error = pyqtSignal()
 
-    def __init__(self, portal, core, *args, **kwargs):
+    def __init__(self, core, jobs_ctx, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
-        self.portal = portal
+        self.jobs_ctx = jobs_ctx
         self.registration_job = None
         self.widget_registration.hide()
         self.button_cancel.hide()

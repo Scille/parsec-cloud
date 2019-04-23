@@ -179,11 +179,10 @@ def get_open_files(parent):
 
 
 class FileLineEdit(QLineEdit):
-    clicked = pyqtSignal(str, bool)
+    clicked = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.is_dir = False
         self.full_text = ""
 
     def setText(self, text):
@@ -204,7 +203,7 @@ class FileLineEdit(QLineEdit):
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
-            self.clicked.emit(self.full_text, self.is_dir)
+            self.clicked.emit(self.full_text)
 
 
 class TaskbarButton(QPushButton):
