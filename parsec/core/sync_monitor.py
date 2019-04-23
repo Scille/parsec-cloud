@@ -104,13 +104,19 @@ class SyncMonitor:
 
         for id, (first_updated, last_updated) in updated_entries.items():
             if now - first_updated > MAX_WAIT:
-                await self.fs.sync_by_id(id)
+                if id == self.fs._user_fs.user_manifest_access.id:
+                    await self.fs.sync("/")
+                else:
+                    await self.fs.sync_by_id(id)
                 break
 
         else:
             for id, (_, last_updated) in updated_entries.items():
                 if now - last_updated > MIN_WAIT:
-                    await self.fs.sync_by_id(id)
+                    if id == self.fs._user_fs.user_manifest_access.id:
+                        await self.fs.sync("/")
+                    else:
+                        await self.fs.sync_by_id(id)
                     break
 
             else:

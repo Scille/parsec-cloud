@@ -4,12 +4,12 @@ import pytest
 from uuid import UUID
 import trio
 from pendulum import Pendulum
-from itertools import combinations_with_replacement, product
 
 from parsec.api.protocole import (
+    VlobGroupRole,
     vlob_group_poll_serializer,
-    vlob_group_get_rights_serializer,
-    vlob_group_update_rights_serializer,
+    vlob_group_get_roles_serializer,
+    vlob_group_update_roles_serializer,
 )
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
@@ -25,29 +25,22 @@ OTHER_GROUP_ID = UUID("0000000000000000000000000000000B")
 YET_ANOTHER_GROUP_ID = UUID("0000000000000000000000000000000C")
 
 
-async def group_get_rights(sock, id):
+async def group_get_roles(sock, id):
     raw_rep = await sock.send(
-        vlob_group_get_rights_serializer.req_dumps({"cmd": "vlob_group_get_rights", "id": id})
+        vlob_group_get_roles_serializer.req_dumps({"cmd": "vlob_group_get_roles", "id": id})
     )
     raw_rep = await sock.recv()
-    return vlob_group_get_rights_serializer.rep_loads(raw_rep)
+    return vlob_group_get_roles_serializer.rep_loads(raw_rep)
 
 
-async def group_update_rights(sock, id, user, admin_right, read_right, write_right):
+async def group_update_roles(sock, id, user, role):
     raw_rep = await sock.send(
-        vlob_group_update_rights_serializer.req_dumps(
-            {
-                "cmd": "vlob_group_update_rights",
-                "id": id,
-                "user": user,
-                "admin_right": admin_right,
-                "read_right": read_right,
-                "write_right": write_right,
-            }
+        vlob_group_update_roles_serializer.req_dumps(
+            {"cmd": "vlob_group_update_roles", "id": id, "user": user, "role": role}
         )
     )
     raw_rep = await sock.recv()
-    return vlob_group_update_rights_serializer.rep_loads(raw_rep)
+    return vlob_group_update_roles_serializer.rep_loads(raw_rep)
 
 
 async def group_poll(sock, id, last_checkpoint):
@@ -66,6 +59,11 @@ async def test_vlob_group_lazy_created_by_new_vlob(backend, alice, alice_backend
 
     rep = await group_poll(alice_backend_sock, GROUP_ID, 0)
     assert rep == {"status": "ok", "current_checkpoint": 1, "changes": {VLOB_ID: 1}}
+
+    # Make sure author gets OWNER role
+
+    rep = await group_get_roles(alice_backend_sock, GROUP_ID)
+    assert rep == {"status": "ok", "users": {"alice": VlobGroupRole.OWNER}}
 
 
 @pytest.mark.trio
@@ -97,8 +95,8 @@ async def test_vlob_group_poll_not_found(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_vlob_group_get_rights_not_found(alice_backend_sock):
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
+async def test_vlob_group_get_roles_not_found(alice_backend_sock):
+    rep = await group_get_roles(alice_backend_sock, GROUP_ID)
     assert rep == {
         "status": "not_found",
         "reason": "Group `00000000-0000-0000-0000-00000000000a` doesn't exist",
@@ -106,8 +104,8 @@ async def test_vlob_group_get_rights_not_found(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_vlob_group_update_rights_not_found(bob, alice_backend_sock):
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, True, True, True)
+async def test_vlob_group_update_roles_not_found(bob, alice_backend_sock):
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, VlobGroupRole.MANAGER)
     assert rep == {
         "status": "not_found",
         "reason": "Group `00000000-0000-0000-0000-00000000000a` doesn't exist",
@@ -115,98 +113,165 @@ async def test_vlob_group_update_rights_not_found(bob, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_vlob_group_update_rights_bad_user(backend, alice, mallory, alice_backend_sock):
+async def test_vlob_group_update_roles_bad_user(backend, alice, mallory, alice_backend_sock):
     await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, mallory.user_id, True, True, True)
+    rep = await group_update_roles(
+        alice_backend_sock, GROUP_ID, mallory.user_id, VlobGroupRole.MANAGER
+    )
     assert rep == {"status": "not_found", "reason": "User `mallory` doesn't exist"}
 
 
 @pytest.mark.trio
-async def test_vlob_group_remove_rights_idempotent(backend, alice, bob, alice_backend_sock):
+async def test_vlob_group_update_roles_cannot_modify_self(backend, alice, alice_backend_sock):
     await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, False, False, False)
-    assert rep == {"status": "ok"}
-
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, False, False, False)
-    assert rep == {"status": "ok"}
-
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {"alice": {"admin_right": True, "read_right": True, "write_right": True}},
-    }
+    rep = await group_update_roles(
+        alice_backend_sock, GROUP_ID, alice.user_id, VlobGroupRole.MANAGER
+    )
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
-async def test_vlob_group_change_to_admin_only(backend, alice, bob, alice_backend_sock):
+@pytest.mark.parametrize("start_with_existing_role", (False, True))
+async def test_vlob_group_remove_role_idempotent(
+    backend, alice, bob, alice_backend_sock, start_with_existing_role
+):
     await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, True, True, True)
+    if start_with_existing_role:
+        rep = await group_update_roles(
+            alice_backend_sock, GROUP_ID, bob.user_id, VlobGroupRole.MANAGER
+        )
+        assert rep == {"status": "ok"}
+
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, None)
     assert rep == {"status": "ok"}
 
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, True, False, False)
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, None)
     assert rep == {"status": "ok"}
 
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {
-            "alice": {"admin_right": True, "read_right": True, "write_right": True},
-            "bob": {"admin_right": True, "read_right": False, "write_right": False},
-        },
-    }
+    rep = await group_get_roles(alice_backend_sock, GROUP_ID)
+    assert rep == {"status": "ok", "users": {"alice": VlobGroupRole.OWNER}}
 
 
 @pytest.mark.trio
-async def test_vlob_group_get_rights_with_partial_rights(
+async def test_vlob_group_update_roles_as_owner(
     backend, alice, bob, alice_backend_sock, bob_backend_sock
 ):
     await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
-    for rights in product((True, False), repeat=3):
-        rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, *rights)
+    for role in VlobGroupRole:
+        rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, role)
         assert rep == {"status": "ok"}
 
-        rep = await group_get_rights(bob_backend_sock, GROUP_ID)
-        if rights == (False, False, False):
-            assert rep["status"] == "not_allowed"
-        else:
-            assert rep["status"] == "ok"
-            assert rep["users"]["bob"] == {
-                "admin_right": rights[0],
-                "read_right": rights[1],
-                "write_right": rights[2],
-            }
+        rep = await group_get_roles(bob_backend_sock, GROUP_ID)
+        assert rep == {
+            "status": "ok",
+            "users": {alice.user_id: VlobGroupRole.OWNER, bob.user_id: role},
+        }
 
-
-@pytest.mark.trio
-async def test_vlob_group_need_admin_to_share(backend, alice, bob, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
-
-    # Only read right...
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, alice.user_id, False, True, True)
+    # Now remove role
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, None)
     assert rep == {"status": "ok"}
 
-    # ...so we shouldn't be able to allow Bob to write
-    for rights in combinations_with_replacement((True, False), 3):
-        rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, *rights)
-        assert rep == {"status": "not_allowed"}
-
-    # Can no longer re-enable ourselft either
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, alice.user_id, True, True, True)
-    assert rep == {"status": "not_allowed"}
-
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {"alice": {"admin_right": False, "read_right": True, "write_right": True}},
-    }
+    rep = await group_get_roles(bob_backend_sock, GROUP_ID)
+    assert rep["status"] == "not_allowed"
 
 
 @pytest.mark.trio
-async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock, bob_backend_sock):
+async def test_vlob_group_update_roles_as_manager(
+    backend_data_binder,
+    local_device_factory,
+    backend,
+    alice,
+    bob,
+    alice_backend_sock,
+    bob_backend_sock,
+):
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
+    # Vlob group must have at least one owner, so we need 3 users in total
+    # (Zack is owner, Alice is manager and gives role to Bob)
+    zack = local_device_factory("zack@dev1")
+    await backend_data_binder.bind_device(zack)
+    await backend.vlob.update_group_roles(
+        alice.organization_id, alice.user_id, GROUP_ID, zack.user_id, VlobGroupRole.OWNER
+    )
+    await backend.vlob.update_group_roles(
+        alice.organization_id, zack.user_id, GROUP_ID, alice.user_id, VlobGroupRole.MANAGER
+    )
+
+    for role in (VlobGroupRole.CONTRIBUTOR, VlobGroupRole.READER):
+        rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, role)
+        assert rep == {"status": "ok"}
+
+        rep = await group_get_roles(bob_backend_sock, GROUP_ID)
+        assert rep == {
+            "status": "ok",
+            "users": {
+                zack.user_id: VlobGroupRole.OWNER,
+                alice.user_id: VlobGroupRole.MANAGER,
+                bob.user_id: role,
+            },
+        }
+
+    # Remove role
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, None)
+    assert rep == {"status": "ok"}
+    rep = await group_get_roles(bob_backend_sock, GROUP_ID)
+    assert rep["status"] == "not_allowed"
+
+    # Cannot give owner or manager role as manager
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, zack.user_id, VlobGroupRole.OWNER)
+    assert rep == {"status": "not_allowed"}
+    rep = await group_update_roles(
+        alice_backend_sock, GROUP_ID, zack.user_id, VlobGroupRole.MANAGER
+    )
+    assert rep == {"status": "not_allowed"}
+
+    # Also cannot change owner or manager role
+    for bob_role in (VlobGroupRole.OWNER, VlobGroupRole.MANAGER):
+        await backend.vlob.update_group_roles(
+            alice.organization_id, zack.user_id, GROUP_ID, bob.user_id, role
+        )
+        rep = await group_update_roles(
+            alice_backend_sock, GROUP_ID, zack.user_id, VlobGroupRole.CONTRIBUTOR
+        )
+        assert rep == {"status": "not_allowed"}
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("alice_role", (VlobGroupRole.CONTRIBUTOR, VlobGroupRole.READER))
+async def test_vlob_group_update_not_allowed(
+    backend_data_binder, local_device_factory, backend, alice, bob, alice_backend_sock, alice_role
+):
+    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
+    # Vlob group must have at least one owner, so we need 3 users in total
+    # (Zack is owner, Alice gives role to Bob)
+    zack = local_device_factory("zack@dev1")
+    await backend_data_binder.bind_device(zack)
+    await backend.vlob.update_group_roles(
+        alice.organization_id, alice.user_id, GROUP_ID, zack.user_id, VlobGroupRole.OWNER
+    )
+    await backend.vlob.update_group_roles(
+        alice.organization_id, zack.user_id, GROUP_ID, alice.user_id, alice_role
+    )
+
+    # Cannot give role
+    for role in VlobGroupRole:
+        rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, role)
+        assert rep == {"status": "not_allowed"}
+
+    # Cannot remove role
+    await backend.vlob.update_group_roles(
+        alice.organization_id, zack.user_id, GROUP_ID, bob.user_id, VlobGroupRole.READER
+    )
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, None)
+    assert rep == {"status": "not_allowed"}
+
+
+@pytest.mark.trio
+async def test_vlob_group_poll(backend, alice, bob, alice_backend_sock, bob_backend_sock):
     await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, GROUP_ID, NOW, b"v1")
 
     # At first only Alice is allowed
@@ -214,45 +279,23 @@ async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock,
     rep = await group_poll(bob_backend_sock, GROUP_ID, 2)
     assert rep == {"status": "not_allowed"}
 
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {"alice": {"admin_right": True, "read_right": True, "write_right": True}},
-    }
+    # Add Bob with read&write rights
 
-    # Now add Bob with write right only
-
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, False, False, True)
+    rep = await group_update_roles(
+        alice_backend_sock, GROUP_ID, bob.user_id, VlobGroupRole.CONTRIBUTOR
+    )
     assert rep == {"status": "ok"}
-
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {
-            "alice": {"admin_right": True, "read_right": True, "write_right": True},
-            "bob": {"admin_right": False, "read_right": False, "write_right": True},
-        },
-    }
 
     rep = await vlob_update(bob_backend_sock, VLOB_ID, 2, b"v2")
     assert rep == {"status": "ok"}
 
     rep = await group_poll(bob_backend_sock, GROUP_ID, 1)
-    assert rep == {"status": "not_allowed"}
+    assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {VLOB_ID: 2}}
 
-    # Now add Bob with read right
+    # Change Bob with read only right
 
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, False, True, False)
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, VlobGroupRole.READER)
     assert rep == {"status": "ok"}
-
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {
-            "alice": {"admin_right": True, "read_right": True, "write_right": True},
-            "bob": {"admin_right": False, "read_right": True, "write_right": False},
-        },
-    }
 
     rep = await vlob_update(bob_backend_sock, VLOB_ID, 3, b"v3", check_rep=False)
     assert rep == {"status": "not_allowed"}
@@ -262,7 +305,7 @@ async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock,
 
     # Finally remove all rights from Bob
 
-    rep = await group_update_rights(alice_backend_sock, GROUP_ID, bob.user_id, False, False, False)
+    rep = await group_update_roles(alice_backend_sock, GROUP_ID, bob.user_id, None)
     assert rep == {"status": "ok"}
 
     rep = await group_poll(bob_backend_sock, GROUP_ID, 2)
@@ -270,12 +313,6 @@ async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock,
 
     rep = await vlob_update(bob_backend_sock, VLOB_ID, 3, b"v3", check_rep=False)
     assert rep == {"status": "not_allowed"}
-
-    rep = await group_get_rights(alice_backend_sock, GROUP_ID)
-    assert rep == {
-        "status": "ok",
-        "users": {"alice": {"admin_right": True, "read_right": True, "write_right": True}},
-    }
 
 
 @pytest.mark.trio
@@ -396,3 +433,6 @@ async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alic
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
+
+
+# TODO: add per-role test on vlob_group_poll

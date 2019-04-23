@@ -3,10 +3,15 @@
 import pytest
 from unittest.mock import ANY
 from uuid import uuid4
-from itertools import product
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, ManifestAccess, LocalUserManifest, FsPath
+from parsec.core.types import (
+    WorkspaceEntry,
+    WorkspaceRole,
+    ManifestAccess,
+    LocalUserManifest,
+    FsPath,
+)
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -21,7 +26,7 @@ from tests.common import freeze_time
 async def test_share_unknown(running_backend, alice_user_fs, bob):
     wid = uuid4()
     with pytest.raises(FSWorkspaceNotFoundError):
-        await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
 
 @pytest.mark.trio
@@ -30,7 +35,7 @@ async def test_share_to_oneself(running_backend, alice_user_fs, alice):
         wid = await alice_user_fs.workspace_create("w1")
 
     with pytest.raises(FSError) as exc:
-        await alice_user_fs.workspace_share(wid, alice.user_id, True, True, True)
+        await alice_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
     assert str(exc.value) == "Cannot share to oneself"
 
 
@@ -40,7 +45,7 @@ async def test_share_bad_recipient(running_backend, alice_user_fs, alice, mallor
         wid = await alice_user_fs.workspace_create("w1")
 
     with pytest.raises(FSError) as exc:
-        await alice_user_fs.workspace_share(wid, mallory.user_id, True, True, True)
+        await alice_user_fs.workspace_share(wid, mallory.user_id, WorkspaceRole.MANAGER)
     assert str(exc.value) == "Cannot retreive recipient: User `mallory` doesn't exist in backend"
 
 
@@ -50,7 +55,7 @@ async def test_share_offline(alice_user_fs, bob):
         wid = await alice_user_fs.workspace_create("w1")
 
     with pytest.raises(FSBackendOfflineError):
-        await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
 
 @pytest.mark.trio
@@ -62,7 +67,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
     if presynced:
         await alice_user_fs.sync()
 
-    await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
     with bob_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
@@ -74,9 +79,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
                 name="w1 (shared by alice)",
                 access=ManifestAccess(wid, spy.ANY),
                 granted_on=Pendulum(2000, 1, 3),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.MANAGER,
             )
         },
     )
@@ -90,9 +93,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
 
     assert bwe.name == "w1 (shared by alice)"
     assert bwe.access == awe.access
-    assert bwe.admin_right
-    assert bwe.read_right
-    assert bwe.write_right
+    assert bwe.role == WorkspaceRole.MANAGER
 
     aw = alice_user_fs.get_workspace(wid)
     bw = bob_user_fs.get_workspace(wid)
@@ -112,7 +113,7 @@ async def test_share_workspace_then_rename_it(
     # Share a workspace between Alice and Bob
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w")
-    await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     with freeze_time("2000-01-03"):
         await bob_user_fs.process_last_messages()
 
@@ -144,11 +145,11 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
     # Share a workspace...
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.OWNER)
     await bob_user_fs.process_last_messages()
 
     # ...and unshare it
-    await bob_user_fs.workspace_share(wid, alice.user_id, False, False, False)
+    await bob_user_fs.workspace_share(wid, alice.user_id, None)
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await alice_user_fs.process_last_messages()
@@ -159,26 +160,20 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
                 name="w1",
                 access=ManifestAccess(wid, spy.ANY),
                 granted_on=Pendulum(2000, 1, 3),
-                admin_right=False,
-                read_right=False,
-                write_right=False,
+                role=None,
             ),
             "previous_entry": WorkspaceEntry(
                 name="w1",
                 access=ManifestAccess(wid, spy.ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.OWNER,
             ),
         },
     )
 
     aum = alice_user_fs.get_user_manifest()
     aw = aum.workspaces[0]
-    assert not aw.admin_right
-    assert not aw.read_right
-    assert not aw.write_right
+    assert not aw.role
 
     # TODO: check workspace access is no longer possible
 
@@ -187,7 +182,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
 async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    await alice_user_fs.workspace_share(wid, bob.user_id, False, False, False)
+    await alice_user_fs.workspace_share(wid, bob.user_id, None)
     with alice_user_fs.event_bus.listen() as spy:
         await bob_user_fs.process_last_messages()
     assert not spy.events
@@ -204,16 +199,16 @@ async def test_share_to_another_after_beeing_unshared(
     # Share a workspace...
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     await bob_user_fs.process_last_messages()
 
     # ...and unshare it
-    await alice_user_fs.workspace_share(wid, bob.user_id, False, False, False)
+    await alice_user_fs.workspace_share(wid, bob.user_id, None)
     await bob_user_fs.process_last_messages()
 
     # Shouldn't be able to share the workspace anymore
     with pytest.raises(FSSharingNotAllowedError):
-        await bob_user_fs.workspace_share(wid, alice.user_id, False, False, False)
+        await bob_user_fs.workspace_share(wid, alice.user_id, None)
 
 
 @pytest.mark.trio
@@ -221,15 +216,15 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
     # Share a workspace...
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     await bob_user_fs.process_last_messages()
 
     # ...and unshare it...
-    await alice_user_fs.workspace_share(wid, bob.user_id, False, False, False)
+    await alice_user_fs.workspace_share(wid, bob.user_id, None)
     await bob_user_fs.process_last_messages()
 
     # ...and re-share it !
-    await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
     await bob_user_fs.process_last_messages()
 
     # Check access
@@ -242,21 +237,19 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
 
     assert bw.name == "w1 (shared by alice)"
     assert bw.access == aw.access
-    assert bw.admin_right
-    assert bw.read_right
-    assert bw.write_right
+    assert bw.role == WorkspaceRole.MANAGER
 
 
 @pytest.mark.trio
-async def test_share_limited_rights(running_backend, alice_user_fs, bob_user_fs, alice, bob):
+async def test_share_with_different_role(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
     aum = alice_user_fs.get_user_manifest()
     aw = aum.workspaces[0]
 
-    for rights in product((True, False), repeat=3):
+    for role in WorkspaceRole:
         # (re)share with rights
-        await alice_user_fs.workspace_share(wid, bob.user_id, *rights)
+        await alice_user_fs.workspace_share(wid, bob.user_id, role)
         await bob_user_fs.process_last_messages()
 
         # Check access
@@ -266,31 +259,26 @@ async def test_share_limited_rights(running_backend, alice_user_fs, bob_user_fs,
 
         assert bw.name == "w1 (shared by alice)"
         assert bw.access == aw.access
-        assert bw.admin_right == rights[0]
-        assert bw.read_right == rights[1]
-        assert bw.write_right == rights[2]
+        assert bw.role == role
 
 
 @pytest.mark.trio
-async def test_share_no_admin_right(running_backend, alice_user_fs, bob_user_fs, alice, bob):
+async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
     await alice_user_fs.sync()
 
-    # Drop admin right
-    await running_backend.backend.vlob.update_group_rights(
-        alice.organization_id,
-        alice.user_id,
-        wid,
-        alice.user_id,
-        admin_right=False,
-        read_right=True,
-        write_right=True,
+    # Drop manager right (and give to Bob the ownership)
+    await running_backend.backend.vlob.update_group_roles(
+        alice.organization_id, alice.user_id, wid, bob.user_id, role=WorkspaceRole.OWNER
+    )
+    await running_backend.backend.vlob.update_group_roles(
+        alice.organization_id, bob.user_id, wid, alice.user_id, role=WorkspaceRole.CONTRIBUTOR
     )
 
     with pytest.raises(FSSharingNotAllowedError) as exc:
-        await alice_user_fs.workspace_share(wid, bob.user_id, True, True, True)
-    assert exc.value.args == ("Admin right on the workspace is mandatory to share it",)
+        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+    assert exc.value.args == ("Must be Owner or Manager on the workspace is mandatory to share it",)
 
 
 @pytest.mark.trio
@@ -306,7 +294,7 @@ async def test_share_with_sharing_name_already_taken(
 
     # Sharing them shouldn't be a trouble
     await bob_user_fs.sync()
-    await alice_user_fs.workspace_share(awid, bob.user_id, True, True, True)
+    await alice_user_fs.workspace_share(awid, bob.user_id, WorkspaceRole.MANAGER)
 
     # Bob should get a notification
     with bob_user_fs.event_bus.listen() as spy:
@@ -319,9 +307,7 @@ async def test_share_with_sharing_name_already_taken(
                 name="w (shared by alice)",
                 access=ManifestAccess(awid, spy.ANY),
                 granted_on=Pendulum(2000, 1, 2),
-                admin_right=True,
-                read_right=True,
-                write_right=True,
+                role=WorkspaceRole.MANAGER,
             )
         },
     )
@@ -349,14 +335,14 @@ async def test_share_workspace_then_conflict_on_rights(
 ):
     # Bob shares a workspace with Alice...
     wid = await bob_user_fs.workspace_create("w")
-    await bob_user_fs.workspace_share(wid, alice.user_id, True, True, True)
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
 
     # ...but only Alice's first device get the information
     with freeze_time("2000-01-02"):
         await alice_user_fs.process_last_messages()
 
     # Now Bob change the sharing rights...
-    await bob_user_fs.workspace_share(wid, alice.user_id, False, True, False)
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.CONTRIBUTOR)
 
     # ...this time it's Alice's second device which get the info
     with freeze_time("2000-01-03"):
@@ -395,9 +381,7 @@ async def test_share_workspace_then_conflict_on_rights(
                 name="w (shared by bob)",
                 access=ManifestAccess(wid, ANY),
                 granted_on=Pendulum(2000, 1, 3),
-                read_right=True,
-                write_right=False,
-                admin_right=False,
+                role=WorkspaceRole.CONTRIBUTOR,
             ),
         ),
     )
@@ -424,10 +408,5 @@ async def test_share_workspace_then_conflict_on_rights(
     }
     assert a_w_stat == a2_w_stat
 
-    assert a_w_info == {
-        "admin_right": False,
-        "read_right": True,
-        "write_right": False,
-        "creator": bob.user_id,
-    }
+    assert a_w_info == {"role": WorkspaceRole.CONTRIBUTOR, "creator": bob.user_id}
     assert a_w_info == a2_w_info

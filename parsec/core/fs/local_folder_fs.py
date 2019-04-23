@@ -10,6 +10,7 @@ from parsec.core.types import (
     Access,
     BlockAccess,
     WorkspaceEntry,
+    WorkspaceRole,
     LocalDevice,
     LocalManifest,
     ManifestAccess,
@@ -273,9 +274,10 @@ class LocalFolderFS:
             return {
                 "id": access.id,
                 "type": "workspace",
-                "admin_right": entry.admin_right,
-                "read_right": entry.read_right,
-                "write_right": entry.write_right,
+                # TODO: reeeeally hacky legacy compatibility...
+                "admin_right": entry.role in (WorkspaceRole.MANAGER, WorkspaceRole.OWNER),
+                "read_right": entry.role is not None,
+                "write_right": entry.role != WorkspaceRole.READER,
                 "is_folder": True,
                 "created": manifest.created,
                 "updated": manifest.updated,
@@ -289,11 +291,7 @@ class LocalFolderFS:
 
         elif is_user_manifest(manifest):
             # Only list workspace we still have access to
-            workspaces = [
-                we.name
-                for we in manifest.workspaces
-                if we.admin_right or we.read_right or we.write_right
-            ]
+            workspaces = [we.name for we in manifest.workspaces if not we.is_revoked()]
             return {
                 "type": "root",
                 "id": access.id,
@@ -326,7 +324,7 @@ class LocalFolderFS:
 
     def _ensure_workspace_write_right(self, workspace):
         workspace_entry = self._retrieve_workspace_entry(workspace)
-        if workspace_entry and not workspace_entry.write_right:
+        if workspace_entry and workspace_entry.role in (None, WorkspaceRole.READER):
             raise PermissionError(13, "No write right for workspace", f"/{workspace}")
 
     def touch(self, path: FsPath) -> UUID:

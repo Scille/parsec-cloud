@@ -8,6 +8,7 @@ logger = get_logger()
 
 
 async def monitor_vlob_groups(device, user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+    event_bus.send("backend.vlob_group.listen", id=device.user_manifest_access.id)
     user_manifest = user_fs.get_user_manifest()
     for workspace_entry in user_manifest.workspaces:
         event_bus.send("backend.vlob_group.listen", id=workspace_entry.access.id)

@@ -15,13 +15,14 @@ CREATE TABLE vlob_group (
 );
 
 
-CREATE TABLE vlob_group_right (
+CREATE TYPE vlob_group_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
+
+
+CREATE TABLE vlob_group_user_role (
     _id SERIAL PRIMARY KEY,
     vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    admin_right BOOLEAN NOT NULL,
-    read_right BOOLEAN NOT NULL,
-    write_right BOOLEAN NOT NULL,
+    role vlob_group_role NOT NULL,
 
     UNIQUE(vlob_group, user_)
 );
@@ -72,7 +73,7 @@ BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM vlob_group_right
+        FROM vlob_group_user_role
         WHERE
             vlob_group = vgroupinternalid
             AND user_ = userinternalid
@@ -83,55 +84,33 @@ END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION user_has_vlob_group_read_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_can_read_vlob(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM vlob_group_right
+        FROM vlob_group_user_role
         WHERE
             vlob_group = vgroupinternalid
             AND user_ = userinternalid
-            AND read_right = TRUE
         LIMIT 1
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION user_has_vlob_group_write_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_can_write_vlob(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM vlob_group_right
+        FROM vlob_group_user_role
         WHERE
             vlob_group = vgroupinternalid
             AND user_ = userinternalid
-            AND write_right = TRUE
-        LIMIT 1
-    );
-END;
-$$ LANGUAGE plpgsql STABLE STRICT;
-
-
-CREATE FUNCTION user_has_vlob_group_any_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
-DECLARE
-BEGIN
-    RETURN EXISTS (
-        SELECT
-            true
-        FROM vlob_group_right
-        WHERE
-            vlob_group = vgroupinternalid
-            AND user_ = userinternalid
-            AND (
-                write_right = TRUE
-                OR read_right = TRUE
-                OR admin_right = TRUE
-            )
+            AND role != 'READER'
         LIMIT 1
     );
 END;

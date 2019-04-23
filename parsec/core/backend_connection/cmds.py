@@ -16,12 +16,13 @@ from parsec.api.protocole import (
     events_listen_serializer,
     message_send_serializer,
     message_get_serializer,
+    VlobGroupRole,
     vlob_group_check_serializer,
     vlob_read_serializer,
     vlob_create_serializer,
     vlob_update_serializer,
-    vlob_group_update_rights_serializer,
-    vlob_group_get_rights_serializer,
+    vlob_group_update_roles_serializer,
+    vlob_group_get_roles_serializer,
     vlob_group_poll_serializer,
     block_create_serializer,
     block_read_serializer,
@@ -196,30 +197,23 @@ async def vlob_update(
     )
 
 
-async def vlob_group_get_rights(transport: Transport, id: UUID) -> Dict[UserID, Dict]:
+async def vlob_group_get_roles(transport: Transport, id: UUID) -> Dict[UserID, Dict]:
     rep = await _send_cmd(
-        transport, vlob_group_get_rights_serializer, cmd="vlob_group_get_rights", id=id
+        transport, vlob_group_get_roles_serializer, cmd="vlob_group_get_roles", id=id
     )
     return rep["users"]
 
 
-async def vlob_group_update_rights(
-    transport: Transport,
-    id: UUID,
-    user: UserID,
-    admin_right: bool,
-    read_right: bool,
-    write_right: bool,
+async def vlob_group_update_roles(
+    transport: Transport, id: UUID, user: UserID, role: Optional[VlobGroupRole]
 ) -> None:
     await _send_cmd(
         transport,
-        vlob_group_update_rights_serializer,
-        cmd="vlob_group_update_rights",
+        vlob_group_update_roles_serializer,
+        cmd="vlob_group_update_roles",
         id=id,
         user=user,
-        admin_right=admin_right,
-        read_right=read_right,
-        write_right=write_right,
+        role=role,
     )
 
 

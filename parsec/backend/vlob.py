@@ -1,17 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from uuid import UUID
 import pendulum
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.api.protocole import (
+    VlobGroupRole,
     vlob_group_check_serializer,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
-    vlob_group_update_rights_serializer,
-    vlob_group_get_rights_serializer,
+    vlob_group_update_roles_serializer,
+    vlob_group_get_roles_serializer,
     vlob_group_poll_serializer,
 )
 from parsec.backend.utils import catch_protocole_errors
@@ -117,58 +118,48 @@ class BaseVlobComponent:
         return vlob_update_serializer.rep_dump({"status": "ok"})
 
     @catch_protocole_errors
-    async def api_vlob_group_get_rights(self, client_ctx, msg):
-        msg = vlob_group_get_rights_serializer.req_load(msg)
+    async def api_vlob_group_get_roles(self, client_ctx, msg):
+        msg = vlob_group_get_roles_serializer.req_load(msg)
 
         try:
-            per_users_rights = await self.get_group_rights(
+            per_users_role = await self.get_group_roles(
                 client_ctx.organization_id, client_ctx.user_id, msg["id"]
             )
 
         except VlobAccessError:
-            return vlob_group_get_rights_serializer.rep_dump({"status": "not_allowed"})
+            return vlob_group_get_roles_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobNotFoundError as exc:
-            return vlob_group_get_rights_serializer.rep_dump(
+            return vlob_group_get_roles_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
             )
 
         except VlobError as exc:
-            return vlob_group_get_rights_serializer.rep_dump(
-                {"status": "error", "reason": str(exc)}
-            )
+            return vlob_group_get_roles_serializer.rep_dump({"status": "error", "reason": str(exc)})
 
-        return vlob_group_get_rights_serializer.rep_dump(
-            {
-                "status": "ok",
-                "users": {
-                    u: {"admin_right": aa, "read_right": ra, "write_right": wa}
-                    for u, (aa, ra, wa) in per_users_rights.items()
-                },
-            }
-        )
+        return vlob_group_get_roles_serializer.rep_dump({"status": "ok", "users": per_users_role})
 
     @catch_protocole_errors
-    async def api_vlob_group_update_rights(self, client_ctx, msg):
-        msg = vlob_group_update_rights_serializer.req_load(msg)
+    async def api_vlob_group_update_roles(self, client_ctx, msg):
+        msg = vlob_group_update_roles_serializer.req_load(msg)
 
         try:
-            await self.update_group_rights(client_ctx.organization_id, client_ctx.user_id, **msg)
+            await self.update_group_roles(client_ctx.organization_id, client_ctx.user_id, **msg)
 
         except VlobAccessError:
-            return vlob_group_update_rights_serializer.rep_dump({"status": "not_allowed"})
+            return vlob_group_update_roles_serializer.rep_dump({"status": "not_allowed"})
 
         except VlobNotFoundError as exc:
-            return vlob_group_update_rights_serializer.rep_dump(
+            return vlob_group_update_roles_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
             )
 
         except VlobError as exc:
-            return vlob_group_update_rights_serializer.rep_dump(
+            return vlob_group_update_roles_serializer.rep_dump(
                 {"status": "error", "reason": str(exc)}
             )
 
-        return vlob_group_update_rights_serializer.rep_dump({"status": "ok"})
+        return vlob_group_update_roles_serializer.rep_dump({"status": "ok"})
 
     @catch_protocole_errors
     async def api_vlob_group_poll(self, client_ctx, msg):
@@ -187,7 +178,7 @@ class BaseVlobComponent:
             return vlob_group_poll_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
 
         except VlobError as exc:
-            return vlob_group_update_rights_serializer.rep_dump(
+            return vlob_group_update_roles_serializer.rep_dump(
                 {"status": "error", "reason": str(exc)}
             )
 
@@ -195,20 +186,18 @@ class BaseVlobComponent:
             {"status": "ok", "current_checkpoint": checkpoint, "changes": changes}
         )
 
-    async def get_group_rights(
+    async def get_group_roles(
         self, organization_id: OrganizationID, author: UserID, id: UUID
-    ) -> Dict[DeviceID, Tuple[bool, bool, bool]]:
+    ) -> Dict[DeviceID, VlobGroupRole]:
         raise NotImplementedError()
 
-    async def update_group_rights(
+    async def update_group_roles(
         self,
         organization_id: OrganizationID,
         author: UserID,
         id: UUID,
         user: UserID,
-        admin_right: bool,
-        read_right: bool,
-        write_right: bool,
+        role: Optional[VlobGroupRole],
     ) -> None:
         raise NotImplementedError()
 

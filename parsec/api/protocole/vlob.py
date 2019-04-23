@@ -1,18 +1,53 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from enum import Enum
+
 from parsec.serde import UnknownCheckedSchema, fields, validate
+from parsec.serde.fields import ValidationError
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
 __all__ = (
+    "VlobGroupRole",
     "vlob_group_check_serializer",
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
-    "vlob_group_update_rights_serializer",
-    "vlob_group_get_rights_serializer",
+    "vlob_group_update_roles_serializer",
+    "vlob_group_get_roles_serializer",
     "vlob_group_poll_serializer",
 )
+
+
+class VlobGroupRole(Enum):
+    OWNER = "OWNER"
+    MANAGER = "MANAGER"
+    CONTRIBUTOR = "CONTRIBUTOR"
+    READER = "READER"
+
+
+class _VlobGroupRoleField(fields.Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        if not isinstance(value, VlobGroupRole):
+            raise ValidationError("Not a VlobGroupRole")
+
+        return value.value
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
+        for choice in VlobGroupRole:
+            if choice.value == value:
+                return choice
+        else:
+            raise ValidationError(f"Invalid role `{value}`")
 
 
 _validate_trust_seed = validate.Length(max=32)
@@ -92,39 +127,31 @@ class VlobUpdateRepSchema(BaseRepSchema):
 vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
 
 
-class VlobGroupUpdateRightsReqSchema(BaseReqSchema):
+class VlobGroupUpdateRolesReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     user = fields.UserID(required=True)
-    admin_right = fields.Boolean(required=True)
-    read_right = fields.Boolean(required=True)
-    write_right = fields.Boolean(required=True)
+    role = _VlobGroupRoleField(allow_none=True, missing=None)
 
 
-class VlobGroupUpdateRightsRepSchema(BaseRepSchema):
+class VlobGroupUpdateRolesRepSchema(BaseRepSchema):
     pass
 
 
-vlob_group_update_rights_serializer = CmdSerializer(
-    VlobGroupUpdateRightsReqSchema, VlobGroupUpdateRightsRepSchema
+vlob_group_update_roles_serializer = CmdSerializer(
+    VlobGroupUpdateRolesReqSchema, VlobGroupUpdateRolesRepSchema
 )
 
 
-class VlobGroupGetRightsReqSchema(BaseReqSchema):
+class VlobGroupGetRolesReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
 
 
-class VlobGroupUserRights(UnknownCheckedSchema):
-    admin_right = fields.Boolean(required=True)
-    read_right = fields.Boolean(required=True)
-    write_right = fields.Boolean(required=True)
+class VlobGroupGetRolesRepSchema(BaseRepSchema):
+    users = fields.Map(fields.UserID(), _VlobGroupRoleField(required=True))
 
 
-class VlobGroupGetRightsRepSchema(BaseRepSchema):
-    users = fields.Map(fields.UserID(), fields.Nested(VlobGroupUserRights), required=True)
-
-
-vlob_group_get_rights_serializer = CmdSerializer(
-    VlobGroupGetRightsReqSchema, VlobGroupGetRightsRepSchema
+vlob_group_get_roles_serializer = CmdSerializer(
+    VlobGroupGetRolesReqSchema, VlobGroupGetRolesRepSchema
 )
 
 

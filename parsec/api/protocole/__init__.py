@@ -27,12 +27,13 @@ from parsec.api.protocole.ping import ping_serializer
 from parsec.api.protocole.message import message_send_serializer, message_get_serializer
 from parsec.api.protocole.block import block_create_serializer, block_read_serializer
 from parsec.api.protocole.vlob import (
+    VlobGroupRole,
     vlob_group_check_serializer,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
-    vlob_group_update_rights_serializer,
-    vlob_group_get_rights_serializer,
+    vlob_group_update_roles_serializer,
+    vlob_group_get_roles_serializer,
     vlob_group_poll_serializer,
 )
 from parsec.api.protocole.user import (
@@ -82,12 +83,13 @@ __all__ = (
     "block_create_serializer",
     "block_read_serializer",
     # Vlob
+    "VlobGroupRole",
     "vlob_group_check_serializer",
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
-    "vlob_group_update_rights_serializer",
-    "vlob_group_get_rights_serializer",
+    "vlob_group_update_roles_serializer",
+    "vlob_group_get_roles_serializer",
     "vlob_group_poll_serializer",
     # User
     "user_get_serializer",

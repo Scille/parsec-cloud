@@ -34,7 +34,7 @@ class PGBlockComponent(BaseBlockComponent):
                 """
 SELECT
     deleted_on,
-    user_has_vlob_group_read_right(
+    user_can_read_vlob(
         get_user_internal_id($1, $2),
         vlob_group
     )
@@ -69,7 +69,7 @@ WHERE
             ret = await conn.fetchrow(
                 """
 SELECT
-    user_has_vlob_group_write_right(
+    user_can_write_vlob(
         get_user_internal_id($1, $2),
         get_vlob_group_internal_id($1, $4)
     ),

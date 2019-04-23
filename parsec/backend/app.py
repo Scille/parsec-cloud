@@ -175,8 +175,8 @@ class BackendApp:
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
-            "vlob_group_get_rights": self.vlob.api_vlob_group_get_rights,
-            "vlob_group_update_rights": self.vlob.api_vlob_group_update_rights,
+            "vlob_group_get_roles": self.vlob.api_vlob_group_get_roles,
+            "vlob_group_update_roles": self.vlob.api_vlob_group_update_roles,
             "vlob_group_poll": self.vlob.api_vlob_group_poll,
         }
         self.anonymous_cmds = {

@@ -72,7 +72,7 @@ TRUNCATE TABLE
     message,
 
     vlob_group,
-    vlob_group_right,
+    vlob_group_user_role,
     vlob,
     vlob_atom,
     vlob_group_update,

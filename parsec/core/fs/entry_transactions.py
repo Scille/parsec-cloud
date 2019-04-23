@@ -12,6 +12,7 @@ from parsec.core.types import (
     FsPath,
     Access,
     WorkspaceEntry,
+    WorkspaceRole,
     LocalDevice,
     LocalManifest,
     ManifestAccess,
@@ -56,7 +57,7 @@ class EntryTransactions:
     # Right management helper
 
     def _check_write_rights(self, path: FsPath):
-        if not self.workspace_entry.write_right:
+        if self.workspace_entry.role == WorkspaceRole.READER:
             raise from_errno(errno.EACCES, str(path))
 
     # Look-up helpers

@@ -59,8 +59,8 @@ class BackendCmdsPool:
     vlob_create = _expose_cmds_with_retrier("vlob_create")
     vlob_read = _expose_cmds_with_retrier("vlob_read")
     vlob_update = _expose_cmds_with_retrier("vlob_update")
-    vlob_group_get_rights = _expose_cmds_with_retrier("vlob_group_get_rights")
-    vlob_group_update_rights = _expose_cmds_with_retrier("vlob_group_update_rights")
+    vlob_group_get_roles = _expose_cmds_with_retrier("vlob_group_get_roles")
+    vlob_group_update_roles = _expose_cmds_with_retrier("vlob_group_update_roles")
     vlob_group_poll = _expose_cmds_with_retrier("vlob_group_poll")
 
     block_create = _expose_cmds_with_retrier("block_create")
