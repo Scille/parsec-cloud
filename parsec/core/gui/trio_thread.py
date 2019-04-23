@@ -100,23 +100,29 @@ class QtToTrioJobScheduler:
         self._portal = None
         self._cancel_scope = None
         self.started = threading.Event()
+        self._stopped = trio.Event()
 
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
         self._portal = trio.BlockingTrioPortal()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(100)
-        async with trio.open_nursery() as nursery, recv_job_channel:
-            self._cancel_scope = nursery.cancel_scope
-            self.started.set()
-            task_status.started()
-            while True:
-                job = await recv_job_channel.receive()
-                assert job.status is None
-                await nursery.start(job._run_fn)
+        try:
+            async with trio.open_nursery() as nursery, recv_job_channel:
+                self._cancel_scope = nursery.cancel_scope
+                self.started.set()
+                task_status.started()
+                while True:
+                    job = await recv_job_channel.receive()
+                    assert job.status is None
+                    await nursery.start(job._run_fn)
+
+        finally:
+            self._stopped.set()
 
     async def _stop(self):
         self._cancel_scope.cancel()
         await self._send_job_channel.aclose()
+        await self._stopped.wait()
 
     def stop(self):
         self._portal.run(self._stop)
