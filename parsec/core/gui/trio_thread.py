@@ -43,8 +43,8 @@ class QtToTrioJob:
         self._fn = fn
         self._args = args
         self._kwargs = kwargs
-
         self.cancel_scope = None
+        self._started = trio.Event()
         self._done = threading.Event()
         self.status = None
         self.ret = None
@@ -57,6 +57,7 @@ class QtToTrioJob:
         try:
             with trio.CancelScope() as self.cancel_scope:
                 task_status.started()
+                self._started.set()
 
                 try:
                     if iscoroutinefunction(self._fn):
@@ -105,7 +106,7 @@ class QtToTrioJobScheduler:
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
         self._portal = trio.BlockingTrioPortal()
-        self._send_job_channel, recv_job_channel = trio.open_memory_channel(100)
+        self._send_job_channel, recv_job_channel = trio.open_memory_channel(1)
         try:
             async with trio.open_nursery() as nursery, recv_job_channel:
                 self._cancel_scope = nursery.cancel_scope
@@ -132,7 +133,15 @@ class QtToTrioJobScheduler:
         assert not [x for x in args if isinstance(x, pyqtBoundSignal)]
         assert not [v for v in kwargs.values() if isinstance(v, pyqtBoundSignal)]
         job = QtToTrioJob(self._portal, fn, args, kwargs, qt_on_success, qt_on_error)
-        self._portal.run_sync(self._send_job_channel.send_nowait, job)
+
+        async def _submit_job():
+            # While inside this async function we are blocking the Qt thread
+            # hence we just wait for the job to start (to avoid concurrent
+            # crash if the job is cancelled)
+            await self._send_job_channel.send(job)
+            await job._started.wait()
+
+        self._portal.run(_submit_job)
         return job
 
     # TODO: needed by legacy widget
