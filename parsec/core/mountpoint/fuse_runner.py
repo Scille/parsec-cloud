@@ -63,13 +63,7 @@ def _teardown_mountpoint(mountpoint):
 
 
 async def fuse_mountpoint_runner(
-    workspace: str,
-    mountpoint: Path,
-    config: dict,
-    fs,
-    event_bus,
-    *,
-    task_status=trio.TASK_STATUS_IGNORED,
+    workspace_fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
 ):
     """
     Raises:
@@ -79,8 +73,8 @@ async def fuse_mountpoint_runner(
     fuse_thread_stopped = threading.Event()
     portal = trio.BlockingTrioPortal()
     abs_mountpoint = str(mountpoint.absolute())
-    fs_access = ThreadFSAccess(portal, fs)
-    fuse_operations = FuseOperations(workspace, fs_access)
+    fs_access = ThreadFSAccess(portal, workspace_fs)
+    fuse_operations = FuseOperations(fs_access)
 
     initial_st_dev = _bootstrap_mountpoint(mountpoint)
 
