@@ -24,7 +24,8 @@ from tests.common import freeze_time
 
 
 @pytest.mark.trio
-async def test_retrieve_device(running_backend, remote_devices_manager, bob):
+async def test_retrieve_device(running_backend, alice_remote_devices_manager, bob):
+    remote_devices_manager = alice_remote_devices_manager
     d1 = Pendulum(2000, 1, 1)
     with freeze_time(d1):
         # Offline with no cache
@@ -56,7 +57,8 @@ async def test_retrieve_device(running_backend, remote_devices_manager, bob):
 
 
 @pytest.mark.trio
-async def test_retrieve_user(running_backend, remote_devices_manager, bob):
+async def test_retrieve_user(running_backend, alice_remote_devices_manager, bob):
+    remote_devices_manager = alice_remote_devices_manager
     d1 = Pendulum(2000, 1, 1)
     with freeze_time(d1):
         # Offline with no cache
@@ -88,7 +90,10 @@ async def test_retrieve_user(running_backend, remote_devices_manager, bob):
 
 
 @pytest.mark.trio
-async def test_retrieve_user_and_devices(running_backend, remote_devices_manager, alice, alice2):
+async def test_retrieve_user_and_devices(
+    running_backend, alice_remote_devices_manager, alice, alice2
+):
+    remote_devices_manager = alice_remote_devices_manager
     d1 = Pendulum(2000, 1, 1)
     with freeze_time(d1):
         # Offline

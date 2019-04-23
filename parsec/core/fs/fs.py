@@ -9,8 +9,9 @@ from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice, FsPath
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendCmdsPool
-from parsec.core.fs.userfs import UserFS
 from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.fs.userfs import UserFS
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 
 class FS:
@@ -59,19 +60,64 @@ class FS:
             _, workspace_name, *parts = path.parts
             return workspace_name, FsPath("/" + "/".join(parts))
 
+    def _get_workspace_entry_from_name(self, workspace_name):
+        # Obviously broken if multiple workspaces have the same name :'(
+        try:
+            return next(
+                w for w in self._user_fs.get_user_manifest().workspaces if w.name == workspace_name
+            )
+        except StopIteration:
+            raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}")
+
     def _get_workspace(self, path):
         workspace_name, subpath = self._split_path(path)
         assert workspace_name
-        workspace = self._user_fs.get_workspace(workspace_name)
+        workspace_entry = self._get_workspace_entry_from_name(workspace_name)
+        try:
+            workspace = self._user_fs.get_workspace(workspace_entry.access.id)
+        except FSWorkspaceNotFoundError as exc:
+            raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}") from exc
+
         return workspace, subpath
 
-    async def stat(self, path: str) -> dict:
-        workspace_name, subpath = self._split_path(path)
-        if not workspace_name:
-            return await self._user_fs.stat()
+    def _iter_workspaces(self):
+        um = self._user_fs.get_user_manifest()
+        for w_entry in um.workspaces:
+            yield self._user_fs.get_workspace(w_entry.access.id)
 
-        else:
-            return await self._user_fs.get_workspace(workspace_name).stat(subpath)
+    async def stat(self, path: str) -> dict:
+        # TODO: This method should be splitted in several methods:
+        # - user_info()
+        # - workspace_info(workspace)
+        # - entry_info(workspace, path)
+        workspace_name, subpath = self._split_path(path)
+
+        # User info
+        if not workspace_name:
+            um = self._user_fs.get_user_manifest()
+            return {
+                "type": "root",
+                "id": self._user_fs.user_manifest_access.id,
+                "is_folder": True,
+                "created": um.created,
+                "updated": um.updated,
+                "base_version": um.base_version,
+                "is_placeholder": um.is_placeholder,
+                "need_sync": um.need_sync,
+                # Only list workspace we still have access to
+                "children": sorted(um.children.keys()),
+            }
+
+        workspace, _ = self._get_workspace(f"/{workspace_name}")
+        entry_info = await workspace.entry_info(subpath)
+
+        # Workspace info
+        if subpath.is_root():
+            workspace_info = await workspace.workspace_info()
+            return {**entry_info, **workspace_info}
+
+        # Entry info
+        return entry_info
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
         workspace, subpath = self._get_workspace(path)
@@ -79,7 +125,7 @@ class FS:
 
     async def file_truncate(self, path: str, length: int) -> None:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_truncate(subpath, length)
+        return await workspace.file_resize(subpath, length)
 
     async def file_read(self, path: str, size: int = math.inf, offset: int = 0) -> bytes:
         workspace, subpath = self._get_workspace(path)
@@ -87,49 +133,60 @@ class FS:
 
     async def file_fd_open(self, path: str, mode="rw") -> int:
         workspace, subpath = self._get_workspace(path)
-        fd = await workspace.file_fd_open(subpath, mode)
+        _, fd = await workspace.file_open(subpath, mode)
         return self._put_fd(workspace, fd)
 
     async def file_fd_close(self, fd: int) -> None:
         workspace, fd = self._pop_fd(fd)
-        await workspace.file_fd_close(fd)
+        await workspace.fd_close(fd)
 
     async def file_fd_seek(self, fd: int, offset: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.file_fd_seek(fd, offset)
+        await workspace.fd_seek(fd, offset)
 
     async def file_fd_truncate(self, fd: int, length: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.file_fd_truncate(fd, length)
+        await workspace.fd_resize(fd, length)
 
     async def file_fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
         workspace, fd = self._get_fd(fd)
-        return await workspace.file_fd_write(fd, content, offset)
+        return await workspace.fd_write(fd, content, offset)
 
     async def file_fd_flush(self, fd: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.file_fd_flush(fd)
+        await workspace.fd_flush(fd)
 
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
         workspace, fd = self._get_fd(fd)
-        return await workspace.file_fd_read(fd, size, offset)
+        return await workspace.fd_read(fd, size, offset)
 
-    async def touch(self, path: str) -> UUID:
-        return await self.file_create(path)
-
-    async def file_create(self, path: str) -> UUID:
+    async def touch(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_create(subpath)
+        _, fd = await workspace.file_create(subpath, open=False)
+        assert fd is None
 
-    async def mkdir(self, path: str) -> UUID:
-        return await self.folder_create(path)
+    async def file_create(self, path: str) -> None:
+        workspace, subpath = self._get_workspace(path)
+        _, fd = await workspace.file_create(subpath)
+        return self._put_fd(workspace, fd)
 
-    async def folder_create(self, path: str) -> UUID:
+    async def mkdir(self, path: str) -> None:
+        await self.folder_create(path)
+
+    async def folder_create(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
         return await workspace.folder_create(subpath)
 
     async def workspace_create(self, path: str) -> UUID:
         cooked_path = FsPath(path)
+        try:
+            _, _ = self._get_workspace(path)
+        except FileNotFoundError:
+            pass
+        else:
+            # A workspace with this name already exists (shouldn't be a trouble,
+            # except for legacy tests using oracle...)
+            raise FileExistsError(17, "File exists", path)
         assert cooked_path.is_workspace()
         return await self._user_fs.workspace_create(cooked_path.workspace)
 
@@ -138,33 +195,53 @@ class FS:
         cooked_dst = FsPath(dst)
         assert cooked_src.is_workspace()
         assert cooked_dst.is_workspace()
-        await self._user_fs.workspace_rename(cooked_src.workspace, cooked_dst.workspace)
+        workspace_entry = self._get_workspace_entry_from_name(cooked_src.workspace)
+        try:
+            _, _ = self._get_workspace(dst)
+        except FileNotFoundError:
+            pass
+        else:
+            # A workspace with this name already exists (shouldn't be a trouble,
+            # except for legacy tests using oracle...)
+            raise FileExistsError(17, "File exists", dst)
+        await self._user_fs.workspace_rename(workspace_entry.access.id, cooked_dst.workspace)
 
     async def move(self, src: str, dst: str, overwrite: bool = True) -> None:
         workspace, subpath_src = self._get_workspace(src)
         workspace_dst, subpath_dst = self._get_workspace(dst)
         assert workspace
-        assert workspace.workpace_name == workspace_dst.workpace_name
-        await workspace.move(subpath_src, subpath_dst)
+        assert workspace.workspace_name == workspace_dst.workspace_name
+        await workspace.entry_rename(subpath_src, subpath_dst)
 
-    async def delete(self, path: str) -> None:
+    async def file_delete(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        await workspace.delete(subpath)
+        await workspace.file_delete(subpath)
+
+    async def folder_delete(self, path: str) -> None:
+        workspace, subpath = self._get_workspace(path)
+        await workspace.folder_delete(subpath)
 
     async def sync(self, path: str, recursive: bool = True) -> None:
         workspace_name, subpath = self._split_path(path)
         if not workspace_name:
-            await self._user_fs.sync(recursive=recursive)
+            if recursive:
+                await self.full_sync()
+            else:
+                await self._user_fs.sync()
 
         else:
-            workspace = self._user_fs.get_workspace(workspace_name)
+            workspace, _ = self._get_workspace(f"/{workspace_name}")
+            stat = await workspace.entry_info(FsPath("/"))
+            if stat["is_placeholder"]:
+                await self._user_fs.sync()
             await workspace.sync(subpath, recursive)
+            await self._user_fs.sync()
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
     async def sync_by_id(self, entry_id: UUID) -> None:
         assert isinstance(entry_id, UUID)
-        for workspace_name in self._user_fs.list_workspaces():
-            workspace = self._user_fs.get_workspace(workspace_name)
+        for workspace_name in [w["name"] for w in self._user_fs.stat()["workspaces"]]:
+            workspace, _ = self._get_workspace(f"/{workspace_name}")
             try:
                 return await workspace.sync_by_id(entry_id)
             except Exception:  # TODO: better exception
@@ -172,12 +249,14 @@ class FS:
 
     # TODO: do we really need this ? or should we optimize `sync(path='/')` ?
     async def full_sync(self) -> None:
-        await self._user_fs.full_sync()
+        await self._user_fs.sync()
+        for workspace in self._iter_workspaces():
+            await workspace.sync("/", recursive=True)
+        await self._user_fs.sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:
         assert isinstance(id, UUID)
-        for workspace_name in self._user_fs.list_workspaces():
-            workspace = self._user_fs.get_workspace(workspace_name)
+        for workspace in self._iter_workspaces():
             try:
                 return await workspace.get_entry_path(id)
             except Exception:  # TODO: better exception
@@ -191,15 +270,14 @@ class FS:
         read_right: bool = True,
         write_right: bool = True,
     ) -> None:
-        cooked_path = FsPath(path)
-        if not cooked_path.is_workspace():
+        workspace_name, subpath = self._split_path(path)
+        if not subpath:
             # Will fail with correct exception
-            workpace_name = path
-        else:
-            workpace_name = cooked_path.workspace
+            workspace_name = path
+        workspace_entry = self._get_workspace_entry_from_name(workspace_name)
 
         await self._user_fs.workspace_share(
-            workpace_name,
+            workspace_entry.access.id,
             recipient=UserID(recipient),
             admin_right=admin_right,
             read_right=read_right,

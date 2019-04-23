@@ -76,6 +76,8 @@ async def _do_claim_user(
     except LocalDeviceAlreadyExistsError:
         raise JobResultError("user-exists")
 
+    return device, password
+
 
 class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     user_claimed = pyqtSignal(OrganizationID, DeviceID, str)
@@ -105,11 +107,9 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_dialog.hide()
 
     def on_claim_error(self):
+        assert self.claim_user_job
         assert self.claim_user_job.is_finished()
         assert self.claim_user_job.status != "ok"
-        self.claim_dialog.hide()
-        self.button_claim.setDisabled(False)
-        self.check_infos()
 
         status = self.claim_user_job.status
         if status == "not_found":
@@ -124,24 +124,23 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             errmsg = _("Can not claim this user ({info}).")
         show_error(self, errmsg.format(**self.claim_user_job.exc.params))
         self.claim_user_job = None
+        self.check_infos()
 
     def on_claim_success(self):
+        assert self.claim_user_job
         assert self.claim_user_job.is_finished()
         assert self.claim_user_job.status == "ok"
-        self.claim_dialog.hide()
-        self.button_claim.setDisabled(False)
-        self.claim_user_job = None
 
-        backend_addr = BackendOrganizationAddr(self.line_edit_url.text())
-        device = DeviceID("{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text()))
-        self.user_claimed.emit(backend_addr.organization_id, device, self.line_edit_password.text())
+        device, password = self.claim_user_job.ret
+        self.claim_user_job = None
+        self.check_infos()
+
+        self.user_claimed.emit(device.organization_id, device.device_id, password)
 
     def cancel_claim(self):
         if self.claim_user_job:
             self.claim_user_job.cancel_and_join()
             self.claim_user_job = None
-        self.claim_dialog.hide()
-        self.button_claim.setDisabled(False)
         self.check_infos()
 
     def password_changed(self, text):
@@ -156,23 +155,30 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             self.label_password_strength.hide()
 
     def check_infos(self, _=""):
+        if self.claim_user_job:
+            self.claim_dialog.show()
+        else:
+            self.claim_dialog.hide()
+
         if (
             len(self.line_edit_login.text())
             and len(self.line_edit_token.text())
             and len(self.line_edit_device.text())
             and len(self.line_edit_url.text())
+            and not self.claim_user_job
         ):
             self.button_claim.setDisabled(False)
         else:
             self.button_claim.setDisabled(True)
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() == Qt.Key_Return and not self.claim_user_job:
             self.claim_clicked()
         event.accept()
 
     def claim_clicked(self):
         assert not self.claim_user_job
+
         self.claim_user_job = self.portal.submit_job(
             ThreadSafeQtSignal(self, "claim_success"),
             ThreadSafeQtSignal(self, "claim_error"),
@@ -188,8 +194,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             pkcs11_token=int(self.combo_pkcs11_token.currentText()),
             pkcs11_key=int(self.combo_pkcs11_key.currentText()),
         )
-        self.claim_dialog.show()
-        self.button_claim.setDisabled(True)
+        self.check_infos()
 
     def reset(self):
         if os.name == "nt":
@@ -207,3 +212,4 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
+        self.check_infos()

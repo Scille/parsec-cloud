@@ -39,12 +39,16 @@ def generate_new_device(
 
 def get_key_file(config_dir: Path, device: LocalDevice) -> Path:
     slug = device.slug
-    return config_dir / slug / f"{slug}.keys"
+    return get_devices_dir(config_dir) / slug / f"{slug}.keys"
+
+
+def get_devices_dir(config_dir: Path) -> Path:
+    return config_dir / "devices"
 
 
 def list_available_devices(config_dir: Path) -> List[Tuple[OrganizationID, DeviceID, str, Path]]:
     try:
-        candidate_pathes = list(config_dir.iterdir())
+        candidate_pathes = list(get_devices_dir(config_dir).iterdir())
     except FileNotFoundError:
         return []
 

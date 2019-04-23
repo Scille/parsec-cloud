@@ -32,6 +32,8 @@ script:
 after_success:
 - pip install -U codecov
 - codecov
+before_deploy:
+- cd $TRAVIS_BUILD_DIR
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel

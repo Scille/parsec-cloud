@@ -100,16 +100,37 @@ class FileTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    # Helpers
+    # Locking helper
+
+    # This logic should move to the local storage along with
+    # the remote loader. It would then be up to the local storage
+    # to download the missing blocks and manifests. This should
+    # simplify the code and helper gather all the sensitive methods
+    # in the same module
 
     @asynccontextmanager
-    async def _load_and_lock_file(self, fd: FileDescriptor) -> LocalFileManifest:
+    async def _load_and_lock_file(self, fd: FileDescriptor):
+        # Get the corresponding access
         try:
-            self.local_storage.load_file_descriptor(fd)
+            cursor, _ = self.local_storage.load_file_descriptor(fd)
+            access = cursor.access
+
+        # Download the corresponding manifest if it's missing
         except LocalStorageMissingEntry as exc:
             await self.remote_loader.load_manifest(exc.access)
-        async with self.local_storage.load_and_lock_file(fd) as (cursor, manifest):
-            yield cursor, manifest
+            access = exc.access
+
+        # Try to lock the access
+        try:
+            async with self.local_storage.lock_manifest(access):
+                yield self.local_storage.load_file_descriptor(fd)
+
+        # The entry has been deleted while we were waiting for the lock
+        except LocalStorageMissingEntry:
+            assert fd not in self.local_storage.open_cursors
+            raise FSInvalidFileDescriptor(fd)
+
+    # Helpers
 
     def _attempt_read(self, manifest: LocalFileManifest, start: int, end: int):
         missing = []
@@ -147,14 +168,14 @@ class FileTransactions:
 
     # Atomic transactions
 
-    async def close(self, fd: FileDescriptor) -> None:
+    async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
 
-    async def seek(self, fd: FileDescriptor, offset: int) -> None:
+    async def fd_seek(self, fd: FileDescriptor, offset: int) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
@@ -164,7 +185,7 @@ class FileTransactions:
             # Atomic change
             cursor.offset = offset
 
-    async def write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
+    async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
@@ -193,7 +214,7 @@ class FileTransactions:
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
         return len(content)
 
-    async def truncate(self, fd: FileDescriptor, length: int) -> None:
+    async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (cursor, manifest):
 
@@ -217,7 +238,7 @@ class FileTransactions:
         # Notify
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
 
-    async def read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
+    async def fd_read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
         # Loop over attemps
         missing = []
         while True:
@@ -250,6 +271,6 @@ class FileTransactions:
 
                 return data
 
-    async def flush(self, fd: FileDescriptor) -> None:
+    async def fd_flush(self, fd: FileDescriptor) -> None:
         # No-op
         pass

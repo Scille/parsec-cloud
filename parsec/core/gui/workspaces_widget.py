@@ -67,13 +67,13 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         button.rename_clicked.connect(self.rename_workspace)
         button.file_clicked.connect(self.open_workspace_file)
         try:
-            self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
+            self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
         except (MountpointAlreadyMounted, MountpointDisabled):
             pass
 
     def open_workspace_file(self, workspace_name, file_name, is_dir):
         try:
-            self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
+            self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
         except MountpointAlreadyMounted:
             pass
         except Exception:
@@ -96,7 +96,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         if not new_name:
             return
         try:
-            self.portal.run(
+            self.jobs_ctx.run(
                 self.core.fs.workspace_rename, current_file_path, os.path.join("/", new_name)
             )
             workspace_button.name = new_name
@@ -105,11 +105,11 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         except:
             show_error(self, _("Can not rename the workspace."))
         else:
-            self.portal.run(self.core.mountpoint_manager.unmount_workspace, current_file_path[1:])
-            self.portal.run(self.core.mountpoint_manager.mount_workspace, new_name)
+            self.jobs_ctx.run(self.core.mountpoint_manager.unmount_workspace, current_file_path[1:])
+            self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, new_name)
 
     def share_workspace(self, workspace_button):
-        d = WorkspaceSharingDialog(workspace_button.name, self.core, self.portal)
+        d = WorkspaceSharingDialog(workspace_button.name, self.core, self.jobs_ctx)
         d.exec_()
 
     def create_workspace_clicked(self):
@@ -119,7 +119,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         if not workspace_name:
             return
         try:
-            self.portal.run(self.core.fs.workspace_create, os.path.join("/", workspace_name))
+            self.jobs_ctx.run(self.core.fs.workspace_create, os.path.join("/", workspace_name))
         except FileExistsError:
             show_error(self, _("A workspace with the same name already exists."))
             return
@@ -132,16 +132,16 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
                 w = item.widget()
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
-        if self.portal:
-            result = self.portal.run(self.core.fs.stat, "/")
+        if self.core:
+            result = self.jobs_ctx.run(self.core.fs.stat, "/")
             user_id = self.core.device.user_id
             for workspace in result.get("children", []):
-                ws_infos = self.portal.run(self.core.fs.stat, os.path.join("/", workspace))
+                ws_infos = self.jobs_ctx.run(self.core.fs.stat, os.path.join("/", workspace))
                 ws_infos["participants"].remove(user_id)
                 files = ws_infos["children"][:4]
                 display_files = {}
                 for f in files:
-                    f_infos = self.portal.run(self.core.fs.stat, os.path.join("/", workspace, f))
+                    f_infos = self.jobs_ctx.run(self.core.fs.stat, os.path.join("/", workspace, f))
                     display_files[f] = f_infos["is_folder"]
                 self.add_workspace(
                     workspace,
@@ -160,7 +160,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
     def _on_fs_changed_qt(self, event, id, path):
         if not path:
             try:
-                path = self.portal.run(self.core.fs.get_entry_path, id)
+                path = self.jobs_ctx.run(self.core.fs.get_entry_path, id)
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return

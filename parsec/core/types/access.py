@@ -110,12 +110,20 @@ class WorkspaceEntry:
     name: str
     access: ManifestAccess = attr.ib(factory=ManifestAccess)
     granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    read_right: bool = attr.ib(default=True)
-    write_right: bool = attr.ib(default=True)
-    admin_right: bool = attr.ib(default=True)
+    read_right: bool = True
+    write_right: bool = True
+    admin_right: bool = True
 
-    def evolve(self, **kwargs):
+    def is_revoked(self) -> bool:
+        return not (self.read_right or self.write_right or self.admin_right)
+
+    def evolve(self, **kwargs) -> "WorkspaceEntry":
         return attr.evolve(self, **kwargs)
+
+    def evolve_and_mark_updated(self, **data) -> "WorkspaceEntry":
+        if "granted_on" not in data:
+            data["granted_on"] = pendulum.now()
+        return attr.evolve(self, **data)
 
 
 class WorkspaceEntrySchema(UnknownCheckedSchema):

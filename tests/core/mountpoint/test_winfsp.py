@@ -8,7 +8,7 @@ def test_rename_to_another_drive(mountpoint_service):
     async def _bootstrap(fs, mountpoint_manager):
         await fs.workspace_create("/x")
         await fs.workspace_create("/y")
-        await fs.file_create("/x/foo.txt")
+        await fs.touch("/x/foo.txt")
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()

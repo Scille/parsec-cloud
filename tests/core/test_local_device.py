@@ -95,7 +95,7 @@ def test_load_bad_password(config_dir, alice):
 
 def test_load_bad_data(config_dir, alice):
     alice_key = get_key_file(config_dir, alice)
-    alice_key.parent.mkdir()
+    alice_key.parent.mkdir(parents=True)
     alice_key.write_bytes(b"dummy")
 
     with pytest.raises(LocalDevicePackingError):

@@ -73,8 +73,8 @@ async def logged_core_factory(
                     # Monitor connection must be first given it will watch on
                     # other monitors' events
                     await monitor_nursery.start(monitor_backend_connection, event_bus)
-                    await monitor_nursery.start(monitor_vlob_groups, device, fs, event_bus)
-                    await monitor_nursery.start(monitor_messages, fs, event_bus)
+                    await monitor_nursery.start(monitor_vlob_groups, device, fs._user_fs, event_bus)
+                    await monitor_nursery.start(monitor_messages, fs._user_fs, event_bus)
                     await monitor_nursery.start(monitor_sync, fs, event_bus)
 
                     async with mountpoint_manager_factory(

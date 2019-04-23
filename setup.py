@@ -254,6 +254,7 @@ build_exe_options = {
     "packages": [
         "parsec.core.gui.ui",
         "idna",
+        "sentry_sdk.integrations",
         "trio._core",
         "nacl._sodium",
         "html.parser",

@@ -1,17 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.fs.userfs import UserFS
+from parsec.core.fs.exceptions import (
+    FSError,
+    FSValidationError,
+    FSPackingError,
+    FSWorkspaceNotFoundError,
+    FSBackendOfflineError,
+    FSSharingNotAllowedError,
+)
 from parsec.core.fs.fs import FS
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.fs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.sync_base import SyncConcurrencyError
-from parsec.core.fs.sharing import SharingError
 
 
 __all__ = (
+    "UserFS",
+    "FSError",
+    "FSValidationError",
+    "FSPackingError",
+    "FSWorkspaceNotFoundError",
+    "FSBackendOfflineError",
+    "FSSharingNotAllowedError",
     "FS",
     "FSManifestLocalMiss",
     "FSEntryNotFound",
     "FSInvalidFileDescriptor",
     "SyncConcurrencyError",
-    "SharingError",
 )
