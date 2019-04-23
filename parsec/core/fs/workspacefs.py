@@ -3,6 +3,7 @@
 import math
 import inspect
 from typing import Tuple
+from uuid import UUID
 
 from parsec.core.types import FsPath, AccessID, FileDescriptor
 from parsec.core.fs.file_transactions import FileTransactions
@@ -168,10 +169,10 @@ class WorkspaceFS:
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
     async def sync_by_id(self, entry_id: AccessID) -> None:
-        assert isinstance(entry_id, AccessID)
+        assert isinstance(entry_id, UUID)
         await self._load_and_retry(self._syncer.sync_by_id, entry_id)
 
     async def get_entry_path(self, id: AccessID) -> FsPath:
-        assert isinstance(id, AccessID)
+        assert isinstance(id, UUID)
         path, _, _ = await self._load_and_retry(self._local_folder_fs.get_entry_path, id)
         return path
