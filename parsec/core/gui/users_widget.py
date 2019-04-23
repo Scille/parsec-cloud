@@ -88,23 +88,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button_add_user.clicked.connect(self.register_user)
         self.taskbar_buttons.append(button_add_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
-        try:
-            user_id = self.core.device.user_id
-            users = self.jobs_ctx.run(self.core.fs.backend_cmds.user_find)
-            for user in users:
-                user_info, user_devices = self.jobs_ctx.run(
-                    self.core.remote_devices_manager.get_user_and_devices, user
-                )
-                self.add_user(
-                    str(user_info.user_id),
-                    is_current_user=user_id == user,
-                    certified_on=user_info.certified_on,
-                    is_revoked=all([device.revoked_on for device in user_devices]),
-                )
-        except BackendNotAvailable:
-            pass
-        except:
-            pass
+        self.reset()
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
@@ -123,6 +107,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def register_user(self):
         d = RegisterUserDialog(self.core, self.jobs_ctx, parent=self)
         d.exec_()
+        self.reset()
 
     def add_user(self, user_name, is_current_user, certified_on, is_revoked):
         if user_name in self.users:
@@ -167,3 +152,29 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 show_error(self, _("You don't have the permission to revoke this user."))
         except:
             show_error(self, _("Can not revoke this user."))
+
+    def reset(self):
+        self.users = []
+        while self.layout_users.count() != 0:
+            item = self.layout_users.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_users.removeWidget(w)
+                w.setParent(None)
+        try:
+            user_id = self.core.device.user_id
+            users = self.jobs_ctx.run(self.core.fs.backend_cmds.user_find)
+            for user in users:
+                user_info, user_devices = self.jobs_ctx.run(
+                    self.core.remote_devices_manager.get_user_and_devices, user
+                )
+                self.add_user(
+                    str(user_info.user_id),
+                    is_current_user=user_id == user,
+                    certified_on=user_info.certified_on,
+                    is_revoked=all([device.revoked_on for device in user_devices]),
+                )
+        except BackendNotAvailable:
+            pass
+        except:
+            pass

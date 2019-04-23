@@ -87,23 +87,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         button_add_device.clicked.connect(self.register_new_device)
         self.taskbar_buttons.append(button_add_device)
         self.line_edit_search.textChanged.connect(self.filter_devices)
-
-        try:
-            current_device = self.core.device
-            _, devices = self.jobs_ctx.run(
-                self.core.remote_devices_manager.get_user_and_devices, self.core.device.user_id
-            )
-            for device in devices:
-                self.add_device(
-                    device.device_name,
-                    is_current_device=device.device_name == current_device.device_name,
-                    is_revoked=bool(device.revoked_on),
-                    revoked_on=device.revoked_on,
-                )
-        except BackendNotAvailable:
-            pass
-        except:
-            pass
+        self.reset()
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
@@ -152,6 +136,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(self.core, self.jobs_ctx, parent=self)
         self.register_device_dialog.exec_()
+        self.reset()
 
     def add_device(self, device_name, is_current_device, is_revoked, revoked_on):
         if device_name in self.devices:
@@ -162,3 +147,28 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         )
         button.revoke_clicked.connect(self.revoke_device)
         self.devices.append(device_name)
+
+    def reset(self):
+        self.devices = []
+        while self.layout_devices.count() != 0:
+            item = self.layout_devices.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_devices.removeWidget(w)
+                w.setParent(None)
+        try:
+            current_device = self.core.device
+            _, devices = self.jobs_ctx.run(
+                self.core.remote_devices_manager.get_user_and_devices, self.core.device.user_id
+            )
+            for device in devices:
+                self.add_device(
+                    device.device_name,
+                    is_current_device=device.device_name == current_device.device_name,
+                    is_revoked=bool(device.revoked_on),
+                    revoked_on=device.revoked_on,
+                )
+        except BackendNotAvailable:
+            pass
+        except:
+            pass
