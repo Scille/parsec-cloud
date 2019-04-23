@@ -3,7 +3,6 @@
 import pytest
 from unittest.mock import ANY
 from uuid import uuid4
-from itertools import product
 from pendulum import Pendulum
 
 from parsec.core.types import (

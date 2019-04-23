@@ -8,8 +8,9 @@ from parsec.core.types import FsPath, AccessID, FileDescriptor
 from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.fs.entry_transactions import EntryTransactions
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
-from parsec.core.fs.exceptions import FSBackendOfflineError, FSError
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
+
+# from parsec.core.fs.exceptions import FSBackendOfflineError, FSError
+# from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 
 
 class WorkspaceFS:

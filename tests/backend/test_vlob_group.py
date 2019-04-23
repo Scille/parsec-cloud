@@ -4,7 +4,6 @@ import pytest
 from uuid import UUID
 import trio
 from pendulum import Pendulum
-from itertools import combinations_with_replacement, product
 
 from parsec.api.protocole import (
     VlobGroupRole,
