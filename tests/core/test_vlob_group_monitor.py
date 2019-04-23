@@ -9,15 +9,17 @@ from tests.common import create_shared_workspace
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("folder", "file"))
 async def test_vlob_group_notif_on_new_entry_sync(
-    type, running_backend, alice_core, alice2_fs, monitor
+    mock_clock, running_backend, alice_core, alice2_fs, type
 ):
+    mock_clock.rate = 1
     await create_shared_workspace("/w", alice_core, alice2_fs)
-    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
+    # Suspend time to freeze core background tasks
+    mock_clock.rate = 0
 
     if type == "folder":
         await alice2_fs.folder_create("/w/foo")
     elif type == "file":
-        await alice2_fs.touch("/w/foo")
+        await alice2_fs.file_create("/w/foo")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
     vlob_group_id = dump_fs["children"]["w"]["access"]["id"]
@@ -25,6 +27,7 @@ async def test_vlob_group_notif_on_new_entry_sync(
 
     with alice_core.event_bus.listen() as spy:
         await alice2_fs.sync("/")
+        mock_clock.rate = 1
         with trio.fail_after(1):
 
             await spy.wait_multiple(
@@ -54,9 +57,11 @@ async def test_vlob_group_notif_on_new_entry_sync(
 
 
 @pytest.mark.trio
-async def test_vlob_group_notif_on_new_workspace_sync(running_backend, alice_core, alice2_fs):
-    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
-
+async def test_vlob_group_notif_on_new_workspace_sync(
+    mock_clock, running_backend, alice_core, alice2_fs
+):
+    # Suspend time to freeze core background tasks
+    mock_clock.rate = 0
     await alice2_fs.workspace_create("/foo")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
@@ -64,6 +69,7 @@ async def test_vlob_group_notif_on_new_workspace_sync(running_backend, alice_cor
 
     with alice_core.event_bus.listen() as spy:
         await alice2_fs.sync("/")
+        mock_clock.rate = 1
         with trio.fail_after(1):
 
             await spy.wait_multiple(
@@ -77,32 +83,31 @@ async def test_vlob_group_notif_on_new_workspace_sync(running_backend, alice_cor
             )
 
 
-# TODO: lazy loading of workspaces make this pretty cumbersome to test...
 @pytest.mark.trio
-@pytest.mark.xfail
 @pytest.mark.parametrize("type", ("folder", "file"))
 async def test_vlob_group_notif_on_new_nested_entry_sync(
-    type, running_backend, alice_core, alice2_fs
+    mock_clock, running_backend, alice_core, alice2_fs, type
 ):
-    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
-
+    mock_clock.rate = 1
     # A workspace already exists and is synced between parties
-    await create_shared_workspace("/foo", alice_core, alice2_fs)
+    await create_shared_workspace("/w", alice_core, alice2_fs)
+    # Suspend time to freeze core background tasks
+    mock_clock.rate = 0
 
     # Create the new item
     if type == "folder":
-        await alice2_fs.folder_create("/foo/bar")
+        await alice2_fs.folder_create("/w/foo")
     elif type == "file":
-        await alice2_fs.touch("/foo/bar")
+        await alice2_fs.file_create("/w/foo")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
-    vlob_group_id = dump_fs["children"]["foo"]["vlob_group_id"]
-    workspace_id = dump_fs["children"]["foo"]["access"]["id"]
-    entry_id = dump_fs["children"]["foo"]["children"]["bar"]["access"]["id"]
+    workspace_id = vlob_group_id = dump_fs["children"]["w"]["access"]["id"]
+    entry_id = dump_fs["children"]["w"]["children"]["foo"]["access"]["id"]
 
     with alice_core.event_bus.listen() as spy:
-        await alice2_fs.sync("/foo/bar")
+        await alice2_fs.sync("/w/foo")
 
+        mock_clock.rate = 1
         with trio.fail_after(1):
             await spy.wait_multiple(
                 [
@@ -110,7 +115,7 @@ async def test_vlob_group_notif_on_new_nested_entry_sync(
                         "backend.vlob_group.updated",
                         {
                             "id": vlob_group_id,
-                            "checkpoint": 1,
+                            "checkpoint": 3,
                             "src_id": entry_id,
                             "src_version": 1,
                         },
@@ -120,9 +125,9 @@ async def test_vlob_group_notif_on_new_nested_entry_sync(
                         "backend.vlob_group.updated",
                         {
                             "id": vlob_group_id,
-                            "checkpoint": 2,
+                            "checkpoint": 4,
                             "src_id": workspace_id,
-                            "src_version": 2,
+                            "src_version": 3,
                         },
                     ),
                     ("fs.entry.updated", {"id": workspace_id}),

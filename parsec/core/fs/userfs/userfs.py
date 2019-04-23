@@ -324,6 +324,9 @@ class UserFS:
             # Merge and store result
             async with self._update_user_manifest_lock:
                 diverged_um = self.get_user_manifest()
+                if target_um.base_version <= diverged_um.base_version:
+                    # Sync already achieved by a concurrent operation
+                    return
                 if base_um and diverged_um.base_version != base_um.base_version:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
