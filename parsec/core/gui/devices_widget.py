@@ -152,7 +152,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(self.core, self.jobs_ctx, parent=self)
         self.register_device_dialog.exec_()
-        self.reset()
 
     def add_device(self, device_name, is_current_device, is_revoked, revoked_on):
         if device_name in self.devices:

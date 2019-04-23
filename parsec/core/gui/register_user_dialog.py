@@ -166,7 +166,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.line_edit_url.setCursorPosition(0)
         self.button_cancel.setFocus()
         self.widget_registration.show()
-        self.registration_job = self.portal.submit_job(
+        self.registration_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "registration_success"),
             ThreadSafeQtSignal(self, "registration_error"),
             _do_registration,

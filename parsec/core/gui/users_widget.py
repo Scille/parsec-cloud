@@ -123,7 +123,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def register_user(self):
         d = RegisterUserDialog(self.core, self.jobs_ctx, parent=self)
         d.exec_()
-        self.reset()
 
     def add_user(self, user_name, is_current_user, certified_on, is_revoked):
         if user_name in self.users:
