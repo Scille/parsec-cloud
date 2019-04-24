@@ -315,8 +315,6 @@ class FS:
                 "write_right": role != WorkspaceRole.READER,
                 "read_right": True,
             }
-        print("PERMISSIONS", path, roles)
-        print("CONVERTED", permissions)
         return permissions
 
     async def process_last_messages(self) -> None:
