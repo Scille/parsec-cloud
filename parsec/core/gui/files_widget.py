@@ -176,13 +176,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.open_file(f[2])
 
     def open_file(self, file_name):
-        path = (
-            FsPath("/", self.workspace_fs.workspace_name).joinpath(
-                *self.current_directory.parts[1:]
-            )
-            / file_name
+        path = self.core.mountpoint_manager.get_path_in_mountpoint(
+            self.workspace_fs.workspace_entry.access.id, self.current_directory / file_name
         )
-        desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
+        desktop.open_file(str(path))
 
     def item_activated(self, file_type, file_name):
         if file_type == FileType.ParentFolder:
@@ -245,7 +242,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         skip_all = False
         replace_all = False
         for src, dst in files:
-            print(src, dst)
             file_exists = False
             try:
                 self.jobs_ctx.run(self.workspace_fs.entry_info, dst)

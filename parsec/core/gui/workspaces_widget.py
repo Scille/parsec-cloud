@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 from uuid import UUID
 
 from PyQt5.QtCore import pyqtSignal
@@ -73,7 +72,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.file_clicked.connect(self.open_workspace_file)
         try:
             self.jobs_ctx.run(
-                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_name
+                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_entry.access.id
             )
         except (MountpointAlreadyMounted, MountpointDisabled):
             pass
@@ -81,15 +80,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def open_workspace_file(self, workspace_fs, file_name):
         try:
             self.jobs_ctx.run(
-                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_name
+                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_entry.access.id
             )
         except MountpointAlreadyMounted:
             pass
         except Exception:
             show_error(self, _("Can not acces this file."))
             return
-        path = FsPath("/") / workspace_fs.workspace_name / file_name
-        desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
+        path = self.core.mountpoint_manager.get_path_in_mountpoint(
+            workspace_fs.workspace_entry.access.id, file_name
+        )
+        desktop.open_file(str(path))
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
@@ -98,7 +99,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         show_warning(self, _("Not yet implemented."))
 
     def rename_workspace(self, workspace_button):
-        current_file_path = os.path.join("/", workspace_button.name)
         new_name = get_text(
             self, _("New name"), _("Enter workspace new name"), placeholder=_("Workspace name")
         )
@@ -114,8 +114,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         except:
             show_error(self, _("Can not rename the workspace."))
         else:
-            self.jobs_ctx.run(self.core.mountpoint_manager.unmount_workspace, current_file_path[1:])
-            self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, new_name)
+            self.jobs_ctx.run(self.core.mountpoint_manager.unmount_workspace, workspace_id)
+            self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, workspace_id)
 
     def share_workspace(self, workspace_button):
         d = WorkspaceSharingDialog(workspace_button.name, self.core, self.jobs_ctx)
