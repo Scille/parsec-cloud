@@ -1,10 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
+
 from contextlib import contextmanager
 from errno import ENETDOWN, EBADF, ENOTDIR, ENOTSUP
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
+
+from parsec.core.types import FsPath
 from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable
 
@@ -31,15 +35,18 @@ class FuseOperations(LoggingMixIn, Operations):
         self.fds = {}
         self._need_exit = False
 
+    def __call__(self, name, path, *args, **kwargs):
+        return super().__call__(name, FsPath(path), *args, **kwargs)
+
     def schedule_exit(self):
         # TODO: Currently call fuse_exit from a non fuse thread is not possible
         # (see https://github.com/fusepy/fusepy/issues/116).
         self._need_exit = True
 
-    def init(self, path):
+    def init(self, path: FsPath):
         pass
 
-    def getattr(self, path, fh=None):
+    def getattr(self, path: FsPath, fh: Optional[int] = None):
         if self._need_exit:
             fuse_exit()
 
@@ -69,7 +76,7 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat["st_gid"] = gid
         return fuse_stat
 
-    def readdir(self, path, fh):
+    def readdir(self, path: FsPath, fh: int):
         with translate_error():
             stat = self.fs_access.entry_info(path)
 
@@ -78,31 +85,31 @@ class FuseOperations(LoggingMixIn, Operations):
 
         return [".", ".."] + list(stat["children"])
 
-    def create(self, path, mode):
+    def create(self, path: FsPath, mode: int):
         with translate_error():
             _, fd = self.fs_access.file_create(path, open=True)
             return fd
 
-    def open(self, path, flags=0):
+    def open(self, path: FsPath, flags: int = 0):
         with translate_error():
             _, fd = self.fs_access.file_open(path)
             return fd
 
-    def release(self, path, fh):
+    def release(self, path: FsPath, fh: int):
         with translate_error():
             self.fs_access.fd_close(fh)
 
-    def read(self, path, size, offset, fh):
+    def read(self, path: FsPath, size: int, offset: int, fh: int):
         with translate_error():
             ret = self.fs_access.fd_read(fh, size, offset)
             # Fuse wants bytes but fd_read returns a bytearray
             return bytes(ret)
 
-    def write(self, path, data, offset, fh):
+    def write(self, path: FsPath, data: bytes, offset: int, fh: int):
         with translate_error():
             return self.fs_access.fd_write(fh, data, offset)
 
-    def truncate(self, path, length, fh=None):
+    def truncate(self, path: FsPath, length: int, fh: Optional[int] = None):
         with translate_error():
             if fh:
                 self.fs_access.fd_resize(fh, length)
@@ -112,34 +119,35 @@ class FuseOperations(LoggingMixIn, Operations):
                 # Should it affect the file reference count?
                 raise FuseOSError(ENOTSUP)
 
-    def unlink(self, path):
+    def unlink(self, path: FsPath):
         with translate_error():
             self.fs_access.file_delete(path)
 
-    def mkdir(self, path, mode):
+    def mkdir(self, path: FsPath, mode: int):
         with translate_error():
             self.fs_access.folder_create(path)
         return 0
 
-    def rmdir(self, path):
+    def rmdir(self, path: FsPath):
         with translate_error():
             self.fs_access.folder_delete(path)
         return 0
 
-    def rename(self, src, dst):
+    def rename(self, path: FsPath, destination: str):
+        destination = FsPath(destination)
         with translate_error():
-            self.fs_access.entry_rename(src, dst, overwrite=True)
+            self.fs_access.entry_rename(path, destination, overwrite=True)
         return 0
 
-    def flush(self, path, fh):
-        with translate_error():
-            self.fs_access.fd_flush(fh)
-        return 0
-
-    def fsync(self, path, datasync, fh):
+    def flush(self, path: FsPath, fh: int):
         with translate_error():
             self.fs_access.fd_flush(fh)
         return 0
 
-    def fsyncdir(self, path, datasync, fh):
+    def fsync(self, path: FsPath, datasync, fh: int):
+        with translate_error():
+            self.fs_access.fd_flush(fh)
+        return 0
+
+    def fsyncdir(self, path: FsPath, datasync, fh: int):
         return 0  # TODO

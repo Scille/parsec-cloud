@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.types import FsPath
-
 
 class ThreadFSAccess:
     def __init__(self, portal, workspace_fs):
@@ -11,31 +9,29 @@ class ThreadFSAccess:
     # Entry transactions
 
     def entry_info(self, path):
-        return self._portal.run(self.workspace_fs.entry_info, FsPath(path))
+        return self._portal.run(self.workspace_fs.entry_info, path)
 
     def entry_rename(self, source, destination, *, overwrite):
-        return self._portal.run(
-            self.workspace_fs.entry_rename, FsPath(source), FsPath(destination), overwrite
-        )
+        return self._portal.run(self.workspace_fs.entry_rename, source, destination, overwrite)
 
     # Folder transactions
 
     def folder_create(self, path):
-        return self._portal.run(self.workspace_fs.folder_create, FsPath(path))
+        return self._portal.run(self.workspace_fs.folder_create, path)
 
     def folder_delete(self, path):
-        return self._portal.run(self.workspace_fs.folder_delete, FsPath(path))
+        return self._portal.run(self.workspace_fs.folder_delete, path)
 
     # File transactions
 
     def file_create(self, path, *, open):
-        return self._portal.run(self.workspace_fs.file_create, FsPath(path), open)
+        return self._portal.run(self.workspace_fs.file_create, path, open)
 
     def file_open(self, path):
-        return self._portal.run(self.workspace_fs.file_open, FsPath(path))
+        return self._portal.run(self.workspace_fs.file_open, path)
 
     def file_delete(self, path):
-        return self._portal.run(self.workspace_fs.file_delete, FsPath(path))
+        return self._portal.run(self.workspace_fs.file_delete, path)
 
     # File descriptor transactions
 

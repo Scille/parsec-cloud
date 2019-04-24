@@ -15,6 +15,7 @@ from winfspy.plumbing.winstuff import (
     SecurityDescriptor,
 )
 
+from parsec.core.types import FsPath
 from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.sync_base import DEFAULT_BLOCK_SIZE
@@ -119,6 +120,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         self._volume_info["volume_label"] = volume_label
 
     def get_security_by_name(self, file_name):
+        file_name = FsPath(file_name)
         with translate_error():
             stat = self.fs_access.entry_info(file_name)
 
@@ -140,6 +142,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         # `granted_access` is already handle by winfsp
         # `allocation_size` useless for us
         # `security_descriptor` is not supported yet
+        file_name = FsPath(file_name)
 
         with translate_error():
             if create_options & CREATE_FILE_CREATE_OPTIONS.FILE_DIRECTORY_FILE:
@@ -158,10 +161,13 @@ class WinFSPOperations(BaseFileSystemOperations):
         pass
 
     def rename(self, file_context, file_name, new_file_name, replace_if_exists):
+        file_name = FsPath(file_name)
+        new_file_name = FsPath(new_file_name)
         with translate_error():
             self.fs_access.entry_rename(file_name, new_file_name, overwrite=False)
 
     def open(self, file_name, create_options, granted_access):
+        file_name = FsPath(file_name)
         # `granted_access` is already handle by winfsp
         with translate_error():
             try:
