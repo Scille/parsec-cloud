@@ -134,7 +134,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             show_error(self, _("Can not revoke this device."))
 
     def register_new_device(self):
-        self.register_device_dialog = RegisterDeviceDialog(self.core, self.jobs_ctx, parent=self)
+        self.register_device_dialog = RegisterDeviceDialog(
+            core=self.core, jobs_ctx=self.jobs_ctx, parent=self
+        )
         self.register_device_dialog.exec_()
         self.reset()
 

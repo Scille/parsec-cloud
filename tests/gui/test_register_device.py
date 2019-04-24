@@ -32,7 +32,6 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     yield gui
 
 
-@pytest.mark.skip("Investigate why the modal is not called")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_device_open_modal(aqtbot, logged_gui):

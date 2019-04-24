@@ -105,7 +105,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                     w.show()
 
     def register_user(self):
-        d = RegisterUserDialog(self.core, self.jobs_ctx, parent=self)
+        d = RegisterUserDialog(core=self.core, jobs_ctx=self.jobs_ctx, parent=self)
         d.exec_()
         self.reset()
 
