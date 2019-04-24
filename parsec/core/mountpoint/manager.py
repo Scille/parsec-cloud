@@ -73,7 +73,9 @@ class MountpointManager:
     def get_path_in_mountpoint(self, workspace_id: AccessID, path: FsPath) -> PurePath:
         workspace = self._get_workspace(workspace_id)
         if workspace_id not in self._mountpoint_tasks:
-            raise MountpointNotMounted(f"Workspace `{workspace.workspace_name}` is not mounted")
+            raise MountpointNotMounted(
+                f"Workspace `{workspace_id}` ({workspace.workspace_name}) is not mounted"
+            )
         return self._get_mountpoint_path(workspace) / path.relative_to(path.root)
 
     def _get_mountpoint_path(self, workspace) -> PurePath:
@@ -83,7 +85,7 @@ class MountpointManager:
         workspace = self._get_workspace(workspace_id)
         if workspace_id in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(
-                f"Workspace `{workspace.workspace_name}` already mounted."
+                f"Workspace `{workspace_id}` ({workspace.workspace_name}) already mounted."
             )
 
         mountpoint = self._get_mountpoint_path(workspace)
