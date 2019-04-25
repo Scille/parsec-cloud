@@ -67,11 +67,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.run_core_success.connect(self.on_core_run_done)
         self.run_core_error.connect(self.on_core_run_done)
         self.run_core_ready.connect(self.on_run_core_ready)
-
-        self.login_widget = LoginWidget(jobs_ctx, config, parent=self)
-        self.widget_center.layout().addWidget(self.login_widget)
-        self.central_widget = CentralWidget(jobs_ctx, event_bus, config, parent=self)
-        self.widget_center.layout().addWidget(self.central_widget)
+        self.logged_in.connect(self.on_logged_in)
+        self.logged_out.connect(self.on_logged_out)
 
         self.setWindowTitle(
             _(
@@ -79,11 +76,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "sensitive data on the cloud"
             ).format(PARSEC_VERSION)
         )
-
-        self.central_widget.logout_requested.connect(self.logout)
-        self.login_widget.login_with_password_clicked.connect(self.login_with_password)
-        self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
-
         self.show_login_widget()
 
     def show_starting_guide(self):
@@ -106,7 +98,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.config = self.config.evolve(gui_first_launch=False, telemetry_enabled=r)
             # TODO: send gui.config.changed event instead
             save_config(self.config)
-        self.login_widget.core_config = self.config
         telemetry.init(self.config)
 
     def show_top(self):
@@ -135,7 +126,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_run_core_ready(self, core, core_jobs_ctx):
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
-        self.central_widget.set_core_attributes(core=core, portal=core_jobs_ctx)
         self.config = self.config.evolve(
             gui_last_device="{}:{}".format(
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
@@ -150,24 +140,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.runing_core_job = None
         self.core_jobs_ctx = None
         self.core = None
-
-        self.central_widget.set_core_attributes(None, None)
         self.logged_out.emit()
 
     def stop_core(self):
         if self.runing_core_job:
             self.runing_core_job.cancel_and_join()
 
+    def on_logged_out(self):
+        self.show_login_widget()
+
+    def on_logged_in(self):
+        self.show_central_widget()
+
     def logout(self):
         self.stop_core()
-        self.show_login_widget()
 
     def login_with_password(self, key_file, password):
         try:
             device = load_device_with_password(key_file, password)
             self.start_core(device)
-            self.show_central_widget()
-
         except LocalDeviceError:
             show_error(self, _("Authentication failed."))
 
@@ -193,8 +184,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 key_file, token_id=pkcs11_token, key_id=pkcs11_key, pin=pkcs11_pin
             )
             self.start_core(device)
-            self.show_central_widget()
-
         except LocalDeviceError:
             show_error(self, _("Authentication failed."))
 
@@ -238,15 +227,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.accept()
 
     def show_central_widget(self):
-        self._hide_all_widgets()
-        self.central_widget.show()
-        self.central_widget.reset()
+        item = self.widget_center.layout().takeAt(0)
+        if item:
+            item.widget().setParent(None)
+
+        central_widget = CentralWidget(self.core, self.core_jobs_ctx, self.event_bus, parent=self)
+        self.widget_center.layout().addWidget(central_widget)
+        central_widget.logout_requested.connect(self.logout)
+        central_widget.show()
 
     def show_login_widget(self):
-        self._hide_all_widgets()
-        self.login_widget.reset()
-        self.login_widget.show()
+        item = self.widget_center.layout().takeAt(0)
+        if item:
+            item.widget().setParent(None)
 
-    def _hide_all_widgets(self):
-        self.login_widget.hide()
-        self.central_widget.hide()
+        login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
+        self.widget_center.layout().addWidget(login_widget)
+        login_widget.login_with_password_clicked.connect(self.login_with_password)
+        login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
+        login_widget.show()

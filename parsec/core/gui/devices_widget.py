@@ -9,7 +9,6 @@ from parsec.types import DeviceID
 from parsec.crypto import build_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
-from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import TaskbarButton, show_info, show_error, ask_question
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
@@ -74,20 +73,24 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.revoke_clicked.emit(self)
 
 
-class DevicesWidget(CoreWidget, Ui_DevicesWidget):
-    def __init__(self, *args, **kwargs):
+class DevicesWidget(QWidget, Ui_DevicesWidget):
+    def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
+        self.jobs_ctx = jobs_ctx
+        self.core = core
+        self.event_bus = event_bus
         self.devices = []
         self.taskbar_buttons = []
         button_add_device = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_add_device.clicked.connect(self.register_new_device)
         self.taskbar_buttons.append(button_add_device)
         self.line_edit_search.textChanged.connect(self.filter_devices)
+        self.reset()
 
     def get_taskbar_buttons(self):
-        return self.taskbar_buttons
+        return self.taskbar_buttons.copy()
 
     def filter_devices(self, pattern):
         pattern = pattern.lower()
@@ -117,7 +120,7 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
                 DeviceID(f"{self.core.device.device_id.user_id}@{device_name}"),
                 pendulum.now(),
             )
-            self.portal.run(self.core.fs.backend_cmds.device_revoke, revoked_device_certificate)
+            self.jobs_ctx.run(self.core.fs.backend_cmds.device_revoke, revoked_device_certificate)
             device_button.is_revoked = True
             show_info(self, _('Device "{}" has been revoked.').format(device_name))
         except BackendCmdsBadResponse as exc:
@@ -132,7 +135,7 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
 
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(
-            parent=self, portal=self.portal, core=self.core
+            core=self.core, jobs_ctx=self.jobs_ctx, parent=self
         )
         self.register_device_dialog.exec_()
         self.reset()
@@ -148,7 +151,6 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
         self.devices.append(device_name)
 
     def reset(self):
-        self.line_edit_search.setText("")
         self.devices = []
         while self.layout_devices.count() != 0:
             item = self.layout_devices.takeAt(0)
@@ -156,20 +158,19 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
                 w = item.widget()
                 self.layout_devices.removeWidget(w)
                 w.setParent(None)
-        if self.portal and self.core:
-            try:
-                current_device = self.core.device
-                _, devices = self.portal.run(
-                    self.core.remote_devices_manager.get_user_and_devices, self.core.device.user_id
+        try:
+            current_device = self.core.device
+            _, devices = self.jobs_ctx.run(
+                self.core.remote_devices_manager.get_user_and_devices, self.core.device.user_id
+            )
+            for device in devices:
+                self.add_device(
+                    device.device_name,
+                    is_current_device=device.device_name == current_device.device_name,
+                    is_revoked=bool(device.revoked_on),
+                    revoked_on=device.revoked_on,
                 )
-                for device in devices:
-                    self.add_device(
-                        device.device_name,
-                        is_current_device=device.device_name == current_device.device_name,
-                        is_revoked=bool(device.revoked_on),
-                        revoked_on=device.revoked_on,
-                    )
-            except BackendNotAvailable:
-                pass
-            except:
-                pass
+        except BackendNotAvailable:
+            pass
+        except:
+            pass

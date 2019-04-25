@@ -11,6 +11,13 @@ import threading
 from parsec.event_bus import EventBus
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.login_widget import LoginWidget, LoginLoginWidget
+from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
+from parsec.core.gui.claim_user_widget import ClaimUserWidget
+from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.users_widget import UsersWidget
+from parsec.core.gui.devices_widget import DevicesWidget
 
 
 _qt_thread_gateway = None
@@ -245,6 +252,7 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
         def _create_main_window():
             # Pass minimize_on_close to avoid having test blocked by the
             # closing confirmation prompt
+
             main_w = MainWindow(jobs_ctx, event_bus, core_config, minimize_on_close=True)
             qtbot.add_widget(main_w)
             main_w.showMaximized()
@@ -258,3 +266,112 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
 @pytest.fixture
 async def gui(gui_factory, event_bus, core_config):
     return await gui_factory(event_bus, core_config)
+
+
+# Decorator to add a method to a class
+def add_method(cls):
+    def _add_method(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        setattr(cls, func.__name__, func)
+        return func
+
+    return _add_method
+
+
+# Since widgets are not longer persistant and are instancied only when needed,
+# we can no longer simply access them.
+# These methods help to retrieve a widget according to the current state of the GUI.
+# They're prefixed by "test_" to ensure that they do not erase any "real" methods.
+
+
+@add_method(MainWindow)
+def test_get_main_widget(self):
+    item = self.widget_center.layout().itemAt(0)
+    return item.widget()
+
+
+@add_method(MainWindow)
+def test_get_central_widget(self):
+    main_widget = self.test_get_main_widget()
+    if not isinstance(main_widget, CentralWidget):
+        return None
+    return main_widget
+
+
+@add_method(MainWindow)
+def test_get_login_widget(self):
+    main_widget = self.test_get_main_widget()
+    if not isinstance(main_widget, LoginWidget):
+        return None
+    return main_widget
+
+
+@add_method(MainWindow)
+def test_get_login_login_widget(self):
+    login_w = self.test_get_login_widget()
+    if not login_w:
+        return
+    item = login_w.layout.itemAt(0)
+    w = item.widget()
+    if not isinstance(w, LoginLoginWidget):
+        return None
+    return w
+
+
+@add_method(MainWindow)
+def test_get_claim_user_widget(self):
+    login_w = self.test_get_login_widget()
+    if not login_w:
+        return
+    item = login_w.layout.itemAt(0)
+    w = item.widget()
+    if not isinstance(w, ClaimUserWidget):
+        return None
+    return w
+
+
+@add_method(MainWindow)
+def test_get_claim_device_widget(self):
+    login_w = self.test_get_login_widget()
+    if not login_w:
+        return
+    item = login_w.layout.itemAt(0)
+    w = item.widget()
+    if not isinstance(w, ClaimDeviceWidget):
+        return None
+    return w
+
+
+@add_method(MainWindow)
+def test_get_bootstrap_organization_widget(self):
+    login_w = self.test_get_login_widget()
+    if not login_w:
+        return
+    item = login_w.layout.itemAt(0)
+    w = item.widget()
+    if not isinstance(w, BootstrapOrganizationWidget):
+        return None
+    return w
+
+
+@add_method(MainWindow)
+def test_get_users_widget(self):
+    central_widget = self.test_get_central_widget()
+    item = central_widget.widget_central.layout().itemAt(0)
+    w = item.widget()
+    if not isinstance(w, UsersWidget):
+        return None
+    return w
+
+
+@add_method(MainWindow)
+def test_get_devices_widget(self):
+    central_widget = self.test_get_central_widget()
+    item = central_widget.widget_central.layout().itemAt(0)
+    w = item.widget()
+    if not isinstance(w, DevicesWidget):
+        return None
+    return w

@@ -10,7 +10,6 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadRe
 
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.custom_widgets import TaskbarButton, show_error, ask_question, show_info
-from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -75,20 +74,24 @@ class UserButton(QWidget, Ui_UserButton):
         self.revoke_clicked.emit(self)
 
 
-class UsersWidget(CoreWidget, Ui_UsersWidget):
-    def __init__(self, *args, **kwargs):
+class UsersWidget(QWidget, Ui_UsersWidget):
+    def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
+        self.core = core
+        self.jobs_ctx = jobs_ctx
+        self.event_bus = event_bus
         self.users = []
         self.taskbar_buttons = []
         button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_add_user.clicked.connect(self.register_user)
         self.taskbar_buttons.append(button_add_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
+        self.reset()
 
     def get_taskbar_buttons(self):
-        return self.taskbar_buttons
+        return self.taskbar_buttons.copy()
 
     def filter_users(self, pattern):
         pattern = pattern.lower()
@@ -102,7 +105,7 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                     w.show()
 
     def register_user(self):
-        d = RegisterUserDialog(parent=self, portal=self.portal, core=self.core)
+        d = RegisterUserDialog(core=self.core, jobs_ctx=self.jobs_ctx, parent=self)
         d.exec_()
         self.reset()
 
@@ -125,7 +128,7 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
             return
 
         try:
-            user_info, trustchain = self.portal.run(
+            user_info, trustchain = self.jobs_ctx.run(
                 self.core.fs.backend_cmds.user_get, user_button.name
             )
             for device in user_info.devices.values():
@@ -135,7 +138,9 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                     device.device_id,
                     pendulum.now(),
                 )
-                self.portal.run(self.core.fs.backend_cmds.device_revoke, revoked_device_certificate)
+                self.jobs_ctx.run(
+                    self.core.fs.backend_cmds.device_revoke, revoked_device_certificate
+                )
             user_button.is_revoked = True
             show_info(self, _('User "{}" has been revoked.').format(user_name))
         except BackendCmdsBadResponse as exc:
@@ -149,7 +154,6 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
             show_error(self, _("Can not revoke this user."))
 
     def reset(self):
-        self.line_edit_search.setText("")
         self.users = []
         while self.layout_users.count() != 0:
             item = self.layout_users.takeAt(0)
@@ -157,21 +161,20 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                 w = item.widget()
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
-        if self.portal and self.core:
-            try:
-                user_id = self.core.device.user_id
-                users = self.portal.run(self.core.fs.backend_cmds.user_find)
-                for user in users:
-                    user_info, user_devices = self.portal.run(
-                        self.core.remote_devices_manager.get_user_and_devices, user
-                    )
-                    self.add_user(
-                        str(user_info.user_id),
-                        is_current_user=user_id == user,
-                        certified_on=user_info.certified_on,
-                        is_revoked=all([device.revoked_on for device in user_devices]),
-                    )
-            except BackendNotAvailable:
-                pass
-            except:
-                pass
+        try:
+            user_id = self.core.device.user_id
+            users = self.jobs_ctx.run(self.core.fs.backend_cmds.user_find)
+            for user in users:
+                user_info, user_devices = self.jobs_ctx.run(
+                    self.core.remote_devices_manager.get_user_and_devices, user
+                )
+                self.add_user(
+                    str(user_info.user_id),
+                    is_current_user=user_id == user,
+                    certified_on=user_info.certified_on,
+                    is_revoked=all([device.revoked_on for device in user_devices]),
+                )
+        except BackendNotAvailable:
+            pass
+        except:
+            pass

@@ -15,40 +15,52 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     save_device_with_password(core_config.config_dir, alice, password)
 
     gui = await gui_factory()
-    lw = gui.login_widget
+    lw = gui.test_get_login_widget()
+    llw = gui.test_get_login_login_widget()
 
-    await aqtbot.key_clicks(lw.login_widget.line_edit_password, password)
+    assert llw is not None
+
+    await aqtbot.key_clicks(llw.line_edit_password, password)
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
-        await aqtbot.mouse_click(lw.login_widget.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
 
-    await aqtbot.mouse_click(gui.central_widget.menu.button_users, QtCore.Qt.LeftButton)
+    central_widget = gui.test_get_central_widget()
+    assert central_widget is not None
+
+    await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
     yield gui
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_open_modal(aqtbot, logged_gui):
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
     with patch("parsec.core.gui.users_widget.RegisterUserDialog") as register_mock:
-        await aqtbot.mouse_click(
-            logged_gui.central_widget.users_widget.taskbar_buttons[0], QtCore.Qt.LeftButton
-        )
-        register_mock.assert_called_once_with(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
+        await aqtbot.mouse_click(u_w.taskbar_buttons[0], QtCore.Qt.LeftButton)
+        register_mock.assert_called_once_with(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_ok(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, gui, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
+
     def _claim_user(user_id, device_name, token, addr, password):
-        claim_w = logged_gui.login_widget.claim_user_widget
+        l_w = gui.test_get_login_widget()
+
+        assert l_w is not None
+        l_w.show_claim_user_widget()
+
+        claim_w = gui.test_get_claim_user_widget()
+
+        assert claim_w is not None
 
         aqtbot.qtbot.keyClicks(claim_w.line_edit_login, user_id)
         aqtbot.qtbot.keyClicks(claim_w.line_edit_device, device_name)
@@ -59,11 +71,7 @@ async def test_register_user_modal_ok(
         aqtbot.qtbot.mouseClick(claim_w.button_claim, QtCore.Qt.LeftButton)
 
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
+        modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -95,14 +103,13 @@ async def test_register_user_modal_invalid_user_id(
 ):
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
+
     def run_dialog():
         with patch("parsec.core.gui.register_user_dialog.UserID") as type_mock:
             type_mock.side_effect = ValueError()
-            modal = RegisterUserDialog(
-                parent=logged_gui.central_widget.users_widget,
-                portal=logged_gui.central_widget.users_widget.portal,
-                core=logged_gui.central_widget.users_widget.core,
-            )
+            modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
             modal.show()
             assert not modal.line_edit_token.text()
             assert not modal.line_edit_url.text()
@@ -121,12 +128,11 @@ async def test_register_user_modal_cancel(
 ):
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
+
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
+        modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -148,14 +154,12 @@ async def test_register_user_modal_offline(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-    gui = logged_gui
+
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
 
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=gui.central_widget.users_widget,
-            portal=gui.central_widget.users_widget.portal,
-            core=gui.central_widget.users_widget.core,
-        )
+        modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -177,12 +181,11 @@ async def test_register_user_modal_already_registered(
 ):
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
+
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
+        modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -201,12 +204,11 @@ async def test_register_user_modal_not_admin(
 ):
     await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, False)
 
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
+
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
+        modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -228,12 +230,11 @@ async def test_register_user_unknown_error(
 
     monkeypatch.setattr("parsec.core.gui.register_user_dialog.core_invite_and_create_user", _broken)
 
+    u_w = logged_gui.test_get_users_widget()
+    assert u_w is not None
+
     def run_dialog():
-        modal = RegisterUserDialog(
-            parent=logged_gui.central_widget.users_widget,
-            portal=logged_gui.central_widget.users_widget.portal,
-            core=logged_gui.central_widget.users_widget.core,
-        )
+        modal = RegisterUserDialog(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)
         modal.show()
         aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user")
         with aqtbot.qtbot.waitSignal(modal.registration_error):

@@ -15,38 +15,51 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     save_device_with_password(core_config.config_dir, alice, password)
 
     gui = await gui_factory()
-    lw = gui.login_widget
+    lw = gui.test_get_login_widget()
+    llw = gui.test_get_login_login_widget()
 
-    await aqtbot.key_clicks(lw.login_widget.line_edit_password, password)
+    assert llw is not None
+
+    await aqtbot.key_clicks(llw.line_edit_password, password)
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
-        await aqtbot.mouse_click(lw.login_widget.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
 
-    await aqtbot.mouse_click(gui.central_widget.menu.button_devices, QtCore.Qt.LeftButton)
+    central_widget = gui.test_get_central_widget()
+    assert central_widget is not None
+
+    await aqtbot.mouse_click(central_widget.menu.button_devices, QtCore.Qt.LeftButton)
     yield gui
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_device_open_modal(aqtbot, logged_gui):
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
+
     with patch("parsec.core.gui.devices_widget.RegisterDeviceDialog") as register_mock:
-        await aqtbot.mouse_click(
-            logged_gui.central_widget.devices_widget.taskbar_buttons[0], QtCore.Qt.LeftButton
-        )
-        register_mock.assert_called_once_with(
-            parent=logged_gui.central_widget.devices_widget,
-            portal=logged_gui.central_widget.devices_widget.portal,
-            core=logged_gui.central_widget.devices_widget.core,
-        )
+        await aqtbot.mouse_click(d_w.taskbar_buttons[0], QtCore.Qt.LeftButton)
+        register_mock.assert_called_once_with(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_device_modal_ok(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, gui, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
+
     def _claim_device(user_id, device_name, token, addr, password):
-        claim_w = logged_gui.login_widget.claim_device_widget
+        l_w = gui.test_get_login_widget()
+
+        assert l_w is not None
+        l_w.show_claim_device_widget()
+
+        claim_w = gui.test_get_claim_device_widget()
+
+        assert claim_w is not None
 
         aqtbot.qtbot.keyClicks(claim_w.line_edit_login, user_id)
         claim_w.line_edit_device.setText("")
@@ -58,11 +71,7 @@ async def test_register_device_modal_ok(
         aqtbot.qtbot.mouseClick(claim_w.button_claim, QtCore.Qt.LeftButton)
 
     def run_dialog():
-        modal = RegisterDeviceDialog(
-            parent=logged_gui.central_widget.devices_widget,
-            portal=logged_gui.central_widget.devices_widget.portal,
-            core=logged_gui.central_widget.devices_widget.core,
-        )
+        modal = RegisterDeviceDialog(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -92,14 +101,13 @@ async def test_register_device_modal_ok(
 async def test_register_device_modal_invalid_device_name(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
+
     def run_dialog():
         with patch("parsec.core.gui.register_device_dialog.DeviceName") as type_mock:
             type_mock.side_effect = ValueError()
-            modal = RegisterDeviceDialog(
-                parent=logged_gui.central_widget.devices_widget,
-                portal=logged_gui.central_widget.devices_widget.portal,
-                core=logged_gui.central_widget.devices_widget.core,
-            )
+            modal = RegisterDeviceDialog(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
             modal.show()
             assert not modal.line_edit_token.text()
             assert not modal.line_edit_url.text()
@@ -116,12 +124,11 @@ async def test_register_device_modal_invalid_device_name(
 async def test_register_device_modal_cancel(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
+
     def run_dialog():
-        modal = RegisterDeviceDialog(
-            parent=logged_gui.central_widget.devices_widget,
-            portal=logged_gui.central_widget.devices_widget.portal,
-            core=logged_gui.central_widget.devices_widget.core,
-        )
+        modal = RegisterDeviceDialog(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -142,14 +149,11 @@ async def test_register_device_modal_cancel(
 async def test_register_device_modal_offline(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    gui = logged_gui
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
 
     def run_dialog():
-        modal = RegisterDeviceDialog(
-            parent=gui.central_widget.devices_widget,
-            portal=gui.central_widget.devices_widget.portal,
-            core=gui.central_widget.devices_widget.core,
-        )
+        modal = RegisterDeviceDialog(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -169,12 +173,11 @@ async def test_register_device_modal_offline(
 async def test_register_device_modal_already_registered(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
+
     def run_dialog():
-        modal = RegisterDeviceDialog(
-            parent=logged_gui.central_widget.devices_widget,
-            portal=logged_gui.central_widget.devices_widget.portal,
-            core=logged_gui.central_widget.devices_widget.core,
-        )
+        modal = RegisterDeviceDialog(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
         modal.show()
         assert not modal.line_edit_token.text()
         assert not modal.line_edit_url.text()
@@ -197,6 +200,9 @@ async def test_register_device_modal_already_registered(
 async def test_register_device_unknown_error(
     monkeypatch, aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
+    d_w = logged_gui.test_get_devices_widget()
+    assert d_w is not None
+
     async def _broken(*args, **kwargs):
         raise RuntimeError()
 
@@ -205,11 +211,7 @@ async def test_register_device_unknown_error(
     )
 
     def run_dialog():
-        modal = RegisterDeviceDialog(
-            parent=logged_gui.central_widget.devices_widget,
-            portal=logged_gui.central_widget.devices_widget.portal,
-            core=logged_gui.central_widget.devices_widget.core,
-        )
+        modal = RegisterDeviceDialog(parent=d_w, jobs_ctx=d_w.jobs_ctx, core=d_w.core)
         modal.show()
         aqtbot.qtbot.keyClicks(modal.line_edit_device_name, "new_device")
         with aqtbot.qtbot.waitSignal(modal.registration_error):

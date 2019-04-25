@@ -1,18 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import time
-import os
 import pathlib
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog
+from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QWidget
 
-from parsec.core.types import FsPath
+from parsec.core.types import FsPath, AccessID
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
-from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.replace_dialog import ReplaceDialog
@@ -24,14 +22,19 @@ class CancelException(Exception):
     pass
 
 
-class FilesWidget(CoreWidget, Ui_FilesWidget):
+class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, workspace_fs, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.core = core
+        self.jobs_ctx = jobs_ctx
+        self.event_bus = event_bus
+        self.workspace_fs = workspace_fs
+
         self.taskbar_buttons = []
         button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
         button_back.clicked.connect(self.back_clicked)
@@ -46,8 +49,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         button_create_folder.clicked.connect(self.create_folder_clicked)
         self.taskbar_buttons.append(button_create_folder)
         self.line_edit_search.textChanged.connect(self.filter_files)
-        self.current_directory = ""
-        self.workspace = None
+        self.current_directory = FsPath("/")
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.update_timer = QTimer()
@@ -58,6 +60,13 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.table_files.rename_clicked.connect(self.rename_files)
         self.table_files.delete_clicked.connect(self.delete_files)
         self.table_files.open_clicked.connect(self.open_files)
+
+        self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+
+        self.label_current_workspace.setText(workspace_fs.workspace_name)
+        self.load(self.current_directory)
+        self.table_files.sortItems(0)
 
     def rename_files(self):
         files = self.table_files.selected_files()
@@ -71,7 +80,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             )
             if not new_name:
                 return
-            if not self.rename(files[0][1], files[0][2], new_name):
+            if not self.rename(files[0][2], new_name):
                 show_error(self, _('File "{}" could not be renamed.').format(files[0][2]))
 
         else:
@@ -86,26 +95,17 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             r = True
             for i, f in enumerate(files, 1):
                 old_file = pathlib.Path(f[2])
-                r &= self.rename(
-                    f[1], f[2], "{}_{}{}".format(new_name, i, ".".join(old_file.suffixes))
-                )
+                r &= self.rename(f[2], "{}_{}{}".format(new_name, i, ".".join(old_file.suffixes)))
             if not r:
                 show_error(self, _("Some files could not be renamed."))
 
-    def rename(self, file_type, file_name, new_name):
+    def rename(self, file_name, new_name):
         try:
-            if file_type == FileType.Folder:
-                self.portal.run(
-                    self.core.fs.move,
-                    os.path.join("/", self.workspace, self.current_directory, file_name),
-                    os.path.join("/", self.workspace, self.current_directory, new_name),
-                )
-            else:
-                self.portal.run(
-                    self.core.fs.move,
-                    os.path.join("/", self.workspace, self.current_directory, file_name),
-                    os.path.join("/", self.workspace, self.current_directory, new_name),
-                )
+            self.jobs_ctx.run(
+                self.workspace_fs.entry_rename,
+                self.current_directory / file_name,
+                self.current_directory / new_name,
+            )
             return True
         except:
             return False
@@ -139,26 +139,26 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.table_files.clearSelection()
 
     def delete_item(self, row, file_type, file_name):
-        path = os.path.join("/", self.workspace, self.current_directory, file_name)
+        path = self.current_directory / file_name
         try:
             if file_type == FileType.Folder:
                 self._delete_folder(path)
             else:
-                self.portal.run(self.core.fs.delete, path)
+                self.jobs_ctx.run(self.workspace_fs.file_delete, path)
             return True
         except:
             return False
 
     def _delete_folder(self, path):
-        result = self.portal.run(self.core.fs.stat, path)
+        result = self.jobs_ctx.run(self.workspace_fs.entry_info, path)
         for child in result.get("children", []):
-            child_path = os.path.join(path, child)
-            file_infos = self.portal.run(self.core.fs.stat, os.path.join(path, child))
-            if file_infos["is_folder"]:
+            child_path = path / child
+            file_infos = self.jobs_ctx.run(self.workspace_fs.entry_info, child_path)
+            if file_infos["type"] == "folder":
                 self._delete_folder(child_path)
             else:
-                self.portal.run(self.core.fs.delete, child_path)
-        self.portal.run(self.core.fs.delete, path)
+                self.jobs_ctx.run(self.workspace_fs.file_delete, child_path)
+        self.jobs_ctx.run(self.workspace_fs.folder_delete, path)
 
     def open_files(self):
         files = self.table_files.selected_files()
@@ -176,45 +176,28 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 self.open_file(f[2])
 
     def open_file(self, file_name):
-        path = FsPath("/") / self.workspace / self.current_directory / file_name
-        desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
+        path = self.core.mountpoint_manager.get_path_in_mountpoint(
+            self.workspace_fs.workspace_entry.access.id, self.current_directory / file_name
+        )
+        desktop.open_file(str(path))
 
     def item_activated(self, file_type, file_name):
         if file_type == FileType.ParentFolder:
-            self.load(os.path.dirname(self.current_directory))
+            self.load(self.current_directory.parent)
         elif file_type == FileType.ParentWorkspace:
             self.back_clicked.emit()
         elif file_type == FileType.File:
             self.open_file(file_name)
         elif file_type == FileType.Folder:
-            self.load(os.path.join(os.path.join(self.current_directory, file_name)))
+            self.load(self.current_directory / file_name)
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
-
-    @CoreWidget.core.setter
-    def core(self, c):
-        if self._core:
-            self._core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self._core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
-        self._core = c
-        if self._core:
-            self._core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self._core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-
-    def set_workspace(self, workspace):
-        self.workspace = workspace
-        self.label_current_workspace.setText(workspace)
-        self.load("")
-        self.table_files.sortItems(0)
 
     def reload(self):
         self.load(self.current_directory)
 
     def load(self, directory):
-        if not self.workspace and not directory:
-            return
-
         self.update_timer.stop()
 
         self.table_files.clear()
@@ -222,22 +205,18 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
         self.current_directory = directory
-        if self.current_directory:
-            self.table_files.add_parent_folder()
-        else:
+        if self.current_directory == FsPath("/"):
             self.table_files.add_parent_workspace()
-        if not self.current_directory:
-            self.label_current_directory.hide()
-            self.label_caret.hide()
         else:
-            self.label_current_directory.setText(self.current_directory)
-            self.label_current_directory.show()
-            self.label_caret.show()
-        dir_path = os.path.join("/", self.workspace, self.current_directory)
-        dir_stat = self.portal.run(self.core.fs.stat, dir_path)
+            self.table_files.add_parent_folder()
+        self.label_current_directory.setText(str(self.current_directory))
+        self.label_current_directory.show()
+        self.label_caret.show()
+        dir_path = self.current_directory
+        dir_stat = self.jobs_ctx.run(self.workspace_fs.entry_info, dir_path)
         for i, child in enumerate(dir_stat["children"]):
-            child_stat = self.portal.run(self.core.fs.stat, os.path.join(dir_path, child))
-            if child_stat["is_folder"]:
+            child_stat = self.jobs_ctx.run(self.workspace_fs.entry_info, dir_path / child)
+            if child_stat["type"] == "folder":
                 self.table_files.add_folder(child, not child_stat["need_sync"])
             else:
                 self.table_files.add_file(
@@ -265,7 +244,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         for src, dst in files:
             file_exists = False
             try:
-                self.portal.run(self.core.fs.stat, dst)
+                self.jobs_ctx.run(self.workspace_fs.entry_info, dst)
                 file_exists = True
             except FileNotFoundError:
                 file_exists = False
@@ -311,7 +290,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         total_size = 0
         for path in paths:
             p = pathlib.Path(path)
-            dst = os.path.join("/", self.workspace, self.current_directory, p.name)
+            dst = self.current_directory / p.name
             files.append((p, dst))
             total_size += p.stat().st_size
         return files, total_size
@@ -320,16 +299,16 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         files = []
         total_size = 0
         try:
-            self.portal.run(self.core.fs.folder_create, dst)
+            self.jobs_ctx.run(self.workspace_fs.folder_create, dst)
         except FileExistsError:
             pass
         for f in src.iterdir():
             if f.is_dir():
-                new_files, new_size = self.get_folder(f, os.path.join(dst, f.name))
+                new_files, new_size = self.get_folder(f, FsPath("/") / dst / f.name)
                 files.extend(new_files)
                 total_size += new_size
             elif f.is_file():
-                new_dst = os.path.join(dst, f.name)
+                new_dst = FsPath("/") / dst / f.name
                 files.append((f, new_dst))
                 total_size += f.stat().st_size
         return files, total_size
@@ -339,7 +318,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         fd_out = None
         try:
             try:
-                fd_out = self.portal.run(self.core.fs.file_create, dst)
+                _, fd_out = self.jobs_ctx.run(self.workspace_fs.file_create, dst)
             except FileExistsError:
                 pass
             with open(src, "rb") as fd_in:
@@ -349,7 +328,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                     chunk = fd_in.read(65536)
                     if not chunk:
                         break
-                    self.portal.run(self.core.fs.file_fd_write, fd_out, chunk)
+                    self.jobs_ctx.run(self.workspace_fs.fd_write, fd_out, chunk)
                     read_size += len(chunk)
                     i += 1
                     if i % 5 == 0:
@@ -366,9 +345,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             traceback.print_exc()
         finally:
             if fd_out:
-                self.portal.run(self.core.fs.file_fd_close, fd_out)
+                self.jobs_ctx.run(self.workspace_fs.fd_close, fd_out)
             if loading_dialog.is_cancelled:
-                self.portal.run(self.core.fs.delete, dst)
+                self.jobs_ctx.run(self.workspace_fs.file_delete, dst)
 
     # slot
     def import_files_clicked(self):
@@ -390,9 +369,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if not path:
             return
         p = pathlib.Path(path)
-        files, total_size = self.get_folder(
-            p, os.path.join("/", self.workspace, self.current_directory, p.name)
-        )
+        files, total_size = self.get_folder(p, self.current_directory / p.name)
         self.default_import_path = str(p)
         self.import_all(files, total_size)
 
@@ -410,10 +387,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     def _create_folder(self, folder_name):
         try:
-            self.portal.run(
-                self.core.fs.folder_create,
-                os.path.join("/", self.workspace, self.current_directory, folder_name),
-            )
+            dir_path = self.current_directory / folder_name
+            self.jobs_ctx.run(self.workspace_fs.folder_create, dir_path)
             return True
         except FileExistsError:
             show_error(self, _("A folder with the same name already exists."))
@@ -430,26 +405,19 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     # slot
     def on_file_moved(self, src, dst):
-        src_path = os.path.join("/", self.workspace, self.current_directory, src)
+        src_path = self.current_directory / src
         dst_path = ""
         if dst == "..":
-            target_dir = pathlib.Path(
-                os.path.join("/", self.workspace, self.current_directory)
-            ).parent
-            dst_path = os.path.join("/", self.workspace, target_dir, src)
+            target_dir = self.current_directory.parent
+            dst_path = FsPath("/") / target_dir / src
         else:
-            dst_path = os.path.join("/", self.workspace, dst, src)
-        self.portal.run(self.core.fs.move, src_path, dst_path)
+            dst_path = FsPath("/") / dst / src
+        self.jobs_ctx.run(self.workspace_fs.move, src_path, dst_path)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete:
             row = self.table_files.currentRow()
             self.delete_item(row)()
-
-    def reset(self):
-        self.workspace = ""
-        self.current_directory = ""
-        self.table_files.clear()
 
     # slot
     def _on_fs_entry_synced_trio(self, event, path, id):
@@ -463,18 +431,20 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def _on_fs_synced_qt(self, event, id, path):
         if path is None:
             try:
-                path = self.portal.run(self.core.fs.get_entry_path, id)
+                path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
             except FSEntryNotFound:
                 return
 
         if path is None:
             return
 
-        path = pathlib.Path(path)
-        parent = path.parent
-        current_path = pathlib.Path("/") / self.workspace / self.current_directory
+        path = FsPath(path)
+        modified_hops = list(path.parts)
+        current_dir_hops = ["/", self.workspace_fs.workspace_name]
+        current_dir_hops.extend((x for x in self.current_directory.parts if x != "/"))
 
-        if path == pathlib.Path("/") or parent != current_path:
+        # Only visible files require updated
+        if modified_hops[:-1] != current_dir_hops:
             return
 
         for i in range(self.table_files.rowCount()):
@@ -488,9 +458,10 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     # slot
     def _on_fs_updated_qt(self, event, id):
+        id = AccessID(id)
         path = None
         try:
-            path = self.portal.run(self.core.fs.get_entry_path, id)
+            path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
         except FSEntryNotFound:
             # Entry not locally present, nothing to do
             return
@@ -499,14 +470,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if path is None or path == pathlib.Path("/"):
             return
 
-        modified_hops = [x for x in path.parts if x != "/"]
-
-        if self.workspace and self.current_directory:
-            current_dir_hops = [self.workspace] + [
-                x for x in self.current_directory.split("/") if x
-            ]
-        else:
-            current_dir_hops = []
+        modified_hops = list(path.parts)
+        current_dir_hops = ["/", self.workspace_fs.workspace_name]
+        current_dir_hops.extend((x for x in self.current_directory.parts if x != "/"))
         # Only direct children to current directory require reloading
         if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
             self.update_timer.start(1000)

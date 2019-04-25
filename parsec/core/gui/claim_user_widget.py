@@ -84,11 +84,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(self, portal, core_config, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.portal = portal
-        self.core_config = core_config
+        self.jobs_ctx = jobs_ctx
+        self.config = config
         self.claim_user_job = None
         self.button_claim.clicked.connect(self.claim_clicked)
         self.line_edit_login.textChanged.connect(self.check_infos)
@@ -101,10 +101,20 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
+
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("Please wait while the user is registered."))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
+
+        if os.name == "nt":
+            self.check_box_use_pkcs11.hide()
+        self.line_edit_device.setText(get_default_device())
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.addItem("0")
+        self.widget_pkcs11.hide()
+        self.label_password_strength.hide()
+        self.check_infos()
 
     def on_claim_error(self):
         assert self.claim_user_job
@@ -179,11 +189,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     def claim_clicked(self):
         assert not self.claim_user_job
 
-        self.claim_user_job = self.portal.submit_job(
+        self.claim_user_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "claim_success"),
             ThreadSafeQtSignal(self, "claim_error"),
             _do_claim_user,
-            config_dir=self.core_config.config_dir,
+            config_dir=self.config.config_dir,
             use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
@@ -194,22 +204,4 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             pkcs11_token=int(self.combo_pkcs11_token.currentText()),
             pkcs11_key=int(self.combo_pkcs11_key.currentText()),
         )
-        self.check_infos()
-
-    def reset(self):
-        if os.name == "nt":
-            self.check_box_use_pkcs11.hide()
-        self.line_edit_login.setText("")
-        self.line_edit_password.setText("")
-        self.line_edit_password_check.setText("")
-        self.line_edit_url.setText("")
-        self.line_edit_device.setText(get_default_device())
-        self.line_edit_token.setText("")
-        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
-        self.combo_pkcs11_key.clear()
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.clear()
-        self.combo_pkcs11_token.addItem("0")
-        self.widget_pkcs11.hide()
-        self.label_password_strength.hide()
         self.check_infos()

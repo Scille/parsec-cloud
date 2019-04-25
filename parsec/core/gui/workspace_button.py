@@ -4,38 +4,45 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
+from parsec.core.fs import WorkspaceFS
+
 from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
 
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
-    clicked = pyqtSignal(str)
+    clicked = pyqtSignal(WorkspaceFS)
     share_clicked = pyqtSignal(QWidget)
     delete_clicked = pyqtSignal(QWidget)
     rename_clicked = pyqtSignal(QWidget)
-    file_clicked = pyqtSignal(str, str, bool)
+    file_clicked = pyqtSignal(WorkspaceFS, str)
 
-    def __init__(self, workspace_name, is_owner, creator, files, shared_with=None, *args, **kwargs):
+    def __init__(self, workspace_fs, participants, is_creator, files=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.is_owner = is_owner
-        self.creator = creator
-        self.shared_with = shared_with or []
-        self.name = workspace_name
+        self.workspace_fs = workspace_fs
+        self.label_empty.show()
+        self.widget_files.hide()
+        self.participants = participants
+        self.is_creator = is_creator
+        self.name = self.workspace_fs.workspace_name
+        files = files or []
+
         if not len(files):
             self.label_empty.show()
             self.widget_files.hide()
         else:
-            for i, (f, is_dir) in enumerate(files.items(), 1):
+            for i, f in enumerate(files, 1):
                 if i > 4:
                     break
                 label = getattr(self, "line_edit_file{}".format(i))
                 label.clicked.connect(self.open_clicked_file)
                 label.setText(f)
-                label.is_dir = is_dir
                 label.setCursorPosition(0)
+            self.widget_files.show()
             self.label_empty.hide()
+
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
         effect.setBlurRadius(10)
@@ -45,13 +52,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_delete.clicked.connect(self.button_delete_clicked)
         self.button_rename.clicked.connect(self.button_rename_clicked)
-        if not self.is_owner:
+        if not self.is_creator:
             self.label_owner.hide()
-        if not self.shared_with:
+        if len(participants) == 1:
             self.label_shared.hide()
 
-    def open_clicked_file(self, file_name, is_dir):
-        self.file_clicked.emit(self.name, file_name, is_dir)
+    def open_clicked_file(self, file_name):
+        self.file_clicked.emit(self.workspace_fs, file_name)
 
     def button_share_clicked(self):
         self.share_clicked.emit(self)
@@ -64,34 +71,22 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def name(self):
-        return self.workspace_name
+        return self.workspace_fs.workspace_name
 
     @name.setter
     def name(self, value):
-        self.workspace_name = value
-        display = self.workspace_name
+        display = self.name
         if len(display) > 20:
             display = display[:20] + "..."
 
-        if self.shared_with:
-            if self.is_owner:
+        if len(self.participants) > 1:
+            if self.is_creator:
                 display += _(" (shared)")
             else:
-                display += _(" (shared by {})").format(self.creator)
+                display += _(" (shared by {})").format(self.workspace_fs.device.user_id)
         self.label_workspace.setText(display)
-        self.label_workspace.setToolTip(self.workspace_name)
-
-    @property
-    def participants(self):
-        return self.shared_with
-
-    @participants.setter
-    def participants(self, value):
-        self.shared_with = value
-        if self.shared_with:
-            self.label_shared.show()
-            self.name = self.name
+        self.label_workspace.setToolTip(self.name)
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
-            self.clicked.emit(self.workspace_name)
+            self.clicked.emit(self.workspace_fs)

@@ -10,6 +10,7 @@ from parsec.core.fs.exceptions import (
     FSSharingNotAllowedError,
 )
 from parsec.core.fs.fs import FS
+from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.fs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.sync_base import SyncConcurrencyError
@@ -28,4 +29,5 @@ __all__ = (
     "FSEntryNotFound",
     "FSInvalidFileDescriptor",
     "SyncConcurrencyError",
+    "WorkspaceFS",
 )
