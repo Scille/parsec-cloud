@@ -77,40 +77,28 @@ async def bob_remote_devices_manager(remote_devices_manager_factory, bob):
 
 
 @pytest.fixture
-def fs_factory(local_storage_factory, event_bus_factory):
+def fs_factory(user_fs_factory):
     @asynccontextmanager
     async def _fs_factory(device, local_storage=None, event_bus=None):
-        if not event_bus:
-            event_bus = event_bus_factory()
-
-        local_storage = local_storage or local_storage_factory(device)
-
-        async with backend_cmds_pool_factory(
-            device.organization_addr, device.device_id, device.signing_key
-        ) as cmds:
-            rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            fs = FS(device, local_storage, cmds, rdm, event_bus)
-            yield fs
+        async with user_fs_factory(device, local_storage, event_bus) as user_fs:
+            yield FS(user_fs)
 
     return _fs_factory
 
 
 @pytest.fixture
-async def alice_fs(fs_factory, alice, alice_local_storage):
-    async with fs_factory(alice, alice_local_storage) as fs:
-        yield fs
+async def alice_fs(alice_user_fs):
+    return FS(alice_user_fs)
 
 
 @pytest.fixture
-async def alice2_fs(fs_factory, alice2, alice2_local_storage):
-    async with fs_factory(alice2, alice2_local_storage) as fs:
-        yield fs
+async def alice2_fs(alice2_user_fs):
+    return FS(alice2_user_fs)
 
 
 @pytest.fixture
-async def bob_fs(fs_factory, bob, bob_local_storage):
-    async with fs_factory(bob, bob_local_storage) as fs:
-        yield fs
+async def bob_fs(bob_user_fs):
+    return FS(bob_user_fs)
 
 
 @pytest.fixture

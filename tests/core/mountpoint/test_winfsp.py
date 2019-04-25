@@ -5,9 +5,9 @@ import pytest
 
 @pytest.mark.win32
 def test_rename_to_another_drive(mountpoint_service):
-    async def _bootstrap(fs, mountpoint_manager):
-        await fs.workspace_create("/x")
-        await fs.workspace_create("/y")
+    async def _bootstrap(user_fs, fs, mountpoint_manager):
+        await user_fs.workspace_create("x")
+        await user_fs.workspace_create("y")
         await fs.touch("/x/foo.txt")
         await mountpoint_manager.mount_all()
 
