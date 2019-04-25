@@ -19,7 +19,7 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.vlob_groups_monitor import monitor_vlob_groups
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
-from parsec.core.fs import FS
+from parsec.core.fs import FS, UserFS
 from parsec.core.local_storage import LocalStorage
 
 
@@ -36,6 +36,7 @@ class LoggedCore:
     mountpoint_manager = attr.ib()
     backend_cmds = attr.ib()
     fs = attr.ib()
+    user_fs = attr.ib()
 
 
 @asynccontextmanager
@@ -65,7 +66,11 @@ async def logged_core_factory(
                 remote_devices_manager = RemoteDevicesManager(
                     backend_cmds_pool, device.root_verify_key
                 )
-                fs = FS(device, local_storage, backend_cmds_pool, remote_devices_manager, event_bus)
+                user_fs = UserFS(
+                    device, local_storage, backend_cmds_pool, remote_devices_manager, event_bus
+                )
+                # TODO: remove the legacy fs class
+                fs = FS(user_fs)
 
                 async with trio.open_nursery() as monitor_nursery:
                     # Finally start monitors
@@ -73,12 +78,15 @@ async def logged_core_factory(
                     # Monitor connection must be first given it will watch on
                     # other monitors' events
                     await monitor_nursery.start(monitor_backend_connection, event_bus)
-                    await monitor_nursery.start(monitor_vlob_groups, device, fs._user_fs, event_bus)
-                    await monitor_nursery.start(monitor_messages, fs._user_fs, event_bus)
+                    await monitor_nursery.start(monitor_vlob_groups, device, user_fs, event_bus)
+                    await monitor_nursery.start(monitor_messages, user_fs, event_bus)
                     await monitor_nursery.start(monitor_sync, fs, event_bus)
 
                     async with mountpoint_manager_factory(
-                        fs, event_bus, config.mountpoint_base_dir, enabled=config.mountpoint_enabled
+                        user_fs,
+                        event_bus,
+                        config.mountpoint_base_dir,
+                        enabled=config.mountpoint_enabled,
                     ) as mountpoint_manager:
 
                         yield LoggedCore(
@@ -90,5 +98,6 @@ async def logged_core_factory(
                             mountpoint_manager=mountpoint_manager,
                             backend_cmds=backend_cmds_pool,
                             fs=fs,
+                            user_fs=user_fs,
                         )
                         root_nursery.cancel_scope.cancel()

@@ -114,7 +114,7 @@ class MountpointManager:
 
 @asynccontextmanager
 async def mountpoint_manager_factory(
-    fs, event_bus, base_mountpoint, *, enabled=True, debug: bool = False, **config
+    user_fs, event_bus, base_mountpoint, *, enabled=True, debug: bool = False, **config
 ):
     config["debug"] = debug
 
@@ -127,9 +127,7 @@ async def mountpoint_manager_factory(
     curried_runner = partial(runner, config=config, event_bus=event_bus)
 
     async with trio.open_nursery() as nursery:
-        mountpoint_manager = MountpointManager(
-            base_mountpoint, fs._user_fs, curried_runner, nursery
-        )
+        mountpoint_manager = MountpointManager(base_mountpoint, user_fs, curried_runner, nursery)
         try:
             yield mountpoint_manager
 
