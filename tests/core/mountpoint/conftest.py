@@ -7,6 +7,7 @@ import pathlib
 from contextlib import contextmanager
 from inspect import iscoroutinefunction
 
+from parsec.core.fs import FS
 from parsec.utils import start_task
 from parsec.core.mountpoint import mountpoint_manager_factory
 
@@ -18,7 +19,7 @@ def base_mountpoint(tmpdir):
 
 @pytest.fixture
 @pytest.mark.mountpoint
-def mountpoint_service_factory(tmpdir, alice, fs_factory):
+def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
@@ -84,19 +85,20 @@ def mountpoint_service_factory(tmpdir, alice, fs_factory):
             self._portal = trio.BlockingTrioPortal()
 
             async def _mountpoint_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
-                async with fs_factory(alice) as fs:
+                async with user_fs_factory(alice) as user_fs:
 
-                    self.default_workspace_id = await fs.workspace_create(
-                        f"/{self.default_workspace_name}"
+                    self.default_workspace_id = await user_fs.workspace_create(
+                        f"{self.default_workspace_name}"
                     )
 
                     async with mountpoint_manager_factory(
-                        fs, fs.event_bus, self.base_mountpoint, debug=False
+                        user_fs, user_fs.event_bus, self.base_mountpoint, debug=False
                     ) as mountpoint_manager:
 
                         await mountpoint_manager.mount_workspace(self.default_workspace_id)
 
-                        task_status.started((fs, mountpoint_manager))
+                        fs = FS(user_fs)
+                        task_status.started((user_fs, fs, mountpoint_manager))
                         await trio.sleep_forever()
 
             async with trio.open_nursery() as self._nursery:

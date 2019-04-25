@@ -5,33 +5,13 @@ from typing import Dict
 from uuid import UUID
 
 from parsec.types import UserID
-from parsec.event_bus import EventBus
-from parsec.core.types import LocalDevice, FsPath, WorkspaceRole
-from parsec.core.local_storage import LocalStorage
-from parsec.core.backend_connection import BackendCmdsPool
-from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.fs.userfs import UserFS
+from parsec.core.types import FsPath, WorkspaceRole
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 
 
 class FS:
-    def __init__(
-        self,
-        device: LocalDevice,
-        local_storage: LocalStorage,
-        backend_cmds: BackendCmdsPool,
-        remote_devices_manager: RemoteDevicesManager,
-        event_bus: EventBus,
-    ):
-        self.device = device
-        self.local_storage = local_storage
-        self.backend_cmds = backend_cmds
-        self.event_bus = event_bus
-
-        self._user_fs = UserFS(
-            device, local_storage, backend_cmds, remote_devices_manager, event_bus
-        )
-
+    def __init__(self, user_fs):
+        self.user_fs = user_fs
         self._fds = {}
 
     def _put_fd(self, workspace, fd):
@@ -45,12 +25,28 @@ class FS:
         return self._fds.get(fd), fd
 
     @property
+    def device(self):
+        return self.user_fs.device
+
+    @property
+    def local_storage(self):
+        return self.user_fs.local_storage
+
+    @property
+    def backend_cmds(self):
+        return self.user_fs.backend_cmds
+
+    @property
+    def event_bus(self):
+        return self.user_fs.event_bus
+
+    @property
     def _local_folder_fs(self):
-        return self._user_fs._local_folder_fs
+        return self.user_fs._local_folder_fs
 
     @property
     def _syncer(self):
-        return self._user_fs._syncer
+        return self.user_fs._syncer
 
     def _split_path(self, path):
         path = FsPath(path)
@@ -64,7 +60,7 @@ class FS:
         # Obviously broken if multiple workspaces have the same name :'(
         try:
             return next(
-                w for w in self._user_fs.get_user_manifest().workspaces if w.name == workspace_name
+                w for w in self.user_fs.get_user_manifest().workspaces if w.name == workspace_name
             )
         except StopIteration:
             raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}")
@@ -74,16 +70,16 @@ class FS:
         assert workspace_name
         workspace_entry = self._get_workspace_entry_from_name(workspace_name)
         try:
-            workspace = self._user_fs.get_workspace(workspace_entry.access.id)
+            workspace = self.user_fs.get_workspace(workspace_entry.access.id)
         except FSWorkspaceNotFoundError as exc:
             raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}") from exc
 
         return workspace, subpath
 
     def _iter_workspaces(self):
-        um = self._user_fs.get_user_manifest()
+        um = self.user_fs.get_user_manifest()
         for w_entry in um.workspaces:
-            yield self._user_fs.get_workspace(w_entry.access.id)
+            yield self.user_fs.get_workspace(w_entry.access.id)
 
     async def stat(self, path: str) -> dict:
         # TODO: This method should be splitted in several methods:
@@ -94,10 +90,10 @@ class FS:
 
         # User info
         if not workspace_name:
-            um = self._user_fs.get_user_manifest()
+            um = self.user_fs.get_user_manifest()
             return {
                 "type": "root",
-                "id": self._user_fs.user_manifest_access.id,
+                "id": self.user_fs.user_manifest_access.id,
                 "is_folder": True,
                 "created": um.created,
                 "updated": um.updated,
@@ -201,7 +197,7 @@ class FS:
             # except for legacy tests using oracle...)
             raise FileExistsError(17, "File exists", path)
         assert cooked_path.is_workspace()
-        return await self._user_fs.workspace_create(cooked_path.workspace)
+        return await self.user_fs.workspace_create(cooked_path.workspace)
 
     async def workspace_rename(self, src: str, dst: str) -> None:
         cooked_src = FsPath(src)
@@ -217,7 +213,7 @@ class FS:
             # A workspace with this name already exists (shouldn't be a trouble,
             # except for legacy tests using oracle...)
             raise FileExistsError(17, "File exists", dst)
-        await self._user_fs.workspace_rename(workspace_entry.access.id, cooked_dst.workspace)
+        await self.user_fs.workspace_rename(workspace_entry.access.id, cooked_dst.workspace)
 
     async def move(self, src: str, dst: str, overwrite: bool = True) -> None:
         workspace, subpath_src = self._get_workspace(src)
@@ -240,15 +236,15 @@ class FS:
             if recursive:
                 await self.full_sync()
             else:
-                await self._user_fs.sync()
+                await self.user_fs.sync()
 
         else:
             workspace, _ = self._get_workspace(f"/{workspace_name}")
             stat = await workspace.entry_info(FsPath("/"))
             if stat["is_placeholder"]:
-                await self._user_fs.sync()
+                await self.user_fs.sync()
             await workspace.sync(subpath, recursive)
-            await self._user_fs.sync()
+            await self.user_fs.sync()
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
     async def sync_by_id(self, entry_id: UUID) -> None:
@@ -261,10 +257,10 @@ class FS:
 
     # TODO: do we really need this ? or should we optimize `sync(path='/')` ?
     async def full_sync(self) -> None:
-        await self._user_fs.sync()
+        await self.user_fs.sync()
         for workspace in self._iter_workspaces():
             await workspace.sync("/", recursive=True)
-        await self._user_fs.sync()
+        await self.user_fs.sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:
         assert isinstance(id, UUID)
@@ -298,7 +294,7 @@ class FS:
             workspace_name = path
         workspace_entry = self._get_workspace_entry_from_name(workspace_name)
 
-        await self._user_fs.workspace_share(
+        await self.user_fs.workspace_share(
             workspace_entry.access.id, recipient=UserID(recipient), role=role
         )
 
@@ -306,7 +302,7 @@ class FS:
         cooked_path = FsPath(path)
         assert cooked_path.is_workspace()
         workspace_entry = self._get_workspace_entry_from_name(cooked_path.workspace)
-        roles = await self._user_fs.workspace_get_roles(workspace_entry.access.id)
+        roles = await self.user_fs.workspace_get_roles(workspace_entry.access.id)
         # TODO: reeeeally hacky legacy compatibility...
         permissions = {}
         for user_id, role in roles.items():
@@ -318,4 +314,4 @@ class FS:
         return permissions
 
     async def process_last_messages(self) -> None:
-        await self._user_fs.process_last_messages()
+        await self.user_fs.process_last_messages()

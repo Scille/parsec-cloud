@@ -5,6 +5,7 @@ import inspect
 from typing import Tuple
 from uuid import UUID
 
+from parsec.core.local_storage import LocalStorageMissingEntry
 from parsec.core.types import FsPath, AccessID, FileDescriptor
 from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.fs.entry_transactions import EntryTransactions
@@ -61,7 +62,7 @@ class WorkspaceFS:
         # TODO: finish me !
         try:
             manifest = self.local_storage.get_manifest(self.workspace_entry.access)
-        except FSManifestLocalMiss as exc:
+        except LocalStorageMissingEntry as exc:
             manifest = await self._remote_loader.load_manifest(exc.access)
         return {
             "role": self.workspace_entry.role,
