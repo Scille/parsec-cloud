@@ -58,6 +58,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             participants=workspace_info["participants"],
             is_creator=workspace_info["creator"] == self.core.device.user_id,
             files=workspace_files["children"][:4],
+            enable_workspace_color=self.core.config.gui_workspace_color,
         )
         if count is None:
             count = len(self.core.user_fs.get_user_manifest().workspaces) - 1

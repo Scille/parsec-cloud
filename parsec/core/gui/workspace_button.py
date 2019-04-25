@@ -7,6 +7,7 @@ from PyQt5.QtGui import QColor
 from parsec.core.fs import WorkspaceFS
 
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.color import StringToColor
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
@@ -18,7 +19,16 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(WorkspaceFS, str)
 
-    def __init__(self, workspace_fs, participants, is_creator, files=None, *args, **kwargs):
+    def __init__(
+        self,
+        workspace_fs,
+        participants,
+        is_creator,
+        files=None,
+        enable_workspace_color=False,
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.workspace_fs = workspace_fs
@@ -43,9 +53,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.widget_files.show()
             self.label_empty.hide()
 
+        if enable_workspace_color:
+            c = StringToColor(self.workspace_fs.workspace_name)
+            self.setStyleSheet("background-color: {};".format(c.hex()))
+
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
-        effect.setBlurRadius(10)
+        effect.setBlurRadius(15)
         effect.setXOffset(4)
         effect.setYOffset(4)
         self.setGraphicsEffect(effect)
