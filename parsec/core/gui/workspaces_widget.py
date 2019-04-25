@@ -5,7 +5,7 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.types import WorkspaceEntry, FsPath
+from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole
 from parsec.core.fs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
@@ -17,7 +17,8 @@ from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
-    _fs_changed_qt = pyqtSignal(str, UUID, str)
+    fs_updated_qt = pyqtSignal(str, UUID)
+    fs_synced_qt = pyqtSignal(str, UUID, str)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
 
@@ -37,30 +38,34 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button_add_workspace.clicked.connect(self.create_workspace_clicked)
 
         self.event_bus.connect("fs.workspace.created", self._on_workspace_created_trio)
+        self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+
+        self.fs_updated_qt.connect(self._on_fs_updated_qt)
+        self.fs_synced_qt.connect(self._on_fs_synced_qt)
+
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
 
         self.taskbar_buttons.append(button_add_workspace)
-
-        user_manifest = self.core.user_fs.get_user_manifest()
-        for count, workspace in enumerate(user_manifest.workspaces):
-            workspace_id = workspace.access.id
-            workspace_fs = self.core.user_fs.get_workspace(workspace_id)
-            self.add_workspace(workspace_fs, count)
+        self.reset()
 
     def disconnect_all(self):
         self.event_bus.disconnect("fs.workspace.created", self._on_workspace_created_trio)
+        self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
 
     def load_workspace(self, workspace_fs):
         self.load_workspace_clicked.emit(workspace_fs)
 
     def add_workspace(self, workspace_fs, count=None):
         # TODO: workspace's participants must be fetched from the backend
-        workspace_info = self.jobs_ctx.run(workspace_fs.workspace_info)
+        ws_entry = workspace_fs.get_workspace_entry()
+        users_roles = self.jobs_ctx.run(workspace_fs.get_user_roles)
         root_info = self.jobs_ctx.run(workspace_fs.path_info, "/")
         button = WorkspaceButton(
             workspace_fs,
-            participants=[workspace_info["participants"]],
-            is_creator=workspace_info["creator"] == self.core.device.user_id,
+            is_shared=len(users_roles) > 1,
+            is_creator=ws_entry.role == WorkspaceRole.OWNER,
             files=root_info["children"][:4],
             enable_workspace_color=self.core.config.gui_workspace_color,
         )
@@ -101,7 +106,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
 
-    def delete_workspace(self, workspace_button):
+    def delete_workspace(self, workspace_entry):
         show_warning(self, _("Not yet implemented."))
 
     def rename_workspace(self, workspace_button):
@@ -120,8 +125,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.jobs_ctx.run(self.core.mountpoint_manager.unmount_workspace, workspace_id)
             self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, workspace_id)
 
-    def share_workspace(self, workspace_button):
-        d = WorkspaceSharingDialog(workspace_button.name, self.core, self.jobs_ctx)
+    def share_workspace(self, workspace_fs):
+        d = WorkspaceSharingDialog(self.core.fs.user_fs, workspace_fs, self.core, self.jobs_ctx)
         d.exec_()
 
     def create_workspace_clicked(self):
@@ -132,9 +137,40 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
         self.jobs_ctx.run(self.core.user_fs.workspace_create, workspace_name)
 
+    def reset(self):
+        while self.layout_workspaces.count() != 0:
+            item = self.layout_workspaces.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_workspaces.removeWidget(w)
+                w.setParent(None)
+        user_manifest = self.core.user_fs.get_user_manifest()
+        for count, workspace in enumerate(user_manifest.workspaces):
+            workspace_id = workspace.access.id
+            workspace_fs = self.core.user_fs.get_workspace(workspace_id)
+            self.add_workspace(workspace_fs, count)
+
     def _on_workspace_created_trio(self, event, new_entry):
         self._workspace_created_qt.emit(new_entry)
 
     def _on_workspace_created_qt(self, workspace_entry):
         workspace_fs = self.core.user_fs.get_workspace(workspace_entry.access.id)
         self.add_workspace(workspace_fs)
+
+    def _on_fs_entry_synced_trio(self, event, path, id):
+        self.fs_synced_qt.emit(event, id, path)
+
+    def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
+        if workspace_id and not id:
+            self.fs_updated_qt.emit(event, workspace_id)
+
+    def _on_fs_synced_qt(self, event, id, path):
+        if path is None:
+            return
+
+        path = FsPath(path)
+        if len(path.parts) == 2:
+            self.reset()
+
+    def _on_fs_updated_qt(self, event, workspace_id):
+        self.reset()

@@ -22,7 +22,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def __init__(
         self,
         workspace_fs,
-        participants,
+        is_shared,
         is_creator,
         files=None,
         enable_workspace_color=False,
@@ -34,7 +34,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.workspace_fs = workspace_fs
         self.label_empty.show()
         self.widget_files.hide()
-        self.participants = participants
+        self.is_shared = is_shared
         self.is_creator = is_creator
         files = files or []
 
@@ -68,7 +68,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_open_workspace.clicked.connect(self.button_open_workspace_clicked)
         if not self.is_creator:
             self.label_owner.hide()
-        if len(participants) == 1:
+        if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name()
 
@@ -79,10 +79,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.file_clicked.emit(self.workspace_fs, file_name)
 
     def button_share_clicked(self):
-        self.share_clicked.emit(self)
+        self.share_clicked.emit(self.workspace_fs)
 
     def button_delete_clicked(self):
-        self.delete_clicked.emit(self)
+        self.delete_clicked.emit(self.workspace_fs)
 
     def button_rename_clicked(self):
         self.rename_clicked.emit(self)
@@ -97,11 +97,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if len(display) > 20:
             display = display[:20] + "..."
 
-        if len(self.participants) > 1:
+        if self.is_shared:
             if self.is_creator:
-                display += _(" (shared)")
-            else:
-                display += _(" (shared by {})").format(self.workspace_fs.device.user_id)
+                display += _(" (shared with others)")
+            # TODO: uncomment once the workspace name does not contain "shared by XX" anymore
+            # else:
+            #     display += _(" (shared with you)")
         self.label_workspace.setText(display)
         self.label_workspace.setToolTip(workspace_name)
 
