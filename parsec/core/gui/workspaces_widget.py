@@ -41,10 +41,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.taskbar_buttons.append(button_add_workspace)
 
-        user_manifest = self.core.fs._user_fs.get_user_manifest()
+        user_manifest = self.core.user_fs.get_user_manifest()
         for count, workspace in enumerate(user_manifest.workspaces):
             workspace_id = workspace.access.id
-            workspace_fs = self.core.fs._user_fs.get_workspace(workspace_id)
+            workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             self.add_workspace(workspace_fs, count)
 
     def load_workspace(self, workspace):
@@ -60,7 +60,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             files=workspace_files["children"][:4],
         )
         if count is None:
-            count = len(self.core.fs._user_fs.get_user_manifest().workspaces) - 1
+            count = len(self.core.user_fs.get_user_manifest().workspaces) - 1
 
         self.layout_workspaces.addWidget(
             button, int(count / self.COLUMNS_NUMBER), int(count % self.COLUMNS_NUMBER)
@@ -106,8 +106,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
         try:
             workspace_id = workspace_button.workspace_fs.workspace_entry.access.id
-            self.jobs_ctx.run(self.core.fs._user_fs.workspace_rename, workspace_id, new_name)
-            workspace_button.workspace_fs = self.core.fs._user_fs.get_workspace(workspace_id)
+            self.jobs_ctx.run(self.core.user_fs.workspace_rename, workspace_id, new_name)
+            workspace_button.workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             workspace_button.name = new_name
         except FileExistsError:
             show_warning(self, _("A workspace with the same name already exists."))
@@ -128,7 +128,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not workspace_name:
             return
         try:
-            self.jobs_ctx.run(self.core.fs._user_fs.workspace_create, workspace_name)
+            self.jobs_ctx.run(self.core.user_fs.workspace_create, workspace_name)
         except FileExistsError:
             show_error(self, _("A workspace with the same name already exists."))
 
@@ -136,5 +136,5 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self._workspace_created_qt.emit(new_entry)
 
     def _on_workspace_created_qt(self, workspace_entry):
-        workspace_fs = self.core.fs._user_fs.get_workspace(workspace_entry.access.id)
+        workspace_fs = self.core.user_fs.get_workspace(workspace_entry.access.id)
         self.add_workspace(workspace_fs)
