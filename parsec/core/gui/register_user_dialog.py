@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
@@ -76,7 +76,13 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.registration_success.connect(self.on_registration_success)
         self.registration_error.connect(self.on_registration_error)
         self.line_edit_username.setValidator(validators.UserIDValidator())
-        self.closing_allowed = True
+        self.setWindowFlags(Qt.SplashScreen)
+        self.adjust_size()
+
+    def adjust_size(self):
+        size = self.sizeHint()
+        size.setWidth(400)
+        self.resize(size)
 
     def copy_field(self, widget):
         def _inner_copy_field():
@@ -93,7 +99,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.checkbox_is_admin.show()
         self.button_register.show()
         self.line_edit_username.show()
-        self.closing_allowed = True
+        self.button_close.show()
+        self.adjust_size()
 
         if self.registration_job:
             assert self.registration_job.is_finished()
@@ -123,7 +130,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_register.show()
         self.line_edit_username.show()
         self.checkbox_is_admin.show()
-        self.closing_allowed = True
+        self.button_close.show()
+        self.adjust_size()
 
     def cancel_registration(self):
         if self.registration_job:
@@ -137,20 +145,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_register.show()
         self.line_edit_username.show()
         self.checkbox_is_admin.show()
-        self.closing_allowed = True
-
-    def closeEvent(self, event):
-        if not self.closing_allowed:
-            show_warning(
-                self,
-                _(
-                    "Cannot close this window while waiting for the new user to register. "
-                    "Please cancel first."
-                ),
-            )
-            event.ignore()
-        else:
-            event.accept()
+        self.button_close.show()
+        self.adjust_size()
 
     def register_user(self):
         if not self.line_edit_username.text():
@@ -180,4 +176,4 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.line_edit_username.hide()
         self.checkbox_is_admin.hide()
         self.button_register.hide()
-        self.closing_allowed = False
+        self.button_close.hide()

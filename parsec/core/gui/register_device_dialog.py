@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.invite_claim import (
@@ -65,7 +65,13 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.registration_success.connect(self.on_registration_success)
         self.registration_error.connect(self.on_registration_error)
         self.line_edit_device_name.setValidator(validators.DeviceNameValidator())
-        self.closing_allowed = True
+        self.setWindowFlags(Qt.SplashScreen)
+        self.adjust_size()
+
+    def adjust_size(self):
+        size = self.sizeHint()
+        size.setWidth(400)
+        self.resize(size)
 
     def copy_field(self, widget):
         def _inner_copy_field():
@@ -81,7 +87,8 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_cancel.hide()
         self.button_register.show()
         self.line_edit_device_name.show()
-        self.closing_allowed = True
+        self.button_close.show()
+        self.adjust_size()
 
         if self.registration_job:
             assert self.registration_job.is_finished()
@@ -105,7 +112,8 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_cancel.hide()
         self.button_register.show()
         self.line_edit_device_name.show()
-        self.closing_allowed = True
+        self.button_close.show()
+        self.adjust_size()
 
     def cancel_registration(self):
         if self.registration_job:
@@ -118,20 +126,8 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_cancel.hide()
         self.button_register.show()
         self.line_edit_device_name.show()
-        self.closing_allowed = True
-
-    def closeEvent(self, event):
-        if not self.closing_allowed:
-            show_warning(
-                self,
-                _(
-                    "Cannot close this window while waiting for the new device to register. "
-                    "Please cancel first."
-                ),
-            )
-            event.ignore()
-        else:
-            event.accept()
+        self.button_close.show()
+        self.adjust_size()
 
     def register_device(self):
         if not self.line_edit_device_name.text():
@@ -158,4 +154,4 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_cancel.show()
         self.line_edit_device_name.hide()
         self.button_register.hide()
-        self.closing_allowed = False
+        self.button_close.hide()
