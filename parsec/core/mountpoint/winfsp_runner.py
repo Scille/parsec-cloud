@@ -49,30 +49,26 @@ def _generate_volume_serial_number(device, workspace):
 
 
 async def winfsp_mountpoint_runner(
-    workspace: str,
-    mountpoint: Path,
-    config: dict,
-    fs,
-    event_bus,
-    *,
-    task_status=trio.TASK_STATUS_IGNORED,
+    workspace_fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
 ):
     """
     Raises:
         MountpointConfigurationError
     """
+    device = workspace_fs.device
+    workspace_name = workspace_fs.workspace_name
     portal = trio.BlockingTrioPortal()
     abs_mountpoint = str(mountpoint.absolute())
-    fs_access = ThreadFSAccess(portal, fs)
+    fs_access = ThreadFSAccess(portal, workspace_fs)
 
     _bootstrap_mountpoint(mountpoint)
 
     if config.get("debug", False):
         enable_debug_log()
 
-    volume_label = f"{fs.device.user_id}-{workspace}"[:31]
-    volume_serial_number = _generate_volume_serial_number(fs.device, workspace)
-    operations = WinFSPOperations(workspace, volume_label, fs_access)
+    volume_label = f"{device.user_id}-{workspace_name}"[:31]
+    volume_serial_number = _generate_volume_serial_number(device, workspace_name)
+    operations = WinFSPOperations(volume_label, fs_access)
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(
         str(abs_mountpoint),

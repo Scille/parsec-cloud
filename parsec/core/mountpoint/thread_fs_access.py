@@ -2,48 +2,53 @@
 
 
 class ThreadFSAccess:
-    def __init__(self, portal, fs):
-        self.fs = fs
+    def __init__(self, portal, workspace_fs):
+        self.workspace_fs = workspace_fs
         self._portal = portal
 
-    def stat(self, path):
-        return self._portal.run(self.fs.stat, path)
+    # Entry transactions
 
-    def file_delete(self, path):
-        return self._portal.run(self.fs.file_delete, path)
+    def entry_info(self, path):
+        return self._portal.run(self.workspace_fs.entry_info, path)
 
-    def folder_delete(self, path):
-        return self._portal.run(self.fs.folder_delete, path)
+    def entry_rename(self, source, destination, *, overwrite):
+        return self._portal.run(self.workspace_fs.entry_rename, source, destination, overwrite)
 
-    def move(self, src, dst, overwrite):
-        return self._portal.run(self.fs.move, src, dst, overwrite)
-
-    def file_create(self, path):
-        return self._portal.run(self.fs.file_create, path)
+    # Folder transactions
 
     def folder_create(self, path):
-        return self._portal.run(self.fs.folder_create, path)
+        return self._portal.run(self.workspace_fs.folder_create, path)
 
-    def file_truncate(self, path, length):
-        return self._portal.run(self.fs.file_truncate, path, length)
+    def folder_delete(self, path):
+        return self._portal.run(self.workspace_fs.folder_delete, path)
 
-    def file_fd_open(self, path):
-        return self._portal.run(self.fs.file_fd_open, path)
+    # File transactions
 
-    def file_fd_close(self, fh):
-        return self._portal.run(self.fs.file_fd_close, fh)
+    def file_create(self, path, *, open):
+        return self._portal.run(self.workspace_fs.file_create, path, open)
 
-    def file_fd_seek(self, fh, offset):
-        return self._portal.run(self.fs.file_fd_seek, fh, offset)
+    def file_open(self, path):
+        return self._portal.run(self.workspace_fs.file_open, path)
 
-    def file_fd_read(self, fh, size, offset):
-        return self._portal.run(self.fs.file_fd_read, fh, size, offset)
+    def file_delete(self, path):
+        return self._portal.run(self.workspace_fs.file_delete, path)
 
-    def file_fd_write(self, fh, data, offset):
-        return self._portal.run(self.fs.file_fd_write, fh, data, offset)
+    # File descriptor transactions
 
-    def file_fd_truncate(self, fh, length):
-        return self._portal.run(self.fs.file_fd_truncate, fh, length)
+    def fd_close(self, fh):
+        return self._portal.run(self.workspace_fs.fd_close, fh)
 
-    def file_fd_flush(self, fh):
-        return self._portal.run(self.fs.file_fd_flush, fh)
+    def fd_seek(self, fh, offset):
+        return self._portal.run(self.workspace_fs.fd_seek, fh, offset)
+
+    def fd_read(self, fh, size, offset):
+        return self._portal.run(self.workspace_fs.fd_read, fh, size, offset)
+
+    def fd_write(self, fh, data, offset):
+        return self._portal.run(self.workspace_fs.fd_write, fh, data, offset)
+
+    def fd_resize(self, fh, length):
+        return self._portal.run(self.workspace_fs.fd_resize, fh, length)
+
+    def fd_flush(self, fh):
+        return self._portal.run(self.workspace_fs.fd_flush, fh)
