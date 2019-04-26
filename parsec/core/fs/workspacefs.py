@@ -2,7 +2,7 @@
 
 import math
 import inspect
-from typing import Tuple
+from typing import Tuple, Union
 from uuid import UUID
 
 from parsec.core.local_storage import LocalStorageMissingEntry
@@ -13,6 +13,8 @@ from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestL
 
 # from parsec.core.fs.exceptions import FSBackendOfflineError, FSError
 # from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
+
+AnyPath = Union[FsPath, str]
 
 
 class WorkspaceFS:
@@ -36,8 +38,8 @@ class WorkspaceFS:
         self._remote_loader = _remote_loader
         self._syncer = _syncer
 
-        self._file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
-        self._entry_transactions = EntryTransactions(
+        self.file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
+        self.entry_transactions = EntryTransactions(
             self.device, workspace_entry, local_storage, self._remote_loader, event_bus
         )
 
@@ -45,7 +47,7 @@ class WorkspaceFS:
     def workspace_name(self):
         return self.workspace_entry.name
 
-    # Workspace info
+    # Information
 
     async def workspace_info(self):
         # try:
@@ -70,54 +72,46 @@ class WorkspaceFS:
             "participants": list(manifest.participants),
         }
 
-    # Entry operations
+    async def entry_info(self, path: AnyPath) -> dict:
+        return await self.entry_transactions.entry_info(FsPath(path))
 
-    async def entry_info(self, path: FsPath) -> dict:
-        return await self._entry_transactions.entry_info(path)
+    # Legacy methods - to remove after the FS class has been completely removed
 
     async def entry_rename(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> AccessID:
-        return await self._entry_transactions.entry_rename(src, dst, overwrite)
-
-    # Folder operations
+        return await self.entry_transactions.entry_rename(src, dst, overwrite)
 
     async def folder_create(self, path: FsPath) -> AccessID:
-        return await self._entry_transactions.folder_create(path)
+        return await self.entry_transactions.folder_create(path)
 
     async def folder_delete(self, path: FsPath) -> AccessID:
-        return await self._entry_transactions.folder_delete(path)
-
-    # File operations
+        return await self.entry_transactions.folder_delete(path)
 
     async def file_create(self, path: FsPath, open: bool = True) -> Tuple[AccessID, FileDescriptor]:
-        return await self._entry_transactions.file_create(path, open=open)
+        return await self.entry_transactions.file_create(path, open=open)
 
     async def file_open(self, path: FsPath, mode="rw") -> Tuple[AccessID, FileDescriptor]:
-        return await self._entry_transactions.file_open(path, mode=mode)
+        return await self.entry_transactions.file_open(path, mode=mode)
 
     async def file_delete(self, path: FsPath) -> AccessID:
-        return await self._entry_transactions.file_delete(path)
-
-    # File descriptor operations
+        return await self.entry_transactions.file_delete(path)
 
     async def fd_close(self, fd: int) -> None:
-        await self._file_transactions.fd_close(fd)
+        await self.file_transactions.fd_close(fd)
 
     async def fd_seek(self, fd: int, offset: int) -> None:
-        await self._file_transactions.fd_seek(fd, offset)
+        await self.file_transactions.fd_seek(fd, offset)
 
     async def fd_resize(self, fd: int, length: int) -> None:
-        await self._file_transactions.fd_resize(fd, length)
+        await self.file_transactions.fd_resize(fd, length)
 
     async def fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
-        return await self._file_transactions.fd_write(fd, content, offset)
+        return await self.file_transactions.fd_write(fd, content, offset)
 
     async def fd_flush(self, fd: int) -> None:
-        await self._file_transactions.fd_flush(fd)
+        await self.file_transactions.fd_flush(fd)
 
     async def fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
-        return await self._file_transactions.fd_read(fd, size, offset)
-
-    # High-level file operations
+        return await self.file_transactions.fd_read(fd, size, offset)
 
     async def file_write(self, path: FsPath, content: bytes, offset: int = 0) -> int:
         _, fd = await self.file_open(path, "rw")
