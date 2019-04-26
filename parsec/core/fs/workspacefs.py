@@ -138,6 +138,87 @@ class WorkspaceFS:
         finally:
             await self.fd_close(fd)
 
+    # Pathlib-like interface
+
+    async def is_dir(self, path: AnyPath) -> bool:
+        path = FsPath(path)
+        info = await self.entry_transactions.entry_info(path)
+        return info["type"] == "folder"
+
+    async def is_file(self, path: AnyPath) -> bool:
+        path = FsPath(path)
+        info = await self.entry_transactions.entry_info(FsPath(path))
+        return info["type"] == "file"
+
+    async def rename(self, source: AnyPath, destination: AnyPath, overwrite: bool = True) -> None:
+        source = FsPath(source)
+        destination = FsPath(destination)
+        await self.entry_transactions.entry_rename(source, destination, overwrite=overwrite)
+
+    async def mkdir(self, path: AnyPath, parents: bool = False, exist_ok: bool = False) -> None:
+        path = FsPath(path)
+        try:
+            await self.entry_transactions.folder_create(path)
+        except FileNotFoundError:
+            if not parents or path.parent == path:
+                raise
+            await self.mkdir(path.parent, parents=True, exist_ok=True)
+            await self.mkdir(path, parents=False, exist_ok=exist_ok)
+        except FileExistsError:
+            if not exist_ok or not await self.is_dir(path):
+                raise
+
+    async def rmdir(self, path: AnyPath) -> None:
+        path = FsPath(path)
+        await self.entry_transactions.folder_delete(path)
+
+    async def touch(self, path: AnyPath, exist_ok: bool = True) -> None:
+        path = FsPath(path)
+        try:
+            await self.entry_transactions.file_create(path, open=False)
+        except FileExistsError:
+            if not exist_ok or not await self.is_file(path):
+                raise
+
+    async def unlink(self, path: AnyPath) -> None:
+        path = FsPath(path)
+        await self.entry_transactions.file_delete(path)
+
+    async def truncate(self, path: AnyPath, length: int) -> None:
+        path = FsPath(path)
+        _, fd = await self.entry_transactions.file_open(path, "w")
+        try:
+            return await self.file_transactions.fd_resize(fd, length)
+        finally:
+            await self.file_transactions.fd_close(fd)
+
+    async def read_bytes(self, path: AnyPath, size: int = math.inf, offset: int = 0) -> bytes:
+        path = FsPath(path)
+        _, fd = await self.entry_transactions.file_open(path, "r")
+        try:
+            return await self.file_transactions.fd_read(fd, size, offset)
+        finally:
+            await self.file_transactions.fd_close(fd)
+
+    async def write_bytes(self, path: AnyPath, data: bytes, offset: int = 0) -> int:
+        path = FsPath(path)
+        _, fd = await self.entry_transactions.file_open(path, "w")
+        try:
+            return await self.file_transactions.fd_write(fd, data, offset)
+        finally:
+            await self.file_transactions.fd_close(fd)
+
+    # Shutil-like interface
+
+    def move(self, source: AnyPath, destination: AnyPath):
+        source = FsPath(source)
+        destination = FsPath(destination)
+        raise NotImplementedError
+
+    def rmtree(self, path: AnyPath):
+        path = FsPath(path)
+        raise NotImplementedError
+
     # Left to migrate
 
     def _cook_path(self, relative_path=""):
