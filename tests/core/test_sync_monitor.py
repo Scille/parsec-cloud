@@ -3,8 +3,6 @@
 import pytest
 import trio
 
-from parsec.core.types import FsPath
-
 
 @pytest.mark.trio
 async def test_autosync_on_modification(mock_clock, running_backend, alice_core, alice2_fs):
@@ -15,12 +13,12 @@ async def test_autosync_on_modification(mock_clock, running_backend, alice_core,
     workspace = alice_core.user_fs.get_workspace(wid)
 
     with alice_core.event_bus.listen() as spy:
-        await workspace.folder_create(FsPath("/foo"))
+        await workspace.mkdir("/foo")
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await spy.wait("fs.entry.synced", kwargs={"path": "/w/foo", "id": spy.ANY})
 
     await alice2_fs.sync("/")
     workspace2 = alice2_fs.user_fs.get_workspace(wid)
-    stat = await workspace.entry_info(FsPath("/foo"))
-    stat2 = await workspace2.entry_info(FsPath("/foo"))
+    stat = await workspace.entry_info("/foo")
+    stat2 = await workspace2.entry_info("/foo")
     assert stat == stat2
