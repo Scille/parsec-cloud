@@ -9,6 +9,7 @@ from random import randrange, choice
 from string import ascii_lowercase
 
 from parsec.core.fs import FSError
+from parsec.core.types import WorkspaceRole
 
 
 FUZZ_PARALLELISM = 10
@@ -24,7 +25,7 @@ class FSState:
     stats = defaultdict(lambda: defaultdict(lambda: 0))
     logs = attr.ib(factory=list)
     files = attr.ib(factory=list)
-    folders = attr.ib(factory=lambda: ["/w"])
+    folders = attr.ib(factory=lambda: ["/"])
 
     def get_cooked_stats(self):
         stats = {}
@@ -117,22 +118,22 @@ class SkipCommand(Exception):
     pass
 
 
-async def fuzzer(id, core, fs_state):
+async def fuzzer(id, core, workspace, fs_state):
     while True:
         try:
-            await _fuzzer_cmd(id, core, fs_state)
+            await _fuzzer_cmd(id, core, workspace, fs_state)
         except SkipCommand:
             fs_state.add_stat(id, "skipped command", "...")
 
 
-async def _fuzzer_cmd(id, core, fs_state):
+async def _fuzzer_cmd(id, core, workspace, fs_state):
     x = randrange(0, 100)
     await trio.sleep(x * 0.01)
 
     if x < 10:
         path = fs_state.get_path()
         try:
-            stat = await core.fs.stat(path)
+            stat = await workspace.entry_info(path)
             fs_state.add_stat(id, "stat_ok", f"path={path}, returned stats={stat!r}")
         except OSError as exc:
             fs_state.add_stat(id, "stat_bad", f"path={path}, raised {exc!r}")
@@ -140,7 +141,7 @@ async def _fuzzer_cmd(id, core, fs_state):
     elif x < 20:
         path = fs_state.get_new_path()
         try:
-            await core.fs.touch(path)
+            await workspace.touch(path)
             fs_state.files.append(path)
             fs_state.add_stat(id, "file_create_ok", f"path={path}")
         except OSError as exc:
@@ -150,7 +151,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         path = fs_state.get_file()
         size = randrange(0, 2000)
         try:
-            ret = await core.fs.file_read(path, size=size)
+            ret = await workspace.read_bytes(path, size=size)
             fs_state.add_stat(
                 id, "file_read_ok", f"path={path}, size={size}, returned {len(ret)} bytes"
             )
@@ -162,7 +163,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         buffer = b"x" * randrange(1, 1000)
         offset = randrange(0, 100)
         try:
-            await core.fs.file_write(path, buffer, offset=offset)
+            await workspace.write_bytes(path, buffer, offset=offset)
             fs_state.add_stat(
                 id, "file_write_ok", f"path={path}, buffer size={len(buffer)}, offset={offset}"
             )
@@ -177,7 +178,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         path = fs_state.get_file()
         length = randrange(0, 100)
         try:
-            await core.fs.file_truncate(path, length)
+            await workspace.truncate(path, length)
             fs_state.add_stat(id, "file_truncate_ok", f"path={path}, length={length}")
         except OSError as exc:
             fs_state.add_stat(
@@ -187,7 +188,7 @@ async def _fuzzer_cmd(id, core, fs_state):
     elif x < 60:
         path = fs_state.get_new_path()
         try:
-            await core.fs.folder_create(path)
+            await workspace.mkdir(path)
             fs_state.folders.append(path)
             fs_state.add_stat(id, "folder_create_ok", f"path={path}")
         except OSError as exc:
@@ -197,7 +198,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         old_path = fs_state.get_path()
         new_path = fs_state.get_new_path()
         try:
-            await core.fs.move(old_path, new_path)
+            await workspace.rename(old_path, new_path)
             fs_state.replace_path(old_path, new_path)
             fs_state.add_stat(id, "move_ok", f"src={old_path}, dst={new_path}")
         except OSError as exc:
@@ -207,10 +208,10 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             if x < 85:
                 path = fs_state.get_file()
-                await core.fs.file_delete(path)
+                await workspace.unlink(path)
             else:
                 path = fs_state.get_folder()
-                await core.fs.folder_delete(path)
+                await workspace.rmdir(path)
             fs_state.remove_path(path)
             fs_state.add_stat(id, "delete_ok", f"path={path}")
         except OSError as exc:
@@ -227,7 +228,7 @@ async def _fuzzer_cmd(id, core, fs_state):
     else:
         path = fs_state.get_path()
         try:
-            await core.fs.share(path, "bob")
+            await core.user_fs.workspace_share(path[1:], "bob", WorkspaceRole.OWNER)
             fs_state.add_stat(id, "share_ok", f"path={path}")
         except FSError as exc:
             fs_state.add_stat(id, "share_bad", f"path={path}, raised {exc!r}")
@@ -235,18 +236,19 @@ async def _fuzzer_cmd(id, core, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-@pytest.mark.skip  # TODO: cause unreliable freezes in ci !
 async def test_fuzz_core(running_backend, alice_core):
-    await alice_core.fs.workspace_create("/w")
+    await trio.sleep(0.1)  # Somehow fixes the test
+    wid = await alice_core.user_fs.workspace_create("w")
+    workspace = alice_core.user_fs.get_workspace(wid)
     try:
         async with trio.open_nursery() as nursery:
             fs_state = FSState()
             for i in range(FUZZ_PARALLELISM):
-                nursery.start_soon(fuzzer, i, alice_core, fs_state)
+                nursery.start_soon(fuzzer, i, alice_core, workspace, fs_state)
             await trio.sleep(FUZZ_TIME)
             nursery.cancel_scope.cancel()
 
-    except Exception:
+    except BaseException:
         print(fs_state.format_logs())
         raise
 
