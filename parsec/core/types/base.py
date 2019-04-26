@@ -37,7 +37,7 @@ class FsPath(PurePosixPath):
     @classmethod
     def _from_parts(cls, args, init=True):
         self = object.__new__(cls)
-        args = [x.replace("\\", "/") for x in args]
+        args = [x.replace("\\", "/") if isinstance(x, str) else x for x in args]
 
         drv, root, parts = PurePosixPath._parse_args(args)
         if not root:
@@ -58,12 +58,18 @@ class FsPath(PurePosixPath):
     def is_root(self):
         return self.parent == self
 
+    # TODO: this method should be removed with the FS class
+    # The concept of workspace path doesn't apply anymore
+
     def is_workspace(self):
         return not self.is_root() and self.parent.is_root()
 
     @property
     def workspace(self):
         return self.parts[1]
+
+    # TODO: this method should be removed with the FS class
+    # The concept of workspace path doesn't apply anymore
 
     def walk_from_path(self):
         parent = None
