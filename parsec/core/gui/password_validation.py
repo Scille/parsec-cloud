@@ -20,6 +20,7 @@ PASSWORD_CSS = {
     2: "color: white; background-color: rgb(194, 51, 51);",
     3: "color: white; background-color: rgb(219, 125, 58);",
     4: "color: white; background-color: rgb(55, 130, 65);",
+    5: "color: white; background-color: rgb(24, 175, 44);",
 }
 
 
