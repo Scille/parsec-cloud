@@ -54,7 +54,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_empty.hide()
 
         if enable_workspace_color:
-            c = StringToColor(self.workspace_fs.workspace_name)
+            c = StringToColor.from_string(self.workspace_fs.workspace_name)
             self.setStyleSheet("background-color: {};".format(c.hex()))
 
         effect = QGraphicsDropShadowEffect(self)
