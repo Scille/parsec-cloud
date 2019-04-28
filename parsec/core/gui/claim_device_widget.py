@@ -24,7 +24,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
     get_password_strength,
-    PASSWORD_STRENGTH_TEXTS,
+    get_password_strength_text,
     PASSWORD_CSS,
 )
 from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
@@ -157,7 +157,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                _("Password strength: {}").format(PASSWORD_STRENGTH_TEXTS[score])
+                _("Password strength: {}").format(get_password_strength_text(score))
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

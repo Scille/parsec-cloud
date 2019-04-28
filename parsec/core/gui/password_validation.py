@@ -5,15 +5,6 @@ from zxcvbn import zxcvbn
 from parsec.core.gui.lang import translate as _
 
 
-PASSWORD_STRENGTH_TEXTS = [
-    _("Too short"),
-    _("Very weak"),
-    _("Weak"),
-    _("Average"),
-    _("Good"),
-    _("Strong"),
-]
-
 PASSWORD_CSS = {
     0: "color: white; background-color: rgb(64, 64, 64);",
     1: "color: white; background-color: rgb(194, 51, 51);",
@@ -22,6 +13,18 @@ PASSWORD_CSS = {
     4: "color: white; background-color: rgb(55, 130, 65);",
     5: "color: white; background-color: rgb(24, 175, 44);",
 }
+
+
+def get_password_strength_text(password_score):
+    PASSWORD_STRENGTH_TEXTS = [
+        _("Too short"),
+        _("Very weak"),
+        _("Weak"),
+        _("Average"),
+        _("Good"),
+        _("Strong"),
+    ]
+    return PASSWORD_STRENGTH_TEXTS[password_score]
 
 
 def get_password_strength(password):
