@@ -239,27 +239,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="190"/>
+        <location filename="../forms/files_widget.ui" line="241"/>
         <source>Search files or folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="339"/>
+        <location filename="../forms/files_widget.ui" line="341"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="344"/>
+        <location filename="../forms/files_widget.ui" line="346"/>
         <source>Created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="349"/>
+        <location filename="../forms/files_widget.ui" line="351"/>
         <source>Updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="354"/>
+        <location filename="../forms/files_widget.ui" line="356"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
@@ -317,8 +317,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="613"/>
+        <location filename="../forms/global_settings_widget.ui" line="688"/>
         <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="591"/>
+        <source>Interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="605"/>
+        <source>Use colors for workspaces</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -674,43 +684,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="206"/>
+        <location filename="../forms/register_device_dialog.ui" line="243"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="155"/>
+        <location filename="../forms/register_device_dialog.ui" line="192"/>
         <source>Use the following information to set up your new device:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="181"/>
+        <location filename="../forms/register_device_dialog.ui" line="218"/>
         <source>URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="218"/>
+        <location filename="../forms/register_device_dialog.ui" line="255"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="291"/>
+        <location filename="../forms/register_device_dialog.ui" line="328"/>
         <source>...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="320"/>
-        <source>Do not close this window while the device registers.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/register_device_dialog.ui" line="372"/>
+        <location filename="../forms/register_device_dialog.ui" line="392"/>
         <source>Register the device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device_dialog.ui" line="390"/>
+        <location filename="../forms/register_device_dialog.ui" line="410"/>
         <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device_dialog.ui" line="152"/>
+        <source>Register a new device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device_dialog.ui" line="461"/>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -722,48 +737,53 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="215"/>
+        <location filename="../forms/register_user_dialog.ui" line="252"/>
         <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="137"/>
+        <location filename="../forms/register_user_dialog.ui" line="174"/>
         <source>User is administrator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="164"/>
+        <location filename="../forms/register_user_dialog.ui" line="201"/>
         <source>Transmit the following information to the user:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="190"/>
+        <location filename="../forms/register_user_dialog.ui" line="227"/>
         <source>URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="227"/>
+        <location filename="../forms/register_user_dialog.ui" line="264"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="300"/>
+        <location filename="../forms/register_user_dialog.ui" line="337"/>
         <source>...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="329"/>
-        <source>Do not close this window while the user registers.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/register_user_dialog.ui" line="381"/>
+        <location filename="../forms/register_user_dialog.ui" line="404"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_user_dialog.ui" line="399"/>
+        <location filename="../forms/register_user_dialog.ui" line="422"/>
         <source>Register the user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_user_dialog.ui" line="154"/>
+        <source>Register a new user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_user_dialog.ui" line="473"/>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -866,22 +886,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="163"/>
+        <location filename="../forms/workspace_button.ui" line="160"/>
         <source>You are this workspace&apos;s owner.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="191"/>
+        <location filename="../forms/workspace_button.ui" line="188"/>
         <source>This workspace is shared.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="268"/>
+        <location filename="../forms/workspace_button.ui" line="265"/>
         <source>This workspace is empty.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="441"/>
+        <location filename="../forms/workspace_button.ui" line="438"/>
         <source>Rename the workspace</source>
         <translation type="unfinished"></translation>
     </message>

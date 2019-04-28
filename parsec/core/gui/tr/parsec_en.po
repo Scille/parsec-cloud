@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-04-15 12:36+0200\n"
+"POT-Creation-Date: 2019-04-28 17:38+0200\n"
 "PO-Revision-Date: 2019-04-04 15:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -98,30 +98,25 @@ msgstr ""
 msgid " (shared by {})"
 msgstr ""
 
-msgid "Unknown error."
+msgid "Bad device name."
 msgstr ""
 
 msgid "This device already exists."
 msgstr ""
 
+msgid "Cannot invite a device without being online."
+msgstr ""
+
 msgid "Device took too much time to register."
 msgstr ""
 
-msgid "Can not register this device ({})."
+msgid "Cannot register this device ({info})."
 msgstr ""
 
 msgid "Device has been registered. You may now close this window."
 msgstr ""
 
-msgid ""
-"Can not close this window while waiting for the new device to register. "
-"Please cancel first."
-msgstr ""
-
 msgid "Please enter a device name."
-msgstr ""
-
-msgid "Could not register the device."
 msgstr ""
 
 msgid "Please wait while the user is registered."
@@ -396,9 +391,6 @@ msgstr ""
 msgid "Global"
 msgstr ""
 
-msgid "Network"
-msgstr ""
-
 msgid "Modification will take effect the next time you start the application."
 msgstr ""
 
@@ -412,6 +404,12 @@ msgid "Mountpoint has been unmounted."
 msgstr ""
 
 msgid "Workspace '{}' shared with you"
+msgstr ""
+
+msgid "Workspace '{}' sharing rights have changed"
+msgstr ""
+
+msgid "Workspace '{}' no longer shared with you"
 msgstr ""
 
 msgid "Conflict while syncing file '{}'."
@@ -435,30 +433,25 @@ msgstr ""
 msgid "Cancelling..."
 msgstr ""
 
-msgid "Only admins can invite a new user."
-msgstr ""
-
-msgid "User took too much time to register."
-msgstr ""
-
-msgid "Unhandled response {}"
-msgstr ""
-
-msgid "User has been registered. You may now close this window."
-msgstr ""
-
-msgid ""
-"Can not close this window while waiting for the new user to register. "
-"Please cancel first."
-msgstr ""
-
-msgid "Please enter a username."
+msgid "Bad user id."
 msgstr ""
 
 msgid "A user with the same name already exists."
 msgstr ""
 
-msgid "Could not register the user."
+msgid "Only admins can invite a new user."
+msgstr ""
+
+msgid "Cannot invite a user without being online."
+msgstr ""
+
+msgid "User took too much time to register."
+msgstr ""
+
+msgid "Cannot register this user ({info})."
+msgstr ""
+
+msgid "Please enter a username."
 msgstr ""
 
 msgid "You can not share a workspace with yourself."
@@ -633,6 +626,12 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
+msgid "Interface"
+msgstr ""
+
+msgid "Use colors for workspaces"
+msgstr ""
+
 msgid "Ok"
 msgstr ""
 
@@ -756,10 +755,10 @@ msgstr ""
 msgid "..."
 msgstr ""
 
-msgid "Do not close this window while the device registers."
+msgid "Register the device"
 msgstr ""
 
-msgid "Register the device"
+msgid "Close"
 msgstr ""
 
 msgid "Register new user"
@@ -771,10 +770,10 @@ msgstr ""
 msgid "Transmit the following information to the user:"
 msgstr ""
 
-msgid "Do not close this window while the user registers."
+msgid "Register the user"
 msgstr ""
 
-msgid "Register the user"
+msgid "Register a new user"
 msgstr ""
 
 msgid "Skip"
@@ -784,9 +783,6 @@ msgid "Replace"
 msgstr ""
 
 msgid "Do the same for all files"
-msgstr ""
-
-msgid "Close"
 msgstr ""
 
 msgid "Back"
@@ -856,5 +852,44 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Can not rename."
+#~ msgstr ""
+
+#~ msgid "Unknown error."
+#~ msgstr ""
+
+#~ msgid "Can not register this device ({})."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Can not close this window while "
+#~ "waiting for the new device to "
+#~ "register. Please cancel first."
+#~ msgstr ""
+
+#~ msgid "Could not register the device."
+#~ msgstr ""
+
+#~ msgid "Network"
+#~ msgstr ""
+
+#~ msgid "Unhandled response {}"
+#~ msgstr ""
+
+#~ msgid "User has been registered. You may now close this window."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Can not close this window while "
+#~ "waiting for the new user to "
+#~ "register. Please cancel first."
+#~ msgstr ""
+
+#~ msgid "Could not register the user."
+#~ msgstr ""
+
+#~ msgid "Do not close this window while the device registers."
+#~ msgstr ""
+
+#~ msgid "Do not close this window while the user registers."
 #~ msgstr ""
 

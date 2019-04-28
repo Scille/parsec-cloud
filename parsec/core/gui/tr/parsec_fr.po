@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-04-15 12:36+0200\n"
-"PO-Revision-Date: 2019-04-15 12:38+0200\n"
+"POT-Creation-Date: 2019-04-28 17:38+0200\n"
+"PO-Revision-Date: 2019-04-28 17:42+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -99,33 +99,26 @@ msgstr " (partagé)"
 msgid " (shared by {})"
 msgstr " (partagé par {})"
 
-msgid "Unknown error."
-msgstr "Erreur inconnue."
+msgid "Bad device name."
+msgstr "Mauvais nom d'appareil."
 
 msgid "This device already exists."
 msgstr "Cet appareil existe déjà."
 
+msgid "Cannot invite a device without being online."
+msgstr "Impossible d'enregistrer un appareil sans être en ligne."
+
 msgid "Device took too much time to register."
 msgstr "L'appareil a été trop long à s'enregistrer."
 
-msgid "Can not register this device ({})."
-msgstr "Impossible d'enregistrer cet appareil ({})."
+msgid "Cannot register this device ({info})."
+msgstr "Impossible d'enregistrer cet appareil ({info})."
 
 msgid "Device has been registered. You may now close this window."
 msgstr "L'appareil a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
 
-msgid ""
-"Can not close this window while waiting for the new device to register. Please "
-"cancel first."
-msgstr ""
-"Cette fenêtre ne peut pas être fermée tant que l'appareil n'a pas été "
-"enregistré. Veuillez annuler d'abord."
-
 msgid "Please enter a device name."
 msgstr "Entrez un nom d'appareil."
-
-msgid "Could not register the device."
-msgstr "Impossible d'enregistrer l'appareil."
 
 msgid "Please wait while the user is registered."
 msgstr "Veuillez patienter pendant que l'utilisateur est enregistré."
@@ -421,9 +414,6 @@ msgstr "L'appareil a été enregistré. Vous pouvez maintenant vous connecter."
 msgid "Global"
 msgstr "Globale"
 
-msgid "Network"
-msgstr "Réseau"
-
 msgid "Modification will take effect the next time you start the application."
 msgstr ""
 "Les modifications seront prises en compte au prochain lancement de l'application."
@@ -439,6 +429,12 @@ msgstr "Le point de montage a été perdu."
 
 msgid "Workspace '{}' shared with you"
 msgstr "Espace de travail '{}' partagé avec vous"
+
+msgid "Workspace '{}' sharing rights have changed"
+msgstr "Les droits de partage de l'espace de travail '{}' ont été modifiés."
+
+msgid "Workspace '{}' no longer shared with you"
+msgstr "L'espace de travail '{}' n'est plus partagé avec vous"
 
 msgid "Conflict while syncing file '{}'."
 msgstr "Conflit lors de la synchronisation de '{}'."
@@ -461,34 +457,26 @@ msgstr "Configuration"
 msgid "Cancelling..."
 msgstr "Annulation..."
 
-msgid "Only admins can invite a new user."
-msgstr "Seuls les administrateurs peuvent inviter un nouvel utilisateur."
-
-msgid "User took too much time to register."
-msgstr "L'utilisateur a été trop long à s'enregistrer."
-
-msgid "Unhandled response {}"
-msgstr "Réponse non gérée {}"
-
-msgid "User has been registered. You may now close this window."
-msgstr ""
-"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
-
-msgid ""
-"Can not close this window while waiting for the new user to register. Please "
-"cancel first."
-msgstr ""
-"Cette fenêtre ne peut pas être fermée tant que l'utilisateur n'a pas été "
-"enregistré. Veuillez annuler d'abord."
-
-msgid "Please enter a username."
-msgstr "Entrez un nom d'utilisateur."
+msgid "Bad user id."
+msgstr "User ID invalide."
 
 msgid "A user with the same name already exists."
 msgstr "Un utilisateur du même nom existe déjà."
 
-msgid "Could not register the user."
-msgstr "Impossible d'enregistrer l'utilisateur."
+msgid "Only admins can invite a new user."
+msgstr "Seuls les administrateurs peuvent inviter un nouvel utilisateur."
+
+msgid "Cannot invite a user without being online."
+msgstr "Impossible d'inviter un utilisateur sans être en ligne."
+
+msgid "User took too much time to register."
+msgstr "L'utilisateur a été trop long à s'enregistrer."
+
+msgid "Cannot register this user ({info})."
+msgstr "Impossible d'enregistrer cet utilisateur ({info})."
+
+msgid "Please enter a username."
+msgstr "Entrez un nom d'utilisateur."
 
 msgid "You can not share a workspace with yourself."
 msgstr "Vous ne pouvez pas partager un espace de travail avec vous-même."
@@ -572,7 +560,7 @@ msgid "Parsec is still running."
 msgstr "Parsec est toujours ouvert."
 
 msgid "Form"
-msgstr ""
+msgstr "Form"
 
 msgid ""
 "To bootstrap an organization, create one on the website and paste the "
@@ -622,7 +610,7 @@ msgid "Register"
 msgstr "Enregistrer"
 
 msgid "Dialog"
-msgstr ""
+msgstr "Dialog"
 
 msgid ""
 "To register a new user, you need another user to create an account and get a "
@@ -675,6 +663,12 @@ msgstr "Envoyer des informations quand Parsec rencontre une erreur."
 
 msgid "Save"
 msgstr "Sauvegarder"
+
+msgid "Interface"
+msgstr "Interface"
+
+msgid "Use colors for workspaces"
+msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "Ok"
 msgstr "Ok"
@@ -794,16 +788,17 @@ msgid "Register new device"
 msgstr "Enregistrer un nouvel appareil"
 
 msgid "Use the following information to set up your new device:"
-msgstr "Utilisez les informations suivantes pour enregistrer votre nouvel appareil"
+msgstr ""
+"Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
 
 msgid "..."
 msgstr "..."
 
-msgid "Do not close this window while the device registers."
-msgstr "Ne fermez pas cette fenêtre pendant que l'appareil s'enregistre."
-
 msgid "Register the device"
 msgstr "Enregistrer l'appareil"
+
+msgid "Close"
+msgstr "Fermer"
 
 msgid "Register new user"
 msgstr "Enregistrer un nouvel utilisateur"
@@ -814,11 +809,11 @@ msgstr "L'utilisateur est un administrateur"
 msgid "Transmit the following information to the user:"
 msgstr "Transmettez les informations suivantes à l'utilisateur :"
 
-msgid "Do not close this window while the user registers."
-msgstr "Ne fermez pas cette fenêtre pendant que l'utilisateur s'enregistre."
-
 msgid "Register the user"
 msgstr "Enregistrer l'utilisateur"
+
+msgid "Register a new user"
+msgstr "Enregistrer un nouvel utilisateur"
 
 msgid "Skip"
 msgstr "Passer"
@@ -828,9 +823,6 @@ msgstr "Remplacer"
 
 msgid "Do the same for all files"
 msgstr "Utiliser la même action pour tous les fichiers"
-
-msgid "Close"
-msgstr "Fermer"
 
 msgid "Back"
 msgstr "Retour"
@@ -900,3 +892,45 @@ msgstr "Appliquer"
 
 #~ msgid "Can not rename."
 #~ msgstr "Impossible de renommer."
+
+#~ msgid "Unknown error."
+#~ msgstr "Erreur inconnue."
+
+#~ msgid "Can not register this device ({})."
+#~ msgstr "Impossible d'enregistrer cet appareil ({})."
+
+#~ msgid ""
+#~ "Can not close this window while waiting for the new device to register. "
+#~ "Please cancel first."
+#~ msgstr ""
+#~ "Cette fenêtre ne peut pas être fermée tant que l'appareil n'a pas été "
+#~ "enregistré. Veuillez annuler d'abord."
+
+#~ msgid "Could not register the device."
+#~ msgstr "Impossible d'enregistrer l'appareil."
+
+#~ msgid "Network"
+#~ msgstr "Réseau"
+
+#~ msgid "Unhandled response {}"
+#~ msgstr "Réponse non gérée {}"
+
+#~ msgid "User has been registered. You may now close this window."
+#~ msgstr ""
+#~ "L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
+
+#~ msgid ""
+#~ "Can not close this window while waiting for the new user to register. Please "
+#~ "cancel first."
+#~ msgstr ""
+#~ "Cette fenêtre ne peut pas être fermée tant que l'utilisateur n'a pas été "
+#~ "enregistré. Veuillez annuler d'abord."
+
+#~ msgid "Could not register the user."
+#~ msgstr "Impossible d'enregistrer l'utilisateur."
+
+#~ msgid "Do not close this window while the device registers."
+#~ msgstr "Ne fermez pas cette fenêtre pendant que l'appareil s'enregistre."
+
+#~ msgid "Do not close this window while the user registers."
+#~ msgstr "Ne fermez pas cette fenêtre pendant que l'utilisateur s'enregistre."
