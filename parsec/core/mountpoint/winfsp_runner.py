@@ -2,14 +2,15 @@
 
 import trio
 from zlib import adler32
-from pathlib import Path
+from pathlib import PurePath
 from structlog import get_logger
+from itertools import count
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
 
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-from parsec.core.mountpoint.exceptions import MountpointConfigurationError
 
 
 __all__ = ("winfsp_mountpoint_runner",)
@@ -18,30 +19,34 @@ __all__ = ("winfsp_mountpoint_runner",)
 logger = get_logger()
 
 
-def _bootstrap_mountpoint(mountpoint):
+async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) -> PurePath:
     # Mountpoint can be a drive letter, in such case nothing to do
-    if str(mountpoint) == mountpoint.drive:
+    if str(base_mountpoint_path) == base_mountpoint_path.drive:
         return
 
-    try:
-        # On Windows, only mountpoint's parent must exists
-        mountpoint.parent.mkdir(exist_ok=True, parents=True)
-        if mountpoint.exists():
-            raise MountpointConfigurationError(
-                f"Mountpoint `{mountpoint.absolute()}` must not exists on windows"
-            )
+    # Find a suitable path where to mount the workspace. The check we are doing
+    # here are not atomic (and the mount operation is not itself atomic anyway),
+    # hence there is still edgecases where the mount can crash due to concurrent
+    # changes on the mountpoint path
+    for tentative in count():
+        dirname = f"{workspace_fs.workspace_name}"
+        if tentative:
+            dirname += f" ({tentative + 1})"
+        mountpoint_path = base_mountpoint_path / dirname
 
-    except OSError as exc:
-        # In case of hard crash, it's possible the mountpoint is still mounted
-        # (but point to nothing). In such case access to the mountpoint end
-        # up with an error :(
-        raise MountpointConfigurationError(
-            "Mountpoint is busy, has parsec prevously cleanly exited ?"
-        ) from exc
+        try:
+            # On Windows, only mountpoint's parent must exists
+            trio_mountpoint_path = trio.Path(mountpoint_path)
+            await trio_mountpoint_path.parent.mkdir(exist_ok=True, parents=True)
+            if await trio_mountpoint_path.exists():
+                continue
+            return mountpoint_path
 
-
-def _teardown_mountpoint(mountpoint):
-    pass
+        except OSError:
+            # In case of hard crash, it's possible the FUSE mountpoint is still
+            # mounted (but points to nothing). In such case just mount in
+            # another place
+            continue
 
 
 def _generate_volume_serial_number(device, workspace):
@@ -49,19 +54,23 @@ def _generate_volume_serial_number(device, workspace):
 
 
 async def winfsp_mountpoint_runner(
-    workspace_fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
+    workspace_fs,
+    base_mountpoint_path: PurePath,
+    config: dict,
+    event_bus,
+    *,
+    task_status=trio.TASK_STATUS_IGNORED,
 ):
     """
     Raises:
-        MountpointConfigurationError
+        MountpointDriverCrash
     """
     device = workspace_fs.device
     workspace_name = workspace_fs.workspace_name
     portal = trio.BlockingTrioPortal()
-    abs_mountpoint = str(mountpoint.absolute())
     fs_access = ThreadFSAccess(portal, workspace_fs)
 
-    _bootstrap_mountpoint(mountpoint)
+    mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_fs)
 
     if config.get("debug", False):
         enable_debug_log()
@@ -71,7 +80,7 @@ async def winfsp_mountpoint_runner(
     operations = WinFSPOperations(volume_label, fs_access)
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(
-        str(abs_mountpoint),
+        str(mountpoint_path.absolute()),
         operations,
         sector_size=512,
         sectors_per_allocation_unit=1,
@@ -96,13 +105,16 @@ async def winfsp_mountpoint_runner(
         # security_timeout=10000,
     )
     try:
-        event_bus.send("mountpoint.starting", mountpoint=abs_mountpoint)
+        event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
         fs.start()
-        event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
-        task_status.started(abs_mountpoint)
+        event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
+        task_status.started(mountpoint_path)
 
         await trio.sleep_forever()
 
+    except Exception as exc:
+        raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
+
     finally:
         fs.stop()
-        event_bus.send("mountpoint.stopped", mountpoint=abs_mountpoint)
+        event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)

@@ -47,8 +47,8 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
         def get_default_workspace_mountpoint(self):
             return self.get_workspace_mountpoint(self.default_workspace_name)
 
-        def get_workspace_mountpoint(self, workspace):
-            return self.base_mountpoint / f"{alice.user_id}-{workspace}"
+        def get_workspace_mountpoint(self, workspace_name):
+            return self.base_mountpoint / workspace_name
 
         def start(self):
             async def _start():

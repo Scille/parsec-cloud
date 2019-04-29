@@ -1,19 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-import time
 import errno
 import ctypes
 import signal
 import threading
-from pathlib import Path
+from pathlib import PurePath
 from fuse import FUSE
 from structlog import get_logger
 from contextlib import contextmanager
+from itertools import count
 
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-from parsec.core.mountpoint.exceptions import MountpointConfigurationError, MountpointDriverCrash
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 
 
 __all__ = ("fuse_mountpoint_runner",)
@@ -38,58 +38,80 @@ def _reset_signals(signals=None):
             ctypes.pythonapi.PyOS_setsig(sig, handler)
 
 
-def _bootstrap_mountpoint(mountpoint):
+async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) -> PurePath:
+    # Find a suitable path where to mount the workspace. The check we are doing
+    # here are not atomic (and the mount operation is not itself atomic anyway),
+    # hence there is still edgecases where the mount can crash due to concurrent
+    # changes on the mountpoint path
+    for tentative in count():
+        dirname = f"{workspace_fs.workspace_name}"
+        if tentative:
+            dirname += f" ({tentative + 1})"
+        mountpoint_path = base_mountpoint_path / dirname
+
+        try:
+            # On POSIX systems, mounting target must exists
+            trio_mountpoint_path = trio.Path(mountpoint_path)
+            await trio_mountpoint_path.mkdir(exist_ok=True, parents=True)
+            base_st_dev = (await trio.Path(base_mountpoint_path).stat()).st_dev
+            initial_st_dev = (await trio_mountpoint_path.stat()).st_dev
+            if initial_st_dev != base_st_dev:
+                # mountpoint_path seems to already have a mountpoint on it,
+                # hence find another place to setup our own mountpoint
+                continue
+            if list(await trio_mountpoint_path.iterdir()):
+                # mountpoint_path not empty, cannot mount there
+                continue
+            return mountpoint_path, initial_st_dev
+
+        except OSError:
+            # In case of hard crash, it's possible the FUSE mountpoint is still
+            # mounted (but points to nothing). In such case just mount in
+            # another place
+            continue
+
+
+async def _teardown_mountpoint(mountpoint_path):
     try:
-        # On POSIX systems, mounting target must exists
-        mountpoint.mkdir(exist_ok=True, parents=True)
-        initial_st_dev = mountpoint.stat().st_dev
-
-    except OSError as exc:
-        # In case of hard crash, it's possible the FUSE mountpoint is still
-        # mounted (but point to nothing). In such case access to the mountpoint
-        # end up with an error :(
-        raise MountpointConfigurationError(
-            "Mountpoint is busy, has parsec prevously cleanly exited ?"
-        ) from exc
-
-    return initial_st_dev
-
-
-def _teardown_mountpoint(mountpoint):
-    try:
-        mountpoint.rmdir()
+        await trio.Path(mountpoint_path).rmdir()
     except OSError:
         pass
 
 
 async def fuse_mountpoint_runner(
-    workspace_fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
+    workspace_fs,
+    base_mountpoint_path: PurePath,
+    config: dict,
+    event_bus,
+    *,
+    task_status=trio.TASK_STATUS_IGNORED,
 ):
     """
     Raises:
-        MountpointConfigurationError
+        MountpointDriverCrash
     """
     fuse_thread_started = threading.Event()
     fuse_thread_stopped = threading.Event()
     portal = trio.BlockingTrioPortal()
-    abs_mountpoint = str(mountpoint.absolute())
     fs_access = ThreadFSAccess(portal, workspace_fs)
     fuse_operations = FuseOperations(fs_access)
 
-    initial_st_dev = _bootstrap_mountpoint(mountpoint)
+    mountpoint_path, initial_st_dev = await _bootstrap_mountpoint(
+        base_mountpoint_path, workspace_fs
+    )
 
     try:
-        event_bus.send("mountpoint.starting", mountpoint=abs_mountpoint)
+        event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
 
         async with trio.open_nursery() as nursery:
 
             def _run_fuse_thread():
-                logger.info("Starting fuse thread...", mountpoint=mountpoint)
+                logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
                 try:
                     fuse_thread_started.set()
                     FUSE(
                         fuse_operations,
-                        abs_mountpoint,
+                        str(mountpoint_path.absolute()),
                         foreground=True,
                         auto_unmount=True,
                         **config,
@@ -101,7 +123,7 @@ async def fuse_mountpoint_runner(
                     except (KeyError, IndexError):
                         errcode = f"Unknown error code: {exc}"
                     raise MountpointDriverCrash(
-                        f"Fuse has crashed on {abs_mountpoint}: {errcode}"
+                        f"Fuse has crashed on {mountpoint_path}: {errcode}"
                     ) from exc
 
                 finally:
@@ -117,59 +139,43 @@ async def fuse_mountpoint_runner(
                 nursery.start_soon(
                     lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
                 )
-                await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
+                await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
-            task_status.started(abs_mountpoint)
+            event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
+            task_status.started(mountpoint_path)
 
     finally:
-        await _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped)
-        event_bus.send("mountpoint.stopped", mountpoint=abs_mountpoint)
-        _teardown_mountpoint(mountpoint)
+        await _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped)
+        event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)
+        await _teardown_mountpoint(mountpoint_path)
 
 
-async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev):
+async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev):
 
     # Polling until fuse is ready
-    # Note given python fs api is blocking, we must run it inside a thread
-    # to avoid blocking the trio loop and ending up in a deadlock
-
-    need_stop = False
-
-    def _wait_for_fuse_ready_thread():
-        fuse_thread_started.wait()
-        while not need_stop:
-            time.sleep(0.01)
-            try:
-                if mountpoint.stat().st_dev != initial_st_dev:
-                    break
-            except FileNotFoundError:
-                pass
-
-    try:
-        await trio.run_sync_in_worker_thread(_wait_for_fuse_ready_thread, cancellable=True)
-    finally:
-        need_stop = True
+    while True:
+        await trio.sleep(0.01)
+        trio_mountpoint_path = trio.Path(mountpoint_path)
+        try:
+            if (await trio_mountpoint_path.stat()).st_dev != initial_st_dev:
+                break
+        except FileNotFoundError:
+            pass
 
 
-async def _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped):
+async def _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped):
     if fuse_thread_stopped.is_set():
         return
 
     # Ask for dummy file just to force a fuse operation that will
     # process the `fuse_exit` from a valid context
-    # Note given python fs api is blocking, we must run it inside a thread
-    # to avoid blocking the trio loop and ending up in a deadlock
-
-    def _wakeup_fuse():
-        try:
-            (mountpoint / "__shutdown_fuse__").exists()
-        except OSError:
-            pass
 
     with trio.CancelScope(shield=True):
-        logger.info("Stopping fuse thread...", mountpoint=mountpoint)
+        logger.info("Stopping fuse thread...", mountpoint=mountpoint_path)
         fuse_operations.schedule_exit()
-        await trio.run_sync_in_worker_thread(_wakeup_fuse)
+        try:
+            await trio.Path(mountpoint_path / "__shutdown_fuse__").exists()
+        except OSError:
+            pass
         await trio.run_sync_in_worker_thread(fuse_thread_stopped.wait)
-        logger.info("Fuse thread stopped", mountpoint=mountpoint)
+        logger.info("Fuse thread stopped", mountpoint=mountpoint_path)
