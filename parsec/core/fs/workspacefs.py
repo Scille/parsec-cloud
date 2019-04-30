@@ -215,14 +215,23 @@ class WorkspaceFS:
 
     # Shutil-like interface
 
-    def move(self, source: AnyPath, destination: AnyPath):
+    async def move(self, source: AnyPath, destination: AnyPath):
         source = FsPath(source)
         destination = FsPath(destination)
+        if source.parent == destination.parent:
+            return await self.rename(source, destination)
+        # TODO - reference implementation:
+        # https://github.com/python/cpython/blob/3.7/Lib/shutil.py#L525
         raise NotImplementedError
 
-    def rmtree(self, path: AnyPath):
+    async def rmtree(self, path: AnyPath):
         path = FsPath(path)
-        raise NotImplementedError
+        async for child in self.iterdir(path):
+            if await self.is_dir(child):
+                await self.rmtree(child)
+            else:
+                await self.unlink(child)
+        await self.rmdir(child)
 
     # Left to migrate
 
