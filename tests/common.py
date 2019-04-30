@@ -10,7 +10,7 @@ import attr
 import pendulum
 
 from parsec.core.logged_core import LoggedCore
-from parsec.core.fs import FS
+from parsec.core.fs import UserFS, FS
 from parsec.core.persistent_storage import PersistentStorage
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.api.transport import Transport, TransportError
@@ -181,24 +181,30 @@ async def create_shared_workspace(name, creator, *shared_with):
             if isinstance(x, LoggedCore):
                 # In case core has been passed
                 spies.append(stack.enter_context(x.event_bus.listen()))
-                fss.append(x.fs)
-            elif isinstance(x, FS):
+                fss.append(x.user_fs)
+            elif isinstance(x, UserFS):
                 fss.append(x)
+            elif isinstance(x, FS):
+                fss.append(x.user_fs)
             else:
                 raise ValueError(f"{x!r} is not a {FS!r} or a {LoggedCore!r}")
 
-        creator_fs, *shared_with_fss = fss
-        path = f"/{name}"
-        await creator_fs.workspace_create(path)
-        await creator_fs.sync(path)
-        for recipient_fs in shared_with_fss:
-            if recipient_fs.device.user_id == creator_fs.device.user_id:
-                await recipient_fs.sync("/")
+        creator_user_fs, *shared_with_fss = fss
+        wid = await creator_user_fs.workspace_create(name)
+        await creator_user_fs.sync()
+        workspace = creator_user_fs.get_workspace(wid)
+        await workspace.sync("/")
+
+        for recipient_user_fs in shared_with_fss:
+            if recipient_user_fs.device.user_id == creator_user_fs.device.user_id:
+                await recipient_user_fs.sync()
             else:
-                await creator_fs.share(path, recipient_fs.device.user_id)
-                await recipient_fs.process_last_messages()
-                await recipient_fs.sync("/")
+                await creator_user_fs.workspace_share(wid, recipient_user_fs.device.user_id)
+                await recipient_user_fs.process_last_messages()
+                await recipient_user_fs.sync()
 
         with trio.fail_after(1):
             for spy in spies:
                 await spy.wait("backend.listener.restarted")
+
+        return wid
