@@ -74,69 +74,6 @@ class WorkspaceFS:
     async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
 
-    # Legacy methods - to remove after the FS class has been completely removed
-
-    async def entry_rename(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> AccessID:
-        return await self.entry_transactions.entry_rename(src, dst, overwrite)
-
-    async def folder_create(self, path: FsPath) -> AccessID:
-        return await self.entry_transactions.folder_create(path)
-
-    async def folder_delete(self, path: FsPath) -> AccessID:
-        return await self.entry_transactions.folder_delete(path)
-
-    async def file_create(self, path: FsPath, open: bool = True) -> Tuple[AccessID, FileDescriptor]:
-        return await self.entry_transactions.file_create(path, open=open)
-
-    async def file_open(self, path: FsPath, mode="rw") -> Tuple[AccessID, FileDescriptor]:
-        return await self.entry_transactions.file_open(path, mode=mode)
-
-    async def file_delete(self, path: FsPath) -> AccessID:
-        return await self.entry_transactions.file_delete(path)
-
-    async def fd_close(self, fd: int) -> None:
-        await self.file_transactions.fd_close(fd)
-
-    async def fd_seek(self, fd: int, offset: int) -> None:
-        await self.file_transactions.fd_seek(fd, offset)
-
-    async def fd_resize(self, fd: int, length: int) -> None:
-        await self.file_transactions.fd_resize(fd, length)
-
-    async def fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
-        return await self.file_transactions.fd_write(fd, content, offset)
-
-    async def fd_flush(self, fd: int) -> None:
-        await self.file_transactions.fd_flush(fd)
-
-    async def fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
-        return await self.file_transactions.fd_read(fd, size, offset)
-
-    async def file_write(self, path: FsPath, content: bytes, offset: int = 0) -> int:
-        _, fd = await self.file_open(path, "rw")
-        try:
-            if offset:
-                await self.fd_seek(fd, offset)
-            return await self.fd_write(fd, content)
-        finally:
-            await self.fd_close(fd)
-
-    async def file_resize(self, path: FsPath, length: int) -> None:
-        _, fd = await self.file_open(path, "w")
-        try:
-            await self.fd_resize(fd, length)
-        finally:
-            await self.fd_close(fd)
-
-    async def file_read(self, path: FsPath, size: int = -1, offset: int = 0) -> bytes:
-        _, fd = await self.file_open(path, "r")
-        try:
-            if offset:
-                await self.fd_seek(fd, offset)
-            return await self.fd_read(fd, size)
-        finally:
-            await self.fd_close(fd)
-
     # Pathlib-like interface
 
     async def is_dir(self, path: AnyPath) -> bool:
