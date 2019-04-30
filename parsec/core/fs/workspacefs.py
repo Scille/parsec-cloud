@@ -93,8 +93,13 @@ class WorkspaceFS:
     async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(path)
+        if "children" not in info:
+            raise NotADirectoryError(str(path))
         for child in info["children"]:
             yield path / child
+
+    async def listdir(self, path: AnyPath) -> Iterator[FsPath]:
+        return [child async for child in self.iterdir(path)]
 
     async def rename(self, source: AnyPath, destination: AnyPath, overwrite: bool = True) -> None:
         source = FsPath(source)
@@ -172,7 +177,7 @@ class WorkspaceFS:
                 await self.rmtree(child)
             else:
                 await self.unlink(child)
-        await self.rmdir(child)
+        await self.rmdir(path)
 
     # Left to migrate
 
