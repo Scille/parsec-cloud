@@ -9,7 +9,7 @@ class ThreadFSAccess:
     # Entry transactions
 
     def entry_info(self, path):
-        return self._portal.run(self.workspace_fs.entry_info, path)
+        return self._portal.run(self.workspace_fs.entry_transactions.entry_info, path)
 
     def entry_rename(self, source, destination, *, overwrite):
         return self._portal.run(
