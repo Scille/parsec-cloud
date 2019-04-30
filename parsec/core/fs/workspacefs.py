@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import inspect
-from typing import Tuple, Union, Iterator
+from typing import Union, Iterator
 from uuid import UUID
 
+from parsec.core.types import FsPath, AccessID
 from parsec.core.local_storage import LocalStorageMissingEntry
-from parsec.core.types import FsPath, AccessID, FileDescriptor
 from parsec.core.fs.file_transactions import FileTransactions
 from parsec.core.fs.entry_transactions import EntryTransactions
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss

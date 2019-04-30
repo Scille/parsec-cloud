@@ -5,13 +5,7 @@ from unittest.mock import ANY
 from uuid import uuid4
 from pendulum import Pendulum
 
-from parsec.core.types import (
-    WorkspaceEntry,
-    WorkspaceRole,
-    ManifestAccess,
-    LocalUserManifest,
-    FsPath,
-)
+from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess, LocalUserManifest
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
