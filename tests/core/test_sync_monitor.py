@@ -19,6 +19,6 @@ async def test_autosync_on_modification(mock_clock, running_backend, alice_core,
 
     await alice2_fs.sync("/")
     workspace2 = alice2_fs.user_fs.get_workspace(wid)
-    stat = await workspace.entry_info("/foo")
-    stat2 = await workspace2.entry_info("/foo")
+    stat = await workspace.path_info("/foo")
+    stat2 = await workspace2.path_info("/foo")
     assert stat == stat2

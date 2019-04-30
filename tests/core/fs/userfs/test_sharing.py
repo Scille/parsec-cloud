@@ -97,8 +97,8 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
 
     aw = alice_user_fs.get_workspace(wid)
     bw = bob_user_fs.get_workspace(wid)
-    aw_stat = await aw.entry_info(FsPath("/"))
-    bw_stat = await bw.entry_info(FsPath("/"))
+    aw_stat = await aw.path_info("/")
+    bw_stat = await bw.path_info("/")
     # TODO: currently workspace minimal sync in userfs cannot
     # update need_sync field
     aw_stat.pop("need_sync")
@@ -134,8 +134,8 @@ async def test_share_workspace_then_rename_it(
     await aw.sync("/")
     await bw.sync("/")
 
-    aw_stat = await aw.entry_info(FsPath("/"))
-    bw_stat = await bw.entry_info(FsPath("/"))
+    aw_stat = await aw.path_info("/")
+    bw_stat = await bw.path_info("/")
     assert aw_stat == bw_stat
     assert aw_stat["id"] == wid
 
@@ -314,13 +314,13 @@ async def test_share_with_sharing_name_already_taken(
 
     assert len(bob_user_fs.get_user_manifest().workspaces) == 3
 
-    b_aw_stat = await bob_user_fs.get_workspace(awid).entry_info(FsPath("/"))
-    a_aw_stat = await alice_user_fs.get_workspace(awid).entry_info(FsPath("/"))
+    b_aw_stat = await bob_user_fs.get_workspace(awid).path_info("/")
+    a_aw_stat = await alice_user_fs.get_workspace(awid).path_info("/")
     b_aw_stat.pop("need_sync")
     a_aw_stat.pop("need_sync")
     assert b_aw_stat == a_aw_stat
 
-    b_bw_stat = await bob_user_fs.get_workspace(bwid).entry_info(FsPath("/"))
+    b_bw_stat = await bob_user_fs.get_workspace(bwid).path_info("/")
     assert b_bw_stat["id"] == bwid
     # TODO: currently workspaces with same name shadow each other
     # should be solve once legacy FS class is dropped
@@ -388,8 +388,8 @@ async def test_share_workspace_then_conflict_on_rights(
     assert am == expected
     assert a2m == am
 
-    a_w_stat = await alice_user_fs.get_workspace(wid).entry_info(FsPath("/"))
-    a2_w_stat = await alice2_user_fs.get_workspace(wid).entry_info(FsPath("/"))
+    a_w_stat = await alice_user_fs.get_workspace(wid).path_info("/")
+    a2_w_stat = await alice2_user_fs.get_workspace(wid).path_info("/")
 
     a_w_info = await alice_user_fs.get_workspace(wid).workspace_info()
     a2_w_info = await alice2_user_fs.get_workspace(wid).workspace_info()

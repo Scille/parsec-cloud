@@ -133,7 +133,7 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
     if x < 10:
         path = fs_state.get_path()
         try:
-            stat = await workspace.entry_info(path)
+            stat = await workspace.path_info(path)
             fs_state.add_stat(id, "stat_ok", f"path={path}, returned stats={stat!r}")
         except OSError as exc:
             fs_state.add_stat(id, "stat_bad", f"path={path}, raised {exc!r}")
