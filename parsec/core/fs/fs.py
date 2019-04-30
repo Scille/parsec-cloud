@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import math
 from typing import Dict
 from uuid import UUID
 
@@ -105,7 +104,7 @@ class FS:
             }
 
         workspace, _ = self._get_workspace(f"/{workspace_name}")
-        entry_info = await workspace.entry_info(subpath)
+        entry_info = await workspace.entry_transactions.entry_info(subpath)
 
         # Workspace info
         if subpath.is_root():
@@ -130,53 +129,53 @@ class FS:
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_write(subpath, content, offset)
+        return await workspace.write_bytes(subpath, content, offset)
 
     async def file_truncate(self, path: str, length: int) -> None:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_resize(subpath, length)
+        return await workspace.truncate(subpath, length)
 
-    async def file_read(self, path: str, size: int = math.inf, offset: int = 0) -> bytes:
+    async def file_read(self, path: str, size: int = -1, offset: int = 0) -> bytes:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.file_read(subpath, size, offset)
+        return await workspace.read_bytes(subpath, size, offset)
 
     async def file_fd_open(self, path: str, mode="rw") -> int:
         workspace, subpath = self._get_workspace(path)
-        _, fd = await workspace.file_open(subpath, mode)
+        _, fd = await workspace.entry_transactions.file_open(subpath, mode)
         return self._put_fd(workspace, fd)
 
     async def file_fd_close(self, fd: int) -> None:
         workspace, fd = self._pop_fd(fd)
-        await workspace.fd_close(fd)
+        await workspace.file_transactions.fd_close(fd)
 
     async def file_fd_seek(self, fd: int, offset: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.fd_seek(fd, offset)
+        await workspace.file_transactions.fd_seek(fd, offset)
 
     async def file_fd_truncate(self, fd: int, length: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.fd_resize(fd, length)
+        await workspace.file_transactions.fd_resize(fd, length)
 
     async def file_fd_write(self, fd: int, content: bytes, offset: int = None) -> int:
         workspace, fd = self._get_fd(fd)
-        return await workspace.fd_write(fd, content, offset)
+        return await workspace.file_transactions.fd_write(fd, content, offset)
 
     async def file_fd_flush(self, fd: int) -> None:
         workspace, fd = self._get_fd(fd)
-        await workspace.fd_flush(fd)
+        await workspace.file_transactions.fd_flush(fd)
 
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
         workspace, fd = self._get_fd(fd)
-        return await workspace.fd_read(fd, size, offset)
+        return await workspace.file_transactions.fd_read(fd, size, offset)
 
     async def touch(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        _, fd = await workspace.file_create(subpath, open=False)
+        _, fd = await workspace.entry_transactions.file_create(subpath, open=False)
         assert fd is None
 
     async def file_create(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        _, fd = await workspace.file_create(subpath)
+        _, fd = await workspace.entry_transactions.file_create(subpath)
         return self._put_fd(workspace, fd)
 
     async def mkdir(self, path: str) -> None:
@@ -184,7 +183,7 @@ class FS:
 
     async def folder_create(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        return await workspace.folder_create(subpath)
+        return await workspace.entry_transactions.folder_create(subpath)
 
     async def workspace_create(self, path: str) -> UUID:
         cooked_path = FsPath(path)
@@ -220,15 +219,15 @@ class FS:
         workspace_dst, subpath_dst = self._get_workspace(dst)
         assert workspace
         assert workspace.workspace_name == workspace_dst.workspace_name
-        await workspace.entry_rename(subpath_src, subpath_dst)
+        await workspace.entry_transactions.entry_rename(subpath_src, subpath_dst)
 
     async def file_delete(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        await workspace.file_delete(subpath)
+        await workspace.entry_transactions.file_delete(subpath)
 
     async def folder_delete(self, path: str) -> None:
         workspace, subpath = self._get_workspace(path)
-        await workspace.folder_delete(subpath)
+        await workspace.entry_transactions.folder_delete(subpath)
 
     async def sync(self, path: str, recursive: bool = True) -> None:
         workspace_name, subpath = self._split_path(path)
@@ -240,7 +239,7 @@ class FS:
 
         else:
             workspace, _ = self._get_workspace(f"/{workspace_name}")
-            stat = await workspace.entry_info(FsPath("/"))
+            stat = await workspace.entry_transactions.entry_info(FsPath("/"))
             if stat["is_placeholder"]:
                 await self.user_fs.sync()
             await workspace.sync(subpath, recursive)

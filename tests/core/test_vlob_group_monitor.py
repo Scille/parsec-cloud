@@ -12,7 +12,7 @@ async def test_vlob_group_notif_on_new_entry_sync(
     mock_clock, running_backend, alice_core, alice2_fs, type
 ):
     mock_clock.rate = 1
-    await create_shared_workspace("/w", alice_core, alice2_fs)
+    await create_shared_workspace("w", alice_core, alice2_fs)
     # Suspend time to freeze core background tasks
     mock_clock.rate = 0
 
@@ -90,7 +90,7 @@ async def test_vlob_group_notif_on_new_nested_entry_sync(
 ):
     mock_clock.rate = 1
     # A workspace already exists and is synced between parties
-    await create_shared_workspace("/w", alice_core, alice2_fs)
+    await create_shared_workspace("w", alice_core, alice2_fs)
     # Suspend time to freeze core background tasks
     mock_clock.rate = 0
 

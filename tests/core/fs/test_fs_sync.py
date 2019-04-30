@@ -4,6 +4,7 @@ import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
 
+from parsec.api.protocole import VlobGroupRole
 from parsec.core.backend_connection import BackendNotAvailable
 
 from tests.common import freeze_time, create_shared_workspace
@@ -29,13 +30,14 @@ async def assert_same_fs(fs1, fs2):
 
 
 @pytest.mark.trio
-async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
+async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-02"):
-        w_id = await alice_fs.workspace_create("/w")
+        w_id = await alice_user_fs.workspace_create("w")
+        workspace = alice_user_fs.get_workspace(w_id)
 
-    with alice_fs.event_bus.listen() as spy:
+    with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await alice_fs.sync("/w")
+            await workspace.sync("/")
     spy.assert_events_occured(
         [
             ("fs.entry.minimal_synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 3)),
@@ -44,45 +46,47 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
         ]
     )
 
-    await alice2_fs.sync("/")
+    workspace2 = alice_user_fs.get_workspace(w_id)
+    await alice_user_fs.sync()
+    await workspace2.sync("/")
 
-    stat = await alice_fs.stat("/w")
-    assert stat == {
+    workspace_info = await workspace.workspace_info()
+    path_info = await workspace.path_info("/")
+    assert path_info == {
         "type": "folder",
         "id": w_id,
-        "is_folder": True,
-        "size": 0,
-        "admin_right": True,
-        "read_right": True,
-        "write_right": True,
         "is_placeholder": False,
         "need_sync": False,
-        "base_version": 2,
+        "base_version": 1,
+        "children": [],
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
-        # TODO: participants&creator fields are deprecated
-        # "participants": [alice.user_id],
+    }
+    assert workspace_info == {
+        "role": VlobGroupRole.OWNER,
         "participants": spy.ANY,
         "creator": alice.user_id,
-        "children": [],
     }
-    stat2 = await alice2_fs.stat("/w")
-    assert stat == stat2
+    workspace_info2 = await workspace.workspace_info()
+    path_info2 = await workspace.path_info("/")
+    assert workspace_info == workspace_info2
+    assert path_info == path_info2
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["file", "folder"])
-async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("w", alice_fs, alice2_fs)
+async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user_fs):
+    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
     with freeze_time("2000-01-02"):
         if type == "file":
-            await alice_fs.touch("/w/foo")
+            await workspace.touch("/foo")
         else:
-            await alice_fs.mkdir("/w/foo")
+            await workspace.mkdir("/foo")
 
-    with alice_fs.event_bus.listen() as spy:
+    with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await alice_fs.sync("/w")
+            await workspace.sync("/")
     spy.assert_events_occured(
         [
             ("fs.entry.minimal_synced", {"path": "/w/foo", "id": spy.ANY}, Pendulum(2000, 1, 3)),
@@ -91,14 +95,14 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
         ]
     )
 
-    await alice2_fs.sync("/w")
+    workspace2 = alice2_user_fs.get_workspace(wid)
+    await workspace2.sync("/")
 
-    stat = await alice_fs.stat("/w/foo")
+    info = await workspace.path_info("/foo")
     if type == "file":
-        assert stat == {
+        assert info == {
             "type": "file",
             "id": ANY,
-            "is_folder": False,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -107,11 +111,9 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
             "size": 0,
         }
     else:
-        assert stat == {
+        assert info == {
             "type": "folder",
             "id": ANY,
-            "is_folder": True,
-            "size": 0,
             "is_placeholder": False,
             "need_sync": False,
             "base_version": 1,
@@ -119,13 +121,13 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
             "updated": Pendulum(2000, 1, 2),
             "children": [],
         }
-    stat2 = await alice2_fs.stat("/w/foo")
-    assert stat == stat2
+    info2 = await workspace2.path_info("/foo")
+    assert info == info2
 
 
 @pytest.mark.trio
 async def test_simple_sync(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # 0) Make sure workspace is loaded for alice2
     # (otherwise won't get synced event during step 2)
@@ -175,7 +177,7 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
 
 @pytest.mark.trio
 async def test_fs_recursive_sync(running_backend, alice_fs):
-    await create_shared_workspace("/w", alice_fs)
+    await create_shared_workspace("w", alice_fs)
 
     # 1) Create data
 
@@ -228,7 +230,7 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
 
 @pytest.mark.trio
 async def test_cross_sync(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # 1) Both fs have things to sync
 
@@ -301,7 +303,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
 
 @pytest.mark.trio
 async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # Growth by truncate is special because no blocks are created to hold
     # the newly created null bytes
@@ -325,7 +327,7 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs
 async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # TODO: concurrency on workspace name is no longer possible
     # TODO: break this test down to reduce complexity
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # 1) Create existing items in both fs
 
@@ -591,7 +593,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
 
 @pytest.mark.trio
 async def test_create_already_existing_file_vlob(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # First create data locally
     with freeze_time("2000-01-02"):

@@ -102,7 +102,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def rename(self, file_name, new_name):
         try:
             self.jobs_ctx.run(
-                self.workspace_fs.entry_rename,
+                self.workspace_fs.rename,
                 self.current_directory / file_name,
                 self.current_directory / new_name,
             )
@@ -144,21 +144,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if file_type == FileType.Folder:
                 self._delete_folder(path)
             else:
-                self.jobs_ctx.run(self.workspace_fs.file_delete, path)
+                self.jobs_ctx.run(self.workspace_fs.unlink, path)
             return True
         except:
             return False
 
     def _delete_folder(self, path):
-        result = self.jobs_ctx.run(self.workspace_fs.entry_info, path)
-        for child in result.get("children", []):
-            child_path = path / child
-            file_infos = self.jobs_ctx.run(self.workspace_fs.entry_info, child_path)
-            if file_infos["type"] == "folder":
-                self._delete_folder(child_path)
-            else:
-                self.jobs_ctx.run(self.workspace_fs.file_delete, child_path)
-        self.jobs_ctx.run(self.workspace_fs.folder_delete, path)
+        self.jobs_ctx.run(self.workspace_fs.rmtree, path)
 
     def open_files(self):
         files = self.table_files.selected_files()
@@ -177,7 +169,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def open_file(self, file_name):
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
-            self.workspace_fs.workspace_entry.access.id, self.current_directory / file_name
+            self.workspace_fs.workspace_id, self.current_directory / file_name
         )
         desktop.open_file(str(path))
 
@@ -213,9 +205,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.label_current_directory.show()
         self.label_caret.show()
         dir_path = self.current_directory
-        dir_stat = self.jobs_ctx.run(self.workspace_fs.entry_info, dir_path)
+        dir_stat = self.jobs_ctx.run(self.workspace_fs.path_info, dir_path)
         for i, child in enumerate(dir_stat["children"]):
-            child_stat = self.jobs_ctx.run(self.workspace_fs.entry_info, dir_path / child)
+            child_stat = self.jobs_ctx.run(self.workspace_fs.path_info, dir_path / child)
             if child_stat["type"] == "folder":
                 self.table_files.add_folder(child, not child_stat["need_sync"])
             else:
@@ -244,7 +236,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         for src, dst in files:
             file_exists = False
             try:
-                self.jobs_ctx.run(self.workspace_fs.entry_info, dst)
+                self.jobs_ctx.run(self.workspace_fs.path_info, dst)
                 file_exists = True
             except FileNotFoundError:
                 file_exists = False
@@ -299,7 +291,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         files = []
         total_size = 0
         try:
-            self.jobs_ctx.run(self.workspace_fs.folder_create, dst)
+            self.jobs_ctx.run(self.workspace_fs.mkdir, dst)
         except FileExistsError:
             pass
         for f in src.iterdir():
@@ -315,12 +307,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def import_file(self, src, dst, current_size, loading_dialog):
         loading_dialog.set_current_file(src.name)
-        fd_out = None
         try:
             try:
-                _, fd_out = self.jobs_ctx.run(self.workspace_fs.file_create, dst)
+                # TODO: use `self.workspace_fs.open(dst, "w")` when implemented
+                self.jobs_ctx.run(self.workspace_fs.touch, dst)
             except FileExistsError:
-                pass
+                self.jobs_ctx.run(self.workspace_fs.truncate, 0)
             with open(src, "rb") as fd_in:
                 i = 0
                 read_size = 0
@@ -328,7 +320,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     chunk = fd_in.read(65536)
                     if not chunk:
                         break
-                    self.jobs_ctx.run(self.workspace_fs.fd_write, fd_out, chunk)
+                    self.jobs_ctx.run(self.workspace_fs.write_bytes, dst, chunk, read_size)
                     read_size += len(chunk)
                     i += 1
                     if i % 5 == 0:
@@ -344,10 +336,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
             traceback.print_exc()
         finally:
-            if fd_out:
-                self.jobs_ctx.run(self.workspace_fs.fd_close, fd_out)
             if loading_dialog.is_cancelled:
-                self.jobs_ctx.run(self.workspace_fs.file_delete, dst)
+                self.jobs_ctx.run(self.workspace_fs.unlink, dst)
 
     # slot
     def import_files_clicked(self):
@@ -388,7 +378,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _create_folder(self, folder_name):
         try:
             dir_path = self.current_directory / folder_name
-            self.jobs_ctx.run(self.workspace_fs.folder_create, dir_path)
+            self.jobs_ctx.run(self.workspace_fs.mkdir, dir_path)
             return True
         except FileExistsError:
             show_error(self, _("A folder with the same name already exists."))
