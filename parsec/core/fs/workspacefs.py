@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import inspect
-from typing import Tuple, Union
+from typing import Tuple, Union, Iterator
 from uuid import UUID
 
 from parsec.core.local_storage import LocalStorageMissingEntry
@@ -71,7 +71,7 @@ class WorkspaceFS:
             "participants": list(manifest.participants),
         }
 
-    async def entry_info(self, path: AnyPath) -> dict:
+    async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
 
     # Legacy methods - to remove after the FS class has been completely removed
@@ -148,6 +148,12 @@ class WorkspaceFS:
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(FsPath(path))
         return info["type"] == "file"
+
+    async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
+        path = FsPath(path)
+        info = await self.entry_transactions.entry_info(path)
+        for child in info["children"]:
+            yield path / child
 
     async def rename(self, source: AnyPath, destination: AnyPath, overwrite: bool = True) -> None:
         source = FsPath(source)
