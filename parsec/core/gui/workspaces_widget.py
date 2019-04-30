@@ -5,7 +5,7 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.types import FsPath, WorkspaceEntry
+from parsec.core.types import WorkspaceEntry
 from parsec.core.fs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
@@ -52,12 +52,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def add_workspace(self, workspace_fs, count=None):
         workspace_info = self.jobs_ctx.run(workspace_fs.workspace_info)
-        workspace_files = self.jobs_ctx.run(workspace_fs.entry_info, FsPath("/"))
+        root_info = self.jobs_ctx.run(workspace_fs.path_info, "/")
         button = WorkspaceButton(
             workspace_fs,
             participants=workspace_info["participants"],
             is_creator=workspace_info["creator"] == self.core.device.user_id,
-            files=workspace_files["children"][:4],
+            files=root_info["children"][:4],
             enable_workspace_color=self.core.config.gui_workspace_color,
         )
         if count is None:
@@ -73,7 +73,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.file_clicked.connect(self.open_workspace_file)
         try:
             self.jobs_ctx.run(
-                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_entry.access.id
+                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_id
             )
         except (MountpointAlreadyMounted, MountpointDisabled):
             pass
@@ -81,7 +81,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def open_workspace_file(self, workspace_fs, file_name):
         try:
             self.jobs_ctx.run(
-                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_entry.access.id
+                self.core.mountpoint_manager.mount_workspace, workspace_fs.workspace_id
             )
         except MountpointAlreadyMounted:
             pass
@@ -89,7 +89,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             show_error(self, _("Can not acces this file."))
             return
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
-            workspace_fs.workspace_entry.access.id, file_name
+            workspace_fs.workspace_id, file_name
         )
         desktop.open_file(str(path))
 
@@ -106,7 +106,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not new_name:
             return
         try:
-            workspace_id = workspace_button.workspace_fs.workspace_entry.access.id
+            workspace_id = workspace_button.workspace_fs.workspace_id
             self.jobs_ctx.run(self.core.user_fs.workspace_rename, workspace_id, new_name)
             workspace_button.workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             workspace_button.name = new_name
