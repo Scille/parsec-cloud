@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from math import inf
 from typing import Optional
 
 from async_generator import asynccontextmanager
@@ -238,7 +237,7 @@ class FileTransactions:
         # Notify
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
 
-    async def fd_read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
+    async def fd_read(self, fd: FileDescriptor, size: int = -1, offset: int = None) -> bytes:
         # Loop over attemps
         missing = []
         while True:
@@ -259,6 +258,7 @@ class FileTransactions:
 
                 # Prepare
                 start = offset
+                size = manifest.size if size < 0 else size
                 end = min(offset + size, manifest.size)
                 data, missing = self._attempt_read(manifest, start, end)
 

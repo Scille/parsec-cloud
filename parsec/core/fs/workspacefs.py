@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import math
 import inspect
 from typing import Tuple, Union
 from uuid import UUID
@@ -129,7 +128,7 @@ class WorkspaceFS:
         finally:
             await self.fd_close(fd)
 
-    async def file_read(self, path: FsPath, size: int = math.inf, offset: int = 0) -> bytes:
+    async def file_read(self, path: FsPath, size: int = -1, offset: int = 0) -> bytes:
         _, fd = await self.file_open(path, "r")
         try:
             if offset:
@@ -192,7 +191,7 @@ class WorkspaceFS:
         finally:
             await self.file_transactions.fd_close(fd)
 
-    async def read_bytes(self, path: AnyPath, size: int = math.inf, offset: int = 0) -> bytes:
+    async def read_bytes(self, path: AnyPath, size: int = -1, offset: int = 0) -> bytes:
         path = FsPath(path)
         _, fd = await self.entry_transactions.file_open(path, "r")
         try:
