@@ -43,8 +43,12 @@ class WorkspaceFS:
         )
 
     @property
-    def workspace_name(self):
+    def workspace_name(self) -> str:
         return self.workspace_entry.name
+
+    @property
+    def workspace_id(self) -> AccessID:
+        return self.workspace_entry.access.id
 
     # Information
 
