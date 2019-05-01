@@ -76,7 +76,7 @@ class PathElement:
         root, workspace, *tail = Path(self.absolute_path).parts
 
         # Do not allow to go outside the inital workspace
-        assert str(self.parsec_root).endswith("-" + workspace)
+        assert str(self.parsec_root).endswith(workspace)
 
         return self.parsec_root / Path(*tail)
 

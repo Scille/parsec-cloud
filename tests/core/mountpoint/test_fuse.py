@@ -36,11 +36,11 @@ def test_delete_then_close_file(mountpoint_service):
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, alice_user_fs, event_bus):
-    mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
+    mountpoint_path = base_mountpoint / "w"
     wid = await alice_user_fs.workspace_create("w")
     await alice_fs.touch("/w/bar.txt")
 
-    bar_txt = trio.Path(f"{mountpoint}/bar.txt")
+    bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
 
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
@@ -48,14 +48,14 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, alice_u
 
         with event_bus.listen() as spy:
             await mountpoint_manager.mount_workspace(wid)
-            command = f"fusermount -u {mountpoint}".split()
+            command = f"fusermount -u {mountpoint_path}".split()
 
             returncode = await trio.Process(command).wait()
             with trio.fail_after(1):
                 # fusermount might fail for some reasons
                 while returncode:
                     returncode = await trio.Process(command).wait()
-                await spy.wait("mountpoint.stopped", kwargs={"mountpoint": mountpoint})
+                await spy.wait("mountpoint.stopped", kwargs={"mountpoint": mountpoint_path})
 
         assert not await bar_txt.exists()
 
@@ -63,19 +63,100 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, alice_u
 @pytest.mark.linux
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs, alice_fs, event_bus):
+async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs, alice_fs):
     wid = await alice_user_fs.workspace_create("w")
+    mountpoint_path = base_mountpoint / "w"
 
     class ToughLuckError(Exception):
         pass
 
     def _crash_fuse(*args, **kwargs):
-        raise ToughLuckError()
+        raise ToughLuckError("Tough luck...")
 
     with patch("parsec.core.mountpoint.fuse_runner.FUSE", new=_crash_fuse):
         async with mountpoint_manager_factory(
-            alice_user_fs, event_bus, base_mountpoint
+            alice_user_fs, alice_user_fs.event_bus, base_mountpoint
         ) as mountpoint_manager:
 
-            with pytest.raises(MountpointDriverCrash):
+            with pytest.raises(MountpointDriverCrash) as exc:
                 await mountpoint_manager.mount_workspace(wid)
+            assert exc.value.args == (
+                f"Fuse has crashed on {mountpoint_path}: Unknown error code: Tough luck...",
+            )
+
+
+@pytest.mark.linux
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_mountpoint_path_already_in_use_concurrent_with_non_empty_dir(
+    monkeypatch, base_mountpoint, alice_user_fs
+):
+    wid = await alice_user_fs.workspace_create("w")
+    mountpoint_path = base_mountpoint.absolute() / f"w"
+
+    # Here instead of checking the path can be used as a mountpoint, we
+    # actually make it unsuitable to check the following behavior
+
+    async def _mocked_bootstrap_mountpoint(*args):
+        trio_mountpoint_path = trio.Path(f"{mountpoint_path}")
+        await trio_mountpoint_path.mkdir(parents=True)
+        await (trio_mountpoint_path / "bar.txt").touch()
+        st_dev = (await trio_mountpoint_path.stat()).st_dev
+        return mountpoint_path, st_dev
+
+    monkeypatch.setattr(
+        "parsec.core.mountpoint.fuse_runner._bootstrap_mountpoint", _mocked_bootstrap_mountpoint
+    )
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_user_fs, alice_user_fs.event_bus, base_mountpoint
+    ) as alice_mountpoint_manager:
+        with pytest.raises(MountpointDriverCrash) as exc:
+            await alice_mountpoint_manager.mount_workspace(wid)
+        assert exc.value.args == (f"Fuse has crashed on {mountpoint_path}: EPERM",)
+
+
+@pytest.mark.linux
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
+    monkeypatch, base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
+):
+    # Create a workspace and make it available in two devices
+    wid = await alice_user_fs.workspace_create("w")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.sync("/")
+    await alice2_user_fs.sync()
+
+    mountpoint_path = base_mountpoint.absolute() / f"w"
+
+    async def _mount_alice2_w_mountpoint(*, task_status=trio.TASK_STATUS_IGNORED):
+        async with mountpoint_manager_factory(
+            alice2_user_fs, alice2_user_fs.event_bus, base_mountpoint
+        ) as alice2_mountpoint_manager:
+            await alice2_mountpoint_manager.mount_workspace(wid)
+            task_status.started()
+
+    async with trio.open_nursery() as nursery:
+        await nursery.start(_mount_alice2_w_mountpoint)
+
+        # Here instead of checking the path can be used as a mountpoint, we
+        # actually make it unsuitable to check the following behavior
+
+        async def _mocked_bootstrap_mountpoint(*args):
+            trio_mountpoint_path = trio.Path(f"{mountpoint_path}")
+            st_dev = (await trio_mountpoint_path.stat()).st_dev
+            return mountpoint_path, st_dev
+
+        monkeypatch.setattr(
+            "parsec.core.mountpoint.fuse_runner._bootstrap_mountpoint", _mocked_bootstrap_mountpoint
+        )
+
+        # Now we can start fuse
+        async with mountpoint_manager_factory(
+            alice_user_fs, alice_user_fs.event_bus, base_mountpoint
+        ) as alice_mountpoint_manager:
+            with pytest.raises(MountpointDriverCrash) as exc:
+                await alice_mountpoint_manager.mount_workspace(wid)
+            assert exc.value.args == (f"Fuse has crashed on {mountpoint_path}: EPERM",)
