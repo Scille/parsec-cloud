@@ -92,7 +92,7 @@ async def test_mountpoint_path_already_in_use_concurrent_with_non_empty_dir(
     monkeypatch, base_mountpoint, alice_user_fs
 ):
     wid = await alice_user_fs.workspace_create("w")
-    mountpoint_path = base_mountpoint.absolute() / f"w"
+    mountpoint_path = base_mountpoint.absolute() / "w"
 
     # Here instead of checking the path can be used as a mountpoint, we
     # actually make it unsuitable to check the following behavior
@@ -129,7 +129,7 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
     await workspace.sync("/")
     await alice2_user_fs.sync()
 
-    mountpoint_path = base_mountpoint.absolute() / f"w"
+    mountpoint_path = base_mountpoint.absolute() / "w"
 
     async def _mount_alice2_w_mountpoint(*, task_status=trio.TASK_STATUS_IGNORED):
         async with mountpoint_manager_factory(
@@ -137,12 +137,13 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
         ) as alice2_mountpoint_manager:
             await alice2_mountpoint_manager.mount_workspace(wid)
             task_status.started()
+            await trio.sleep_forever()
 
     async with trio.open_nursery() as nursery:
         await nursery.start(_mount_alice2_w_mountpoint)
 
         # Here instead of checking the path can be used as a mountpoint, we
-        # actually make it unsuitable to check the following behavior
+        # actually lead it into error
 
         async def _mocked_bootstrap_mountpoint(*args):
             trio_mountpoint_path = trio.Path(f"{mountpoint_path}")
@@ -160,3 +161,6 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
             with pytest.raises(MountpointDriverCrash) as exc:
                 await alice_mountpoint_manager.mount_workspace(wid)
             assert exc.value.args == (f"Fuse has crashed on {mountpoint_path}: EPERM",)
+
+        # Test is over, stop alice2 mountpoint and exit
+        nursery.cancel_scope.cancel()

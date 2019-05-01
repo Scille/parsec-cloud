@@ -151,14 +151,15 @@ async def fuse_mountpoint_runner(
 
 
 async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev):
+    trio_mountpoint_path = trio.Path(mountpoint_path)
 
     # Polling until fuse is ready
     while True:
         await trio.sleep(0.01)
-        trio_mountpoint_path = trio.Path(mountpoint_path)
         try:
             if (await trio_mountpoint_path.stat()).st_dev != initial_st_dev:
                 break
+
         except FileNotFoundError:
             pass
 
