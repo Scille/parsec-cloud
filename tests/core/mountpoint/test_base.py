@@ -88,8 +88,8 @@ async def test_mountpoint_path_already_in_use(
     await workspace.sync("/")
     await alice2_user_fs.sync()
     # Easily differenciate alice&alice2
-    await alice2_user_fs.get_workspace(wid).file_create(FsPath("/I_am_alice2.txt"))
-    await alice_user_fs.get_workspace(wid).file_create(FsPath("/I_am_alice.txt"))
+    await alice2_user_fs.get_workspace(wid).touch("/I_am_alice2.txt")
+    await alice_user_fs.get_workspace(wid).touch("/I_am_alice.txt")
 
     naive_workspace_path = f"{base_mountpoint.absolute()}/w"
 
