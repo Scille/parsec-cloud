@@ -67,6 +67,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
+        self.event_bus = event_bus
         self.config = config
 
         self.button_login_instead.clicked.connect(self.show_login_widget)
@@ -75,10 +76,15 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_bootstrap_instead.clicked.connect(self.show_bootstrap_widget)
         self.button_settings.clicked.connect(self.show_settings)
 
+        self.event_bus.connect("gui.config.changed", self.on_config_updated)
+
         if len(list_available_devices(self.config.config_dir)) == 0:
             self.show_claim_user_widget()
         else:
             self.show_login_widget()
+
+    def on_config_updated(self, event, **kwargs):
+        self.config = self.config.evolve(**kwargs)
 
     def organization_bootstrapped(self, organization, device, password):
         devices = list_available_devices(self.config.config_dir)
@@ -115,7 +121,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_with_pkcs11_clicked.emit(key_file, pkcs11_pin, pkcs11_key, pkcs11_token)
 
     def show_settings(self):
-        settings_dialog = SettingsDialog(self.config, parent=self)
+        settings_dialog = SettingsDialog(self.config, self.event_bus, parent=self)
         settings_dialog.exec_()
 
     def show_login_widget(self):

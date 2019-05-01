@@ -166,7 +166,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def show_settings_widget(self):
         self.clear_widgets()
-        settings_widget = SettingsWidget(self.core.config, parent=self)
+        settings_widget = SettingsWidget(self.core.config, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, settings_widget)
         self.menu.activate_settings()
         self.label_title.setText(_("Settings"))

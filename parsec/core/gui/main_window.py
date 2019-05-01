@@ -70,6 +70,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.logged_in.connect(self.on_logged_in)
         self.logged_out.connect(self.on_logged_out)
 
+        self.event_bus.connect("gui.config.changed", self.on_config_updated)
+
         self.setWindowTitle(
             _(
                 "Parsec - Community Edition - {} - Sovereign enclave for sharing "
@@ -77,6 +79,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ).format(PARSEC_VERSION)
         )
         self.show_login_widget()
+
+    def on_config_updated(self, event, **kwargs):
+        self.config = self.config.evolve(**kwargs)
+        save_config(self.config)
+        telemetry.init(self.config)
 
     def show_starting_guide(self):
         s = StartingGuideDialog(parent=self)
@@ -95,8 +102,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     "us improve your experience ?"
                 ),
             )
-            self.config = self.config.evolve(gui_first_launch=False, telemetry_enabled=r)
-            # TODO: send gui.config.changed event instead
+            self.event_bus.send("gui.config.changed", gui_first_launch=False, telemetry_enabled=r)
             save_config(self.config)
         telemetry.init(self.config)
 

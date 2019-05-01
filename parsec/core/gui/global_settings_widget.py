@@ -5,23 +5,33 @@ import os
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.config import save_config
 from parsec.core.gui import lang
-from parsec.core.gui import telemetry
 from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
 
 
 class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
     save_clicked = pyqtSignal()
 
-    def __init__(self, core_config, *args, **kwargs):
+    def __init__(self, core_config, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.core_config = core_config
+        self.event_bus = event_bus
         self.setupUi(self)
-        self.init()
         if os.name != "nt":
             self.widget_version.hide()
         self.button_save.clicked.connect(self.save_clicked)
+        self.checkbox_tray.setChecked(self.core_config.gui_tray_enabled)
+        current = None
+        for lg, key in lang.LANGUAGES.items():
+            self.combo_languages.addItem(lg, key)
+            if key == self.core_config.gui_language:
+                current = lg
+        if current:
+            self.combo_languages.setCurrentText(current)
+        self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
+        self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
+        self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
+
         # self.button_check_version.clicked.connect(self.check_version)
 
     # TODO: re-enable me asap !
@@ -37,26 +47,12 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
     #             ),
     #         )
 
-    def init(self):
-        self.checkbox_tray.setChecked(self.core_config.gui_tray_enabled)
-        current = None
-        for lg, key in lang.LANGUAGES.items():
-            self.combo_languages.addItem(lg, key)
-            if key == self.core_config.gui_language:
-                current = lg
-        if current:
-            self.combo_languages.setCurrentText(current)
-        self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
-        self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
-        self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
-
     def save(self):
-        self.core_config = self.core_config.evolve(
+        self.event_bus.send(
+            "gui.config.changed",
             telemetry_enabled=self.check_box_send_data.isChecked(),
             gui_tray_enabled=self.checkbox_tray.isChecked(),
             gui_language=self.combo_languages.currentData(),
             gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
             gui_workspace_color=self.check_box_workspace_color.isChecked(),
         )
-        save_config(self.core_config)
-        telemetry.init(self.core_config)
