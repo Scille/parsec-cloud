@@ -6,7 +6,7 @@ from typing import Optional
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
-from parsec.core.types import FileDescriptor
+from parsec.core.types import FileDescriptor, AccessID
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.types import Access, BlockAccess, LocalFileManifest, FileCursor
 from parsec.core.local_storage import (
@@ -93,11 +93,21 @@ class FileTransactions:
     """
 
     def __init__(
-        self, local_storage: LocalStorage, remote_loader: RemoteLoader, event_bus: EventBus
+        self,
+        workspace_id: AccessID,
+        local_storage: LocalStorage,
+        remote_loader: RemoteLoader,
+        event_bus: EventBus,
     ):
+        self.workspace_id = workspace_id
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
+
+    # Event helper
+
+    def _send_event(self, event, **kwargs):
+        self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
     # Locking helper
 
@@ -210,7 +220,7 @@ class FileTransactions:
             cursor.offset = new_offset
 
         # Notify
-        self.event_bus.send("fs.entry.updated", id=cursor.access.id)
+        self._send_event("fs.entry.updated", id=cursor.access.id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
@@ -235,7 +245,7 @@ class FileTransactions:
             self.local_storage.set_dirty_manifest(cursor.access, manifest)
 
         # Notify
-        self.event_bus.send("fs.entry.updated", id=cursor.access.id)
+        self._send_event("fs.entry.updated", id=cursor.access.id)
 
     async def fd_read(self, fd: FileDescriptor, size: int = -1, offset: int = None) -> bytes:
         # Loop over attemps

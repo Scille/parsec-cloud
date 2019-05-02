@@ -71,7 +71,8 @@ class SyncMonitor:
         updated_entries = {}
         new_event = trio.Event()
 
-        def _on_entry_updated(event, id):
+        def _on_entry_updated(event, workspace_id=None, id=None):
+            assert id is not None
             try:
                 first_updated, _ = updated_entries[id]
                 last_updated = timestamp()

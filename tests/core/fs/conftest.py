@@ -25,11 +25,15 @@ def local_folder_fs(local_folder_fs_factory, alice, alice_local_storage):
 
 
 @pytest.fixture
-def file_transactions_factory(event_bus, remote_devices_manager_factory):
+def file_transactions_factory(
+    event_bus, remote_devices_manager_factory, entry_transactions_factory
+):
     def _file_transactions_factory(device, local_storage, backend_cmds):
+        entry_transactions = entry_transactions_factory(device, local_storage, backend_cmds)
+        workspace_id = entry_transactions.workspace_id
         remote_devices_manager = remote_devices_manager_factory(device)
         remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
-        return FileTransactions(local_storage, remote_loader, event_bus)
+        return FileTransactions(workspace_id, local_storage, remote_loader, event_bus)
 
     return _file_transactions_factory
 

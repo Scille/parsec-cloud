@@ -54,11 +54,20 @@ class EntryTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
+    @property
+    def workspace_id(self):
+        return self.workspace_entry.access.id
+
     # Right management helper
 
     def _check_write_rights(self, path: FsPath):
         if self.workspace_entry.role == WorkspaceRole.READER:
             raise from_errno(errno.EACCES, str(path))
+
+    # Event helper
+
+    def _send_event(self, event, **kwargs):
+        self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
     # Look-up helpers
 
@@ -265,7 +274,7 @@ class EntryTransactions:
             self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
 
         # Send event
-        self.event_bus.send("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=parent.access.id)
 
         # Return the access id of the renamed entry
         return parent.manifest.children[source.name].id
@@ -301,7 +310,7 @@ class EntryTransactions:
             self.local_storage.clear_manifest(child.access)
 
         # Send event
-        self.event_bus.send("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=parent.access.id)
 
         # Return the access id of the removed folder
         return child.access.id
@@ -333,7 +342,7 @@ class EntryTransactions:
             self.local_storage.remove_file_reference(child.access, child.manifest)
 
         # Send event
-        self.event_bus.send("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=parent.access.id)
 
         # Return the access id of the deleted file
         return child.access.id
@@ -363,8 +372,8 @@ class EntryTransactions:
             self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
 
         # Send events
-        self.event_bus.send("fs.entry.updated", id=parent.access.id)
-        self.event_bus.send("fs.entry.updated", id=child_access.id)
+        self._send_event("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=child_access.id)
 
         # Return the access id of the created folder
         return child_access.id
@@ -395,8 +404,8 @@ class EntryTransactions:
             fd = self.local_storage.create_cursor(child_access) if open else None
 
         # Send events
-        self.event_bus.send("fs.entry.updated", id=parent.access.id)
-        self.event_bus.send("fs.entry.updated", id=child_access.id)
+        self._send_event("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=child_access.id)
 
         # Return the access id of the created file and the file descriptor
         return child_access.id, fd
