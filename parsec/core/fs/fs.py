@@ -108,17 +108,14 @@ class FS:
 
         # Workspace info
         if subpath.is_root():
-            workspace_info = await workspace.workspace_info()
-            # TODO: reeeeally hacky legacy compatibility...
-            role = workspace_info.pop("role")
+            own_role = workspace.get_workspace_entry().role
             return {
                 **entry_info,
-                **workspace_info,
                 "is_folder": True,
                 "size": 0,
-                "read_right": role is not None,
-                "write_right": role != WorkspaceRole.READER,
-                "admin_right": role in (WorkspaceRole.MANAGER, WorkspaceRole.OWNER),
+                "read_right": own_role is not None,
+                "write_right": own_role != WorkspaceRole.READER,
+                "admin_right": own_role in (WorkspaceRole.MANAGER, WorkspaceRole.OWNER),
             }
 
         # Entry info
@@ -218,7 +215,7 @@ class FS:
         workspace, subpath_src = self._get_workspace(src)
         workspace_dst, subpath_dst = self._get_workspace(dst)
         assert workspace
-        assert workspace.workspace_name == workspace_dst.workspace_name
+        assert workspace.workspace_id == workspace_dst.workspace_id
         await workspace.entry_transactions.entry_rename(subpath_src, subpath_dst)
 
     async def file_delete(self, path: str) -> None:
@@ -298,14 +295,14 @@ class FS:
         )
 
     async def get_permissions(self, path: str) -> Dict[UserID, Dict]:
-        cooked_path = FsPath(path)
-        assert cooked_path.is_workspace()
-        workspace_entry = self._get_workspace_entry_from_name(cooked_path.workspace)
-        roles = await self.user_fs.workspace_get_roles(workspace_entry.access.id)
+        workspace, subpath = self._get_workspace(path)
+        assert not subpath
+        roles = await workspace.get_user_roles()
         # TODO: reeeeally hacky legacy compatibility...
         permissions = {}
         for user_id, role in roles.items():
             permissions[user_id] = {
+                "is_owner": role == WorkspaceRole.OWNER,
                 "admin_right": role in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER),
                 "write_right": role != WorkspaceRole.READER,
                 "read_right": True,

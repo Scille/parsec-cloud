@@ -3,7 +3,6 @@
 import os
 import attr
 import pytest
-from unittest.mock import ANY
 from pendulum import Pendulum
 import pathlib
 from string import ascii_lowercase
@@ -69,10 +68,6 @@ def test_workspace_create(local_folder_fs, alice):
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
         "children": [],
-        "creator": alice.user_id,
-        # TODO: participants&creator fields are deprecated
-        # "participants": [alice.user_id],
-        "participants": ANY,
     }
 
 
@@ -97,11 +92,6 @@ def test_file_create(local_folder_fs, alice):
         "need_sync": True,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 3),
-        "creator": alice.user_id,
-        # "participants": [alice.user_id],
-        # TODO: participants&creator fields are deprecated
-        # "participants": [alice.user_id],
-        "participants": ANY,
         "children": ["foo.txt"],
     }
 
@@ -224,11 +214,6 @@ def test_access_not_loaded_entry(alice, bob, local_folder_fs):
         "is_placeholder": True,
         "need_sync": True,
         "children": [],
-        "creator": bob.user_id,
-        # "participants": [bob.user_id],
-        # TODO: participants&creator fields are deprecated
-        # "participants": [alice.user_id],
-        "participants": ANY,
     }
 
 

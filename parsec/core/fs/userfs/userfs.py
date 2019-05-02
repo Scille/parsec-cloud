@@ -133,63 +133,26 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
-    async def workspace_refresh_roles(self, workspace_id: UUID) -> None:
-        """
-        Raises:
-            FSError
-            FSWorkspaceNotFoundError
-            FSBackendOfflineError
-        """
-        if not self.get_user_manifest().get_workspace_entry(workspace_id):
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
-
-        try:
-            roles = await self.backend_cmds.vlob_group_get_roles(workspace_id)
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendCmdsNotAllowed:
-            # Seems we lost all the access roles
-            self_role = None
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
-
-        else:
-            try:
-                self_role = roles[self.device.user_id]
-
-            except KeyError:
-                # We should never be here in theory given if we had no roles
-                # backend was supposed to deny us the access !
-                logger.warning(
-                    "User not part of the roles returned by the backend",
-                    vlob_group=workspace_id,
-                    device_id=self.device.device_id,
-                )
-                self_role = None
-
-        async with self._update_user_manifest_lock:
-            user_manifest = self.get_user_manifest()
-            workspace_entry = user_manifest.get_workspace_entry(workspace_id)
-            updated_workspace_entry = workspace_entry.evolve(role=self_role)
-            updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
-                updated_workspace_entry
-            )
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, updated_user_manifest)
-
     def get_workspace(self, workspace_id: UUID) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
         """
-        user_manifest = self.get_user_manifest()
-        workspace_entry = user_manifest.get_workspace_entry(workspace_id)
-        if not workspace_entry:
-            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+        # Workspace entry can change at any time, so we provide a way for
+        # WorskpaeFS to load it each time it is needed
+        def _get_workspace_entry():
+            user_manifest = self.get_user_manifest()
+            workspace_entry = user_manifest.get_workspace_entry(workspace_id)
+            if not workspace_entry:
+                raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+            return workspace_entry
+
+        # Sanity check to make sure workspace_id is valid
+        _get_workspace_entry()
+
         return WorkspaceFS(
-            workspace_entry,
+            workspace_id,
+            get_workspace_entry=_get_workspace_entry,
             device=self.device,
             local_storage=self.local_storage,
             backend_cmds=self.backend_cmds,
@@ -204,11 +167,7 @@ class UserFS:
         Raises: Nothing !
         """
         workspace_entry = WorkspaceEntry(name)
-        workspace_manifest = LocalWorkspaceManifest(
-            author=self.device.device_id,
-            creator=self.device.user_id,
-            participants=[self.device.user_id],
-        )
+        workspace_manifest = LocalWorkspaceManifest(author=self.device.device_id)
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
@@ -429,8 +388,6 @@ class UserFS:
             version=1,
             created=workspace_manifest.created,
             updated=workspace_manifest.created,
-            creator=self.device.user_id,
-            participants=[self.device.user_id],
             children={},
         )
         now = pendulum_now()

@@ -4,14 +4,7 @@ import pendulum
 from itertools import count
 from typing import Optional, List, Tuple
 
-from parsec.core.types import (
-    RemoteManifest,
-    LocalManifest,
-    UserManifest,
-    WorkspaceManifest,
-    LocalUserManifest,
-    LocalWorkspaceManifest,
-)
+from parsec.core.types import RemoteManifest, LocalManifest, UserManifest, LocalUserManifest
 
 
 def find_conflicting_name_for_child_entry(original_name: str, check_candidate_name) -> str:
@@ -238,10 +231,6 @@ def merge_remote_folder_manifests(
 
     evolves = {"updated": updated, "children": children}
 
-    if isinstance(target, WorkspaceManifest):
-        # Only workspace manifest has this field
-        evolves["participants"] = list({*target.participants, *diverged.participants})
-
     merged = target.evolve(**evolves)
     return merged, need_sync, conflicts
 
@@ -288,10 +277,6 @@ def merge_local_folder_manifests(
             updated = diverged.updated
 
     evolves = {"need_sync": need_sync, "updated": updated, "children": children}
-
-    if isinstance(target, LocalWorkspaceManifest):
-        # Only workspace manifest has this field
-        evolves["participants"] = list(sorted(set(target.participants + diverged.participants)))
 
     merged = target.evolve(**evolves)
     return merged, need_sync, conflicts

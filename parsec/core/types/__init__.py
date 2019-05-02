@@ -10,6 +10,7 @@ from parsec.core.types.access import (
     BlockAccess,
     DirtyBlockAccess,
     WorkspaceRole,
+    WorkspaceRoleField,
     WorkspaceEntry,
 )
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
@@ -55,6 +56,7 @@ __all__ = (
     "BlockAccess",
     "DirtyBlockAccess",
     "WorkspaceRole",
+    "WorkspaceRoleField",
     "WorkspaceEntry",
     # local_device
     "LocalDevice",

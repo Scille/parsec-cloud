@@ -233,7 +233,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             w.setParent(None)
         QCoreApplication.processEvents()
         path = os.path.join("/", self.name)
-        stat = self.portal.run(self.core.fs.stat, path)
         sharing_info = self.portal.run(self.core.fs.get_permissions, path)
         current_user_permission = sharing_info[self.core.device.user_id]
         can_update = current_user_permission["admin_right"]
@@ -243,7 +242,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.add_participant(
                 user,
                 user == self.core.device.user_id,
-                stat["creator"] == user,
+                permissions["is_owner"],
                 admin=permissions["admin_right"],
                 read=permissions["read_right"],
                 write=permissions["write_right"],

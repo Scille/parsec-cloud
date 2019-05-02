@@ -31,7 +31,7 @@ async def test_root_entry_info(entry_transactions):
     stat = await entry_transactions.entry_info(FsPath("/"))
     assert stat == {
         "type": "folder",
-        "id": entry_transactions.workspace_entry.access.id,
+        "id": entry_transactions.workspace_id,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -52,7 +52,7 @@ async def test_file_create(entry_transactions, file_transactions, alice):
     root_stat = await entry_transactions.entry_info(FsPath("/"))
     assert root_stat == {
         "type": "folder",
-        "id": entry_transactions.workspace_entry.access.id,
+        "id": entry_transactions.workspace_id,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -132,8 +132,7 @@ async def test_cannot_replace_root(entry_transactions):
 
 @pytest.mark.trio
 async def test_access_not_loaded_entry(alice, bob, entry_transactions):
-
-    access = entry_transactions.workspace_entry.access
+    access = entry_transactions.get_workspace_entry().access
     manifest = entry_transactions.local_storage.get_manifest(access)
     entry_transactions.local_storage.clear_manifest(access)
 
@@ -317,7 +316,7 @@ def test_folder_operations(
                 return
 
             local_storage = self.entry_transactions.local_storage
-            root_access = self.entry_transactions.workspace_entry.access
+            root_access = self.entry_transactions.get_workspace_entry().access
             new_id_to_path = set()
 
             def _recursive_build_id_to_path(access, path):

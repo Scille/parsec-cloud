@@ -5,9 +5,9 @@ import pendulum
 from uuid import UUID
 from typing import Tuple, Dict, List, Union
 
-from parsec.types import DeviceID, UserID, FrozenDict
+from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
-from parsec.core.types import remote_manifests
+from parsec.core.types import remote_manifests, WorkspaceRole, WorkspaceRoleField
 from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
 from parsec.core.types.access import (
     BlockAccess,
@@ -175,13 +175,7 @@ local_folder_manifest_serializer = serializer_factory(LocalFolderManifestSchema)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalWorkspaceManifest(LocalFolderManifest):
-    creator: UserID = None
-    participants: Tuple[UserID] = attr.ib(converter=tuple, default=())
-
-    def __attrs_post_init__(self):
-        super().__attrs_post_init__()
-        if not self.creator:
-            object.__setattr__(self, "creator", self.author.user_id)
+    role_hint: WorkspaceRole = WorkspaceRole.OWNER
 
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(
@@ -190,16 +184,13 @@ class LocalWorkspaceManifest(LocalFolderManifest):
             created=self.created,
             updated=self.updated,
             children=self.children,
-            creator=self.creator,
-            participants=self.participants,
             **data,
         )
 
 
 class LocalWorkspaceManifestSchema(LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    creator = fields.UserID(required=True)
-    participants = fields.List(fields.UserID(), required=True)
+    role_hint = WorkspaceRoleField(required=True)
 
     @post_load
     def make_obj(self, data):
@@ -228,7 +219,8 @@ class LocalUserManifest:
     # TODO: remove this legacy stuff
     @property
     def children(self):
-        return {w.name: w.access for w in self.workspaces if not w.is_revoked()}
+        # return {w.name: w.access for w in self.workspaces if not w.is_revoked()}
+        return {w.name: w.access for w in self.workspaces}
 
     def __attrs_post_init__(self):
         if not self.created:

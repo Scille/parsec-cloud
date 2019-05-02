@@ -382,13 +382,14 @@ async def test_share_workspace_then_conflict_on_rights(
     assert am == expected
     assert a2m == am
 
-    a_w_stat = await alice_user_fs.get_workspace(wid).path_info("/")
-    a2_w_stat = await alice2_user_fs.get_workspace(wid).path_info("/")
+    a_w = alice_user_fs.get_workspace(wid)
+    a2_w = alice2_user_fs.get_workspace(wid)
 
-    a_w_info = await alice_user_fs.get_workspace(wid).workspace_info()
-    a2_w_info = await alice2_user_fs.get_workspace(wid).workspace_info()
-    a_w_info.pop("participants")
-    a2_w_info.pop("participants")
+    a_w_stat = await a_w.path_info("/")
+    a2_w_stat = await a2_w.path_info("/")
+
+    a_w_entry = a_w.get_workspace_entry()
+    a2_w_entry = a2_w.get_workspace_entry()
 
     assert a_w_stat == {
         "type": "folder",
@@ -402,5 +403,10 @@ async def test_share_workspace_then_conflict_on_rights(
     }
     assert a_w_stat == a2_w_stat
 
-    assert a_w_info == {"role": WorkspaceRole.CONTRIBUTOR, "creator": bob.user_id}
-    assert a_w_info == a2_w_info
+    assert a_w_entry == WorkspaceEntry(
+        name=f"w (shared by {bob.user_id})",
+        access=ManifestAccess(id=wid, key=ANY),
+        granted_on=Pendulum(2000, 1, 3),
+        role=WorkspaceRole.CONTRIBUTOR,
+    )
+    assert a2_w_entry == a_w_entry

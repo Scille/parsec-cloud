@@ -53,7 +53,18 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
             workspace_entry = WorkspaceEntry("test")
             workspace_manifest = LocalWorkspaceManifest(device.device_id)
         local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
-        return EntryTransactions(device, workspace_entry, local_storage, remote_loader, event_bus)
+
+        def _get_workspace_entry():
+            return workspace_entry
+
+        return EntryTransactions(
+            workspace_entry.access.id,
+            _get_workspace_entry,
+            device,
+            local_storage,
+            remote_loader,
+            event_bus,
+        )
 
     return _entry_transactions_factory
 

@@ -5,7 +5,6 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.core.types import FsPath
-from parsec.api.protocole import VlobGroupRole
 
 
 @pytest.fixture
@@ -18,16 +17,6 @@ async def alice_workspace(alice_user_fs, running_backend):
     await workspace.touch("/foo/baz")
     await workspace.sync("/")
     return workspace
-
-
-@pytest.mark.trio
-async def test_workspace_info(alice, alice_workspace):
-    info = await alice_workspace.workspace_info()
-    assert info == {
-        "creator": alice.user_id,
-        "participants": [alice.user_id],
-        "role": VlobGroupRole.OWNER,
-    }
 
 
 @pytest.mark.trio

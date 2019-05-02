@@ -5,7 +5,6 @@ from typing import Union, Iterator
 from uuid import UUID
 
 from parsec.core.types import FsPath, AccessID
-from parsec.core.local_storage import LocalStorageMissingEntry
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 
@@ -19,7 +18,8 @@ AnyPath = Union[FsPath, str]
 class WorkspaceFS:
     def __init__(
         self,
-        workspace_entry,
+        workspace_id,
+        get_workspace_entry,
         device,
         local_storage,
         backend_cmds,
@@ -28,7 +28,8 @@ class WorkspaceFS:
         _remote_loader,
         _syncer,
     ):
-        self.workspace_entry = workspace_entry
+        self.workspace_id = workspace_id
+        self.get_workspace_entry = get_workspace_entry
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
@@ -36,46 +37,21 @@ class WorkspaceFS:
         self._local_folder_fs = _local_folder_fs
         self._remote_loader = _remote_loader
         self._syncer = _syncer
+        self._user_roles_cache_access = None
 
         self.file_transactions = FileTransactions(
             self.workspace_id, local_storage, self._remote_loader, event_bus
         )
         self.entry_transactions = EntryTransactions(
-            self.device, workspace_entry, local_storage, self._remote_loader, event_bus
+            self.workspace_id,
+            self.get_workspace_entry,
+            self.device,
+            local_storage,
+            self._remote_loader,
+            event_bus,
         )
 
-    @property
-    def workspace_name(self) -> str:
-        return self.workspace_entry.name
-
-    @property
-    def workspace_id(self) -> AccessID:
-        return self.workspace_entry.access.id
-
     # Information
-
-    async def workspace_info(self):
-        # try:
-        #     user_roles = await self.backend_cmds.vlob_group_get_roles(
-        #         self.workspace_entry.access.id
-        #     )
-
-        # except BackendNotAvailable as exc:
-        #     raise FSBackendOfflineError(str(exc)) from exc
-
-        # except BackendConnectionError as exc:
-        #     raise FSError(f"Cannot retreive workspace's vlob group rights: {exc}") from exc
-
-        # TODO: finish me !
-        try:
-            manifest = self.local_storage.get_manifest(self.workspace_entry.access)
-        except LocalStorageMissingEntry as exc:
-            manifest = await self._remote_loader.load_manifest(exc.access)
-        return {
-            "role": self.workspace_entry.role,
-            "creator": manifest.creator,
-            "participants": list(manifest.participants),
-        }
 
     async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
@@ -184,7 +160,8 @@ class WorkspaceFS:
     # Left to migrate
 
     def _cook_path(self, relative_path=""):
-        return FsPath(f"/{self.workspace_name}/{relative_path}")
+        workspace_name = self.get_workspace_entry().name
+        return FsPath(f"/{workspace_name}/{relative_path}")
 
     async def _load_and_retry(self, fn, *args, **kwargs):
         while True:
