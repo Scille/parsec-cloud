@@ -54,7 +54,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_empty.hide()
 
         if enable_workspace_color:
-            c = StringToColor.from_string(self.workspace_fs.workspace_name)
+            c = StringToColor.from_string(str(self.workspace_fs.workspace_id))
             self.setStyleSheet("background-color: {};".format(c.hex()))
 
         effect = QGraphicsDropShadowEffect(self)
@@ -66,10 +66,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_delete.clicked.connect(self.button_delete_clicked)
         self.button_rename.clicked.connect(self.button_rename_clicked)
+        self.button_open_workspace.clicked.connect(self.button_open_workspace_clicked)
         if not self.is_creator:
             self.label_owner.hide()
         if len(participants) == 1:
             self.label_shared.hide()
+
+    def button_open_workspace_clicked(self):
+        self.open_clicked_file("/")
 
     def open_clicked_file(self, file_name):
         self.file_clicked.emit(self.workspace_fs, file_name)

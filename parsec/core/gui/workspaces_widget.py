@@ -114,8 +114,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.jobs_ctx.run(self.core.user_fs.workspace_rename, workspace_id, new_name)
             workspace_button.workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             workspace_button.name = new_name
-        except FileExistsError:
-            show_warning(self, _("A workspace with the same name already exists."))
         except:
             show_error(self, _("Can not rename the workspace."))
         else:
@@ -132,10 +130,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
         if not workspace_name:
             return
-        try:
-            self.jobs_ctx.run(self.core.user_fs.workspace_create, workspace_name)
-        except FileExistsError:
-            show_error(self, _("A workspace with the same name already exists."))
+        self.jobs_ctx.run(self.core.user_fs.workspace_create, workspace_name)
 
     def _on_workspace_created_trio(self, event, new_entry):
         self._workspace_created_qt.emit(new_entry)
