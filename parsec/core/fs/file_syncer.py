@@ -16,7 +16,7 @@ from parsec.core.types import (
 from parsec.core.fs.local_folder_fs import FSEntryNotFound
 from parsec.core.fs.merge_folders import find_conflicting_name_for_child_entry
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
-from parsec.core.fs.file_transactions import Buffer, DirtyBlockBuffer, BlockBuffer
+from parsec.core.fs.workspacefs.file_transactions import Buffer, DirtyBlockBuffer, BlockBuffer
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
 from parsec.core.fs.utils import is_file_manifest, is_placeholder_manifest
 

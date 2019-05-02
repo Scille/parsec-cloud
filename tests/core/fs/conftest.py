@@ -3,8 +3,8 @@
 import pytest
 
 from parsec.core.fs.local_folder_fs import LocalFolderFS
-from parsec.core.fs.file_transactions import FileTransactions
-from parsec.core.fs.entry_transactions import EntryTransactions
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.types import WorkspaceEntry, LocalWorkspaceManifest
 

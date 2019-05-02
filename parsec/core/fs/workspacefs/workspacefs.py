@@ -6,12 +6,12 @@ from uuid import UUID
 
 from parsec.core.types import FsPath, AccessID
 from parsec.core.local_storage import LocalStorageMissingEntry
-from parsec.core.fs.file_transactions import FileTransactions
-from parsec.core.fs.entry_transactions import EntryTransactions
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+
+# Legacy
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
 
-# from parsec.core.fs.exceptions import FSBackendOfflineError, FSError
-# from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 
 AnyPath = Union[FsPath, str]
 

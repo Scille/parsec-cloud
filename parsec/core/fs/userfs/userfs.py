@@ -45,7 +45,7 @@ from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.file_transactions import FileTransactions
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.userfs.merging import merge_local_user_manifests
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
