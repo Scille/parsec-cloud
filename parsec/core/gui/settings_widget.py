@@ -26,6 +26,9 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.global_settings.save_clicked.connect(self.save)
         # self.network_settings.save_clicked.connect(self.save)
 
+    def disconnect_all(self):
+        pass
+
     def save(self):
         self.global_settings.save()
         # self.network_settings.save()

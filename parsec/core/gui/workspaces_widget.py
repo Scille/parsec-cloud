@@ -47,8 +47,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             self.add_workspace(workspace_fs, count)
 
-    def load_workspace(self, workspace):
-        self.load_workspace_clicked.emit(workspace)
+    def disconnect_all(self):
+        self.event_bus.disconnect("fs.workspace.created", self._on_workspace_created_trio)
+
+    def load_workspace(self, workspace_fs):
+        self.load_workspace_clicked.emit(workspace_fs)
 
     def add_workspace(self, workspace_fs, count=None):
         workspace_info = self.jobs_ctx.run(workspace_fs.workspace_info)

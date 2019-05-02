@@ -21,6 +21,9 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.event_bus = event_bus
         self.show_workspaces_widget()
 
+    def disconnect_all(self):
+        pass
+
     def load_workspace(self, workspace_fs):
         self.show_files_widget(workspace_fs)
 
@@ -49,5 +52,6 @@ class MountWidget(QWidget, Ui_MountWidget):
     def clear_widgets(self):
         item = self.layout_content.takeAt(0)
         if item:
+            item.widget().disconnect_all()
             item.widget().hide()
             item.widget().setParent(None)

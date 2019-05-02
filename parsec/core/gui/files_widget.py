@@ -68,6 +68,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory)
         self.table_files.sortItems(0)
 
+    def disconnect_all(self):
+        self.core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+
     def rename_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:

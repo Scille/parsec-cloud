@@ -83,6 +83,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         else:
             self.show_login_widget()
 
+    def disconnect_all(self):
+        self.event_bus.disconnect("gui.config.changed", self.on_config_updated)
+
     def on_config_updated(self, event, **kwargs):
         self.config = self.config.evolve(**kwargs)
 

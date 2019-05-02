@@ -233,22 +233,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.accept()
 
     def show_central_widget(self):
-        item = self.widget_center.layout().takeAt(0)
-        if item:
-            item.widget().setParent(None)
-
+        self.clear_widgets()
         central_widget = CentralWidget(self.core, self.core_jobs_ctx, self.event_bus, parent=self)
         self.widget_center.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
 
     def show_login_widget(self):
-        item = self.widget_center.layout().takeAt(0)
-        if item:
-            item.widget().setParent(None)
-
+        self.clear_widgets()
         login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
         self.widget_center.layout().addWidget(login_widget)
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
         login_widget.show()
+
+    def clear_widgets(self):
+        item = self.widget_center.layout().takeAt(0)
+        if item:
+            item.widget().disconnect_all()
+            item.widget().hide()
+            item.widget().setParent(None)

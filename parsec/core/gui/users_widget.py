@@ -90,6 +90,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.line_edit_search.textChanged.connect(self.filter_users)
         self.reset()
 
+    def disconnect_all(self):
+        pass
+
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
 

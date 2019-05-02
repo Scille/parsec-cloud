@@ -89,6 +89,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.line_edit_search.textChanged.connect(self.filter_devices)
         self.reset()
 
+    def disconnect_all(self):
+        pass
+
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
 

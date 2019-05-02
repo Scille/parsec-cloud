@@ -73,6 +73,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.show_mount_widget()
 
+    def disconnect_all(self):
+        self.event_bus.disconnect("backend.connection.ready", self._on_connection_changed)
+        self.event_bus.disconnect("backend.connection.lost", self._on_connection_changed)
+        for e in self.NOTIFICATION_EVENTS:
+            self.event_bus.disconnect(e, self.handle_event)
+
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":
             self.new_notification.emit("WARNING", _("Disconnected from the backend."))
@@ -194,5 +200,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def clear_widgets(self):
         item = self.widget_central.layout().takeAt(0)
         if item:
+            item.widget().disconnect_all()
             item.widget().hide()
             item.widget().setParent(None)

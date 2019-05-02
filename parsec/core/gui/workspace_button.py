@@ -14,8 +14,8 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(WorkspaceFS)
-    share_clicked = pyqtSignal(QWidget)
-    delete_clicked = pyqtSignal(QWidget)
+    share_clicked = pyqtSignal(WorkspaceFS)
+    delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(WorkspaceFS, str)
 
