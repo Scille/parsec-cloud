@@ -1,12 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import inspect
-from typing import Union, Iterator
+from typing import Union, Iterator, Dict
 from uuid import UUID
 
-from parsec.core.types import FsPath, AccessID
+from parsec.types import UserID
+from parsec.core.types import FsPath, AccessID, WorkspaceRole
+from parsec.core.backend_connection import (
+    BackendNotAvailable,
+    BackendCmdsNotAllowed,
+    BackendConnectionError,
+)
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 
 # Legacy
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
@@ -55,6 +62,40 @@ class WorkspaceFS:
 
     async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
+
+    # TODO: remove this once workspace widget has been reworked
+    async def workspace_info(self):
+        try:
+            roles = await self.get_user_roles()
+        except FSBackendOfflineError:
+            roles = {self.device.user_id: self.get_workspace_entry().role}
+
+        return {
+            "participants": list(roles.keys()),
+            "creator": next(
+                user_id for user_id, role in roles.items() if role == WorkspaceRole.OWNER
+            ),
+        }
+
+    async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
+        """
+        Raises:
+            FSError
+            FSWorkspaceNotFoundError
+            FSBackendOfflineError
+        """
+        try:
+            return await self.backend_cmds.vlob_group_get_roles(self.workspace_id)
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsNotAllowed:
+            # Seems we lost all the access roles
+            return {}
+
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
     # Pathlib-like interface
 

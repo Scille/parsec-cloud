@@ -14,8 +14,8 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(WorkspaceFS)
-    share_clicked = pyqtSignal(WorkspaceFS)
-    delete_clicked = pyqtSignal(WorkspaceFS)
+    share_clicked = pyqtSignal(QWidget)
+    delete_clicked = pyqtSignal(QWidget)
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(WorkspaceFS, str)
 
@@ -36,7 +36,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.widget_files.hide()
         self.participants = participants
         self.is_creator = is_creator
-        self.set_display_name(self.workspace_fs.workspace_name)
         files = files or []
 
         if not len(files):
@@ -71,6 +70,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_owner.hide()
         if len(participants) == 1:
             self.label_shared.hide()
+        self.reload_workspace_name()
 
     def button_open_workspace_clicked(self):
         self.open_clicked_file("/")
@@ -89,10 +89,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def name(self):
-        return self.workspace_fs.workspace_name
+        return self.workspace_fs.get_workspace_entry().name
 
-    def set_display_name(self, name):
-        display = name
+    def reload_workspace_name(self):
+        workspace_name = self.workspace_fs.get_workspace_entry().name
+        display = workspace_name
         if len(display) > 20:
             display = display[:20] + "..."
 
@@ -102,7 +103,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             else:
                 display += _(" (shared by {})").format(self.workspace_fs.device.user_id)
         self.label_workspace.setText(display)
-        self.label_workspace.setToolTip(name)
+        self.label_workspace.setToolTip(workspace_name)
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:

@@ -54,11 +54,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.load_workspace_clicked.emit(workspace_fs)
 
     def add_workspace(self, workspace_fs, count=None):
+        # TODO: workspace's participants must be fetched from the backend
         workspace_info = self.jobs_ctx.run(workspace_fs.workspace_info)
         root_info = self.jobs_ctx.run(workspace_fs.path_info, "/")
         button = WorkspaceButton(
             workspace_fs,
-            participants=workspace_info["participants"],
+            participants=[workspace_info["participants"]],
             is_creator=workspace_info["creator"] == self.core.device.user_id,
             files=root_info["children"][:4],
             enable_workspace_color=self.core.config.gui_workspace_color,
@@ -112,8 +113,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         try:
             workspace_id = workspace_button.workspace_fs.workspace_id
             self.jobs_ctx.run(self.core.user_fs.workspace_rename, workspace_id, new_name)
-            workspace_button.workspace_fs = self.core.user_fs.get_workspace(workspace_id)
-            workspace_button.set_display_name(new_name)
+            workspace_button.reload_workspace_name()
         except:
             show_error(self, _("Can not rename the workspace."))
         else:

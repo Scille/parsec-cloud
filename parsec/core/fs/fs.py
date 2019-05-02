@@ -296,7 +296,7 @@ class FS:
 
     async def get_permissions(self, path: str) -> Dict[UserID, Dict]:
         workspace, subpath = self._get_workspace(path)
-        assert not subpath
+        assert subpath.is_root()
         roles = await workspace.get_user_roles()
         # TODO: reeeeally hacky legacy compatibility...
         permissions = {}
