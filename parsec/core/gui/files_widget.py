@@ -418,8 +418,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.fs_synced_qt.emit(event, id, path)
 
     # slot
-    def _on_fs_entry_updated_trio(self, event, id):
-        self.fs_updated_qt.emit(event, id)
+    def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
+        assert id is not None
+        if workspace_id is None or workspace_id == self.workspace_fs.workspace_id:
+            self.fs_updated_qt.emit(event, id)
 
     # slot
     def _on_fs_synced_qt(self, event, id, path):
