@@ -5,7 +5,7 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.types import WorkspaceEntry
+from parsec.core.types import WorkspaceEntry, FsPath
 from parsec.core.fs import WorkspaceFS
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
@@ -88,6 +88,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         except Exception:
             show_error(self, _("Can not acces this file."))
             return
+        file_name = FsPath("/", file_name)
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
             workspace_fs.workspace_id, file_name
         )
