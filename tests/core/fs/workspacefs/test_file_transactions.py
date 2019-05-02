@@ -12,7 +12,7 @@ from hypothesis_trio.stateful import (
 from hypothesis import strategies as st
 
 from parsec.core.types import ManifestAccess, BlockAccess, LocalFileManifest
-from parsec.core.fs.file_transactions import FSInvalidFileDescriptor
+from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.backend_connection.exceptions import BackendCmdsNotFound
 
 from tests.common import freeze_time
