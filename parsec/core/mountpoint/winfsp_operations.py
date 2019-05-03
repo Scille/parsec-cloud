@@ -251,7 +251,7 @@ class WinFSPOperations(BaseFileSystemOperations):
             for child_name in stat["children"]:
                 if marker is not None and child_name < marker:
                     continue
-                child_stat = self.fs_access.entry_info(f"{file_context.path}\\{child_name}")
+                child_stat = self.fs_access.entry_info(file_context.path / child_name)
                 entries.append({"file_name": child_name, **stat_to_winfsp_attributes(child_stat)})
 
             if not file_context.path.is_root():
