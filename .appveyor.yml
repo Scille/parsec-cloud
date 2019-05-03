@@ -41,7 +41,7 @@ test_script:
   # No sed ? Hold my beer !
   - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/*', 'parsec/core/gui/*,../parsec/core/gui/*'))"
   - py.test ../tests/gui --cov=parsec --cov-config=../setup.cfg --rungui --log-level=DEBUG -vvv -x
-  - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runslow -x --postgresql --log-level=DEBUG -vvv -x
+  - py.test ../tests/ -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --runslow -x --postgresql --log-level=DEBUG -vvv -x
 
 on_success:
   - pip install -U --user codecov
