@@ -45,7 +45,6 @@ from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.userfs.merging import merge_local_user_manifests
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
@@ -80,7 +79,6 @@ class UserFS:
 
         # TODO: move those attributes into WorkspaceFS (no need to share them anymore)
         self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
-        self._file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
         self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
         self._syncer = Syncer(
             device,

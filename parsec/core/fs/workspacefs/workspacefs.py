@@ -37,7 +37,9 @@ class WorkspaceFS:
         self._remote_loader = _remote_loader
         self._syncer = _syncer
 
-        self.file_transactions = FileTransactions(local_storage, self._remote_loader, event_bus)
+        self.file_transactions = FileTransactions(
+            self.workspace_id, local_storage, self._remote_loader, event_bus
+        )
         self.entry_transactions = EntryTransactions(
             self.device, workspace_entry, local_storage, self._remote_loader, event_bus
         )
