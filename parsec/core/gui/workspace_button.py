@@ -36,7 +36,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.widget_files.hide()
         self.participants = participants
         self.is_creator = is_creator
-        self.name = self.workspace_fs.workspace_name
+        self.set_display_name(self.workspace_fs.workspace_name)
         files = files or []
 
         if not len(files):
@@ -91,9 +91,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def name(self):
         return self.workspace_fs.workspace_name
 
-    @name.setter
-    def name(self, value):
-        display = self.name
+    def set_display_name(self, name):
+        display = name
         if len(display) > 20:
             display = display[:20] + "..."
 
@@ -103,7 +102,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             else:
                 display += _(" (shared by {})").format(self.workspace_fs.device.user_id)
         self.label_workspace.setText(display)
-        self.label_workspace.setToolTip(self.name)
+        self.label_workspace.setToolTip(name)
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:

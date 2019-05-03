@@ -113,7 +113,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_id = workspace_button.workspace_fs.workspace_id
             self.jobs_ctx.run(self.core.user_fs.workspace_rename, workspace_id, new_name)
             workspace_button.workspace_fs = self.core.user_fs.get_workspace(workspace_id)
-            workspace_button.name = new_name
+            workspace_button.set_display_name(new_name)
         except:
             show_error(self, _("Can not rename the workspace."))
         else:
