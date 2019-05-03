@@ -22,7 +22,9 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.show_workspaces_widget()
 
     def disconnect_all(self):
-        pass
+        item = self.layout_content.itemAt(0)
+        if item:
+            item.widget().disconnect_all()
 
     def load_workspace(self, workspace_fs):
         self.show_files_widget(workspace_fs)
