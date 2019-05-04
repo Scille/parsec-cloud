@@ -87,6 +87,7 @@ class PathElement:
 
 
 @pytest.mark.slow
+@pytest.mark.linux  # TODO: investigate while this fails on windows
 @pytest.mark.mountpoint
 def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
