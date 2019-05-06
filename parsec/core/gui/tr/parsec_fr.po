@@ -424,6 +424,9 @@ msgstr "Déconnecté du serveur."
 msgid "Connected to the backend."
 msgstr "Connecté au serveur."
 
+msgid "Cannot connect to backend : incompatible version detected."
+msgstr "Connexion au backend impossible : version incompatible détectée."
+
 msgid "Mountpoint has been unmounted."
 msgstr "Le point de montage a été perdu."
 
@@ -444,6 +447,9 @@ msgstr "Connecté"
 
 msgid "Disconnected"
 msgstr "Déconnecté"
+
+msgid "Bad Version"
+msgstr "MàJ requise"
 
 msgid "Users"
 msgstr "Utilisateurs"

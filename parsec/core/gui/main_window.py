@@ -15,7 +15,11 @@ from parsec.core.local_device import (
 )
 from parsec.core.config import save_config
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
-from parsec.core.backend_connection import BackendHandshakeError, BackendDeviceRevokedError
+from parsec.core.backend_connection import (
+    BackendHandshakeError,
+    BackendHandshakeAPIVersionError,
+    BackendDeviceRevokedError,
+)
 from parsec.core import logged_core_factory
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import telemetry
@@ -168,6 +172,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except LocalDeviceError:
             show_error(self, _("Authentication failed."))
 
+        except BackendHandshakeAPIVersionError as exc:
+            show_error(self, _(f"Incompatible backend API version. Server is {str(exc)}"))  # TODO
+
         except BackendDeviceRevokedError:
             show_error(self, _("This device has been revoked."))
 
@@ -192,6 +199,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.start_core(device)
         except LocalDeviceError:
             show_error(self, _("Authentication failed."))
+
+        except BackendHandshakeAPIVersionError as exc:
+            show_error(self, _(f"Incompatible backend API version. Server is {str(exc)}"))
 
         except BackendDeviceRevokedError:
             show_error(self, _("This device has been revoked."))

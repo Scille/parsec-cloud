@@ -14,17 +14,20 @@ from parsec.core.gui.custom_widgets import NotificationTaskbarButton
 from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
+from parsec.core.backend_connection.monitor import BackendState, current_backend_connection_state
+
 
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
         "backend.connection.lost",
         "backend.connection.ready",
+        "backend.connection.incompatible_version",
         "mountpoint.stopped",
         "sharing.new",
         "fs.entry.file_update_conflicted",
     ]
 
-    connection_state_changed = pyqtSignal(bool)
+    connection_state_changed = pyqtSignal(int)
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
@@ -45,10 +48,13 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.event_bus.connect("backend.connection.ready", self._on_connection_changed)
         self.event_bus.connect("backend.connection.lost", self._on_connection_changed)
+        self.event_bus.connect(
+            "backend.connection.incompatible_version", self._on_connection_changed
+        )
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, self.handle_event)
 
-        self._on_connection_state_changed(True)
+        self._on_connection_state_changed(current_backend_connection_state(event_bus).value)
         self.label_mountpoint.setText(str(self.core.config.mountpoint_base_dir))
         self.menu.organization = self.core.device.organization_addr.organization_id
         self.menu.username = self.core.device.user_id
@@ -63,6 +69,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.button_notif.clicked.connect(self.show_notification_center)
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.notification_center.close_requested.connect(self.close_notification_center)
+        if current_backend_connection_state(event_bus) == BackendState.INCOMPATIBLE_VERSION:
+            self.handle_event("backend.connection.incompatible_version")
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -76,6 +84,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def disconnect_all(self):
         self.event_bus.disconnect("backend.connection.ready", self._on_connection_changed)
         self.event_bus.disconnect("backend.connection.lost", self._on_connection_changed)
+        self.event_bus.disconnect(
+            "backend.connection.incompatible_version", self._on_connection_changed
+        )
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.disconnect(e, self.handle_event)
 
@@ -84,6 +95,10 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.new_notification.emit("WARNING", _("Disconnected from the backend."))
         elif event == "backend.connection.ready":
             self.new_notification.emit("INFO", _("Connected to the backend."))
+        elif event == "backend.connection.incompatible_version":
+            self.new_notification.emit(
+                "WARNING", _("Cannot connect to backend : incompatible version detected.")
+            )
         elif event == "mountpoint.stopped":
             self.new_notification.emit("ERROR", _("Mountpoint has been unmounted."))
         elif event == "sharing.granted":
@@ -119,13 +134,18 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.button_notif.reset_notif_count()
 
     def _on_connection_state_changed(self, state):
-        if state:
+        if state == BackendState.READY.value:
             self.menu.label_connection_text.setText(_("Connected"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_online.png")
             )
-        else:
+        elif state == BackendState.LOST.value:
             self.menu.label_connection_text.setText(_("Disconnected"))
+            self.menu.label_connection_icon.setPixmap(
+                QPixmap(":/icons/images/icons/cloud_offline.png")
+            )
+        elif state == BackendState.INCOMPATIBLE_VERSION.value:
+            self.menu.label_connection_text.setText(_("Bad Version"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
@@ -138,9 +158,11 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def _on_connection_changed(self, event):
         if event == "backend.connection.ready":
-            self.connection_state_changed.emit(True)
+            self.connection_state_changed.emit(BackendState.READY.value)
         elif event == "backend.connection.lost":
-            self.connection_state_changed.emit(False)
+            self.connection_state_changed.emit(BackendState.LOST.value)
+        elif event == "backend.connection.incompatible_version":
+            self.connection_state_changed.emit(BackendState.INCOMPATIBLE_VERSION.value)
 
     def show_mount_widget(self):
         self.clear_widgets()
