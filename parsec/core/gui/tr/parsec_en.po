@@ -400,6 +400,9 @@ msgstr ""
 msgid "Connected to the backend."
 msgstr ""
 
+msgid "Cannot connect to backend : incompatible version detected."
+msgstr ""
+
 msgid "Mountpoint has been unmounted."
 msgstr ""
 
@@ -419,6 +422,9 @@ msgid "Connected"
 msgstr ""
 
 msgid "Disconnected"
+msgstr ""
+
+msgid "Bad Version"
 msgstr ""
 
 msgid "Users"

@@ -11,6 +11,7 @@ from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     backend_anonymous_cmds_factory,
     BackendNotAvailable,
+    BackendIncompatibleVersion,
     BackendHandshakeError,
 )
 from parsec.core.local_device import (
@@ -86,6 +87,9 @@ async def _do_bootstrap_organization(
                 user_certificate,
                 device_certificate,
             )
+
+    except BackendIncompatibleVersion as exc:
+        raise JobResultError("bad-api-version", info=str(exc))
 
     except BackendHandshakeError:
         raise JobResultError("invalid-url")
