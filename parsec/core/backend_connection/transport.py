@@ -17,6 +17,7 @@ from parsec.api.transport import Transport, TransportError, TransportClosedByPee
 from parsec.api.protocole import (
     ProtocoleError,
     HandshakeRevokedDevice,
+    HandshakeAPIVersionError,
     AnonymousClientHandshake,
     AuthenticatedClientHandshake,
     AdministrationClientHandshake,
@@ -24,7 +25,9 @@ from parsec.api.protocole import (
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,
+    BackendIncompatibleVersion,
     BackendHandshakeError,
+    BackendHandshakeAPIVersionError,
     BackendDeviceRevokedError,
 )
 
@@ -50,6 +53,7 @@ async def _connect(
     Raises:
         BackendConnectionError
         BackendNotAvailable
+        BackendIncompatibleVersion
         BackendHandshakeError
         BackendDeviceRevokedError
     """
@@ -100,6 +104,10 @@ async def _connect(
     try:
         await _do_handshade(transport, ch)
 
+    except BackendHandshakeAPIVersionError as exc:
+        logger.debug("Incompatible API version", reason=f"Server API version {str(exc)}")
+        raise BackendIncompatibleVersion(exc) from exc
+
     except Exception as exc:
         transport.logger.debug("Connection lost during handshake", reason=exc)
         await transport.aclose()
@@ -135,6 +143,10 @@ async def _do_handshade(transport: Transport, ch):
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc
 
+    except HandshakeAPIVersionError as exc:
+        transport.logger.debug("Handshake failed", reason=exc)
+        raise BackendHandshakeAPIVersionError(exc) from exc
+
     except HandshakeRevokedDevice as exc:
         transport.logger.warning("Handshake failed", reason=exc)
         raise BackendDeviceRevokedError(exc) from exc
@@ -150,6 +162,7 @@ async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transpor
     Raises:
         BackendConnectionError
         BackendNotAvailable
+        BackendIncompatibleVersion
         BackendHandshakeError
         BackendDeviceRevokedError
     """
@@ -168,6 +181,7 @@ async def administration_transport_factory(addr: BackendAddr, token: str) -> Tra
     Raises:
         BackendConnectionError
         BackendNotAvailable
+        BackendIncompatibleVersion
         BackendHandshakeError
         BackendDeviceRevokedError
     """
@@ -196,6 +210,7 @@ class AuthenticatedTransportPool:
         Raises:
             BackendConnectionError
             BackendNotAvailable
+            BackendIncompatibleVersion
             BackendHandshakeError
             BackendDeviceRevokedError
             trio.ClosedResourceError: if used after having being closed

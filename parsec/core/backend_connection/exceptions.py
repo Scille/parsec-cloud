@@ -9,7 +9,15 @@ class BackendNotAvailable(BackendConnectionError):
     pass
 
 
+class BackendIncompatibleVersion(BackendNotAvailable):
+    pass
+
+
 class BackendHandshakeError(BackendConnectionError):
+    pass
+
+
+class BackendHandshakeAPIVersionError(BackendHandshakeError):
     pass
 
 
