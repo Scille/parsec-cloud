@@ -3,7 +3,9 @@
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,
+    BackendIncompatibleVersion,
     BackendHandshakeError,
+    BackendHandshakeAPIVersionError,
     BackendDeviceRevokedError,
     BackendCmdsInvalidRequest,
     BackendCmdsInvalidResponse,
@@ -30,7 +32,11 @@ from parsec.core.backend_connection.transport import (
     AuthenticatedTransportPool,
 )
 from parsec.core.backend_connection.event_listener import backend_listen_events
-from parsec.core.backend_connection.monitor import monitor_backend_connection
+from parsec.core.backend_connection.monitor import (
+    monitor_backend_connection,
+    current_backend_connection_state,
+    BackendState,
+)
 from parsec.core.backend_connection.porcelain import (
     BackendCmdsPool,
     backend_cmds_pool_factory,
@@ -44,7 +50,9 @@ from parsec.core.backend_connection.porcelain import (
 __all__ = (
     "BackendConnectionError",
     "BackendNotAvailable",
+    "BackendIncompatibleVersion",
     "BackendHandshakeError",
+    "BackendHandshakeAPIVersionError",
     "BackendDeviceRevokedError",
     "BackendCmdsInvalidRequest",
     "BackendCmdsInvalidResponse",
@@ -69,6 +77,8 @@ __all__ = (
     "AuthenticatedTransportPool",
     "backend_listen_events",
     "monitor_backend_connection",
+    "current_backend_connection_state",
+    "BackendState",
     "BackendCmdsInvalidRequest",
     "BackendCmdsInvalidResponse",
     "BackendCmdsBadResponse",

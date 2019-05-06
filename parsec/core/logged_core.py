@@ -51,7 +51,6 @@ async def logged_core_factory(
         # switch to listen events mode, then monitors kick in and send it
         # events about which vlob groups to listen on, obliging to restart the
         # listen connection...
-        await root_nursery.start(backend_listen_events, device, event_bus)
 
         async with backend_cmds_pool_factory(
             device.organization_addr,
@@ -81,6 +80,8 @@ async def logged_core_factory(
                     await monitor_nursery.start(monitor_vlob_groups, device, user_fs, event_bus)
                     await monitor_nursery.start(monitor_messages, user_fs, event_bus)
                     await monitor_nursery.start(monitor_sync, fs, event_bus)
+
+                    await root_nursery.start(backend_listen_events, device, event_bus)
 
                     async with mountpoint_manager_factory(
                         user_fs,

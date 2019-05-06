@@ -8,7 +8,9 @@ from parsec.api.transport import TransportError
 from parsec.core.types import LocalDevice
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
+    BackendIncompatibleVersion,
     BackendHandshakeError,
+    BackendHandshakeAPIVersionError,
     BackendDeviceRevokedError,
     BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
@@ -25,6 +27,7 @@ class BackendEventsManager:
         self.device = device
         self.event_bus = event_bus
         self._backend_online = None
+        self._backend_incompatible_version = None
         self._subscribed_vlob_groups = set()
         self._subscribed_vlob_groups_changed = trio.Event()
         self._task_info = None
@@ -50,12 +53,21 @@ class BackendEventsManager:
         await closed_event.wait()
         self._task_info = None
 
+    def _event_pump_incompatible_version(self):
+        if self._backend_incompatible_version is not True:
+            self._backend_incompatible_version = True
+            self.event_bus.send("backend.incompatible_version")
+        # Send "incompatible_version" before "offline" so it can be read correctly
+        self._event_pump_lost()
+
     def _event_pump_lost(self):
         if self._backend_online is not False:
             self._backend_online = False
             self.event_bus.send("backend.offline")
 
     def _event_pump_ready(self):
+        if self._backend_incompatible_version is True:
+            self._backend_incompatible_version = False
         if self._backend_online is not True:
             self._backend_online = True
             self.event_bus.send("backend.online")
@@ -64,6 +76,7 @@ class BackendEventsManager:
     async def run(self, *, task_status=trio.TASK_STATUS_IGNORED):
         closed_event = trio.Event()
         try:
+            self.event_bus.send("backend.listener.started")
             async with trio.open_nursery() as nursery:
                 # If backend is online, we want to wait before calling
                 # `task_status.started` until we are connected to the backend
@@ -118,6 +131,12 @@ class BackendEventsManager:
                         lambda x: None if isinstance(x, trio.Cancelled) else x, exc
                     )
                     raise filtered_exc if filtered_exc else exc
+
+            except (BackendHandshakeAPIVersionError, BackendIncompatibleVersion) as exc:
+                # No need to retry, client should update or wait for backend update first
+                self._event_pump_incompatible_version()
+                logger.info(f"Cannot connect to backend : incompatible version {str(exc)}")
+                return
 
             except (TransportError, BackendNotAvailable) as exc:
                 # In case of connection failure, wait a bit and restart
