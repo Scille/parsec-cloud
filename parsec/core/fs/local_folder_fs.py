@@ -285,8 +285,6 @@ class LocalFolderFS:
                 "is_placeholder": manifest.is_placeholder,
                 "need_sync": manifest.need_sync,
                 "children": list(sorted(manifest.children.keys())),
-                "creator": manifest.creator,
-                "participants": list(manifest.participants),
             }
 
         elif is_user_manifest(manifest):

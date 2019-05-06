@@ -7,7 +7,7 @@ from hashlib import sha256
 from typing import Union, Optional
 
 from parsec.types import UserID
-from parsec.api.protocole.vlob import VlobGroupRole, _VlobGroupRoleField
+from parsec.api.protocole import VlobGroupRole, VlobGroupRoleField
 from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import AccessID, serializer_factory, EntryNameField
@@ -105,6 +105,7 @@ Access = Union[UserAccess, ManifestAccess, BlockAccess, DirtyBlockAccess]
 
 # Republishing under a better name
 WorkspaceRole = VlobGroupRole
+WorkspaceRoleField = VlobGroupRoleField
 
 
 # Not stricly speaking an access, but close enough...
@@ -133,7 +134,7 @@ class WorkspaceEntrySchema(UnknownCheckedSchema):
     name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
     access = fields.Nested(ManifestAccessSchema, required=True)
     granted_on = fields.DateTime(required=True)
-    role = _VlobGroupRoleField(allow_none=True, missing=None)
+    role = WorkspaceRoleField(allow_none=True, missing=None)
 
     @post_load
     def make_obj(self, data):

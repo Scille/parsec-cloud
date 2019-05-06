@@ -26,7 +26,7 @@ class VlobGroupRole(Enum):
     READER = "READER"
 
 
-class _VlobGroupRoleField(fields.Field):
+class VlobGroupRoleField(fields.Field):
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
@@ -130,7 +130,7 @@ vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
 class VlobGroupUpdateRolesReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     user = fields.UserID(required=True)
-    role = _VlobGroupRoleField(allow_none=True, missing=None)
+    role = VlobGroupRoleField(allow_none=True, missing=None)
 
 
 class VlobGroupUpdateRolesRepSchema(BaseRepSchema):
@@ -147,7 +147,7 @@ class VlobGroupGetRolesReqSchema(BaseReqSchema):
 
 
 class VlobGroupGetRolesRepSchema(BaseRepSchema):
-    users = fields.Map(fields.UserID(), _VlobGroupRoleField(required=True))
+    users = fields.Map(fields.UserID(), VlobGroupRoleField(required=True))
 
 
 vlob_group_get_roles_serializer = CmdSerializer(

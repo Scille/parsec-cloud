@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
 
-from parsec.api.protocole import VlobGroupRole
+from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess
 from parsec.core.backend_connection import BackendNotAvailable
 
 from tests.common import freeze_time, create_shared_workspace
@@ -50,7 +50,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
     await alice_user_fs.sync()
     await workspace2.sync("/")
 
-    workspace_info = await workspace.workspace_info()
+    workspace_entry = workspace.get_workspace_entry()
     path_info = await workspace.path_info("/")
     assert path_info == {
         "type": "folder",
@@ -62,14 +62,15 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
     }
-    assert workspace_info == {
-        "role": VlobGroupRole.OWNER,
-        "participants": spy.ANY,
-        "creator": alice.user_id,
-    }
-    workspace_info2 = await workspace.workspace_info()
+    assert workspace_entry == WorkspaceEntry(
+        name="w",
+        access=ManifestAccess(id=w_id, key=spy.ANY),
+        granted_on=Pendulum(2000, 1, 2),
+        role=WorkspaceRole.OWNER,
+    )
+    workspace_entry2 = workspace.get_workspace_entry()
     path_info2 = await workspace.path_info("/")
-    assert workspace_info == workspace_info2
+    assert workspace_entry == workspace_entry2
     assert path_info == path_info2
 
 
@@ -547,7 +548,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
 
 
 @pytest.mark.trio
-async def test_create_already_existing_folder_vlob(running_backend, alice, alice_fs, alice2_fs):
+async def test_create_already_existing_folder_vlob(running_backend, alice_fs, alice2_fs):
     # First create data locally
     with freeze_time("2000-01-02"):
         w_id = await alice_fs.workspace_create("/w")
@@ -581,8 +582,6 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
-        "creator": alice.user_id,
-        "participants": [alice.user_id],
         "children": ["x"],
     }
 

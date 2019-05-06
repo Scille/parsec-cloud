@@ -51,8 +51,6 @@ async def test_create_workspace(alice_user_fs, alice):
 
     w_manifest = alice_user_fs.local_storage.get_manifest(um.workspaces[0].access)
     expected_w_manifest = LocalWorkspaceManifest(
-        creator=alice.user_id,
-        participants=[alice.user_id],
         author=alice.device_id,
         base_version=0,
         need_sync=True,

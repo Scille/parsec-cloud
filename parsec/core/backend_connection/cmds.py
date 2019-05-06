@@ -197,7 +197,7 @@ async def vlob_update(
     )
 
 
-async def vlob_group_get_roles(transport: Transport, id: UUID) -> Dict[UserID, Dict]:
+async def vlob_group_get_roles(transport: Transport, id: UUID) -> Dict[UserID, VlobGroupRole]:
     rep = await _send_cmd(
         transport, vlob_group_get_roles_serializer, cmd="vlob_group_get_roles", id=id
     )

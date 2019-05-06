@@ -1,13 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import inspect
-from typing import Union, Iterator
+from typing import Union, Iterator, Dict
 from uuid import UUID
 
-from parsec.core.types import FsPath, AccessID
-from parsec.core.local_storage import LocalStorageMissingEntry
+from parsec.types import UserID
+from parsec.core.types import FsPath, AccessID, WorkspaceRole
+from parsec.core.backend_connection import (
+    BackendNotAvailable,
+    BackendCmdsNotAllowed,
+    BackendConnectionError,
+)
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 
 # Legacy
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
@@ -19,7 +25,8 @@ AnyPath = Union[FsPath, str]
 class WorkspaceFS:
     def __init__(
         self,
-        workspace_entry,
+        workspace_id,
+        get_workspace_entry,
         device,
         local_storage,
         backend_cmds,
@@ -28,7 +35,8 @@ class WorkspaceFS:
         _remote_loader,
         _syncer,
     ):
-        self.workspace_entry = workspace_entry
+        self.workspace_id = workspace_id
+        self.get_workspace_entry = get_workspace_entry
         self.device = device
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
@@ -41,44 +49,56 @@ class WorkspaceFS:
             self.workspace_id, local_storage, self._remote_loader, event_bus
         )
         self.entry_transactions = EntryTransactions(
-            self.device, workspace_entry, local_storage, self._remote_loader, event_bus
+            self.workspace_id,
+            self.get_workspace_entry,
+            self.device,
+            local_storage,
+            self._remote_loader,
+            event_bus,
         )
 
     @property
     def workspace_name(self) -> str:
-        return self.workspace_entry.name
-
-    @property
-    def workspace_id(self) -> AccessID:
-        return self.workspace_entry.access.id
+        return self.get_workspace_entry().name
 
     # Information
 
-    async def workspace_info(self):
-        # try:
-        #     user_roles = await self.backend_cmds.vlob_group_get_roles(
-        #         self.workspace_entry.access.id
-        #     )
-
-        # except BackendNotAvailable as exc:
-        #     raise FSBackendOfflineError(str(exc)) from exc
-
-        # except BackendConnectionError as exc:
-        #     raise FSError(f"Cannot retreive workspace's vlob group rights: {exc}") from exc
-
-        # TODO: finish me !
-        try:
-            manifest = self.local_storage.get_manifest(self.workspace_entry.access)
-        except LocalStorageMissingEntry as exc:
-            manifest = await self._remote_loader.load_manifest(exc.access)
-        return {
-            "role": self.workspace_entry.role,
-            "creator": manifest.creator,
-            "participants": list(manifest.participants),
-        }
-
     async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
+
+    # TODO: remove this once workspace widget has been reworked
+    async def workspace_info(self):
+        try:
+            roles = await self.get_user_roles()
+        except FSBackendOfflineError:
+            roles = {self.device.user_id: self.get_workspace_entry().role}
+
+        return {
+            "participants": list(roles.keys()),
+            "creator": next(
+                user_id for user_id, role in roles.items() if role == WorkspaceRole.OWNER
+            ),
+        }
+
+    async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
+        """
+        Raises:
+            FSError
+            FSWorkspaceNotFoundError
+            FSBackendOfflineError
+        """
+        try:
+            return await self.backend_cmds.vlob_group_get_roles(self.workspace_id)
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsNotAllowed:
+            # Seems we lost all the access roles
+            return {}
+
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
     # Pathlib-like interface
 
@@ -184,7 +204,8 @@ class WorkspaceFS:
     # Left to migrate
 
     def _cook_path(self, relative_path=""):
-        return FsPath(f"/{self.workspace_name}/{relative_path}")
+        workspace_name = self.workspace_name
+        return FsPath(f"/{workspace_name}/{relative_path}")
 
     async def _load_and_retry(self, fn, *args, **kwargs):
         while True:

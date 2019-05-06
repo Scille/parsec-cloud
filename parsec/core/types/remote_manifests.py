@@ -4,7 +4,7 @@ import attr
 import pendulum
 from typing import Tuple, Dict, List, Union
 
-from parsec.types import DeviceID, UserID, FrozenDict
+from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
 from parsec.core.types import local_manifests
 from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
@@ -128,21 +128,16 @@ folder_manifest_serializer = serializer_factory(FolderManifestSchema)
 
 # Workspace manifest
 
-# TODO: remove creator and participants (use vlob_group api to determine this)
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class WorkspaceManifest(FolderManifest):
-    creator: UserID
-    participants: Tuple[UserID]
-
-    def to_local(self) -> "local_manifests.LocalFolderManifest":
+    def to_local(self) -> "local_manifests.LocalWorkspaceManifest":
         return local_manifests.LocalWorkspaceManifest(
             author=self.author,
             base_version=self.version,
             created=self.created,
             updated=self.updated,
             children=self.children,
-            creator=self.creator,
-            participants=self.participants,
             is_placeholder=False,
             need_sync=False,
         )
@@ -150,8 +145,6 @@ class WorkspaceManifest(FolderManifest):
 
 class WorkspaceManifestSchema(FolderManifestSchema):
     type = fields.CheckedConstant("workspace_manifest", required=True)
-    creator = fields.UserID(required=True)
-    participants = fields.List(fields.UserID(), required=True)
 
     @post_load
     def make_obj(self, data):

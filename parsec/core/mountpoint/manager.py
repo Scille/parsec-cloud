@@ -73,22 +73,18 @@ class MountpointManager:
             raise MountpointConfigurationError(f"Workspace `{workspace_id}` doesn't exist") from exc
 
     def get_path_in_mountpoint(self, workspace_id: AccessID, path: FsPath) -> PurePath:
-        workspace = self._get_workspace(workspace_id)
+        self._get_workspace(workspace_id)
         try:
             runner_task = self._mountpoint_tasks[workspace_id]
             return runner_task.value / path.relative_to(path.root)
 
         except KeyError:
-            raise MountpointNotMounted(
-                f"Workspace `{workspace_id}` ({workspace.workspace_name}) is not mounted"
-            )
+            raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
 
     async def mount_workspace(self, workspace_id: AccessID) -> PurePath:
         workspace = self._get_workspace(workspace_id)
         if workspace_id in self._mountpoint_tasks:
-            raise MountpointAlreadyMounted(
-                f"Workspace `{workspace_id}` ({workspace.workspace_name}) already mounted."
-            )
+            raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
 
         curried_runner = partial(
             self._runner,

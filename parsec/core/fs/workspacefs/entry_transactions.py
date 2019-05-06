@@ -2,7 +2,8 @@
 
 import os
 import errno
-from typing import Tuple
+from uuid import UUID
+from typing import Tuple, Callable
 from collections import namedtuple
 from async_generator import asynccontextmanager
 
@@ -11,7 +12,6 @@ from parsec.core.types import (
     AccessID,
     FsPath,
     Access,
-    WorkspaceEntry,
     WorkspaceRole,
     LocalDevice,
     LocalManifest,
@@ -31,6 +31,7 @@ from parsec.core.fs.remote_loader import RemoteLoader
 
 
 Entry = namedtuple("Entry", "access manifest")
+WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
 
 
 def from_errno(errno, message=None, filename=None, filename2=None):
@@ -42,26 +43,24 @@ def from_errno(errno, message=None, filename=None, filename2=None):
 class EntryTransactions:
     def __init__(
         self,
+        workspace_id: UUID,
+        get_workspace_entry: Callable,
         device: LocalDevice,
-        workspace_entry: WorkspaceEntry,
         local_storage: LocalStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
     ):
+        self.workspace_id = workspace_id
+        self.get_workspace_entry = get_workspace_entry
         self.local_author = device.device_id
-        self.workspace_entry = workspace_entry
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    @property
-    def workspace_id(self):
-        return self.workspace_entry.access.id
-
     # Right management helper
 
     def _check_write_rights(self, path: FsPath):
-        if self.workspace_entry.role == WorkspaceRole.READER:
+        if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
             raise from_errno(errno.EACCES, str(path))
 
     # Event helper
@@ -80,7 +79,7 @@ class EntryTransactions:
     async def _get_entry(self, path: FsPath) -> Tuple[Access, LocalManifest]:
         # Root access and manifest
         assert path.parts[0] == "/"
-        access = self.workspace_entry.access
+        access = self.get_workspace_entry().access
         manifest = await self._get_manifest(access)
         assert is_workspace_manifest(manifest)
 

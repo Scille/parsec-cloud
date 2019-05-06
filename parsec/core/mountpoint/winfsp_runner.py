@@ -19,7 +19,7 @@ __all__ = ("winfsp_mountpoint_runner",)
 logger = get_logger()
 
 
-async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) -> PurePath:
+async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_name) -> PurePath:
     # Mountpoint can be a drive letter, in such case nothing to do
     if str(base_mountpoint_path) == base_mountpoint_path.drive:
         return
@@ -28,10 +28,11 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
     # here are not atomic (and the mount operation is not itself atomic anyway),
     # hence there is still edgecases where the mount can crash due to concurrent
     # changes on the mountpoint path
-    for tentative in count():
-        dirname = f"{workspace_fs.workspace_name}"
-        if tentative:
-            dirname += f" ({tentative + 1})"
+    for tentative in count(1):
+        if tentative == 1:
+            dirname = workspace_name
+        else:
+            dirname = f"{workspace_name} ({tentative})"
         mountpoint_path = base_mountpoint_path / dirname
 
         try:
@@ -49,8 +50,8 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
             continue
 
 
-def _generate_volume_serial_number(device, workspace):
-    return adler32(f"{device.organization_id}-{device.device_id}-{workspace}".encode())
+def _generate_volume_serial_number(device, workspace_id):
+    return adler32(f"{device.organization_id}-{device.device_id}-{workspace_id}".encode())
 
 
 async def winfsp_mountpoint_runner(
@@ -70,13 +71,13 @@ async def winfsp_mountpoint_runner(
     portal = trio.BlockingTrioPortal()
     fs_access = ThreadFSAccess(portal, workspace_fs)
 
-    mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_fs)
+    mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_name)
 
     if config.get("debug", False):
         enable_debug_log()
 
     volume_label = f"{device.user_id}-{workspace_name}"[:31]
-    volume_serial_number = _generate_volume_serial_number(device, workspace_name)
+    volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
     operations = WinFSPOperations(volume_label, fs_access)
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(

@@ -28,6 +28,7 @@ from parsec.api.protocole.message import message_send_serializer, message_get_se
 from parsec.api.protocole.block import block_create_serializer, block_read_serializer
 from parsec.api.protocole.vlob import (
     VlobGroupRole,
+    VlobGroupRoleField,
     vlob_group_check_serializer,
     vlob_create_serializer,
     vlob_read_serializer,
@@ -84,6 +85,7 @@ __all__ = (
     "block_read_serializer",
     # Vlob
     "VlobGroupRole",
+    "VlobGroupRoleField",
     "vlob_group_check_serializer",
     "vlob_create_serializer",
     "vlob_read_serializer",
