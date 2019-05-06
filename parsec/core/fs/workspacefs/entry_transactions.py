@@ -57,10 +57,6 @@ class EntryTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    @property
-    def workspace_id(self):
-        return self.workspace_entry.access.id
-
     # Right management helper
 
     def _check_write_rights(self, path: FsPath):
