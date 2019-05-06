@@ -67,7 +67,7 @@ async def winfsp_mountpoint_runner(
         MountpointDriverCrash
     """
     device = workspace_fs.device
-    workspace_name = workspace_fs.get_workspace_entry().name
+    workspace_name = workspace_fs.workspace_name
     portal = trio.BlockingTrioPortal()
     fs_access = ThreadFSAccess(portal, workspace_fs)
 

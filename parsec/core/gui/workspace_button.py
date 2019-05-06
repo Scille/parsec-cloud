@@ -89,10 +89,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def name(self):
-        return self.workspace_fs.get_workspace_entry().name
+        return self.workspace_fs.workspace_name
 
     def reload_workspace_name(self):
-        workspace_name = self.workspace_fs.get_workspace_entry().name
+        workspace_name = self.workspace_fs.workspace_name
         display = workspace_name
         if len(display) > 20:
             display = display[:20] + "..."

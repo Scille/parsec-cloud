@@ -44,7 +44,6 @@ class WorkspaceFS:
         self._local_folder_fs = _local_folder_fs
         self._remote_loader = _remote_loader
         self._syncer = _syncer
-        self._user_roles_cache_access = None
 
         self.file_transactions = FileTransactions(
             self.workspace_id, local_storage, self._remote_loader, event_bus
@@ -57,6 +56,10 @@ class WorkspaceFS:
             self._remote_loader,
             event_bus,
         )
+
+    @property
+    def workspace_name(self) -> str:
+        return self.get_workspace_entry().name
 
     # Information
 
@@ -201,7 +204,7 @@ class WorkspaceFS:
     # Left to migrate
 
     def _cook_path(self, relative_path=""):
-        workspace_name = self.get_workspace_entry().name
+        workspace_name = self.workspace_name
         return FsPath(f"/{workspace_name}/{relative_path}")
 
     async def _load_and_retry(self, fn, *args, **kwargs):

@@ -64,7 +64,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
 
-        self.label_current_workspace.setText(workspace_fs.get_workspace_entry().name)
+        self.label_current_workspace.setText(workspace_fs.workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
 
@@ -436,7 +436,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         path = FsPath(path)
         modified_hops = list(path.parts)
-        current_dir_hops = ["/", self.workspace_fs.get_workspace_entry().name]
+        current_dir_hops = ["/", self.workspace_fs.workspace_name]
         current_dir_hops.extend((x for x in self.current_directory.parts if x != "/"))
 
         # Only visible files require updated
@@ -467,7 +467,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
         modified_hops = list(path.parts)
-        current_dir_hops = ["/", self.workspace_fs.get_workspace_entry().name]
+        current_dir_hops = ["/", self.workspace_fs.workspace_name]
         current_dir_hops.extend((x for x in self.current_directory.parts if x != "/"))
         # Only direct children to current directory require reloading
         if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
