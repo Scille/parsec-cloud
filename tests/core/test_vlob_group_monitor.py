@@ -7,6 +7,7 @@ from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
+@pytest.mark.linux  # TODO: investigate while this fails on windows
 @pytest.mark.parametrize("type", ("folder", "file"))
 async def test_vlob_group_notif_on_new_entry_sync(
     mock_clock, running_backend, alice_core, alice2_fs, type

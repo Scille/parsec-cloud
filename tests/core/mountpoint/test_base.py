@@ -91,7 +91,7 @@ async def test_mountpoint_path_already_in_use(
     await alice2_user_fs.get_workspace(wid).touch("/I_am_alice2.txt")
     await alice_user_fs.get_workspace(wid).touch("/I_am_alice.txt")
 
-    naive_workspace_path = f"{base_mountpoint.absolute()}/w"
+    naive_workspace_path = (base_mountpoint / "w").absolute()
 
     # Default workspace path already exists, souldn't be able to use it
     await trio.Path(base_mountpoint / "w").mkdir(parents=True)
@@ -111,8 +111,8 @@ async def test_mountpoint_path_already_in_use(
         assert str(alice2_mountpoint_path) == f"{naive_workspace_path} (3)"
 
         # Finally make sure each workspace is well mounted
-        assert await trio.Path(f"{alice_mountpoint_path}/I_am_alice.txt").exists()
-        assert await trio.Path(f"{alice2_mountpoint_path}/I_am_alice2.txt").exists()
+        assert await trio.Path(alice_mountpoint_path / "I_am_alice.txt").exists()
+        assert await trio.Path(alice2_mountpoint_path / "I_am_alice2.txt").exists()
 
 
 @pytest.mark.trio
