@@ -205,7 +205,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.table_files.add_parent_workspace()
         else:
             self.table_files.add_parent_folder()
-        self.label_current_directory.setText(str(self.current_directory))
+        str_dir = str(self.current_directory)
+        if len(str_dir) > 59:
+            str_dir = "{}...{}".format(str_dir[:28], str_dir[-28:])
+        self.label_current_directory.setText(str_dir)
         self.label_current_directory.show()
         self.label_caret.show()
         dir_path = self.current_directory
