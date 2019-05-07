@@ -17,7 +17,7 @@ alice_workspace and bob_workspace, that their sharing with each other.
 
 PORT=6888
 TMP=`mktemp -d`
-DIR=`dirname $0`
+DIR=`dirname ${BASH_SOURCE[0]}`
 export XDG_CACHE_HOME="$TMP/cache"
 export XDG_DATA_HOME="$TMP/share"
 export XDG_CONFIG_HOME="$TMP/config"
