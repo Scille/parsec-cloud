@@ -7,15 +7,22 @@ from uuid import UUID
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QWidget
 
-from parsec.core.types import FsPath, AccessID
+from parsec.core.types import FsPath, AccessID, WorkspaceEntry, WorkspaceRole
+from parsec.core.fs import FSEntryNotFound
+
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
-from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
+from parsec.core.gui.custom_widgets import (
+    show_error,
+    ask_question,
+    get_text,
+    TaskbarButton,
+    show_warning,
+)
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.replace_dialog import ReplaceDialog
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
-from parsec.core.fs import FSEntryNotFound
 
 
 class CancelException(Exception):
@@ -25,6 +32,9 @@ class CancelException(Exception):
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID, str)
+    sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
+    sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
+    taskbar_updated = pyqtSignal()
     back_clicked = pyqtSignal()
 
     def __init__(self, core, jobs_ctx, event_bus, workspace_fs, *args, **kwargs):
@@ -35,19 +45,21 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus = event_bus
         self.workspace_fs = workspace_fs
 
-        self.taskbar_buttons = []
-        button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
-        button_back.clicked.connect(self.back_clicked)
-        self.taskbar_buttons.append(button_back)
-        button_import_folder = TaskbarButton(icon_path=":/icons/images/icons/upload_folder_off.png")
-        button_import_folder.clicked.connect(self.import_folder_clicked)
-        self.taskbar_buttons.append(button_import_folder)
-        button_import_files = TaskbarButton(icon_path=":/icons/images/icons/upload_file_off.png")
-        button_import_files.clicked.connect(self.import_files_clicked)
-        self.taskbar_buttons.append(button_import_files)
-        button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
-        button_create_folder.clicked.connect(self.create_folder_clicked)
-        self.taskbar_buttons.append(button_create_folder)
+        ws_entry = self.workspace_fs.get_workspace_entry()
+        self.current_user_role = ws_entry.role
+
+        self.button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
+        self.button_back.clicked.connect(self.back_clicked)
+        self.button_import_folder = TaskbarButton(
+            icon_path=":/icons/images/icons/upload_folder_off.png"
+        )
+        self.button_import_folder.clicked.connect(self.import_folder_clicked)
+        self.button_import_files = TaskbarButton(
+            icon_path=":/icons/images/icons/upload_file_off.png"
+        )
+        self.button_import_files.clicked.connect(self.import_files_clicked)
+        self.button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
+        self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = FsPath("/")
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
@@ -60,17 +72,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.rename_clicked.connect(self.rename_files)
         self.table_files.delete_clicked.connect(self.delete_files)
         self.table_files.open_clicked.connect(self.open_files)
+        self.table_files.current_user_role = self.current_user_role
 
-        self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
 
         self.label_current_workspace.setText(workspace_fs.workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
+        self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
+        self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
 
     def disconnect_all(self):
-        self.core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
 
     def rename_files(self):
         files = self.table_files.selected_files()
@@ -188,7 +207,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.load(self.current_directory / file_name)
 
     def get_taskbar_buttons(self):
-        return self.taskbar_buttons
+        if self.current_user_role == WorkspaceRole.READER:
+            return [self.button_back]
+        else:
+            return [
+                self.button_back,
+                self.button_import_folder,
+                self.button_import_files,
+                self.button_create_folder,
+            ]
 
     def reload(self):
         self.load(self.current_directory)
@@ -197,6 +224,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.update_timer.stop()
 
         self.table_files.clear()
+
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
@@ -413,17 +441,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             row = self.table_files.currentRow()
             self.delete_item(row)()
 
-    # slot
     def _on_fs_entry_synced_trio(self, event, path, id):
         self.fs_synced_qt.emit(event, id, path)
 
-    # slot
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         assert id is not None
         if workspace_id is None or workspace_id == self.workspace_fs.workspace_id:
             self.fs_updated_qt.emit(event, id)
 
-    # slot
     def _on_fs_synced_qt(self, event, id, path):
         if path is None:
             try:
@@ -452,7 +477,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     icon_item.is_synced = True
                     return
 
-    # slot
     def _on_fs_updated_qt(self, event, id):
         id = AccessID(id)
         path = None
@@ -472,3 +496,21 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # Only direct children to current directory require reloading
         if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
             self.update_timer.start(1000)
+
+    def _on_sharing_revoked_trio(self, event, new_entry, previous_entry):
+        self.sharing_revoked_qt.emit(new_entry, previous_entry)
+
+    def _on_sharing_revoked_qt(self, new_entry, previous_entry):
+        show_error(self, _("You no longer have the permission to access this workspace."))
+        self.back_clicked.emit()
+
+    def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
+        self.sharing_updated_qt.emit(new_entry, previous_entry)
+
+    def _on_sharing_updated_qt(self, new_entry, previous_entry):
+        self.current_user_role = new_entry.role
+        if previous_entry.role != WorkspaceRole.READER and new_entry.role == WorkspaceRole.READER:
+            show_warning(self, _("You are now a reader on this workspace."))
+            self.taskbar_updated.emit()
+        else:
+            self.taskbar_updated.emit()

@@ -42,6 +42,10 @@ class MountWidget(QWidget, Ui_MountWidget):
         )
         self.layout_content.insertWidget(0, files_widget)
         files_widget.back_clicked.connect(self.show_workspaces_widget)
+        files_widget.taskbar_updated.connect(self.on_taskbar_updated)
+        self.widget_switched.emit(self.get_taskbar_buttons())
+
+    def on_taskbar_updated(self):
         self.widget_switched.emit(self.get_taskbar_buttons())
 
     def show_workspaces_widget(self):

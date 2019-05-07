@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
-
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QCompleter, QWidget
 
 from parsec.core.fs import FSError
+from parsec.types import UserID
+from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, show_info
 from parsec.core.gui.lang import translate as _
@@ -13,75 +13,106 @@ from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialo
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
 
-class SharingWidget(QWidget, Ui_SharingWidget):
-    remove_clicked = pyqtSignal(QWidget)
+_ROLES_TO_INDEX = {
+    WorkspaceRole.READER: 0,
+    WorkspaceRole.CONTRIBUTOR: 1,
+    WorkspaceRole.MANAGER: 2,
+    WorkspaceRole.OWNER: 3,
+}
 
-    def __init__(
-        self,
-        name,
-        is_current_user,
-        is_creator,
-        admin,
-        read,
-        write,
-        can_change_permissions,
-        *args,
-        **kwargs,
-    ):
+
+def _index_to_role(index):
+    for role, idx in _ROLES_TO_INDEX.items():
+        if index == idx:
+            return role
+    return None
+
+
+class SharingWidget(QWidget, Ui_SharingWidget):
+    delete_clicked = pyqtSignal(UserID)
+
+    def __init__(self, user, is_current_user, current_user_role, role, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.is_creator = is_creator
-        self.name = name
-        if self.is_creator:
-            self.label_name.setText(f"<b>{name}</b>")
-        else:
-            self.label_name.setText(name)
-        self.checkbox_read.setChecked(read)
-        self.checkbox_write.setChecked(write)
-        self.checkbox_admin.setChecked(admin)
+        self.role = role
+        self.current_user_role = current_user_role
         self.is_current_user = is_current_user
-        if self.is_current_user or not can_change_permissions:
-            self.checkbox_read.setDisabled(True)
-            self.checkbox_write.setDisabled(True)
-            self.checkbox_admin.setDisabled(True)
-        self.read_start_state = read
-        self.write_start_state = write
-        self.admin_start_state = admin
+        self.user = user
+        if self.role == WorkspaceRole.OWNER:
+            self.label_name.setText(f"<b>{self.user}</b>")
+        else:
+            self.label_name.setText(self.user)
+
+        for role, index in _ROLES_TO_INDEX.items():
+            if role == WorkspaceRole.READER:
+                self.combo_role.insertItem(index, _("Reader"))
+            elif role == WorkspaceRole.CONTRIBUTOR:
+                self.combo_role.insertItem(index, _("Contributor"))
+            elif role == WorkspaceRole.MANAGER:
+                self.combo_role.insertItem(index, _("Manager"))
+            elif role == WorkspaceRole.OWNER:
+                self.combo_role.insertItem(index, _("Owner"))
+        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
+
+        if self.is_current_user:
+            self.setDisabled(True)
+        if (
+            self.current_user_role == WorkspaceRole.READER
+            or self.current_user_role == WorkspaceRole.CONTRIBUTOR
+        ):
+            self.setDisabled(True)
+        if self.current_user_role == WorkspaceRole.MANAGER and (
+            self.role == WorkspaceRole.OWNER or self.role == WorkspaceRole.MANAGER
+        ):
+            self.setDisabled(True)
+        if self.current_user_role == WorkspaceRole.OWNER and self.role == WorkspaceRole.OWNER:
+            self.setDisabled(True)
+
+        self.button_delete.clicked.connect(self.on_delete_clicked)
 
     @property
-    def admin_rights(self):
-        return self.checkbox_admin.isChecked()
+    def new_role(self):
+        return _index_to_role(self.combo_role.currentIndex())
 
-    @property
-    def read_rights(self):
-        return self.checkbox_read.isChecked()
-
-    @property
-    def write_rights(self):
-        return self.checkbox_write.isChecked()
+    def on_delete_clicked(self):
+        self.delete_clicked.emit(self.user)
 
     def should_update(self):
-        return (
-            self.admin_rights != self.admin_start_state
-            or self.write_rights != self.write_start_state
-            or self.read_rights != self.read_start_state
-        )
+        return self.role != self.new_role
 
 
 class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
-    def __init__(self, name, core, portal, *args, **kwargs):
+    def __init__(self, user_fs, workspace_fs, core, jobs_ctx, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.user_fs = user_fs
         self.core = core
-        self.portal = portal
-        self.name = name
+        self.jobs_ctx = jobs_ctx
+        self.workspace_fs = workspace_fs
         self.setWindowFlags(Qt.SplashScreen)
         self.line_edit_share.textChanged.connect(self.text_changed)
         self.timer = QTimer()
         self.timer.timeout.connect(self.show_auto_complete)
-        self.button_close.clicked.connect(self.close_requested)
-        self.button_share.clicked.connect(self.add_user)
-        self.button_apply.clicked.connect(self.apply_changes)
+        self.button_close.clicked.connect(self.on_close_requested)
+        self.button_share.clicked.connect(self.on_share_clicked)
+        self.button_apply.clicked.connect(self.on_update_permissions_clicked)
+        for role, index in _ROLES_TO_INDEX.items():
+            if role == WorkspaceRole.READER:
+                self.combo_role.insertItem(index, _("Reader"))
+            elif role == WorkspaceRole.CONTRIBUTOR:
+                self.combo_role.insertItem(index, _("Contributor"))
+            elif role == WorkspaceRole.MANAGER:
+                self.combo_role.insertItem(index, _("Manager"))
+            elif role == WorkspaceRole.OWNER:
+                self.combo_role.insertItem(index, _("Owner"))
+        ws_entry = self.workspace_fs.get_workspace_entry()
+        self.current_user_role = ws_entry.role
+        if (
+            self.current_user_role == WorkspaceRole.READER
+            or self.current_user_role == WorkspaceRole.CONTRIBUTOR
+        ):
+            self.widget_add.hide()
+            self.button_apply.hide()
         self.reset()
 
     def text_changed(self, text):
@@ -94,7 +125,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
     def show_auto_complete(self):
         self.timer.stop()
         if len(self.line_edit_share.text()):
-            users = self.portal.run(
+            users = self.jobs_ctx.run(
                 self.core.fs.backend_cmds.user_find, self.line_edit_share.text(), 1, 100, True
             )
             users = [u for u in users if u != self.core.device.user_id]
@@ -104,67 +135,71 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.line_edit_share.setCompleter(completer)
             self.line_edit_share.completer().complete()
 
-    def add_user(self):
-        user = self.line_edit_share.text()
-        if not user:
+    def on_share_clicked(self):
+        user_name = self.line_edit_share.text()
+        if not user_name:
             return
-        if user == self.core.device.user_id:
-            show_warning(self, _("You can not share a workspace with yourself.").format(user))
+        if user_name == self.core.device.user_id:
+            show_warning(self, _("You can not share a workspace with yourself.").format(user_name))
             return
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
-            if item and item.widget() and item.widget().name == user:
-                show_warning(self, _('This workspace is already shared with "{}".').format(user))
+            if item and item.widget() and item.widget().user == user_name:
+                show_warning(
+                    self, _('This workspace is already shared with "{}".').format(user_name)
+                )
                 return
         try:
-            self.portal.run(
-                self.core.fs.share,
-                os.path.join("/", self.name),
+            user = UserID(user_name)
+            self.jobs_ctx.run(
+                self.user_fs.workspace_share,
+                self.workspace_fs.workspace_id,
                 user,
-                self.checkbox_admin.isChecked(),
-                self.checkbox_read.isChecked(),
-                self.checkbox_write.isChecked(),
+                _index_to_role(self.combo_role.currentIndex()),
             )
-            self.add_participant(
-                user,
-                False,
-                False,
-                admin=self.checkbox_admin.isChecked(),
-                read=self.checkbox_read.isChecked(),
-                write=self.checkbox_write.isChecked(),
-                can_change_permissions=self.checkbox_admin.isChecked(),
-            )
-            self.checkbox_admin.setChecked(True)
-            self.checkbox_read.setChecked(True)
-            self.checkbox_write.setChecked(True)
+            self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
         except FSError:
             show_warning(
-                self, _('Can not share the workspace "{}" with this user.').format(self.name)
+                self,
+                _('Can not share the workspace "{}" with this user.').format(
+                    self.workspace_fs.workspace_name
+                ),
             )
         except:
             import traceback
 
             traceback.print_exc()
             show_error(
-                self, _('Can not share the workspace "{}" with "{}".').format(self.name, user)
+                self,
+                _('Can not share the workspace "{}" with "{}".').format(
+                    self.workspace_fs.workspace_name, user
+                ),
             )
 
-    def add_participant(
-        self, participant, is_current_user, is_creator, admin, read, write, can_change_permissions
-    ):
+    def add_participant(self, user, is_current_user, role):
         w = SharingWidget(
-            name=participant,
+            user=user,
             is_current_user=is_current_user,
-            is_creator=is_creator,
-            admin=admin,
-            read=read,
-            write=write,
-            can_change_permissions=can_change_permissions,
+            current_user_role=self.current_user_role,
+            role=role,
             parent=self,
         )
         self.scroll_content.layout().insertWidget(0, w)
+        w.delete_clicked.connect(self.on_remove_user_clicked)
 
-    def apply_changes(self):
+    def on_remove_user_clicked(self, user):
+        r = ask_question(
+            parent=self,
+            title=_("Remove this user"),
+            message=_("Are you sure you want to stop sharing this workspace with {}?").format(user),
+        )
+        if not r:
+            return
+
+        self.jobs_ctx.run(self.user_fs.workspace_share, self.workspace_fs.workspace_id, user, None)
+        self.reset()
+
+    def on_update_permissions_clicked(self):
         errors = []
         updated = False
         for i in range(self.scroll_content.layout().count()):
@@ -172,19 +207,17 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             w = item.widget()
             if not w or not isinstance(w, SharingWidget):
                 continue
-            if not w.is_current_user and not w.is_creator and w.should_update():
+            if w.should_update():
                 try:
-                    self.portal.run(
-                        self.core.fs.share,
-                        os.path.join("/", self.name),
-                        w.name,
-                        w.admin_rights,
-                        w.read_rights,
-                        w.write_rights,
+                    self.jobs_ctx.run(
+                        self.user_fs.workspace_share,
+                        self.workspace_fs.workspace_id,
+                        w.user,
+                        w.new_role,
                     )
                     updated = True
                 except:
-                    errors.append(w.name)
+                    errors.append(w.user)
                     import traceback
 
                     traceback.print_exc()
@@ -205,11 +238,11 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         for i in range(self.scroll_content.layout().count() - 1):
             item = self.scroll_content.layout().itemAt(i)
             w = item.widget()
-            if not w.is_current_user and not w.is_creator and w.should_update():
+            if w.should_update():
                 return True
         return False
 
-    def close_requested(self):
+    def on_close_requested(self):
         if self.has_changes():
             r = ask_question(
                 parent=self,
@@ -232,19 +265,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.scroll_content.layout().removeItem(item)
             w.setParent(None)
         QCoreApplication.processEvents()
-        path = os.path.join("/", self.name)
-        sharing_info = self.portal.run(self.core.fs.get_permissions, path)
-        current_user_permission = sharing_info[self.core.device.user_id]
-        can_update = current_user_permission["admin_right"]
-        self.button_apply.setVisible(can_update)
-        self.widget_add.setVisible(can_update)
-        for user, permissions in sharing_info.items():
-            self.add_participant(
-                user,
-                user == self.core.device.user_id,
-                permissions["is_owner"],
-                admin=permissions["admin_right"],
-                read=permissions["read_right"],
-                write=permissions["write_right"],
-                can_change_permissions=current_user_permission["admin_right"],
-            )
+        participants = self.jobs_ctx.run(self.workspace_fs.get_user_roles)
+        for user, role in participants.items():
+            self.add_participant(user, user == self.core.device.user_id, role)
