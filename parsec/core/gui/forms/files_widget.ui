@@ -139,7 +139,7 @@ height: 16px;
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="spacing">
-         <number>5</number>
+         <number>10</number>
         </property>
         <property name="rightMargin">
          <number>0</number>
@@ -210,6 +210,43 @@ border: 0;
           </property>
           <property name="readOnly">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_role">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLabel#label_role
+{
+border: 1px solid rgb(12, 65, 157);
+border-top-left-radius: 5px;
+border-bottom-left-radius: 5px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 5px;
+color: rgb(12, 65, 157);
+}</string>
+          </property>
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>

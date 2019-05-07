@@ -45,8 +45,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus = event_bus
         self.workspace_fs = workspace_fs
 
+        self.ROLES_TEXTS = {
+            WorkspaceRole.READER: _("Reader"),
+            WorkspaceRole.CONTRIBUTOR: _("Contributor"),
+            WorkspaceRole.MANAGER: _("Manager"),
+            WorkspaceRole.OWNER: _("Owner"),
+        }
+
         ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
+        self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
 
         self.button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
         self.button_back.clicked.connect(self.back_clicked)
@@ -509,6 +517,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_sharing_updated_qt(self, new_entry, previous_entry):
         self.current_user_role = new_entry.role
+        self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         if previous_entry.role != WorkspaceRole.READER and new_entry.role == WorkspaceRole.READER:
             show_warning(self, _("You are now a reader on this workspace."))
             self.taskbar_updated.emit()
