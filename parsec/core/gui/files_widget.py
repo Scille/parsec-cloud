@@ -206,11 +206,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             self.table_files.add_parent_folder()
         str_dir = str(self.current_directory)
-        if len(str_dir) > 59:
-            str_dir = "{}...{}".format(str_dir[:28], str_dir[-28:])
-        self.label_current_directory.setText(str_dir)
-        self.label_current_directory.show()
-        self.label_caret.show()
+        self.line_edit_current_directory.setText(str_dir)
+        self.line_edit_current_directory.setCursorPosition(0)
         dir_path = self.current_directory
         dir_stat = self.jobs_ctx.run(self.workspace_fs.path_info, dir_path)
         for i, child in enumerate(dir_stat["children"]):
