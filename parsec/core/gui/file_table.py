@@ -13,6 +13,8 @@ from PyQt5.QtWidgets import (
     QMenu,
 )
 
+from parsec.core.types import WorkspaceRole
+
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import (
     FileTableItem,
@@ -70,6 +72,7 @@ class FileTable(QTableWidget):
         self.itemSelectionChanged.connect(self.change_selection)
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.cellDoubleClicked.connect(self.item_double_clicked)
+        self.current_user_role = WorkspaceRole.OWNER
 
     def selected_files(self):
         files = []
@@ -94,10 +97,11 @@ class FileTable(QTableWidget):
         menu = QMenu(self)
         action = menu.addAction(_("Open"))
         action.triggered.connect(self.open_clicked.emit)
-        action = menu.addAction(_("Rename"))
-        action.triggered.connect(self.rename_clicked.emit)
-        action = menu.addAction(_("Delete"))
-        action.triggered.connect(self.delete_clicked.emit)
+        if self.current_user_role != WorkspaceRole.READER:
+            action = menu.addAction(_("Rename"))
+            action.triggered.connect(self.rename_clicked.emit)
+            action = menu.addAction(_("Delete"))
+            action.triggered.connect(self.delete_clicked.emit)
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):
