@@ -24,6 +24,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         "backend.connection.incompatible_version",
         "mountpoint.stopped",
         "sharing.new",
+        "sharing.revoked",
+        "sharing.updated",
         "fs.entry.file_update_conflicted",
     ]
 
@@ -100,7 +102,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 "WARNING", _("Cannot connect to backend : incompatible version detected.")
             )
         elif event == "mountpoint.stopped":
-            self.new_notification.emit("ERROR", _("Mountpoint has been unmounted."))
+            self.new_notification.emit("WARNING", _("Mountpoint has been unmounted."))
         elif event == "sharing.granted":
             self.new_notification.emit(
                 "INFO", _("Workspace '{}' shared with you").format(kwargs["new_entry"].name)
