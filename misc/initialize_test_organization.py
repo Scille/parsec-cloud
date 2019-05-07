@@ -135,7 +135,7 @@ async def amain(
 
     config = load_config(config_dir, debug="DEBUG" in os.environ)
     async with logged_core_factory(config, alice_device) as core:
-        await core.fs.workspace_create(f"/{alice_workspace}")
+        alice_ws_id = await core.fs.workspace_create(f"/{alice_workspace}")
 
     # Register a new device for Alice
 
@@ -178,13 +178,17 @@ async def amain(
     # Create bob workspace and share with Alice
 
     async with logged_core_factory(config, bob_device) as core:
-        await core.fs.workspace_create(f"/{bob_workspace}")
-        await core.fs.share(f"/{bob_workspace}", alice_device_id.user_id, WorkspaceRole.MANAGER)
+        bob_ws_id = await core.fs.workspace_create(f"/{bob_workspace}")
+        await core.fs.user_fs.workspace_share(
+            bob_ws_id, alice_device_id.user_id, WorkspaceRole.MANAGER
+        )
 
     # Share Alice workspace with bob
 
     async with logged_core_factory(config, alice_device) as core:
-        await core.fs.share(f"/{alice_workspace}", bob_device_id.user_id, WorkspaceRole.MANAGER)
+        await core.fs.user_fs.workspace_share(
+            alice_ws_id, bob_device_id.user_id, WorkspaceRole.MANAGER
+        )
 
     # Print out
 
