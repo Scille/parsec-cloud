@@ -172,7 +172,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except LocalDeviceError:
             show_error(self, _("Authentication failed."))
 
-        except BackendHandshakeAPIVersionError as exc:
+        except BackendHandshakeAPIVersionError:
             show_error(self, _("Incompatible backend API version."))  # TODO
 
         except BackendDeviceRevokedError:
@@ -200,7 +200,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except LocalDeviceError:
             show_error(self, _("Authentication failed."))
 
-        except BackendHandshakeAPIVersionError as exc:
+        except BackendHandshakeAPIVersionError:
             show_error(self, _("Incompatible backend API version."))
 
         except BackendDeviceRevokedError:
