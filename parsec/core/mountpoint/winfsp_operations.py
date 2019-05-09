@@ -21,6 +21,9 @@ from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.sync_base import DEFAULT_BLOCK_SIZE
 
 
+MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}
+
+
 @contextmanager
 def translate_error():
     try:
@@ -168,10 +171,11 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def open(self, file_name, create_options, granted_access):
         file_name = FsPath(file_name)
+        mode = MODES[granted_access % 4]
         # `granted_access` is already handle by winfsp
         with translate_error():
             try:
-                _, fd = self.fs_access.file_open(file_name)
+                _, fd = self.fs_access.file_open(file_name, mode=mode)
                 return OpenedFile(file_name, fd)
 
             except IsADirectoryError:

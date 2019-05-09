@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 from typing import Optional
 
 from contextlib import contextmanager
@@ -11,6 +12,9 @@ from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_e
 from parsec.core.types import FsPath
 from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable
+
+
+MODES = {os.O_RDONLY: "r", os.O_WRONLY: "w", os.O_RDWR: "rw"}
 
 
 @contextmanager
@@ -91,8 +95,10 @@ class FuseOperations(LoggingMixIn, Operations):
             return fd
 
     def open(self, path: FsPath, flags: int = 0):
+        # Filter file status and file creation flags
+        mode = MODES[flags % 4]
         with translate_error():
-            _, fd = self.fs_access.file_open(path)
+            _, fd = self.fs_access.file_open(path, mode=mode)
             return fd
 
     def release(self, path: FsPath, fh: int):
