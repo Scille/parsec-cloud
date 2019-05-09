@@ -29,8 +29,8 @@ class ThreadFSAccess:
     def file_create(self, path, *, open):
         return self._portal.run(self.workspace_fs.entry_transactions.file_create, path, open)
 
-    def file_open(self, path):
-        return self._portal.run(self.workspace_fs.entry_transactions.file_open, path)
+    def file_open(self, path, *, mode):
+        return self._portal.run(self.workspace_fs.entry_transactions.file_open, path, mode)
 
     def file_delete(self, path):
         return self._portal.run(self.workspace_fs.entry_transactions.file_delete, path)
