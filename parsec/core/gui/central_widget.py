@@ -91,6 +91,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         )
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.disconnect(e, self.handle_event)
+        item = self.widget_central.layout().itemAt(0)
+        if item:
+            item.widget().disconnect_all()
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":
