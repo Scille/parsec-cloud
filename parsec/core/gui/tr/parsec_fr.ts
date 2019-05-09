@@ -239,27 +239,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="241"/>
+        <location filename="../forms/files_widget.ui" line="277"/>
         <source>Search files or folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="341"/>
+        <location filename="../forms/files_widget.ui" line="377"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="346"/>
+        <location filename="../forms/files_widget.ui" line="382"/>
         <source>Created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="351"/>
+        <location filename="../forms/files_widget.ui" line="387"/>
         <source>Updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="356"/>
+        <location filename="../forms/files_widget.ui" line="392"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
@@ -838,6 +838,11 @@
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../forms/sharing_widget.ui" line="105"/>
+        <source>Remove user permissions.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>StartingGuideDialog</name>
@@ -896,23 +901,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="265"/>
+        <location filename="../forms/workspace_button.ui" line="278"/>
         <source>This workspace is empty.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="438"/>
+        <location filename="../forms/workspace_button.ui" line="451"/>
         <source>Rename the workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="507"/>
+        <location filename="../forms/workspace_button.ui" line="520"/>
         <source>Share the workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="573"/>
+        <location filename="../forms/workspace_button.ui" line="586"/>
         <source>Delete the workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_button.ui" line="242"/>
+        <source>...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -924,53 +934,30 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="115"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="144"/>
         <source>Share with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="141"/>
-        <source>User can administer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="159"/>
-        <source>User can read</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="180"/>
-        <source>User can write</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="244"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="228"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="327"/>
-        <source>Admin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="357"/>
-        <source>Read</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="387"/>
-        <source>Write</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="506"/>
-        <source>Apply</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="574"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="497"/>
         <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="426"/>
+        <source>Update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="165"/>
+        <source>A reader can see uploaded files.
+A contributor can upload files (and see them).
+A manager can add people and manage their permissions (and see and upload files).</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

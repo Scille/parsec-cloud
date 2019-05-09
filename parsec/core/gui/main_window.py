@@ -173,7 +173,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("Authentication failed."))
 
         except BackendHandshakeAPIVersionError as exc:
-            show_error(self, _(f"Incompatible backend API version. Server is {str(exc)}"))  # TODO
+            show_error(self, _("Incompatible backend API version."))  # TODO
 
         except BackendDeviceRevokedError:
             show_error(self, _("This device has been revoked."))
@@ -201,7 +201,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("Authentication failed."))
 
         except BackendHandshakeAPIVersionError as exc:
-            show_error(self, _(f"Incompatible backend API version. Server is {str(exc)}"))
+            show_error(self, _("Incompatible backend API version."))
 
         except BackendDeviceRevokedError:
             show_error(self, _("This device has been revoked."))

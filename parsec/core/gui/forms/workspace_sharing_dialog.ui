@@ -163,7 +163,7 @@ background-color: rgb(220, 220, 220);
              </property>
              <property name="toolTip">
               <string>A reader can see uploaded files.
-A collaborator can upload files (and see them).
+A contributor can upload files (and see them).
 A manager can add people and manage their permissions (and see and upload files).</string>
              </property>
             </widget>

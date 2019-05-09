@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-04-28 17:38+0200\n"
+"POT-Creation-Date: 2019-05-09 09:57+0200\n"
 "PO-Revision-Date: 2019-04-04 15:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -17,6 +17,18 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
+
+msgid "Reader"
+msgstr ""
+
+msgid "Contributor"
+msgstr ""
+
+msgid "Manager"
+msgstr ""
+
+msgid "Owner"
+msgstr ""
 
 msgid "Rename a file"
 msgstr ""
@@ -69,6 +81,12 @@ msgstr ""
 msgid "Enter new folder name"
 msgstr ""
 
+msgid "You no longer have the permission to access this workspace."
+msgstr ""
+
+msgid "You are now a reader on this workspace."
+msgstr ""
+
 msgid ""
 "The file \"{}\" already exists.\n"
 "Do you want to replace it ?"
@@ -92,10 +110,7 @@ msgstr ""
 msgid "Strong"
 msgstr ""
 
-msgid " (shared)"
-msgstr ""
-
-msgid " (shared by {})"
+msgid " (shared with others)"
 msgstr ""
 
 msgid "Bad device name."
@@ -180,9 +195,6 @@ msgid "Enter workspace new name"
 msgstr ""
 
 msgid "Workspace name"
-msgstr ""
-
-msgid "A workspace with the same name already exists."
 msgstr ""
 
 msgid "Can not rename the workspace."
@@ -472,6 +484,12 @@ msgstr ""
 msgid "Can not share the workspace \"{}\" with \"{}\"."
 msgstr ""
 
+msgid "Remove this user"
+msgstr ""
+
+msgid "Are you sure you want to stop sharing this workspace with {}?"
+msgstr ""
+
 msgid "Permissions could not be updated for the following users: {}"
 msgstr ""
 
@@ -513,6 +531,9 @@ msgid ""
 msgstr ""
 
 msgid "Authentication failed."
+msgstr ""
+
+msgid "Incompatible backend API version."
 msgstr ""
 
 msgid "User not registered in the backend."
@@ -791,6 +812,9 @@ msgstr ""
 msgid "Do the same for all files"
 msgstr ""
 
+msgid "Remove user permissions."
+msgstr ""
+
 msgid "Back"
 msgstr ""
 
@@ -821,28 +845,17 @@ msgstr ""
 msgid "Share with"
 msgstr ""
 
-msgid "User can administer"
-msgstr ""
-
-msgid "User can read"
-msgstr ""
-
-msgid "User can write"
-msgstr ""
-
 msgid "Share"
 msgstr ""
 
-msgid "Admin"
+msgid "Update"
 msgstr ""
 
-msgid "Read"
-msgstr ""
-
-msgid "Write"
-msgstr ""
-
-msgid "Apply"
+msgid ""
+"A reader can see uploaded files.\n"
+"A contributor can upload files (and see them).\n"
+"A manager can add people and manage their permissions (and see and upload"
+" files)."
 msgstr ""
 
 #~ msgid "URL or user is invalid."
@@ -897,5 +910,46 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Do not close this window while the user registers."
+#~ msgstr ""
+
+#~ msgid " (shared)"
+#~ msgstr ""
+
+#~ msgid " (shared by {})"
+#~ msgstr ""
+
+#~ msgid "A workspace with the same name already exists."
+#~ msgstr ""
+
+#~ msgid "User can administer"
+#~ msgstr ""
+
+#~ msgid "User can read"
+#~ msgstr ""
+
+#~ msgid "User can write"
+#~ msgstr ""
+
+#~ msgid "Admin"
+#~ msgstr ""
+
+#~ msgid "Read"
+#~ msgstr ""
+
+#~ msgid "Write"
+#~ msgstr ""
+
+#~ msgid "Apply"
+#~ msgstr ""
+
+#~ msgid "f\"Incompatible backend API version. Server is {str(exc)}\""
+#~ msgstr ""
+
+#~ msgid ""
+#~ "A reader can see uploaded files.\n"
+#~ "A collaborator can upload files (and see them).\n"
+#~ "A manager can add people and "
+#~ "manage their permissions (and see and"
+#~ " upload files)."
 #~ msgstr ""
 

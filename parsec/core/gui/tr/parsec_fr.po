@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-04-28 17:38+0200\n"
-"PO-Revision-Date: 2019-04-28 17:42+0200\n"
+"POT-Creation-Date: 2019-05-09 09:57+0200\n"
+"PO-Revision-Date: 2019-05-09 09:59+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -18,6 +18,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
 "X-Generator: Poedit 2.2.1\n"
+
+msgid "Reader"
+msgstr "Lecteur"
+
+msgid "Contributor"
+msgstr "Contributeur"
+
+msgid "Manager"
+msgstr "Gérant"
+
+msgid "Owner"
+msgstr "Propriétaire"
 
 msgid "Rename a file"
 msgstr "Renommer un fichier"
@@ -70,6 +82,12 @@ msgstr "Nom du répertoire"
 msgid "Enter new folder name"
 msgstr "Entrez un nouveau nom de répertoire"
 
+msgid "You no longer have the permission to access this workspace."
+msgstr "Vous n'avez plus la permission d'accéder à cet espace de travail."
+
+msgid "You are now a reader on this workspace."
+msgstr "Vous êtes maintenant un lecteur de cet espace de travail."
+
 msgid ""
 "The file \"{}\" already exists.\n"
 "Do you want to replace it ?"
@@ -93,11 +111,8 @@ msgstr "Bon"
 msgid "Strong"
 msgstr "Excellent"
 
-msgid " (shared)"
+msgid " (shared with others)"
 msgstr " (partagé)"
-
-msgid " (shared by {})"
-msgstr " (partagé par {})"
 
 msgid "Bad device name."
 msgstr "Mauvais nom d'appareil."
@@ -183,9 +198,6 @@ msgstr "Entrez le nouveau nom de l'espace de travail"
 msgid "Workspace name"
 msgstr "Nom de l'espace de travail"
 
-msgid "A workspace with the same name already exists."
-msgstr "Un espace de travail du même nom existe déjà."
-
 msgid "Can not rename the workspace."
 msgstr "Impossible de renommer cet espace de travail."
 
@@ -255,8 +267,8 @@ msgid ""
 "Arrange all your files by workspaces, a clear interface for an easy to use and "
 "simple process."
 msgstr ""
-"Organisez tous vos fichiers par espace de travail, une interface claire pour une "
-"utilisation simple et efficace."
+"Organisez tous vos fichiers par espace de travail, une interface claire pour "
+"une utilisation simple et efficace."
 
 msgid ":/screenshots/images/screenshots/workspaces.png"
 msgstr ":/screenshots/images/screenshots/workspaces.png"
@@ -297,8 +309,8 @@ msgid ""
 "See and manage thee devices you trust. Those are the key to the guaranted "
 "security of your files."
 msgstr ""
-"Visualisez et gérez aisément vos différents périphériques de confiance, qui sont "
-"la clé de la sécurisation assurée de vos fichiers."
+"Visualisez et gérez aisément vos différents périphériques de confiance, qui "
+"sont la clé de la sécurisation assurée de vos fichiers."
 
 msgid ":/screenshots/images/screenshots/devices.png"
 msgstr ":/screenshots/images/screenshots/devices.png"
@@ -320,8 +332,8 @@ msgid "Even offline"
 msgstr "Même hors-ligne"
 
 msgid ""
-"No network ? Not a problem. You can access all your files. Modifications will be "
-"saved locally until your device comes online again."
+"No network ? Not a problem. You can access all your files. Modifications will "
+"be saved locally until your device comes online again."
 msgstr ""
 "Un soucis de réseau ? Aucun problème ! Vous avez accès à tous vos fichiers. Vos "
 "modifications sont sauvegardées localement, tout se synchronisera au retour du "
@@ -383,7 +395,8 @@ msgstr "Afficher la fenêtre"
 msgid "Exit"
 msgstr "Quitter"
 
-msgid "The organization and the user have been created. You will now be logged in."
+msgid ""
+"The organization and the user have been created. You will now be logged in."
 msgstr ""
 "L'organisation et l'utilisateur ont été crées. Vous allez maintenant être "
 "connecté."
@@ -416,7 +429,8 @@ msgstr "Globale"
 
 msgid "Modification will take effect the next time you start the application."
 msgstr ""
-"Les modifications seront prises en compte au prochain lancement de l'application."
+"Les modifications seront prises en compte au prochain lancement de "
+"l'application."
 
 msgid "Disconnected from the backend."
 msgstr "Déconnecté du serveur."
@@ -496,6 +510,13 @@ msgstr "Impossible de partager l'espace de travail \"{}\" avec cet utilisateur."
 msgid "Can not share the workspace \"{}\" with \"{}\"."
 msgstr "Impossible de partager l'espace de travail \"{}\" avec \"{}\"."
 
+msgid "Remove this user"
+msgstr "Supprimer cet utilisateur"
+
+msgid "Are you sure you want to stop sharing this workspace with {}?"
+msgstr ""
+"Êtes-vous sûr de vouloir arrêter de partager cet espace de travail avec {} ?"
+
 msgid "Permissions could not be updated for the following users: {}"
 msgstr ""
 "Les permissions n'ont pas pu être mises à jour pour les utilisateurs suivants : "
@@ -546,6 +567,9 @@ msgstr ""
 
 msgid "Authentication failed."
 msgstr "L'authentification a échoué."
+
+msgid "Incompatible backend API version."
+msgstr "Votre version de l'application est incompatible avec le serveur."
 
 msgid "User not registered in the backend."
 msgstr "L'utilisateur n'est pas enregistré sur le serveur."
@@ -830,6 +854,9 @@ msgstr "Remplacer"
 msgid "Do the same for all files"
 msgstr "Utiliser la même action pour tous les fichiers"
 
+msgid "Remove user permissions."
+msgstr "Retirer les permissions."
+
 msgid "Back"
 msgstr "Retour"
 
@@ -860,29 +887,21 @@ msgstr "Gérer le partage de l'espace de travail"
 msgid "Share with"
 msgstr "Partagé avec"
 
-msgid "User can administer"
-msgstr "Administrateur"
-
-msgid "User can read"
-msgstr "Lecture"
-
-msgid "User can write"
-msgstr "Écriture"
-
 msgid "Share"
 msgstr "Partager"
 
-msgid "Admin"
-msgstr "Administrateur"
+msgid "Update"
+msgstr "Mettre à jour"
 
-msgid "Read"
-msgstr "Lecture"
-
-msgid "Write"
-msgstr "Écriture"
-
-msgid "Apply"
-msgstr "Appliquer"
+msgid ""
+"A reader can see uploaded files.\n"
+"A contributor can upload files (and see them).\n"
+"A manager can add people and manage their permissions (and see and upload "
+"files)."
+msgstr ""
+"Un lecteur peut voir les fichiers.\n"
+"Un contributeur peut ajouter ou supprimer des fichiers.\n"
+"Un gérant peut gérer les permissions des utilisateurs."
 
 #~ msgid "URL or user is invalid."
 #~ msgstr "L'URL ou l'utilisateur sont invalides."
@@ -940,3 +959,42 @@ msgstr "Appliquer"
 
 #~ msgid "Do not close this window while the user registers."
 #~ msgstr "Ne fermez pas cette fenêtre pendant que l'utilisateur s'enregistre."
+
+#~ msgid " (shared)"
+#~ msgstr " (partagé)"
+
+#~ msgid " (shared by {})"
+#~ msgstr " (partagé par {})"
+
+#~ msgid "A workspace with the same name already exists."
+#~ msgstr "Un espace de travail du même nom existe déjà."
+
+#~ msgid "User can administer"
+#~ msgstr "Administrateur"
+
+#~ msgid "User can read"
+#~ msgstr "Lecture"
+
+#~ msgid "User can write"
+#~ msgstr "Écriture"
+
+#~ msgid "Admin"
+#~ msgstr "Administrateur"
+
+#~ msgid "Read"
+#~ msgstr "Lecture"
+
+#~ msgid "Write"
+#~ msgstr "Écriture"
+
+#~ msgid "Apply"
+#~ msgstr "Appliquer"
+
+#~ msgid ""
+#~ "A reader can see uploaded files.\n"
+#~ "A collaborator can upload files (and see them).\n"
+#~ "A manager can add people and manage their permissions (and see and upload "
+#~ "files)."
+#~ msgstr ""
+#~ "Un lecteur peut voir les fichiers.\n"
+#~ "Un collabor"
