@@ -34,6 +34,12 @@ class SharingWidget(QWidget, Ui_SharingWidget):
     def __init__(self, user, is_current_user, current_user_role, role, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.ROLES_TRANSLATIONS = {
+            WorkspaceRole.READER: _("Reader"),
+            WorkspaceRole.CONTRIBUTOR: _("Contributor"),
+            WorkspaceRole.MANAGER: _("Manager"),
+            WorkspaceRole.OWNER: _("Owner"),
+        }
         self.role = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
@@ -42,17 +48,6 @@ class SharingWidget(QWidget, Ui_SharingWidget):
             self.label_name.setText(f"<b>{self.user}</b>")
         else:
             self.label_name.setText(self.user)
-
-        for role, index in _ROLES_TO_INDEX.items():
-            if role == WorkspaceRole.READER:
-                self.combo_role.insertItem(index, _("Reader"))
-            elif role == WorkspaceRole.CONTRIBUTOR:
-                self.combo_role.insertItem(index, _("Contributor"))
-            elif role == WorkspaceRole.MANAGER:
-                self.combo_role.insertItem(index, _("Manager"))
-            elif role == WorkspaceRole.OWNER:
-                self.combo_role.insertItem(index, _("Owner"))
-        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
 
         if self.is_current_user:
             self.setDisabled(True)
@@ -68,6 +63,17 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         if self.current_user_role == WorkspaceRole.OWNER and self.role == WorkspaceRole.OWNER:
             self.setDisabled(True)
 
+        if not self.isEnabled():
+            for role, index in _ROLES_TO_INDEX.items():
+                self.combo_role.insertItem(index, self.ROLES_TRANSLATIONS[role])
+        else:
+            current_index = _ROLES_TO_INDEX[self.current_user_role]
+            for role, index in _ROLES_TO_INDEX.items():
+                if current_index <= index:
+                    break
+                self.combo_role.insertItem(index, self.ROLES_TRANSLATIONS[role])
+
+        self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
         self.button_delete.clicked.connect(self.on_delete_clicked)
 
     @property
@@ -103,8 +109,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 self.combo_role.insertItem(index, _("Contributor"))
             elif role == WorkspaceRole.MANAGER:
                 self.combo_role.insertItem(index, _("Manager"))
-            elif role == WorkspaceRole.OWNER:
-                self.combo_role.insertItem(index, _("Owner"))
         ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         if (
