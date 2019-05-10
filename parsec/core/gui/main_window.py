@@ -107,7 +107,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 ),
             )
             self.event_bus.send("gui.config.changed", gui_first_launch=False, telemetry_enabled=r)
-            save_config(self.config)
         telemetry.init(self.config)
 
     def show_top(self):
@@ -141,8 +140,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             )
         )
-        # TODO: send gui.config.changed event instead
-        save_config(self.config)
         self.logged_in.emit()
 
     def on_core_run_done(self):
