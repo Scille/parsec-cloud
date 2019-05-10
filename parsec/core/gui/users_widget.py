@@ -18,29 +18,28 @@ from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, user_name, is_current_user, certified_on, is_revoked, *args, **kwargs):
+    def __init__(
+        self, user_name, is_current_user, is_admin, certified_on, is_revoked, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        if is_current_user:
+        if is_admin:
             self.label.setPixmap(QPixmap(":/icons/images/icons/owner2.png"))
         else:
             self.label.setPixmap(QPixmap(":/icons/images/icons/user2.png"))
-        self.name = user_name
         self.label.is_revoked = is_revoked
         self.certified_on = certified_on
         self.is_current_user = is_current_user
+        self.set_display(user_name)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
+    def set_display(self, value):
         self._name = value
         if len(value) > 16:
             value = value[:16] + "-\n" + value[16:]
+        if self.is_current_user:
+            value += _("\n(you)")
         self.label_user.setText(value)
 
     @property
@@ -112,10 +111,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         d.exec_()
         self.reset()
 
-    def add_user(self, user_name, is_current_user, certified_on, is_revoked):
+    def add_user(self, user_name, is_current_user, is_admin, certified_on, is_revoked):
         if user_name in self.users:
             return
-        button = UserButton(user_name, is_current_user, certified_on, is_revoked)
+        button = UserButton(user_name, is_current_user, is_admin, certified_on, is_revoked)
         self.layout_users.addWidget(button, int(len(self.users) / 4), int(len(self.users) % 4))
         button.revoke_clicked.connect(self.revoke_user)
         self.users.append(user_name)
@@ -174,6 +173,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self.add_user(
                     str(user_info.user_id),
                     is_current_user=user_id == user,
+                    is_admin=False,
                     certified_on=user_info.certified_on,
                     is_revoked=all([device.revoked_on for device in user_devices]),
                 )
