@@ -6,6 +6,7 @@ from uuid import UUID
 from typing import Tuple, Callable
 from collections import namedtuple
 from async_generator import asynccontextmanager
+import copy
 
 from parsec.event_bus import EventBus
 from parsec.core.types import (
@@ -423,3 +424,46 @@ class EntryTransactions:
 
             # Return the access id of the open file and the file descriptor
             return entry.access.id, self.local_storage.create_cursor(entry.access)
+
+    async def file_copy(
+        self, source_path: FsPath, target_path: FsPath, open=True
+    ) -> Tuple[AccessID, FileDescriptor]:
+        # Check write rights
+        self._check_write_rights(target_path)
+
+        # Lock old file in read mode
+        async with self._lock_entry(source_path) as source_entry:
+
+            # Lock new parent in write mode
+            async with self._lock_parent_entry(target_path) as (target_parent, target_entry):
+
+                # Destination already exists
+                if target_entry is not None:
+                    raise from_errno(errno.EEXIST, filename=str(target_path))
+
+                # Not a file
+                if not is_file_manifest(source_entry.manifest):
+                    raise from_errno(errno.EISDIR, str(old_path))
+
+                # Copy file manifest
+                child_access = ManifestAccess()
+                child_manifest = copy.deepcopy(source_entry.manifest)
+
+                # New parent manifest
+                updated_target_parent_manifest = target_parent.manifest.evolve_children_and_mark_updated(
+                    {target_path.name: child_access}
+                )
+
+                # ~ Atomic change
+                self.local_storage.set_dirty_manifest(child_access, child_manifest)
+                self.local_storage.set_dirty_manifest(
+                    target_parent.access, updated_target_parent_manifest
+                )
+                fd = self.local_storage.create_cursor(child_access) if open else None
+
+        # Send events
+        self._send_event("fs.entry.updated", id=child_access.id)
+        self._send_event("fs.entry.updated", id=parent.access.id)
+
+        # Return the access id of the created file and the file descriptor
+        return child_access.id, fd

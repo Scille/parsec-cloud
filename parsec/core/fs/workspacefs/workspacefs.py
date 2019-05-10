@@ -186,11 +186,54 @@ class WorkspaceFS:
     async def move(self, source: AnyPath, destination: AnyPath):
         source = FsPath(source)
         destination = FsPath(destination)
+        real_destination = destination
+        print("source = " + str(source))
+        print("destination = " + str(destination))
+        print("source parent = " + str(source.parent))
+        print("destination parent = " + str(destination.parent))
         if source.parent == destination.parent:
             return await self.rename(source, destination)
-        # TODO - reference implementation:
-        # https://github.com/python/cpython/blob/3.7/Lib/shutil.py#L525
+        try:
+            if await self.is_dir(destination):
+                print("destination is dir")
+                print(self.path_info(destination))
+                real_destination = destination.joinpath(source.name)
+                if self.path_info(real_destination):
+                    raise FileExistsError
+        # If real_destination is not found, we can continue
+        except FileNotFoundError as e:
+            pass
+        if await self.is_dir(source):
+            await self.copytree(source, real_destination)
+            await self.rmtree(source)
+            return
+        elif await self.is_file(source):
+            await self.entry_transactions.file_copy(source, real_destination)
+            await self.entry_transactions.file_delete(source)
+            return
         raise NotImplementedError
+
+    def _destinsrc(src: AnyPath, dst: AnyPath):
+        try:
+            dst.relative_to(src)
+            return True
+        except ValueError:
+            return False
+
+    async def copytree(self, source_path: AnyPath, target_path: AnyPath):
+        names = self.listdir(source_path)
+        self.mkdir(target_path)
+        errors = []
+        for name in names:
+            source_name = source_path.joinpath(name)
+            target_name = target_path.joinpath(name)
+            try:
+                if self.is_dir(source_name):
+                    self.copytree(source_name, target_name)
+                elif self.is_file(source_name):
+                    self.entry_transactions.file_copy(source_name, target_name)
+            except Error as e:
+                raise
 
     async def rmtree(self, path: AnyPath):
         path = FsPath(path)
