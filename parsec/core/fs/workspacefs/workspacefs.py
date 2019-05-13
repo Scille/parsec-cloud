@@ -237,13 +237,13 @@ class WorkspaceFS:
         self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024, exist_ok: bool = False
     ):
         await self.touch(target_path, exist_ok=exist_ok)
-        off = 0
-        while 1:
-            buff = await self.read_bytes(source_path, length, off * length)
+        offset = 0
+        while True:
+            buff = await self.read_bytes(source_path, length, offset * length)
             if not buff:
                 break
-            await self.write_bytes(target_path, buff, off * length)
-            off += 1
+            await self.write_bytes(target_path, buff, offset * length)
+            offset += 1
 
     async def rmtree(self, path: AnyPath):
         path = FsPath(path)
