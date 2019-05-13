@@ -203,7 +203,7 @@ class WorkspaceFS:
             return
         elif await self.is_file(source):
             await self.copyfile(source, real_destination)
-            await self.entry_transactions.file_delete(source)
+            await self.unlink(source)
             return
         raise NotImplementedError
 
