@@ -187,18 +187,12 @@ class WorkspaceFS:
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
-        print("source = " + str(source))
-        print("destination = " + str(destination))
-        print("source parent = " + str(source.parent))
-        print("destination parent = " + str(destination.parent))
         if source.parent == destination.parent:
             return await self.rename(source, destination)
         try:
             if await self.is_dir(destination):
-                print("destination is dir")
-                print(self.path_info(destination))
                 real_destination = destination.joinpath(source.name)
-                if self.path_info(real_destination):
+                if await self.path_info(real_destination):
                     raise FileExistsError
         # If real_destination is not found, we can continue
         except FileNotFoundError as e:
@@ -208,7 +202,7 @@ class WorkspaceFS:
             await self.rmtree(source)
             return
         elif await self.is_file(source):
-            await self.entry_transactions.file_copy(source, real_destination)
+            await self.copyfile(source, real_destination)
             await self.entry_transactions.file_delete(source)
             return
         raise NotImplementedError
@@ -221,19 +215,25 @@ class WorkspaceFS:
             return False
 
     async def copytree(self, source_path: AnyPath, target_path: AnyPath):
-        names = self.listdir(source_path)
-        self.mkdir(target_path)
+        source_files = await self.listdir(source_path)
+        await self.mkdir(target_path)
         errors = []
-        for name in names:
-            source_name = source_path.joinpath(name)
-            target_name = target_path.joinpath(name)
-            try:
-                if self.is_dir(source_name):
-                    self.copytree(source_name, target_name)
-                elif self.is_file(source_name):
-                    self.entry_transactions.file_copy(source_name, target_name)
-            except Error as e:
-                raise
+        for source_file in source_files:
+            target_file = target_path.joinpath(source_file.name)
+            if await self.is_dir(source_file):
+                await self.copytree(source_file, target_file)
+            elif await self.is_file(source_file):
+                await self.copyfile(source_file, target_file)
+
+    async def copyfile(self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024):
+        await self.touch(target_path)
+        off = 0
+        while 1:
+            buff = await self.read_bytes(source_path, length, off * length)
+            if not buff:
+                break
+            await self.write_bytes(target_path, buff, off * length)
+            off += 1
 
     async def rmtree(self, path: AnyPath):
         path = FsPath(path)
