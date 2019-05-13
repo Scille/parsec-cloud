@@ -193,6 +193,10 @@ class WorkspaceFS:
     # Shutil-like interface
 
     async def move(self, source: AnyPath, destination: AnyPath):
+        """
+        Raises:
+            FileExistsError
+        """
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
@@ -201,7 +205,9 @@ class WorkspaceFS:
                 real_destination = destination.joinpath(source.name)
                 if await self.exists(real_destination):
                     raise FileExistsError
-        # If real_destination is not found, we can continue
+        # At this point, real_destination is the target either representing :
+        # - the destination path if it didn't already exist,
+        # - a new entry with the same name as source, but inside the destination directory
         except FileNotFoundError as e:
             pass
         if source.parent == real_destination.parent:
