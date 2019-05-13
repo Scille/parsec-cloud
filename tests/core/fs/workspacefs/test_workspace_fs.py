@@ -274,6 +274,13 @@ async def test_move(alice_workspace):
 
 
 @pytest.mark.trio
+async def test_copyfile(alice_workspace):
+    await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
+    await alice_workspace.copyfile("/foo/bar", "/copied")
+    assert await alice_workspace.read_bytes("/copied") == b"a" * 9000 + b"b" * 40000
+
+
+@pytest.mark.trio
 async def test_rmtree(alice_workspace):
     await alice_workspace.mkdir("/foz")
     await alice_workspace.rmtree("/foz")
