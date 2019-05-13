@@ -248,10 +248,29 @@ async def test_move(alice_workspace):
     await alice_workspace.move("/foz/bar", "/foz/bal")
     assert await alice_workspace.is_file("/foz/bal")
 
-    with pytest.raises(NotImplementedError):
-        await alice_workspace.move("/foz/baz", "/baz")
     with pytest.raises(FileNotFoundError):
         await alice_workspace.move("/foo", "/fob")
+
+    await alice_workspace.write_bytes("/foz/bal", b"abcde")
+    await alice_workspace.write_bytes("/foz/baz", b"fghij")
+    await alice_workspace.mkdir("/containfoz")
+    await alice_workspace.move("/foz", "/containfoz")
+    assert await alice_workspace.is_file("/containfoz/foz/bal")
+    assert await alice_workspace.is_file("/containfoz/foz/baz")
+    assert await alice_workspace.read_bytes("/containfoz/foz/bal", size=5) == b"abcde"
+    assert await alice_workspace.read_bytes("/containfoz/foz/baz", size=5) == b"fghij"
+
+    with pytest.raises(FileNotFoundError):
+        await alice_workspace.move("/foz/baz", "/baz")
+
+    await alice_workspace.move("/containfoz/foz/baz", "/baz")
+    assert await alice_workspace.is_file("/baz")
+
+    with pytest.raises(FileNotFoundError):
+        await alice_workspace.move("/containfoz/foz/baz", "/biz")
+
+    with pytest.raises(FileExistsError):
+        await alice_workspace.move("/containfoz/foz/bal", "/baz")
 
 
 @pytest.mark.trio
