@@ -226,7 +226,6 @@ class WorkspaceFS:
     async def copytree(self, source_path: AnyPath, target_path: AnyPath):
         source_files = await self.listdir(source_path)
         await self.mkdir(target_path)
-        errors = []
         for source_file in source_files:
             target_file = target_path.joinpath(source_file.name)
             if await self.is_dir(source_file):
