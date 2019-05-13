@@ -187,8 +187,6 @@ class WorkspaceFS:
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
-        if source.parent == destination.parent:
-            return await self.rename(source, destination)
         try:
             if await self.is_dir(destination):
                 real_destination = destination.joinpath(source.name)
@@ -197,7 +195,9 @@ class WorkspaceFS:
         # If real_destination is not found, we can continue
         except FileNotFoundError as e:
             pass
-        if await self.is_dir(source):
+        if source.parent == real_destination.parent:
+            return await self.rename(source, real_destination)
+        elif await self.is_dir(source):
             await self.copytree(source, real_destination)
             await self.rmtree(source)
             return
@@ -225,8 +225,10 @@ class WorkspaceFS:
             elif await self.is_file(source_file):
                 await self.copyfile(source_file, target_file)
 
-    async def copyfile(self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024):
-        await self.touch(target_path)
+    async def copyfile(
+        self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024, exist_ok: bool = False
+    ):
+        await self.touch(target_path, exist_ok=exist_ok)
         off = 0
         while 1:
             buff = await self.read_bytes(source_path, length, off * length)
