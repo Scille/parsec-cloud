@@ -102,6 +102,15 @@ class WorkspaceFS:
 
     # Pathlib-like interface
 
+    async def exists(self, path: AnyPath) -> bool:
+        path = FsPath(path)
+        try:
+            if await self.entry_transactions.entry_info(path):
+                return True
+        except FileNotFoundError:
+            return False
+        return False
+
     async def is_dir(self, path: AnyPath) -> bool:
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(path)
@@ -190,7 +199,7 @@ class WorkspaceFS:
         try:
             if await self.is_dir(destination):
                 real_destination = destination.joinpath(source.name)
-                if await self.path_info(real_destination):
+                if await self.exists(real_destination):
                     raise FileExistsError
         # If real_destination is not found, we can continue
         except FileNotFoundError as e:

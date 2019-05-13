@@ -59,6 +59,18 @@ async def test_path_info(alice_workspace):
 
 
 @pytest.mark.trio
+async def test_exists(alice_workspace):
+    assert await alice_workspace.exists("/") is True
+    assert await alice_workspace.exists("/foo") is True
+    assert await alice_workspace.exists("/foo/bar") is True
+    assert await alice_workspace.exists("/foo/baz") is True
+
+    assert await alice_workspace.exists("/fiz") is False
+    assert await alice_workspace.exists("/foo/fiz") is False
+    assert await alice_workspace.exists("/fiz/foo") is False
+
+
+@pytest.mark.trio
 async def test_is_dir(alice_workspace):
     assert await alice_workspace.is_dir("/") is True
     assert await alice_workspace.is_dir("/foo") is True
