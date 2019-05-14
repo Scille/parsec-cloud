@@ -236,6 +236,7 @@ def _verify_user(root_verify_key, uv_user, verified_devices):
         user_certificate=uv_user.user_certificate,
         certified_by=u_certif.certified_by,
         certified_on=u_certif.certified_on,
+        is_admin=uv_user.is_admin,
     )
 
 

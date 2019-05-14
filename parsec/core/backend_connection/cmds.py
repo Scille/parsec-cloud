@@ -257,7 +257,7 @@ async def user_get(
 ) -> Tuple[UnverifiedRemoteUser, List[UnverifiedRemoteDevice], List[UnverifiedRemoteDevice]]:
     rep = await _send_cmd(transport, user_get_serializer, cmd="user_get", user_id=user_id)
 
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"], is_admin=rep["is_admin"])
     devices = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
@@ -407,7 +407,7 @@ async def user_get_invitation_creator(
         invited_user_id=invited_user_id,
     )
 
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"], is_admin=rep["is_admin"])
     trustchain = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
@@ -438,7 +438,7 @@ async def device_get_invitation_creator(
         invited_device_id=invited_device_id,
     )
 
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"], is_admin=rep["is_admin"])
     trustchain = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
