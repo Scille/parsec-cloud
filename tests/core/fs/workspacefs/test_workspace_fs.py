@@ -59,6 +59,18 @@ async def test_path_info(alice_workspace):
 
 
 @pytest.mark.trio
+async def test_exists(alice_workspace):
+    assert await alice_workspace.exists("/") is True
+    assert await alice_workspace.exists("/foo") is True
+    assert await alice_workspace.exists("/foo/bar") is True
+    assert await alice_workspace.exists("/foo/baz") is True
+
+    assert await alice_workspace.exists("/fiz") is False
+    assert await alice_workspace.exists("/foo/fiz") is False
+    assert await alice_workspace.exists("/fiz/foo") is False
+
+
+@pytest.mark.trio
 async def test_is_dir(alice_workspace):
     assert await alice_workspace.is_dir("/") is True
     assert await alice_workspace.is_dir("/foo") is True
@@ -248,10 +260,50 @@ async def test_move(alice_workspace):
     await alice_workspace.move("/foz/bar", "/foz/bal")
     assert await alice_workspace.is_file("/foz/bal")
 
-    with pytest.raises(NotImplementedError):
-        await alice_workspace.move("/foz/baz", "/baz")
     with pytest.raises(FileNotFoundError):
         await alice_workspace.move("/foo", "/fob")
+
+    await alice_workspace.write_bytes("/foz/bal", b"abcde")
+    await alice_workspace.write_bytes("/foz/baz", b"fghij")
+    await alice_workspace.mkdir("/containfoz")
+    await alice_workspace.move("/foz", "/containfoz")
+    assert await alice_workspace.is_file("/containfoz/foz/bal")
+    assert await alice_workspace.is_file("/containfoz/foz/baz")
+    assert await alice_workspace.read_bytes("/containfoz/foz/bal", size=5) == b"abcde"
+    assert await alice_workspace.read_bytes("/containfoz/foz/baz", size=5) == b"fghij"
+
+    with pytest.raises(FileNotFoundError):
+        await alice_workspace.move("/foz/baz", "/baz")
+
+    await alice_workspace.move("/containfoz/foz/baz", "/baz")
+    assert await alice_workspace.is_file("/baz")
+
+    with pytest.raises(FileNotFoundError):
+        await alice_workspace.move("/containfoz/foz/baz", "/biz")
+
+    with pytest.raises(FileExistsError):
+        await alice_workspace.move("/containfoz/foz/bal", "/baz")
+
+
+@pytest.mark.trio
+async def test_copytree(alice_workspace):
+    await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
+    await alice_workspace.write_bytes("/foo/baz", b"a" * 40000 + b"b" * 9000)
+    await alice_workspace.mkdir("/foo/dir")
+    await alice_workspace.touch("/foo/dir/bar")
+    await alice_workspace.write_bytes("/foo/dir/bar", b"a" * 5000 + b"b" * 6000)
+
+    await alice_workspace.copytree("/foo", "/cfoo")
+    assert await alice_workspace.read_bytes("/foo/bar") == b"a" * 9000 + b"b" * 40000
+    assert await alice_workspace.read_bytes("/foo/baz") == b"a" * 40000 + b"b" * 9000
+    assert await alice_workspace.read_bytes("/foo/dir/bar") == b"a" * 5000 + b"b" * 6000
+
+
+@pytest.mark.trio
+async def test_copyfile(alice_workspace):
+    await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
+    await alice_workspace.copyfile("/foo/bar", "/copied")
+    assert await alice_workspace.read_bytes("/copied") == b"a" * 9000 + b"b" * 40000
 
 
 @pytest.mark.trio

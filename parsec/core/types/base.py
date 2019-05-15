@@ -64,12 +64,12 @@ class FsPath(PurePosixPath):
     def is_workspace(self):
         return not self.is_root() and self.parent.is_root()
 
+    # TODO: this method should be removed with the FS class
+    # The concept of workspace path doesn't apply anymore
+
     @property
     def workspace(self):
         return self.parts[1]
-
-    # TODO: this method should be removed with the FS class
-    # The concept of workspace path doesn't apply anymore
 
     def walk_from_path(self):
         parent = None

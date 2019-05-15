@@ -102,6 +102,15 @@ class WorkspaceFS:
 
     # Pathlib-like interface
 
+    async def exists(self, path: AnyPath) -> bool:
+        path = FsPath(path)
+        try:
+            if await self.entry_transactions.entry_info(path):
+                return True
+        except FileNotFoundError:
+            return False
+        return False
+
     async def is_dir(self, path: AnyPath) -> bool:
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(path)
@@ -184,13 +193,65 @@ class WorkspaceFS:
     # Shutil-like interface
 
     async def move(self, source: AnyPath, destination: AnyPath):
+        """
+        Raises:
+            FileExistsError
+        """
         source = FsPath(source)
         destination = FsPath(destination)
-        if source.parent == destination.parent:
-            return await self.rename(source, destination)
-        # TODO - reference implementation:
-        # https://github.com/python/cpython/blob/3.7/Lib/shutil.py#L525
+        real_destination = destination
+        try:
+            if await self.is_dir(destination):
+                real_destination = destination.joinpath(source.name)
+                if await self.exists(real_destination):
+                    raise FileExistsError
+        # At this point, real_destination is the target either representing :
+        # - the destination path if it didn't already exist,
+        # - a new entry with the same name as source, but inside the destination directory
+        except FileNotFoundError:
+            pass
+        if source.parent == real_destination.parent:
+            return await self.rename(source, real_destination)
+        elif await self.is_dir(source):
+            await self.copytree(source, real_destination)
+            await self.rmtree(source)
+            return
+        elif await self.is_file(source):
+            await self.copyfile(source, real_destination)
+            await self.unlink(source)
+            return
         raise NotImplementedError
+
+    def _destinsrc(src: AnyPath, dst: AnyPath):
+        try:
+            dst.relative_to(src)
+            return True
+        except ValueError:
+            return False
+
+    async def copytree(self, source_path: AnyPath, target_path: AnyPath):
+        source_path = FsPath(source_path)
+        target_path = FsPath(target_path)
+        source_files = await self.listdir(source_path)
+        await self.mkdir(target_path)
+        for source_file in source_files:
+            target_file = target_path.joinpath(source_file.name)
+            if await self.is_dir(source_file):
+                await self.copytree(source_file, target_file)
+            elif await self.is_file(source_file):
+                await self.copyfile(source_file, target_file)
+
+    async def copyfile(
+        self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024, exist_ok: bool = False
+    ):
+        await self.touch(target_path, exist_ok=exist_ok)
+        offset = 0
+        while True:
+            buff = await self.read_bytes(source_path, length, offset * length)
+            if not buff:
+                break
+            await self.write_bytes(target_path, buff, offset * length)
+            offset += 1
 
     async def rmtree(self, path: AnyPath):
         path = FsPath(path)
