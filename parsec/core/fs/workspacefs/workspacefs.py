@@ -208,7 +208,7 @@ class WorkspaceFS:
         # At this point, real_destination is the target either representing :
         # - the destination path if it didn't already exist,
         # - a new entry with the same name as source, but inside the destination directory
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             pass
         if source.parent == real_destination.parent:
             return await self.rename(source, real_destination)
