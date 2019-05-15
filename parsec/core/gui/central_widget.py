@@ -23,7 +23,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         "backend.connection.ready",
         "backend.connection.incompatible_version",
         "mountpoint.stopped",
-        "sharing.new",
+        "sharing.granted",
         "sharing.revoked",
         "sharing.updated",
         "fs.entry.file_update_conflicted",
@@ -113,7 +113,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         elif event == "sharing.updated":
             self.new_notification.emit(
                 "INFO",
-                _("Workspace '{}' sharing rights have changed").format(kwargs["new_entry"].name),
+                _("Your role on Workspace '{}' has changed changed").format(
+                    kwargs["new_entry"].name
+                ),
             )
         elif event == "sharing.revoked":
             self.new_notification.emit(
