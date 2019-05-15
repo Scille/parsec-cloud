@@ -308,7 +308,7 @@ test_requirements = [
     "flake8",
     "hypothesis==4.5.5",
     "hypothesis-trio==0.3.0",
-    "black==19.b0",  # Pin black to avoid flaky style check
+    "black==19.3b0",  # Pin black to avoid flaky style check
     "flake8==3.7.7",
 ]
 
