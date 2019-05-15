@@ -286,6 +286,20 @@ async def test_move(alice_workspace):
 
 
 @pytest.mark.trio
+async def test_copytree(alice_workspace):
+    await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
+    await alice_workspace.write_bytes("/foo/baz", b"a" * 40000 + b"b" * 9000)
+    await alice_workspace.mkdir("/foo/dir")
+    await alice_workspace.touch("/foo/dir/bar")
+    await alice_workspace.write_bytes("/foo/dir/bar", b"a" * 5000 + b"b" * 6000)
+
+    await alice_workspace.copytree("/foo", "/cfoo")
+    assert await alice_workspace.read_bytes("/foo/bar") == b"a" * 9000 + b"b" * 40000
+    assert await alice_workspace.read_bytes("/foo/baz") == b"a" * 40000 + b"b" * 9000
+    assert await alice_workspace.read_bytes("/foo/dir/bar") == b"a" * 5000 + b"b" * 6000
+
+
+@pytest.mark.trio
 async def test_copyfile(alice_workspace):
     await alice_workspace.write_bytes("/foo/bar", b"a" * 9000 + b"b" * 40000)
     await alice_workspace.copyfile("/foo/bar", "/copied")
