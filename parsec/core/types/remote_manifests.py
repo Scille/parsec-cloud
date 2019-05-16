@@ -166,7 +166,7 @@ class UserManifest:
     created: pendulum.Pendulum
     updated: pendulum.Pendulum
     last_processed_message: int
-    workspaces: List[WorkspaceEntry]
+    workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
 
     def evolve(self, **data) -> "UserManifest":
         return attr.evolve(self, **data)
