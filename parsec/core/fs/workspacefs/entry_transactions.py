@@ -270,7 +270,7 @@ class EntryTransactions:
             )
 
             # Atomic change
-            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(parent.access, new_parent_manifest)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.access.id)
@@ -303,9 +303,10 @@ class EntryTransactions:
             )
 
             # Atomic change
-            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(parent.access, new_parent_manifest)
 
             # Clean up
+            # TODO: actually we can't do that: this child my require synchronization
             self.local_storage.clear_manifest(child.access)
 
         # Send event
@@ -335,7 +336,7 @@ class EntryTransactions:
             )
 
             # Atomic change
-            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(parent.access, new_parent_manifest)
 
             # Clean up
             self.local_storage.remove_file_reference(child.access, child.manifest)
@@ -367,8 +368,8 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            self.local_storage.set_dirty_manifest(child_access, child_manifest)
-            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(child_access, child_manifest)
+            self.local_storage.set_manifest(parent.access, new_parent_manifest)
 
         # Send events
         self._send_event("fs.entry.updated", id=parent.access.id)
@@ -398,8 +399,8 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            self.local_storage.set_dirty_manifest(child_access, child_manifest)
-            self.local_storage.set_dirty_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(child_access, child_manifest)
+            self.local_storage.set_manifest(parent.access, new_parent_manifest)
             fd = self.local_storage.create_cursor(child_access) if open else None
 
         # Send events

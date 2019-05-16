@@ -107,7 +107,7 @@ class UserFS:
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
             user_manifest = LocalUserManifest(author=self.device.device_id)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             return user_manifest
 
     def get_workspace(self, workspace_id: UUID) -> WorkspaceFS:
@@ -148,8 +148,8 @@ class UserFS:
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(workspace_entry.access, workspace_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
@@ -170,7 +170,7 @@ class UserFS:
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, updated_user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, updated_user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
 
     async def _fetch_remote_user_manifest(self, version=None):
@@ -261,7 +261,7 @@ class UserFS:
                 if base_um and diverged_um.base_version != base_um.base_version:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
-                self.local_storage.set_dirty_manifest(self.user_manifest_access, merged)
+                self.local_storage.set_manifest(self.user_manifest_access, merged)
                 # TODO: deprecated event ?
                 self.event_bus.send(
                     "fs.entry.remote_changed", path="/", id=self.user_manifest_access.id
@@ -338,7 +338,7 @@ class UserFS:
         async with self._update_user_manifest_lock:
             diverged_um = self.get_user_manifest()
             merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, merged_um)
+            self.local_storage.set_manifest(self.user_manifest_access, merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_access.id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -394,7 +394,7 @@ class UserFS:
         # TODO: possible concurrency issue with workspacefs
         workspace_manifest = self.local_storage.get_manifest(access)
         if workspace_manifest.is_placeholder:
-            self.local_storage.set_dirty_manifest(
+            self.local_storage.set_manifest(
                 access, workspace_manifest.evolve(is_placeholder=False, base_version=1)
             )
         # TODO: still useful ?
@@ -551,7 +551,7 @@ class UserFS:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
                     )
-                    self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+                    self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
                     self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
 
         return errors
@@ -651,7 +651,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             self.event_bus.send("userfs.updated")
             if already_existing_entry:
                 self.event_bus.send(
@@ -705,7 +705,7 @@ class UserFS:
             workspace_entry = existing_workspace_entry.evolve(role=None, granted_on=pendulum_now())
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
                 "sharing.revoked",
