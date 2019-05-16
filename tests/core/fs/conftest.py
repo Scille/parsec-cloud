@@ -5,6 +5,7 @@ import pytest
 from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.types import WorkspaceEntry, LocalWorkspaceManifest
 
@@ -72,3 +73,13 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
 @pytest.fixture
 def entry_transactions(entry_transactions_factory, alice, alice_local_storage, alice_backend_cmds):
     return entry_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+
+
+@pytest.fixture
+def sync_transactions(entry_transactions):
+    return SyncTransactions(
+        entry_transactions.workspace_id,
+        entry_transactions.local_storage,
+        entry_transactions.remote_loader,
+        entry_transactions.event_bus,
+    )
