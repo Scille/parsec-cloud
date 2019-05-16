@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from collections import OrderedDict
 import pytest
-from unittest import mock
 
 from parsec.core.local_storage import LocalStorage
 from parsec.core.persistent_storage import LocalStorageMissingEntry

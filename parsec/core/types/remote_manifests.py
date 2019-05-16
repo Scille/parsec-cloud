@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict, List, Union
+from typing import Tuple, Dict, Union
 
 from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
