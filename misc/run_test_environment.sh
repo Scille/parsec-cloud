@@ -17,7 +17,6 @@ alice_workspace and bob_workspace, that their sharing with each other.
 
 PORT=6888
 TMP=`mktemp -d`
-DIR=`dirname ${BASH_SOURCE[0]}`
 export XDG_CACHE_HOME="$TMP/cache"
 export XDG_DATA_HOME="$TMP/share"
 export XDG_CONFIG_HOME="$TMP/config"
@@ -34,4 +33,4 @@ Configure your test environment with the following variables:
 pkill -f "parsec backend run -b MOCKED -P $PORT"
 parsec backend run -b MOCKED -P $PORT &
 sleep 1
-python3 $DIR/initialize_test_organization.py -B "ws://localhost:$PORT" $@
+python3 misc/initialize_test_organization.py -B "ws://localhost:$PORT" $@
