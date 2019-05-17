@@ -645,15 +645,6 @@ class BaseUserComponent:
 
     #### Virtual methods ####
 
-    async def set_user_admin(
-        self, organization_id: OrganizationID, user_id: UserID, is_admin: bool
-    ) -> None:
-        """
-        Raises:
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:

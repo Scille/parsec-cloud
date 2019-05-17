@@ -35,14 +35,6 @@ class MemoryUserComponent(BaseUserComponent):
         self.event_bus = event_bus
         self._organizations = defaultdict(OrganizationStore)
 
-    async def set_user_admin(
-        self, organization_id: OrganizationID, user_id: UserID, is_admin: bool
-    ) -> None:
-        org = self._organizations[organization_id]
-
-        user = self._get_user(organization_id, user_id)
-        org._users[user_id] = user.evolve(is_admin=is_admin)
-
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:

@@ -26,27 +26,6 @@ class PGUserComponent(BaseUserComponent):
         self.dbh = dbh
         self.event_bus = event_bus
 
-    async def set_user_admin(
-        self, organization_id: OrganizationID, user_id: UserID, is_admin: bool
-    ) -> None:
-        await self.get_user(organization_id, user_id)
-
-        async with self.dbh.pool.acquire() as conn:
-            result = await conn.execute(
-                """
-UPDATE user_ SET
-    is_admin = $3
-WHERE
-    organization = get_organization_internal_id($1)
-    AND user_id = $2
-""",
-                organization_id,
-                user_id,
-                is_admin,
-            )
-            if result != "UPDATE 1":
-                raise UserError(f"Update error: {result}")
-
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
