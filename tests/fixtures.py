@@ -234,7 +234,7 @@ def initial_user_manifest_state():
 
 
 def local_device_to_backend_user(
-    device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData]
+    device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData], is_admin=False
 ) -> Tuple[BackendUser, BackendDevice]:
     if isinstance(certifier, OrganizationFullData):
         certifier_id = None
@@ -245,14 +245,14 @@ def local_device_to_backend_user(
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        certifier_id, certifier_signing_key, device.user_id, device.public_key, now
+        certifier_id, certifier_signing_key, device.user_id, device.public_key, now, is_admin
     )
     device_certificate = build_device_certificate(
         certifier_id, certifier_signing_key, device.device_id, device.verify_key, now
     )
     return new_backend_user_factory(
         device_id=device.device_id,
-        is_admin=False,
+        is_admin=is_admin,
         certifier=certifier_id,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
