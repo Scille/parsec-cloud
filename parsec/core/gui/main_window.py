@@ -135,10 +135,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_run_core_ready(self, core, core_jobs_ctx):
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
-        self.config = self.config.evolve(
+        self.event_bus.send(
+            "gui.config.changed",
             gui_last_device="{}:{}".format(
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
-            )
+            ),
         )
         self.logged_in.emit()
 
