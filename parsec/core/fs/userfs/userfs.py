@@ -243,14 +243,14 @@ class UserFS:
             return
 
         # New things in remote, merge is needed
-        target_um = target_um.to_local()
+        target_um = target_um.to_local(self.device.device_id)
 
         base_um = None
         while True:
             if diverged_um.base_version != 0:
                 # TODO: keep base manifest somewhere to avoid this query
                 base_um = await self._fetch_remote_user_manifest(version=diverged_um.base_version)
-                base_um = base_um.to_local()
+                base_um = base_um.to_local(self.device.device_id)
 
             # Merge and store result
             async with self._update_user_manifest_lock:

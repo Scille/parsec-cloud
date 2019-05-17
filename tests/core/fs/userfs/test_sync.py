@@ -180,7 +180,7 @@ async def test_sync_under_concurrency(
     um2 = alice2_user_fs.get_user_manifest()
 
     expected_um = LocalUserManifest(
-        author=alice2.device_id,
+        author=alice.device_id,
         base_version=3,
         need_sync=False,
         is_placeholder=False,
@@ -203,7 +203,7 @@ async def test_sync_under_concurrency(
         ),
     )
     assert um == expected_um
-    assert um == um2
+    assert um2 == expected_um.evolve(author=alice2.device_id)
 
 
 @pytest.mark.trio
@@ -299,7 +299,7 @@ async def test_concurrent_sync_placeholder(
         um2 = user_fs2.get_user_manifest()
         if dev2_has_changes:
             expected_um = LocalUserManifest(
-                author=device2.device_id,
+                author=device1.device_id,
                 base_version=2,
                 need_sync=False,
                 is_placeholder=False,
@@ -339,8 +339,9 @@ async def test_concurrent_sync_placeholder(
                     ),
                 ),
             )
+
         assert um1 == expected_um
-        assert um1 == um2
+        assert um2 == expected_um.evolve(author=device2.device_id)
 
 
 @pytest.mark.trio
@@ -367,7 +368,7 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
     um2 = alice2_user_fs.get_user_manifest()
 
     expected_um = LocalUserManifest(
-        author=alice2.device_id,
+        author=alice.device_id,
         base_version=2,
         need_sync=False,
         is_placeholder=False,
@@ -383,5 +384,6 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
             ),
         ),
     )
+
     assert um == expected_um
-    assert um == um2
+    assert um2 == expected_um.evolve(author=alice2.device_id)

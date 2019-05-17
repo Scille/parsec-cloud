@@ -9,7 +9,7 @@ from parsec.core.types import LocalUserManifest, ManifestAccess
 
 @pytest.fixture
 def local_storage(tmpdir):
-    with LocalStorage(tmpdir) as db:
+    with LocalStorage("a@b", tmpdir) as db:
         yield db
 
 
@@ -40,14 +40,18 @@ def test_base_manifest(local_storage):
 
 def test_set_manifest(local_storage):
     access = ManifestAccess()
-    manifest = LocalUserManifest(author=123, base_version=1, is_placeholder=False, need_sync=False)
+    manifest = LocalUserManifest(
+        author="a@b", base_version=1, is_placeholder=False, need_sync=False
+    )
     local_storage.set_manifest(access, manifest)
     assert local_storage.local_manifest_cache[access.id] == manifest
 
 
 def test_clear_manifest(local_storage):
     access = ManifestAccess()
-    manifest = LocalUserManifest(author=123, base_version=1, is_placeholder=False, need_sync=False)
+    manifest = LocalUserManifest(
+        author="a@b", base_version=1, is_placeholder=False, need_sync=False
+    )
     local_storage.set_base_manifest(access, manifest.to_remote())
     local_storage.set_manifest(access, manifest)
 

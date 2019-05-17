@@ -18,10 +18,11 @@ def local_storage_factory(initial_user_manifest_state):
         device_id = device.device_id
         assert force or (device_id not in local_storages)
 
-        local_storage = InMemoryLocalStorage()
+        local_storage = InMemoryLocalStorage(device_id)
         local_storages[device_id] = local_storage
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
+            user_manifest = user_manifest.evolve(author=device_id)
             local_storage.set_dirty_manifest(device.user_manifest_access, user_manifest)
         return local_storage
 

@@ -363,7 +363,7 @@ async def test_share_workspace_then_conflict_on_rights(
     am = alice_user_fs.get_user_manifest()
     a2m = alice2_user_fs.get_user_manifest()
     expected = LocalUserManifest(
-        author=alice2.device_id,
+        author=alice.device_id,
         created=Pendulum(2000, 1, 1),
         updated=Pendulum(2000, 1, 3),
         base_version=synced_version,
@@ -380,7 +380,7 @@ async def test_share_workspace_then_conflict_on_rights(
         ),
     )
     assert am == expected
-    assert a2m == am
+    assert a2m == expected.evolve(author=alice2.device_id)
 
     a_w = alice_user_fs.get_workspace(wid)
     a2_w = alice2_user_fs.get_workspace(wid)

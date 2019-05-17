@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import Tuple
+from pathlib import Path
 from itertools import count
 from collections import defaultdict
 
@@ -10,6 +11,7 @@ from trio import hazmat
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
+from parsec.types import DeviceID
 from parsec.core.types import (
     FileDescriptor,
     Access,
@@ -39,7 +41,8 @@ class LocalStorage:
     - the persistent storage to keep serialized data on the disk
     """
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, device_id: DeviceID, path: Path, **kwargs):
+        self.device_id = device_id
 
         # Cursors and file descriptors
         self.open_cursors = {}
@@ -101,7 +104,7 @@ class LocalStorage:
         try:
             raw = self.persistent_storage.get_dirty_manifest(access)
         except LocalStorageMissingEntry:
-            manifest = self.get_base_manifest(access).to_local()
+            manifest = self.get_base_manifest(access).to_local(self.device_id)
         else:
             manifest = local_manifest_serializer.loads(raw)
         self.local_manifest_cache[access.id] = manifest
@@ -121,6 +124,7 @@ class LocalStorage:
         self.base_manifest_cache[access.id] = manifest
 
     def set_manifest(self, access: Access, manifest: LocalManifest) -> None:
+        assert manifest.author == self.device_id
         self._check_lock_status(access)
         raw = local_manifest_serializer.dumps(manifest)
         self.persistent_storage.set_dirty_manifest(access, raw)
