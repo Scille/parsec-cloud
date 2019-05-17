@@ -36,7 +36,6 @@ class DeviceSchema(UnknownCheckedSchema):
 
 class UserGetRepSchema(BaseRepSchema):
     user_id = fields.UserID(required=True)
-    is_admin = fields.Boolean(required=True)
 
     user_certificate = fields.Bytes(required=True)
 
@@ -122,7 +121,6 @@ user_cancel_invitation_serializer = CmdSerializer(
 class UserCreateReqSchema(BaseReqSchema):
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
-    is_admin = fields.Boolean(missing=False)
 
 
 class UserCreateRepSchema(BaseRepSchema):
