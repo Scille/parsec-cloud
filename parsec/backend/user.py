@@ -193,7 +193,6 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "user_id": user.user_id,
-                "is_admin": user.is_admin,
                 "user_certificate": user.user_certificate,
                 "devices": devices,
                 "trustchain": trustchain,
