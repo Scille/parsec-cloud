@@ -218,7 +218,6 @@ class BaseUserComponent:
 
     @catch_protocole_errors
     async def api_user_invite(self, client_ctx, msg):
-        # is_admin could have changed in db since the creation of the connection
         try:
             user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
 
@@ -396,7 +395,7 @@ class BaseUserComponent:
         try:
             user = User(
                 user_id=u_data.user_id,
-                is_admin=msg["is_admin"],
+                is_admin=u_data.is_admin,
                 user_certificate=msg["user_certificate"],
                 user_certifier=u_data.certified_by,
                 created_on=u_data.certified_on,

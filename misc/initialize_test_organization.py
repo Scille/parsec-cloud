@@ -117,7 +117,7 @@ async def amain(
 
         now = pendulum.now()
         user_certificate = build_user_certificate(
-            None, root_signing_key, alice_device.user_id, alice_device.public_key, now
+            None, root_signing_key, alice_device.user_id, alice_device.public_key, now, True
         )
         device_certificate = build_device_certificate(
             None, root_signing_key, alice_device_id, alice_device.verify_key, now

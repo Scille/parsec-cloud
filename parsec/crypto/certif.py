@@ -29,6 +29,7 @@ class CertifiedUserSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("user", required=True)
     user_id = fields.UserID(required=True)
     public_key = fields.PublicKey(required=True)
+    is_admin = fields.Boolean(required=True)
 
 
 class CertifiedDeviceRevokedSchema(UnknownCheckedSchema):
@@ -74,6 +75,7 @@ class CertifiedUserData:
     public_key: VerifyKey
     certified_by: DeviceID
     certified_on: Pendulum
+    is_admin: bool
 
 
 def verify_device_certificate(
@@ -128,7 +130,9 @@ def verify_user_certificate(
     _, timestamp = unsecure_extract_signed_msg_meta(user_certificate)
     content = verify_signed_msg(user_certificate, expected_author_id, author_verify_key, timestamp)
     data = user_certificate_schema.loads(content)
-    return CertifiedUserData(data["user_id"], data["public_key"], expected_author_id, timestamp)
+    return CertifiedUserData(
+        data["user_id"], data["public_key"], expected_author_id, timestamp, data["is_admin"]
+    )
 
 
 def unsecure_read_device_certificate(device_certificate: bytes) -> CertifiedDeviceData:
@@ -181,6 +185,7 @@ def unsecure_read_user_certificate(user_certificate: bytes) -> CertifiedUserData
         public_key=data["public_key"],
         certified_by=certified_by,
         certified_on=certified_on,
+        is_admin=data["is_admin"],
     )
 
 
@@ -227,6 +232,7 @@ def build_user_certificate(
     user_id: UserID,
     public_key: PublicKey,
     timestamp: Pendulum,
+    is_admin: bool,
 ) -> bytes:
     """
     Raises:
@@ -235,6 +241,6 @@ def build_user_certificate(
         CryptoWrappedMsgPackingError
     """
     content = user_certificate_schema.dumps(
-        {"type": "user", "user_id": user_id, "public_key": public_key}
+        {"type": "user", "user_id": user_id, "public_key": public_key, "is_admin": is_admin}
     )
     return build_signed_msg(certifier_id, certifier_key, content, timestamp)

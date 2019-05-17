@@ -257,7 +257,12 @@ async def user_get(
 ) -> Tuple[UnverifiedRemoteUser, List[UnverifiedRemoteDevice], List[UnverifiedRemoteDevice]]:
     rep = await _send_cmd(transport, user_get_serializer, cmd="user_get", user_id=user_id)
 
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"], is_admin=rep["is_admin"])
+    print("user_get")
+    print(dict(rep))
+    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+    import pdb
+
+    pdb.set_trace()
     devices = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
@@ -306,7 +311,7 @@ async def user_cancel_invitation(transport: Transport, user_id: UserID) -> None:
 
 
 async def user_create(
-    transport: Transport, user_certificate: bytes, device_certificate: bytes, is_admin: bool
+    transport: Transport, user_certificate: bytes, device_certificate: bytes
 ) -> None:
     await _send_cmd(
         transport,
@@ -314,7 +319,6 @@ async def user_create(
         cmd="user_create",
         user_certificate=user_certificate,
         device_certificate=device_certificate,
-        is_admin=is_admin,
     )
 
 
@@ -407,7 +411,11 @@ async def user_get_invitation_creator(
         invited_user_id=invited_user_id,
     )
 
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"], is_admin=rep["is_admin"])
+    print("user_get_invitation_creator")
+    print(dict(rep))
+
+    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+
     trustchain = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
@@ -438,7 +446,10 @@ async def device_get_invitation_creator(
         invited_device_id=invited_device_id,
     )
 
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"], is_admin=rep["is_admin"])
+    print("device_get_invitation_creator")
+    print(dict(rep))
+    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+
     trustchain = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],

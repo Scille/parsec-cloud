@@ -448,7 +448,12 @@ async def invite_and_create_user(
         now = pendulum.now()
         try:
             user_certificate = build_user_certificate(
-                device.device_id, device.signing_key, device_id.user_id, claim["public_key"], now
+                device.device_id,
+                device.signing_key,
+                device_id.user_id,
+                claim["public_key"],
+                now,
+                is_admin,
             )
             device_certificate = build_device_certificate(
                 device.device_id, device.signing_key, device_id, claim["verify_key"], now
@@ -460,7 +465,7 @@ async def invite_and_create_user(
             ) from exc
 
         try:
-            await cmds.user_create(user_certificate, device_certificate, is_admin)
+            await cmds.user_create(user_certificate, device_certificate)
 
         except BackendNotAvailable as exc:
             raise InviteClaimBackendOfflineError(str(exc)) from exc
