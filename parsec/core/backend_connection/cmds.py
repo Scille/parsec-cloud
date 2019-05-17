@@ -260,9 +260,6 @@ async def user_get(
     print("user_get")
     print(dict(rep))
     user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
-    import pdb
-
-    pdb.set_trace()
     devices = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
