@@ -5,6 +5,7 @@ import trio
 import threading
 from inspect import iscoroutinefunction
 from structlog import get_logger
+from parsec.core.fs import FSError
 from PyQt5.QtCore import pyqtBoundSignal, Q_ARG, QMetaObject, Qt
 
 
@@ -74,6 +75,10 @@ class QtToTrioJob:
                     self.status = "cancelled"
                     self.exc = exc
                     raise
+
+                except FSError as exc:
+                    self.status = "ko"
+                    self.exc = exc
 
                 except Exception as exc:
                     logger.exception("Uncatched error", exc_info=exc)

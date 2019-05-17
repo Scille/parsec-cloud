@@ -69,7 +69,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.runing_core_job = None
 
         self.run_core_success.connect(self.on_core_run_done)
-        self.run_core_error.connect(self.on_core_run_done)
+        self.run_core_error.connect(self.on_core_run_error)
         self.run_core_ready.connect(self.on_run_core_ready)
         self.logged_in.connect(self.on_logged_in)
         self.logged_out.connect(self.on_logged_out)
@@ -142,6 +142,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ),
         )
         self.logged_in.emit()
+
+    def on_core_run_error(self):
+        assert self.runing_core_job.is_finished()
+        if self.runing_core_job.status is not None:
+            if "Device has been revoked" in str(self.runing_core_job.exc):
+                show_error(self, _("This device has been revoked."))
+            else:
+                show_error(self, _("Unhandled error."))
+        self.runing_core_job = None
+        self.core_jobs_ctx = None
+        self.core = None
+        self.logged_out.emit()
 
     def on_core_run_done(self):
         assert self.runing_core_job.is_finished()
