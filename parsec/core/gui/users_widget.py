@@ -30,6 +30,7 @@ class UserButton(QWidget, Ui_UserButton):
         self.label.is_revoked = is_revoked
         self.certified_on = certified_on
         self.is_current_user = is_current_user
+        self.user_name = user_name
         self.set_display(user_name)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
@@ -120,7 +121,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.users.append(user_name)
 
     def revoke_user(self, user_button):
-        user_name = user_button.name
+        user_name = user_button.user_name
         result = ask_question(
             self,
             _("Confirmation"),
@@ -130,10 +131,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             return
 
         try:
-            user_info, trustchain = self.jobs_ctx.run(
-                self.core.fs.backend_cmds.user_get, user_button.name
+            user_info, user_devices = self.jobs_ctx.run(
+                self.core.remote_devices_manager.get_user_and_devices, user_name
             )
-            for device in user_info.devices.values():
+            for device in user_devices:
                 revoked_device_certificate = build_revoked_device_certificate(
                     self.core.device.device_id,
                     self.core.device.signing_key,
