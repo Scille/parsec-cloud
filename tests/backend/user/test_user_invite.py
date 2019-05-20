@@ -61,10 +61,10 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
 
 
 @pytest.mark.trio
-async def test_user_invite_not_admin(alice_backend_sock, alice, mallory):
-    async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+async def test_user_invite_not_admin(bob_backend_sock, bob, mallory):
+    async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep:
         pass
-    assert prep[0] == {"status": "invalid_role", "reason": f"User `{alice.user_id}` is not admin"}
+    assert prep[0] == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
 
 
 @pytest.mark.trio
@@ -97,8 +97,6 @@ async def test_user_invite_same_name_different_organizations(
     backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, mallory
 ):
     # Mallory invitation from first organization
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
         # Waiting for user.claimed event
@@ -121,8 +119,6 @@ async def test_user_invite_same_name_different_organizations(
     backend.event_bus.spy.clear()
 
     # Mallory invitation from second organization
-    await backend.user.set_user_admin(otheralice.organization_id, otheralice.user_id, True)
-
     async with user_invite(otheralice_backend_sock, user_id=mallory.user_id) as prep:
 
         # Waiting for user.claimed event
