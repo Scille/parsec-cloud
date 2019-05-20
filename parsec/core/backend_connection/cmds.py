@@ -407,7 +407,6 @@ async def user_get_invitation_creator(
     )
 
     user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
-
     trustchain = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
@@ -439,7 +438,6 @@ async def device_get_invitation_creator(
     )
 
     user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
-
     trustchain = [
         UnverifiedRemoteDevice(
             device_certificate=d["device_certificate"],
