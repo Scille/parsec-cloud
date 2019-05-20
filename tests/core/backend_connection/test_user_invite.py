@@ -20,8 +20,6 @@ async def test_user_invite_then_claim_ok(
 ):
     token = "424242"
 
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async def _alice_invite():
         encrypted_claim = await alice_backend_cmds.user_invite(mallory.user_id)
         claim = extract_user_encrypted_claim(alice.private_key, encrypted_claim)
@@ -30,13 +28,18 @@ async def test_user_invite_then_claim_ok(
 
         now = pendulum.now()
         user_certificate = build_user_certificate(
-            alice.device_id, alice.signing_key, claim["device_id"].user_id, claim["public_key"], now
+            alice.device_id,
+            alice.signing_key,
+            claim["device_id"].user_id,
+            claim["public_key"],
+            now,
+            False,
         )
         device_certificate = build_device_certificate(
             alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now
         )
         with trio.fail_after(1):
-            await alice_backend_cmds.user_create(user_certificate, device_certificate, False)
+            await alice_backend_cmds.user_create(user_certificate, device_certificate)
 
     async def _mallory_claim():
         async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:

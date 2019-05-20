@@ -20,8 +20,6 @@ async def test_invite_claim_user(running_backend, backend, alice):
     new_device = None
     token = generate_invitation_token()
 
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async def _from_alice():
         await invite_and_create_user(alice, new_device_id.user_id, token=token, is_admin=False)
 
@@ -48,8 +46,6 @@ async def test_invite_claim_device(running_backend, backend, alice):
     new_device_id = DeviceID(f"{alice.user_id}@NewDevice")
     new_device = None
     token = generate_invitation_token()
-
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     async def _from_alice():
         await invite_and_create_device(alice, new_device_id.device_name, token=token)
