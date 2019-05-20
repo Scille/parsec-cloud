@@ -343,16 +343,12 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 2) Make both fs diverged
 
     with freeze_time("2000-01-03"):
-        # z_by_alice_id = await alice_fs.workspace_create("/z")
-        # z_by_alice = alice_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice_fs.file_write("/w/foo.txt", b"alice's v2")
         await alice_fs.folder_create("/w/bar/from_alice")
         await alice_fs.folder_create("/w/bar/spam")
         await alice_fs.touch("/w/bar/buzz.txt")
 
     with freeze_time("2000-01-04"):
-        # z_by_alice2_id = await alice2_fs.workspace_create("/z")
-        # z_by_alice2 = alice2_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice2_fs.file_write("/w/foo.txt", b"alice2's v2")
         await alice2_fs.folder_create("/w/bar/from_alice2")
         await alice2_fs.folder_create("/w/bar/spam")

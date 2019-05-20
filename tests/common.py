@@ -61,8 +61,8 @@ class InMemoryPersistentStorage(PersistentStorage):
 
 
 class InMemoryLocalStorage(LocalStorage):
-    def __init__(self):
-        super().__init__("unused")
+    def __init__(self, device_id):
+        super().__init__(device_id, "unused")
         self.persistent_storage = InMemoryPersistentStorage()
 
 

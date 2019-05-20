@@ -90,6 +90,10 @@ class FolderSyncerMixin(BaseSyncer):
                 to_sync_manifest, sync_needed, conflicts = merge_remote_manifests(
                     base, to_sync_manifest, target
                 )
+
+                # Hot fix: make sure to_sync_manifest has the right author
+                to_sync_manifest = to_sync_manifest.evolve(author=self.device.device_id)
+
                 for original_name, original_id, diverged_name, diverged_id in conflicts:
                     self.event_bus.send(
                         "fs.entry.name_conflicted",
@@ -207,7 +211,7 @@ class FolderSyncerMixin(BaseSyncer):
         current_manifest = self.local_folder_fs.get_manifest(access)
         assert is_folderish_manifest(current_manifest)
 
-        target_manifest = target_remote_manifest.to_local()
+        target_manifest = target_remote_manifest.to_local(self.device.device_id)
         final_manifest, _, conflicts = merge_local_manifests(
             base_manifest, current_manifest, target_manifest
         )

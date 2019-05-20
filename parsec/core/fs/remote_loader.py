@@ -40,9 +40,8 @@ class RemoteLoader:
         remote_manifest = remote_manifest_serializer.loads(raw)
         # TODO: better exception !
         assert remote_manifest.version == expected_version
+        assert remote_manifest.author == expected_author_id
         # TODO: also store access id in remote_manifest and check it here
+        self.local_storage.set_base_manifest(access, remote_manifest)
 
-        local_manifest = remote_manifest.to_local()
-        self.local_storage.set_clean_manifest(access, local_manifest)
-
-        return local_manifest
+        return remote_manifest.to_local(self.local_storage.device_id)
