@@ -47,8 +47,6 @@ async def test_register_user_open_modal(aqtbot, logged_gui):
 async def test_register_user_modal_ok(
     aqtbot, gui, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
@@ -101,8 +99,6 @@ async def test_register_user_modal_ok(
 async def test_register_user_modal_invalid_user_id(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
@@ -126,8 +122,6 @@ async def test_register_user_modal_invalid_user_id(
 async def test_register_user_modal_cancel(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
@@ -153,8 +147,6 @@ async def test_register_user_modal_cancel(
 async def test_register_user_modal_offline(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
@@ -179,8 +171,6 @@ async def test_register_user_modal_offline(
 async def test_register_user_modal_already_registered(
     aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
@@ -200,10 +190,8 @@ async def test_register_user_modal_already_registered(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_not_admin(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, logged_gui, running_backend, qt_thread_gateway, bob, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, False)
-
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
