@@ -249,8 +249,6 @@ def local_device_to_backend_user(
         certifier_signing_key = certifier.signing_key
 
     now = pendulum.now()
-    # import pdb
-    # pdb.set_trace()
     user_certificate = build_user_certificate(
         certifier_id, certifier_signing_key, device.user_id, device.public_key, now, is_admin
     )
