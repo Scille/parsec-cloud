@@ -87,6 +87,7 @@ class LocalStorage:
     # Manifest interface
 
     def get_base_manifest(self, access: Access) -> RemoteManifest:
+        """Raises: LocalStorageMissingEntry"""
         try:
             return self.base_manifest_cache[access.id]
         except KeyError:
@@ -97,6 +98,7 @@ class LocalStorage:
         return manifest
 
     def get_manifest(self, access: Access) -> LocalManifest:
+        """Raises: LocalStorageMissingEntry"""
         try:
             return self.local_manifest_cache[access.id]
         except KeyError:
