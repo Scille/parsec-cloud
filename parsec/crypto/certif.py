@@ -232,7 +232,7 @@ def build_user_certificate(
     user_id: UserID,
     public_key: PublicKey,
     timestamp: Pendulum,
-    is_admin: bool,
+    is_admin: bool = False,
 ) -> bytes:
     """
     Raises:
