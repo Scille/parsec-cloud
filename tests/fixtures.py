@@ -148,6 +148,11 @@ def alice2(local_device_factory):
 
 
 @pytest.fixture
+def adam(local_device_factory):
+    return local_device_factory("adam@dev1")
+
+
+@pytest.fixture
 def bob(local_device_factory):
     return local_device_factory("bob@dev1")
 
@@ -244,6 +249,8 @@ def local_device_to_backend_user(
         certifier_signing_key = certifier.signing_key
 
     now = pendulum.now()
+    # import pdb
+    # pdb.set_trace()
     user_certificate = build_user_certificate(
         certifier_id, certifier_signing_key, device.user_id, device.public_key, now, is_admin
     )
@@ -324,7 +331,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(org.organization_id, bootstrap_token)
             if first_device:
-                backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
+                backend_user, backend_first_device = local_device_to_backend_user(
+                    first_device, org, is_admin=True
+                )
                 await self.backend.organization.bootstrap(
                     org.organization_id,
                     backend_user,
@@ -362,6 +371,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
             initial_user_manifest_in_v0: bool = False,
+            is_admin: bool = False,
         ):
             if not certifier:
                 try:
@@ -373,7 +383,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 except StopIteration:
                     raise RuntimeError(f"Organization `{device.organization_id}` not bootstrapped")
 
-            backend_user, backend_device = local_device_to_backend_user(device, certifier)
+            backend_user, backend_device = local_device_to_backend_user(device, certifier, is_admin)
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device
