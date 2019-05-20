@@ -170,7 +170,7 @@ async def test_device_revoke_other_organization(
     async with sock_from_other_organization_factory(backend, mimick=alice.device_id) as sock:
         # ...even for organization admins !
         other_admin = await backend.user.get_user(sock.device.organization_id, sock.device.user_id)
-        assert unsecure_read_user_certificate(other_admin.user_certificate).is_admin == True
+        assert unsecure_read_user_certificate(other_admin.user_certificate).is_admin is True
 
         revocation = build_revoked_device_certificate(
             sock.device.device_id, sock.device.signing_key, bob.device_id, pendulum.now()
