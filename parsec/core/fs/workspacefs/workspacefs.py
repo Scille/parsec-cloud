@@ -5,12 +5,15 @@ from typing import Union, Iterator, Dict
 from uuid import UUID
 
 from parsec.types import UserID
-from parsec.core.types import FsPath, AccessID, WorkspaceRole
+from parsec.core.types import FsPath, AccessID, WorkspaceRole, Access
 from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendCmdsNotAllowed,
     BackendConnectionError,
 )
+
+from parsec.core.local_storage import LocalStorageMissingEntry
+
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -66,9 +69,12 @@ class WorkspaceFS:
             self.workspace_id,
             self.get_workspace_entry,
             self.device,
-            local_storage,
-            self._remote_loader,
-            event_bus,
+            self.local_storage,
+            self.remote_loader,
+            self.event_bus,
+        )
+        self.sync_transactions = SyncTransactions(
+            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
         )
 
     @property
@@ -275,6 +281,57 @@ class WorkspaceFS:
             else:
                 await self.unlink(child)
         await self.rmdir(path)
+
+    # Sync interface
+
+    def _use_legacy_sync(self, access, remote_manifest):
+        if is_file_manifest(remote_manifest):
+            return True
+        try:
+            local_manifest = self.local_storage.get_manifest(access)
+        except LocalStorageMissingEntry:
+            return False
+        return is_file_manifest(local_manifest)
+
+    async def sync_by_access(self, access: Access, remote_changed: bool = False) -> None:
+
+        # Get the current remote manifest if it has changed
+        remote_manifest = None
+        if remote_changed:
+            try:
+                remote_manifest = await self.remote_loader.load_remote_manifest(access)
+            except RemoteManifestNotFound:
+                pass
+
+        # Check type
+        if self._use_legacy_sync(access, remote_manifest):
+            return await self._load_and_retry(self._syncer.sync_by_id, access.id)
+
+        # Loop over sync transactions
+        while True:
+            # Perform the transaction
+            try:
+                new_remote_manifest = await self.sync_transactions.folder_sync(
+                    access, remote_manifest
+                )
+            # Another manifest requires synchronization first
+            except SynchronizationRequiredError as exc:
+                await self.sync_by_access(exc.access)
+                continue
+
+            # No new manifest to upload, the entry is synced!
+            if new_remote_manifest is None:
+                return
+
+            # Upload the new manifest containing the latest changes
+            try:
+                await self.remote_loader.upload_manifest(access, new_remote_manifest)
+            # The upload has failed: download the latest remote manifest
+            except RemoteSyncError:
+                remote_manifest = await self.remote_loader.load_remote_manifest(access)
+            # The upload has succeed: loop to acknowledge this new version
+            else:
+                remote_manifest = new_remote_manifest
 
     # Left to migrate
 
