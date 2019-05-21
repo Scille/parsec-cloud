@@ -183,9 +183,9 @@ def unsecure_read_user_certificate(user_certificate: bytes) -> CertifiedUserData
     return CertifiedUserData(
         user_id=data["user_id"],
         public_key=data["public_key"],
+        is_admin=data["is_admin"],
         certified_by=certified_by,
         certified_on=certified_on,
-        is_admin=data["is_admin"],
     )
 
 
