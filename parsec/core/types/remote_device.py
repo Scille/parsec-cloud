@@ -16,7 +16,6 @@ from parsec.crypto import (
 class UnverifiedRemoteUser:
     user_certificate: bytes
     fetched_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    is_admin: bool = False
 
     def __repr__(self):
         info = unsecure_read_user_certificate(self.user_certificate)
