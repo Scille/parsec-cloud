@@ -73,9 +73,9 @@ class CertifiedRevokedDeviceData:
 class CertifiedUserData:
     user_id: DeviceID
     public_key: VerifyKey
+    is_admin: bool
     certified_by: DeviceID
     certified_on: Pendulum
-    is_admin: bool
 
 
 def verify_device_certificate(
@@ -131,7 +131,7 @@ def verify_user_certificate(
     content = verify_signed_msg(user_certificate, expected_author_id, author_verify_key, timestamp)
     data = user_certificate_schema.loads(content)
     return CertifiedUserData(
-        data["user_id"], data["public_key"], expected_author_id, timestamp, data["is_admin"]
+        data["user_id"], data["public_key"], data["is_admin"], expected_author_id, timestamp
     )
 
 
