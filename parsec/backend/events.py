@@ -26,20 +26,22 @@ def _pinged_callback_factory(client_ctx, pings):
     return _on_pinged
 
 
-def _vlob_group_updated_callback_factory(client_ctx, vlob_group_ids):
-    vlob_group_ids = set(vlob_group_ids)
+def _realm_vlobs_updated_callback_factory(client_ctx, realm_ids):
+    realm_ids = set(realm_ids)
 
-    def _on_vlob_group_updated(event, organization_id, author, id, checkpoint, src_id, src_version):
+    def _on_realm_vlobs_updated(
+        event, organization_id, author, realm_id, checkpoint, src_id, src_version
+    ):
         if (
             organization_id != client_ctx.organization_id
             or author == client_ctx.device_id
-            or id not in vlob_group_ids
+            or realm_id not in realm_ids
         ):
             return
 
         msg = {
             "event": event,
-            "id": id,
+            "realm_id": realm_id,
             "checkpoint": checkpoint,
             "src_id": src_id,
             "src_version": src_version,
@@ -49,7 +51,7 @@ def _vlob_group_updated_callback_factory(client_ctx, vlob_group_ids):
         except trio.WouldBlock:
             client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-    return _on_vlob_group_updated
+    return _on_realm_vlobs_updated
 
 
 def _message_received_callback_factory(client_ctx):
@@ -84,11 +86,11 @@ class EventsComponent:
             on_pinged = _pinged_callback_factory(client_ctx, msg["pinged"])
             client_ctx.event_bus_ctx.connect("pinged", on_pinged)
 
-        if msg["vlob_group_updated"]:
-            on_vlob_group_updated = _vlob_group_updated_callback_factory(
-                client_ctx, msg["vlob_group_updated"]
+        if msg["realm_vlobs_updated"]:
+            on_realm_vlobs_updated = _realm_vlobs_updated_callback_factory(
+                client_ctx, msg["realm_vlobs_updated"]
             )
-            client_ctx.event_bus_ctx.connect("vlob_group.updated", on_vlob_group_updated)
+            client_ctx.event_bus_ctx.connect("realm.vlobs_updated", on_realm_vlobs_updated)
 
         if msg["message_received"]:
             on_message_received = _message_received_callback_factory(client_ctx)

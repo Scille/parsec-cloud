@@ -6,32 +6,32 @@
 -------------------------------------------------------
 
 
-CREATE TABLE vlob_group (
+CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    vlob_group_id UUID NOT NULL,
+    realm_id UUID NOT NULL,
 
-    UNIQUE(organization, vlob_group_id)
+    UNIQUE(organization, realm_id)
 );
 
 
-CREATE TYPE vlob_group_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
+CREATE TYPE realm_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
 
 
-CREATE TABLE vlob_group_user_role (
+CREATE TABLE realm_user_role (
     _id SERIAL PRIMARY KEY,
-    vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    role vlob_group_role NOT NULL,
+    role realm_role NOT NULL,
 
-    UNIQUE(vlob_group, user_)
+    UNIQUE(realm, user_)
 );
 
 
 CREATE TABLE vlob (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    vlob_group INTEGER REFERENCES vlob_group (_id),
+    realm INTEGER REFERENCES realm (_id),
     vlob_id UUID NOT NULL,
 
     UNIQUE(organization, vlob_id)
@@ -52,13 +52,13 @@ CREATE TABLE vlob_atom (
 );
 
 
-CREATE TABLE vlob_group_update (
+CREATE TABLE realm_update (
     _id SERIAL PRIMARY KEY,
-    vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
     index INTEGER NOT NULL,
     vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
 
-    UNIQUE(vlob_group, index)
+    UNIQUE(realm, index)
 );
 
 
@@ -67,15 +67,15 @@ CREATE TABLE vlob_group_update (
 -------------------------------------------------------
 
 
-CREATE FUNCTION user_has_vlob_group_admin_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_has_realm_admin_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM vlob_group_user_role
+        FROM realm_user_role
         WHERE
-            vlob_group = vgroupinternalid
+            realm = vgroupinternalid
             AND user_ = userinternalid
             AND admin_right = TRUE
         LIMIT 1
@@ -90,9 +90,9 @@ BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM vlob_group_user_role
+        FROM realm_user_role
         WHERE
-            vlob_group = vgroupinternalid
+            realm = vgroupinternalid
             AND user_ = userinternalid
         LIMIT 1
     );
@@ -106,9 +106,9 @@ BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM vlob_group_user_role
+        FROM realm_user_role
         WHERE
-            vlob_group = vgroupinternalid
+            realm = vgroupinternalid
             AND user_ = userinternalid
             AND role != 'READER'
         LIMIT 1
@@ -117,28 +117,28 @@ END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION get_vlob_group_internal_id(orgid VARCHAR, vgroupid UUID) RETURNS INTEGER AS $$
+CREATE FUNCTION get_realm_internal_id(orgid VARCHAR, vgroupid UUID) RETURNS INTEGER AS $$
 DECLARE
 BEGIN
     RETURN (
         SELECT
             _id
-        FROM vlob_group
+        FROM realm
         WHERE
             organization = get_organization_internal_id(orgid)
-            AND vlob_group_id = vgroupid
+            AND realm_id = vgroupid
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION get_vlob_group_id(vgroupinternalid INTEGER) RETURNS UUID AS $$
+CREATE FUNCTION get_realm_id(vgroupinternalid INTEGER) RETURNS UUID AS $$
 DECLARE
 BEGIN
     RETURN (
         SELECT
-            vlob_group_id
-        FROM vlob_group
+            realm_id
+        FROM realm
         WHERE _id = vgroupinternalid
     );
 END;

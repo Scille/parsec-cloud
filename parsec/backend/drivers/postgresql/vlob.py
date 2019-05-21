@@ -6,9 +6,9 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 
 from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
     BaseVlobComponent,
-    VlobGroupRole,
     VlobAccessError,
     VlobVersionError,
     VlobNotFoundError,
@@ -17,7 +17,7 @@ from parsec.backend.vlob import (
 from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
 
 
-_STR_TO_ROLE = {role.value: role for role in VlobGroupRole}
+_STR_TO_ROLE = {role.value: role for role in RealmRole}
 
 
 class PGVlobComponent(BaseVlobComponent):
@@ -25,41 +25,34 @@ class PGVlobComponent(BaseVlobComponent):
         self.dbh = dbh
 
     async def _vlob_updated(
-        self,
-        conn,
-        vlob_atom_internal_id,
-        organization_id,
-        author,
-        vlob_group,
-        src_id,
-        src_version=1,
+        self, conn, vlob_atom_internal_id, organization_id, author, realm_id, src_id, src_version=1
     ):
         index = await conn.fetchval(
             """
-INSERT INTO vlob_group_update (
-    vlob_group, index, vlob_atom
+INSERT INTO realm_update (
+    realm, index, vlob_atom
 )
 SELECT
-    get_vlob_group_internal_id($1, $2),
+    get_realm_internal_id($1, $2),
     (
         SELECT COALESCE(MAX(index) + 1, 1)
-        FROM vlob_group_update
-        WHERE vlob_group = get_vlob_group_internal_id($1, $2)
+        FROM realm_update
+        WHERE realm = get_realm_internal_id($1, $2)
     ),
     $3
 RETURNING index
 """,
             organization_id,
-            vlob_group,
+            realm_id,
             vlob_atom_internal_id,
         )
 
         await send_signal(
             conn,
-            "vlob_group.updated",
+            "realm.vlobs_updated",
             organization_id=organization_id,
             author=author,
-            id=vlob_group,
+            realm_id=realm_id,
             checkpoint=index,
             src_id=src_id,
             src_version=src_version,
@@ -67,7 +60,7 @@ RETURNING index
 
     async def get_group_roles(
         self, organization_id: OrganizationID, author: UserID, id: UUID
-    ) -> Dict[DeviceID, VlobGroupRole]:
+    ) -> Dict[DeviceID, RealmRole]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 ret = await conn.fetch(
@@ -75,9 +68,9 @@ RETURNING index
 SELECT
     get_user_id(user_),
     role
-FROM vlob_group_user_role
+FROM realm_user_role
 WHERE
-    vlob_group = get_vlob_group_internal_id($1, $2)
+    realm = get_realm_internal_id($1, $2)
 """,
                     organization_id,
                     id,
@@ -98,7 +91,7 @@ WHERE
         author: UserID,
         id: UUID,
         user: UserID,
-        role: Optional[VlobGroupRole],
+        role: Optional[RealmRole],
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             if author == user:
@@ -107,20 +100,20 @@ WHERE
             async with conn.transaction():
                 ret = await conn.fetch(
                     """
-WITH _vlob_group_users AS (
+WITH _realm_users AS (
     SELECT
         user_,
         role
-    FROM vlob_group_user_role
+    FROM realm_user_role
     WHERE
-        vlob_group = get_vlob_group_internal_id($1, $2)
+        realm = get_realm_internal_id($1, $2)
 )
 SELECT
     get_user_id(user_._id),
-    _vlob_group_users.role
+    _realm_users.role
 FROM user_
-LEFT JOIN _vlob_group_users
-ON user_._id = _vlob_group_users.user_
+LEFT JOIN _realm_users
+ON user_._id = _realm_users.user_
 WHERE
     user_.organization = get_organization_internal_id($1)
 """,
@@ -139,10 +132,10 @@ WHERE
 
                 author_role = next(x[1] for x in ret if x[0] == author)
 
-                if existing_user_role in (VlobGroupRole.MANAGER.value, VlobGroupRole.OWNER.value):
-                    needed_roles = (VlobGroupRole.OWNER.value,)
+                if existing_user_role in (RealmRole.MANAGER.value, RealmRole.OWNER.value):
+                    needed_roles = (RealmRole.OWNER.value,)
                 else:
-                    needed_roles = (VlobGroupRole.MANAGER.value, VlobGroupRole.OWNER.value)
+                    needed_roles = (RealmRole.MANAGER.value, RealmRole.OWNER.value)
 
                 if author_role not in needed_roles:
                     raise VlobAccessError()
@@ -150,7 +143,7 @@ WHERE
                 if not role:
                     ret = await conn.execute(
                         """
-DELETE FROM vlob_group_user_role
+DELETE FROM realm_user_role
 WHERE user_ = get_user_internal_id($1, $2)
                         """,
                         organization_id,
@@ -159,15 +152,15 @@ WHERE user_ = get_user_internal_id($1, $2)
                 else:
                     await conn.execute(
                         """
-INSERT INTO vlob_group_user_role(
-    vlob_group,
+INSERT INTO realm_user_role(
+    realm,
     user_,
     role
 ) SELECT
-    get_vlob_group_internal_id($1, $2),
+    get_realm_internal_id($1, $2),
     get_user_internal_id($1, $3),
     $4
-ON CONFLICT (vlob_group, user_)
+ON CONFLICT (realm, user_)
 DO UPDATE
 SET
     role = excluded.role
@@ -187,10 +180,10 @@ SET
                     """
 SELECT user_can_read_vlob(
     get_user_internal_id($1, $3),
-    get_vlob_group_internal_id($1, $2)
+    get_realm_internal_id($1, $2)
 )
-FROM vlob_group_user_role
-WHERE vlob_group = get_vlob_group_internal_id($1, $2)
+FROM realm_user_role
+WHERE realm = get_realm_internal_id($1, $2)
 """,
                     organization_id,
                     id,
@@ -208,10 +201,10 @@ SELECT
     index,
     get_vlob_id(vlob_atom.vlob),
     vlob_atom.version
-FROM vlob_group_update
-LEFT JOIN vlob_atom ON vlob_group_update.vlob_atom = vlob_atom._id
+FROM realm_update
+LEFT JOIN vlob_atom ON realm_update.vlob_atom = vlob_atom._id
 WHERE
-    vlob_group = get_vlob_group_internal_id($1, $2)
+    realm = get_realm_internal_id($1, $2)
     AND index > $3
 ORDER BY index ASC
 """,
@@ -246,7 +239,7 @@ WHERE
     AND vlob_id = any($3::uuid[])
     AND user_can_read_vlob(
         get_user_internal_id($1, $2),
-        vlob_group
+        realm
     )
 ORDER BY vlob_id, version DESC
 """,
@@ -275,9 +268,9 @@ ORDER BY vlob_id, version DESC
                 # Create vlob group if doesn't exist yet
                 ret = await conn.execute(
                     """
-INSERT INTO vlob_group (
+INSERT INTO realm (
     organization,
-    vlob_group_id
+    realm_id
 ) SELECT
     get_organization_internal_id($1),
     $2
@@ -289,10 +282,10 @@ ON CONFLICT DO NOTHING
                 if ret == "INSERT 0 1":
                     await conn.execute(
                         """
-INSERT INTO vlob_group_user_role(
-    vlob_group, user_, role
+INSERT INTO realm_user_role(
+    realm, user_, role
 ) SELECT
-    get_vlob_group_internal_id($1, $2),
+    get_realm_internal_id($1, $2),
     get_user_internal_id($1, $3),
     'OWNER'
 """,
@@ -306,16 +299,16 @@ INSERT INTO vlob_group_user_role(
                     vlob_internal_id = await conn.fetchval(
                         """
 INSERT INTO vlob (
-    organization, vlob_group, vlob_id
+    organization, realm, vlob_id
 )
 SELECT
     get_organization_internal_id($1),
-    get_vlob_group_internal_id($1, $3),
+    get_realm_internal_id($1, $3),
     $4
 WHERE
     user_can_write_vlob(
         get_user_internal_id($1, $2),
-        get_vlob_group_internal_id($1, $3)
+        get_realm_internal_id($1, $3)
     )
 RETURNING _id
 """,
@@ -367,7 +360,7 @@ RETURNING _id
 SELECT
     user_can_read_vlob(
         get_user_internal_id($1, $2),
-        vlob.vlob_group
+        vlob.realm
     ),
     version,
     blob,
@@ -392,7 +385,7 @@ ORDER BY version DESC
 SELECT
     user_can_read_vlob(
         get_user_internal_id($1, $2),
-        vlob.vlob_group
+        vlob.realm
     ),
     version,
     blob,
@@ -440,7 +433,7 @@ WHERE
 SELECT
     user_can_write_vlob(
         get_user_internal_id($1, $2),
-        (SELECT vlob_group FROM vlob where _id = vlob)
+        (SELECT realm FROM vlob where _id = vlob)
     ),
     version
 FROM vlob_atom
@@ -462,7 +455,7 @@ ORDER BY version DESC LIMIT 1
                     raise VlobVersionError()
 
                 try:
-                    vlob_group_id, vlob_atom_internal_id = await conn.fetchrow(
+                    realm_id, vlob_atom_internal_id = await conn.fetchrow(
                         """
 INSERT INTO vlob_atom (
     vlob, version, blob, author, created_on
@@ -474,7 +467,7 @@ SELECT
     get_device_internal_id($1, $5),
     $6
 RETURNING (
-    SELECT get_vlob_group_id(vlob_group)
+    SELECT get_realm_id(realm)
     FROM vlob
     WHERE _id = vlob
 ), _id
@@ -492,5 +485,5 @@ RETURNING (
                     raise VlobVersionError()
 
                 await self._vlob_updated(
-                    conn, vlob_atom_internal_id, organization_id, author, vlob_group_id, id, version
+                    conn, vlob_atom_internal_id, organization_id, author, realm_id, id, version
                 )

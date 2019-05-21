@@ -5,7 +5,7 @@ CREATE TABLE block (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     block_id UUID NOT NULL,
-    vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,

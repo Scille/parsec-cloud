@@ -445,7 +445,7 @@ class UserFS:
 
         # Step 1)
         try:
-            await self.backend_cmds.vlob_group_update_roles(
+            await self.backend_cmds.realm_update_roles(
                 workspace_entry.access.id, recipient, role=role
             )
 
@@ -610,7 +610,7 @@ class UserFS:
         # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            roles = await self.backend_cmds.vlob_group_get_roles(workspace_id)
+            roles = await self.backend_cmds.realm_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -678,7 +678,7 @@ class UserFS:
         # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.backend_cmds.vlob_group_get_roles(workspace_id)
+            await self.backend_cmds.realm_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc

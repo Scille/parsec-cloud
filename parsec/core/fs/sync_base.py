@@ -80,7 +80,7 @@ class BaseSyncer:
             self.event_bus.send("fs.entry.synced", path="/", id=self.device.user_manifest_access.id)
             return
 
-        need_sync_entries = await self._backend_vlob_group_check(local_entries)
+        need_sync_entries = await self._backend_realm_check(local_entries)
         for need_sync_entry_id in need_sync_entries:
             await self.sync_by_id(need_sync_entry_id)
 
@@ -207,10 +207,10 @@ class BaseSyncer:
     ) -> None:
         raise NotImplementedError()
 
-    async def _backend_block_create(self, vlob_group, access, blob):
+    async def _backend_block_create(self, realm, access, blob):
         ciphered = encrypt_raw_with_secret_key(access.key, bytes(blob))
         try:
-            await self.backend_cmds.block_create(access.id, vlob_group, ciphered)
+            await self.backend_cmds.block_create(access.id, realm, ciphered)
         except BackendCmdsBadResponse as exc:
             # If a previous attempt of uploading this block has been processed by
             # the backend but we lost the connection before receiving the response
@@ -223,8 +223,8 @@ class BaseSyncer:
         ciphered = await self.backend_cmds.block_read(access.id)
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
-    async def _backend_vlob_group_check(self, to_check):
-        changed = await self.backend_cmds.vlob_group_check(to_check)
+    async def _backend_realm_check(self, to_check):
+        changed = await self.backend_cmds.realm_check(to_check)
         return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
@@ -239,7 +239,7 @@ class BaseSyncer:
         assert manifest.version == expected_version
         return manifest
 
-    async def _backend_vlob_create(self, vlob_group, access, manifest):
+    async def _backend_vlob_create(self, realm, access, manifest):
         assert manifest.version == 1
         now = pendulum.now()
         ciphered = encrypt_signed_msg_with_secret_key(
@@ -250,7 +250,7 @@ class BaseSyncer:
             now,
         )
         try:
-            await self.backend_cmds.vlob_create(vlob_group, access.id, now, ciphered)
+            await self.backend_cmds.vlob_create(realm, access.id, now, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise SyncConcurrencyError(access)

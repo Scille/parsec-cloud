@@ -88,7 +88,7 @@ class WorkspaceFS:
             FSBackendOfflineError
         """
         try:
-            return await self.backend_cmds.vlob_group_get_roles(self.workspace_id)
+            return await self.backend_cmds.realm_get_roles(self.workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc

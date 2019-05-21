@@ -33,6 +33,9 @@ from parsec.crypto_types import (
 
 
 __all__ = (
+    "enum_field_factory",
+    "bytes_based_field_factory",
+    "str_based_field_factory",
     "Int",
     "String",
     "List",
@@ -56,6 +59,34 @@ __all__ = (
     "DeviceName",
     "SemVer",
 )
+
+
+def enum_field_factory(enum):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        if not isinstance(value, enum):
+            raise ValidationError(f"Not a {enum.__name__}")
+
+        return value.value
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise ValidationError("Not string")
+
+        for choice in enum:
+            if choice.value == value:
+                return choice
+        else:
+            raise ValidationError(f"Invalid role `{value}`")
+
+    return type(
+        f"{enum.__name__}Field", (Field,), {"_serialize": _serialize, "_deserialize": _deserialize}
+    )
 
 
 def bytes_based_field_factory(value_type):

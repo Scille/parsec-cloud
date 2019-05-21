@@ -7,24 +7,24 @@ from structlog import get_logger
 logger = get_logger()
 
 
-async def monitor_vlob_groups(device, user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_realms(device, user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     def _on_listener_started(sender):
-        event_bus.send("backend.vlob_group.listen", id=device.user_manifest_access.id)
+        event_bus.send("backend.realm.listen", id=device.user_manifest_access.id)
         user_manifest = user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
-            event_bus.send("backend.vlob_group.listen", id=workspace_entry.access.id)
+            event_bus.send("backend.realm.listen", id=workspace_entry.access.id)
 
     def _on_workspace_created(sender, new_entry):
-        event_bus.send("backend.vlob_group.listen", id=new_entry.access.id)
+        event_bus.send("backend.realm.listen", id=new_entry.access.id)
 
-    def _on_vlob_group_updated(sender, id, checkpoint, src_id, src_version):
+    def _on_realm_updated(sender, id, checkpoint, src_id, src_version):
         # TODO: special event to signify an inbound sync is needed ?
         event_bus.send("fs.entry.updated", id=src_id)
 
     with event_bus.connect_in_context(
         ("backend.listener.started", _on_listener_started),
         ("fs.workspace.created", _on_workspace_created),
-        ("backend.vlob_group.updated", _on_vlob_group_updated),
+        ("backend.realm.updated", _on_realm_updated),
     ):
 
         task_status.started()

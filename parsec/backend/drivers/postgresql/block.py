@@ -36,7 +36,7 @@ SELECT
     deleted_on,
     user_can_read_vlob(
         get_user_internal_id($1, $2),
-        vlob_group
+        realm
     )
 FROM block
 WHERE
@@ -56,12 +56,7 @@ WHERE
         return await self._blockstore_component.read(organization_id, id)
 
     async def create(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        id: UUID,
-        vlob_group: UUID,
-        block: bytes,
+        self, organization_id: OrganizationID, author: DeviceID, id: UUID, realm: UUID, block: bytes
     ) -> None:
 
         async with self.dbh.pool.acquire() as conn:
@@ -71,7 +66,7 @@ WHERE
 SELECT
     user_can_write_vlob(
         get_user_internal_id($1, $2),
-        get_vlob_group_internal_id($1, $4)
+        get_realm_internal_id($1, $4)
     ),
     EXISTS (
         SELECT _id
@@ -84,7 +79,7 @@ SELECT
                 organization_id,
                 author.user_id,
                 id,
-                vlob_group,
+                realm,
             )
 
             if not ret[0]:
@@ -110,7 +105,7 @@ SELECT
 INSERT INTO block (
     organization,
     block_id,
-    vlob_group,
+    realm,
     author,
     size,
     created_on
@@ -118,7 +113,7 @@ INSERT INTO block (
 SELECT
     get_organization_internal_id($1),
     $3,
-    get_vlob_group_internal_id($1, $4),
+    get_realm_internal_id($1, $4),
     get_device_internal_id($1, $2),
     $5,
     $6
@@ -126,7 +121,7 @@ SELECT
                 organization_id,
                 author,
                 id,
-                vlob_group,
+                realm,
                 len(block),
                 pendulum.now(),
             )

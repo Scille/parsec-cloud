@@ -97,9 +97,9 @@ class LocalFolderFS:
     def clear_manifest(self, access: Access):
         self.local_storage.clear_manifest(access)
 
-    def get_local_vlob_groups(self) -> List[UUID]:
-        # vlob_group_id is either the id of the user manifest or of a workspace manifest
-        vlob_groups = [self.root_access.id]
+    def get_local_realms(self) -> List[UUID]:
+        # realm_id is either the id of the user manifest or of a workspace manifest
+        realms = [self.root_access.id]
         try:
             root_manifest = self.get_user_manifest()
             # Currently workspace can only direct children of the user manifest
@@ -109,10 +109,10 @@ class LocalFolderFS:
                 except FSManifestLocalMiss:
                     continue
                 if is_workspace_manifest(child_manifest):
-                    vlob_groups.append(child_access.id)
+                    realms.append(child_access.id)
         except FSManifestLocalMiss:
             raise AssertionError("root manifest should always be available in local !")
-        return vlob_groups
+        return realms
 
     def dump(self) -> dict:
         def _recursive_dump(access: Access):
@@ -136,7 +136,7 @@ class LocalFolderFS:
 
         return _recursive_dump(self.root_access)
 
-    def get_vlob_group(self, path: FsPath) -> UUID:
+    def get_realm(self, path: FsPath) -> UUID:
         # The vlob group is used to notify other clients that we modified an entry.
         # We try to use the id of workspace containing the modification as
         # vlob group. This is not possible when directly modifying the user
