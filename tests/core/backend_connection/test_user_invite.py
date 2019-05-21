@@ -32,8 +32,8 @@ async def test_user_invite_then_claim_ok(
             alice.signing_key,
             claim["device_id"].user_id,
             claim["public_key"],
-            now,
             False,
+            now,
         )
         device_certificate = build_device_certificate(
             alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now

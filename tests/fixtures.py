@@ -250,7 +250,7 @@ def local_device_to_backend_user(
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        certifier_id, certifier_signing_key, device.user_id, device.public_key, now, is_admin
+        certifier_id, certifier_signing_key, device.user_id, device.public_key, is_admin, now
     )
     device_certificate = build_device_certificate(
         certifier_id, certifier_signing_key, device.device_id, device.verify_key, now

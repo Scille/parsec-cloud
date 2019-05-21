@@ -30,7 +30,7 @@ async def test_user_create_ok(
 ):
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now, is_admin
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, is_admin, now
     )
     device_certificate = build_device_certificate(
         alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now
@@ -66,13 +66,13 @@ async def test_user_create_ok(
 async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
     good_user_certificate = build_user_certificate(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, False, now
     )
     good_device_certificate = build_device_certificate(
         alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, now
     )
     bad_user_certificate = build_user_certificate(
-        bob.device_id, bob.signing_key, mallory.user_id, mallory.public_key, now
+        bob.device_id, bob.signing_key, mallory.user_id, mallory.public_key, False, now
     )
     bad_device_certificate = build_device_certificate(
         bob.device_id, bob.signing_key, mallory.device_id, mallory.verify_key, now
@@ -94,7 +94,7 @@ async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mal
 async def test_user_create_not_matching_user_device(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, False, now
     )
     device_certificate = build_device_certificate(
         alice.device_id, alice.signing_key, bob.device_id, mallory.verify_key, now
@@ -113,7 +113,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
 async def test_user_create_already_exists(alice_backend_sock, alice, bob):
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        alice.device_id, alice.signing_key, bob.user_id, bob.public_key, now
+        alice.device_id, alice.signing_key, bob.user_id, bob.public_key, False, now
     )
     device_certificate = build_device_certificate(
         alice.device_id, alice.signing_key, bob.device_id, bob.verify_key, now
@@ -130,7 +130,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
     date1 = pendulum.Pendulum(2000, 1, 1)
     date2 = date1.add(seconds=1)
     cu = build_user_certificate(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, date1
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, False, date1
     )
     cd = build_device_certificate(
         alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, date2
@@ -148,7 +148,7 @@ async def test_user_create_certify_too_old(alice_backend_sock, alice, mallory):
     too_old = pendulum.Pendulum(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
     cu = build_user_certificate(
-        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, too_old
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, False, too_old
     )
     cd = build_device_certificate(
         alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key, too_old

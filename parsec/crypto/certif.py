@@ -231,8 +231,8 @@ def build_user_certificate(
     certifier_key: SigningKey,
     user_id: UserID,
     public_key: PublicKey,
+    is_admin: bool,
     timestamp: Pendulum,
-    is_admin: bool = False,
 ) -> bytes:
     """
     Raises:

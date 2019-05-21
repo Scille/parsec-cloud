@@ -452,8 +452,8 @@ async def invite_and_create_user(
                 device.signing_key,
                 device_id.user_id,
                 claim["public_key"],
-                now,
                 is_admin,
+                now,
             )
             device_certificate = build_device_certificate(
                 device.device_id, device.signing_key, device_id, claim["verify_key"], now

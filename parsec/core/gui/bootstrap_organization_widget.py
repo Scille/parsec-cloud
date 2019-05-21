@@ -72,7 +72,7 @@ async def _do_bootstrap_organization(
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        None, root_signing_key, device.user_id, device.public_key, now, True
+        None, root_signing_key, device.user_id, device.public_key, True, now
     )
     device_certificate = build_device_certificate(
         None, root_signing_key, device_id, device.verify_key, now
