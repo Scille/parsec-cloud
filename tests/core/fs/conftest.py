@@ -32,8 +32,7 @@ def file_transactions_factory(
     def _file_transactions_factory(device, local_storage, backend_cmds):
         entry_transactions = entry_transactions_factory(device, local_storage, backend_cmds)
         workspace_id = entry_transactions.workspace_id
-        remote_devices_manager = remote_devices_manager_factory(device)
-        remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
+        remote_loader = entry_transactions.remote_loader
         return FileTransactions(workspace_id, local_storage, remote_loader, event_bus)
 
     return _file_transactions_factory
@@ -47,13 +46,16 @@ def file_transactions(file_transactions_factory, alice, alice_local_storage, ali
 @pytest.fixture
 def entry_transactions_factory(event_bus, remote_devices_manager_factory):
     def _entry_transactions_factory(device, local_storage, backend_cmds):
-        remote_devices_manager = remote_devices_manager_factory(device)
-        remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
 
         with freeze_time("2000-01-01"):
             workspace_entry = WorkspaceEntry("test")
             workspace_manifest = LocalWorkspaceManifest(device.device_id)
         local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
+
+        remote_devices_manager = remote_devices_manager_factory(device)
+        remote_loader = RemoteLoader(
+            device, workspace_entry.access.id, backend_cmds, remote_devices_manager, local_storage
+        )
 
         def _get_workspace_entry():
             return workspace_entry

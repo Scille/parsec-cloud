@@ -13,6 +13,11 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SynchronizationRequiredError
+from parsec.core.fs.remote_loader import RemoteLoader, RemoteSyncError, RemoteManifestNotFound
+
+from parsec.core.fs.utils import is_file_manifest
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 
 # Legacy
@@ -31,8 +36,8 @@ class WorkspaceFS:
         local_storage,
         backend_cmds,
         event_bus,
+        remote_device_manager,
         _local_folder_fs,
-        _remote_loader,
         _syncer,
     ):
         self.workspace_id = workspace_id
@@ -41,12 +46,21 @@ class WorkspaceFS:
         self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
+        self.remote_device_manager = remote_device_manager
+
+        # Legacy
         self._local_folder_fs = _local_folder_fs
-        self._remote_loader = _remote_loader
         self._syncer = _syncer
 
+        self.remote_loader = RemoteLoader(
+            self.device,
+            self.workspace_id,
+            self.backend_cmds,
+            self.remote_device_manager,
+            self.local_storage,
+        )
         self.file_transactions = FileTransactions(
-            self.workspace_id, local_storage, self._remote_loader, event_bus
+            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
         )
         self.entry_transactions = EntryTransactions(
             self.workspace_id,

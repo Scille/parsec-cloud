@@ -43,7 +43,6 @@ from parsec.core.remote_devices_manager import (
 from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.syncer import Syncer
-from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.userfs.merging import merge_local_user_manifests
 from parsec.core.fs.userfs.message import message_content_serializer
@@ -77,8 +76,6 @@ class UserFS:
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
 
-        # TODO: move those attributes into WorkspaceFS (no need to share them anymore)
-        self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
         self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
         self._syncer = Syncer(
             device,
@@ -134,8 +131,8 @@ class UserFS:
             local_storage=self.local_storage,
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
+            remote_device_manager=self.remote_devices_manager,
             _local_folder_fs=self._local_folder_fs,
-            _remote_loader=self._remote_loader,
             _syncer=self._syncer,
         )
 

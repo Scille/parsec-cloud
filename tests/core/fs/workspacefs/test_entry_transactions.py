@@ -20,8 +20,8 @@ from hypothesis_trio.stateful import (
 from hypothesis import strategies as st
 
 from parsec.core.types import FsPath
-from parsec.core.backend_connection import BackendCmdsNotFound
 from parsec.core.fs.utils import is_folder_manifest
+from parsec.core.fs.remote_loader import RemoteManifestNotFound
 
 from tests.common import freeze_time
 
@@ -136,7 +136,7 @@ async def test_access_not_loaded_entry(alice, bob, entry_transactions):
     manifest = entry_transactions.local_storage.get_manifest(access)
     entry_transactions.local_storage.clear_manifest(access)
 
-    with pytest.raises(BackendCmdsNotFound):
+    with pytest.raises(RemoteManifestNotFound):
         await entry_transactions.entry_info(FsPath("/"))
 
     entry_transactions.local_storage.set_dirty_manifest(access, manifest)
