@@ -217,13 +217,7 @@ class BaseUserComponent:
 
     @catch_protocole_errors
     async def api_user_invite(self, client_ctx, msg):
-        try:
-            user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
-
-        except UserNotFoundError:
-            raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
-
-        if not user.is_admin:
+        if not client_ctx.is_admin:
             return {
                 "status": "invalid_role",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
