@@ -85,20 +85,6 @@ class WorkspaceFS:
     async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
 
-    # TODO: remove this once workspace widget has been reworked
-    async def workspace_info(self):
-        try:
-            roles = await self.get_user_roles()
-        except FSBackendOfflineError:
-            roles = {self.device.user_id: self.get_workspace_entry().role}
-
-        return {
-            "participants": list(roles.keys()),
-            "creator": next(
-                user_id for user_id, role in roles.items() if role == WorkspaceRole.OWNER
-            ),
-        }
-
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
         Raises:
