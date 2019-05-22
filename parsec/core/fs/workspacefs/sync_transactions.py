@@ -171,7 +171,6 @@ class SyncTransactions:
     async def folder_sync(
         self, access: Access, remote_manifest: Optional[FolderManifest] = None
     ) -> Optional[FolderManifest]:
-        # TODO: what signal should we emit?
 
         # Fetch and lock
         async with self.local_storage.lock_manifest(access) as local_manifest:
@@ -203,6 +202,10 @@ class SyncTransactions:
             # Set the new local manifest
             if new_local_manifest.need_sync and new_local_manifest != local_manifest:
                 self.local_storage.set_manifest(access, new_local_manifest)
+
+            # Send synced event
+            if local_manifest.need_sync and not new_local_manifest.need_sync:
+                self._send_event("fs.entry.synced", id=access.id)
 
             # Nothing new to upload
             if not new_local_manifest.need_sync:
