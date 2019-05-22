@@ -10,6 +10,7 @@ CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     realm_id UUID NOT NULL,
+    encryption_revision int NOT NULL,
 
     UNIQUE(organization, realm_id)
 );
@@ -40,6 +41,8 @@ CREATE TABLE vlob (
 
 CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
+    # TODO: Add organization and/or realm here ?
+    encryption_revision INTEGER NOT NULL,
     vlob INTEGER REFERENCES vlob (_id) NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,

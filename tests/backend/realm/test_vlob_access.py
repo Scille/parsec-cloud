@@ -313,14 +313,24 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
     )
 
     rep = await vlob_create(
-        alice_backend_sock, realm, VLOB_ID, blob=b"First version.", check_rep=False
+        alice_backend_sock,
+        realm,
+        VLOB_ID,
+        blob=b"First version.",
+        encryption_revision=2,
+        check_rep=False,
     )
     assert rep == {"status": "in_maintenance"}
 
-    rep = await vlob_read(alice_backend_sock, vlobs[0])
+    rep = await vlob_read(alice_backend_sock, vlobs[0], encryption_revision=2)
     assert rep == {"status": "in_maintenance"}
 
     rep = await vlob_update(
-        alice_backend_sock, vlobs[0], version=3, blob=b"Next version.", check_rep=False
+        alice_backend_sock,
+        vlobs[0],
+        version=3,
+        blob=b"Next version.",
+        encryption_revision=2,
+        check_rep=False,
     )
     assert rep == {"status": "in_maintenance"}

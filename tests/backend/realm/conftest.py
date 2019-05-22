@@ -15,6 +15,8 @@ from parsec.api.protocole import (
     vlob_update_serializer,
     vlob_group_check_serializer,
     vlob_poll_changes_serializer,
+    vlob_maintenance_get_reencryption_batch_serializer,
+    vlob_maintenance_save_reencryption_batch_serializer,
 )
 
 
@@ -165,6 +167,40 @@ async def vlob_poll_changes(sock, realm_id, last_checkpoint):
     )
     raw_rep = await sock.recv()
     return vlob_poll_changes_serializer.rep_loads(raw_rep)
+
+
+async def vlob_maintenance_get_reencryption_batch(sock, realm_id, encryption_revision):
+    raw_rep = await sock.send(
+        vlob_maintenance_get_reencryption_batch_serializer.req_dumps(
+            {
+                "cmd": "vlob_maintenance_get_reencryption_batch",
+                "realm_id": realm_id,
+                "encryption_revision": encryption_revision,
+            }
+        )
+    )
+    raw_rep = await sock.recv()
+    return vlob_maintenance_get_reencryption_batch_serializer.rep_loads(raw_rep)
+
+
+async def vlob_maintenance_save_reencryption_batch(
+    sock, realm_id, encryption_revision, batch, check_rep=True
+):
+    raw_rep = await sock.send(
+        vlob_maintenance_save_reencryption_batch_serializer.req_dumps(
+            {
+                "cmd": "vlob_maintenance_save_reencryption_batch",
+                "realm_id": realm_id,
+                "encryption_revision": encryption_revision,
+                "batch": batch,
+            }
+        )
+    )
+    raw_rep = await sock.recv()
+    rep = vlob_maintenance_save_reencryption_batch_serializer.rep_loads(raw_rep)
+    if check_rep:
+        assert rep == {"status": "ok"}
+    return rep
 
 
 @pytest.fixture

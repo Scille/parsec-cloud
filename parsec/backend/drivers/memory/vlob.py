@@ -8,7 +8,12 @@ from collections import defaultdict
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
-from parsec.backend.drivers.memory.realm import MemoryRealmComponent, RealmAlreadyExistsError
+from parsec.api.protocole import RealmRole
+from parsec.backend.drivers.memory.realm import (
+    MemoryRealmComponent,
+    RealmNotFoundError,
+    RealmAlreadyExistsError,
+)
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -17,24 +22,77 @@ from parsec.backend.vlob import (
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
+    VlobMaintenanceError,
 )
 
 
 @attr.s
 class Vlob:
-    realm_id = attr.ib()
-    data = attr.ib(factory=list)
+    realm_id: UUID = attr.ib()
+    data: List[Tuple[bytes, DeviceID, pendulum.Pendulum]] = attr.ib(factory=list)
 
     @property
     def current_version(self):
         return len(self.data)
 
 
+class Reencryption:
+    def __init__(self, realm_id, vlobs):
+        self.realm_id = realm_id
+        self._original_vlobs = vlobs
+        self._todo = {}
+        self._done = {}
+        for vlob_id, vlob in vlobs.items():
+            for index, (data, _, _) in enumerate(vlob.data):
+                version = index + 1
+                self._todo[(vlob_id, version)] = data
+
+    def get_reencrypted_vlobs(self):
+        assert self.is_finished()
+        vlobs = {}
+        for (vlob_id, version), data in sorted(self._done.items()):
+            try:
+                (_, author, timestamp) = self._original_vlobs[vlob_id].data[version - 1]
+
+            except KeyError:
+                raise VlobNotFoundError()
+
+            if vlob_id not in vlobs:
+                vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp)])
+            else:
+                vlobs[vlob_id].data.append((data, author, timestamp))
+            assert len(vlobs[vlob_id].data) == version
+
+        return vlobs
+
+    def is_finished(self):
+        return not self._todo
+
+    def get_batch(self, size=100):
+        batch = []
+        for (vlob_id, version), data in self._todo.items():
+            if (vlob_id, version) in self._done:
+                continue
+            batch.append((vlob_id, version, data))
+        return batch
+
+    def save_batch(self, batch):
+        for vlob_id, version, data in batch:
+            key = (vlob_id, version)
+            if key in self._done:
+                continue
+            try:
+                del self._todo[key]
+            except KeyError:
+                raise VlobNotFoundError()
+            self._done[key] = data
+
+
 @attr.s
 class Changes:
-    checkpoint = attr.ib(default=0)
-    encryption_revision = attr.ib(default=1)
-    changes = attr.ib(factory=dict)
+    checkpoint: int = attr.ib(default=0)
+    changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.ib(factory=dict)
+    reencryption: Reencryption = attr.ib(default=None)
 
 
 class MemoryVlobComponent(BaseVlobComponent):
@@ -45,12 +103,28 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._per_realm_changes = defaultdict(Changes)
 
     def _maintenance_reencryption_start_hook(self, organization_id, realm_id, encryption_revision):
-        pass
+        changes = self._per_realm_changes[(organization_id, realm_id)]
+        assert not changes.reencryption
+        realm_vlobs = {
+            vlob_id: vlob
+            for (orgid, vlob_id), vlob in self._vlobs.items()
+            if orgid == organization_id and vlob.realm_id == realm_id
+        }
+        changes.reencryption = Reencryption(realm_id, realm_vlobs)
 
     def _maintenance_reencryption_is_finished_hook(
         self, organization_id, realm_id, encryption_revision
     ):
-        pass
+        changes = self._per_realm_changes[(organization_id, realm_id)]
+        assert changes.reencryption
+        if not changes.reencryption.is_finished():
+            return False
+
+        realm_vlobs = changes.reencryption.get_reencrypted_vlobs()
+        for vlob_id, vlob in realm_vlobs.items():
+            self._vlobs[(organization_id, vlob_id)] = vlob
+        changes.reencryption = None
+        return True
 
     def _get_vlob(self, organization_id, vlob_id):
         try:
@@ -64,6 +138,53 @@ class MemoryVlobComponent(BaseVlobComponent):
             self._realm_component._create_realm(organization_id, realm_id, author)
         except RealmAlreadyExistsError:
             pass
+
+    def _check_realm_read_access(self, organization_id, realm_id, user_id, encryption_revision):
+        can_read_roles = (
+            RealmRole.OWNER,
+            RealmRole.MANAGER,
+            RealmRole.CONTRIBUTOR,
+            RealmRole.READER,
+        )
+        self._check_realm_access(
+            organization_id, realm_id, user_id, encryption_revision, can_read_roles
+        )
+
+    def _check_realm_write_access(self, organization_id, realm_id, user_id, encryption_revision):
+        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        self._check_realm_access(
+            organization_id, realm_id, user_id, encryption_revision, can_write_roles
+        )
+
+    def _check_realm_access(
+        self, organization_id, realm_id, user_id, encryption_revision, allowed_roles
+    ):
+        try:
+            realm = self._realm_component._get_realm(organization_id, realm_id)
+        except RealmNotFoundError:
+            raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+        if realm.roles.get(user_id) not in allowed_roles:
+            raise VlobAccessError()
+
+        if encryption_revision not in (None, realm.status.encryption_revision):
+            raise VlobEncryptionRevisionError()
+
+        if realm.status.in_maintenance:
+            raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+
+    def _check_realm_in_maintenance_access(
+        self, organization_id, realm_id, user_id, encryption_revision
+    ):
+        can_do_maintenance_roles = (RealmRole.OWNER,)
+        try:
+            self._check_realm_access(
+                organization_id, realm_id, user_id, encryption_revision, can_do_maintenance_roles
+            )
+        except VlobInMaintenanceError:
+            pass
+        else:
+            raise VlobMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
     def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -90,23 +211,14 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: Optional[int] = None,
     ) -> None:
         self._create_realm_if_needed(organization_id, realm_id, author)
-        self._realm_component._check_write_access_and_maintenance(
-            organization_id,
-            realm_id,
-            author.user_id,
-            not_found_exc=VlobNotFoundError,
-            access_error_exc=VlobAccessError,
-            in_maintenance_exc=VlobInMaintenanceError,
+
+        self._check_realm_write_access(
+            organization_id, realm_id, author.user_id, encryption_revision
         )
 
         key = (organization_id, vlob_id)
         if key in self._vlobs:
             raise VlobAlreadyExistsError()
-
-        if encryption_revision is not None:
-            changes = self._per_realm_changes[key]
-            if changes.encryption_revision != encryption_revision:
-                raise VlobEncryptionRevisionError()
 
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)])
 
@@ -122,19 +234,9 @@ class MemoryVlobComponent(BaseVlobComponent):
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
-        self._realm_component._check_read_access_and_maintenance(
-            organization_id,
-            vlob.realm_id,
-            author.user_id,
-            not_found_exc=VlobNotFoundError,
-            access_error_exc=VlobAccessError,
-            in_maintenance_exc=VlobInMaintenanceError,
+        self._check_realm_read_access(
+            organization_id, vlob.realm_id, author.user_id, encryption_revision
         )
-
-        if encryption_revision is not None:
-            changes = self._per_realm_changes[(organization_id, vlob_id)]
-            if changes.encryption_revision != encryption_revision:
-                raise VlobEncryptionRevisionError()
 
         if version is None:
             version = vlob.current_version
@@ -156,19 +258,9 @@ class MemoryVlobComponent(BaseVlobComponent):
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
 
-        self._realm_component._check_write_access_and_maintenance(
-            organization_id,
-            vlob.realm_id,
-            author.user_id,
-            not_found_exc=VlobNotFoundError,
-            access_error_exc=VlobAccessError,
-            in_maintenance_exc=VlobInMaintenanceError,
+        self._check_realm_write_access(
+            organization_id, vlob.realm_id, author.user_id, encryption_revision
         )
-
-        if encryption_revision is not None:
-            changes = self._per_realm_changes[(organization_id, vlob_id)]
-            if changes.encryption_revision != encryption_revision:
-                raise VlobEncryptionRevisionError()
 
         if version - 1 == vlob.current_version:
             vlob.data.append((blob, author, timestamp))
@@ -192,9 +284,11 @@ class MemoryVlobComponent(BaseVlobComponent):
                 except VlobNotFoundError:
                     continue
 
-                if not self._realm_component._check_read_access_and_maintenance(
-                    organization_id, vlob.realm_id, author.user_id
-                ):
+                try:
+                    self._check_realm_read_access(
+                        organization_id, vlob.realm_id, author.user_id, None
+                    )
+                except (VlobNotFoundError, VlobAccessError, VlobInMaintenanceError):
                     continue
 
                 if vlob.current_version != version:
@@ -205,23 +299,45 @@ class MemoryVlobComponent(BaseVlobComponent):
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:
-        key = (organization_id, realm_id)
-        if key not in self._realm_component._realms:
-            raise VlobNotFoundError(f"Realm `{realm_id}` doesn't exist")
+        self._check_realm_read_access(organization_id, realm_id, author.user_id, None)
 
-        self._realm_component._check_read_access_and_maintenance(
-            organization_id,
-            realm_id,
-            author.user_id,
-            not_found_exc=VlobNotFoundError,
-            access_error_exc=VlobAccessError,
-            in_maintenance_exc=VlobInMaintenanceError,
-        )
-
-        changes = self._per_realm_changes[key]
+        changes = self._per_realm_changes[(organization_id, realm_id)]
         changes_since_checkpoint = {
             src_id: src_version
             for src_id, (_, change_checkpoint, src_version) in changes.changes.items()
             if change_checkpoint > checkpoint
         }
         return (changes.checkpoint, changes_since_checkpoint)
+
+    async def maintenance_get_reencryption_batch(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        encryption_revision: int,
+    ) -> List[Tuple[UUID, int, bytes]]:
+        self._check_realm_in_maintenance_access(
+            organization_id, realm_id, author.user_id, encryption_revision
+        )
+
+        changes = self._per_realm_changes[(organization_id, realm_id)]
+        assert changes.reencryption
+
+        return changes.reencryption.get_batch()
+
+    async def maintenance_save_reencryption_batch(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        encryption_revision: int,
+        batch: List[Tuple[UUID, int, bytes]],
+    ) -> None:
+        self._check_realm_in_maintenance_access(
+            organization_id, realm_id, author.user_id, encryption_revision
+        )
+
+        changes = self._per_realm_changes[(organization_id, realm_id)]
+        assert changes.reencryption
+
+        changes.reencryption.save_batch(batch)

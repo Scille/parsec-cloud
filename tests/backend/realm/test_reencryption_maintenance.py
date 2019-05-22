@@ -7,6 +7,9 @@ from parsec.api.protocole import RealmRole
 from tests.backend.realm.conftest import (
     realm_start_reencryption_maintenance,
     realm_finish_reencryption_maintenance,
+    vlob_read,
+    vlob_maintenance_get_reencryption_batch,
+    vlob_maintenance_save_reencryption_batch,
 )
 
 
@@ -15,7 +18,7 @@ async def test_start_bad_encryption_revision(backend, alice_backend_sock, realm)
     rep = await realm_start_reencryption_maintenance(
         alice_backend_sock, realm, 42, {"alice": b"wathever"}, check_rep=False
     )
-    assert rep == {"status": "maintenance_error", "reason": "Invalid encryption revision"}
+    assert rep == {"status": "bad_encryption_revision"}
 
 
 @pytest.mark.trio
@@ -99,9 +102,78 @@ async def test_finish_not_in_maintenance(alice_backend_sock, realm):
         )
         assert rep == {
             "status": "maintenance_error",
-            "reason": "Realm not currently in maintenance",
+            "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
         }
 
+
+@pytest.mark.trio
+async def test_reencryption_batch_not_during_maintenance(alice_backend_sock, realm):
+    rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 1)
+    assert rep == {
+        "status": "maintenance_error",
+        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+    }
+
+    rep = await vlob_maintenance_save_reencryption_batch(
+        alice_backend_sock, realm, 1, [], check_rep=False
+    )
+    assert rep == {
+        "status": "maintenance_error",
+        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+    }
+
+    rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 1, check_rep=False)
+    assert rep == {
+        "status": "maintenance_error",
+        "reason": "Realm `a0000000-0000-0000-0000-000000000000` not under maintenance",
+    }
+
+
+@pytest.mark.trio
+async def test_reencryption_batch_bad_revisison(alice_backend_sock, realm):
+    await realm_start_reencryption_maintenance(alice_backend_sock, realm, 2, {"alice": b"foo"})
+
+    rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 1)
+    assert rep == {"status": "bad_encryption_revision"}
+
+    rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 1, check_rep=False)
+    assert rep == {"status": "bad_encryption_revision"}
+
+
+@pytest.mark.trio
+async def test_reencryption(alice_backend_sock, realm, vlobs):
+    await realm_start_reencryption_maintenance(alice_backend_sock, realm, 2, {"alice": b"foo"})
+    # TODO: Test that Alice have received the message
+
+    # Get the first (and only in our case) batch
+    rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2)
+    assert rep["status"] == "ok"
+    assert len(rep["batch"]) == 3
+    batch_entries = {(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)}
+    assert {(x["vlob_id"], x["version"]) for x in rep["batch"]} == batch_entries
+
+    # Save the modified batch
+    updated_batch = [
+        {
+            "vlob_id": vlob_id,
+            "version": version,
+            "data": f"{vlob_id}::{version} reencrypted".encode(),
+        }
+        for vlob_id, version in batch_entries
+    ]
+    await vlob_maintenance_save_reencryption_batch(alice_backend_sock, realm, 2, updated_batch)
+
+    # Finish the reencryption
+    await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2)
+
+    # Check the vlob have changed
+    for vlob_id, version in batch_entries:
+        rep = await vlob_read(alice_backend_sock, vlob_id, version, encryption_revision=2)
+        assert rep["blob"] == f"{vlob_id}::{version} reencrypted".encode()
+
+
+############ TODO  ####################
+# TODO TODO TODO TODO
 
 # @pytest.mark.trio
 # @pytest.mark.parametrize('bob_role', [

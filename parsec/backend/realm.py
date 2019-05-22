@@ -34,6 +34,10 @@ class RealmAlreadyExistsError(RealmError):
     pass
 
 
+class RealmEncryptionRevisionError(RealmError):
+    pass
+
+
 class RealmInMaintenanceError(RealmError):
     pass
 
@@ -132,6 +136,11 @@ class BaseRealmComponent:
                 {"status": "not_found", "reason": str(exc)}
             )
 
+        except RealmEncryptionRevisionError:
+            return realm_start_reencryption_maintenance_serializer.rep_dump(
+                {"status": "bad_encryption_revision"}
+            )
+
         except RealmMaintenanceError as exc:
             return realm_finish_reencryption_maintenance_serializer.rep_dump(
                 {"status": "maintenance_error", "reason": str(exc)}
@@ -159,6 +168,11 @@ class BaseRealmComponent:
         except RealmNotFoundError as exc:
             return realm_finish_reencryption_maintenance_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
+            )
+
+        except RealmEncryptionRevisionError:
+            return realm_finish_reencryption_maintenance_serializer.rep_dump(
+                {"status": "bad_encryption_revision"}
             )
 
         except RealmMaintenanceError as exc:

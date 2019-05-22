@@ -15,6 +15,7 @@ from parsec.backend.realm import (
     RealmAccessError,
     RealmAlreadyExistsError,
     RealmNotFoundError,
+    RealmEncryptionRevisionError,
     RealmMaintenanceError,
     RealmInMaintenanceError,
 )
@@ -56,81 +57,6 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         else:
             raise RealmAlreadyExistsError()
-
-    # Semi-private method used by memory vlob&block components
-    def _check_access_and_maintenance(
-        self,
-        organization_id,
-        realm_id,
-        user_id,
-        allowed_roles,
-        not_found_exc=None,
-        access_error_exc=None,
-        in_maintenance_exc=None,
-    ):
-        try:
-            realm = self._get_realm(organization_id, realm_id)
-        except RealmNotFoundError:
-            if not_found_exc:
-                raise not_found_exc(f"Realm {realm_id} doesn't exist")
-            else:
-                return False
-
-        if realm.roles.get(user_id) not in allowed_roles:
-            if access_error_exc:
-                raise access_error_exc()
-            else:
-                return False
-
-        if realm.status.in_maintenance:
-            if in_maintenance_exc:
-                raise in_maintenance_exc(f"Realm {realm_id} is currently under maintenance")
-            else:
-                return False
-
-        return True
-
-    # Semi-private method used by memory vlob&block components
-    def _check_read_access_and_maintenance(self, organization_id, realm_id, user_id, **kwargs):
-        can_read_roles = (
-            RealmRole.OWNER,
-            RealmRole.MANAGER,
-            RealmRole.CONTRIBUTOR,
-            RealmRole.READER,
-        )
-        return self._check_access_and_maintenance(
-            organization_id, realm_id, user_id, can_read_roles, **kwargs
-        )
-
-    # Semi-private method used by memory vlob&block components
-    def _check_write_access_and_maintenance(self, organization_id, realm_id, user_id, **kwargs):
-        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-        return self._check_access_and_maintenance(
-            organization_id, realm_id, user_id, can_write_roles, **kwargs
-        )
-
-    # Semi-private method used by memory vlob&block components
-    def _can_read(self, organization_id: OrganizationID, realm_id: UUID, user_id: UserID):
-        can_read_roles = (
-            RealmRole.OWNER,
-            RealmRole.MANAGER,
-            RealmRole.CONTRIBUTOR,
-            RealmRole.READER,
-        )
-        return self._has_role(organization_id, realm_id, user_id, can_read_roles)
-
-    # Semi-private method used by memory vlob&block components
-    def _can_write(self, organization_id, realm_id, user_id):
-        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
-        return self._has_role(organization_id, realm_id, user_id, can_write_roles)
-
-    def _has_role(self, organization_id, realm_id, user_id, roles):
-        try:
-            realm = self._get_realm(organization_id, realm_id)
-            return realm.roles[user_id] in roles
-
-        except (RealmNotFoundError, KeyError):
-            return False
 
     def _get_realm(self, organization_id, realm_id):
         try:
@@ -202,9 +128,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if realm.status.in_maintenance:
-            raise RealmInMaintenanceError("Realm already in maintenance")
+            raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
-            raise RealmMaintenanceError("Invalid encryption revision")
+            raise RealmEncryptionRevisionError("Invalid encryption revision")
         if per_participant_message.keys() ^ realm.roles.keys():
             raise RealmMaintenanceError("Realm participants and message recipients mismatch")
 
@@ -234,9 +160,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if not realm.status.in_maintenance:
-            raise RealmMaintenanceError("Realm not currently in maintenance")
+            raise RealmMaintenanceError(f"Realm `{realm_id}` not under maintenance")
         if encryption_revision != realm.status.encryption_revision:
-            raise RealmMaintenanceError("Invalid encryption revision")
+            raise RealmEncryptionRevisionError("Invalid encryption revision")
         if (
             self._maintenance_reencryption_is_finished_hook
             and not self._maintenance_reencryption_is_finished_hook(

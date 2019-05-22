@@ -4,7 +4,8 @@ from uuid import UUID
 import attr
 
 from parsec.types import DeviceID, OrganizationID
-from parsec.backend.realm import BaseRealmComponent
+from parsec.api.protocole import RealmRole
+from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
     BaseBlockComponent,
@@ -28,6 +29,31 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._blockstore_component = blockstore_component
         self._realm_component = realm_component
 
+    def _check_realm_read_access(self, organization_id, realm_id, user_id):
+        can_read_roles = (
+            RealmRole.OWNER,
+            RealmRole.MANAGER,
+            RealmRole.CONTRIBUTOR,
+            RealmRole.READER,
+        )
+        self._check_realm_access(organization_id, realm_id, user_id, can_read_roles)
+
+    def _check_realm_write_access(self, organization_id, realm_id, user_id):
+        can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
+        self._check_realm_access(organization_id, realm_id, user_id, can_write_roles)
+
+    def _check_realm_access(self, organization_id, realm_id, user_id, allowed_roles):
+        try:
+            realm = self._realm_component._get_realm(organization_id, realm_id)
+        except RealmNotFoundError:
+            raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+        if realm.roles.get(user_id) not in allowed_roles:
+            raise BlockAccessError()
+
+        if realm.status.in_maintenance:
+            raise BlockInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
     ) -> bytes:
@@ -37,14 +63,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             raise BlockNotFoundError()
 
-        self._realm_component._check_read_access_and_maintenance(
-            organization_id,
-            blockmeta.realm_id,
-            author.user_id,
-            not_found_exc=BlockNotFoundError,
-            access_error_exc=BlockAccessError,
-            in_maintenance_exc=BlockInMaintenanceError,
-        )
+        self._check_realm_read_access(organization_id, blockmeta.realm_id, author.user_id)
 
         return await self._blockstore_component.read(organization_id, block_id)
 
@@ -56,14 +75,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         realm_id: UUID,
         block: bytes,
     ) -> None:
-        self._realm_component._check_write_access_and_maintenance(
-            organization_id,
-            realm_id,
-            author.user_id,
-            not_found_exc=BlockNotFoundError,
-            access_error_exc=BlockAccessError,
-            in_maintenance_exc=BlockInMaintenanceError,
-        )
+        self._check_realm_write_access(organization_id, realm_id, author.user_id)
 
         await self._blockstore_component.create(organization_id, block_id, block)
         self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id)

@@ -11,6 +11,8 @@ from parsec.api.protocole import (
     vlob_update_serializer,
     vlob_group_check_serializer,
     vlob_poll_changes_serializer,
+    vlob_maintenance_get_reencryption_batch_serializer,
+    vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.backend.utils import catch_protocole_errors
 from parsec.crypto import timestamps_in_the_ballpark
@@ -41,6 +43,10 @@ class VlobEncryptionRevisionError(VlobError):
 
 
 class VlobInMaintenanceError(VlobError):
+    pass
+
+
+class VlobMaintenanceError(VlobError):
     pass
 
 
@@ -173,6 +179,76 @@ class BaseVlobComponent:
             {"status": "ok", "current_checkpoint": checkpoint, "changes": changes}
         )
 
+    @catch_protocole_errors
+    async def api_vlob_maintenance_get_reencryption_batch(self, client_ctx, msg):
+        msg = vlob_maintenance_get_reencryption_batch_serializer.req_load(msg)
+
+        try:
+            batch = await self.maintenance_get_reencryption_batch(
+                client_ctx.organization_id, client_ctx.device_id, **msg
+            )
+
+        except VlobAccessError:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "not_allowed"}
+            )
+
+        except VlobNotFoundError as exc:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
+
+        except VlobEncryptionRevisionError:
+            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+
+        except VlobMaintenanceError as exc:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "maintenance_error", "reason": str(exc)}
+            )
+
+        return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+            {
+                "status": "ok",
+                "batch": [
+                    {"vlob_id": vlob_id, "version": version, "data": data}
+                    for vlob_id, version, data in batch
+                ],
+            }
+        )
+
+    @catch_protocole_errors
+    async def api_vlob_maintenance_save_reencryption_batch(self, client_ctx, msg):
+        msg = vlob_maintenance_save_reencryption_batch_serializer.req_load(msg)
+
+        try:
+            await self.maintenance_save_reencryption_batch(
+                client_ctx.organization_id,
+                client_ctx.device_id,
+                realm_id=msg["realm_id"],
+                encryption_revision=msg["encryption_revision"],
+                batch=[(x["vlob_id"], x["version"], x["data"]) for x in msg["batch"]],
+            )
+
+        except VlobAccessError:
+            return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
+                {"status": "not_allowed"}
+            )
+
+        except VlobNotFoundError as exc:
+            return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
+
+        except VlobEncryptionRevisionError:
+            return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
+
+        except VlobMaintenanceError as exc:
+            return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
+                {"status": "maintenance_error", "reason": str(exc)}
+            )
+
+        return vlob_maintenance_save_reencryption_batch_serializer.rep_dump({"status": "ok"})
+
     async def create(
         self,
         organization_id: OrganizationID,
@@ -244,5 +320,36 @@ class BaseVlobComponent:
             VlobInMaintenanceError
             VlobNotFoundError
             VlobAccessError
+        """
+        raise NotImplementedError()
+
+    async def maintenance_get_reencryption_batch(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        encryption_revision: int,
+    ) -> List[Tuple[UUID, int, bytes]]:
+        """
+        Raises:
+            VlobNotFoundError
+            VlobAccessError
+            VlobMaintenanceError: not in maintenance or bad encryption_revision
+        """
+        raise NotImplementedError()
+
+    async def maintenance_save_reencryption_batch(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        encryption_revision: int,
+        batch: List[Tuple[UUID, int, bytes]],
+    ) -> None:
+        """
+        Raises:
+            VlobNotFoundError
+            VlobAccessError
+            VlobMaintenanceError: not in maintenance or bad encryption_revision
         """
         raise NotImplementedError()

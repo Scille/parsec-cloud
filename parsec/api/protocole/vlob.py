@@ -115,8 +115,14 @@ class VlobMaintenanceGetReencryptionBatchReqSchema(BaseReqSchema):
     encryption_revision = fields.Integer(required=True)
 
 
+class ReencryptionBatchEntrySchema(UnknownCheckedSchema):
+    vlob_id = fields.UUID(required=True)
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
+    data = fields.Bytes(required=True)
+
+
 class VlobMaintenanceGetReencryptionBatchRepSchema(BaseRepSchema):
-    batch = fields.Map(fields.Integer(), fields.Bytes(required=True), required=True)
+    batch = fields.List(fields.Nested(ReencryptionBatchEntrySchema), required=True)
 
 
 vlob_maintenance_get_reencryption_batch_serializer = CmdSerializer(
@@ -127,7 +133,7 @@ vlob_maintenance_get_reencryption_batch_serializer = CmdSerializer(
 class VlobMaintenanceSaveReencryptionBatchReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
-    batch = fields.Map(fields.Integer(), fields.Bytes(required=True), required=True)
+    batch = fields.List(fields.Nested(ReencryptionBatchEntrySchema), required=True)
 
 
 class VlobMaintenanceSaveReencryptionBatchRepSchema(BaseRepSchema):
