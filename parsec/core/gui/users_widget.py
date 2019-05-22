@@ -102,7 +102,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             item = self.layout_users.itemAt(i)
             if item:
                 w = item.widget()
-                if pattern and pattern not in w.name.lower():
+                if pattern and pattern not in w.user_name.lower():
                     w.hide()
                 else:
                     w.show()
