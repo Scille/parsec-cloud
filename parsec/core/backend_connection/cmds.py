@@ -417,7 +417,9 @@ async def user_get_invitation_creator(
     return (user, trustchain)
 
 
-async def user_claim(transport: Transport, invited_user_id: UserID, encrypted_claim: bytes) -> None:
+async def user_claim(
+    transport: Transport, invited_user_id: UserID, encrypted_claim: bytes
+) -> bytes:
     rep = await _send_cmd(
         transport,
         user_claim_serializer,
