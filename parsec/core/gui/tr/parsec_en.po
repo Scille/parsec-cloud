@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-05-09 09:57+0200\n"
+"POT-Creation-Date: 2019-05-22 13:35+0200\n"
 "PO-Revision-Date: 2019-04-04 15:23+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -155,10 +155,18 @@ msgstr ""
 msgid "Password strength: {}"
 msgstr ""
 
+msgid ""
+"\n"
+"(current)"
+msgstr ""
+
 msgid "Show info"
 msgstr ""
 
 msgid "Revoke"
+msgstr ""
+
+msgid "Created on {}"
 msgstr ""
 
 msgid "This device has been revoked."
@@ -206,7 +214,9 @@ msgstr ""
 msgid "Enter new workspace name"
 msgstr ""
 
-msgid "Created on {}"
+msgid ""
+"\n"
+"(you)"
 msgstr ""
 
 msgid "This user has been revoked."
@@ -421,7 +431,7 @@ msgstr ""
 msgid "Workspace '{}' shared with you"
 msgstr ""
 
-msgid "Workspace '{}' sharing rights have changed"
+msgid "Your role on Workspace '{}' has changed changed"
 msgstr ""
 
 msgid "Workspace '{}' no longer shared with you"
@@ -528,6 +538,9 @@ msgstr ""
 msgid ""
 "Do you authorize Parsec to send data when it encounters an error to help "
 "us improve your experience ?"
+msgstr ""
+
+msgid "Unhandled error."
 msgstr ""
 
 msgid "Authentication failed."
@@ -951,5 +964,8 @@ msgstr ""
 #~ "A manager can add people and "
 #~ "manage their permissions (and see and"
 #~ " upload files)."
+#~ msgstr ""
+
+#~ msgid "Workspace '{}' sharing rights have changed"
 #~ msgstr ""
 
