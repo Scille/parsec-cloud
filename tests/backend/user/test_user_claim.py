@@ -60,7 +60,7 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, mallory_i
                 user_id=mallory_invitation.user_id,
             )
 
-    assert prep[0] == {"status": "ok"}
+    assert prep[0]["status"] == "ok"
 
 
 @pytest.mark.trio

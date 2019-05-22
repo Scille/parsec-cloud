@@ -99,7 +99,7 @@ class UserClaimReqSchema(BaseReqSchema):
 
 
 class UserClaimRepSchema(BaseRepSchema):
-    pass
+    user_certificate = fields.Bytes(required=True)
 
 
 user_claim_serializer = CmdSerializer(UserClaimReqSchema, UserClaimRepSchema)

@@ -418,13 +418,14 @@ async def user_get_invitation_creator(
 
 
 async def user_claim(transport: Transport, invited_user_id: UserID, encrypted_claim: bytes) -> None:
-    await _send_cmd(
+    rep = await _send_cmd(
         transport,
         user_claim_serializer,
         cmd="user_claim",
         invited_user_id=invited_user_id,
         encrypted_claim=encrypted_claim,
     )
+    return rep["user_certificate"]
 
 
 async def device_get_invitation_creator(
