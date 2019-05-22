@@ -36,7 +36,6 @@ class UserButton(QWidget, Ui_UserButton):
         self.customContextMenuRequested.connect(self.show_context_menu)
 
     def set_display(self, value):
-        self._name = value
         if len(value) > 16:
             value = value[:16] + "-\n" + value[16:]
         if self.is_current_user:
@@ -63,7 +62,7 @@ class UserButton(QWidget, Ui_UserButton):
         menu.exec_(global_pos)
 
     def show_info(self):
-        text = "{}\n\n".format(self.name)
+        text = "{}\n\n".format(self.user_name)
         text += _("Created on {}").format(self.certified_on.format("%x %X"))
         if self.label.is_revoked:
             text += "\n\n"
