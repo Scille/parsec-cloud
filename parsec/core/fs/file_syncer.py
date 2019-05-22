@@ -306,7 +306,6 @@ class FileSyncerMixin(BaseSyncer):
 
         await self._sync_file_actual_sync(path, access, minimal_manifest)
 
-        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access.id)
         return need_more_sync
 
     def _sync_file_merge_back(

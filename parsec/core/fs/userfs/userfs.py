@@ -19,7 +19,6 @@ from parsec.serde import SerdeError
 from parsec.core.types import (
     LocalDevice,
     LocalWorkspaceManifest,
-    WorkspaceManifest,
     ManifestAccess,
     WorkspaceEntry,
     WorkspaceRole,
@@ -40,7 +39,7 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
 )
-from parsec.core.fs.utils import is_workspace_manifest
+
 from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.workspacefs import WorkspaceFS
@@ -344,59 +343,9 @@ class UserFS:
             FSError
             FSBackendOfflineError
         """
-        # TODO: do this in workspacefs ?
-        access = workspace_entry.access
-        try:
-            workspace_manifest = self.local_storage.get_manifest(access)
-        except LocalStorageMissingEntry:
-            # Workspace not in local means it is already synchronized
-            return
-        assert is_workspace_manifest(workspace_manifest)
-        if not workspace_manifest.is_placeholder:
-            return
-
-        # We don't care about the content of the workspace, just
-        # synchronize an empty initial version
-        remote_workspace_manifest = WorkspaceManifest(
-            author=self.device.device_id,
-            version=1,
-            created=workspace_manifest.created,
-            updated=workspace_manifest.created,
-            children={},
-        )
-        now = pendulum_now()
-        ciphered = encrypt_signed_msg_with_secret_key(
-            self.device.device_id,
-            self.device.signing_key,
-            access.key,
-            remote_manifest_serializer.dumps(remote_workspace_manifest),
-            now,
-        )
-        try:
-            await self.backend_cmds.vlob_create(access.id, access.id, now, ciphered)
-
-        except BackendCmdsAlreadyExists:
-            # Already synchronized, nothing to do then ;-)
-            return
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(
-                f"Cannot synchronize workspace `{access.id}` ({workspace_entry.name}): {exc}"
-            ) from exc
-
-        # Finally update local storage info
-        # TODO: possible concurrency issue with workspacefs
-        workspace_manifest = self.local_storage.get_manifest(access)
-        if workspace_manifest.is_placeholder:
-            self.local_storage.set_manifest(
-                access, workspace_manifest.evolve(is_placeholder=False, base_version=1)
-            )
-        # TODO: still useful ?
-        self.event_bus.send(
-            "fs.entry.minimal_synced", path=f"/{workspace_entry.name}", id=access.id
+        workspace = self.get_workspace(workspace_entry.access.id)
+        await workspace.sync_by_access(
+            workspace_entry.access, remote_changed=False, recursive=False
         )
 
     async def workspace_share(
