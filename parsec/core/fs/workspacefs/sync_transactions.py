@@ -1,23 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Iterator
 
 
 from parsec.event_bus import EventBus
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
-from parsec.core.types import AccessID, FolderManifest, Access, LocalFolderManifest
+from parsec.core.types import AccessID, FolderManifest, Access, LocalFolderManifest, Manifest
 
-__all__ = ("SynchronizationRequiredError", "SyncTransactions")
+from parsec.core.fs.utils import is_file_manifest
+
+__all__ = "SyncTransactions"
 
 
 # Helpers
-
-
-class SynchronizationRequiredError(Exception):
-    @property
-    def access(self):
-        return self.args[0]
 
 
 def full_name(name: str, suffixes: List[str]):
@@ -134,7 +130,7 @@ def merge_folder_manifests(
 
     # Some of the local changes have been updated by our device
     if remote_manifest.author == local_manifest.author:
-        return local_manifest.evolve(base_version=remote_version)
+        return local_manifest.evolve(is_placeholder=False, base_version=remote_version)
 
     # The remote has been updated by some other device
     new_children = merge_folder_children(
@@ -144,7 +140,7 @@ def merge_folder_manifests(
         remote_manifest.author,
     )
     return local_manifest.evolve_and_mark_updated(
-        base_version=remote_version, children=new_children
+        is_placeholder=False, base_version=remote_version, children=new_children
     )
 
 
@@ -213,7 +209,7 @@ class SyncTransactions:
                 self.local_storage.set_base_manifest(access, remote_manifest)
 
             # Set the new local manifest
-            if new_local_manifest.need_sync and new_local_manifest != local_manifest:
+            if new_local_manifest.need_sync:
                 self.local_storage.set_manifest(access, new_local_manifest)
 
             # Send synced event
