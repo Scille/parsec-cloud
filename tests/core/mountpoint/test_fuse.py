@@ -127,8 +127,9 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
     # Create a workspace and make it available in two devices
     wid = await alice_user_fs.workspace_create("w")
     workspace = alice_user_fs.get_workspace(wid)
-    await workspace.sync("/")
+    await alice_user_fs.sync()
     await alice2_user_fs.sync()
+    await workspace.sync("/")
 
     mountpoint_path = base_mountpoint.absolute() / "w"
 

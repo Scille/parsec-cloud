@@ -125,8 +125,8 @@ async def test_share_workspace_then_rename_it(
     await aw.mkdir("/ping_alice")
 
     await bw.sync("/")
-    await aw.sync("/")
-    await bw.sync("/")
+    await aw.sync("/", remote_changed=True)
+    await bw.sync("/", remote_changed=True)
 
     aw_stat = await aw.path_info("/")
     bw_stat = await bw.path_info("/")

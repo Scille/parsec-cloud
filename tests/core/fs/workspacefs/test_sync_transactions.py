@@ -6,7 +6,6 @@ from pendulum import Pendulum
 from parsec.core.types import FsPath
 from parsec.core.types import ManifestAccess, FolderManifest, LocalFolderManifest
 
-from parsec.core.fs.workspacefs.sync_transactions import SynchronizationRequiredError
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_manifests
 
@@ -109,13 +108,15 @@ def test_merge_folder_manifests_with_a_placeholder():
 
     m2b = m1.evolve_children_and_mark_updated({"a": ManifestAccess()})
     m3b = merge_folder_manifests(m2b, None, v1)
-    assert m3b == m2b.evolve(base_version=1)
+    assert m3b == m2b.evolve(base_version=1, is_placeholder=False)
 
     v2 = v1.evolve(version=2, author="b@b", children={"b": ManifestAccess()})
     m2c = m1.evolve_children_and_mark_updated({"a": ManifestAccess()})
     m3c = merge_folder_manifests(m2c, None, v2)
     children = {**v2.children, **m2c.children}
-    assert m3c == m2c.evolve(base_version=2, children=children, updated=m3c.updated)
+    assert m3c == m2c.evolve(
+        is_placeholder=False, base_version=2, children=children, updated=m3c.updated
+    )
 
 
 @pytest.mark.trio
@@ -132,18 +133,19 @@ async def test_folder_sync_transaction(sync_transactions, entry_transactions):
     # Local change
     a_id = await entry_transactions.folder_create(FsPath("/a"))
 
-    # Can't sync parent with a placeholder child
-    with pytest.raises(SynchronizationRequiredError) as context:
-        manifest = await folder_sync(access)
-    a_access = context.value.access
+    # Sync parent with a placeholder child
+    manifest = await folder_sync(access)
+    children = []
+    async for child in sync_transactions.placeholder_children(manifest):
+        children.append(child)
+    a_access, = children
     assert a_access.id == a_id
 
     # Sync child
     a_manifest = await folder_sync(a_access)
     assert await folder_sync(a_access, a_manifest) is None
 
-    # Try again
-    manifest = await folder_sync(access)
+    # Acknowledge the manifest
     assert sorted(manifest.children) == ["a"]
     assert await folder_sync(access, manifest) is None
 
@@ -154,17 +156,18 @@ async def test_folder_sync_transaction(sync_transactions, entry_transactions):
     children = {**manifest.children, "c": ManifestAccess()}
     manifest = manifest.evolve(version=5, children=children, author="b@b")
 
-    # Can't sync parent with a placeholder child
-    with pytest.raises(SynchronizationRequiredError) as context:
-        manifest = await folder_sync(access, manifest)
-    b_access = context.value.access
+    # Sync parent with a placeholder child
+    manifest = await folder_sync(access, manifest)
+    children = []
+    async for child in sync_transactions.placeholder_children(manifest):
+        children.append(child)
+    b_access, = children
     assert b_access.id == b_id
 
     # Sync child
     b_manifest = await folder_sync(b_access)
     assert await folder_sync(b_access, b_manifest) is None
 
-    # Try again
-    manifest = await folder_sync(access, manifest)
+    # Acknowledge the manifest
     assert sorted(manifest.children) == ["a", "b", "c"]
     assert await folder_sync(access, manifest) is None

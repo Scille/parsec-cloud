@@ -14,8 +14,9 @@ async def test_autosync_on_modification(mock_clock, running_backend, alice_core,
 
     with alice_core.event_bus.listen() as spy:
         await workspace.mkdir("/foo")
+        foo_id = await workspace.path_id("/foo")
         with trio.fail_after(60):  # autojump, so not *really* 60s
-            await spy.wait("fs.entry.synced", kwargs={"path": "/w/foo", "id": spy.ANY})
+            await spy.wait("fs.entry.synced", kwargs={"workspace_id": wid, "id": foo_id})
 
     await alice2_fs.sync("/")
     workspace2 = alice2_fs.user_fs.get_workspace(wid)
