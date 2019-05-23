@@ -307,7 +307,7 @@ class WorkspaceFS:
         # Register the manifest to unset the placeholder tag
         await self.sync_transactions.folder_sync(access, remote_manifest)
 
-    async def _sync_by_access(self, access: Access, remote_changed: bool = False) -> Manifest:
+    async def _sync_by_access(self, access: Access, remote_changed: bool = True) -> Manifest:
         # Get the current remote manifest if it has changed
         remote_manifest = None
         if remote_changed:
@@ -351,7 +351,7 @@ class WorkspaceFS:
                 remote_manifest = new_remote_manifest
 
     async def sync_by_access(
-        self, access: Access, remote_changed: bool = False, recursive: bool = True
+        self, access: Access, remote_changed: bool = True, recursive: bool = True
     ):
         # Sync parent first
         try:
@@ -369,7 +369,7 @@ class WorkspaceFS:
             await self.sync_by_access(access, remote_changed=remote_changed, recursive=True)
 
     async def sync(
-        self, path: AnyPath, remote_changed: bool = False, recursive: bool = True
+        self, path: AnyPath, remote_changed: bool = True, recursive: bool = True
     ) -> None:
         path = FsPath(path)
         access, _ = await self.entry_transactions._get_entry(path)
@@ -378,7 +378,7 @@ class WorkspaceFS:
     # Temporary methods
 
     async def sync_by_id(
-        self, access_id: AccessID, remote_changed: bool = False, recursive: bool = True
+        self, access_id: AccessID, remote_changed: bool = True, recursive: bool = True
     ):
 
         # Temporary hack: this weird lookup logic will disappear with the removal of accesses

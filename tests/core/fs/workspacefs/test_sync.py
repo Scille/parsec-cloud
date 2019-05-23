@@ -83,10 +83,10 @@ async def test_sync_by_access_couple(alice_workspace, bob_workspace):
     await alice_workspace.sync_by_access(alice_w_access)
 
     # Bob sync /b and doesn't know about alice /a yet
-    await bob_workspace.sync_by_access(bob_w_access)
+    await bob_workspace.sync_by_access(bob_w_access, remote_changed=False)
 
     # Alice knows about bob /b
-    await alice_workspace.sync_by_access(alice_w_access, remote_changed=True)
+    await alice_workspace.sync_by_access(alice_w_access)
 
     # Everyone should be up to date by now
     expected = [FsPath("/a"), FsPath("/b")]

@@ -239,7 +239,7 @@ class FS:
             stat = await workspace.entry_transactions.entry_info(FsPath("/"))
             if stat["is_placeholder"]:
                 await self.user_fs.sync()
-            await workspace.sync(subpath, True, recursive)
+            await workspace.sync(subpath, recursive=recursive)
             await self.user_fs.sync()
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
@@ -247,7 +247,7 @@ class FS:
         assert isinstance(entry_id, UUID)
         for workspace in self._iter_workspaces():
             try:
-                return await workspace.sync_by_id(entry_id, remote_changed=True)
+                return await workspace.sync_by_id(entry_id)
             except Exception:  # TODO: better exception
                 pass
 
@@ -255,7 +255,7 @@ class FS:
     async def full_sync(self) -> None:
         await self.user_fs.sync()
         for workspace in self._iter_workspaces():
-            await workspace.sync("/", remote_changed=True, recursive=True)
+            await workspace.sync("/")
         await self.user_fs.sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:
