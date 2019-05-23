@@ -212,6 +212,13 @@ class SyncTransactions:
             if new_local_manifest.need_sync:
                 self.local_storage.set_manifest(access, new_local_manifest)
 
+            # Send downsynced event
+            if (
+                local_manifest.base_version != new_local_manifest.base_version
+                and remote_manifest.author != new_local_manifest.author
+            ):
+                self._send_event("fs.entry.downsynced", id=access.id)
+
             # Send synced event
             if local_manifest.need_sync and not new_local_manifest.need_sync:
                 self._send_event("fs.entry.synced", id=access.id)
