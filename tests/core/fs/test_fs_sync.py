@@ -32,21 +32,17 @@ async def assert_same_fs(fs1, fs2):
 @pytest.mark.trio
 async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-02"):
-        w_id = await alice_user_fs.workspace_create("w")
-        workspace = alice_user_fs.get_workspace(w_id)
+        wid = await alice_user_fs.workspace_create("w")
+        workspace = alice_user_fs.get_workspace(wid)
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await workspace.sync("/")
     spy.assert_events_occured(
-        [
-            ("fs.entry.minimal_synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 3)),
-            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 3)),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 3)),
-        ]
+        [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 3))]
     )
 
-    workspace2 = alice_user_fs.get_workspace(w_id)
+    workspace2 = alice_user_fs.get_workspace(wid)
     await alice_user_fs.sync()
     await workspace2.sync("/")
 
@@ -54,7 +50,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
     path_info = await workspace.path_info("/")
     assert path_info == {
         "type": "folder",
-        "id": w_id,
+        "id": wid,
         "is_placeholder": False,
         "need_sync": False,
         "base_version": 1,
@@ -64,7 +60,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
     }
     assert workspace_entry == WorkspaceEntry(
         name="w",
-        access=ManifestAccess(id=w_id, key=spy.ANY),
+        access=ManifestAccess(id=wid, key=spy.ANY),
         granted_on=Pendulum(2000, 1, 2),
         role=WorkspaceRole.OWNER,
     )
@@ -85,16 +81,22 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
         else:
             await workspace.mkdir("/foo")
 
+    info = await workspace.path_info("/foo")
+    fid = info["id"]
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await workspace.sync("/")
-    spy.assert_events_occured(
-        [
-            ("fs.entry.minimal_synced", {"path": "/w/foo", "id": spy.ANY}, Pendulum(2000, 1, 3)),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 3)),
-            ("fs.entry.synced", {"path": "/w/foo", "id": spy.ANY}, Pendulum(2000, 1, 3)),
+
+    if type == "file":
+        expected_events = [
+            ("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 3))
         ]
-    )
+    else:
+        expected_events = [
+            ("fs.entry.synced", {"workspace_id": wid, "id": fid}, Pendulum(2000, 1, 3)),
+            ("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 3)),
+        ]
+    spy.assert_events_occured(expected_events)
 
     workspace2 = alice2_user_fs.get_workspace(wid)
     await workspace2.sync("/")
@@ -128,7 +130,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
 @pytest.mark.trio
 async def test_simple_sync(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("w", alice_fs, alice2_fs)
+    wid = await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # 0) Make sure workspace is loaded for alice2
     # (otherwise won't get synced event during step 2)
@@ -145,26 +147,18 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
     with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
             await alice_fs.sync("/w")
+
     spy.assert_events_occured(
-        [
-            (
-                "fs.entry.minimal_synced",
-                {"path": "/w/foo.txt", "id": spy.ANY},
-                Pendulum(2000, 1, 4),
-            ),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 4)),
-            ("fs.entry.synced", {"path": "/w/foo.txt", "id": spy.ANY}, Pendulum(2000, 1, 4)),
-        ]
+        [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
     )
 
     # 2) Fetch back file from another fs
 
     with alice2_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
-            # TODO: `sync` on not loaded entry should load it
             await alice2_fs.sync("/w")
     spy.assert_events_occured(
-        [("fs.entry.remote_changed", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 5))]
+        [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 5))]
     )
 
     # 3) Finally make sure both fs have the same data
@@ -178,7 +172,7 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
 
 @pytest.mark.trio
 async def test_fs_recursive_sync(running_backend, alice_fs):
-    await create_shared_workspace("w", alice_fs)
+    wid = await create_shared_workspace("w", alice_fs)
 
     # 1) Create data
 
@@ -196,19 +190,9 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
     sync_date = Pendulum(2000, 1, 3)
     spy.assert_events_occured(
         [
-            # Minimal sync on /w/bar and sync it access into it parent
-            ("fs.entry.minimal_synced", {"path": "/w/bar", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, sync_date),
-            # Recursive sync on /w/bar children
-            ("fs.entry.minimal_synced", {"path": "/w/bar/spam", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w/bar", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w/bar/spam", "id": spy.ANY}, sync_date),
-            ("fs.entry.minimal_synced", {"path": "/w/bar/wizz.txt", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w/bar", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w/bar/wizz.txt", "id": spy.ANY}, sync_date),
-            ("fs.entry.minimal_synced", {"path": "/w/foo.txt", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, sync_date),
-            ("fs.entry.synced", {"path": "/w/foo.txt", "id": spy.ANY}, sync_date),
+            ("fs.entry.synced", {"workspace_id": wid, "id": spy.ANY}, sync_date),
+            ("fs.entry.synced", {"workspace_id": wid, "id": spy.ANY}, sync_date),
+            ("fs.entry.synced", {"workspace_id": wid, "id": spy.ANY}, sync_date),
         ]
     )
 
@@ -231,7 +215,7 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
 
 @pytest.mark.trio
 async def test_cross_sync(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("w", alice_fs, alice2_fs)
+    wid = await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # 1) Both fs have things to sync
 
@@ -249,15 +233,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
             await alice_fs.sync("/w")
 
     spy.assert_events_occured(
-        [
-            (
-                "fs.entry.minimal_synced",
-                {"path": "/w/foo.txt", "id": spy.ANY},
-                Pendulum(2000, 1, 4),
-            ),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 4)),
-            ("fs.entry.synced", {"path": "/w/foo.txt", "id": spy.ANY}, Pendulum(2000, 1, 4)),
-        ]
+        [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
     )
 
     with alice2_fs.event_bus.listen() as spy:
@@ -266,15 +242,10 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
 
     spy.assert_events_occured(
         [
-            ("fs.entry.minimal_synced", {"path": "/w/bar", "id": spy.ANY}, Pendulum(2000, 1, 5)),
-            ("fs.entry.synced", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 5)),
-            (
-                "fs.entry.minimal_synced",
-                {"path": "/w/bar/spam", "id": spy.ANY},
-                Pendulum(2000, 1, 5),
-            ),
-            ("fs.entry.synced", {"path": "/w/bar", "id": spy.ANY}, Pendulum(2000, 1, 5)),
-            ("fs.entry.synced", {"path": "/w/bar/spam", "id": spy.ANY}, Pendulum(2000, 1, 5)),
+            ("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 5)),
+            ("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 5)),
+            ("fs.entry.synced", {"workspace_id": wid, "id": spy.ANY}, Pendulum(2000, 1, 5)),
+            ("fs.entry.synced", {"workspace_id": wid, "id": spy.ANY}, Pendulum(2000, 1, 5)),
         ]
     )
 
@@ -283,7 +254,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
             await alice_fs.sync("/w")
 
     spy.assert_events_occured(
-        [("fs.entry.remote_changed", {"path": "/w", "id": spy.ANY}, Pendulum(2000, 1, 6))]
+        [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 6))]
     )
 
     # 3) Finally make sure both fs have the same data
@@ -293,7 +264,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
     assert final_wkps["children"].keys() == {"foo.txt", "bar"}
     assert final_wkps["children"]["bar"]["children"].keys() == {"spam"}
 
-    assert final_wkps["base_version"] == 4
+    assert final_wkps["base_version"] == 3
     assert final_wkps["children"]["bar"]["base_version"] == 2
     assert final_wkps["children"]["foo.txt"]["base_version"] == 1
 
