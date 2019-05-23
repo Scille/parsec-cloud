@@ -29,6 +29,13 @@ from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestL
 AnyPath = Union[FsPath, str]
 
 
+# Extra exception to avoid confusion
+
+
+class NoSynchronizationRequired(LocalStorageMissingEntry):
+    pass
+
+
 class WorkspaceFS:
     def __init__(
         self,
@@ -269,6 +276,33 @@ class WorkspaceFS:
 
     # Sync interface
 
+    async def _minimal_sync(self, access: Access):
+        # Get a minimal manifest to upload
+        try:
+            remote_manifest = await self.sync_transactions.minimal_sync(access)
+        # Not available locally so noting to synchronize
+        except LocalStorageMissingEntry:
+            return
+
+        # No miminal manifest to upload, the entry is not a placeholder
+        if remote_manifest is None:
+            return
+
+        # Legacy
+        if is_file_manifest(remote_manifest):
+            await self._legacy_minimal_file_sync(access)
+            return
+
+        # Upload the miminal manifest
+        try:
+            await self.remote_loader.upload_manifest(access, remote_manifest)
+        # The upload has failed: download the latest remote manifest
+        except RemoteSyncError:
+            remote_manifest = await self.remote_loader.load_remote_manifest(access)
+
+        # Register the manifest to unset the placeholder tag
+        await self.sync_transactions.folder_sync(access, remote_manifest)
+
     async def _sync_by_access(self, access: Access, remote_changed: bool = False) -> Manifest:
         # Get the current remote manifest if it has changed
         remote_manifest = None
@@ -280,8 +314,7 @@ class WorkspaceFS:
 
         # Check type
         if self._use_legacy_sync(access, remote_manifest):
-            await self._legacy_file_sync(access)
-            return
+            return await self._legacy_file_sync(access)
 
         # Loop over sync transactions
         while True:
@@ -291,14 +324,17 @@ class WorkspaceFS:
                 new_remote_manifest = await self.sync_transactions.folder_sync(
                     access, remote_manifest
                 )
-            # Another manifest requires synchronization first
-            except SynchronizationRequiredError as exc:
-                await self._sync_by_access(exc.access)
-                continue
+            # The manifest doesn't exist locally
+            except LocalStorageMissingEntry:
+                raise NoSynchronizationRequired(access)
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest
+                return remote_manifest or self.local_storage.get_base_manifest(access)
+
+            # Synchronize placeholder children
+            async for child in self.sync_transactions.placeholder_children(new_remote_manifest):
+                await self._minimal_sync(child)
 
             # Upload the new manifest containing the latest changes
             try:
@@ -314,14 +350,18 @@ class WorkspaceFS:
         self, access: Access, remote_changed: bool = False, recursive: bool = True
     ):
         # Sync parent first
-        manifest = await self._sync_by_access(access, remote_changed=remote_changed)
-
-        # Non-recursive
-        if not recursive or not is_folder_manifest(manifest):
+        try:
+            manifest = await self._sync_by_access(access, remote_changed=remote_changed)
+        # Nothing to synchronize if the manifest does not exist locally
+        except NoSynchronizationRequired:
             return
 
-        # Recursion
-        for access in manifest.children.values():
+        # Non-recursive
+        if not recursive or is_file_manifest(manifest):
+            return
+
+        # Synchronize children
+        for name, access in manifest.children.items():
             await self.sync_by_access(access, remote_changed=remote_changed, recursive=True)
 
     async def sync(
@@ -381,15 +421,33 @@ class WorkspaceFS:
             return False
         return is_file_manifest(local_manifest)
 
-    async def _legacy_file_sync(self, access):
+    async def _legacy_minimal_file_sync(self, access):
         from parsec.core.fs.local_folder_fs import FSEntryNotFound
 
+        # Get info
         try:
-            args = await self._load_and_retry(
+            path, _, manifest = await self._load_and_retry(
                 self._syncer.local_folder_fs.get_entry_path, access.id
             )
         except FSEntryNotFound:
             return
-        await self._load_and_retry(self._syncer._minimal_sync_file, *args)
-        args = await self._load_and_retry(self._syncer.local_folder_fs.get_entry_path, access.id)
-        await self._load_and_retry(self._syncer._sync_file, *args)
+        # Minimal sync
+        if manifest.is_placeholder:
+            await self._load_and_retry(self._syncer._minimal_sync_file, path, access, manifest)
+
+    async def _legacy_file_sync(self, access):
+        from parsec.core.fs.local_folder_fs import FSEntryNotFound
+
+        # Minimal sync
+        await self._legacy_minimal_file_sync(access)
+        # Get info
+        try:
+            path, _, manifest = await self._load_and_retry(
+                self._syncer.local_folder_fs.get_entry_path, access.id
+            )
+        except FSEntryNotFound:
+            raise NoSynchronizationRequired(access)
+        # Actual sync
+        await self._load_and_retry(self._syncer._sync_file, path, access, manifest)
+        # Return the manifest
+        return manifest

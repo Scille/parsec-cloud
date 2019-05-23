@@ -166,6 +166,28 @@ class SyncTransactions:
     def _send_event(self, event, **kwargs):
         self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
+    # Public read-only helpers
+
+    async def placeholder_children(self, remote_manifest: Manifest) -> Iterator[Access]:
+        # Check children placeholder
+        for child_access in remote_manifest.children.values():
+            try:
+                child_manifest = self.local_storage.get_manifest(child_access)
+            except LocalStorageMissingEntry:
+                continue
+            if child_manifest.is_placeholder:
+                yield child_access
+
+    async def minimal_sync(self, access: Access) -> Optional[Manifest]:
+        manifest = self.local_storage.get_manifest(access)
+        if not manifest.is_placeholder:
+            return None
+        if is_file_manifest(manifest):
+            new_manifest = manifest.evolve(updated=manifest.created, size=0, blocks=[])
+        else:
+            new_manifest = manifest.evolve(updated=manifest.created, children={})
+        return new_manifest.to_remote().evolve(version=1)
+
     # Atomic transactions
 
     async def folder_sync(
@@ -174,15 +196,6 @@ class SyncTransactions:
 
         # Fetch and lock
         async with self.local_storage.lock_manifest(access) as local_manifest:
-
-            # Check children placeholder
-            for child_access in local_manifest.children.values():
-                try:
-                    child_manifest = self.local_storage.get_manifest(child_access)
-                except LocalStorageMissingEntry:
-                    continue
-                if child_manifest.is_placeholder:
-                    raise SynchronizationRequiredError(child_access)
 
             # Get base manifest
             if local_manifest.is_placeholder:

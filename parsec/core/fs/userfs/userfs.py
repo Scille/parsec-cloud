@@ -344,9 +344,10 @@ class UserFS:
             FSBackendOfflineError
         """
         workspace = self.get_workspace(workspace_entry.access.id)
-        await workspace.sync_by_access(
-            workspace_entry.access, remote_changed=False, recursive=False
-        )
+        try:
+            await workspace._minimal_sync(workspace_entry.access)
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
 
     async def workspace_share(
         self, workspace_id: UUID, recipient: UserID, role: Optional[WorkspaceRole]
