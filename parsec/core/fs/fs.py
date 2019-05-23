@@ -247,7 +247,7 @@ class FS:
         assert isinstance(entry_id, UUID)
         for workspace in self._iter_workspaces():
             try:
-                return await workspace.sync_by_id(entry_id, True)
+                return await workspace.sync_by_id(entry_id, remote_changed=True)
             except Exception:  # TODO: better exception
                 pass
 
@@ -255,7 +255,7 @@ class FS:
     async def full_sync(self) -> None:
         await self.user_fs.sync()
         for workspace in self._iter_workspaces():
-            await workspace.sync("/", recursive=True)
+            await workspace.sync("/", remote_changed=True, recursive=True)
         await self.user_fs.sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:
