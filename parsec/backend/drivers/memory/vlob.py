@@ -68,13 +68,13 @@ class Reencryption:
     def is_finished(self):
         return not self._todo
 
-    def get_batch(self, size=100):
+    def get_batch(self, size):
         batch = []
         for (vlob_id, version), data in self._todo.items():
             if (vlob_id, version) in self._done:
                 continue
             batch.append((vlob_id, version, data))
-        return batch
+        return batch[:size]
 
     def save_batch(self, batch):
         for vlob_id, version, data in batch:
@@ -315,6 +315,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         author: DeviceID,
         realm_id: UUID,
         encryption_revision: int,
+        size: int,
     ) -> List[Tuple[UUID, int, bytes]]:
         self._check_realm_in_maintenance_access(
             organization_id, realm_id, author.user_id, encryption_revision
@@ -323,7 +324,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert changes.reencryption
 
-        return changes.reencryption.get_batch()
+        return changes.reencryption.get_batch(size)
 
     async def maintenance_save_reencryption_batch(
         self,

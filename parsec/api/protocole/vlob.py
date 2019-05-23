@@ -113,12 +113,13 @@ vlob_poll_changes_serializer = CmdSerializer(VlobPollChangesReqSchema, VlobPollC
 class VlobMaintenanceGetReencryptionBatchReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
+    size = fields.Integer(required=True, validate=validate.Range(min=0, max=1000))
 
 
 class ReencryptionBatchEntrySchema(UnknownCheckedSchema):
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
-    data = fields.Bytes(required=True)
+    blob = fields.Bytes(required=True)
 
 
 class VlobMaintenanceGetReencryptionBatchRepSchema(BaseRepSchema):

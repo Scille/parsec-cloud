@@ -210,8 +210,8 @@ class BaseVlobComponent:
             {
                 "status": "ok",
                 "batch": [
-                    {"vlob_id": vlob_id, "version": version, "data": data}
-                    for vlob_id, version, data in batch
+                    {"vlob_id": vlob_id, "version": version, "blob": blob}
+                    for vlob_id, version, blob in batch
                 ],
             }
         )
@@ -226,7 +226,7 @@ class BaseVlobComponent:
                 client_ctx.device_id,
                 realm_id=msg["realm_id"],
                 encryption_revision=msg["encryption_revision"],
-                batch=[(x["vlob_id"], x["version"], x["data"]) for x in msg["batch"]],
+                batch=[(x["vlob_id"], x["version"], x["blob"]) for x in msg["batch"]],
             )
 
         except VlobAccessError:
@@ -329,6 +329,7 @@ class BaseVlobComponent:
         author: DeviceID,
         realm_id: UUID,
         encryption_revision: int,
+        size: int,
     ) -> List[Tuple[UUID, int, bytes]]:
         """
         Raises:

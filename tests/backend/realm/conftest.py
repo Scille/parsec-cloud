@@ -169,13 +169,14 @@ async def vlob_poll_changes(sock, realm_id, last_checkpoint):
     return vlob_poll_changes_serializer.rep_loads(raw_rep)
 
 
-async def vlob_maintenance_get_reencryption_batch(sock, realm_id, encryption_revision):
+async def vlob_maintenance_get_reencryption_batch(sock, realm_id, encryption_revision, size=100):
     raw_rep = await sock.send(
         vlob_maintenance_get_reencryption_batch_serializer.req_dumps(
             {
                 "cmd": "vlob_maintenance_get_reencryption_batch",
                 "realm_id": realm_id,
                 "encryption_revision": encryption_revision,
+                "size": size,
             }
         )
     )
@@ -234,6 +235,11 @@ async def vlobs(backend, alice, realm):
         b"r:A b:2 v:1",
     )
     return vlob_ids
+
+
+@pytest.fixture
+async def vlob_atoms(vlobs):
+    return [(vlobs[0], 1), (vlobs[0], 2), (vlobs[1], 1)]
 
 
 @pytest.fixture
