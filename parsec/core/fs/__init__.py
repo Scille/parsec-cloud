@@ -9,7 +9,6 @@ from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
     FSSharingNotAllowedError,
 )
-from parsec.core.fs.fs import FS
 from parsec.core.fs.workspacefs import WorkspaceFS, FSInvalidFileDescriptor
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.fs.sync_base import SyncConcurrencyError

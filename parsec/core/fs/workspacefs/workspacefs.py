@@ -2,6 +2,7 @@
 
 import inspect
 from uuid import UUID
+import errno
 from typing import Union, Iterator, Dict
 
 from parsec.types import UserID
@@ -229,6 +230,8 @@ class WorkspaceFS:
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
+        if _destinsrc(source, destination):
+            raise OSError(errno.EINVAL)
         try:
             if await self.is_dir(destination):
                 real_destination = destination.joinpath(source.name)
@@ -250,13 +253,6 @@ class WorkspaceFS:
             await self.unlink(source)
             return
         raise NotImplementedError
-
-    def _destinsrc(src: AnyPath, dst: AnyPath):
-        try:
-            dst.relative_to(src)
-            return True
-        except ValueError:
-            return False
 
     async def copytree(self, source_path: AnyPath, target_path: AnyPath):
         source_path = FsPath(source_path)

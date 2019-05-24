@@ -16,9 +16,9 @@ def timestamp():
 
 
 class SyncMonitor:
-    def __init__(self, fs, event_bus):
+    def __init__(self, user_fs, event_bus):
         super().__init__()
-        self.user_fs = fs.user_fs
+        self.user_fs = user_fs
         self.event_bus = event_bus
 
         self._running = False
