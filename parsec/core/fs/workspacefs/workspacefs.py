@@ -41,6 +41,14 @@ from parsec.core.fs.local_folder_fs import (
 AnyPath = Union[FsPath, str]
 
 
+def _destinsrc(src: AnyPath, dst: AnyPath):
+    try:
+        dst.relative_to(src)
+        return True
+    except ValueError:
+        return False
+
+
 class WorkspaceFS:
     def __init__(
         self,
@@ -189,7 +197,7 @@ class WorkspaceFS:
         try:
             await self.entry_transactions.file_create(path, open=False)
         except FileExistsError:
-            if not exist_ok or not await self.is_file(path):
+            if not exist_ok:
                 raise
 
     async def unlink(self, path: AnyPath) -> None:
@@ -231,7 +239,9 @@ class WorkspaceFS:
         destination = FsPath(destination)
         real_destination = destination
         if _destinsrc(source, destination):
-            raise OSError(errno.EINVAL)
+            raise OSError(
+                errno.EINVAL, f"Cannot move a directory {source} into itself {destination}"
+            )
         try:
             if await self.is_dir(destination):
                 real_destination = destination.joinpath(source.name)

@@ -11,6 +11,7 @@ from hypothesis_trio.stateful import (
     TrioRuleBasedStateMachine,
 )
 
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 from tests.common import call_with_control
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -49,7 +50,7 @@ def test_fs_online_concurrent_user(
     backend_factory,
     server_factory,
     local_storage_factory,
-    fs_factory,
+    user_fs_factory,
     alice,
     alice2,
 ):
@@ -57,12 +58,12 @@ def test_fs_online_concurrent_user(
         Workspaces = Bundle("workspace")
         FSs = Bundle("fs")
 
-        async def start_fs(self, device, local_storage):
-            async def _fs_controlled_cb(started_cb):
-                async with fs_factory(device=device, local_storage=local_storage) as fs:
+        async def start_user_fs(self, device, local_storage):
+            async def _user_fs_controlled_cb(started_cb):
+                async with user_fs_factory(device=device, local_storage=local_storage) as fs:
                     await started_cb(fs=fs)
 
-            return await self.get_root_nursery().start(call_with_control, _fs_controlled_cb)
+            return await self.get_root_nursery().start(call_with_control, _user_fs_controlled_cb)
 
         async def start_backend(self, devices):
             async def _backend_controlled_cb(started_cb):
@@ -73,12 +74,12 @@ def test_fs_online_concurrent_user(
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
 
         @property
-        def fs1(self):
-            return self.fs1_controller.fs
+        def user_fs1(self):
+            return self.user_fs1_controller.fs
 
         @property
-        def fs2(self):
-            return self.fs2_controller.fs
+        def user_fs2(self):
+            return self.user_fs2_controller.fs
 
         @initialize(target=Workspaces)
         async def init(self):
@@ -88,40 +89,45 @@ def test_fs_online_concurrent_user(
             self.local_storage2 = local_storage_factory(self.device2)
 
             self.backend_controller = await self.start_backend([self.device1, self.device2])
-            self.fs1_controller = await self.start_fs(self.device1, self.local_storage1)
-            self.fs2_controller = await self.start_fs(self.device2, self.local_storage2)
+            self.user_fs1_controller = await self.start_user_fs(self.device1, self.local_storage1)
+            self.user_fs2_controller = await self.start_user_fs(self.device2, self.local_storage2)
 
-            await self.fs1.workspace_create("/w")
-            await self.fs1.sync("/")
-            await self.fs2.sync("/")
+            self.wid = await self.user_fs1.workspace_create("w")
+            workspace = self.user_fs1.get_workspace(self.wid)
+            await workspace.sync("/")
+            await self.user_fs1.sync()
+            await self.user_fs2.sync()
 
-            return "/w"
-
-        @initialize(target=FSs, force_after_init=Workspaces)
-        async def register_fs1(self, force_after_init):
-            return self.fs1
+            return self.wid, "w"
 
         @initialize(target=FSs, force_after_init=Workspaces)
-        async def register_fs2(self, force_after_init):
-            return self.fs2
+        async def register_user_fs1(self, force_after_init):
+            return self.user_fs1
+
+        @initialize(target=FSs, force_after_init=Workspaces)
+        async def register_user_fs2(self, force_after_init):
+            return self.user_fs2
 
         @rule(target=Workspaces, fs=FSs, name=st_entry_name)
         async def create_workspace(self, fs, name):
-            path = f"/{name}"
             try:
-                await fs.workspace_create(path=path)
-            except OSError:
-                pass
-            return path
+                wid = await fs.workspace_create(name)
+                workspace = fs.get_workspace(wid)
+                await workspace.sync("/")
+            except AssertionError:
+                return "wrong", name
+            return wid, name
 
         @rule(target=Workspaces, fs=FSs, src=Workspaces, dst_name=st_entry_name)
         async def rename_workspace(self, fs, src, dst_name):
-            dst = f"/{dst_name}"
+            wid, _ = src
+            if wid == "wrong":
+                return src[0], src[1]
             try:
-                await fs.workspace_rename(src, dst)
-            except OSError:
+                await fs.workspace_rename(wid, dst_name)
+            except FSWorkspaceNotFoundError:
                 pass
-            return dst
+            return wid, dst_name
 
         @rule()
         async def sync(self):
@@ -129,18 +135,24 @@ def test_fs_online_concurrent_user(
             # once created
 
             # Sync 1
-            await self.fs1.sync("/")
-            await self.fs1.sync("/")
+            workspace = self.user_fs1.get_workspace(self.wid)
+            await workspace.sync("/")
+            await self.user_fs1.sync()
+            await self.user_fs1.sync()
 
             # Sync 2
-            await self.fs2.sync("/")
-            await self.fs2.sync("/")
+            workspace = self.user_fs2.get_workspace(self.wid)
+            await workspace.sync("/")
+            await self.user_fs2.sync()
+            await self.user_fs2.sync()
 
             # Sync 1
-            await self.fs1.sync("/")
+            workspace = self.user_fs1.get_workspace(self.wid)
+            await workspace.sync("/")
+            await self.user_fs1.sync()
 
-            fs_dump_1 = self.fs1._local_folder_fs.dump()
-            fs_dump_2 = self.fs2._local_folder_fs.dump()
+            fs_dump_1 = self.user_fs1._local_folder_fs.dump()
+            fs_dump_2 = self.user_fs2._local_folder_fs.dump()
             compare_fs_dumps(fs_dump_1, fs_dump_2)
 
     run_state_machine_as_test(FSOnlineConcurrentUser, settings=hypothesis_settings)
