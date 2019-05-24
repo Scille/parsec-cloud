@@ -51,3 +51,11 @@ class FSWorkspaceNotInMaintenance(FSError):
 
 class FSMaintenanceNotAllowedError(FSError):
     pass
+
+
+class FSFileConflictError(FSError):
+    pass
+
+
+class FSReshapingRequiredError(FSError):
+    pass

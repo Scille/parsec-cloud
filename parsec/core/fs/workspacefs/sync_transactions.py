@@ -7,11 +7,24 @@ from parsec.event_bus import EventBus
 from parsec.types import DeviceID
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
-from parsec.core.types import EntryID, EntryName, FolderManifest, LocalFolderManifest, Manifest
+from parsec.core.types import (
+    EntryID,
+    EntryName,
+    FolderManifest,
+    Manifest,
+    LocalManifest,
+    BlockAccess,
+)
+from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
+from parsec.core.fs.workspacefs.file_transactions import DirtyBlockBuffer, BlockBuffer
+
+from parsec.core.fs.exceptions import FSFileConflictError, FSReshapingRequiredError
 
 from parsec.core.fs.utils import is_file_manifest
 
 __all__ = "SyncTransactions"
+
+DEFAULT_BLOCK_SIZE = 1 * 1024 * 1024  # 1 MB
 
 
 # Helpers
@@ -103,16 +116,15 @@ def merge_folder_children(
     return children
 
 
-def merge_folder_manifests(
-    local_manifest: LocalFolderManifest,
-    base_manifest: Optional[FolderManifest] = None,
-    remote_manifest: Optional[FolderManifest] = None,
+def merge_manifests(
+    local_manifest: LocalManifest,
+    base_manifest: Optional[Manifest] = None,
+    remote_manifest: Optional[Manifest] = None,
 ):
     # Exctract versions
     local_version = local_manifest.base_version
     assert base_manifest is None or base_manifest.version == local_version
     remote_version = local_version if remote_manifest is None else remote_manifest.version
-    base_manifest_children = {} if base_manifest is None else base_manifest.children
 
     # The remote hasn't changed
     if remote_version <= local_version:
@@ -134,6 +146,14 @@ def merge_folder_manifests(
         return local_manifest.evolve(is_placeholder=False, base_version=remote_version)
 
     # The remote has been updated by some other device
+    assert remote_manifest.author != local_manifest.author
+
+    # Cannot solve a file conflict directly
+    if is_file_manifest(local_manifest):
+        raise FSFileConflictError(local_manifest, remote_manifest)
+
+    # Solve the folder conflict
+    base_manifest_children = {} if base_manifest is None else base_manifest.children
     new_children = merge_folder_children(
         base_manifest_children,
         local_manifest.children,
@@ -194,6 +214,10 @@ class SyncTransactions:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
+            # Sync cannot be performed
+            if is_file_manifest(local_manifest) and local_manifest.dirty_blocks:
+                raise FSReshapingRequiredError(entry_id)
+
             # Get base manifest
             if local_manifest.is_placeholder:
                 base_manifest = None
@@ -201,9 +225,7 @@ class SyncTransactions:
                 base_manifest = self.local_storage.get_base_manifest(entry_id)
 
             # Merge manifests
-            new_local_manifest = merge_folder_manifests(
-                local_manifest, base_manifest, remote_manifest
-            )
+            new_local_manifest = merge_manifests(local_manifest, base_manifest, remote_manifest)
 
             # Extract authors
             local_author = local_manifest.author
@@ -219,6 +241,11 @@ class SyncTransactions:
             # Set the new base manifest
             if base_version != remote_version:
                 self.local_storage.set_base_manifest(entry_id, remote_manifest)
+
+            # TODO: setting base and local manifest should be done with a single API
+            # call in order to prevent corruption if a failure happens at this moment.
+            # The local storage should also ensure that base_manifest.version corresponds
+            # to local_manifest.base_version at all times
 
             # Set the new local manifest
             if new_local_manifest.need_sync:
@@ -239,3 +266,96 @@ class SyncTransactions:
             # Produce the new remote manifest to upload
             new_remote_manifest = new_local_manifest.to_remote()
             return new_remote_manifest.evolve(version=new_remote_manifest.version + 1)
+
+    async def file_reshape(self, entry_id: EntryID) -> None:
+
+        # Loop over attemps
+        missing = []
+        while True:
+
+            # Load missing blocks
+            # TODO: add a `load_blocks` method to the remote loader
+            # to download the blocks in a concurrent way.
+            for access in missing:
+                await self.remote_loader.load_block(access)
+
+            # Fetch and lock
+            async with self.local_storage.lock_manifest(entry_id) as manifest:
+                assert is_file_manifest(manifest)
+
+                # Look for missing blocks
+                missing = self._missing_blocks(manifest)
+                if missing:
+                    continue
+
+                # Prepare
+                blocks, old_blocks, new_blocks = self._reshape_blocks(manifest)
+                new_manifest = manifest.evolve_and_mark_updated(blocks=blocks, dirty_blocks=[])
+                # Atomic change
+                for access, data in new_blocks:
+                    self.local_storage.set_dirty_block(access, data)
+                for block in old_blocks:
+                    self.local_storage.clear_block(block)
+                self.local_storage.set_manifest(entry_id, new_manifest)
+
+                # Return
+                return
+
+    async def file_conflict(
+        self, entry_id: EntryID, local_manifest: LocalManifest, remote_manifest: Manifest
+    ) -> None:
+        # TODO
+        raise NotImplementedError
+
+    def _missing_blocks(self, manifest):
+        # Merge the blocks
+        dirty_blocks = [
+            DirtyBlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks
+        ]
+        blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
+        merged = merge_buffers_with_limits_and_alignment(
+            blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
+        )
+        # Loop over used buffers
+        missing = []
+        for space in merged.spaces:
+            if len(space.buffers) <= 1:
+                continue
+            for buffer_space in space.buffers:
+                if isinstance(buffer_space.buffer, BlockBuffer):
+                    try:
+                        self.local_storage.get_block(buffer_space.buffer.access)
+                    except LocalStorageMissingError:
+                        missing.append(buffer_space.buffer.access)
+        # Return missing accesses
+        return missing
+
+    def _reshape_blocks(self, manifest):
+        # Merge the blocks
+        dirty_blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks]
+        blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
+        merged = merge_buffers_with_limits_and_alignment(
+            blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
+        )
+        # Loop over blocks
+        blocks, old_blocks, new_blocks = [], [], []
+        for space in merged.spaces:
+            # Existing blocks
+            if len(space.buffers) <= 1:
+                buffer_space, = space.buffers
+                blocks.append(buffer_space.buffer.access)
+                continue
+            # New blocks
+            data = bytearray(space.size)
+            for buffer_space in space.buffers:
+                if buffer_space.buffer.access:
+                    old_blocks.append(buffer_space.buffer.access)
+                buff = self.local_storage.get_block(buffer_space.buffer.access.id)
+                data[buffer_space.start - space.start : buffer_space.end - space.start] = buff[
+                    buffer_space.buffer_slice_start : buffer_space.buffer_slice_end
+                ]
+            block_access = BlockAccess.from_block(data, space.start)
+            blocks.append(block_access)
+            new_blocks.append((block_access, data))
+        # Return missing accesses
+        return blocks, old_blocks, new_blocks

@@ -6,7 +6,7 @@ import pendulum
 from parsec.crypto import (
     encrypt_signed_msg_with_secret_key,
     decrypt_raw_with_secret_key,
-    # encrypt_raw_with_secret_key, TODO: uncomment when upload_block is implemented
+    encrypt_raw_with_secret_key,
     decrypt_and_verify_signed_msg_with_secret_key,
 )
 
@@ -64,6 +64,15 @@ class RemoteLoader:
 
         self.local_storage.set_clean_block(access.id, block)
         return block
+
+    async def upload_block(self, access: BlockAccess, data: bytes):
+        """
+        Raises:
+            BackendConnectionError
+            CryptoError
+        """
+        ciphered = encrypt_raw_with_secret_key(access.key, data)
+        await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
 
     async def load_remote_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:
         try:
