@@ -5,7 +5,7 @@ from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.fs import FS, UserFS
+from parsec.core.fs import UserFS
 
 from tests.common import freeze_time, InMemoryLocalStorage
 
@@ -75,31 +75,6 @@ async def alice2_remote_devices_manager(remote_devices_manager_factory, alice2):
 async def bob_remote_devices_manager(remote_devices_manager_factory, bob):
     async with remote_devices_manager_factory(bob) as rdm:
         yield rdm
-
-
-@pytest.fixture
-def fs_factory(user_fs_factory):
-    @asynccontextmanager
-    async def _fs_factory(device, local_storage=None, event_bus=None):
-        async with user_fs_factory(device, local_storage, event_bus) as user_fs:
-            yield FS(user_fs)
-
-    return _fs_factory
-
-
-@pytest.fixture
-async def alice_fs(alice_user_fs):
-    return FS(alice_user_fs)
-
-
-@pytest.fixture
-async def alice2_fs(alice2_user_fs):
-    return FS(alice2_user_fs)
-
-
-@pytest.fixture
-async def bob_fs(bob_user_fs):
-    return FS(bob_user_fs)
 
 
 @pytest.fixture

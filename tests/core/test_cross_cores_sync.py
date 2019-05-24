@@ -48,17 +48,17 @@ async def wait_for_entries_synced(core, entries_pathes):
 #         await events2.wait("fs.sync_monitor.idle")
 
 #         with freeze_time("2000-01-02"):
-#             await alice_core.fs.file_create("/foo.txt")
+#             await alice_core.user_fs.file_create("/foo.txt")
 
 #         with freeze_time("2000-01-03"):
-#             await alice_core.fs.file_write("/foo.txt", b"hello world !")
+#             await alice_core.user_fs.file_write("/foo.txt", b"hello world !")
 
 #         mock_clock.autojump_threshold = 0.1
 #         await events.wait("fs.sync_monitor.tick_finished")
 #         await events2.wait("fs.sync_monitor.tick_finished")
 
-#     stat = await alice_core.fs.stat("/foo.txt")
-#     stat2 = await alice2_core2.fs.stat("/foo.txt")
+#     stat = await alice_core.user_fs.stat("/foo.txt")
+#     stat2 = await alice2_core2.user_fs.stat("/foo.txt")
 #     assert stat2 == stat
 
 
@@ -74,23 +74,23 @@ async def test_online_sync2(mock_clock, running_backend, core_factory, alice, al
         await alice2_core2.login(alice2)
 
         # FS does a full sync at startup, wait for it to finish
-        await alice_core.fs.wait_not_syncing()
-        await alice2_core2.fs.wait_not_syncing()
+        await alice_core.user_fs.wait_not_syncing()
+        await alice2_core2.user_fs.wait_not_syncing()
 
         async with wait_for_entries_synced(alice2_core2, ["/"]), wait_for_entries_synced(
             alice_core, ("/", "/foo.txt")
         ):
 
             with freeze_time("2000-01-02"):
-                await alice_core.fs.touch("/foo.txt")
+                await alice_core.user_fs.touch("/foo.txt")
 
             with freeze_time("2000-01-03"):
-                await alice_core.fs.file_write("/foo.txt", b"hello world !")
+                await alice_core.user_fs.file_write("/foo.txt", b"hello world !")
 
-            await alice_core.fs.sync("/foo.txt")
+            await alice_core.user_fs.sync("/foo.txt")
 
-        stat = await alice_core.fs.stat("/foo.txt")
-        stat2 = await alice2_core2.fs.stat("/foo.txt")
+        stat = await alice_core.user_fs.stat("/foo.txt")
+        stat2 = await alice2_core2.user_fs.stat("/foo.txt")
         assert stat2 == stat
 
 
@@ -107,19 +107,19 @@ async def test_sync_then_clean_start(mock_clock, running_backend, core_factory, 
         async with wait_for_entries_synced(alice_core, ("/", "/foo.txt")):
 
             with freeze_time("2000-01-02"):
-                await alice_core.fs.touch("/foo.txt")
+                await alice_core.user_fs.touch("/foo.txt")
 
             with freeze_time("2000-01-03"):
-                await alice_core.fs.file_write("/foo.txt", b"v1")
+                await alice_core.user_fs.file_write("/foo.txt", b"v1")
 
-            await alice_core.fs.sync("/foo.txt")
+            await alice_core.user_fs.sync("/foo.txt")
 
         async with core_factory() as alice2_core2, wait_for_entries_synced(alice2_core2, ["/"]):
             await alice2_core2.login(alice2)
 
             for path in ("/", "/foo.txt"):
-                stat = await alice_core.fs.stat(path)
-                stat2 = await alice2_core2.fs.stat(path)
+                stat = await alice_core.user_fs.stat(path)
+                stat2 = await alice2_core2.user_fs.stat(path)
                 assert stat2 == stat
 
 
@@ -137,31 +137,31 @@ async def test_sync_then_fast_forward_on_start(
         await alice2_core2.login(alice2)
 
         with freeze_time("2000-01-02"):
-            await alice_core.fs.touch("/foo.txt")
+            await alice_core.user_fs.touch("/foo.txt")
 
         with freeze_time("2000-01-03"):
-            await alice_core.fs.file_write("/foo.txt", b"v1")
+            await alice_core.user_fs.file_write("/foo.txt", b"v1")
 
         async with wait_for_entries_synced(alice2_core2, ["/"]), wait_for_entries_synced(
             alice_core, ("/", "/foo.txt")
         ):
-            await alice_core.fs.sync("/foo.txt")
+            await alice_core.user_fs.sync("/foo.txt")
 
         await alice2_core2.logout()
 
         with freeze_time("2000-01-04"):
-            await alice_core.fs.file_write("/foo.txt", b"v2")
-            await alice_core.fs.folder_create("/bar")
+            await alice_core.user_fs.file_write("/foo.txt", b"v2")
+            await alice_core.user_fs.folder_create("/bar")
 
         async with wait_for_entries_synced(alice_core, ["/", "/bar", "/foo.txt"]):
-            await alice_core.fs.sync("/")
+            await alice_core.user_fs.sync("/")
 
         async with wait_for_entries_synced(alice2_core2, ["/"]):
             await alice2_core2.login(alice2)
 
         for path in ("/", "/bar", "/foo.txt"):
-            stat = await alice_core.fs.stat(path)
-            stat2 = await alice2_core2.fs.stat(path)
+            stat = await alice_core.user_fs.stat(path)
+            stat2 = await alice2_core2.user_fs.stat(path)
             assert stat2 == stat
 
 
@@ -192,31 +192,31 @@ async def test_fast_forward_on_offline_during_sync(
                 alice_core, ("/", "/foo.txt")
             ):
                 with freeze_time("2000-01-02"):
-                    await alice_core.fs.touch("/foo.txt")
+                    await alice_core.user_fs.touch("/foo.txt")
 
                 with freeze_time("2000-01-03"):
-                    await alice_core.fs.file_write("/foo.txt", b"v1")
+                    await alice_core.user_fs.file_write("/foo.txt", b"v1")
 
                 # Sync should be done in the background by the sync monitor
                 ########### shouldn't need to do that... #######
-                await alice_core.fs.sync("/foo.txt")
+                await alice_core.user_fs.sync("/foo.txt")
 
             # TODO: shouldn't need this...
             await trio.testing.wait_all_tasks_blocked(cushion=0.1)
 
             # core goes offline, other core2 is still connected to backend
             async with wait_for_entries_synced(alice_core, ("/", "/foo.txt")):
-                stat2 = await alice2_core2.fs.stat("/foo.txt")
+                stat2 = await alice2_core2.user_fs.stat("/foo.txt")
                 with offline(server1.addr):
 
                     with freeze_time("2000-01-04"):
-                        await alice2_core2.fs.file_write("/foo.txt", b"v2")
-                        await alice2_core2.fs.folder_create("/bar")
+                        await alice2_core2.user_fs.file_write("/foo.txt", b"v2")
+                        await alice2_core2.user_fs.folder_create("/bar")
 
                     async with wait_for_entries_synced(alice2_core2, ("/", "/bar", "/foo.txt")):
-                        await alice2_core2.fs.sync("/")
+                        await alice2_core2.user_fs.sync("/")
 
             for path in ("/", "/bar", "/foo.txt"):
-                stat = await alice_core.fs.stat(path)
-                stat2 = await alice2_core2.fs.stat(path)
+                stat = await alice_core.user_fs.stat(path)
+                stat2 = await alice2_core2.user_fs.stat(path)
                 assert stat2 == stat

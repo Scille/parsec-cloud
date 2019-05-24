@@ -57,13 +57,14 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_base_mountpoint_not_created(base_mountpoint, alice_fs, alice_user_fs, event_bus):
+async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event_bus):
     # Path should be created if it doesn' exist
     base_mountpoint = base_mountpoint / "dummy/dummy/dummy"
     mountpoint = f"{base_mountpoint.absolute()}/w"
 
     wid = await alice_user_fs.workspace_create("w")
-    await alice_fs.touch("/w/bar.txt")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch("/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint}/bar.txt")
 
@@ -80,7 +81,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_fs, alice_user
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_mountpoint_path_already_in_use(
-    base_mountpoint, running_backend, alice_user_fs, alice2_user_fs, alice_fs
+    base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
     # Create a workspace and make it available in two devices
     wid = await alice_user_fs.workspace_create("w")
@@ -119,14 +120,15 @@ async def test_mountpoint_path_already_in_use(
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
 async def test_mount_and_explore_workspace(
-    base_mountpoint, alice_fs, alice_user_fs, event_bus, manual_unmount
+    base_mountpoint, alice_user_fs, event_bus, manual_unmount
 ):
     # Populate a bit the fs first...
 
     wid = await alice_user_fs.workspace_create("w")
-    await alice_fs.folder_create("/w/foo")
-    await alice_fs.touch("/w/bar.txt")
-    await alice_fs.file_write("/w/bar.txt", b"Hello world !")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.mkdir("/foo")
+    await workspace.touch("/bar.txt")
+    await workspace.write_bytes("/bar.txt", b"Hello world !")
 
     # Now we can start fuse
 
@@ -176,15 +178,14 @@ async def test_mount_and_explore_workspace(
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
-async def test_idempotent_mount(
-    base_mountpoint, alice_fs, alice_user_fs, event_bus, manual_unmount
-):
+async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manual_unmount):
     mountpoint_path = base_mountpoint / "w"
 
     # Populate a bit the fs first...
 
     wid = await alice_user_fs.workspace_create("w")
-    await alice_fs.touch("/w/bar.txt")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch("/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
 
@@ -221,7 +222,8 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 
     async with logged_core_factory(core_config, alice) as alice_core:
         wid = await alice_core.user_fs.workspace_create("w")
-        await alice_core.fs.touch("/w/bar.txt")
+        workspace = alice_core.user_fs.get_workspace(wid)
+        await workspace.touch("/bar.txt")
 
         assert not await bar_txt.exists()
 
@@ -234,11 +236,12 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 
 @pytest.mark.mountpoint
 def test_manifest_not_available(mountpoint_service):
-    async def _bootstrap(user_fs, fs, mountpoint_manager):
-        await user_fs.workspace_create("x")
-        await fs.touch("/x/foo.txt")
-        foo_access = fs._local_folder_fs.get_access(FsPath("/x/foo.txt"))
-        fs._local_folder_fs.clear_manifest(foo_access)
+    async def _bootstrap(user_fs, mountpoint_manager):
+        wid = await user_fs.workspace_create("x")
+        workspace = user_fs.get_workspace(wid)
+        await workspace.touch("/foo.txt")
+        foo_access = user_fs._local_folder_fs.get_access(FsPath("/x/foo.txt"))
+        user_fs._local_folder_fs.clear_manifest(foo_access)
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()
@@ -255,12 +258,14 @@ def test_manifest_not_available(mountpoint_service):
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_get_path_in_mountpoint(base_mountpoint, alice_fs, alice_user_fs, event_bus):
+async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus):
     # Populate a bit the fs first...
     wid = await alice_user_fs.workspace_create("mounted_wksp")
     wid2 = await alice_user_fs.workspace_create("not_mounted_wksp")
-    await alice_fs.touch("/mounted_wksp/bar.txt")
-    await alice_fs.touch("/not_mounted_wksp/foo.txt")
+    workspace1 = alice_user_fs.get_workspace(wid)
+    workspace2 = alice_user_fs.get_workspace(wid2)
+    await workspace1.touch("/bar.txt")
+    await workspace2.touch("/foo.txt")
 
     # Now we can start fuse
     async with mountpoint_manager_factory(

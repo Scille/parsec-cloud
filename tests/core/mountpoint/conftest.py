@@ -7,7 +7,6 @@ import pathlib
 from contextlib import contextmanager
 from inspect import iscoroutinefunction
 
-from parsec.core.fs import FS
 from parsec.utils import start_task
 from parsec.core.mountpoint import mountpoint_manager_factory
 
@@ -97,8 +96,7 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
 
                         await mountpoint_manager.mount_workspace(self.default_workspace_id)
 
-                        fs = FS(user_fs)
-                        task_status.started((user_fs, fs, mountpoint_manager))
+                        task_status.started((user_fs, mountpoint_manager))
                         await trio.sleep_forever()
 
             async with trio.open_nursery() as self._nursery:
