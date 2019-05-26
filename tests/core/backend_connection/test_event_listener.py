@@ -43,26 +43,26 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
 
 
 @pytest.mark.trio
-async def test_subscribe_listen_unsubscribe_vlob_group(
+async def test_subscribe_listen_unsubscribe_realm(
     event_bus, backend, running_backend_listen_events, alice
 ):
-    vlob_group_id = uuid4()
+    realm_id = uuid4()
     src_id = uuid4()
 
     # Subscribe event
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
+        event_bus.send("backend.realm.listen", realm_id=realm_id)
         with trio.fail_after(1.0):
             await spy.wait("backend.listener.restarted")
 
     # Send&listen event
 
     backend.event_bus.send(
-        "vlob_group.updated",
+        "realm.vlobs_updated",
         organization_id=alice.organization_id,
         author="bob@test",
-        id=vlob_group_id,
+        realm_id=realm_id,
         checkpoint=1,
         src_id=src_id,
         src_version=42,
@@ -70,14 +70,14 @@ async def test_subscribe_listen_unsubscribe_vlob_group(
 
     with trio.fail_after(1.0):
         await event_bus.spy.wait(
-            "backend.vlob_group.updated",
-            kwargs={"id": vlob_group_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
+            "backend.realm.vlobs_updated",
+            kwargs={"realm_id": realm_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
         )
 
     # Unsubscribe event
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.vlob_group.unlisten", id=vlob_group_id)
+        event_bus.send("backend.realm.unlisten", realm_id=realm_id)
         with trio.fail_after(1.0):
             await spy.wait("backend.listener.restarted")
 
@@ -85,10 +85,10 @@ async def test_subscribe_listen_unsubscribe_vlob_group(
 
     with event_bus.listen() as spy:
         backend.event_bus.send(
-            "vlob_group.updated",
+            "realm.vlobs_updated",
             organization_id=alice.organization_id,
             author="bob@test",
-            id=vlob_group_id,
+            realm_id=realm_id,
             checkpoint=1,
             src_id=src_id,
             src_version=42,
@@ -98,48 +98,44 @@ async def test_subscribe_listen_unsubscribe_vlob_group(
 
 
 @pytest.mark.trio
-async def test_unlisten_unknown_vlob_group_does_nothing(event_bus, running_backend_listen_events):
-    vlob_group_id = uuid4()
+async def test_unlisten_unknown_realm_does_nothing(event_bus, running_backend_listen_events):
+    realm_id = uuid4()
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.vlob_group.unlisten", id=vlob_group_id)
+        event_bus.send("backend.realm.unlisten", realm_id=realm_id)
         await wait_all_tasks_blocked(cushion=0.01)
 
     assert not spy.assert_events_exactly_occured(
-        [("backend.vlob_group.unlisten", {"id": vlob_group_id})]
+        [("backend.realm.unlisten", {"realm_id": realm_id})]
     )
 
 
 @pytest.mark.trio
-async def test_listen_already_listened_vlob_group_does_nothing(
-    event_bus, running_backend_listen_events
-):
-    vlob_group_id = uuid4()
+async def test_listen_already_listened_realm_does_nothing(event_bus, running_backend_listen_events):
+    realm_id = uuid4()
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
+        event_bus.send("backend.realm.listen", realm_id=realm_id)
         await spy.wait("backend.listener.restarted")
 
     # Second subscribe is useless, event listener shouldn't be restarted
     with event_bus.listen() as spy:
-        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
+        event_bus.send("backend.realm.listen", realm_id=realm_id)
         await wait_all_tasks_blocked(cushion=0.01)
 
-    assert not spy.assert_events_exactly_occured(
-        [("backend.vlob_group.listen", {"id": vlob_group_id})]
-    )
+    assert not spy.assert_events_exactly_occured([("backend.realm.listen", {"realm_id": realm_id})])
 
 
 @pytest.mark.trio
 async def test_backend_switch_offline(
     mock_clock, event_bus, backend_addr, backend, running_backend_listen_events, alice
 ):
-    vlob_group_id = uuid4()
+    realm_id = uuid4()
     src_id = uuid4()
     mock_clock.rate = 1.0
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
+        event_bus.send("backend.realm.listen", realm_id=realm_id)
         await spy.wait("backend.listener.restarted")
 
     # Switch backend offline and wait for according event
@@ -162,10 +158,10 @@ async def test_backend_switch_offline(
 
     with event_bus.listen() as spy:
         backend.event_bus.send(
-            "vlob_group.updated",
+            "realm.vlobs_updated",
             organization_id=alice.organization_id,
             author="bob@test",
-            id=vlob_group_id,
+            realm_id=realm_id,
             checkpoint=1,
             src_id=src_id,
             src_version=42,
@@ -173,6 +169,6 @@ async def test_backend_switch_offline(
 
         with trio.fail_after(1.0):
             await spy.wait(
-                "backend.vlob_group.updated",
-                kwargs={"id": vlob_group_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
+                "backend.realm.vlobs_updated",
+                kwargs={"realm_id": realm_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
             )

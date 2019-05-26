@@ -31,7 +31,7 @@ class RemoteLoader:
         return block
 
     async def load_manifest(self, access: ManifestAccess) -> LocalManifest:
-        args = await self.backend_cmds.vlob_read(access.id)
+        args = await self.backend_cmds.vlob_read(access.encryption_revision, access.id)
         expected_author_id, expected_timestamp, expected_version, blob = args
         author = await self.remote_devices_manager.get_device(expected_author_id)
         raw = decrypt_and_verify_signed_msg_with_secret_key(

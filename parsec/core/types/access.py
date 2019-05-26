@@ -115,6 +115,7 @@ WorkspaceRoleField = RealmRoleField
 class WorkspaceEntry:
     name: str
     access: ManifestAccess = attr.ib(factory=ManifestAccess)
+    encryption_revision: int = 1
     granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     role: Optional[WorkspaceRole] = WorkspaceRole.OWNER
 
@@ -133,6 +134,7 @@ class WorkspaceEntry:
 class WorkspaceEntrySchema(UnknownCheckedSchema):
     name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
     access = fields.Nested(ManifestAccessSchema, required=True)
+    encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
     granted_on = fields.DateTime(required=True)
     role = WorkspaceRoleField(allow_none=True, missing=None)
 

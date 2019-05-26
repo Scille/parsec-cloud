@@ -34,15 +34,15 @@ class BackendEventsManager:
         self.event_bus.connect("backend.realm.listen", self._on_realm_listen)
         self.event_bus.connect("backend.realm.unlisten", self._on_realm_unlisten)
 
-    def _on_realm_listen(self, sender, id):
-        if id in self._subscribed_realms:
+    def _on_realm_listen(self, sender, realm_id):
+        if realm_id in self._subscribed_realms:
             return
-        self._subscribed_realms.add(id)
+        self._subscribed_realms.add(realm_id)
         self._subscribed_realms_changed.set()
 
-    def _on_realm_unlisten(self, sender, id):
+    def _on_realm_unlisten(self, sender, realm_id):
         try:
-            self._subscribed_realms.remove(id)
+            self._subscribed_realms.remove(realm_id)
         except KeyError:
             return
         self._subscribed_realms_changed.set()
@@ -170,7 +170,7 @@ class BackendEventsManager:
             ) as cmds:
                 # Copy `self._subscribed_realms` to avoid concurrent modifications
                 await cmds.events_subscribe(
-                    message_received=True, realm_updated=self._subscribed_realms.copy()
+                    message_received=True, realm_vlobs_updated=self._subscribed_realms.copy()
                 )
 
                 # Given the backend won't notify us for messages that arrived while
@@ -190,10 +190,10 @@ class BackendEventsManager:
             elif rep["event"] == "pinged":
                 self.event_bus.send("backend.pinged", ping=rep["ping"])
 
-            elif rep["event"] == "realm.updated":
+            elif rep["event"] == "realm.vlobs_updated":
                 self.event_bus.send(
-                    "backend.realm.updated",
-                    id=rep["id"],
+                    "backend.realm.vlobs_updated",
+                    realm_id=rep["realm_id"],
                     checkpoint=rep["checkpoint"],
                     src_id=rep["src_id"],
                     src_version=rep["src_version"],

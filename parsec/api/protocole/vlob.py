@@ -40,8 +40,8 @@ vlob_create_serializer = CmdSerializer(VlobCreateReqSchema, VlobCreateRepSchema)
 
 
 class VlobReadReqSchema(BaseReqSchema):
-    vlob_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
+    vlob_id = fields.UUID(required=True)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
 
 

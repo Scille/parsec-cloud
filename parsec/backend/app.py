@@ -32,7 +32,7 @@ from parsec.backend.drivers.postgresql import (
     PGPingComponent,
     PGUserComponent,
     PGMessageComponent,
-    # PGRealmComponent,
+    PGRealmComponent,
     PGVlobComponent,
     PGBlockComponent,
 )
@@ -150,6 +150,7 @@ class BackendApp:
             self.user = PGUserComponent(self.dbh, self.event_bus)
             self.organization = PGOrganizationComponent(self.dbh, self.user)
             self.message = PGMessageComponent(self.dbh)
+            self.realm = PGRealmComponent(self.dbh)
             self.vlob = PGVlobComponent(self.dbh)
             self.ping = PGPingComponent(self.dbh)
             self.blockstore = blockstore_factory(

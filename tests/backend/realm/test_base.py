@@ -28,7 +28,15 @@ async def test_realm_lazy_created_by_new_vlob(backend, alice, alice_backend_sock
     VLOB_ID = UUID("00000000000000000000000000000001")
     REALM_ID = UUID("0000000000000000000000000000000A")
 
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, REALM_ID, NOW, b"v1")
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=REALM_ID,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        timestamp=NOW,
+        blob=b"v1",
+    )
 
     rep = await vlob_poll_changes(alice_backend_sock, REALM_ID, 0)
     assert rep == {"status": "ok", "current_checkpoint": 1, "changes": {VLOB_ID: 1}}

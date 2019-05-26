@@ -93,6 +93,10 @@ class UserFS:
     def user_manifest_access(self) -> ManifestAccess:
         return self.device.user_manifest_access
 
+    @property
+    def user_manifest_encryption_revision(self) -> int:
+        return self.device.user_manifest_encryption_revision
+
     def get_user_manifest(self) -> LocalUserManifest:
         """
         Raises: Nothing !
@@ -180,7 +184,9 @@ class UserFS:
             FSBackendOfflineError
         """
         try:
-            args = await self.backend_cmds.vlob_read(self.user_manifest_access.id, version)
+            # Note encryption_revision is always 1 given we never reencrypt
+            # the user manifest's realm
+            args = await self.backend_cmds.vlob_read(1, self.user_manifest_access.id, version)
             expected_author_id, expected_timestamp, expected_version, blob = args
 
         except BackendNotAvailable as exc:
@@ -317,11 +323,13 @@ class UserFS:
 
         # Sync the vlob with backend
         try:
+            # Note encryption_revision is always 1 given we never reencrypt
+            # the user manifest's realm
             if to_sync_um.base_version == 1:
-                await self.backend_cmds.vlob_create(access.id, access.id, now, ciphered)
+                await self.backend_cmds.vlob_create(access.id, 1, access.id, now, ciphered)
             else:
                 await self.backend_cmds.vlob_update(
-                    access.id, to_sync_um.base_version, now, ciphered
+                    1, access.id, to_sync_um.base_version, now, ciphered
                 )
 
         except (BackendCmdsAlreadyExists, BackendCmdsBadVersion):
@@ -376,7 +384,7 @@ class UserFS:
             now,
         )
         try:
-            await self.backend_cmds.vlob_create(access.id, access.id, now, ciphered)
+            await self.backend_cmds.vlob_create(access.id, 1, access.id, now, ciphered)
 
         except BackendCmdsAlreadyExists:
             # Already synchronized, nothing to do then ;-)

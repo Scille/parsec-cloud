@@ -204,11 +204,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        vlob_id: UUID,
         realm_id: UUID,
+        encryption_revision: int,
+        vlob_id: UUID,
         timestamp: pendulum.Pendulum,
         blob: bytes,
-        encryption_revision: Optional[int] = None,
     ) -> None:
         self._create_realm_if_needed(organization_id, realm_id, author)
 
@@ -228,9 +228,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: UserID,
+        encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
-        encryption_revision: Optional[int] = None,
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
@@ -250,11 +250,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
+        encryption_revision: int,
         vlob_id: UUID,
         version: int,
         timestamp: pendulum.Pendulum,
         blob: bytes,
-        encryption_revision: Optional[int] = None,
     ) -> None:
         vlob = self._get_vlob(organization_id, vlob_id)
 

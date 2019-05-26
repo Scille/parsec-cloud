@@ -210,12 +210,13 @@ async def realm(backend, alice):
     vlob_id = UUID("10000000000000000000000000000000")
 
     await backend.vlob.create(
-        alice.organization_id,
-        alice.device_id,
-        vlob_id,
-        realm_id,
-        Pendulum(2000, 1, 2),
-        b"r:A b:1 v:1",
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm_id,
+        encryption_revision=1,
+        vlob_id=vlob_id,
+        timestamp=Pendulum(2000, 1, 2),
+        blob=b"r:A b:1 v:1",
     )
     return realm_id
 
@@ -224,15 +225,22 @@ async def realm(backend, alice):
 async def vlobs(backend, alice, realm):
     vlob_ids = (UUID("10000000000000000000000000000000"), UUID("20000000000000000000000000000000"))
     await backend.vlob.update(
-        alice.organization_id, alice.device_id, vlob_ids[0], 2, Pendulum(2000, 1, 3), b"r:A b:1 v:2"
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        encryption_revision=1,
+        vlob_id=vlob_ids[0],
+        version=2,
+        timestamp=Pendulum(2000, 1, 3),
+        blob=b"r:A b:1 v:2",
     )
     await backend.vlob.create(
-        alice.organization_id,
-        alice.device_id,
-        vlob_ids[1],
-        realm,
-        Pendulum(2000, 1, 4),
-        b"r:A b:2 v:1",
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm,
+        encryption_revision=1,
+        vlob_id=vlob_ids[1],
+        timestamp=Pendulum(2000, 1, 4),
+        blob=b"r:A b:2 v:1",
     )
     return vlob_ids
 
@@ -248,6 +256,12 @@ async def other_realm(backend, bob):
     vlob_id = UUID("30000000000000000000000000000000")
 
     await backend.vlob.create(
-        bob.organization_id, bob.device_id, vlob_id, realm_id, Pendulum(2000, 1, 2), b"r:B b:10 v:1"
+        organization_id=bob.organization_id,
+        author=bob.device_id,
+        realm_id=realm_id,
+        encryption_revision=1,
+        vlob_id=vlob_id,
+        timestamp=Pendulum(2000, 1, 2),
+        blob=b"r:B b:10 v:1",
     )
     return realm_id

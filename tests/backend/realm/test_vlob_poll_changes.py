@@ -22,8 +22,24 @@ YET_ANOTHER_REALM_ID = UUID("0000000000000000000000000000000C")
 
 @pytest.mark.trio
 async def test_realm_updated_by_vlob(backend, alice, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, REALM_ID, NOW, b"v1")
-    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, NOW, b"v2")
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=REALM_ID,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        timestamp=NOW,
+        blob=b"v1",
+    )
+    await backend.vlob.update(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        version=2,
+        timestamp=NOW,
+        blob=b"v2",
+    )
 
     for last_checkpoint in (0, 1):
         rep = await vlob_poll_changes(alice_backend_sock, REALM_ID, last_checkpoint)
@@ -32,8 +48,24 @@ async def test_realm_updated_by_vlob(backend, alice, alice_backend_sock):
 
 @pytest.mark.trio
 async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, REALM_ID, NOW, b"v1")
-    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, NOW, b"v2")
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=REALM_ID,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        timestamp=NOW,
+        blob=b"v1",
+    )
+    await backend.vlob.update(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        version=2,
+        timestamp=NOW,
+        blob=b"v2",
+    )
 
     rep = await vlob_poll_changes(alice_backend_sock, REALM_ID, 2)
     assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {}}
@@ -50,7 +82,15 @@ async def test_vlob_poll_changes_not_found(alice_backend_sock):
 
 @pytest.mark.trio
 async def test_vlob_poll_changes(backend, alice, bob, alice_backend_sock, bob_backend_sock):
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, REALM_ID, NOW, b"v1")
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=REALM_ID,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        timestamp=NOW,
+        blob=b"v1",
+    )
 
     # At first only Alice is allowed
 
@@ -94,7 +134,15 @@ async def test_vlob_poll_changes(backend, alice, bob, alice_backend_sock, bob_ba
 @pytest.mark.trio
 async def test_realm_updated_event(backend, alice_backend_sock, alice, alice2):
     # Not listened events
-    await backend.vlob.create(alice.organization_id, alice.device_id, VLOB_ID, REALM_ID, NOW, b"v1")
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=REALM_ID,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        timestamp=NOW,
+        blob=b"v1",
+    )
 
     # Start listening events
     await events_subscribe(alice_backend_sock, realm_vlobs_updated=[REALM_ID, OTHER_REALM_ID])
@@ -103,10 +151,32 @@ async def test_realm_updated_event(backend, alice_backend_sock, alice, alice2):
     with backend.event_bus.listen() as spy:
 
         await backend.vlob.create(
-            alice.organization_id, alice2.device_id, OTHER_VLOB_ID, OTHER_REALM_ID, NOW, b"v1"
+            organization_id=alice.organization_id,
+            author=alice2.device_id,
+            realm_id=OTHER_REALM_ID,
+            encryption_revision=1,
+            vlob_id=OTHER_VLOB_ID,
+            timestamp=NOW,
+            blob=b"v1",
         )
-        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 2, NOW, b"v2")
-        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 3, NOW, b"v3")
+        await backend.vlob.update(
+            organization_id=alice.organization_id,
+            author=alice2.device_id,
+            encryption_revision=1,
+            vlob_id=VLOB_ID,
+            version=2,
+            timestamp=NOW,
+            blob=b"v2",
+        )
+        await backend.vlob.update(
+            organization_id=alice.organization_id,
+            author=alice2.device_id,
+            encryption_revision=1,
+            vlob_id=VLOB_ID,
+            version=3,
+            timestamp=NOW,
+            blob=b"v3",
+        )
 
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
@@ -188,7 +258,15 @@ async def test_realm_updated_event(backend, alice_backend_sock, alice, alice2):
 
     # Ignore self events
 
-    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 4, NOW, b"v4")
+    await backend.vlob.update(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        encryption_revision=1,
+        vlob_id=VLOB_ID,
+        version=4,
+        timestamp=NOW,
+        blob=b"v4",
+    )
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
@@ -196,15 +274,22 @@ async def test_realm_updated_event(backend, alice_backend_sock, alice, alice2):
     # Realm id not subscribed to
 
     await backend.vlob.create(
-        alice.organization_id,
-        alice2.device_id,
-        YET_ANOTHER_VLOB_ID,
-        YET_ANOTHER_REALM_ID,
-        NOW,
-        b"v1",
+        organization_id=alice.organization_id,
+        author=alice2.device_id,
+        realm_id=YET_ANOTHER_REALM_ID,
+        encryption_revision=1,
+        vlob_id=YET_ANOTHER_VLOB_ID,
+        timestamp=NOW,
+        blob=b"v1",
     )
     await backend.vlob.update(
-        alice.organization_id, alice2.device_id, YET_ANOTHER_VLOB_ID, 2, NOW, b"v2"
+        organization_id=alice.organization_id,
+        author=alice2.device_id,
+        encryption_revision=1,
+        vlob_id=YET_ANOTHER_VLOB_ID,
+        version=2,
+        timestamp=NOW,
+        blob=b"v2",
     )
 
     rep = await events_listen_nowait(alice_backend_sock)

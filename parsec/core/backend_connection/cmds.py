@@ -111,7 +111,7 @@ async def ping(transport: Transport, ping: str) -> str:
 async def events_subscribe(
     transport: Transport,
     message_received: bool = False,
-    realm_updated: Iterable[UUID] = (),
+    realm_vlobs_updated: Iterable[UUID] = (),
     pinged: Iterable[str] = (),
 ) -> None:
     await _send_cmd(
@@ -119,7 +119,7 @@ async def events_subscribe(
         events_subscribe_serializer,
         cmd="events_subscribe",
         message_received=message_received,
-        realm_updated=realm_updated,
+        realm_vlobs_updated=realm_vlobs_updated,
         pinged=pinged,
     )
 
@@ -159,13 +159,19 @@ async def message_get(transport: Transport, offset: int) -> List[Tuple[int, Devi
 
 
 async def vlob_create(
-    transport: Transport, realm_id: UUID, vlob_id: UUID, timestamp: pendulum.Pendulum, blob: bytes
+    transport: Transport,
+    realm_id: UUID,
+    encryption_revision: int,
+    vlob_id: UUID,
+    timestamp: pendulum.Pendulum,
+    blob: bytes,
 ) -> None:
     await _send_cmd(
         transport,
         vlob_create_serializer,
         cmd="vlob_create",
         realm_id=realm_id,
+        encryption_revision=encryption_revision,
         vlob_id=vlob_id,
         timestamp=timestamp,
         blob=blob,
@@ -173,21 +179,32 @@ async def vlob_create(
 
 
 async def vlob_read(
-    transport: Transport, vlob_id: UUID, version: int = None
+    transport: Transport, encryption_revision: int, vlob_id: UUID, version: int = None
 ) -> Tuple[DeviceID, pendulum.Pendulum, int, bytes]:
     rep = await _send_cmd(
-        transport, vlob_read_serializer, cmd="vlob_read", vlob_id=vlob_id, version=version
+        transport,
+        vlob_read_serializer,
+        cmd="vlob_read",
+        encryption_revision=encryption_revision,
+        vlob_id=vlob_id,
+        version=version,
     )
     return rep["author"], rep["timestamp"], rep["version"], rep["blob"]
 
 
 async def vlob_update(
-    transport: Transport, vlob_id: UUID, version: int, timestamp: pendulum.Pendulum, blob: bytes
+    transport: Transport,
+    encryption_revision: int,
+    vlob_id: UUID,
+    version: int,
+    timestamp: pendulum.Pendulum,
+    blob: bytes,
 ) -> None:
     await _send_cmd(
         transport,
         vlob_update_serializer,
         cmd="vlob_update",
+        encryption_revision=encryption_revision,
         vlob_id=vlob_id,
         version=version,
         timestamp=timestamp,

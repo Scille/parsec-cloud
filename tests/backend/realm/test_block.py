@@ -16,7 +16,15 @@ BLOCK_DATA = b"Hodi ho !"
 
 async def _create_realm(backend, user, vlob_id, realm_id):
     now = pendulum.now()
-    await backend.vlob.create(user.organization_id, user.device_id, vlob_id, realm_id, now, b"")
+    await backend.vlob.create(
+        organization_id=user.organization_id,
+        author=user.device_id,
+        realm_id=realm_id,
+        encryption_revision=1,
+        vlob_id=vlob_id,
+        timestamp=now,
+        blob=b"",
+    )
     return realm_id
 
 
