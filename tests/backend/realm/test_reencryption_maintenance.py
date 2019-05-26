@@ -111,6 +111,13 @@ async def test_finish_not_in_maintenance(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
+async def test_finish_while_reencryption_not_done(alice_backend_sock, realm):
+    await realm_start_reencryption_maintenance(alice_backend_sock, realm, 2, {"alice": b"wathever"})
+    rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2, check_rep=False)
+    assert rep == {"status": "maintenance_error", "reason": "Reencryption operations are not over"}
+
+
+@pytest.mark.trio
 async def test_reencrypt_and_finish_check_access_rights(
     backend, alice_backend_sock, bob_backend_sock, alice, bob, realm, vlobs
 ):
@@ -141,7 +148,7 @@ async def test_reencrypt_and_finish_check_access_rights(
     async def _finish():
         await realm_finish_reencryption_maintenance(alice_backend_sock, realm, encryption_revision)
 
-    async def _assert_bob_access(allowed):
+    async def _assert_bob_maintenance_access(allowed):
         if allowed:
             expected_rep = {"status": "ok"}
         else:
@@ -157,7 +164,7 @@ async def test_reencrypt_and_finish_check_access_rights(
 
     # User not part of the realm
     await _ready_to_finish()
-    await _assert_bob_access(allowed=False)
+    await _assert_bob_maintenance_access(allowed=False)
     await _finish()
 
     # User part of the realm with various role
@@ -167,7 +174,7 @@ async def test_reencrypt_and_finish_check_access_rights(
             alice.organization_id, alice.device_id, realm, bob.user_id, not_allowed_role
         )
         await _ready_to_finish()
-        await _assert_bob_access(allowed=False)
+        await _assert_bob_maintenance_access(allowed=False)
         await _finish()
 
     # Finally, just make sure owner can do it
@@ -175,7 +182,7 @@ async def test_reencrypt_and_finish_check_access_rights(
         alice.organization_id, alice.device_id, realm, bob.user_id, RealmRole.OWNER
     )
     await _ready_to_finish()
-    await _assert_bob_access(allowed=True)
+    await _assert_bob_maintenance_access(allowed=True)
 
 
 @pytest.mark.trio

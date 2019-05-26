@@ -9,10 +9,11 @@
 CREATE TABLE vlob (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
+    encryption_revision INTEGER NOT NULL,
     realm INTEGER REFERENCES realm (_id),
     vlob_id UUID NOT NULL,
 
-    UNIQUE(organization, vlob_id)
+    UNIQUE(organization, encryption_revision, vlob_id)
 );
 
 

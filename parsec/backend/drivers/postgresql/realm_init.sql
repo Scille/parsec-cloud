@@ -40,7 +40,7 @@ CREATE TABLE realm_user_role (
 -------------------------------------------------------
 
 
-CREATE FUNCTION user_can_do_realm_maintenance(userinternalid INTEGER, realminternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_has_realm_maintenance_access(userinternalid INTEGER, realminternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
@@ -51,6 +51,39 @@ BEGIN
             realm = realminternalid
             AND user_ = userinternalid
             AND role = 'OWNER'
+        LIMIT 1
+    );
+END;
+$$ LANGUAGE plpgsql STABLE STRICT;
+
+
+CREATE FUNCTION user_has_realm_read_access(userinternalid INTEGER, realminternalid INTEGER) RETURNS BOOLEAN AS $$
+DECLARE
+BEGIN
+    RETURN EXISTS (
+        SELECT
+            true
+        FROM realm_user_role
+        WHERE
+            realm = realminternalid
+            AND user_ = userinternalid
+        LIMIT 1
+    );
+END;
+$$ LANGUAGE plpgsql STABLE STRICT;
+
+
+CREATE FUNCTION user_has_realm_write_access(userinternalid INTEGER, realminternalid INTEGER) RETURNS BOOLEAN AS $$
+DECLARE
+BEGIN
+    RETURN EXISTS (
+        SELECT
+            true
+        FROM realm_user_role
+        WHERE
+            realm = realminternalid
+            AND user_ = userinternalid
+            AND role != 'READER'
         LIMIT 1
     );
 END;

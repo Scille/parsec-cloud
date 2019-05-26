@@ -48,11 +48,14 @@ class RealmMaintenanceError(RealmError):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStatus:
-    in_maintenance: bool
     maintenance_type: MaintenanceType
     maintenance_started_on: Optional[DeviceID]
     maintenance_started_by: Optional[pendulum.Pendulum]
     encryption_revision: int
+
+    @property
+    def in_maintenance(self) -> bool:
+        return bool(self.maintenance_type)
 
 
 class BaseRealmComponent:

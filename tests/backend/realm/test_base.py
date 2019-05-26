@@ -6,12 +6,31 @@ from pendulum import Pendulum
 
 from parsec.api.protocole import RealmRole
 
-from tests.backend.realm.conftest import realm_status, realm_get_roles, vlob_poll_changes
+from tests.backend.realm.conftest import (
+    realm_status,
+    realm_get_roles,
+    realm_update_roles,
+    vlob_poll_changes,
+)
 
 
 @pytest.mark.trio
-async def test_status(backend, alice_backend_sock, realm):
+async def test_status(backend, bob_backend_sock, alice_backend_sock, bob, realm):
     rep = await realm_status(alice_backend_sock, realm)
+    assert rep == {
+        "status": "ok",
+        "in_maintenance": False,
+        "maintenance_type": None,
+        "maintenance_started_by": None,
+        "maintenance_started_on": None,
+        "encryption_revision": 1,
+    }
+    # Cheap test on no access
+    rep = await realm_status(bob_backend_sock, realm)
+    assert rep == {"status": "not_allowed"}
+    # Also test lesser role have access
+    await realm_update_roles(alice_backend_sock, realm, bob.user_id, RealmRole.READER)
+    rep = await realm_status(bob_backend_sock, realm)
     assert rep == {
         "status": "ok",
         "in_maintenance": False,

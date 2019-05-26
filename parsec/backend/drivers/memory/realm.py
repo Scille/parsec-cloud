@@ -25,7 +25,7 @@ from parsec.backend.drivers.memory.message import MemoryMessageComponent
 
 @attr.s
 class Realm:
-    status: RealmStatus = attr.ib(factory=lambda: RealmStatus(False, None, None, None, 1))
+    status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
     checkpoint: int = attr.ib(default=0)
     roles: Dict[UserID, RealmRole] = attr.ib(factory=dict)
 
@@ -136,7 +136,6 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         timestamp = pendulum.now()
         realm.status = RealmStatus(
-            in_maintenance=True,
             maintenance_type=MaintenanceType.REENCRYPTION,
             maintenance_started_on=timestamp,
             maintenance_started_by=author,
@@ -172,7 +171,6 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmMaintenanceError("Reencryption operations are not over")
 
         realm.status = RealmStatus(
-            in_maintenance=False,
             maintenance_type=None,
             maintenance_started_on=None,
             maintenance_started_by=None,
