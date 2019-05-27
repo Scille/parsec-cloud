@@ -264,6 +264,10 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
+            creator_user, creator_device = await self.get_user_with_device(
+                client_ctx.organization_id, invitation.creator
+            )
+
             user, trustchain = await self.get_user_with_trustchain(
                 client_ctx.organization_id, invitation.creator.user_id
             )
@@ -274,7 +278,7 @@ class BaseUserComponent:
         return user_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
-                "user_id": user.user_id,
+                "device_certificate": creator_device.device_certificate,
                 "user_certificate": user.user_certificate,
                 "trustchain": trustchain,
             }
@@ -458,6 +462,10 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
+            creator_user, creator_device = await self.get_user_with_device(
+                client_ctx.organization_id, invitation.creator
+            )
+
             user, trustchain = await self.get_user_with_trustchain(
                 client_ctx.organization_id, invitation.creator.user_id
             )
@@ -468,7 +476,7 @@ class BaseUserComponent:
         return device_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
-                "user_id": user.user_id,
+                "device_certificate": creator_device.device_certificate,
                 "user_certificate": user.user_certificate,
                 "trustchain": trustchain,
             }
