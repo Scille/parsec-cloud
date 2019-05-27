@@ -120,34 +120,34 @@ def test_merge_folder_manifests_with_a_placeholder():
 
 
 @pytest.mark.trio
-async def test_folder_sync_transaction(sync_transactions, entry_transactions):
-    folder_sync = sync_transactions.folder_sync
+async def test_synchronization_step_transaction(sync_transactions, entry_transactions):
+    synchronization_step = sync_transactions.synchronization_step
     access = entry_transactions.get_workspace_entry().access
 
     # Sync a placeholder
-    manifest = await folder_sync(access)
+    manifest = await synchronization_step(access)
 
     # Acknowledge a successful synchronization
-    assert await folder_sync(access, manifest) is None
+    assert await synchronization_step(access, manifest) is None
 
     # Local change
     a_id = await entry_transactions.folder_create(FsPath("/a"))
 
     # Sync parent with a placeholder child
-    manifest = await folder_sync(access)
+    manifest = await synchronization_step(access)
     children = []
-    async for child in sync_transactions.placeholder_children(manifest):
+    for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
     a_access, = children
     assert a_access.id == a_id
 
     # Sync child
-    a_manifest = await folder_sync(a_access)
-    assert await folder_sync(a_access, a_manifest) is None
+    a_manifest = await synchronization_step(a_access)
+    assert await synchronization_step(a_access, a_manifest) is None
 
     # Acknowledge the manifest
     assert sorted(manifest.children) == ["a"]
-    assert await folder_sync(access, manifest) is None
+    assert await synchronization_step(access, manifest) is None
 
     # Local change
     b_id = await entry_transactions.folder_create(FsPath("/b"))
@@ -157,17 +157,17 @@ async def test_folder_sync_transaction(sync_transactions, entry_transactions):
     manifest = manifest.evolve(version=5, children=children, author="b@b")
 
     # Sync parent with a placeholder child
-    manifest = await folder_sync(access, manifest)
+    manifest = await synchronization_step(access, manifest)
     children = []
-    async for child in sync_transactions.placeholder_children(manifest):
+    for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
     b_access, = children
     assert b_access.id == b_id
 
     # Sync child
-    b_manifest = await folder_sync(b_access)
-    assert await folder_sync(b_access, b_manifest) is None
+    b_manifest = await synchronization_step(b_access)
+    assert await synchronization_step(b_access, b_manifest) is None
 
     # Acknowledge the manifest
     assert sorted(manifest.children) == ["a", "b", "c"]
-    assert await folder_sync(access, manifest) is None
+    assert await synchronization_step(access, manifest) is None

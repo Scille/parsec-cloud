@@ -164,7 +164,7 @@ class SyncTransactions:
 
     # Public read-only helpers
 
-    async def placeholder_children(self, remote_manifest: Manifest) -> Iterator[Access]:
+    def get_placeholder_children(self, remote_manifest: Manifest) -> Iterator[Access]:
         # Check children placeholder
         for child_access in remote_manifest.children.values():
             try:
@@ -174,7 +174,7 @@ class SyncTransactions:
             if child_manifest.is_placeholder:
                 yield child_access
 
-    async def minimal_sync(self, access: Access) -> Optional[Manifest]:
+    async def get_minimal_remote_manifest(self, access: Access) -> Optional[Manifest]:
         manifest = self.local_storage.get_manifest(access)
         if not manifest.is_placeholder:
             return None
@@ -186,7 +186,7 @@ class SyncTransactions:
 
     # Atomic transactions
 
-    async def folder_sync(
+    async def synchronization_step(
         self, access: Access, remote_manifest: Optional[FolderManifest] = None
     ) -> Optional[FolderManifest]:
 
