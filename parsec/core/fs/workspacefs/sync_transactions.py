@@ -118,7 +118,7 @@ def merge_folder_manifests(
         return local_manifest
 
     # Only the remote has changed
-    if remote_version > local_version and not local_manifest.need_sync:
+    if not local_manifest.need_sync:
         return remote_manifest.to_local(local_manifest.author)
 
     # Both the remote and the local have changed
@@ -128,7 +128,7 @@ def merge_folder_manifests(
     if remote_manifest == local_manifest.to_remote().evolve(version=remote_version):
         return remote_manifest.to_local(local_manifest.author)
 
-    # Some of the local changes have been updated by our device
+    # The remote changes are ours: no reason to risk a meaningless conflict
     if remote_manifest.author == local_manifest.author:
         return local_manifest.evolve(is_placeholder=False, base_version=remote_version)
 
@@ -204,8 +204,19 @@ class SyncTransactions:
                 local_manifest, base_manifest, remote_manifest
             )
 
+            # Extract authors
+            local_author = local_manifest.author
+            base_author = local_author if base_manifest is None else base_manifest.author
+            remote_author = base_author if remote_manifest is None else remote_manifest.author
+
+            # Extract versions
+            local_version = local_manifest.base_version
+            new_local_version = new_local_manifest.base_version
+            base_version = 0 if base_manifest is None else base_manifest.version
+            remote_version = base_version if remote_manifest is None else remote_manifest.version
+
             # Set the new base manifest
-            if remote_manifest is not None and remote_manifest != base_manifest:
+            if base_version != remote_version:
                 self.local_storage.set_base_manifest(access, remote_manifest)
 
             # Set the new local manifest
@@ -213,10 +224,7 @@ class SyncTransactions:
                 self.local_storage.set_manifest(access, new_local_manifest)
 
             # Send downsynced event
-            if (
-                local_manifest.base_version != new_local_manifest.base_version
-                and remote_manifest.author != new_local_manifest.author
-            ):
+            if local_version != new_local_version and remote_author != local_author:
                 self._send_event("fs.entry.downsynced", id=access.id)
 
             # Send synced event
