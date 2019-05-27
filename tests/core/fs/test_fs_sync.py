@@ -6,6 +6,7 @@ from unittest.mock import ANY
 
 from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess
 from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.fs.exceptions import FSBackendOfflineError
 
 from tests.common import freeze_time, create_shared_workspace
 
@@ -516,36 +517,33 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
 
 
 @pytest.mark.trio
-@pytest.mark.skip  # TODO: rewrite this test
-async def test_create_already_existing_folder_vlob(running_backend, alice_fs, alice2_fs):
+async def test_create_already_existing_folder_vlob(running_backend, alice_user_fs, alice2_user_fs):
+
     # First create data locally
     with freeze_time("2000-01-02"):
-        w_id = await alice_fs.workspace_create("/w")
-        await alice_fs.folder_create("/w/x")
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+        workspace = alice_user_fs.get_workspace(wid)
+        await workspace.mkdir("/x")
 
-    vanilla_backend_vlob_create = alice_fs._syncer._backend_vlob_create
+    remote_loader = workspace.remote_loader
+    original_vlob_create = remote_loader._vlob_create
 
-    async def mocked_backend_vlob_create(*args, **kwargs):
-        await vanilla_backend_vlob_create(*args, **kwargs)
-        raise BackendNotAvailable()
+    async def mocked_vlob_create(*args, **kwargs):
+        await original_vlob_create(*args, **kwargs)
+        raise FSBackendOfflineError
 
-    alice_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
+    remote_loader._vlob_create = mocked_vlob_create
 
-    with pytest.raises(BackendNotAvailable):
-        await alice_fs.sync("/w")
+    with pytest.raises(FSBackendOfflineError):
+        await workspace.sync("/")
 
-    alice_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
-    await alice_fs.sync("/w")
+    remote_loader._vlob_create = original_vlob_create
+    await workspace.sync("/")
 
-    stat = await alice_fs.stat("/w")
-    assert stat == {
+    info = await workspace.path_info("/")
+    assert info == {
         "type": "folder",
-        "id": w_id,
-        "is_folder": True,
-        "size": 0,
-        "admin_right": True,
-        "read_right": True,
-        "write_right": True,
+        "id": wid,
         "base_version": 2,
         "is_placeholder": False,
         "need_sync": False,
@@ -554,9 +552,10 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_fs, al
         "children": ["x"],
     }
 
-    await alice2_fs.sync("/")
-    stat2 = await alice2_fs.stat("/w")
-    assert stat == stat2
+    workspace2 = alice2_user_fs.get_workspace(wid)
+    await workspace2.sync("/")
+    info2 = await workspace2.path_info("/")
+    assert info == info2
 
 
 @pytest.mark.trio
