@@ -71,7 +71,7 @@ async def test_device_get_invitation_creator_ok(
         )
     assert rep == {
         "status": "ok",
-        "user_id": alice.user_id,
+        "device_certificate": binder.certificates_store.get_device(alice),
         "user_certificate": binder.certificates_store.get_user(alice),
         "trustchain": [],
     }
@@ -102,7 +102,7 @@ async def test_device_get_invitation_creator_with_trustchain_ok(
     rep["trustchain"] = sorted(rep["trustchain"], key=lambda x: x["device_id"])
     assert rep == {
         "status": "ok",
-        "user_id": mike1.user_id,
+        "device_certificate": certificates_store.get_device(mike1),
         "user_certificate": certificates_store.get_user(mike1),
         "trustchain": [
             {
