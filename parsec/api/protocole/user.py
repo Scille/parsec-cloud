@@ -83,8 +83,8 @@ class UserGetInvitationCreatorReqSchema(BaseReqSchema):
 
 
 class UserGetInvitationCreatorRepSchema(BaseRepSchema):
-    user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    user_certificate = fields.Bytes(required=True)
     trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
 
 
@@ -149,8 +149,8 @@ class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
 
 
 class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
-    user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    user_certificate = fields.Bytes(required=True)
     trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
 
 
