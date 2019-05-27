@@ -14,8 +14,6 @@ async def shared_workspaces(alice_user_fs, bob_user_fs, running_backend):
     wid = await create_shared_workspace("w", alice_user_fs, bob_user_fs)
     alice_workspace = alice_user_fs.get_workspace(wid)
     bob_workspace = bob_user_fs.get_workspace(wid)
-    await alice_workspace.sync("/")
-    await bob_workspace.sync("/")
     return alice_workspace, bob_workspace
 
 
