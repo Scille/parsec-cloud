@@ -398,7 +398,7 @@ async def organization_bootstrap(
 
 async def user_get_invitation_creator(
     transport: Transport, invited_user_id: UserID
-) -> Tuple[UnverifiedRemoteUser, List[UnverifiedRemoteDevice]]:
+) -> Tuple[UnverifiedRemoteDevice, UnverifiedRemoteUser, List[UnverifiedRemoteDevice]]:
     rep = await _send_cmd(
         transport,
         user_get_invitation_creator_serializer,
@@ -406,6 +406,7 @@ async def user_get_invitation_creator(
         invited_user_id=invited_user_id,
     )
 
+    device = UnverifiedRemoteDevice(device_certificate=rep["device_certificate"])
     user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
     trustchain = [
         UnverifiedRemoteDevice(
@@ -414,12 +415,12 @@ async def user_get_invitation_creator(
         )
         for d in rep["trustchain"]
     ]
-    return (user, trustchain)
+    return (device, user, trustchain)
 
 
 async def user_claim(
     transport: Transport, invited_user_id: UserID, encrypted_claim: bytes
-) -> bytes:
+) -> UnverifiedRemoteUser:
     rep = await _send_cmd(
         transport,
         user_claim_serializer,
@@ -427,12 +428,12 @@ async def user_claim(
         invited_user_id=invited_user_id,
         encrypted_claim=encrypted_claim,
     )
-    return rep["user_certificate"]
+    return UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
 
 
 async def device_get_invitation_creator(
     transport: Transport, invited_device_id: DeviceID
-) -> Tuple[UnverifiedRemoteUser, List[UnverifiedRemoteDevice]]:
+) -> Tuple[UnverifiedRemoteDevice, UnverifiedRemoteUser, List[UnverifiedRemoteDevice]]:
     rep = await _send_cmd(
         transport,
         device_get_invitation_creator_serializer,
@@ -440,6 +441,7 @@ async def device_get_invitation_creator(
         invited_device_id=invited_device_id,
     )
 
+    device = UnverifiedRemoteDevice(device_certificate=rep["device_certificate"])
     user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
     trustchain = [
         UnverifiedRemoteDevice(
@@ -448,7 +450,7 @@ async def device_get_invitation_creator(
         )
         for d in rep["trustchain"]
     ]
-    return (user, trustchain)
+    return (device, user, trustchain)
 
 
 async def device_claim(
