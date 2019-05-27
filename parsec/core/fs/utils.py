@@ -34,7 +34,7 @@ def is_folderish_manifest(manifest: Manifest) -> bool:
             LocalFolderManifest,
             WorkspaceManifest,
             LocalWorkspaceManifest,
-            UserManifest,
+            UserManifest,  # TODO: remove when migration is over
             LocalUserManifest,
         ),
     )

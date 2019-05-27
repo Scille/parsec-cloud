@@ -87,7 +87,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
         with freeze_time("2000-01-03"):
             await workspace.sync("/")
 
-    if type == "file":
+    if type == "file":  # TODO: file and folder should generate the same events after the migration
         expected_events = [
             ("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 3))
         ]
