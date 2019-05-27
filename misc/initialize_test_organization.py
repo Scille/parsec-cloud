@@ -111,7 +111,7 @@ async def amain(
         root_verify_key = root_signing_key.verify_key
         organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
 
-        alice_device = generate_new_device(alice_device_id, organization_addr)
+        alice_device = generate_new_device(alice_device_id, organization_addr, True)
 
         save_device_with_password(config_dir, alice_device, password, force=force)
 
