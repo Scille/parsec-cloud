@@ -299,7 +299,12 @@ async def test_realm_updated_event(backend, alice_backend_sock, alice, alice2):
 @pytest.mark.trio
 async def test_vlob_poll_changes_during_maintenance(backend, alice, alice_backend_sock, realm):
     await backend.realm.start_reencryption_maintenance(
-        alice.organization_id, alice.device_id, realm, 2, {alice.user_id: b"whatever"}
+        alice.organization_id,
+        alice.device_id,
+        realm,
+        2,
+        {alice.user_id: b"whatever"},
+        Pendulum(2000, 1, 2),
     )
 
     # Realm under maintenance are simply skipped

@@ -253,11 +253,11 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        vlob_id: UUID,
         realm_id: UUID,
+        encryption_revision: int,
+        vlob_id: UUID,
         timestamp: pendulum.Pendulum,
         blob: bytes,
-        encryption_revision: Optional[int] = None,
     ) -> None:
         """
         Raises:
@@ -271,9 +271,9 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
+        encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
-        encryption_revision: Optional[int] = None,
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         """
         Raises:
@@ -289,10 +289,11 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
+        encryption_revision: int,
         vlob_id: UUID,
         version: int,
+        timestamp: pendulum.Pendulum,
         blob: bytes,
-        encryption_revision: Optional[int] = None,
     ) -> None:
         """
         Raises:

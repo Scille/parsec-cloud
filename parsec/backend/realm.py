@@ -126,7 +126,7 @@ class BaseRealmComponent:
 
         try:
             await self.start_reencryption_maintenance(
-                client_ctx.organization_id, client_ctx.device_id, **msg
+                client_ctx.organization_id, client_ctx.device_id, **msg, timestamp=pendulum.now()
             )
 
         except RealmAccessError:
@@ -228,6 +228,7 @@ class BaseRealmComponent:
         realm_id: UUID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
+        timestamp: pendulum.Pendulum,
     ) -> None:
         """
         Raises:

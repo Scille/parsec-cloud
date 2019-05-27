@@ -1,5 +1,6 @@
 import pytest
 from uuid import UUID
+from pendulum import Pendulum
 
 from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_group_check
 
@@ -46,7 +47,12 @@ async def test_group_check_other_organization(backend, sock_from_other_organizat
 @pytest.mark.trio
 async def test_group_check_during_maintenance(backend, alice, alice_backend_sock, realm, vlobs):
     await backend.realm.start_reencryption_maintenance(
-        alice.organization_id, alice.device_id, realm, 2, {alice.user_id: b"whatever"}
+        alice.organization_id,
+        alice.device_id,
+        realm,
+        2,
+        {alice.user_id: b"whatever"},
+        Pendulum(2000, 1, 2),
     )
 
     # Realm under maintenance are simply skipped

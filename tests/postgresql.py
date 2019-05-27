@@ -73,7 +73,7 @@ TRUNCATE TABLE
 
     realm,
     realm_user_role,
-    vlob,
+    vlob_encryption_revision,
     vlob_atom,
     realm_vlob_update,
 

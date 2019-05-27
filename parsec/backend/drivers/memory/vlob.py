@@ -227,7 +227,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     async def read(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,

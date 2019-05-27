@@ -3,11 +3,12 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocole import RealmRole, MaintenanceType
 
 from tests.common import freeze_time
 from tests.backend.test_message import message_get
 from tests.backend.realm.conftest import (
+    realm_status,
     realm_start_reencryption_maintenance,
     realm_finish_reencryption_maintenance,
     vlob_read,
@@ -43,6 +44,21 @@ async def test_start_bad_per_participant_message(backend, alice_backend_sock, al
             "status": "maintenance_error",
             "reason": "Realm participants and message recipients mismatch",
         }
+
+
+@pytest.mark.trio
+async def test_start_reencryption_update_status(alice_backend_sock, alice, realm):
+    with freeze_time("2000-01-02"):
+        await realm_start_reencryption_maintenance(alice_backend_sock, realm, 2, {"alice": b"foo"})
+    rep = await realm_status(alice_backend_sock, realm)
+    assert rep == {
+        "status": "ok",
+        "encryption_revision": 2,
+        "in_maintenance": True,
+        "maintenance_started_by": alice.device_id,
+        "maintenance_started_on": Pendulum(2000, 1, 2),
+        "maintenance_type": MaintenanceType.REENCRYPTION,
+    }
 
 
 @pytest.mark.trio
@@ -111,8 +127,19 @@ async def test_finish_not_in_maintenance(alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-async def test_finish_while_reencryption_not_done(alice_backend_sock, realm):
+async def test_finish_while_reencryption_not_done(alice_backend_sock, realm, vlobs):
     await realm_start_reencryption_maintenance(alice_backend_sock, realm, 2, {"alice": b"wathever"})
+    rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2, check_rep=False)
+    assert rep == {"status": "maintenance_error", "reason": "Reencryption operations are not over"}
+
+    # Also try with part of the job done
+    rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=2)
+    assert rep["status"] == "ok"
+    assert len(rep["batch"]) == 2
+    for entry in rep["batch"]:
+        entry["blob"] = f"{entry['vlob_id']}::{entry['version']} reencrypted".encode()
+    await vlob_maintenance_save_reencryption_batch(alice_backend_sock, realm, 2, rep["batch"])
+
     rep = await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2, check_rep=False)
     assert rep == {"status": "maintenance_error", "reason": "Reencryption operations are not over"}
 

@@ -12,7 +12,7 @@ CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     realm_id UUID NOT NULL,
-    encryption_revision int NOT NULL,
+    encryption_revision INTEGER NOT NULL,
     -- NULL if not currently in maintenance
     maintenance_started_by INTEGER REFERENCES device (_id),
     maintenance_started_on TIMESTAMPTZ,
@@ -113,6 +113,19 @@ BEGIN
             realm_id
         FROM realm
         WHERE _id = realminternalid
+    );
+END;
+$$ LANGUAGE plpgsql STABLE STRICT;
+
+
+CREATE FUNCTION is_realm_in_maintenance(realminternalid INTEGER) RETURNS BOOLEAN AS $$
+DECLARE
+BEGIN
+    RETURN (
+        SELECT maintenance_type IS NOT NULL
+        FROM realm
+        WHERE _id = realminternalid
+            
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;

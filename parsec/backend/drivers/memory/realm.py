@@ -123,6 +123,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_id: UUID,
         encryption_revision: int,
         per_participant_message: Dict[UserID, bytes],
+        timestamp: pendulum.Pendulum,
     ) -> None:
         realm = self._get_realm(organization_id, realm_id)
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
@@ -134,7 +135,6 @@ class MemoryRealmComponent(BaseRealmComponent):
         if per_participant_message.keys() ^ realm.roles.keys():
             raise RealmMaintenanceError("Realm participants and message recipients mismatch")
 
-        timestamp = pendulum.now()
         realm.status = RealmStatus(
             maintenance_type=MaintenanceType.REENCRYPTION,
             maintenance_started_on=timestamp,

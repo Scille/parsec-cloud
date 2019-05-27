@@ -332,7 +332,12 @@ async def test_block_check_other_organization(
 @pytest.mark.trio
 async def test_access_during_maintenance(backend, alice, alice_backend_sock, realm, block):
     await backend.realm.start_reencryption_maintenance(
-        alice.organization_id, alice.device_id, realm, 2, {alice.user_id: b"whatever"}
+        alice.organization_id,
+        alice.device_id,
+        realm,
+        2,
+        {alice.user_id: b"whatever"},
+        pendulum.now(),
     )
 
     rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)

@@ -6,21 +6,20 @@
 -------------------------------------------------------
 
 
-CREATE TABLE vlob (
+CREATE TABLE vlob_encryption_revision (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    encryption_revision INTEGER NOT NULL,
     realm INTEGER REFERENCES realm (_id),
-    vlob_id UUID NOT NULL,
+    encryption_revision INTEGER NOT NULL,
 
-    UNIQUE(organization, encryption_revision, vlob_id)
+    UNIQUE(realm, encryption_revision)
 );
 
 
 CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
-    -- TODO: Add organization and/or realm here ?
-    vlob INTEGER REFERENCES vlob (_id) NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    vlob_encryption_revision INTEGER REFERENCES vlob_encryption_revision (_id) NOT NULL,
+    vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
@@ -28,7 +27,7 @@ CREATE TABLE vlob_atom (
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
 
-    UNIQUE(vlob, version)
+    UNIQUE(vlob_encryption_revision, vlob_id, version)
 );
 
 
@@ -80,29 +79,45 @@ END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION get_vlob_internal_id(orgid VARCHAR, vlobid UUID) RETURNS INTEGER AS $$
+CREATE FUNCTION get_vlob_encryption_revision_internal_id(orgid VARCHAR, realmid UUID, revision INTEGER) RETURNS INTEGER AS $$
 DECLARE
 BEGIN
     RETURN (
         SELECT
             _id
-        FROM vlob
+        FROM vlob_encryption_revision
         WHERE
-            organization = get_organization_internal_id(orgid)
-            AND vlob_id = vlobid
+            realm = get_realm_internal_id(orgid, realmid)
+            AND encryption_revision = revision
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION get_vlob_id(vlobinternalid INTEGER) RETURNS UUID AS $$
+CREATE FUNCTION get_vlob_atom_internal_id(orgid VARCHAR, vlobid UUID) RETURNS INTEGER AS $$
+DECLARE
+BEGIN
+    RETURN (
+        SELECT
+            _id
+        FROM vlob_atom
+        WHERE
+            organization = get_organization_internal_id(orgid)
+            AND vlob_id = vlobid
+        LIMIT 1
+    );
+END;
+$$ LANGUAGE plpgsql STABLE STRICT;
+
+
+CREATE FUNCTION get_vlob_id(vlobatominternalid INTEGER) RETURNS UUID AS $$
 DECLARE
 BEGIN
     RETURN (
         SELECT
             vlob_id
-        FROM vlob
-        WHERE _id = vlobinternalid
+        FROM vlob_atom
+        WHERE _id = vlobatominternalid
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;

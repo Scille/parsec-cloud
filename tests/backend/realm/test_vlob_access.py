@@ -309,7 +309,12 @@ async def test_bad_encryption_revision(backend, alice, alice_backend_sock, vlobs
 @pytest.mark.trio
 async def test_access_during_maintenance(backend, alice, alice_backend_sock, realm, vlobs):
     await backend.realm.start_reencryption_maintenance(
-        alice.organization_id, alice.device_id, realm, 2, {alice.user_id: b"whatever"}
+        alice.organization_id,
+        alice.device_id,
+        realm,
+        2,
+        {alice.user_id: b"whatever"},
+        Pendulum(2000, 1, 2),
     )
 
     rep = await vlob_create(
