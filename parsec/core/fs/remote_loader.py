@@ -6,21 +6,18 @@ import pendulum
 from parsec.crypto import (
     encrypt_signed_msg_with_secret_key,
     decrypt_raw_with_secret_key,
-    # encrypt_raw_with_secret_key,
+    # encrypt_raw_with_secret_key, TODO: uncomment when upload_block is implemented
     decrypt_and_verify_signed_msg_with_secret_key,
 )
 
-from parsec.core.backend_connection import BackendCmdsBadResponse
+from parsec.core.backend_connection import BackendCmdsBadResponse, BackendNotAvailable
 from parsec.core.types import LocalManifest, BlockAccess
 from parsec.core.types import ManifestAccess, remote_manifest_serializer, Manifest
-
-
-class RemoteSyncError(Exception):
-    pass
-
-
-class RemoteManifestNotFound(Exception):
-    pass
+from parsec.core.fs.exceptions import (
+    FSRemoteSyncError,
+    FSRemoteManifestNotFound,
+    FSBackendOfflineError,
+)
 
 
 class RemoteLoader:
@@ -54,7 +51,7 @@ class RemoteLoader:
             args = await self.backend_cmds.vlob_read(access.id)
         except BackendCmdsBadResponse as exc:
             if exc.status == "not_found":
-                raise RemoteManifestNotFound(access)
+                raise FSRemoteManifestNotFound(access)
             raise
         expected_author_id, expected_timestamp, expected_version, blob = args
         author = await self.remote_device_manager.get_device(expected_author_id)
@@ -83,6 +80,7 @@ class RemoteLoader:
             await self._vlob_update(access, manifest)
 
     async def _vlob_create(self, access: ManifestAccess, manifest: Manifest):
+        """Raises: FSBackendOfflineError, FSRemoteSyncError"""
         assert manifest.version == 1
         assert manifest.author == self.device.device_id
         now = pendulum.now()
@@ -95,12 +93,16 @@ class RemoteLoader:
         )
         try:
             await self.backend_cmds.vlob_create(self.workspace_id, access.id, now, ciphered)
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
-                raise RemoteSyncError(access)
+                raise FSRemoteSyncError(access)
+            # TODO: does that happen?
             raise
 
     async def _vlob_update(self, access: ManifestAccess, manifest: Manifest):
+        """Raises: FSBackendOfflineError, FSRemoteSyncError"""
         assert manifest.version > 1
         assert manifest.author == self.device.device_id
         now = pendulum.now()
@@ -113,7 +115,10 @@ class RemoteLoader:
         )
         try:
             await self.backend_cmds.vlob_update(access.id, manifest.version, now, ciphered)
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":
-                raise RemoteSyncError(access)
+                raise FSRemoteSyncError(access)
+            # TODO: does that happen?
             raise

@@ -13,27 +13,27 @@ from parsec.core.backend_connection import (
 
 from parsec.core.local_storage import LocalStorageMissingEntry
 
+from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.fs.remote_loader import RemoteLoader, RemoteSyncError, RemoteManifestNotFound
 
-from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.utils import is_file_manifest
 from parsec.core.fs.utils import is_folderish_manifest as is_folder_manifest
+
+from parsec.core.fs.exceptions import (
+    FSError,
+    FSBackendOfflineError,
+    FSRemoteManifestNotFound,
+    FSRemoteSyncError,
+    FSNoSynchronizationRequired,
+)
 
 # Legacy
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSMultiManifestLocalMiss
 
 
 AnyPath = Union[FsPath, str]
-
-
-# Extra exception to avoid confusion
-
-
-class NoSynchronizationRequired(LocalStorageMissingEntry):
-    pass
 
 
 class WorkspaceFS:
@@ -280,10 +280,11 @@ class WorkspaceFS:
 
     # Sync interface
 
-    async def _minimal_sync(self, access: Access):
+    async def minimal_sync(self, access: Access) -> None:
+        """Raises: FSBackendOfflineError"""
         # Get a minimal manifest to upload
         try:
-            remote_manifest = await self.sync_transactions.minimal_sync(access)
+            remote_manifest = await self.sync_transactions.get_minimal_remote_manifest(access)
         # Not available locally so noting to synchronize
         except LocalStorageMissingEntry:
             return
@@ -301,19 +302,20 @@ class WorkspaceFS:
         try:
             await self.remote_loader.upload_manifest(access, remote_manifest)
         # The upload has failed: download the latest remote manifest
-        except RemoteSyncError:
+        except FSRemoteSyncError:
             remote_manifest = await self.remote_loader.load_remote_manifest(access)
 
         # Register the manifest to unset the placeholder tag
-        await self.sync_transactions.folder_sync(access, remote_manifest)
+        await self.sync_transactions.synchronization_step(access, remote_manifest)
 
     async def _sync_by_access(self, access: Access, remote_changed: bool = True) -> Manifest:
+        """Raises: FSBackendOfflineError"""
         # Get the current remote manifest if it has changed
         remote_manifest = None
         if remote_changed:
             try:
                 remote_manifest = await self.remote_loader.load_remote_manifest(access)
-            except RemoteManifestNotFound:
+            except FSRemoteManifestNotFound:
                 pass
 
         # Check type
@@ -325,26 +327,26 @@ class WorkspaceFS:
 
             # Perform the transaction
             try:
-                new_remote_manifest = await self.sync_transactions.folder_sync(
+                new_remote_manifest = await self.sync_transactions.synchronization_step(
                     access, remote_manifest
                 )
             # The manifest doesn't exist locally
             except LocalStorageMissingEntry:
-                raise NoSynchronizationRequired(access)
+                raise FSNoSynchronizationRequired(access)
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
                 return remote_manifest or self.local_storage.get_base_manifest(access)
 
             # Synchronize placeholder children
-            async for child in self.sync_transactions.placeholder_children(new_remote_manifest):
-                await self._minimal_sync(child)
+            for child in self.sync_transactions.get_placeholder_children(new_remote_manifest):
+                await self.minimal_sync(child)
 
             # Upload the new manifest containing the latest changes
             try:
                 await self.remote_loader.upload_manifest(access, new_remote_manifest)
             # The upload has failed: download the latest remote manifest
-            except RemoteSyncError:
+            except FSRemoteSyncError:
                 remote_manifest = await self.remote_loader.load_remote_manifest(access)
             # The upload has succeed: loop to acknowledge this new version
             else:
@@ -357,7 +359,7 @@ class WorkspaceFS:
         try:
             manifest = await self._sync_by_access(access, remote_changed=remote_changed)
         # Nothing to synchronize if the manifest does not exist locally
-        except NoSynchronizationRequired:
+        except FSNoSynchronizationRequired:
             return
 
         # Non-recursive
@@ -450,7 +452,7 @@ class WorkspaceFS:
                 self._syncer.local_folder_fs.get_entry_path, access.id
             )
         except FSEntryNotFound:
-            raise NoSynchronizationRequired(access)
+            raise FSNoSynchronizationRequired(access)
         # Actual sync
         await self._load_and_retry(self._syncer._sync_file, path, access, manifest)
         # Return the manifest
