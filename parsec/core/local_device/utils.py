@@ -25,13 +25,14 @@ from parsec.core.local_device.pkcs11_cipher import PKCS11DeviceEncryptor, PKCS11
 
 
 def generate_new_device(
-    device_id: DeviceID, organization_addr: BackendOrganizationAddr
+    device_id: DeviceID, organization_addr: BackendOrganizationAddr, is_admin=False
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
         device_id=device_id,
         signing_key=SigningKey.generate(),
         private_key=PrivateKey.generate(),
+        is_admin=is_admin,
         user_manifest_access=ManifestAccess(),
         local_symkey=generate_secret_key(),
     )
