@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import pytest
 
 from tests.common import create_shared_workspace
@@ -40,36 +39,31 @@ async def test_vlob_group_notif_on_new_entry_sync(
         ),
         ("fs.entry.downsynced", {"workspace_id": wid, "id": wid}),
     ]
-
     with alice_core.event_bus.listen() as spy:
         await workspace.sync(sync)
-        mock_clock.rate = 10
+        mock_clock.rate = 1
         expected = entry_events if sync == "/foo" else entry_events + root_events
         await spy.wait_multiple_with_timeout(expected, 3)
 
 
 @pytest.mark.trio
 async def test_vlob_group_notif_on_new_workspace_sync(
-    mock_clock, running_backend, alice_core, alice2_fs
+    mock_clock, running_backend, alice_core, alice2_user_fs
 ):
+
     # Suspend time to freeze core background tasks
     mock_clock.rate = 0
-    await alice2_fs.workspace_create("/foo")
+    uid = alice2_user_fs.user_manifest_access.id
+    await alice2_user_fs.workspace_create("foo")
 
-    dump_fs = alice2_fs._local_folder_fs.dump()
-    root_id = dump_fs["access"]["id"]
+    expected = [
+        (
+            "backend.vlob_group.updated",
+            {"id": uid, "checkpoint": 2, "src_id": uid, "src_version": 2},
+        )
+    ]
 
     with alice_core.event_bus.listen() as spy:
-        await alice2_fs.sync("/")
+        await alice2_user_fs.sync()
         mock_clock.rate = 1
-        with trio.fail_after(1):
-
-            await spy.wait_multiple(
-                [
-                    (
-                        "backend.vlob_group.updated",
-                        {"id": root_id, "checkpoint": 2, "src_id": root_id, "src_version": 2},
-                    ),
-                    ("fs.entry.updated", {"id": root_id}),
-                ]
-            )
+        await spy.wait_multiple_with_timeout(expected, 3)
