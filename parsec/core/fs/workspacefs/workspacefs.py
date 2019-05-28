@@ -375,6 +375,8 @@ class WorkspaceFS:
     ) -> None:
         path = FsPath(path)
         access, _ = await self.entry_transactions._get_entry(path)
+        # TODO: Maybe the path itself is not synchronized with the remote
+        # Should we do something about it?
         await self.sync_by_access(access, remote_changed=remote_changed, recursive=recursive)
 
     # Temporary methods
