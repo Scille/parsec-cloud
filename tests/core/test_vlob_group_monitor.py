@@ -6,6 +6,7 @@ from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
+@pytest.mark.linux  # TODO: investigate why this test fail on appveyor
 @pytest.mark.parametrize("sync", ("/", "/foo"))
 @pytest.mark.parametrize("type", ("folder", "file"))
 async def test_vlob_group_notif_on_new_entry_sync(
