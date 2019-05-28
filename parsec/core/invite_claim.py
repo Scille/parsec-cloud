@@ -15,6 +15,7 @@ from parsec.crypto import (
     decrypt_raw_for,
     build_device_certificate,
     build_user_certificate,
+    verify_user_certificate,
 )
 
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
@@ -262,7 +263,7 @@ async def claim_user(
         async with backend_anonymous_cmds_factory(backend_addr) as cmds:
             # 1) Retrieve invitation creator
             try:
-                invitation_creator = await get_user_invitation_creator(
+                invitation_creator_device, invitation_creator_user = await get_user_invitation_creator(
                     cmds, new_device.root_verify_key, new_device.user_id
                 )
 
@@ -274,7 +275,7 @@ async def claim_user(
 
             # 2) Generate claim info for invitation creator
             encrypted_claim = generate_user_encrypted_claim(
-                invitation_creator.public_key,
+                invitation_creator_user.public_key,
                 token,
                 new_device_id,
                 new_device.public_key,
@@ -283,7 +284,17 @@ async def claim_user(
 
             # 3) Send claim
             try:
-                await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+                user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+                import pdb
+
+                pdb.set_trace()
+                user = verify_user_certificate(
+                    user.user_certificate,
+                    invitation_creator_device.device_id,
+                    invitation_creator_device.verify_key,
+                )
+                pdb.set_trace()
+                new_device.evole(is_admin=user.is_admin)
 
             except BackendNotAvailable as exc:
                 raise InviteClaimBackendOfflineError(str(exc)) from exc
@@ -315,7 +326,7 @@ async def claim_device(
         async with backend_anonymous_cmds_factory(backend_addr) as cmds:
             # 1) Retrieve invitation creator
             try:
-                invitation_creator = await get_device_invitation_creator(
+                invitation_creator_device, invitation_creator_user = await get_device_invitation_creator(
                     cmds, backend_addr.root_verify_key, new_device_id
                 )
 
@@ -327,7 +338,7 @@ async def claim_device(
 
             # 2) Generate claim info for invitation creator
             encrypted_claim = generate_device_encrypted_claim(
-                creator_public_key=invitation_creator.public_key,
+                creator_public_key=invitation_creator_user.public_key,
                 token=token,
                 device_id=new_device_id,
                 verify_key=device_signing_key.verify_key,
@@ -354,6 +365,7 @@ async def claim_device(
         device_id=new_device_id,
         signing_key=device_signing_key,
         private_key=answer["private_key"],
+        is_admin=invitation_creator_user.is_admin,
         user_manifest_access=answer["user_manifest_access"],
         local_symkey=generate_secret_key(),
     )
