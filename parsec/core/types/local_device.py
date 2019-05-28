@@ -18,6 +18,7 @@ class LocalDevice:
     device_id: DeviceID
     signing_key: SigningKey
     private_key: PrivateKey
+    is_admin: bool
     user_manifest_access: Access
     local_symkey: bytes
 
@@ -73,6 +74,7 @@ class LocalDeviceSchema(UnknownCheckedSchema):
     device_id = fields.DeviceID(required=True)
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)
+    is_admin = fields.Boolean(required=True)
     user_manifest_access = fields.Nested(ManifestAccessSchema, required=True)
     local_symkey = fields.Bytes(required=True)
 
