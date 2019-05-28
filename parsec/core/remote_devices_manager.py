@@ -434,7 +434,7 @@ async def get_user_invitation_creator(
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
-        uv_user, trustchain = await backend_cmds.user_get_invitation_creator(new_user_id)
+        uv_device, uv_user, trustchain = await backend_cmds.user_get_invitation_creator(new_user_id)
 
     except BackendNotAvailable as exc:
         raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
