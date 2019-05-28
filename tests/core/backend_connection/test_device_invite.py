@@ -9,9 +9,10 @@ from parsec.crypto import (
     PrivateKey,
     SigningKey,
     build_device_certificate,
+    unsecure_read_device_certificate,
     unsecure_read_user_certificate,
 )
-from parsec.core.types import UnverifiedRemoteUser
+from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (
     generate_device_encrypted_claim,
@@ -47,11 +48,19 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
 
     async def _alice_nd_claim():
         async with backend_anonymous_cmds_factory(alice.organization_addr) as cmds:
-            invitation_creator, trustchain = await cmds.device_get_invitation_creator(nd_id)
-            assert isinstance(invitation_creator, UnverifiedRemoteUser)
+            invitation_creator_device, invitation_creator_user, trustchain = await cmds.device_get_invitation_creator(
+                nd_id
+            )
+            assert isinstance(invitation_creator_device, UnverifiedRemoteDevice)
+            assert isinstance(invitation_creator_user, UnverifiedRemoteUser)
             assert trustchain == []
 
-            creator = unsecure_read_user_certificate(invitation_creator.user_certificate)
+            creator = unsecure_read_user_certificate(invitation_creator_user.user_certificate)
+
+            creator_device = unsecure_read_device_certificate(
+                invitation_creator_device.device_certificate
+            )
+            assert creator_device.device_id.split("@")[0] == creator.user_id
 
             answer_private_key = PrivateKey.generate()
             encrypted_claim = generate_device_encrypted_claim(
