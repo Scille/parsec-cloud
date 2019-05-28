@@ -7,9 +7,10 @@ import pendulum
 from parsec.crypto import (
     build_user_certificate,
     build_device_certificate,
+    unsecure_read_device_certificate,
     unsecure_read_user_certificate,
 )
-from parsec.core.types import UnverifiedRemoteUser
+from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
 
@@ -43,11 +44,19 @@ async def test_user_invite_then_claim_ok(
 
     async def _mallory_claim():
         async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
-            invitation_creator, trustchain = await cmds.user_get_invitation_creator(mallory.user_id)
-            assert isinstance(invitation_creator, UnverifiedRemoteUser)
+            invitation_creator_device, invitation_creator_user, trustchain = await cmds.user_get_invitation_creator(
+                mallory.user_id
+            )
+            assert isinstance(invitation_creator_device, UnverifiedRemoteDevice)
+            assert isinstance(invitation_creator_user, UnverifiedRemoteUser)
             assert trustchain == []
 
-            creator = unsecure_read_user_certificate(invitation_creator.user_certificate)
+            creator = unsecure_read_user_certificate(invitation_creator_user.user_certificate)
+
+            creator_device = unsecure_read_device_certificate(
+                invitation_creator_device.device_certificate
+            )
+            assert creator_device.device_id.split("@")[0] == creator.user_id
 
             encrypted_claim = generate_user_encrypted_claim(
                 creator.public_key, token, mallory.device_id, mallory.public_key, mallory.verify_key
