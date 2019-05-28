@@ -222,10 +222,6 @@ class UserFS:
         """
         user_manifest = self.get_user_manifest()
         if user_manifest.need_sync:
-            # Sync placeholders
-            for w in user_manifest.workspaces:
-                await self._workspace_minimal_sync(w)
-
             await self._outbound_sync()
         else:
             await self._inbound_sync()
@@ -281,22 +277,14 @@ class UserFS:
         if not base_um.need_sync:
             return
 
-        # Ignore placeholders (they have been created since the start of the sync)
-        non_placeholder_entries = []
-        for entry in base_um.workspaces:
-            try:
-                workspace_manifest = self.local_storage.get_manifest(entry.access)
-                if workspace_manifest.is_placeholder:
-                    continue
-            except LocalStorageMissingEntry:
-                # Workspace not in local means it is already synchronized
-                pass
-            non_placeholder_entries.append(entry)
+        # Sync placeholders
+        for w in base_um.workspaces:
+            await self._workspace_minimal_sync(w)
 
         # Build vlob
         access = self.user_manifest_access
         to_sync_um = base_um.evolve(
-            workspaces=tuple(non_placeholder_entries),
+            workspaces=base_um.workspaces,
             base_version=base_um.base_version + 1,
             author=self.device.device_id,
             need_sync=False,
