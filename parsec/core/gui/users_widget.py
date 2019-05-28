@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
@@ -9,7 +9,7 @@ from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
-from parsec.core.gui.custom_widgets import TaskbarButton, show_error, ask_question, show_info
+from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -55,19 +55,19 @@ class UserButton(QWidget, Ui_UserButton):
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
         action = menu.addAction(_("Show info"))
-        action.triggered.connect(self.show_info)
+        action.triggered.connect(self.show_user_info)
         if not self.label.is_revoked and not self.is_current_user:
             action = menu.addAction(_("Revoke"))
             action.triggered.connect(self.revoke)
         menu.exec_(global_pos)
 
-    def show_info(self):
+    def show_user_info(self):
         text = "{}\n\n".format(self.user_name)
         text += _("Created on {}").format(self.certified_on.format("%x %X"))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("This user has been revoked.")
-        show_info(self, text)
+        MessageDialog.show_info(self, text)
 
     def revoke(self):
         self.revoke_clicked.emit(self)
@@ -87,7 +87,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
             button_add_user.clicked.connect(self.register_user)
             self.taskbar_buttons.append(button_add_user)
-        self.line_edit_search.textChanged.connect(self.filter_users)
+        self.filter_timer = QTimer()
+        self.filter_timer.setInterval(300)
+        self.line_edit_search.textChanged.connect(self.filter_timer.start)
+        self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
         self.reset()
 
     def disconnect_all(self):
@@ -95,6 +98,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
+
+    def on_filter_timer_timeout(self):
+        self.filter_users(self.line_edit_search.text())
 
     def filter_users(self, pattern):
         pattern = pattern.lower()
@@ -122,7 +128,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def revoke_user(self, user_button):
         user_name = user_button.user_name
-        result = ask_question(
+        result = QuestionDialog.ask(
             self,
             _("Confirmation"),
             _('Are you sure you want to revoke user "{}" ?').format(user_name),
@@ -134,6 +140,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             user_info, user_devices = self.jobs_ctx.run(
                 self.core.remote_devices_manager.get_user_and_devices, user_name
             )
+            print(user_info, user_devices)
             for device in user_devices:
                 revoked_device_certificate = build_revoked_device_certificate(
                     self.core.device.device_id,
@@ -143,16 +150,20 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 )
                 self.jobs_ctx.run(self.core.backend_cmds.device_revoke, revoked_device_certificate)
             user_button.is_revoked = True
-            show_info(self, _('User "{}" has been revoked.').format(user_name))
+            MessageDialog.show_info(self, _('User "{}" has been revoked.').format(user_name))
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_revoked":
-                show_error(self, _('User "{}" has already been revoked.').format(user_name))
+                MessageDialog.show_error(
+                    self, _('User "{}" has already been revoked.').format(user_name)
+                )
             elif exc.status == "not_found":
-                show_error(self, _('User "{}" not found.').format(user_name))
+                MessageDialog.show_error(self, _('User "{}" not found.').format(user_name))
             elif exc.status == "invalid_role" or exc.status == "invalid_certification":
-                show_error(self, _("You don't have the permission to revoke this user."))
+                MessageDialog.show_error(
+                    self, _("You don't have the permission to revoke this user.")
+                )
         except:
-            show_error(self, _("Can not revoke this user."))
+            MessageDialog.show_error(self, _("Can not revoke this user."))
 
     def reset(self):
         self.users = []

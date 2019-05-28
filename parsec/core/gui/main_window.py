@@ -26,7 +26,7 @@ from parsec.core.gui import telemetry
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.custom_widgets import ask_question, show_error
+from parsec.core.gui.custom_widgets import QuestionDialog, MessageDialog
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -98,7 +98,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QCoreApplication.processEvents()
         if self.config.gui_first_launch:
             self.show_starting_guide()
-            r = ask_question(
+            r = QuestionDialog.ask(
                 self,
                 _("Error reporting"),
                 _(
@@ -147,9 +147,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         assert self.runing_core_job.is_finished()
         if self.runing_core_job.status is not None:
             if "Device has been revoked" in str(self.runing_core_job.exc):
-                show_error(self, _("This device has been revoked."))
+                MessageDialog.show_error(self, _("This device has been revoked."))
             else:
-                show_error(self, _("Unhandled error."))
+                MessageDialog.show_error(self, _("Unhandled error."))
         self.runing_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -180,25 +180,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = load_device_with_password(key_file, password)
             self.start_core(device)
         except LocalDeviceError:
-            show_error(self, _("Authentication failed."))
+            MessageDialog.show_error(self, _("Authentication failed."))
 
         except BackendHandshakeAPIVersionError:
-            show_error(self, _("Incompatible backend API version."))  # TODO
+            MessageDialog.show_error(self, _("Incompatible backend API version."))  # TODO
 
         except BackendDeviceRevokedError:
-            show_error(self, _("This device has been revoked."))
+            MessageDialog.show_error(self, _("This device has been revoked."))
 
         except BackendHandshakeError:
-            show_error(self, _("User not registered in the backend."))
+            MessageDialog.show_error(self, _("User not registered in the backend."))
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            show_error(self, _("Mountpoint already in use."))
+            MessageDialog.show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
             import traceback
 
             traceback.print_exc()
-            show_error(self, _("Can not login"))
+            MessageDialog.show_error(self, _("Can not login"))
             logger.error("Error while trying to log in: {}".format(str(exc)))
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
@@ -208,25 +208,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.start_core(device)
         except LocalDeviceError:
-            show_error(self, _("Authentication failed."))
+            MessageDialog.show_error(self, _("Authentication failed."))
 
         except BackendHandshakeAPIVersionError:
-            show_error(self, _("Incompatible backend API version."))
+            MessageDialog.show_error(self, _("Incompatible backend API version."))
 
         except BackendDeviceRevokedError:
-            show_error(self, _("This device has been revoked."))
+            MessageDialog.show_error(self, _("This device has been revoked."))
 
         except BackendHandshakeError:
-            show_error(self, _("User not registered in the backend."))
+            MessageDialog.show_error(self, _("User not registered in the backend."))
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            show_error(self, _("Mountpoint already in use."))
+            MessageDialog.show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
             import traceback
 
             traceback.print_exc()
-            show_error(self, _("Can not login."))
+            MessageDialog.show_error(self, _("Can not login."))
             logger.error("Error while trying to log in: {}".format(str(exc)))
 
     def close_app(self, force=False):
@@ -241,7 +241,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
-                result = ask_question(self, _("Confirmation"), _("Are you sure you want to quit ?"))
+                result = QuestionDialog.ask(
+                    self, _("Confirmation"), _("Are you sure you want to quit ?")
+                )
                 if not result:
                     event.ignore()
                     return

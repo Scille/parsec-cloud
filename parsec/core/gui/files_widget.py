@@ -13,11 +13,10 @@ from parsec.core.fs import FSEntryNotFound
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_widgets import (
-    show_error,
-    ask_question,
-    get_text,
+    QuestionDialog,
+    MessageDialog,
+    TextInputDialog,
     TaskbarButton,
-    show_warning,
 )
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
@@ -102,7 +101,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def rename_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            new_name = get_text(
+            new_name = TextInputDialog.get_text(
                 self,
                 _("Rename a file"),
                 _("Enter file new name"),
@@ -112,10 +111,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if not new_name:
                 return
             if not self.rename(files[0][2], new_name):
-                show_error(self, _('File "{}" could not be renamed.').format(files[0][2]))
+                MessageDialog.show_error(
+                    self, _('File "{}" could not be renamed.').format(files[0][2])
+                )
 
         else:
-            new_name = get_text(
+            new_name = TextInputDialog.get_text(
                 self,
                 _("Rename {} files").format(len(files)),
                 _("Enter files new name (without extension)"),
@@ -128,7 +129,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 old_file = pathlib.Path(f[2])
                 r &= self.rename(f[2], "{}_{}{}".format(new_name, i, ".".join(old_file.suffixes)))
             if not r:
-                show_error(self, _("Some files could not be renamed."))
+                MessageDialog.show_error(self, _("Some files could not be renamed."))
 
     def rename(self, file_name, new_name):
         try:
@@ -144,13 +145,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def delete_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
-            result = ask_question(
+            result = QuestionDialog.ask(
                 self,
                 _("Confirmation"),
                 _('Are you sure you want to delete "{}"?').format(files[0][2]),
             )
         else:
-            result = ask_question(
+            result = QuestionDialog.ask(
                 self,
                 _("Confirmation"),
                 _("Are you sure you want to delete {} files?").format(len(files)),
@@ -164,9 +165,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.table_files.removeRow(f[0])
         if not r:
             if len(files) == 1:
-                show_error(self, _('Can not delete "{}".').format(f[2]))
+                MessageDialog.show_error(self, _('Can not delete "{}".').format(f[2]))
             else:
-                show_error(self, _("Some files could not be deleted."))
+                MessageDialog.show_error(self, _("Some files could not be deleted."))
         self.table_files.clearSelection()
 
     def delete_item(self, row, file_type, file_name):
@@ -188,7 +189,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) == 1:
             self.open_file(files[0][2])
         else:
-            result = ask_question(
+            result = QuestionDialog.ask(
                 self,
                 _("Confirmation"),
                 _("Are you sure you want to open {} files?").format(len(files)),
@@ -421,12 +422,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.jobs_ctx.run(self.workspace_fs.mkdir, dir_path)
             return True
         except FileExistsError:
-            show_error(self, _("A folder with the same name already exists."))
+            MessageDialog.show_error(self, _("A folder with the same name already exists."))
             return False
 
     # slot
     def create_folder_clicked(self):
-        folder_name = get_text(
+        folder_name = TextInputDialog.get_text(
             self, _("Folder name"), _("Enter new folder name"), placeholder="Name"
         )
         if not folder_name:
@@ -502,7 +503,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.sharing_revoked_qt.emit(new_entry, previous_entry)
 
     def _on_sharing_revoked_qt(self, new_entry, previous_entry):
-        show_error(self, _("You no longer have the permission to access this workspace."))
+        MessageDialog.show_error(
+            self, _("You no longer have the permission to access this workspace.")
+        )
         self.back_clicked.emit()
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
@@ -512,7 +515,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_user_role = new_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         if previous_entry.role != WorkspaceRole.READER and new_entry.role == WorkspaceRole.READER:
-            show_warning(self, _("You are now a reader on this workspace."))
+            MessageDialog.show_warning(self, _("You are now a reader on this workspace."))
             self.taskbar_updated.emit()
         else:
             self.taskbar_updated.emit()

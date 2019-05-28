@@ -9,7 +9,7 @@ from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole
 from parsec.core.fs import WorkspaceFS, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import show_error, show_warning, get_text, TaskbarButton
+from parsec.core.gui.custom_widgets import MessageDialog, TextInputDialog, TaskbarButton
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -21,6 +21,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_synced_qt = pyqtSignal(str, UUID)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
+    # workspace_creation_success = pyqtSignal()
+    # workspace_creation_error = pyqtSignal()
 
     COLUMNS_NUMBER = 3
 
@@ -104,7 +106,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         except MountpointAlreadyMounted:
             pass
         except Exception:
-            show_error(self, _("Can not acces this file."))
+            MessageDialog.show_error(self, _("Can not acces this file."))
             return
         file_name = FsPath("/", file_name)
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
@@ -116,10 +118,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         return self.taskbar_buttons
 
     def delete_workspace(self, workspace_entry):
-        show_warning(self, _("Not yet implemented."))
+        MessageDialog.show_warning(self, _("Not yet implemented."))
 
     def rename_workspace(self, workspace_button):
-        new_name = get_text(
+        new_name = TextInputDialog.get_text(
             self, _("New name"), _("Enter workspace new name"), placeholder=_("Workspace name")
         )
         if not new_name:
@@ -129,7 +131,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.jobs_ctx.run(self.core.user_fs.workspace_rename, workspace_id, new_name)
             workspace_button.reload_workspace_name()
         except:
-            show_error(self, _("Can not rename the workspace."))
+            MessageDialog.show_error(self, _("Can not rename the workspace."))
         else:
             self.jobs_ctx.run(self.core.mountpoint_manager.unmount_workspace, workspace_id)
             self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, workspace_id)
@@ -141,7 +143,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         d.exec_()
 
     def create_workspace_clicked(self):
-        workspace_name = get_text(
+        workspace_name = TextInputDialog.get_text(
             self, _("New workspace"), _("Enter new workspace name"), _("Workspace name")
         )
         if not workspace_name:
