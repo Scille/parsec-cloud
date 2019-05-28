@@ -430,14 +430,6 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to send sharing message to backend: {exc}") from exc
 
-        # # TODO: participant&creator fields are deprecated, this is just a hack
-        # async with self._update_user_manifest_lock:
-        #     workspace_manifest = self.local_storage.get_manifest(workspace_entry.access)
-        #     workspace_manifest = workspace_manifest.evolve_and_mark_updated(
-        #         participants=(*workspace_manifest.participants, recipient))
-        #     self.local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
-        #     self.event_bus.send("fs.entry.updated", id=workspace_entry.access.id)
-
     async def process_last_messages(self) -> List[Tuple[int, Exception]]:
         """
         Raises:
