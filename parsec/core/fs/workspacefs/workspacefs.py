@@ -392,17 +392,24 @@ class WorkspaceFS:
             try:
                 manifest = self.local_storage.get_manifest(access)
             except LocalStorageMissingEntry:
-                return
+                return None
 
             if not is_folder_manifest(manifest):
-                return
+                return None
 
             for child_access in manifest.children.values():
                 access = find_access(child_access)
-                if access:
+                if access is not None:
                     return access
 
+        # Find the corresponding access
         access = find_access(self.get_workspace_entry().access)
+
+        # We're not aware of this ID: it's probably not available locally
+        if access is None:
+            return
+
+        # Perform the synchronization
         await self.sync_by_access(access, remote_changed=remote_changed, recursive=recursive)
 
     async def _load_and_retry(self, fn, *args, **kwargs):
