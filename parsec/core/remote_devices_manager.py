@@ -389,7 +389,7 @@ class RemoteDevicesManager:
 
 async def get_device_invitation_creator(
     backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
-) -> VerifiedRemoteUser:
+) -> Tuple[VerifiedRemoteDevice, VerifiedRemoteUser]:
     """
     Raises:
         RemoteDevicesManagerError
@@ -398,7 +398,9 @@ async def get_device_invitation_creator(
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
-        uv_user, trustchain = await backend_cmds.device_get_invitation_creator(new_device_id)
+        uv_device, uv_user, trustchain = await backend_cmds.device_get_invitation_creator(
+            new_device_id
+        )
 
     except BackendNotAvailable as exc:
         raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
@@ -414,13 +416,16 @@ async def get_device_invitation_creator(
             f"`{new_device_id}` from the backend: {exc}"
         ) from exc
 
-    verified_devices = _verify_devices(root_verify_key, *trustchain)
-    return _verify_user(root_verify_key, uv_user, verified_devices)
+    verified_devices = _verify_devices(root_verify_key, uv_device, *trustchain)
+    return (
+        verified_devices[unsecure_read_device_certificate(uv_device.device_certificate).device_id],
+        _verify_user(root_verify_key, uv_user, verified_devices),
+    )
 
 
 async def get_user_invitation_creator(
     backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
-) -> VerifiedRemoteUser:
+) -> Tuple[VerifiedRemoteDevice, VerifiedRemoteUser]:
     """
     Raises:
         RemoteDevicesManagerError
@@ -445,5 +450,8 @@ async def get_user_invitation_creator(
             f"`{new_user_id}` from the backend: {exc}"
         ) from exc
 
-    verified_devices = _verify_devices(root_verify_key, *trustchain)
-    return _verify_user(root_verify_key, uv_user, verified_devices)
+    verified_devices = _verify_devices(root_verify_key, uv_device, *trustchain)
+    return (
+        verified_devices[unsecure_read_device_certificate(uv_device.device_certificate).device_id],
+        _verify_user(root_verify_key, uv_user, verified_devices),
+    )
