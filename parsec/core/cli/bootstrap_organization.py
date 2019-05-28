@@ -23,7 +23,7 @@ async def _bootstrap_organization(
     organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
 
     device_display = click.style(device_id, fg="yellow")
-    device = generate_new_device(device_id, organization_addr)
+    device = generate_new_device(device_id, organization_addr, True)
 
     with operation(f"Creating locally {device_display}"):
         save_device_with_password(config_dir, device, password, force=force)
