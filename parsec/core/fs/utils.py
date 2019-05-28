@@ -27,7 +27,17 @@ def is_folder_manifest(manifest: Manifest) -> bool:
 
 
 def is_folderish_manifest(manifest: Manifest) -> bool:
-    return not is_file_manifest(manifest)
+    return isinstance(
+        manifest,
+        (
+            FolderManifest,
+            LocalFolderManifest,
+            WorkspaceManifest,
+            LocalWorkspaceManifest,
+            UserManifest,  # TODO: remove when migration is over
+            LocalUserManifest,
+        ),
+    )
 
 
 def is_workspace_manifest(manifest: Manifest) -> bool:

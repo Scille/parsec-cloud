@@ -29,7 +29,7 @@ def fast_forward_file(
 ) -> LocalFileManifest:
     assert local_base.base_version < remote_target.version
     assert local_base.base_version <= local_current.base_version
-    assert local_current.base_version < remote_target.version
+    # assert local_current.base_version < remote_target.version
 
     processed_dirty_blocks_ids = [k.id for k in local_base.dirty_blocks]
     merged_dirty_blocks = [
@@ -306,7 +306,6 @@ class FileSyncerMixin(BaseSyncer):
 
         await self._sync_file_actual_sync(path, access, minimal_manifest)
 
-        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access.id)
         return need_more_sync
 
     def _sync_file_merge_back(

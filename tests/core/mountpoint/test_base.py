@@ -84,9 +84,9 @@ async def test_mountpoint_path_already_in_use(
 ):
     # Create a workspace and make it available in two devices
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
-    await workspace.sync("/")
+    await alice_user_fs.sync()
     await alice2_user_fs.sync()
+
     # Easily differenciate alice&alice2
     await alice2_user_fs.get_workspace(wid).touch("/I_am_alice2.txt")
     await alice_user_fs.get_workspace(wid).touch("/I_am_alice.txt")

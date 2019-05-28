@@ -9,6 +9,7 @@ import trio
 import attr
 import pendulum
 
+from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS, FS
 from parsec.core.persistent_storage import PersistentStorage
@@ -199,7 +200,9 @@ async def create_shared_workspace(name, creator, *shared_with):
             if recipient_user_fs.device.user_id == creator_user_fs.device.user_id:
                 await recipient_user_fs.sync()
             else:
-                await creator_user_fs.workspace_share(wid, recipient_user_fs.device.user_id)
+                await creator_user_fs.workspace_share(
+                    wid, recipient_user_fs.device.user_id, WorkspaceRole.MANAGER
+                )
                 await recipient_user_fs.process_last_messages()
                 await recipient_user_fs.sync()
 

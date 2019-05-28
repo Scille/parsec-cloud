@@ -195,7 +195,6 @@ class FolderSyncerMixin(BaseSyncer):
         target_remote_manifest = await self._sync_folder_actual_sync(path, access, manifest)
         self._sync_folder_merge_back(path, access, manifest, target_remote_manifest)
 
-        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access.id)
         return need_more_sync
 
     def _sync_folder_merge_back(
