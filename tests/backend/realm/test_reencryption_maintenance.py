@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+import trio
 from pendulum import Pendulum
 
 from parsec.api.protocole import RealmRole, MaintenanceType
@@ -15,6 +16,7 @@ from tests.backend.realm.conftest import (
     vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch,
 )
+from tests.backend.test_events import events_subscribe, events_listen_nowait
 
 
 @pytest.mark.trio
@@ -43,6 +45,35 @@ async def test_start_bad_per_participant_message(backend, alice_backend_sock, al
         assert rep == {
             "status": "maintenance_error",
             "reason": "Realm participants and message recipients mismatch",
+        }
+
+
+@pytest.mark.trio
+async def test_start_send_message_to_participants(
+    backend, alice, bob, alice_backend_sock, bob_backend_sock, realm
+):
+    await backend.realm.update_roles(
+        alice.organization_id, alice.device_id, realm, bob.user_id, RealmRole.READER
+    )
+
+    with freeze_time("2000-01-02"):
+        await realm_start_reencryption_maintenance(
+            alice_backend_sock, realm, 2, {"alice": b"alice msg", "bob": b"bob msg"}
+        )
+
+    # Each participant should have received a message
+    for user, sock in ((alice, alice_backend_sock), (bob, bob_backend_sock)):
+        rep = await message_get(sock)
+        assert rep == {
+            "status": "ok",
+            "messages": [
+                {
+                    "count": 1,
+                    "body": f"{user.user_id} msg".encode(),
+                    "timestamp": Pendulum(2000, 1, 2),
+                    "sender": alice.device_id,
+                }
+            ],
         }
 
 
@@ -285,3 +316,51 @@ async def test_reencryption(alice, alice_backend_sock, realm, vlobs, vlob_atoms)
     for vlob_id, version in vlob_atoms:
         rep = await vlob_read(alice_backend_sock, vlob_id, version, encryption_revision=2)
         assert rep["blob"] == f"{vlob_id}::{version} reencrypted".encode()
+
+
+@pytest.mark.trio
+async def test_reencryption_events(
+    backend, alice, alice_backend_sock, alice2_backend_sock, realm, vlobs, vlob_atoms
+):
+
+    # Start listening events
+    await events_subscribe(alice_backend_sock, realm=[realm])
+
+    with backend.event_bus.listen() as spy:
+        # Start maintenance and check for events
+        await realm_start_reencryption_maintenance(alice2_backend_sock, realm, 2, {"alice": b"foo"})
+
+        with trio.fail_after(1):
+            # No guarantees those events occur before the commands' return
+            await spy.wait("realm.maintenance_started")
+
+        rep = await events_listen_nowait(alice_backend_sock)
+        assert rep == {
+            "status": "ok",
+            "event": "realm.maintenance_started",
+            "realm_id": realm,
+            "encryption_revision": 2,
+        }
+
+        # Do the reencryption
+        rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=100)
+        await vlob_maintenance_save_reencryption_batch(alice_backend_sock, realm, 2, rep["batch"])
+
+        # Finish maintenance and check for events
+        await realm_finish_reencryption_maintenance(alice2_backend_sock, realm, 2)
+
+        with trio.fail_after(1):
+            # No guarantees those events occur before the commands' return
+            await spy.wait("realm.maintenance_finished")
+
+        rep = await events_listen_nowait(alice_backend_sock)
+        assert rep == {
+            "status": "ok",
+            "event": "realm.maintenance_finished",
+            "realm_id": realm,
+            "encryption_revision": 2,
+        }
+
+    # Sanity check
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "no_events"}

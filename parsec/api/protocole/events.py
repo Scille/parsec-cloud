@@ -22,6 +22,20 @@ class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
     src_version = fields.Integer(required=True)
 
 
+class EventsRealmMaintenanceStartedRepSchema(BaseRepSchema):
+    status = fields.CheckedConstant("ok", required=True)
+    event = fields.CheckedConstant("realm.maintenance_started", required=True)
+    realm_id = fields.UUID(required=True)
+    encryption_revision = fields.Integer(required=True)
+
+
+class EventsRealmMaintenanceFinishedRepSchema(BaseRepSchema):
+    status = fields.CheckedConstant("ok", required=True)
+    event = fields.CheckedConstant("realm.maintenance_finished", required=True)
+    realm_id = fields.UUID(required=True)
+    encryption_revision = fields.Integer(required=True)
+
+
 class EventsMessageReceivedRepSchema(BaseRepSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("message.received", required=True)
@@ -38,6 +52,8 @@ class EventsListenRepSchema(OneOfSchema):
     type_schemas = {
         "pinged": EventsPingedRepSchema(),
         "realm.vlobs_updated": EventsRealmVlobsUpdatedRepSchema(),
+        "realm.maintenance_started": EventsRealmMaintenanceStartedRepSchema(),
+        "realm.maintenance_finished": EventsRealmMaintenanceFinishedRepSchema(),
         "message.received": EventsMessageReceivedRepSchema(),
     }
 
@@ -49,9 +65,9 @@ events_listen_serializer = CmdSerializer(EventsListenReqSchema, EventsListenRepS
 
 
 class EventsSubscribeReqSchema(BaseReqSchema):
-    pinged = fields.List(fields.String(validate=validate.Length(max=64)), missing=None)
-    realm_vlobs_updated = fields.List(fields.UUID(), missing=None)
-    message_received = fields.Boolean(missing=None)
+    ping = fields.List(fields.String(validate=validate.Length(max=64)), missing=None)
+    realm = fields.List(fields.UUID(), missing=None)
+    message = fields.Boolean(missing=None)
 
 
 class EventsSubscribeRepSchema(BaseRepSchema):

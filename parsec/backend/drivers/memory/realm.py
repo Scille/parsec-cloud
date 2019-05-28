@@ -148,6 +148,14 @@ class MemoryRealmComponent(BaseRealmComponent):
         for recipient, msg in per_participant_message.items():
             await self._message_component.send(organization_id, author, recipient, timestamp, msg)
 
+        self.event_bus.send(
+            "realm.maintenance_started",
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+        )
+
     async def finish_reencryption_maintenance(
         self,
         organization_id: OrganizationID,
@@ -174,5 +182,13 @@ class MemoryRealmComponent(BaseRealmComponent):
             maintenance_type=None,
             maintenance_started_on=None,
             maintenance_started_by=None,
+            encryption_revision=encryption_revision,
+        )
+
+        self.event_bus.send(
+            "realm.maintenance_finished",
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
             encryption_revision=encryption_revision,
         )

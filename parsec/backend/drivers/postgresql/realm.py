@@ -17,7 +17,7 @@ from parsec.backend.realm import (
     RealmMaintenanceError,
     RealmInMaintenanceError,
 )
-from parsec.backend.drivers.postgresql.handler import PGHandler
+from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
 from parsec.backend.drivers.postgresql.message import send_message
 
 
@@ -326,6 +326,15 @@ INSERT INTO vlob_encryption_revision(
         for recipient, body in per_participant_message.items():
             await send_message(conn, organization_id, author, recipient, timestamp, body)
 
+        await send_signal(
+            conn,
+            "realm.maintenance_started",
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+        )
+
     async def finish_reencryption_maintenance(
         self,
         organization_id: OrganizationID,
@@ -392,4 +401,13 @@ WHERE
 """,
                     organization_id,
                     realm_id,
+                )
+
+                await send_signal(
+                    conn,
+                    "realm.maintenance_finished",
+                    organization_id=organization_id,
+                    author=author,
+                    realm_id=realm_id,
+                    encryption_revision=encryption_revision,
                 )

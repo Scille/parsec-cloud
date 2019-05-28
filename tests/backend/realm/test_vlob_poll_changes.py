@@ -145,7 +145,7 @@ async def test_realm_updated_event(backend, alice_backend_sock, alice, alice2):
     )
 
     # Start listening events
-    await events_subscribe(alice_backend_sock, realm_vlobs_updated=[REALM_ID, OTHER_REALM_ID])
+    await events_subscribe(alice_backend_sock, realm=[REALM_ID, OTHER_REALM_ID])
 
     # Good events
     with backend.event_bus.listen() as spy:
