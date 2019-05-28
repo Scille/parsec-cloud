@@ -7,7 +7,7 @@ from parsec.core.fs import FSError
 from parsec.types import UserID
 from parsec.core.types import WorkspaceRole
 
-from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, show_info
+from parsec.core.gui.custom_widgets import MessageDialog, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
@@ -148,12 +148,14 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if not user_name:
             return
         if user_name == self.core.device.user_id:
-            show_warning(self, _("You can not share a workspace with yourself.").format(user_name))
+            MessageDialog.show_warning(
+                self, _("You can not share a workspace with yourself.").format(user_name)
+            )
             return
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
             if item and item.widget() and item.widget().user == user_name:
-                show_warning(
+                MessageDialog.show_warning(
                     self, _('This workspace is already shared with "{}".').format(user_name)
                 )
                 return
@@ -167,7 +169,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             )
             self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
         except FSError:
-            show_warning(
+            MessageDialog.show_warning(
                 self,
                 _('Can not share the workspace "{}" with this user.').format(
                     self.workspace_fs.workspace_name
@@ -177,7 +179,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             import traceback
 
             traceback.print_exc()
-            show_error(
+            MessageDialog.show_error(
                 self,
                 _('Can not share the workspace "{}" with "{}".').format(
                     self.workspace_fs.workspace_name, user
@@ -196,7 +198,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         w.delete_clicked.connect(self.on_remove_user_clicked)
 
     def on_remove_user_clicked(self, user):
-        r = ask_question(
+        r = QuestionDialog.ask(
             parent=self,
             title=_("Remove this user"),
             message=_("Are you sure you want to stop sharing this workspace with {}?").format(user),
@@ -230,7 +232,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
                     traceback.print_exc()
         if errors:
-            show_error(
+            MessageDialog.show_error(
                 self,
                 _(
                     "Permissions could not be updated for the following users: {}".format(
@@ -239,7 +241,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 ),
             )
         elif updated:
-            show_info(self, _("Permissions have been updated."))
+            MessageDialog.show_info(self, _("Permissions have been updated."))
         self.reset()
 
     def has_changes(self):
@@ -252,7 +254,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
     def on_close_requested(self):
         if self.has_changes():
-            r = ask_question(
+            r = QuestionDialog.ask(
                 parent=self,
                 title=_("Are you sure?"),
                 message=_(

@@ -13,7 +13,7 @@ from parsec.types import BackendOrganizationAddr, UserID
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
-from parsec.core.gui.custom_widgets import show_warning, show_info, show_error
+from parsec.core.gui.custom_widgets import MessageDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
@@ -108,12 +108,12 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 return
             assert self.registration_job.status != "ok"
             errmsg = STATUS_TO_ERRMSG.get(self.registration_job.status, DEFAULT_ERRMSG)
-            show_error(self, errmsg.format(**self.registration_job.exc.params))
+            MessageDialog.show_error(self, errmsg.format(**self.registration_job.exc.params))
 
     def on_registration_success(self):
         assert self.registration_job.is_finished()
         assert self.registration_job.status == "ok"
-        show_info(
+        MessageDialog.show_info(
             self,
             QCoreApplication.translate(
                 "RegisterUserDialog", "User has been registered. You may now close this window."
@@ -150,7 +150,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
 
     def register_user(self):
         if not self.line_edit_username.text():
-            show_warning(self, _("Please enter a username."))
+            MessageDialog.show_warning(self, _("Please enter a username."))
             return
 
         token = core_generate_invitation_token()
