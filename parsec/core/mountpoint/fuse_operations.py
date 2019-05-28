@@ -4,7 +4,7 @@ import os
 from typing import Optional
 
 from contextlib import contextmanager
-from errno import ENETDOWN, EBADF, ENOTDIR, ENOTSUP
+from errno import ENETDOWN, EBADF, ENOTDIR
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
@@ -123,7 +123,11 @@ class FuseOperations(LoggingMixIn, Operations):
                 # TODO: investigate file_truncate
                 # Should it be atomic?
                 # Should it affect the file reference count?
-                raise FuseOSError(ENOTSUP)
+                fd = self.open(path)
+                try:
+                    self.fs_access.fd_resize(fd, length)
+                finally:
+                    self.fs_access.fd_close(fd)
 
     def unlink(self, path: FsPath):
         with translate_error():
