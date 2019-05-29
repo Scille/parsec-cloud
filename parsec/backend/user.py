@@ -336,9 +336,7 @@ class BaseUserComponent:
             async for event, user_id in recv_channel:
                 if user_id == invitation.user_id:
                     replied_ok = event == "user.created"
-                    user = await self.get_user(
-                        client_ctx.organization_id, invitation.creator.user_id
-                    )
+                    user = await self.get_user(client_ctx.organization_id, invitation.user_id)
                     user_certificate = user.user_certificate
                     break
 
