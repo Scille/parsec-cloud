@@ -18,6 +18,8 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.workspaces_widget import WorkspacesWidget
+from parsec.core.gui.mount_widget import MountWidget
 
 
 _qt_thread_gateway = None
@@ -375,3 +377,25 @@ def test_get_devices_widget(self):
     if not isinstance(w, DevicesWidget):
         return None
     return w
+
+
+@add_method(MainWindow)
+def test_get_mount_widget(self):
+    central_widget = self.test_get_central_widget()
+    item = central_widget.widget_central.layout().itemAt(0)
+    w = item.widget()
+    if not isinstance(w, MountWidget):
+        return None
+    return w
+
+
+@add_method(MainWindow)
+def test_get_workspaces_widget(self):
+    mount_widget = self.test_get_mount_widget()
+    return mount_widget.workspaces_widget
+
+
+@add_method(MainWindow)
+def test_get_files_widget(self):
+    mount_widget = self.test_get_mount_widget()
+    return mount_widget.files_widget

@@ -36,10 +36,8 @@ class QtToTrioJob:
     def __init__(self, portal, fn, args, kwargs, qt_on_success, qt_on_error):
         self._portal = portal
         assert isinstance(qt_on_success, ThreadSafeQtSignal)
-        assert len(qt_on_success.args_types) == 0
         self._qt_on_success = qt_on_success
         assert isinstance(qt_on_error, ThreadSafeQtSignal)
-        assert len(qt_on_error.args_types) == 0
         self._qt_on_error = qt_on_error
         self._fn = fn
         self._args = args
@@ -90,10 +88,21 @@ class QtToTrioJob:
         finally:
             self._done.set()
             if self.status == "ok":
-                self._qt_on_success.emit()
-
+                if (
+                    len(self._qt_on_success.args_types)
+                    and self._qt_on_success.args_types[0] == QtToTrioJob
+                ):
+                    self._qt_on_success.emit(self)
+                else:
+                    self._qt_on_success.emit()
             else:
-                self._qt_on_error.emit()
+                if (
+                    len(self._qt_on_error.args_types)
+                    and self._qt_on_error.args_types[0] == QtToTrioJob
+                ):
+                    self._qt_on_error.emit(self)
+                else:
+                    self._qt_on_error.emit()
 
     def cancel_and_join(self):
         assert self.cancel_scope

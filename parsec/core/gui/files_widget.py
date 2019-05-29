@@ -36,13 +36,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     taskbar_updated = pyqtSignal()
     back_clicked = pyqtSignal()
 
-    def __init__(self, core, jobs_ctx, event_bus, workspace_fs, *args, **kwargs):
+    def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
-        self.workspace_fs = workspace_fs
+        self._workspace_fs = None
 
         self.ROLES_TEXTS = {
             WorkspaceRole.READER: _("Reader"),
@@ -50,10 +50,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             WorkspaceRole.MANAGER: _("Manager"),
             WorkspaceRole.OWNER: _("Owner"),
         }
-
-        ws_entry = self.workspace_fs.get_workspace_entry()
-        self.current_user_role = ws_entry.role
-        self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
 
         self.button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
         self.button_back.clicked.connect(self.back_clicked)
@@ -79,16 +75,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.rename_clicked.connect(self.rename_files)
         self.table_files.delete_clicked.connect(self.delete_files)
         self.table_files.open_clicked.connect(self.open_files)
-        self.table_files.current_user_role = self.current_user_role
 
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
         self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
 
-        self.label_current_workspace.setText(workspace_fs.workspace_name)
-        self.load(self.current_directory)
-        self.table_files.sortItems(0)
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
 
@@ -97,6 +89,25 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
         self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
+
+    @property
+    def workspace_fs(self):
+        return self._workspace_fs
+
+    @workspace_fs.setter
+    def workspace_fs(self, val):
+        self.current_directory = FsPath("/")
+        self._workspace_fs = val
+        ws_entry = self.workspace_fs.get_workspace_entry()
+        self.current_user_role = ws_entry.role
+        self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
+        self.table_files.current_user_role = self.current_user_role
+        self.reload()
+
+    def reset(self):
+        self.label_current_workspace.setText(self.workspace_fs.workspace_name)
+        self.load(self.current_directory)
+        self.table_files.sortItems(0)
 
     def rename_files(self):
         files = self.table_files.selected_files()
@@ -459,6 +470,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.fs_updated_qt.emit(event, id)
 
     def _on_fs_synced_qt(self, event, id, path):
+        if not self.workspace_fs:
+            return
         if path is None:
             try:
                 path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
@@ -487,6 +500,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     return
 
     def _on_fs_updated_qt(self, event, id):
+        if not self.workspace_fs:
+            return
+
         id = EntryID(id)
         path = None
         try:
