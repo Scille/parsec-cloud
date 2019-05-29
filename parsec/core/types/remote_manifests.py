@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict, List, Union
+from typing import Tuple, Dict, Union
 
 from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
@@ -44,9 +44,9 @@ class FileManifest:
     def evolve(self, **data) -> "FileManifest":
         return attr.evolve(self, **data)
 
-    def to_local(self) -> "local_manifests.LocalFileManifest":
+    def to_local(self, author: DeviceID) -> "local_manifests.LocalFileManifest":
         return local_manifests.LocalFileManifest(
-            author=self.author,
+            author=author,
             base_version=self.version,
             created=self.created,
             updated=self.updated,
@@ -91,9 +91,9 @@ class FolderManifest:
     def evolve(self, **data) -> "FolderManifest":
         return attr.evolve(self, **data)
 
-    def to_local(self) -> "local_manifests.LocalFolderManifest":
+    def to_local(self, author: DeviceID) -> "local_manifests.LocalFolderManifest":
         return local_manifests.LocalFolderManifest(
-            author=self.author,
+            author=author,
             base_version=self.version,
             created=self.created,
             updated=self.updated,
@@ -131,9 +131,9 @@ folder_manifest_serializer = serializer_factory(FolderManifestSchema)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class WorkspaceManifest(FolderManifest):
-    def to_local(self) -> "local_manifests.LocalWorkspaceManifest":
+    def to_local(self, author: DeviceID) -> "local_manifests.LocalWorkspaceManifest":
         return local_manifests.LocalWorkspaceManifest(
-            author=self.author,
+            author=author,
             base_version=self.version,
             created=self.created,
             updated=self.updated,
@@ -166,14 +166,14 @@ class UserManifest:
     created: pendulum.Pendulum
     updated: pendulum.Pendulum
     last_processed_message: int
-    workspaces: List[WorkspaceEntry]
+    workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
 
     def evolve(self, **data) -> "UserManifest":
         return attr.evolve(self, **data)
 
-    def to_local(self) -> "local_manifests.LocalUserManifest":
+    def to_local(self, author: DeviceID) -> "local_manifests.LocalUserManifest":
         return local_manifests.LocalUserManifest(
-            author=self.author,
+            author=author,
             base_version=self.version,
             created=self.created,
             updated=self.updated,

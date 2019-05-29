@@ -9,6 +9,7 @@ import trio
 import attr
 import pendulum
 
+from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS, FS
 from parsec.core.persistent_storage import PersistentStorage
@@ -61,8 +62,8 @@ class InMemoryPersistentStorage(PersistentStorage):
 
 
 class InMemoryLocalStorage(LocalStorage):
-    def __init__(self):
-        super().__init__("unused")
+    def __init__(self, device_id):
+        super().__init__(device_id, "unused")
         self.persistent_storage = InMemoryPersistentStorage()
 
 
@@ -199,7 +200,9 @@ async def create_shared_workspace(name, creator, *shared_with):
             if recipient_user_fs.device.user_id == creator_user_fs.device.user_id:
                 await recipient_user_fs.sync()
             else:
-                await creator_user_fs.workspace_share(wid, recipient_user_fs.device.user_id)
+                await creator_user_fs.workspace_share(
+                    wid, recipient_user_fs.device.user_id, WorkspaceRole.MANAGER
+                )
                 await recipient_user_fs.process_last_messages()
                 await recipient_user_fs.sync()
 

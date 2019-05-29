@@ -29,7 +29,7 @@ def fast_forward_file(
 ) -> LocalFileManifest:
     assert local_base.base_version < remote_target.version
     assert local_base.base_version <= local_current.base_version
-    assert local_current.base_version < remote_target.version
+    # assert local_current.base_version < remote_target.version
 
     processed_dirty_blocks_ids = [k.id for k in local_base.dirty_blocks]
     merged_dirty_blocks = [
@@ -108,8 +108,7 @@ class FileSyncerMixin(BaseSyncer):
 
         self.local_folder_fs.set_dirty_manifest(moved_access, diverged_manifest)
         self.local_folder_fs.set_dirty_manifest(parent_access, parent_manifest)
-        target_manifest = target_remote_manifest.to_local()
-        self.local_folder_fs.set_clean_manifest(access, target_manifest, force=True)
+        self.local_storage.set_base_manifest(access, target_remote_manifest)
 
         self.event_bus.send(
             "fs.entry.file_update_conflicted",
@@ -141,9 +140,8 @@ class FileSyncerMixin(BaseSyncer):
                 path, access, current_manifest, target_remote_manifest
             )
         else:
-            target_local_manifest = target_remote_manifest.to_local()
             # Otherwise just fast-forward the local data
-            self.local_folder_fs.set_clean_manifest(access, target_local_manifest)
+            self.local_storage.set_base_manifest(access, target_remote_manifest)
         return True
 
     async def _sync_file_actual_sync(
@@ -308,7 +306,6 @@ class FileSyncerMixin(BaseSyncer):
 
         await self._sync_file_actual_sync(path, access, minimal_manifest)
 
-        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access.id)
         return need_more_sync
 
     def _sync_file_merge_back(
@@ -326,4 +323,4 @@ class FileSyncerMixin(BaseSyncer):
             self.local_folder_fs.set_dirty_manifest(access, final_manifest)
         else:
             # New manifest is up to date with the remote: safely clean up the local manifest
-            self.local_folder_fs.set_clean_manifest(access, final_manifest, force=True)
+            self.local_storage.set_base_manifest(access, final_manifest.to_remote())

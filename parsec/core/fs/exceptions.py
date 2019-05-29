@@ -23,3 +23,15 @@ class FSBackendOfflineError(FSError):
 
 class FSSharingNotAllowedError(FSError):
     pass
+
+
+class FSRemoteSyncError(FSError):
+    pass
+
+
+class FSRemoteManifestNotFound(FSError):
+    pass
+
+
+class FSNoSynchronizationRequired(FSError):
+    pass

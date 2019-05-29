@@ -19,7 +19,6 @@ from parsec.serde import SerdeError
 from parsec.core.types import (
     LocalDevice,
     LocalWorkspaceManifest,
-    WorkspaceManifest,
     ManifestAccess,
     WorkspaceEntry,
     WorkspaceRole,
@@ -40,10 +39,9 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
 )
-from parsec.core.fs.utils import is_workspace_manifest
+
 from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.syncer import Syncer
-from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.userfs.merging import merge_local_user_manifests
 from parsec.core.fs.userfs.message import message_content_serializer
@@ -77,8 +75,6 @@ class UserFS:
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
 
-        # TODO: move those attributes into WorkspaceFS (no need to share them anymore)
-        self._remote_loader = RemoteLoader(backend_cmds, remote_devices_manager, local_storage)
         self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
         self._syncer = Syncer(
             device,
@@ -92,10 +88,6 @@ class UserFS:
     @property
     def user_manifest_access(self) -> ManifestAccess:
         return self.device.user_manifest_access
-
-    @property
-    def user_manifest_encryption_revision(self) -> int:
-        return self.device.user_manifest_encryption_revision
 
     def get_user_manifest(self) -> LocalUserManifest:
         """
@@ -111,7 +103,7 @@ class UserFS:
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
             user_manifest = LocalUserManifest(author=self.device.device_id)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             return user_manifest
 
     def get_workspace(self, workspace_id: UUID) -> WorkspaceFS:
@@ -138,8 +130,8 @@ class UserFS:
             local_storage=self.local_storage,
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
+            remote_device_manager=self.remote_devices_manager,
             _local_folder_fs=self._local_folder_fs,
-            _remote_loader=self._remote_loader,
             _syncer=self._syncer,
         )
 
@@ -152,8 +144,8 @@ class UserFS:
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(workspace_entry.access, workspace_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
@@ -174,7 +166,7 @@ class UserFS:
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, updated_user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, updated_user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
 
     async def _fetch_remote_user_manifest(self, version=None):
@@ -232,10 +224,6 @@ class UserFS:
         """
         user_manifest = self.get_user_manifest()
         if user_manifest.need_sync:
-            # Sync placeholders
-            for w in user_manifest.workspaces:
-                await self._workspace_minimal_sync(w)
-
             await self._outbound_sync()
         else:
             await self._inbound_sync()
@@ -249,14 +237,14 @@ class UserFS:
             return
 
         # New things in remote, merge is needed
-        target_um = target_um.to_local()
+        target_um = target_um.to_local(self.device.device_id)
 
         base_um = None
         while True:
             if diverged_um.base_version != 0:
                 # TODO: keep base manifest somewhere to avoid this query
                 base_um = await self._fetch_remote_user_manifest(version=diverged_um.base_version)
-                base_um = base_um.to_local()
+                base_um = base_um.to_local(self.device.device_id)
 
             # Merge and store result
             async with self._update_user_manifest_lock:
@@ -267,7 +255,7 @@ class UserFS:
                 if base_um and diverged_um.base_version != base_um.base_version:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
-                self.local_storage.set_dirty_manifest(self.user_manifest_access, merged)
+                self.local_storage.set_manifest(self.user_manifest_access, merged)
                 # TODO: deprecated event ?
                 self.event_bus.send(
                     "fs.entry.remote_changed", path="/", id=self.user_manifest_access.id
@@ -291,22 +279,14 @@ class UserFS:
         if not base_um.need_sync:
             return
 
-        # Ignore placeholders (they have been created since the start of the sync)
-        non_placeholder_entries = []
-        for entry in base_um.workspaces:
-            try:
-                workspace_manifest = self.local_storage.get_manifest(entry.access)
-                if workspace_manifest.is_placeholder:
-                    continue
-            except LocalStorageMissingEntry:
-                # Workspace not in local means it is already synchronized
-                pass
-            non_placeholder_entries.append(entry)
+        # Sync placeholders
+        for w in base_um.workspaces:
+            await self._workspace_minimal_sync(w)
 
         # Build vlob
         access = self.user_manifest_access
         to_sync_um = base_um.evolve(
-            workspaces=tuple(non_placeholder_entries),
+            workspaces=base_um.workspaces,
             base_version=base_um.base_version + 1,
             author=self.device.device_id,
             need_sync=False,
@@ -346,7 +326,7 @@ class UserFS:
         async with self._update_user_manifest_lock:
             diverged_um = self.get_user_manifest()
             merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, merged_um)
+            self.local_storage.set_manifest(self.user_manifest_access, merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_access.id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -355,60 +335,8 @@ class UserFS:
             FSError
             FSBackendOfflineError
         """
-        # TODO: do this in workspacefs ?
-        access = workspace_entry.access
-        try:
-            workspace_manifest = self.local_storage.get_manifest(access)
-        except LocalStorageMissingEntry:
-            # Workspace not in local means it is already synchronized
-            return
-        assert is_workspace_manifest(workspace_manifest)
-        if not workspace_manifest.is_placeholder:
-            return
-
-        # We don't care about the content of the workspace, just
-        # synchronize an empty initial version
-        remote_workspace_manifest = WorkspaceManifest(
-            author=self.device.device_id,
-            version=1,
-            created=workspace_manifest.created,
-            updated=workspace_manifest.created,
-            children={},
-        )
-        now = pendulum_now()
-        ciphered = encrypt_signed_msg_with_secret_key(
-            self.device.device_id,
-            self.device.signing_key,
-            access.key,
-            remote_manifest_serializer.dumps(remote_workspace_manifest),
-            now,
-        )
-        try:
-            await self.backend_cmds.vlob_create(access.id, 1, access.id, now, ciphered)
-
-        except BackendCmdsAlreadyExists:
-            # Already synchronized, nothing to do then ;-)
-            return
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(
-                f"Cannot synchronize workspace `{access.id}` ({workspace_entry.name}): {exc}"
-            ) from exc
-
-        # Finally update local storage info
-        # TODO: possible concurrency issue with workspacefs
-        workspace_manifest = self.local_storage.get_manifest(access)
-        if workspace_manifest.is_placeholder:
-            self.local_storage.set_dirty_manifest(
-                access, workspace_manifest.evolve(is_placeholder=False, base_version=1)
-            )
-        # TODO: still useful ?
-        self.event_bus.send(
-            "fs.entry.minimal_synced", path=f"/{workspace_entry.name}", id=access.id
-        )
+        workspace = self.get_workspace(workspace_entry.access.id)
+        await workspace.minimal_sync(workspace_entry.access)
 
     async def workspace_share(
         self, workspace_id: UUID, recipient: UserID, role: Optional[WorkspaceRole]
@@ -506,14 +434,6 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to send sharing message to backend: {exc}") from exc
 
-        # # TODO: participant&creator fields are deprecated, this is just a hack
-        # async with self._update_user_manifest_lock:
-        #     workspace_manifest = self.local_storage.get_manifest(workspace_entry.access)
-        #     workspace_manifest = workspace_manifest.evolve_and_mark_updated(
-        #         participants=(*workspace_manifest.participants, recipient))
-        #     self.local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
-        #     self.event_bus.send("fs.entry.updated", id=workspace_entry.access.id)
-
     async def process_last_messages(self) -> List[Tuple[int, Exception]]:
         """
         Raises:
@@ -559,7 +479,7 @@ class UserFS:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
                     )
-                    self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+                    self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
                     self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
 
         return errors
@@ -659,7 +579,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             self.event_bus.send("userfs.updated")
             if already_existing_entry:
                 self.event_bus.send(
@@ -713,7 +633,7 @@ class UserFS:
             workspace_entry = existing_workspace_entry.evolve(role=None, granted_on=pendulum_now())
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_dirty_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
                 "sharing.revoked",

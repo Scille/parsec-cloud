@@ -237,10 +237,12 @@ class BaseSyncer:
         manifest = remote_manifest_serializer.loads(raw)
         # TODO: better exception !
         assert manifest.version == expected_version
+        assert manifest.author == expected_author_id
         return manifest
 
     async def _backend_vlob_create(self, realm, access, manifest):
         assert manifest.version == 1
+        assert manifest.author == self.device.device_id
         now = pendulum.now()
         ciphered = encrypt_signed_msg_with_secret_key(
             self.device.device_id,
@@ -260,6 +262,7 @@ class BaseSyncer:
 
     async def _backend_vlob_update(self, access, manifest):
         assert manifest.version > 1
+        assert manifest.author == self.device.device_id
         now = pendulum.now()
         ciphered = encrypt_signed_msg_with_secret_key(
             self.device.device_id,

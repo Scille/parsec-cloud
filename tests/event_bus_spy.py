@@ -64,6 +64,11 @@ class EventBusSpy:
         self._waiters.add(_waiter)
         return await receive_channel.receive()
 
+    async def wait_multiple_with_timeout(self, events, timeout):
+        with trio.move_on_after(timeout):
+            await self.wait_multiple(events)
+        self.assert_events_occured(events)
+
     async def wait_multiple(self, events):
         expected_events = self._cook_events_params(events)
         try:
@@ -115,15 +120,11 @@ class EventBusSpy:
 
     def assert_events_occured(self, events):
         expected_events = self._cook_events_params(events)
-        occured_events = iter(self.events)
-        try:
-            for i, expected in enumerate(expected_events):
-                while True:
-                    occured = next(occured_events)
-                    if occured == expected:
-                        break
-        except StopIteration:
-            raise AssertionError("Missing events: " + "\n".join([str(x) for x in events[i:]]))
+        current_events = self.events
+        for event in expected_events:
+            assert event in current_events, self.events
+            i = current_events.index(event)
+            current_events = current_events[i + 1 :]
 
     def assert_events_exactly_occured(self, events):
         events = self._cook_events_params(events)

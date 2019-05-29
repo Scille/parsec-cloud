@@ -30,12 +30,12 @@ class UserButton(QWidget, Ui_UserButton):
         self.label.is_revoked = is_revoked
         self.certified_on = certified_on
         self.is_current_user = is_current_user
+        self.user_name = user_name
         self.set_display(user_name)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
     def set_display(self, value):
-        self._name = value
         if len(value) > 16:
             value = value[:16] + "-\n" + value[16:]
         if self.is_current_user:
@@ -62,7 +62,7 @@ class UserButton(QWidget, Ui_UserButton):
         menu.exec_(global_pos)
 
     def show_info(self):
-        text = "{}\n\n".format(self.name)
+        text = "{}\n\n".format(self.user_name)
         text += _("Created on {}").format(self.certified_on.format("%x %X"))
         if self.label.is_revoked:
             text += "\n\n"
@@ -101,7 +101,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             item = self.layout_users.itemAt(i)
             if item:
                 w = item.widget()
-                if pattern and pattern not in w.name.lower():
+                if pattern and pattern not in w.user_name.lower():
                     w.hide()
                 else:
                     w.show()
@@ -120,7 +120,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.users.append(user_name)
 
     def revoke_user(self, user_button):
-        user_name = user_button.name
+        user_name = user_button.user_name
         result = ask_question(
             self,
             _("Confirmation"),
@@ -130,10 +130,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             return
 
         try:
-            user_info, trustchain = self.jobs_ctx.run(
-                self.core.fs.backend_cmds.user_get, user_button.name
+            user_info, user_devices = self.jobs_ctx.run(
+                self.core.remote_devices_manager.get_user_and_devices, user_name
             )
-            for device in user_info.devices.values():
+            for device in user_devices:
                 revoked_device_certificate = build_revoked_device_certificate(
                     self.core.device.device_id,
                     self.core.device.signing_key,

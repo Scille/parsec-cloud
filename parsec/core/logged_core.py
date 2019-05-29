@@ -60,7 +60,9 @@ async def logged_core_factory(
             keepalive_time=config.backend_connection_keepalive,
         ) as backend_cmds_pool:
 
-            with LocalStorage(config.data_base_dir / device.slug) as local_storage:
+            with LocalStorage(
+                device.device_id, config.data_base_dir / device.slug
+            ) as local_storage:
 
                 remote_devices_manager = RemoteDevicesManager(
                     backend_cmds_pool, device.root_verify_key

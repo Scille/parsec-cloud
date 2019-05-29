@@ -17,14 +17,9 @@ async def monitor_realms(device, user_fs, event_bus, *, task_status=trio.TASK_ST
     def _on_workspace_created(sender, new_entry):
         event_bus.send("backend.realm.listen", realm_id=new_entry.access.id)
 
-    def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
-        # TODO: special event to signify an inbound sync is needed ?
-        event_bus.send("fs.entry.updated", id=src_id)
-
     with event_bus.connect_in_context(
         ("backend.listener.started", _on_listener_started),
         ("fs.workspace.created", _on_workspace_created),
-        ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
     ):
 
         task_status.started()

@@ -19,28 +19,26 @@ from parsec.core.gui.ui.device_button import Ui_DeviceButton
 class DeviceButton(QWidget, Ui_DeviceButton):
     revoke_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, device_name, is_current_device, is_revoked, revoked_on, *args, **kwargs):
+    def __init__(
+        self, device_name, is_current_device, is_revoked, revoked_on, certified_on, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.revoked_on = revoked_on
         self.label.is_revoked = is_revoked
-        if is_current_device:
-            self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
-        else:
-            self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
-        self.name = device_name
+        self.is_current_device = is_current_device
+        self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
+        self.device_name = device_name
+        self.certified_on = certified_on
+        self.set_display(device_name)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
+    def set_display(self, value):
         if len(value) > 16:
             value = value[:16] + "-\n" + value[16:]
+        if self.is_current_device:
+            value += _("\n(current)")
         self.label_device.setText(value)
 
     @property
@@ -57,13 +55,14 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         menu = QMenu(self)
         action = menu.addAction(_("Show info"))
         action.triggered.connect(self.show_info)
-        if not self.label.is_revoked:
+        if not self.label.is_revoked and not self.is_current_device:
             action = menu.addAction(_("Revoke"))
             action.triggered.connect(self.revoke)
         menu.exec_(global_pos)
 
     def show_info(self):
-        text = "{}".format(self.name)
+        text = "{}\n\n".format(self.device_name)
+        text += _("Created on {}").format(self.certified_on.format("%x %X"))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("This device has been revoked.")
@@ -101,13 +100,13 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             item = self.layout_devices.itemAt(i)
             if item:
                 w = item.widget()
-                if pattern and pattern not in w.name.lower():
+                if pattern and pattern not in w.device_name.lower():
                     w.hide()
                 else:
                     w.show()
 
     def revoke_device(self, device_button):
-        device_name = device_button.name
+        device_name = device_button.device_name
         result = ask_question(
             self,
             _("Confirmation"),
@@ -143,10 +142,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.register_device_dialog.exec_()
         self.reset()
 
-    def add_device(self, device_name, is_current_device, is_revoked, revoked_on):
+    def add_device(self, device_name, is_current_device, is_revoked, revoked_on, certified_on):
         if device_name in self.devices:
             return
-        button = DeviceButton(device_name, is_current_device, is_revoked, revoked_on)
+        button = DeviceButton(device_name, is_current_device, is_revoked, revoked_on, certified_on)
         self.layout_devices.addWidget(
             button, int(len(self.devices) / 4), int(len(self.devices) % 4)
         )
@@ -172,6 +171,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                     is_current_device=device.device_name == current_device.device_name,
                     is_revoked=bool(device.revoked_on),
                     revoked_on=device.revoked_on,
+                    certified_on=device.certified_on,
                 )
         except BackendNotAvailable:
             pass

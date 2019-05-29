@@ -20,6 +20,9 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 
 
 def compare_fs_dumps(entry_1, entry_2):
+    entry_1.pop("author", None)
+    entry_2.pop("author", None)
+
     def cook_entry(entry):
         if "children" in entry:
             return {**entry, "children": {k: v["access"] for k, v in entry["children"].items()}}

@@ -175,14 +175,6 @@ class PersistentStorage:
 
     # Generic manifest operations
 
-    def _check_presence(self, conn: Connection, access: Access):
-        with self._open_cursor(conn) as cursor:
-            cursor.execute(
-                "SELECT manifest_id FROM manifests WHERE manifest_id = ?", (str(access.id),)
-            )
-            row = cursor.fetchone()
-        return bool(row)
-
     def _get_manifest(self, conn: Connection, access: Access):
         with self._open_cursor(conn) as cursor:
             cursor.execute(
@@ -219,8 +211,6 @@ class PersistentStorage:
         return self._get_manifest(self.clean_conn, access)
 
     def set_clean_manifest(self, access: Access, raw: bytes):
-        if self._check_presence(self.dirty_conn, access):
-            raise ValueError("Cannot set clean manifest: a dirty manifest is already present")
         self._set_manifest(self.clean_conn, access, raw)
 
     def clear_clean_manifest(self, access: Access):
@@ -232,8 +222,6 @@ class PersistentStorage:
         return self._get_manifest(self.dirty_conn, access)
 
     def set_dirty_manifest(self, access: Access, raw: bytes):
-        if self._check_presence(self.clean_conn, access):
-            raise ValueError("Cannot set dirty manifest: a clean manifest is already present")
         self._set_manifest(self.dirty_conn, access, raw)
 
     def clear_dirty_manifest(self, access: Access):
