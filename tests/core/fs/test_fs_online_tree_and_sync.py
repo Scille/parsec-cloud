@@ -100,9 +100,9 @@ def test_fs_online_tree_and_sync(
             # TODO: would be cleaner to recreate a new device...
             self.local_storage = local_storage_factory(self.device, force=True)
             await self.restart_user_fs(self.device, self.local_storage)
-            await self.workspace.sync("/")
-            await self.user_fs.sync()
             self.oracle_fs.reset()
+            self.oracle_fs.create_workspace("/w")
+            await self.user_fs.sync()
 
         @rule()
         async def sync_root(self):
