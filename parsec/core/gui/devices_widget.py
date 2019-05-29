@@ -6,9 +6,10 @@ from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
 from parsec.types import DeviceID
-from parsec.crypto import build_device_certificate
+from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
@@ -72,7 +73,42 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.revoke_clicked.emit(self)
 
 
+async def _do_revoke_device(core, device_name, button):
+    try:
+        revoked_device_certificate = build_revoked_device_certificate(
+            core.device.device_id,
+            core.device.signing_key,
+            DeviceID(f"{core.device.device_id.user_id}@{device_name}"),
+            pendulum.now(),
+        )
+        await core.user_fs.backend_cmds.device_revoke(revoked_device_certificate)
+        return button
+    except BackendCmdsBadResponse as exc:
+        raise JobResultError(exc.status)
+    except:
+        import traceback
+
+        traceback.print_exc()
+        raise JobResultError("error")
+
+
+async def _do_list_devices(core):
+    try:
+        current_device = core.device
+        _, devices = await core.remote_devices_manager.get_user_and_devices(current_device.user_id)
+        return devices
+    except BackendNotAvailable:
+        raise JobResultError("offline")
+    except:
+        raise JobResultError("error")
+
+
 class DevicesWidget(QWidget, Ui_DevicesWidget):
+    revoke_success = pyqtSignal()
+    revoke_error = pyqtSignal()
+    list_success = pyqtSignal()
+    list_error = pyqtSignal()
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -87,12 +123,19 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.taskbar_buttons.append(button_add_device)
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)
+        self.revoke_job = None
+        self.list_job = None
+        self.revoke_success.connect(self.on_revoke_success)
+        self.revoke_error.connect(self.on_revoke_error)
+        self.list_success.connect(self.on_list_success)
+        self.list_error.connect(self.on_list_error)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
         self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
         self.reset()
 
     def disconnect_all(self):
-        pass
+        self.list_job = None
+        self.revoke_job = None
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
@@ -111,39 +154,50 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 else:
                     w.show()
 
+    def on_revoke_success(self):
+        assert self.revoke_job
+        assert self.revoke_job.is_finished()
+        assert self.revoke_job.status == "ok"
+        button = self.revoke_job.ret
+        self.revoke_job = None
+        MessageDialog.show_info(self, _('Device "{}" has been revoked.').format(button.device_name))
+        button.is_revoked = True
+
+    def on_revoke_error(self):
+        assert self.revoke_job
+        assert self.revoke_job.is_finished()
+        assert self.revoke_job.status != "ok"
+
+        status = self.revoke_job.status
+        self.revoke_job = None
+        if status == "already_revoked":
+            MessageDialog.show_error(self, _("Device has already been revoked."))
+        elif status == "not_found":
+            MessageDialog.show_error(self, _("Device not found."))
+        elif status == "invalid_role" or status == "invalid_certification":
+            MessageDialog.show_error(
+                self, _("You don't have the permission to revoke this device.")
+            )
+        elif status == "error":
+            MessageDialog.show_error(self, _("Can not revoke this device."))
+
     def revoke_device(self, device_button):
-        device_name = device_button.device_name
         result = QuestionDialog.ask(
             self,
             _("Confirmation"),
-            _('Are you sure you want to revoke device "{}" ?').format(device_name),
+            _('Are you sure you want to revoke device "{}" ?').format(device_button.device_name),
         )
         if not result:
             return
-
-        try:
-            revoked_device_certificate = build_device_certificate(
-                self.core.device.device_id,
-                self.core.device.signing_key,
-                DeviceID(f"{self.core.device.device_id.user_id}@{device_name}"),
-                pendulum.now(),
-            )
-            self.jobs_ctx.run(self.core.backend_cmds.device_revoke, revoked_device_certificate)
-            device_button.is_revoked = True
-            MessageDialog.show_info(self, _('Device "{}" has been revoked.').format(device_name))
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "already_revoked":
-                MessageDialog.show_error(
-                    self, _('Device "{}" has already been revoked.').format(device_name)
-                )
-            elif exc.status == "not_found":
-                MessageDialog.show_error(self, _('Device "{}" not found.').format(device_name))
-            elif exc.status == "invalid_role" or exc.status == "invalid_certification":
-                MessageDialog.show_error(
-                    self, _("You don't have the permission to revoke this device.")
-                )
-        except:
-            MessageDialog.show_error(self, _("Can not revoke this device."))
+        assert not self.revoke_job
+        self.revoke_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "revoke_success"),
+            ThreadSafeQtSignal(self, "revoke_error"),
+            _do_revoke_device,
+            core=self.core,
+            device_name=device_button.device_name,
+            button=device_button,
+        )
 
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(
@@ -160,7 +214,30 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             button, int(len(self.devices) / 4), int(len(self.devices) % 4)
         )
         button.revoke_clicked.connect(self.revoke_device)
+        button.show()
         self.devices.append(device_name)
+
+    def on_list_success(self):
+        assert self.list_job
+        assert self.list_job.is_finished()
+        assert self.list_job.status == "ok"
+        devices = self.list_job.ret
+        self.list_job = None
+        current_device = self.core.device
+        for device in devices:
+            self.add_device(
+                device.device_name,
+                is_current_device=device.device_name == current_device.device_name,
+                is_revoked=bool(device.revoked_on),
+                revoked_on=device.revoked_on,
+                certified_on=device.certified_on,
+            )
+
+    def on_list_error(self):
+        assert self.list_job
+        assert self.list_job.is_finished()
+        assert self.list_job.status != "ok"
+        self.list_job = None
 
     def reset(self):
         self.devices = []
@@ -170,20 +247,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 w = item.widget()
                 self.layout_devices.removeWidget(w)
                 w.setParent(None)
-        try:
-            current_device = self.core.device
-            _, devices = self.jobs_ctx.run(
-                self.core.remote_devices_manager.get_user_and_devices, self.core.device.user_id
-            )
-            for device in devices:
-                self.add_device(
-                    device.device_name,
-                    is_current_device=device.device_name == current_device.device_name,
-                    is_revoked=bool(device.revoked_on),
-                    revoked_on=device.revoked_on,
-                    certified_on=device.certified_on,
-                )
-        except BackendNotAvailable:
-            pass
-        except:
-            pass
+        assert not self.list_job
+        self.list_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "list_success"),
+            ThreadSafeQtSignal(self, "list_error"),
+            _do_list_devices,
+            core=self.core,
+        )

@@ -43,9 +43,13 @@ async def logged_gui_bob(aqtbot, gui_factory, autoclose_dialog, core_config, bob
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_register_user_open_modal(aqtbot, logged_gui_alice):
-    u_w = logged_gui_alice.test_get_users_widget()
+async def test_register_user_open_modal(aqtbot, logged_gui, running_backend):
+    u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
+
+    async with aqtbot.wait_signal(u_w.list_success):
+        pass
+
     with patch("parsec.core.gui.users_widget.RegisterUserDialog") as register_mock:
         await aqtbot.mouse_click(u_w.taskbar_buttons[0], QtCore.Qt.LeftButton)
         register_mock.assert_called_once_with(parent=u_w, jobs_ctx=u_w.jobs_ctx, core=u_w.core)

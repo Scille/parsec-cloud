@@ -8,6 +8,7 @@ from PyQt5.QtGui import QPixmap
 from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
 from parsec.core.gui.lang import translate as _
@@ -73,7 +74,44 @@ class UserButton(QWidget, Ui_UserButton):
         self.revoke_clicked.emit(self)
 
 
+async def _do_revoke_user(core, user_name, button):
+    try:
+        user_info, user_devices = await core.remote_devices_manager.get_user_and_devices(user_name)
+        for device in user_devices:
+            revoked_device_certificate = build_revoked_device_certificate(
+                core.device.device_id, core.device.signing_key, device.device_id, pendulum.now()
+            )
+            await core.user_fs.backend_cmds.device_revoke(revoked_device_certificate)
+        return button
+    except BackendCmdsBadResponse as exc:
+        raise JobResultError(exc.status)
+    except:
+        raise JobResultError("error")
+
+
+async def _do_list_users(core):
+    try:
+        ret = {}
+        users = await core.user_fs.backend_cmds.user_find()
+        for user in users:
+            user_info, user_devices = await core.remote_devices_manager.get_user_and_devices(user)
+            ret[user] = (user_info, user_devices)
+        return ret
+    except BackendNotAvailable:
+        raise JobResultError("offline")
+    except:
+        import traceback
+
+        traceback.print_exc()
+        raise JobResultError("error")
+
+
 class UsersWidget(QWidget, Ui_UsersWidget):
+    revoke_success = pyqtSignal()
+    revoke_error = pyqtSignal()
+    list_success = pyqtSignal()
+    list_error = pyqtSignal()
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -87,10 +125,16 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
             button_add_user.clicked.connect(self.register_user)
             self.taskbar_buttons.append(button_add_user)
+        self.revoke_job = None
+        self.list_job = None
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
         self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
+        self.revoke_success.connect(self.on_revoke_success)
+        self.revoke_error.connect(self.on_revoke_error)
+        self.list_success.connect(self.on_list_success)
+        self.list_error.connect(self.on_list_error)
         self.reset()
 
     def disconnect_all(self):
@@ -124,46 +168,72 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button = UserButton(user_name, is_current_user, is_admin, certified_on, is_revoked)
         self.layout_users.addWidget(button, int(len(self.users) / 4), int(len(self.users) % 4))
         button.revoke_clicked.connect(self.revoke_user)
+        button.show()
         self.users.append(user_name)
 
+    def on_revoke_success(self):
+        assert self.revoke_job
+        assert self.revoke_job.is_finished()
+        assert self.revoke_job.status == "ok"
+        button = self.revoke_job.ret
+        self.revoke_job = None
+        MessageDialog.show_info(self, _('User "{}" has been revoked.'.format(button.user_name)))
+        button.is_revoked = True
+
+    def on_revoke_error(self):
+        assert self.revoke_job
+        assert self.revoke_job.is_finished()
+        assert self.revoke_job.status != "ok"
+
+        status = self.revoke_job.status
+        self.revoke_job = None
+        if status == "already_revoked":
+            MessageDialog.show_error(self, _("User has already been revoked."))
+        elif status == "not_found":
+            MessageDialog.show_error(self, _("User not found."))
+        elif status == "invalid_role" or status == "invalid_certification":
+            MessageDialog.show_error(self, _("You don't have the permission to revoke this user."))
+        elif status == "error":
+            MessageDialog.show_error(self, _("Can not revoke this user."))
+
     def revoke_user(self, user_button):
-        user_name = user_button.user_name
         result = QuestionDialog.ask(
             self,
             _("Confirmation"),
-            _('Are you sure you want to revoke user "{}" ?').format(user_name),
+            _('Are you sure you want to revoke user "{}" ?').format(user_button.user_name),
         )
         if not result:
             return
+        assert not self.revoke_job
+        self.revoke_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "revoke_success"),
+            ThreadSafeQtSignal(self, "revoke_error"),
+            _do_revoke_user,
+            core=self.core,
+            user_name=user_button.user_name,
+            button=user_button,
+        )
 
-        try:
-            user_info, user_devices = self.jobs_ctx.run(
-                self.core.remote_devices_manager.get_user_and_devices, user_name
+    def on_list_success(self):
+        assert self.list_job
+        assert self.list_job.is_finished()
+        assert self.list_job.status == "ok"
+        users = self.list_job.ret
+        self.list_job = None
+        current_user = self.core.device.user_id
+        for user, (user_info, user_devices) in users.items():
+            self.add_user(
+                str(user_info.user_id),
+                is_current_user=current_user == user,
+                is_admin=False,
+                certified_on=user_info.certified_on,
+                is_revoked=all([device.revoked_on for device in user_devices]),
             )
-            print(user_info, user_devices)
-            for device in user_devices:
-                revoked_device_certificate = build_revoked_device_certificate(
-                    self.core.device.device_id,
-                    self.core.device.signing_key,
-                    device.device_id,
-                    pendulum.now(),
-                )
-                self.jobs_ctx.run(self.core.backend_cmds.device_revoke, revoked_device_certificate)
-            user_button.is_revoked = True
-            MessageDialog.show_info(self, _('User "{}" has been revoked.').format(user_name))
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "already_revoked":
-                MessageDialog.show_error(
-                    self, _('User "{}" has already been revoked.').format(user_name)
-                )
-            elif exc.status == "not_found":
-                MessageDialog.show_error(self, _('User "{}" not found.').format(user_name))
-            elif exc.status == "invalid_role" or exc.status == "invalid_certification":
-                MessageDialog.show_error(
-                    self, _("You don't have the permission to revoke this user.")
-                )
-        except:
-            MessageDialog.show_error(self, _("Can not revoke this user."))
+
+    def on_list_error(self):
+        assert self.list_job
+        assert self.list_job.is_finished()
+        assert self.list_job.status != "ok"
 
     def reset(self):
         self.users = []
@@ -173,21 +243,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w = item.widget()
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
-        try:
-            user_id = self.core.device.user_id
-            users = self.jobs_ctx.run(self.core.backend_cmds.user_find)
-            for user in users:
-                user_info, user_devices = self.jobs_ctx.run(
-                    self.core.remote_devices_manager.get_user_and_devices, user
-                )
-                self.add_user(
-                    str(user_info.user_id),
-                    is_current_user=user_id == user,
-                    is_admin=user_info.is_admin,
-                    certified_on=user_info.certified_on,
-                    is_revoked=all([device.revoked_on for device in user_devices]),
-                )
-        except BackendNotAvailable:
-            pass
-        except:
-            pass
+        assert not self.list_job
+        self.list_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "list_success"),
+            ThreadSafeQtSignal(self, "list_error"),
+            _do_list_users,
+            core=self.core,
+        )

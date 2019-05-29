@@ -19,45 +19,46 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
+        self.workspaces_widget = WorkspacesWidget(
+            self.core, self.jobs_ctx, self.event_bus, parent=self
+        )
+        self.layout_content.insertWidget(0, self.workspaces_widget)
+        self.workspaces_widget.load_workspace_clicked.connect(self.load_workspace)
+        self.files_widget = FilesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.layout_content.insertWidget(0, self.files_widget)
+        self.files_widget.back_clicked.connect(self.show_workspaces_widget)
+        self.files_widget.taskbar_updated.connect(self.on_taskbar_updated)
+        self.widget_switched.emit(self.get_taskbar_buttons())
         self.show_workspaces_widget()
 
     def disconnect_all(self):
-        item = self.layout_content.itemAt(0)
-        if item:
-            item.widget().disconnect_all()
+        self.files_widget.disconnect_all()
+        self.workspaces_widget.disconnect_all()
 
     def load_workspace(self, workspace_fs):
         self.show_files_widget(workspace_fs)
 
     def get_taskbar_buttons(self):
-        item = self.layout_content.itemAt(0)
-        if item:
-            return item.widget().get_taskbar_buttons().copy()
+        if not self.files_widget.isVisible() and not self.workspaces_widget.isVisible():
+            return self.workspaces_widget.get_taskbar_buttons().copy()
+        elif self.files_widget.isVisible():
+            return self.files_widget.get_taskbar_buttons().copy()
+        elif self.workspaces_widget.isVisible():
+            return self.workspaces_widget.get_taskbar_buttons().copy()
         return []
-
-    def show_files_widget(self, workspace_fs):
-        self.clear_widgets()
-        files_widget = FilesWidget(
-            self.core, self.jobs_ctx, self.event_bus, workspace_fs, parent=self
-        )
-        self.layout_content.insertWidget(0, files_widget)
-        files_widget.back_clicked.connect(self.show_workspaces_widget)
-        files_widget.taskbar_updated.connect(self.on_taskbar_updated)
-        self.widget_switched.emit(self.get_taskbar_buttons())
 
     def on_taskbar_updated(self):
         self.widget_switched.emit(self.get_taskbar_buttons())
 
-    def show_workspaces_widget(self):
-        self.clear_widgets()
-        workspaces_widget = WorkspacesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
-        self.layout_content.insertWidget(0, workspaces_widget)
-        workspaces_widget.load_workspace_clicked.connect(self.load_workspace)
-        self.widget_switched.emit(self.get_taskbar_buttons())
+    def show_files_widget(self, workspace_fs):
+        self.workspaces_widget.hide()
+        self.files_widget.workspace_fs = workspace_fs
+        self.files_widget.reset()
+        self.files_widget.show()
+        self.widget_switched.emit(self.files_widget.get_taskbar_buttons().copy())
 
-    def clear_widgets(self):
-        item = self.layout_content.takeAt(0)
-        if item:
-            item.widget().disconnect_all()
-            item.widget().hide()
-            item.widget().setParent(None)
+    def show_workspaces_widget(self):
+        self.files_widget.hide()
+        self.workspaces_widget.reset()
+        self.workspaces_widget.show()
+        self.widget_switched.emit(self.workspaces_widget.get_taskbar_buttons().copy())

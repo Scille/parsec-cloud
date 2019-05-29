@@ -34,9 +34,12 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_register_device_open_modal(aqtbot, logged_gui):
+async def test_register_device_open_modal(aqtbot, logged_gui, running_backend):
     d_w = logged_gui.test_get_devices_widget()
+
     assert d_w is not None
+    async with aqtbot.wait_signal(d_w.list_success):
+        pass
 
     with patch("parsec.core.gui.devices_widget.RegisterDeviceDialog") as register_mock:
         await aqtbot.mouse_click(d_w.taskbar_buttons[0], QtCore.Qt.LeftButton)
