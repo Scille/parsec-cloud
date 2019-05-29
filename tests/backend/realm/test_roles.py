@@ -175,3 +175,25 @@ async def test_role_update_not_allowed(
     )
     rep = await realm_update_roles(alice_backend_sock, realm, bob.user_id, None)
     assert rep == {"status": "not_allowed"}
+
+
+@pytest.mark.trio
+async def test_role_access_during_maintenance(
+    backend, alice, bob, alice_backend_sock, realm, vlobs
+):
+    await backend.realm.start_reencryption_maintenance(
+        alice.organization_id,
+        alice.device_id,
+        realm,
+        2,
+        {alice.user_id: b"whatever"},
+        Pendulum(2000, 1, 2),
+    )
+
+    # Get roles allowed...
+    rep = await realm_get_roles(alice_backend_sock, realm)
+    assert rep == {"status": "ok", "users": {"alice": RealmRole.OWNER}}
+
+    # ...buit not update role
+    rep = await realm_update_roles(alice_backend_sock, realm, bob.user_id, RealmRole.MANAGER)
+    assert rep == {"status": "in_maintenance"}
