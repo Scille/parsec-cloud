@@ -60,6 +60,15 @@ def pytest_addoption(parser):
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
+    parser.addoption(
+        "--run-postgresql-cluster",
+        action="store_true",
+        help=(
+            "Instead of running the tests, only start a PostgreSQL cluster "
+            "that could be use for other tests (through `PG_URL` env var) "
+            "to avoid having to create a new cluster each time."
+        ),
+    )
 
 
 def is_xdist_master(config):
@@ -77,6 +86,10 @@ def pytest_configure(config):
         configure_logging()
     if config.getoption("--postgresql") and not is_xdist_master(config):
         bootstrap_postgresql_testbed()
+    if config.getoption("--run-postgresql-cluster"):
+        bootstrap_postgresql_testbed()
+        input("Press enter when you're done with...")
+        pytest.exit("bye")
 
 
 def patch_pytest_trio():
