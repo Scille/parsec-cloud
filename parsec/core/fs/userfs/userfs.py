@@ -32,6 +32,7 @@ from parsec.core.backend_connection import (
     BackendCmdsNotAllowed,
     BackendCmdsAlreadyExists,
     BackendCmdsBadVersion,
+    BackendCmdsInMaintenance,
     BackendConnectionError,
 )
 from parsec.core.remote_devices_manager import (
@@ -50,6 +51,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
     FSSharingNotAllowedError,
+    FSWorkspaceInMaintenance,
 )
 
 
@@ -183,6 +185,11 @@ class UserFS:
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot access workspace data while it is in maintenance"
+            ) from exc
 
         except BackendConnectionError as exc:
             raise FSError(f"Cannot fetch user manifest from backend: {exc}") from exc
@@ -319,6 +326,11 @@ class UserFS:
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot modify workspace data while it is in maintenance"
+            ) from exc
+
         except BackendConnectionError as exc:
             raise FSError(f"Cannot sync user manifest: {exc}") from exc
 
@@ -391,6 +403,11 @@ class UserFS:
         except BackendCmdsNotAllowed as exc:
             raise FSSharingNotAllowedError(
                 "Must be Owner or Manager on the workspace is mandatory to share it"
+            ) from exc
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot share workspace while it is in maintenance"
             ) from exc
 
         except BackendConnectionError as exc:

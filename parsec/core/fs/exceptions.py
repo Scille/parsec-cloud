@@ -35,3 +35,7 @@ class FSRemoteManifestNotFound(FSError):
 
 class FSNoSynchronizationRequired(FSError):
     pass
+
+
+class FSWorkspaceInMaintenance(FSError):
+    pass

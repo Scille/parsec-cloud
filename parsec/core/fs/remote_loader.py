@@ -10,13 +10,18 @@ from parsec.crypto import (
     decrypt_and_verify_signed_msg_with_secret_key,
 )
 
-from parsec.core.backend_connection import BackendCmdsBadResponse, BackendNotAvailable
+from parsec.core.backend_connection import (
+    BackendCmdsBadResponse,
+    BackendCmdsInMaintenance,
+    BackendNotAvailable,
+)
 from parsec.core.types import LocalManifest, BlockAccess
 from parsec.core.types import ManifestAccess, remote_manifest_serializer, Manifest
 from parsec.core.fs.exceptions import (
     FSRemoteSyncError,
     FSRemoteManifestNotFound,
     FSBackendOfflineError,
+    FSWorkspaceInMaintenance,
 )
 
 
@@ -48,11 +53,19 @@ class RemoteLoader:
 
     async def load_remote_manifest(self, access: ManifestAccess) -> Manifest:
         try:
-            args = await self.backend_cmds.vlob_read(access.id)
+            # TODO: encryption_revision is not yet handled in core
+            args = await self.backend_cmds.vlob_read(1, access.id)
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot access workspace data while it is in maintenance"
+            ) from exc
+
         except BackendCmdsBadResponse as exc:
             if exc.status == "not_found":
                 raise FSRemoteManifestNotFound(access)
             raise
+
         expected_author_id, expected_timestamp, expected_version, blob = args
         author = await self.remote_device_manager.get_device(expected_author_id)
         raw = decrypt_and_verify_signed_msg_with_secret_key(
@@ -92,9 +105,17 @@ class RemoteLoader:
             now,
         )
         try:
-            await self.backend_cmds.vlob_create(self.workspace_id, access.id, now, ciphered)
+            # TODO: encryption_revision is not yet handled in core
+            await self.backend_cmds.vlob_create(self.workspace_id, 1, access.id, now, ciphered)
+
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot access workspace data while it is in maintenance"
+            ) from exc
+
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise FSRemoteSyncError(access)
@@ -114,9 +135,17 @@ class RemoteLoader:
             now,
         )
         try:
-            await self.backend_cmds.vlob_update(access.id, manifest.version, now, ciphered)
+            # TODO: encryption_revision is not yet handled in core
+            await self.backend_cmds.vlob_update(1, access.id, manifest.version, now, ciphered)
+
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot access workspace data while it is in maintenance"
+            ) from exc
+
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":
                 raise FSRemoteSyncError(access)
