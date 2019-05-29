@@ -294,7 +294,7 @@ async def claim_user(
                     invitation_creator_device.verify_key,
                 )
                 pdb.set_trace()
-                new_device.evole(is_admin=user.is_admin)
+                new_device.evolve(is_admin=user.is_admin)
 
             except BackendNotAvailable as exc:
                 raise InviteClaimBackendOfflineError(str(exc)) from exc
