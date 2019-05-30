@@ -232,7 +232,7 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
     assert not await bar_txt.exists()
 
 
-@pytest.mark.linux
+@pytest.mark.mountpoint
 def test_manifest_not_available(mountpoint_service):
     async def _bootstrap(user_fs, fs, mountpoint_manager):
         await user_fs.workspace_create("x")
