@@ -86,13 +86,13 @@ class SyncMonitor:
             updated_entries[workspace_id, id] = first_updated, last_updated
             new_event.set()
 
-        def _on_vlob_group_updated(sender, id, checkpoint, src_id, src_version):
-            updated_entries[id, src_id] = timestamp() - MAX_WAIT, timestamp() - MAX_WAIT
+        def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
+            updated_entries[realm_id, src_id] = timestamp() - MAX_WAIT, timestamp() - MAX_WAIT
             new_event.set()
 
         with self.event_bus.connect_in_context(
             ("fs.entry.updated", _on_entry_updated),
-            ("backend.vlob_group.updated", _on_vlob_group_updated),
+            ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
         ):
 
             async with trio.open_nursery() as nursery:

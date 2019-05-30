@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import inspect
+from uuid import UUID
 from typing import Union, Iterator, Dict
 
 from parsec.types import UserID
@@ -92,7 +93,7 @@ class WorkspaceFS:
     async def path_info(self, path: AnyPath) -> dict:
         return await self.entry_transactions.entry_info(FsPath(path))
 
-    async def path_id(self, path: AnyPath) -> dict:
+    async def path_id(self, path: AnyPath) -> UUID:
         info = await self.entry_transactions.entry_info(FsPath(path))
         return info["id"]
 
