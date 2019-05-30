@@ -228,7 +228,7 @@ class BaseSyncer:
         return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
-        args = await self.backend_cmds.vlob_read(access.encryption_revision, access.id, version)
+        args = await self.backend_cmds.vlob_read(1, access.id, version)
         expected_author_id, expected_timestamp, expected_version, blob = args
         author = await self.remote_devices_manager.get_device(expected_author_id)
         raw = decrypt_and_verify_signed_msg_with_secret_key(
@@ -252,9 +252,7 @@ class BaseSyncer:
             now,
         )
         try:
-            await self.backend_cmds.vlob_create(
-                realm, access.encryption_revision, access.id, now, ciphered
-            )
+            await self.backend_cmds.vlob_create(realm, 1, access.id, now, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise SyncConcurrencyError(access)
@@ -272,9 +270,7 @@ class BaseSyncer:
             now,
         )
         try:
-            await self.backend_cmds.vlob_update(
-                access.encryption_revision, access.id, manifest.version, now, ciphered
-            )
+            await self.backend_cmds.vlob_update(1, access.id, manifest.version, now, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":
                 raise SyncConcurrencyError(access)

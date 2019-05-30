@@ -169,9 +169,7 @@ class BackendEventsManager:
                 max_pool=1,
             ) as cmds:
                 # Copy `self._subscribed_realms` to avoid concurrent modifications
-                await cmds.events_subscribe(
-                    message_received=True, realm_vlobs_updated=self._subscribed_realms.copy()
-                )
+                await cmds.events_subscribe(message=True, realm=self._subscribed_realms.copy())
 
                 # Given the backend won't notify us for messages that arrived while
                 # we were offline, we must actively check this ourself.

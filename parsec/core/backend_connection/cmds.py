@@ -110,17 +110,17 @@ async def ping(transport: Transport, ping: str) -> str:
 
 async def events_subscribe(
     transport: Transport,
-    message_received: bool = False,
-    realm_vlobs_updated: Iterable[UUID] = (),
-    pinged: Iterable[str] = (),
+    message: bool = False,
+    realm: Iterable[UUID] = (),
+    ping: Iterable[str] = (),
 ) -> None:
     await _send_cmd(
         transport,
         events_subscribe_serializer,
         cmd="events_subscribe",
-        message_received=message_received,
-        realm_vlobs_updated=realm_vlobs_updated,
-        pinged=pinged,
+        message=message,
+        realm=realm,
+        ping=ping,
     )
 
 
@@ -295,13 +295,13 @@ async def realm_finish_reencryption_maintenance(
 ### Block API ###
 
 
-async def block_create(transport: Transport, block_id: UUID, realm: UUID, block: bytes) -> None:
+async def block_create(transport: Transport, block_id: UUID, realm_id: UUID, block: bytes) -> None:
     await _send_cmd(
         transport,
         block_create_serializer,
         cmd="block_create",
         block_id=block_id,
-        realm=realm,
+        realm_id=realm_id,
         block=block,
     )
 

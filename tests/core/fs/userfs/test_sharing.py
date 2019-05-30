@@ -263,11 +263,11 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
     await alice_user_fs.sync()
 
     # Drop manager right (and give to Bob the ownership)
-    await running_backend.backend.vlob.update_group_roles(
-        alice.organization_id, alice.user_id, wid, bob.user_id, role=WorkspaceRole.OWNER
+    await running_backend.backend.realm.update_roles(
+        alice.organization_id, alice, wid, bob.user_id, role=WorkspaceRole.OWNER
     )
-    await running_backend.backend.vlob.update_group_roles(
-        alice.organization_id, bob.user_id, wid, alice.user_id, role=WorkspaceRole.CONTRIBUTOR
+    await running_backend.backend.realm.update_roles(
+        alice.organization_id, bob, wid, alice.user_id, role=WorkspaceRole.CONTRIBUTOR
     )
 
     with pytest.raises(FSSharingNotAllowedError) as exc:
