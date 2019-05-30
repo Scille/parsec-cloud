@@ -3,7 +3,6 @@
 import pendulum
 from uuid import UUID
 from typing import Dict, Optional
-from triopg import UniqueViolationError
 
 from parsec.api.protocole import RealmRole, MaintenanceType
 from parsec.types import DeviceID, UserID, OrganizationID

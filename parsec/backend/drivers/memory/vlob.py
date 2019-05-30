@@ -6,7 +6,7 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
-from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.types import DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.api.protocole import RealmRole
 from parsec.backend.drivers.memory.realm import (

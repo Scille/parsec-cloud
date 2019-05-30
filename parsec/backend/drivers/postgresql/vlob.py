@@ -5,7 +5,7 @@ from triopg import UniqueViolationError
 from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 
-from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.types import DeviceID, OrganizationID
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
     BaseVlobComponent,
