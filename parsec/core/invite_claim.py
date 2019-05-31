@@ -285,15 +285,11 @@ async def claim_user(
             # 3) Send claim
             try:
                 user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
-                import pdb
-
-                pdb.set_trace()
                 user = verify_user_certificate(
                     user.user_certificate,
                     invitation_creator_device.device_id,
                     invitation_creator_device.verify_key,
                 )
-                pdb.set_trace()
                 new_device.evolve(is_admin=user.is_admin)
 
             except BackendNotAvailable as exc:
