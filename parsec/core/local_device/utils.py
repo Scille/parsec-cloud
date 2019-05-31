@@ -25,7 +25,7 @@ from parsec.core.local_device.pkcs11_cipher import PKCS11DeviceEncryptor, PKCS11
 
 
 def generate_new_device(
-    device_id: DeviceID, organization_addr: BackendOrganizationAddr, is_admin=False
+    device_id: DeviceID, organization_addr: BackendOrganizationAddr, is_admin: bool = False
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
