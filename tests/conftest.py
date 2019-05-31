@@ -87,18 +87,19 @@ def patch_pytest_trio():
     vanilla_crash = pytest_trio.plugin.TrioTestContext.crash
 
     def patched_crash(self, exc):
-        vanilla_crash(self, exc)
         if exc is None:
             task = trio.hazmat.current_task()
             for child_nursery in task.child_nurseries:
-                for exc in child_nursery._pending_excs:
-                    vanilla_crash(self, exc)
+                for child_exc in child_nursery._pending_excs:
+                    if not isinstance(exc, trio.Cancelled):
+                        vanilla_crash(self, child_exc)
+        vanilla_crash(self, exc)
 
     pytest_trio.plugin.TrioTestContext.crash = patched_crash
 
     def fget(self):
         if self.crashed and not self._error_list:
-            return [trio.TrioInternalError("See pytest-trio issue #75")]
+            self._error_list.append(trio.TrioInternalError("See pytest-trio issue #75"))
         return self._error_list
 
     def fset(self, value):
