@@ -32,6 +32,30 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     yield gui
 
 
+@pytest.fixture
+async def logged_gui_bob(aqtbot, gui_factory, autoclose_dialog, core_config, bob):
+    # Create an existing device before starting the gui
+    password = "P@ssw0rd"
+    save_device_with_password(core_config.config_dir, bob, password)
+
+    gui = await gui_factory()
+    lw = gui.test_get_login_widget()
+    llw = gui.test_get_login_login_widget()
+
+    assert llw is not None
+
+    await aqtbot.key_clicks(llw.line_edit_password, password)
+
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
+        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
+
+    central_widget = gui.test_get_central_widget()
+    assert central_widget is not None
+
+    await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
+    yield gui
+
+
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_open_modal(aqtbot, logged_gui):
@@ -190,9 +214,9 @@ async def test_register_user_modal_already_registered(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_not_admin(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, bob, autoclose_dialog
+    aqtbot, logged_gui_bob, running_backend, qt_thread_gateway, bob, autoclose_dialog
 ):
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_bob.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():
