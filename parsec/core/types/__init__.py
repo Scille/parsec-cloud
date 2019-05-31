@@ -2,7 +2,7 @@
 
 from typing import Union
 
-from parsec.core.types.base import TrustSeed, AccessID, EntryName, FsPath
+from parsec.core.types.base import AccessID, EntryName, FsPath
 from parsec.core.types.access import (
     Access,
     UserAccess,
@@ -44,7 +44,6 @@ Manifest = Union[LocalManifest, RemoteManifest]
 
 __all__ = (
     # base
-    "TrustSeed",
     "AccessID",
     "EntryName",
     "FileDescriptor",
