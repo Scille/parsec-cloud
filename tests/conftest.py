@@ -354,8 +354,8 @@ def backend_factory(
                         binder = backend_data_binder_factory(backend)
                         await binder.bind_organization(coolorg, alice)
                         await binder.bind_organization(otherorg, otheralice)
-                        await binder.bind_device(alice2, is_admin=True)
-                        await binder.bind_device(adam, is_admin=True)
+                        await binder.bind_device(alice2)
+                        await binder.bind_device(adam)
                         await binder.bind_device(bob)
 
                 yield backend

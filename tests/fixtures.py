@@ -84,7 +84,9 @@ def local_device_factory(coolorg):
     count = 0
 
     def _local_device_factory(
-        base_device_id: Optional[str] = None, org: OrganizationFullData = coolorg
+        base_device_id: Optional[str] = None,
+        org: OrganizationFullData = coolorg,
+        is_admin: bool = False,
     ):
         nonlocal count
 
@@ -96,12 +98,13 @@ def local_device_factory(coolorg):
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
 
-        device = generate_new_device(device_id, org.addr)
+        device = generate_new_device(device_id, org.addr, is_admin=is_admin)
         try:
             # If the user already exists, we must retreive it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
             device = device.evolve(
                 private_key=parent_device.private_key,
+                is_admin=parent_device.is_admin,
                 user_manifest_access=parent_device.user_manifest_access,
             )
 
@@ -127,12 +130,12 @@ def otherorg(organization_factory):
 
 @pytest.fixture
 def otheralice(local_device_factory, otherorg):
-    return local_device_factory("alice@dev1", otherorg)
+    return local_device_factory("alice@dev1", otherorg, is_admin=True)
 
 
 @pytest.fixture
 def alice(local_device_factory, initial_user_manifest_state):
-    device = local_device_factory("alice@dev1")
+    device = local_device_factory("alice@dev1", is_admin=True)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -149,7 +152,7 @@ def alice2(local_device_factory):
 
 @pytest.fixture
 def adam(local_device_factory):
-    return local_device_factory("adam@dev1")
+    return local_device_factory("adam@dev1", is_admin=True)
 
 
 @pytest.fixture
@@ -239,7 +242,7 @@ def initial_user_manifest_state():
 
 
 def local_device_to_backend_user(
-    device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData], is_admin=False
+    device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData]
 ) -> Tuple[BackendUser, BackendDevice]:
     if isinstance(certifier, OrganizationFullData):
         certifier_id = None
@@ -250,14 +253,14 @@ def local_device_to_backend_user(
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        certifier_id, certifier_signing_key, device.user_id, device.public_key, is_admin, now
+        certifier_id, certifier_signing_key, device.user_id, device.public_key, device.is_admin, now
     )
     device_certificate = build_device_certificate(
         certifier_id, certifier_signing_key, device.device_id, device.verify_key, now
     )
     return new_backend_user_factory(
         device_id=device.device_id,
-        is_admin=is_admin,
+        is_admin=device.is_admin,
         certifier=certifier_id,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
@@ -329,9 +332,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
             await self.backend.organization.create(org.organization_id, bootstrap_token)
             if first_device:
-                backend_user, backend_first_device = local_device_to_backend_user(
-                    first_device, org, is_admin=True
-                )
+                backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
                 await self.backend.organization.bootstrap(
                     org.organization_id,
                     backend_user,
@@ -381,7 +382,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 except StopIteration:
                     raise RuntimeError(f"Organization `{device.organization_id}` not bootstrapped")
 
-            backend_user, backend_device = local_device_to_backend_user(device, certifier, is_admin)
+            backend_user, backend_device = local_device_to_backend_user(device, certifier)
 
             if any(d for d in self.binded_local_devices if d.user_id == device.user_id):
                 # User already created, only add device
@@ -458,14 +459,16 @@ def sock_from_other_organization_factory(
     backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
 ):
     @asynccontextmanager
-    async def _sock_from_other_organization_factory(backend, mimick=None, anonymous=False):
+    async def _sock_from_other_organization_factory(
+        backend, mimick=None, anonymous=False, is_admin=False
+    ):
         binder = backend_data_binder_factory(backend)
 
         other_org = organization_factory()
         if mimick:
-            other_device = local_device_factory(mimick, other_org)
+            other_device = local_device_factory(mimick, other_org, is_admin)
         else:
-            other_device = local_device_factory(org=other_org)
+            other_device = local_device_factory(org=other_org, is_admin=is_admin)
         await binder.bind_organization(other_org, other_device)
 
         if anonymous:
