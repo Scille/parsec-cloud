@@ -40,7 +40,7 @@ async def user_claim(sock, **kwargs):
 
 
 @pytest.mark.trio
-async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, mallory_invitation):
+async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, alice, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
         async with user_claim(
             anonymous_backend_sock,
@@ -51,6 +51,21 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, mallory_i
             await backend.event_bus.spy.wait(
                 "event.connected", kwargs={"event_name": "user.created"}
             )
+
+            await backend.user.create_user(
+                alice.organization_id,
+                User(
+                    user_id=mallory_invitation.user_id,
+                    user_certificate=b"<foo>",
+                    user_certifier=alice.device_id,
+                ),
+                Device(
+                    device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
+                    device_certificate=b"<bar>",
+                    device_certifier=alice.device_id,
+                ),
+            )
+
             backend.event_bus.send(
                 "user.created", organization_id=coolorg.organization_id, user_id="dummy"
             )
@@ -60,7 +75,7 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, mallory_i
                 user_id=mallory_invitation.user_id,
             )
 
-    assert prep[0]["status"] == "ok"
+    assert prep[0]["status"] == "ok" and prep[0]["user_certificate"] == b"<foo>"
 
 
 @pytest.mark.trio
