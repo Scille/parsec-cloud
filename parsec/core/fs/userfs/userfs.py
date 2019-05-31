@@ -337,8 +337,10 @@ class UserFS:
         # Merge back the manifest in local
         async with self._update_user_manifest_lock:
             diverged_um = self.get_user_manifest()
-            merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-            self.local_storage.set_manifest(self.user_manifest_access, merged_um)
+            # Final merge could have been achieved by a concurrent operation
+            if to_sync_um.base_version > diverged_um.base_version:
+                merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
+                self.local_storage.set_manifest(self.user_manifest_access, merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_access.id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
