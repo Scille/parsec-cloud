@@ -7,13 +7,17 @@ from typing import Tuple, Dict, Union
 from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
 from parsec.core.types import local_manifests
-from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
+from parsec.core.types.base import (
+    EntryID,
+    EntryIDField,
+    EntryName,
+    EntryNameField,
+    serializer_factory,
+)
 from parsec.core.types.access import (
     BlockAccess,
-    ManifestAccess,
-    WorkspaceEntry,
     BlockAccessSchema,
-    ManifestAccessSchema,
+    WorkspaceEntry,
     WorkspaceEntrySchema,
 )
 
@@ -86,7 +90,7 @@ class FolderManifest:
     version: int
     created: pendulum.Pendulum
     updated: pendulum.Pendulum
-    children: Dict[EntryName, ManifestAccess] = attr.ib(converter=FrozenDict)
+    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict)
 
     def evolve(self, **data) -> "FolderManifest":
         return attr.evolve(self, **data)
@@ -112,7 +116,7 @@ class FolderManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     children = fields.Map(
         EntryNameField(validate=validate.Length(min=1, max=256)),
-        fields.Nested(ManifestAccessSchema),
+        EntryIDField(required=True),
         required=True,
     )
 

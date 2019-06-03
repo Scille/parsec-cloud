@@ -1,14 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from uuid import UUID
-from typing import NewType
+from uuid import UUID, uuid4
 from pathlib import PurePosixPath
 
 from parsec.serde import Serializer, fields
 
 
-__all__ = ("AccessID", "EntryName", "EntryNameField", "FsPath")
+__all__ = (
+    "BlockID",
+    "BlockIDField",
+    "EntryID",
+    "EntryIDField",
+    "EntryName",
+    "EntryNameField",
+    "FsPath",
+)
 
 
 def serializer_factory(schema_cls):
@@ -16,7 +23,32 @@ def serializer_factory(schema_cls):
     return Serializer(schema_cls)
 
 
-AccessID = NewType("AccessID", UUID)
+class BlockID(UUID):
+    __slots__ = ()
+
+    def __init__(self, init=None):
+        init = uuid4() if init is None else init
+        if isinstance(init, UUID):
+            super().__init__(init.hex)
+        else:
+            super().__init__(init)
+
+
+BlockIDField = fields.uuid_based_field_factory(BlockID)
+
+
+class EntryID(UUID):
+    __slots__ = ()
+
+    def __init__(self, init=None):
+        init = uuid4() if init is None else init
+        if isinstance(init, UUID):
+            super().__init__(init.hex)
+        else:
+            super().__init__(init)
+
+
+EntryIDField = fields.uuid_based_field_factory(EntryID)
 
 
 class EntryName(str):

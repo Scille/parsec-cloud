@@ -5,12 +5,19 @@
 
 from typing import NewType
 from base64 import b32decode, b32encode
+from nacl.utils import random
+from nacl.secret import SecretBox
 from nacl.public import PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.exceptions import CryptoError
 
 
-SymetricKey = NewType("SymetricKey", bytes)
+class SecretKey(bytes):
+    @classmethod
+    def generate(cls) -> "SecretKey":
+        return cls(random(SecretBox.KEY_SIZE))
+
+
 HashDigest = NewType("HashDigest", bytes)
 
 

@@ -36,6 +36,7 @@ __all__ = (
     "enum_field_factory",
     "bytes_based_field_factory",
     "str_based_field_factory",
+    "uuid_based_field_factory",
     "Int",
     "String",
     "List",
@@ -53,7 +54,7 @@ __all__ = (
     "SigningKey",
     "PublicKey",
     "PrivateKey",
-    "SymetricKey",
+    "SecretKey",
     "DeviceID",
     "UserID",
     "DeviceName",
@@ -128,6 +129,26 @@ def str_based_field_factory(value_type):
             return None
 
         return str(value)
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_deserialize": _deserialize, "_serialize": _serialize},
+    )
+
+
+def uuid_based_field_factory(value_type):
+    def _deserialize(self, value, attr, data):
+        try:
+            return value_type(str(value))
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return value
 
     return type(
         f"{value_type.__name__}Field",
@@ -312,7 +333,7 @@ class SemVer(Field):
     _deserialize = _serialize
 
 
-SymetricKey = bytes_based_field_factory(bytes)
+SecretKey = bytes_based_field_factory(bytes)
 Bytes = bytes_based_field_factory(bytes)
 DeviceID = str_based_field_factory(_DeviceID)
 UserID = str_based_field_factory(_UserID)

@@ -6,11 +6,11 @@ import pendulum
 from parsec.types import DeviceID, UserID, DeviceName, BackendOrganizationAddr
 from parsec.crypto import (
     CryptoError,
+    SecretKey,
     PublicKey,
     PrivateKey,
     SigningKey,
     VerifyKey,
-    generate_secret_key,
     encrypt_raw_for,
     decrypt_raw_for,
     build_device_certificate,
@@ -18,8 +18,7 @@ from parsec.crypto import (
 )
 
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
-from parsec.core.types import LocalDevice, Access
-from parsec.core.types.access import ManifestAccessSchema
+from parsec.core.types import LocalDevice, EntryID, EntryIDField
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
@@ -192,14 +191,18 @@ def extract_device_encrypted_claim(creator_private_key: PrivateKey, encrypted_cl
 class DeviceClaimAnswerSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("device_claim_answer", required=True)
     private_key = fields.PrivateKey(required=True)
-    user_manifest_access = fields.Nested(ManifestAccessSchema, required=True)
+    user_manifest_id = EntryIDField(required=True)
+    user_manifest_key = fields.SecretKey(required=True)
 
 
 device_claim_answer_serializer = Serializer(DeviceClaimAnswerSchema)
 
 
 def generate_device_encrypted_answer(
-    creator_public_key: PublicKey, private_key: PrivateKey, user_manifest_access: Access
+    creator_public_key: PublicKey,
+    private_key: PrivateKey,
+    user_manifest_id: EntryID,
+    user_manifest_key: SecretKey,
 ) -> bytes:
     """
     Raises:
@@ -210,7 +213,8 @@ def generate_device_encrypted_answer(
     payload = {
         "type": "device_claim_answer",
         "private_key": private_key,
-        "user_manifest_access": user_manifest_access,
+        "user_manifest_id": user_manifest_id,
+        "user_manifest_key": user_manifest_key,
     }
     raw = device_claim_answer_serializer.dumps(payload)
     try:
@@ -354,8 +358,9 @@ async def claim_device(
         device_id=new_device_id,
         signing_key=device_signing_key,
         private_key=answer["private_key"],
-        user_manifest_access=answer["user_manifest_access"],
-        local_symkey=generate_secret_key(),
+        user_manifest_id=answer["user_manifest_id"],
+        user_manifest_key=answer["user_manifest_key"],
+        local_symkey=SecretKey.generate(),
     )
 
 
@@ -400,7 +405,10 @@ async def invite_and_create_device(
             raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
 
         encrypted_answer = generate_device_encrypted_answer(
-            claim["answer_public_key"], device.private_key, device.user_manifest_access
+            claim["answer_public_key"],
+            device.private_key,
+            device.user_manifest_id,
+            device.user_manifest_key,
         )
 
         try:

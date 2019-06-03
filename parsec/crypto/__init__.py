@@ -3,7 +3,7 @@
 # Republish `parsec.crypto_type` given it not part of
 # `parsec.crypto` only to avoid recursive imports
 from parsec.crypto_types import (
-    SymetricKey,
+    SecretKey,
     HashDigest,
     PrivateKey,
     PublicKey,
@@ -21,7 +21,6 @@ from parsec.crypto.exceptions import (
     CryptoSignatureTimestampMismatchError,
 )
 from parsec.crypto.raw import (
-    generate_secret_key,
     derivate_secret_key_from_password,
     encrypt_raw_with_secret_key,
     decrypt_raw_with_secret_key,
@@ -58,7 +57,7 @@ from parsec.crypto.certif import (
 
 __all__ = (
     # types
-    "SymetricKey",
+    "SecretKey",
     "HashDigest",
     "PrivateKey",
     "PublicKey",

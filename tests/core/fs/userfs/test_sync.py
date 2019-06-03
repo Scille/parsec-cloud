@@ -9,7 +9,6 @@ from parsec.core.types import (
     WorkspaceEntry,
     WorkspaceRole,
     LocalUserManifest,
-    ManifestAccess,
     LocalWorkspaceManifest,
 )
 from parsec.core.fs import FSWorkspaceNotFoundError, FSBackendOfflineError
@@ -41,7 +40,9 @@ async def test_create_workspace(alice_user_fs, alice):
         workspaces=(
             WorkspaceEntry(
                 name="w1",
-                access=ManifestAccess(wid, ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -49,7 +50,7 @@ async def test_create_workspace(alice_user_fs, alice):
     )
     assert um == expected_um
 
-    w_manifest = alice_user_fs.local_storage.get_manifest(um.workspaces[0].access)
+    w_manifest = alice_user_fs.local_storage.get_manifest(um.workspaces[0].id)
     expected_w_manifest = LocalWorkspaceManifest(
         author=alice.device_id,
         base_version=0,
@@ -88,7 +89,9 @@ async def test_rename_workspace(alice_user_fs, alice):
         workspaces=(
             WorkspaceEntry(
                 name="w2",
-                access=ManifestAccess(wid, ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -121,7 +124,7 @@ async def test_create_workspace_same_name(alice_user_fs):
     um = alice_user_fs.get_user_manifest()
     assert um.updated == Pendulum(2000, 1, 3)
     assert len(um.workspaces) == 2
-    assert [(x.access.id, x.name) for x in um.workspaces] == [(w1id, "w"), (w2id, "w")]
+    assert [(x.id, x.name) for x in um.workspaces] == [(w1id, "w"), (w2id, "w")]
 
 
 @pytest.mark.trio
@@ -152,7 +155,9 @@ async def test_sync(running_backend, alice2_user_fs, alice2):
         workspaces=(
             WorkspaceEntry(
                 name="w1",
-                access=ManifestAccess(wid, ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -190,13 +195,17 @@ async def test_sync_under_concurrency(
         workspaces=(
             WorkspaceEntry(
                 name="wa",
-                access=ManifestAccess(waid, ANY),
+                id=waid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.OWNER,
             ),
             WorkspaceEntry(
                 name="wa2",
-                access=ManifestAccess(wa2id, ANY),
+                id=wa2id,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -246,7 +255,9 @@ async def test_sync_placeholder(
                 workspaces=(
                     WorkspaceEntry(
                         name="w1",
-                        access=ManifestAccess(wid, ANY),
+                        id=wid,
+                        key=ANY,
+                        encryption_revision=1,
                         granted_on=Pendulum(2000, 1, 2),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -309,13 +320,17 @@ async def test_concurrent_sync_placeholder(
                 workspaces=(
                     WorkspaceEntry(
                         name="w1",
-                        access=ManifestAccess(w1id, ANY),
+                        id=w1id,
+                        key=ANY,
+                        encryption_revision=1,
                         granted_on=Pendulum(2000, 1, 1),
                         role=WorkspaceRole.OWNER,
                     ),
                     WorkspaceEntry(
                         name="w2",
-                        access=ManifestAccess(w2id, ANY),
+                        id=w2id,
+                        key=ANY,
+                        encryption_revision=1,
                         granted_on=Pendulum(2000, 1, 2),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -333,7 +348,9 @@ async def test_concurrent_sync_placeholder(
                 workspaces=(
                     WorkspaceEntry(
                         name="w1",
-                        access=ManifestAccess(w1id, ANY),
+                        id=w1id,
+                        key=ANY,
+                        encryption_revision=1,
                         granted_on=Pendulum(2000, 1, 1),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -378,7 +395,9 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
         workspaces=(
             WorkspaceEntry(
                 name="wa",
-                access=ManifestAccess(wid, ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),

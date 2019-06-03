@@ -4,15 +4,15 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath
-from parsec.core.types import ManifestAccess, FolderManifest, LocalFolderManifest
+from parsec.core.types import EntryID, FolderManifest, LocalFolderManifest
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_manifests
 
 
 def test_merge_folder_children():
-    m1 = ManifestAccess()
-    m2 = ManifestAccess()
+    m1 = EntryID()
+    m2 = EntryID()
     a1 = {"a": m1}
     a2 = {"a": m2}
     b1 = {"b.txt": m1}
@@ -60,7 +60,7 @@ def test_merge_folder_manifests():
     assert merge_folder_manifests(m1, v1) == m1
 
     # Local change
-    m2 = m1.evolve_children_and_mark_updated({"a": ManifestAccess()})
+    m2 = m1.evolve_children_and_mark_updated({"a": EntryID()})
     assert merge_folder_manifests(m2, v1) == m2
 
     # Successful upload
@@ -69,9 +69,9 @@ def test_merge_folder_manifests():
     assert m3 == v2.to_local("a@a")
 
     # Two local changes
-    m4 = m3.evolve_children_and_mark_updated({"b": ManifestAccess()})
+    m4 = m3.evolve_children_and_mark_updated({"b": EntryID()})
     assert merge_folder_manifests(m4, v2) == m4
-    m5 = m4.evolve_children_and_mark_updated({"c": ManifestAccess()})
+    m5 = m4.evolve_children_and_mark_updated({"c": EntryID()})
     assert merge_folder_manifests(m4, v2) == m4
 
     # M4 has been successfully uploaded
@@ -80,7 +80,7 @@ def test_merge_folder_manifests():
     assert m6 == m5.evolve(base_version=3)
 
     # The remote has changed
-    v4 = v3.evolve(version=4, children={"d": ManifestAccess(), **v3.children}, author="b@b")
+    v4 = v3.evolve(version=4, children={"d": EntryID(), **v3.children}, author="b@b")
     m7 = merge_folder_manifests(m6, v3, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
@@ -92,7 +92,7 @@ def test_merge_folder_manifests():
     assert m8 == v5.to_local("a@a")
 
     # The remote has changed
-    v6 = v5.evolve(version=6, children={"e": ManifestAccess(), **v5.children}, author="b@b")
+    v6 = v5.evolve(version=6, children={"e": EntryID(), **v5.children}, author="b@b")
     m9 = merge_folder_manifests(m8, v5, v6)
     assert m9 == v6.to_local("a@a")
 
@@ -106,12 +106,12 @@ def test_merge_folder_manifests_with_a_placeholder():
     m2a = merge_folder_manifests(m1, None, v1)
     assert m2a == v1.to_local(author="a@a")
 
-    m2b = m1.evolve_children_and_mark_updated({"a": ManifestAccess()})
+    m2b = m1.evolve_children_and_mark_updated({"a": EntryID()})
     m3b = merge_folder_manifests(m2b, None, v1)
     assert m3b == m2b.evolve(base_version=1, is_placeholder=False)
 
-    v2 = v1.evolve(version=2, author="b@b", children={"b": ManifestAccess()})
-    m2c = m1.evolve_children_and_mark_updated({"a": ManifestAccess()})
+    v2 = v1.evolve(version=2, author="b@b", children={"b": EntryID()})
+    m2c = m1.evolve_children_and_mark_updated({"a": EntryID()})
     m3c = merge_folder_manifests(m2c, None, v2)
     children = {**v2.children, **m2c.children}
     assert m3c == m2c.evolve(
@@ -122,52 +122,52 @@ def test_merge_folder_manifests_with_a_placeholder():
 @pytest.mark.trio
 async def test_synchronization_step_transaction(sync_transactions, entry_transactions):
     synchronization_step = sync_transactions.synchronization_step
-    access = entry_transactions.get_workspace_entry().access
+    entry_id = entry_transactions.get_workspace_entry().id
 
     # Sync a placeholder
-    manifest = await synchronization_step(access)
+    manifest = await synchronization_step(entry_id)
 
     # Acknowledge a successful synchronization
-    assert await synchronization_step(access, manifest) is None
+    assert await synchronization_step(entry_id, manifest) is None
 
     # Local change
     a_id = await entry_transactions.folder_create(FsPath("/a"))
 
     # Sync parent with a placeholder child
-    manifest = await synchronization_step(access)
+    manifest = await synchronization_step(entry_id)
     children = []
     for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
-    a_access, = children
-    assert a_access.id == a_id
+    a_entry_id, = children
+    assert a_entry_id == a_id
 
     # Sync child
-    a_manifest = await synchronization_step(a_access)
-    assert await synchronization_step(a_access, a_manifest) is None
+    a_manifest = await synchronization_step(a_entry_id)
+    assert await synchronization_step(a_entry_id, a_manifest) is None
 
     # Acknowledge the manifest
     assert sorted(manifest.children) == ["a"]
-    assert await synchronization_step(access, manifest) is None
+    assert await synchronization_step(entry_id, manifest) is None
 
     # Local change
     b_id = await entry_transactions.folder_create(FsPath("/b"))
 
     # Remote change
-    children = {**manifest.children, "c": ManifestAccess()}
+    children = {**manifest.children, "c": EntryID()}
     manifest = manifest.evolve(version=5, children=children, author="b@b")
 
     # Sync parent with a placeholder child
-    manifest = await synchronization_step(access, manifest)
+    manifest = await synchronization_step(entry_id, manifest)
     children = []
     for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
-    b_access, = children
-    assert b_access.id == b_id
+    b_entry_id, = children
+    assert b_entry_id == b_id
 
     # Sync child
-    b_manifest = await synchronization_step(b_access)
-    assert await synchronization_step(b_access, b_manifest) is None
+    b_manifest = await synchronization_step(b_entry_id)
+    assert await synchronization_step(b_entry_id, b_manifest) is None
 
     # Acknowledge the manifest
     assert sorted(manifest.children) == ["a", "b", "c"]
-    assert await synchronization_step(access, manifest) is None
+    assert await synchronization_step(entry_id, manifest) is None

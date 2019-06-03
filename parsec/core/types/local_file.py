@@ -3,13 +3,13 @@
 import attr
 from typing import NewType
 
-from parsec.core.types import Access
+from parsec.core.types import EntryID
 
 
 FileDescriptor = NewType("FileDescriptor", int)
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, auto_attribs=True)
 class FileCursor:
-    access = attr.ib(type=Access)
-    offset = attr.ib(default=0, type=int)
+    entry_id: EntryID
+    offset: int = 0

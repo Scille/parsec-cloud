@@ -61,7 +61,7 @@ async def logged_core_factory(
         ) as backend_cmds_pool:
 
             with LocalStorage(
-                device.device_id, config.data_base_dir / device.slug
+                device.device_id, device.local_symkey, config.data_base_dir / device.slug
             ) as local_storage:
 
                 remote_devices_manager = RemoteDevicesManager(

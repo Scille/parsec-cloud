@@ -2,24 +2,24 @@
 
 import attr
 from uuid import UUID
-from typing import List, Tuple
+from typing import Tuple
 
 from parsec.event_bus import EventBus
 from parsec.core.types import (
     FsPath,
-    Access,
+    EntryID,
     BlockAccess,
+    ManifestAccess,
     WorkspaceEntry,
     WorkspaceRole,
     LocalDevice,
     LocalManifest,
-    ManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalUserManifest,
 )
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
@@ -34,33 +34,35 @@ class FSEntryNotFound(Exception):
 
 
 class FSManifestLocalMiss(Exception):
-    def __init__(self, access):
-        super().__init__(access)
-        self.access = access
+    def __init__(self, entry_id):
+        super().__init__(entry_id)
+        self.entry_id = entry_id
 
 
 class FSMultiManifestLocalMiss(Exception):
-    def __init__(self, accesses):
-        super().__init__(accesses)
-        self.accesses = accesses
+    def __init__(self, entries_ids):
+        super().__init__(entries_ids)
+        self.entries_ids = entries_ids
 
 
 class LocalFolderFS:
     def __init__(self, device: LocalDevice, local_storage: LocalStorage, event_bus: EventBus):
         self.local_author = device.device_id
-        self.root_access = device.user_manifest_access
+        self.root_access = ManifestAccess(
+            device.user_manifest_id, device.user_manifest_id, device.user_manifest_key, 1
+        )
         self.local_storage = local_storage
         self.event_bus = event_bus
 
     # Manifest methods
 
-    def get_manifest(self, access: Access) -> LocalManifest:
+    def get_manifest(self, access: ManifestAccess) -> LocalManifest:
         try:
-            return self.local_storage.get_manifest(access)
-        except LocalStorageMissingEntry as exc:
+            return self.local_storage.get_manifest(access.id)
+        except LocalStorageMissingError as exc:
             # Last chance: if we are looking for the user manifest, we can
             # fake to know it version 0, which is useful during boostrap step
-            if access == self.root_access:
+            if access.id == self.root_access.id:
                 manifest = LocalUserManifest(self.local_author)
                 self.set_dirty_manifest(access, manifest)
                 return manifest
@@ -81,41 +83,24 @@ class LocalFolderFS:
         except FSManifestLocalMiss as exc:
             raise RuntimeError("Should never occurs !!!") from exc
 
-    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False):
+    def set_clean_manifest(self, access: ManifestAccess, manifest: LocalManifest, force=False):
         # Always keep the user manifest locally
         if access == self.root_access:
             return self.set_dirty_manifest(access, manifest)
         if manifest.need_sync:
             raise ValueError("The given manifest is not a clean manifest.")
-        self.local_storage.set_clean_manifest(access, manifest, force)
+        self.local_storage.set_clean_manifest(access.id, manifest, force)
 
-    def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
+    def set_dirty_manifest(self, access: ManifestAccess, manifest: LocalManifest):
         if access != self.root_access and not manifest.need_sync:
             raise ValueError("The given manifest is not a dirty manifest.")
-        self.local_storage.set_dirty_manifest(access, manifest)
+        self.local_storage.set_dirty_manifest(access.id, manifest)
 
-    def clear_manifest(self, access: Access):
-        self.local_storage.clear_manifest(access)
-
-    def get_local_realms(self) -> List[UUID]:
-        # realm_id is either the id of the user manifest or of a workspace manifest
-        realms = [self.root_access.id]
-        try:
-            root_manifest = self.get_user_manifest()
-            # Currently workspace can only direct children of the user manifest
-            for child_access in root_manifest.children.values():
-                try:
-                    child_manifest = self.get_manifest(child_access)
-                except FSManifestLocalMiss:
-                    continue
-                if is_workspace_manifest(child_manifest):
-                    realms.append(child_access.id)
-        except FSManifestLocalMiss:
-            raise AssertionError("root manifest should always be available in local !")
-        return realms
+    def clear_manifest(self, access: ManifestAccess):
+        self.local_storage.clear_manifest(access.id)
 
     def dump(self) -> dict:
-        def _recursive_dump(access: Access):
+        def _recursive_dump(access: ManifestAccess):
             dump_data = {"access": attr.asdict(access)}
             try:
                 manifest = self.get_manifest(access)
@@ -129,40 +114,30 @@ class LocalFolderFS:
                 dump_data["children"] = {}
 
             if is_folderish_manifest(manifest):
-                for child_name, child_access in manifest.children.items():
+                for child_name, child_entry_id in manifest.children.items():
+                    child_access = ManifestAccess(
+                        child_entry_id, access.realm_id, access.key, access.encryption_revision
+                    )
                     dump_data["children"][child_name] = _recursive_dump(child_access)
 
             return dump_data
 
         return _recursive_dump(self.root_access)
 
-    def get_realm(self, path: FsPath) -> UUID:
-        # The vlob group is used to notify other clients that we modified an entry.
-        # We try to use the id of workspace containing the modification as
-        # vlob group. This is not possible when directly modifying the user
-        # manifest in which case we use the user manifest id as vlob group.
-        try:
-            _, workspace_name, *_ = path.parts
-        except ValueError:
-            return self.root_access.id
-
-        access, manifest = self._retrieve_entry_read_only(FsPath(f"/{workspace_name}"))
-        assert is_workspace_manifest(manifest)
-        return access.id
-
-    def get_entry(self, path: FsPath) -> Tuple[Access, LocalManifest]:
+    def get_entry(self, path: FsPath) -> Tuple[ManifestAccess, LocalManifest]:
         return self._retrieve_entry(path)
 
-    def get_entry_path(self, entry_id: UUID) -> Tuple[FsPath, Access, LocalManifest]:
+    def get_entry_path(self, entry_id: UUID) -> Tuple[FsPath, ManifestAccess, LocalManifest]:
         """
         Raises:
             FSEntryNotFound: If the entry is not present in local
         """
+        user_manifest = self.get_user_manifest()
         if entry_id == self.root_access.id:
-            return FsPath("/"), self.root_access, self.get_user_manifest()
+            return FsPath("/"), self.root_access, user_manifest
 
         # Brute force style
-        def _recursive_search(access, path):
+        def _recursive_search_on_workspace(access, path):
             try:
                 manifest = self.get_manifest(access)
             except FSManifestLocalMiss:
@@ -171,23 +146,36 @@ class LocalFolderFS:
                 return path, access, manifest
 
             if is_folderish_manifest(manifest):
-                for child_name, child_access in manifest.children.items():
-                    found = _recursive_search(child_access, path / child_name)
+                for child_name, child_entry_id in manifest.children.items():
+                    child_access = ManifestAccess(
+                        child_entry_id, access.realm_id, access.key, access.encryption_revision
+                    )
+                    found = _recursive_search_on_workspace(child_access, path / child_name)
                     if found:
                         return found
 
-        found = _recursive_search(self.root_access, FsPath("/"))
-        if not found:
-            raise FSEntryNotFound(entry_id)
-        return found
+        for workspace_entry in user_manifest.workspaces:
+            workspace_path = FsPath(f"/{workspace_entry.name}")
+            workspace_access = ManifestAccess(
+                workspace_entry.id,
+                workspace_entry.id,
+                workspace_entry.key,
+                workspace_entry.encryption_revision,
+            )
+            found = _recursive_search_on_workspace(workspace_access, workspace_path)
+            if found:
+                return found
 
-    def _retrieve_entry(self, path: FsPath, collector=None) -> Tuple[Access, LocalManifest]:
+        else:
+            raise FSEntryNotFound(entry_id)
+
+    def _retrieve_entry(self, path: FsPath, collector=None) -> Tuple[ManifestAccess, LocalManifest]:
         access, read_only_manifest = self._retrieve_entry_read_only(path, collector)
         return access, read_only_manifest
 
     def _retrieve_entry_read_only(
         self, path: FsPath, collector=None
-    ) -> Tuple[Access, LocalManifest]:
+    ) -> Tuple[ManifestAccess, LocalManifest]:
         curr_access = self.root_access
         curr_manifest = self.get_manifest(curr_access)
         if collector:
@@ -198,26 +186,45 @@ class LocalFolderFS:
         except ValueError:
             return curr_access, curr_manifest
 
-        for hop in hops:
-            try:
-                curr_access = curr_manifest.children[hop.name]
-            except KeyError:
-                raise FileNotFoundError(2, "No such file or directory", str(hop))
+        def _retrieve_hop(hop):
+            nonlocal curr_access
 
-            curr_manifest = self.get_manifest(curr_access)
+            if hasattr(curr_manifest, "workspaces"):
+                # curr_manifest is a User manifest
+                workspace_entry = next(
+                    (w for w in curr_manifest.workspaces if w.name == hop.name), None
+                )
+                if not workspace_entry:
+                    raise FileNotFoundError(2, "No such file or directory", str(hop))
+                curr_access = ManifestAccess(
+                    workspace_entry.id,
+                    workspace_entry.id,
+                    workspace_entry.key,
+                    workspace_entry.encryption_revision,
+                )
+
+            else:
+                try:
+                    curr_access = ManifestAccess(
+                        curr_manifest.children[hop.name],
+                        curr_access.realm_id,
+                        curr_access.key,
+                        curr_access.encryption_revision,
+                    )
+                except KeyError:
+                    raise FileNotFoundError(2, "No such file or directory", str(hop))
+
+            return curr_access, self.get_manifest(curr_access)
+
+        for hop in hops:
+            curr_access, curr_manifest = _retrieve_hop(hop)
 
             if not is_folderish_manifest(curr_manifest):
                 raise NotADirectoryError(20, "Not a directory", str(hop))
             if collector:
                 collector(curr_access, curr_manifest)
 
-        try:
-            curr_access = curr_manifest.children[dest.name]
-        except KeyError:
-            raise FileNotFoundError(2, "No such file or directory", str(dest))
-
-        curr_manifest = self.get_manifest(curr_access)
-
+        curr_access, curr_manifest = _retrieve_hop(dest)
         if collector:
             collector(curr_access, curr_manifest)
 
@@ -241,13 +248,13 @@ class LocalFolderFS:
 
         return sync_path, sync_recursive
 
-    def get_access(self, path: FsPath, mode="rw") -> Access:
+    def get_access(self, path: FsPath, mode="rw") -> ManifestAccess:
         if not path.is_root() and "w" in mode:
             self._ensure_workspace_write_right(path.parts[1])
         access, _ = self._retrieve_entry_read_only(path)
         return access
 
-    def get_file_access(self, path: FsPath, mode="rw") -> Access:
+    def get_file_access(self, path: FsPath, mode="rw") -> ManifestAccess:
         access = self.get_access(path, mode)
         manifest = self.get_manifest(access)
         if not is_file_manifest(manifest):
@@ -342,9 +349,11 @@ class LocalFolderFS:
         if path.name in manifest.children:
             raise FileExistsError(17, "File exists", str(path))
 
-        child_access = ManifestAccess()
+        child_access = ManifestAccess(
+            EntryID(), access.realm_id, access.key, access.encryption_revision
+        )
         child_manifest = LocalFileManifest(self.local_author)
-        manifest = manifest.evolve_children_and_mark_updated({path.name: child_access})
+        manifest = manifest.evolve_children_and_mark_updated({path.name: child_access.id})
         self.set_dirty_manifest(access, manifest)
         self.set_dirty_manifest(child_access, child_manifest)
         self.event_bus.send("fs.entry.updated", id=access.id)
@@ -369,9 +378,11 @@ class LocalFolderFS:
         if path.name in manifest.children:
             raise FileExistsError(17, "File exists", str(path))
 
-        child_access = ManifestAccess()
+        child_access = ManifestAccess(
+            EntryID(), access.realm_id, access.key, access.encryption_revision
+        )
         child_manifest = LocalFolderManifest(self.local_author)
-        manifest = manifest.evolve_children_and_mark_updated({path.name: child_access})
+        manifest = manifest.evolve_children_and_mark_updated({path.name: child_access.id})
 
         self.set_dirty_manifest(access, manifest)
         self.set_dirty_manifest(child_access, child_manifest)
@@ -392,7 +403,12 @@ class LocalFolderFS:
 
         workspace_entry = WorkspaceEntry(path.name)
         workspace_manifest = LocalWorkspaceManifest(self.local_author)
-        workspace_access = workspace_entry.access
+        workspace_access = ManifestAccess(
+            workspace_entry.id,
+            workspace_entry.id,
+            workspace_entry.key,
+            WorkspaceEntry.encryption_revision,
+        )
         root_manifest = root_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
 
         self.set_dirty_manifest(self.root_access, root_manifest)
@@ -444,7 +460,13 @@ class LocalFolderFS:
             raise NotADirectoryError(20, "Not a directory", str(path.parent))
 
         try:
-            item_access = parent_manifest.children[path.name]
+            item_entry_id = parent_manifest.children[path.name]
+            item_access = ManifestAccess(
+                item_entry_id,
+                parent_access.realm_id,
+                parent_access.key,
+                parent_access.encryption_revision,
+            )
         except KeyError:
             raise FileNotFoundError(2, "No such file or directory", str(path))
 
@@ -528,11 +550,17 @@ class LocalFolderFS:
                 raise OSError(22, "Invalid argument", str(src), None, str(dst))
 
             try:
-                src_access = parent_manifest.children[src.name]
+                src_entry_id = parent_manifest.children[src.name]
+                src_access = ManifestAccess(
+                    src_entry_id,
+                    parent_access.realm_id,
+                    parent_access.key,
+                    parent_access.encryption_revision,
+                )
             except KeyError:
                 raise FileNotFoundError(2, "No such file or directory", str(src))
 
-            existing_dst_access = parent_manifest.children.get(dst.name)
+            existing_dst_id = parent_manifest.children.get(dst.name)
             src_manifest = self.get_manifest(src_access)
 
             if is_workspace_manifest(src_manifest):
@@ -543,7 +571,13 @@ class LocalFolderFS:
                     str(dst),
                 )
 
-            if existing_dst_access:
+            if existing_dst_id:
+                existing_dst_access = ManifestAccess(
+                    existing_dst_id,
+                    parent_access.realm_id,
+                    parent_access.key,
+                    parent_access.encryption_revision,
+                )
                 if not overwrite:
                     raise FileExistsError(17, "File exists", str(dst))
 
@@ -560,7 +594,7 @@ class LocalFolderFS:
             moved_access = self._recursive_manifest_copy(src_access, src_manifest)
 
             parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                {dst.name: moved_access, src.name: None}
+                {dst.name: moved_access.id, src.name: None}
             )
             self.set_dirty_manifest(parent_access, parent_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_access.id)
@@ -587,11 +621,17 @@ class LocalFolderFS:
                 raise OSError(22, "Invalid argument", str(src), None, str(dst))
 
             try:
-                src_access = parent_src_manifest.children[src.name]
+                src_entry_id = parent_src_manifest.children[src.name]
+                src_access = ManifestAccess(
+                    src_entry_id,
+                    parent_src_access.realm_id,
+                    parent_src_access.key,
+                    parent_src_access.encryption_revision,
+                )
             except KeyError:
                 raise FileNotFoundError(2, "No such file or directory", str(src))
 
-            existing_dst_access = parent_dst_manifest.children.get(dst.name)
+            existing_dst_entry_id = parent_dst_manifest.children.get(dst.name)
             src_manifest = self.get_manifest(src_access)
 
             if is_workspace_manifest(src_manifest):
@@ -602,7 +642,13 @@ class LocalFolderFS:
                     str(dst),
                 )
 
-            if existing_dst_access:
+            if existing_dst_entry_id:
+                existing_dst_access = ManifestAccess(
+                    existing_dst_entry_id,
+                    parent_dst_access.realm_id,
+                    parent_dst_access.key,
+                    parent_dst_access.encryption_revision,
+                )
                 if not overwrite:
                     raise FileExistsError(17, "File exists", str(dst))
 
@@ -620,7 +666,7 @@ class LocalFolderFS:
 
             # Update destination
             parent_dst_manifest = parent_dst_manifest.evolve_children_and_mark_updated(
-                {dst.name: moved_access}
+                {dst.name: moved_access.id}
             )
             self.set_dirty_manifest(parent_dst_access, parent_dst_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_dst_access.id)
@@ -649,7 +695,10 @@ class LocalFolderFS:
             if is_folderish_manifest(manifest):
                 copy_map["children"] = {}
 
-                for child_name, child_access in manifest.children.items():
+                for child_name, child_entry_id in manifest.children.items():
+                    child_access = ManifestAccess(
+                        child_entry_id, access.realm_id, access.key, access.encryption_revision
+                    )
                     try:
                         child_manifest = self.get_manifest(child_access)
                     except FSManifestLocalMiss as exc:
@@ -675,7 +724,9 @@ class LocalFolderFS:
             access = copy_map["access"]
             manifest = copy_map["manifest"]
 
-            cpy_access = ManifestAccess()
+            cpy_access = ManifestAccess(
+                EntryID(), access.realm_id, access.key, access.encryption_revision
+            )
             if is_file_manifest(manifest):
 
                 # Temporary hack: copy the dirty blocks
@@ -701,7 +752,7 @@ class LocalFolderFS:
                 for child_name in manifest.children.keys():
                     child_copy_map = copy_map["children"][child_name]
                     new_child_access = _recursive_process_copy_map(child_copy_map)
-                    cpy_children[child_name] = new_child_access
+                    cpy_children[child_name] = new_child_access.id
 
                 cpy_manifest = LocalFolderManifest(author=self.local_author, children=cpy_children)
 

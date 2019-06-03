@@ -2,10 +2,8 @@
 
 from typing import Union
 
-from parsec.core.types.base import AccessID, EntryName, FsPath
+from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
 from parsec.core.types.access import (
-    Access,
-    UserAccess,
     ManifestAccess,
     BlockAccess,
     DirtyBlockAccess,
@@ -44,13 +42,14 @@ Manifest = Union[LocalManifest, RemoteManifest]
 
 __all__ = (
     # base
-    "AccessID",
+    "BlockID",
+    "BlockIDField",
+    "EntryID",
+    "EntryIDField",
     "EntryName",
     "FileDescriptor",
     "FsPath",
     # access
-    "Access",
-    "UserAccess",
     "ManifestAccess",
     "BlockAccess",
     "DirtyBlockAccess",

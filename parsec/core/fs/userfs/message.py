@@ -9,7 +9,7 @@ class SharingGrantedMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("sharing.granted", required=True)
     name = fields.String(required=True)
     id = fields.UUID(required=True)
-    key = fields.SymetricKey(missing=None)
+    key = fields.SecretKey(missing=None)
     # Don't include access rights given the receiver will have anyway to
     # interrogate the backend for workspace's access rights list
     # to make sure the message sender is an admin

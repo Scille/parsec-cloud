@@ -132,18 +132,18 @@ async def test_cannot_replace_root(entry_transactions):
 
 @pytest.mark.trio
 async def test_access_not_loaded_entry(alice, bob, entry_transactions):
-    access = entry_transactions.get_workspace_entry().access
-    manifest = entry_transactions.local_storage.get_manifest(access)
-    entry_transactions.local_storage.clear_manifest(access)
+    entry_id = entry_transactions.get_workspace_entry().id
+    manifest = entry_transactions.local_storage.get_manifest(entry_id)
+    entry_transactions.local_storage.clear_manifest(entry_id)
 
     with pytest.raises(FSRemoteManifestNotFound):
         await entry_transactions.entry_info(FsPath("/"))
 
-    entry_transactions.local_storage.set_dirty_manifest(access, manifest)
+    entry_transactions.local_storage.set_dirty_manifest(entry_id, manifest)
     entry_info = await entry_transactions.entry_info(FsPath("/"))
     assert entry_info == {
         "type": "folder",
-        "id": access.id,
+        "id": entry_id,
         "created": Pendulum(2000, 1, 1),
         "updated": Pendulum(2000, 1, 1),
         "base_version": 0,

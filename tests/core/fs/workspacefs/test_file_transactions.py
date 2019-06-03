@@ -11,7 +11,7 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import ManifestAccess, BlockAccess, LocalFileManifest
+from parsec.core.types import EntryID, BlockAccess, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.backend_connection.exceptions import BackendCmdsNotFound
 
@@ -42,12 +42,12 @@ class File:
 def foo_txt(alice, file_transactions):
     local_storage = file_transactions.local_storage
     with freeze_time("2000-01-02"):
-        access = ManifestAccess()
+        entry_id = EntryID()
         manifest = LocalFileManifest(
             author=alice.device_id, is_placeholder=False, need_sync=False, base_version=1
         )
-        local_storage.set_clean_manifest(access, manifest)
-    return File(local_storage, access)
+        local_storage.set_clean_manifest(entry_id, manifest)
+    return File(local_storage, entry_id)
 
 
 @pytest.mark.trio
@@ -158,8 +158,8 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     with pytest.raises(BackendCmdsNotFound):
         await file_transactions.fd_read(fd, 14)
 
-    file_transactions.local_storage.set_dirty_block(block1_access, block1)
-    file_transactions.local_storage.set_dirty_block(block2_access, block2)
+    file_transactions.local_storage.set_dirty_block(block1_access.id, block1)
+    file_transactions.local_storage.set_dirty_block(block2_access.id, block2)
 
     data = await file_transactions.fd_read(fd, 14)
     assert data == block1 + block2[:4]
@@ -193,11 +193,11 @@ def test_file_operations(
                 self.device, self.local_storage, alice_backend_cmds
             )
 
-            self.access = ManifestAccess()
+            self.entry_id = EntryID()
             manifest = LocalFileManifest(self.device.device_id, need_sync=True)
-            self.local_storage.set_dirty_manifest(self.access, manifest)
+            self.local_storage.set_dirty_manifest(self.entry_id, manifest)
 
-            self.fd = self.local_storage.create_cursor(self.access)
+            self.fd = self.local_storage.create_cursor(self.entry_id)
             self.file_oracle_path = tmpdir / f"oracle-test-{tentative}.txt"
             self.file_oracle_fd = os.open(self.file_oracle_path, os.O_RDWR | os.O_CREAT)
 
