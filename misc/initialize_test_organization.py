@@ -162,7 +162,7 @@ async def amain(
     bob_device = None
 
     async def invite_task():
-        await invite_and_create_user(alice_device, bob_device_id.user_id, token, is_admin=True)
+        await invite_and_create_user(alice_device, bob_device_id.user_id, token, is_admin=False)
 
     async def claim_task():
         nonlocal bob_device
