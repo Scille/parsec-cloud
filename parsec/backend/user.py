@@ -336,15 +336,14 @@ class BaseUserComponent:
             async for event, user_id in recv_channel:
                 if user_id == invitation.user_id:
                     replied_ok = event == "user.created"
-                    if replied_ok:
-                        user = await self.get_user(client_ctx.organization_id, invitation.user_id)
-                        user_certificate = user.user_certificate
                     break
 
         if not replied_ok:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
 
         else:
+            user = await self.get_user(client_ctx.organization_id, invitation.user_id)
+            user_certificate = user.user_certificate
             return {"status": "ok", "user_certificate": user_certificate}
 
     @catch_protocole_errors
