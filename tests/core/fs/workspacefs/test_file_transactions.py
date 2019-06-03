@@ -19,23 +19,23 @@ from tests.common import freeze_time
 
 
 class File:
-    def __init__(self, local_storage, access):
-        self.access = access
+    def __init__(self, local_storage, entry_id):
+        self.entry_id = entry_id
         self.local_storage = local_storage
 
     def ensure_manifest(self, **kwargs):
-        manifest = self.local_storage.get_manifest(self.access)
+        manifest = self.local_storage.get_manifest(self.entry_id)
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
     def get_manifest(self):
-        return self.local_storage.get_manifest(self.access)
+        return self.local_storage.get_manifest(self.entry_id)
 
     def set_manifest(self, manifest):
-        self.local_storage.set_dirty_manifest(self.access, manifest)
+        self.local_storage.set_dirty_manifest(self.entry_id, manifest)
 
     def open(self):
-        return self.local_storage.create_cursor(self.access)
+        return self.local_storage.create_cursor(self.entry_id)
 
 
 @pytest.fixture
@@ -229,7 +229,7 @@ def test_file_operations(
         @rule()
         async def reopen(self):
             await self.file_transactions.fd_close(self.fd)
-            self.fd = self.local_storage.create_cursor(self.access)
+            self.fd = self.local_storage.create_cursor(self.entry_id)
             os.close(self.file_oracle_fd)
             self.file_oracle_fd = os.open(self.file_oracle_path, os.O_RDWR)
 

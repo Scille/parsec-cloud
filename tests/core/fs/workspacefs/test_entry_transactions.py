@@ -316,24 +316,24 @@ def test_folder_operations(
                 return
 
             local_storage = self.entry_transactions.local_storage
-            root_access = self.entry_transactions.get_workspace_entry().access
+            root_entry_id = self.entry_transactions.get_workspace_entry().id
             new_id_to_path = set()
 
-            def _recursive_build_id_to_path(access, path):
-                new_id_to_path.add((access.id, path))
-                manifest = local_storage.get_manifest(access)
+            def _recursive_build_id_to_path(entry_id, parent_id):
+                new_id_to_path.add((entry_id, parent_id))
+                manifest = local_storage.get_manifest(entry_id)
                 if is_folder_manifest(manifest):
-                    for child_name, child_access in manifest.children.items():
-                        _recursive_build_id_to_path(child_access, path / "child_name")
+                    for child_name, child_entry_id in manifest.children.items():
+                        _recursive_build_id_to_path(child_entry_id, entry_id)
 
-            _recursive_build_id_to_path(root_access, FsPath("/"))
+            _recursive_build_id_to_path(root_entry_id, None)
 
             added_items = new_id_to_path - self.last_step_id_to_path
-            for added_id, added_path in added_items:
-                for old_id, old_path in self.last_step_id_to_path:
-                    if old_id == added_id and added_path.parent != old_path.parent:
+            for added_id, added_parent in added_items:
+                for old_id, old_parent in self.last_step_id_to_path:
+                    if old_id == added_id and added_parent != old_parent.parent:
                         raise AssertionError(
-                            f"Same id ({old_id}) but different path: {old_path} -> {added_path}"
+                            f"Same id ({old_id}) but different parent: {old_parent} -> {added_parent}"
                         )
 
             self.last_step_id_to_path = new_id_to_path

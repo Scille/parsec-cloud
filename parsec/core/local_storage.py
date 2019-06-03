@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, Dict, Set
 from pathlib import Path
 from collections import defaultdict
 
 import trio
 from trio import hazmat
+from typing import Tuple, Dict, Union, Set
 
 from structlog import get_logger
 from async_generator import asynccontextmanager
@@ -46,7 +46,7 @@ class LocalStorage:
 
         # Cursors and file descriptors
         self.open_cursors: Dict[FileDescriptor, FileCursor] = {}
-        self.file_references: Dict[EntryID, Set[FileDescriptor]] = defaultdict(set)
+        self.file_references: Dict[EntryID, Set[Union[EntryID, FileDescriptor]]] = defaultdict(set)
         self._fd_counter = 0
 
         # Locking structures
