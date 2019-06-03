@@ -4,11 +4,7 @@ import pytest
 import trio
 import pendulum
 
-from parsec.crypto import (
-    build_user_certificate,
-    build_device_certificate,
-    unsecure_read_user_certificate,
-)
+from parsec.crypto import build_user_certificate, build_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocole import user_create_serializer
 
@@ -59,7 +55,6 @@ async def test_user_create_ok(
     async with backend_sock_factory(backend, mallory) as sock:
         rep = await user_get(sock, user_id=mallory.user_id)
         assert rep["status"] == "ok"
-        assert unsecure_read_user_certificate(rep["user_certificate"]).is_admin == is_admin
 
 
 @pytest.mark.trio
