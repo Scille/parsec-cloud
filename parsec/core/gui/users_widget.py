@@ -173,7 +173,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self.add_user(
                     str(user_info.user_id),
                     is_current_user=user_id == user,
-                    is_admin=False,
+                    is_admin=user_info.is_admin,
                     certified_on=user_info.certified_on,
                     is_revoked=all([device.revoked_on for device in user_devices]),
                 )
