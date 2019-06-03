@@ -284,9 +284,9 @@ async def claim_user(
 
             # 3) Send claim
             try:
-                user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+                unverified_user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
                 user = verify_user_certificate(
-                    user.user_certificate,
+                    unverified_user.user_certificate,
                     invitation_creator_device.device_id,
                     invitation_creator_device.verify_key,
                 )
