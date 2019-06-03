@@ -60,6 +60,15 @@ def pytest_addoption(parser):
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
+    parser.addoption(
+        "--run-postgresql-cluster",
+        action="store_true",
+        help=(
+            "Instead of running the tests, only start a PostgreSQL cluster "
+            "that could be use for other tests (through `PG_URL` env var) "
+            "to avoid having to create a new cluster each time."
+        ),
+    )
 
 
 def is_xdist_master(config):
@@ -67,6 +76,8 @@ def is_xdist_master(config):
 
 
 def pytest_configure(config):
+    # Patch pytest-trio
+    patch_pytest_trio()
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
     os.environ.setdefault("TZ", "UTC")
     # For some reason, Windows doesn't like our logging configuration and
@@ -75,6 +86,40 @@ def pytest_configure(config):
         configure_logging()
     if config.getoption("--postgresql") and not is_xdist_master(config):
         bootstrap_postgresql_testbed()
+    if config.getoption("--run-postgresql-cluster"):
+        bootstrap_postgresql_testbed()
+        input("Press enter when you're done with...")
+        pytest.exit("bye")
+
+
+def patch_pytest_trio():
+    # Fix while waiting for
+    # https://github.com/python-trio/pytest-trio/issues/77
+    import pytest_trio
+
+    vanilla_crash = pytest_trio.plugin.TrioTestContext.crash
+
+    def patched_crash(self, exc):
+        if exc is None:
+            task = trio.hazmat.current_task()
+            for child_nursery in task.child_nurseries:
+                for child_exc in child_nursery._pending_excs:
+                    if not isinstance(exc, trio.Cancelled):
+                        vanilla_crash(self, child_exc)
+        vanilla_crash(self, exc)
+
+    pytest_trio.plugin.TrioTestContext.crash = patched_crash
+
+    def fget(self):
+        if self.crashed and not self._error_list:
+            self._error_list.append(trio.TrioInternalError("See pytest-trio issue #75"))
+        return self._error_list
+
+    def fset(self, value):
+        self._error_list = value
+
+    error_list = property(fget, fset)
+    pytest_trio.plugin.TrioTestContext.error_list = error_list
 
 
 @pytest.fixture(scope="session")

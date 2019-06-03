@@ -172,6 +172,8 @@ class BackendConfig:
 
     db_url: str = None
     db_type: str = None
+    # If False, deleted data are only marked for deletion
+    db_drop_deleted_data: bool = False
 
     blockstore_config: BaseBlockStoreConfig = None
 

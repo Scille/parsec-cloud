@@ -84,9 +84,9 @@ async def test_mountpoint_path_already_in_use(
 ):
     # Create a workspace and make it available in two devices
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
-    await workspace.sync("/")
+    await alice_user_fs.sync()
     await alice2_user_fs.sync()
+
     # Easily differenciate alice&alice2
     await alice2_user_fs.get_workspace(wid).touch("/I_am_alice2.txt")
     await alice_user_fs.get_workspace(wid).touch("/I_am_alice.txt")
@@ -232,7 +232,7 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
     assert not await bar_txt.exists()
 
 
-@pytest.mark.linux
+@pytest.mark.mountpoint
 def test_manifest_not_available(mountpoint_service):
     async def _bootstrap(user_fs, fs, mountpoint_manager):
         await user_fs.workspace_create("x")

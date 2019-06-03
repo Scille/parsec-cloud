@@ -100,7 +100,8 @@ async def test_mountpoint_path_already_in_use_concurrent_with_non_empty_dir(
     async def _mocked_bootstrap_mountpoint(*args):
         trio_mountpoint_path = trio.Path(f"{mountpoint_path}")
         await trio_mountpoint_path.mkdir(parents=True)
-        await (trio_mountpoint_path / "bar.txt").touch()
+        file_path = trio_mountpoint_path / "bar.txt"
+        await file_path.touch()
         st_dev = (await trio_mountpoint_path.stat()).st_dev
         return mountpoint_path, st_dev
 
@@ -125,8 +126,7 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
 ):
     # Create a workspace and make it available in two devices
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
-    await workspace.sync("/")
+    await alice_user_fs.sync()
     await alice2_user_fs.sync()
 
     mountpoint_path = base_mountpoint.absolute() / "w"

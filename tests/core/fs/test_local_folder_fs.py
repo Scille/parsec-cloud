@@ -199,7 +199,8 @@ def test_access_not_loaded_entry(alice, bob, local_folder_fs):
     with pytest.raises(FSManifestLocalMiss):
         local_folder_fs.stat(FsPath("/w/"))
 
-    local_folder_fs.set_dirty_manifest(w_entry.access, w_manifest)
+    alice_w_manifest = w_manifest.evolve(author=alice.device_id)
+    local_folder_fs.set_dirty_manifest(w_entry.access, alice_w_manifest)
     stat = local_folder_fs.stat(FsPath("/w/"))
     assert stat == {
         "type": "workspace",

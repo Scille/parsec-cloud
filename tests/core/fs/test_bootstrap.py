@@ -148,8 +148,7 @@ async def test_reloading_v0_user_manifest(
         with freeze_time("2000-01-02"):
             stat = await fs.workspace_create("/foo")
 
-    # TODO: clean manifest cache once it's been moved to local storage
-    # local_storage.clear_memory_cache()
+    local_storage.clear_memory_cache()
 
     # Reload version 0 manifest
     async with fs_factory(alice, local_storage) as fs:
@@ -168,7 +167,7 @@ async def test_reloading_v0_user_manifest(
             "children": ["foo"],
         }
 
-    local_storage.manifest_cache.clear()
+    local_storage.clear_memory_cache()
 
     # Syncronize version 0 manifest
     async with fs_factory(alice, local_storage) as fs:

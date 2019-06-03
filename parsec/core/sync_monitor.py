@@ -18,7 +18,7 @@ def timestamp():
 class SyncMonitor:
     def __init__(self, fs, event_bus):
         super().__init__()
-        self.fs = fs
+        self.user_fs = fs.user_fs
         self.event_bus = event_bus
 
         self._running = False
@@ -61,7 +61,12 @@ class SyncMonitor:
         with trio.CancelScope() as self._monitoring_cancel_scope:
             self.event_bus.send("sync_monitor.reconnection_sync.started")
             try:
-                await self.fs.full_sync()
+                await self.user_fs.sync()
+                user_manifest = self.user_fs.get_user_manifest()
+                for entry in user_manifest.workspaces:
+                    wid = entry.access.id
+                    workspace = self.user_fs.get_workspace(wid)
+                    await workspace.sync("/")
             finally:
                 self.event_bus.send("sync_monitor.reconnection_sync.done")
 
@@ -74,14 +79,21 @@ class SyncMonitor:
         def _on_entry_updated(event, workspace_id=None, id=None):
             assert id is not None
             try:
-                first_updated, _ = updated_entries[id]
+                first_updated, _ = updated_entries[workspace_id, id]
                 last_updated = timestamp()
             except KeyError:
                 first_updated = last_updated = timestamp()
-            updated_entries[id] = (first_updated, last_updated)
+            updated_entries[workspace_id, id] = first_updated, last_updated
             new_event.set()
 
-        with self.event_bus.connect_in_context(("fs.entry.updated", _on_entry_updated)):
+        def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
+            updated_entries[realm_id, src_id] = timestamp() - MAX_WAIT, timestamp() - MAX_WAIT
+            new_event.set()
+
+        with self.event_bus.connect_in_context(
+            ("fs.entry.updated", _on_entry_updated),
+            ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
+        ):
 
             async with trio.open_nursery() as nursery:
                 while True:
@@ -91,45 +103,39 @@ class SyncMonitor:
                     new_event.clear()
 
                     await self._monitoring_tick(updated_entries)
-
-                    if updated_entries:
+                    sorted_entries = self._sorted_entries(updated_entries)
+                    if sorted_entries:
+                        t, _, _ = sorted_entries[0]
+                        delta = max(0, t - timestamp())
 
                         async def _wait():
-                            await trio.sleep(MIN_WAIT)
+                            await trio.sleep(delta)
                             new_event.set()
 
                         nursery.start_soon(_wait)
 
+    def _sorted_entries(self, updated_entries):
+        result = []
+        for (wid, id), (first_updated, last_updated) in updated_entries.items():
+            t = min(first_updated + MAX_WAIT, last_updated + MIN_WAIT)
+            result.append((t, id, wid))
+        return sorted(result)
+
     async def _monitoring_tick(self, updated_entries):
-        now = timestamp()
+        # Loop over entries to synchronize
+        for t, id, wid in self._sorted_entries(updated_entries):
+            if t > timestamp():
+                return
 
-        for id, (first_updated, last_updated) in updated_entries.items():
-            if now - first_updated > MAX_WAIT:
-                if id == self.fs.user_fs.user_manifest_access.id:
-                    await self.fs.sync("/")
-                else:
-                    await self.fs.sync_by_id(id)
-                break
+            # Pop from entries before the synchronization
+            updated_entries.pop((wid, id), None)
 
-        else:
-            for id, (_, last_updated) in updated_entries.items():
-                if now - last_updated > MIN_WAIT:
-                    if id == self.fs.user_fs.user_manifest_access.id:
-                        await self.fs.sync("/")
-                    else:
-                        await self.fs.sync_by_id(id)
-                    break
-
-            else:
-                id = None
-
-        if id:
-            _, new_last_updated = updated_entries[id]
-            # This entry has been modified again during the sync
-            if new_last_updated != last_updated:
-                updated_entries[id] = (last_updated, new_last_updated)
-            else:
-                del updated_entries[id]
+            # Perform the synchronization
+            if id == self.user_fs.user_manifest_access.id:
+                await self.user_fs.sync()
+            elif wid is not None:
+                workspace = self.user_fs.get_workspace(wid)
+                await workspace.sync_by_id(id)
 
 
 async def monitor_sync(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):

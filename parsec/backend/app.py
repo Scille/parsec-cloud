@@ -18,20 +18,22 @@ from parsec.backend.events import EventsComponent
 from parsec.backend.utils import check_anonymous_api_allowed
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
+    MemoryPingComponent,
     MemoryOrganizationComponent,
     MemoryUserComponent,
-    MemoryVlobComponent,
     MemoryMessageComponent,
-    MemoryPingComponent,
+    MemoryRealmComponent,
+    MemoryVlobComponent,
     MemoryBlockComponent,
 )
 from parsec.backend.drivers.postgresql import (
     PGHandler,
     PGOrganizationComponent,
-    PGUserComponent,
-    PGVlobComponent,
-    PGMessageComponent,
     PGPingComponent,
+    PGUserComponent,
+    PGMessageComponent,
+    PGRealmComponent,
+    PGVlobComponent,
     PGBlockComponent,
 )
 from parsec.backend.user import UserNotFoundError
@@ -134,16 +136,22 @@ class BackendApp:
             self.user = MemoryUserComponent(self.event_bus)
             self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
-            self.vlob = MemoryVlobComponent(self.event_bus, self.user)
+            self.realm = MemoryRealmComponent(self.event_bus, self.user, self.message)
+            self.vlob = MemoryVlobComponent(self.event_bus, self.realm)
+            self.realm._register_maintenance_reencryption_hooks(
+                self.vlob._maintenance_reencryption_start_hook,
+                self.vlob._maintenance_reencryption_is_finished_hook,
+            )
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
-            self.block = MemoryBlockComponent(self.blockstore, self.vlob)
+            self.block = MemoryBlockComponent(self.blockstore, self.realm)
 
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
             self.user = PGUserComponent(self.dbh, self.event_bus)
             self.organization = PGOrganizationComponent(self.dbh, self.user)
             self.message = PGMessageComponent(self.dbh)
+            self.realm = PGRealmComponent(self.dbh)
             self.vlob = PGVlobComponent(self.dbh)
             self.ping = PGPingComponent(self.dbh)
             self.blockstore = blockstore_factory(
@@ -173,12 +181,18 @@ class BackendApp:
             "block_read": self.block.api_block_read,
             # Vlob
             "vlob_group_check": self.vlob.api_vlob_group_check,
+            "vlob_poll_changes": self.vlob.api_vlob_poll_changes,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
-            "vlob_group_get_roles": self.vlob.api_vlob_group_get_roles,
-            "vlob_group_update_roles": self.vlob.api_vlob_group_update_roles,
-            "vlob_group_poll": self.vlob.api_vlob_group_poll,
+            "vlob_maintenance_get_reencryption_batch": self.vlob.api_vlob_maintenance_get_reencryption_batch,
+            "vlob_maintenance_save_reencryption_batch": self.vlob.api_vlob_maintenance_save_reencryption_batch,
+            # Realm
+            "realm_status": self.realm.api_realm_status,
+            "realm_get_roles": self.realm.api_realm_get_roles,
+            "realm_update_roles": self.realm.api_realm_update_roles,
+            "realm_start_reencryption_maintenance": self.realm.api_realm_start_reencryption_maintenance,
+            "realm_finish_reencryption_maintenance": self.realm.api_realm_finish_reencryption_maintenance,
         }
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,

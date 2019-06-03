@@ -7,10 +7,10 @@ from parsec.api.protocole import events_subscribe_serializer, events_listen_seri
 from parsec.backend.utils import catch_protocole_errors
 
 
-def _pinged_callback_factory(client_ctx, pings):
+def _ping_event_callback_factory(client_ctx, pings):
     pings = set(pings)
 
-    def _on_pinged(event, organization_id, author, ping):
+    def _on_ping_event(event, organization_id, author, ping):
         if (
             organization_id != client_ctx.organization_id
             or author == client_ctx.device_id
@@ -23,37 +23,31 @@ def _pinged_callback_factory(client_ctx, pings):
         except trio.WouldBlock:
             client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-    return _on_pinged
+    return _on_ping_event
 
 
-def _vlob_group_updated_callback_factory(client_ctx, vlob_group_ids):
-    vlob_group_ids = set(vlob_group_ids)
+def _realm_events_callback_factory(client_ctx, realm_ids):
+    realm_ids = set(realm_ids)
 
-    def _on_vlob_group_updated(event, organization_id, author, id, checkpoint, src_id, src_version):
+    def _on_realm_events(event, organization_id, author, realm_id, **kwargs):
         if (
             organization_id != client_ctx.organization_id
             or author == client_ctx.device_id
-            or id not in vlob_group_ids
+            or realm_id not in realm_ids
         ):
             return
 
-        msg = {
-            "event": event,
-            "id": id,
-            "checkpoint": checkpoint,
-            "src_id": src_id,
-            "src_version": src_version,
-        }
+        msg = {"event": event, "realm_id": realm_id, **kwargs}
         try:
             client_ctx.send_events_channel.send_nowait(msg)
         except trio.WouldBlock:
             client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-    return _on_vlob_group_updated
+    return _on_realm_events
 
 
-def _message_received_callback_factory(client_ctx):
-    def _on_message_received(event, organization_id, author, recipient, index):
+def _message_event_callback_factory(client_ctx):
+    def _on_message_event(event, organization_id, author, recipient, index):
         if (
             organization_id != client_ctx.organization_id
             or author == client_ctx.device_id
@@ -66,7 +60,7 @@ def _message_received_callback_factory(client_ctx):
         except trio.WouldBlock:
             client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
-    return _on_message_received
+    return _on_message_event
 
 
 class EventsComponent:
@@ -80,18 +74,18 @@ class EventsComponent:
         # Drop previous event callbacks if any
         client_ctx.event_bus_ctx.clear()
 
-        if msg["pinged"]:
-            on_pinged = _pinged_callback_factory(client_ctx, msg["pinged"])
-            client_ctx.event_bus_ctx.connect("pinged", on_pinged)
+        if msg["ping"]:
+            on_ping_event = _ping_event_callback_factory(client_ctx, msg["ping"])
+            client_ctx.event_bus_ctx.connect("pinged", on_ping_event)
 
-        if msg["vlob_group_updated"]:
-            on_vlob_group_updated = _vlob_group_updated_callback_factory(
-                client_ctx, msg["vlob_group_updated"]
-            )
-            client_ctx.event_bus_ctx.connect("vlob_group.updated", on_vlob_group_updated)
+        if msg["realm"]:
+            on_realm_event = _realm_events_callback_factory(client_ctx, msg["realm"])
+            client_ctx.event_bus_ctx.connect("realm.vlobs_updated", on_realm_event)
+            client_ctx.event_bus_ctx.connect("realm.maintenance_started", on_realm_event)
+            client_ctx.event_bus_ctx.connect("realm.maintenance_finished", on_realm_event)
 
-        if msg["message_received"]:
-            on_message_received = _message_received_callback_factory(client_ctx)
+        if msg["message"]:
+            on_message_received = _message_event_callback_factory(client_ctx)
             client_ctx.event_bus_ctx.connect("message.received", on_message_received)
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})

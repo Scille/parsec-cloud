@@ -357,12 +357,13 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     ciphered, generated_by, generated_on = args
                     access = first_device.user_manifest_access
                     await self.backend.vlob.create(
-                        first_device.organization_id,
-                        generated_by,
-                        access.id,
-                        access.id,
-                        generated_on,
-                        ciphered,
+                        organization_id=first_device.organization_id,
+                        author=generated_by,
+                        realm_id=access.id,
+                        encryption_revision=1,
+                        vlob_id=access.id,
+                        timestamp=generated_on,
+                        blob=ciphered,
                     )
 
         async def bind_device(
@@ -414,12 +415,13 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     ciphered, generated_by, generated_on = args
                     access = device.user_manifest_access
                     await self.backend.vlob.create(
-                        device.organization_id,
-                        generated_by,
-                        access.id,
-                        access.id,
-                        generated_on,
-                        ciphered,
+                        organization_id=device.organization_id,
+                        author=generated_by,
+                        realm_id=access.id,
+                        encryption_revision=1,
+                        vlob_id=access.id,
+                        timestamp=generated_on,
+                        blob=ciphered,
                     )
 
             self.binded_local_devices.append(device)

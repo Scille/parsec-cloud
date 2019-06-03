@@ -16,14 +16,17 @@ from parsec.api.protocole import (
     events_listen_serializer,
     message_send_serializer,
     message_get_serializer,
-    VlobGroupRole,
-    vlob_group_check_serializer,
+    RealmRole,
     vlob_read_serializer,
     vlob_create_serializer,
     vlob_update_serializer,
-    vlob_group_update_roles_serializer,
-    vlob_group_get_roles_serializer,
-    vlob_group_poll_serializer,
+    vlob_group_check_serializer,
+    vlob_poll_changes_serializer,
+    realm_status_serializer,
+    realm_get_roles_serializer,
+    realm_update_roles_serializer,
+    realm_start_reencryption_maintenance_serializer,
+    realm_finish_reencryption_maintenance_serializer,
     block_create_serializer,
     block_read_serializer,
     user_get_serializer,
@@ -107,17 +110,17 @@ async def ping(transport: Transport, ping: str) -> str:
 
 async def events_subscribe(
     transport: Transport,
-    message_received: bool = False,
-    vlob_group_updated: Iterable[UUID] = (),
-    pinged: Iterable[str] = (),
+    message: bool = False,
+    realm: Iterable[UUID] = (),
+    ping: Iterable[str] = (),
 ) -> None:
     await _send_cmd(
         transport,
         events_subscribe_serializer,
         cmd="events_subscribe",
-        message_received=message_received,
-        vlob_group_updated=vlob_group_updated,
-        pinged=pinged,
+        message=message,
+        realm=realm,
+        ping=ping,
     )
 
 
@@ -155,6 +158,60 @@ async def message_get(transport: Transport, offset: int) -> List[Tuple[int, Devi
 ### Vlob API ###
 
 
+async def vlob_create(
+    transport: Transport,
+    realm_id: UUID,
+    encryption_revision: int,
+    vlob_id: UUID,
+    timestamp: pendulum.Pendulum,
+    blob: bytes,
+) -> None:
+    await _send_cmd(
+        transport,
+        vlob_create_serializer,
+        cmd="vlob_create",
+        realm_id=realm_id,
+        encryption_revision=encryption_revision,
+        vlob_id=vlob_id,
+        timestamp=timestamp,
+        blob=blob,
+    )
+
+
+async def vlob_read(
+    transport: Transport, encryption_revision: int, vlob_id: UUID, version: int = None
+) -> Tuple[DeviceID, pendulum.Pendulum, int, bytes]:
+    rep = await _send_cmd(
+        transport,
+        vlob_read_serializer,
+        cmd="vlob_read",
+        encryption_revision=encryption_revision,
+        vlob_id=vlob_id,
+        version=version,
+    )
+    return rep["author"], rep["timestamp"], rep["version"], rep["blob"]
+
+
+async def vlob_update(
+    transport: Transport,
+    encryption_revision: int,
+    vlob_id: UUID,
+    version: int,
+    timestamp: pendulum.Pendulum,
+    blob: bytes,
+) -> None:
+    await _send_cmd(
+        transport,
+        vlob_update_serializer,
+        cmd="vlob_update",
+        encryption_revision=encryption_revision,
+        vlob_id=vlob_id,
+        version=version,
+        timestamp=timestamp,
+        blob=blob,
+    )
+
+
 async def vlob_group_check(transport: Transport, to_check: list) -> list:
     rep = await _send_cmd(
         transport, vlob_group_check_serializer, cmd="vlob_group_check", to_check=to_check
@@ -162,90 +219,95 @@ async def vlob_group_check(transport: Transport, to_check: list) -> list:
     return rep["changed"]
 
 
-async def vlob_create(
-    transport: Transport, group: UUID, id: UUID, timestamp: pendulum.Pendulum, blob: bytes
-) -> None:
-    await _send_cmd(
-        transport,
-        vlob_create_serializer,
-        cmd="vlob_create",
-        group=group,
-        id=id,
-        timestamp=timestamp,
-        blob=blob,
-    )
-
-
-async def vlob_read(
-    transport: Transport, id: UUID, version: int = None
-) -> Tuple[DeviceID, pendulum.Pendulum, int, bytes]:
-    rep = await _send_cmd(transport, vlob_read_serializer, cmd="vlob_read", id=id, version=version)
-    return rep["author"], rep["timestamp"], rep["version"], rep["blob"]
-
-
-async def vlob_update(
-    transport: Transport, id: UUID, version: int, timestamp: pendulum.Pendulum, blob: bytes
-) -> None:
-    await _send_cmd(
-        transport,
-        vlob_update_serializer,
-        cmd="vlob_update",
-        id=id,
-        version=version,
-        timestamp=timestamp,
-        blob=blob,
-    )
-
-
-async def vlob_group_get_roles(transport: Transport, id: UUID) -> Dict[UserID, VlobGroupRole]:
-    rep = await _send_cmd(
-        transport, vlob_group_get_roles_serializer, cmd="vlob_group_get_roles", id=id
-    )
-    return rep["users"]
-
-
-async def vlob_group_update_roles(
-    transport: Transport, id: UUID, user: UserID, role: Optional[VlobGroupRole]
-) -> None:
-    await _send_cmd(
-        transport,
-        vlob_group_update_roles_serializer,
-        cmd="vlob_group_update_roles",
-        id=id,
-        user=user,
-        role=role,
-    )
-
-
-async def vlob_group_poll(
-    transport: Transport, id: UUID, last_checkpoint: int
+async def vlob_poll_changes(
+    transport: Transport, realm_id: UUID, last_checkpoint: int
 ) -> Tuple[int, Dict[UUID, int]]:
     rep = await _send_cmd(
         transport,
-        vlob_group_poll_serializer,
-        cmd="vlob_group_poll",
-        id=id,
+        vlob_poll_changes_serializer,
+        cmd="vlob_poll_changes",
+        realm_id=realm_id,
         last_checkpoint=last_checkpoint,
     )
     return (rep["current_checkpoint"], rep["changes"])
 
 
+### Realm API ###
+
+
+async def realm_status(transport: Transport, realm_id: UUID) -> Dict[UserID, RealmRole]:
+    rep = await _send_cmd(
+        transport, realm_status_serializer, cmd="realm_get_roles", realm_id=realm_id
+    )
+    rep.pop("status")
+    # TODO: return RealmStatus object ?
+    return rep
+
+
+async def realm_get_roles(transport: Transport, realm_id: UUID) -> Dict[UserID, RealmRole]:
+    rep = await _send_cmd(
+        transport, realm_get_roles_serializer, cmd="realm_get_roles", realm_id=realm_id
+    )
+    return rep["users"]
+
+
+async def realm_update_roles(
+    transport: Transport, realm_id: UUID, user: UserID, role: Optional[RealmRole]
+) -> None:
+    await _send_cmd(
+        transport,
+        realm_update_roles_serializer,
+        cmd="realm_update_roles",
+        realm_id=realm_id,
+        user=user,
+        role=role,
+    )
+
+
+async def realm_start_reencryption_maintenance(
+    transport: Transport,
+    realm_id: UUID,
+    encryption_revision: int,
+    per_participant_message: Dict[UserID, bytes],
+) -> None:
+    await _send_cmd(
+        transport,
+        realm_start_reencryption_maintenance_serializer,
+        cmd="realm_start_reencryption_maintenance",
+        realm_id=realm_id,
+        encryption_revision=encryption_revision,
+        per_participant_message=per_participant_message,
+    )
+
+
+async def realm_finish_reencryption_maintenance(
+    transport: Transport, realm_id: UUID, encryption_revision: int
+) -> None:
+    await _send_cmd(
+        transport,
+        realm_finish_reencryption_maintenance_serializer,
+        cmd="realm_finish_reencryption_maintenance",
+        realm_id=realm_id,
+        encryption_revision=encryption_revision,
+    )
+
+
 ### Block API ###
 
 
-async def block_create(transport: Transport, id: UUID, vlob_group: UUID, block: bytes) -> None:
+async def block_create(transport: Transport, block_id: UUID, realm_id: UUID, block: bytes) -> None:
     await _send_cmd(
         transport,
         block_create_serializer,
         cmd="block_create",
-        id=id,
-        vlob_group=vlob_group,
+        block_id=block_id,
+        realm_id=realm_id,
         block=block,
     )
 
 
-async def block_read(transport: Transport, id: UUID) -> bytes:
-    rep = await _send_cmd(transport, block_read_serializer, cmd="block_read", id=id)
+async def block_read(transport: Transport, block_id: UUID) -> bytes:
+    rep = await _send_cmd(transport, block_read_serializer, cmd="block_read", block_id=block_id)
     return rep["block"]
 
 

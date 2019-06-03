@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import Tuple
+from pathlib import Path
 from itertools import count
 from collections import defaultdict
 
@@ -10,14 +11,17 @@ from trio import hazmat
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
+from parsec.types import DeviceID
 from parsec.core.types import (
     FileDescriptor,
     Access,
     BlockAccess,
     LocalManifest,
+    RemoteManifest,
     LocalFileManifest,
     FileCursor,
     local_manifest_serializer,
+    remote_manifest_serializer,
 )
 from parsec.core.persistent_storage import PersistentStorage, LocalStorageMissingEntry
 
@@ -37,7 +41,8 @@ class LocalStorage:
     - the persistent storage to keep serialized data on the disk
     """
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, device_id: DeviceID, path: Path, **kwargs):
+        self.device_id = device_id
 
         # Cursors and file descriptors
         self.open_cursors = {}
@@ -49,7 +54,8 @@ class LocalStorage:
         self.access_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
-        self.manifest_cache = {}
+        self.base_manifest_cache = {}
+        self.local_manifest_cache = {}
         self.persistent_storage = PersistentStorage(path, **kwargs)
 
     def __enter__(self):
@@ -58,6 +64,10 @@ class LocalStorage:
 
     def __exit__(self, *args):
         self.persistent_storage.__exit__(*args)
+
+    def clear_memory_cache(self):
+        self.base_manifest_cache.clear()
+        self.local_manifest_cache.clear()
 
     # Locking helpers
 
@@ -76,53 +86,71 @@ class LocalStorage:
 
     # Manifest interface
 
-    def get_manifest(self, access: Access) -> LocalManifest:
+    def get_base_manifest(self, access: Access) -> RemoteManifest:
+        """Raises: LocalStorageMissingEntry"""
         try:
-            return self.manifest_cache[access.id]
+            return self.base_manifest_cache[access.id]
         except KeyError:
             pass
-        # Try local manifest first, although it should not matter
+        raw = self.persistent_storage.get_clean_manifest(access)
+        manifest = remote_manifest_serializer.loads(raw)
+        self.base_manifest_cache[access.id] = manifest
+        return manifest
+
+    def get_manifest(self, access: Access) -> LocalManifest:
+        """Raises: LocalStorageMissingEntry"""
+        try:
+            return self.local_manifest_cache[access.id]
+        except KeyError:
+            pass
         try:
             raw = self.persistent_storage.get_dirty_manifest(access)
         except LocalStorageMissingEntry:
-            raw = self.persistent_storage.get_clean_manifest(access)
-        manifest = local_manifest_serializer.loads(raw)
-        self.manifest_cache[access.id] = manifest
+            manifest = self.get_base_manifest(access).to_local(self.device_id)
+        else:
+            manifest = local_manifest_serializer.loads(raw)
+        self.local_manifest_cache[access.id] = manifest
         return manifest
 
-    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False) -> None:
+    def set_base_manifest(self, access: Access, manifest: RemoteManifest) -> None:
         self._check_lock_status(access)
         # Remove the corresponding local manifest if it exists
-        if force:
-            try:
-                self.persistent_storage.clear_dirty_manifest(access)
-            except LocalStorageMissingEntry:
-                pass
-        # Serialize and set remote manifest
-        raw = local_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_clean_manifest(access, raw)
-        self.manifest_cache[access.id] = manifest
-
-    def set_dirty_manifest(self, access: Access, manifest: LocalManifest) -> None:
-        self._check_lock_status(access)
         try:
-            self.persistent_storage.clear_clean_manifest(access)
+            self.persistent_storage.clear_dirty_manifest(access)
         except LocalStorageMissingEntry:
             pass
+        self.local_manifest_cache.pop(access.id, None)
+        # Serialize and set remote manifest
+        raw = remote_manifest_serializer.dumps(manifest)
+        self.persistent_storage.set_clean_manifest(access, raw)
+        self.base_manifest_cache[access.id] = manifest
+
+    def set_manifest(self, access: Access, manifest: LocalManifest) -> None:
+        assert manifest.author == self.device_id
+        self._check_lock_status(access)
         raw = local_manifest_serializer.dumps(manifest)
         self.persistent_storage.set_dirty_manifest(access, raw)
-        self.manifest_cache[access.id] = manifest
+        self.local_manifest_cache[access.id] = manifest
 
     def clear_manifest(self, access: Access) -> None:
         self._check_lock_status(access)
         try:
             self.persistent_storage.clear_clean_manifest(access)
         except LocalStorageMissingEntry:
-            try:
-                self.persistent_storage.clear_dirty_manifest(access)
-            except LocalStorageMissingEntry:
-                pass
-        self.manifest_cache.pop(access.id, None)
+            pass
+        try:
+            self.persistent_storage.clear_dirty_manifest(access)
+        except LocalStorageMissingEntry:
+            pass
+        self.base_manifest_cache.pop(access.id, None)
+        self.local_manifest_cache.pop(access.id, None)
+
+    # TODO: Remove those legacy methods
+
+    set_dirty_manifest = set_manifest
+
+    def set_clean_manifest(self, access, manifest, force=False):
+        self.set_base_manifest(access, manifest.to_remote())
 
     # Block interface
 

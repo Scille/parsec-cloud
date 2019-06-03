@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 18.9b0
+    rev: 19.3b0
     hooks:
     - id: black
       args:
@@ -8,3 +8,7 @@ repos:
           - "--exclude=parsec/core/gui/_resources_rc.py"
           - "--exclude=parsec/core/gui/ui/"
       language_version: python3
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.7
+    hooks:
+    - id: flake8
