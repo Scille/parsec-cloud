@@ -27,6 +27,10 @@ class BlockAccessError(BlockError):
     pass
 
 
+class BlockInMaintenanceError(BlockError):
+    pass
+
+
 class BaseBlockComponent:
     @catch_protocole_errors
     async def api_block_read(self, client_ctx, msg):
@@ -43,6 +47,9 @@ class BaseBlockComponent:
 
         except BlockAccessError:
             return block_read_serializer.rep_dump({"status": "not_allowed"})
+
+        except BlockInMaintenanceError:
+            return block_read_serializer.rep_dump({"status": "in_maintenance"})
 
         return block_read_serializer.rep_dump({"status": "ok", "block": block})
 
@@ -62,14 +69,20 @@ class BaseBlockComponent:
         except BlockAccessError:
             return block_create_serializer.rep_dump({"status": "not_allowed"})
 
+        except BlockInMaintenanceError:
+            return block_create_serializer.rep_dump({"status": "in_maintenance"})
+
         return block_create_serializer.rep_dump({"status": "ok"})
 
-    async def read(self, organization_id: OrganizationID, author: DeviceID, id: UUID) -> bytes:
+    async def read(
+        self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
+    ) -> bytes:
         """
         Raises:
             BlockNotFoundError
             BlockTimeoutError
             BlockAccessError
+            BlockInMaintenanceError
         """
         raise NotImplementedError()
 
@@ -77,8 +90,8 @@ class BaseBlockComponent:
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        id: UUID,
-        vlob_group: UUID,
+        block_id: UUID,
+        realm: UUID,
         block: bytes,
     ) -> None:
         """
@@ -86,5 +99,6 @@ class BaseBlockComponent:
             BlockAlreadyExistsError
             BlockTimeoutError
             BlockAccessError
+            BlockInMaintenanceError
         """
         raise NotImplementedError()

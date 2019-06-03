@@ -32,6 +32,7 @@ from parsec.core.backend_connection import (
     BackendCmdsNotAllowed,
     BackendCmdsAlreadyExists,
     BackendCmdsBadVersion,
+    BackendCmdsInMaintenance,
     BackendConnectionError,
 )
 from parsec.core.remote_devices_manager import (
@@ -50,6 +51,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
     FSSharingNotAllowedError,
+    FSWorkspaceInMaintenance,
 )
 
 
@@ -176,11 +178,18 @@ class UserFS:
             FSBackendOfflineError
         """
         try:
-            args = await self.backend_cmds.vlob_read(self.user_manifest_access.id, version)
+            # Note encryption_revision is always 1 given we never reencrypt
+            # the user manifest's realm
+            args = await self.backend_cmds.vlob_read(1, self.user_manifest_access.id, version)
             expected_author_id, expected_timestamp, expected_version, blob = args
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot access workspace data while it is in maintenance"
+            ) from exc
 
         except BackendConnectionError as exc:
             raise FSError(f"Cannot fetch user manifest from backend: {exc}") from exc
@@ -301,11 +310,13 @@ class UserFS:
 
         # Sync the vlob with backend
         try:
+            # Note encryption_revision is always 1 given we never reencrypt
+            # the user manifest's realm
             if to_sync_um.base_version == 1:
-                await self.backend_cmds.vlob_create(access.id, access.id, now, ciphered)
+                await self.backend_cmds.vlob_create(access.id, 1, access.id, now, ciphered)
             else:
                 await self.backend_cmds.vlob_update(
-                    access.id, to_sync_um.base_version, now, ciphered
+                    1, access.id, to_sync_um.base_version, now, ciphered
                 )
 
         except (BackendCmdsAlreadyExists, BackendCmdsBadVersion):
@@ -315,14 +326,21 @@ class UserFS:
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot modify workspace data while it is in maintenance"
+            ) from exc
+
         except BackendConnectionError as exc:
             raise FSError(f"Cannot sync user manifest: {exc}") from exc
 
         # Merge back the manifest in local
         async with self._update_user_manifest_lock:
             diverged_um = self.get_user_manifest()
-            merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-            self.local_storage.set_manifest(self.user_manifest_access, merged_um)
+            # Final merge could have been achieved by a concurrent operation
+            if to_sync_um.base_version > diverged_um.base_version:
+                merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
+                self.local_storage.set_manifest(self.user_manifest_access, merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_access.id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -377,7 +395,7 @@ class UserFS:
 
         # Step 1)
         try:
-            await self.backend_cmds.vlob_group_update_roles(
+            await self.backend_cmds.realm_update_roles(
                 workspace_entry.access.id, recipient, role=role
             )
 
@@ -387,6 +405,11 @@ class UserFS:
         except BackendCmdsNotAllowed as exc:
             raise FSSharingNotAllowedError(
                 "Must be Owner or Manager on the workspace is mandatory to share it"
+            ) from exc
+
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot share workspace while it is in maintenance"
             ) from exc
 
         except BackendConnectionError as exc:
@@ -534,7 +557,7 @@ class UserFS:
         # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            roles = await self.backend_cmds.vlob_group_get_roles(workspace_id)
+            roles = await self.backend_cmds.realm_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -602,7 +625,7 @@ class UserFS:
         # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.backend_cmds.vlob_group_get_roles(workspace_id)
+            await self.backend_cmds.realm_get_roles(workspace_id)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc

@@ -55,13 +55,21 @@ class BackendCmdsPool:
     message_send = _expose_cmds_with_retrier("message_send")
     message_get = _expose_cmds_with_retrier("message_get")
 
-    vlob_group_check = _expose_cmds_with_retrier("vlob_group_check")
     vlob_create = _expose_cmds_with_retrier("vlob_create")
     vlob_read = _expose_cmds_with_retrier("vlob_read")
     vlob_update = _expose_cmds_with_retrier("vlob_update")
-    vlob_group_get_roles = _expose_cmds_with_retrier("vlob_group_get_roles")
-    vlob_group_update_roles = _expose_cmds_with_retrier("vlob_group_update_roles")
-    vlob_group_poll = _expose_cmds_with_retrier("vlob_group_poll")
+    vlob_group_check = _expose_cmds_with_retrier("vlob_group_check")
+    vlob_poll_changes = _expose_cmds_with_retrier("vlob_poll_changes")
+
+    realm_status = _expose_cmds_with_retrier("realm_status")
+    realm_get_roles = _expose_cmds_with_retrier("realm_get_roles")
+    realm_update_roles = _expose_cmds_with_retrier("realm_update_roles")
+    realm_start_reencryption_maintenance = _expose_cmds_with_retrier(
+        "realm_start_reencryption_maintenance"
+    )
+    realm_finish_reencryption_maintenance = _expose_cmds_with_retrier(
+        "realm_finish_reencryption_maintenance"
+    )
 
     block_create = _expose_cmds_with_retrier("block_create")
     block_read = _expose_cmds_with_retrier("block_read")

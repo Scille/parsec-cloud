@@ -6,10 +6,10 @@ from tests.common import create_shared_workspace
 
 
 @pytest.mark.trio
-@pytest.mark.linux  # TODO: investigate why this test fail on appveyor
+# @pytest.mark.linux  # TODO: investigate why this test fail on appveyor
 @pytest.mark.parametrize("sync", ("/", "/foo"))
 @pytest.mark.parametrize("type", ("folder", "file"))
-async def test_vlob_group_notif_on_new_entry_sync(
+async def test_realm_notif_on_new_entry_sync(
     running_backend, alice_core, alice2_user_fs, mock_clock, sync, type
 ):
     mock_clock.rate = 1
@@ -28,15 +28,15 @@ async def test_vlob_group_notif_on_new_entry_sync(
     # Expected events
     entry_events = [
         (
-            "backend.vlob_group.updated",
-            {"id": wid, "checkpoint": 2, "src_id": entry_id, "src_version": 1},
+            "backend.realm.vlobs_updated",
+            {"realm_id": wid, "checkpoint": 2, "src_id": entry_id, "src_version": 1},
         ),
         # TODO: add ("fs.entry.downsynced", {"workspace_id": wid, "id": entry_id}),
     ]
     root_events = [
         (
-            "backend.vlob_group.updated",
-            {"id": wid, "checkpoint": 3, "src_id": wid, "src_version": 2},
+            "backend.realm.vlobs_updated",
+            {"realm_id": wid, "checkpoint": 3, "src_id": wid, "src_version": 2},
         ),
         ("fs.entry.downsynced", {"workspace_id": wid, "id": wid}),
     ]
@@ -48,7 +48,7 @@ async def test_vlob_group_notif_on_new_entry_sync(
 
 
 @pytest.mark.trio
-async def test_vlob_group_notif_on_new_workspace_sync(
+async def test_realm_notif_on_new_workspace_sync(
     mock_clock, running_backend, alice_core, alice2_user_fs
 ):
 
@@ -59,8 +59,8 @@ async def test_vlob_group_notif_on_new_workspace_sync(
 
     expected = [
         (
-            "backend.vlob_group.updated",
-            {"id": uid, "checkpoint": 2, "src_id": uid, "src_version": 2},
+            "backend.realm.vlobs_updated",
+            {"realm_id": uid, "checkpoint": 2, "src_id": uid, "src_version": 2},
         )
     ]
 

@@ -161,7 +161,7 @@ class FileSyncerMixin(BaseSyncer):
         spaces = sync_map.spaces
         blocks = []
 
-        vlob_group = self.local_folder_fs.get_vlob_group(path)
+        realm = self.local_folder_fs.get_realm(path)
 
         async def _process_spaces():
             nonlocal blocks
@@ -174,7 +174,7 @@ class FileSyncerMixin(BaseSyncer):
                 else:
                     # Create a new block from existing data
                     block_access = BlockAccess.from_block(data, cs.start)
-                    await self._backend_block_create(vlob_group, block_access, data)
+                    await self._backend_block_create(realm, block_access, data)
                     blocks.append(block_access)
 
                     # The block has been successfully uploaded
@@ -206,7 +206,7 @@ class FileSyncerMixin(BaseSyncer):
         # Upload the file manifest as new vlob version
         try:
             if is_placeholder_manifest(manifest):
-                await self._backend_vlob_create(vlob_group, access, to_sync_manifest)
+                await self._backend_vlob_create(realm, access, to_sync_manifest)
             else:
                 await self._backend_vlob_update(access, to_sync_manifest)
 

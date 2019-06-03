@@ -112,6 +112,14 @@ class BackendCmdsBadMessage(BackendCmdsBadResponse):
     status = "bad_message"
 
 
+class BackendCmdsInMaintenance(BackendCmdsBadResponse):
+    status = "in_maintenance"
+
+
+class BackendCmdsMaintenanceError(BackendCmdsBadResponse):
+    status = "maintenance_error"
+
+
 STATUS_TO_EXC_CLS = {
     exc_cls.status: exc_cls
     for exc_cls in (
@@ -130,6 +138,8 @@ STATUS_TO_EXC_CLS = {
         BackendCmdsNoEvents,
         BackendCmdsTimeout,
         BackendCmdsBadMessage,
+        BackendCmdsInMaintenance,
+        BackendCmdsMaintenanceError,
     )
 }
 

@@ -2,21 +2,23 @@
 
 from .handler import PGHandler, init_db
 from .organization import PGOrganizationComponent
-from .block import PGBlockComponent, PGBlockStoreComponent
-from .message import PGMessageComponent
-from .user import PGUserComponent
-from .vlob import PGVlobComponent
 from .ping import PGPingComponent
+from .user import PGUserComponent
+from .message import PGMessageComponent
+from .realm import PGRealmComponent
+from .vlob import PGVlobComponent
+from .block import PGBlockComponent, PGBlockStoreComponent
 
 
 __all__ = [
     "init_db",
     "PGHandler",
     "PGOrganizationComponent",
+    "PGPingComponent",
+    "PGUserComponent",
+    "PGMessageComponent",
+    "PGRealmComponent",
+    "PGVlobComponent",
     "PGBlockComponent",
     "PGBlockStoreComponent",
-    "PGMessageComponent",
-    "PGUserComponent",
-    "PGVlobComponent",
-    "PGPingComponent",
 ]

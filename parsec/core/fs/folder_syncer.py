@@ -47,12 +47,12 @@ class FolderSyncerMixin(BaseSyncer):
         to_sync_manifest = to_sync_manifest.evolve(version=manifest.base_version + 1)
 
         # Upload the folder manifest as new vlob version
-        vlob_group = self.local_folder_fs.get_vlob_group(path)
+        realm = self.local_folder_fs.get_realm(path)
         force_update = False
         while True:
             try:
                 if is_placeholder_manifest(manifest) and not force_update:
-                    await self._backend_vlob_create(vlob_group, access, to_sync_manifest)
+                    await self._backend_vlob_create(realm, access, to_sync_manifest)
                 else:
                     await self._backend_vlob_update(access, to_sync_manifest)
                 break

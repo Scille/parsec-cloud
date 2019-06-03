@@ -1,11 +1,16 @@
 -- Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 
+-------------------------------------------------------
+--  Tables
+-------------------------------------------------------
+
+
 CREATE TABLE block (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     block_id UUID NOT NULL,
-    vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
@@ -27,6 +32,11 @@ CREATE TABLE block_data (
 
     UNIQUE(organization_id, block_id)
 );
+
+
+-------------------------------------------------------
+--  Procedures
+-------------------------------------------------------
 
 
 CREATE FUNCTION get_block_internal_id(orgid VARCHAR, blockid UUID) RETURNS INTEGER AS $$

@@ -24,6 +24,8 @@ from parsec.core.backend_connection.exceptions import (
     BackendCmdsNoEvents,
     BackendCmdsTimeout,
     BackendCmdsBadMessage,
+    BackendCmdsInMaintenance,
+    BackendCmdsMaintenanceError,
 )
 from parsec.core.backend_connection.transport import (
     anonymous_transport_factory,
@@ -71,6 +73,8 @@ __all__ = (
     "BackendCmdsNoEvents",
     "BackendCmdsTimeout",
     "BackendCmdsBadMessage",
+    "BackendCmdsInMaintenance",
+    "BackendCmdsMaintenanceError",
     "anonymous_transport_factory",
     "administration_transport_factory",
     "authenticated_transport_pool_factory",

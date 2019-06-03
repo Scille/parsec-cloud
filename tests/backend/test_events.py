@@ -17,6 +17,9 @@ BEACON_ID = uuid4()
 
 
 async def events_subscribe(sock, **kwargs):
+    # Sanity check to fail fast in case of typo
+    assert not kwargs.keys() - {"ping", "realm", "message"}
+
     await sock.send(events_subscribe_serializer.req_dumps({"cmd": "events_subscribe", **kwargs}))
     raw_rep = await sock.recv()
     rep = events_subscribe_serializer.rep_loads(raw_rep)
@@ -50,11 +53,11 @@ async def events_listen(sock):
 @pytest.mark.parametrize(
     "events",
     [
-        {"pinged": [], "beacon_updated": [], "message_received": False},
-        {"pinged": ["foo"], "beacon_updated": [BEACON_ID], "message_received": True},
-        {"beacon_updated": [BEACON_ID], "message_received": True},
-        {"pinged": ["foo"], "message_received": True},
-        {"pinged": ["foo"], "beacon_updated": [BEACON_ID]},
+        {"ping": [], "realm": [], "message": False},
+        {"ping": ["foo"], "realm": [BEACON_ID], "message": True},
+        {"realm": [BEACON_ID], "message": True},
+        {"ping": ["foo"], "message": True},
+        {"ping": ["foo"], "realm": [BEACON_ID]},
         {},
     ],
 )
@@ -67,10 +70,10 @@ async def test_events_subscribe_ok(alice_backend_sock, events):
     "events",
     [
         {"dummy": []},
-        {"pinged": [42]},
-        {"beacon.updated": ["dummy"]},
-        {"pinged": ["a" * 100]},  # Too long
-        {"message.received": []},
+        {"ping": [42]},
+        {"realm": ["dummy"]},
+        {"ping": ["a" * 100]},  # Too long
+        {"message": []},
     ],
 )
 async def test_events_subscribe_bad_msg(alice_backend_sock, events):
@@ -81,7 +84,7 @@ async def test_events_subscribe_bad_msg(alice_backend_sock, events):
 
 
 async def subscribe_pinged(sock, pings):
-    raw_req = events_subscribe_serializer.req_dumps({"cmd": "events_subscribe", "pinged": pings})
+    raw_req = events_subscribe_serializer.req_dumps({"cmd": "events_subscribe", "ping": pings})
     await sock.send(raw_req)
     raw_rep = await sock.recv()
     rep = events_subscribe_serializer.rep_loads(raw_rep)

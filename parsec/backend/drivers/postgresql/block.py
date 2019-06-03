@@ -13,8 +13,37 @@ from parsec.backend.block import (
     BlockAlreadyExistsError,
     BlockNotFoundError,
     BlockAccessError,
+    BlockInMaintenanceError,
 )
 from parsec.backend.drivers.postgresql.handler import PGHandler
+from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
+
+
+async def _check_realm(conn, organization_id, realm_id):
+    try:
+        rep = await get_realm_status(conn, organization_id, realm_id)
+
+    except RealmNotFoundError as exc:
+        raise BlockNotFoundError(*exc.args) from exc
+
+    if rep["maintenance_type"]:
+        raise BlockInMaintenanceError("Data realm is currently under maintenance")
+
+
+async def _get_realm_id_from_block_id(conn, organization_id, block_id):
+    realm_id = await conn.fetchval(
+        """
+SELECT get_realm_id(realm)
+FROM block
+WHERE _id = get_block_internal_id($1, $2)
+LIMIT 1
+            """,
+        organization_id,
+        block_id,
+    )
+    if not realm_id:
+        raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
+    return realm_id
 
 
 class PGBlockComponent(BaseBlockComponent):
@@ -28,15 +57,19 @@ class PGBlockComponent(BaseBlockComponent):
         self._blockstore_component = blockstore_component
         self._vlob_component = vlob_component
 
-    async def read(self, organization_id: OrganizationID, author: DeviceID, id: UUID) -> bytes:
+    async def read(
+        self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
+    ) -> bytes:
         async with self.dbh.pool.acquire() as conn:
+            realm_id = await _get_realm_id_from_block_id(conn, organization_id, block_id)
+            await _check_realm(conn, organization_id, realm_id)
             ret = await conn.fetchrow(
                 """
 SELECT
     deleted_on,
     user_can_read_vlob(
         get_user_internal_id($1, $2),
-        vlob_group
+        realm
     )
 FROM block
 WHERE
@@ -45,7 +78,7 @@ WHERE
 """,
                 organization_id,
                 author.user_id,
-                id,
+                block_id,
             )
             if not ret or ret[0]:
                 raise BlockNotFoundError()
@@ -53,25 +86,26 @@ WHERE
             elif not ret[1]:
                 raise BlockAccessError()
 
-        return await self._blockstore_component.read(organization_id, id)
+        return await self._blockstore_component.read(organization_id, block_id)
 
     async def create(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
-        id: UUID,
-        vlob_group: UUID,
+        block_id: UUID,
+        realm_id: UUID,
         block: bytes,
     ) -> None:
-
         async with self.dbh.pool.acquire() as conn:
+            await _check_realm(conn, organization_id, realm_id)
+
             # 1) Check access rights and block unicity
             ret = await conn.fetchrow(
                 """
 SELECT
     user_can_write_vlob(
         get_user_internal_id($1, $2),
-        get_vlob_group_internal_id($1, $4)
+        get_realm_internal_id($1, $4)
     ),
     EXISTS (
         SELECT _id
@@ -83,8 +117,8 @@ SELECT
 """,
                 organization_id,
                 author.user_id,
-                id,
-                vlob_group,
+                block_id,
+                realm_id,
             )
 
             if not ret[0]:
@@ -102,7 +136,7 @@ SELECT
             # blockstores with existing block raise `BlockAlreadyExistsError`)
             # blockstore are idempotent (i.e. if a block id already exists a
             # blockstore return success without any modification).
-            await self._blockstore_component.create(organization_id, id, block)
+            await self._blockstore_component.create(organization_id, block_id, block)
 
             # 3) Insert the block metadata into the database
             ret = await conn.execute(
@@ -110,7 +144,7 @@ SELECT
 INSERT INTO block (
     organization,
     block_id,
-    vlob_group,
+    realm,
     author,
     size,
     created_on
@@ -118,15 +152,15 @@ INSERT INTO block (
 SELECT
     get_organization_internal_id($1),
     $3,
-    get_vlob_group_internal_id($1, $4),
+    get_realm_internal_id($1, $4),
     get_device_internal_id($1, $2),
     $5,
     $6
 """,
                 organization_id,
                 author,
-                id,
-                vlob_group,
+                block_id,
+                realm_id,
                 len(block),
                 pendulum.now(),
             )
