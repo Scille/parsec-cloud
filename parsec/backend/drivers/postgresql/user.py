@@ -271,6 +271,22 @@ WHERE
                 trustchain = await self._get_trustchain(conn, organization_id, user.user_certifier)
                 return user, trustchain
 
+    async def get_user_with_device_and_trustchain(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> Tuple[User, Device, Tuple[Device]]:
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                user = await self._get_user(conn, organization_id, device_id.user_id)
+                user_device = await self._get_device(conn, organization_id, device_id)
+                trustchain = await self._get_trustchain(
+                    conn,
+                    organization_id,
+                    user.user_certifier,
+                    user_device.device_certifier,
+                    user_device.revoked_device_certifier,
+                )
+                return user, user_device, trustchain
+
     async def get_user_with_devices_and_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
     ) -> Tuple[User, Tuple[Device], Tuple[Device]]:

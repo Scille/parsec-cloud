@@ -78,7 +78,7 @@ class MemoryUserComponent(BaseUserComponent):
         async def _recursive_extract_creators(device_id):
             if not device_id or device_id in trustchain:
                 return
-            device = await self._get_device(organization_id, device_id)
+            device = self._get_device(organization_id, device_id)
             trustchain[device_id] = device
             await _recursive_extract_creators(device.device_certifier)
             await _recursive_extract_creators(device.revoked_device_certifier)
@@ -107,6 +107,19 @@ class MemoryUserComponent(BaseUserComponent):
         trustchain = await self._get_trustchain(organization_id, user.user_certifier)
         return user, trustchain
 
+    async def get_user_with_device_and_trustchain(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> Tuple[User, Device, Tuple[Device]]:
+        user = self._get_user(organization_id, device_id.user_id)
+        user_device = self._get_device(organization_id, device_id)
+        trustchain = await self._get_trustchain(
+            organization_id,
+            user.user_certifier,
+            user_device.device_certifier,
+            user_device.revoked_device_certifier,
+        )
+        return user, user_device, trustchain
+
     async def get_user_with_devices_and_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
     ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
@@ -121,7 +134,7 @@ class MemoryUserComponent(BaseUserComponent):
         )
         return user, user_devices, trustchain
 
-    async def _get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
+    def _get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
         org = self._organizations[organization_id]
 
         try:
@@ -142,7 +155,7 @@ class MemoryUserComponent(BaseUserComponent):
         self, organization_id: OrganizationID, device_id: DeviceID
     ) -> Tuple[User, Device]:
         user = self._get_user(organization_id, device_id.user_id)
-        device = await self._get_device(organization_id, device_id)
+        device = self._get_device(organization_id, device_id)
         return user, device
 
     async def find(

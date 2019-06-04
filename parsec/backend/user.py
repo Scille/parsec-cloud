@@ -264,12 +264,8 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-            creator_user, creator_device = await self.get_user_with_device(
+            creator_user, creator_device, trustchain = await self.get_user_with_device_and_trustchain(
                 client_ctx.organization_id, invitation.creator
-            )
-
-            user, trustchain = await self.get_user_with_trustchain(
-                client_ctx.organization_id, invitation.creator.user_id
             )
 
         except UserNotFoundError:
@@ -279,7 +275,7 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "device_certificate": creator_device.device_certificate,
-                "user_certificate": user.user_certificate,
+                "user_certificate": creator_user.user_certificate,
                 "trustchain": trustchain,
             }
         )
@@ -460,12 +456,8 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-            creator_user, creator_device = await self.get_user_with_device(
+            creator_user, creator_device, trustchain = await self.get_user_with_device_and_trustchain(
                 client_ctx.organization_id, invitation.creator
-            )
-
-            user, trustchain = await self.get_user_with_trustchain(
-                client_ctx.organization_id, invitation.creator.user_id
             )
 
         except UserNotFoundError:
@@ -475,7 +467,7 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "device_certificate": creator_device.device_certificate,
-                "user_certificate": user.user_certificate,
+                "user_certificate": creator_user.user_certificate,
                 "trustchain": trustchain,
             }
         )
@@ -677,6 +669,15 @@ class BaseUserComponent:
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
     ) -> Tuple[User, Tuple[Device]]:
+        """
+        Raises:
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def get_user_with_device_and_trustchain(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> Tuple[User, Device, Tuple[Device]]:
         """
         Raises:
             UserNotFoundError
