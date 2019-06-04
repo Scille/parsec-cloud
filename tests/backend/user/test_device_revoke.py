@@ -11,13 +11,13 @@ from tests.common import freeze_time
 
 
 @pytest.fixture
-def alice_revocation(alice, bob):
+def alice_revocation_from_bob(alice, bob):
     now = pendulum.now()
     return build_revoked_device_certificate(bob.device_id, bob.signing_key, alice.device_id, now)
 
 
 @pytest.fixture
-def bob_revocation(alice, bob):
+def bob_revocation_from_alice(alice, bob):
     now = pendulum.now()
     return build_revoked_device_certificate(alice.device_id, alice.signing_key, bob.device_id, now)
 
@@ -68,9 +68,11 @@ async def test_device_revoke_ok(
 
 @pytest.mark.trio
 async def test_device_revoke_not_admin(
-    backend, backend_sock_factory, bob_backend_sock, bob, alice, alice_revocation
+    backend, backend_sock_factory, bob_backend_sock, bob, alice, alice_revocation_from_bob
 ):
-    rep = await device_revoke(bob_backend_sock, revoked_device_certificate=alice_revocation)
+    rep = await device_revoke(
+        bob_backend_sock, revoked_device_certificate=alice_revocation_from_bob
+    )
     assert rep == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
 
 
@@ -118,12 +120,16 @@ async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
 
 @pytest.mark.trio
 async def test_device_revoke_already_revoked(
-    backend, alice_backend_sock, alice, bob, bob_revocation
+    backend, alice_backend_sock, alice, bob, bob_revocation_from_alice
 ):
-    rep = await device_revoke(alice_backend_sock, revoked_device_certificate=bob_revocation)
+    rep = await device_revoke(
+        alice_backend_sock, revoked_device_certificate=bob_revocation_from_alice
+    )
     assert rep["status"] == "ok"
 
-    rep = await device_revoke(alice_backend_sock, revoked_device_certificate=bob_revocation)
+    rep = await device_revoke(
+        alice_backend_sock, revoked_device_certificate=bob_revocation_from_alice
+    )
     assert rep == {
         "status": "already_revoked",
         "reason": f"Device `{bob.device_id}` already revoked",
