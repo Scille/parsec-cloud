@@ -56,7 +56,7 @@ async def test_user_invite_then_claim_ok(
             creator_device = unsecure_read_device_certificate(
                 invitation_creator_device.device_certificate
             )
-            assert creator_device.device_id.split("@")[0] == creator.user_id
+            assert creator_device.device_id.user_id == creator.user_id
 
             encrypted_claim = generate_user_encrypted_claim(
                 creator.public_key, token, mallory.device_id, mallory.public_key, mallory.verify_key
