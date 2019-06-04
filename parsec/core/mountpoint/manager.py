@@ -10,7 +10,7 @@ from pathlib import PurePath
 from async_generator import asynccontextmanager
 
 from parsec.utils import start_task
-from parsec.core.types import FsPath, AccessID
+from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
 from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationError,
@@ -66,13 +66,13 @@ class MountpointManager:
         self._nursery = nursery
         self._mountpoint_tasks = {}
 
-    def _get_workspace(self, workspace_id: AccessID):
+    def _get_workspace(self, workspace_id: EntryID):
         try:
             return self.user_fs.get_workspace(workspace_id)
         except FSWorkspaceNotFoundError as exc:
             raise MountpointConfigurationError(f"Workspace `{workspace_id}` doesn't exist") from exc
 
-    def get_path_in_mountpoint(self, workspace_id: AccessID, path: FsPath) -> PurePath:
+    def get_path_in_mountpoint(self, workspace_id: EntryID, path: FsPath) -> PurePath:
         self._get_workspace(workspace_id)
         try:
             runner_task = self._mountpoint_tasks[workspace_id]
@@ -81,7 +81,7 @@ class MountpointManager:
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
 
-    async def mount_workspace(self, workspace_id: AccessID) -> PurePath:
+    async def mount_workspace(self, workspace_id: EntryID) -> PurePath:
         workspace = self._get_workspace(workspace_id)
         if workspace_id in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
@@ -97,7 +97,7 @@ class MountpointManager:
         self._mountpoint_tasks[workspace_id] = runner_task
         return runner_task.value
 
-    async def unmount_workspace(self, workspace_id: AccessID):
+    async def unmount_workspace(self, workspace_id: EntryID):
         if workspace_id not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
@@ -108,7 +108,7 @@ class MountpointManager:
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
             try:
-                await self.mount_workspace(workspace_entry.access.id)
+                await self.mount_workspace(workspace_entry.id)
             except MountpointAlreadyMounted:
                 pass
 

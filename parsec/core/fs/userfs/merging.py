@@ -15,15 +15,15 @@ def merge_workspace_entries(base, diverged, target):
     # - Workspaces entries are never removed
 
     # Workspace entries should never be removed
-    base_entries = {entry.access.id for entry in base or ()}
-    diverged_entries = {entry.access.id for entry in diverged}
-    target_entries = {entry.access.id for entry in target}
+    base_entries = {entry.id for entry in base or ()}
+    diverged_entries = {entry.id for entry in diverged}
+    target_entries = {entry.id for entry in target}
     assert not base_entries - diverged_entries
     assert not base_entries - target_entries
 
     resolved = set(target)
     for d_entry in diverged:
-        t_entry = next((we for we in resolved if we.access.id == d_entry.access.id), None)
+        t_entry = next((we for we in resolved if we.id == d_entry.id), None)
 
         if t_entry == d_entry:
             # Target and diverged agree on the entry, nothing more to do
@@ -35,7 +35,7 @@ def merge_workspace_entries(base, diverged, target):
 
         else:
             # Target and diverged have both modified this entry
-            b_entry = next((we for we in base or () if we.access.id == d_entry.access.id), None)
+            b_entry = next((we for we in base or () if we.id == d_entry.id), None)
 
             # If the name has been modified on both sides, target always wins
             if b_entry and b_entry.name != t_entry.name:

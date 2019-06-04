@@ -7,16 +7,9 @@ from sqlite3 import Connection, connect as sqlite_connect
 
 import pendulum
 
-from parsec.core.types.access import ManifestAccess
-from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
+from parsec.core.types import EntryID, BlockID
+from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
 
-
-# Alias now
-now = pendulum.Pendulum.now
-
-# TODO: shouldn't use core.fs.types.Acces here
-# from parsec.core.fs.types import Access
-Access = None  # TODO: hack to fix recursive import
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
@@ -27,9 +20,9 @@ class LocalStorageError(Exception):
     pass
 
 
-class LocalStorageMissingEntry(LocalStorageError):
-    def __init__(self, access):
-        self.access = access
+class LocalStorageMissingError(LocalStorageError):
+    def __init__(self, id):
+        self.id = id
 
 
 class PersistentStorage:
@@ -48,14 +41,16 @@ class PersistentStorage:
     types nor serialization processes.
     """
 
-    def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
+    def __init__(self, key: SecretKey, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
+        self.local_symkey = key
+        self._path = Path(path)
+        self.max_cache_size = max_cache_size
         self.dirty_conn = None
         self.clean_conn = None
-        self._path = Path(path)
         self._clean_db_files = self._path / "clean_data_cache"
         self._dirty_db_files = self._path / "dirty_data_storage"
-        self.max_cache_size = max_cache_size
 
+    # TODO: really needed ?
     @property
     def path(self):
         return str(self._path)
@@ -175,79 +170,79 @@ class PersistentStorage:
 
     # Generic manifest operations
 
-    def _get_manifest(self, conn: Connection, access: Access):
+    def _get_manifest(self, conn: Connection, entry_id: EntryID):
         with self._open_cursor(conn) as cursor:
             cursor.execute(
-                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(access.id),)
+                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(entry_id),)
             )
             manifest_row = cursor.fetchone()
         if not manifest_row:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(entry_id)
         manifest_id, blob = manifest_row
-        return decrypt_raw_with_secret_key(access.key, blob)
+        return decrypt_raw_with_secret_key(self.local_symkey, blob)
 
-    def _set_manifest(self, conn: Connection, access: Access, raw: bytes):
+    def _set_manifest(self, conn: Connection, entry_id: EntryID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+        ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
         with self._open_cursor(conn) as cursor:
             cursor.execute(
                 """INSERT OR REPLACE INTO manifests (manifest_id, blob)
                 VALUES (?, ?)""",
-                (str(access.id), ciphered),
+                (str(entry_id), ciphered),
             )
 
-    def _clear_manifest(self, conn: Connection, access: Access):
+    def _clear_manifest(self, conn: Connection, entry_id: EntryID):
         with self._open_cursor(conn) as cursor:
-            cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(access.id),))
+            cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(entry_id),))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(entry_id)
 
     # Clean manifest operations
 
-    def get_clean_manifest(self, access: Access):
-        return self._get_manifest(self.clean_conn, access)
+    def get_clean_manifest(self, entry_id: EntryID):
+        return self._get_manifest(self.clean_conn, entry_id)
 
-    def set_clean_manifest(self, access: Access, raw: bytes):
-        self._set_manifest(self.clean_conn, access, raw)
+    def set_clean_manifest(self, entry_id: EntryID, raw: bytes):
+        self._set_manifest(self.clean_conn, entry_id, raw)
 
-    def clear_clean_manifest(self, access: Access):
-        self._clear_manifest(self.clean_conn, access)
+    def clear_clean_manifest(self, entry_id: EntryID):
+        self._clear_manifest(self.clean_conn, entry_id)
 
     # Dirty manifest operations
 
-    def get_dirty_manifest(self, access: Access):
-        return self._get_manifest(self.dirty_conn, access)
+    def get_dirty_manifest(self, entry_id: EntryID):
+        return self._get_manifest(self.dirty_conn, entry_id)
 
-    def set_dirty_manifest(self, access: Access, raw: bytes):
-        self._set_manifest(self.dirty_conn, access, raw)
+    def set_dirty_manifest(self, entry_id: EntryID, raw: bytes):
+        self._set_manifest(self.dirty_conn, entry_id, raw)
 
-    def clear_dirty_manifest(self, access: Access):
-        self._clear_manifest(self.dirty_conn, access)
+    def clear_dirty_manifest(self, entry_id: EntryID):
+        self._clear_manifest(self.dirty_conn, entry_id)
 
     # Generic block operations
 
-    def _get_block(self, conn: Connection, path: Path, access: Access):
+    def _get_block(self, conn: Connection, path: Path, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
             cursor.execute(
                 """UPDATE blocks SET accessed_on = ? WHERE block_id = ?""",
-                (str(now()), str(access.id)),
+                (str(pendulum.now()), str(block_id)),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
 
         if not changes:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(block_id)
 
-        ciphered = self._read_file(access, path)
-        return decrypt_raw_with_secret_key(access.key, ciphered)
+        ciphered = self._read_file(block_id, path)
+        return decrypt_raw_with_secret_key(self.local_symkey, ciphered)
 
-    def _set_block(self, conn: Connection, path: Path, access: Access, raw: bytes):
+    def _set_block(self, conn: Connection, path: Path, block_id: BlockID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        filepath = path / str(access.id)
-        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+        filepath = path / str(block_id)
+        ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
         # Update database
         with self._open_cursor(conn) as cursor:
@@ -255,69 +250,70 @@ class PersistentStorage:
                 """INSERT OR REPLACE INTO
                 blocks (block_id, size, offline, accessed_on, file_path)
                 VALUES (?, ?, ?, ?, ?)""",
-                (str(access.id), len(ciphered), False, str(now()), str(filepath)),
+                # TODO: better serialization of DateTime
+                (str(block_id), len(ciphered), False, str(pendulum.now()), str(filepath)),
             )
 
         # Write file
-        self._write_file(access, ciphered, path)
+        self._write_file(block_id, ciphered, path)
 
-    def _clear_block(self, conn: Connection, path: Path, access: Access):
+    def _clear_block(self, conn: Connection, path: Path, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
-            cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
+            cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(block_id),))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
 
         if not changes:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(block_id)
 
-        self._remove_file(access, path)
+        self._remove_file(block_id, path)
 
     # Clean block operations
 
-    def get_clean_block(self, access: Access):
-        return self._get_block(self.clean_conn, self._clean_db_files, access)
+    def get_clean_block(self, block_id: BlockID):
+        return self._get_block(self.clean_conn, self._clean_db_files, block_id)
 
-    def set_clean_block(self, access: Access, raw: bytes):
-        self._set_block(self.clean_conn, self._clean_db_files, access, raw)
+    def set_clean_block(self, block_id: BlockID, raw: bytes):
+        self._set_block(self.clean_conn, self._clean_db_files, block_id, raw)
 
         # Clean up if necessary
         limit = self.get_nb_clean_blocks() - self.block_limit
         if limit > 0:
             self.clear_clean_blocks(limit=limit)
 
-    def clear_clean_block(self, access):
-        self._clear_block(self.clean_conn, self._clean_db_files, access)
+    def clear_clean_block(self, block_id: BlockID):
+        self._clear_block(self.clean_conn, self._clean_db_files, block_id)
 
     # Dirty block operations
 
-    def get_dirty_block(self, access: Access):
-        return self._get_block(self.dirty_conn, self._dirty_db_files, access)
+    def get_dirty_block(self, block_id: BlockID):
+        return self._get_block(self.dirty_conn, self._dirty_db_files, block_id)
 
-    def set_dirty_block(self, access: Access, raw: bytes):
-        self._set_block(self.dirty_conn, self._dirty_db_files, access, raw)
+    def set_dirty_block(self, block_id: BlockID, raw: bytes):
+        self._set_block(self.dirty_conn, self._dirty_db_files, block_id, raw)
 
-    def clear_dirty_block(self, access):
-        self._clear_block(self.dirty_conn, self._dirty_db_files, access)
+    def clear_dirty_block(self, block_id: BlockID):
+        self._clear_block(self.dirty_conn, self._dirty_db_files, block_id)
 
     # Block file operations
 
-    def _read_file(self, access: Access, path: Path):
-        filepath = path / str(access.id)
+    def _read_file(self, block_id: BlockID, path: Path):
+        filepath = path / str(block_id)
         try:
             return filepath.read_bytes()
         except FileNotFoundError:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(block_id)
 
-    def _write_file(self, access: Access, content: bytes, path: Path):
-        filepath = path / str(access.id)
+    def _write_file(self, block_id: BlockID, content: bytes, path: Path):
+        filepath = path / str(block_id)
         filepath.write_bytes(content)
 
-    def _remove_file(self, access: Access, path: Path):
-        filepath = path / str(access.id)
+    def _remove_file(self, block_id: BlockID, path: Path):
+        filepath = path / str(block_id)
         try:
             filepath.unlink()
         except FileNotFoundError:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(block_id)
 
     # Garbage collection
 
@@ -331,10 +327,10 @@ class PersistentStorage:
                 """
                 + limit_string
             )
-            block_ids = [block_id for (block_id,) in cursor.fetchall()]
+            block_ids = [BlockID(block_id) for (block_id,) in cursor.fetchall()]
 
         for block_id in block_ids:
-            self.clear_clean_block(ManifestAccess(block_id))
+            self.clear_clean_block(block_id)
 
     def run_block_garbage_collector(self):
         self.clear_clean_blocks()

@@ -16,7 +16,7 @@ from hypothesis.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import FsPath, WorkspaceEntry, LocalWorkspaceManifest
+from parsec.core.types import FsPath, WorkspaceEntry, LocalWorkspaceManifest, ManifestAccess
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, is_folder_manifest
 
 from tests.common import freeze_time
@@ -44,7 +44,7 @@ def test_workspace_create(local_folder_fs, alice):
     root_stat = local_folder_fs.stat(FsPath("/"))
     assert root_stat == {
         "type": "root",
-        "id": alice.user_manifest_access.id,
+        "id": alice.user_manifest_id,
         "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
@@ -188,23 +188,27 @@ def test_cannot_replace_root(local_folder_fs):
 
 
 def test_access_not_loaded_entry(alice, bob, local_folder_fs):
-    user_manifest = local_folder_fs.get_manifest(alice.user_manifest_access)
+    user_manifest_access = ManifestAccess(
+        alice.user_manifest_id, alice.user_manifest_id, alice.user_manifest_key, 1
+    )
+    user_manifest = local_folder_fs.get_manifest(user_manifest_access)
 
     with freeze_time("2000-01-02"):
         w_entry = WorkspaceEntry("w")
+        w_access = ManifestAccess(w_entry.id, w_entry.id, w_entry.key, w_entry.encryption_revision)
         w_manifest = LocalWorkspaceManifest(bob.device_id)
         user_manifest = user_manifest.evolve_workspaces(w_entry)
-        local_folder_fs.set_dirty_manifest(alice.user_manifest_access, user_manifest)
+        local_folder_fs.set_dirty_manifest(user_manifest_access, user_manifest)
 
     with pytest.raises(FSManifestLocalMiss):
         local_folder_fs.stat(FsPath("/w/"))
 
     alice_w_manifest = w_manifest.evolve(author=alice.device_id)
-    local_folder_fs.set_dirty_manifest(w_entry.access, alice_w_manifest)
+    local_folder_fs.set_dirty_manifest(w_access, alice_w_manifest)
     stat = local_folder_fs.stat(FsPath("/w/"))
     assert stat == {
         "type": "workspace",
-        "id": w_entry.access.id,
+        "id": w_entry.id,
         "admin_right": True,
         "read_right": True,
         "write_right": True,

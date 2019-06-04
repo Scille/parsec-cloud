@@ -4,9 +4,10 @@ from typing import Optional, List, Dict, Iterator
 
 
 from parsec.event_bus import EventBus
+from parsec.types import DeviceID
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
-from parsec.core.types import AccessID, FolderManifest, Access, LocalFolderManifest, Manifest
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.types import EntryID, EntryName, FolderManifest, LocalFolderManifest, Manifest
 
 from parsec.core.fs.utils import is_file_manifest
 
@@ -16,7 +17,7 @@ __all__ = "SyncTransactions"
 # Helpers
 
 
-def full_name(name: str, suffixes: List[str]):
+def full_name(name: EntryName, suffixes: List[str]) -> EntryName:
     # No suffix
     if not suffixes:
         return name
@@ -24,23 +25,23 @@ def full_name(name: str, suffixes: List[str]):
     # No extension
     suffix_string = "".join(f" ({suffix})" for suffix in suffixes)
     if "." not in name[1:]:
-        return name + suffix_string
+        return EntryName(name + suffix_string)
 
     # Extension
     first_name, *ext = name.split(".")
-    return ".".join([first_name + suffix_string, *ext])
+    return EntryName(".".join([first_name + suffix_string, *ext]))
 
 
 def merge_folder_children(
-    base_children: Dict[str, Access],
-    local_children: Dict[str, Access],
-    remote_children: Dict[str, Access],
-    remote_device_name: str,
+    base_children: Dict[EntryName, EntryID],
+    local_children: Dict[EntryName, EntryID],
+    remote_children: Dict[EntryName, EntryID],
+    remote_device_name: DeviceID,
 ):
     # Prepare lookups
-    base_reversed = {access.id: name for name, access in base_children.items()}
-    local_reversed = {access.id: name for name, access in local_children.items()}
-    remote_reversed = {access.id: name for name, access in remote_children.items()}
+    base_reversed = {entry_id: name for name, entry_id in base_children.items()}
+    local_reversed = {entry_id: name for name, entry_id in local_children.items()}
+    remote_reversed = {entry_id: name for name, entry_id in remote_children.items()}
 
     # All ids that might remain
     ids = set(local_reversed) | set(remote_reversed)
@@ -91,12 +92,12 @@ def merge_folder_children(
 
     # Merge mappings and fix conflicting names
     children = {}
-    for name, (access, *suffixes) in solved_remote_children.items():
-        children[full_name(name, suffixes)] = access
-    for name, (access, *suffixes) in solved_local_children.items():
+    for name, (entry_id, *suffixes) in solved_remote_children.items():
+        children[full_name(name, suffixes)] = entry_id
+    for name, (entry_id, *suffixes) in solved_local_children.items():
         if name in children:
             suffixes = *suffixes, f"conflicting with {remote_device_name}"
-        children[full_name(name, suffixes)] = access
+        children[full_name(name, suffixes)] = entry_id
 
     # Return
     return children
@@ -147,7 +148,7 @@ def merge_folder_manifests(
 class SyncTransactions:
     def __init__(
         self,
-        workspace_id: AccessID,
+        workspace_id: EntryID,
         local_storage: LocalStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
@@ -164,18 +165,18 @@ class SyncTransactions:
 
     # Public read-only helpers
 
-    def get_placeholder_children(self, remote_manifest: Manifest) -> Iterator[Access]:
+    def get_placeholder_children(self, remote_manifest: Manifest) -> Iterator[EntryID]:
         # Check children placeholder
-        for child_access in remote_manifest.children.values():
+        for chield_entry_id in remote_manifest.children.values():
             try:
-                child_manifest = self.local_storage.get_manifest(child_access)
-            except LocalStorageMissingEntry:
+                child_manifest = self.local_storage.get_manifest(chield_entry_id)
+            except LocalStorageMissingError:
                 continue
             if child_manifest.is_placeholder:
-                yield child_access
+                yield chield_entry_id
 
-    async def get_minimal_remote_manifest(self, access: Access) -> Optional[Manifest]:
-        manifest = self.local_storage.get_manifest(access)
+    async def get_minimal_remote_manifest(self, enty_id: EntryID) -> Optional[Manifest]:
+        manifest = self.local_storage.get_manifest(enty_id)
         if not manifest.is_placeholder:
             return None
         if is_file_manifest(manifest):
@@ -187,17 +188,17 @@ class SyncTransactions:
     # Atomic transactions
 
     async def synchronization_step(
-        self, access: Access, remote_manifest: Optional[FolderManifest] = None
+        self, entry_id: EntryID, remote_manifest: Optional[FolderManifest] = None
     ) -> Optional[FolderManifest]:
 
         # Fetch and lock
-        async with self.local_storage.lock_manifest(access) as local_manifest:
+        async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
             # Get base manifest
             if local_manifest.is_placeholder:
                 base_manifest = None
             else:
-                base_manifest = self.local_storage.get_base_manifest(access)
+                base_manifest = self.local_storage.get_base_manifest(entry_id)
 
             # Merge manifests
             new_local_manifest = merge_folder_manifests(
@@ -217,19 +218,19 @@ class SyncTransactions:
 
             # Set the new base manifest
             if base_version != remote_version:
-                self.local_storage.set_base_manifest(access, remote_manifest)
+                self.local_storage.set_base_manifest(entry_id, remote_manifest)
 
             # Set the new local manifest
             if new_local_manifest.need_sync:
-                self.local_storage.set_manifest(access, new_local_manifest)
+                self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
             if local_version != new_local_version and remote_author != local_author:
-                self._send_event("fs.entry.downsynced", id=access.id)
+                self._send_event("fs.entry.downsynced", id=entry_id)
 
             # Send synced event
             if local_manifest.need_sync and not new_local_manifest.need_sync:
-                self._send_event("fs.entry.synced", id=access.id)
+                self._send_event("fs.entry.synced", id=entry_id)
 
             # Nothing new to upload
             if not new_local_manifest.need_sync:

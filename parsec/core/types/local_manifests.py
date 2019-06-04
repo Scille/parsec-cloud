@@ -2,21 +2,24 @@
 
 import attr
 import pendulum
-from uuid import UUID
 from typing import Tuple, Dict, List, Union
 
 from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
-from parsec.core.types import remote_manifests, WorkspaceRole, WorkspaceRoleField
-from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
+from parsec.core.types import remote_manifests
+from parsec.core.types.base import (
+    EntryID,
+    EntryIDField,
+    EntryName,
+    EntryNameField,
+    serializer_factory,
+)
 from parsec.core.types.access import (
     BlockAccess,
-    ManifestAccess,
     BlockAccessSchema,
-    WorkspaceEntry,
-    ManifestAccessSchema,
     DirtyBlockAccess,
     DirtyBlockAccessSchema,
+    WorkspaceEntry,
     WorkspaceEntrySchema,
 )
 
@@ -107,7 +110,7 @@ class LocalFolderManifest:
     is_placeholder: bool = True
     created: pendulum.Pendulum = None
     updated: pendulum.Pendulum = None
-    children: Dict[EntryName, ManifestAccess] = attr.ib(converter=FrozenDict, factory=FrozenDict)
+    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict, factory=FrozenDict)
 
     def __attrs_post_init__(self):
         if not self.created:
@@ -156,7 +159,7 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     children = fields.Map(
         EntryNameField(validate=validate.Length(min=1, max=256)),
-        fields.Nested(ManifestAccessSchema),
+        EntryIDField(required=True),
         required=True,
     )
 
@@ -175,8 +178,6 @@ local_folder_manifest_serializer = serializer_factory(LocalFolderManifestSchema)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalWorkspaceManifest(LocalFolderManifest):
-    role_hint: WorkspaceRole = WorkspaceRole.OWNER
-
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(
             author=self.author,
@@ -190,7 +191,6 @@ class LocalWorkspaceManifest(LocalFolderManifest):
 
 class LocalWorkspaceManifestSchema(LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    role_hint = WorkspaceRoleField(required=True)
 
     @post_load
     def make_obj(self, data):
@@ -220,7 +220,7 @@ class LocalUserManifest:
     @property
     def children(self):
         # return {w.name: w.access for w in self.workspaces if not w.is_revoked()}
-        return {w.name: w.access for w in self.workspaces}
+        return {w.name: w.id for w in self.workspaces}
 
     def __attrs_post_init__(self):
         if not self.created:
@@ -239,8 +239,8 @@ class LocalUserManifest:
             **data,
         )
 
-    def get_workspace_entry(self, workspace_id: UUID) -> WorkspaceEntry:
-        return next((w for w in self.workspaces if w.access.id == workspace_id), None)
+    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
+        return next((w for w in self.workspaces if w.id == workspace_id), None)
 
     def evolve_and_mark_updated(self, **data) -> "LocalUserManifest":
         if "updated" not in data:
@@ -252,11 +252,11 @@ class LocalUserManifest:
         return attr.evolve(self, **data)
 
     def evolve_workspaces_and_mark_updated(self, *data) -> "LocalUserManifest":
-        workspaces = {**{w.access.id: w for w in self.workspaces}, **{w.access.id: w for w in data}}
+        workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
         return self.evolve_and_mark_updated(workspaces=tuple(workspaces.values()))
 
     def evolve_workspaces(self, *data) -> "LocalUserManifest":
-        workspaces = {**{w.access.id: w for w in self.workspaces}, **{w.access.id: w for w in data}}
+        workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
         return self.evolve(workspaces=tuple(workspaces.values()))
 
 

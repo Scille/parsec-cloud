@@ -40,7 +40,10 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             pendulum.now(),
         )
         encrypted_answer = generate_device_encrypted_answer(
-            claim["answer_public_key"], alice.private_key, alice.user_manifest_access
+            claim["answer_public_key"],
+            alice.private_key,
+            alice.user_manifest_id,
+            alice.user_manifest_key,
         )
         with trio.fail_after(1):
             await alice_backend_cmds.device_create(device_certificate, encrypted_answer)
@@ -69,7 +72,8 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             assert answer == {
                 "type": "device_claim_answer",
                 "private_key": alice.private_key,
-                "user_manifest_access": alice.user_manifest_access,
+                "user_manifest_id": alice.user_manifest_id,
+                "user_manifest_key": alice.user_manifest_key,
             }
 
     async with trio.open_nursery() as nursery:

@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess
+from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.exceptions import FSBackendOfflineError
 
@@ -61,7 +61,9 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
     }
     assert workspace_entry == WorkspaceEntry(
         name="w",
-        access=ManifestAccess(id=wid, key=spy.ANY),
+        id=wid,
+        key=spy.ANY,
+        encryption_revision=1,
         granted_on=Pendulum(2000, 1, 2),
         role=WorkspaceRole.OWNER,
     )
@@ -130,7 +132,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
 
 @pytest.mark.trio
-async def test_simple_sync(running_backend, alice_fs, alice2_fs):
+async def test_simple_sync(running_backend, alice_fs, alice2_fs, monitor):
     wid = await create_shared_workspace("w", alice_fs, alice2_fs)
 
     # 0) Make sure workspace is loaded for alice2
@@ -147,7 +149,9 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
 
     with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
+            print("============ SYNC 1 =============")
             await alice_fs.sync("/w")
+            print("============ END SYNC 1 =============")
 
     spy.assert_events_occured(
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
@@ -157,7 +161,9 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
 
     with alice2_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
+            print("============ SYNC 2 =============")
             await alice2_fs.sync("/w")
+            print("============ END SYNC 2 =============")
     spy.assert_events_occured(
         [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 5))]
     )

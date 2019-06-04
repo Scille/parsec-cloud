@@ -69,7 +69,7 @@ class FS:
         assert workspace_name
         workspace_entry = self._get_workspace_entry_from_name(workspace_name)
         try:
-            workspace = self.user_fs.get_workspace(workspace_entry.access.id)
+            workspace = self.user_fs.get_workspace(workspace_entry.id)
         except FSWorkspaceNotFoundError as exc:
             raise FileNotFoundError(2, "No such file or directory", f"/{workspace_name}") from exc
 
@@ -78,7 +78,7 @@ class FS:
     def _iter_workspaces(self):
         um = self.user_fs.get_user_manifest()
         for w_entry in um.workspaces:
-            yield self.user_fs.get_workspace(w_entry.access.id)
+            yield self.user_fs.get_workspace(w_entry.id)
 
     async def stat(self, path: str) -> dict:
         # TODO: This method should be splitted in several methods:
@@ -92,7 +92,7 @@ class FS:
             um = self.user_fs.get_user_manifest()
             return {
                 "type": "root",
-                "id": self.user_fs.user_manifest_access.id,
+                "id": self.user_fs.user_manifest_id,
                 "is_folder": True,
                 "created": um.created,
                 "updated": um.updated,
@@ -209,7 +209,7 @@ class FS:
             # A workspace with this name already exists (shouldn't be a trouble,
             # except for legacy tests using oracle...)
             raise FileExistsError(17, "File exists", dst)
-        await self.user_fs.workspace_rename(workspace_entry.access.id, cooked_dst.workspace)
+        await self.user_fs.workspace_rename(workspace_entry.id, cooked_dst.workspace)
 
     async def move(self, src: str, dst: str, overwrite: bool = True) -> None:
         workspace, subpath_src = self._get_workspace(src)
@@ -291,7 +291,7 @@ class FS:
         workspace_entry = self._get_workspace_entry_from_name(workspace_name)
 
         await self.user_fs.workspace_share(
-            workspace_entry.access.id, recipient=UserID(recipient), role=role
+            workspace_entry.id, recipient=UserID(recipient), role=role
         )
 
     async def get_permissions(self, path: str) -> Dict[UserID, Dict]:

@@ -13,7 +13,7 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS, FS
 from parsec.core.persistent_storage import PersistentStorage
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.api.transport import Transport, TransportError
 
 
@@ -24,9 +24,9 @@ class InMemoryPersistentStorage(PersistentStorage):
     and has very permissive life cycle.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, key, **kwargs):
         self._data = {}
-        super().__init__("unused", **kwargs)
+        super().__init__(key, "unused", **kwargs)
 
         self.dirty_conn = sqlite3.connect(":memory:")
         self.clean_conn = sqlite3.connect(":memory:")
@@ -42,29 +42,29 @@ class InMemoryPersistentStorage(PersistentStorage):
 
     # File systeme interface
 
-    def _read_file(self, access, path):
-        filepath = path / str(access.id)
+    def _read_file(self, entry_id, path):
+        filepath = path / str(entry_id)
         try:
             return self._data[filepath]
         except KeyError:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(entry_id)
 
-    def _write_file(self, access, content, path):
-        filepath = path / str(access.id)
+    def _write_file(self, entry_id, content, path):
+        filepath = path / str(entry_id)
         self._data[filepath] = content
 
-    def _remove_file(self, access, path):
-        filepath = path / str(access.id)
+    def _remove_file(self, entry_id, path):
+        filepath = path / str(entry_id)
         try:
             del self._data[filepath]
         except KeyError:
-            raise LocalStorageMissingEntry(access)
+            raise LocalStorageMissingError(entry_id)
 
 
 class InMemoryLocalStorage(LocalStorage):
-    def __init__(self, device_id):
-        super().__init__(device_id, "unused")
-        self.persistent_storage = InMemoryPersistentStorage()
+    def __init__(self, device_id, key):
+        super().__init__(device_id, key, "unused")
+        self.persistent_storage = InMemoryPersistentStorage(key)
 
 
 def freeze_time(time):

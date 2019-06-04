@@ -31,60 +31,60 @@ def bob_workspace(shared_workspaces):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("remote_changed", [False, True])
-async def test_sync_by_access_single(alice_workspace, remote_changed):
+async def test_sync_by_id_single(alice_workspace, remote_changed):
     # Assuming the the remote has changed when it hasn't should not be an issue
-    sync_by_access = partial(alice_workspace.sync_by_access, remote_changed=remote_changed)
+    sync_by_id = partial(alice_workspace.sync_by_id, remote_changed=remote_changed)
     entry = alice_workspace.get_workspace_entry()
-    w_access = entry.access
+    wid = entry.id
 
     def get_access(name):
-        manifest = alice_workspace.local_storage.get_manifest(w_access)
+        manifest = alice_workspace.local_storage.get_manifest(wid)
         return manifest.children[name]
 
     # Empty workspace
-    await sync_by_access(w_access)
+    await sync_by_id(wid)
 
     # Empty directory
     await alice_workspace.mkdir("/a")
     a_access = get_access("a")
-    await sync_by_access(a_access)
+    await sync_by_id(a_access)
 
     # Non empty workspace
-    await alice_workspace.sync_by_access(w_access)
+    await alice_workspace.sync_by_id(wid)
 
     # Directory with folder placeholders
     await alice_workspace.mkdir("/i/j/k", parents=True)
     i_access = get_access("i")
-    await sync_by_access(i_access)
+    await sync_by_id(i_access)
 
     # Workspace with folder placeholders
     await alice_workspace.mkdir("/x/y/z", parents=True)
-    await sync_by_access(w_access)
+    await sync_by_id(wid)
 
     # Workspace with file placeholders
     await alice_workspace.touch("/f")
-    await sync_by_access(w_access)
+    await sync_by_id(wid)
 
 
 @pytest.mark.trio
-async def test_sync_by_access_couple(alice_workspace, bob_workspace):
+async def test_sync_by_id_couple(alice_workspace, bob_workspace):
     alice_entry = alice_workspace.get_workspace_entry()
-    alice_w_access = alice_entry.access
+    alice_wid = alice_entry.id
     bob_entry = bob_workspace.get_workspace_entry()
-    bob_w_access = bob_entry.access
+    bob_wid = bob_entry.id
 
     # Create directories
     await alice_workspace.mkdir("/a")
     await bob_workspace.mkdir("/b")
 
     # Alice sync /a
-    await alice_workspace.sync_by_access(alice_w_access)
+    await alice_workspace.sync_by_id(alice_wid)
 
     # Bob sync /b and doesn't know about alice /a yet
-    await bob_workspace.sync_by_access(bob_w_access, remote_changed=False)
+    await bob_workspace.sync_by_id(bob_wid, remote_changed=False)
 
     # Alice knows about bob /b
-    await alice_workspace.sync_by_access(alice_w_access)
+    await alice_workspace.sync_by_id(alice_wid)
 
     # Everyone should be up to date by now
     expected = [FsPath("/a"), FsPath("/b")]
