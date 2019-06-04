@@ -5,7 +5,7 @@ from unittest.mock import ANY
 from uuid import uuid4
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess, LocalUserManifest
+from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -71,7 +71,9 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
         kwargs={
             "new_entry": WorkspaceEntry(
                 name="w1 (shared by alice)",
-                access=ManifestAccess(wid, spy.ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.MANAGER,
             )
@@ -86,7 +88,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
     bwe = bum.get_workspace_entry(wid)
 
     assert bwe.name == "w1 (shared by alice)"
-    assert bwe.access == awe.access
+    assert bwe.id == awe.id
     assert bwe.role == WorkspaceRole.MANAGER
 
     aw = alice_user_fs.get_workspace(wid)
@@ -152,13 +154,17 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
         kwargs={
             "new_entry": WorkspaceEntry(
                 name="w1",
-                access=ManifestAccess(wid, spy.ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 3),
                 role=None,
             ),
             "previous_entry": WorkspaceEntry(
                 name="w1",
-                access=ManifestAccess(wid, spy.ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -230,7 +236,7 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
     bw = bum.workspaces[0]
 
     assert bw.name == "w1 (shared by alice)"
-    assert bw.access == aw.access
+    assert bw.id == aw.id
     assert bw.role == WorkspaceRole.MANAGER
 
 
@@ -252,7 +258,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
         bw = bum.workspaces[0]
 
         assert bw.name == "w1 (shared by alice)"
-        assert bw.access == aw.access
+        assert bw.id == aw.id
         assert bw.role == role
 
 
@@ -299,7 +305,9 @@ async def test_share_with_sharing_name_already_taken(
         kwargs={
             "new_entry": WorkspaceEntry(
                 name="w (shared by alice)",
-                access=ManifestAccess(awid, spy.ANY),
+                id=awid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.MANAGER,
             )
@@ -373,7 +381,9 @@ async def test_share_workspace_then_conflict_on_rights(
         workspaces=(
             WorkspaceEntry(
                 name="w (shared by bob)",
-                access=ManifestAccess(wid, ANY),
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
                 granted_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.CONTRIBUTOR,
             ),
@@ -405,7 +415,9 @@ async def test_share_workspace_then_conflict_on_rights(
 
     assert a_w_entry == WorkspaceEntry(
         name=f"w (shared by {bob.user_id})",
-        access=ManifestAccess(id=wid, key=ANY),
+        id=wid,
+        key=ANY,
+        encryption_revision=1,
         granted_on=Pendulum(2000, 1, 3),
         role=WorkspaceRole.CONTRIBUTOR,
     )

@@ -3,7 +3,13 @@
 from typing import Optional, Dict
 from structlog import get_logger
 
-from parsec.core.types import Access, LocalManifest, FsPath, LocalFolderManifest, FolderManifest
+from parsec.core.types import (
+    ManifestAccess,
+    LocalManifest,
+    FsPath,
+    LocalFolderManifest,
+    FolderManifest,
+)
 from parsec.core.fs.utils import is_user_manifest, is_folderish_manifest, is_placeholder_manifest
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
 from parsec.core.fs.merge_folders import merge_local_manifests, merge_remote_manifests
@@ -15,7 +21,7 @@ logger = get_logger()
 
 class FolderSyncerMixin(BaseSyncer):
     async def _sync_folder_look_for_remote_changes(
-        self, access: Access, manifest: LocalFolderManifest
+        self, access: ManifestAccess, manifest: LocalFolderManifest
     ) -> Optional[FolderManifest]:
         # Placeholder means we need synchro !
         assert not is_placeholder_manifest(manifest)
@@ -26,7 +32,7 @@ class FolderSyncerMixin(BaseSyncer):
             return None
         return target_remote_manifest
 
-    def _strip_placeholders(self, children: Dict[Access, LocalManifest]):
+    def _strip_placeholders(self, children: Dict[ManifestAccess, LocalManifest]):
         synced_children = {}
         for child_name, child_access in children.items():
             try:
@@ -40,19 +46,18 @@ class FolderSyncerMixin(BaseSyncer):
         return synced_children
 
     async def _sync_folder_actual_sync(
-        self, path: FsPath, access: Access, manifest: LocalFolderManifest
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFolderManifest
     ) -> FolderManifest:
         # to_sync_manifest = manifest.to_remote(version=manifest.base_version + 1)
         to_sync_manifest = manifest.to_remote()
         to_sync_manifest = to_sync_manifest.evolve(version=manifest.base_version + 1)
 
         # Upload the folder manifest as new vlob version
-        realm = self.local_folder_fs.get_realm(path)
         force_update = False
         while True:
             try:
                 if is_placeholder_manifest(manifest) and not force_update:
-                    await self._backend_vlob_create(realm, access, to_sync_manifest)
+                    await self._backend_vlob_create(access, to_sync_manifest)
                 else:
                     await self._backend_vlob_update(access, to_sync_manifest)
                 break
@@ -71,10 +76,10 @@ class FolderSyncerMixin(BaseSyncer):
 
                     if is_user_manifest(manifest):
                         logger.warning(
-                            "Concurrency error while creating user vlob", access_id=access.id
+                            "Concurrency error while creating user vlob", entry_id=access.id
                         )
                     else:
-                        logger.warning("Concurrency error while creating vlob", access_id=access.id)
+                        logger.warning("Concurrency error while creating vlob", entry_id=access.id)
 
                     base = None
                     force_update = True
@@ -112,7 +117,7 @@ class FolderSyncerMixin(BaseSyncer):
         return to_sync_manifest
 
     async def _sync_folder(
-        self, path: FsPath, access: Access, manifest: LocalFolderManifest, recursive: bool
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFolderManifest, recursive: bool
     ) -> None:
         assert not is_placeholder_manifest(manifest)
         assert is_folderish_manifest(manifest)
@@ -169,7 +174,7 @@ class FolderSyncerMixin(BaseSyncer):
         self.event_bus.send(event_type, path=str(path), id=access.id)
 
     async def _minimal_sync_folder(
-        self, path: FsPath, access: Access, manifest: LocalFolderManifest
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFolderManifest
     ) -> bool:
         """
         Returns: If additional sync are needed
@@ -200,7 +205,7 @@ class FolderSyncerMixin(BaseSyncer):
     def _sync_folder_merge_back(
         self,
         path: FsPath,
-        access: Access,
+        access: ManifestAccess,
         base_manifest: LocalFolderManifest,
         target_remote_manifest: FolderManifest,
     ) -> None:

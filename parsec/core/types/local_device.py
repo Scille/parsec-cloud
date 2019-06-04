@@ -5,10 +5,9 @@ from typing import Tuple
 from hashlib import sha256
 
 from parsec.types import BackendOrganizationAddr, OrganizationID, DeviceID
-from parsec.crypto import PrivateKey, SigningKey
+from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import UnknownCheckedSchema, fields, post_load
-from parsec.core.types.base import serializer_factory
-from parsec.core.types.access import Access, ManifestAccessSchema
+from parsec.core.types.base import EntryID, EntryIDField, serializer_factory
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -19,7 +18,8 @@ class LocalDevice:
     signing_key: SigningKey
     private_key: PrivateKey
     is_admin: bool
-    user_manifest_access: Access
+    user_manifest_id: EntryID
+    user_manifest_key: SecretKey
     local_symkey: bytes
 
     def __repr__(self):
@@ -75,7 +75,8 @@ class LocalDeviceSchema(UnknownCheckedSchema):
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)
     is_admin = fields.Boolean(required=True)
-    user_manifest_access = fields.Nested(ManifestAccessSchema, required=True)
+    user_manifest_id = EntryIDField(required=True)
+    user_manifest_key = fields.SecretKey(required=True)
     local_symkey = fields.Bytes(required=True)
 
     @post_load

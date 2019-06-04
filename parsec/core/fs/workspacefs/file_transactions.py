@@ -6,12 +6,12 @@ from typing import Optional
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
-from parsec.core.types import FileDescriptor, AccessID
+from parsec.core.types import FileDescriptor, EntryID
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.types import Access, BlockAccess, LocalFileManifest, FileCursor
+from parsec.core.types import BlockAccess, LocalFileManifest, FileCursor
 from parsec.core.local_storage import (
     LocalStorage,
-    LocalStorageMissingEntry,
+    LocalStorageMissingError,
     FSInvalidFileDescriptor,
 )
 from parsec.core.fs.buffer_ordering import (
@@ -94,7 +94,7 @@ class FileTransactions:
 
     def __init__(
         self,
-        workspace_id: AccessID,
+        workspace_id: EntryID,
         local_storage: LocalStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
@@ -119,23 +119,23 @@ class FileTransactions:
 
     @asynccontextmanager
     async def _load_and_lock_file(self, fd: FileDescriptor):
-        # Get the corresponding access
+        # Get the corresponding entry_id
         try:
             cursor, _ = self.local_storage.load_file_descriptor(fd)
-            access = cursor.access
+            entry_id = cursor.entry_id
 
         # Download the corresponding manifest if it's missing
-        except LocalStorageMissingEntry as exc:
-            await self.remote_loader.load_manifest(exc.access)
-            access = exc.access
+        except LocalStorageMissingError as exc:
+            await self.remote_loader.load_manifest(exc.entry_id)
+            entry_id = exc.id
 
-        # Try to lock the access
+        # Try to lock the entry_id
         try:
-            async with self.local_storage.lock_manifest(access):
+            async with self.local_storage.lock_manifest(entry_id):
                 yield self.local_storage.load_file_descriptor(fd)
 
         # The entry has been deleted while we were waiting for the lock
-        except LocalStorageMissingEntry:
+        except LocalStorageMissingError:
             assert fd not in self.local_storage.open_cursors
             raise FSInvalidFileDescriptor(fd)
 
@@ -147,19 +147,19 @@ class FileTransactions:
         merged = merge_buffers(manifest, start, end)
         for cs in merged.spaces:
             for bs in cs.buffers:
-                access = bs.buffer.access
+                block_access = bs.buffer.access
 
                 if isinstance(bs.buffer, DirtyBlockBuffer):
                     try:
-                        buff = self.local_storage.get_block(access)
-                    except LocalStorageMissingEntry as exc:
-                        raise RuntimeError(f"Unknown local block `{access.id}`") from exc
+                        buff = self.local_storage.get_block(block_access.id)
+                    except LocalStorageMissingError as exc:
+                        raise RuntimeError(f"Unknown local block `{block_access.id}`") from exc
 
                 elif isinstance(bs.buffer, BlockBuffer):
                     try:
-                        buff = self.local_storage.get_block(access)
-                    except LocalStorageMissingEntry:
-                        missing.append(access)
+                        buff = self.local_storage.get_block(block_access.id)
+                    except LocalStorageMissingError:
+                        missing.append(block_access)
                         continue
 
                 data[bs.start - cs.start : bs.end - cs.start] = buff[
@@ -170,9 +170,9 @@ class FileTransactions:
 
     # Temporary helper
 
-    def open(self, access: Access):
-        cursor = FileCursor(access)
-        self.local_storage.add_file_reference(access)
+    def open(self, entry_id: EntryID):
+        cursor = FileCursor(entry_id)
+        self.local_storage.add_file_reference(entry_id)
         return self.local_storage.create_file_descriptor(cursor)
 
     # Atomic transactions
@@ -215,12 +215,12 @@ class FileTransactions:
             )
 
             # Atomic change
-            self.local_storage.set_dirty_block(block_access, padded_content)
-            self.local_storage.set_dirty_manifest(cursor.access, manifest)
+            self.local_storage.set_dirty_block(block_access.id, padded_content)
+            self.local_storage.set_dirty_manifest(cursor.entry_id, manifest)
             cursor.offset = new_offset
 
         # Notify
-        self._send_event("fs.entry.updated", id=cursor.access.id)
+        self._send_event("fs.entry.updated", id=cursor.entry_id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
@@ -241,11 +241,11 @@ class FileTransactions:
 
             # Atomic change
             if padded_content:
-                self.local_storage.set_dirty_block(block_access, padded_content)
-            self.local_storage.set_dirty_manifest(cursor.access, manifest)
+                self.local_storage.set_dirty_block(block_access.id, padded_content)
+            self.local_storage.set_dirty_manifest(cursor.entry_id, manifest)
 
         # Notify
-        self._send_event("fs.entry.updated", id=cursor.access.id)
+        self._send_event("fs.entry.updated", id=cursor.entry_id)
 
     async def fd_read(self, fd: FileDescriptor, size: int = -1, offset: int = None) -> bytes:
         # Loop over attemps
@@ -255,8 +255,8 @@ class FileTransactions:
             # Load missing blocks
             # TODO: add a `load_blocks` method to the remote loader
             # to download the blocks in a concurrent way.
-            for access in missing:
-                await self.remote_loader.load_block(access)
+            for block_access in missing:
+                await self.remote_loader.load_block(block_access)
 
             # Fetch and lock
             async with self._load_and_lock_file(fd) as (cursor, manifest):

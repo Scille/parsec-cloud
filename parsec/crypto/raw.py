@@ -6,11 +6,7 @@ from nacl.secret import SecretBox
 from nacl.utils import random
 from nacl.pwhash import argon2i
 
-from parsec.crypto_types import PrivateKey, PublicKey, SymetricKey
-
-
-def generate_secret_key() -> SymetricKey:
-    return random(SecretBox.KEY_SIZE)
+from parsec.crypto_types import PrivateKey, PublicKey, SecretKey
 
 
 # TODO: SENSITIVE is really slow which is not good for unittests...
@@ -20,9 +16,7 @@ CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
 CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 
-def derivate_secret_key_from_password(
-    password: str, salt: bytes = None
-) -> Tuple[SymetricKey, bytes]:
+def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:
     salt = salt or random(argon2i.SALTBYTES)
     key = argon2i.kdf(
         SecretBox.KEY_SIZE,
@@ -50,7 +44,7 @@ def decrypt_raw_for(recipient_privkey: PrivateKey, ciphered: bytes):
     return SealedBox(recipient_privkey).decrypt(ciphered)
 
 
-def encrypt_raw_with_secret_key(key: SymetricKey, data: bytes) -> bytes:
+def encrypt_raw_with_secret_key(key: SecretKey, data: bytes) -> bytes:
     """
     Raises:
         CryptoError: if key is invalid.
@@ -59,7 +53,7 @@ def encrypt_raw_with_secret_key(key: SymetricKey, data: bytes) -> bytes:
     return box.encrypt(data)
 
 
-def decrypt_raw_with_secret_key(key: SymetricKey, ciphered: bytes) -> bytes:
+def decrypt_raw_with_secret_key(key: SecretKey, ciphered: bytes) -> bytes:
     """
     Raises:
         CryptoError: if key is invalid.

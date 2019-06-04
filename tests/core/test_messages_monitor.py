@@ -4,7 +4,7 @@ import trio
 import pytest
 from unittest.mock import ANY
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess
+from parsec.core.types import WorkspaceEntry, WorkspaceRole
 
 
 @pytest.mark.trio
@@ -27,7 +27,9 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
                 kwargs={
                     "new_entry": WorkspaceEntry(
                         name="foo (shared by alice)",
-                        access=ManifestAccess(wid, ANY),
+                        id=wid,
+                        key=ANY,
+                        encryption_revision=1,
                         granted_on=ANY,
                         role=WorkspaceRole.OWNER,
                     )

@@ -13,7 +13,7 @@ from parsec.crypto import (
 from parsec.core.backend_connection import BackendCmdsBadResponse
 from parsec.core.types import (
     FsPath,
-    Access,
+    ManifestAccess,
     LocalFolderManifest,
     LocalFileManifest,
     LocalManifest,
@@ -142,7 +142,7 @@ class BaseSyncer:
             await self._sync_folder(path, access, manifest, recursive)
 
     async def _resolve_placeholders_in_path(
-        self, path: FsPath, access: Access, manifest: LocalManifest
+        self, path: FsPath, access: ManifestAccess, manifest: LocalManifest
     ) -> bool:
         """
         Returns: If an additional sync is needed
@@ -190,27 +190,29 @@ class BaseSyncer:
             return need_more_sync
 
     async def _minimal_sync_file(
-        self, path: FsPath, access: Access, manifest: LocalFileManifest
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFileManifest
     ) -> None:
         raise NotImplementedError()
 
     async def _minimal_sync_folder(
-        self, path: FsPath, access: Access, manifest: LocalFolderManifest
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFolderManifest
     ) -> None:
         raise NotImplementedError()
 
-    async def _sync_file(self, path: FsPath, access: Access, manifest: LocalFileManifest) -> None:
+    async def _sync_file(
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFileManifest
+    ) -> None:
         raise NotImplementedError()
 
     async def _sync_folder(
-        self, path: FsPath, access: Access, manifest: LocalFolderManifest, recursive: bool
+        self, path: FsPath, access: ManifestAccess, manifest: LocalFolderManifest, recursive: bool
     ) -> None:
         raise NotImplementedError()
 
-    async def _backend_block_create(self, realm, access, blob):
-        ciphered = encrypt_raw_with_secret_key(access.key, bytes(blob))
+    async def _backend_block_create(self, file_access, block_access, blob):
+        ciphered = encrypt_raw_with_secret_key(block_access.key, bytes(blob))
         try:
-            await self.backend_cmds.block_create(access.id, realm, ciphered)
+            await self.backend_cmds.block_create(block_access.id, file_access.realm_id, ciphered)
         except BackendCmdsBadResponse as exc:
             # If a previous attempt of uploading this block has been processed by
             # the backend but we lost the connection before receiving the response
@@ -219,16 +221,16 @@ class BaseSyncer:
             if exc.args[0]["status"] != "already_exists":
                 raise
 
-    async def _backend_block_read(self, access):
-        ciphered = await self.backend_cmds.block_read(access.id)
-        return decrypt_raw_with_secret_key(access.key, ciphered)
+    async def _backend_block_read(self, block_access):
+        ciphered = await self.backend_cmds.block_read(block_access.id)
+        return decrypt_raw_with_secret_key(block_access.key, ciphered)
 
     async def _backend_realm_check(self, to_check):
         changed = await self.backend_cmds.realm_check(to_check)
         return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
-        args = await self.backend_cmds.vlob_read(1, access.id, version)
+        args = await self.backend_cmds.vlob_read(access.encryption_revision, access.id, version)
         expected_author_id, expected_timestamp, expected_version, blob = args
         author = await self.remote_devices_manager.get_device(expected_author_id)
         raw = decrypt_and_verify_signed_msg_with_secret_key(
@@ -240,7 +242,7 @@ class BaseSyncer:
         assert manifest.author == expected_author_id
         return manifest
 
-    async def _backend_vlob_create(self, realm, access, manifest):
+    async def _backend_vlob_create(self, access, manifest):
         assert manifest.version == 1
         assert manifest.author == self.device.device_id
         now = pendulum.now()
@@ -252,7 +254,9 @@ class BaseSyncer:
             now,
         )
         try:
-            await self.backend_cmds.vlob_create(realm, 1, access.id, now, ciphered)
+            await self.backend_cmds.vlob_create(
+                access.realm_id, access.encryption_revision, access.id, now, ciphered
+            )
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise SyncConcurrencyError(access)
@@ -270,7 +274,9 @@ class BaseSyncer:
             now,
         )
         try:
-            await self.backend_cmds.vlob_update(1, access.id, manifest.version, now, ciphered)
+            await self.backend_cmds.vlob_update(
+                access.encryption_revision, access.id, manifest.version, now, ciphered
+            )
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":
                 raise SyncConcurrencyError(access)

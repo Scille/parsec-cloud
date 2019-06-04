@@ -54,7 +54,7 @@ async def test_realm_notif_on_new_workspace_sync(
 
     # Suspend time to freeze core background tasks
     mock_clock.rate = 0
-    uid = alice2_user_fs.user_manifest_access.id
+    uid = alice2_user_fs.user_manifest_id
     await alice2_user_fs.workspace_create("foo")
 
     expected = [

@@ -7,7 +7,7 @@ from uuid import UUID
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QWidget
 
-from parsec.core.types import FsPath, AccessID, WorkspaceEntry, WorkspaceRole
+from parsec.core.types import FsPath, EntryID, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import FSEntryNotFound
 
 from parsec.core.gui import desktop
@@ -486,7 +486,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     return
 
     def _on_fs_updated_qt(self, event, id):
-        id = AccessID(id)
+        id = EntryID(id)
         path = None
         try:
             path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
