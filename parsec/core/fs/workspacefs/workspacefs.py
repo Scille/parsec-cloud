@@ -422,11 +422,11 @@ class WorkspaceFS:
                     return fn(*args, **kwargs)
 
             except FSManifestLocalMiss as exc:
-                await self._remote_loader.load_manifest(exc.access)
+                await self.remote_loader.load_manifest(exc.access)
 
             except FSMultiManifestLocalMiss as exc:
                 for access in exc.accesses:
-                    await self._remote_loader.load_manifest(access)
+                    await self.remote_loader.load_manifest(access)
 
     def _use_legacy_sync(self, access, remote_manifest):
         if is_file_manifest(remote_manifest):
