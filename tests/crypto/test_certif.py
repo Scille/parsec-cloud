@@ -56,6 +56,7 @@ def test_build_user_certificate(alice, bob, mallory):
     assert unsecure.public_key == bob.public_key
     assert unsecure.certified_on == now
     assert unsecure.certified_by == alice.device_id
+    assert unsecure.is_admin is False
 
     verified = verify_user_certificate(certif, alice.device_id, alice.verify_key)
     assert verified == unsecure
