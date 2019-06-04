@@ -86,7 +86,7 @@ def local_device_factory(coolorg):
     def _local_device_factory(
         base_device_id: Optional[str] = None,
         org: OrganizationFullData = coolorg,
-        is_admin: bool = False,
+        is_admin: bool = None,
     ):
         nonlocal count
 
@@ -98,19 +98,23 @@ def local_device_factory(coolorg):
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
 
-        device = generate_new_device(device_id, org.addr, is_admin=is_admin)
+        parent_device = None
         try:
             # If the user already exists, we must retreive it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
-            device = device.evolve(
-                private_key=parent_device.private_key,
-                is_admin=parent_device.is_admin,
-                user_manifest_access=parent_device.user_manifest_access,
-            )
+            if is_admin is not None:
+                raise ValueError("is_admin is set but user already exists.")
+            is_admin = (parent_device.is_admin,)
 
         except StopIteration:
-            pass
+            is_admin = bool(is_admin)
 
+        device = generate_new_device(device_id, org.addr, is_admin=is_admin)
+        if parent_device is not None:
+            device = device.evolve(
+                private_key=parent_device.private_key,
+                user_manifest_access=parent_device.user_manifest_access,
+            )
         org_devices.append(device)
         return device
 
