@@ -702,14 +702,14 @@ class LocalFolderFS:
                     try:
                         child_manifest = self.get_manifest(child_access)
                     except FSManifestLocalMiss as exc:
-                        manifests_miss.append(exc.access)
+                        manifests_miss.append(exc.entry_id)
                     else:
                         try:
                             copy_map["children"][child_name] = _recursive_create_copy_map(
                                 child_access, child_manifest
                             )
                         except FSMultiManifestLocalMiss as exc:
-                            manifests_miss += exc.accesses
+                            manifests_miss += exc.entries_ids
 
             if manifests_miss:
                 raise FSMultiManifestLocalMiss(manifests_miss)
