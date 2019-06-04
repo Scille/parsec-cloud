@@ -32,7 +32,7 @@ async def message_get(sock, offset=0):
 
 @pytest.mark.trio
 async def test_message_from_bob_to_alice(alice, bob, alice_backend_sock, bob_backend_sock):
-    await events_subscribe(alice_backend_sock, message=True)
+    await events_subscribe(alice_backend_sock)
     d1 = Pendulum(2000, 1, 1)
     async with events_listen(alice_backend_sock) as listen:
         with freeze_time(d1):
@@ -96,7 +96,7 @@ async def test_message_from_bob_to_alice_multi_backends(
             backend_1, alice
         ) as alice_backend_sock, backend_sock_factory(backend_2, bob) as bob_backend_sock:
 
-            await events_subscribe(alice_backend_sock, message=True)
+            await events_subscribe(alice_backend_sock)
             async with events_listen(alice_backend_sock) as listen:
                 with freeze_time(d1):
                     await message_send(bob_backend_sock, alice.user_id, b"Hello from Bob !")
@@ -120,7 +120,7 @@ async def test_message_from_bob_to_alice_multi_backends(
 @pytest.mark.trio
 async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     d1 = Pendulum(2000, 1, 1)
-    await events_subscribe(alice_backend_sock, message=True)
+    await events_subscribe(alice_backend_sock)
 
     # Good message
     await backend.message.send(

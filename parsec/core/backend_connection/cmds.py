@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, List, Dict, Iterable, Optional
+from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
 
@@ -108,20 +108,8 @@ async def ping(transport: Transport, ping: str) -> str:
     return rep["pong"]
 
 
-async def events_subscribe(
-    transport: Transport,
-    message: bool = False,
-    realm: Iterable[UUID] = (),
-    ping: Iterable[str] = (),
-) -> None:
-    await _send_cmd(
-        transport,
-        events_subscribe_serializer,
-        cmd="events_subscribe",
-        message=message,
-        realm=realm,
-        ping=ping,
-    )
+async def events_subscribe(transport: Transport,) -> None:
+    await _send_cmd(transport, events_subscribe_serializer, cmd="events_subscribe")
 
 
 async def events_listen(transport: Transport, wait: bool = True) -> dict:

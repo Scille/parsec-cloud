@@ -208,6 +208,6 @@ async def create_shared_workspace(name, creator, *shared_with):
 
         with trio.fail_after(1):
             for spy in spies:
-                await spy.wait("backend.listener.restarted")
+                await spy.wait("backend.realm.roles_updated")
 
         return wid

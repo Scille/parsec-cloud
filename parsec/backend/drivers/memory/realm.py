@@ -55,6 +55,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         if key not in self._realms:
             self._realms[key] = Realm(roles={author.user_id: RealmRole.OWNER})
 
+            self.event_bus.send(
+                "realm.roles_updated",
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                user=author.user_id,
+                role=RealmRole.OWNER,
+            )
+
         else:
             raise RealmAlreadyExistsError()
 
@@ -116,6 +125,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         else:
             realm.roles[user] = role
 
+        self.event_bus.send(
+            "realm.roles_updated",
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            user=user,
+            role=role,
+        )
+
     async def start_reencryption_maintenance(
         self,
         organization_id: OrganizationID,
@@ -145,8 +163,8 @@ class MemoryRealmComponent(BaseRealmComponent):
             self._maintenance_reencryption_start_hook(
                 organization_id, realm_id, encryption_revision
             )
-        for recipient, msg in per_participant_message.items():
-            await self._message_component.send(organization_id, author, recipient, timestamp, msg)
+
+        # Should first send maintenance event, then message to each participant
 
         self.event_bus.send(
             "realm.maintenance_started",
@@ -155,6 +173,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
+
+        for recipient, msg in per_participant_message.items():
+            await self._message_component.send(organization_id, author, recipient, timestamp, msg)
 
     async def finish_reencryption_maintenance(
         self,
@@ -192,3 +213,16 @@ class MemoryRealmComponent(BaseRealmComponent):
             realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
+
+    async def get_realms_for_user(
+        self, organization_id: OrganizationID, user: UserID
+    ) -> Dict[UUID, RealmRole]:
+        user_realms = {}
+        for (realm_org_id, realm_id), realm in self._realms.items():
+            if realm_org_id != organization_id:
+                continue
+            try:
+                user_realms[realm_id] = realm.roles[user]
+            except KeyError:
+                pass
+        return user_realms

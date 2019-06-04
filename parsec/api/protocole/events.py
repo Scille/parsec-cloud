@@ -2,15 +2,30 @@
 
 from parsec.serde import OneOfSchema, fields, validate
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocole.realm import RealmRoleField
 
 
-EVENTS = ("pinged", "realm.vlobs_updated", "message.received")
+EVENTS = (
+    "pinged",
+    "realm.roles_updated",
+    "realm.vlobs_updated",
+    "realm.maintenance_started",
+    "realm.maintenance_finished",
+    "message.received",
+)
 
 
 class EventsPingedRepSchema(BaseRepSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("pinged", required=True)
     ping = fields.String(validate=validate.Length(max=64), required=True)
+
+
+class EventsRealmRolesUpdatedRepSchema(BaseRepSchema):
+    status = fields.CheckedConstant("ok", required=True)
+    event = fields.CheckedConstant("realm.roles_updated", required=True)
+    realm_id = fields.UUID(required=True)
+    role = RealmRoleField(allow_none=True, missing=None)
 
 
 class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
@@ -51,6 +66,7 @@ class EventsListenRepSchema(OneOfSchema):
     type_field_remove = False
     type_schemas = {
         "pinged": EventsPingedRepSchema(),
+        "realm.roles_updated": EventsRealmRolesUpdatedRepSchema(),
         "realm.vlobs_updated": EventsRealmVlobsUpdatedRepSchema(),
         "realm.maintenance_started": EventsRealmMaintenanceStartedRepSchema(),
         "realm.maintenance_finished": EventsRealmMaintenanceFinishedRepSchema(),
@@ -65,9 +81,7 @@ events_listen_serializer = CmdSerializer(EventsListenReqSchema, EventsListenRepS
 
 
 class EventsSubscribeReqSchema(BaseReqSchema):
-    ping = fields.List(fields.String(validate=validate.Length(max=64)), missing=None)
-    realm = fields.List(fields.UUID(), missing=None)
-    message = fields.Boolean(missing=None)
+    pass
 
 
 class EventsSubscribeRepSchema(BaseRepSchema):
