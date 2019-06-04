@@ -285,6 +285,15 @@ async def claim_user(
             # 3) Send claim
             try:
                 unverified_user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+
+            except BackendNotAvailable as exc:
+                raise InviteClaimBackendOfflineError(str(exc)) from exc
+
+            except BackendConnectionError as exc:
+                raise InviteClaimError(f"Cannot claim user: {exc}") from exc
+
+            # 4) Verify user certificate and check admin status
+            try:
                 user = verify_user_certificate(
                     unverified_user.user_certificate,
                     invitation_creator_device.device_id,
@@ -292,11 +301,8 @@ async def claim_user(
                 )
                 new_device = new_device.evolve(is_admin=user.is_admin)
 
-            except BackendNotAvailable as exc:
-                raise InviteClaimBackendOfflineError(str(exc)) from exc
-
-            except BackendConnectionError as exc:
-                raise InviteClaimError(f"Cannot claim user: {exc}") from exc
+            except CryptoError as exc:
+                raise InviteClaimCryptoError(str(exc)) from exc
 
     except BackendNotAvailable as exc:
         raise InviteClaimBackendOfflineError(str(exc)) from exc
