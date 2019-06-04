@@ -384,24 +384,6 @@ class WorkspaceFS:
         for name, entry_id in manifest.children.items():
             await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
 
-    # async def sync_by_access(
-    #     self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
-    # ):
-    #     # Sync parent first
-    #     try:
-    #         manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
-    #     # Nothing to synchronize if the manifest does not exist locally
-    #     except FSNoSynchronizationRequired:
-    #         return
-
-    #     # Non-recursive
-    #     if not recursive or is_file_manifest(manifest):
-    #         return
-
-    #     # Synchronize children
-    #     for name, entry_id in manifest.children.items():
-    #         await self.sync_by_access(entry_id, remote_changed=remote_changed, recursive=True)
-
     async def sync(
         self, path: AnyPath, remote_changed: bool = True, recursive: bool = True
     ) -> None:
