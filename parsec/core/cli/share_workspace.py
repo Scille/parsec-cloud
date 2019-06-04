@@ -11,7 +11,7 @@ from parsec.core.cli.utils import core_config_and_device_options
 
 async def _share_workspace(config, device, name, user_id):
     async with logged_core_factory(config, device) as core:
-        await core.fs.share(f"/{name}", user_id)
+        await core.user_fs.workspace_share(f"/{name}", user_id)
 
 
 @click.command(short_help="share workspace")

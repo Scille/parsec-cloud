@@ -88,7 +88,7 @@ class UserInputDialog(QDialog, Ui_InputDialog):
     def show_auto_complete(self):
         self.timer.stop()
         if len(self.line_edit_text.text()):
-            users = self.portal.run(self.core.fs.backend_cmds.user_find, self.line_edit_text.text())
+            users = self.portal.run(self.core.backend_cmds.user_find, self.line_edit_text.text())
             if self.exclude:
                 users = [u for u in users if u not in self.exclude]
             completer = QCompleter(users)
