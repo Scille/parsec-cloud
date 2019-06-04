@@ -63,7 +63,7 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             creator_device = unsecure_read_device_certificate(
                 invitation_creator_device.device_certificate
             )
-            assert creator_device.device_id.split("@")[0] == creator.user_id
+            assert creator_device.device_id.user_id == creator.user_id
 
             answer_private_key = PrivateKey.generate()
             encrypted_claim = generate_device_encrypted_claim(
