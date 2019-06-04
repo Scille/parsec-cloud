@@ -102,9 +102,11 @@ def local_device_factory(coolorg):
         try:
             # If the user already exists, we must retreive it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
-            if is_admin is not None:
-                raise ValueError("is_admin is set but user already exists.")
-            is_admin = (parent_device.is_admin,)
+            if is_admin is not None and is_admin is not parent_device.is_admin:
+                raise ValueError(
+                    "is_admin is set but user already exists, with a different is_admin value."
+                )
+            is_admin = parent_device.is_admin
 
         except StopIteration:
             is_admin = bool(is_admin)
@@ -151,7 +153,7 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 @pytest.fixture
 def alice2(local_device_factory):
-    return local_device_factory("alice@dev2")
+    return local_device_factory("alice@dev2", is_admin=True)
 
 
 @pytest.fixture
