@@ -140,9 +140,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                     device.device_id,
                     pendulum.now(),
                 )
-                self.jobs_ctx.run(
-                    self.core.fs.backend_cmds.device_revoke, revoked_device_certificate
-                )
+                self.jobs_ctx.run(self.core.backend_cmds.device_revoke, revoked_device_certificate)
             user_button.is_revoked = True
             show_info(self, _('User "{}" has been revoked.').format(user_name))
         except BackendCmdsBadResponse as exc:
@@ -165,7 +163,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.setParent(None)
         try:
             user_id = self.core.device.user_id
-            users = self.jobs_ctx.run(self.core.fs.backend_cmds.user_find)
+            users = self.jobs_ctx.run(self.core.backend_cmds.user_find)
             for user in users:
                 user_info, user_devices = self.jobs_ctx.run(
                     self.core.remote_devices_manager.get_user_and_devices, user

@@ -12,6 +12,7 @@ from hypothesis_trio.stateful import (
 )
 from string import ascii_lowercase
 
+from parsec.core.fs import FSWorkspaceNotFoundError
 from tests.common import call_with_control
 
 
@@ -28,24 +29,24 @@ def test_fs_online_user(
     server_factory,
     local_storage_factory,
     oracle_fs_with_sync_factory,
-    fs_factory,
+    user_fs_factory,
     alice,
 ):
     class FSOfflineUser(TrioRuleBasedStateMachine):
         Workspaces = Bundle("workspace")
 
-        async def restart_fs(self, device, local_storage):
+        async def restart_user_fs(self, device, local_storage):
             try:
-                await self.fs_controller.stop()
+                await self.user_fs_controller.stop()
             except AttributeError:
                 pass
 
-            async def _fs_controlled_cb(started_cb):
-                async with fs_factory(device=device, local_storage=local_storage) as fs:
-                    await started_cb(fs=fs)
+            async def _user_fs_controlled_cb(started_cb):
+                async with user_fs_factory(device=device, local_storage=local_storage) as user_fs:
+                    await started_cb(user_fs=user_fs)
 
-            self.fs_controller = await self.get_root_nursery().start(
-                call_with_control, _fs_controlled_cb
+            self.user_fs_controller = await self.get_root_nursery().start(
+                call_with_control, _user_fs_controlled_cb
             )
 
         async def start_backend(self):
@@ -63,13 +64,14 @@ def test_fs_online_user(
             self.device = alice
             self.local_storage = local_storage_factory(self.device)
             self.oracle_fs = oracle_fs_with_sync_factory()
+            self.workspace = None
 
             await self.start_backend()
-            await self.restart_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device, self.local_storage)
 
         @property
-        def fs(self):
-            return self.fs_controller.fs
+        def user_fs(self):
+            return self.user_fs_controller.user_fs
 
         @property
         def backend(self):
@@ -77,54 +79,53 @@ def test_fs_online_user(
 
         @rule()
         async def restart(self):
-            await self.restart_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device, self.local_storage)
 
         @rule()
         async def reset(self):
             # TODO: would be cleaner to recreate a new device...
             self.local_storage = local_storage_factory(self.device, force=True)
-            await self.restart_fs(self.device, self.local_storage)
-            await self.fs.sync("/")
+            await self.restart_user_fs(self.device, self.local_storage)
+            await self.user_fs.sync()
             self.oracle_fs.reset()
 
         async def stat(self):
             expected = self.oracle_fs.stat("/")
-            stat = await self.fs.stat("/")
-            assert stat["type"] == expected["type"]
+            path_info = await self.workspace.path_info("/")
+            assert path_info["type"] == expected["type"]
             # TODO: oracle's `base_version` is broken (synchronization
             # strategy with parent placeholder make it complex to get right)
-            # assert stat["base_version"] == expected["base_version"]
-            if not stat["need_sync"]:
-                assert stat["base_version"] > 0
-            assert stat["is_placeholder"] == expected["is_placeholder"]
-            assert stat["need_sync"] == expected["need_sync"]
+            # assert path_info["base_version"] == expected["base_version"]
+            if not path_info["need_sync"]:
+                assert path_info["base_version"] > 0
+            assert path_info["is_placeholder"] == expected["is_placeholder"]
+            assert path_info["need_sync"] == expected["need_sync"]
 
         @rule(target=Workspaces, name=st_entry_name)
         async def create_workspace(self, name):
             path = os.path.join("/", name)
-            expected_status = self.oracle_fs.create_workspace(path)
-            if expected_status == "ok":
-                await self.fs.workspace_create(path)
-            else:
-                with pytest.raises(OSError):
-                    await self.fs.workspace_create(path)
-            return name
+            self.oracle_fs.create_workspace(path)
+            wid = await self.user_fs.workspace_create(name)
+            self.workspace = self.user_fs.get_workspace(wid)
+            await self.user_fs.sync()
+            return wid, name
 
         @rule(target=Workspaces, workspace=Workspaces, new_name=st_entry_name)
         async def rename_workspace(self, workspace, new_name):
+            wid, workspace = workspace
             src = f"/{workspace}"
             dst = f"/{new_name}"
             expected_status = self.oracle_fs.rename_workspace(src, dst)
             if expected_status == "ok":
-                await self.fs.workspace_rename(src, dst)
+                await self.user_fs.workspace_rename(wid, new_name)
             else:
-                with pytest.raises(OSError):
-                    await self.fs.workspace_rename(src, dst)
-            return new_name
+                with pytest.raises(FSWorkspaceNotFoundError):
+                    await self.user_fs.workspace_rename(workspace, new_name)
+            return wid, new_name
 
-        @rule()
-        async def sync(self):
-            await self.fs.sync("/")
+        @rule(workspace=Workspaces)
+        async def sync(self, workspace):
+            await self.user_fs.sync()
             self.oracle_fs.sync("/")
 
     run_state_machine_as_test(FSOfflineUser, settings=hypothesis_settings)

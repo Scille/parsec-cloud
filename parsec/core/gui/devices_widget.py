@@ -122,7 +122,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 DeviceID(f"{self.core.device.device_id.user_id}@{device_name}"),
                 pendulum.now(),
             )
-            self.jobs_ctx.run(self.core.fs.backend_cmds.device_revoke, revoked_device_certificate)
+            self.jobs_ctx.run(self.core.backend_cmds.device_revoke, revoked_device_certificate)
             device_button.is_revoked = True
             show_info(self, _('Device "{}" has been revoked.').format(device_name))
         except BackendCmdsBadResponse as exc:

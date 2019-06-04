@@ -42,7 +42,7 @@ def test_share_workspace(tmpdir, alice, bob):
     async def share(*args, **kwargs):
         return share_mock(*args, **kwargs)
 
-    factory_mock.return_value.fs.share = share
+    factory_mock.return_value.user_fs.workspace_share = share
 
     with patch("parsec.core.cli.utils.list_available_devices") as list_mock:
         with patch("parsec.core.cli.utils.load_device_with_password") as load_mock:

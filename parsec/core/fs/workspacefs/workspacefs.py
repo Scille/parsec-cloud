@@ -2,6 +2,7 @@
 
 import inspect
 from uuid import UUID
+import errno
 from typing import Union, Iterator, Dict
 
 from parsec.types import UserID
@@ -38,6 +39,14 @@ from parsec.core.fs.local_folder_fs import (
 
 
 AnyPath = Union[FsPath, str]
+
+
+def _destinsrc(src: AnyPath, dst: AnyPath):
+    try:
+        dst.relative_to(src)
+        return True
+    except ValueError:
+        return False
 
 
 class WorkspaceFS:
@@ -188,7 +197,7 @@ class WorkspaceFS:
         try:
             await self.entry_transactions.file_create(path, open=False)
         except FileExistsError:
-            if not exist_ok or not await self.is_file(path):
+            if not exist_ok:
                 raise
 
     async def unlink(self, path: AnyPath) -> None:
@@ -229,6 +238,10 @@ class WorkspaceFS:
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
+        if _destinsrc(source, destination):
+            raise OSError(
+                errno.EINVAL, f"Cannot move a directory {source} into itself {destination}"
+            )
         try:
             if await self.is_dir(destination):
                 real_destination = destination.joinpath(source.name)
@@ -250,13 +263,6 @@ class WorkspaceFS:
             await self.unlink(source)
             return
         raise NotImplementedError
-
-    def _destinsrc(src: AnyPath, dst: AnyPath):
-        try:
-            dst.relative_to(src)
-            return True
-        except ValueError:
-            return False
 
     async def copytree(self, source_path: AnyPath, target_path: AnyPath):
         source_path = FsPath(source_path)
@@ -404,11 +410,11 @@ class WorkspaceFS:
                     return fn(*args, **kwargs)
 
             except FSManifestLocalMiss as exc:
-                await self.remote_loader.load_manifest(exc.access)
+                await self.remote_loader.load_manifest(exc.entry_id)
 
             except FSMultiManifestLocalMiss as exc:
-                for access in exc.accesses:
-                    await self.remote_loader.load_manifest(access)
+                for entry_id in exc.entries_ids:
+                    await self.remote_loader.load_manifest(entry_id)
 
     def _use_legacy_sync(self, entry_id, remote_manifest):
         if is_file_manifest(remote_manifest):

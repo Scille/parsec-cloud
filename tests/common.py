@@ -11,7 +11,7 @@ import pendulum
 
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
-from parsec.core.fs import UserFS, FS
+from parsec.core.fs import UserFS
 from parsec.core.persistent_storage import PersistentStorage
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.api.transport import Transport, TransportError
@@ -185,10 +185,8 @@ async def create_shared_workspace(name, creator, *shared_with):
                 fss.append(x.user_fs)
             elif isinstance(x, UserFS):
                 fss.append(x)
-            elif isinstance(x, FS):
-                fss.append(x.user_fs)
             else:
-                raise ValueError(f"{x!r} is not a {FS!r} or a {LoggedCore!r}")
+                raise ValueError(f"{x!r} is not a {UserFS!r} or a {LoggedCore!r}")
 
         creator_user_fs, *shared_with_fss = fss
         wid = await creator_user_fs.workspace_create(name)

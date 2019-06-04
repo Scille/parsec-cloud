@@ -10,7 +10,7 @@ from parsec.core.cli.utils import core_config_and_device_options
 
 async def _create_workspace(config, device, name):
     async with logged_core_factory(config, device) as core:
-        await core.fs.workspace_create(f"/{name}")
+        await core.user_fs.workspace_create(f"{name}")
 
 
 @click.command(short_help="create workspace")
