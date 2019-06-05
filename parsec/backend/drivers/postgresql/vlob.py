@@ -231,6 +231,7 @@ RETURNING _id
         encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
+        timestamp: Optional[pendulum.Pendulum] = None,
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
 
         async with self.dbh.pool.acquire() as conn:
@@ -242,8 +243,9 @@ RETURNING _id
                 )
 
                 if version is None:
-                    data = await conn.fetchrow(
-                        """
+                    if timestamp is None:
+                        data = await conn.fetchrow(
+                            """
 SELECT
     version,
     blob,
@@ -256,12 +258,37 @@ WHERE
 ORDER BY version DESC
 LIMIT 1
 """,
-                        organization_id,
-                        realm_id,
-                        encryption_revision,
-                        vlob_id,
-                    )
-                    assert data  # _get_realm_id_from_vlob_id checks vlob presence
+                            organization_id,
+                            realm_id,
+                            encryption_revision,
+                            vlob_id,
+                        )
+                        assert data  # _get_realm_id_from_vlob_id checks vlob presence
+
+                    else:
+                        data = await conn.fetchrow(
+                            """
+SELECT
+    version,
+    blob,
+    get_device_id(author) as author,
+    created_on
+FROM vlob_atom
+WHERE
+    vlob_encryption_revision = get_vlob_encryption_revision_internal_id($1, $2, $3)
+    AND vlob_id = $4
+    AND created_on <= $5
+ORDER BY version DESC
+LIMIT 1
+""",
+                            organization_id,
+                            realm_id,
+                            encryption_revision,
+                            vlob_id,
+                            timestamp,
+                        )
+                        if not data:
+                            raise VlobVersionError()
 
                 else:
                     data = await conn.fetchrow(
