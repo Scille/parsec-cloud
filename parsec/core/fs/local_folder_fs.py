@@ -66,7 +66,7 @@ class LocalFolderFS:
                 manifest = LocalUserManifest(self.local_author)
                 self.set_dirty_manifest(access, manifest)
                 return manifest
-            raise FSManifestLocalMiss(access) from exc
+            raise FSManifestLocalMiss(access.id) from exc
         # TODO: move this block to the right place
         # if is_workspace_manifest(manifest):
         #     path, *_ = self.get_entry_path(access.id)
