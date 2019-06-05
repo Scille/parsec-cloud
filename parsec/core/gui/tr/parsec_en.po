@@ -440,6 +440,12 @@ msgstr ""
 msgid "Conflict while syncing file '{}'."
 msgstr ""
 
+msgid "Cryptographic error on file {}: {}"
+msgstr ""
+
+msgid "File {} is not currently available in local: {}"
+msgstr ""
+
 msgid "Connected"
 msgstr ""
 

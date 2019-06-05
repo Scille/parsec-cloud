@@ -96,7 +96,7 @@ async def fuse_mountpoint_runner(
     fuse_thread_stopped = threading.Event()
     portal = trio.BlockingTrioPortal()
     fs_access = ThreadFSAccess(portal, workspace_fs)
-    fuse_operations = FuseOperations(fs_access)
+    fuse_operations = FuseOperations(event_bus, fs_access)
 
     mountpoint_path, initial_st_dev = await _bootstrap_mountpoint(
         base_mountpoint_path, workspace_fs

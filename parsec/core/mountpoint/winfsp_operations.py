@@ -16,20 +16,22 @@ from winfspy.plumbing.winstuff import (
 )
 
 from parsec.core.types import FsPath
+from parsec.crypto import CryptoError
 from parsec.core.fs import FSInvalidFileDescriptor
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.sync_base import DEFAULT_BLOCK_SIZE
+from parsec.core.backend_connection import BackendNotAvailable
 
 
 MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}
 
 
 @contextmanager
-def translate_error():
+def translate_error(event_bus, path):
     try:
         yield
 
     except BackendNotAvailable as exc:
+        event_bus.send("fs.access_backend_offline", msg=str(exc), path=path)
         raise NTStatusError(NTSTATUS.STATUS_NETWORK_UNREACHABLE) from exc
 
     except FSInvalidFileDescriptor as exc:
@@ -37,6 +39,10 @@ def translate_error():
 
     except OSError as exc:
         raise NTStatusError(posix_to_ntstatus(exc.errno)) from exc
+
+    except CryptoError as exc:
+        event_bus.send("fs.access_crypto_error", msg=str(exc), path=path)
+        raise NTStatusError(NTSTATUS.STATUS_NETWORK_UNREACHABLE) from exc
 
 
 def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):
@@ -124,7 +130,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def get_security_by_name(self, file_name):
         file_name = FsPath(file_name)
-        with translate_error():
+        with translate_error(self.event_bus, file_name):
             stat = self.fs_access.entry_info(file_name)
 
         return (
@@ -147,7 +153,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         # `security_descriptor` is not supported yet
         file_name = FsPath(file_name)
 
-        with translate_error():
+        with translate_error(self.event_bus, file_name):
             if create_options & CREATE_FILE_CREATE_OPTIONS.FILE_DIRECTORY_FILE:
                 self.fs_access.folder_create(file_name)
                 return OpenedFolder(file_name)
@@ -166,14 +172,14 @@ class WinFSPOperations(BaseFileSystemOperations):
     def rename(self, file_context, file_name, new_file_name, replace_if_exists):
         file_name = FsPath(file_name)
         new_file_name = FsPath(new_file_name)
-        with translate_error():
+        with translate_error(self.event_bus, file_name):
             self.fs_access.entry_rename(file_name, new_file_name, overwrite=False)
 
     def open(self, file_name, create_options, granted_access):
         file_name = FsPath(file_name)
         mode = MODES[granted_access % 4]
         # `granted_access` is already handle by winfsp
-        with translate_error():
+        with translate_error(self.event_bus, file_name):
             try:
                 _, fd = self.fs_access.file_open(file_name, mode=mode)
                 return OpenedFile(file_name, fd)
@@ -183,19 +189,19 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def close(self, file_context):
         if isinstance(file_context, OpenedFile):
-            with translate_error():
+            with translate_error(self.event_bus, file_context.path):
                 self.fs_access.fd_close(file_context.fd)
 
         if file_context.deleted:
             if isinstance(file_context, OpenedFile):
-                with translate_error():
+                with translate_error(self.event_bus, file_context.path):
                     self.fs_access.file_delete(file_context.path)
             else:
-                with translate_error():
+                with translate_error(self.event_bus, file_context.path):
                     self.fs_access.folder_delete(file_context.path)
 
     def get_file_info(self, file_context):
-        with translate_error():
+        with translate_error(self.event_bus, file_context.path):
             stat = self.fs_access.entry_info(file_context.path)
 
         return stat_to_winfsp_attributes(stat)
@@ -229,11 +235,11 @@ class WinFSPOperations(BaseFileSystemOperations):
     def set_file_size(self, file_context, new_size, set_allocation_size):
 
         if not set_allocation_size:
-            with translate_error():
+            with translate_error(self.event_bus, file_context.path):
                 self.fs_access.fd_resize(file_context.fd, new_size)
 
     def can_delete(self, file_context, file_name: str) -> None:
-        with translate_error():
+        with translate_error(self.event_bus, file_context.path):
             stat = self.fs_access.entry_info(file_context.path)
             if stat["type"] == "file":
                 return
@@ -244,7 +250,7 @@ class WinFSPOperations(BaseFileSystemOperations):
                 raise NTStatusError(NTSTATUS.STATUS_DIRECTORY_NOT_EMPTY)
 
     def read_directory(self, file_context, marker):
-        with translate_error():
+        with translate_error(self.event_bus, file_context.path):
             stat = self.fs_access.entry_info(file_context.path)
 
             if stat["type"] == "file":
@@ -264,13 +270,13 @@ class WinFSPOperations(BaseFileSystemOperations):
         return entries
 
     def read(self, file_context, offset, length):
-        with translate_error():
+        with translate_error(self.event_bus, file_context.path):
             buffer = self.fs_access.fd_read(file_context.fd, length, offset)
             return buffer
 
     def write(self, file_context, buffer, offset, write_to_end_of_file, constrained_io):
         # `constrained_io` seems too complicated to implement for us
-        with translate_error():
+        with translate_error(self.event_bus, file_context.path):
             if write_to_end_of_file:
                 offset = -1
             # LocalStorage.set only wants bytes or bytearray...
@@ -279,7 +285,7 @@ class WinFSPOperations(BaseFileSystemOperations):
             return ret
 
     def flush(self, file_context) -> None:
-        with translate_error():
+        with translate_error(self.event_bus, file_context.path):
             self.fs_access.fd_flush(file_context.fd)
 
     def cleanup(self, file_context, file_name, flags) -> None:

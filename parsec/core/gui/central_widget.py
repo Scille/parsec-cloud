@@ -27,6 +27,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         "sharing.revoked",
         "sharing.updated",
         "fs.entry.file_update_conflicted",
+        "fs.access_backend_offline",
+        "fs.access_crypto_error",
     ]
 
     connection_state_changed = pyqtSignal(int)
@@ -125,6 +127,18 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(
                 "WARNING", _("Conflict while syncing file '{}'.").format(kwargs["path"])
+            )
+        elif event == "fs.access_backend_offline":
+            self.new_notification.emit(
+                "WARNING",
+                _("File {} is not currently available in local: {}").format(
+                    kwargs["path"], kwargs["msg"]
+                ),
+            )
+        elif event == "fs.access_crypto_error":
+            self.new_notification.emit(
+                "ERROR",
+                _("Cryptographic error on file {}: {}").format(kwargs["path"], kwargs["msg"]),
             )
 
     def close_notification_center(self):

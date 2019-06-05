@@ -470,6 +470,12 @@ msgstr "L'espace de travail '{}' n'est plus partagé avec vous"
 msgid "Conflict while syncing file '{}'."
 msgstr "Conflit lors de la synchronisation de '{}'."
 
+msgid "Cryptographic error on file {}: {}"
+msgstr "Error de cryptographie sur le fichier {}: {}"
+
+msgid "File {} is not currently available in local: {}"
+msgstr "Le fichier {} n'est pas actuellement accessible en local: {}"
+
 msgid "Connected"
 msgstr "Connecté"
 
