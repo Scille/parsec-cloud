@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import Tuple
+from collections import OrderedDict
 import pendulum
 
 from parsec.types import DeviceID, UserID
@@ -61,7 +62,7 @@ def _verify_devices(root_verify_key, *uv_devices):
     Raises:
         RemoteDevicesManagerInvalidTrustchainError
     """
-    verified_devices = {}
+    verified_devices = OrderedDict()
 
     # First convert to VerifiedRemoteDevice to easily access metadata
     # (obviously those VerifiedRemoteDevice are not verified at all so far !)
@@ -418,7 +419,7 @@ async def get_device_invitation_creator(
 
     verified_devices = _verify_devices(root_verify_key, uv_device, *trustchain)
     return (
-        verified_devices[unsecure_read_device_certificate(uv_device.device_certificate).device_id],
+        verified_devices.popitem(last=False)[1],
         _verify_user(root_verify_key, uv_user, verified_devices),
     )
 
@@ -452,6 +453,6 @@ async def get_user_invitation_creator(
 
     verified_devices = _verify_devices(root_verify_key, uv_device, *trustchain)
     return (
-        verified_devices[unsecure_read_device_certificate(uv_device.device_certificate).device_id],
+        verified_devices.popitem(last=False)[1],
         _verify_user(root_verify_key, uv_user, verified_devices),
     )
