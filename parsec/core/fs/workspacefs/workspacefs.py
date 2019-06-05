@@ -122,9 +122,16 @@ class WorkspaceFS:
         """
         Raises:
             FSError
-            FSWorkspaceNotFoundError
             FSBackendOfflineError
         """
+        try:
+            workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+            if workspace_manifest.is_placeholder:
+                return {self.device.user_id: WorkspaceRole.OWNER}
+
+        except LocalStorageMissingError:
+            pass
+
         try:
             return await self.backend_cmds.realm_get_roles(self.workspace_id)
 
