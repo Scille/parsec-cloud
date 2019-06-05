@@ -27,7 +27,7 @@ class SyncConcurrencyError(Exception):
     pass
 
 
-DEFAULT_BLOCK_SIZE = 2 ** 16  # 64Kio
+DEFAULT_BLOCK_SIZE = 2 ** 19  # 512Ko
 
 
 class BaseSyncer:
