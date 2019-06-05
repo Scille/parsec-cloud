@@ -579,11 +579,11 @@ msgstr ""
 "Autorisez-vous Parsec à envoyer des données en cas d'erreur pour nous permettre "
 "d'améliorer votre expérience ?"
 
-msgid "Unhandled error."
-msgstr "Erreur non gérée."
+msgid "Unhandled error:\n\n{}"
+msgstr "Erreur non gérée:\n\n{}"
 
-msgid "Authentication failed."
-msgstr "L'authentification a échoué."
+msgid "Authentication failed ({})."
+msgstr "L'authentification a échoué ({})."
 
 msgid "Incompatible backend API version."
 msgstr "Votre version de l'application est incompatible avec le serveur."
