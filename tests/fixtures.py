@@ -102,7 +102,8 @@ def local_device_factory(coolorg):
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
             device = device.evolve(
                 private_key=parent_device.private_key,
-                user_manifest_access=parent_device.user_manifest_access,
+                user_manifest_id=parent_device.user_manifest_id,
+                user_manifest_key=parent_device.user_manifest_key,
             )
 
         except StopIteration:
@@ -171,13 +172,12 @@ class InitialUserManifestState:
             )
 
             remote_user_manifest = user_manifest.to_remote()
-            access = device.user_manifest_access
             now = pendulum.now()
 
             ciphered = encrypt_signed_msg_with_secret_key(
                 device.device_id,
                 device.signing_key,
-                access.key,
+                device.user_manifest_key,
                 local_manifest_serializer.dumps(user_manifest),
                 now,
             )
@@ -185,7 +185,7 @@ class InitialUserManifestState:
             remote_ciphered = encrypt_signed_msg_with_secret_key(
                 device.device_id,
                 device.signing_key,
-                access.key,
+                device.user_manifest_key,
                 remote_manifest_serializer.dumps(remote_user_manifest),
                 now,
             )
@@ -347,13 +347,12 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         first_device, ciphered=True
                     )
                     ciphered, generated_by, generated_on = args
-                    access = first_device.user_manifest_access
                     await self.backend.vlob.create(
                         organization_id=first_device.organization_id,
                         author=generated_by,
-                        realm_id=access.id,
+                        realm_id=first_device.user_manifest_id,
                         encryption_revision=1,
-                        vlob_id=access.id,
+                        vlob_id=first_device.user_manifest_id,
                         timestamp=generated_on,
                         blob=ciphered,
                     )
@@ -404,13 +403,12 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         device, ciphered=True
                     )
                     ciphered, generated_by, generated_on = args
-                    access = device.user_manifest_access
                     await self.backend.vlob.create(
                         organization_id=device.organization_id,
                         author=generated_by,
-                        realm_id=access.id,
+                        realm_id=device.user_manifest_id,
                         encryption_revision=1,
-                        vlob_id=access.id,
+                        vlob_id=device.user_manifest_id,
                         timestamp=generated_on,
                         blob=ciphered,
                     )

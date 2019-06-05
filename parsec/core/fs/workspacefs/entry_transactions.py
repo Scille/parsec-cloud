@@ -2,25 +2,22 @@
 
 import os
 import errno
-from uuid import UUID
 from typing import Tuple, Callable
 from collections import namedtuple
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.core.types import (
-    AccessID,
+    EntryID,
     FsPath,
-    Access,
     WorkspaceRole,
     LocalDevice,
     LocalManifest,
-    ManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
     FileDescriptor,
 )
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
@@ -30,7 +27,7 @@ from parsec.core.fs.utils import (
 from parsec.core.fs.remote_loader import RemoteLoader
 
 
-Entry = namedtuple("Entry", "access manifest")
+Entry = namedtuple("Entry", "id manifest")
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
 
 
@@ -43,7 +40,7 @@ def from_errno(errno, message=None, filename=None, filename2=None):
 class EntryTransactions:
     def __init__(
         self,
-        workspace_id: UUID,
+        workspace_id: EntryID,
         get_workspace_entry: Callable,
         device: LocalDevice,
         local_storage: LocalStorage,
@@ -70,17 +67,17 @@ class EntryTransactions:
 
     # Look-up helpers
 
-    async def _get_manifest(self, access: Access) -> LocalManifest:
+    async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
         try:
-            return self.local_storage.get_manifest(access)
-        except LocalStorageMissingEntry as exc:
-            return await self.remote_loader.load_manifest(exc.access)
+            return self.local_storage.get_manifest(entry_id)
+        except LocalStorageMissingError as exc:
+            return await self.remote_loader.load_manifest(exc.id)
 
-    async def _get_entry(self, path: FsPath) -> Tuple[Access, LocalManifest]:
-        # Root access and manifest
+    async def _get_entry(self, path: FsPath) -> Tuple[EntryID, LocalManifest]:
+        # Root entry_id and manifest
         assert path.parts[0] == "/"
-        access = self.get_workspace_entry().access
-        manifest = await self._get_manifest(access)
+        entry_id = self.get_workspace_entry().id
+        manifest = await self._get_manifest(entry_id)
         assert is_workspace_manifest(manifest)
 
         # Follow the path
@@ -88,13 +85,13 @@ class EntryTransactions:
             if is_file_manifest(manifest):
                 raise from_errno(errno.ENOTDIR, filename=str(path))
             try:
-                access = manifest.children[name]
+                entry_id = manifest.children[name]
             except (AttributeError, KeyError):
                 raise from_errno(errno.ENOENT, filename=str(path))
-            manifest = await self._get_manifest(access)
+            manifest = await self._get_manifest(entry_id)
 
         # Return entry
-        return Entry(access, manifest)
+        return Entry(entry_id, manifest)
 
     # Locking helpers
 
@@ -107,15 +104,15 @@ class EntryTransactions:
     @asynccontextmanager
     async def _lock_entry(self, path: FsPath):
         # Load the entry
-        access, _ = await self._get_entry(path)
+        entry_id, _ = await self._get_entry(path)
 
-        # Try to lock the corresponding access
+        # Try to lock the corresponding entry
         try:
-            async with self.local_storage.lock_manifest(access) as manifest:
-                yield Entry(access, manifest)
+            async with self.local_storage.lock_manifest(entry_id) as manifest:
+                yield Entry(entry_id, manifest)
 
         # The entry has been deleted while we were waiting for the lock
-        except LocalStorageMissingEntry:
+        except LocalStorageMissingError:
             raise from_errno(errno.ENOENT, filename=str(path))
 
     @asynccontextmanager
@@ -158,22 +155,22 @@ class EntryTransactions:
                     return
 
                 # Child exists
-                access = parent.manifest.children[path.name]
+                entry_id = parent.manifest.children[path.name]
                 try:
-                    async with self.local_storage.lock_manifest(access) as manifest:
-                        yield parent, Entry(access, manifest)
+                    async with self.local_storage.lock_manifest(entry_id) as manifest:
+                        yield parent, Entry(entry_id, manifest)
                         return
 
                 # Child is not available
-                except LocalStorageMissingEntry as exc:
-                    assert exc.access == access
+                except LocalStorageMissingError as exc:
+                    assert exc.id == entry_id
 
             # Release the lock and download the child manifest
-            await self.remote_loader.load_manifest(access)
+            await self.remote_loader.load_manifest(entry_id)
 
     # Reverse lookup logic
 
-    async def _get_path(self, id: AccessID) -> FsPath:
+    async def _get_path(self, id: EntryID) -> FsPath:
         # TODO
         pass
 
@@ -182,11 +179,11 @@ class EntryTransactions:
     async def entry_info(self, path: FsPath) -> dict:
 
         # Fetch data
-        access, manifest = await self._get_entry(path)
+        entry_id, manifest = await self._get_entry(path)
 
         # General stats
         stats = {
-            "id": access.id,
+            "id": entry_id,
             "created": manifest.created,
             "updated": manifest.updated,
             "base_version": manifest.base_version,
@@ -206,7 +203,7 @@ class EntryTransactions:
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
-    ) -> AccessID:
+    ) -> EntryID:
         # Check write rights
         self._check_write_rights(source)
 
@@ -232,7 +229,7 @@ class EntryTransactions:
             # Source does not exist
             if source.name not in parent.manifest.children:
                 raise from_errno(errno.ENOENT, filename=str(source))
-            source_access = parent.manifest.children[source.name]
+            source_entry_id = parent.manifest.children[source.name]
 
             # Source and destination are the same
             if source.name == destination.name:
@@ -244,7 +241,7 @@ class EntryTransactions:
 
             # Overwrite logic
             if overwrite and child is not None:
-                source_manifest = await self._get_manifest(source_access)
+                source_manifest = await self._get_manifest(source_entry_id)
 
                 # Overwrite a file
                 if is_file_manifest(source_manifest):
@@ -266,19 +263,19 @@ class EntryTransactions:
 
             # Create new manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
-                {destination.name: source_access, source.name: None}
+                {destination.name: source_entry_id, source.name: None}
             )
 
             # Atomic change
-            self.local_storage.set_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=parent.id)
 
-        # Return the access id of the renamed entry
-        return parent.manifest.children[source.name].id
+        # Return the entry id of the renamed entry
+        return parent.manifest.children[source.name]
 
-    async def folder_delete(self, path: FsPath) -> AccessID:
+    async def folder_delete(self, path: FsPath) -> EntryID:
         # Check write rights
         self._check_write_rights(path)
 
@@ -303,19 +300,19 @@ class EntryTransactions:
             )
 
             # Atomic change
-            self.local_storage.set_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
             # Clean up
             # TODO: actually we can't do that: this child my require synchronization
-            self.local_storage.clear_manifest(child.access)
+            self.local_storage.clear_manifest(child.id)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=parent.id)
 
-        # Return the access id of the removed folder
-        return child.access.id
+        # Return the entry id of the removed folder
+        return child.id
 
-    async def file_delete(self, path: FsPath) -> AccessID:
+    async def file_delete(self, path: FsPath) -> EntryID:
         # Check write rights
         self._check_write_rights(path)
 
@@ -336,18 +333,18 @@ class EntryTransactions:
             )
 
             # Atomic change
-            self.local_storage.set_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
             # Clean up
-            self.local_storage.remove_file_reference(child.access, child.manifest)
+            self.local_storage.remove_file_reference(child.id, child.manifest)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.access.id)
+        self._send_event("fs.entry.updated", id=parent.id)
 
-        # Return the access id of the deleted file
-        return child.access.id
+        # Return the entry id of the deleted file
+        return child.id
 
-    async def folder_create(self, path: FsPath) -> AccessID:
+    async def folder_create(self, path: FsPath) -> EntryID:
         # Check write rights
         self._check_write_rights(path)
 
@@ -359,26 +356,26 @@ class EntryTransactions:
                 raise from_errno(errno.EEXIST, filename=str(path))
 
             # Create folder
-            child_access = ManifestAccess()
+            child_entry_id = EntryID()
             child_manifest = LocalFolderManifest(self.local_author)
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
-                {path.name: child_access}
+                {path.name: child_entry_id}
             )
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child_access, child_manifest)
-            self.local_storage.set_manifest(parent.access, new_parent_manifest)
+            self.local_storage.set_manifest(child_entry_id, child_manifest)
+            self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
         # Send events
-        self._send_event("fs.entry.updated", id=parent.access.id)
-        self._send_event("fs.entry.updated", id=child_access.id)
+        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event("fs.entry.updated", id=child_entry_id)
 
-        # Return the access id of the created folder
-        return child_access.id
+        # Return the entry id of the created folder
+        return child_entry_id
 
-    async def file_create(self, path: FsPath, open=True) -> Tuple[AccessID, FileDescriptor]:
+    async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
         self._check_write_rights(path)
 
@@ -390,27 +387,27 @@ class EntryTransactions:
                 raise from_errno(errno.EEXIST, filename=str(path))
 
             # Create file
-            child_access = ManifestAccess()
+            child_entry_id = EntryID()
             child_manifest = LocalFileManifest(self.local_author)
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
-                {path.name: child_access}
+                {path.name: child_entry_id}
             )
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child_access, child_manifest)
-            self.local_storage.set_manifest(parent.access, new_parent_manifest)
-            fd = self.local_storage.create_cursor(child_access) if open else None
+            self.local_storage.set_manifest(child_entry_id, child_manifest)
+            self.local_storage.set_manifest(parent.id, new_parent_manifest)
+            fd = self.local_storage.create_cursor(child_entry_id) if open else None
 
         # Send events
-        self._send_event("fs.entry.updated", id=parent.access.id)
-        self._send_event("fs.entry.updated", id=child_access.id)
+        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event("fs.entry.updated", id=child_entry_id)
 
-        # Return the access id of the created file and the file descriptor
-        return child_access.id, fd
+        # Return the entry id of the created file and the file descriptor
+        return child_entry_id, fd
 
-    async def file_open(self, path: FsPath, mode="rw") -> Tuple[AccessID, FileDescriptor]:
+    async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
         if "w" in mode:
             self._check_write_rights(path)
@@ -422,5 +419,5 @@ class EntryTransactions:
             if not is_file_manifest(entry.manifest):
                 raise from_errno(errno.EISDIR, str(path))
 
-            # Return the access id of the open file and the file descriptor
-            return entry.access.id, self.local_storage.create_cursor(entry.access)
+            # Return the entry id of the open file and the file descriptor
+            return entry.id, self.local_storage.create_cursor(entry.id)

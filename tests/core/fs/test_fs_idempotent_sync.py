@@ -32,7 +32,7 @@ def check_fs_dump(entry, is_root=True):
 
 @pytest.mark.slow
 def test_fs_online_idempotent_sync(
-    hypothesis_settings, backend_addr, backend_factory, server_factory, fs_factory, alice
+    hypothesis_settings, backend_addr, backend_factory, server_factory, user_fs_factory, alice
 ):
     class FSOnlineIdempotentSync(TrioRuleBasedStateMachine):
         BadPath = Bundle("bad_path")
@@ -40,12 +40,12 @@ def test_fs_online_idempotent_sync(
         GoodFolderPath = Bundle("good_folder_path")
         GoodPath = st.one_of(GoodFilePath, GoodFolderPath)
 
-        async def start_fs(self, device):
-            async def _fs_controlled_cb(started_cb):
-                async with fs_factory(device=device) as fs:
-                    await started_cb(fs=fs)
+        async def start_user_fs(self, device):
+            async def _user_fs_controlled_cb(started_cb):
+                async with user_fs_factory(device=device) as user_fs:
+                    await started_cb(user_fs=user_fs)
 
-            return await self.get_root_nursery().start(call_with_control, _fs_controlled_cb)
+            return await self.get_root_nursery().start(call_with_control, _user_fs_controlled_cb)
 
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
@@ -56,87 +56,91 @@ def test_fs_online_idempotent_sync(
             return await self.get_root_nursery().start(call_with_control, _backend_controlled_cb)
 
         @property
-        def fs(self):
-            return self.fs_controller.fs
+        def user_fs(self):
+            return self.user_fs_controller.user_fs
 
         @initialize(target=BadPath)
         async def init(self):
             self.backend_controller = await self.start_backend()
             self.device = alice
-            self.fs_controller = await self.start_fs(alice)
+            self.user_fs_controller = await self.start_user_fs(alice)
 
-            await self.fs.workspace_create("/w")
-            await self.fs.touch("/w/good_file.txt")
-            await self.fs.folder_create("/w/good_folder")
-            await self.fs.touch("/w/good_folder/good_sub_file.txt")
-            await self.fs.sync("/")
+            wid = await self.user_fs.workspace_create("w")
+            self.workspace = self.user_fs.get_workspace(wid)
+            await self.workspace.touch("/good_file.txt")
+            await self.workspace.mkdir("/good_folder")
+            await self.workspace.touch("/good_folder/good_sub_file.txt")
+            await self.workspace.sync("/")
+            await self.user_fs.sync()
 
-            self.initial_fs_dump = self.fs._local_folder_fs.dump()
+            self.initial_fs_dump = self.user_fs._local_folder_fs.dump()
             check_fs_dump(self.initial_fs_dump)
 
-            return "/w/dummy"
+            return "/dummy"
 
         @initialize(target=GoodFolderPath)
         async def init_good_folder_pathes(self):
-            return multiple("/w/", "/w/good_folder/")
+            return multiple("/", "/good_folder/")
 
         @initialize(target=GoodFilePath)
         async def init_good_file_pathes(self):
-            return multiple("/w/good_file.txt", "/w/good_folder/good_sub_file.txt")
+            return multiple("/good_file.txt", "/good_folder/good_sub_file.txt")
 
         @rule(target=BadPath, type=st_entry_type, bad_parent=BadPath, name=st_entry_name)
         async def try_to_create_bad_path(self, type, bad_parent, name):
             path = os.path.join(bad_parent, name)
-            with pytest.raises(OSError):
+            with pytest.raises(FileNotFoundError):
                 if type == "file":
-                    await self.fs.touch(path)
+                    await self.workspace.touch(path)
                 else:
-                    await self.fs.folder_create(path)
+                    await self.workspace.mkdir(path)
             return path
 
         @rule(type=st_entry_type, path=GoodPath)
         async def try_to_create_already_exists(self, type, path):
-            with pytest.raises(OSError):
-                if type == "file":
-                    await self.fs.touch(path)
+            if type == "file":
+                if str(path) == "/":
+                    with pytest.raises(PermissionError):
+                        await self.workspace.mkdir(path)
                 else:
-                    await self.fs.folder_create(path)
+                    with pytest.raises(FileExistsError):
+                        await self.workspace.mkdir(path)
 
         @rule(path=BadPath)
         async def try_to_update_file(self, path):
             with pytest.raises(OSError):
-                await self.fs.file_write(path, offset=0, content=b"a")
+                await self.workspace.write_bytes(path, data=b"a", offset=0)
 
         @rule(path=BadPath)
         async def try_to_delete(self, path):
-            with pytest.raises(OSError):
-                await self.fs.file_delete(path)
-            with pytest.raises(OSError):
-                await self.fs.folder_delete(path)
+            with pytest.raises(FileNotFoundError):
+                await self.workspace.unlink(path)
+            with pytest.raises(FileNotFoundError):
+                await self.workspace.rmdir(path)
 
         @rule(src=BadPath, dst_name=st_entry_name)
         async def try_to_move_bad_src(self, src, dst_name):
             dst = "/%s" % dst_name
             with pytest.raises(OSError):
-                await self.fs.move(src, dst)
+                await self.workspace.rename(src, dst)
 
         @rule(src=GoodPath, dst=GoodFolderPath)
         async def try_to_move_bad_dst(self, src, dst):
             # TODO: why so much special cases ?
-            if src == dst and src not in ("/", "/w/"):
-                await self.fs.move(src, dst)
+            if src == dst and src != "/":
+                await self.workspace.rename(src, dst)
             else:
                 with pytest.raises(OSError):
-                    await self.fs.move(src, dst)
+                    await self.workspace.rename(src, dst)
 
         @rule(path=GoodPath)
         async def sync(self, path):
-            await self.fs.sync(path)
+            await self.workspace.sync(path)
 
         @invariant()
         async def check_fs(self):
             try:
-                fs_dump = self.fs._local_folder_fs.dump()
+                fs_dump = self.user_fs._local_folder_fs.dump()
             except AttributeError:
                 # FS not yet initialized
                 pass

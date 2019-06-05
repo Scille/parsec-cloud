@@ -4,48 +4,34 @@ import attr
 import pendulum
 from uuid import uuid4
 from hashlib import sha256
-from typing import Union, Optional
+from typing import Optional
 
-from parsec.types import UserID
 from parsec.api.protocole import RealmRole, RealmRoleField
-from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
+from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
-from parsec.core.types.base import AccessID, serializer_factory, EntryNameField
+from parsec.core.types.base import (
+    BlockID,
+    BlockIDField,
+    EntryID,
+    EntryIDField,
+    serializer_factory,
+    EntryNameField,
+)
 
 
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class UserAccess:
-    id: AccessID
-    key: SymetricKey
-
-    @classmethod
-    def from_block(cls, user_id: UserID, key: SymetricKey) -> "UserAccess":
-        access_id = sha256(user_id.encode("utf8")).hexdigest()
-        return cls(id=access_id, key=key)
-
-
+# TODO: legacy stuff, remove me
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ManifestAccess:
-    id: AccessID = attr.ib(factory=uuid4)
-    key: SymetricKey = attr.ib(factory=generate_secret_key)
-
-
-class ManifestAccessSchema(UnknownCheckedSchema):
-    id = fields.UUID(required=True)
-    key = fields.SymetricKey(required=True)
-
-    @post_load
-    def make_obj(self, data):
-        return ManifestAccess(**data)
-
-
-manifest_access_serializer = serializer_factory(ManifestAccessSchema)
+    id: EntryID
+    realm_id: EntryID
+    key: SecretKey
+    encryption_revision: int
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BlockAccess:
-    id: AccessID
-    key: SymetricKey
+    id: BlockID
+    key: SecretKey
     offset: int
     size: int
     digest: HashDigest
@@ -54,7 +40,7 @@ class BlockAccess:
     def from_block(cls, block: bytes, offset: int) -> "BlockAccess":
         return cls(
             id=uuid4(),
-            key=generate_secret_key(),
+            key=SecretKey.generate(),
             offset=offset,
             size=len(block),
             digest=sha256(block).hexdigest(),
@@ -62,8 +48,8 @@ class BlockAccess:
 
 
 class BlockAccessSchema(UnknownCheckedSchema):
-    id = fields.UUID(required=True)
-    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    id = BlockIDField(required=True)
+    key = fields.SecretKey(required=True)
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     # TODO: provide digest as hexa string
@@ -80,15 +66,15 @@ block_access_serializer = serializer_factory(BlockAccessSchema)
 # TODO: not used yet, useful ?
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DirtyBlockAccess:
-    id: AccessID
-    key: SymetricKey
+    id: BlockID
+    key: SecretKey
     offset: int
     size: int
 
 
 class DirtyBlockAccessSchema(UnknownCheckedSchema):
-    id = fields.UUID(required=True)
-    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    id = BlockIDField(required=True)
+    key = fields.SecretKey(required=True)
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
 
@@ -98,9 +84,6 @@ class DirtyBlockAccessSchema(UnknownCheckedSchema):
 
 
 dirty_block_access_serializer = serializer_factory(DirtyBlockAccessSchema)
-
-
-Access = Union[UserAccess, ManifestAccess, BlockAccess, DirtyBlockAccess]
 
 
 # Republishing under a better name
@@ -114,7 +97,8 @@ WorkspaceRoleField = RealmRoleField
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class WorkspaceEntry:
     name: str
-    access: ManifestAccess = attr.ib(factory=ManifestAccess)
+    id: EntryID = attr.ib(factory=EntryID)
+    key: SecretKey = attr.ib(factory=SecretKey.generate)
     encryption_revision: int = 1
     granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     role: Optional[WorkspaceRole] = WorkspaceRole.OWNER
@@ -133,7 +117,8 @@ class WorkspaceEntry:
 
 class WorkspaceEntrySchema(UnknownCheckedSchema):
     name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
-    access = fields.Nested(ManifestAccessSchema, required=True)
+    id = EntryIDField(required=True)
+    key = fields.SecretKey(required=True)
     encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
     granted_on = fields.DateTime(required=True)
     role = WorkspaceRoleField(allow_none=True, missing=None)

@@ -7,7 +7,7 @@ from parsec.crypto import (
     CryptoError,
     CryptoSignatureTimestampMismatchError,
     CryptoSignatureAuthorMismatchError,
-    generate_secret_key,
+    SecretKey,
     build_signed_msg,
     verify_signed_msg,
     encrypt_signed_msg_for,
@@ -52,7 +52,7 @@ def test_encrypt_signed_msg_for(alice, bob):
 def test_encrypt_signed_msg_with_secret_key(alice):
     msg = b"Hello world !"
     now = pendulum_now()
-    key = generate_secret_key()
+    key = SecretKey.generate()
 
     ciphered_msg = encrypt_signed_msg_with_secret_key(
         alice.device_id, alice.signing_key, key, msg, now
@@ -77,8 +77,8 @@ def test_encrypt_signed_msg_with_secret_key(alice):
 def test_signed_decrypt_bad_secret_key(alice, bob):
     msg = b"Hello world !"
     now = pendulum_now()
-    key = generate_secret_key()
-    bad_key = generate_secret_key()
+    key = SecretKey.generate()
+    bad_key = SecretKey.generate()
 
     ciphered_msg = encrypt_signed_msg_with_secret_key(
         alice.device_id, alice.signing_key, key, msg, now

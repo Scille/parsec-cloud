@@ -37,7 +37,7 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
         raise JobResultError("registration-invite-bad-value")
 
     try:
-        users = await core.fs.backend_cmds.user_find(new_user_id)
+        users = await core.user_fs.backend_cmds.user_find(new_user_id)
     except BackendNotAvailable:
         raise JobResultError("registration-invite-offline")
     except BackendConnectionError as exc:

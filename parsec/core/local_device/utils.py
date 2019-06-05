@@ -2,11 +2,12 @@
 
 from typing import List, Tuple
 from pathlib import Path
+from uuid import uuid4
 
 from parsec.types import DeviceID, OrganizationID, BackendOrganizationAddr
 from parsec.serde import SerdeValidationError, SerdePackingError
-from parsec.crypto import SigningKey, PrivateKey, generate_secret_key
-from parsec.core.types import LocalDevice, local_device_serializer, ManifestAccess
+from parsec.crypto import SecretKey, SigningKey, PrivateKey
+from parsec.core.types import EntryID, LocalDevice, local_device_serializer
 from parsec.core.local_device.exceptions import (
     LocalDeviceError,
     LocalDeviceCryptoError,
@@ -32,8 +33,9 @@ def generate_new_device(
         device_id=device_id,
         signing_key=SigningKey.generate(),
         private_key=PrivateKey.generate(),
-        user_manifest_access=ManifestAccess(),
-        local_symkey=generate_secret_key(),
+        user_manifest_id=EntryID(uuid4().hex),
+        user_manifest_key=SecretKey.generate(),
+        local_symkey=SecretKey.generate(),
     )
 
 

@@ -183,10 +183,7 @@ async def test_touch(alice_workspace):
     with pytest.raises(FileExistsError):
         await alice_workspace.touch("/bar", exist_ok=False)
 
-    # TODO: is that really what we expect here?
-    # pathlib seems to be fine with touching a directory
-    with pytest.raises(FileExistsError):
-        await alice_workspace.touch("/foo")
+    await alice_workspace.touch("/foo")
 
 
 @pytest.mark.trio

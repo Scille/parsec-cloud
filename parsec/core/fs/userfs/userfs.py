@@ -3,7 +3,6 @@
 import trio
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional
-from uuid import UUID
 from structlog import get_logger
 
 from parsec.types import UserID, DeviceID
@@ -17,15 +16,15 @@ from parsec.crypto import (
 )
 from parsec.serde import SerdeError
 from parsec.core.types import (
+    EntryID,
     LocalDevice,
     LocalWorkspaceManifest,
-    ManifestAccess,
     WorkspaceEntry,
     WorkspaceRole,
     LocalUserManifest,
     remote_manifest_serializer,
 )
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.backend_connection import (
     BackendCmdsPool,
     BackendNotAvailable,
@@ -88,27 +87,27 @@ class UserFS:
         )
 
     @property
-    def user_manifest_access(self) -> ManifestAccess:
-        return self.device.user_manifest_access
+    def user_manifest_id(self) -> EntryID:
+        return self.device.user_manifest_id
 
     def get_user_manifest(self) -> LocalUserManifest:
         """
         Raises: Nothing !
         """
         try:
-            return self.local_storage.get_manifest(self.user_manifest_access)
+            return self.local_storage.get_manifest(self.user_manifest_id)
 
-        except LocalStorageMissingEntry:
+        except LocalStorageMissingError:
             # In the unlikely event the user manifest is not present in
             # local (e.g. device just created or during tests), we fall
             # back on an empty manifest which is a good aproximation of
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
             user_manifest = LocalUserManifest(author=self.device.device_id)
-            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
             return user_manifest
 
-    def get_workspace(self, workspace_id: UUID) -> WorkspaceFS:
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
@@ -126,7 +125,7 @@ class UserFS:
         _get_workspace_entry()
 
         return WorkspaceFS(
-            workspace_id,
+            workspace_id=workspace_id,
             get_workspace_entry=_get_workspace_entry,
             device=self.device,
             local_storage=self.local_storage,
@@ -137,7 +136,7 @@ class UserFS:
             _syncer=self._syncer,
         )
 
-    async def workspace_create(self, name: str) -> UUID:
+    async def workspace_create(self, name: str) -> EntryID:
         """
         Raises: Nothing !
         """
@@ -146,14 +145,14 @@ class UserFS:
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_manifest(workspace_entry.access, workspace_manifest)
-            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
-            self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
+            self.local_storage.set_manifest(workspace_entry.id, workspace_manifest)
+            self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
+            self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
-        return workspace_entry.access.id
+        return workspace_entry.id
 
-    async def workspace_rename(self, workspace_id: UUID, new_name: str) -> None:
+    async def workspace_rename(self, workspace_id: EntryID, new_name: str) -> None:
         """
         Raises:
             FSWorkspaceNotFoundError
@@ -168,8 +167,8 @@ class UserFS:
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
-            self.local_storage.set_manifest(self.user_manifest_access, updated_user_manifest)
-            self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
+            self.local_storage.set_manifest(self.user_manifest_id, updated_user_manifest)
+            self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
     async def _fetch_remote_user_manifest(self, version=None):
         """
@@ -180,7 +179,7 @@ class UserFS:
         try:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
-            args = await self.backend_cmds.vlob_read(1, self.user_manifest_access.id, version)
+            args = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
             expected_author_id, expected_timestamp, expected_version, blob = args
 
         except BackendNotAvailable as exc:
@@ -203,7 +202,7 @@ class UserFS:
         author = await self.remote_devices_manager.get_device(expected_author_id)
         try:
             raw = decrypt_and_verify_signed_msg_with_secret_key(
-                self.user_manifest_access.key,
+                self.device.user_manifest_key,
                 blob,
                 expected_author_id,
                 author.verify_key,
@@ -262,11 +261,9 @@ class UserFS:
                 if base_um and diverged_um.base_version != base_um.base_version:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
-                self.local_storage.set_manifest(self.user_manifest_access, merged)
+                self.local_storage.set_manifest(self.user_manifest_id, merged)
                 # TODO: deprecated event ?
-                self.event_bus.send(
-                    "fs.entry.remote_changed", path="/", id=self.user_manifest_access.id
-                )
+                self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
                 return
 
     async def _outbound_sync(self) -> None:
@@ -291,7 +288,6 @@ class UserFS:
             await self._workspace_minimal_sync(w)
 
         # Build vlob
-        access = self.user_manifest_access
         to_sync_um = base_um.evolve(
             workspaces=base_um.workspaces,
             base_version=base_um.base_version + 1,
@@ -303,7 +299,7 @@ class UserFS:
         ciphered = encrypt_signed_msg_with_secret_key(
             self.device.device_id,
             self.device.signing_key,
-            access.key,
+            self.device.user_manifest_key,
             remote_manifest_serializer.dumps(to_sync_um.to_remote()),
             now,
         )
@@ -313,10 +309,12 @@ class UserFS:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
             if to_sync_um.base_version == 1:
-                await self.backend_cmds.vlob_create(access.id, 1, access.id, now, ciphered)
+                await self.backend_cmds.vlob_create(
+                    self.user_manifest_id, 1, self.user_manifest_id, now, ciphered
+                )
             else:
                 await self.backend_cmds.vlob_update(
-                    1, access.id, to_sync_um.base_version, now, ciphered
+                    1, self.user_manifest_id, to_sync_um.base_version, now, ciphered
                 )
 
         except (BackendCmdsAlreadyExists, BackendCmdsBadVersion):
@@ -340,8 +338,8 @@ class UserFS:
             # Final merge could have been achieved by a concurrent operation
             if to_sync_um.base_version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-                self.local_storage.set_manifest(self.user_manifest_access, merged_um)
-            self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_access.id)
+                self.local_storage.set_manifest(self.user_manifest_id, merged_um)
+            self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
         """
@@ -349,11 +347,11 @@ class UserFS:
             FSError
             FSBackendOfflineError
         """
-        workspace = self.get_workspace(workspace_entry.access.id)
-        await workspace.minimal_sync(workspace_entry.access)
+        workspace = self.get_workspace(workspace_entry.id)
+        await workspace.minimal_sync(workspace_entry.id)
 
     async def workspace_share(
-        self, workspace_id: UUID, recipient: UserID, role: Optional[WorkspaceRole]
+        self, workspace_id: EntryID, recipient: UserID, role: Optional[WorkspaceRole]
     ) -> None:
         """
         Raises:
@@ -395,9 +393,7 @@ class UserFS:
 
         # Step 1)
         try:
-            await self.backend_cmds.realm_update_roles(
-                workspace_entry.access.id, recipient, role=role
-            )
+            await self.backend_cmds.realm_update_roles(workspace_entry.id, recipient, role=role)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -418,10 +414,10 @@ class UserFS:
         # Step 2)
 
         # Build the sharing message
-        msg = {"id": workspace_entry.access.id, "name": workspace_entry.name}
+        msg = {"id": workspace_entry.id, "name": workspace_entry.name}
         if role:
             msg["type"] = "sharing.granted"
-            msg["key"] = workspace_entry.access.key
+            msg["key"] = workspace_entry.key
         else:
             msg["type"] = "sharing.revoked"
 
@@ -498,8 +494,8 @@ class UserFS:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
                     )
-                    self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
-                    self.event_bus.send("fs.entry.updated", id=self.user_manifest_access.id)
+                    self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
+                    self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
         return errors
 
@@ -582,7 +578,8 @@ class UserFS:
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
             name=f"{workspace_name} (shared by {sender.user_id})",
-            access=ManifestAccess(id=workspace_id, key=workspace_key),
+            id=workspace_id,
+            key=workspace_key,
             role=self_role,
         )
 
@@ -598,7 +595,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
             self.event_bus.send("userfs.updated")
             if already_existing_entry:
                 self.event_bus.send(
@@ -609,7 +606,7 @@ class UserFS:
             else:
                 # TODO: remove this event ?
                 self.event_bus.send(
-                    "fs.entry.synced", id=workspace_entry.access.id, path=f"/{workspace_name}"
+                    "fs.entry.synced", id=workspace_entry.id, path=f"/{workspace_name}"
                 )
                 self.event_bus.send("sharing.granted", new_entry=workspace_entry)
 
@@ -652,7 +649,7 @@ class UserFS:
             workspace_entry = existing_workspace_entry.evolve(role=None, granted_on=pendulum_now())
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_manifest(self.user_manifest_access, user_manifest)
+            self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
                 "sharing.revoked",

@@ -50,18 +50,23 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
         with freeze_time("2000-01-01"):
             workspace_entry = WorkspaceEntry("test")
             workspace_manifest = LocalWorkspaceManifest(device.device_id)
-        local_storage.set_dirty_manifest(workspace_entry.access, workspace_manifest)
+        local_storage.set_dirty_manifest(workspace_entry.id, workspace_manifest)
 
         remote_devices_manager = remote_devices_manager_factory(device)
         remote_loader = RemoteLoader(
-            device, workspace_entry.access.id, backend_cmds, remote_devices_manager, local_storage
+            device,
+            workspace_entry.id,
+            workspace_entry.key,
+            backend_cmds,
+            remote_devices_manager,
+            local_storage,
         )
 
         def _get_workspace_entry():
             return workspace_entry
 
         return EntryTransactions(
-            workspace_entry.access.id,
+            workspace_entry.id,
             _get_workspace_entry,
             device,
             local_storage,

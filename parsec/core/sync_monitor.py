@@ -16,9 +16,9 @@ def timestamp():
 
 
 class SyncMonitor:
-    def __init__(self, fs, event_bus):
+    def __init__(self, user_fs, event_bus):
         super().__init__()
-        self.user_fs = fs.user_fs
+        self.user_fs = user_fs
         self.event_bus = event_bus
 
         self._running = False
@@ -64,8 +64,7 @@ class SyncMonitor:
                 await self.user_fs.sync()
                 user_manifest = self.user_fs.get_user_manifest()
                 for entry in user_manifest.workspaces:
-                    wid = entry.access.id
-                    workspace = self.user_fs.get_workspace(wid)
+                    workspace = self.user_fs.get_workspace(entry.id)
                     await workspace.sync("/")
             finally:
                 self.event_bus.send("sync_monitor.reconnection_sync.done")
@@ -131,7 +130,7 @@ class SyncMonitor:
             updated_entries.pop((wid, id), None)
 
             # Perform the synchronization
-            if id == self.user_fs.user_manifest_access.id:
+            if id == self.user_fs.user_manifest_id:
                 await self.user_fs.sync()
             elif wid is not None:
                 workspace = self.user_fs.get_workspace(wid)

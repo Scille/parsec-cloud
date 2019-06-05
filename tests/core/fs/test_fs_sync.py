@@ -4,30 +4,32 @@ import pytest
 from pendulum import Pendulum
 from unittest.mock import ANY
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, ManifestAccess
+from parsec.core.types import WorkspaceEntry, WorkspaceRole
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.exceptions import FSBackendOfflineError
 
 from tests.common import freeze_time, create_shared_workspace
 
 
-async def assert_same_fs(fs1, fs2):
-    async def _recursive_assert(fs1, fs2, path):
-        stat1 = await fs1.stat(path)
-        assert not stat1["need_sync"]
-        stat2 = await fs2.stat(path)
-        assert stat1 == stat2
+async def assert_same_workspace(workspace, workspace2):
+    async def _recursive_assert(workspace, workspace2, path):
+        path_info_1 = await workspace.path_info(path)
+        assert not path_info_1["need_sync"]
+        path_info_2 = await workspace2.path_info(path)
+        assert path_info_1 == path_info_2
 
         cooked_children = {}
         # TODO: type root should not exist
-        if stat1["type"] in ("folder", "root"):
-            for child in stat1["children"]:
-                cooked_children[child] = await _recursive_assert(fs1, fs2, f"{path}/{child}")
-            stat1["children"] = cooked_children
+        if path_info_1["type"] in ("folder", "root"):
+            for child in path_info_1["children"]:
+                cooked_children[child] = await _recursive_assert(
+                    workspace, workspace2, f"{path}/{child}"
+                )
+            path_info_1["children"] = cooked_children
 
-        return stat1
+        return path_info_1
 
-    return await _recursive_assert(fs1, fs2, "/")
+    return await _recursive_assert(workspace, workspace2, "/")
 
 
 @pytest.mark.trio
@@ -61,7 +63,9 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
     }
     assert workspace_entry == WorkspaceEntry(
         name="w",
-        access=ManifestAccess(id=wid, key=spy.ANY),
+        id=wid,
+        key=spy.ANY,
+        encryption_revision=1,
         granted_on=Pendulum(2000, 1, 2),
         role=WorkspaceRole.OWNER,
     )
@@ -130,64 +134,67 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
 
 @pytest.mark.trio
-async def test_simple_sync(running_backend, alice_fs, alice2_fs):
-    wid = await create_shared_workspace("w", alice_fs, alice2_fs)
+async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs, monitor):
+    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # 0) Make sure workspace is loaded for alice2
     # (otherwise won't get synced event during step 2)
-    await alice2_fs.stat("/w")
+    await workspace2.path_info("/")
 
     # 1) Create&sync file
 
     with freeze_time("2000-01-02"):
-        await alice_fs.touch("/w/foo.txt")
+        await workspace.touch("/foo.txt")
 
     with freeze_time("2000-01-03"):
-        await alice_fs.file_write("/w/foo.txt", b"hello world !")
+        await workspace.write_bytes("/foo.txt", b"hello world !")
 
-    with alice_fs.event_bus.listen() as spy:
+    with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
-            await alice_fs.sync("/w")
-
+            await workspace.sync("/")
     spy.assert_events_occured(
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
     )
 
     # 2) Fetch back file from another fs
 
-    with alice2_fs.event_bus.listen() as spy:
+    with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
-            await alice2_fs.sync("/w")
+            # TODO: `sync` on not loaded entry should load it
+            await workspace2.sync("/")
     spy.assert_events_occured(
         [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 5))]
     )
 
     # 3) Finally make sure both fs have the same data
-    final_fs = await assert_same_fs(alice_fs, alice2_fs)
-    assert final_fs["children"]["w"]["children"].keys() == {"foo.txt"}
+    final_fs = await assert_same_workspace(workspace, workspace2)
+    assert final_fs["children"].keys() == {"foo.txt"}
 
-    data = await alice_fs.file_read("/w/foo.txt")
-    data2 = await alice2_fs.file_read("/w/foo.txt")
+    data = await workspace.read_bytes("/foo.txt")
+    data2 = await workspace2.read_bytes("/foo.txt")
     assert data == data2
 
 
 @pytest.mark.trio
-async def test_fs_recursive_sync(running_backend, alice_fs):
-    wid = await create_shared_workspace("w", alice_fs)
+async def test_fs_recursive_sync(running_backend, alice_user_fs):
+    wid = await create_shared_workspace("w", alice_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
 
     # 1) Create data
 
     with freeze_time("2000-01-02"):
-        await alice_fs.touch("/w/foo.txt")
-        await alice_fs.folder_create("/w/bar")
-        await alice_fs.touch("/w/bar/wizz.txt")
-        await alice_fs.folder_create("/w/bar/spam")
+        await workspace.touch("/foo.txt")
+        await workspace.mkdir("/bar")
+        await workspace.touch("/bar/wizz.txt")
+        await workspace.mkdir("/bar/spam")
 
     # 2) Sync it
 
-    with alice_fs.event_bus.listen() as spy:
+    with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await alice_fs.sync("/w")
+            await workspace.sync("/")
     sync_date = Pendulum(2000, 1, 3)
     spy.assert_events_occured(
         [
@@ -199,15 +206,15 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
 
     # 2) Now additional sync should not trigger any event
 
-    with alice_fs.event_bus.listen() as spy:
+    with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
-            await alice_fs.sync("/w")
+            await workspace.sync("/")
     assert not spy.events
 
     # 3) Make sure everything is considered synced
-    for path in ["/", "/w", "/w/foo.txt", "/w/bar", "/w/bar/wizz.txt", "/w/bar/spam"]:
-        stat = await alice_fs.stat(path)
-        assert not stat["need_sync"]
+    for path in ["/", "/foo.txt", "/bar", "/bar/wizz.txt", "/bar/spam"]:
+        path_info = await workspace.path_info(path)
+        assert not path_info["need_sync"]
 
 
 # TODO: a complex but interesting test would be to do concurrent changes
@@ -215,31 +222,33 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
 
 
 @pytest.mark.trio
-async def test_cross_sync(running_backend, alice_fs, alice2_fs):
-    wid = await create_shared_workspace("w", alice_fs, alice2_fs)
+async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
+    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # 1) Both fs have things to sync
 
     with freeze_time("2000-01-02"):
-        await alice_fs.touch("/w/foo.txt")
+        await workspace.touch("/foo.txt")
 
     with freeze_time("2000-01-03"):
-        await alice2_fs.folder_create("/w/bar")
-        await alice2_fs.folder_create("/w/bar/spam")
+        await workspace2.mkdir("/bar")
+        await workspace2.mkdir("/bar/spam")
 
     # 2) Do the cross sync
 
-    with alice_fs.event_bus.listen() as spy:
+    with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
-            await alice_fs.sync("/w")
+            await workspace.sync("/")
 
     spy.assert_events_occured(
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
     )
 
-    with alice2_fs.event_bus.listen() as spy:
+    with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
-            await alice2_fs.sync("/w")
+            await workspace2.sync("/")
 
     spy.assert_events_occured(
         [
@@ -250,9 +259,9 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
         ]
     )
 
-    with alice_fs.event_bus.listen() as spy:
+    with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-06"):
-            await alice_fs.sync("/w")
+            await workspace.sync("/")
 
     spy.assert_events_occured(
         [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 6))]
@@ -260,8 +269,7 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
 
     # 3) Finally make sure both fs have the same data
 
-    final_fs = await assert_same_fs(alice_fs, alice2_fs)
-    final_wkps = final_fs["children"]["w"]
+    final_wkps = await assert_same_workspace(workspace, workspace2)
     assert final_wkps["children"].keys() == {"foo.txt", "bar"}
     assert final_wkps["children"]["bar"]["children"].keys() == {"spam"}
 
@@ -269,30 +277,32 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
     assert final_wkps["children"]["bar"]["base_version"] == 2
     assert final_wkps["children"]["foo.txt"]["base_version"] == 1
 
-    data = await alice_fs.file_read("/w/foo.txt")
-    data2 = await alice2_fs.file_read("/w/foo.txt")
+    data = await workspace.read_bytes("/foo.txt")
+    data2 = await workspace2.read_bytes("/foo.txt")
     assert data == data2 == b""
 
 
 @pytest.mark.trio
-async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("w", alice_fs, alice2_fs)
+async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alice2_user_fs):
+    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # Growth by truncate is special because no blocks are created to hold
     # the newly created null bytes
 
     with freeze_time("2000-01-02"):
-        await alice_fs.touch("/w/foo.txt")
+        await workspace.touch("/foo.txt")
 
     with freeze_time("2000-01-03"):
-        await alice_fs.file_truncate("/w/foo.txt", length=24)
+        await workspace.truncate("/foo.txt", length=24)
 
-    await alice_fs.sync("/w")
-    await alice2_fs.sync("/w")
+    await workspace.sync("/")
+    await workspace2.sync("/")
 
-    stat = await alice2_fs.stat("/w/foo.txt")
-    assert stat["size"] == 24
-    data = await alice2_fs.file_read("/w/foo.txt")
+    path_info = await workspace2.path_info("/foo.txt")
+    assert path_info["size"] == 24
+    data = await workspace2.read_bytes("/foo.txt")
     assert data == b"\x00" * 24
 
 
@@ -425,33 +435,33 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
 
 @pytest.mark.trio
 @pytest.mark.skip  # TODO: rewrite this test
-async def test_create_already_existing_file_vlob(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("w", alice_fs, alice2_fs)
+async def test_create_already_existing_file_vlob(running_backend, alice_user_fs, alice2_user_fs):
+    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # First create data locally
     with freeze_time("2000-01-02"):
-        fd = await alice_fs.file_create("/w/foo.txt")
-        await alice_fs.file_fd_close(fd)
+        await workspace.touch("/foo.txt")
 
-    vanilla_backend_vlob_create = alice_fs._syncer._backend_vlob_create
+    vanilla_backend_vlob_create = alice_user_fs._syncer._backend_vlob_create
 
     async def mocked_backend_vlob_create(*args, **kwargs):
         await vanilla_backend_vlob_create(*args, **kwargs)
         raise BackendNotAvailable()
 
-    alice_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
+    alice_user_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
 
     with pytest.raises(BackendNotAvailable):
-        await alice_fs.sync("/w/foo.txt")
+        await workspace.sync("/foo.txt")
 
-    alice_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
-    await alice_fs.sync("/w/foo.txt")
+    alice_user_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
+    await workspace.sync("/foo.txt")
 
-    stat = await alice_fs.stat("/w/foo.txt")
-    assert stat == {
+    path_info = await workspace.path_info("/foo.txt")
+    assert path_info == {
         "type": "file",
         "id": ANY,
-        "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -460,59 +470,59 @@ async def test_create_already_existing_file_vlob(running_backend, alice_fs, alic
         "size": 0,
     }
 
-    await alice2_fs.sync("/w")
-    stat2 = await alice2_fs.stat("/w/foo.txt")
-    assert stat == stat2
+    await workspace2.sync("/w")
+    path_info_2 = await workspace2.path_info("/foo.txt")
+    assert path_info == path_info_2
 
 
 @pytest.mark.trio
 @pytest.mark.skip  # TODO: rewrite this test
-async def test_create_already_existing_block(running_backend, alice_fs, alice2_fs):
+async def test_create_already_existing_block(running_backend, alice_user_fs, alice2_user_fs):
     # First create&sync an empty file
 
     with freeze_time("2000-01-02"):
-        await alice_fs.workspace_create("/w")
-        fd = await alice_fs.file_create("/w/foo.txt")
-        await alice_fs.file_fd_close(fd)
-        await alice_fs.sync("/w/foo.txt")
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+        workspace = alice_user_fs.get_workspace(wid)
+        workspace2 = alice2_user_fs.get_workspace(wid)
+        await workspace.touch("/foo.txt")
+        await workspace.sync("/foo.txt")
 
-    stat = await alice_fs.stat("/w/foo.txt")
-    assert stat["base_version"] == 1
+    path_info = await workspace.path_info("/foo.txt")
+    assert path_info["base_version"] == 1
 
     # Now hack a bit the fs to simulate poor connection with backend
 
-    vanilla_backend_block_create = alice_fs._syncer._backend_block_create
+    vanilla_backend_block_create = alice_user_fs._syncer._backend_block_create
 
     async def mocked_backend_block_create(*args, **kwargs):
         await vanilla_backend_block_create(*args, **kwargs)
         raise BackendNotAvailable()
 
-    alice_fs._syncer._backend_block_create = mocked_backend_block_create
+    alice_user_fs._syncer._backend_block_create = mocked_backend_block_create
 
     # Write into the file locally and try to sync this.
     # We should end up with a block synced in the backend but still considered
     # as a dirty block in the fs.
 
     with freeze_time("2000-01-03"):
-        await alice_fs.file_write("/w/foo.txt", b"data")
+        await workspace.write_bytes("/foo.txt", b"data")
     with pytest.raises(BackendNotAvailable):
-        await alice_fs.sync("/w/foo.txt")
+        await workspace.sync("/foo.txt")
 
     # Now retry the sync with a good connection, we should be able to reach
     # eventual consistency.
 
-    alice_fs._syncer._backend_block_create = vanilla_backend_block_create
-    await alice_fs.sync("/w/foo.txt")
+    alice_user_fs._syncer._backend_block_create = vanilla_backend_block_create
+    await workspace.sync("/foo.txt")
 
     # Finally test this so-called consistency ;-)
 
-    data = await alice_fs.file_read("/w/foo.txt")
+    data = await workspace.read_bytes("/foo.txt")
     assert data == b"data"
-    stat = await alice_fs.stat("/w/foo.txt")
-    assert stat == {
+    path_info = await workspace.path_info("/foo.txt")
+    assert path_info == {
         "type": "file",
         "id": ANY,
-        "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
@@ -521,8 +531,8 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
         "size": 4,
     }
 
-    await alice2_fs.sync("/")
-    data2 = await alice2_fs.file_read("/w/foo.txt")
+    await workspace2.sync("/")
+    data2 = await workspace2.read_bytes("/foo.txt")
     assert data2 == b"data"
 
 

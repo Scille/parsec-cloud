@@ -11,9 +11,10 @@ from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverC
 @pytest.mark.linux  # win32 doesn't allow to remove an opened file
 @pytest.mark.mountpoint
 def test_delete_then_close_file(mountpoint_service):
-    async def _bootstrap(user_fs, fs, mountpoint_manager):
-        await fs.touch(f"/w/with_fsync.txt")
-        await fs.touch(f"/w/without_fsync.txt")
+    async def _bootstrap(user_fs, mountpoint_manager):
+        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        await workspace.touch("/with_fsync.txt")
+        await workspace.touch("/without_fsync.txt")
 
     mountpoint_service.start()
     mountpoint_service.execute(_bootstrap)
@@ -35,10 +36,11 @@ def test_delete_then_close_file(mountpoint_service):
 @pytest.mark.linux
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, alice_user_fs, event_bus):
+async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, event_bus):
     mountpoint_path = base_mountpoint / "w"
     wid = await alice_user_fs.workspace_create("w")
-    await alice_fs.touch("/w/bar.txt")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch("/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
 
@@ -63,7 +65,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, alice_u
 @pytest.mark.linux
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs, alice_fs):
+async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
     wid = await alice_user_fs.workspace_create("w")
     mountpoint_path = base_mountpoint / "w"
 

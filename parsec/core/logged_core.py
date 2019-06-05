@@ -19,7 +19,7 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.realms_monitor import monitor_realms
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
-from parsec.core.fs import FS, UserFS
+from parsec.core.fs import UserFS
 from parsec.core.local_storage import LocalStorage
 
 
@@ -35,7 +35,6 @@ class LoggedCore:
     remote_devices_manager = attr.ib()
     mountpoint_manager = attr.ib()
     backend_cmds = attr.ib()
-    fs = attr.ib()
     user_fs = attr.ib()
 
 
@@ -61,7 +60,7 @@ async def logged_core_factory(
         ) as backend_cmds_pool:
 
             with LocalStorage(
-                device.device_id, config.data_base_dir / device.slug
+                device.device_id, device.local_symkey, config.data_base_dir / device.slug
             ) as local_storage:
 
                 remote_devices_manager = RemoteDevicesManager(
@@ -70,8 +69,6 @@ async def logged_core_factory(
                 user_fs = UserFS(
                     device, local_storage, backend_cmds_pool, remote_devices_manager, event_bus
                 )
-                # TODO: remove the legacy fs class
-                fs = FS(user_fs)
 
                 async with trio.open_nursery() as monitor_nursery:
                     # Finally start monitors
@@ -81,7 +78,7 @@ async def logged_core_factory(
                     await monitor_nursery.start(monitor_backend_connection, event_bus)
                     await monitor_nursery.start(monitor_realms, device, user_fs, event_bus)
                     await monitor_nursery.start(monitor_messages, user_fs, event_bus)
-                    await monitor_nursery.start(monitor_sync, fs, event_bus)
+                    await monitor_nursery.start(monitor_sync, user_fs, event_bus)
 
                     await root_nursery.start(backend_listen_events, device, event_bus)
 
@@ -100,7 +97,6 @@ async def logged_core_factory(
                             remote_devices_manager=remote_devices_manager,
                             mountpoint_manager=mountpoint_manager,
                             backend_cmds=backend_cmds_pool,
-                            fs=fs,
                             user_fs=user_fs,
                         )
                         root_nursery.cancel_scope.cancel()
