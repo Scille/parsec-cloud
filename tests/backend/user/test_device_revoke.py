@@ -3,7 +3,7 @@
 import pytest
 import pendulum
 
-from parsec.crypto import build_revoked_device_certificate, unsecure_read_user_certificate
+from parsec.crypto import build_revoked_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocole import device_revoke_serializer, HandshakeRevokedDevice
 
@@ -172,13 +172,10 @@ async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice,
 async def test_device_revoke_other_organization(
     sock_from_other_organization_factory, backend_sock_factory, backend, alice, bob
 ):
-    # Organizations should be isolated...
+    # Organizations should be isolated even for organization admins
     async with sock_from_other_organization_factory(
         backend, mimick=alice.device_id, is_admin=True
     ) as sock:
-        # ...even for organization admins !
-        other_admin = await backend.user.get_user(sock.device.organization_id, sock.device.user_id)
-        assert unsecure_read_user_certificate(other_admin.user_certificate).is_admin is True
 
         revocation = build_revoked_device_certificate(
             sock.device.device_id, sock.device.signing_key, bob.device_id, pendulum.now()
