@@ -6,6 +6,7 @@ from uuid import UUID
 from parsec.types import UserID
 from parsec.core.types import FsPath, WorkspaceRole
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
+from parsec.core.backend_connection import BackendCmdsNotAllowed
 
 
 class FS:
@@ -255,7 +256,10 @@ class FS:
     async def full_sync(self) -> None:
         await self.user_fs.sync()
         for workspace in self._iter_workspaces():
-            await workspace.sync("/", recursive=True)
+            try:
+                await workspace.sync("/", recursive=True)
+            except BackendCmdsNotAllowed:
+                pass
         await self.user_fs.sync()
 
     async def get_entry_path(self, id: UUID) -> FsPath:

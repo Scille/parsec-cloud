@@ -19,6 +19,8 @@ from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID, str)
+    sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
+    sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
 
@@ -40,9 +42,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.connect("fs.workspace.created", self._on_workspace_created_trio)
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
 
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
+        self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
+        self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
 
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
 
@@ -53,6 +59,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.disconnect("fs.workspace.created", self._on_workspace_created_trio)
         self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
+        self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
 
     def load_workspace(self, workspace_fs):
         self.load_workspace_clicked.emit(workspace_fs)
@@ -154,7 +162,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
         user_manifest = self.core.user_fs.get_user_manifest()
-        for count, workspace in enumerate(user_manifest.workspaces):
+        available_workspaces = [w for w in user_manifest.workspaces if w.role]
+        for count, workspace in enumerate(available_workspaces):
             workspace_id = workspace.access.id
             workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             self.add_workspace(workspace_fs, count)
@@ -169,6 +178,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_fs_entry_synced_trio(self, event, path, id):
         self.fs_synced_qt.emit(event, id, path)
 
+    def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
+        self.sharing_updated_qt.emit(new_entry, previous_entry)
+
+    def _on_sharing_revoked_trio(self, event, new_entry, previous_entry):
+        self.sharing_revoked_qt.emit(new_entry, previous_entry)
+
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         if workspace_id and not id:
             self.fs_updated_qt.emit(event, workspace_id)
@@ -180,6 +195,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         path = FsPath(path)
         if len(path.parts) == 2:
             self.reset()
+
+    def _on_sharing_revoked_qt(self, new_entry, previous_entry):
+        self.reset()
+
+    def _on_sharing_updated_qt(self, new_entry, previous_entry):
+        self.reset()
 
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()
