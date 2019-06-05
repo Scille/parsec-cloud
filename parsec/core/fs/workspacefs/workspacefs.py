@@ -20,7 +20,7 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
-from parsec.core.fs.utils import is_file_manifest
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
 from parsec.core.fs.exceptions import (
     FSError,
@@ -458,3 +458,38 @@ class WorkspaceFS:
         await self._load_and_retry(self._syncer._sync_file, path, access, manifest)
         # Return the manifest
         return manifest
+
+    async def get_entry_path(self, id: EntryID) -> FsPath:
+        assert isinstance(id, UUID)
+
+        path_parts = []
+
+        # Temporary hack: this weird lookup logic will disappear with the removal of accesses
+        def find_access(name, entry):
+            path_parts.append(name)
+
+            if entry == id:
+                return True
+
+            try:
+                manifest = self.local_storage.get_manifest(entry)
+            except LocalStorageMissingEntry:
+                path_parts.pop()
+                return False
+
+            if not is_folder_manifest(manifest):
+                path_parts.pop()
+                return False
+
+            for child_name, child_entry in manifest.children.items():
+                if find_access(child_name, child_entry):
+                    return True
+
+            path_parts.pop()
+            return False
+
+        # Find the corresponding access
+        find_access(self.get_workspace_entry().name, self.get_workspace_entry().id)
+        if path_parts:
+            path = "/" + "/".join(path_parts)
+            return FsPath(path)
