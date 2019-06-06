@@ -121,13 +121,14 @@ async def vlob_create(
     return rep
 
 
-async def vlob_read(sock, vlob_id, version=None, encryption_revision=1):
+async def vlob_read(sock, vlob_id, version=None, timestamp=None, encryption_revision=1):
     await sock.send(
         vlob_read_serializer.req_dumps(
             {
                 "cmd": "vlob_read",
                 "vlob_id": vlob_id,
                 "version": version,
+                "timestamp": timestamp,
                 "encryption_revision": encryption_revision,
             }
         )
