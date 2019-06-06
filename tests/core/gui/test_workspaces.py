@@ -1,9 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import trio
-from unittest.mock import patch
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
 
