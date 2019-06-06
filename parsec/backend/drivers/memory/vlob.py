@@ -243,10 +243,12 @@ class MemoryVlobComponent(BaseVlobComponent):
             if timestamp is None:
                 version = vlob.current_version
             else:
-                for i in range(len(vlob.data)):
-                    if vlob.data[-i][2] <= timestamp:
-                        version = len(vlob.data) - i + 1
+                for i in range(vlob.current_version):
+                    if vlob.data[-i - 1][2] <= timestamp:
+                        version = vlob.current_version - i
                         break
+                if version is None:
+                    raise VlobVersionError()
         try:
             return (version, *vlob.data[version - 1])
 
