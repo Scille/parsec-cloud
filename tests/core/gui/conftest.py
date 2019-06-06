@@ -18,7 +18,6 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
-from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.gui.mount_widget import MountWidget
 
 
