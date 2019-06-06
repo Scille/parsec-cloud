@@ -101,7 +101,8 @@ class OpenedFile:
 
 
 class WinFSPOperations(BaseFileSystemOperations):
-    def __init__(self, volume_label, fs_access):
+    def __init__(self, event_bus, volume_label, fs_access):
+        self.event_bus = event_bus
         super().__init__()
         if len(volume_label) > 31:
             raise ValueError("`volume_label` must be 31 characters long max")
