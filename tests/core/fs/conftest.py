@@ -2,7 +2,6 @@
 
 import pytest
 
-from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -10,19 +9,6 @@ from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.types import WorkspaceEntry, LocalWorkspaceManifest
 
 from tests.common import freeze_time
-
-
-@pytest.fixture
-def local_folder_fs_factory(event_bus):
-    def _local_folder_fs_factory(device, local_storage):
-        return LocalFolderFS(device, local_storage, event_bus)
-
-    return _local_folder_fs_factory
-
-
-@pytest.fixture
-def local_folder_fs(local_folder_fs_factory, alice, alice_local_storage):
-    return local_folder_fs_factory(alice, alice_local_storage)
 
 
 @pytest.fixture

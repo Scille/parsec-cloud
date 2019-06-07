@@ -5,6 +5,8 @@ from uuid import UUID
 
 from typing import Union, Iterator, Dict
 
+import attr
+
 from parsec.types import UserID
 from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
 from parsec.core.backend_connection import (
@@ -55,8 +57,6 @@ class WorkspaceFS:
         backend_cmds,
         event_bus,
         remote_device_manager,
-        _local_folder_fs,
-        _syncer,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -109,6 +109,35 @@ class WorkspaceFS:
     async def path_id(self, path: AnyPath) -> UUID:
         info = await self.entry_transactions.entry_info(FsPath(path))
         return info["id"]
+
+    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
+
+        # Loop over parts
+        parts = []
+        current_id = entry_id
+        while True:
+
+            # Get the manifest
+            try:
+                manifest = self.local_storage.get_manifest(current_id)
+            except LocalStorageMissingError as exc:
+                raise FSEntryNotFound(entry_id)
+
+            # Find the child name
+            try:
+                name = next(name for name, child_id in manifest.children if child_id == current_id)
+            except StopIteration:
+                raise FSEntryNotFound(entry_id)
+            else:
+                parts.append(name)
+
+            # Continue until root is found
+            if current_id != self.workspace_id:
+                current_id = manifest.parent_id
+                continue
+
+            # Return the path
+            return FsPath("/" + "/".join(reversed(parts)))
 
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
@@ -418,31 +447,24 @@ class WorkspaceFS:
         # Should we do something about it?
         await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=recursive)
 
-    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
+    # Debugging helper
 
-        # Loop over parts
-        parts = []
-        current_id = entry_id
-        while True:
-
-            # Get the manifest
+    def dump(self):
+        def rec(entry_id):
+            result = {"id": entry_id}
             try:
-                manifest = self.local_storage.get_manifest(current_id)
-            except LocalStorageMissingError as exc:
-                raise FSEntryNotFound(entry_id)
+                manifest = self.local_storage.get_manifest(entry_id)
+            except LocalStorageMissingError:
+                return result
 
-            # Find the child name
+            result.update(attr.asdict(manifest))
             try:
-                name = next(name for name, child_id in manifest.children if child_id == current_id)
-            except StopIteration:
-                raise FSEntryNotFound(entry_id)
-            else:
-                parts.append(name)
+                manifest.children
+            except AttributeError:
+                return result
 
-            # Continue until root is found
-            if current_id != self.workspace_id:
-                current_id = manifest.parent_id
-                continue
+            for key, value in manifest.children.items():
+                result["children"][key] = rec(value)
+            return result
 
-            # Return the path
-            return FsPath("/" + "/".join(reversed(parts)))
+        return rec(self.workspace_id)

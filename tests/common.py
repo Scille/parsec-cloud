@@ -209,3 +209,27 @@ async def create_shared_workspace(name, creator, *shared_with):
                 await spy.wait("backend.realm.roles_updated")
 
         return wid
+
+
+def compare_fs_dumps(entry_1, entry_2):
+    entry_1.pop("author", None)
+    entry_2.pop("author", None)
+
+    def cook_entry(entry):
+        if "children" in entry:
+            return {**entry, "children": {k: v["id"] for k, v in entry["children"].items()}}
+        else:
+            return entry
+
+    assert not entry_1.get("need_sync", False)
+    assert not entry_2.get("need_sync", False)
+
+    if "need_sync" not in entry_1 or "need_sync" not in entry_2:
+        # One of the entry is not loaded
+        return
+
+    assert cook_entry(entry_1) == cook_entry(entry_2)
+    if "children" in entry_1:
+        for key, child_for_entry_1 in entry_1["children"].items():
+            child_for_entry_2 = entry_2["children"][key]
+            compare_fs_dumps(child_for_entry_1, child_for_entry_2)

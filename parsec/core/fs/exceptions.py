@@ -59,3 +59,7 @@ class FSFileConflictError(FSError):
 
 class FSReshapingRequiredError(FSError):
     pass
+
+
+class FSEntryNotFound(FSError):
+    pass

@@ -45,8 +45,7 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
 )
-from parsec.core.fs.local_folder_fs import LocalFolderFS
-from parsec.core.fs.syncer import Syncer
+
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.userfs.message import message_content_serializer
@@ -142,16 +141,6 @@ class UserFS:
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
 
-        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
-        self._syncer = Syncer(
-            device,
-            backend_cmds,
-            remote_devices_manager,
-            self._local_folder_fs,
-            local_storage,
-            event_bus,
-        )
-
     @property
     def user_manifest_id(self) -> EntryID:
         return self.device.user_manifest_id
@@ -198,8 +187,6 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
-            _local_folder_fs=self._local_folder_fs,
-            _syncer=self._syncer,
         )
 
     async def workspace_create(self, name: str) -> EntryID:
