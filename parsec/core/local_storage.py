@@ -158,6 +158,9 @@ class LocalStorage:
 
     # Block interface
 
+    def is_dirty_block(self, block_id: BlockID):
+        return self.persistent_storage.is_dirty_block(block_id)
+
     def get_block(self, block_id: BlockID) -> bytes:
         try:
             return self.persistent_storage.get_dirty_block(block_id)

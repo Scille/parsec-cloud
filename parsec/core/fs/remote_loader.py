@@ -61,7 +61,6 @@ class RemoteLoader:
         # TODO: better exceptions
         block = decrypt_raw_with_secret_key(access.key, ciphered_block)
         assert sha256(block).hexdigest() == access.digest, access
-
         self.local_storage.set_clean_block(access.id, block)
         return block
 
@@ -72,7 +71,16 @@ class RemoteLoader:
             CryptoError
         """
         ciphered = encrypt_raw_with_secret_key(access.key, data)
-        await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
+        try:
+            await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
+        except BackendCmdsBadResponse as exc:
+            # Ignore exception if the block has already been uploaded
+            # This might happen when a failure occurs before the local storage can be updated
+            if exc.status != "already_exists":
+                pass
+            raise
+        self.local_storage.clear_dirty_block(access.id)
+        self.local_storage.set_clean_block(access.id, data)
 
     async def load_remote_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:
         try:

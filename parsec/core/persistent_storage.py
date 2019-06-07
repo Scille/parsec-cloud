@@ -224,6 +224,12 @@ class PersistentStorage:
 
     # Generic block operations
 
+    def _is_block(self, conn: Connection, path: Path, block_id: BlockID):
+        with self._open_cursor(conn) as cursor:
+            cursor.execute("SELECT block_id FROM blocks WHERE block_id = ?", (str(block_id),))
+            manifest_row = cursor.fetchone()
+        return bool(manifest_row)
+
     def _get_block(self, conn: Connection, path: Path, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
             cursor.execute(
@@ -285,6 +291,9 @@ class PersistentStorage:
         self._clear_block(self.clean_conn, self._clean_db_files, block_id)
 
     # Dirty block operations
+
+    def is_dirty_block(self, block_id: BlockID):
+        return self._is_block(self.dirty_conn, self._dirty_db_files, block_id)
 
     def get_dirty_block(self, block_id: BlockID):
         return self._get_block(self.dirty_conn, self._dirty_db_files, block_id)

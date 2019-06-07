@@ -306,6 +306,7 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alic
     assert data == b"\x00" * 24
 
 
+@pytest.mark.skip
 @pytest.mark.trio
 async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)

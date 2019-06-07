@@ -304,8 +304,9 @@ class WorkspaceFS:
 
     async def _upload_blocks(self, manifest: Manifest) -> None:
         for access in manifest.blocks:
-            data = self.local_storage.get_block(access.id)
-            await self.remote_loader.upload_block(access, data)
+            if self.local_storage.is_dirty_block(access.id):
+                data = self.local_storage.get_block(access.id)
+                await self.remote_loader.upload_block(access, data)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """Raises: FSBackendOfflineError"""
