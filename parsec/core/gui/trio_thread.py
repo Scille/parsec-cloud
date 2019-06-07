@@ -86,6 +86,7 @@ class QtToTrioJob:
                     self.exc = JobResultError(
                         "crashed", exc=exc, info=f"Unexpected error: {repr(exc)}"
                     )
+                    self.exc.__traceback__ = exc.__traceback__
 
         finally:
             self._done.set()
