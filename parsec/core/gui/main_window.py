@@ -150,6 +150,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if "Device has been revoked" in str(self.runing_core_job.exc):
                 show_error(self, _("This device has been revoked."))
             else:
+                logger.error("Unhandled error", exc_info=self.runing_core_job.exc)
                 error = "\n".join(traceback.format_tb(self.runing_core_job.exc.__traceback__))
                 show_error(self, _("Unhandled error:\n\n{}").format(error))
         self.runing_core_job = None
@@ -198,9 +199,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
+            logger.exception("Unhandled error during login")
             error = "\n".join(traceback.format_tb(exc.__traceback__))
             show_error(self, _("Unhandled error:\n\n{}").format(error))
-            logger.exception("Unhandled error during login")
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
@@ -224,9 +225,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
+            logger.exception("Unhandled error during login")
             error = "\n".join(traceback.format_tb(exc.__traceback__))
             show_error(self, _("Unhandled error:\n\n{}").format(error))
-            logger.exception("Unhandled error during login")
 
     def close_app(self, force=False):
         self.need_close = True
