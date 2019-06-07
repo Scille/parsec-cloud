@@ -284,12 +284,11 @@ class SyncTransactions:
                 assert is_file_manifest(manifest)
 
                 # Look for missing blocks
-                missing = self._missing_blocks(manifest)
+                blocks, old_blocks, new_blocks, missing = self._reshape_blocks(manifest)
                 if missing:
                     continue
 
                 # Prepare
-                blocks, old_blocks, new_blocks = self._reshape_blocks(manifest)
                 new_manifest = manifest.evolve_and_mark_updated(blocks=blocks, dirty_blocks=[])
                 # Atomic change
                 for access, data in new_blocks:
@@ -307,7 +306,7 @@ class SyncTransactions:
         # TODO
         raise NotImplementedError
 
-    def _missing_blocks(self, manifest):
+    def _reshape_blocks(self, manifest):
         # Merge the blocks
         dirty_blocks = [
             DirtyBlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks
@@ -316,46 +315,37 @@ class SyncTransactions:
         merged = merge_buffers_with_limits_and_alignment(
             blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
         )
-        # Loop over used buffers
-        missing = []
-        for space in merged.spaces:
-            if len(space.buffers) <= 1:
-                continue
-            for buffer_space in space.buffers:
-                if isinstance(buffer_space.buffer, BlockBuffer):
-                    try:
-                        self.local_storage.get_block(buffer_space.buffer.access)
-                    except LocalStorageMissingError:
-                        missing.append(buffer_space.buffer.access)
-        # Return missing accesses
-        return missing
 
-    def _reshape_blocks(self, manifest):
-        # Merge the blocks
-        dirty_blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks]
-        blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
-        merged = merge_buffers_with_limits_and_alignment(
-            blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
-        )
         # Loop over blocks
-        blocks, old_blocks, new_blocks = [], [], []
+        blocks, old_blocks, new_blocks, missing = [], [], [], []
         for space in merged.spaces:
-            # Existing blocks
+
+            # Existing block
             if len(space.buffers) <= 1:
                 buffer_space, = space.buffers
                 blocks.append(buffer_space.buffer.access)
                 continue
-            # New blocks
+
+            # Create data for new block
             data = bytearray(space.size)
             for buffer_space in space.buffers:
                 if buffer_space.buffer.access:
                     old_blocks.append(buffer_space.buffer.access)
-                buff = self.local_storage.get_block(buffer_space.buffer.access.id)
-                data[buffer_space.start - space.start : buffer_space.end - space.start] = buff[
+                try:
+                    buff = self.local_storage.get_block(buffer_space.buffer.access)
+                except LocalStorageMissingError:
+                    missing.append(buffer_space.buffer.access)
+                    continue
+                start = buffer_space.start - space.start
+                end = buffer_space.end - space.start
+                data[start:end] = buff[
                     buffer_space.buffer_slice_start : buffer_space.buffer_slice_end
                 ]
+
+            # Create new block
             block_access = BlockAccess.from_block(data, space.start)
             blocks.append(block_access)
             new_blocks.append((block_access, data))
+
         # Return missing accesses
-        return blocks, old_blocks, new_blocks
+        return blocks, old_blocks, new_blocks, missing
