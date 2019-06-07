@@ -79,7 +79,7 @@ class RemoteLoader:
             if exc.status != "already_exists":
                 pass
             raise
-        self.local_storage.clear_dirty_block(access.id)
+        self.local_storage.clear_block(access.id)
         self.local_storage.set_clean_block(access.id, data)
 
     async def load_remote_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:

@@ -292,9 +292,9 @@ class SyncTransactions:
                 new_manifest = manifest.evolve_and_mark_updated(blocks=blocks, dirty_blocks=[])
                 # Atomic change
                 for access, data in new_blocks:
-                    self.local_storage.set_dirty_block(access, data)
-                for block in old_blocks:
-                    self.local_storage.clear_block(block)
+                    self.local_storage.set_dirty_block(access.id, data)
+                for access in old_blocks:
+                    self.local_storage.clear_block(access.id)
                 self.local_storage.set_manifest(entry_id, new_manifest)
 
                 # Return
@@ -332,7 +332,7 @@ class SyncTransactions:
                 if buffer_space.buffer.access:
                     old_blocks.append(buffer_space.buffer.access)
                 try:
-                    buff = self.local_storage.get_block(buffer_space.buffer.access)
+                    buff = self.local_storage.get_block(buffer_space.buffer.access.id)
                 except LocalStorageMissingError:
                     missing.append(buffer_space.buffer.access)
                     continue

@@ -173,17 +173,14 @@ class LocalStorage:
     def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         return self.persistent_storage.set_clean_block(block_id, block)
 
-    def clear_dirty_block(self, block_id: BlockID) -> None:
+    def clear_block(self, block_id: BlockID) -> None:
         try:
             self.persistent_storage.clear_dirty_block(block_id)
         except LocalStorageMissingError:
-            logger.warning("Tried to remove a dirty block that doesn't exist anymore")
-
-    def clear_clean_block(self, block_id: BlockID) -> None:
-        try:
-            self.persistent_storage.clear_clean_block(block_id)
-        except LocalStorageMissingError:
-            pass
+            try:
+                self.persistent_storage.clear_clean_block(block_id)
+            except LocalStorageMissingError:
+                logger.warning("Tried to remove a dirty block that doesn't exist anymore")
 
     # File management interface
 
@@ -244,9 +241,9 @@ class LocalStorage:
             return
         self.clear_manifest(entry_id)
         for block_access in manifest.dirty_blocks:
-            self.clear_dirty_block(block_access.id)
+            self.clear_block(block_access.id)
         for block_access in manifest.blocks:
-            self.clear_clean_block(block_access.id)
+            self.clear_block(block_access.id)
 
     # Cursor helper
 
