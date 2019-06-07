@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QWidget
 from parsec.core.types import FsPath, EntryID, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import FSEntryNotFound
 
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX
 from parsec.core.gui.custom_widgets import (
@@ -28,6 +29,57 @@ class CancelException(Exception):
     pass
 
 
+async def _do_rename(workspace_fs, old_path, new_path):
+    try:
+        await workspace_fs.rename(old_path, new_path)
+    except:
+        raise JobResultError("error")
+
+
+async def _do_delete(workspace_fs, paths):
+    try:
+        for path in paths:
+            try:
+                info = await workspace_fs.path_info(path)
+                if info["type"] == "folder":
+                    await workspace_fs.rmtree(path)
+                else:
+                    await workspace_fs.unlink(path)
+            except:
+                pass
+    except:
+        raise JobResultError("error")
+
+
+async def _do_folder_stat(workspace_fs, path):
+    try:
+        stats = {}
+        dir_stat = await workspace_fs.path_info(path)
+        for i, child in enumerate(dir_stat["children"]):
+            child_stat = await workspace_fs.path_info(path / child)
+            stats[path / child] = child_stat
+        return stats
+    except:
+        raise JobResultError("error")
+
+
+async def _do_folder_create(workspace_fs, path):
+    try:
+        await workspace_fs.mkdir(path)
+    except FileExistsError:
+        raise JobResultError("already-exists")
+    except:
+        raise JobResultError("error")
+
+
+async def _do_import(workspace_fs, files, destination, progress_signal):
+    for f in files:
+        try:
+            progress_signal.emit(100)
+        except:
+            pass
+
+
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID, str)
@@ -36,6 +88,19 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     taskbar_updated = pyqtSignal()
     back_clicked = pyqtSignal()
 
+    rename_success = pyqtSignal(QtToTrioJob)
+    rename_error = pyqtSignal(QtToTrioJob)
+    delete_success = pyqtSignal(QtToTrioJob)
+    delete_error = pyqtSignal(QtToTrioJob)
+    folder_stat_success = pyqtSignal(QtToTrioJob)
+    folder_stat_error = pyqtSignal(QtToTrioJob)
+    folder_create_success = pyqtSignal(QtToTrioJob)
+    folder_create_error = pyqtSignal(QtToTrioJob)
+    import_success = pyqtSignal(QtToTrioJob)
+    import_error = pyqtSignal(QtToTrioJob)
+
+    import_progress = pyqtSignal(int)
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -43,6 +108,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self._workspace_fs = None
+        self.import_job = None
 
         self.ROLES_TEXTS = {
             WorkspaceRole.READER: _("Reader"),
@@ -83,6 +149,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
+        self.rename_success.connect(self._on_rename_success)
+        self.rename_error.connect(self._on_rename_error)
+        self.delete_success.connect(self._on_delete_success)
+        self.delete_error.connect(self._on_delete_error)
+        self.folder_stat_success.connect(self._on_folder_stat_success)
+        self.folder_stat_error.connect(self._on_folder_stat_error)
+        self.folder_create_success.connect(self._on_folder_create_success)
+        self.folder_create_error.connect(self._on_folder_create_error)
+        self.import_success.connect(self._on_import_success)
+        self.import_error.connect(self._on_import_error)
 
     def disconnect_all(self):
         self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
@@ -143,15 +219,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 MessageDialog.show_error(self, _("Some files could not be renamed."))
 
     def rename(self, file_name, new_name):
-        try:
-            self.jobs_ctx.run(
-                self.workspace_fs.rename,
-                self.current_directory / file_name,
-                self.current_directory / new_name,
-            )
-            return True
-        except:
-            return False
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            _do_rename,
+            workspace_fs=self.workspace_fs,
+            old_path=self.current_directory / file_name,
+            new_path=self.current_directory / new_name,
+        )
 
     def delete_files(self):
         files = self.table_files.selected_files()
@@ -182,18 +257,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.clearSelection()
 
     def delete_item(self, row, file_type, file_name):
-        path = self.current_directory / file_name
-        try:
-            if file_type == FileType.Folder:
-                self._delete_folder(path)
-            else:
-                self.jobs_ctx.run(self.workspace_fs.unlink, path)
-            return True
-        except:
-            return False
-
-    def _delete_folder(self, path):
-        self.jobs_ctx.run(self.workspace_fs.rmtree, path)
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            _do_delete,
+            workspace_fs=self.workspace_fs,
+            paths=[self.current_directory / file_name],
+        )
 
     def open_files(self):
         files = self.table_files.selected_files()
@@ -243,39 +313,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def load(self, directory):
         self.update_timer.stop()
 
-        self.table_files.clear()
-
-        old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
-        old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
-        self.table_files.setSortingEnabled(False)
-        self.current_directory = directory
-        if self.current_directory == FsPath("/"):
-            self.table_files.add_parent_workspace()
-        else:
-            self.table_files.add_parent_folder()
-        str_dir = str(self.current_directory)
-        self.line_edit_current_directory.setText(str_dir)
-        self.line_edit_current_directory.setCursorPosition(0)
-        dir_path = self.current_directory
-        dir_stat = self.jobs_ctx.run(self.workspace_fs.path_info, dir_path)
-        for i, child in enumerate(dir_stat["children"]):
-            child_stat = self.jobs_ctx.run(self.workspace_fs.path_info, dir_path / child)
-            if child_stat["type"] == "folder":
-                self.table_files.add_folder(child, not child_stat["need_sync"])
-            else:
-                self.table_files.add_file(
-                    child,
-                    child_stat["size"],
-                    child_stat["created"],
-                    child_stat["updated"],
-                    not child_stat["need_sync"],
-                )
-            if i % 5 == 0:
-                QApplication.processEvents()
-        self.table_files.sortItems(old_sort, old_order)
-        self.table_files.setSortingEnabled(True)
-        if self.line_edit_search.text():
-            self.filter_files(self.line_edit_search.text())
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            _do_folder_stat,
+            workspace_fs=self.workspace_fs,
+            path=[self.current_directory],
+        )
 
     def import_all(self, files, total_size):
         loading_dialog = LoadingDialog(total_size=total_size + len(files), parent=self)
@@ -428,13 +472,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     self.table_files.setRowHidden(i, False)
 
     def _create_folder(self, folder_name):
-        try:
-            dir_path = self.current_directory / folder_name
-            self.jobs_ctx.run(self.workspace_fs.mkdir, dir_path)
-            return True
-        except FileExistsError:
-            MessageDialog.show_error(self, _("A folder with the same name already exists."))
-            return False
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            _do_folder_create,
+            workspace_fs=self.workspace_fs,
+            path=self.current_directory / folder_name,
+        )
 
     # slot
     def create_folder_clicked(self):
@@ -460,6 +504,59 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if event.key() == Qt.Key_Delete:
             row = self.table_files.currentRow()
             self.delete_item(row)()
+
+    def _on_rename_success(self, job):
+        pass
+
+    def _on_rename_error(self, job):
+        pass
+
+    def _on_delete_success(self, job):
+        pass
+
+    def _on_delete_error(self, job):
+        pass
+
+    def _on_folder_stat_success(self, job):
+        old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
+        old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
+        self.table_files.setSortingEnabled(False)
+        if self.current_directory == FsPath("/"):
+            self.table_files.add_parent_workspace()
+        else:
+            self.table_files.add_parent_folder()
+        str_dir = str(self.current_directory)
+        self.line_edit_current_directory.setText(str_dir)
+        self.line_edit_current_directory.setCursorPosition(0)
+        self.table_files.clear()
+        files_stats = job.ret
+        for path, stats in files_stats.items():
+            if stats["type"] == "folder":
+                self.table_files.add_folder(path, not stats["need_sync"])
+            else:
+                self.table_files.add_file(
+                    path, stats["size"], stats["created"], stats["updated"], not stats["need_sync"]
+                )
+        self.table_files.sortItems(old_sort, old_order)
+        self.table_files.setSortingEnabled(True)
+        if self.line_edit_search.text():
+            self.filter_files(self.line_edit_search.text())
+
+    def _on_folder_stat_error(self, job):
+        pass
+
+    def _on_folder_create_success(self, job):
+        pass
+
+    def _on_folder_create_error(self, job):
+        if job.status == "already-exists":
+            MessageDialog.show_error(self, _("A folder with the same name already exists."))
+
+    def _on_import_success(self):
+        pass
+
+    def _on_import_error(self):
+        pass
 
     def _on_fs_entry_synced_trio(self, event, path, id):
         self.fs_synced_qt.emit(event, id, path)
