@@ -44,7 +44,8 @@ async def _do_workspace_list(core):
     try:
         workspaces = []
         user_manifest = core.user_fs.get_user_manifest()
-        for count, workspace in enumerate(user_manifest.workspaces):
+        available_workspaces = [w for w in user_manifest.workspaces if w.role]
+        for count, workspace in enumerate(available_workspaces):
             workspace_id = workspace.id
             workspace_fs = core.user_fs.get_workspace(workspace_id)
             ws_entry = workspace_fs.get_workspace_entry()
@@ -68,6 +69,8 @@ async def _do_workspace_mount(core, workspace_id):
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID, str)
+    sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
+    sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
 
@@ -98,6 +101,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.connect("fs.workspace.created", self._on_workspace_created_trio)
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
 
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
@@ -111,6 +116,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.mount_success.connect(self.on_mount_success)
         self.mount_error.connect(self.on_mount_error)
 
+        self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
+        self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
+
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
         self.taskbar_buttons.append(button_add_workspace)
 
@@ -118,6 +126,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.disconnect("fs.workspace.created", self._on_workspace_created_trio)
         self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
 
     def load_workspace(self, workspace_fs):
         self.load_workspace_clicked.emit(workspace_fs)
@@ -214,9 +224,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def share_workspace(self, workspace_fs):
-        d = WorkspaceSharingDialog(
-            self.core.user_fs.user_fs, workspace_fs, self.core, self.jobs_ctx
-        )
+        d = WorkspaceSharingDialog(self.core.user_fs, workspace_fs, self.core, self.jobs_ctx)
         d.exec_()
 
     def create_workspace_clicked(self):
@@ -240,6 +248,18 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             _do_workspace_list,
             core=self.core,
         )
+
+    def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
+        self.sharing_updated_qt.emit(new_entry, previous_entry)
+
+    def _on_sharing_revoked_trio(self, event, new_entry, previous_entry):
+        self.sharing_revoked_qt.emit(new_entry, previous_entry)
+
+    def _on_sharing_updated_qt(self, new_entry, previous_entry):
+        self.reset()
+
+    def _on_sharing_revoked_qt(self, new_entry, previous_entry):
+        self.reset()
 
     def _on_workspace_created_trio(self, event, new_entry):
         self._workspace_created_qt.emit(new_entry)
