@@ -112,32 +112,41 @@ class WorkspaceFS:
 
     async def get_entry_path(self, entry_id: EntryID) -> FsPath:
 
+        # Get first manifest
+        try:
+            current_id = entry_id
+            current_manifest = self.local_storage.get_manifest(current_id)
+        except LocalStorageMissingError:
+            raise FSEntryNotFound(entry_id)
+
         # Loop over parts
         parts = []
-        current_id = entry_id
-        while True:
+        while current_id != self.workspace_id:
 
             # Get the manifest
             try:
-                manifest = self.local_storage.get_manifest(current_id)
-            except LocalStorageMissingError as exc:
+                parent_manifest = self.local_storage.get_manifest(current_manifest.parent_id)
+            except LocalStorageMissingError:
                 raise FSEntryNotFound(entry_id)
 
             # Find the child name
             try:
-                name = next(name for name, child_id in manifest.children if child_id == current_id)
+                name = next(
+                    name
+                    for name, child_id in parent_manifest.children.items()
+                    if child_id == current_id
+                )
             except StopIteration:
                 raise FSEntryNotFound(entry_id)
             else:
                 parts.append(name)
 
             # Continue until root is found
-            if current_id != self.workspace_id:
-                current_id = manifest.parent_id
-                continue
+            current_id = current_manifest.parent_id
+            current_manifest = parent_manifest
 
-            # Return the path
-            return FsPath("/" + "/".join(reversed(parts)))
+        # Return the path
+        return FsPath("/" + "/".join(reversed(parts)))
 
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
