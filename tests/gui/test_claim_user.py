@@ -17,8 +17,6 @@ async def alice_invite(running_backend, backend, alice):
         "password": "S3cr3tP@ss",
     }
 
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async def _invite():
         await invite_and_create_user(alice, invitation["user_id"], invitation["token"], True)
 

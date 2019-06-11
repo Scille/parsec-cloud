@@ -84,7 +84,9 @@ def local_device_factory(coolorg):
     count = 0
 
     def _local_device_factory(
-        base_device_id: Optional[str] = None, org: OrganizationFullData = coolorg
+        base_device_id: Optional[str] = None,
+        org: OrganizationFullData = coolorg,
+        is_admin: bool = None,
     ):
         nonlocal count
 
@@ -96,19 +98,26 @@ def local_device_factory(coolorg):
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
 
-        device = generate_new_device(device_id, org.addr)
+        parent_device = None
         try:
             # If the user already exists, we must retreive it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
+            if is_admin is not None and is_admin is not parent_device.is_admin:
+                raise ValueError(
+                    "is_admin is set but user already exists, with a different is_admin value."
+                )
+            is_admin = parent_device.is_admin
+
+        except StopIteration:
+            is_admin = bool(is_admin)
+
+        device = generate_new_device(device_id, org.addr, is_admin=is_admin)
+        if parent_device is not None:
             device = device.evolve(
                 private_key=parent_device.private_key,
                 user_manifest_id=parent_device.user_manifest_id,
                 user_manifest_key=parent_device.user_manifest_key,
             )
-
-        except StopIteration:
-            pass
-
         org_devices.append(device)
         return device
 
@@ -128,12 +137,12 @@ def otherorg(organization_factory):
 
 @pytest.fixture
 def otheralice(local_device_factory, otherorg):
-    return local_device_factory("alice@dev1", otherorg)
+    return local_device_factory("alice@dev1", otherorg, is_admin=True)
 
 
 @pytest.fixture
 def alice(local_device_factory, initial_user_manifest_state):
-    device = local_device_factory("alice@dev1")
+    device = local_device_factory("alice@dev1", is_admin=True)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -145,7 +154,12 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 @pytest.fixture
 def alice2(local_device_factory):
-    return local_device_factory("alice@dev2")
+    return local_device_factory("alice@dev2", is_admin=True)
+
+
+@pytest.fixture
+def adam(local_device_factory):
+    return local_device_factory("adam@dev1", is_admin=True)
 
 
 @pytest.fixture
@@ -245,14 +259,14 @@ def local_device_to_backend_user(
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        certifier_id, certifier_signing_key, device.user_id, device.public_key, now
+        certifier_id, certifier_signing_key, device.user_id, device.public_key, device.is_admin, now
     )
     device_certificate = build_device_certificate(
         certifier_id, certifier_signing_key, device.device_id, device.verify_key, now
     )
     return new_backend_user_factory(
         device_id=device.device_id,
-        is_admin=False,
+        is_admin=device.is_admin,
         certifier=certifier_id,
         user_certificate=user_certificate,
         device_certificate=device_certificate,
@@ -362,6 +376,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             device: LocalDevice,
             certifier: Optional[LocalDevice] = None,
             initial_user_manifest_in_v0: bool = False,
+            is_admin: bool = False,
         ):
             if not certifier:
                 try:
@@ -450,14 +465,16 @@ def sock_from_other_organization_factory(
     backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
 ):
     @asynccontextmanager
-    async def _sock_from_other_organization_factory(backend, mimick=None, anonymous=False):
+    async def _sock_from_other_organization_factory(
+        backend, mimick=None, anonymous=False, is_admin=False
+    ):
         binder = backend_data_binder_factory(backend)
 
         other_org = organization_factory()
         if mimick:
-            other_device = local_device_factory(mimick, other_org)
+            other_device = local_device_factory(mimick, other_org, is_admin)
         else:
-            other_device = local_device_factory(org=other_org)
+            other_device = local_device_factory(org=other_org, is_admin=is_admin)
         await binder.bind_organization(other_org, other_device)
 
         if anonymous:

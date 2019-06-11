@@ -47,6 +47,7 @@ logger = get_logger()
 class LoggedClientContext:
     transport = attr.ib()
     organization_id = attr.ib()
+    is_admin = attr.ib()
     device_id = attr.ib()
     public_key = attr.ib()
     verify_key = attr.ib()
@@ -251,6 +252,7 @@ class BackendApp:
                         context = LoggedClientContext(
                             transport,
                             organization_id,
+                            user.is_admin,
                             device_id,
                             user.public_key,
                             device.verify_key,

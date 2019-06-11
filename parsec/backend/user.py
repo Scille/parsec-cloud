@@ -193,7 +193,6 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "user_id": user.user_id,
-                "is_admin": user.is_admin,
                 "user_certificate": user.user_certificate,
                 "devices": devices,
                 "trustchain": trustchain,
@@ -218,14 +217,7 @@ class BaseUserComponent:
 
     @catch_protocole_errors
     async def api_user_invite(self, client_ctx, msg):
-        # is_admin could have changed in db since the creation of the connection
-        try:
-            user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
-
-        except UserNotFoundError:
-            raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
-
-        if not user.is_admin:
+        if not client_ctx.is_admin:
             return {
                 "status": "invalid_role",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -272,8 +264,8 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-            user, trustchain = await self.get_user_with_trustchain(
-                client_ctx.organization_id, invitation.creator.user_id
+            creator_user, creator_device, trustchain = await self.get_user_with_device_and_trustchain(
+                client_ctx.organization_id, invitation.creator
             )
 
         except UserNotFoundError:
@@ -282,8 +274,8 @@ class BaseUserComponent:
         return user_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
-                "user_id": user.user_id,
-                "user_certificate": user.user_certificate,
+                "device_certificate": creator_device.device_certificate,
+                "user_certificate": creator_user.user_certificate,
                 "trustchain": trustchain,
             }
         )
@@ -346,7 +338,9 @@ class BaseUserComponent:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
 
         else:
-            return {"status": "ok"}
+            user = await self.get_user(client_ctx.organization_id, invitation.user_id)
+            user_certificate = user.user_certificate
+            return {"status": "ok", "user_certificate": user_certificate}
 
     @catch_protocole_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
@@ -396,7 +390,7 @@ class BaseUserComponent:
         try:
             user = User(
                 user_id=u_data.user_id,
-                is_admin=msg["is_admin"],
+                is_admin=u_data.is_admin,
                 user_certificate=msg["user_certificate"],
                 user_certifier=u_data.certified_by,
                 created_on=u_data.certified_on,
@@ -462,8 +456,8 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-            user, trustchain = await self.get_user_with_trustchain(
-                client_ctx.organization_id, invitation.creator.user_id
+            creator_user, creator_device, trustchain = await self.get_user_with_device_and_trustchain(
+                client_ctx.organization_id, invitation.creator
             )
 
         except UserNotFoundError:
@@ -472,8 +466,8 @@ class BaseUserComponent:
         return device_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
-                "user_id": user.user_id,
-                "user_certificate": user.user_certificate,
+                "device_certificate": creator_device.device_certificate,
+                "user_certificate": creator_user.user_certificate,
                 "trustchain": trustchain,
             }
         )
@@ -647,15 +641,6 @@ class BaseUserComponent:
 
     #### Virtual methods ####
 
-    async def set_user_admin(
-        self, organization_id: OrganizationID, user_id: UserID, is_admin: bool
-    ) -> None:
-        """
-        Raises:
-            UserNotFoundError
-        """
-        raise NotImplementedError()
-
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
     ) -> None:
@@ -684,6 +669,15 @@ class BaseUserComponent:
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
     ) -> Tuple[User, Tuple[Device]]:
+        """
+        Raises:
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def get_user_with_device_and_trustchain(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> Tuple[User, Device, Tuple[Device]]:
         """
         Raises:
             UserNotFoundError
