@@ -324,7 +324,7 @@ async def test_reencryption_events(
 ):
 
     # Start listening events
-    await events_subscribe(alice_backend_sock, realm=[realm])
+    await events_subscribe(alice_backend_sock)
 
     with backend.event_bus.listen() as spy:
         # Start maintenance and check for events
@@ -332,7 +332,7 @@ async def test_reencryption_events(
 
         with trio.fail_after(1):
             # No guarantees those events occur before the commands' return
-            await spy.wait("realm.maintenance_started")
+            await spy.wait_multiple(["realm.maintenance_started", "message.received"])
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {
@@ -341,6 +341,8 @@ async def test_reencryption_events(
             "realm_id": realm,
             "encryption_revision": 2,
         }
+        rep = await events_listen_nowait(alice_backend_sock)
+        assert rep == {"status": "ok", "event": "message.received", "index": 1}
 
         # Do the reencryption
         rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=100)

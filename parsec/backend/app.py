@@ -54,6 +54,7 @@ class LoggedClientContext:
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
     channels = attr.ib(factory=lambda: trio.open_memory_channel(100))
+    realms = attr.ib(factory=set)
 
     def __repr__(self):
         return (
@@ -129,7 +130,6 @@ class BackendApp:
         self.config = config
         self.nursery = None
         self.dbh = None
-        self.events = EventsComponent(self.event_bus)
 
         if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(self.event_bus)
@@ -157,6 +157,8 @@ class BackendApp:
                 self.config.blockstore_config, postgresql_dbh=self.dbh
             )
             self.block = PGBlockComponent(self.dbh, self.blockstore, self.vlob)
+
+        self.events = EventsComponent(self.event_bus, self.realm)
 
         self.logged_cmds = {
             "events_subscribe": self.events.api_events_subscribe,

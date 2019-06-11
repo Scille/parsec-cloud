@@ -237,7 +237,7 @@ class BaseRealmComponent:
             RealmNotFoundError
             RealmAccessError
         """
-        pass
+        raise NotImplementedError()
 
     async def finish_reencryption_maintenance(
         self,
@@ -252,4 +252,12 @@ class BaseRealmComponent:
             RealmAccessError
             RealmMaintenanceError: not in maintenance or bad encryption_revision
         """
-        pass
+        raise NotImplementedError()
+
+    async def get_realms_for_user(
+        self, organization_id: OrganizationID, user: UserID
+    ) -> Dict[UUID, RealmRole]:
+        """
+        Raises: Nothing !
+        """
+        raise NotImplementedError()

@@ -103,6 +103,7 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 @pytest.mark.trio
 async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_backend, alice):
     # Spy on the transport events to detect the Pings/Pongs
+    # (Note we are talking about websocket ping, not our own higher-level ping api)
     transport_events_sender, transport_events_receiver = trio.open_memory_channel(100)
     _vanilla_next_ws_event = Transport._next_ws_event
 

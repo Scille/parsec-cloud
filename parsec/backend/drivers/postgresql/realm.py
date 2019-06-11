@@ -73,6 +73,16 @@ SELECT
         realm_internal_id,
     )
 
+    await send_signal(
+        conn,
+        "realm.roles_updated",
+        organization_id=organization_id,
+        author=author,
+        realm_id=realm_id,
+        user=author.user_id,
+        role_str=RealmRole.OWNER.value,
+    )
+
 
 async def get_realm_status(conn, organization_id, realm_id):
     rep = await conn.fetchrow(
@@ -262,6 +272,16 @@ SET
                         role.value,
                     )
 
+                await send_signal(
+                    conn,
+                    "realm.roles_updated",
+                    organization_id=organization_id,
+                    author=author,
+                    realm_id=realm_id,
+                    user=user,
+                    role_str=role.value if role else None,
+                )
+
     async def start_reencryption_maintenance(
         self,
         organization_id: OrganizationID,
@@ -322,9 +342,6 @@ INSERT INTO vlob_encryption_revision(
                     encryption_revision,
                 )
 
-        for recipient, body in per_participant_message.items():
-            await send_message(conn, organization_id, author, recipient, timestamp, body)
-
         await send_signal(
             conn,
             "realm.maintenance_started",
@@ -333,6 +350,9 @@ INSERT INTO vlob_encryption_revision(
             realm_id=realm_id,
             encryption_revision=encryption_revision,
         )
+
+        for recipient, body in per_participant_message.items():
+            await send_message(conn, organization_id, author, recipient, timestamp, body)
 
     async def finish_reencryption_maintenance(
         self,
@@ -410,3 +430,18 @@ WHERE
                     realm_id=realm_id,
                     encryption_revision=encryption_revision,
                 )
+
+    async def get_realms_for_user(
+        self, organization_id: OrganizationID, user: UserID
+    ) -> Dict[UUID, RealmRole]:
+        async with self.dbh.pool.acquire() as conn:
+            rep = await conn.fetch(
+                """
+SELECT get_realm_id(realm) as realm_id, role
+FROM realm_user_role
+WHERE user_ = get_user_internal_id($1, $2)
+""",
+                organization_id,
+                user,
+            )
+        return {row["realm_id"]: _STR_TO_ROLE.get(row["role"]) for row in rep}
