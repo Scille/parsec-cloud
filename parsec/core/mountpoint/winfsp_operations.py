@@ -18,7 +18,7 @@ from winfspy.plumbing.winstuff import (
 from parsec.core.types import FsPath
 from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.fs.sync_base import DEFAULT_BLOCK_SIZE
+from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
 MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}
