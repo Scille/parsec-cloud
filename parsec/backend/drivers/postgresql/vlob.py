@@ -151,9 +151,12 @@ WHERE
                     ret = await conn.execute(
                         """
 DELETE FROM vlob_group_user_role
-WHERE user_ = get_user_internal_id($1, $2)
+WHERE
+    user_ = get_user_internal_id($1, $3)
+    AND vlob_group = get_vlob_group_internal_id($1, $2)
                         """,
                         organization_id,
+                        id,
                         user,
                     )
                 else:
