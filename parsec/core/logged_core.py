@@ -97,4 +97,5 @@ async def logged_core_factory(
                             backend_cmds=backend_cmds_pool,
                             user_fs=user_fs,
                         )
-                        root_nursery.cancel_scope.cancel()
+                    monitor_nursery.cancel_scope.cancel()
+        root_nursery.cancel_scope.cancel()
