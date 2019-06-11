@@ -83,9 +83,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.event_bus = event_bus
         self.users = []
         self.taskbar_buttons = []
-        button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
-        button_add_user.clicked.connect(self.register_user)
-        self.taskbar_buttons.append(button_add_user)
+        if core.device.is_admin:
+            button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
+            button_add_user.clicked.connect(self.register_user)
+            self.taskbar_buttons.append(button_add_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
         self.reset()
 
@@ -171,7 +172,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self.add_user(
                     str(user_info.user_id),
                     is_current_user=user_id == user,
-                    is_admin=False,
+                    is_admin=user_info.is_admin,
                     certified_on=user_info.certified_on,
                     is_revoked=all([device.revoked_on for device in user_devices]),
                 )

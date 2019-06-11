@@ -2,11 +2,11 @@
 
 import pytest
 import trio
-from trio.testing import wait_all_tasks_blocked
-from uuid import uuid4
 
+from parsec.api.protocole import RealmRole
 from parsec.core.backend_connection import backend_listen_events
 
+from tests.common import create_shared_workspace
 from tests.open_tcp_stream_mock_wrapper import offline
 
 
@@ -43,100 +43,10 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
 
 
 @pytest.mark.trio
-async def test_subscribe_listen_unsubscribe_realm(
-    event_bus, backend, running_backend_listen_events, alice
-):
-    realm_id = uuid4()
-    src_id = uuid4()
-
-    # Subscribe event
-
-    with event_bus.listen() as spy:
-        event_bus.send("backend.realm.listen", realm_id=realm_id)
-        with trio.fail_after(1.0):
-            await spy.wait("backend.listener.restarted")
-
-    # Send&listen event
-
-    backend.event_bus.send(
-        "realm.vlobs_updated",
-        organization_id=alice.organization_id,
-        author="bob@test",
-        realm_id=realm_id,
-        checkpoint=1,
-        src_id=src_id,
-        src_version=42,
-    )
-
-    with trio.fail_after(1.0):
-        await event_bus.spy.wait(
-            "backend.realm.vlobs_updated",
-            kwargs={"realm_id": realm_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
-        )
-
-    # Unsubscribe event
-
-    with event_bus.listen() as spy:
-        event_bus.send("backend.realm.unlisten", realm_id=realm_id)
-        with trio.fail_after(1.0):
-            await spy.wait("backend.listener.restarted")
-
-    # Finally make sure this event is no longer present
-
-    with event_bus.listen() as spy:
-        backend.event_bus.send(
-            "realm.vlobs_updated",
-            organization_id=alice.organization_id,
-            author="bob@test",
-            realm_id=realm_id,
-            checkpoint=1,
-            src_id=src_id,
-            src_version=42,
-        )
-        await wait_all_tasks_blocked(cushion=0.01)
-        assert not spy.events
-
-
-@pytest.mark.trio
-async def test_unlisten_unknown_realm_does_nothing(event_bus, running_backend_listen_events):
-    realm_id = uuid4()
-
-    with event_bus.listen() as spy:
-        event_bus.send("backend.realm.unlisten", realm_id=realm_id)
-        await wait_all_tasks_blocked(cushion=0.01)
-
-    assert not spy.assert_events_exactly_occured(
-        [("backend.realm.unlisten", {"realm_id": realm_id})]
-    )
-
-
-@pytest.mark.trio
-async def test_listen_already_listened_realm_does_nothing(event_bus, running_backend_listen_events):
-    realm_id = uuid4()
-
-    with event_bus.listen() as spy:
-        event_bus.send("backend.realm.listen", realm_id=realm_id)
-        await spy.wait("backend.listener.restarted")
-
-    # Second subscribe is useless, event listener shouldn't be restarted
-    with event_bus.listen() as spy:
-        event_bus.send("backend.realm.listen", realm_id=realm_id)
-        await wait_all_tasks_blocked(cushion=0.01)
-
-    assert not spy.assert_events_exactly_occured([("backend.realm.listen", {"realm_id": realm_id})])
-
-
-@pytest.mark.trio
 async def test_backend_switch_offline(
     mock_clock, event_bus, backend_addr, backend, running_backend_listen_events, alice
 ):
-    realm_id = uuid4()
-    src_id = uuid4()
     mock_clock.rate = 1.0
-
-    with event_bus.listen() as spy:
-        event_bus.send("backend.realm.listen", realm_id=realm_id)
-        await spy.wait("backend.listener.restarted")
 
     # Switch backend offline and wait for according event
 
@@ -158,17 +68,80 @@ async def test_backend_switch_offline(
 
     with event_bus.listen() as spy:
         backend.event_bus.send(
-            "realm.vlobs_updated",
-            organization_id=alice.organization_id,
-            author="bob@test",
-            realm_id=realm_id,
-            checkpoint=1,
-            src_id=src_id,
-            src_version=42,
+            "pinged", organization_id=alice.organization_id, author="bob@test", ping="foo"
         )
 
         with trio.fail_after(1.0):
-            await spy.wait(
-                "backend.realm.vlobs_updated",
-                kwargs={"realm_id": realm_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
-            )
+            await spy.wait("backend.pinged", kwargs={"ping": "foo"})
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("sync", ("/", "/foo"))
+@pytest.mark.parametrize("type", ("folder", "file"))
+async def test_realm_notif_on_new_entry_sync(
+    running_backend, alice_core, alice2_user_fs, mock_clock, sync, type
+):
+    mock_clock.rate = 1
+    wid = await create_shared_workspace("w", alice_core, alice2_user_fs)
+    workspace = alice2_user_fs.get_workspace(wid)
+
+    # Suspend time to freeze core background tasks
+    mock_clock.rate = 0
+
+    if type == "folder":
+        await workspace.mkdir("/foo")
+    elif type == "file":
+        await workspace.touch("/foo")
+    entry_id = await workspace.path_id("/foo")
+
+    # Expected events
+    entry_events = [
+        (
+            "backend.realm.vlobs_updated",
+            {"realm_id": wid, "checkpoint": 2, "src_id": entry_id, "src_version": 1},
+        ),
+        # TODO: add ("fs.entry.downsynced", {"workspace_id": wid, "id": entry_id}),
+    ]
+    root_events = [
+        (
+            "backend.realm.vlobs_updated",
+            {"realm_id": wid, "checkpoint": 3, "src_id": wid, "src_version": 2},
+        ),
+        ("fs.entry.downsynced", {"workspace_id": wid, "id": wid}),
+    ]
+    with alice_core.event_bus.listen() as spy:
+        await workspace.sync(sync)
+        mock_clock.rate = 1
+        expected = entry_events if sync == "/foo" else entry_events + root_events
+        await spy.wait_multiple_with_timeout(expected, 3)
+
+
+@pytest.mark.trio
+async def test_realm_notif_on_new_workspace_sync(
+    mock_clock, running_backend, alice_core, alice2_user_fs
+):
+
+    # Suspend time to freeze core background tasks
+    mock_clock.rate = 0
+    uid = alice2_user_fs.user_manifest_id
+    wid = await alice2_user_fs.workspace_create("foo")
+
+    expected = [
+        # Access to newly created realm
+        ("backend.realm.roles_updated", {"realm_id": wid, "role": RealmRole.OWNER}),
+        # New realm workspace manifest created
+        (
+            "backend.realm.vlobs_updated",
+            {"realm_id": wid, "checkpoint": 1, "src_id": wid, "src_version": 1},
+        ),
+        # User manifest updated
+        (
+            "backend.realm.vlobs_updated",
+            {"realm_id": uid, "checkpoint": 2, "src_id": uid, "src_version": 2},
+        ),
+    ]
+
+    with alice_core.event_bus.listen() as spy:
+        await alice2_user_fs.sync()
+        mock_clock.rate = 1
+        await spy.wait_multiple_with_timeout(expected, 3)

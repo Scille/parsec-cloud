@@ -46,7 +46,6 @@ async def test_api_user_get_ok(access_testbed):
     rep = await user_get(sock, device.user_id)
     assert rep == {
         "status": "ok",
-        "is_admin": False,
         "user_id": device.user_id,
         "user_certificate": binder.certificates_store.get_user(device),
         "devices": [
@@ -93,7 +92,6 @@ async def test_api_user_get_ok_deep_trustchain(
     rep["devices"] = sorted(rep["devices"], key=lambda x: x["device_id"])
     assert rep == {
         "status": "ok",
-        "is_admin": False,
         "user_id": mike2.device_id.user_id,
         "user_certificate": certificates_store.get_user(mike2),
         "devices": [

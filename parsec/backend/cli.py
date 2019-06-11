@@ -47,7 +47,7 @@ def init_cmd(db):
     "--blockstore",
     "-b",
     default="MOCKED",
-    type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT", "RAID1")),
+    type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT", "RAID0", "RAID1", "RAID5")),
     help="Block store the clients should write into (default: mocked in memory). "
     "Set environment variables accordingly.",
 )

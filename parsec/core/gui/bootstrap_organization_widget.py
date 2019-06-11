@@ -64,7 +64,7 @@ async def _do_bootstrap_organization(
     organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
 
     try:
-        device = generate_new_device(device_id, organization_addr)
+        device = generate_new_device(device_id, organization_addr, True)
         save_device_with_password(config_dir, device, password)
 
     except LocalDeviceAlreadyExistsError:
@@ -72,7 +72,7 @@ async def _do_bootstrap_organization(
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
-        None, root_signing_key, device.user_id, device.public_key, now
+        None, root_signing_key, device.user_id, device.public_key, device.is_admin, now
     )
     device_certificate = build_device_certificate(
         None, root_signing_key, device_id, device.verify_key, now

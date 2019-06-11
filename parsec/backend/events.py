@@ -5,88 +5,93 @@ import trio
 from parsec.event_bus import EventBus
 from parsec.api.protocole import events_subscribe_serializer, events_listen_serializer
 from parsec.backend.utils import catch_protocole_errors
-
-
-def _ping_event_callback_factory(client_ctx, pings):
-    pings = set(pings)
-
-    def _on_ping_event(event, organization_id, author, ping):
-        if (
-            organization_id != client_ctx.organization_id
-            or author == client_ctx.device_id
-            or ping not in pings
-        ):
-            return
-
-        try:
-            client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
-        except trio.WouldBlock:
-            client_ctx.logger.warning(f"event queue is full for {client_ctx}")
-
-    return _on_ping_event
-
-
-def _realm_events_callback_factory(client_ctx, realm_ids):
-    realm_ids = set(realm_ids)
-
-    def _on_realm_events(event, organization_id, author, realm_id, **kwargs):
-        if (
-            organization_id != client_ctx.organization_id
-            or author == client_ctx.device_id
-            or realm_id not in realm_ids
-        ):
-            return
-
-        msg = {"event": event, "realm_id": realm_id, **kwargs}
-        try:
-            client_ctx.send_events_channel.send_nowait(msg)
-        except trio.WouldBlock:
-            client_ctx.logger.warning(f"event queue is full for {client_ctx}")
-
-    return _on_realm_events
-
-
-def _message_event_callback_factory(client_ctx):
-    def _on_message_event(event, organization_id, author, recipient, index):
-        if (
-            organization_id != client_ctx.organization_id
-            or author == client_ctx.device_id
-            or recipient != client_ctx.user_id
-        ):
-            return
-
-        try:
-            client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
-        except trio.WouldBlock:
-            client_ctx.logger.warning(f"event queue is full for {client_ctx}")
-
-    return _on_message_event
+from parsec.backend.realm import BaseRealmComponent
 
 
 class EventsComponent:
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus, realm_component: BaseRealmComponent):
         self.event_bus = event_bus
+        self.realm_component = realm_component
 
     @catch_protocole_errors
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
+        def _on_roles_updated(event, organization_id, author, realm_id, user, role):
+            if organization_id != client_ctx.organization_id or user != client_ctx.user_id:
+                return
+
+            if role is None:
+                client_ctx.realms.discard(realm_id)
+            else:
+                client_ctx.realms.add(realm_id)
+
+            # Note for this event we don't filter out the ones sent by the client's
+            # device, there is two reason for this:
+            # 1) A user cannot change it own role, so this case should never occur
+            # 2) Returning this event inform the peer we are ready to send it
+            #    `realm.vlobs_updated` events on this realm (especially useful during tests)
+            try:
+                client_ctx.send_events_channel.send_nowait(
+                    {"event": event, "realm_id": realm_id, "role": role}
+                )
+            except trio.WouldBlock:
+                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+
+        def _on_pinged(event, organization_id, author, ping):
+            if organization_id != client_ctx.organization_id or author == client_ctx.device_id:
+                return
+
+            try:
+                client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
+            except trio.WouldBlock:
+                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+
+        def _on_realm_events(event, organization_id, author, realm_id, **kwargs):
+            if (
+                organization_id != client_ctx.organization_id
+                or author == client_ctx.device_id
+                or realm_id not in client_ctx.realms
+            ):
+                return
+
+            msg = {"event": event, "realm_id": realm_id, **kwargs}
+            try:
+                client_ctx.send_events_channel.send_nowait(msg)
+            except trio.WouldBlock:
+                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+
+        def _on_message_received(event, organization_id, author, recipient, index):
+            if (
+                organization_id != client_ctx.organization_id
+                or author == client_ctx.device_id
+                or recipient != client_ctx.user_id
+            ):
+                return
+
+            try:
+                client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
+            except trio.WouldBlock:
+                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+
         # Drop previous event callbacks if any
         client_ctx.event_bus_ctx.clear()
 
-        if msg["ping"]:
-            on_ping_event = _ping_event_callback_factory(client_ctx, msg["ping"])
-            client_ctx.event_bus_ctx.connect("pinged", on_ping_event)
+        # Connect the new callbacks
+        client_ctx.event_bus_ctx.connect("pinged", _on_pinged)
+        client_ctx.event_bus_ctx.connect("realm.vlobs_updated", _on_realm_events)
+        client_ctx.event_bus_ctx.connect("realm.maintenance_started", _on_realm_events)
+        client_ctx.event_bus_ctx.connect("realm.maintenance_finished", _on_realm_events)
+        client_ctx.event_bus_ctx.connect("message.received", _on_message_received)
 
-        if msg["realm"]:
-            on_realm_event = _realm_events_callback_factory(client_ctx, msg["realm"])
-            client_ctx.event_bus_ctx.connect("realm.vlobs_updated", on_realm_event)
-            client_ctx.event_bus_ctx.connect("realm.maintenance_started", on_realm_event)
-            client_ctx.event_bus_ctx.connect("realm.maintenance_finished", on_realm_event)
+        # Final event to keep up to date the list of realm we should listen on
+        client_ctx.event_bus_ctx.connect("realm.roles_updated", _on_roles_updated)
 
-        if msg["message"]:
-            on_message_received = _message_event_callback_factory(client_ctx)
-            client_ctx.event_bus_ctx.connect("message.received", on_message_received)
+        # Finally populate the list of realm we should listen on
+        realms_for_user = await self.realm_component.get_realms_for_user(
+            client_ctx.organization_id, client_ctx.user_id
+        )
+        client_ctx.realms = set(realms_for_user.keys())
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 

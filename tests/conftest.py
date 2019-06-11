@@ -364,6 +364,7 @@ def backend_factory(
     alice,
     alice2,
     otheralice,
+    adam,
     bob,
     initial_user_manifest_state,
     blockstore,
@@ -399,6 +400,7 @@ def backend_factory(
                         await binder.bind_organization(coolorg, alice)
                         await binder.bind_organization(otherorg, otheralice)
                         await binder.bind_device(alice2)
+                        await binder.bind_device(adam)
                         await binder.bind_device(bob)
 
                 yield backend
@@ -512,6 +514,12 @@ async def otheralice_backend_sock(backend_sock_factory, backend, otheralice):
 
 
 @pytest.fixture
+async def adam_backend_sock(backend_sock_factory, backend, adam):
+    async with backend_sock_factory(backend, adam) as sock:
+        yield sock
+
+
+@pytest.fixture
 async def bob_backend_sock(backend_sock_factory, backend, bob):
     async with backend_sock_factory(backend, bob) as sock:
         yield sock
@@ -540,6 +548,13 @@ async def alice2_core(running_backend_ready, event_bus_factory, core_config, ali
     await running_backend_ready.wait()
     async with logged_core_factory(core_config, alice2, event_bus_factory()) as alice2_core:
         yield alice2_core
+
+
+@pytest.fixture
+async def adam_core(running_backend_ready, event_bus_factory, core_config, adam):
+    await running_backend_ready.wait()
+    async with logged_core_factory(core_config, adam, event_bus_factory()) as adam_core:
+        yield adam_core
 
 
 @pytest.fixture

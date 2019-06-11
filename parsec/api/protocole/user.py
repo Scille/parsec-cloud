@@ -36,7 +36,6 @@ class DeviceSchema(UnknownCheckedSchema):
 
 class UserGetRepSchema(BaseRepSchema):
     user_id = fields.UserID(required=True)
-    is_admin = fields.Boolean(required=True)
 
     user_certificate = fields.Bytes(required=True)
 
@@ -84,7 +83,7 @@ class UserGetInvitationCreatorReqSchema(BaseReqSchema):
 
 
 class UserGetInvitationCreatorRepSchema(BaseRepSchema):
-    user_id = fields.UserID(required=True)
+    device_certificate = fields.Bytes(required=True)
     user_certificate = fields.Bytes(required=True)
     trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
 
@@ -100,7 +99,7 @@ class UserClaimReqSchema(BaseReqSchema):
 
 
 class UserClaimRepSchema(BaseRepSchema):
-    pass
+    user_certificate = fields.Bytes(required=True)
 
 
 user_claim_serializer = CmdSerializer(UserClaimReqSchema, UserClaimRepSchema)
@@ -122,7 +121,6 @@ user_cancel_invitation_serializer = CmdSerializer(
 class UserCreateReqSchema(BaseReqSchema):
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
-    is_admin = fields.Boolean(missing=False)
 
 
 class UserCreateRepSchema(BaseRepSchema):
@@ -151,7 +149,7 @@ class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
 
 
 class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
-    user_id = fields.UserID(required=True)
+    device_certificate = fields.Bytes(required=True)
     user_certificate = fields.Bytes(required=True)
     trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
 
