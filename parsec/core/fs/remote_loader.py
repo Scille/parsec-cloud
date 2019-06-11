@@ -77,8 +77,7 @@ class RemoteLoader:
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage can be updated
             if exc.status != "already_exists":
-                pass
-            raise
+                raise
         self.local_storage.clear_block(access.id)
         self.local_storage.set_clean_block(access.id, data)
 
