@@ -53,7 +53,9 @@ def test_merge_folder_children():
 
 def test_merge_manifests():
     now = Pendulum.now()
-    v1 = FolderManifest(author="b@b", version=1, created=now, updated=now, children={})
+    v1 = FolderManifest(
+        author="b@b", parent_id=EntryID(), version=1, created=now, updated=now, children={}
+    )
 
     # Initial base manifest
     m1 = v1.to_local("a@a")
@@ -98,7 +100,7 @@ def test_merge_manifests():
 
 
 def test_merge_manifests_with_a_placeholder():
-    m1 = LocalFolderManifest("a@a")
+    m1 = LocalFolderManifest("a@a", parent_id=EntryID())
     m2 = merge_manifests(m1)
     assert m2 == m1
     v1 = m1.to_remote().evolve(version=1)

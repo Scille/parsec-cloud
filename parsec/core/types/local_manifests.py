@@ -40,6 +40,7 @@ __all__ = (
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalFileManifest:
     author: DeviceID
+    parent_id: EntryID
     base_version: int = 0
     need_sync: bool = True
     is_placeholder: bool = True
@@ -67,6 +68,7 @@ class LocalFileManifest:
     def to_remote(self, **data) -> "remote_manifests.FileManifest":
         return remote_manifests.FileManifest(
             author=self.author,
+            parent_id=self.parent_id,
             version=self.base_version,
             created=self.created,
             updated=self.updated,
@@ -80,6 +82,7 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_file_manifest", required=True)
     author = fields.DeviceID(required=True)
+    parent_id = EntryIDField(required=True)
     base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
     is_placeholder = fields.Boolean(required=True)
@@ -105,6 +108,7 @@ local_file_manifest_serializer = serializer_factory(LocalFileManifestSchema)
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalFolderManifest:
     author: DeviceID
+    parent_id: EntryID
     base_version: int = 0
     need_sync: bool = True
     is_placeholder: bool = True
@@ -140,6 +144,7 @@ class LocalFolderManifest:
     def to_remote(self, **data) -> "remote_manifests.FolderManifest":
         return remote_manifests.FolderManifest(
             author=self.author,
+            parent_id=self.parent_id,
             version=self.base_version,
             created=self.created,
             updated=self.updated,
@@ -152,6 +157,7 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_folder_manifest", required=True)
     author = fields.DeviceID(required=True)
+    parent_id = EntryIDField(required=True)
     base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
     is_placeholder = fields.Boolean(required=True)
@@ -181,6 +187,7 @@ class LocalWorkspaceManifest(LocalFolderManifest):
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(
             author=self.author,
+            parent_id=self.parent_id,
             version=self.base_version,
             created=self.created,
             updated=self.updated,

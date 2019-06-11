@@ -194,7 +194,9 @@ class UserFS:
         Raises: Nothing !
         """
         workspace_entry = WorkspaceEntry(name)
-        workspace_manifest = LocalWorkspaceManifest(author=self.device.device_id)
+        workspace_manifest = LocalWorkspaceManifest(
+            author=self.device.device_id, parent_id=self.user_manifest_id
+        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)

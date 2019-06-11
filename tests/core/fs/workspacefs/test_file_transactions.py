@@ -44,7 +44,11 @@ def foo_txt(alice, file_transactions):
     with freeze_time("2000-01-02"):
         entry_id = EntryID()
         manifest = LocalFileManifest(
-            author=alice.device_id, is_placeholder=False, need_sync=False, base_version=1
+            author=alice.device_id,
+            parent_id=EntryID(),
+            is_placeholder=False,
+            need_sync=False,
+            base_version=1,
         )
         local_storage.set_clean_manifest(entry_id, manifest)
     return File(local_storage, entry_id)
@@ -194,7 +198,7 @@ def test_file_operations(
             )
 
             self.entry_id = EntryID()
-            manifest = LocalFileManifest(self.device.device_id, need_sync=True)
+            manifest = LocalFileManifest(self.device.device_id, parent_id=EntryID())
             self.local_storage.set_dirty_manifest(self.entry_id, manifest)
 
             self.fd = self.local_storage.create_cursor(self.entry_id)
