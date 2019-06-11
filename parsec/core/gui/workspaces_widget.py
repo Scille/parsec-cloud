@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole
-from parsec.core.fs import WorkspaceFS
+from parsec.core.fs import WorkspaceFS, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import show_error, show_warning, get_text, TaskbarButton
@@ -60,13 +60,22 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def add_workspace(self, workspace_fs, count=None):
         # TODO: workspace's participants must be fetched from the backend
         ws_entry = workspace_fs.get_workspace_entry()
-        users_roles = self.jobs_ctx.run(workspace_fs.get_user_roles)
-        root_info = self.jobs_ctx.run(workspace_fs.path_info, "/")
+        try:
+            users_roles = self.jobs_ctx.run(workspace_fs.get_user_roles)
+        except FSBackendOfflineError:
+            users_roles = {}
+
+        try:
+            root_info = self.jobs_ctx.run(workspace_fs.path_info, "/")
+            files = root_info["children"]
+        except FSBackendOfflineError:
+            files = []
+
         button = WorkspaceButton(
             workspace_fs,
             is_shared=len(users_roles) > 1,
             is_creator=ws_entry.role == WorkspaceRole.OWNER,
-            files=root_info["children"][:4],
+            files=files[:4],
             enable_workspace_color=self.core.config.gui_workspace_color,
         )
         if count is None:
