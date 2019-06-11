@@ -392,10 +392,6 @@ class WorkspaceFS:
             except FSReshapingRequiredError:
                 await self.sync_transactions.file_reshape(entry_id)
                 continue
-            # A file conflict needs to be adressed first
-            except FSFileConflictError as exc:
-                await self.sync_transactions.file_conflict(entry_id, *exc.args)
-                continue
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
@@ -429,6 +425,12 @@ class WorkspaceFS:
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
             return
+
+        # A file conflict needs to be adressed first
+        except FSFileConflictError as exc:
+            local_manifest, remote_manifest = exc.args
+            await self.sync_transactions.file_conflict(entry_id, local_manifest, remote_manifest)
+            return await self.sync_by_id(local_manifest.parent_id)
 
         # Non-recursive
         if not recursive or is_file_manifest(manifest):

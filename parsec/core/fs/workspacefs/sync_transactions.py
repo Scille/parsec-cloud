@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from itertools import count
 from typing import Optional, List, Dict, Iterator
-
 
 from parsec.event_bus import EventBus
 from parsec.types import DeviceID
@@ -30,6 +30,21 @@ DEFAULT_BLOCK_SIZE = 1 * 1024 * 1024  # 1 MB
 # Helpers
 
 
+def get_filename(manifest: Manifest, entry_id: EntryID) -> Optional[EntryName]:
+    try:
+        return next(name for name, child_id in manifest.children.items() if child_id == entry_id)
+    except StopIteration:
+        return None
+
+
+def get_conflict_filename(filename: EntryName, filenames: List[EntryName], author: DeviceID):
+    counter = count(2)
+    new_filename = full_name(filename, [f"conflicting with {author}"])
+    while new_filename in filenames:
+        new_filename = full_name(filename, [f"conflicting with {author} - {next(counter)}"])
+    return new_filename
+
+
 def full_name(name: EntryName, suffixes: List[str]) -> EntryName:
     # No suffix
     if not suffixes:
@@ -43,6 +58,9 @@ def full_name(name: EntryName, suffixes: List[str]) -> EntryName:
     # Extension
     first_name, *ext = name.split(".")
     return EntryName(".".join([first_name + suffix_string, *ext]))
+
+
+# Merging helpers
 
 
 def merge_folder_children(
@@ -303,8 +321,36 @@ class SyncTransactions:
     async def file_conflict(
         self, entry_id: EntryID, local_manifest: LocalManifest, remote_manifest: Manifest
     ) -> None:
-        # TODO
-        raise NotImplementedError
+        # This is the only transaction that affects more than one manifests
+        # That's because the local version of the file has to be registered in the
+        # parent as a new child while the remote version has to be set as the actual
+        # version. In practice, this should not be an issue.
+
+        # Lock parent then child
+        parent_id = local_manifest.parent_id
+        async with self.local_storage.lock_manifest(parent_id) as parent_manifest:
+            async with self.local_storage.lock_manifest(entry_id) as current_manifest:
+
+                # Make sure the file still exists
+                filename = get_filename(parent_manifest, entry_id)
+                if filename is None:
+                    return
+
+                # Prepare
+                new_entry_id = EntryID()
+                new_name = get_conflict_filename(
+                    filename, list(parent_manifest.children), remote_manifest.author
+                )
+                new_manifest = current_manifest.evolve(base_version=0, is_placeholder=True)
+                new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
+                    {new_name: new_entry_id}
+                )
+
+                # TODO: blocks should be copied!!
+
+                self.local_storage.set_manifest(new_entry_id, new_manifest)
+                self.local_storage.set_manifest(parent_id, new_parent_manifest)
+                self.local_storage.set_base_manifest(entry_id, remote_manifest)
 
     def _reshape_blocks(self, manifest):
         # Merge the blocks

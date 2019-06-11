@@ -306,7 +306,6 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alic
     assert data == b"\x00" * 24
 
 
-@pytest.mark.skip
 @pytest.mark.trio
 async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
@@ -351,7 +350,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         ]
     )
 
-    # 4) Sync Alice2, with conflicts on `/z`, `/w/bar/buzz.txt` and `/w/bar/spam`
+    # 4) Sync Alice2, with conflicts on `/foo.txt`, `/bar/buzz.txt` and `/bar/spam`
 
     with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-06"):
@@ -363,7 +362,8 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
             # TODO: add more events
         ]
     )
-    expected = [
+    root_expected = ["/bar", "/foo (conflicting with alice@dev1).txt", "/foo.txt"]
+    bar_expected = [
         "/bar/buzz (conflicting with alice@dev1).txt",
         "/bar/buzz.txt",
         "/bar/from_alice",
@@ -371,8 +371,10 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         "/bar/spam",
         "/bar/spam (conflicting with alice@dev1)",
     ]
-    children = sorted(str(x) for x in await workspace2.listdir("/bar"))
-    assert children == expected
+    root_children = sorted(str(x) for x in await workspace2.listdir("/"))
+    bar_children = sorted(str(x) for x in await workspace2.listdir("/bar"))
+    assert root_children == root_expected
+    assert bar_children == bar_expected
 
     # 5) Sync Alice again to take into account changes from the second fs's sync
 
@@ -386,10 +388,12 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
             # TODO: add more events
         ]
     )
-    children = sorted(str(x) for x in await workspace2.listdir("/bar"))
-    assert children == expected
+    root_children = sorted(str(x) for x in await workspace.listdir("/"))
+    bar_children = sorted(str(x) for x in await workspace.listdir("/bar"))
+    assert root_children == root_expected
+    assert bar_children == bar_expected
 
-    # TODO: add tests for file conflicts
+    # TODO: add more tests for file conflicts
 
 
 @pytest.mark.trio
