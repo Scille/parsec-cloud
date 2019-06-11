@@ -245,9 +245,12 @@ WHERE
                     await conn.execute(
                         """
 DELETE FROM realm_user_role
-WHERE user_ = get_user_internal_id($1, $2)
+WHERE
+    user_ = get_user_internal_id($1, $3)
+    AND realm = get_realm_internal_id($1, $2)
                         """,
                         organization_id,
+                        realm_id,
                         user,
                     )
                 else:
