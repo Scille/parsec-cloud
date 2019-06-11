@@ -148,7 +148,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 w.setParent(None)
         user_manifest = self.core.user_fs.get_user_manifest()
         for count, workspace in enumerate(user_manifest.workspaces):
-            workspace_id = workspace.access.id
+            workspace_id = workspace.id
             workspace_fs = self.core.user_fs.get_workspace(workspace_id)
             self.add_workspace(workspace_fs, count)
 
@@ -156,7 +156,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self._workspace_created_qt.emit(new_entry)
 
     def _on_workspace_created_qt(self, workspace_entry):
-        workspace_fs = self.core.user_fs.get_workspace(workspace_entry.access.id)
+        workspace_fs = self.core.user_fs.get_workspace(workspace_entry.id)
         self.add_workspace(workspace_fs)
 
     def _on_fs_entry_synced_trio(self, event, path, id):
