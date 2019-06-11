@@ -7,7 +7,7 @@ from uuid import UUID
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QWidget
 
-from parsec.core.types import FsPath, EntryID, WorkspaceEntry, WorkspaceRole
+from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import FSEntryNotFound
 
 from parsec.core.gui import desktop
@@ -463,7 +463,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         except FSEntryNotFound:
             return
 
-        if not path or path == "/" + self.workspace_fs.workspace_name:
+        if not path or str(path) == "/" + self.workspace_fs.workspace_name:
             return
 
         path = FsPath(path)
@@ -488,10 +488,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
 
         # Modifications on root is handled by workspace_widget
-        if not path or path == "/" + self.workspace_fs.workspace_name:
+        if not path or str(path) == "/" + self.workspace_fs.workspace_name:
             return
 
-        path = FsPath(path)
         modified_hops = list(path.parts)
         current_dir_hops = ["/", self.workspace_fs.workspace_name]
         current_dir_hops.extend((x for x in self.current_directory.parts if x != "/"))

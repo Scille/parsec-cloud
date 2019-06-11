@@ -473,7 +473,7 @@ class WorkspaceFS:
 
             try:
                 manifest = self.local_storage.get_manifest(entry)
-            except LocalStorageMissingEntry:
+            except LocalStorageMissingError:
                 path_parts.pop()
                 return False
 
@@ -493,3 +493,5 @@ class WorkspaceFS:
         if path_parts:
             path = "/" + "/".join(path_parts)
             return FsPath(path)
+        else:
+            raise FSEntryNotFound(path)
