@@ -23,7 +23,7 @@ def local_storage_factory(initial_user_manifest_state):
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
             user_manifest = user_manifest.evolve(author=device_id)
-            local_storage.set_dirty_manifest(device.user_manifest_id, user_manifest)
+            local_storage.set_manifest(device.user_manifest_id, user_manifest)
         return local_storage
 
     return _local_storage_factory

@@ -216,7 +216,7 @@ class FileTransactions:
 
             # Atomic change
             self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_dirty_manifest(cursor.entry_id, manifest)
+            self.local_storage.set_manifest(cursor.entry_id, manifest)
             cursor.offset = new_offset
 
         # Notify
@@ -242,7 +242,7 @@ class FileTransactions:
             # Atomic change
             if padded_content:
                 self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_dirty_manifest(cursor.entry_id, manifest)
+            self.local_storage.set_manifest(cursor.entry_id, manifest)
 
         # Notify
         self._send_event("fs.entry.updated", id=cursor.entry_id)

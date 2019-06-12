@@ -32,7 +32,7 @@ class File:
         return self.local_storage.get_manifest(self.entry_id)
 
     def set_manifest(self, manifest):
-        self.local_storage.set_dirty_manifest(self.entry_id, manifest)
+        self.local_storage.set_manifest(self.entry_id, manifest)
 
     def open(self):
         return self.local_storage.create_cursor(self.entry_id)
@@ -49,8 +49,8 @@ def foo_txt(alice, file_transactions):
             is_placeholder=False,
             need_sync=False,
             base_version=1,
-        )
-        local_storage.set_clean_manifest(entry_id, manifest)
+        ).to_remote()
+        local_storage.set_base_manifest(entry_id, manifest)
     return File(local_storage, entry_id)
 
 
@@ -199,7 +199,7 @@ def test_file_operations(
 
             self.entry_id = EntryID()
             manifest = LocalFileManifest(self.device.device_id, parent_id=EntryID())
-            self.local_storage.set_dirty_manifest(self.entry_id, manifest)
+            self.local_storage.set_manifest(self.entry_id, manifest)
 
             self.fd = self.local_storage.create_cursor(self.entry_id)
             self.file_oracle_path = tmpdir / f"oracle-test-{tentative}.txt"
