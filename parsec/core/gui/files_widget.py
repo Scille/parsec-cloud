@@ -36,17 +36,19 @@ async def _do_rename(workspace_fs, old_path, new_path):
         raise JobResultError("error")
 
 
-async def _do_delete(workspace_fs, paths):
+async def _do_delete(workspace_fs, files):
     try:
-        for path in paths:
+        rows = []
+        for path, file_type, row in files:
             try:
-                info = await workspace_fs.path_info(path)
-                if info["type"] == "folder":
+                if file_type == FileType.Folder:
                     await workspace_fs.rmtree(path)
                 else:
                     await workspace_fs.unlink(path)
+                rows.append(row)
             except:
                 pass
+        return rows
     except:
         raise JobResultError("error")
 
@@ -55,10 +57,10 @@ async def _do_folder_stat(workspace_fs, path):
     try:
         stats = {}
         dir_stat = await workspace_fs.path_info(path)
-        for i, child in enumerate(dir_stat["children"]):
+        for child in dir_stat["children"]:
             child_stat = await workspace_fs.path_info(path / child)
-            stats[path / child] = child_stat
-        return stats
+            stats[child] = child_stat
+        return path, stats
     except:
         raise JobResultError("error")
 
@@ -82,7 +84,7 @@ async def _do_import(workspace_fs, files, destination, progress_signal):
 
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
-    fs_synced_qt = pyqtSignal(str, UUID, str)
+    fs_synced_qt = pyqtSignal(str, UUID)
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     taskbar_updated = pyqtSignal()
@@ -178,7 +180,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_user_role = ws_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
-        self.reload()
+        self.reset()
 
     def reset(self):
         self.label_current_workspace.setText(self.workspace_fs.workspace_name)
@@ -245,24 +247,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not result:
             return
         r = True
-        for f in files:
-            r &= self.delete_item(*f)
-            if r:
-                self.table_files.removeRow(f[0])
-        if not r:
-            if len(files) == 1:
-                MessageDialog.show_error(self, _('Can not delete "{}".').format(f[2]))
-            else:
-                MessageDialog.show_error(self, _("Some files could not be deleted."))
-        self.table_files.clearSelection()
 
-    def delete_item(self, row, file_type, file_name):
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "delete_error", QtToTrioJob),
             _do_delete,
             workspace_fs=self.workspace_fs,
-            paths=[self.current_directory / file_name],
+            files=[(self.current_directory / f[2], f[1], f[0]) for f in files],
         )
 
     def open_files(self):
@@ -314,11 +305,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.update_timer.stop()
 
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
+            ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
             _do_folder_stat,
             workspace_fs=self.workspace_fs,
-            path=[self.current_directory],
+            path=directory,
         )
 
     def import_all(self, files, total_size):
@@ -471,25 +462,21 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 else:
                     self.table_files.setRowHidden(i, False)
 
-    def _create_folder(self, folder_name):
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
-            _do_folder_create,
-            workspace_fs=self.workspace_fs,
-            path=self.current_directory / folder_name,
-        )
-
-    # slot
     def create_folder_clicked(self):
         folder_name = TextInputDialog.get_text(
             self, _("Folder name"), _("Enter new folder name"), placeholder="Name"
         )
         if not folder_name:
             return
-        self._create_folder(folder_name)
 
-    # slot
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "create_folder_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "create_folder_error", QtToTrioJob),
+            _do_folder_create,
+            workspace_fs=self.workspace_fs,
+            path=self.current_directory / folder_name,
+        )
+
     def on_file_moved(self, src, dst):
         src_path = self.current_directory / src
         dst_path = ""
@@ -509,15 +496,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         pass
 
     def _on_rename_error(self, job):
-        pass
+        MessageDialog.show_error(self, _("Can not rename the file."))
 
     def _on_delete_success(self, job):
-        pass
+        rows = job.ret
+        for row in rows:
+            self.table_files.removeRow(f[0])
+        self.table_files.clearSelection()
 
     def _on_delete_error(self, job):
-        pass
+        MessageDialog.show_error(self, _("Can not delete the file."))
 
     def _on_folder_stat_success(self, job):
+        self.current_directory, files_stats = job.ret
+        str_dir = str(self.current_directory)
+
+        self.table_files.clear()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
@@ -525,17 +519,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.table_files.add_parent_workspace()
         else:
             self.table_files.add_parent_folder()
-        str_dir = str(self.current_directory)
         self.line_edit_current_directory.setText(str_dir)
         self.line_edit_current_directory.setCursorPosition(0)
-        self.table_files.clear()
-        files_stats = job.ret
         for path, stats in files_stats.items():
             if stats["type"] == "folder":
-                self.table_files.add_folder(path, not stats["need_sync"])
+                self.table_files.add_folder(str(path), not stats["need_sync"])
             else:
                 self.table_files.add_file(
-                    path, stats["size"], stats["created"], stats["updated"], not stats["need_sync"]
+                    str(path), stats["size"], stats["created"], stats["updated"], not stats["need_sync"]
                 )
         self.table_files.sortItems(old_sort, old_order)
         self.table_files.setSortingEnabled(True)
@@ -543,7 +534,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.filter_files(self.line_edit_search.text())
 
     def _on_folder_stat_error(self, job):
-        pass
+        print("STAT ERROR")
 
     def _on_folder_create_success(self, job):
         pass
@@ -551,6 +542,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_folder_create_error(self, job):
         if job.status == "already-exists":
             MessageDialog.show_error(self, _("A folder with the same name already exists."))
+        else:
+            MessageDialog.show_error(self, _("Can not create the folder."))
 
     def _on_import_success(self):
         pass
