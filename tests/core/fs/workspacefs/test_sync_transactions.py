@@ -3,8 +3,9 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import FsPath
-from parsec.core.types import EntryID, FolderManifest, LocalFolderManifest
+from parsec.core.types import FsPath, BlockAccess, EntryID
+from parsec.core.types import FolderManifest, LocalFolderManifest, LocalFileManifest
+from parsec.core.local_storage import LocalStorageMissingError
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
@@ -173,3 +174,172 @@ async def test_synchronization_step_transaction(sync_transactions, entry_transac
     # Acknowledge the manifest
     assert sorted(manifest.children) == ["a", "b", "c"]
     assert await synchronization_step(entry_id, manifest) is None
+
+
+def test_reshape_blocks(sync_transactions):
+    # No block
+    manifest = LocalFileManifest("a@a", EntryID(), blocks=[], dirty_blocks=[])
+
+    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
+    assert blocks == old_blocks == new_blocks == missing == []
+
+    # One block
+    access = BlockAccess.from_block(b"abc", 0)
+    manifest = LocalFileManifest("a@a", EntryID(), blocks=[access], dirty_blocks=[], size=3)
+
+    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
+    assert old_blocks == new_blocks == missing == []
+    assert blocks == [access]
+
+    # One dirty block
+    access = BlockAccess.from_block(b"abc", 0)
+    manifest = LocalFileManifest("a@a", EntryID(), blocks=[], dirty_blocks=[access], size=3)
+
+    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
+    assert old_blocks == new_blocks == missing == []
+    assert blocks == [access]
+
+    # Several dirty blocks
+    size = 0
+    dirty = []
+    for data in [b"abc", b"def", b"ghi"]:
+        access = BlockAccess.from_block(data, size)
+        sync_transactions.local_storage.set_dirty_block(access.id, data)
+        size += len(data)
+        dirty.append(access)
+    manifest = LocalFileManifest("a@a", EntryID(), blocks=[], dirty_blocks=dirty, size=size)
+
+    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
+    assert missing == []
+    assert old_blocks == dirty
+    assert len(new_blocks) == 1
+    (access, data), = new_blocks
+    assert data == b"abcdefghi"
+    assert blocks == [access]
+
+    # One block - several dirty blocks
+    size = 0
+    data = b"abc"
+    dirty = []
+    clean = [BlockAccess.from_block(data, size)]
+    sync_transactions.local_storage.set_clean_block(clean[0].id, data)
+    size += len(data)
+    for data in [b"def", b"ghi"]:
+        access = BlockAccess.from_block(data, size)
+        sync_transactions.local_storage.set_dirty_block(access.id, data)
+        size += len(data)
+        dirty.append(access)
+    manifest = LocalFileManifest("a@a", EntryID(), blocks=clean, dirty_blocks=dirty, size=size)
+
+    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
+    assert missing == []
+    assert old_blocks == clean + dirty
+    assert len(new_blocks) == 1
+    (access, data), = new_blocks
+    assert data == b"abcdefghi"
+    assert blocks == [access]
+
+    # One missing block - several dirty blocks
+    size = 0
+    data = b"abc"
+    dirty = []
+    clean = [BlockAccess.from_block(data, size)]
+    size += len(data)
+    for data in [b"def", b"ghi"]:
+        access = BlockAccess.from_block(data, size)
+        sync_transactions.local_storage.set_dirty_block(access.id, data)
+        size += len(data)
+        dirty.append(access)
+    manifest = LocalFileManifest("a@a", EntryID(), blocks=clean, dirty_blocks=dirty, size=size)
+
+    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
+    assert missing == clean
+    assert old_blocks == dirty
+    assert len(new_blocks) == 1
+    (access, data), = new_blocks
+    assert data == b"\x00\x00\x00defghi"
+    assert blocks == [access]
+
+
+@pytest.mark.trio
+async def test_file_reshape(sync_transactions):
+    # Prepare the backend
+    workspace_id = sync_transactions.remote_loader.workspace_id
+    device_id = sync_transactions.local_storage.device_id
+    manifest = await sync_transactions.get_minimal_remote_manifest(workspace_id)
+    await sync_transactions.remote_loader.upload_manifest(workspace_id, manifest)
+
+    # No block
+    entry_id = EntryID()
+    manifest = LocalFileManifest(device_id, entry_id, blocks=[], dirty_blocks=[])
+    sync_transactions.local_storage.set_manifest(entry_id, manifest)
+
+    await sync_transactions.file_reshape(entry_id)
+
+    # One block
+    entry_id = EntryID()
+    access = BlockAccess.from_block(b"abc", 0)
+    manifest = LocalFileManifest(device_id, EntryID(), blocks=[access], dirty_blocks=[], size=3)
+    sync_transactions.local_storage.set_manifest(entry_id, manifest)
+
+    await sync_transactions.file_reshape(entry_id)
+
+    # One dirty block
+    entry_id = EntryID()
+    access = BlockAccess.from_block(b"abc", 0)
+    manifest = LocalFileManifest(device_id, EntryID(), blocks=[], dirty_blocks=[access], size=3)
+    sync_transactions.local_storage.set_manifest(entry_id, manifest)
+
+    await sync_transactions.file_reshape(entry_id)
+    new_manifest = sync_transactions.local_storage.get_manifest(entry_id)
+    assert new_manifest.blocks == (access,)
+    assert new_manifest.dirty_blocks == ()
+
+    # Several dirty blocks
+    entry_id = EntryID()
+    size = 0
+    dirty = []
+    for data in [b"abc", b"def", b"ghi"]:
+        access = BlockAccess.from_block(data, size)
+        sync_transactions.local_storage.set_dirty_block(access.id, data)
+        size += len(data)
+        dirty.append(access)
+    manifest = LocalFileManifest(device_id, EntryID(), blocks=[], dirty_blocks=dirty, size=size)
+    sync_transactions.local_storage.set_manifest(entry_id, manifest)
+
+    await sync_transactions.file_reshape(entry_id)
+    new_manifest = sync_transactions.local_storage.get_manifest(entry_id)
+    assert new_manifest.dirty_blocks == ()
+    assert len(new_manifest.blocks) == 1
+    access, = new_manifest.blocks
+    assert sync_transactions.local_storage.get_block(access.id) == b"abcdefghi"
+    for access in dirty:
+        with pytest.raises(LocalStorageMissingError):
+            sync_transactions.local_storage.get_block(access.id)
+
+    # One missing block - several dirty blocks
+    entry_id = EntryID()
+    size = 0
+    data = b"abc"
+    dirty = []
+    clean = [BlockAccess.from_block(data, size)]
+    await sync_transactions.remote_loader.upload_block(clean[0], data)
+    sync_transactions.local_storage.clear_block(clean[0].id)
+    size += len(data)
+    for data in [b"def", b"ghi"]:
+        access = BlockAccess.from_block(data, size)
+        sync_transactions.local_storage.set_dirty_block(access.id, data)
+        size += len(data)
+        dirty.append(access)
+    manifest = LocalFileManifest(device_id, EntryID(), blocks=clean, dirty_blocks=dirty, size=size)
+    sync_transactions.local_storage.set_manifest(entry_id, manifest)
+
+    await sync_transactions.file_reshape(entry_id)
+    new_manifest = sync_transactions.local_storage.get_manifest(entry_id)
+    assert new_manifest.dirty_blocks == ()
+    assert len(new_manifest.blocks) == 1
+    access, = new_manifest.blocks
+    assert sync_transactions.local_storage.get_block(access.id) == b"abcdefghi"
+    for access in dirty:
+        with pytest.raises(LocalStorageMissingError):
+            sync_transactions.local_storage.get_block(access.id)
