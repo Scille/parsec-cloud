@@ -798,6 +798,10 @@ size is too small.""",
         help="""If specified, disables cache clearing between steps.""",
         default=False)
 
+    parser.add_option('-D', '--depth',
+        action="store", dest="depth", type='int',
+        help="Subdirectory depth", default=1)
+
     #
     # Parse the command line
     #
@@ -903,7 +907,8 @@ size is too small.""",
     #
     system("rm -rf naive-bench-data")
     starttime = time.time()
-    system("mkdir naive-bench-data")
+    __test_data_dir = __test_data_dir + "/" + "/".join(["subdir"] * (options.depth - 1))
+    system(f"mkdir -p {__test_data_dir}")
     endtime = time.time() - starttime
     print("DONE [%d s]\n"%(endtime), file=sys.stderr)
 
