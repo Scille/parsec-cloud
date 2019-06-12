@@ -49,14 +49,19 @@ async def _do_workspace_list(core):
             workspace_id = workspace.id
             workspace_fs = core.user_fs.get_workspace(workspace_id)
             ws_entry = workspace_fs.get_workspace_entry()
-            users_roles = await workspace_fs.get_user_roles()
-            root_info = await workspace_fs.path_info("/")
-            workspaces.append((workspace_fs, ws_entry, users_roles, root_info))
+            try:
+                users_roles = await workspace_fs.get_user_roles()
+            except FSBackendOfflineError:
+                users_roles = {}
+            try:
+                root_info = await workspace_fs.path_info("/")
+                files = root_info["children"]
+            except FSBackendOfflineError:
+                files = []
+            workspaces.append((workspace_fs, ws_entry, users_roles, files))
         return workspaces
     except:
-        import traceback
-
-        traceback.print_exc()
+        raise JobResultError("error")
 
 
 async def _do_workspace_mount(core, workspace_id):
@@ -155,8 +160,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
         workspaces = job.ret
-        for count, (workspace_fs, ws_entry, users_roles, root_info) in enumerate(workspaces):
-            self.add_workspace(workspace_fs, ws_entry, users_roles, root_info, count)
+        for count, (workspace_fs, ws_entry, users_roles, files) in enumerate(workspaces):
+            self.add_workspace(workspace_fs, ws_entry, users_roles, files, count)
 
     def on_list_error(self, job):
         pass
@@ -167,7 +172,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_mount_error(self, job):
         pass
 
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, root_info, count=None):
+    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, count=None):
         button = WorkspaceButton(
             workspace_fs,
             is_shared=len(users_roles) > 1,

@@ -41,10 +41,12 @@ async def test_list_users(aqtbot, running_backend, logged_gui):
     async with aqtbot.wait_signal(u_w.list_success):
         pass
 
-    assert u_w.layout_users.count() == 2
+    assert u_w.layout_users.count() == 3
     item = u_w.layout_users.itemAt(0)
-    assert item.widget().label_user.text() == "alice\n(you)"
+    assert item.widget().label_user.text() == "adam"
     item = u_w.layout_users.itemAt(1)
+    assert item.widget().label_user.text() == "alice\n(you)"
+    item = u_w.layout_users.itemAt(2)
     assert item.widget().label_user.text() == "bob"
 
 
@@ -57,12 +59,15 @@ async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui):
     async with aqtbot.wait_signal(u_w.list_success):
         pass
 
-    assert u_w.layout_users.count() == 2
+    assert u_w.layout_users.count() == 3
     item = u_w.layout_users.itemAt(0)
     item.widget().show_user_info()
     item = u_w.layout_users.itemAt(1)
     item.widget().show_user_info()
+    item = u_w.layout_users.itemAt(2)
+    item.widget().show_user_info()
     assert autoclose_dialog.dialogs == [
+        ("Information", "adam\n\nCreated on 01/01/00 00:00:00"),
         ("Information", "alice\n\nCreated on 01/01/00 00:00:00"),
         ("Information", "bob\n\nCreated on 01/01/00 00:00:00"),
     ]
@@ -79,9 +84,9 @@ async def test_revoke_user(
     async with aqtbot.wait_signal(u_w.list_success):
         pass
 
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-    assert u_w.layout_users.count() == 2
-    bob_w = u_w.layout_users.itemAt(1).widget()
+    assert u_w.layout_users.count() == 3
+    bob_w = u_w.layout_users.itemAt(2).widget()
+    assert bob_w.user_name == "bob"
     assert bob_w.is_revoked is False
     monkeypatch.setattr(
         "parsec.core.gui.custom_widgets.QuestionDialog.ask", classmethod(lambda *args: True)
@@ -95,32 +100,6 @@ async def test_revoke_user(
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_revoke_user_not_admin(
-    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui
-):
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
-
-    assert u_w.layout_users.count() == 2
-    bob_w = u_w.layout_users.itemAt(1).widget()
-    assert bob_w.is_revoked is False
-    monkeypatch.setattr(
-        "parsec.core.gui.custom_widgets.QuestionDialog.ask", classmethod(lambda *args: True)
-    )
-
-    async with aqtbot.wait_signal(u_w.revoke_error):
-        bob_w.revoke_clicked.emit(bob_w)
-    assert autoclose_dialog.dialogs == [
-        ("Error", "You don't have the permission to revoke this user.")
-    ]
-    assert bob_w.is_revoked is False
-
-
-@pytest.mark.gui
-@pytest.mark.trio
 async def test_filter_users(aqtbot, running_backend, logged_gui):
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
@@ -128,22 +107,33 @@ async def test_filter_users(aqtbot, running_backend, logged_gui):
     async with aqtbot.wait_signal(u_w.list_success):
         pass
 
-    assert u_w.layout_users.count() == 2
-    alice_w = u_w.layout_users.itemAt(0).widget()
-    bob_w = u_w.layout_users.itemAt(1).widget()
+    assert u_w.layout_users.count() == 3
+
+    adam_w = u_w.layout_users.itemAt(0).widget()
+    assert adam_w.user_name == "adam"
+    alice_w = u_w.layout_users.itemAt(1).widget()
+    assert alice_w.user_name == "alice"
+    bob_w = u_w.layout_users.itemAt(2).widget()
+    assert bob_w.user_name == "bob"
 
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is True
+    assert adam_w.isVisible() is True
 
     async with aqtbot.wait_signal(u_w.filter_timer.timeout):
         aqtbot.qtbot.keyClicks(u_w.line_edit_search, "bo")
     assert alice_w.isVisible() is False
     assert bob_w.isVisible() is True
+    assert adam_w.isVisible() is False
+
     async with aqtbot.wait_signal(u_w.filter_timer.timeout):
         u_w.line_edit_search.setText("")
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is True
+    assert adam_w.isVisible() is True
+
     async with aqtbot.wait_signal(u_w.filter_timer.timeout):
         aqtbot.qtbot.keyClicks(u_w.line_edit_search, "a")
     assert alice_w.isVisible() is True
     assert bob_w.isVisible() is False
+    assert adam_w.isVisible() is True
