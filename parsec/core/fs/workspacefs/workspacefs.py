@@ -375,6 +375,9 @@ class WorkspaceFS:
             except FSReshapingRequiredError:
                 await self.sync_transactions.file_reshape(entry_id)
                 continue
+            # Not available locally so noting to synchronize
+            except LocalStorageMissingError:
+                return
 
     async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> Manifest:
         """Raises: FSBackendOfflineError"""

@@ -375,13 +375,13 @@ class SyncTransactions:
             # Create data for new block
             data = bytearray(space.size)
             for buffer_space in space.buffers:
-                if buffer_space.buffer.access:
-                    old_blocks.append(buffer_space.buffer.access)
                 try:
                     buff = self.local_storage.get_block(buffer_space.buffer.access.id)
                 except LocalStorageMissingError:
                     missing.append(buffer_space.buffer.access)
                     continue
+                if buffer_space.buffer.access:
+                    old_blocks.append(buffer_space.buffer.access)
                 start = buffer_space.start - space.start
                 end = buffer_space.end - space.start
                 data[start:end] = buff[
