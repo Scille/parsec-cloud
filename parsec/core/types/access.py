@@ -2,7 +2,6 @@
 
 import attr
 import pendulum
-from uuid import uuid4
 from hashlib import sha256
 from typing import Optional
 
@@ -39,7 +38,7 @@ class BlockAccess:
     @classmethod
     def from_block(cls, block: bytes, offset: int) -> "BlockAccess":
         return cls(
-            id=uuid4(),
+            id=BlockID(),
             key=SecretKey.generate(),
             offset=offset,
             size=len(block),
