@@ -18,7 +18,7 @@ from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
-    fs_synced_qt = pyqtSignal(str, UUID, str)
+    fs_synced_qt = pyqtSignal(str, UUID)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
 
@@ -168,20 +168,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_fs = self.core.user_fs.get_workspace(workspace_entry.id)
         self.add_workspace(workspace_fs)
 
-    def _on_fs_entry_synced_trio(self, event, path, id):
-        self.fs_synced_qt.emit(event, id, path)
+    def _on_fs_entry_synced_trio(self, event, id, path=None, workspace_id=None):
+        self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         if workspace_id and not id:
             self.fs_updated_qt.emit(event, workspace_id)
 
-    def _on_fs_synced_qt(self, event, id, path):
-        if path is None:
-            return
-
-        path = FsPath(path)
-        if len(path.parts) == 2:
-            self.reset()
+    def _on_fs_synced_qt(self, event, id):
+        self.reset()
 
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()

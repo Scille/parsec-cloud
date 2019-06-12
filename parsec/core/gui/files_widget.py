@@ -7,7 +7,7 @@ from uuid import UUID
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QWidget
 
-from parsec.core.types import FsPath, EntryID, WorkspaceEntry, WorkspaceRole
+from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import FSEntryNotFound
 
 from parsec.core.gui import desktop
@@ -31,7 +31,7 @@ class CancelException(Exception):
 
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
-    fs_synced_qt = pyqtSignal(str, UUID, str)
+    fs_synced_qt = pyqtSignal(str, UUID)
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     taskbar_updated = pyqtSignal()
@@ -352,7 +352,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 # TODO: use `self.workspace_fs.open(dst, "w")` when implemented
                 self.jobs_ctx.run(self.workspace_fs.touch, dst)
             except FileExistsError:
-                self.jobs_ctx.run(self.workspace_fs.truncate, 0)
+                self.jobs_ctx.run(self.workspace_fs.truncate, dst, 0)
             with open(src, "rb") as fd_in:
                 i = 0
                 read_size = 0
@@ -449,22 +449,21 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             row = self.table_files.currentRow()
             self.delete_item(row)()
 
-    def _on_fs_entry_synced_trio(self, event, path, id):
-        self.fs_synced_qt.emit(event, id, path)
+    def _on_fs_entry_synced_trio(self, event, id, path=None, workspace_id=None):
+        self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         assert id is not None
         if workspace_id is None or workspace_id == self.workspace_fs.workspace_id:
             self.fs_updated_qt.emit(event, id)
 
-    def _on_fs_synced_qt(self, event, id, path):
-        if path is None:
-            try:
-                path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
-            except FSEntryNotFound:
-                return
+    def _on_fs_synced_qt(self, event, id):
+        try:
+            path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
+        except FSEntryNotFound:
+            return
 
-        if path is None:
+        if not path or str(path) == "/" + self.workspace_fs.workspace_name:
             return
 
         path = FsPath(path)
@@ -486,16 +485,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     return
 
     def _on_fs_updated_qt(self, event, id):
-        id = EntryID(id)
-        path = None
-        try:
-            path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
-        except FSEntryNotFound:
-            # Entry not locally present, nothing to do
-            return
+        path = self.jobs_ctx.run(self.workspace_fs.get_entry_path, id)
 
         # Modifications on root is handled by workspace_widget
-        if path is None or path == pathlib.Path("/"):
+        if not path or str(path) == "/" + self.workspace_fs.workspace_name:
             return
 
         modified_hops = list(path.parts)
