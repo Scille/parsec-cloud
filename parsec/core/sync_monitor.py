@@ -3,7 +3,7 @@
 import trio
 from trio.hazmat import current_clock
 
-from parsec.core.fs import FSBackendOfflineError
+from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError
 
 
 MIN_WAIT = 1
@@ -133,7 +133,15 @@ class SyncMonitor:
             if id == self.user_fs.user_manifest_id:
                 await self.user_fs.sync()
             elif wid is not None:
-                workspace = self.user_fs.get_workspace(wid)
+                try:
+                    workspace = self.user_fs.get_workspace(wid)
+                except FSWorkspaceNotFoundError:
+                    # If the workspace is not present, nothing to do
+                    # (this can happen when a workspace is just shared with
+                    # us, hence we receive vlob updated events before having
+                    # added the workspace entry to our user manifest)
+                    # TODO: add unittest about this...
+                    continue
                 await workspace.sync_by_id(id)
 
 

@@ -178,6 +178,23 @@ async def test_role_update_not_allowed(
 
 
 @pytest.mark.trio
+async def test_remove_role_dont_change_other_realms(
+    backend, bob, alice_backend_sock, bob_backend_sock, realm, other_realm
+):
+    # Bob is owner of other_realm and manager of realm
+    rep = await realm_update_roles(alice_backend_sock, realm, bob.user_id, RealmRole.MANAGER)
+    assert rep == {"status": "ok"}
+
+    # Remove Bob from realm
+    rep = await realm_update_roles(alice_backend_sock, realm, bob.user_id, None)
+    assert rep == {"status": "ok"}
+
+    # Bob should still have access to other_realm
+    rep = await realm_get_roles(bob_backend_sock, other_realm)
+    assert rep == {"status": "ok", "users": {"bob": RealmRole.OWNER}}
+
+
+@pytest.mark.trio
 async def test_role_access_during_maintenance(
     backend, alice, bob, alice_backend_sock, realm, vlobs
 ):

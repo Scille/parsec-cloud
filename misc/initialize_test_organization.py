@@ -111,13 +111,13 @@ async def amain(
         root_verify_key = root_signing_key.verify_key
         organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
 
-        alice_device = generate_new_device(alice_device_id, organization_addr)
+        alice_device = generate_new_device(alice_device_id, organization_addr, True)
 
         save_device_with_password(config_dir, alice_device, password, force=force)
 
         now = pendulum.now()
         user_certificate = build_user_certificate(
-            None, root_signing_key, alice_device.user_id, alice_device.public_key, now
+            None, root_signing_key, alice_device.user_id, alice_device.public_key, True, now
         )
         device_certificate = build_device_certificate(
             None, root_signing_key, alice_device_id, alice_device.verify_key, now
@@ -162,7 +162,7 @@ async def amain(
     bob_device = None
 
     async def invite_task():
-        await invite_and_create_user(alice_device, bob_device_id.user_id, token, is_admin=True)
+        await invite_and_create_user(alice_device, bob_device_id.user_id, token, is_admin=False)
 
     async def claim_task():
         nonlocal bob_device

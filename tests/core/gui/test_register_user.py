@@ -8,11 +8,10 @@ from unittest.mock import patch
 from parsec.core.local_device import save_device_with_password
 
 
-@pytest.fixture
-async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
+async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, user):
     # Create an existing device before starting the gui
     password = "P@ssw0rd"
-    save_device_with_password(core_config.config_dir, alice, password)
+    save_device_with_password(core_config.config_dir, user, password)
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
@@ -29,7 +28,17 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     assert central_widget is not None
 
     await aqtbot.mouse_click(central_widget.menu.button_users, QtCore.Qt.LeftButton)
-    yield gui
+    return gui
+
+
+@pytest.fixture
+async def logged_gui_alice(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
+    yield await logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice)
+
+
+@pytest.fixture
+async def logged_gui_bob(aqtbot, gui_factory, autoclose_dialog, core_config, bob):
+    yield await logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, bob)
 
 
 @pytest.mark.gui
@@ -49,11 +58,9 @@ async def test_register_user_open_modal(aqtbot, logged_gui, running_backend):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_ok(
-    aqtbot, gui, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, gui, logged_gui_alice, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     def _claim_user(user_id, device_name, token, addr, password):
@@ -103,11 +110,9 @@ async def test_register_user_modal_ok(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_invalid_user_id(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, logged_gui_alice, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():
@@ -128,11 +133,9 @@ async def test_register_user_modal_invalid_user_id(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_cancel(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, logged_gui_alice, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():
@@ -155,11 +158,9 @@ async def test_register_user_modal_cancel(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_offline(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, logged_gui_alice, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():
@@ -181,11 +182,9 @@ async def test_register_user_modal_offline(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_already_registered(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, logged_gui_alice, running_backend, qt_thread_gateway, alice, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():
@@ -204,11 +203,9 @@ async def test_register_user_modal_already_registered(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_not_admin(
-    aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot, logged_gui_bob, running_backend, qt_thread_gateway, bob, autoclose_dialog
 ):
-    await running_backend.backend.user.set_user_admin(alice.organization_id, alice.user_id, False)
-
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_bob.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():
@@ -227,14 +224,20 @@ async def test_register_user_modal_not_admin(
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_unknown_error(
-    monkeypatch, aqtbot, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    monkeypatch,
+    aqtbot,
+    logged_gui_alice,
+    running_backend,
+    qt_thread_gateway,
+    alice,
+    autoclose_dialog,
 ):
     async def _broken(*args, **kwargs):
         raise RuntimeError()
 
     monkeypatch.setattr("parsec.core.gui.register_user_dialog.core_invite_and_create_user", _broken)
 
-    u_w = logged_gui.test_get_users_widget()
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     def run_dialog():

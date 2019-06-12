@@ -62,6 +62,10 @@ class PGHandler:
         self.pool = None
         self.notification_conn = None
         self._task_status = None
+        # Goes around recursive import
+        from parsec.backend.drivers.postgresql.realm import _STR_TO_ROLE
+
+        self._str_to_role = _STR_TO_ROLE
 
     async def init(self, nursery):
         self._task_status = await start_task(nursery, self._run_connections)
@@ -80,6 +84,9 @@ class PGHandler:
         data.pop("__id__")  # Simply discard the notification id
         signal = data.pop("__signal__")
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
+        # Kind of a hack, but fine enough for the moment
+        if signal == "realm.roles_updated":
+            data["role"] = self._str_to_role.get(data.pop("role_str"))
         self.event_bus.send(signal, **data)
 
     async def teardown(self):

@@ -125,7 +125,6 @@ BEGIN
         SELECT maintenance_type IS NOT NULL
         FROM realm
         WHERE _id = realminternalid
-            
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;

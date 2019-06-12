@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole
-from parsec.core.fs import WorkspaceFS
+from parsec.core.fs import WorkspaceFS, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -49,14 +49,19 @@ async def _do_workspace_list(core):
             workspace_id = workspace.id
             workspace_fs = core.user_fs.get_workspace(workspace_id)
             ws_entry = workspace_fs.get_workspace_entry()
-            users_roles = await workspace_fs.get_user_roles()
-            root_info = await workspace_fs.path_info("/")
-            workspaces.append((workspace_fs, ws_entry, users_roles, root_info))
+            try:
+                users_roles = await workspace_fs.get_user_roles()
+            except FSBackendOfflineError:
+                users_roles = {}
+            try:
+                root_info = await workspace_fs.path_info("/")
+                files = root_info["children"]
+            except FSBackendOfflineError:
+                files = []
+            workspaces.append((workspace_fs, ws_entry, users_roles, files))
         return workspaces
     except:
-        import traceback
-
-        traceback.print_exc()
+        raise JobResultError("error")
 
 
 async def _do_workspace_mount(core, workspace_id):
@@ -68,7 +73,8 @@ async def _do_workspace_mount(core, workspace_id):
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
-    fs_synced_qt = pyqtSignal(str, UUID, str)
+    fs_synced_qt = pyqtSignal(str, UUID)
+
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
@@ -155,8 +161,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
         workspaces = job.ret
-        for count, (workspace_fs, ws_entry, users_roles, root_info) in enumerate(workspaces):
-            self.add_workspace(workspace_fs, ws_entry, users_roles, root_info, count)
+        for count, (workspace_fs, ws_entry, users_roles, files) in enumerate(workspaces):
+            self.add_workspace(workspace_fs, ws_entry, users_roles, files, count)
 
     def on_list_error(self, job):
         pass
@@ -167,12 +173,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_mount_error(self, job):
         pass
 
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, root_info, count=None):
+    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, count=None):
         button = WorkspaceButton(
             workspace_fs,
             is_shared=len(users_roles) > 1,
             is_creator=ws_entry.role == WorkspaceRole.OWNER,
-            files=root_info["children"][:4],
+            files=files[:4],
             enable_workspace_color=self.core.config.gui_workspace_color,
         )
         if count is None:
@@ -267,20 +273,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_workspace_created_qt(self, workspace_entry):
         self.reset()
 
-    def _on_fs_entry_synced_trio(self, event, path, id):
-        self.fs_synced_qt.emit(event, id, path)
+    def _on_fs_entry_synced_trio(self, event, id, path=None, workspace_id=None):
+        self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         if workspace_id and not id:
             self.fs_updated_qt.emit(event, workspace_id)
 
-    def _on_fs_synced_qt(self, event, id, path):
-        if path is None:
-            return
-
-        path = FsPath(path)
-        if len(path.parts) == 2:
-            self.reset()
+    def _on_fs_synced_qt(self, event, id):
+        self.reset()
 
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()

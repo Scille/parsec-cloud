@@ -11,7 +11,13 @@ from tests.common import freeze_time
 
 
 @pytest.fixture
-def bob_revocation(alice, bob):
+def alice_revocation_from_bob(alice, bob):
+    now = pendulum.now()
+    return build_revoked_device_certificate(bob.device_id, bob.signing_key, alice.device_id, now)
+
+
+@pytest.fixture
+def bob_revocation_from_alice(alice, bob):
     now = pendulum.now()
     return build_revoked_device_certificate(alice.device_id, alice.signing_key, bob.device_id, now)
 
@@ -25,21 +31,19 @@ async def device_revoke(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_revoke_ok(
-    backend, backend_sock_factory, bob_backend_sock, alice, alice2, bob
+    backend, backend_sock_factory, adam_backend_sock, alice, alice2, adam
 ):
-    await backend.user.set_user_admin(bob.organization_id, bob.user_id, True)
-
     now = pendulum.Pendulum(2000, 10, 11)
     alice_revocation = build_revoked_device_certificate(
-        bob.device_id, bob.signing_key, alice.device_id, now
+        adam.device_id, adam.signing_key, alice.device_id, now
     )
     alice2_revocation = build_revoked_device_certificate(
-        bob.device_id, bob.signing_key, alice2.device_id, now
+        adam.device_id, adam.signing_key, alice2.device_id, now
     )
 
     # Revoke Alice's first device
     with freeze_time(now):
-        rep = await device_revoke(bob_backend_sock, revoked_device_certificate=alice_revocation)
+        rep = await device_revoke(adam_backend_sock, revoked_device_certificate=alice_revocation)
     assert rep == {"status": "ok", "user_revoked_on": None}
 
     # Alice cannot connect from now on...
@@ -53,7 +57,7 @@ async def test_device_revoke_ok(
 
     # Revoke Alice's second device (should automatically revoke the user)
     with freeze_time(now):
-        rep = await device_revoke(bob_backend_sock, revoked_device_certificate=alice2_revocation)
+        rep = await device_revoke(adam_backend_sock, revoked_device_certificate=alice2_revocation)
     assert rep == {"status": "ok", "user_revoked_on": now}
 
     # Alice2 cannot connect from now on...
@@ -64,10 +68,12 @@ async def test_device_revoke_ok(
 
 @pytest.mark.trio
 async def test_device_revoke_not_admin(
-    backend, backend_sock_factory, alice_backend_sock, alice, bob, bob_revocation
+    backend, backend_sock_factory, bob_backend_sock, bob, alice, alice_revocation_from_bob
 ):
-    rep = await device_revoke(alice_backend_sock, revoked_device_certificate=bob_revocation)
-    assert rep == {"status": "invalid_role", "reason": f"User `{alice.user_id}` is not admin"}
+    rep = await device_revoke(
+        bob_backend_sock, revoked_device_certificate=alice_revocation_from_bob
+    )
+    assert rep == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
 
 
 @pytest.mark.trio
@@ -90,8 +96,6 @@ async def test_device_revoke_own_device_not_admin(
 
 @pytest.mark.trio
 async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     revoked_device_certificate = build_revoked_device_certificate(
         alice.device_id, alice.signing_key, mallory.device_id, pendulum.now()
     )
@@ -104,8 +108,6 @@ async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory
 
 @pytest.mark.trio
 async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     revoked_device_certificate = build_revoked_device_certificate(
         alice.device_id, alice.signing_key, f"{alice.user_id}@foo", pendulum.now()
     )
@@ -118,14 +120,16 @@ async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
 
 @pytest.mark.trio
 async def test_device_revoke_already_revoked(
-    backend, alice_backend_sock, alice, bob, bob_revocation
+    backend, alice_backend_sock, alice, bob, bob_revocation_from_alice
 ):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
-    rep = await device_revoke(alice_backend_sock, revoked_device_certificate=bob_revocation)
+    rep = await device_revoke(
+        alice_backend_sock, revoked_device_certificate=bob_revocation_from_alice
+    )
     assert rep["status"] == "ok"
 
-    rep = await device_revoke(alice_backend_sock, revoked_device_certificate=bob_revocation)
+    rep = await device_revoke(
+        alice_backend_sock, revoked_device_certificate=bob_revocation_from_alice
+    )
     assert rep == {
         "status": "already_revoked",
         "reason": f"Device `{bob.device_id}` already revoked",
@@ -134,8 +138,6 @@ async def test_device_revoke_already_revoked(
 
 @pytest.mark.trio
 async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alice2, bob):
-    await backend.user.set_user_admin(alice2.organization_id, alice2.user_id, True)
-
     revoked_device_certificate = build_revoked_device_certificate(
         alice2.device_id, alice2.signing_key, bob.device_id, pendulum.now()
     )
@@ -151,8 +153,6 @@ async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alic
 
 @pytest.mark.trio
 async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice, bob):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     now = pendulum.Pendulum(2000, 1, 1)
     revoked_device_certificate = build_revoked_device_certificate(
         alice.device_id, alice.signing_key, bob.device_id, now
@@ -172,11 +172,10 @@ async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice,
 async def test_device_revoke_other_organization(
     sock_from_other_organization_factory, backend_sock_factory, backend, alice, bob
 ):
-
-    # Organizations should be isolated...
-    async with sock_from_other_organization_factory(backend, mimick=alice.device_id) as sock:
-        # ...even for organization admins !
-        await backend.user.set_user_admin(sock.device.organization_id, sock.device.user_id, True)
+    # Organizations should be isolated even for organization admins
+    async with sock_from_other_organization_factory(
+        backend, mimick=alice.device_id, is_admin=True
+    ) as sock:
 
         revocation = build_revoked_device_certificate(
             sock.device.device_id, sock.device.signing_key, bob.device_id, pendulum.now()

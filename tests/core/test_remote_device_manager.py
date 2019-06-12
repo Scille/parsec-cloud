@@ -182,6 +182,7 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
             certifier_key=certifier_key,
             user_id=local_user.user_id,
             public_key=local_user.public_key,
+            is_admin=False,
             timestamp=created_on,
         )
 

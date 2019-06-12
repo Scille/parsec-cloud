@@ -133,16 +133,20 @@ async def test_organization_bootstrap_bad_data(
     verify_key = newalice.verify_key
 
     now = pendulum.now()
-    good_cu = build_user_certificate(None, root_signing_key, good_user_id, public_key, now)
+    good_cu = build_user_certificate(None, root_signing_key, good_user_id, public_key, False, now)
     good_cd = build_device_certificate(None, root_signing_key, good_device_id, verify_key, now)
 
     bad_now = now - pendulum.interval(seconds=1)
-    bad_now_cu = build_user_certificate(None, root_signing_key, good_user_id, public_key, bad_now)
+    bad_now_cu = build_user_certificate(
+        None, root_signing_key, good_user_id, public_key, False, bad_now
+    )
     bad_now_cd = build_device_certificate(
         None, root_signing_key, good_device_id, verify_key, bad_now
     )
-    bad_id_cu = build_user_certificate(None, root_signing_key, bad_user_id, public_key, now)
-    bad_key_cu = build_user_certificate(None, bad_root_signing_key, good_user_id, public_key, now)
+    bad_id_cu = build_user_certificate(None, root_signing_key, bad_user_id, public_key, False, now)
+    bad_key_cu = build_user_certificate(
+        None, bad_root_signing_key, good_user_id, public_key, False, now
+    )
     bad_key_cd = build_device_certificate(
         None, bad_root_signing_key, good_device_id, verify_key, now
     )

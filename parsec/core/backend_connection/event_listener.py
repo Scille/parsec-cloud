@@ -28,30 +28,6 @@ class BackendEventsManager:
         self.event_bus = event_bus
         self._backend_online = None
         self._backend_incompatible_version = None
-        self._subscribed_realms = set()
-        self._subscribed_realms_changed = trio.Event()
-        self._task_info = None
-        self.event_bus.connect("backend.realm.listen", self._on_realm_listen)
-        self.event_bus.connect("backend.realm.unlisten", self._on_realm_unlisten)
-
-    def _on_realm_listen(self, sender, realm_id):
-        if realm_id in self._subscribed_realms:
-            return
-        self._subscribed_realms.add(realm_id)
-        self._subscribed_realms_changed.set()
-
-    def _on_realm_unlisten(self, sender, realm_id):
-        try:
-            self._subscribed_realms.remove(realm_id)
-        except KeyError:
-            return
-        self._subscribed_realms_changed.set()
-
-    async def _teardown(self):
-        cancel_scope, closed_event = self._task_info
-        cancel_scope.cancel()
-        await closed_event.wait()
-        self._task_info = None
 
     def _event_pump_incompatible_version(self):
         if self._backend_incompatible_version is not True:
@@ -102,19 +78,11 @@ class BackendEventsManager:
 
                     async with trio.open_nursery() as nursery:
                         logger.info("Try to connect to backend...")
-                        self._subscribed_realms_changed.clear()
-                        event_pump_cancel_scope = await nursery.start(self._event_pump)
+                        await nursery.start(self._event_pump)
                         backend_connection_failures = 0
                         logger.info("Backend online")
                         self._event_pump_ready()
-                        while True:
-                            await self._subscribed_realms_changed.wait()
-                            self._subscribed_realms_changed.clear()
-                            new_cancel_scope = await nursery.start(self._event_pump)
-                            self._event_pump_ready()
-                            event_pump_cancel_scope.cancel()
-                            event_pump_cancel_scope = new_cancel_scope
-                            logger.info("Event listener restarted")
+                        await trio.sleep_forever()
 
                 except trio.MultiError as exc:
                     # MultiError can contains:
@@ -161,22 +129,20 @@ class BackendEventsManager:
                 return
 
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        with trio.CancelScope() as cancel_scope:
-            async with backend_cmds_pool_factory(
-                self.device.organization_addr,
-                self.device.device_id,
-                self.device.signing_key,
-                max_pool=1,
-            ) as cmds:
-                # Copy `self._subscribed_realms` to avoid concurrent modifications
-                await cmds.events_subscribe(message=True, realm=self._subscribed_realms.copy())
+        async with backend_cmds_pool_factory(
+            self.device.organization_addr,
+            self.device.device_id,
+            self.device.signing_key,
+            max_pool=1,
+        ) as cmds:
+            await cmds.events_subscribe()
 
-                # Given the backend won't notify us for messages that arrived while
-                # we were offline, we must actively check this ourself.
-                self.event_bus.send("backend.message.polling_needed")
+            # Given the backend won't notify us for messages that arrived while
+            # we were offline, we must actively check this ourself.
+            self.event_bus.send("backend.message.polling_needed")
 
-                task_status.started(cancel_scope)
-                await self._event_pump_do(cmds)
+            task_status.started()
+            await self._event_pump_do(cmds)
 
     async def _event_pump_do(self, cmds):
         while True:
@@ -187,6 +153,11 @@ class BackendEventsManager:
 
             elif rep["event"] == "pinged":
                 self.event_bus.send("backend.pinged", ping=rep["ping"])
+
+            elif rep["event"] == "realm.roles_updated":
+                self.event_bus.send(
+                    "backend.realm.roles_updated", realm_id=rep["realm_id"], role=rep["role"]
+                )
 
             elif rep["event"] == "realm.vlobs_updated":
                 self.event_bus.send(

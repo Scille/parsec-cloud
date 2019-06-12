@@ -16,7 +16,6 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.realms_monitor import monitor_realms
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
@@ -76,7 +75,6 @@ async def logged_core_factory(
                     # Monitor connection must be first given it will watch on
                     # other monitors' events
                     await monitor_nursery.start(monitor_backend_connection, event_bus)
-                    await monitor_nursery.start(monitor_realms, device, user_fs, event_bus)
                     await monitor_nursery.start(monitor_messages, user_fs, event_bus)
                     await monitor_nursery.start(monitor_sync, user_fs, event_bus)
 
@@ -99,4 +97,5 @@ async def logged_core_factory(
                             backend_cmds=backend_cmds_pool,
                             user_fs=user_fs,
                         )
-                        root_nursery.cancel_scope.cancel()
+                    monitor_nursery.cancel_scope.cancel()
+        root_nursery.cancel_scope.cancel()

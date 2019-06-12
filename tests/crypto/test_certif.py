@@ -46,7 +46,7 @@ def test_unsecure_read_user_certificate_bad_data():
 def test_build_user_certificate(alice, bob, mallory):
     now = pendulum_now()
     certif = build_user_certificate(
-        alice.device_id, alice.signing_key, bob.user_id, bob.public_key, now
+        alice.device_id, alice.signing_key, bob.user_id, bob.public_key, False, now
     )
     assert isinstance(certif, bytes)
 
@@ -56,6 +56,7 @@ def test_build_user_certificate(alice, bob, mallory):
     assert unsecure.public_key == bob.public_key
     assert unsecure.certified_on == now
     assert unsecure.certified_by == alice.device_id
+    assert unsecure.is_admin is False
 
     verified = verify_user_certificate(certif, alice.device_id, alice.verify_key)
     assert verified == unsecure

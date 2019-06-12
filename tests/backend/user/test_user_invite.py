@@ -19,8 +19,6 @@ async def user_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_user_invite(backend, alice_backend_sock, alice, mallory):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
         # Waiting for user.claimed event
@@ -44,8 +42,6 @@ async def test_user_invite(backend, alice_backend_sock, alice, mallory):
 
 @pytest.mark.trio
 async def test_user_invite_already_exists(backend, alice_backend_sock, alice, bob):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async with user_invite(alice_backend_sock, user_id=bob.user_id) as prep:
         pass
     assert prep[0] == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
@@ -53,8 +49,6 @@ async def test_user_invite_already_exists(backend, alice_backend_sock, alice, bo
 
 @pytest.mark.trio
 async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alice, mallory):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
@@ -67,23 +61,20 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
 
 
 @pytest.mark.trio
-async def test_user_invite_not_admin(alice_backend_sock, alice, mallory):
-    async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+async def test_user_invite_not_admin(bob_backend_sock, bob, mallory):
+    async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep:
         pass
-    assert prep[0] == {"status": "invalid_role", "reason": f"User `{alice.user_id}` is not admin"}
+    assert prep[0] == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
 
 
 @pytest.mark.trio
 async def test_concurrent_user_invite(
-    backend, alice_backend_sock, bob_backend_sock, alice, bob, mallory
+    backend, alice_backend_sock, adam_backend_sock, alice, adam, mallory
 ):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-    await backend.user.set_user_admin(bob.organization_id, bob.user_id, True)
-
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep1:
 
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep2:
+        async with user_invite(adam_backend_sock, user_id=mallory.user_id) as prep2:
 
             backend.event_bus.spy.clear()
             await backend.event_bus.spy.wait(
@@ -106,8 +97,6 @@ async def test_user_invite_same_name_different_organizations(
     backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, mallory
 ):
     # Mallory invitation from first organization
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
-
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
         # Waiting for user.claimed event
@@ -130,8 +119,6 @@ async def test_user_invite_same_name_different_organizations(
     backend.event_bus.spy.clear()
 
     # Mallory invitation from second organization
-    await backend.user.set_user_admin(otheralice.organization_id, otheralice.user_id, True)
-
     async with user_invite(otheralice_backend_sock, user_id=mallory.user_id) as prep:
 
         # Waiting for user.claimed event
