@@ -4,11 +4,12 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath, BlockAccess, EntryID
-from parsec.core.types import FolderManifest, LocalFolderManifest, LocalFileManifest
+from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest, LocalFileManifest
 from parsec.core.local_storage import LocalStorageMissingError
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
+from parsec.core.fs.exceptions import FSReshapingRequiredError, FSFileConflictError
 
 
 def test_merge_folder_children():
@@ -52,7 +53,7 @@ def test_merge_folder_children():
     assert result == {"c.tar.gz": m2, "c (conflicting with a@a).tar.gz": m1}
 
 
-def test_merge_manifests():
+def test_merge_folder_manifests():
     now = Pendulum.now()
     v1 = FolderManifest(
         author="b@b", parent_id=EntryID(), version=1, created=now, updated=now, children={}
@@ -122,8 +123,47 @@ def test_merge_manifests_with_a_placeholder():
     )
 
 
+def test_merge_file_manifests():
+    now = Pendulum.now()
+    v1 = FileManifest(
+        author="b@b", parent_id=EntryID(), version=1, created=now, updated=now, blocks=[], size=0
+    )
+
+    # Initial base manifest
+    m1 = v1.to_local("a@a")
+    assert merge_manifests(m1, v1) == m1
+
+    # Local change
+    m2 = m1.evolve_and_mark_updated(size=1)
+    assert merge_manifests(m2, v1) == m2
+
+    # Successful upload
+    v2 = m2.to_remote().evolve(version=2)
+    m3 = merge_manifests(m2, v1, v2)
+    assert m3 == v2.to_local("a@a")
+
+    # Two local changes
+    m4 = m3.evolve_and_mark_updated(size=2)
+    assert merge_manifests(m4, v2) == m4
+    m5 = m4.evolve_and_mark_updated(size=3)
+    assert merge_manifests(m4, v2) == m4
+
+    # M4 has been successfully uploaded
+    v3 = m4.to_remote().evolve(version=3)
+    m6 = merge_manifests(m5, v2, v3)
+    assert m6 == m5.evolve(base_version=3)
+
+    # The remote has changed
+    v4 = v3.evolve(version=4, size=4, author="b@b")
+    with pytest.raises(FSFileConflictError):
+        merge_manifests(m6, v3, v4)
+
+
 @pytest.mark.trio
-async def test_synchronization_step_transaction(sync_transactions, entry_transactions):
+@pytest.mark.parametrize("type", ["file", "folder"])
+async def test_synchronization_step_transaction(
+    sync_transactions, entry_transactions, file_transactions, type
+):
     synchronization_step = sync_transactions.synchronization_step
     entry_id = entry_transactions.get_workspace_entry().id
 
@@ -134,7 +174,12 @@ async def test_synchronization_step_transaction(sync_transactions, entry_transac
     assert await synchronization_step(entry_id, manifest) is None
 
     # Local change
-    a_id = await entry_transactions.folder_create(FsPath("/a"))
+    if type == "file":
+        a_id, fd = await entry_transactions.file_create(FsPath("/a"))
+        await file_transactions.fd_write(fd, b"abc")
+        await file_transactions.fd_close(fd)
+    else:
+        a_id = await entry_transactions.folder_create(FsPath("/a"))
 
     # Sync parent with a placeholder child
     manifest = await synchronization_step(entry_id)
@@ -145,6 +190,10 @@ async def test_synchronization_step_transaction(sync_transactions, entry_transac
     assert a_entry_id == a_id
 
     # Sync child
+    if type == "file":
+        with pytest.raises(FSReshapingRequiredError):
+            await synchronization_step(a_entry_id)
+        await sync_transactions.file_reshape(a_entry_id)
     a_manifest = await synchronization_step(a_entry_id)
     assert await synchronization_step(a_entry_id, a_manifest) is None
 
@@ -343,3 +392,44 @@ async def test_file_reshape(sync_transactions):
     for access in dirty:
         with pytest.raises(LocalStorageMissingError):
             sync_transactions.local_storage.get_block(access.id)
+
+
+@pytest.mark.trio
+async def test_get_minimal_remote_manifest(
+    sync_transactions, entry_transactions, file_transactions
+):
+    # Prepare
+    w_id = sync_transactions.workspace_id
+    a_id, fd = await entry_transactions.file_create(FsPath("/a"))
+    await file_transactions.fd_write(fd, b"abc")
+    await file_transactions.fd_close(fd)
+    b_id = await entry_transactions.folder_create(FsPath("/b"))
+    c_id = await entry_transactions.folder_create(FsPath("/b/c"))
+
+    # Workspace manifest
+    minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
+    local = sync_transactions.local_storage.get_manifest(w_id)
+    assert minimal == local.to_remote().evolve(version=1, children={}, updated=local.created)
+    await sync_transactions.synchronization_step(w_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
+
+    # File manifest
+    minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
+    local = sync_transactions.local_storage.get_manifest(a_id)
+    assert minimal == local.to_remote().evolve(version=1, blocks=[], updated=local.created, size=0)
+    await sync_transactions.synchronization_step(w_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
+
+    # Folder manifest
+    minimal = await sync_transactions.get_minimal_remote_manifest(b_id)
+    local = sync_transactions.local_storage.get_manifest(b_id)
+    assert minimal == local.to_remote().evolve(version=1, children={}, updated=local.created)
+    await sync_transactions.synchronization_step(w_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
+
+    # Empty folder manifest
+    minimal = await sync_transactions.get_minimal_remote_manifest(c_id)
+    local = sync_transactions.local_storage.get_manifest(c_id)
+    assert minimal == local.to_remote().evolve(version=1)
+    await sync_transactions.synchronization_step(w_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
