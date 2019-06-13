@@ -334,17 +334,36 @@ class SyncTransactions:
                 if filename is None:
                     return
 
+                # Copy blocks
+                new_blocks = []
+                for access in current_manifest.blocks:
+                    data = self.local_storage.get_block(access.id)
+                    new_access = BlockAccess.from_block(data, access.offset)
+                    self.local_storage.set_dirty_block(new_access.id, data)
+                    new_blocks.append(new_access)
+
+                # Copy dirty blocks
+                new_dirty_blocks = []
+                for access in current_manifest.dirty_blocks:
+                    data = self.local_storage.get_block(access.id)
+                    new_access = BlockAccess.from_block(data, access.offset)
+                    self.local_storage.set_dirty_block(new_access.id, data)
+                    new_dirty_blocks.append(new_access)
+
                 # Prepare
                 new_entry_id = EntryID()
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
-                new_manifest = current_manifest.evolve(base_version=0, is_placeholder=True)
+                new_manifest = current_manifest.evolve(
+                    blocks=new_blocks,
+                    dirty_blocks=new_dirty_blocks,
+                    base_version=0,
+                    is_placeholder=True,
+                )
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_entry_id}
                 )
-
-                # TODO: blocks should be copied!!
 
                 self.local_storage.set_manifest(new_entry_id, new_manifest)
                 self.local_storage.set_manifest(parent_id, new_parent_manifest)
