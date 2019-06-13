@@ -16,8 +16,7 @@ from winfspy.plumbing.winstuff import (
 )
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor
-from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.fs import FSInvalidFileDescriptor, FSBackendOfflineError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
@@ -29,7 +28,7 @@ def translate_error():
     try:
         yield
 
-    except BackendNotAvailable as exc:
+    except FSBackendOfflineError as exc:
         raise NTStatusError(NTSTATUS.STATUS_NETWORK_UNREACHABLE) from exc
 
     except FSInvalidFileDescriptor as exc:

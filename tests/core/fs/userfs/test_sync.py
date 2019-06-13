@@ -50,10 +50,10 @@ async def test_create_workspace(alice_user_fs, alice):
     )
     assert um == expected_um
 
-    w_manifest = alice_user_fs.local_storage.get_manifest(um.workspaces[0].id)
+    w_manifest = alice_user_fs.local_storage.get_manifest(wid)
     expected_w_manifest = LocalWorkspaceManifest(
         author=alice.device_id,
-        parent_id=alice.user_manifest_id,
+        parent_id=wid,
         base_version=0,
         need_sync=True,
         is_placeholder=True,

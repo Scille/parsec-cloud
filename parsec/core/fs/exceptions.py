@@ -33,6 +33,10 @@ class FSRemoteManifestNotFound(FSError):
     pass
 
 
+class FSRemoteBlockNotFound(FSError):
+    pass
+
+
 class FSNoSynchronizationRequired(FSError):
     pass
 

@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 
 from parsec.core.types import EntryID, BlockAccess, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
-from parsec.core.backend_connection.exceptions import BackendCmdsNotFound
+from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 
 from tests.common import freeze_time
 
@@ -159,7 +159,7 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     foo_txt.set_manifest(foo_manifest)
 
     fd = foo_txt.open()
-    with pytest.raises(BackendCmdsNotFound):
+    with pytest.raises(FSRemoteBlockNotFound):
         await file_transactions.fd_read(fd, 14)
 
     file_transactions.local_storage.set_dirty_block(block1_access.id, block1)
