@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+import trio
 import pytest
 import pendulum
 from collections import defaultdict
@@ -15,6 +16,7 @@ from parsec.crypto import (
     build_device_certificate,
     build_revoked_device_certificate,
 )
+from parsec.api.protocole import RealmRole
 from parsec.core.types import (
     LocalDevice,
     remote_manifest_serializer,
@@ -370,6 +372,18 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         timestamp=generated_on,
                         blob=ciphered,
                     )
+                    with trio.fail_after(1):
+                        # Avoid possible race condition in tests listening for events
+                        await self.backend.event_bus.spy.wait(
+                            "realm.roles_updated",
+                            kwargs={
+                                "organization_id": first_device.organization_id,
+                                "author": generated_by,
+                                "realm_id": first_device.user_manifest_id,
+                                "user": generated_by.user_id,
+                                "role": RealmRole.OWNER,
+                            },
+                        )
 
         async def bind_device(
             self,
@@ -427,6 +441,18 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         timestamp=generated_on,
                         blob=ciphered,
                     )
+                    with trio.fail_after(1):
+                        # Avoid possible race condition in tests listening for events
+                        await self.backend.event_bus.spy.wait(
+                            "realm.roles_updated",
+                            kwargs={
+                                "organization_id": device.organization_id,
+                                "author": generated_by,
+                                "realm_id": device.user_manifest_id,
+                                "user": generated_by.user_id,
+                                "role": RealmRole.OWNER,
+                            },
+                        )
 
             self.binded_local_devices.append(device)
 
