@@ -200,7 +200,7 @@ async def vlob_maintenance_save_reencryption_batch(
     raw_rep = await sock.recv()
     rep = vlob_maintenance_save_reencryption_batch_serializer.rep_loads(raw_rep)
     if check_rep:
-        assert rep == {"status": "ok"}
+        assert rep["status"] == "ok"
     return rep
 
 

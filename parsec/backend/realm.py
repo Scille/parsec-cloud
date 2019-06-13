@@ -38,6 +38,10 @@ class RealmEncryptionRevisionError(RealmError):
     pass
 
 
+class RealmParticipantsMismatchError(RealmError):
+    pass
+
+
 class RealmInMaintenanceError(RealmError):
     pass
 
@@ -142,6 +146,11 @@ class BaseRealmComponent:
         except RealmEncryptionRevisionError:
             return realm_start_reencryption_maintenance_serializer.rep_dump(
                 {"status": "bad_encryption_revision"}
+            )
+
+        except RealmParticipantsMismatchError as exc:
+            return realm_finish_reencryption_maintenance_serializer.rep_dump(
+                {"status": "participants_mismatch", "reason": str(exc)}
             )
 
         except RealmMaintenanceError as exc:

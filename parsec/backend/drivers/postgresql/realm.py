@@ -13,6 +13,7 @@ from parsec.backend.realm import (
     RealmNotFoundError,
     RealmAlreadyExistsError,
     RealmEncryptionRevisionError,
+    RealmParticipantsMismatchError,
     RealmMaintenanceError,
     RealmInMaintenanceError,
 )
@@ -305,7 +306,7 @@ SET
 
                 roles = await get_realm_role_for(conn, organization_id, realm_id)
                 if per_participant_message.keys() ^ roles.keys():
-                    raise RealmMaintenanceError(
+                    raise RealmParticipantsMismatchError(
                         "Realm participants and message recipients mismatch"
                     )
 

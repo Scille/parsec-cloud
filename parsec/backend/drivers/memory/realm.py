@@ -16,6 +16,7 @@ from parsec.backend.realm import (
     RealmAlreadyExistsError,
     RealmNotFoundError,
     RealmEncryptionRevisionError,
+    RealmParticipantsMismatchError,
     RealmMaintenanceError,
     RealmInMaintenanceError,
 )
@@ -151,7 +152,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         if per_participant_message.keys() ^ realm.roles.keys():
-            raise RealmMaintenanceError("Realm participants and message recipients mismatch")
+            raise RealmParticipantsMismatchError(
+                "Realm participants and message recipients mismatch"
+            )
 
         realm.status = RealmStatus(
             maintenance_type=MaintenanceType.REENCRYPTION,

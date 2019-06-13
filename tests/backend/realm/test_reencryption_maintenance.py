@@ -43,7 +43,7 @@ async def test_start_bad_per_participant_message(backend, alice_backend_sock, al
             alice_backend_sock, realm, 2, {}, check_rep=False
         )
         assert rep == {
-            "status": "maintenance_error",
+            "status": "participants_mismatch",
             "reason": "Realm participants and message recipients mismatch",
         }
 
@@ -208,17 +208,17 @@ async def test_reencrypt_and_finish_check_access_rights(
 
     async def _assert_bob_maintenance_access(allowed):
         if allowed:
-            expected_rep = {"status": "ok"}
+            expected_status = "ok"
         else:
-            expected_rep = {"status": "not_allowed"}
+            expected_status = "not_allowed"
         rep = await vlob_maintenance_save_reencryption_batch(
             bob_backend_sock, realm, encryption_revision, [], check_rep=False
         )
-        assert rep == expected_rep
+        assert rep["status"] == expected_status
         rep = await realm_finish_reencryption_maintenance(
             bob_backend_sock, realm, encryption_revision, check_rep=False
         )
-        assert rep == expected_rep
+        assert rep["status"] == expected_status
 
     # User not part of the realm
     await _ready_to_finish()
@@ -296,18 +296,21 @@ async def test_reencryption(alice, alice_backend_sock, realm, vlobs, vlob_atoms)
         ],
     }
 
-    async def _reencrypt_with_batch_of_2(expected_size):
+    async def _reencrypt_with_batch_of_2(expected_size, expected_done):
         rep = await vlob_maintenance_get_reencryption_batch(alice_backend_sock, realm, 2, size=2)
         assert rep["status"] == "ok"
         assert len(rep["batch"]) == expected_size
         for entry in rep["batch"]:
             entry["blob"] = f"{entry['vlob_id']}::{entry['version']} reencrypted".encode()
-        await vlob_maintenance_save_reencryption_batch(alice_backend_sock, realm, 2, rep["batch"])
+        rep = await vlob_maintenance_save_reencryption_batch(
+            alice_backend_sock, realm, 2, rep["batch"]
+        )
+        assert rep == {"status": "ok", "total": 3, "done": expected_done}
 
     # Should have 2 batch to reencrypt
-    await _reencrypt_with_batch_of_2(expected_size=2)
-    await _reencrypt_with_batch_of_2(expected_size=1)
-    await _reencrypt_with_batch_of_2(expected_size=0)
+    await _reencrypt_with_batch_of_2(expected_size=2, expected_done=2)
+    await _reencrypt_with_batch_of_2(expected_size=1, expected_done=3)
+    await _reencrypt_with_batch_of_2(expected_size=0, expected_done=3)
 
     # Finish the reencryption
     await realm_finish_reencryption_maintenance(alice_backend_sock, realm, 2)

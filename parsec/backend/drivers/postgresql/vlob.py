@@ -492,7 +492,7 @@ LIMIT $4
         realm_id: UUID,
         encryption_revision: int,
         batch: List[Tuple[UUID, int, bytes]],
-    ) -> None:
+    ) -> Tuple[int, int]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
@@ -539,3 +539,23 @@ ON CONFLICT DO NOTHING
                         encryption_revision,
                         blob,
                     )
+
+                rep = await conn.fetchrow(
+                    """
+SELECT (
+    SELECT COUNT(*)
+    FROM vlob_atom
+    WHERE vlob_encryption_revision = get_vlob_encryption_revision_internal_id($1, $2, $3 - 1)
+),
+(
+    SELECT COUNT(*)
+    FROM vlob_atom
+    WHERE vlob_encryption_revision = get_vlob_encryption_revision_internal_id($1, $2, $3)
+)
+""",
+                    organization_id,
+                    realm_id,
+                    encryption_revision,
+                )
+
+                return rep[0], rep[1]
