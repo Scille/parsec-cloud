@@ -34,13 +34,6 @@ def normalize_offset(offset, cursor, manifest):
     return offset
 
 
-def shorten_data_repr(data: bytes) -> bytes:
-    if len(data) > 100:
-        return data[:40] + b"..." + data[-40:]
-    else:
-        return data
-
-
 def pad_content(offset: int, size: int, content: bytes = b""):
     empty_gap = offset - size
     if empty_gap <= 0:
