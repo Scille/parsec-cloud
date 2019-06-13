@@ -31,10 +31,8 @@ DEFAULT_BLOCK_SIZE = 1 * 1024 * 1024  # 1 MB
 
 
 def get_filename(manifest: Manifest, entry_id: EntryID) -> Optional[EntryName]:
-    try:
-        return next(name for name, child_id in manifest.children.items() if child_id == entry_id)
-    except StopIteration:
-        return None
+    gen = (name for name, child_id in manifest.children.items() if child_id == entry_id)
+    return next(gen, None)
 
 
 def get_conflict_filename(filename: EntryName, filenames: List[EntryName], author: DeviceID):
@@ -315,7 +313,7 @@ class SyncTransactions:
                     self.local_storage.clear_block(access.id)
                 self.local_storage.set_manifest(entry_id, new_manifest)
 
-                # Return
+                # Break out of the retry loop
                 return
 
     async def file_conflict(
@@ -365,9 +363,10 @@ class SyncTransactions:
         # Loop over blocks
         blocks, old_blocks, new_blocks, missing = [], [], [], []
         for space in merged.spaces:
+            assert len(space.buffers) > 0
 
             # Existing block
-            if len(space.buffers) <= 1:
+            if len(space.buffers) == 1:
                 buffer_space, = space.buffers
                 blocks.append(buffer_space.buffer.access)
                 continue

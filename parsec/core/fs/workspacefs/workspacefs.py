@@ -351,7 +351,7 @@ class WorkspaceFS:
         # Get a minimal manifest to upload
         try:
             remote_manifest = await self.sync_transactions.get_minimal_remote_manifest(entry_id)
-        # Not available locally so noting to synchronize
+        # Not available locally so nothing to synchronize
         except LocalStorageMissingError:
             return
 
@@ -375,7 +375,7 @@ class WorkspaceFS:
             except FSReshapingRequiredError:
                 await self.sync_transactions.file_reshape(entry_id)
                 continue
-            # Not available locally so noting to synchronize
+            # Not available locally so nothing to synchronize
             except LocalStorageMissingError:
                 return
 
@@ -473,11 +473,11 @@ class WorkspaceFS:
 
             result.update(attr.asdict(manifest))
             try:
-                manifest.children
+                children = manifest.children
             except AttributeError:
                 return result
 
-            for key, value in manifest.children.items():
+            for key, value in children.items():
                 result["children"][key] = rec(value)
             return result
 
