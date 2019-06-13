@@ -417,19 +417,72 @@ async def test_get_minimal_remote_manifest(
     minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
     local = sync_transactions.local_storage.get_manifest(a_id)
     assert minimal == local.to_remote().evolve(version=1, blocks=[], updated=local.created, size=0)
-    await sync_transactions.synchronization_step(w_id, minimal)
-    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
+    await sync_transactions.file_reshape(a_id)
+    await sync_transactions.synchronization_step(a_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(a_id) is None
 
     # Folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(b_id)
     local = sync_transactions.local_storage.get_manifest(b_id)
     assert minimal == local.to_remote().evolve(version=1, children={}, updated=local.created)
-    await sync_transactions.synchronization_step(w_id, minimal)
-    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
+    await sync_transactions.synchronization_step(b_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(b_id) is None
 
     # Empty folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(c_id)
     local = sync_transactions.local_storage.get_manifest(c_id)
     assert minimal == local.to_remote().evolve(version=1)
-    await sync_transactions.synchronization_step(w_id, minimal)
-    assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
+    await sync_transactions.synchronization_step(c_id, minimal)
+    assert await sync_transactions.get_minimal_remote_manifest(c_id) is None
+
+
+@pytest.mark.trio
+async def test_file_conflict(sync_transactions, entry_transactions, file_transactions):
+    # Prepare
+    a_id, fd = await entry_transactions.file_create(FsPath("/a"))
+    await file_transactions.fd_write(fd, b"abc")
+    await sync_transactions.file_reshape(a_id)
+    remote = await sync_transactions.synchronization_step(a_id)
+    assert await sync_transactions.synchronization_step(a_id, remote) is None
+    await file_transactions.fd_write(fd, b"def", offset=3)
+    await sync_transactions.file_reshape(a_id)
+    changed_remote = remote.evolve(version=2, blocks=[], size=0, author="b@b")
+
+    # Try a synchronization
+    with pytest.raises(FSFileConflictError) as ctx:
+        await sync_transactions.synchronization_step(a_id, changed_remote)
+    local, remote = ctx.value.args
+
+    # Write some more
+    await file_transactions.fd_write(fd, b"ghi", offset=6)
+
+    # Also create a fake previous conflict file
+    await entry_transactions.file_create(FsPath("/a (conflicting with b@b)"), open=False)
+
+    # Solve conflict
+    await sync_transactions.file_conflict(a_id, local, remote)
+    assert await file_transactions.fd_read(fd) == b""
+    a2_id, fd2 = await entry_transactions.file_open(FsPath("/a (conflicting with b@b - 2)"))
+    assert await file_transactions.fd_read(fd2) == b"abcdefghi"
+
+    # Finish synchronization
+    await sync_transactions.file_reshape(a2_id)
+    assert await sync_transactions.synchronization_step(a_id, changed_remote) is None
+    remote2 = await sync_transactions.synchronization_step(a2_id)
+    assert await sync_transactions.synchronization_step(a2_id, remote2) is None
+
+    # Create a new conflict then remove a
+    await file_transactions.fd_write(fd, b"abc")
+    await sync_transactions.file_reshape(a_id)
+    changed_remote = changed_remote.evolve(version=3)
+    await entry_transactions.file_delete(FsPath("/a"))
+
+    # Conflict solving should still succeed
+    with pytest.raises(FSFileConflictError) as ctx:
+        await sync_transactions.synchronization_step(a_id, changed_remote)
+    local, remote = ctx.value.args
+    await sync_transactions.file_conflict(a_id, local, remote)
+
+    # Close fds
+    await file_transactions.fd_close(fd)
+    await file_transactions.fd_close(fd2)
