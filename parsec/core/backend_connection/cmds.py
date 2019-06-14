@@ -22,6 +22,8 @@ from parsec.api.protocole import (
     vlob_update_serializer,
     vlob_group_check_serializer,
     vlob_poll_changes_serializer,
+    vlob_maintenance_get_reencryption_batch_serializer,
+    vlob_maintenance_save_reencryption_batch_serializer,
     realm_status_serializer,
     realm_get_roles_serializer,
     realm_update_roles_serializer,
@@ -43,7 +45,7 @@ from parsec.api.protocole import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
+from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice, EntryID
 from parsec.core.backend_connection.exceptions import (
     raise_on_bad_response,
     BackendNotAvailable,
@@ -220,13 +222,42 @@ async def vlob_poll_changes(
     return (rep["current_checkpoint"], rep["changes"])
 
 
+async def vlob_maintenance_get_reencryption_batch(
+    transport: Transport, realm_id: UUID, encryption_revision: int, size: int
+) -> List[Tuple[EntryID, int, bytes]]:
+    rep = await _send_cmd(
+        transport,
+        vlob_maintenance_get_reencryption_batch_serializer,
+        cmd="vlob_maintenance_get_reencryption_batch",
+        realm_id=realm_id,
+        encryption_revision=encryption_revision,
+        size=size,
+    )
+    return [(x["vlob_id"], x["version"], x["blob"]) for x in rep["batch"]]
+
+
+async def vlob_maintenance_save_reencryption_batch(
+    transport: Transport,
+    realm_id: UUID,
+    encryption_revision: int,
+    batch: List[Tuple[EntryID, int, bytes]],
+) -> Tuple[int, int]:
+    rep = await _send_cmd(
+        transport,
+        vlob_maintenance_save_reencryption_batch_serializer,
+        cmd="vlob_maintenance_save_reencryption_batch",
+        realm_id=realm_id,
+        encryption_revision=encryption_revision,
+        batch=[{"vlob_id": x[0], "version": x[1], "blob": x[2]} for x in batch],
+    )
+    return rep["total"], rep["done"]
+
+
 ### Realm API ###
 
 
-async def realm_status(transport: Transport, realm_id: UUID) -> Dict[UserID, RealmRole]:
-    rep = await _send_cmd(
-        transport, realm_status_serializer, cmd="realm_get_roles", realm_id=realm_id
-    )
+async def realm_status(transport: Transport, realm_id: UUID) -> dict:
+    rep = await _send_cmd(transport, realm_status_serializer, cmd="realm_status", realm_id=realm_id)
     rep.pop("status")
     # TODO: return RealmStatus object ?
     return rep
@@ -256,6 +287,7 @@ async def realm_start_reencryption_maintenance(
     transport: Transport,
     realm_id: UUID,
     encryption_revision: int,
+    timestamp: pendulum.Pendulum,
     per_participant_message: Dict[UserID, bytes],
 ) -> None:
     await _send_cmd(
@@ -264,6 +296,7 @@ async def realm_start_reencryption_maintenance(
         cmd="realm_start_reencryption_maintenance",
         realm_id=realm_id,
         encryption_revision=encryption_revision,
+        timestamp=timestamp,
         per_participant_message=per_participant_message,
     )
 
