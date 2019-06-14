@@ -8,10 +8,11 @@ import pendulum
 from parsec.core.types import FsPath
 
 from parsec.core.fs.workspacefs.entry_transactions import from_errno
-from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS, AnyPath
+from parsec.core.fs.workspacefs.workspacefs import AnyPath
+import parsec.core.fs.workspacefs as workspacefs
 
 
-class WorkspaceFSTimestamped(WorkspaceFS):
+class WorkspaceFSTimestamped(workspacefs.WorkspaceFS):
     def _throw_permission_error(*e, **ke):
         raise from_errno(errno.EACCES, "Not available for timestamped workspaces.")
 
@@ -30,7 +31,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
     sync_by_id = _throw_permission_error
     sync = _throw_permission_error
 
-    def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.Pendulum):
+    def __init__(self, workspacefs: workspacefs.WorkspaceFS, timestamp: pendulum.Pendulum):
         self.workspace_id = workspacefs.workspace_id
         self.get_workspace_entry = workspacefs.get_workspace_entry
         self.device = workspacefs.device

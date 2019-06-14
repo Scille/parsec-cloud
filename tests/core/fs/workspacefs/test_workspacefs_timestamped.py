@@ -5,7 +5,6 @@ import pendulum
 from unittest.mock import ANY
 
 from parsec.core.types import FsPath
-from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
 
 from tests.common import freeze_time
 
@@ -47,31 +46,31 @@ async def alice_workspace(alice_user_fs, running_backend):
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace_t1(alice_workspace):
-    return WorkspaceFSTimestamped(alice_workspace, day1)
+    return alice_workspace.to_timestamped(day1)
 
 
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace_t2(alice_workspace):
-    return WorkspaceFSTimestamped(alice_workspace, day2)
+    return alice_workspace.to_timestamped(day2)
 
 
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace_t3(alice_workspace):
-    return WorkspaceFSTimestamped(alice_workspace, day3)
+    return alice_workspace.to_timestamped(day3)
 
 
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace_t4(alice_workspace):
-    return WorkspaceFSTimestamped(alice_workspace, day4)
+    return alice_workspace.to_timestamped(day4)
 
 
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace_t5(alice_workspace):
-    return WorkspaceFSTimestamped(alice_workspace, day5)
+    return alice_workspace.to_timestamped(day5)
 
 
 @pytest.mark.trio
