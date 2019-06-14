@@ -25,6 +25,7 @@ from parsec.core.types import (
 from parsec.core.fs.exceptions import (
     FSRemoteSyncError,
     FSRemoteManifestNotFound,
+    FSRemoteManifestNotFoundBadVersion,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
 )
@@ -65,10 +66,13 @@ class RemoteLoader:
         self.local_storage.set_clean_block(access.id, block)
         return block
 
-    async def load_remote_manifest(self, entry_id: EntryID) -> Manifest:
+    async def load_remote_manifest(
+        self, entry_id: EntryID, timestamp: pendulum.Pendulum = None
+    ) -> Manifest:
         try:
             # TODO: encryption_revision is not yet handled in core
-            args = await self.backend_cmds.vlob_read(1, entry_id)
+            args = await self.backend_cmds.vlob_read(1, entry_id, timestamp=timestamp)
+            # args = await self.backend_cmds.vlob_read(1, entry_id)
 
         except BackendCmdsInMaintenance as exc:
             raise FSWorkspaceInMaintenance(
@@ -76,6 +80,8 @@ class RemoteLoader:
             ) from exc
 
         except BackendCmdsBadResponse as exc:
+            if exc.status == "bad_version":
+                raise FSRemoteManifestNotFoundBadVersion(entry_id)
             if exc.status == "not_found":
                 raise FSRemoteManifestNotFound(entry_id)
             raise
@@ -92,12 +98,15 @@ class RemoteLoader:
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
 
-    async def load_manifest(self, entry_id: EntryID) -> LocalManifest:
-        remote_manifest = await self.load_remote_manifest(entry_id)
+    async def load_manifest(
+        self, entry_id: EntryID, timestamp: pendulum.Pendulum = None
+    ) -> LocalManifest:
+        remote_manifest = await self.load_remote_manifest(entry_id, timestamp)
         # TODO: This should only be done if the manifest is not in the local storage
         # The relationship between the local storage and the remote loader needs
         # to be settle so we can refactor this kind of dangerous code
-        self.local_storage.set_base_manifest(entry_id, remote_manifest)
+        if timestamp is None:
+            self.local_storage.set_base_manifest(entry_id, remote_manifest)
         return remote_manifest.to_local(self.device.device_id)
 
     async def upload_manifest(self, entry_id: EntryID, manifest: Manifest):
