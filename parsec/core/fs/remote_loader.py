@@ -65,10 +65,10 @@ class RemoteLoader:
         self.local_storage.set_clean_block(access.id, block)
         return block
 
-    async def load_remote_manifest(self, entry_id: EntryID) -> Manifest:
+    async def load_remote_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:
         try:
             # TODO: encryption_revision is not yet handled in core
-            args = await self.backend_cmds.vlob_read(1, entry_id)
+            args = await self.backend_cmds.vlob_read(1, entry_id, version=version)
 
         except BackendCmdsInMaintenance as exc:
             raise FSWorkspaceInMaintenance(

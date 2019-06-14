@@ -6,6 +6,8 @@ from parsec.core.fs.exceptions import (
     FSValidationError,
     FSPackingError,
     FSWorkspaceNotFoundError,
+    FSWorkspaceInMaintenance,
+    FSWorkspaceNotInMaintenance,
     FSBackendOfflineError,
     FSSharingNotAllowedError,
 )
@@ -20,6 +22,8 @@ __all__ = (
     "FSValidationError",
     "FSPackingError",
     "FSWorkspaceNotFoundError",
+    "FSWorkspaceInMaintenance",
+    "FSWorkspaceNotInMaintenance",
     "FSBackendOfflineError",
     "FSSharingNotAllowedError",
     "FS",

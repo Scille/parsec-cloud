@@ -37,5 +37,17 @@ class FSNoSynchronizationRequired(FSError):
     pass
 
 
+class FSWorkspaceNoAccess(FSError):
+    pass
+
+
 class FSWorkspaceInMaintenance(FSError):
+    pass
+
+
+class FSWorkspaceNotInMaintenance(FSError):
+    pass
+
+
+class FSMaintenanceNotAllowedError(FSError):
     pass
