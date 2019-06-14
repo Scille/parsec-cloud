@@ -46,6 +46,10 @@ class VlobInMaintenanceError(VlobError):
     pass
 
 
+class VlobNotInMaintenanceError(VlobError):
+    pass
+
+
 class VlobMaintenanceError(VlobError):
     pass
 
@@ -198,6 +202,11 @@ class BaseVlobComponent:
                 {"status": "not_found", "reason": str(exc)}
             )
 
+        except VlobNotInMaintenanceError as exc:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "not_in_maintenance", "reason": str(exc)}
+            )
+
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
@@ -237,6 +246,11 @@ class BaseVlobComponent:
         except VlobNotFoundError as exc:
             return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
+            )
+
+        except VlobNotInMaintenanceError as exc:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "not_in_maintenance", "reason": str(exc)}
             )
 
         except VlobEncryptionRevisionError:

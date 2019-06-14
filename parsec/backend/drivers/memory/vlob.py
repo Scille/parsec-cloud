@@ -22,7 +22,7 @@ from parsec.backend.vlob import (
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
-    VlobMaintenanceError,
+    VlobNotInMaintenanceError,
 )
 
 
@@ -187,7 +187,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except VlobInMaintenanceError:
             pass
         else:
-            raise VlobMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
     def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
         changes = self._per_realm_changes[(organization_id, realm_id)]

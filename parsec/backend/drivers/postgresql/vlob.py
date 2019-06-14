@@ -15,7 +15,7 @@ from parsec.backend.vlob import (
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
-    VlobMaintenanceError,
+    VlobNotInMaintenanceError,
 )
 from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
 from parsec.backend.drivers.postgresql.realm import (
@@ -46,7 +46,7 @@ async def _check_realm(
             raise VlobInMaintenanceError("Data realm is currently under maintenance")
     elif expected_maintenance is True:
         if not rep["maintenance_type"]:
-            raise VlobMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
 
 async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):

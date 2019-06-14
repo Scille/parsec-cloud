@@ -52,7 +52,7 @@ async def realm_update_roles(sock, realm_id, user, role):
 
 
 async def realm_start_reencryption_maintenance(
-    sock, realm_id, encryption_revision, per_participant_message, check_rep=True
+    sock, realm_id, encryption_revision, timestamp, per_participant_message, check_rep=True
 ):
     raw_rep = await sock.send(
         realm_start_reencryption_maintenance_serializer.req_dumps(
@@ -60,6 +60,7 @@ async def realm_start_reencryption_maintenance(
                 "cmd": "realm_start_reencryption_maintenance",
                 "realm_id": realm_id,
                 "encryption_revision": encryption_revision,
+                "timestamp": timestamp,
                 "per_participant_message": per_participant_message,
             }
         )
