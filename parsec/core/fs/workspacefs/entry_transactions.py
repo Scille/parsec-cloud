@@ -5,6 +5,7 @@ import errno
 from typing import Tuple, Callable
 from collections import namedtuple
 from async_generator import asynccontextmanager
+from pendulum import Pendulum
 
 from parsec.event_bus import EventBus
 from parsec.core.types import (
@@ -67,17 +68,23 @@ class EntryTransactions:
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
-        try:
-            return self.local_storage.get_manifest(entry_id)
-        except LocalStorageMissingError as exc:
-            return await self.remote_loader.load_manifest(exc.id)
+    async def _get_manifest(self, entry_id: EntryID, timestamp: Pendulum = None) -> LocalManifest:
+        if timestamp is None:
+            try:
+                return self.local_storage.get_manifest(entry_id)
+            except LocalStorageMissingError:
+                return await self.remote_loader.load_manifest(entry_id)
+        else:
+            # For now, no caching mechanism for older versions
+            return await self.remote_loader.load_manifest(entry_id, timestamp)
 
-    async def _get_entry(self, path: FsPath) -> Tuple[EntryID, LocalManifest]:
+    async def _get_entry(
+        self, path: FsPath, timestamp: Pendulum = None
+    ) -> Tuple[EntryID, LocalManifest]:
         # Root entry_id and manifest
         assert path.parts[0] == "/"
         entry_id = self.get_workspace_entry().id
-        manifest = await self._get_manifest(entry_id)
+        manifest = await self._get_manifest(entry_id, timestamp)
         assert is_workspace_manifest(manifest)
 
         # Follow the path
@@ -88,7 +95,7 @@ class EntryTransactions:
                 entry_id = manifest.children[name]
             except (AttributeError, KeyError):
                 raise from_errno(errno.ENOENT, filename=str(path))
-            manifest = await self._get_manifest(entry_id)
+            manifest = await self._get_manifest(entry_id, timestamp)
 
         # Return entry
         return Entry(entry_id, manifest)
@@ -176,10 +183,10 @@ class EntryTransactions:
 
     # Transactions
 
-    async def entry_info(self, path: FsPath) -> dict:
+    async def entry_info(self, path: FsPath, timestamp: Pendulum = None) -> dict:
 
         # Fetch data
-        entry_id, manifest = await self._get_entry(path)
+        entry_id, manifest = await self._get_entry(path, timestamp)
 
         # General stats
         stats = {
@@ -407,10 +414,15 @@ class EntryTransactions:
         # Return the entry id of the created file and the file descriptor
         return child_entry_id, fd
 
-    async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
+    async def file_open(
+        self, path: FsPath, mode="rw", timestamp: Pendulum = None
+    ) -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
         if "w" in mode:
-            self._check_write_rights(path)
+            if timestamp is not None:
+                raise from_errno(errno.EACCES, str(path))
+            else:
+                self._check_write_rights(path)
 
         # Lock path in read mode
         async with self._lock_entry(path) as entry:
