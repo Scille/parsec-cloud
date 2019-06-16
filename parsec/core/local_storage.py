@@ -39,6 +39,7 @@ class LocalStorage:
     That includes:
     - a cache in memory for fast access to deserialized data
     - the persistent storage to keep serialized data on the disk
+    - a lock mecanism to protect against race conditions
     """
 
     def __init__(self, device_id: DeviceID, key: SecretKey, path: Path, **kwargs):
@@ -76,16 +77,22 @@ class LocalStorage:
     # Locking helpers
 
     @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID):
+    async def lock_entry_id(self, entry_id: EntryID):
         async with self.entry_locks[entry_id]:
             try:
                 self.locking_tasks[entry_id] = hazmat.current_task()
-                yield self.get_manifest(entry_id)
+                yield entry_id
             finally:
                 del self.locking_tasks[entry_id]
 
+    @asynccontextmanager
+    async def lock_manifest(self, entry_id: EntryID):
+        async with self.lock_entry_id(entry_id):
+            yield self.get_manifest(entry_id)
+
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
+        # TODO: remove `task is None` to ensure that the lock is taken
         assert task is None or task == hazmat.current_task()
 
     # Manifest interface

@@ -363,7 +363,7 @@ class WorkspaceFS:
             await self.remote_loader.upload_manifest(entry_id, remote_manifest)
         # The upload has failed: download the latest remote manifest
         except FSRemoteSyncError:
-            remote_manifest = await self.remote_loader.load_remote_manifest(entry_id)
+            remote_manifest = await self.remote_loader.load_manifest(entry_id)
 
         while True:
             # Register the manifest to unset the placeholder tag
@@ -384,7 +384,7 @@ class WorkspaceFS:
         remote_manifest = None
         if remote_changed:
             try:
-                remote_manifest = await self.remote_loader.load_remote_manifest(entry_id)
+                remote_manifest = await self.remote_loader.load_manifest(entry_id)
             except FSRemoteManifestNotFound:
                 pass
 
@@ -421,7 +421,7 @@ class WorkspaceFS:
                 await self.remote_loader.upload_manifest(entry_id, new_remote_manifest)
             # The upload has failed: download the latest remote manifest
             except FSRemoteSyncError:
-                remote_manifest = await self.remote_loader.load_remote_manifest(entry_id)
+                remote_manifest = await self.remote_loader.load_manifest(entry_id)
             # The upload has succeed: loop to acknowledge this new version
             else:
                 remote_manifest = new_remote_manifest

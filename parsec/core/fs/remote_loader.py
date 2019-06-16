@@ -22,13 +22,7 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendConnectionError,
 )
-from parsec.core.types import (
-    LocalManifest,
-    EntryID,
-    BlockAccess,
-    remote_manifest_serializer,
-    Manifest,
-)
+from parsec.core.types import EntryID, BlockAccess, remote_manifest_serializer, Manifest
 from parsec.core.fs.exceptions import (
     FSError,
     FSRemoteSyncError,
@@ -146,7 +140,7 @@ class RemoteLoader:
         self.local_storage.clear_block(access.id)
         self.local_storage.set_clean_block(access.id, data)
 
-    async def load_remote_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:
+    async def load_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:
         """
         Raises:
             FSError
@@ -227,21 +221,6 @@ class RemoteLoader:
 
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
-
-    async def load_manifest(self, entry_id: EntryID) -> LocalManifest:
-        """
-        Raises:
-            FSError
-            FSBackendOfflineError
-            FSWorkspaceInMaintenance
-            FSRemoteManifestNotFound
-        """
-        remote_manifest = await self.load_remote_manifest(entry_id)
-        # TODO: This should only be done if the manifest is not in the local storage
-        # The relationship between the local storage and the remote loader needs
-        # to be settle so we can refactor this kind of dangerous code
-        self.local_storage.set_base_manifest(entry_id, remote_manifest)
-        return remote_manifest.to_local(self.device.device_id)
 
     async def upload_manifest(self, entry_id: EntryID, manifest: Manifest):
         """
