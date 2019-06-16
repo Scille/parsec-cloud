@@ -63,6 +63,9 @@ class BaseBlockComponent:
         except BlockAlreadyExistsError:
             return block_create_serializer.rep_dump({"status": "already_exists"})
 
+        except BlockNotFoundError:
+            return block_create_serializer.rep_dump({"status": "not_found"})
+
         except BlockTimeoutError:
             return block_create_serializer.rep_dump({"status": "timeout"})
 
@@ -96,6 +99,7 @@ class BaseBlockComponent:
     ) -> None:
         """
         Raises:
+            BlockNotFoundError: if cannot found realm
             BlockAlreadyExistsError
             BlockTimeoutError
             BlockAccessError
