@@ -160,7 +160,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     def _check_realm_access(
-        self, organization_id, realm_id, user_id, encryption_revision, allowed_roles
+        self,
+        organization_id,
+        realm_id,
+        user_id,
+        encryption_revision,
+        allowed_roles,
+        expected_maintenance=False,
     ):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
@@ -170,24 +176,28 @@ class MemoryVlobComponent(BaseVlobComponent):
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
 
+        if expected_maintenance is False:
+            if realm.status.in_maintenance:
+                raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
+        elif expected_maintenance is True:
+            if not realm.status.in_maintenance:
+                raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+
         if encryption_revision not in (None, realm.status.encryption_revision):
             raise VlobEncryptionRevisionError()
-
-        if realm.status.in_maintenance:
-            raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
 
     def _check_realm_in_maintenance_access(
         self, organization_id, realm_id, user_id, encryption_revision
     ):
         can_do_maintenance_roles = (RealmRole.OWNER,)
-        try:
-            self._check_realm_access(
-                organization_id, realm_id, user_id, encryption_revision, can_do_maintenance_roles
-            )
-        except VlobInMaintenanceError:
-            pass
-        else:
-            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+        self._check_realm_access(
+            organization_id,
+            realm_id,
+            user_id,
+            encryption_revision,
+            can_do_maintenance_roles,
+            expected_maintenance=True,
+        )
 
     def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
         changes = self._per_realm_changes[(organization_id, realm_id)]
