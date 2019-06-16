@@ -11,6 +11,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNotInMaintenance,
     FSBackendOfflineError,
     FSSharingNotAllowedError,
+    FSBadEncryptionRevision,
 )
 from parsec.core.fs.workspacefs import WorkspaceFS
 
@@ -29,6 +30,7 @@ __all__ = (
     "FSWorkspaceNotInMaintenance",
     "FSBackendOfflineError",
     "FSSharingNotAllowedError",
+    "FSBadEncryptionRevision",
     "FSInvalidFileDescriptor",
     "WorkspaceFS",
 )

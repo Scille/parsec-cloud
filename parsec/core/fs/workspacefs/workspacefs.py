@@ -69,8 +69,7 @@ class WorkspaceFS:
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
-            # TODO: key is subject to change, we should use get_workspace_entry() instead
-            self.workspace_key,
+            get_workspace_entry,
             self.backend_cmds,
             self.remote_device_manager,
             self.local_storage,
@@ -98,8 +97,8 @@ class WorkspaceFS:
         return self.get_workspace_entry().name
 
     @property
-    def workspace_key(self) -> str:
-        return self.get_workspace_entry().key
+    def encryption_revision(self) -> int:
+        return self.get_workspace_entry().encryption_revision
 
     # Information
 

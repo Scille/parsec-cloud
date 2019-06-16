@@ -14,12 +14,13 @@ from parsec.crypto import (
 )
 
 from parsec.core.backend_connection import (
+    BackendCmdsBadResponse,
     BackendCmdsInMaintenance,
     BackendCmdsAlreadyExists,
     BackendCmdsNotFound,
+    BackendCmdsBadVersion,
     BackendNotAvailable,
     BackendConnectionError,
-    BackendCmdsBadVersion,
 )
 from parsec.core.types import (
     LocalManifest,
@@ -35,6 +36,7 @@ from parsec.core.fs.exceptions import (
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
+    FSBadEncryptionRevision,
 )
 
 
@@ -43,14 +45,14 @@ class RemoteLoader:
         self,
         device,
         workspace_id,
-        workspace_key,
+        get_workspace_entry,
         backend_cmds,
         remote_device_manager,
         local_storage,
     ):
         self.device = device
         self.workspace_id = workspace_id
-        self.workspace_key = workspace_key
+        self.get_workspace_entry = get_workspace_entry
         self.backend_cmds = backend_cmds
         self.remote_device_manager = remote_device_manager
         self.local_storage = local_storage
@@ -151,11 +153,14 @@ class RemoteLoader:
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
+            FSBadEncryptionRevision
         """
         # Download the vlob
+        workspace_entry = self.get_workspace_entry()
         try:
-            # TODO: encryption_revision is not yet handled in core
-            args = await self.backend_cmds.vlob_read(1, entry_id, version=version)
+            args = await self.backend_cmds.vlob_read(
+                workspace_entry.encryption_revision, entry_id, version=version
+            )
 
         # Vlob is not found
         except BackendCmdsNotFound as exc:
@@ -171,9 +176,19 @@ class RemoteLoader:
                 f"Cannot download vlob while the workspace is in maintenance"
             ) from exc
 
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "not_found":
+                raise FSRemoteManifestNotFound(entry_id)
+            elif exc.status == "bad_encryption_revision":
+                raise FSBadEncryptionRevision(
+                    f"Cannot fetch vlob {entry_id}: Bad encryption revision provided"
+                ) from exc
+            else:
+                raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
+
         # Another backend error
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot download vlob: {exc}") from exc
+            raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
 
         expected_author_id, expected_timestamp, expected_version, blob = args
         if version not in (None, expected_version):
@@ -186,7 +201,7 @@ class RemoteLoader:
         # Vlob decryption
         try:
             raw = decrypt_and_verify_signed_msg_with_secret_key(
-                self.workspace_key, blob, expected_author_id, author.verify_key, expected_timestamp
+                workspace_entry.key, blob, expected_author_id, author.verify_key, expected_timestamp
             )
 
         # Decryption error
@@ -235,9 +250,11 @@ class RemoteLoader:
             FSRemoteSyncError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
+            FSBadEncryptionRevision
         """
         now = pendulum.now()
         assert manifest.author == self.device.device_id
+        workspace_entry = self.get_workspace_entry()
 
         # Manifest serialization
         try:
@@ -250,7 +267,7 @@ class RemoteLoader:
         # Vlob encryption
         try:
             ciphered = encrypt_signed_msg_with_secret_key(
-                self.device.device_id, self.device.signing_key, self.workspace_key, raw, now
+                self.device.device_id, self.device.signing_key, workspace_entry.key, raw, now
             )
 
         # Encryption error
@@ -259,23 +276,29 @@ class RemoteLoader:
 
         # Upload the vlob
         if manifest.version == 1:
-            await self._vlob_create(entry_id, ciphered, now)
+            await self._vlob_create(workspace_entry.encryption_revision, entry_id, ciphered, now)
         else:
-            await self._vlob_update(entry_id, ciphered, now, manifest.version)
+            await self._vlob_update(
+                workspace_entry.encryption_revision, entry_id, ciphered, now, manifest.version
+            )
 
-    async def _vlob_create(self, entry_id: EntryID, ciphered: bytes, now: Pendulum):
+    async def _vlob_create(
+        self, encryption_revision: int, entry_id: EntryID, ciphered: bytes, now: Pendulum
+    ):
         """
         Raises:
             FSError
             FSRemoteSyncError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
+            FSBadEncryptionRevision
         """
 
         # Vlob updload
         try:
-            # TODO: encryption_revision is not yet handled in core
-            await self.backend_cmds.vlob_create(self.workspace_id, 1, entry_id, now, ciphered)
+            await self.backend_cmds.vlob_create(
+                self.workspace_id, encryption_revision, entry_id, now, ciphered
+            )
 
         # Vlob alread exists
         except BackendCmdsAlreadyExists as exc:
@@ -291,11 +314,28 @@ class RemoteLoader:
                 f"Cannot create vlob while the workspace is in maintenance"
             ) from exc
 
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "already_exists":
+                raise FSRemoteSyncError(entry_id)
+            elif exc.status == "bad_encryption_revision":
+                raise FSBadEncryptionRevision(
+                    f"Cannot create vlob {entry_id}: Bad encryption revision provided"
+                ) from exc
+            else:
+                raise FSError(f"Cannot create vlob {entry_id}: {exc}") from exc
+
         # Another backend error
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot create vlob: {exc}") from exc
+            raise FSError(f"Cannot update vlob: {exc}") from exc
 
-    async def _vlob_update(self, entry_id: EntryID, ciphered: bytes, now: Pendulum, version: int):
+    async def _vlob_update(
+        self,
+        encryption_revision: int,
+        entry_id: EntryID,
+        ciphered: bytes,
+        now: Pendulum,
+        version: int,
+    ):
         """
         Raises:
             FSError
@@ -305,26 +345,37 @@ class RemoteLoader:
         """
         # Vlob upload
         try:
-            # TODO: encryption_revision is not yet handled in core
-            await self.backend_cmds.vlob_update(1, entry_id, version, now, ciphered)
+            await self.backend_cmds.vlob_update(
+                encryption_revision, entry_id, version, now, ciphered
+            )
 
         # Vlob not found
         except BackendCmdsNotFound as exc:
             raise FSRemoteSyncError(entry_id) from exc
 
+        # Workspace in maintenance
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot create vlob while the workspace is in maintenance"
+            ) from exc
+
         # Versions do not match
         except BackendCmdsBadVersion as exc:
             raise FSRemoteSyncError(entry_id) from exc
 
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "bad_version":
+                raise FSRemoteSyncError(entry_id)
+            elif exc.status == "bad_encryption_revision":
+                raise FSBadEncryptionRevision(
+                    f"Cannot update vlob {entry_id}: Bad encryption revision provided"
+                ) from exc
+            else:
+                raise FSError(f"Cannot update vlob {entry_id}: {exc}") from exc
+
         # Backend not available
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
-
-        # Workspace in maintenance
-        except BackendCmdsInMaintenance as exc:
-            raise FSWorkspaceInMaintenance(
-                f"Cannot update vlob while the workspace is in maintenance"
-            ) from exc
 
         # Another backend error
         except BackendConnectionError as exc:

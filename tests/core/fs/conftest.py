@@ -42,7 +42,7 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
         remote_loader = RemoteLoader(
             device,
             workspace_entry.id,
-            workspace_entry.key,
+            lambda: workspace_entry,
             backend_cmds,
             remote_devices_manager,
             local_storage,

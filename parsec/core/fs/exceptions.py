@@ -37,6 +37,10 @@ class FSRemoteBlockNotFound(FSError):
     pass
 
 
+class FSBadEncryptionRevision(FSError):
+    pass
+
+
 class FSNoSynchronizationRequired(FSError):
     pass
 
