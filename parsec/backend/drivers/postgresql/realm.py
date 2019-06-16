@@ -13,8 +13,10 @@ from parsec.backend.realm import (
     RealmNotFoundError,
     RealmAlreadyExistsError,
     RealmEncryptionRevisionError,
+    RealmParticipantsMismatchError,
     RealmMaintenanceError,
     RealmInMaintenanceError,
+    RealmNotInMaintenanceError,
 )
 from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
 from parsec.backend.drivers.postgresql.message import send_message
@@ -305,7 +307,7 @@ SET
 
                 roles = await get_realm_role_for(conn, organization_id, realm_id)
                 if per_participant_message.keys() ^ roles.keys():
-                    raise RealmMaintenanceError(
+                    raise RealmParticipantsMismatchError(
                         "Realm participants and message recipients mismatch"
                     )
 
@@ -345,17 +347,17 @@ INSERT INTO vlob_encryption_revision(
                     encryption_revision,
                 )
 
-        await send_signal(
-            conn,
-            "realm.maintenance_started",
-            organization_id=organization_id,
-            author=author,
-            realm_id=realm_id,
-            encryption_revision=encryption_revision,
-        )
+                await send_signal(
+                    conn,
+                    "realm.maintenance_started",
+                    organization_id=organization_id,
+                    author=author,
+                    realm_id=realm_id,
+                    encryption_revision=encryption_revision,
+                )
 
-        for recipient, body in per_participant_message.items():
-            await send_message(conn, organization_id, author, recipient, timestamp, body)
+                for recipient, body in per_participant_message.items():
+                    await send_message(conn, organization_id, author, recipient, timestamp, body)
 
     async def finish_reencryption_maintenance(
         self,
@@ -372,7 +374,7 @@ INSERT INTO vlob_encryption_revision(
                 if roles.get(author.user_id) != RealmRole.OWNER:
                     raise RealmAccessError()
                 if not rep["maintenance_type"]:
-                    raise RealmMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+                    raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
                 if encryption_revision != rep["encryption_revision"]:
                     raise RealmEncryptionRevisionError("Invalid encryption revision")
 

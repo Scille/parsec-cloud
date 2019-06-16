@@ -172,6 +172,9 @@ class UserManifest:
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
 
+    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
+        return next((w for w in self.workspaces if w.id == workspace_id), None)
+
     def evolve(self, **data) -> "UserManifest":
         return attr.evolve(self, **data)
 

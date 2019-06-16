@@ -145,9 +145,15 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
         {"status": "no_events"},
     ]
 
-    # Message to self is silly... and doesn't trigger event !
+    # Message to self also trigger event (not as silly as at sound: see workspace reencryption)
     await backend.message.send(
         alice.organization_id, alice.device_id, alice.user_id, d1, b"Hello to myself"
     )
-    rep = await events_listen_nowait(alice_backend_sock)
-    assert rep == {"status": "no_events"}
+    reps = [
+        await events_listen_nowait(alice_backend_sock),
+        await events_listen_nowait(alice_backend_sock),
+    ]
+    assert reps == [
+        {"status": "ok", "event": "message.received", "index": 3},
+        {"status": "no_events"},
+    ]

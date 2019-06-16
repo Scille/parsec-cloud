@@ -22,7 +22,7 @@ from parsec.backend.vlob import (
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
-    VlobMaintenanceError,
+    VlobNotInMaintenanceError,
 )
 
 
@@ -46,6 +46,7 @@ class Reencryption:
             for index, (data, _, _) in enumerate(vlob.data):
                 version = index + 1
                 self._todo[(vlob_id, version)] = data
+        self._total = len(self._todo)
 
     def get_reencrypted_vlobs(self):
         assert self.is_finished()
@@ -86,6 +87,8 @@ class Reencryption:
             except KeyError:
                 raise VlobNotFoundError()
             self._done[key] = data
+
+        return self._total, len(self._done)
 
 
 @attr.s
@@ -184,7 +187,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except VlobInMaintenanceError:
             pass
         else:
-            raise VlobMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
     def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -333,7 +336,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_id: UUID,
         encryption_revision: int,
         batch: List[Tuple[UUID, int, bytes]],
-    ) -> None:
+    ) -> Tuple[int, int]:
         self._check_realm_in_maintenance_access(
             organization_id, realm_id, author.user_id, encryption_revision
         )
@@ -341,4 +344,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert changes.reencryption
 
-        changes.reencryption.save_batch(batch)
+        total, done = changes.reencryption.save_batch(batch)
+
+        return total, done

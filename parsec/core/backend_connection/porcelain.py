@@ -60,6 +60,12 @@ class BackendCmdsPool:
     vlob_update = _expose_cmds_with_retrier("vlob_update")
     vlob_group_check = _expose_cmds_with_retrier("vlob_group_check")
     vlob_poll_changes = _expose_cmds_with_retrier("vlob_poll_changes")
+    vlob_maintenance_get_reencryption_batch = _expose_cmds_with_retrier(
+        "vlob_maintenance_get_reencryption_batch"
+    )
+    vlob_maintenance_save_reencryption_batch = _expose_cmds_with_retrier(
+        "vlob_maintenance_save_reencryption_batch"
+    )
 
     realm_status = _expose_cmds_with_retrier("realm_status")
     realm_get_roles = _expose_cmds_with_retrier("realm_get_roles")

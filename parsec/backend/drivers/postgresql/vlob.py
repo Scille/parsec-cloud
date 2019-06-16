@@ -15,7 +15,7 @@ from parsec.backend.vlob import (
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
-    VlobMaintenanceError,
+    VlobNotInMaintenanceError,
 )
 from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
 from parsec.backend.drivers.postgresql.realm import (
@@ -46,7 +46,7 @@ async def _check_realm(
             raise VlobInMaintenanceError("Data realm is currently under maintenance")
     elif expected_maintenance is True:
         if not rep["maintenance_type"]:
-            raise VlobMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
 
 async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
@@ -492,7 +492,7 @@ LIMIT $4
         realm_id: UUID,
         encryption_revision: int,
         batch: List[Tuple[UUID, int, bytes]],
-    ) -> None:
+    ) -> Tuple[int, int]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
@@ -539,3 +539,23 @@ ON CONFLICT DO NOTHING
                         encryption_revision,
                         blob,
                     )
+
+                rep = await conn.fetchrow(
+                    """
+SELECT (
+    SELECT COUNT(*)
+    FROM vlob_atom
+    WHERE vlob_encryption_revision = get_vlob_encryption_revision_internal_id($1, $2, $3 - 1)
+),
+(
+    SELECT COUNT(*)
+    FROM vlob_atom
+    WHERE vlob_encryption_revision = get_vlob_encryption_revision_internal_id($1, $2, $3)
+)
+""",
+                    organization_id,
+                    realm_id,
+                    encryption_revision,
+                )
+
+                return rep[0], rep[1]

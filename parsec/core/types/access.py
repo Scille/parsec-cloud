@@ -100,7 +100,7 @@ class WorkspaceEntry:
     id: EntryID = attr.ib(factory=EntryID)
     key: SecretKey = attr.ib(factory=SecretKey.generate)
     encryption_revision: int = 1
-    granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    role_cached_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     role: Optional[WorkspaceRole] = WorkspaceRole.OWNER
 
     def is_revoked(self) -> bool:
@@ -110,8 +110,8 @@ class WorkspaceEntry:
         return attr.evolve(self, **kwargs)
 
     def evolve_and_mark_updated(self, **data) -> "WorkspaceEntry":
-        if "granted_on" not in data:
-            data["granted_on"] = pendulum.now()
+        if "role_cached_on" not in data:
+            data["role_cached_on"] = pendulum.now()
         return attr.evolve(self, **data)
 
 
@@ -120,7 +120,7 @@ class WorkspaceEntrySchema(UnknownCheckedSchema):
     id = EntryIDField(required=True)
     key = fields.SecretKey(required=True)
     encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
-    granted_on = fields.DateTime(required=True)
+    role_cached_on = fields.DateTime(required=True)
     role = WorkspaceRoleField(allow_none=True, missing=None)
 
     @post_load

@@ -2,14 +2,61 @@
 
 from typing import Optional, Tuple
 
-from parsec.core.types import UserManifest, LocalUserManifest
+from parsec.core.types import UserManifest, LocalUserManifest, WorkspaceEntry
 
 
 # TODO: replace sanity asserts by cleaner exceptions given they could be
 # triggered by a malicious client trying to make us crash
 
 
-def merge_workspace_entries(base, diverged, target):
+def merge_workspace_entry(
+    base: WorkspaceEntry, diverged: WorkspaceEntry, target: WorkspaceEntry
+) -> WorkspaceEntry:
+    assert diverged.id == target.id
+    assert not base or base.id == target.id
+
+    # If the name has been modified on both sides, target always wins
+    if base and base.name != target.name:
+        name = target.name
+    elif base and base.name != diverged.name:
+        name = diverged.name
+    else:
+        name = target.name
+
+    # Keep last encryption
+    if diverged.encryption_revision < target.encryption_revision:
+        encryption_revision = target.encryption_revision
+        key = target.key
+    else:
+        encryption_revision = diverged.encryption_revision
+        key = diverged.key
+
+    # Keep last role
+    if target.role == diverged.role:
+        role = target.role
+        role_cached_on = min(target.role_cached_on, diverged.role_cached_on)
+
+    elif target.role_cached_on >= diverged.role_cached_on:
+        role = target.role
+        role_cached_on = target.role_cached_on
+
+    else:
+        role = diverged.role
+        role_cached_on = diverged.role_cached_on
+
+    return WorkspaceEntry(
+        name=name,
+        id=target.id,
+        key=key,
+        encryption_revision=encryption_revision,
+        role_cached_on=role_cached_on,
+        role=role,
+    )
+
+
+def merge_workspace_entries(
+    base: Tuple[WorkspaceEntry], diverged: Tuple[WorkspaceEntry], target: Tuple[WorkspaceEntry]
+) -> Tuple[Tuple[WorkspaceEntry], bool]:
     # Merging workspace entries is really trivial given:
     # - Workspaces are not required to have distinct names
     # - Workspaces entries are never removed
@@ -36,22 +83,7 @@ def merge_workspace_entries(base, diverged, target):
         else:
             # Target and diverged have both modified this entry
             b_entry = next((we for we in base or () if we.id == d_entry.id), None)
-
-            # If the name has been modified on both sides, target always wins
-            if b_entry and b_entry.name != t_entry.name:
-                name = t_entry.name
-            elif b_entry and b_entry.name != d_entry.name:
-                name = d_entry.name
-            else:
-                name = t_entry.name
-
-            # Keep last modified data for the rest
-            if t_entry.granted_on >= d_entry.granted_on:
-                merged_entry = t_entry.evolve(name=name)
-
-            else:
-                merged_entry = d_entry.evolve(name=name)
-
+            merged_entry = merge_workspace_entry(b_entry, d_entry, t_entry)
             resolved.remove(t_entry)
             resolved.add(merged_entry)
 

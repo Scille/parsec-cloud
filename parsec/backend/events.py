@@ -62,11 +62,7 @@ class EventsComponent:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
         def _on_message_received(event, organization_id, author, recipient, index):
-            if (
-                organization_id != client_ctx.organization_id
-                or author == client_ctx.device_id
-                or recipient != client_ctx.user_id
-            ):
+            if organization_id != client_ctx.organization_id or recipient != client_ctx.user_id:
                 return
 
             try:
