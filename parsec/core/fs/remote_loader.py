@@ -176,6 +176,11 @@ class RemoteLoader:
             raise FSError(f"Cannot download vlob: {exc}") from exc
 
         expected_author_id, expected_timestamp, expected_version, blob = args
+        if version not in (None, expected_version):
+            raise FSError(
+                f"Backend returned invalid version for vlob {entry_id} (expecting {version}, got {expected_version})"
+            )
+
         author = await self.remote_device_manager.get_device(expected_author_id)
 
         # Vlob decryption
@@ -196,9 +201,15 @@ class RemoteLoader:
         except SerdeError as exc:
             raise FSError(f"Cannot deserialize vlob: {exc}") from exc
 
-        # TODO: better exception !
-        assert remote_manifest.version == expected_version
-        assert remote_manifest.author == expected_author_id
+        if remote_manifest.version != expected_version:
+            raise FSError(
+                f"Vlob {entry_id} version mismatch between signed metadata ({remote_manifest.version}) and backend ({expected_version})"
+            )
+        if remote_manifest.author != expected_author_id:
+            raise FSError(
+                f"Vlob {entry_id} author mismatch between signed metadata ({remote_manifest.author}) and backend ({expected_author_id})"
+            )
+
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
 
