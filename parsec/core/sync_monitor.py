@@ -60,6 +60,8 @@ class SyncMonitor:
     async def _monitoring(self):
         with trio.CancelScope() as self._monitoring_cancel_scope:
             self.event_bus.send("sync_monitor.reconnection_sync.started")
+            # TODO: currently we must finish *all* the sync operations
+            # before considering ourself up and running...
             try:
                 await self.user_fs.sync()
                 user_manifest = self.user_fs.get_user_manifest()

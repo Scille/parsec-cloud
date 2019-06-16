@@ -430,6 +430,13 @@ class WorkspaceFS:
     async def sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
     ):
+        workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+        # Half hacky solution: we sync the workspace manifest but don't
+        # update the user manifest. This should be fine because synchronization
+        # is idempotent, but it's quite ugly...
+        if workspace_manifest.is_placeholder:
+            await self.minimal_sync(self.workspace_id)
+
         # Sync parent first
         try:
             manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
