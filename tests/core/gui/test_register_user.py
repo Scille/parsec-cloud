@@ -43,8 +43,8 @@ async def logged_gui_bob(aqtbot, gui_factory, autoclose_dialog, core_config, bob
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_register_user_open_modal(aqtbot, logged_gui, running_backend):
-    u_w = logged_gui.test_get_users_widget()
+async def test_register_user_open_modal(aqtbot, logged_gui_alice, running_backend):
+    u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
     async with aqtbot.wait_signal(u_w.list_success):

@@ -104,12 +104,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_add_workspace.clicked.connect(self.create_workspace_clicked)
 
-        self.event_bus.connect("fs.workspace.created", self._on_workspace_created_trio)
-        self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
-        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
-
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
 
@@ -129,11 +123,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.taskbar_buttons.append(button_add_workspace)
 
     def disconnect_all(self):
-        self.event_bus.disconnect("fs.workspace.created", self._on_workspace_created_trio)
-        self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
-        self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
-        self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
+        pass
+
+    def showEvent(self, event):
+        self.event_bus.connect("fs.workspace.created", self._on_workspace_created_trio)
+        self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
+
+    def hideEvent(self, event):
+        try:
+            self.event_bus.disconnect("fs.workspace.created", self._on_workspace_created_trio)
+            self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+            self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
+            self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
+        except ValueError:
+            pass
 
     def load_workspace(self, workspace_fs):
         self.load_workspace_clicked.emit(workspace_fs)

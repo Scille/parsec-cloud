@@ -494,4 +494,4 @@ class WorkspaceFS:
             path = "/" + "/".join(path_parts)
             return FsPath(path)
         else:
-            raise FSEntryNotFound(path)
+            raise FSEntryNotFound(id)

@@ -2,6 +2,7 @@
 
 import pytest
 import pendulum
+import uuid
 
 from PyQt5 import QtCore
 
@@ -54,12 +55,22 @@ def test_file_table_sort(qtbot):
     w = FileTable(parent=None)
     qtbot.addWidget(w)
     w.add_parent_workspace()
-    w.add_folder("Dir1", True)
+    w.add_folder("Dir1", uuid.uuid4(), True)
     w.add_file(
-        "File1.txt", 100, pendulum.datetime(2000, 1, 15), pendulum.datetime(2000, 1, 20), True
+        "File1.txt",
+        uuid.uuid4(),
+        100,
+        pendulum.datetime(2000, 1, 15),
+        pendulum.datetime(2000, 1, 20),
+        True,
     )
     w.add_file(
-        "AnotherFile.txt", 80, pendulum.datetime(2000, 1, 10), pendulum.datetime(2000, 1, 25), True
+        "AnotherFile.txt",
+        uuid.uuid4(),
+        80,
+        pendulum.datetime(2000, 1, 10),
+        pendulum.datetime(2000, 1, 25),
+        True,
     )
     assert w.rowCount() == 4
     assert w.item(0, 1).text() == "Parent Workspace"
