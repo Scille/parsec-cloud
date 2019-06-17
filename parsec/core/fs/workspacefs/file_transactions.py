@@ -8,7 +8,7 @@ from async_generator import asynccontextmanager
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, EntryID
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.types import BlockAccess, LocalFileManifest, FileCursor
+from parsec.core.types import BlockAccess, LocalFileManifest
 from parsec.core.local_storage import (
     LocalStorage,
     LocalStorageMissingError,
@@ -146,13 +146,6 @@ class FileTransactions:
                 ]
 
         return data, missing
-
-    # Temporary helper
-
-    def open(self, entry_id: EntryID):
-        cursor = FileCursor(entry_id)
-        self.local_storage.add_file_reference(entry_id)
-        return self.local_storage.create_file_descriptor(cursor)
 
     # Atomic transactions
 

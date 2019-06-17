@@ -71,6 +71,7 @@ async def test_operations_on_file(file_transactions, foo_txt):
 
         await file_transactions.fd_seek(fd, 0)
         await file_transactions.fd_write(fd, b"H")
+        await file_transactions.fd_write(fd, b"")
 
         fd2 = foo_txt.open()
 

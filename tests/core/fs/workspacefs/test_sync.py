@@ -37,25 +37,21 @@ async def test_sync_by_id_single(alice_workspace, remote_changed):
     entry = alice_workspace.get_workspace_entry()
     wid = entry.id
 
-    def get_access(name):
-        manifest = alice_workspace.local_storage.get_manifest(wid)
-        return manifest.children[name]
-
     # Empty workspace
     await sync_by_id(wid)
 
     # Empty directory
     await alice_workspace.mkdir("/a")
-    a_access = get_access("a")
-    await sync_by_id(a_access)
+    a_id = await alice_workspace.path_id("/a")
+    await sync_by_id(a_id)
 
     # Non empty workspace
     await alice_workspace.sync_by_id(wid)
 
     # Directory with folder placeholders
     await alice_workspace.mkdir("/i/j/k", parents=True)
-    i_access = get_access("i")
-    await sync_by_id(i_access)
+    i_id = await alice_workspace.path_id("/i")
+    await sync_by_id(i_id)
 
     # Workspace with folder placeholders
     await alice_workspace.mkdir("/x/y/z", parents=True)
@@ -63,7 +59,14 @@ async def test_sync_by_id_single(alice_workspace, remote_changed):
 
     # Workspace with file placeholders
     await alice_workspace.touch("/f")
+    await alice_workspace.write_bytes("/f", b"abc")
     await sync_by_id(wid)
+
+    # Non empty file
+    await alice_workspace.write_bytes("/f", b"efg", offset=3)
+    f_id = await alice_workspace.path_id("/f")
+    await sync_by_id(f_id)
+    assert await alice_workspace.read_bytes("/f") == b"abcefg"
 
 
 @pytest.mark.trio
