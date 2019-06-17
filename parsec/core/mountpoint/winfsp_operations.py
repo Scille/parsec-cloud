@@ -289,6 +289,9 @@ class WinFSPOperations(BaseFileSystemOperations):
             ret = self.fs_access.fd_write(file_context.fd, buffer, offset)
             return ret
 
+    def overwrite(self, *args, **kwargs):
+        pass
+
     def flush(self, file_context) -> None:
         with translate_error():
             self.fs_access.fd_flush(file_context.fd)
