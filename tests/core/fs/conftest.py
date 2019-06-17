@@ -2,7 +2,6 @@
 
 import pytest
 
-from parsec.core.fs.local_folder_fs import LocalFolderFS
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -10,19 +9,6 @@ from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.types import WorkspaceEntry, LocalWorkspaceManifest
 
 from tests.common import freeze_time
-
-
-@pytest.fixture
-def local_folder_fs_factory(event_bus):
-    def _local_folder_fs_factory(device, local_storage):
-        return LocalFolderFS(device, local_storage, event_bus)
-
-    return _local_folder_fs_factory
-
-
-@pytest.fixture
-def local_folder_fs(local_folder_fs_factory, alice, alice_local_storage):
-    return local_folder_fs_factory(alice, alice_local_storage)
 
 
 @pytest.fixture
@@ -49,14 +35,14 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
 
         with freeze_time("2000-01-01"):
             workspace_entry = WorkspaceEntry("test")
-            workspace_manifest = LocalWorkspaceManifest(device.device_id)
-        local_storage.set_dirty_manifest(workspace_entry.id, workspace_manifest)
+            workspace_manifest = LocalWorkspaceManifest(device.device_id, device.user_manifest_id)
+        local_storage.set_manifest(workspace_entry.id, workspace_manifest)
 
         remote_devices_manager = remote_devices_manager_factory(device)
         remote_loader = RemoteLoader(
             device,
             workspace_entry.id,
-            workspace_entry.key,
+            lambda: workspace_entry,
             backend_cmds,
             remote_devices_manager,
             local_storage,

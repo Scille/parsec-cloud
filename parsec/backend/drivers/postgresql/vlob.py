@@ -38,15 +38,15 @@ async def _check_realm(
     except RealmNotFoundError as exc:
         raise VlobNotFoundError(*exc.args) from exc
 
-    if encryption_revision is not None and rep["encryption_revision"] != encryption_revision:
-        raise VlobEncryptionRevisionError()
-
     if expected_maintenance is False:
         if rep["maintenance_type"]:
             raise VlobInMaintenanceError("Data realm is currently under maintenance")
     elif expected_maintenance is True:
         if not rep["maintenance_type"]:
             raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+
+    if encryption_revision is not None and rep["encryption_revision"] != encryption_revision:
+        raise VlobEncryptionRevisionError()
 
 
 async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):

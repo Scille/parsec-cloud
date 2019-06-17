@@ -45,8 +45,7 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
 )
-from parsec.core.fs.local_folder_fs import LocalFolderFS
-from parsec.core.fs.syncer import Syncer
+
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.userfs.message import message_content_serializer
@@ -142,16 +141,6 @@ class UserFS:
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
 
-        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
-        self._syncer = Syncer(
-            device,
-            backend_cmds,
-            remote_devices_manager,
-            self._local_folder_fs,
-            local_storage,
-            event_bus,
-        )
-
     @property
     def user_manifest_id(self) -> EntryID:
         return self.device.user_manifest_id
@@ -198,8 +187,6 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
-            _local_folder_fs=self._local_folder_fs,
-            _syncer=self._syncer,
         )
 
     async def workspace_create(self, name: str) -> EntryID:
@@ -207,7 +194,12 @@ class UserFS:
         Raises: Nothing !
         """
         workspace_entry = WorkspaceEntry(name)
-        workspace_manifest = LocalWorkspaceManifest(author=self.device.device_id)
+        # TODO: At the moment, a workspace manifest is its own parent
+        # Maybe a the data model should be updated to remove the parent_id
+        # attribute for the workspace manifest classes
+        workspace_manifest = LocalWorkspaceManifest(
+            author=self.device.device_id, parent_id=workspace_entry.id
+        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)

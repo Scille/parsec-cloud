@@ -39,6 +39,7 @@ class LocalStorage:
     That includes:
     - a cache in memory for fast access to deserialized data
     - the persistent storage to keep serialized data on the disk
+    - a lock mecanism to protect against race conditions
     """
 
     def __init__(self, device_id: DeviceID, key: SecretKey, path: Path, **kwargs):
@@ -76,22 +77,29 @@ class LocalStorage:
     # Locking helpers
 
     @asynccontextmanager
-    async def lock_manifest(self, entry_id: EntryID):
+    async def lock_entry_id(self, entry_id: EntryID):
         async with self.entry_locks[entry_id]:
             try:
                 self.locking_tasks[entry_id] = hazmat.current_task()
-                yield self.get_manifest(entry_id)
+                yield entry_id
             finally:
                 del self.locking_tasks[entry_id]
 
+    @asynccontextmanager
+    async def lock_manifest(self, entry_id: EntryID):
+        async with self.lock_entry_id(entry_id):
+            yield self.get_manifest(entry_id)
+
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
+        # TODO: remove `task is None` to ensure that the lock is taken
         assert task is None or task == hazmat.current_task()
 
     # Manifest interface
 
     def get_base_manifest(self, entry_id: EntryID) -> RemoteManifest:
         """Raises: LocalStorageMissingError"""
+        assert isinstance(entry_id, EntryID)
         try:
             return self.base_manifest_cache[entry_id]
         except KeyError:
@@ -103,6 +111,7 @@ class LocalStorage:
 
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """Raises: LocalStorageMissingError"""
+        assert isinstance(entry_id, EntryID)
         try:
             return self.local_manifest_cache[entry_id]
         except KeyError:
@@ -117,6 +126,7 @@ class LocalStorage:
         return manifest
 
     def set_base_manifest(self, entry_id: EntryID, manifest: RemoteManifest) -> None:
+        assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
         # Remove the corresponding local manifest if it exists
         try:
@@ -130,6 +140,7 @@ class LocalStorage:
         self.base_manifest_cache[entry_id] = manifest
 
     def set_manifest(self, entry_id: EntryID, manifest: LocalManifest) -> None:
+        assert isinstance(entry_id, EntryID)
         assert manifest.author == self.device_id
         self._check_lock_status(entry_id)
         raw = local_manifest_serializer.dumps(manifest)
@@ -137,6 +148,7 @@ class LocalStorage:
         self.local_manifest_cache[entry_id] = manifest
 
     def clear_manifest(self, entry_id: EntryID) -> None:
+        assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
         try:
             self.persistent_storage.clear_clean_manifest(entry_id)
@@ -149,38 +161,36 @@ class LocalStorage:
         self.base_manifest_cache.pop(entry_id, None)
         self.local_manifest_cache.pop(entry_id, None)
 
-    # TODO: Remove those legacy methods
-
-    set_dirty_manifest = set_manifest
-
-    def set_clean_manifest(self, entry_id: EntryID, manifest, force=False):
-        self.set_base_manifest(entry_id, manifest.to_remote())
-
     # Block interface
 
+    def is_dirty_block(self, block_id: BlockID):
+        assert isinstance(block_id, BlockID)
+        return self.persistent_storage.is_dirty_block(block_id)
+
     def get_block(self, block_id: BlockID) -> bytes:
+        assert isinstance(block_id, BlockID)
         try:
             return self.persistent_storage.get_dirty_block(block_id)
         except LocalStorageMissingError:
             return self.persistent_storage.get_clean_block(block_id)
 
     def set_dirty_block(self, block_id: BlockID, block: bytes) -> None:
+        assert isinstance(block_id, BlockID)
         return self.persistent_storage.set_dirty_block(block_id, block)
 
     def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
+        assert isinstance(block_id, BlockID)
         return self.persistent_storage.set_clean_block(block_id, block)
 
-    def clear_dirty_block(self, block_id: BlockID) -> None:
+    def clear_block(self, block_id: BlockID) -> None:
+        assert isinstance(block_id, BlockID)
         try:
             self.persistent_storage.clear_dirty_block(block_id)
         except LocalStorageMissingError:
-            logger.warning("Tried to remove a dirty block that doesn't exist anymore")
-
-    def clear_clean_block(self, block_id: BlockID) -> None:
-        try:
-            self.persistent_storage.clear_clean_block(block_id)
-        except LocalStorageMissingError:
-            pass
+            try:
+                self.persistent_storage.clear_clean_block(block_id)
+            except LocalStorageMissingError:
+                logger.warning("Tried to remove a dirty block that doesn't exist anymore")
 
     # File management interface
 
@@ -241,9 +251,9 @@ class LocalStorage:
             return
         self.clear_manifest(entry_id)
         for block_access in manifest.dirty_blocks:
-            self.clear_dirty_block(block_access.id)
+            self.clear_block(block_access.id)
         for block_access in manifest.blocks:
-            self.clear_clean_block(block_access.id)
+            self.clear_block(block_access.id)
 
     # Cursor helper
 

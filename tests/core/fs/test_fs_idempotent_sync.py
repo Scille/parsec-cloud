@@ -22,12 +22,12 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 st_entry_type = st.sampled_from(["file", "folder"])
 
 
-def check_fs_dump(entry, is_root=True):
+def check_fs_dump(entry):
     assert not entry["need_sync"]
-    assert entry["base_version"] == 2 if is_root else 1
+    assert entry["base_version"] in (1, 2)
     if "children" in entry:
         for k, v in entry["children"].items():
-            check_fs_dump(v, is_root=False)
+            check_fs_dump(v)
 
 
 @pytest.mark.slow
@@ -73,7 +73,7 @@ def test_fs_online_idempotent_sync(
             await self.workspace.sync("/")
             await self.user_fs.sync()
 
-            self.initial_fs_dump = self.user_fs._local_folder_fs.dump()
+            self.initial_fs_dump = self.workspace.dump()
             check_fs_dump(self.initial_fs_dump)
 
             return "/dummy"
@@ -140,7 +140,7 @@ def test_fs_online_idempotent_sync(
         @invariant()
         async def check_fs(self):
             try:
-                fs_dump = self.user_fs._local_folder_fs.dump()
+                fs_dump = self.workspace.dump()
             except AttributeError:
                 # FS not yet initialized
                 pass

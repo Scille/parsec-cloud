@@ -34,13 +34,6 @@ def normalize_offset(offset, cursor, manifest):
     return offset
 
 
-def shorten_data_repr(data: bytes) -> bytes:
-    if len(data) > 100:
-        return data[:40] + b"..." + data[-40:]
-    else:
-        return data
-
-
 def pad_content(offset: int, size: int, content: bytes = b""):
     empty_gap = offset - size
     if empty_gap <= 0:
@@ -111,33 +104,19 @@ class FileTransactions:
 
     # Locking helper
 
-    # This logic should move to the local storage along with
-    # the remote loader. It would then be up to the local storage
-    # to download the missing blocks and manifests. This should
-    # simplify the code and helper gather all the sensitive methods
-    # in the same module
-
     @asynccontextmanager
     async def _load_and_lock_file(self, fd: FileDescriptor):
+        # The LocalStorageMissingError exception is not considered here.
+        # This is because we should be able to assume that the manifest
+        # corresponding to valid file descriptor is always available locally
+
         # Get the corresponding entry_id
-        try:
-            cursor, _ = self.local_storage.load_file_descriptor(fd)
-            entry_id = cursor.entry_id
+        cursor, _ = self.local_storage.load_file_descriptor(fd)
+        entry_id = cursor.entry_id
 
-        # Download the corresponding manifest if it's missing
-        except LocalStorageMissingError as exc:
-            await self.remote_loader.load_manifest(exc.entry_id)
-            entry_id = exc.id
-
-        # Try to lock the entry_id
-        try:
-            async with self.local_storage.lock_manifest(entry_id):
-                yield self.local_storage.load_file_descriptor(fd)
-
-        # The entry has been deleted while we were waiting for the lock
-        except LocalStorageMissingError:
-            assert fd not in self.local_storage.open_cursors
-            raise FSInvalidFileDescriptor(fd)
+        # Lock the entry_id
+        async with self.local_storage.lock_manifest(entry_id):
+            yield self.local_storage.load_file_descriptor(fd)
 
     # Helpers
 
@@ -216,7 +195,7 @@ class FileTransactions:
 
             # Atomic change
             self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_dirty_manifest(cursor.entry_id, manifest)
+            self.local_storage.set_manifest(cursor.entry_id, manifest)
             cursor.offset = new_offset
 
         # Notify
@@ -242,7 +221,7 @@ class FileTransactions:
             # Atomic change
             if padded_content:
                 self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_dirty_manifest(cursor.entry_id, manifest)
+            self.local_storage.set_manifest(cursor.entry_id, manifest)
 
         # Notify
         self._send_event("fs.entry.updated", id=cursor.entry_id)

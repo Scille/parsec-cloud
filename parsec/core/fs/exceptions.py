@@ -33,6 +33,14 @@ class FSRemoteManifestNotFound(FSError):
     pass
 
 
+class FSRemoteBlockNotFound(FSError):
+    pass
+
+
+class FSBadEncryptionRevision(FSError):
+    pass
+
+
 class FSNoSynchronizationRequired(FSError):
     pass
 
@@ -50,4 +58,16 @@ class FSWorkspaceNotInMaintenance(FSError):
 
 
 class FSMaintenanceNotAllowedError(FSError):
+    pass
+
+
+class FSFileConflictError(FSError):
+    pass
+
+
+class FSReshapingRequiredError(FSError):
+    pass
+
+
+class FSEntryNotFound(FSError):
     pass

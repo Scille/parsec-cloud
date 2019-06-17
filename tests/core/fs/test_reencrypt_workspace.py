@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from pendulum import Pendulum
+from unittest.mock import ANY
 
 from parsec.core.types import EntryID
 from parsec.core.fs import (
@@ -8,6 +10,7 @@ from parsec.core.fs import (
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
     FSWorkspaceInMaintenance,
+    FSBadEncryptionRevision,
 )
 
 from tests.common import freeze_time
@@ -75,6 +78,13 @@ async def test_do_reencryption(running_backend, workspace, alice, alice_user_fs)
 
     with pytest.raises(FSWorkspaceNotInMaintenance):
         await job.do_one_batch()
+
+
+@pytest.mark.trio
+async def test_reencrypt_placeholder(running_backend, alice, alice_user_fs):
+    wid = await alice_user_fs.workspace_create("w1")
+    with pytest.raises(FSError):
+        await alice_user_fs.workspace_start_reencryption(wid)
 
 
 @pytest.mark.trio
@@ -151,3 +161,83 @@ async def test_reencryption_already_started(running_backend, alice_user_fs):
 
     with pytest.raises(FSError):
         await alice_user_fs.workspace_start_reencryption(wid)
+
+
+@pytest.mark.trio
+async def test_no_access_during_reencryption(running_backend, alice2_user_fs, workspace):
+    # Workspace have been created with alice_user_fs, hence user alice2_user_fs
+    # start with no local cache
+    await alice2_user_fs.sync()
+    aw = alice2_user_fs.get_workspace(workspace)
+
+    # Populate local cache for workspace root manifest
+    await aw.path_info("/")
+
+    # Start reencryption
+    job = await alice2_user_fs.workspace_start_reencryption(workspace)
+
+    # WorkspaceFS doesn't have encryption revision until user messages are processed
+    assert aw.encryption_revision == 1
+    # Data not in local cache cannot be accessed
+    root_info = await aw.path_info("/")
+    assert root_info == {
+        "id": workspace,
+        "type": "folder",
+        "base_version": 2,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 2),
+        "is_placeholder": False,
+        "need_sync": False,
+        "children": ["foo.txt"],
+    }
+    with pytest.raises(FSWorkspaceInMaintenance):
+        await aw.path_info("/foo.txt")
+
+    # Also cannot sync data
+    with freeze_time("2000-01-03"):
+        await aw.touch("/bar.txt")
+    with pytest.raises(FSWorkspaceInMaintenance):
+        await aw.sync("/bar.txt")
+
+    # Finish reencryption
+    while True:
+        total, done = await job.do_one_batch()
+        if total == done:
+            break
+
+    # Still not allowed to access data due to outdated encryption_revision
+    root_info2 = await aw.path_info("/")
+    assert root_info2 == {
+        "id": workspace,
+        "type": "folder",
+        "base_version": 2,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 3),
+        "is_placeholder": False,
+        "need_sync": True,
+        "children": ["bar.txt", "foo.txt"],
+    }
+    with pytest.raises(FSBadEncryptionRevision):
+        await aw.path_info("/foo.txt")
+
+    # Stilly not allowed to do the sync
+    with pytest.raises(FSBadEncryptionRevision):
+        await aw.sync("/bar.txt")
+
+    # Update encryption_revision in user manifest and check access is ok
+    await alice2_user_fs.process_last_messages()
+    assert aw.encryption_revision == 2
+    file_info = await aw.path_info("/foo.txt")
+    assert file_info == {
+        "id": ANY,
+        "type": "file",
+        "base_version": 2,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 2),
+        "is_placeholder": False,
+        "need_sync": False,
+        "size": 2,
+    }
+
+    # Finally sync is ok
+    await aw.sync("/bar.txt")

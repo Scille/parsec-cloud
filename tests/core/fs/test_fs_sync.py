@@ -134,7 +134,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
 
 @pytest.mark.trio
-async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs, monitor):
+async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
@@ -350,7 +350,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         ]
     )
 
-    # 4) Sync Alice2, with conflicts on `/z`, `/w/bar/buzz.txt` and `/w/bar/spam`
+    # 4) Sync Alice2, with conflicts on `/foo.txt`, `/bar/buzz.txt` and `/bar/spam`
 
     with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-06"):
@@ -362,7 +362,8 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
             # TODO: add more events
         ]
     )
-    expected = [
+    root_expected = ["/bar", "/foo (conflicting with alice@dev1).txt", "/foo.txt"]
+    bar_expected = [
         "/bar/buzz (conflicting with alice@dev1).txt",
         "/bar/buzz.txt",
         "/bar/from_alice",
@@ -370,8 +371,10 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         "/bar/spam",
         "/bar/spam (conflicting with alice@dev1)",
     ]
-    children = sorted(str(x) for x in await workspace2.listdir("/bar"))
-    assert children == expected
+    root_children = sorted(str(x) for x in await workspace2.listdir("/"))
+    bar_children = sorted(str(x) for x in await workspace2.listdir("/bar"))
+    assert root_children == root_expected
+    assert bar_children == bar_expected
 
     # 5) Sync Alice again to take into account changes from the second fs's sync
 
@@ -385,10 +388,12 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
             # TODO: add more events
         ]
     )
-    children = sorted(str(x) for x in await workspace2.listdir("/bar"))
-    assert children == expected
+    root_children = sorted(str(x) for x in await workspace.listdir("/"))
+    bar_children = sorted(str(x) for x in await workspace.listdir("/bar"))
+    assert root_children == root_expected
+    assert bar_children == bar_expected
 
-    # TODO: add tests for file conflicts
+    # TODO: add more tests for file conflicts
 
 
 @pytest.mark.trio
@@ -534,6 +539,49 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
     await workspace2.sync("/")
     data2 = await workspace2.read_bytes("/foo.txt")
     assert data2 == b"data"
+
+
+@pytest.mark.trio
+async def test_sync_data_before_workspace(running_backend, alice_user_fs):
+    with freeze_time("2000-01-02"):
+        wid = await alice_user_fs.workspace_create("w")
+    w = alice_user_fs.get_workspace(wid)
+    with freeze_time("2000-01-03"):
+        await w.mkdir("/bar")
+    with freeze_time("2000-01-04"):
+        await w.touch("/bar/foo.txt")
+    with freeze_time("2000-01-05"):
+        await w.write_bytes("/bar/foo.txt", b"v2")
+
+    # Syncing
+    with freeze_time("2000-01-06"):
+        await w.sync("/bar/foo.txt")
+
+    # Just to be sure, do
+    await alice_user_fs.sync()
+
+    foo_info = await w.path_info("/bar/foo.txt")
+    assert foo_info == {
+        "id": ANY,
+        "type": "file",
+        "base_version": 1,
+        "created": Pendulum(2000, 1, 4),
+        "updated": Pendulum(2000, 1, 6),
+        "is_placeholder": False,
+        "need_sync": False,
+        "size": 2,
+    }
+    root_info = await w.path_info("/")
+    assert root_info == {
+        "id": wid,
+        "type": "folder",
+        "base_version": 1,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 3),
+        "is_placeholder": False,
+        "need_sync": True,
+        "children": ["bar"],
+    }
 
 
 # TODO: test data/manifest updated between failed and new syncs

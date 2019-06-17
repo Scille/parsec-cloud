@@ -1,9 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import inspect
-from uuid import UUID
 import errno
+from uuid import UUID
+
 from typing import Union, Iterator, Dict
+
+import attr
 
 from parsec.types import UserID
 from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
@@ -24,17 +26,13 @@ from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
 from parsec.core.fs.exceptions import (
     FSError,
+    FSEntryNotFound,
     FSBackendOfflineError,
     FSRemoteManifestNotFound,
     FSRemoteSyncError,
     FSNoSynchronizationRequired,
-)
-
-# Legacy
-from parsec.core.fs.local_folder_fs import (
-    FSManifestLocalMiss,
-    FSMultiManifestLocalMiss,
-    FSEntryNotFound,
+    FSFileConflictError,
+    FSReshapingRequiredError,
 )
 
 
@@ -59,8 +57,6 @@ class WorkspaceFS:
         backend_cmds,
         event_bus,
         remote_device_manager,
-        _local_folder_fs,
-        _syncer,
     ):
         self.workspace_id = workspace_id
         self.get_workspace_entry = get_workspace_entry
@@ -70,15 +66,10 @@ class WorkspaceFS:
         self.event_bus = event_bus
         self.remote_device_manager = remote_device_manager
 
-        # Legacy
-        self._local_folder_fs = _local_folder_fs
-        self._syncer = _syncer
-
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
-            # TODO: key is subject to change, we should use get_workspace_entry() instead
-            self.workspace_key,
+            get_workspace_entry,
             self.backend_cmds,
             self.remote_device_manager,
             self.local_storage,
@@ -106,8 +97,8 @@ class WorkspaceFS:
         return self.get_workspace_entry().name
 
     @property
-    def workspace_key(self) -> str:
-        return self.get_workspace_entry().key
+    def encryption_revision(self) -> int:
+        return self.get_workspace_entry().encryption_revision
 
     # Information
 
@@ -117,6 +108,44 @@ class WorkspaceFS:
     async def path_id(self, path: AnyPath) -> UUID:
         info = await self.entry_transactions.entry_info(FsPath(path))
         return info["id"]
+
+    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
+
+        # Get first manifest
+        try:
+            current_id = entry_id
+            current_manifest = self.local_storage.get_manifest(current_id)
+        except LocalStorageMissingError:
+            raise FSEntryNotFound(entry_id)
+
+        # Loop over parts
+        parts = []
+        while current_id != self.workspace_id:
+
+            # Get the manifest
+            try:
+                parent_manifest = self.local_storage.get_manifest(current_manifest.parent_id)
+            except LocalStorageMissingError:
+                raise FSEntryNotFound(entry_id)
+
+            # Find the child name
+            try:
+                name = next(
+                    name
+                    for name, child_id in parent_manifest.children.items()
+                    if child_id == current_id
+                )
+            except StopIteration:
+                raise FSEntryNotFound(entry_id)
+            else:
+                parts.append(name)
+
+            # Continue until root is found
+            current_id = current_manifest.parent_id
+            current_manifest = parent_manifest
+
+        # Return the path
+        return FsPath("/" + "/".join(reversed(parts)))
 
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
@@ -304,14 +333,24 @@ class WorkspaceFS:
                 await self.unlink(child)
         await self.rmdir(path)
 
-    # Sync interface
+    # Sync helpers
+
+    async def _synchronize_placeholders(self, manifest: Manifest) -> None:
+        for child in self.sync_transactions.get_placeholder_children(manifest):
+            await self.minimal_sync(child)
+
+    async def _upload_blocks(self, manifest: Manifest) -> None:
+        for access in manifest.blocks:
+            if self.local_storage.is_dirty_block(access.id):
+                data = self.local_storage.get_block(access.id)
+                await self.remote_loader.upload_block(access, data)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """Raises: FSBackendOfflineError"""
         # Get a minimal manifest to upload
         try:
             remote_manifest = await self.sync_transactions.get_minimal_remote_manifest(entry_id)
-        # Not available locally so noting to synchronize
+        # Not available locally so nothing to synchronize
         except LocalStorageMissingError:
             return
 
@@ -319,20 +358,25 @@ class WorkspaceFS:
         if remote_manifest is None:
             return
 
-        # Legacy
-        if is_file_manifest(remote_manifest):
-            await self._legacy_minimal_file_sync(entry_id)
-            return
-
         # Upload the miminal manifest
         try:
             await self.remote_loader.upload_manifest(entry_id, remote_manifest)
         # The upload has failed: download the latest remote manifest
         except FSRemoteSyncError:
-            remote_manifest = await self.remote_loader.load_remote_manifest(entry_id)
+            remote_manifest = await self.remote_loader.load_manifest(entry_id)
 
-        # Register the manifest to unset the placeholder tag
-        await self.sync_transactions.synchronization_step(entry_id, remote_manifest)
+        while True:
+            # Register the manifest to unset the placeholder tag
+            try:
+                await self.sync_transactions.synchronization_step(entry_id, remote_manifest)
+                return
+            # The manifest first requires reshaping
+            except FSReshapingRequiredError:
+                await self.sync_transactions.file_reshape(entry_id)
+                continue
+            # Not available locally so nothing to synchronize
+            except LocalStorageMissingError:
+                return
 
     async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> Manifest:
         """Raises: FSBackendOfflineError"""
@@ -340,13 +384,9 @@ class WorkspaceFS:
         remote_manifest = None
         if remote_changed:
             try:
-                remote_manifest = await self.remote_loader.load_remote_manifest(entry_id)
+                remote_manifest = await self.remote_loader.load_manifest(entry_id)
             except FSRemoteManifestNotFound:
                 pass
-
-        # Check type
-        if self._use_legacy_sync(entry_id, remote_manifest):
-            return await self._legacy_file_sync(entry_id)
 
         # Loop over sync transactions
         while True:
@@ -359,21 +399,29 @@ class WorkspaceFS:
             # The manifest doesn't exist locally
             except LocalStorageMissingError:
                 raise FSNoSynchronizationRequired(entry_id)
+            # The manifest first requires reshaping
+            except FSReshapingRequiredError:
+                await self.sync_transactions.file_reshape(entry_id)
+                continue
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
                 return remote_manifest or self.local_storage.get_base_manifest(entry_id)
 
             # Synchronize placeholder children
-            for child in self.sync_transactions.get_placeholder_children(new_remote_manifest):
-                await self.minimal_sync(child)
+            if is_folder_manifest(new_remote_manifest):
+                await self._synchronize_placeholders(new_remote_manifest)
+
+            # Upload blocks
+            if is_file_manifest(new_remote_manifest):
+                await self._upload_blocks(new_remote_manifest)
 
             # Upload the new manifest containing the latest changes
             try:
                 await self.remote_loader.upload_manifest(entry_id, new_remote_manifest)
             # The upload has failed: download the latest remote manifest
             except FSRemoteSyncError:
-                remote_manifest = await self.remote_loader.load_remote_manifest(entry_id)
+                remote_manifest = await self.remote_loader.load_manifest(entry_id)
             # The upload has succeed: loop to acknowledge this new version
             else:
                 remote_manifest = new_remote_manifest
@@ -381,6 +429,13 @@ class WorkspaceFS:
     async def sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
     ):
+        workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+        # Half hacky solution: we sync the workspace manifest but don't
+        # update the user manifest. This should be fine because synchronization
+        # is idempotent, but it's quite ugly...
+        if workspace_manifest.is_placeholder:
+            await self.minimal_sync(self.workspace_id)
+
         # Sync parent first
         try:
             manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
@@ -388,6 +443,12 @@ class WorkspaceFS:
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
             return
+
+        # A file conflict needs to be adressed first
+        except FSFileConflictError as exc:
+            local_manifest, remote_manifest = exc.args
+            await self.sync_transactions.file_conflict(entry_id, local_manifest, remote_manifest)
+            return await self.sync_by_id(local_manifest.parent_id)
 
         # Non-recursive
         if not recursive or is_file_manifest(manifest):
@@ -406,92 +467,24 @@ class WorkspaceFS:
         # Should we do something about it?
         await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=recursive)
 
-    # Temporary methods
+    # Debugging helper
 
-    async def _load_and_retry(self, fn, *args, **kwargs):
-        while True:
+    def dump(self):
+        def rec(entry_id):
+            result = {"id": entry_id}
             try:
-                if inspect.iscoroutinefunction(fn):
-                    return await fn(*args, **kwargs)
-                else:
-                    return fn(*args, **kwargs)
-
-            except FSManifestLocalMiss as exc:
-                await self.remote_loader.load_manifest(exc.entry_id)
-
-            except FSMultiManifestLocalMiss as exc:
-                for entry_id in exc.entries_ids:
-                    await self.remote_loader.load_manifest(entry_id)
-
-    def _use_legacy_sync(self, entry_id, remote_manifest):
-        if is_file_manifest(remote_manifest):
-            return True
-        try:
-            local_manifest = self.local_storage.get_manifest(entry_id)
-        except LocalStorageMissingError:
-            return False
-        return is_file_manifest(local_manifest)
-
-    async def _legacy_minimal_file_sync(self, entry_id):
-        # Get info
-        try:
-            path, access, manifest = await self._load_and_retry(
-                self._syncer.local_folder_fs.get_entry_path, entry_id
-            )
-        except FSEntryNotFound:
-            return
-        # Minimal sync
-        if manifest.is_placeholder:
-            await self._load_and_retry(self._syncer._minimal_sync_file, path, access, manifest)
-
-    async def _legacy_file_sync(self, entry_id):
-        # Minimal sync
-        await self._legacy_minimal_file_sync(entry_id)
-        # Get info
-        try:
-            path, access, manifest = await self._load_and_retry(
-                self._syncer.local_folder_fs.get_entry_path, entry_id
-            )
-        except FSEntryNotFound:
-            raise FSNoSynchronizationRequired(entry_id)
-        # Actual sync
-        await self._load_and_retry(self._syncer._sync_file, path, access, manifest)
-        # Return the manifest
-        return manifest
-
-    async def get_entry_path(self, id: EntryID) -> FsPath:
-        assert isinstance(id, UUID)
-
-        path_parts = []
-
-        # Temporary hack: this weird lookup logic will disappear with the removal of accesses
-        def find_access(name, entry):
-            path_parts.append(name)
-
-            if entry == id:
-                return True
-
-            try:
-                manifest = self.local_storage.get_manifest(entry)
+                manifest = self.local_storage.get_manifest(entry_id)
             except LocalStorageMissingError:
-                path_parts.pop()
-                return False
+                return result
 
-            if not is_folder_manifest(manifest):
-                path_parts.pop()
-                return False
+            result.update(attr.asdict(manifest))
+            try:
+                children = manifest.children
+            except AttributeError:
+                return result
 
-            for child_name, child_entry in manifest.children.items():
-                if find_access(child_name, child_entry):
-                    return True
+            for key, value in children.items():
+                result["children"][key] = rec(value)
+            return result
 
-            path_parts.pop()
-            return False
-
-        # Find the corresponding access
-        find_access(self.get_workspace_entry().name, self.get_workspace_entry().id)
-        if path_parts:
-            path = "/" + "/".join(path_parts)
-            return FsPath(path)
-        else:
-            raise FSEntryNotFound(path)
+        return rec(self.workspace_id)

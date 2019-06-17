@@ -240,8 +240,8 @@ def test_manifest_not_available(mountpoint_service):
         wid = await user_fs.workspace_create("x")
         workspace = user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
-        foo_access = user_fs._local_folder_fs.get_access(FsPath("/x/foo.txt"))
-        user_fs._local_folder_fs.clear_manifest(foo_access)
+        foo_id = await workspace.path_id("/foo.txt")
+        user_fs.local_storage.clear_manifest(foo_id)
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()

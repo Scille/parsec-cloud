@@ -2,10 +2,9 @@
 
 import pytest
 from unittest.mock import ANY
-from uuid import uuid4
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest
+from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -18,7 +17,7 @@ from tests.common import freeze_time
 
 @pytest.mark.trio
 async def test_share_unknown(running_backend, alice_user_fs, bob):
-    wid = uuid4()
+    wid = EntryID()
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 

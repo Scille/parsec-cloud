@@ -4,7 +4,8 @@ import errno
 import pytest
 from unittest.mock import ANY
 
-from parsec.core.types import FsPath
+from parsec.core.fs import FSEntryNotFound
+from parsec.core.types import FsPath, EntryID
 
 
 @pytest.fixture
@@ -56,6 +57,17 @@ async def test_path_info(alice_workspace):
         "type": "file",
         "updated": ANY,
     }
+
+
+@pytest.mark.trio
+async def test_get_entry_path(alice_workspace):
+    paths = ["/", "/foo", "/foo/bar", "/foo/baz"]
+    for path in paths:
+        entry_id = await alice_workspace.path_id(path)
+        assert await alice_workspace.get_entry_path(entry_id) == FsPath(path)
+
+    with pytest.raises(FSEntryNotFound):
+        await alice_workspace.get_entry_path(EntryID())
 
 
 @pytest.mark.trio
