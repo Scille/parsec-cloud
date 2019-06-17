@@ -11,8 +11,10 @@ __all__ = (
     "RealmRoleField",
     "MaintenanceType",
     "MaintenanceTypeField",
+    "realm_create_serializer",
     "realm_status_serializer",
     "realm_get_roles_serializer",
+    "realm_get_role_certificates_serializer",
     "realm_update_roles_serializer",
     "realm_start_reencryption_maintenance_serializer",
     "realm_finish_reencryption_maintenance_serializer",
@@ -35,6 +37,17 @@ RealmRoleField = fields.enum_field_factory(RealmRole)
 MaintenanceTypeField = fields.enum_field_factory(MaintenanceType)
 
 
+class RealmCreateReqSchema(BaseReqSchema):
+    role_certificate = fields.Bytes(required=True)
+
+
+class RealmCreateRepSchema(BaseRepSchema):
+    pass
+
+
+realm_create_serializer = CmdSerializer(RealmCreateReqSchema, RealmCreateRepSchema)
+
+
 class RealmStatusReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
 
@@ -50,6 +63,21 @@ class RealmStatusRepSchema(BaseRepSchema):
 realm_status_serializer = CmdSerializer(RealmStatusReqSchema, RealmStatusRepSchema)
 
 
+class RealmGetRoleCertificatesReqSchema(BaseReqSchema):
+    realm_id = fields.UUID(required=True)
+    since = fields.DateTime(allow_none=True, missing=None)
+
+
+class RealmGetRoleCertificatesRepSchema(BaseRepSchema):
+    certificates = fields.List(fields.Bytes(required=True), required=True)
+
+
+realm_get_role_certificates_serializer = CmdSerializer(
+    RealmGetRoleCertificatesReqSchema, RealmGetRoleCertificatesRepSchema
+)
+
+
+# TODO: get_roles api is deprecated
 class RealmGetRolesReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
 
@@ -63,9 +91,7 @@ realm_get_roles_serializer = CmdSerializer(RealmGetRolesReqSchema, RealmGetRoles
 
 
 class RealmUpdateRolesReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
-    user = fields.UserID(required=True)
-    role = RealmRoleField(allow_none=True, missing=None)
+    role_certificate = fields.Bytes(required=True)
 
 
 class RealmUpdateRolesRepSchema(BaseRepSchema):

@@ -3,13 +3,14 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import Dict, Optional
+from typing import List, Dict, Tuple, Optional
 
 from parsec.api.protocole import RealmRole
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.realm import (
     MaintenanceType,
+    RealmGrantedRole,
     BaseRealmComponent,
     RealmStatus,
     RealmAccessError,
@@ -29,7 +30,17 @@ from parsec.backend.drivers.memory.message import MemoryMessageComponent
 class Realm:
     status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
     checkpoint: int = attr.ib(default=0)
-    roles: Dict[UserID, RealmRole] = attr.ib(factory=dict)
+    granted_roles: List[RealmGrantedRole] = attr.ib(factory=list)
+
+    @property
+    def roles(self):
+        roles = {}
+        for x in self.granted_roles:
+            if x.role is None:
+                roles.pop(x.user_id, None)
+            else:
+                roles[x.user_id] = x.role
+        return roles
 
 
 class MemoryRealmComponent(BaseRealmComponent):
@@ -51,29 +62,33 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._maintenance_reencryption_start_hook = start
         self._maintenance_reencryption_is_finished_hook = is_finished
 
-    # Semi-private method used by memory vlob component
-    def _create_realm(self, organization_id: OrganizationID, realm_id: UUID, author: DeviceID):
-        key = (organization_id, realm_id)
-        if key not in self._realms:
-            self._realms[key] = Realm(roles={author.user_id: RealmRole.OWNER})
-
-            self.event_bus.send(
-                "realm.roles_updated",
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm_id,
-                user=author.user_id,
-                role=RealmRole.OWNER,
-            )
-
-        else:
-            raise RealmAlreadyExistsError()
-
     def _get_realm(self, organization_id, realm_id):
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
             raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+    async def create(
+        self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
+    ) -> None:
+        assert self_granted_role.granted_by.user_id == self_granted_role.user_id
+        assert self_granted_role.role == RealmRole.OWNER
+
+        key = (organization_id, self_granted_role.realm_id)
+        if key not in self._realms:
+            self._realms[key] = Realm(granted_roles=[self_granted_role])
+
+            self.event_bus.send(
+                "realm.roles_updated",
+                organization_id=organization_id,
+                author=self_granted_role.granted_by,
+                realm_id=self_granted_role.realm_id,
+                user=self_granted_role.user_id,
+                role=self_granted_role.role,
+            )
+
+        else:
+            raise RealmAlreadyExistsError()
 
     async def get_status(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
@@ -85,55 +100,69 @@ class MemoryRealmComponent(BaseRealmComponent):
 
     async def get_roles(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
-    ) -> Dict[DeviceID, RealmRole]:
+    ) -> Dict[UserID, RealmRole]:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
-        return realm.roles.copy()
+        roles = {}
+        for x in realm.granted_roles:
+            if x.role is None:
+                roles.pop(x.user_id, None)
+            else:
+                roles[x.user_id] = x.role
+        return roles
 
-    async def update_roles(
+    async def get_role_certificates(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
-        user: UserID,
-        role: Optional[RealmRole],
+        since: pendulum.Pendulum,
+    ) -> Tuple[RealmGrantedRole]:
+        """
+        Raises:
+            RealmNotFoundError
+            RealmAccessError
+        """
+        realm = self._get_realm(organization_id, realm_id)
+        if author.user_id not in realm.roles:
+            raise RealmAccessError()
+        return tuple(x for x in realm.granted_roles if x.granted_on > since)
+
+    async def update_roles(
+        self, organization_id: OrganizationID, new_role: RealmGrantedRole
     ) -> None:
-        if author.user_id == user:
-            raise RealmAccessError("Cannot modify our own role")
+        assert new_role.granted_by.user_id != new_role.user_id
 
         try:
-            self._user_component._get_user(organization_id, user)
+            self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:
-            raise RealmNotFoundError(f"User `{user}` doesn't exist")
+            raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
 
-        realm = self._get_realm(organization_id, realm_id)
+        realm = self._get_realm(organization_id, new_role.realm_id)
 
         if realm.status.in_maintenance:
             raise RealmInMaintenanceError("Data realm is currently under maintenance")
 
-        existing_user_role = realm.roles.get(user)
+        existing_user_role = realm.roles.get(new_role.user_id)
         if existing_user_role in (RealmRole.MANAGER, RealmRole.OWNER):
             needed_roles = (RealmRole.OWNER,)
         else:
             needed_roles = (RealmRole.MANAGER, RealmRole.OWNER)
 
-        author_role = realm.roles.get(author.user_id)
+        author_role = realm.roles.get(new_role.granted_by.user_id)
         if author_role not in needed_roles:
             raise RealmAccessError()
 
-        if not role:
-            realm.roles.pop(user, None)
-        else:
-            realm.roles[user] = role
+        realm.granted_roles.append(new_role)
 
         self.event_bus.send(
             "realm.roles_updated",
             organization_id=organization_id,
-            author=author,
-            realm_id=realm_id,
-            user=user,
-            role=role,
+            author=new_role.granted_by,
+            realm_id=new_role.realm_id,
+            user=new_role.user_id,
+            role=new_role.role,
         )
 
     async def start_reencryption_maintenance(

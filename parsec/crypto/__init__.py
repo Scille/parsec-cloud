@@ -46,12 +46,14 @@ from parsec.crypto.certif import (
     verify_device_certificate,
     verify_revoked_device_certificate,
     verify_user_certificate,
+    verify_realm_role_certificate,
     unsecure_read_device_certificate,
     unsecure_read_revoked_device_certificate,
     unsecure_read_user_certificate,
     build_device_certificate,
     build_revoked_device_certificate,
     build_user_certificate,
+    build_realm_role_certificate,
 )
 
 
@@ -97,10 +99,12 @@ __all__ = (
     "verify_device_certificate",
     "verify_revoked_device_certificate",
     "verify_user_certificate",
+    "verify_realm_role_certificate",
     "unsecure_read_device_certificate",
     "unsecure_read_revoked_device_certificate",
     "unsecure_read_user_certificate",
     "build_device_certificate",
     "build_revoked_device_certificate",
     "build_user_certificate",
+    "build_realm_role_certificate",
 )

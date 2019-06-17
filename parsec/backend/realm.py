@@ -1,16 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Dict, Optional
+from typing import List, Dict, Tuple, Optional
 from uuid import UUID
 import pendulum
 import attr
 
 from parsec.types import DeviceID, UserID, OrganizationID
-from parsec.crypto import timestamps_in_the_ballpark
+from parsec.crypto import timestamps_in_the_ballpark, verify_realm_role_certificate, CryptoError
 from parsec.api.protocole import (
     RealmRole,
     MaintenanceType,
     realm_status_serializer,
+    realm_create_serializer,
     realm_get_roles_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
@@ -67,7 +68,75 @@ class RealmStatus:
         return bool(self.maintenance_type)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class RealmGrantedRole:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.user_id} {self.role})"
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+    certificate: bytes
+    realm_id: UUID
+    user_id: UserID
+    role: Optional[RealmRole]
+    granted_by: Optional[DeviceID]
+    granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+
+
 class BaseRealmComponent:
+    @catch_protocole_errors
+    async def api_realm_create(self, client_ctx, msg):
+        msg = realm_update_roles_serializer.req_load(msg)
+
+        try:
+            data = verify_realm_role_certificate(
+                msg["role_certificate"], client_ctx.device_id, client_ctx.verify_key
+            )
+
+        except CryptoError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(data.certified_on, now):
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
+            }
+
+        granted_role = RealmGrantedRole(
+            certificate=msg["role_certificate"],
+            realm_id=data.realm_id,
+            user_id=data.user_id,
+            role=data.role,
+            granted_by=data.certified_by,
+            granted_on=data.granted_on,
+        )
+        if granted_role.granted_by.user_id != granted_role.user_id:
+            return {
+                "status": "invalid_data",
+                "reason": f"Initial realm role certificate must be self-signed.",
+            }
+        if granted_role.role != RealmRole.OWNER:
+            return {
+                "status": "invalid_data",
+                "reason": f"Initial realm role certificate must set OWNER role.",
+            }
+
+        try:
+            await self.create(client_ctx.organization_id, client_ctx.device_id, granted_role)
+
+        except RealmNotFoundError as exc:
+            return realm_create_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+
+        except RealmAlreadyExistsError:
+            return realm_create_serializer.rep_dump({"status": "already_exists"})
+
+        return realm_create_serializer.rep_dump({"status": "ok"})
+
     @catch_protocole_errors
     async def api_realm_status(self, client_ctx, msg):
         msg = realm_status_serializer.req_load(msg)
@@ -110,11 +179,64 @@ class BaseRealmComponent:
         return realm_get_roles_serializer.rep_dump({"status": "ok", "users": roles})
 
     @catch_protocole_errors
+    async def api_realm_get_role_certificates(self, client_ctx, msg):
+        msg = realm_get_role_certificates_serializer.req_load(msg)
+
+        try:
+            certificates = await self.get_role_certificates(
+                client_ctx.organization_id, client_ctx.device_id, **msg
+            )
+
+        except RealmAccessError:
+            return realm_get_role_certificates_serializer.rep_dump({"status": "not_allowed"})
+
+        except RealmNotFoundError as exc:
+            return realm_get_role_certificates_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
+
+        return realm_get_role_certificates_serializer.rep_dump(
+            {"status": "ok", "certificates": certificates}
+        )
+
+    @catch_protocole_errors
     async def api_realm_update_roles(self, client_ctx, msg):
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:
-            await self.update_roles(client_ctx.organization_id, client_ctx.device_id, **msg)
+            data = verify_realm_role_certificate(
+                msg["role_certificate"], client_ctx.device_id, client_ctx.verify_key
+            )
+
+        except CryptoError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(data.certified_on, now):
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
+            }
+
+        granted_role = RealmGrantedRole(
+            certificate=msg["role_certificate"],
+            realm_id=data.realm_id,
+            user_id=data.user_id,
+            role=data.role,
+            granted_by=data.certified_by,
+            granted_on=data.certified_on,
+        )
+        if granted_role.granted_by.user_id == granted_role.user_id:
+            return {
+                "status": "invalid_data",
+                "reason": f"Realm role certificate cannot be self-signed.",
+            }
+
+        try:
+            await self.update_roles(client_ctx.organization_id, granted_role)
 
         except RealmAccessError:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
@@ -208,6 +330,17 @@ class BaseRealmComponent:
 
         return realm_finish_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
 
+    async def create(
+        self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
+    ) -> None:
+        """
+        Raises:
+            RealmNotFoundError
+            RealmAccessError
+            RealmAlreadyExistsError
+        """
+        raise NotImplementedError()
+
     async def get_status(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStatus:
@@ -228,13 +361,22 @@ class BaseRealmComponent:
         """
         raise NotImplementedError()
 
-    async def update_roles(
+    async def get_role_certificates(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
-        user: UserID,
-        role: Optional[RealmRole],
+        since: pendulum.Pendulum,
+    ) -> Tuple[RealmGrantedRole]:
+        """
+        Raises:
+            RealmNotFoundError
+            RealmAccessError
+        """
+        raise NotImplementedError()
+
+    async def update_roles(
+        self, organization_id: OrganizationID, new_role: RealmGrantedRole
     ) -> None:
         """
         Raises:

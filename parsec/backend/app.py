@@ -190,8 +190,10 @@ class BackendApp:
             "vlob_maintenance_get_reencryption_batch": self.vlob.api_vlob_maintenance_get_reencryption_batch,
             "vlob_maintenance_save_reencryption_batch": self.vlob.api_vlob_maintenance_save_reencryption_batch,
             # Realm
+            "realm_create": self.realm.api_realm_create,
             "realm_status": self.realm.api_realm_status,
             "realm_get_roles": self.realm.api_realm_get_roles,
+            "realm_get_role_certificates": self.realm.api_realm_get_role_certificates,
             "realm_update_roles": self.realm.api_realm_update_roles,
             "realm_start_reencryption_maintenance": self.realm.api_realm_start_reencryption_maintenance,
             "realm_finish_reencryption_maintenance": self.realm.api_realm_finish_reencryption_maintenance,
