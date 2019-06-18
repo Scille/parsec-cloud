@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+import traceback
 from functools import partial
 from structlog import get_logger
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, pyqtSlot
@@ -149,7 +150,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if "Device has been revoked" in str(self.runing_core_job.exc):
                 show_error(self, _("This device has been revoked."))
             else:
-                show_error(self, _("Unhandled error."))
+                logger.error("Unhandled error", exc_info=self.runing_core_job.exc)
+                error = "\n".join(traceback.format_tb(self.runing_core_job.exc.__traceback__))
+                show_error(self, _("Unhandled error:\n\n{}").format(error))
         self.runing_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -179,8 +182,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             device = load_device_with_password(key_file, password)
             self.start_core(device)
-        except LocalDeviceError:
-            show_error(self, _("Authentication failed."))
+
+        except LocalDeviceError as exc:
+            show_error(self, _("Authentication failed ({}).").format(str(exc)))
 
         except BackendHandshakeAPIVersionError:
             show_error(self, _("Incompatible backend API version."))  # TODO
@@ -195,11 +199,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
-            import traceback
-
-            traceback.print_exc()
-            show_error(self, _("Can not login"))
-            logger.error("Error while trying to log in: {}".format(str(exc)))
+            logger.exception("Unhandled error during login")
+            error = "\n".join(traceback.format_tb(exc.__traceback__))
+            show_error(self, _("Unhandled error:\n\n{}").format(error))
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
@@ -223,11 +225,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
-            import traceback
-
-            traceback.print_exc()
-            show_error(self, _("Can not login."))
-            logger.error("Error while trying to log in: {}".format(str(exc)))
+            logger.exception("Unhandled error during login")
+            error = "\n".join(traceback.format_tb(exc.__traceback__))
+            show_error(self, _("Unhandled error:\n\n{}").format(error))
 
     def close_app(self, force=False):
         self.need_close = True
