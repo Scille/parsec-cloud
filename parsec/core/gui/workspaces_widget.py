@@ -142,9 +142,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.jobs_ctx.run(self.core.mountpoint_manager.mount_workspace, workspace_id)
 
     def share_workspace(self, workspace_fs):
-        d = WorkspaceSharingDialog(
-            self.core.user_fs.user_fs, workspace_fs, self.core, self.jobs_ctx
-        )
+        d = WorkspaceSharingDialog(self.core.user_fs, workspace_fs, self.core, self.jobs_ctx)
         d.exec_()
 
     def reencrypt_workspace(self, workspace_id):
