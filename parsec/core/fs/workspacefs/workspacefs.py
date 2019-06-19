@@ -428,7 +428,14 @@ class WorkspaceFS:
     async def sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
     ):
-        workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+        # Get workspace manifest
+        try:
+            workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+
+        # Not available locally so nothing to synchronize
+        except LocalStorageMissingError:
+            return
+
         # Half hacky solution: we sync the workspace manifest but don't
         # update the user manifest. This should be fine because synchronization
         # is idempotent, but it's quite ugly...
