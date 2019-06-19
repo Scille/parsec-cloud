@@ -6,7 +6,7 @@ from trio.hazmat import current_clock
 from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError
 
 
-MIN_WAIT = 1
+MIN_WAIT = 5
 MAX_WAIT = 60
 
 
@@ -144,7 +144,10 @@ class SyncMonitor:
                     # added the workspace entry to our user manifest)
                     # TODO: add unittest about this...
                     continue
-                await workspace.sync_by_id(id)
+
+                # No recursion here: only the manifest that has changed
+                # (remotely or locally) should get synchronized
+                await workspace.sync_by_id(id, recursive=False)
 
 
 async def monitor_sync(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
