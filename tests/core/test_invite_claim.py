@@ -72,8 +72,18 @@ async def test_invite_claim_admin_user(running_backend, backend, alice):
         await cmds.ping("foo")
 
 
+async def _invite_and_claim(running_backend, invite_func, claim_func, event_name="user.claimed"):
+    with trio.fail_after(1):
+        async with trio.open_nursery() as nursery:
+            with running_backend.backend.event_bus.listen() as spy:
+                nursery.start_soon(invite_func)
+                await spy.wait("event.connected", kwargs={"event_name": event_name})
+            nursery.start_soon(claim_func)
+
+
 @pytest.mark.trio
 async def test_invite_claim_3_chained_users(running_backend, backend, alice):
+    # Zeta will be invited by Zoe, Zoe will be invited by Zack
     new_device_id_1 = DeviceID("zack@pc1")
     new_device_1 = None
     token_1 = generate_invitation_token()
@@ -84,7 +94,7 @@ async def test_invite_claim_3_chained_users(running_backend, backend, alice):
     new_device_3 = None
     token_3 = generate_invitation_token()
 
-    async def _from_alice():
+    async def _invite_from_alice():
         await invite_and_create_user(alice, new_device_id_1.user_id, token=token_1, is_admin=True)
 
     async def _claim_from_1():
@@ -109,38 +119,15 @@ async def test_invite_claim_3_chained_users(running_backend, backend, alice):
         nonlocal new_device_3
         new_device_3 = await claim_user(alice.organization_addr, new_device_id_3, token=token_3)
 
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_from_alice)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        nursery.start_soon(_claim_from_1)
-
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_invite_from_1)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        nursery.start_soon(_claim_from_2)
-
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_invite_from_2)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        nursery.start_soon(_claim_from_3)
+    await _invite_and_claim(running_backend, _invite_from_alice, _claim_from_1)
+    await _invite_and_claim(running_backend, _invite_from_1, _claim_from_2)
+    await _invite_and_claim(running_backend, _invite_from_2, _claim_from_3)
 
     assert new_device_1.is_admin
     assert new_device_2.is_admin
     assert not new_device_3.is_admin
 
-    # Now connect as the new user
-    async with backend_cmds_pool_factory(
-        new_device_1.organization_addr, new_device_1.device_id, new_device_1.signing_key
-    ) as cmds:
-        await cmds.ping("foo")
-
-    # Now connect as the new user
+    # Now connect as the last user
     async with backend_cmds_pool_factory(
         new_device_2.organization_addr, new_device_2.device_id, new_device_2.signing_key
     ) as cmds:
@@ -176,6 +163,7 @@ async def test_invite_claim_device(running_backend, backend, alice):
 
 @pytest.mark.trio
 async def test_invite_claim_multiple_devices_from_chained_user(running_backend, backend, alice):
+    # The devices are invited from one another
     new_device_id_1 = DeviceID("zack@pc1")
     new_device_1 = None
     token_1 = generate_invitation_token()
@@ -188,7 +176,7 @@ async def test_invite_claim_multiple_devices_from_chained_user(running_backend, 
     new_device_3 = None
     token_3 = generate_invitation_token()
 
-    async def _from_alice():
+    async def _invite_from_alice():
         await invite_and_create_user(alice, new_device_id_1.user_id, token=token_1, is_admin=True)
 
     async def _claim_from_1():
@@ -209,33 +197,15 @@ async def test_invite_claim_multiple_devices_from_chained_user(running_backend, 
         nonlocal new_device_3
         new_device_3 = await claim_device(alice.organization_addr, new_device_id_3, token=token_3)
 
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_from_alice)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        nursery.start_soon(_claim_from_1)
+    await _invite_and_claim(running_backend, _invite_from_alice, _claim_from_1)
+    await _invite_and_claim(
+        running_backend, _invite_from_1, _claim_from_2, event_name="device.claimed"
+    )
+    await _invite_and_claim(
+        running_backend, _invite_from_2, _claim_from_3, event_name="device.claimed"
+    )
 
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_invite_from_1)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
-        nursery.start_soon(_claim_from_2)
-
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_invite_from_2)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
-        nursery.start_soon(_claim_from_3)
-
-    # Now connect as the new devices
-    async with backend_cmds_pool_factory(
-        new_device_2.organization_addr, new_device_2.device_id, new_device_2.signing_key
-    ) as cmds:
-        await cmds.ping("foo")
-
+    # Now connect as the last device
     async with backend_cmds_pool_factory(
         new_device_3.organization_addr, new_device_3.device_id, new_device_3.signing_key
     ) as cmds:
