@@ -149,6 +149,11 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     await backend.message.send(
         alice.organization_id, alice.device_id, alice.user_id, d1, b"Hello to myself"
     )
+
+    with trio.fail_after(1):
+        # No guarantees those events occur before the commands' return
+        await backend.event_bus.spy.wait_multiple(["message.received"])
+
     reps = [
         await events_listen_nowait(alice_backend_sock),
         await events_listen_nowait(alice_backend_sock),
