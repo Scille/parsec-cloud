@@ -14,6 +14,15 @@ from parsec.core.invite_claim import (
 from parsec.core.backend_connection import backend_cmds_pool_factory
 
 
+async def _invite_and_claim(running_backend, invite_func, claim_func, event_name="user.claimed"):
+    with trio.fail_after(1):
+        async with trio.open_nursery() as nursery:
+            with running_backend.backend.event_bus.listen() as spy:
+                nursery.start_soon(invite_func)
+                await spy.wait("event.connected", kwargs={"event_name": event_name})
+            nursery.start_soon(claim_func)
+
+
 @pytest.mark.trio
 async def test_invite_claim_non_admin_user(running_backend, backend, alice):
     new_device_id = DeviceID("zack@pc1")
@@ -27,12 +36,7 @@ async def test_invite_claim_non_admin_user(running_backend, backend, alice):
         nonlocal new_device
         new_device = await claim_user(alice.organization_addr, new_device_id, token=token)
 
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_from_alice)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        nursery.start_soon(_from_mallory)
+    await _invite_and_claim(running_backend, _from_alice, _from_mallory)
 
     assert new_device.is_admin is False
 
@@ -56,12 +60,7 @@ async def test_invite_claim_admin_user(running_backend, backend, alice):
         nonlocal new_device
         new_device = await claim_user(alice.organization_addr, new_device_id, token=token)
 
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_from_alice)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
-        nursery.start_soon(_from_mallory)
+    await _invite_and_claim(running_backend, _from_alice, _from_mallory)
 
     assert new_device.is_admin
 
@@ -70,15 +69,6 @@ async def test_invite_claim_admin_user(running_backend, backend, alice):
         new_device.organization_addr, new_device.device_id, new_device.signing_key
     ) as cmds:
         await cmds.ping("foo")
-
-
-async def _invite_and_claim(running_backend, invite_func, claim_func, event_name="user.claimed"):
-    with trio.fail_after(1):
-        async with trio.open_nursery() as nursery:
-            with running_backend.backend.event_bus.listen() as spy:
-                nursery.start_soon(invite_func)
-                await spy.wait("event.connected", kwargs={"event_name": event_name})
-            nursery.start_soon(claim_func)
 
 
 @pytest.mark.trio
@@ -147,12 +137,9 @@ async def test_invite_claim_device(running_backend, backend, alice):
         nonlocal new_device
         new_device = await claim_device(alice.organization_addr, new_device_id, token=token)
 
-    async with trio.open_nursery() as nursery:
-        with running_backend.backend.event_bus.listen() as spy:
-            nursery.start_soon(_from_alice)
-            with trio.fail_after(1):
-                await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
-        nursery.start_soon(_from_mallory)
+    await _invite_and_claim(
+        running_backend, _from_alice, _from_mallory, event_name="device.claimed"
+    )
 
     # Now connect as the new device
     async with backend_cmds_pool_factory(
