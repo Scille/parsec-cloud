@@ -179,11 +179,10 @@ class WorkspaceFS:
     async def exists(self, path: AnyPath) -> bool:
         path = FsPath(path)
         try:
-            if await self.entry_transactions.entry_info(path):
-                return True
+            await self.entry_transactions.entry_info(path)
         except FileNotFoundError:
             return False
-        return False
+        return True
 
     async def is_dir(self, path: AnyPath) -> bool:
         path = FsPath(path)
