@@ -12,7 +12,6 @@ from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, Mountpoi
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import MessageDialog, TextInputDialog, TaskbarButton
-from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
