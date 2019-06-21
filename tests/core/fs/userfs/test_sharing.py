@@ -2,10 +2,9 @@
 
 import pytest
 from unittest.mock import ANY
-from uuid import uuid4
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest
+from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -18,7 +17,7 @@ from tests.common import freeze_time
 
 @pytest.mark.trio
 async def test_share_unknown(running_backend, alice_user_fs, bob):
-    wid = uuid4()
+    wid = EntryID()
     with pytest.raises(FSWorkspaceNotFoundError):
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
@@ -74,7 +73,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
-                granted_on=Pendulum(2000, 1, 3),
+                role_cached_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.MANAGER,
             )
         },
@@ -157,7 +156,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
-                granted_on=Pendulum(2000, 1, 3),
+                role_cached_on=Pendulum(2000, 1, 3),
                 role=None,
             ),
             "previous_entry": WorkspaceEntry(
@@ -165,7 +164,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
-                granted_on=Pendulum(2000, 1, 2),
+                role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
         },
@@ -308,7 +307,7 @@ async def test_share_with_sharing_name_already_taken(
                 id=awid,
                 key=ANY,
                 encryption_revision=1,
-                granted_on=Pendulum(2000, 1, 2),
+                role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.MANAGER,
             )
         },
@@ -337,17 +336,22 @@ async def test_share_workspace_then_conflict_on_rights(
 ):
     # Bob shares a workspace with Alice...
     wid = await bob_user_fs.workspace_create("w")
-    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
+    with freeze_time("2000-01-02"):
+        await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
 
     # ...but only Alice's first device get the information
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-03"):
         await alice_user_fs.process_last_messages()
 
     # Now Bob change the sharing rights...
-    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.CONTRIBUTOR)
+    with freeze_time("2000-01-04"):
+        await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.CONTRIBUTOR)
 
     # ...this time it's Alice's second device which get the info
-    with freeze_time("2000-01-03"):
+    with freeze_time("2000-01-05"):
+        # Note we will process the 2 sharing messages bob sent us, this
+        # will attribute role_cached_on to the first message timestamp even
+        # if we cache the second message role...
         await alice2_user_fs.process_last_messages()
 
     if first_to_sync == "alice2":
@@ -360,12 +364,12 @@ async def test_share_workspace_then_conflict_on_rights(
         synced_version = 2
 
     # Finally Alice devices try to reconciliate
-    with freeze_time("2000-01-04"):
+    with freeze_time("2000-01-06"):
         await first.sync()
-    with freeze_time("2000-01-05"):
+    with freeze_time("2000-01-07"):
         await second.sync()
     # Resync first device to get changes from the 2nd
-    with freeze_time("2000-01-06"):
+    with freeze_time("2000-01-08"):
         await first.sync()
 
     am = alice_user_fs.get_user_manifest()
@@ -373,7 +377,7 @@ async def test_share_workspace_then_conflict_on_rights(
     expected = LocalUserManifest(
         author=alice.device_id,
         created=Pendulum(2000, 1, 1),
-        updated=Pendulum(2000, 1, 3),
+        updated=Pendulum(2000, 1, 5),
         base_version=synced_version,
         need_sync=False,
         is_placeholder=False,
@@ -384,7 +388,7 @@ async def test_share_workspace_then_conflict_on_rights(
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
-                granted_on=Pendulum(2000, 1, 3),
+                role_cached_on=Pendulum(2000, 1, 5),
                 role=WorkspaceRole.CONTRIBUTOR,
             ),
         ),
@@ -418,7 +422,7 @@ async def test_share_workspace_then_conflict_on_rights(
         id=wid,
         key=ANY,
         encryption_revision=1,
-        granted_on=Pendulum(2000, 1, 3),
+        role_cached_on=Pendulum(2000, 1, 5),
         role=WorkspaceRole.CONTRIBUTOR,
     )
     assert a2_w_entry == a_w_entry

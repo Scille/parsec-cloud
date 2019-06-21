@@ -46,6 +46,10 @@ class VlobInMaintenanceError(VlobError):
     pass
 
 
+class VlobNotInMaintenanceError(VlobError):
+    pass
+
+
 class VlobMaintenanceError(VlobError):
     pass
 
@@ -198,6 +202,11 @@ class BaseVlobComponent:
                 {"status": "not_found", "reason": str(exc)}
             )
 
+        except VlobNotInMaintenanceError as exc:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "not_in_maintenance", "reason": str(exc)}
+            )
+
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
@@ -221,7 +230,7 @@ class BaseVlobComponent:
         msg = vlob_maintenance_save_reencryption_batch_serializer.req_load(msg)
 
         try:
-            await self.maintenance_save_reencryption_batch(
+            total, done = await self.maintenance_save_reencryption_batch(
                 client_ctx.organization_id,
                 client_ctx.device_id,
                 realm_id=msg["realm_id"],
@@ -239,6 +248,11 @@ class BaseVlobComponent:
                 {"status": "not_found", "reason": str(exc)}
             )
 
+        except VlobNotInMaintenanceError as exc:
+            return vlob_maintenance_get_reencryption_batch_serializer.rep_dump(
+                {"status": "not_in_maintenance", "reason": str(exc)}
+            )
+
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
@@ -247,7 +261,9 @@ class BaseVlobComponent:
                 {"status": "maintenance_error", "reason": str(exc)}
             )
 
-        return vlob_maintenance_save_reencryption_batch_serializer.rep_dump({"status": "ok"})
+        return vlob_maintenance_save_reencryption_batch_serializer.rep_dump(
+            {"status": "ok", "total": total, "done": done}
+        )
 
     async def create(
         self,
@@ -336,7 +352,8 @@ class BaseVlobComponent:
         Raises:
             VlobNotFoundError
             VlobAccessError
-            VlobMaintenanceError: not in maintenance or bad encryption_revision
+            VlobEncryptionRevisionError
+            VlobMaintenanceError: not in maintenance
         """
         raise NotImplementedError()
 
@@ -347,11 +364,12 @@ class BaseVlobComponent:
         realm_id: UUID,
         encryption_revision: int,
         batch: List[Tuple[UUID, int, bytes]],
-    ) -> None:
+    ) -> Tuple[int, int]:
         """
         Raises:
             VlobNotFoundError
             VlobAccessError
-            VlobMaintenanceError: not in maintenance or bad encryption_revision
+            VlobEncryptionRevisionError
+            VlobMaintenanceError: not in maintenance
         """
         raise NotImplementedError()

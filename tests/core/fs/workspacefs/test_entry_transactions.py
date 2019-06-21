@@ -139,7 +139,7 @@ async def test_access_not_loaded_entry(alice, bob, entry_transactions):
     with pytest.raises(FSRemoteManifestNotFound):
         await entry_transactions.entry_info(FsPath("/"))
 
-    entry_transactions.local_storage.set_dirty_manifest(entry_id, manifest)
+    entry_transactions.local_storage.set_manifest(entry_id, manifest)
     entry_info = await entry_transactions.entry_info(FsPath("/"))
     assert entry_info == {
         "type": "folder",

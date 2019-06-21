@@ -20,7 +20,7 @@ class BaseMessageComponent:
 
         now = pendulum_now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
-            return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
+            return {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
 
         await self.send(
             client_ctx.organization_id,

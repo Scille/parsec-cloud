@@ -6,6 +6,7 @@ import pendulum
 import attr
 
 from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.crypto import timestamps_in_the_ballpark
 from parsec.api.protocole import (
     RealmRole,
     MaintenanceType,
@@ -38,7 +39,15 @@ class RealmEncryptionRevisionError(RealmError):
     pass
 
 
+class RealmParticipantsMismatchError(RealmError):
+    pass
+
+
 class RealmInMaintenanceError(RealmError):
+    pass
+
+
+class RealmNotInMaintenanceError(RealmError):
     pass
 
 
@@ -124,9 +133,13 @@ class BaseRealmComponent:
     async def api_realm_start_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_start_reencryption_maintenance_serializer.req_load(msg)
 
+        now = pendulum.now()
+        if not timestamps_in_the_ballpark(msg["timestamp"], now):
+            return {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
+
         try:
             await self.start_reencryption_maintenance(
-                client_ctx.organization_id, client_ctx.device_id, **msg, timestamp=pendulum.now()
+                client_ctx.organization_id, client_ctx.device_id, **msg
             )
 
         except RealmAccessError:
@@ -142,6 +155,11 @@ class BaseRealmComponent:
         except RealmEncryptionRevisionError:
             return realm_start_reencryption_maintenance_serializer.rep_dump(
                 {"status": "bad_encryption_revision"}
+            )
+
+        except RealmParticipantsMismatchError as exc:
+            return realm_finish_reencryption_maintenance_serializer.rep_dump(
+                {"status": "participants_mismatch", "reason": str(exc)}
             )
 
         except RealmMaintenanceError as exc:
@@ -176,6 +194,11 @@ class BaseRealmComponent:
         except RealmEncryptionRevisionError:
             return realm_finish_reencryption_maintenance_serializer.rep_dump(
                 {"status": "bad_encryption_revision"}
+            )
+
+        except RealmNotInMaintenanceError as exc:
+            return realm_finish_reencryption_maintenance_serializer.rep_dump(
+                {"status": "not_in_maintenance", "reason": str(exc)}
             )
 
         except RealmMaintenanceError as exc:

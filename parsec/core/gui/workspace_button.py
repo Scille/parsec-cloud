@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
 from parsec.core.fs import WorkspaceFS
+from parsec.core.types import EntryID
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.color import StringToColor
@@ -15,6 +16,7 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(WorkspaceFS)
     share_clicked = pyqtSignal(WorkspaceFS)
+    reencrypt_clicked = pyqtSignal(EntryID)
     delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(WorkspaceFS, str)
@@ -27,7 +29,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         files=None,
         enable_workspace_color=False,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -36,6 +38,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.widget_files.hide()
         self.is_shared = is_shared
         self.is_creator = is_creator
+        self.reencrypting = None
         files = files or []
 
         if not len(files):
@@ -63,6 +66,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         effect.setYOffset(4)
         self.setGraphicsEffect(effect)
         self.button_share.clicked.connect(self.button_share_clicked)
+        self.button_reencrypt.clicked.connect(self.button_reencrypt_clicked)
         self.button_delete.clicked.connect(self.button_delete_clicked)
         self.button_rename.clicked.connect(self.button_rename_clicked)
         self.button_open_workspace.clicked.connect(self.button_open_workspace_clicked)
@@ -80,6 +84,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def button_share_clicked(self):
         self.share_clicked.emit(self.workspace_fs)
+
+    def button_reencrypt_clicked(self):
+        self.reencrypt_clicked.emit(self.workspace_fs.workspace_id)
 
     def button_delete_clicked(self):
         self.delete_clicked.emit(self.workspace_fs)
@@ -103,6 +110,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             # TODO: uncomment once the workspace name does not contain "shared by XX" anymore
             # else:
             #     display += _(" (shared with you)")
+
+        if self.reencrypting:
+            total, done = self.reencrypting
+            display += f" - Rencrypting {int(done / total * 100)}%"
+
         self.label_workspace.setText(display)
         self.label_workspace.setToolTip(workspace_name)
 

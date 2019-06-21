@@ -5,13 +5,14 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole
+from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole, EntryID
 from parsec.core.fs import WorkspaceFS, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import MessageDialog, TextInputDialog, TaskbarButton
+from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -79,6 +80,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
+    workspace_reencryption_success = pyqtSignal()
+    workspace_reencryption_error = pyqtSignal()
+    workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
 
     rename_success = pyqtSignal(QtToTrioJob)
     rename_error = pyqtSignal(QtToTrioJob)
@@ -98,6 +102,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
+        self.reencrypting = set()
 
         self.taskbar_buttons = []
 
@@ -115,6 +120,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.list_error.connect(self.on_list_error)
         self.mount_success.connect(self.on_mount_success)
         self.mount_error.connect(self.on_mount_error)
+        self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
@@ -196,6 +202,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
         button.clicked.connect(self.load_workspace)
         button.share_clicked.connect(self.share_workspace)
+        button.reencrypt_clicked.connect(self.reencrypt_workspace)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
         button.file_clicked.connect(self.open_workspace_file)
@@ -239,6 +246,45 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def share_workspace(self, workspace_fs):
         d = WorkspaceSharingDialog(self.core.user_fs, workspace_fs, self.core, self.jobs_ctx)
         d.exec_()
+
+    def reencrypt_workspace(self, workspace_id):
+        if workspace_id in self.reencrypting:
+            return
+
+        async def _reencrypt(on_progress, workspace_id):
+            self.reencrypting.add(workspace_id)
+            try:
+                job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
+                while True:
+                    total, done = await job.do_one_batch(size=1)
+                    on_progress.emit(workspace_id, total, done)
+                    if total == done:
+                        break
+            finally:
+                self.reencrypting.remove(workspace_id)
+
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "workspace_reencryption_success"),
+            ThreadSafeQtSignal(self, "workspace_reencryption_error"),
+            _reencrypt,
+            on_progress=ThreadSafeQtSignal(
+                self, "workspace_reencryption_progress", EntryID, int, int
+            ),
+            workspace_id=workspace_id,
+        )
+
+    def _on_workspace_reencryption_progress(self, workspace_id, total, done):
+        for idx in range(self.layout_workspaces.count()):
+            widget = self.layout_workspaces.itemAt(idx).widget()
+            print(widget)
+            print(dir(widget))
+            if widget.workspace_fs.workspace_id == workspace_id:
+                if done == total:
+                    widget.reencrypting = None
+                else:
+                    widget.reencrypting = (total, done)
+                widget.reload_workspace_name()
+                break
 
     def create_workspace_clicked(self):
         workspace_name = TextInputDialog.get_text(

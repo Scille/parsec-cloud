@@ -540,10 +540,10 @@ msgid ""
 "us improve your experience ?"
 msgstr ""
 
-msgid "Unhandled error."
+msgid "Unhandled error:\n\n{}"
 msgstr ""
 
-msgid "Authentication failed."
+msgid "Authentication failed ({})."
 msgstr ""
 
 msgid "Incompatible backend API version."

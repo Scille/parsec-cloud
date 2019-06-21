@@ -12,15 +12,20 @@ from parsec.crypto import (
     decrypt_and_verify_signed_msg_for,
     encrypt_signed_msg_with_secret_key,
     decrypt_and_verify_signed_msg_with_secret_key,
+    encrypt_raw_with_secret_key,
+    decrypt_raw_with_secret_key,
     CryptoError,
+    SecretKey,
 )
 from parsec.serde import SerdeError
+from parsec.api.protocole import MaintenanceType
 from parsec.core.types import (
     EntryID,
     LocalDevice,
     LocalWorkspaceManifest,
     WorkspaceEntry,
     WorkspaceRole,
+    UserManifest,
     LocalUserManifest,
     remote_manifest_serializer,
 )
@@ -32,6 +37,7 @@ from parsec.core.backend_connection import (
     BackendCmdsAlreadyExists,
     BackendCmdsBadVersion,
     BackendCmdsInMaintenance,
+    BackendCmdsParticipantsMismatchError,
     BackendConnectionError,
 )
 from parsec.core.remote_devices_manager import (
@@ -40,21 +46,80 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
 )
 
-from parsec.core.fs.local_folder_fs import LocalFolderFS
-from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.fs.userfs.merging import merge_local_user_manifests
+from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
     FSError,
+    FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
     FSSharingNotAllowedError,
     FSWorkspaceInMaintenance,
+    FSWorkspaceNotInMaintenance,
 )
 
 
 logger = get_logger()
+
+
+class ReencryptionJob:
+    def __init__(self, backend_cmds, new_workspace_entry, old_workspace_entry):
+        self.backend_cmds = backend_cmds
+        self.new_workspace_entry = new_workspace_entry
+        self.old_workspace_entry = old_workspace_entry
+        assert new_workspace_entry.id == old_workspace_entry.id
+
+    async def do_one_batch(self, size=100) -> Tuple[int, int]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
+        """
+        workspace_id = self.new_workspace_entry.id
+        new_encryption_revision = self.new_workspace_entry.encryption_revision
+
+        # Get the batch
+        try:
+            batch = await self.backend_cmds.vlob_maintenance_get_reencryption_batch(
+                workspace_id, new_encryption_revision, size
+            )
+
+            donebatch = []
+            for vlob_id, version, blob in batch:
+                cleartext = decrypt_raw_with_secret_key(self.old_workspace_entry.key, blob)
+                newciphered = encrypt_raw_with_secret_key(self.new_workspace_entry.key, cleartext)
+                donebatch.append((vlob_id, version, newciphered))
+
+            total, done = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
+                workspace_id, new_encryption_revision, donebatch
+            )
+
+            if total == done:
+                # Finish the maintenance
+                await self.backend_cmds.realm_finish_reencryption_maintenance(
+                    workspace_id, new_encryption_revision
+                )
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            if exc.status in ("not_in_maintenance", "bad_encryption_revision"):
+                raise FSWorkspaceNotInMaintenance("Reencryption job already finished") from exc
+
+            if exc.status == "not_allowed":
+                raise FSWorkspaceNoAccess(
+                    f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {exc}"
+                ) from exc
+
+            raise FSError(
+                f"Cannot do reencryption maintenance on workspace {workspace_id}: {exc}"
+            ) from exc
+
+        return total, done
 
 
 class UserFS:
@@ -75,16 +140,6 @@ class UserFS:
         # it concurrently
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
-
-        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
-        self._syncer = Syncer(
-            device,
-            backend_cmds,
-            remote_devices_manager,
-            self._local_folder_fs,
-            local_storage,
-            event_bus,
-        )
 
     @property
     def user_manifest_id(self) -> EntryID:
@@ -132,8 +187,6 @@ class UserFS:
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
-            _local_folder_fs=self._local_folder_fs,
-            _syncer=self._syncer,
         )
 
     async def workspace_create(self, name: str) -> EntryID:
@@ -141,7 +194,12 @@ class UserFS:
         Raises: Nothing !
         """
         workspace_entry = WorkspaceEntry(name)
-        workspace_manifest = LocalWorkspaceManifest(author=self.device.device_id)
+        # TODO: At the moment, a workspace manifest is its own parent
+        # Maybe a the data model should be updated to remove the parent_id
+        # attribute for the workspace manifest classes
+        workspace_manifest = LocalWorkspaceManifest(
+            author=self.device.device_id, parent_id=workspace_entry.id
+        )
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
@@ -170,7 +228,7 @@ class UserFS:
             self.local_storage.set_manifest(self.user_manifest_id, updated_user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
-    async def _fetch_remote_user_manifest(self, version=None):
+    async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
         """
         Raises:
             FSError
@@ -199,6 +257,7 @@ class UserFS:
                 f" backend returned version {expected_version}"
             )
 
+        # TODO: add try/except ?
         author = await self.remote_devices_manager.get_device(expected_author_id)
         try:
             raw = decrypt_and_verify_signed_msg_with_secret_key(
@@ -418,6 +477,7 @@ class UserFS:
         if role:
             msg["type"] = "sharing.granted"
             msg["key"] = workspace_entry.key
+            msg["encryption_revision"] = workspace_entry.encryption_revision
         else:
             msg["type"] = "sharing.revoked"
 
@@ -527,8 +587,10 @@ class UserFS:
 
         msg = message_content_serializer.loads(raw)
 
-        if msg["type"] == "sharing.granted":
-            await self._process_message_sharing_granted(sender, msg["id"], msg["key"], msg["name"])
+        if msg["type"] in ("sharing.granted", "sharing.reencrypted"):
+            await self._process_message_sharing_granted(
+                sender, msg["id"], msg["key"], msg["encryption_revision"], msg["name"]
+            )
 
         elif msg["type"] == "sharing.revoked":
             await self._process_message_sharing_revoked(sender, msg["id"])
@@ -538,7 +600,7 @@ class UserFS:
             self.event_bus.send("pinged")
 
     async def _process_message_sharing_granted(
-        self, sender, workspace_id, workspace_key, workspace_name
+        self, sender, workspace_id, workspace_key, workspace_encryption_revision, workspace_name
     ):
         """
         Raises:
@@ -580,7 +642,9 @@ class UserFS:
             name=f"{workspace_name} (shared by {sender.user_id})",
             id=workspace_id,
             key=workspace_key,
+            encryption_revision=workspace_encryption_revision,
             role=self_role,
+            role_cached_on=pendulum_now(),
         )
 
         async with self._update_user_manifest_lock:
@@ -589,7 +653,11 @@ class UserFS:
             # Check if we already know this workspace
             already_existing_entry = user_manifest.get_workspace_entry(workspace_id)
             if already_existing_entry:
-                workspace_entry.evolve(name=already_existing_entry.name)
+                # Merge with existing as target to keep possible workpace rename
+                workspace_entry = merge_workspace_entry(
+                    None, workspace_entry, already_existing_entry
+                )
+
             if already_existing_entry == workspace_entry:
                 # Cheap idempotent check
                 return
@@ -646,7 +714,15 @@ class UserFS:
             if not existing_workspace_entry:
                 # No workspace entry, nothing to update then
                 return
-            workspace_entry = existing_workspace_entry.evolve(role=None, granted_on=pendulum_now())
+
+            workspace_entry = merge_workspace_entry(
+                None,
+                existing_workspace_entry,
+                existing_workspace_entry.evolve(role=None, role_cached_on=pendulum_now()),
+            )
+            if existing_workspace_entry == workspace_entry:
+                # Cheap idempotent check
+                return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
@@ -656,3 +732,199 @@ class UserFS:
                 new_entry=workspace_entry,
                 previous_entry=existing_workspace_entry,
             )
+
+    async def _retreive_participants(self, workspace_id):
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+        """
+        # First retrieve workspace participants list
+        try:
+            roles = await self.backend_cmds.realm_get_roles(workspace_id)
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsNotAllowed as exc:
+            raise FSWorkspaceNoAccess(
+                f"No longer allowed to access to workspace {workspace_id}: {exc}"
+            ) from exc
+
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot retrieve workspace {workspace_id} participants: {exc}") from exc
+
+        # Then retrieve each participant user data
+        try:
+            users = []
+            for user_id in roles.keys():
+                user = await self.remote_devices_manager.get_user(user_id)
+                users.append(user)
+
+        except RemoteDevicesManagerBackendOfflineError as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except RemoteDevicesManagerError as exc:
+            raise FSError(f"Cannot retrieve workspace {workspace_id} participants: {exc}") from exc
+
+        return users
+
+    def _generate_reencryption_messages(self, new_workspace_entry, users):
+        """
+        Raises:
+            FSError
+        """
+        # Generate&sign reencryption message
+        msg = {
+            "type": "sharing.reencrypted",
+            "id": new_workspace_entry.id,
+            "key": new_workspace_entry.key,
+            "encryption_revision": new_workspace_entry.encryption_revision,
+            "name": new_workspace_entry.name,
+        }
+        # Should never raise error given we control the inputs
+        raw_msg = message_content_serializer.dumps(msg)
+
+        now = pendulum_now()
+
+        # Encrypt message for each user
+        per_user_ciphered_msgs = {}
+        for user in users:
+            try:
+                ciphered = encrypt_signed_msg_for(
+                    self.device.device_id, self.device.signing_key, user.public_key, raw_msg, now
+                )
+                per_user_ciphered_msgs[user.user_id] = ciphered
+
+            except CryptoError as exc:
+                raise FSError(
+                    f"Cannot create reencryption message for `{user.user_id}`: {exc}"
+                ) from exc
+
+        return now, per_user_ciphered_msgs
+
+    async def _send_start_reencryption_cmd(
+        self, workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
+    ):
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+            BackendCmdsParticipantsMismatchError
+        """
+        # Finally send command to the backend
+        try:
+            await self.backend_cmds.realm_start_reencryption_maintenance(
+                workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
+            )
+
+        except BackendCmdsParticipantsMismatchError:
+            # Catched by caller
+            raise
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            if exc.status == "in_maintenance":
+                raise FSWorkspaceInMaintenance(f"Workspace {workspace_id} already in maintenance")
+
+            if exc.status == "not_allowed":
+                raise FSWorkspaceNoAccess(
+                    f"Not allowed to start maintenance on workspace {workspace_id}: {exc}"
+                ) from exc
+
+            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {exc}") from exc
+
+    async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+            FSWorkspaceNotFoundError
+        """
+        user_manifest = self.get_user_manifest()
+        workspace_entry = user_manifest.get_workspace_entry(workspace_id)
+        if not workspace_entry:
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+
+        new_workspace_entry = workspace_entry.evolve(
+            encryption_revision=workspace_entry.encryption_revision + 1, key=SecretKey.generate()
+        )
+
+        while True:
+            # In order to provide the new key to each participant, we must
+            # encrypt a message for each of them
+            participants = await self._retreive_participants(workspace_entry.id)
+            msgs_timestamp, reencryption_msgs = self._generate_reencryption_messages(
+                new_workspace_entry, participants
+            )
+
+            # Actually ask the backend to start the reencryption
+            try:
+                await self._send_start_reencryption_cmd(
+                    workspace_entry.id,
+                    new_workspace_entry.encryption_revision,
+                    msgs_timestamp,
+                    reencryption_msgs,
+                )
+
+            except BackendCmdsParticipantsMismatchError:
+                # Participant list has changed concurrently
+                continue
+
+            else:
+                break
+
+        # Note we don't update the user manifest here, this will be done when
+        # processing the `realm.updated` message from the backend
+
+        return ReencryptionJob(self.backend_cmds, new_workspace_entry, workspace_entry)
+
+    async def workspace_continue_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+            FSWorkspaceNotFoundError
+        """
+        user_manifest = self.get_user_manifest()
+        workspace_entry = user_manifest.get_workspace_entry(workspace_id)
+        if not workspace_entry:
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+
+        # First make sure the workspace is under maintenance
+        status = await self.backend_cmds.realm_status(workspace_entry.id)
+        if (
+            not status["in_maintenance"]
+            or status["maintenance_type"] != MaintenanceType.REENCRYPTION
+        ):
+            raise FSWorkspaceNotInMaintenance("Not in reencryption maintenance")
+        current_encryption_revision = status["encryption_revision"]
+        if status["encryption_revision"] != workspace_entry.encryption_revision:
+            raise FSError("Bad encryption revision")
+
+        # Must retreive the previous encryption revision's key
+        version_to_fetch = None
+        while True:
+            previous_user_manifest = await self._fetch_remote_user_manifest(
+                version=version_to_fetch
+            )
+            previous_workspace_entry = previous_user_manifest.get_workspace_entry(
+                workspace_entry.id
+            )
+            if not previous_workspace_entry:
+                raise FSError(
+                    f"Never had access to encryption revision {current_encryption_revision - 1}"
+                )
+
+            if previous_workspace_entry.encryption_revision == current_encryption_revision - 1:
+                break
+            else:
+                version_to_fetch = previous_workspace_entry.version - 1
+
+        return ReencryptionJob(self.backend_cmds, workspace_entry, previous_workspace_entry)
