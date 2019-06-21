@@ -3,7 +3,7 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 
 from parsec.api.protocole import RealmRole
 from parsec.types import DeviceID, UserID, OrganizationID

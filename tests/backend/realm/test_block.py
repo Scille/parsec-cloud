@@ -6,26 +6,13 @@ import pendulum
 from uuid import UUID, uuid4
 
 from parsec.backend.block import BlockTimeoutError
+from parsec.backend.realm import RealmGrantedRole
 from parsec.api.protocole import block_create_serializer, block_read_serializer, packb, RealmRole
 
 
 BLOCK_ID = UUID("00000000000000000000000000000001")
 VLOB_ID = UUID("00000000000000000000000000000002")
 BLOCK_DATA = b"Hodi ho !"
-
-
-async def _create_realm(backend, user, vlob_id, realm_id):
-    now = pendulum.now()
-    await backend.vlob.create(
-        organization_id=user.organization_id,
-        author=user.device_id,
-        realm_id=realm_id,
-        encryption_revision=1,
-        vlob_id=vlob_id,
-        timestamp=now,
-        blob=b"",
-    )
-    return realm_id
 
 
 @pytest.fixture
@@ -61,7 +48,14 @@ async def test_block_read_check_access_rights(backend, alice, bob, bob_backend_s
     # User part of the realm with various role
     for role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER, RealmRole.OWNER):
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"<dummy>",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=role,
+                granted_by=alice.device_id,
+            ),
         )
         rep = await block_read(bob_backend_sock, block)
         assert rep == {"status": "ok", "block": b"Hodi ho !"}
@@ -83,7 +77,14 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
         (RealmRole.OWNER, True),
     ]:
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"<dummy>",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=role,
+                granted_by=alice.device_id,
+            ),
         )
         block_id = uuid4()
         rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA)
@@ -321,7 +322,16 @@ async def test_block_check_other_organization(
         rep = await block_read(sock, block)
         assert rep == {"status": "not_found"}
 
-        await _create_realm(backend, sock.device, vlob_id=VLOB_ID, realm_id=realm)
+        await backend.realm.create(
+            sock.device.organization_id,
+            RealmGrantedRole(
+                certificate=b"<dummy>",
+                realm_id=realm,
+                user_id=sock.device.user_id,
+                role=RealmRole.OWNER,
+                granted_by=sock.device.device_id,
+            ),
+        )
         rep = await block_create(sock, block, realm, b"other org data")
         assert rep == {"status": "ok"}
 

@@ -31,7 +31,7 @@ OTHER_VLOB_ID = UUID("30000000000000000000000000000000")
 async def realm_create(sock, realm_id, role_certificate, check_rep=True):
     raw_rep = await sock.send(
         realm_create_serializer.req_dumps(
-            {"cmd": "realm_status", "realm_id": realm_id, "role_certificate": role_certificate}
+            {"cmd": "realm_create", "realm_id": realm_id, "role_certificate": role_certificate}
         )
     )
     raw_rep = await sock.recv()
@@ -238,17 +238,19 @@ async def vlob_maintenance_save_reencryption_batch(
 @pytest.fixture
 async def realm(backend, alice):
     realm_id = UUID("A0000000000000000000000000000000")
-    await backend.realm.create(
-        organization_id=alice.organization_id,
-        self_granted_role=RealmGrantedRole(
-            realm_id=realm_id,
-            user_id=alice.user_id,
-            certificate=b"<dummy>",
-            role=RealmRole.OWNER,
-            granted_by=alice.device_id,
-            granted_on=Pendulum(2000, 1, 2),
-        ),
-    )
+    with backend.event_bus.listen() as spy:
+        await backend.realm.create(
+            organization_id=alice.organization_id,
+            self_granted_role=RealmGrantedRole(
+                realm_id=realm_id,
+                user_id=alice.user_id,
+                certificate=b"<dummy>",
+                role=RealmRole.OWNER,
+                granted_by=alice.device_id,
+                granted_on=Pendulum(2000, 1, 2),
+            ),
+        )
+        await spy.wait_with_timeout("realm.roles_updated")
     return realm_id
 
 
@@ -291,17 +293,38 @@ async def vlob_atoms(vlobs):
 
 
 @pytest.fixture
-async def other_realm(backend, bob):
+async def other_realm(backend, alice):
     realm_id = UUID("B0000000000000000000000000000000")
-    await backend.realm.create(
-        organization_id=bob.organization_id,
-        self_granted_role=RealmGrantedRole(
-            realm_id=realm_id,
-            user_id=bob.user_id,
-            certificate=b"<dummy>",
-            certifier=bob.device_id,
-            role=RealmRole.OWNER,
-            granted_on=Pendulum(2000, 1, 2),
-        ),
-    )
+    with backend.event_bus.listen() as spy:
+        await backend.realm.create(
+            organization_id=alice.organization_id,
+            self_granted_role=RealmGrantedRole(
+                realm_id=realm_id,
+                user_id=alice.user_id,
+                certificate=b"<dummy>",
+                role=RealmRole.OWNER,
+                granted_by=alice.device_id,
+                granted_on=Pendulum(2000, 1, 2),
+            ),
+        )
+        await spy.wait_with_timeout("realm.roles_updated")
+    return realm_id
+
+
+@pytest.fixture
+async def bob_realm(backend, bob):
+    realm_id = UUID("C0000000000000000000000000000000")
+    with backend.event_bus.listen() as spy:
+        await backend.realm.create(
+            organization_id=bob.organization_id,
+            self_granted_role=RealmGrantedRole(
+                realm_id=realm_id,
+                user_id=bob.user_id,
+                certificate=b"<dummy>",
+                role=RealmRole.OWNER,
+                granted_by=bob.device_id,
+                granted_on=Pendulum(2000, 1, 2),
+            ),
+        )
+        await spy.wait_with_timeout("realm.roles_updated")
     return realm_id

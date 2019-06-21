@@ -43,7 +43,7 @@ class CertifiedRealmRoleSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("user", required=True)
     realm_id = fields.UUID(required=True)
     user_id = fields.UserID(required=True)
-    role = RealmRoleField(required=True)
+    role = RealmRoleField(allow_none=True, missing=None)
 
 
 device_certificate_schema = Serializer(

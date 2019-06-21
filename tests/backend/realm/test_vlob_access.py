@@ -11,20 +11,20 @@ from parsec.api.protocole import (
     vlob_read_serializer,
     vlob_update_serializer,
 )
+from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
 from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_read
 
 
 VLOB_ID = UUID("00000000000000000000000000000001")
-REALM_ID = UUID("00000000000000000000000000000002")
 
 
 @pytest.mark.trio
-async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock):
+async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock, realm):
     blob = b"Initial commit."
     with freeze_time("2000-01-02"):
-        await vlob_create(alice_backend_sock, REALM_ID, VLOB_ID, blob)
+        await vlob_create(alice_backend_sock, realm, VLOB_ID, blob)
 
     rep = await vlob_read(alice2_backend_sock, VLOB_ID)
     assert rep == {
@@ -37,13 +37,13 @@ async def test_create_and_read(alice, alice_backend_sock, alice2_backend_sock):
 
 
 @pytest.mark.trio
-async def test_create_bad_timestamp(alice, alice_backend_sock):
+async def test_create_bad_timestamp(alice, alice_backend_sock, realm):
     blob = b"Initial commit."
     d1 = Pendulum(2000, 1, 1)
     with freeze_time(d1):
         d2 = d1.add(seconds=3600)
         rep = await vlob_create(
-            alice_backend_sock, REALM_ID, VLOB_ID, blob, timestamp=d2, check_rep=False
+            alice_backend_sock, realm, VLOB_ID, blob, timestamp=d2, check_rep=False
         )
     assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
 
@@ -67,12 +67,12 @@ async def test_create_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
-async def test_create_but_already_exists(alice_backend_sock):
+async def test_create_but_already_exists(alice_backend_sock, realm):
     blob = b"Initial commit."
 
-    await vlob_create(alice_backend_sock, REALM_ID, VLOB_ID, blob)
+    await vlob_create(alice_backend_sock, realm, VLOB_ID, blob)
 
-    rep = await vlob_create(alice_backend_sock, REALM_ID, VLOB_ID, blob, check_rep=False)
+    rep = await vlob_create(alice_backend_sock, realm, VLOB_ID, blob, check_rep=False)
     assert rep["status"] == "already_exists"
 
 
@@ -92,7 +92,14 @@ async def test_create_check_access_rights(backend, alice, bob, bob_backend_sock,
         (RealmRole.OWNER, True),
     ]:
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"dummy",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=role,
+                granted_by=alice.device_id,
+            ),
         )
         vlob_id = uuid4()
         rep = await vlob_create(
@@ -200,7 +207,14 @@ async def test_read_check_access_rights(backend, alice, bob, bob_backend_sock, r
 
     for role in RealmRole:
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"dummy",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=role,
+                granted_by=alice.device_id,
+            ),
         )
         rep = await vlob_read(bob_backend_sock, vlobs[0])
         assert rep["status"] == "ok"
@@ -290,7 +304,14 @@ async def test_update_check_access_rights(backend, alice, bob, bob_backend_sock,
         (RealmRole.OWNER, True),
     ]:
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"dummy",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=role,
+                granted_by=alice.device_id,
+            ),
         )
         rep = await vlob_update(
             bob_backend_sock, vlobs[0], version=next_version, blob=b"Next version.", check_rep=False
@@ -347,10 +368,10 @@ async def test_update_bad_version(alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_bad_encryption_revision(backend, alice, alice_backend_sock, vlobs):
+async def test_bad_encryption_revision(backend, alice, alice_backend_sock, realm, vlobs):
     rep = await vlob_create(
         alice_backend_sock,
-        REALM_ID,
+        realm,
         VLOB_ID,
         blob=b"First version.",
         encryption_revision=42,

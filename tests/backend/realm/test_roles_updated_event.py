@@ -2,11 +2,27 @@
 
 import pytest
 import trio
+import pendulum
+from uuid import UUID
 
 from parsec.api.protocole import RealmRole
+from parsec.crypto import build_realm_role_certificate
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
-from tests.backend.realm.conftest import realm_update_roles
+from tests.backend.realm.conftest import realm_create, realm_update_roles
+
+
+@pytest.mark.trio
+async def test_realm_create(backend, alice, alice_backend_sock):
+    await events_subscribe(alice_backend_sock)
+
+    realm_id = UUID("C0000000000000000000000000000000")
+    certif = build_realm_role_certificate(
+        alice.device_id, alice.signing_key, realm_id, alice.user_id, RealmRole.OWNER, pendulum.now()
+    )
+    with backend.event_bus.listen() as spy:
+        await realm_create(alice_backend_sock, realm_id, certif)
+        await spy.wait_with_timeout("realm.roles_updated")
 
 
 @pytest.mark.trio
@@ -16,7 +32,10 @@ async def test_roles_updated_for_participant(
     async def _update_role_and_check_events(role):
 
         with backend.event_bus.listen() as spy:
-            rep = await realm_update_roles(alice_backend_sock, realm, bob.user_id, role)
+            certif = build_realm_role_certificate(
+                alice.device_id, alice.signing_key, realm, bob.user_id, role, pendulum.now()
+            )
+            rep = await realm_update_roles(alice_backend_sock, certif, check_rep=False)
             assert rep == {"status": "ok"}
 
             with trio.fail_after(1):

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional
 from uuid import UUID
 import pendulum
 import attr
@@ -13,6 +13,7 @@ from parsec.api.protocole import (
     realm_status_serializer,
     realm_create_serializer,
     realm_get_roles_serializer,
+    realm_get_role_certificates_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
@@ -87,7 +88,7 @@ class RealmGrantedRole:
 class BaseRealmComponent:
     @catch_protocole_errors
     async def api_realm_create(self, client_ctx, msg):
-        msg = realm_update_roles_serializer.req_load(msg)
+        msg = realm_create_serializer.req_load(msg)
 
         try:
             data = verify_realm_role_certificate(
@@ -113,7 +114,7 @@ class BaseRealmComponent:
             user_id=data.user_id,
             role=data.role,
             granted_by=data.certified_by,
-            granted_on=data.granted_on,
+            granted_on=data.certified_on,
         )
         if granted_role.granted_by.user_id != granted_role.user_id:
             return {
@@ -127,7 +128,7 @@ class BaseRealmComponent:
             }
 
         try:
-            await self.create(client_ctx.organization_id, client_ctx.device_id, granted_role)
+            await self.create(client_ctx.organization_id, granted_role)
 
         except RealmNotFoundError as exc:
             return realm_create_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
@@ -280,17 +281,19 @@ class BaseRealmComponent:
             )
 
         except RealmParticipantsMismatchError as exc:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
+            return realm_start_reencryption_maintenance_serializer.rep_dump(
                 {"status": "participants_mismatch", "reason": str(exc)}
             )
 
         except RealmMaintenanceError as exc:
-            return realm_finish_reencryption_maintenance_serializer.rep_dump(
+            return realm_start_reencryption_maintenance_serializer.rep_dump(
                 {"status": "maintenance_error", "reason": str(exc)}
             )
 
         except RealmInMaintenanceError:
-            return realm_update_roles_serializer.rep_dump({"status": "in_maintenance"})
+            return realm_start_reencryption_maintenance_serializer.rep_dump(
+                {"status": "in_maintenance"}
+            )
 
         return realm_start_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
 

@@ -48,6 +48,7 @@ async def test_status(backend, bob_backend_sock, alice_backend_sock, alice, bob,
 
 
 @pytest.mark.trio
+@pytest.mark.xfail(reason="no longer true, TODO: remove meeee")
 async def test_realm_lazy_created_by_new_vlob(backend, alice, alice_backend_sock):
     NOW = Pendulum(2000, 1, 1)
     VLOB_ID = UUID("00000000000000000000000000000001")

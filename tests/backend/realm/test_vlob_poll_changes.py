@@ -2,9 +2,10 @@
 
 import pytest
 from uuid import UUID
-from pendulum import Pendulum
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocole import RealmRole
+from parsec.crypto import build_realm_role_certificate
 
 from tests.backend.realm.conftest import realm_update_roles, vlob_update, vlob_poll_changes
 
@@ -13,17 +14,24 @@ NOW = Pendulum(2000, 1, 1)
 VLOB_ID = UUID("00000000000000000000000000000001")
 OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
 YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")
-REALM_ID = UUID("0000000000000000000000000000000A")
-OTHER_REALM_ID = UUID("0000000000000000000000000000000B")
-YET_ANOTHER_REALM_ID = UUID("0000000000000000000000000000000C")
+UNKNOWN_REALM_ID = UUID("0000000000000000000000000000000F")
+
+
+async def _realm_generate_certif_and_update_roles_or_fail(
+    backend_sock, author, realm_id, user_id, role
+):
+    certif = build_realm_role_certificate(
+        author.device_id, author.signing_key, realm_id, user_id, role, pendulum_now()
+    )
+    return await realm_update_roles(backend_sock, certif, check_rep=False)
 
 
 @pytest.mark.trio
-async def test_realm_updated_by_vlob(backend, alice, alice_backend_sock):
+async def test_realm_updated_by_vlob(backend, alice, alice_backend_sock, realm):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
-        realm_id=REALM_ID,
+        realm_id=realm,
         encryption_revision=1,
         vlob_id=VLOB_ID,
         timestamp=NOW,
@@ -40,16 +48,16 @@ async def test_realm_updated_by_vlob(backend, alice, alice_backend_sock):
     )
 
     for last_checkpoint in (0, 1):
-        rep = await vlob_poll_changes(alice_backend_sock, REALM_ID, last_checkpoint)
+        rep = await vlob_poll_changes(alice_backend_sock, realm, last_checkpoint)
         assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {VLOB_ID: 2}}
 
 
 @pytest.mark.trio
-async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_backend_sock):
+async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_backend_sock, realm):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
-        realm_id=REALM_ID,
+        realm_id=realm,
         encryption_revision=1,
         vlob_id=VLOB_ID,
         timestamp=NOW,
@@ -65,25 +73,25 @@ async def test_vlob_poll_changes_checkpoint_up_to_date(backend, alice, alice_bac
         blob=b"v2",
     )
 
-    rep = await vlob_poll_changes(alice_backend_sock, REALM_ID, 2)
+    rep = await vlob_poll_changes(alice_backend_sock, realm, 2)
     assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {}}
 
 
 @pytest.mark.trio
 async def test_vlob_poll_changes_not_found(alice_backend_sock):
-    rep = await vlob_poll_changes(alice_backend_sock, REALM_ID, 0)
+    rep = await vlob_poll_changes(alice_backend_sock, UNKNOWN_REALM_ID, 0)
     assert rep == {
         "status": "not_found",
-        "reason": "Realm `00000000-0000-0000-0000-00000000000a` doesn't exist",
+        "reason": "Realm `00000000-0000-0000-0000-00000000000f` doesn't exist",
     }
 
 
 @pytest.mark.trio
-async def test_vlob_poll_changes(backend, alice, bob, alice_backend_sock, bob_backend_sock):
+async def test_vlob_poll_changes(backend, alice, bob, alice_backend_sock, bob_backend_sock, realm):
     await backend.vlob.create(
         organization_id=alice.organization_id,
         author=alice.device_id,
-        realm_id=REALM_ID,
+        realm_id=realm,
         encryption_revision=1,
         vlob_id=VLOB_ID,
         timestamp=NOW,
@@ -92,37 +100,43 @@ async def test_vlob_poll_changes(backend, alice, bob, alice_backend_sock, bob_ba
 
     # At first only Alice is allowed
 
-    rep = await vlob_poll_changes(bob_backend_sock, REALM_ID, 2)
+    rep = await vlob_poll_changes(bob_backend_sock, realm, 2)
     assert rep == {"status": "not_allowed"}
 
     # Add Bob with read&write rights
 
-    rep = await realm_update_roles(alice_backend_sock, REALM_ID, bob.user_id, RealmRole.CONTRIBUTOR)
+    rep = await _realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.CONTRIBUTOR
+    )
     assert rep == {"status": "ok"}
 
     rep = await vlob_update(bob_backend_sock, VLOB_ID, 2, b"v2")
     assert rep == {"status": "ok"}
 
-    rep = await vlob_poll_changes(bob_backend_sock, REALM_ID, 1)
+    rep = await vlob_poll_changes(bob_backend_sock, realm, 1)
     assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {VLOB_ID: 2}}
 
     # Change Bob with read only right
 
-    rep = await realm_update_roles(alice_backend_sock, REALM_ID, bob.user_id, RealmRole.READER)
+    rep = await _realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.READER
+    )
     assert rep == {"status": "ok"}
 
     rep = await vlob_update(bob_backend_sock, VLOB_ID, 3, b"v3", check_rep=False)
     assert rep == {"status": "not_allowed"}
 
-    rep = await vlob_poll_changes(bob_backend_sock, REALM_ID, 1)
+    rep = await vlob_poll_changes(bob_backend_sock, realm, 1)
     assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {VLOB_ID: 2}}
 
     # Finally remove all rights from Bob
 
-    rep = await realm_update_roles(alice_backend_sock, REALM_ID, bob.user_id, None)
+    rep = await _realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, None
+    )
     assert rep == {"status": "ok"}
 
-    rep = await vlob_poll_changes(bob_backend_sock, REALM_ID, 2)
+    rep = await vlob_poll_changes(bob_backend_sock, realm, 2)
     assert rep == {"status": "not_allowed"}
 
     rep = await vlob_update(bob_backend_sock, VLOB_ID, 3, b"v3", check_rep=False)
