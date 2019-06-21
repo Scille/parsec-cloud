@@ -2,7 +2,6 @@
 
 import pytest
 from uuid import UUID
-import trio
 from pendulum import Pendulum
 
 from parsec.api.protocole import RealmRole
