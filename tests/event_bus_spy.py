@@ -45,6 +45,10 @@ class EventBusSpy:
 
         return await self._wait(SpiedEvent("backend.connection.ready", dt=ANY))
 
+    async def wait_with_timeout(self, event, dt=ANY, kwargs=ANY, timeout=1):
+        with trio.move_on_after(timeout):
+            await self.wait(event, dt, kwargs)
+
     async def wait(self, event, dt=ANY, kwargs=ANY):
         expected = SpiedEvent(event, kwargs, dt)
         for occured_event in reversed(self.events):
@@ -64,7 +68,7 @@ class EventBusSpy:
         self._waiters.add(_waiter)
         return await receive_channel.receive()
 
-    async def wait_multiple_with_timeout(self, events, timeout):
+    async def wait_multiple_with_timeout(self, events, timeout=1):
         with trio.move_on_after(timeout):
             await self.wait_multiple(events)
         self.assert_events_occured(events)

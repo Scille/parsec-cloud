@@ -42,10 +42,6 @@ class WorkspaceFSTimestamped(workspacefs.WorkspaceFS):
 
         self.timestamp = timestamp
 
-        # Legacy
-        self._local_folder_fs = workspacefs._local_folder_fs
-        self._syncer = workspacefs._syncer
-
         self.remote_loader = workspacefs.remote_loader
         self.file_transactions = workspacefs.file_transactions
         self.entry_transactions = workspacefs.entry_transactions

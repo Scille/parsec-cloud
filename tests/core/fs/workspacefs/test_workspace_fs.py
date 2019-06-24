@@ -4,7 +4,9 @@ import errno
 import pytest
 from unittest.mock import ANY
 
-from parsec.core.types import FsPath
+from parsec.core.fs import FSEntryNotFound
+from parsec.core.types import FsPath, EntryID
+from parsec.api.protocole.realm import RealmRole
 
 
 @pytest.fixture
@@ -17,6 +19,12 @@ async def alice_workspace(alice_user_fs, running_backend):
     await workspace.touch("/foo/baz")
     await workspace.sync("/")
     return workspace
+
+
+@pytest.mark.trio
+async def test_workspace_properties(alice_workspace):
+    assert alice_workspace.workspace_name == "w"
+    assert alice_workspace.encryption_revision == 1
 
 
 @pytest.mark.trio
@@ -55,6 +63,40 @@ async def test_path_info(alice_workspace):
         "need_sync": False,
         "type": "file",
         "updated": ANY,
+    }
+
+
+@pytest.mark.trio
+async def test_get_entry_path(alice_workspace):
+    paths = ["/", "/foo", "/foo/bar", "/foo/baz"]
+    for path in paths:
+        entry_id = await alice_workspace.path_id(path)
+        assert await alice_workspace.get_entry_path(entry_id) == FsPath(path)
+
+    with pytest.raises(FSEntryNotFound):
+        await alice_workspace.get_entry_path(EntryID())
+
+    # Remove an open file
+    path = "/foo/bar"
+    bar_id, bar_fd = await alice_workspace.entry_transactions.file_open(FsPath(path))
+    await alice_workspace.unlink(path)
+
+    # Get entry path of a removed entry
+    with pytest.raises(FSEntryNotFound):
+        await alice_workspace.get_entry_path(bar_id)
+
+    # Remove parent and try again
+    await alice_workspace.rmtree("/foo")
+    with pytest.raises(FSEntryNotFound):
+        await alice_workspace.get_entry_path(bar_id)
+
+    await alice_workspace.file_transactions.fd_close(bar_fd)
+
+
+@pytest.mark.trio
+async def test_get_user_roles(alice_workspace):
+    assert await alice_workspace.get_user_roles() == {
+        alice_workspace.device.user_id: RealmRole.OWNER
     }
 
 
@@ -281,6 +323,12 @@ async def test_move(alice_workspace):
     with pytest.raises(FileExistsError):
         await alice_workspace.move("/containfoz/foz/bal", "/baz")
 
+    with pytest.raises(OSError):
+        await alice_workspace.move("/containfoz", "/containfoz/foz")
+
+    with pytest.raises(FileExistsError):
+        await alice_workspace.move("/containfoz/foz", "/containfoz")
+
 
 @pytest.mark.trio
 async def test_copytree(alice_workspace):
@@ -322,3 +370,48 @@ async def test_rmtree(alice_workspace):
 
     with pytest.raises(PermissionError):
         await alice_workspace.rmtree("/")
+
+
+@pytest.mark.trio
+async def test_dump(alice_workspace):
+    device_id = alice_workspace.device.device_id
+    baz_id = await alice_workspace.path_id("/foo/baz")
+    alice_workspace.local_storage.clear_manifest(baz_id)
+    assert alice_workspace.dump() == {
+        "author": device_id,
+        "base_version": 2,
+        "children": {
+            "foo": {
+                "author": device_id,
+                "base_version": 2,
+                "children": {
+                    "bar": {
+                        "author": device_id,
+                        "base_version": 1,
+                        "blocks": [],
+                        "created": ANY,
+                        "dirty_blocks": [],
+                        "id": ANY,
+                        "is_placeholder": False,
+                        "need_sync": False,
+                        "parent_id": ANY,
+                        "size": 0,
+                        "updated": ANY,
+                    },
+                    "baz": {"id": ANY},
+                },
+                "created": ANY,
+                "id": ANY,
+                "is_placeholder": False,
+                "need_sync": False,
+                "parent_id": ANY,
+                "updated": ANY,
+            }
+        },
+        "created": ANY,
+        "id": ANY,
+        "is_placeholder": False,
+        "need_sync": False,
+        "parent_id": ANY,
+        "updated": ANY,
+    }

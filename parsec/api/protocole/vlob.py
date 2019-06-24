@@ -139,7 +139,8 @@ class VlobMaintenanceSaveReencryptionBatchReqSchema(BaseReqSchema):
 
 
 class VlobMaintenanceSaveReencryptionBatchRepSchema(BaseRepSchema):
-    pass
+    total = fields.Integer(required=True)
+    done = fields.Integer(required=True)
 
 
 vlob_maintenance_save_reencryption_batch_serializer = CmdSerializer(

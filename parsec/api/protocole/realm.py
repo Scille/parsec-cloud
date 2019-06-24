@@ -78,6 +78,7 @@ realm_update_roles_serializer = CmdSerializer(RealmUpdateRolesReqSchema, RealmUp
 class RealmStartReencryptionMaintenanceReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
+    timestamp = fields.DateTime(required=True)
     per_participant_message = fields.Map(
         fields.UserID(), fields.Bytes(required=True), required=True
     )

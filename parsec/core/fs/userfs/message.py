@@ -2,22 +2,28 @@
 
 from parsec.serde import Serializer, UnknownCheckedSchema, OneOfSchema, fields
 
+from parsec.core.types.base import EntryIDField
 from parsec.core.fs.exceptions import FSValidationError, FSPackingError
 
 
 class SharingGrantedMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("sharing.granted", required=True)
     name = fields.String(required=True)
-    id = fields.UUID(required=True)
+    id = EntryIDField(required=True)
+    encryption_revision = fields.Integer(required=True)
     key = fields.SecretKey(missing=None)
     # Don't include access rights given the receiver will have anyway to
     # interrogate the backend for workspace's access rights list
     # to make sure the message sender is an admin
 
 
+class SharingReencryptedMessageContentSchema(SharingGrantedMessageContentSchema):
+    type = fields.CheckedConstant("sharing.reencrypted", required=True)
+
+
 class SharingRevokedMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("sharing.revoked", required=True)
-    id = fields.UUID(required=True)
+    id = EntryIDField(required=True)
 
 
 class PingMessageContentSchema(UnknownCheckedSchema):
@@ -30,6 +36,7 @@ class MessageContentSchema(OneOfSchema):
     type_field_remove = False
     type_schemas = {
         "sharing.granted": SharingGrantedMessageContentSchema,
+        "sharing.reencrypted": SharingReencryptedMessageContentSchema,
         "sharing.revoked": SharingRevokedMessageContentSchema,
         "ping": PingMessageContentSchema,
     }

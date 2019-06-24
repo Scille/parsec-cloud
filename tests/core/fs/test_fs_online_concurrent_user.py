@@ -12,35 +12,11 @@ from hypothesis_trio.stateful import (
 )
 
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
-from tests.common import call_with_control
+from tests.common import call_with_control, compare_fs_dumps
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 st_fs = st.sampled_from(["fs_1", "fs_2"])
-
-
-def compare_fs_dumps(entry_1, entry_2):
-    entry_1.pop("author", None)
-    entry_2.pop("author", None)
-
-    def cook_entry(entry):
-        if "children" in entry:
-            return {**entry, "children": {k: v["access"] for k, v in entry["children"].items()}}
-        else:
-            return entry
-
-    assert not entry_1.get("need_sync", False)
-    assert not entry_2.get("need_sync", False)
-
-    if "need_sync" not in entry_1 or "need_sync" not in entry_2:
-        # One of the entry is not loaded
-        return
-
-    assert cook_entry(entry_1) == cook_entry(entry_2)
-    if "children" in entry_1:
-        for key, child_for_entry_1 in entry_1["children"].items():
-            child_for_entry_2 = entry_2["children"][key]
-            compare_fs_dumps(child_for_entry_1, child_for_entry_2)
 
 
 @pytest.mark.slow
@@ -134,25 +110,25 @@ def test_fs_online_concurrent_user(
             # Send two syncs in a row given file conflict results are not synced
             # once created
 
+            workspace1 = self.user_fs1.get_workspace(self.wid)
+            workspace2 = self.user_fs2.get_workspace(self.wid)
+
             # Sync 1
-            workspace = self.user_fs1.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace1.sync("/")
             await self.user_fs1.sync()
             await self.user_fs1.sync()
 
             # Sync 2
-            workspace = self.user_fs2.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace2.sync("/")
             await self.user_fs2.sync()
             await self.user_fs2.sync()
 
             # Sync 1
-            workspace = self.user_fs1.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace1.sync("/")
             await self.user_fs1.sync()
 
-            fs_dump_1 = self.user_fs1._local_folder_fs.dump()
-            fs_dump_2 = self.user_fs2._local_folder_fs.dump()
+            fs_dump_1 = workspace1.dump()
+            fs_dump_2 = workspace2.dump()
             compare_fs_dumps(fs_dump_1, fs_dump_2)
 
     run_state_machine_as_test(FSOnlineConcurrentUser, settings=hypothesis_settings)

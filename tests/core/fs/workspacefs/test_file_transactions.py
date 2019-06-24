@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 
 from parsec.core.types import EntryID, BlockAccess, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
-from parsec.core.backend_connection.exceptions import BackendCmdsNotFound
+from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 
 from tests.common import freeze_time
 
@@ -32,7 +32,7 @@ class File:
         return self.local_storage.get_manifest(self.entry_id)
 
     def set_manifest(self, manifest):
-        self.local_storage.set_dirty_manifest(self.entry_id, manifest)
+        self.local_storage.set_manifest(self.entry_id, manifest)
 
     def open(self):
         return self.local_storage.create_cursor(self.entry_id)
@@ -44,9 +44,13 @@ def foo_txt(alice, file_transactions):
     with freeze_time("2000-01-02"):
         entry_id = EntryID()
         manifest = LocalFileManifest(
-            author=alice.device_id, is_placeholder=False, need_sync=False, base_version=1
-        )
-        local_storage.set_clean_manifest(entry_id, manifest)
+            author=alice.device_id,
+            parent_id=EntryID(),
+            is_placeholder=False,
+            need_sync=False,
+            base_version=1,
+        ).to_remote()
+        local_storage.set_base_manifest(entry_id, manifest)
     return File(local_storage, entry_id)
 
 
@@ -67,6 +71,7 @@ async def test_operations_on_file(file_transactions, foo_txt):
 
         await file_transactions.fd_seek(fd, 0)
         await file_transactions.fd_write(fd, b"H")
+        await file_transactions.fd_write(fd, b"")
 
         fd2 = foo_txt.open()
 
@@ -155,7 +160,7 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     foo_txt.set_manifest(foo_manifest)
 
     fd = foo_txt.open()
-    with pytest.raises(BackendCmdsNotFound):
+    with pytest.raises(FSRemoteBlockNotFound):
         await file_transactions.fd_read(fd, 14)
 
     file_transactions.local_storage.set_dirty_block(block1_access.id, block1)
@@ -194,8 +199,8 @@ def test_file_operations(
             )
 
             self.entry_id = EntryID()
-            manifest = LocalFileManifest(self.device.device_id, need_sync=True)
-            self.local_storage.set_dirty_manifest(self.entry_id, manifest)
+            manifest = LocalFileManifest(self.device.device_id, parent_id=EntryID())
+            self.local_storage.set_manifest(self.entry_id, manifest)
 
             self.fd = self.local_storage.create_cursor(self.entry_id)
             self.file_oracle_path = tmpdir / f"oracle-test-{tentative}.txt"

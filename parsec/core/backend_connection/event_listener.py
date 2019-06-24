@@ -5,7 +5,7 @@ from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.api.transport import TransportError
-from parsec.core.types import LocalDevice
+from parsec.core.types import LocalDevice, EntryID
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendIncompatibleVersion,
@@ -155,17 +155,27 @@ class BackendEventsManager:
                 self.event_bus.send("backend.pinged", ping=rep["ping"])
 
             elif rep["event"] == "realm.roles_updated":
+                realm_id = EntryID(rep["realm_id"])
                 self.event_bus.send(
-                    "backend.realm.roles_updated", realm_id=rep["realm_id"], role=rep["role"]
+                    "backend.realm.roles_updated", realm_id=realm_id, role=rep["role"]
                 )
 
             elif rep["event"] == "realm.vlobs_updated":
+                src_id = EntryID(rep["src_id"])
+                realm_id = EntryID(rep["realm_id"])
                 self.event_bus.send(
                     "backend.realm.vlobs_updated",
-                    realm_id=rep["realm_id"],
+                    realm_id=realm_id,
                     checkpoint=rep["checkpoint"],
-                    src_id=rep["src_id"],
+                    src_id=src_id,
                     src_version=rep["src_version"],
+                )
+
+            elif rep["event"] == "realm.maintenance_started":
+                self.event_bus.send(
+                    "backend.realm.maintenance_started",
+                    realm_id=rep["realm_id"],
+                    encryption_revision=rep["encryption_revision"],
                 )
 
             else:

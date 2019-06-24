@@ -112,12 +112,20 @@ class BackendCmdsBadMessage(BackendCmdsBadResponse):
     status = "bad_message"
 
 
+class BackendCmdsBadEncryptionRevision(BackendCmdsBadResponse):
+    status = "bad_encryption_revision"
+
+
 class BackendCmdsInMaintenance(BackendCmdsBadResponse):
     status = "in_maintenance"
 
 
 class BackendCmdsMaintenanceError(BackendCmdsBadResponse):
     status = "maintenance_error"
+
+
+class BackendCmdsParticipantsMismatchError(BackendCmdsBadResponse):
+    status = "participants_mismatch"
 
 
 STATUS_TO_EXC_CLS = {
@@ -140,6 +148,7 @@ STATUS_TO_EXC_CLS = {
         BackendCmdsBadMessage,
         BackendCmdsInMaintenance,
         BackendCmdsMaintenanceError,
+        BackendCmdsParticipantsMismatchError,
     )
 }
 

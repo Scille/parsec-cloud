@@ -418,10 +418,7 @@ async def get_device_invitation_creator(
         ) from exc
 
     verified_devices = _verify_devices(root_verify_key, uv_device, *trustchain)
-    return (
-        verified_devices.popitem(last=False)[1],
-        _verify_user(root_verify_key, uv_user, verified_devices),
-    )
+    return (verified_devices.popitem()[1], _verify_user(root_verify_key, uv_user, verified_devices))
 
 
 async def get_user_invitation_creator(
@@ -452,7 +449,4 @@ async def get_user_invitation_creator(
         ) from exc
 
     verified_devices = _verify_devices(root_verify_key, uv_device, *trustchain)
-    return (
-        verified_devices.popitem(last=False)[1],
-        _verify_user(root_verify_key, uv_user, verified_devices),
-    )
+    return (verified_devices.popitem()[1], _verify_user(root_verify_key, uv_user, verified_devices))

@@ -19,12 +19,7 @@ from parsec.core.types import (
     FileDescriptor,
 )
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
-from parsec.core.fs.utils import (
-    is_file_manifest,
-    is_folder_manifest,
-    is_folderish_manifest,
-    is_workspace_manifest,
-)
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.remote_loader import RemoteLoader
 
 
@@ -72,55 +67,72 @@ class EntryTransactions:
         if timestamp is None:
             try:
                 return self.local_storage.get_manifest(entry_id)
-            except LocalStorageMissingError:
-                return await self.remote_loader.load_manifest(entry_id)
+            except LocalStorageMissingError as exc:
+                remote_manifest = await self.remote_loader.load_manifest(exc.id)
+                return remote_manifest.to_local(self.local_author)
         else:
             # For now, no caching mechanism for older versions
-            return await self.remote_loader.load_manifest(entry_id, timestamp)
+            remote_manifest = await self.remote_loader.load_manifest(entry_id, timestamp=timestamp)
+            return remote_manifest.to_local(self.local_author)
 
-    async def _get_entry(
-        self, path: FsPath, timestamp: Pendulum = None
-    ) -> Tuple[EntryID, LocalManifest]:
+    @asynccontextmanager
+    async def _load_and_lock_manifest(self, entry_id: EntryID):
+        async with self.local_storage.lock_entry_id(entry_id):
+            try:
+                yield self.local_storage.get_manifest(entry_id)
+            except LocalStorageMissingError as exc:
+                remote_manifest = await self.remote_loader.load_manifest(exc.id)
+                self.local_storage.set_base_manifest(entry_id, remote_manifest)
+                yield self.local_storage.get_manifest(entry_id)
+
+    async def _load_manifest(self, entry_id: EntryID) -> LocalManifest:
+        async with self._load_and_lock_manifest(entry_id) as manifest:
+            return manifest
+
+    @asynccontextmanager
+    async def _lock_entry(self, path: FsPath) -> Tuple[EntryID, LocalManifest]:
         # Root entry_id and manifest
         assert path.parts[0] == "/"
         entry_id = self.get_workspace_entry().id
-        manifest = await self._get_manifest(entry_id, timestamp)
-        assert is_workspace_manifest(manifest)
 
         # Follow the path
         for name in path.parts[1:]:
+            manifest = await self._load_manifest(entry_id)
             if is_file_manifest(manifest):
                 raise from_errno(errno.ENOTDIR, filename=str(path))
             try:
                 entry_id = manifest.children[name]
             except (AttributeError, KeyError):
                 raise from_errno(errno.ENOENT, filename=str(path))
+
+        # Lock entry
+        async with self._load_and_lock_manifest(entry_id) as manifest:
+            yield Entry(entry_id, manifest)
+
+    async def _get_entry(
+        self, path: FsPath, timestamp: Pendulum = None
+    ) -> Tuple[EntryID, LocalManifest]:
+        if timestamp is None:
+            async with self._lock_entry(path) as entry:
+                return entry
+        else:
+            # Root entry_id and manifest
+            assert path.parts[0] == "/"
+            entry_id = self.get_workspace_entry().id
             manifest = await self._get_manifest(entry_id, timestamp)
 
-        # Return entry
-        return Entry(entry_id, manifest)
+            # Follow the path
+            for name in path.parts[1:]:
+                if is_file_manifest(manifest):
+                    raise from_errno(errno.ENOTDIR, filename=str(path))
+                try:
+                    entry_id = manifest.children[name]
+                except (AttributeError, KeyError):
+                    raise from_errno(errno.ENOENT, filename=str(path))
+                manifest = await self._get_manifest(entry_id, timestamp)
 
-    # Locking helpers
-
-    # This logic should move to the local storage along with
-    # the remote loader. It would then be up to the local storage
-    # to download the missing manifests. This should simplify the
-    # code and help gather all the sensitive methods in the same
-    # module.
-
-    @asynccontextmanager
-    async def _lock_entry(self, path: FsPath):
-        # Load the entry
-        entry_id, _ = await self._get_entry(path)
-
-        # Try to lock the corresponding entry
-        try:
-            async with self.local_storage.lock_manifest(entry_id) as manifest:
-                yield Entry(entry_id, manifest)
-
-        # The entry has been deleted while we were waiting for the lock
-        except LocalStorageMissingError:
-            raise from_errno(errno.ENOENT, filename=str(path))
+            # Return entry
+            return Entry(entry_id, manifest)
 
     @asynccontextmanager
     async def _lock_parent_entry(self, path):
@@ -173,7 +185,7 @@ class EntryTransactions:
                     assert exc.id == entry_id
 
             # Release the lock and download the child manifest
-            await self.remote_loader.load_manifest(entry_id)
+            await self._load_manifest(entry_id)
 
     # Reverse lookup logic
 
@@ -364,7 +376,7 @@ class EntryTransactions:
 
             # Create folder
             child_entry_id = EntryID()
-            child_manifest = LocalFolderManifest(self.local_author)
+            child_manifest = LocalFolderManifest(self.local_author, parent.id)
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
@@ -395,7 +407,7 @@ class EntryTransactions:
 
             # Create file
             child_entry_id = EntryID()
-            child_manifest = LocalFileManifest(self.local_author)
+            child_manifest = LocalFileManifest(self.local_author, parent.id)
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
