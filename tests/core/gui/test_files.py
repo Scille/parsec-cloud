@@ -85,7 +85,7 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
         async with aqtbot.wait_signal(w_f.folder_create_success):
             aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
 
-    async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000):
+    async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
         pass
 
 
