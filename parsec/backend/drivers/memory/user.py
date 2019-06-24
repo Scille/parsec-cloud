@@ -170,7 +170,16 @@ class MemoryUserComponent(BaseUserComponent):
         users = org._users
 
         if query:
-            results = [user_id for user_id in users.keys() if user_id.startswith(query)]
+            try:
+                UserID(query)
+            except ValueError:
+                # Contains invalid caracters, no need to go further
+                return ([], 0)
+
+            results = [
+                user_id for user_id in users.keys() if user_id.lower().startswith(query.lower())
+            ]
+
         else:
             results = users.keys()
 
