@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-import trio
 import pytest
 import pendulum
 from collections import defaultdict
@@ -372,18 +371,32 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         timestamp=generated_on,
                         blob=ciphered,
                     )
-                    with trio.fail_after(1):
-                        # Avoid possible race condition in tests listening for events
-                        await self.backend.event_bus.spy.wait(
-                            "realm.roles_updated",
-                            kwargs={
-                                "organization_id": first_device.organization_id,
-                                "author": generated_by,
-                                "realm_id": first_device.user_manifest_id,
-                                "user": generated_by.user_id,
-                                "role": RealmRole.OWNER,
-                            },
-                        )
+                    # Avoid possible race condition in tests listening for events
+                    await self.backend.event_bus.spy.wait_multiple_with_timeout(
+                        [
+                            (
+                                "realm.roles_updated",
+                                {
+                                    "organization_id": first_device.organization_id,
+                                    "author": generated_by,
+                                    "realm_id": first_device.user_manifest_id,
+                                    "user": generated_by.user_id,
+                                    "role": RealmRole.OWNER,
+                                },
+                            ),
+                            (
+                                "realm.vlobs_updated",
+                                {
+                                    "organization_id": first_device.organization_id,
+                                    "author": first_device.device_id,
+                                    "realm_id": first_device.user_manifest_id,
+                                    "checkpoint": 1,
+                                    "src_id": first_device.user_manifest_id,
+                                    "src_version": 1,
+                                },
+                            ),
+                        ]
+                    )
 
         async def bind_device(
             self,
@@ -441,19 +454,32 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         timestamp=generated_on,
                         blob=ciphered,
                     )
-                    with trio.fail_after(1):
-                        # Avoid possible race condition in tests listening for events
-                        await self.backend.event_bus.spy.wait(
-                            "realm.roles_updated",
-                            kwargs={
-                                "organization_id": device.organization_id,
-                                "author": generated_by,
-                                "realm_id": device.user_manifest_id,
-                                "user": generated_by.user_id,
-                                "role": RealmRole.OWNER,
-                            },
-                        )
-
+                    # Avoid possible race condition in tests listening for events
+                    await self.backend.event_bus.spy.wait_multiple_with_timeout(
+                        [
+                            (
+                                "realm.roles_updated",
+                                {
+                                    "organization_id": device.organization_id,
+                                    "author": generated_by,
+                                    "realm_id": device.user_manifest_id,
+                                    "user": generated_by.user_id,
+                                    "role": RealmRole.OWNER,
+                                },
+                            ),
+                            (
+                                "realm.vlobs_updated",
+                                {
+                                    "organization_id": device.organization_id,
+                                    "author": device.device_id,
+                                    "realm_id": device.user_manifest_id,
+                                    "checkpoint": 1,
+                                    "src_id": device.user_manifest_id,
+                                    "src_version": 1,
+                                },
+                            ),
+                        ]
+                    )
             self.binded_local_devices.append(device)
 
         async def bind_revocation(self, device: LocalDevice, certifier: LocalDevice):

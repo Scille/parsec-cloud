@@ -2,7 +2,6 @@
 
 import pytest
 from uuid import UUID
-import trio
 from pendulum import Pendulum
 
 from parsec.api.protocole import RealmRole
@@ -31,7 +30,9 @@ async def test_vlobs_updated_event_ok(backend, alice_backend_sock, alice, alice2
         timestamp=NOW,
         blob=b"v1",
     )
-    await backend.event_bus.spy.wait_multiple(["realm.roles_updated", "realm.vlobs_updated"])
+    await backend.event_bus.spy.wait_multiple_with_timeout(
+        ["realm.roles_updated", "realm.vlobs_updated"]
+    )
 
     # Start listening events
     await events_subscribe(alice_backend_sock)
@@ -67,59 +68,58 @@ async def test_vlobs_updated_event_ok(backend, alice_backend_sock, alice, alice2
             blob=b"v3",
         )
 
-        with trio.fail_after(1):
-            # No guarantees those events occur before the commands' return
-            # On top of that, other `realm.vlobs_updated` has been triggered
-            # before us (i.g. during alice user vlob creation). In case of slow
-            # database those events could pop only now, hence shadowing the ones
-            # we are waiting for. To avoid this we have to specify event params.
-            await spy.wait_multiple(
-                [
-                    (
-                        "realm.roles_updated",
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": OTHER_REALM_ID,
-                            "user": alice2.user_id,
-                            "role": RealmRole.OWNER,
-                        },
-                    ),
-                    (
-                        "realm.vlobs_updated",
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": OTHER_REALM_ID,
-                            "checkpoint": 1,
-                            "src_id": OTHER_VLOB_ID,
-                            "src_version": 1,
-                        },
-                    ),
-                    (
-                        "realm.vlobs_updated",
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": REALM_ID,
-                            "checkpoint": 2,
-                            "src_id": VLOB_ID,
-                            "src_version": 2,
-                        },
-                    ),
-                    (
-                        "realm.vlobs_updated",
-                        {
-                            "organization_id": alice2.organization_id,
-                            "author": alice2.device_id,
-                            "realm_id": REALM_ID,
-                            "checkpoint": 3,
-                            "src_id": VLOB_ID,
-                            "src_version": 3,
-                        },
-                    ),
-                ]
-            )
+        # No guarantees those events occur before the commands' return
+        # On top of that, other `realm.vlobs_updated` has been triggered
+        # before us (i.g. during alice user vlob creation). In case of slow
+        # database those events could pop only now, hence shadowing the ones
+        # we are waiting for. To avoid this we have to specify event params.
+        await spy.wait_multiple_with_timeout(
+            [
+                (
+                    "realm.roles_updated",
+                    {
+                        "organization_id": alice2.organization_id,
+                        "author": alice2.device_id,
+                        "realm_id": OTHER_REALM_ID,
+                        "user": alice2.user_id,
+                        "role": RealmRole.OWNER,
+                    },
+                ),
+                (
+                    "realm.vlobs_updated",
+                    {
+                        "organization_id": alice2.organization_id,
+                        "author": alice2.device_id,
+                        "realm_id": OTHER_REALM_ID,
+                        "checkpoint": 1,
+                        "src_id": OTHER_VLOB_ID,
+                        "src_version": 1,
+                    },
+                ),
+                (
+                    "realm.vlobs_updated",
+                    {
+                        "organization_id": alice2.organization_id,
+                        "author": alice2.device_id,
+                        "realm_id": REALM_ID,
+                        "checkpoint": 2,
+                        "src_id": VLOB_ID,
+                        "src_version": 2,
+                    },
+                ),
+                (
+                    "realm.vlobs_updated",
+                    {
+                        "organization_id": alice2.organization_id,
+                        "author": alice2.device_id,
+                        "realm_id": REALM_ID,
+                        "checkpoint": 3,
+                        "src_id": VLOB_ID,
+                        "src_version": 3,
+                    },
+                ),
+            ]
+        )
 
     reps = [
         await events_listen_nowait(alice_backend_sock),
@@ -130,10 +130,10 @@ async def test_vlobs_updated_event_ok(backend, alice_backend_sock, alice, alice2
     ]
     assert reps == [
         {
+            "status": "ok",
             "event": "realm.roles_updated",
             "realm_id": OTHER_REALM_ID,
             "role": RealmRole.OWNER,
-            "status": "ok",
         },
         {
             "status": "ok",
@@ -199,15 +199,14 @@ async def test_vlobs_updated_event_handle_self_events(backend, alice_backend_soc
         )
 
         # Wait for events to be processed by the backend
-        with trio.fail_after(1):
-            await spy.wait_multiple(
-                [
-                    "realm.roles_updated",
-                    "realm.vlobs_updated",
-                    "realm.vlobs_updated",
-                    "realm.vlobs_updated",
-                ]
-            )
+        await spy.wait_multiple_with_timeout(
+            [
+                "realm.roles_updated",
+                "realm.vlobs_updated",
+                "realm.vlobs_updated",
+                "realm.vlobs_updated",
+            ]
+        )
 
     # Only self-events not ignored is the roles_updated one
     rep = await events_listen_nowait(alice_backend_sock)
@@ -249,10 +248,9 @@ async def test_vlobs_updated_event_not_participant(backend, alice_backend_sock, 
         )
 
         # Wait for events to be processed by the backend
-        with trio.fail_after(1):
-            await spy.wait_multiple(
-                ["realm.roles_updated", "realm.vlobs_updated", "realm.vlobs_updated"]
-            )
+        await spy.wait_multiple_with_timeout(
+            ["realm.roles_updated", "realm.vlobs_updated", "realm.vlobs_updated"]
+        )
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
@@ -300,15 +298,14 @@ async def test_vlobs_updated_event_realm_created_after_subscribe(
         )
 
         # Wait for events to be processed by the backend
-        with trio.fail_after(1):
-            await spy.wait_multiple(
-                [
-                    "realm.roles_updated",
-                    "realm.vlobs_updated",
-                    "realm.vlobs_updated",
-                    "realm.vlobs_updated",
-                ]
-            )
+        await spy.wait_multiple_with_timeout(
+            [
+                "realm.roles_updated",
+                "realm.vlobs_updated",
+                "realm.vlobs_updated",
+                "realm.vlobs_updated",
+            ]
+        )
 
     # Realm access granted
     rep = await events_listen_nowait(alice_backend_sock)

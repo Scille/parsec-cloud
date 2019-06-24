@@ -322,15 +322,20 @@ WHERE
     ) -> Tuple[List[UserID], int]:
         async with self.dbh.pool.acquire() as conn:
             now = pendulum.now()
+
             if query:
-                # LIKE only use % and _ as special tokens
-                escaped_query = query.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+                try:
+                    UserID(query)
+                except ValueError:
+                    # Contains invalid caracters, no need to go further
+                    return ([], 0)
+
                 all_results = await conn.fetch(
                     """
 SELECT user_id FROM user_
 WHERE
     organization = get_organization_internal_id($1)
-    AND user_id LIKE $2 ESCAPE '!'
+    AND user_id ~* $2
     AND (
         NOT $3 OR EXISTS (
             SELECT TRUE FROM device
@@ -345,7 +350,7 @@ WHERE
 ORDER BY user_id
 """,
                     organization_id,
-                    f"{escaped_query}%",
+                    query,
                     omit_revoked,
                     now,
                 )
