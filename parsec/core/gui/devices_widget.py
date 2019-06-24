@@ -9,7 +9,7 @@ from parsec.types import DeviceID
 from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
@@ -85,11 +85,6 @@ async def _do_revoke_device(core, device_name, button):
         return button
     except BackendCmdsBadResponse as exc:
         raise JobResultError(exc.status)
-    except:
-        import traceback
-
-        traceback.print_exc()
-        raise JobResultError("error")
 
 
 async def _do_list_devices(core):
@@ -99,15 +94,13 @@ async def _do_list_devices(core):
         return devices
     except BackendNotAvailable:
         raise JobResultError("offline")
-    except:
-        raise JobResultError("error")
 
 
 class DevicesWidget(QWidget, Ui_DevicesWidget):
-    revoke_success = pyqtSignal()
-    revoke_error = pyqtSignal()
-    list_success = pyqtSignal()
-    list_error = pyqtSignal()
+    revoke_success = pyqtSignal(QtToTrioJob)
+    revoke_error = pyqtSignal(QtToTrioJob)
+    list_success = pyqtSignal(QtToTrioJob)
+    list_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -123,8 +116,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.taskbar_buttons.append(button_add_device)
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)
-        self.revoke_job = None
-        self.list_job = None
         self.revoke_success.connect(self.on_revoke_success)
         self.revoke_error.connect(self.on_revoke_error)
         self.list_success.connect(self.on_list_success)
@@ -134,8 +125,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.reset()
 
     def disconnect_all(self):
-        self.list_job = None
-        self.revoke_job = None
+        pass
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
@@ -154,22 +144,13 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 else:
                     w.show()
 
-    def on_revoke_success(self):
-        assert self.revoke_job
-        assert self.revoke_job.is_finished()
-        assert self.revoke_job.status == "ok"
-        button = self.revoke_job.ret
-        self.revoke_job = None
+    def on_revoke_success(self, job):
+        button = job.ret
         MessageDialog.show_info(self, _('Device "{}" has been revoked.').format(button.device_name))
         button.is_revoked = True
 
-    def on_revoke_error(self):
-        assert self.revoke_job
-        assert self.revoke_job.is_finished()
-        assert self.revoke_job.status != "ok"
-
-        status = self.revoke_job.status
-        self.revoke_job = None
+    def on_revoke_error(self, job):
+        status = job.status
         if status == "already_revoked":
             MessageDialog.show_error(self, _("Device has already been revoked."))
         elif status == "not_found":
@@ -189,10 +170,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         )
         if not result:
             return
-        assert not self.revoke_job
-        self.revoke_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "revoke_success"),
-            ThreadSafeQtSignal(self, "revoke_error"),
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "revoke_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "revoke_error", QtToTrioJob),
             _do_revoke_device,
             core=self.core,
             device_name=device_button.device_name,
@@ -217,13 +197,17 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         button.show()
         self.devices.append(device_name)
 
-    def on_list_success(self):
-        assert self.list_job
-        assert self.list_job.is_finished()
-        assert self.list_job.status == "ok"
-        devices = self.list_job.ret
-        self.list_job = None
+    def on_list_success(self, job):
+        devices = job.ret
         current_device = self.core.device
+        self.devices = []
+        while self.layout_devices.count() != 0:
+            item = self.layout_devices.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_devices.removeWidget(w)
+                w.setParent(None)
+
         for device in devices:
             self.add_device(
                 device.device_name,
@@ -233,24 +217,13 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 certified_on=device.certified_on,
             )
 
-    def on_list_error(self):
-        assert self.list_job
-        assert self.list_job.is_finished()
-        assert self.list_job.status != "ok"
-        self.list_job = None
+    def on_list_error(self, job):
+        pass
 
     def reset(self):
-        self.devices = []
-        while self.layout_devices.count() != 0:
-            item = self.layout_devices.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_devices.removeWidget(w)
-                w.setParent(None)
-        assert not self.list_job
-        self.list_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "list_success"),
-            ThreadSafeQtSignal(self, "list_error"),
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_list_devices,
             core=self.core,
         )

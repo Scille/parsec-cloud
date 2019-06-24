@@ -36,12 +36,7 @@ async def _do_rename(workspace_fs, paths):
         except FileExistsError:
             raise JobResultError("already-exists", multi=len(paths) > 1)
         except OSError:
-            import traceback
-
-            traceback.print_exc()
             raise JobResultError("not-empty", multi=len(paths) > 1)
-        except:
-            raise JobResultError("error", multi=len(paths) > 1)
 
 
 async def _do_delete(workspace_fs, files, silent=False):

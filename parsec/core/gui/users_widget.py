@@ -8,7 +8,7 @@ from PyQt5.QtGui import QPixmap
 from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
 from parsec.core.gui.lang import translate as _
@@ -85,8 +85,6 @@ async def _do_revoke_user(core, user_name, button):
         return button
     except BackendCmdsBadResponse as exc:
         raise JobResultError(exc.status)
-    except:
-        raise JobResultError("error")
 
 
 async def _do_list_users(core):
@@ -99,18 +97,13 @@ async def _do_list_users(core):
         return ret
     except BackendNotAvailable:
         raise JobResultError("offline")
-    except:
-        import traceback
-
-        traceback.print_exc()
-        raise JobResultError("error")
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
-    revoke_success = pyqtSignal()
-    revoke_error = pyqtSignal()
-    list_success = pyqtSignal()
-    list_error = pyqtSignal()
+    revoke_success = pyqtSignal(QtToTrioJob)
+    revoke_error = pyqtSignal(QtToTrioJob)
+    list_success = pyqtSignal(QtToTrioJob)
+    list_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -125,8 +118,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
             button_add_user.clicked.connect(self.register_user)
             self.taskbar_buttons.append(button_add_user)
-        self.revoke_job = None
-        self.list_job = None
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
@@ -171,22 +162,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         button.show()
         self.users.append(user_name)
 
-    def on_revoke_success(self):
-        assert self.revoke_job
-        assert self.revoke_job.is_finished()
-        assert self.revoke_job.status == "ok"
-        button = self.revoke_job.ret
-        self.revoke_job = None
+    def on_revoke_success(self, job):
+        button = job.ret
         MessageDialog.show_info(self, _('User "{}" has been revoked.'.format(button.user_name)))
         button.is_revoked = True
 
-    def on_revoke_error(self):
-        assert self.revoke_job
-        assert self.revoke_job.is_finished()
-        assert self.revoke_job.status != "ok"
-
-        status = self.revoke_job.status
-        self.revoke_job = None
+    def on_revoke_error(self, job):
+        status = job.status
         if status == "already_revoked":
             MessageDialog.show_error(self, _("User has already been revoked."))
         elif status == "not_found":
@@ -204,22 +186,24 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         )
         if not result:
             return
-        assert not self.revoke_job
-        self.revoke_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "revoke_success"),
-            ThreadSafeQtSignal(self, "revoke_error"),
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "revoke_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "revoke_error", QtToTrioJob),
             _do_revoke_user,
             core=self.core,
             user_name=user_button.user_name,
             button=user_button,
         )
 
-    def on_list_success(self):
-        assert self.list_job
-        assert self.list_job.is_finished()
-        assert self.list_job.status == "ok"
-        users = self.list_job.ret
-        self.list_job = None
+    def on_list_success(self, job):
+        users = job.ret
+        self.users = []
+        while self.layout_users.count() != 0:
+            item = self.layout_users.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_users.removeWidget(w)
+                w.setParent(None)
         current_user = self.core.device.user_id
         for user, (user_info, user_devices) in users.items():
             self.add_user(
@@ -230,23 +214,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 is_revoked=all([device.revoked_on for device in user_devices]),
             )
 
-    def on_list_error(self):
-        assert self.list_job
-        assert self.list_job.is_finished()
-        assert self.list_job.status != "ok"
+    def on_list_error(self, job):
+        pass
 
     def reset(self):
-        self.users = []
-        while self.layout_users.count() != 0:
-            item = self.layout_users.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_users.removeWidget(w)
-                w.setParent(None)
-        assert not self.list_job
-        self.list_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "list_success"),
-            ThreadSafeQtSignal(self, "list_error"),
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
             _do_list_users,
             core=self.core,
         )
