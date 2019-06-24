@@ -85,7 +85,7 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
         async with aqtbot.wait_signal(w_f.folder_create_success):
             aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
 
-    async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=2000):
+    async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000):
         pass
 
 
@@ -155,7 +155,7 @@ async def test_create_dir_already_exists(
     )
     async with aqtbot.wait_signal(w_f.folder_create_success):
         aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
-    async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=2000):
+    async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000):
         pass
 
     assert w_f.table_files.rowCount() == 2
@@ -367,7 +367,7 @@ async def test_import_files(
     )
 
     async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=2000
+        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=3000
     ):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
 
@@ -395,7 +395,7 @@ async def test_import_dir(
     )
 
     async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=2000
+        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=3000
     ):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
 
