@@ -11,7 +11,7 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.settings_dialog import SettingsDialog
-from parsec.core.gui.custom_widgets import MessageDialog
+from parsec.core.gui.custom_widgets import show_info
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
@@ -93,7 +93,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         devices = list_available_devices(self.config.config_dir)
         if len(devices) == 1:
             if devices[0][0] == organization and devices[0][1] == device:
-                MessageDialog.show_info(
+                show_info(
                     self,
                     _(
                         "The organization and the user have been created. "
@@ -102,7 +102,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 )
                 self.emit_login_with_password(devices[0][3], password)
         else:
-            MessageDialog.show_info(
+            show_info(
                 self, _("The organization and the user have been created. You can now log in.")
             )
             self.show_login_widget()
@@ -111,12 +111,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         devices = list_available_devices(self.config.config_dir)
         if len(devices) == 1:
             if devices[0][0] == organization and devices[0][1] == device:
-                MessageDialog.show_info(
-                    self, _("The user has been created. You will now be logged in.")
-                )
+                show_info(self, _("The user has been created. You will now be logged in."))
                 self.emit_login_with_password(devices[0][3], password)
         else:
-            MessageDialog.show_info(self, _("The user has been created. You can now log in."))
+            show_info(self, _("The user has been created. You can now log in."))
             self.show_login_widget()
 
     def emit_login_with_password(self, key_file, password):

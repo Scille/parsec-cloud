@@ -19,7 +19,7 @@ from parsec.core.invite_claim import (
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_widgets import MessageDialog
+from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
@@ -132,7 +132,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             errmsg = _("URL or device is invalid.")
         else:
             errmsg = _("Can not claim this user ({info}).")
-        MessageDialog.show_error(self, errmsg.format(**self.claim_user_job.exc.params))
+        show_error(self, errmsg.format(**self.claim_user_job.exc.params))
         self.claim_user_job = None
         self.check_infos()
 

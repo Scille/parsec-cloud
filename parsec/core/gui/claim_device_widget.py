@@ -19,7 +19,7 @@ from parsec.core.invite_claim import (
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_widgets import MessageDialog
+from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
@@ -130,7 +130,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             errmsg = (_("URL or device is invalid."),)
         else:
             errmsg = _("Can not claim this device ({info}).")
-        MessageDialog.show_error(self, errmsg.format(**self.claim_device_job.exc.params))
+        show_error(self, errmsg.format(**self.claim_device_job.exc.params))
         self.claim_device_job = None
         self.check_infos()
 
@@ -141,7 +141,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
 
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
-        MessageDialog.show_info(self, _("The device has been registered. You can now login."))
+        show_info(self, _("The device has been registered. You can now login."))
         self.claim_device_job = None
         self.device_claimed.emit()
         self.check_infos()

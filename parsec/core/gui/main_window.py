@@ -27,7 +27,7 @@ from parsec.core.gui import telemetry
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.custom_widgets import QuestionDialog, MessageDialog
+from parsec.core.gui.custom_widgets import QuestionDialog, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -148,11 +148,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         assert self.runing_core_job.is_finished()
         if self.runing_core_job.status is not None:
             if "Device has been revoked" in str(self.runing_core_job.exc):
-                MessageDialog.show_error(self, _("This device has been revoked."))
+                show_error(self, _("This device has been revoked."))
             else:
                 logger.error("Unhandled error", exc_info=self.runing_core_job.exc)
                 error = "\n".join(traceback.format_tb(self.runing_core_job.exc.__traceback__))
-                MessageDialog.show_error(self, _("Unhandled error:\n\n{}").format(error))
+                show_error(self, _("Unhandled error:\n\n{}").format(error))
         self.runing_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -183,24 +183,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = load_device_with_password(key_file, password)
             self.start_core(device)
         except LocalDeviceError as exc:
-            MessageDialog.show_error(self, _("Authentication failed ({}).").format(str(exc)))
+            show_error(self, _("Authentication failed ({}).").format(str(exc)))
 
         except BackendHandshakeAPIVersionError:
-            MessageDialog.show_error(self, _("Incompatible backend API version."))  # TODO
+            show_error(self, _("Incompatible backend API version."))  # TODO
 
         except BackendDeviceRevokedError:
-            MessageDialog.show_error(self, _("This device has been revoked."))
+            show_error(self, _("This device has been revoked."))
 
         except BackendHandshakeError:
-            MessageDialog.show_error(self, _("User not registered in the backend."))
+            show_error(self, _("User not registered in the backend."))
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            MessageDialog.show_error(self, _("Mountpoint already in use."))
+            show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
             logger.exception("Unhandled error during login")
             error = "\n".join(traceback.format_tb(exc.__traceback__))
-            MessageDialog.show_error(self, _("Unhandled error:\n\n{}").format(error))
+            show_error(self, _("Unhandled error:\n\n{}").format(error))
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
@@ -209,24 +209,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.start_core(device)
         except LocalDeviceError:
-            MessageDialog.show_error(self, _("Authentication failed."))
+            show_error(self, _("Authentication failed."))
 
         except BackendHandshakeAPIVersionError:
-            MessageDialog.show_error(self, _("Incompatible backend API version."))
+            show_error(self, _("Incompatible backend API version."))
 
         except BackendDeviceRevokedError:
-            MessageDialog.show_error(self, _("This device has been revoked."))
+            show_error(self, _("This device has been revoked."))
 
         except BackendHandshakeError:
-            MessageDialog.show_error(self, _("User not registered in the backend."))
+            show_error(self, _("User not registered in the backend."))
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            MessageDialog.show_error(self, _("Mountpoint already in use."))
+            show_error(self, _("Mountpoint already in use."))
 
         except Exception as exc:
             logger.exception("Unhandled error during login")
             error = "\n".join(traceback.format_tb(exc.__traceback__))
-            MessageDialog.show_error(self, _("Unhandled error:\n\n{}").format(error))
+            show_error(self, _("Unhandled error:\n\n{}").format(error))
 
     def close_app(self, force=False):
         self.need_close = True

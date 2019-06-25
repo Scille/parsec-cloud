@@ -11,7 +11,7 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadRe
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
+from parsec.core.gui.custom_widgets import TaskbarButton, show_info, show_error, QuestionDialog
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
@@ -67,7 +67,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         if self.label.is_revoked:
             text += "\n\n"
             text += _("This device has been revoked.")
-        MessageDialog.show_info(self, text)
+        show_info(self, text)
 
     def revoke(self):
         self.revoke_clicked.emit(self)
@@ -146,21 +146,19 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
     def on_revoke_success(self, job):
         button = job.ret
-        MessageDialog.show_info(self, _('Device "{}" has been revoked.').format(button.device_name))
+        show_info(self, _('Device "{}" has been revoked.').format(button.device_name))
         button.is_revoked = True
 
     def on_revoke_error(self, job):
         status = job.status
         if status == "already_revoked":
-            MessageDialog.show_error(self, _("Device has already been revoked."))
+            show_error(self, _("Device has already been revoked."))
         elif status == "not_found":
-            MessageDialog.show_error(self, _("Device not found."))
+            show_error(self, _("Device not found."))
         elif status == "invalid_role" or status == "invalid_certification":
-            MessageDialog.show_error(
-                self, _("You don't have the permission to revoke this device.")
-            )
+            show_error(self, _("You don't have the permission to revoke this device."))
         elif status == "error":
-            MessageDialog.show_error(self, _("Can not revoke this device."))
+            show_error(self, _("Can not revoke this device."))
 
     def revoke_device(self, device_button):
         result = QuestionDialog.ask(

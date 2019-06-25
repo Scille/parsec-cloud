@@ -138,20 +138,24 @@ class MessageDialog(QDialog, Ui_MessageDialog):
         self.label_icon.setPixmap(icon)
         self.setWindowFlags(Qt.SplashScreen)
 
-    @classmethod
-    def show_info(cls, parent, text):
-        m = cls(QPixmap(":/icons/images/icons/info.png"), _("Information"), text, parent=parent)
-        return m.exec_()
 
-    @classmethod
-    def show_warning(cls, parent, text):
-        m = cls(QPixmap(":/icons/images/icons/warning.png"), _("Warning"), text, parent=parent)
-        return m.exec_()
+def show_error(parent, text):
+    m = MessageDialog(QPixmap(":/icons/images/icons/error.png"), _("Error"), text, parent=parent)
+    return m.exec_()
 
-    @classmethod
-    def show_error(cls, parent, text):
-        m = cls(QPixmap(":/icons/images/icons/error.png"), _("Error"), text, parent=parent)
-        return m.exec_()
+
+def show_info(parent, text):
+    m = MessageDialog(
+        QPixmap(":/icons/images/icons/info.png"), _("Information"), text, parent=parent
+    )
+    return m.exec_()
+
+
+def show_warning(parent, text):
+    m = MessageDialog(
+        QPixmap(":/icons/images/icons/warning.png"), _("Warning"), text, parent=parent
+    )
+    return m.exec_()
 
 
 def get_open_files(parent):

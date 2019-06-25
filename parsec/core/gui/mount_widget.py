@@ -52,7 +52,7 @@ class MountWidget(QWidget, Ui_MountWidget):
 
     def show_files_widget(self, workspace_fs):
         self.workspaces_widget.hide()
-        self.files_widget.workspace_fs = workspace_fs
+        self.files_widget.set_workspace_fs(workspace_fs)
         self.files_widget.show()
         self.widget_switched.emit(self.files_widget.get_taskbar_buttons().copy())
 

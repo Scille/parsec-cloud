@@ -10,7 +10,7 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadRe
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
-from parsec.core.gui.custom_widgets import TaskbarButton, MessageDialog, QuestionDialog
+from parsec.core.gui.custom_widgets import TaskbarButton, show_error, show_info, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -68,7 +68,7 @@ class UserButton(QWidget, Ui_UserButton):
         if self.label.is_revoked:
             text += "\n\n"
             text += _("This user has been revoked.")
-        MessageDialog.show_info(self, text)
+        show_info(self, text)
 
     def revoke(self):
         self.revoke_clicked.emit(self)
@@ -164,19 +164,19 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def on_revoke_success(self, job):
         button = job.ret
-        MessageDialog.show_info(self, _('User "{}" has been revoked.'.format(button.user_name)))
+        show_info(self, _('User "{}" has been revoked.').format(button.user_name))
         button.is_revoked = True
 
     def on_revoke_error(self, job):
         status = job.status
         if status == "already_revoked":
-            MessageDialog.show_error(self, _("User has already been revoked."))
+            show_error(self, _("User has already been revoked."))
         elif status == "not_found":
-            MessageDialog.show_error(self, _("User not found."))
+            show_error(self, _("User not found."))
         elif status == "invalid_role" or status == "invalid_certification":
-            MessageDialog.show_error(self, _("You don't have the permission to revoke this user."))
+            show_error(self, _("You don't have the permission to revoke this user."))
         elif status == "error":
-            MessageDialog.show_error(self, _("Can not revoke this user."))
+            show_error(self, _("Can not revoke this user."))
 
     def revoke_user(self, user_button):
         result = QuestionDialog.ask(

@@ -14,7 +14,8 @@ from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
 from parsec.core.gui.custom_widgets import (
     QuestionDialog,
-    MessageDialog,
+    show_error,
+    show_warning,
     TextInputDialog,
     TaskbarButton,
 )
@@ -52,15 +53,12 @@ async def _do_delete(workspace_fs, files, silent=False):
 
 
 async def _do_folder_stat(workspace_fs, path):
-    try:
-        stats = {}
-        dir_stat = await workspace_fs.path_info(path)
-        for child in dir_stat["children"]:
-            child_stat = await workspace_fs.path_info(path / child)
-            stats[child] = child_stat
-        return path, dir_stat["id"], stats
-    except:
-        raise JobResultError("error")
+    stats = {}
+    dir_stat = await workspace_fs.path_info(path)
+    for child in dir_stat["children"]:
+        child_stat = await workspace_fs.path_info(path / child)
+        stats[child] = child_stat
+    return path, dir_stat["id"], stats
 
 
 async def _do_folder_create(workspace_fs, path):
@@ -68,8 +66,6 @@ async def _do_folder_create(workspace_fs, path):
         await workspace_fs.mkdir(path)
     except FileExistsError:
         raise JobResultError("already-exists")
-    except:
-        raise JobResultError("error")
 
 
 async def _do_import(workspace_fs, files, total_size, progress_signal):
@@ -97,8 +93,6 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
             progress_signal.emit(current_size)
         except trio.Cancelled:
             raise JobResultError("cancelled", last_file=dst)
-        except:
-            raise JobResultError("error")
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
@@ -128,7 +122,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
-        self._workspace_fs = None
+        self.workspace_fs = None
         self.import_job = None
 
         self.ROLES_TEXTS = {
@@ -198,14 +192,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         except ValueError:
             pass
 
-    @property
-    def workspace_fs(self):
-        return self._workspace_fs
-
-    @workspace_fs.setter
-    def workspace_fs(self, val):
+    def set_workspace_fs(self, wk_fs):
         self.current_directory = FsPath("/")
-        self._workspace_fs = val
+        self.workspace_fs = wk_fs
         ws_entry = self.workspace_fs.get_workspace_entry()
         self.current_user_role = ws_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
@@ -423,7 +412,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         p = pathlib.Path(path)
         files, total_size = self.get_folder(p)
-        print(files)
         self.default_import_path = str(p)
         self.import_all(files, total_size)
 
@@ -474,18 +462,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_rename_error(self, job):
         print(job.status)
         if job.exc.params["multi"]:
-            MessageDialog.show_error(self, _("Can not rename the files."))
+            show_error(self, _("Can not rename the files."))
         else:
-            MessageDialog.show_error(self, _("Can not rename the file."))
+            show_error(self, _("Can not rename the file."))
 
     def _on_delete_success(self, job):
         self.reset()
 
     def _on_delete_error(self, job):
         if job.exc.params["multi"]:
-            MessageDialog.show_error(self, _("Can not delete the files."))
+            show_error(self, _("Can not delete the files."))
         else:
-            MessageDialog.show_error(self, _("Can not delete the file."))
+            show_error(self, _("Can not delete the file."))
 
     def _on_folder_stat_success(self, job):
         self.current_directory, self.current_directory_uuid, files_stats = job.ret
@@ -526,9 +514,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_create_error(self, job):
         if job.status == "already-exists":
-            MessageDialog.show_error(self, _("A folder with the same name already exists."))
+            show_error(self, _("A folder with the same name already exists."))
         else:
-            MessageDialog.show_error(self, _("Can not create the folder."))
+            show_error(self, _("Can not create the folder."))
 
     def _on_import_success(self):
         assert self.loading_dialog
@@ -549,7 +537,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 silent=True,
             )
         else:
-            MessageDialog.show_error(self, _("Can not import files."))
+            show_error(self, _("Can not import files."))
         self.loading_dialog.hide()
         self.loading_dialog.setParent(None)
         self.loading_dialog = None
@@ -590,9 +578,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.sharing_revoked_qt.emit(new_entry, previous_entry)
 
     def _on_sharing_revoked_qt(self, new_entry, previous_entry):
-        MessageDialog.show_error(
-            self, _("You no longer have the permission to access this workspace.")
-        )
+        show_error(self, _("You no longer have the permission to access this workspace."))
         self.back_clicked.emit()
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
@@ -602,7 +588,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_user_role = new_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         if previous_entry.role != WorkspaceRole.READER and new_entry.role == WorkspaceRole.READER:
-            MessageDialog.show_warning(self, _("You are now a reader on this workspace."))
+            show_warning(self, _("You are now a reader on this workspace."))
             self.taskbar_updated.emit()
         else:
             self.taskbar_updated.emit()

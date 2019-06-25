@@ -11,7 +11,7 @@ from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, Mountpoi
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import MessageDialog, TextInputDialog, TaskbarButton
+from parsec.core.gui.custom_widgets import show_error, show_warning, TextInputDialog, TaskbarButton
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -19,11 +19,8 @@ from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 
 
 async def _do_workspace_create(core, workspace_name):
-    try:
-        workspace_id = await core.user_fs.workspace_create(workspace_name)
-        return workspace_id
-    except:
-        raise JobResultError("error")
+    workspace_id = await core.user_fs.workspace_create(workspace_name)
+    return workspace_id
 
 
 async def _do_workspace_rename(core, workspace_id, new_name, button):
@@ -41,27 +38,24 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
 
 
 async def _do_workspace_list(core):
-    try:
-        workspaces = []
-        user_manifest = core.user_fs.get_user_manifest()
-        available_workspaces = [w for w in user_manifest.workspaces if w.role]
-        for count, workspace in enumerate(available_workspaces):
-            workspace_id = workspace.id
-            workspace_fs = core.user_fs.get_workspace(workspace_id)
-            ws_entry = workspace_fs.get_workspace_entry()
-            try:
-                users_roles = await workspace_fs.get_user_roles()
-            except FSBackendOfflineError:
-                users_roles = {}
-            try:
-                root_info = await workspace_fs.path_info("/")
-                files = root_info["children"]
-            except FSBackendOfflineError:
-                files = []
-            workspaces.append((workspace_fs, ws_entry, users_roles, files))
-        return workspaces
-    except:
-        raise JobResultError("error")
+    workspaces = []
+    user_manifest = core.user_fs.get_user_manifest()
+    available_workspaces = [w for w in user_manifest.workspaces if w.role]
+    for count, workspace in enumerate(available_workspaces):
+        workspace_id = workspace.id
+        workspace_fs = core.user_fs.get_workspace(workspace_id)
+        ws_entry = workspace_fs.get_workspace_entry()
+        try:
+            users_roles = await workspace_fs.get_user_roles()
+        except FSBackendOfflineError:
+            users_roles = {}
+        try:
+            root_info = await workspace_fs.path_info("/")
+            files = root_info["children"]
+        except FSBackendOfflineError:
+            files = []
+        workspaces.append((workspace_fs, ws_entry, users_roles, files))
+    return workspaces
 
 
 async def _do_workspace_mount(core, workspace_id):
@@ -161,7 +155,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_button.reload_workspace_name()
 
     def on_rename_error(self, job):
-        MessageDialog.show_error(self, _("Can not rename the workspace."))
+        show_error(self, _("Can not rename the workspace."))
 
     def on_list_success(self, job):
         if not job.ret:
@@ -224,7 +218,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         return self.taskbar_buttons
 
     def delete_workspace(self, workspace_entry):
-        MessageDialog.show_warning(self, _("Not yet implemented."))
+        show_warning(self, _("Not yet implemented."))
 
     def rename_workspace(self, workspace_button):
         new_name = TextInputDialog.get_text(
