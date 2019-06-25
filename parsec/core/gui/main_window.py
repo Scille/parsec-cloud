@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import trio
 import traceback
 from functools import partial
@@ -58,6 +59,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__(**kwargs)
         self.setupUi(self)
 
+        self.logged_user_key_file = None
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
@@ -177,8 +179,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def logout(self):
         self.stop_core()
+        os.unlink(f"{self.logged_user_key_file}.lock")
+        self.logged_user_key_file = None
 
     def login_with_password(self, key_file, password):
+        if os.path.exists(f"{key_file}.lock"):
+            show_error(self, _("This used is already logged on another instance."))
+            return
+
         try:
             device = load_device_with_password(key_file, password)
             self.start_core(device)
@@ -201,6 +209,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             logger.exception("Unhandled error during login")
             error = "\n".join(traceback.format_tb(exc.__traceback__))
             show_error(self, _("Unhandled error:\n\n{}").format(error))
+        else:
+            open(f"{key_file}.lock", "a").close()
+            self.logged_user_key_file = key_file
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
