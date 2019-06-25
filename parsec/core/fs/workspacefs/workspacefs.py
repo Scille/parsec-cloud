@@ -4,7 +4,6 @@ import errno
 from uuid import UUID
 
 from typing import Union, Iterator, Dict
-from pendulum import Pendulum
 
 import attr
 
@@ -22,7 +21,6 @@ from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-import parsec.core.fs.workspacefs as workspacefs
 
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
@@ -71,7 +69,7 @@ class WorkspaceFS:
         self.remote_loader = RemoteLoader(
             self.device,
             self.workspace_id,
-            self.get_workspace_entry,
+            get_workspace_entry,
             self.backend_cmds,
             self.remote_device_manager,
             self.local_storage,
@@ -175,10 +173,6 @@ class WorkspaceFS:
 
         except BackendConnectionError as exc:
             raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
-
-    # Timestamped version
-    def to_timestamped(self, timestamp: Pendulum):
-        return workspacefs.WorkspaceFSTimestamped(self, timestamp)
 
     # Pathlib-like interface
 

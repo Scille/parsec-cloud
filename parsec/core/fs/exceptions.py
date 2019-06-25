@@ -33,10 +33,6 @@ class FSRemoteManifestNotFound(FSError):
     pass
 
 
-class FSRemoteManifestNotFoundBadVersion(FSRemoteManifestNotFound):
-    pass
-
-
 class FSRemoteBlockNotFound(FSError):
     pass
 
