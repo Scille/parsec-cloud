@@ -34,10 +34,10 @@ async def _do_rename(workspace_fs, paths):
         try:
             await workspace_fs.rename(old_path, new_path)
             new_names[uuid] = FsPath(new_path).name
-        except FileExistsError:
-            raise JobResultError("already-exists", multi=len(paths) > 1)
-        except OSError:
-            raise JobResultError("not-empty", multi=len(paths) > 1)
+        except FileExistsError as exc:
+            raise JobResultError("already-exists", multi=len(paths) > 1) from exc
+        except OSError as exc:
+            raise JobResultError("not-empty", multi=len(paths) > 1) from exc
 
 
 async def _do_delete(workspace_fs, files, silent=False):
@@ -47,9 +47,9 @@ async def _do_delete(workspace_fs, files, silent=False):
                 await workspace_fs.rmtree(path)
             else:
                 await workspace_fs.unlink(path)
-        except:
+        except Exception as exc:
             if not silent:
-                raise JobResultError("error", multi=len(files) > 1)
+                raise JobResultError("error", multi=len(files) > 1) from exc
 
 
 async def _do_folder_stat(workspace_fs, path):
@@ -64,8 +64,8 @@ async def _do_folder_stat(workspace_fs, path):
 async def _do_folder_create(workspace_fs, path):
     try:
         await workspace_fs.mkdir(path)
-    except FileExistsError:
-        raise JobResultError("already-exists")
+    except FileExistsError as exc:
+        raise JobResultError("already-exists") from exc
 
 
 async def _do_import(workspace_fs, files, total_size, progress_signal):
@@ -91,8 +91,8 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
                     progress_signal.emit(current_size + read_size)
             current_size += src.stat().st_size + 1
             progress_signal.emit(current_size)
-        except trio.Cancelled:
-            raise JobResultError("cancelled", last_file=dst)
+        except trio.Cancelled as exc:
+            raise JobResultError("cancelled", last_file=dst) from exc
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
@@ -460,8 +460,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def _on_rename_error(self, job):
-        print(job.status)
-        if job.exc.params["multi"]:
+        if job.exc.params.get("multi"):
             show_error(self, _("Can not rename the files."))
         else:
             show_error(self, _("Can not rename the file."))
@@ -470,7 +469,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def _on_delete_error(self, job):
-        if job.exc.params["multi"]:
+        if job.exc.params.get("multi"):
             show_error(self, _("Can not delete the files."))
         else:
             show_error(self, _("Can not delete the file."))

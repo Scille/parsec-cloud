@@ -84,7 +84,7 @@ async def _do_revoke_user(core, user_name, button):
             await core.user_fs.backend_cmds.device_revoke(revoked_device_certificate)
         return button
     except BackendCmdsBadResponse as exc:
-        raise JobResultError(exc.status)
+        raise JobResultError(exc.status) from exc
 
 
 async def _do_list_users(core):
@@ -95,8 +95,8 @@ async def _do_list_users(core):
             user_info, user_devices = await core.remote_devices_manager.get_user_and_devices(user)
             ret[user] = (user_info, user_devices)
         return ret
-    except BackendNotAvailable:
-        raise JobResultError("offline")
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):

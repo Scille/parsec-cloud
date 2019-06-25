@@ -84,7 +84,7 @@ async def _do_revoke_device(core, device_name, button):
         await core.user_fs.backend_cmds.device_revoke(revoked_device_certificate)
         return button
     except BackendCmdsBadResponse as exc:
-        raise JobResultError(exc.status)
+        raise JobResultError(exc.status) from exc
 
 
 async def _do_list_devices(core):
@@ -92,8 +92,8 @@ async def _do_list_devices(core):
         current_device = core.device
         _, devices = await core.remote_devices_manager.get_user_and_devices(current_device.user_id)
         return devices
-    except BackendNotAvailable:
-        raise JobResultError("offline")
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
 
 
 class DevicesWidget(QWidget, Ui_DevicesWidget):
