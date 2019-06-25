@@ -61,7 +61,12 @@ async def test_claim_device(aqtbot, gui, autoclose_dialog, alice_invite):
     async with aqtbot.wait_signal(claim_w.device_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
-        ("Information", "The device has been created. You can now log in.")
+        (
+            "Warning",
+            "Please CAREFULLY remind your password. Losing a password means losing the "
+            "data if you have one device, or if it has not been synced yet.",
+        ),
+        ("Information", "The device has been created. You can now log in."),
     ]
 
 
@@ -75,7 +80,14 @@ async def test_claim_device_offline(aqtbot, gui, autoclose_dialog, running_backe
         async with aqtbot.wait_signal(claim_w.claim_error):
             await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs == [("Error", "Cannot claim this device.")]
+    assert autoclose_dialog.dialogs == [
+        (
+            "Warning",
+            "Please CAREFULLY remind your password. Losing a password means losing the "
+            "data if you have one device, or if it has not been synced yet.",
+        ),
+        ("Error", "Cannot claim this device."),
+    ]
 
 
 @pytest.mark.gui
@@ -91,5 +103,12 @@ async def test_claim_device_unknown_error(monkeypatch, aqtbot, gui, autoclose_di
 
     async with aqtbot.wait_signal(claim_w.claim_error):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
-    assert autoclose_dialog.dialogs == [("Error", "Cannot claim this device.")]
+    assert autoclose_dialog.dialogs == [
+        (
+            "Warning",
+            "Please CAREFULLY remind your password. Losing a password means losing the "
+            "data if you have one device, or if it has not been synced yet.",
+        ),
+        ("Error", "Cannot claim this device."),
+    ]
     # TODO: Make sure a log is emitted

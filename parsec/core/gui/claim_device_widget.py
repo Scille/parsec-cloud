@@ -17,7 +17,7 @@ from parsec.core.invite_claim import (
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_dialogs import show_error, show_info
+from parsec.core.gui.custom_dialogs import show_error, show_warning, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
@@ -88,6 +88,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.claim_device_job = None
+        self.password_notification = True
         self.button_claim.clicked.connect(self.claim_clicked)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
@@ -96,6 +97,8 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.line_edit_password.textChanged.connect(self.check_infos)
         self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
+        self.line_edit_password.textChanged.connect(self.password_warning)
+        self.line_edit_password_check.textChanged.connect(self.password_warning)
         self.claim_success.connect(self.on_claim_success)
         self.claim_error.connect(self.on_claim_error)
         self.line_edit_login.setValidator(validators.UserIDValidator())
@@ -154,6 +157,20 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.claim_device_job.cancel_and_join()
             self.claim_device_job = None
         self.check_infos()
+
+    def password_warning(self, text):
+        if (
+            self.password_notification
+            and self.line_edit_password.text() == self.line_edit_password_check.text()
+        ):
+            show_warning(
+                self,
+                _(
+                    "Please CAREFULLY remind your password. "
+                    "Losing a password means losing the data if you have one device, or if it has not been synced yet."
+                ),
+            )
+            self.password_notification = False
 
     def password_changed(self, text):
         if len(text):
