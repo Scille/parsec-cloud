@@ -42,8 +42,9 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
         raise JobResultError("registration-invite-offline")
     except BackendConnectionError as exc:
         raise JobResultError("registration-invite-error", info=str(exc))
-    if len(users):
-        raise JobResultError("registration-invite-already-exists")
+    for u in users:
+        if u == new_user_id:
+            raise JobResultError("registration-invite-already-exists")
 
     try:
         await core_invite_and_create_user(device, new_user_id, token, is_admin)

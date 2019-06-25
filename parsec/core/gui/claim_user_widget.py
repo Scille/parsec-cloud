@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
-
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
@@ -107,8 +105,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
 
-        if os.name == "nt":
-            self.check_box_use_pkcs11.hide()
+        self.check_box_use_pkcs11.hide()
         self.line_edit_device.setText(get_default_device())
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.addItem("0")

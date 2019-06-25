@@ -127,6 +127,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.bootstrap_success.connect(self.on_bootstrap_success)
         self.bootstrap_error.connect(self.on_bootstrap_error)
 
+        self.check_box_use_pkcs11.hide()
         self.line_edit_device.setText(get_default_device())
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.addItem("0")

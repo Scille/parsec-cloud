@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
-
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
@@ -25,8 +23,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.setupUi(self)
         self.config = config
         self.button_login.clicked.connect(self.emit_login)
-        if os.name == "nt":
-            self.check_box_use_pkcs11.hide()
+        self.check_box_use_pkcs11.hide()
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
