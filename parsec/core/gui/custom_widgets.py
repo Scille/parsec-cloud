@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
 )
 
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui import desktop
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.input_dialog import Ui_InputDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
@@ -132,32 +133,69 @@ class QuestionDialog(QDialog, Ui_QuestionDialog):
 
 
 class MessageDialog(QDialog, Ui_MessageDialog):
-    def __init__(self, icon, title, message, *args, **kwargs):
+    def __init__(self, icon, title, message, exception=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.label_title.setText(title)
         self.label_message.setText(message)
         self.label_icon.setPixmap(icon)
         self.setWindowFlags(Qt.SplashScreen)
+        self.text_details.hide()
+        if not exception:
+            self.button_details.hide()
+        else:
+            import traceback
+
+            self.text_details.setPlainText(traceback.format_exc())
+        self.button_details.clicked.connect(self.show_details)
+        self.button_copy.clicked.connect(self.copy_to_clipboard)
+        self.button_copy.hide()
         message_size = self.label_message.sizeHint()
-        self.resize(self.sizeHint().width(), message_size.height() * 2 + 85)
+        self.resize(435, message_size.height() * 2 + 85)
+
+    def copy_to_clipboard(self):
+        desktop.copy_to_clipboard(self.text_details.toPlainText())
+
+    def show_details(self):
+        if self.text_details.isVisible():
+            self.text_details.hide()
+            self.button_copy.hide()
+            message_size = self.label_message.sizeHint()
+            self.resize(435, message_size.height() * 2 + 85)
+        else:
+            self.text_details.show()
+            self.button_copy.show()
 
 
-def show_error(parent, text):
-    m = MessageDialog(QPixmap(":/icons/images/icons/error.png"), _("Error"), text, parent=parent)
-    return m.exec_()
-
-
-def show_info(parent, text):
+def show_info(parent, text, exception=None):
     m = MessageDialog(
-        QPixmap(":/icons/images/icons/info.png"), _("Information"), text, parent=parent
+        QPixmap(":/icons/images/icons/info.png"),
+        _("Information"),
+        text,
+        exception=exception,
+        parent=parent,
     )
     return m.exec_()
 
 
-def show_warning(parent, text):
+def show_warning(parent, text, exception=None):
     m = MessageDialog(
-        QPixmap(":/icons/images/icons/warning.png"), _("Warning"), text, parent=parent
+        QPixmap(":/icons/images/icons/warning.png"),
+        _("Warning"),
+        text,
+        exception=exception,
+        parent=parent,
+    )
+    return m.exec_()
+
+
+def show_error(parent, text, exception=None):
+    m = MessageDialog(
+        QPixmap(":/icons/images/icons/error.png"),
+        _("Error"),
+        text,
+        exception=exception,
+        parent=parent,
     )
     return m.exec_()
 
