@@ -18,12 +18,7 @@ from parsec.backend.vlob import (
     VlobNotInMaintenanceError,
 )
 from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
-from parsec.backend.drivers.postgresql.realm import (
-    create_realm,
-    get_realm_status,
-    RealmNotFoundError,
-    RealmAlreadyExistsError,
-)
+from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
 
 
 _STR_TO_ROLE = {role.value: role for role in RealmRole}
@@ -52,26 +47,24 @@ async def _check_realm(
 async def _check_realm_access(conn, organization_id, realm_id, author, allowed_roles):
     rep = await conn.fetchrow(
         """
-WITH cte_realm_roles AS (
-SELECT user_, role
-FROM realm_user_role
-WHERE
-    realm = get_realm_internal_id($1, $2)
+WITH cte_current_realm_roles AS (
+    SELECT DISTINCT ON(user_) user_, role
+    FROM  realm_user_role
+    WHERE realm = get_realm_internal_id($1, $2)
+    ORDER BY user_, certified_on DESC
 )
 SELECT role
 FROM user_
-LEFT JOIN cte_realm_roles
-ON user_._id = cte_realm_roles.user_
+LEFT JOIN cte_current_realm_roles
+ON user_._id = cte_current_realm_roles.user_
 WHERE user_._id = get_user_internal_id($1, $3)
         """,
         organization_id,
         realm_id,
         author.user_id,
     )
-    if not rep:
-        import pdb
 
-        pdb.set_trace()
+    if not rep:
         raise VlobNotFoundError(f"User `{author.user_id}` doesn't exist")
 
     if _STR_TO_ROLE.get(rep[0]) not in allowed_roles:
@@ -176,11 +169,6 @@ class PGVlobComponent(BaseVlobComponent):
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                try:
-                    await create_realm(conn, organization_id, author, realm_id)
-                except RealmAlreadyExistsError:
-                    pass
-
                 await _check_realm_and_write_access(
                     conn, organization_id, author, realm_id, encryption_revision
                 )
