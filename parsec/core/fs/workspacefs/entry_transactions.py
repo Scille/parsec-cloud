@@ -426,15 +426,10 @@ class EntryTransactions:
         # Return the entry id of the created file and the file descriptor
         return child_entry_id, fd
 
-    async def file_open(
-        self, path: FsPath, mode="rw", timestamp: Pendulum = None
-    ) -> Tuple[EntryID, FileDescriptor]:
+    async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
         if "w" in mode:
-            if timestamp is not None:
-                raise from_errno(errno.EACCES, str(path))
-            else:
-                self._check_write_rights(path)
+            self._check_write_rights(path)
 
         # Lock path in read mode
         async with self._lock_entry(path) as entry:
