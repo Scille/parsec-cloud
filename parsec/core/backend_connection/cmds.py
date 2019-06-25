@@ -24,6 +24,7 @@ from parsec.api.protocole import (
     vlob_poll_changes_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
+    realm_create_serializer,
     realm_status_serializer,
     realm_get_roles_serializer,
     realm_update_roles_serializer,
@@ -261,6 +262,12 @@ async def vlob_maintenance_save_reencryption_batch(
 ### Realm API ###
 
 
+async def realm_create(transport: Transport, role_certificate: bytes) -> None:
+    await _send_cmd(
+        transport, realm_create_serializer, cmd="realm_create", role_certificate=role_certificate
+    )
+
+
 async def realm_status(transport: Transport, realm_id: UUID) -> dict:
     rep = await _send_cmd(transport, realm_status_serializer, cmd="realm_status", realm_id=realm_id)
     rep.pop("status")
@@ -275,16 +282,12 @@ async def realm_get_roles(transport: Transport, realm_id: UUID) -> Dict[UserID, 
     return rep["users"]
 
 
-async def realm_update_roles(
-    transport: Transport, realm_id: UUID, user: UserID, role: Optional[RealmRole]
-) -> None:
+async def realm_update_roles(transport: Transport, role_certificate: bytes) -> None:
     await _send_cmd(
         transport,
         realm_update_roles_serializer,
         cmd="realm_update_roles",
-        realm_id=realm_id,
-        user=user,
-        role=role,
+        role_certificate=role_certificate,
     )
 
 

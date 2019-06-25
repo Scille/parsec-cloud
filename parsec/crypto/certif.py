@@ -309,7 +309,7 @@ def build_user_certificate(
 
 
 def build_realm_role_certificate(
-    certifier_id: Optional[DeviceID],
+    certifier_id: DeviceID,
     certifier_key: SigningKey,
     realm_id: UUID,
     user_id: UserID,
@@ -326,3 +326,22 @@ def build_realm_role_certificate(
         {"type": "user", "realm_id": realm_id, "user_id": user_id, "role": role}
     )
     return build_signed_msg(certifier_id, certifier_key, content, timestamp)
+
+
+def build_realm_self_role_certificate(
+    self_id: DeviceID, self_key: SigningKey, realm_id: UUID, timestamp: Pendulum
+) -> bytes:
+    """
+    Raises:
+        CryptoError: if the signature operation fails.
+        CryptoWrappedMsgValidationError
+        CryptoWrappedMsgPackingError
+    """
+    return build_realm_role_certificate(
+        certifier_id=self_id,
+        certifier_key=self_key,
+        realm_id=realm_id,
+        user_id=self_id.user_id,
+        role=RealmRole.OWNER,
+        timestamp=timestamp,
+    )

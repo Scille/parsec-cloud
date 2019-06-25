@@ -68,6 +68,7 @@ class BackendCmdsPool:
     )
 
     realm_status = _expose_cmds_with_retrier("realm_status")
+    realm_create = _expose_cmds_with_retrier("realm_create")
     realm_get_roles = _expose_cmds_with_retrier("realm_get_roles")
     realm_update_roles = _expose_cmds_with_retrier("realm_update_roles")
     realm_start_reencryption_maintenance = _expose_cmds_with_retrier(

@@ -54,6 +54,7 @@ from parsec.crypto.certif import (
     build_revoked_device_certificate,
     build_user_certificate,
     build_realm_role_certificate,
+    build_realm_self_role_certificate,
 )
 
 
@@ -107,4 +108,5 @@ __all__ = (
     "build_revoked_device_certificate",
     "build_user_certificate",
     "build_realm_role_certificate",
+    "build_realm_self_role_certificate",
 )

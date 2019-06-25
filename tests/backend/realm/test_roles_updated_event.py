@@ -6,7 +6,7 @@ import pendulum
 from uuid import UUID
 
 from parsec.api.protocole import RealmRole
-from parsec.crypto import build_realm_role_certificate
+from parsec.crypto import build_realm_self_role_certificate, build_realm_role_certificate
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
 from tests.backend.realm.conftest import realm_create, realm_update_roles
@@ -17,11 +17,11 @@ async def test_realm_create(backend, alice, alice_backend_sock):
     await events_subscribe(alice_backend_sock)
 
     realm_id = UUID("C0000000000000000000000000000000")
-    certif = build_realm_role_certificate(
-        alice.device_id, alice.signing_key, realm_id, alice.user_id, RealmRole.OWNER, pendulum.now()
+    certif = build_realm_self_role_certificate(
+        alice.device_id, alice.signing_key, realm_id, pendulum.now()
     )
     with backend.event_bus.listen() as spy:
-        await realm_create(alice_backend_sock, realm_id, certif)
+        await realm_create(alice_backend_sock, certif)
         await spy.wait_with_timeout("realm.roles_updated")
 
 

@@ -28,10 +28,10 @@ REALM_ID = UUID("20000000000000000000000000000000")
 OTHER_VLOB_ID = UUID("30000000000000000000000000000000")
 
 
-async def realm_create(sock, realm_id, role_certificate, check_rep=True):
+async def realm_create(sock, role_certificate, check_rep=True):
     raw_rep = await sock.send(
         realm_create_serializer.req_dumps(
-            {"cmd": "realm_create", "realm_id": realm_id, "role_certificate": role_certificate}
+            {"cmd": "realm_create", "role_certificate": role_certificate}
         )
     )
     raw_rep = await sock.recv()

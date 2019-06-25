@@ -364,6 +364,9 @@ class WorkspaceFS:
         if remote_manifest is None:
             return
 
+        # Create in backend the realm corresponding to this workspace
+        await self.remote_loader.create_realm(entry_id)
+
         # Upload the miminal manifest
         try:
             await self.remote_loader.upload_manifest(entry_id, remote_manifest)

@@ -11,6 +11,7 @@ from parsec.core.fs import (
     FSBackendOfflineError,
     FSSharingNotAllowedError,
 )
+from parsec.backend.realm import RealmGrantedRole, RealmRole
 
 from tests.common import freeze_time
 
@@ -269,10 +270,26 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
 
     # Drop manager right (and give to Bob the ownership)
     await running_backend.backend.realm.update_roles(
-        alice.organization_id, alice.device_id, wid, bob.user_id, role=WorkspaceRole.OWNER
+        alice.organization_id,
+        RealmGrantedRole(
+            realm_id=wid,
+            user_id=bob.user_id,
+            certificate=b"<dummy>",
+            role=RealmRole.OWNER,
+            granted_by=alice.device_id,
+            granted_on=Pendulum(2000, 1, 3),
+        ),
     )
     await running_backend.backend.realm.update_roles(
-        alice.organization_id, bob.device_id, wid, alice.user_id, role=WorkspaceRole.CONTRIBUTOR
+        alice.organization_id,
+        RealmGrantedRole(
+            realm_id=wid,
+            user_id=alice.user_id,
+            certificate=b"<dummy>",
+            role=RealmRole.CONTRIBUTOR,
+            granted_by=bob.device_id,
+            granted_on=Pendulum(2000, 1, 4),
+        ),
     )
 
     with pytest.raises(FSSharingNotAllowedError) as exc:
