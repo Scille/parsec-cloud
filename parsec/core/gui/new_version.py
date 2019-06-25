@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import platform
 import trio
 from distutils.version import StrictVersion
 from urllib.parse import urlsplit
@@ -43,6 +44,9 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
     def __init__(self, jobs_ctx, event_bus, config, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
+
+        if platform.system() != "Windows":
+            return
 
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
