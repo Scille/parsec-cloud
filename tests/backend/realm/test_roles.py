@@ -34,14 +34,12 @@ async def _realm_generate_certif_and_update_roles_or_fail(
     return await realm_update_roles(backend_sock, certif, check_rep=False)
 
 
-async def _backend_realm_generate_certif_and_update_roles_or_fail(
-    backend, author, realm_id, user_id, role
-):
+async def _backend_realm_generate_certif_and_update_roles(backend, author, realm_id, user_id, role):
     now = pendulum_now()
     certif = build_realm_role_certificate(
         author.device_id, author.signing_key, realm_id, user_id, role, now
     )
-    return await backend.realm.update_roles(
+    await backend.realm.update_roles(
         author.organization_id,
         RealmGrantedRole(
             certificate=certif,
@@ -147,10 +145,10 @@ async def test_update_roles_as_manager(
     # (Zack is owner, Alice is manager and gives role to Bob)
     zack = local_device_factory("zack@dev1")
     await backend_data_binder.bind_device(zack)
-    await _backend_realm_generate_certif_and_update_roles_or_fail(
+    await _backend_realm_generate_certif_and_update_roles(
         backend, alice, realm, zack.user_id, RealmRole.OWNER
     )
-    await _backend_realm_generate_certif_and_update_roles_or_fail(
+    await _backend_realm_generate_certif_and_update_roles(
         backend, zack, realm, alice.user_id, RealmRole.MANAGER
     )
 
@@ -179,19 +177,16 @@ async def test_update_roles_as_manager(
     assert rep["status"] == "not_allowed"
 
     # Cannot give owner or manager role as manager
-    rep = await _realm_generate_certif_and_update_roles_or_fail(
-        alice_backend_sock, alice, realm, zack.user_id, RealmRole.OWNER
-    )
-    assert rep == {"status": "not_allowed"}
-    rep = await _realm_generate_certif_and_update_roles_or_fail(
-        alice_backend_sock, alice, realm, zack.user_id, RealmRole.MANAGER
-    )
-    assert rep == {"status": "not_allowed"}
+    for new_role in (RealmRole.OWNER, RealmRole.MANAGER):
+        rep = await _realm_generate_certif_and_update_roles_or_fail(
+            alice_backend_sock, alice, realm, bob.user_id, new_role
+        )
+        assert rep == {"status": "not_allowed"}
 
     # Also cannot change owner or manager role
-    for bob_role in (RealmRole.OWNER, RealmRole.MANAGER):
-        await _backend_realm_generate_certif_and_update_roles_or_fail(
-            backend, zack, realm, bob.user_id, bob_role
+    for new_role in (RealmRole.OWNER, RealmRole.MANAGER):
+        await _backend_realm_generate_certif_and_update_roles(
+            backend, zack, realm, bob.user_id, new_role
         )
         rep = await _realm_generate_certif_and_update_roles_or_fail(
             alice_backend_sock, alice, realm, zack.user_id, RealmRole.CONTRIBUTOR
@@ -215,10 +210,10 @@ async def test_role_update_not_allowed(
     # (Zack is owner, Alice gives role to Bob)
     zack = local_device_factory("zack@dev1")
     await backend_data_binder.bind_device(zack)
-    await _backend_realm_generate_certif_and_update_roles_or_fail(
+    await _backend_realm_generate_certif_and_update_roles(
         backend, alice, realm, zack.user_id, RealmRole.OWNER
     )
-    await _backend_realm_generate_certif_and_update_roles_or_fail(
+    await _backend_realm_generate_certif_and_update_roles(
         backend, zack, realm, alice.user_id, alice_role
     )
 
@@ -230,7 +225,7 @@ async def test_role_update_not_allowed(
         assert rep == {"status": "not_allowed"}
 
     # Cannot remove role
-    await _backend_realm_generate_certif_and_update_roles_or_fail(
+    await _backend_realm_generate_certif_and_update_roles(
         backend, zack, realm, bob.user_id, RealmRole.READER
     )
     rep = await _realm_generate_certif_and_update_roles_or_fail(
