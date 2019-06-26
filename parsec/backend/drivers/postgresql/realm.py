@@ -259,10 +259,12 @@ ORDER BY user_, certified_on DESC
                 author_role = roles[new_role.granted_by.user_id]
                 existing_user_role = roles[new_role.user_id]
 
-                if existing_user_role in (RealmRole.MANAGER, RealmRole.OWNER):
-                    needed_roles = (RealmRole.OWNER,)
+                owner_only = (RealmRole.OWNER,)
+                owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+                if existing_user_role in owner_or_manager or new_role.role in owner_or_manager:
+                    needed_roles = owner_only
                 else:
-                    needed_roles = (RealmRole.MANAGER, RealmRole.OWNER)
+                    needed_roles = owner_or_manager
 
                 if author_role not in needed_roles:
                     raise RealmAccessError()

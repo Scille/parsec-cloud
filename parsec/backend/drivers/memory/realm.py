@@ -35,6 +35,7 @@ class Realm:
     @property
     def roles(self):
         roles = {}
+        # `self.granted_roles` items are in chronological order
         for x in self.granted_roles:
             if x.role is None:
                 roles.pop(x.user_id, None)
@@ -144,11 +145,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.status.in_maintenance:
             raise RealmInMaintenanceError("Data realm is currently under maintenance")
 
+        owner_only = (RealmRole.OWNER,)
+        owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
         existing_user_role = realm.roles.get(new_role.user_id)
-        if existing_user_role in (RealmRole.MANAGER, RealmRole.OWNER):
-            needed_roles = (RealmRole.OWNER,)
+        if existing_user_role in owner_or_manager or new_role.role in owner_or_manager:
+            needed_roles = owner_only
         else:
-            needed_roles = (RealmRole.MANAGER, RealmRole.OWNER)
+            needed_roles = owner_or_manager
 
         author_role = realm.roles.get(new_role.granted_by.user_id)
         if author_role not in needed_roles:
