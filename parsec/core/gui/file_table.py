@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from collections import namedtuple
 import pendulum
 
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -23,6 +24,7 @@ from parsec.core.gui.file_items import (
     FileType,
     NAME_DATA_INDEX,
     TYPE_DATA_INDEX,
+    UUID_DATA_INDEX,
 )
 from parsec.core.gui.file_size import get_filesize
 
@@ -75,11 +77,20 @@ class FileTable(QTableWidget):
         self.current_user_role = WorkspaceRole.OWNER
 
     def selected_files(self):
+        SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
+
         files = []
         for r in self.selectedRanges():
             for row in range(r.topRow(), r.bottomRow() + 1):
                 item = self.item(row, 1)
-                files.append((row, item.data(TYPE_DATA_INDEX), item.data(NAME_DATA_INDEX)))
+                files.append(
+                    SelectedFile(
+                        row,
+                        item.data(TYPE_DATA_INDEX),
+                        item.data(NAME_DATA_INDEX),
+                        item.data(UUID_DATA_INDEX),
+                    )
+                )
         return files
 
     def show_context_menu(self, pos):
@@ -182,49 +193,60 @@ class FileTable(QTableWidget):
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 4, item)
 
-    def add_folder(self, folder_name, is_synced):
+    def add_folder(self, folder_name, uuid, is_synced):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(folder_name)
         item.setData(NAME_DATA_INDEX, folder_name)
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem()
         item.setData(NAME_DATA_INDEX, -1)
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 4, item)
 
-    def add_file(self, file_name, file_size, created_on, updated_on, is_synced):
+    def add_file(self, file_name, uuid, file_size, created_on, updated_on, is_synced):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, file_name)
         item.setData(NAME_DATA_INDEX, 1)
+        item.setData(TYPE_DATA_INDEX, FileType.File)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(file_name)
         item.setData(NAME_DATA_INDEX, file_name)
         item.setData(TYPE_DATA_INDEX, FileType.File)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 1, item)
         item = CustomTableItem(created_on.format("%x %X"))
         item.setData(NAME_DATA_INDEX, created_on)
         item.setData(TYPE_DATA_INDEX, FileType.File)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 2, item)
         item = CustomTableItem(updated_on.format("%x %X"))
         item.setData(NAME_DATA_INDEX, updated_on)
         item.setData(TYPE_DATA_INDEX, FileType.File)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 3, item)
         item = CustomTableItem(get_filesize(file_size))
         item.setData(NAME_DATA_INDEX, file_size)
         item.setData(TYPE_DATA_INDEX, FileType.File)
+        item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 4, item)
 
     def dropEvent(self, event):

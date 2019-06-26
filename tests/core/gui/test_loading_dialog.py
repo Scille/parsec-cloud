@@ -12,7 +12,6 @@ def test_loading_dialog(qtbot):
     w = LoadingDialog(total_size=10000, parent=None)
 
     qtbot.addWidget(w)
-    assert w.is_cancelled is False
     assert w.progress_bar.text() == "0%"
     assert w.progress_bar.value() == 0
 
@@ -32,4 +31,3 @@ def test_loading_dialog(qtbot):
     assert w.progress_bar.text() == "100%"
 
     qtbot.mouseClick(w.button_cancel, QtCore.Qt.LeftButton)
-    assert w.is_cancelled is True

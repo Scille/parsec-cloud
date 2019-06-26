@@ -7,7 +7,7 @@ from parsec.core.fs import FSError
 from parsec.types import UserID
 from parsec.core.types import WorkspaceRole
 
-from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, show_info
+from parsec.core.gui.custom_widgets import show_info, show_warning, show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
@@ -174,9 +174,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 ),
             )
         except:
-            import traceback
-
-            traceback.print_exc()
             show_error(
                 self,
                 _('Can not share the workspace "{}" with "{}".').format(
@@ -196,7 +193,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         w.delete_clicked.connect(self.on_remove_user_clicked)
 
     def on_remove_user_clicked(self, user):
-        r = ask_question(
+        r = QuestionDialog.ask(
             parent=self,
             title=_("Remove this user"),
             message=_("Are you sure you want to stop sharing this workspace with {}?").format(user),
@@ -226,9 +223,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                     updated = True
                 except:
                     errors.append(w.user)
-                    import traceback
-
-                    traceback.print_exc()
         if errors:
             show_error(
                 self,
@@ -252,7 +246,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
     def on_close_requested(self):
         if self.has_changes():
-            r = ask_question(
+            r = QuestionDialog.ask(
                 parent=self,
                 title=_("Are you sure?"),
                 message=_(

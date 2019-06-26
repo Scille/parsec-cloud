@@ -27,7 +27,7 @@ from parsec.core.gui import telemetry
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.custom_widgets import ask_question, show_error
+from parsec.core.gui.custom_widgets import QuestionDialog, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -99,7 +99,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QCoreApplication.processEvents()
         if self.config.gui_first_launch:
             self.show_starting_guide()
-            r = ask_question(
+            r = QuestionDialog.ask(
                 self,
                 _("Error reporting"),
                 _(
@@ -182,7 +182,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             device = load_device_with_password(key_file, password)
             self.start_core(device)
-
         except LocalDeviceError as exc:
             show_error(self, _("Authentication failed ({}).").format(str(exc)))
 
@@ -241,7 +240,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
-                result = ask_question(self, _("Confirmation"), _("Are you sure you want to quit ?"))
+                result = QuestionDialog.ask(
+                    self, _("Confirmation"), _("Are you sure you want to quit ?")
+                )
                 if not result:
                     event.ignore()
                     return

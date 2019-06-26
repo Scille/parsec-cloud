@@ -40,25 +40,25 @@ class TextInputDialog(QDialog, Ui_InputDialog):
             completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
             self.line_edit_text.setCompleter(completer)
 
+    @classmethod
+    def get_text(cls, parent, title, message, placeholder="", default_text="", completion=None):
+
+        m = cls(
+            title=title,
+            message=message,
+            placeholder=placeholder,
+            parent=parent,
+            default_text=default_text,
+            completion=completion,
+        )
+        status = m.exec_()
+        if status == QDialog.Accepted:
+            return m.text
+        return None
+
     @property
     def text(self):
         return self.line_edit_text.text()
-
-
-def get_text(parent, title, message, placeholder="", default_text="", completion=None):
-
-    m = TextInputDialog(
-        title=title,
-        message=message,
-        placeholder=placeholder,
-        parent=parent,
-        default_text=default_text,
-        completion=completion,
-    )
-    status = m.exec_()
-    if status == QDialog.Accepted:
-        return m.text
-    return None
 
 
 # TODO: If this ever gets used again, it needs to transition to the new job system
@@ -120,13 +120,13 @@ class QuestionDialog(QDialog, Ui_QuestionDialog):
         self.label_message.setText(message)
         self.setWindowFlags(Qt.SplashScreen)
 
-
-def ask_question(parent, title, message):
-    m = QuestionDialog(title=title, message=message, parent=parent)
-    status = m.exec_()
-    if status == QDialog.Accepted:
-        return True
-    return False
+    @classmethod
+    def ask(cls, parent, title, message):
+        m = cls(title=title, message=message, parent=parent)
+        status = m.exec_()
+        if status == QDialog.Accepted:
+            return True
+        return False
 
 
 class MessageDialog(QDialog, Ui_MessageDialog):
@@ -137,6 +137,11 @@ class MessageDialog(QDialog, Ui_MessageDialog):
         self.label_message.setText(message)
         self.label_icon.setPixmap(icon)
         self.setWindowFlags(Qt.SplashScreen)
+
+
+def show_error(parent, text):
+    m = MessageDialog(QPixmap(":/icons/images/icons/error.png"), _("Error"), text, parent=parent)
+    return m.exec_()
 
 
 def show_info(parent, text):
@@ -150,11 +155,6 @@ def show_warning(parent, text):
     m = MessageDialog(
         QPixmap(":/icons/images/icons/warning.png"), _("Warning"), text, parent=parent
     )
-    return m.exec_()
-
-
-def show_error(parent, text):
-    m = MessageDialog(QPixmap(":/icons/images/icons/error.png"), _("Error"), text, parent=parent)
     return m.exec_()
 
 
