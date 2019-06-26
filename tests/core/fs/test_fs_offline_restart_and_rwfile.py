@@ -6,7 +6,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
 )
 
 from tests.common import call_with_control
@@ -19,9 +19,9 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 @pytest.mark.slow
 def test_fs_offline_restart_and_rwfile(
-    hypothesis_settings, local_storage_factory, user_fs_factory, alice
+    hypothesis_settings, reset_testbed, local_storage_factory, user_fs_factory, alice
 ):
-    class FSOfflineRestartAndRWFile(TrioRuleBasedStateMachine):
+    class FSOfflineRestartAndRWFile(TrioAsyncioRuleBasedStateMachine):
         async def restart_user_fs(self):
             try:
                 await self.fs_controller.stop()
@@ -47,6 +47,7 @@ def test_fs_offline_restart_and_rwfile(
 
         @initialize()
         async def init(self):
+            await reset_testbed()
             self.device = alice
             self.local_storage = local_storage_factory(alice)
             await self.restart_user_fs()

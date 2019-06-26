@@ -307,7 +307,7 @@ test_requirements = [
     "Sphinx",
     "flake8==3.7.7",
     "hypothesis==4.5.5",
-    "hypothesis-trio==0.3.0",
+    "hypothesis-trio==0.4.0",
     "black==19.3b0",  # Pin black to avoid flaky style check
 ]
 

@@ -8,7 +8,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
 )
 
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
@@ -22,6 +22,7 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 @pytest.mark.slow
 def test_fs_online_concurrent_user(
     hypothesis_settings,
+    reset_testbed,
     backend_addr,
     backend_factory,
     server_factory,
@@ -30,7 +31,7 @@ def test_fs_online_concurrent_user(
     alice,
     alice2,
 ):
-    class FSOnlineConcurrentUser(TrioRuleBasedStateMachine):
+    class FSOnlineConcurrentUser(TrioAsyncioRuleBasedStateMachine):
         Workspaces = Bundle("workspace")
         FSs = Bundle("fs")
 
@@ -59,6 +60,7 @@ def test_fs_online_concurrent_user(
 
         @initialize(target=Workspaces)
         async def init(self):
+            await reset_testbed()
             self.device1 = alice
             self.device2 = alice2
             self.local_storage1 = local_storage_factory(self.device1)

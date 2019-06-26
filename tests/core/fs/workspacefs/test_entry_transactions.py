@@ -10,7 +10,7 @@ import attr
 import pytest
 from pendulum import Pendulum
 from hypothesis_trio.stateful import (
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
     initialize,
     invariant,
     rule,
@@ -197,6 +197,7 @@ class PathElement:
 def test_folder_operations(
     tmpdir,
     hypothesis_settings,
+    reset_testbed,
     local_storage_factory,
     entry_transactions_factory,
     file_transactions_factory,
@@ -208,7 +209,7 @@ def test_folder_operations(
     # The point is not to find breaking filenames here, so keep it simple
     st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
-    class FileOperationsStateMachine(TrioRuleBasedStateMachine):
+    class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
@@ -216,6 +217,7 @@ def test_folder_operations(
         async def init_root(self):
             nonlocal tentative
             tentative += 1
+            await reset_testbed()
 
             self.last_step_id_to_path = set()
             self.device = alice

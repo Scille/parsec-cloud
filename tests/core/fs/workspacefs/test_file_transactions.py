@@ -7,7 +7,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
 )
 from hypothesis import strategies as st
 
@@ -178,6 +178,7 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 def test_file_operations(
     tmpdir,
     hypothesis_settings,
+    reset_testbed,
     local_storage_factory,
     file_transactions_factory,
     alice,
@@ -185,11 +186,12 @@ def test_file_operations(
 ):
     tentative = 0
 
-    class FileOperationsStateMachine(TrioRuleBasedStateMachine):
+    class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
         @initialize()
         async def init(self):
             nonlocal tentative
             tentative += 1
+            await reset_testbed()
 
             self.device = alice
             self.local_storage = local_storage_factory(self.device)

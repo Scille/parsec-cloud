@@ -7,7 +7,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
     Bundle,
 )
 from string import ascii_lowercase
@@ -26,9 +26,14 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_offline_restart_and_tree(
-    hypothesis_settings, local_storage_factory, oracle_fs_factory, user_fs_factory, alice
+    hypothesis_settings,
+    reset_testbed,
+    local_storage_factory,
+    oracle_fs_factory,
+    user_fs_factory,
+    alice,
 ):
-    class FSOfflineRestartAndTree(TrioRuleBasedStateMachine):
+    class FSOfflineRestartAndTree(TrioAsyncioRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
@@ -54,6 +59,7 @@ def test_fs_offline_restart_and_tree(
 
         @initialize(target=Folders)
         async def init(self):
+            await reset_testbed()
             self.device = alice
             self.local_storage = local_storage_factory(self.device)
             await self.restart_user_fs()

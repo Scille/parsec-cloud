@@ -9,7 +9,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
 )
 
 from tests.common import call_with_control, compare_fs_dumps
@@ -22,6 +22,7 @@ st_fs = st.sampled_from(["fs_1", "fs_2"])
 @pytest.mark.slow
 def test_fs_online_concurrent_tree_and_sync(
     hypothesis_settings,
+    reset_testbed,
     backend_addr,
     backend_factory,
     server_factory,
@@ -30,7 +31,7 @@ def test_fs_online_concurrent_tree_and_sync(
     alice,
     alice2,
 ):
-    class FSOnlineConcurrentTreeAndSync(TrioRuleBasedStateMachine):
+    class FSOnlineConcurrentTreeAndSync(TrioAsyncioRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
         FSs = Bundle("fs")
@@ -60,6 +61,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @initialize(target=Folders)
         async def init(self):
+            await reset_testbed()
             self.device1 = alice
             self.device2 = alice2
             self.local_storage1 = local_storage_factory(self.device1)

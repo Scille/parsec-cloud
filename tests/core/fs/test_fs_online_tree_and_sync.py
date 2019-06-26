@@ -9,7 +9,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
 )
 
 from tests.common import call_with_control
@@ -27,6 +27,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_online_tree_and_sync(
     hypothesis_settings,
+    reset_testbed,
     backend_addr,
     backend_factory,
     server_factory,
@@ -35,7 +36,7 @@ def test_fs_online_tree_and_sync(
     user_fs_factory,
     alice,
 ):
-    class FSOnlineTreeAndSync(TrioRuleBasedStateMachine):
+    class FSOnlineTreeAndSync(TrioAsyncioRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
@@ -77,6 +78,7 @@ def test_fs_online_tree_and_sync(
 
         @initialize(target=Folders)
         async def init(self):
+            await reset_testbed()
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.oracle_fs.create_workspace("/w")
             self.device = alice

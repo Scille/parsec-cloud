@@ -6,7 +6,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
 )
 
 from tests.common import call_with_control
@@ -20,6 +20,7 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 @pytest.mark.slow
 def test_fs_online_rwfile_and_sync(
     hypothesis_settings,
+    reset_testbed,
     backend_addr,
     backend_factory,
     server_factory,
@@ -27,7 +28,7 @@ def test_fs_online_rwfile_and_sync(
     user_fs_factory,
     alice,
 ):
-    class FSOnlineRwFileAndSync(TrioRuleBasedStateMachine):
+    class FSOnlineRwFileAndSync(TrioAsyncioRuleBasedStateMachine):
         async def restart_user_fs(self, device, local_storage):
             try:
                 await self.user_fs_controller.stop()
@@ -62,6 +63,7 @@ def test_fs_online_rwfile_and_sync(
 
         @initialize()
         async def init(self):
+            await reset_testbed()
             self.device = alice
             self.local_storage = local_storage_factory(self.device)
             await self.start_backend()

@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import pytest
 import trio
 from hypothesis import strategies as st
@@ -7,7 +9,7 @@ from hypothesis_trio.stateful import (
     rule,
     invariant,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
     multiple,
 )
 
@@ -20,6 +22,7 @@ from tests.backend.realm.test_roles import _realm_generate_certif_and_update_rol
 @pytest.mark.slow
 def test_shuffle_roles(
     hypothesis_settings,
+    reset_testbed,
     backend_addr,
     backend_factory,
     server_factory,
@@ -30,7 +33,7 @@ def test_shuffle_roles(
     coolorg,
     alice,
 ):
-    class ShuffleRoles(TrioRuleBasedStateMachine):
+    class ShuffleRoles(TrioAsyncioRuleBasedStateMachine):
         realm_role_strategy = st.one_of(st.just(x) for x in RealmRole)
         User = Bundle("user")
 
@@ -48,6 +51,7 @@ def test_shuffle_roles(
 
         @initialize(target=User)
         async def init(self):
+            await reset_testbed()
             self.backend_controller = await self.start_backend()
 
             # Create organization and first user
