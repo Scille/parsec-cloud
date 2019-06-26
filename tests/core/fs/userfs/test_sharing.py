@@ -266,7 +266,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
 async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    await alice_user_fs.sync()
+        await alice_user_fs.sync()
 
     # Drop manager right (and give to Bob the ownership)
     await running_backend.backend.realm.update_roles(

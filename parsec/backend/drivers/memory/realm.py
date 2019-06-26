@@ -35,8 +35,7 @@ class Realm:
     @property
     def roles(self):
         roles = {}
-        # `self.granted_roles` items are in chronological order
-        for x in self.granted_roles:
+        for x in sorted(self.granted_roles, key=lambda x: x.granted_on):
             if x.role is None:
                 roles.pop(x.user_id, None)
             else:
