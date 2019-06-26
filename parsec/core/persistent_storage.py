@@ -76,6 +76,7 @@ class PersistentStorage:
 
         # Use auto-commit for dirty data since it is very sensitive
         self.dirty_conn.isolation_level = None
+        self.dirty_conn.execute("PRAGMA synchronous = OFF")
 
         # Initialize
         self.create_db()
