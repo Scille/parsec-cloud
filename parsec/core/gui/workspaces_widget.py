@@ -27,8 +27,8 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
     try:
         await core.user_fs.workspace_rename(workspace_id, new_name)
         return button
-    except:
-        raise JobResultError("rename-error")
+    except Exception as exc:
+        raise JobResultError("rename-error") from exc
     else:
         try:
             await core.mountpoint_manager.unmount_workspace(workspace_id)

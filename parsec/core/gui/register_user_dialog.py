@@ -33,25 +33,25 @@ DEFAULT_ERRMSG = _("Cannot register this user ({info}).")
 async def _do_registration(core, device, new_user_id, token, is_admin):
     try:
         new_user_id = UserID(new_user_id)
-    except ValueError:
-        raise JobResultError("registration-invite-bad-value")
+    except ValueError as exc:
+        raise JobResultError("registration-invite-bad-value") from exc
 
     try:
         users = await core.user_fs.backend_cmds.user_find(new_user_id)
-    except BackendNotAvailable:
-        raise JobResultError("registration-invite-offline")
+    except BackendNotAvailable as exc:
+        raise JobResultError("registration-invite-offline") from exc
     except BackendConnectionError as exc:
-        raise JobResultError("registration-invite-error", info=str(exc))
+        raise JobResultError("registration-invite-error", info=str(exc)) from exc
     for u in users:
         if u == new_user_id:
             raise JobResultError("registration-invite-already-exists")
 
     try:
         await core_invite_and_create_user(device, new_user_id, token, is_admin)
-    except InviteClaimBackendOfflineError:
-        raise JobResultError("registration-invite-offline")
+    except InviteClaimBackendOfflineError as exc:
+        raise JobResultError("registration-invite-offline") from exc
     except InviteClaimError as exc:
-        raise JobResultError("registration-invite-error", info=str(exc))
+        raise JobResultError("registration-invite-error", info=str(exc)) from exc
 
     return new_user_id, token
 
