@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import trio
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocole import message_send_serializer, message_get_serializer
