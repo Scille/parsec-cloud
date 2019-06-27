@@ -46,16 +46,16 @@ def fix_pyqt_import():
         else:
             continue
 
-        try:
-            path = glob.glob(path_glob)[0]
-        except IndexError:
-            raise RuntimeError("Cannot found module `%s` in .eggs" % module_name)
+        for path in glob.glob(path_glob):
 
-        spec = importlib.util.spec_from_file_location(module_name, path)
-        if not spec:
-            raise RuntimeError("Cannot load module `%s` from path `%s`" % (module_name, path))
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
+            spec = importlib.util.spec_from_file_location(module_name, path)
+            if spec:
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[module_name] = module
+                break
+
+        else:
+            raise RuntimeError("Cannot found module `%s` in .eggs" % module_name)
 
 
 class GeneratePyQtResourcesBundle(Command):
@@ -333,7 +333,6 @@ extra_requirements = {
         # Swift
         "python-swiftclient==3.5.0",
         "pbr==4.0.2",
-        "futures==3.1.1",
     ],
     "dev": test_requirements,
 }
@@ -350,7 +349,7 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(),
     package_dir={"parsec": "parsec"},
-    setup_requires=[PYQT_DEP, BABEL_DEP],  # To generate resources bundle
+    setup_requires=[PYQT_DEP, BABEL_DEP, "wheel"],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
