@@ -43,16 +43,14 @@ async def device_claim(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_claim_ok(backend, anonymous_backend_sock, alice, alice_nd_invitation):
-    with freeze_time(alice_nd_invitation.created_on):
+    with freeze_time(alice_nd_invitation.created_on), backend.event_bus.listen() as spy:
         async with device_claim(
             anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await backend.event_bus.spy.wait(
-                "event.connected", kwargs={"event_name": "device.created"}
-            )
+            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.created"})
             backend.event_bus.send(
                 "device.created",
                 organization_id=alice.organization_id,
@@ -72,16 +70,14 @@ async def test_device_claim_ok(backend, anonymous_backend_sock, alice, alice_nd_
 async def test_device_claim_timeout(
     mock_clock, backend, anonymous_backend_sock, alice_nd_invitation
 ):
-    with freeze_time(alice_nd_invitation.created_on):
+    with freeze_time(alice_nd_invitation.created_on), backend.event_bus.listen() as spy:
         async with device_claim(
             anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await backend.event_bus.spy.wait(
-                "event.connected", kwargs={"event_name": "device.created"}
-            )
+            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.created"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -92,14 +88,14 @@ async def test_device_claim_timeout(
 
 @pytest.mark.trio
 async def test_device_claim_denied(backend, anonymous_backend_sock, alice, alice_nd_invitation):
-    with freeze_time(alice_nd_invitation.created_on):
+    with freeze_time(alice_nd_invitation.created_on), backend.event_bus.listen() as spy:
         async with device_claim(
             anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await backend.event_bus.spy.wait(
+            await spy.wait_with_timeout(
                 "event.connected", kwargs={"event_name": "device.invitation.cancelled"}
             )
             backend.event_bus.send(

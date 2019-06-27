@@ -543,28 +543,44 @@ def core_config(tmpdir):
 
 
 @pytest.fixture
-async def alice_core(running_backend_ready, event_bus_factory, core_config, alice):
-    await running_backend_ready.wait()
-    async with logged_core_factory(core_config, alice, event_bus_factory()) as alice_core:
-        yield alice_core
+def core_factory(running_backend_ready, event_bus_factory, core_config):
+    @asynccontextmanager
+    async def _core_factory(device):
+        await running_backend_ready.wait()
+        event_bus = event_bus_factory()
+        with event_bus.listen() as spy:
+            async with logged_core_factory(core_config, device, event_bus) as core:
+                if running_backend_ready.is_set():
+                    # On startup, sync_monitor does a full sync that could
+                    # cause concurrency issues in the tests
+                    await spy.wait("backend.connection.ready")
+                else:
+                    await spy.wait("backend.connection.ready")
+
+                yield core
+
+    return _core_factory
 
 
 @pytest.fixture
-async def alice2_core(running_backend_ready, event_bus_factory, core_config, alice2):
-    await running_backend_ready.wait()
-    async with logged_core_factory(core_config, alice2, event_bus_factory()) as alice2_core:
-        yield alice2_core
+async def alice_core(core_factory, alice):
+    async with core_factory(alice) as core:
+        yield core
 
 
 @pytest.fixture
-async def adam_core(running_backend_ready, event_bus_factory, core_config, adam):
-    await running_backend_ready.wait()
-    async with logged_core_factory(core_config, adam, event_bus_factory()) as adam_core:
-        yield adam_core
+async def alice2_core(core_factory, alice2):
+    async with core_factory(alice2) as core:
+        yield core
 
 
 @pytest.fixture
-async def bob_core(running_backend_ready, event_bus_factory, core_config, bob):
-    await running_backend_ready.wait()
-    async with logged_core_factory(core_config, bob, event_bus_factory()) as bob_core:
-        yield bob_core
+async def adam_core(core_factory, adam):
+    async with core_factory(adam) as core:
+        yield core
+
+
+@pytest.fixture
+async def bob_core(core_factory, bob):
+    async with core_factory(bob) as core:
+        yield core

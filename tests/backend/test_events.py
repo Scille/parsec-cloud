@@ -58,12 +58,12 @@ async def test_events_subscribe(backend, alice_backend_sock, alice2_backend_sock
     await events_subscribe(alice_backend_sock)
 
     # Should ignore our own events
-    await ping(alice_backend_sock, "bar")
-    await ping(alice2_backend_sock, "foo")
+    with backend.event_bus.listen() as spy:
+        await ping(alice_backend_sock, "bar")
+        await ping(alice2_backend_sock, "foo")
 
-    with trio.fail_after(1):
         # No guarantees those events occur before the commands' return
-        await backend.event_bus.spy.wait_multiple(["pinged", "pinged"])
+        await spy.wait_multiple_with_timeout(["pinged", "pinged"])
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
@@ -78,9 +78,8 @@ async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_soc
     with backend.event_bus.listen() as spy:
         await ping(alice2_backend_sock, "foo")
 
-        with trio.fail_after(1):
-            # No guarantees those events occur before the commands' return
-            await spy.wait("pinged")
+        # No guarantees those events occur before the commands' return
+        await spy.wait_with_timeout("pinged")
 
     # Resubscribing should have no effect
     await events_subscribe(alice_backend_sock)
@@ -89,9 +88,8 @@ async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_soc
         await ping(alice2_backend_sock, "bar")
         await ping(alice2_backend_sock, "spam")
 
-        with trio.fail_after(1):
-            # No guarantees those events occur before the commands' return
-            await spy.wait_multiple(["pinged", "pinged"])
+        # No guarantees those events occur before the commands' return
+        await spy.wait_multiple_with_timeout(["pinged", "pinged"])
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}

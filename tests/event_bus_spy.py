@@ -34,17 +34,6 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
-    # TODO: Remove this ? At least check were it is still needed since
-    # `running_backend_ready` fixture should have fixed most of it usecases
-    async def wait_for_backend_connection_ready(self):
-        for occured_event in reversed(self.events):
-            if occured_event.event == "backend.connection.ready":
-                return occured_event
-            elif occured_event.event == "backend.connection.lost":
-                break
-
-        return await self._wait(SpiedEvent("backend.connection.ready", dt=ANY))
-
     async def wait_with_timeout(self, event, dt=ANY, kwargs=ANY, timeout=1):
         with trio.move_on_after(timeout):
             await self.wait(event, dt, kwargs)
@@ -141,7 +130,6 @@ class SpiedEventBus(EventBus):
     def __init__(self):
         super().__init__()
         self._spies = []
-        self.spy = self.create_spy()
 
     def send(self, event, **kwargs):
         for spy in self._spies:

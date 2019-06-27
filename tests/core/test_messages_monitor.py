@@ -11,11 +11,6 @@ from parsec.core.types import WorkspaceEntry, WorkspaceRole
 
 @pytest.mark.trio
 async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
-    # TODO: this should be part of alice_core fixture
-    # Make sure sync_monitor bootstrap sync won't mess with create_shared_workspace
-    await alice_core.event_bus.spy.wait("backend.connection.ready")
-    await bob_core.event_bus.spy.wait("backend.connection.ready")
-
     # First, create a folder and sync it on backend
     wid = await alice_core.user_fs.workspace_create("foo")
     workspace = alice_core.user_fs.get_workspace(wid)
@@ -47,10 +42,6 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
 
 @pytest.mark.trio
 async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, running_backend):
-    # TODO: this should be part of alice_core fixture
-    # Make sure sync_monitor bootstrap sync won't mess with create_shared_workspace
-    await alice_core.event_bus.spy.wait("backend.connection.ready")
-
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace("w", alice_core, bob_core)
 
@@ -85,11 +76,6 @@ async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, ru
 
 @pytest.mark.trio
 async def test_new_reencryption_trigger_event(alice_core, bob_core, running_backend):
-    # TODO: this should be part of alice_core fixture
-    # Make sure sync_monitor bootstrap sync won't mess with create_shared_workspace
-    await alice_core.event_bus.spy.wait("backend.connection.ready")
-    await bob_core.event_bus.spy.wait("backend.connection.ready")
-
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace("w", alice_core, bob_core)
 
