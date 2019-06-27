@@ -127,6 +127,72 @@ async def test_read_ok(alice, alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
+async def test_read_ok_v1(alice, alice_backend_sock, vlobs):
+    rep = await vlob_read(alice_backend_sock, vlobs[0], version=1)
+    assert rep == {
+        "status": "ok",
+        "blob": b"r:A b:1 v:1",
+        "version": 1,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 2),
+    }
+
+
+@pytest.mark.trio
+async def test_read_ok_timestamp_after_v2(alice, alice_backend_sock, vlobs):
+    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=Pendulum(2000, 1, 4))
+    assert rep == {
+        "status": "ok",
+        "blob": b"r:A b:1 v:2",
+        "version": 2,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 3),
+    }
+
+
+@pytest.mark.trio
+async def test_read_ok_timestamp_is_v2(alice, alice_backend_sock, vlobs):
+    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=Pendulum(2000, 1, 3))
+    assert rep == {
+        "status": "ok",
+        "blob": b"r:A b:1 v:2",
+        "version": 2,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 3),
+    }
+
+
+@pytest.mark.trio
+async def test_read_ok_timestamp_between_v1_and_v2(alice, alice_backend_sock, vlobs):
+    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=Pendulum(2000, 1, 2, 10))
+    assert rep == {
+        "status": "ok",
+        "blob": b"r:A b:1 v:1",
+        "version": 1,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 2),
+    }
+
+
+@pytest.mark.trio
+async def test_read_ok_timestamp_is_v1(alice, alice_backend_sock, vlobs):
+    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=Pendulum(2000, 1, 2))
+    assert rep == {
+        "status": "ok",
+        "blob": b"r:A b:1 v:1",
+        "version": 1,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 2),
+    }
+
+
+@pytest.mark.trio
+async def test_read_before_v1(alice_backend_sock, vlobs):
+    rep = await vlob_read(alice_backend_sock, vlobs[0], timestamp=Pendulum(2000, 1, 1))
+    assert rep == {"status": "bad_version"}
+
+
+@pytest.mark.trio
 async def test_read_check_access_rights(backend, alice, bob, bob_backend_sock, realm, vlobs):
     # Not part of the realm
     rep = await vlob_read(bob_backend_sock, vlobs[0])

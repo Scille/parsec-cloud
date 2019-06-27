@@ -43,6 +43,7 @@ class VlobReadReqSchema(BaseReqSchema):
     encryption_revision = fields.Integer(required=True)
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
+    timestamp = fields.DateTime(allow_none=True, missing=None)
 
 
 class VlobReadRepSchema(BaseRepSchema):

@@ -290,6 +290,7 @@ class BaseVlobComponent:
         encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
+        timestamp: Optional[pendulum.Pendulum] = None,
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         """
         Raises:

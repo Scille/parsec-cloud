@@ -169,7 +169,11 @@ async def vlob_create(
 
 
 async def vlob_read(
-    transport: Transport, encryption_revision: int, vlob_id: UUID, version: int = None
+    transport: Transport,
+    encryption_revision: int,
+    vlob_id: UUID,
+    version: int = None,
+    timestamp: pendulum.Pendulum = None,
 ) -> Tuple[DeviceID, pendulum.Pendulum, int, bytes]:
     rep = await _send_cmd(
         transport,
@@ -178,6 +182,7 @@ async def vlob_read(
         encryption_revision=encryption_revision,
         vlob_id=vlob_id,
         version=version,
+        timestamp=timestamp,
     )
     return rep["author"], rep["timestamp"], rep["version"], rep["blob"]
 

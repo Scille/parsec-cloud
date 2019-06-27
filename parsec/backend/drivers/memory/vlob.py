@@ -244,6 +244,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         encryption_revision: int,
         vlob_id: UUID,
         version: Optional[int] = None,
+        timestamp: Optional[pendulum.Pendulum] = None,
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
@@ -252,7 +253,15 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
         if version is None:
-            version = vlob.current_version
+            if timestamp is None:
+                version = vlob.current_version
+            else:
+                for i in range(vlob.current_version, 0, -1):
+                    if vlob.data[i - 1][2] <= timestamp:
+                        version = i
+                        break
+                else:
+                    raise VlobVersionError()
         try:
             return (version, *vlob.data[version - 1])
 
