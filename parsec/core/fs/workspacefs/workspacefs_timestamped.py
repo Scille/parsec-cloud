@@ -11,15 +11,14 @@ from parsec.core.types import FsPath, LocalFileManifest, FileCursor
 
 from parsec.core.fs.workspacefs.entry_transactions import from_errno
 from parsec.core.fs.workspacefs.file_transactions import normalize_offset, merge_buffers
-from parsec.core.fs.workspacefs.workspacefs import AnyPath
-import parsec.core.fs.workspacefs as workspacefs
+from parsec.core.fs.workspacefs.workspacefs import AnyPath, WorkspaceFS
 
 from parsec.core.fs.utils import is_file_manifest
 
 from parsec.core.local_storage import LocalStorageMissingError
 
 
-class WorkspaceFSTimestamped(workspacefs.WorkspaceFS):
+class WorkspaceFSTimestamped(WorkspaceFS):
     def _throw_permission_error(*e, **ke):
         raise from_errno(errno.EACCES, "Not available for timestamped workspaces.")
 
@@ -38,7 +37,7 @@ class WorkspaceFSTimestamped(workspacefs.WorkspaceFS):
     sync_by_id = _throw_permission_error
     sync = _throw_permission_error
 
-    def __init__(self, workspacefs: workspacefs.WorkspaceFS, timestamp: pendulum.Pendulum):
+    def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.Pendulum):
         self.workspace_id = workspacefs.workspace_id
         self.get_workspace_entry = workspacefs.get_workspace_entry
         self.device = workspacefs.device
