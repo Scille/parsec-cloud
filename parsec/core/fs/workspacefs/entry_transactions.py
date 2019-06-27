@@ -5,6 +5,7 @@ import errno
 from typing import Tuple, Callable
 from collections import namedtuple
 from async_generator import asynccontextmanager
+from pendulum import Pendulum
 
 from parsec.event_bus import EventBus
 from parsec.core.types import (
@@ -62,11 +63,16 @@ class EntryTransactions:
 
     # Look-up helpers
 
-    async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
-        try:
-            return self.local_storage.get_manifest(entry_id)
-        except LocalStorageMissingError as exc:
-            remote_manifest = await self.remote_loader.load_manifest(exc.id)
+    async def _get_manifest(self, entry_id: EntryID, timestamp: Pendulum = None) -> LocalManifest:
+        if timestamp is None:
+            try:
+                return self.local_storage.get_manifest(entry_id)
+            except LocalStorageMissingError as exc:
+                remote_manifest = await self.remote_loader.load_manifest(exc.id)
+                return remote_manifest.to_local(self.local_author)
+        else:
+            # For now, no caching mechanism for older versions
+            remote_manifest = await self.remote_loader.load_manifest(entry_id, timestamp=timestamp)
             return remote_manifest.to_local(self.local_author)
 
     @asynccontextmanager
@@ -103,9 +109,30 @@ class EntryTransactions:
         async with self._load_and_lock_manifest(entry_id) as manifest:
             yield Entry(entry_id, manifest)
 
-    async def _get_entry(self, path: FsPath) -> Tuple[EntryID, LocalManifest]:
-        async with self._lock_entry(path) as entry:
-            return entry
+    async def _get_entry(
+        self, path: FsPath, timestamp: Pendulum = None
+    ) -> Tuple[EntryID, LocalManifest]:
+        if timestamp is None:
+            async with self._lock_entry(path) as entry:
+                return entry
+        else:
+            # Root entry_id and manifest
+            assert path.parts[0] == "/"
+            entry_id = self.get_workspace_entry().id
+            manifest = await self._get_manifest(entry_id, timestamp)
+
+            # Follow the path
+            for name in path.parts[1:]:
+                if is_file_manifest(manifest):
+                    raise from_errno(errno.ENOTDIR, filename=str(path))
+                try:
+                    entry_id = manifest.children[name]
+                except (AttributeError, KeyError):
+                    raise from_errno(errno.ENOENT, filename=str(path))
+                manifest = await self._get_manifest(entry_id, timestamp)
+
+            # Return entry
+            return Entry(entry_id, manifest)
 
     @asynccontextmanager
     async def _lock_parent_entry(self, path):
@@ -168,10 +195,10 @@ class EntryTransactions:
 
     # Transactions
 
-    async def entry_info(self, path: FsPath) -> dict:
+    async def entry_info(self, path: FsPath, timestamp: Pendulum = None) -> dict:
 
         # Fetch data
-        entry_id, manifest = await self._get_entry(path)
+        entry_id, manifest = await self._get_entry(path, timestamp)
 
         # General stats
         stats = {
