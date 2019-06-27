@@ -379,7 +379,7 @@ async def test_dump(alice_workspace):
     alice_workspace.local_storage.clear_manifest(baz_id)
     assert alice_workspace.dump() == {
         "author": device_id,
-        "base_version": 2,
+        "base_version": 1,
         "children": {
             "foo": {
                 "author": device_id,
