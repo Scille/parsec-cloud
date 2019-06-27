@@ -27,6 +27,7 @@ from parsec.core.fs.exceptions import (
     FSError,
     FSRemoteSyncError,
     FSRemoteManifestNotFound,
+    FSRemoteManifestNotFoundBadVersion,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
@@ -140,7 +141,9 @@ class RemoteLoader:
         self.local_storage.clear_block(access.id)
         self.local_storage.set_clean_block(access.id, data)
 
-    async def load_manifest(self, entry_id: EntryID, version: int = None) -> Manifest:
+    async def load_manifest(
+        self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
+    ) -> Manifest:
         """
         Raises:
             FSError
@@ -153,7 +156,7 @@ class RemoteLoader:
         workspace_entry = self.get_workspace_entry()
         try:
             args = await self.backend_cmds.vlob_read(
-                workspace_entry.encryption_revision, entry_id, version=version
+                workspace_entry.encryption_revision, entry_id, version=version, timestamp=timestamp
             )
 
         # Vlob is not found
@@ -171,6 +174,8 @@ class RemoteLoader:
             ) from exc
 
         except BackendCmdsBadResponse as exc:
+            if exc.status == "bad_version":
+                raise FSRemoteManifestNotFoundBadVersion(entry_id)
             if exc.status == "not_found":
                 raise FSRemoteManifestNotFound(entry_id)
             elif exc.status == "bad_encryption_revision":
