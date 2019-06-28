@@ -64,12 +64,11 @@ async def test_user_invite_then_claim_ok(
             with trio.fail_after(1):
                 await cmds.user_claim(mallory.user_id, encrypted_claim)
 
-    async with trio.open_nursery() as nursery:
-        nursery.start_soon(_alice_invite)
-        await running_backend.backend.event_bus.spy.wait(
-            "event.connected", kwargs={"event_name": "user.claimed"}
-        )
-        nursery.start_soon(_mallory_claim)
+    with running_backend.backend.event_bus.listen() as spy:
+        async with trio.open_nursery() as nursery:
+            nursery.start_soon(_alice_invite)
+            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            nursery.start_soon(_mallory_claim)
 
     # Now mallory should be able to connect to backend
     async with backend_cmds_pool_factory(

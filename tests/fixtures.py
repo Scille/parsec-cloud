@@ -344,61 +344,63 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 author = self.get_device(device.organization_id, generated_by)
             realm_id = author.user_manifest_id
 
-            await self.backend.realm.create(
-                organization_id=author.organization_id,
-                self_granted_role=RealmGrantedRole(
-                    realm_id=realm_id,
-                    user_id=author.user_id,
-                    certificate=build_realm_role_certificate(
-                        certifier_id=author.device_id,
-                        certifier_key=author.signing_key,
+            with self.backend.event_bus.listen() as spy:
+
+                await self.backend.realm.create(
+                    organization_id=author.organization_id,
+                    self_granted_role=RealmGrantedRole(
                         realm_id=realm_id,
                         user_id=author.user_id,
+                        certificate=build_realm_role_certificate(
+                            certifier_id=author.device_id,
+                            certifier_key=author.signing_key,
+                            realm_id=realm_id,
+                            user_id=author.user_id,
+                            role=RealmRole.OWNER,
+                            timestamp=generated_on,
+                        ),
                         role=RealmRole.OWNER,
-                        timestamp=generated_on,
+                        granted_by=author.device_id,
+                        granted_on=generated_on,
                     ),
-                    role=RealmRole.OWNER,
-                    granted_by=author.device_id,
-                    granted_on=generated_on,
-                ),
-            )
+                )
 
-            await self.backend.vlob.create(
-                organization_id=author.organization_id,
-                author=generated_by,
-                realm_id=realm_id,
-                encryption_revision=1,
-                vlob_id=author.user_manifest_id,
-                timestamp=generated_on,
-                blob=ciphered,
-            )
+                await self.backend.vlob.create(
+                    organization_id=author.organization_id,
+                    author=generated_by,
+                    realm_id=realm_id,
+                    encryption_revision=1,
+                    vlob_id=author.user_manifest_id,
+                    timestamp=generated_on,
+                    blob=ciphered,
+                )
 
-            # Avoid possible race condition in tests listening for events
-            await self.backend.event_bus.spy.wait_multiple_with_timeout(
-                [
-                    (
-                        "realm.roles_updated",
-                        {
-                            "organization_id": author.organization_id,
-                            "author": generated_by,
-                            "realm_id": author.user_manifest_id,
-                            "user": generated_by.user_id,
-                            "role": RealmRole.OWNER,
-                        },
-                    ),
-                    (
-                        "realm.vlobs_updated",
-                        {
-                            "organization_id": author.organization_id,
-                            "author": author.device_id,
-                            "realm_id": author.user_manifest_id,
-                            "checkpoint": 1,
-                            "src_id": author.user_manifest_id,
-                            "src_version": 1,
-                        },
-                    ),
-                ]
-            )
+                # Avoid possible race condition in tests listening for events
+                await spy.wait_multiple_with_timeout(
+                    [
+                        (
+                            "realm.roles_updated",
+                            {
+                                "organization_id": author.organization_id,
+                                "author": generated_by,
+                                "realm_id": author.user_manifest_id,
+                                "user": generated_by.user_id,
+                                "role": RealmRole.OWNER,
+                            },
+                        ),
+                        (
+                            "realm.vlobs_updated",
+                            {
+                                "organization_id": author.organization_id,
+                                "author": author.device_id,
+                                "realm_id": author.user_manifest_id,
+                                "checkpoint": 1,
+                                "src_id": author.user_manifest_id,
+                                "src_version": 1,
+                            },
+                        ),
+                    ]
+                )
 
         async def bind_organization(
             self,

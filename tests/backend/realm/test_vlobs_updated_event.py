@@ -32,7 +32,7 @@ async def test_vlobs_updated_event_ok(
             timestamp=NOW,
             blob=b"v1",
         )
-        await backend.event_bus.spy.wait_with_timeout("realm.vlobs_updated")
+        await spy.wait_with_timeout("realm.vlobs_updated")
 
     # Start listening events
     await events_subscribe(alice_backend_sock)

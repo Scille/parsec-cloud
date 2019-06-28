@@ -41,16 +41,14 @@ async def user_claim(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, alice, mallory_invitation):
-    with freeze_time(mallory_invitation.created_on):
+    with freeze_time(mallory_invitation.created_on), backend.event_bus.listen() as spy:
         async with user_claim(
             anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await backend.event_bus.spy.wait(
-                "event.connected", kwargs={"event_name": "user.created"}
-            )
+            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.created"})
 
             await backend.user.create_user(
                 alice.organization_id,
@@ -81,16 +79,14 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, alice, ma
 
 @pytest.mark.trio
 async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, mallory_invitation):
-    with freeze_time(mallory_invitation.created_on):
+    with freeze_time(mallory_invitation.created_on), backend.event_bus.listen() as spy:
         async with user_claim(
             anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await backend.event_bus.spy.wait(
-                "event.connected", kwargs={"event_name": "user.created"}
-            )
+            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.created"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -101,14 +97,14 @@ async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, m
 
 @pytest.mark.trio
 async def test_user_claim_denied(backend, anonymous_backend_sock, coolorg, mallory_invitation):
-    with freeze_time(mallory_invitation.created_on):
+    with freeze_time(mallory_invitation.created_on), backend.event_bus.listen() as spy:
         async with user_claim(
             anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await backend.event_bus.spy.wait(
+            await spy.wait_with_timeout(
                 "event.connected", kwargs={"event_name": "user.invitation.cancelled"}
             )
             backend.event_bus.send(
