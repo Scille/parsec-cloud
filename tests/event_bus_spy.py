@@ -16,7 +16,7 @@ class SpiedEvent:
     dt = attr.ib(factory=pendulum.now)
 
 
-@attr.s(repr=False)
+@attr.s(repr=False, cmp=False)
 class EventBusSpy:
     ANY = ANY  # Easier to use than doing an import
     events = attr.ib(factory=list)
