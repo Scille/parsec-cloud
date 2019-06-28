@@ -34,6 +34,7 @@ from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
     reset_postgresql_testbed,
+    asyncio_reset_postgresql_testbed,
 )
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper, offline
 from tests.event_bus_spy import SpiedEventBus
@@ -286,18 +287,24 @@ def backend_addr(tcp_stream_spy):
     return BackendAddr("ws://127.0.0.1:9999")
 
 
+@pytest.fixture(scope="session")
+def reset_testbed(request):
+    if request.config.getoption("--postgresql"):
+
+        async def _reset_testbed():
+            await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
+
+    else:
+
+        async def _reset_testbed():
+            pass
+
+    return _reset_testbed
+
+
 @pytest.fixture()
 def backend_store(request):
     if request.config.getoption("--postgresql"):
-        if request.node.get_closest_marker("slow"):
-            import warnings
-
-            warnings.warn(
-                "TODO: trio-asyncio loop currently incompatible with hypothesis tests :'("
-            )
-
-            return "MOCKED"
-
         reset_postgresql_testbed()
         return get_postgresql_url()
 
@@ -404,7 +411,6 @@ def backend_factory(
                         await binder.bind_device(bob)
 
                 yield backend
-
             finally:
                 await backend.teardown()
                 # Don't do `nursery.cancel_scope.cancel()` given `backend.teardown()`

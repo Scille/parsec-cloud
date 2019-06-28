@@ -364,6 +364,8 @@ class WorkspaceFS:
         if remote_manifest is None:
             return
 
+        await self._create_realm_if_needed()
+
         # Upload the miminal manifest
         try:
             await self.remote_loader.upload_manifest(entry_id, remote_manifest)
@@ -432,22 +434,22 @@ class WorkspaceFS:
             else:
                 remote_manifest = new_remote_manifest
 
-    async def sync_by_id(
-        self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
-    ):
+    async def _create_realm_if_needed(self):
         # Get workspace manifest
         try:
             workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
 
-        # Not available locally so nothing to synchronize
+        # Cannot be a placeholder if we know about it but don't have it in local
         except LocalStorageMissingError:
             return
 
-        # Half hacky solution: we sync the workspace manifest but don't
-        # update the user manifest. This should be fine because synchronization
-        # is idempotent, but it's quite ugly...
         if workspace_manifest.is_placeholder:
-            await self.minimal_sync(self.workspace_id)
+            await self.remote_loader.create_realm(self.workspace_id)
+
+    async def sync_by_id(
+        self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
+    ):
+        await self._create_realm_if_needed()
 
         # Sync parent first
         try:

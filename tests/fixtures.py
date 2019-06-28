@@ -14,6 +14,7 @@ from parsec.crypto import (
     build_user_certificate,
     build_device_certificate,
     build_revoked_device_certificate,
+    build_realm_role_certificate,
 )
 from parsec.api.protocole import RealmRole
 from parsec.core.types import (
@@ -28,6 +29,7 @@ from parsec.backend.user import (
     Device as BackendDevice,
     new_user_factory as new_backend_user_factory,
 )
+from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
 
@@ -323,12 +325,80 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             self.binded_local_devices = []
             self.certificates_store = CertificatesStore()
 
-        def get_device(self, device_id):
+        def get_device(self, organization_id, device_id):
             for d in self.binded_local_devices:
-                if d.device_id == device_id:
+                if d.organization_id == organization_id and d.device_id == device_id:
                     return d
             else:
-                raise ValueError(device_id)
+                raise ValueError((organization_id, device_id))
+
+        async def _create_realm_and_first_vlob(self, device):
+            args = initial_user_manifest_state.get_user_manifest_v1_for_backend(
+                device, ciphered=True
+            )
+            ciphered, generated_by, generated_on = args
+
+            if generated_by == device.device_id:
+                author = device
+            else:
+                author = self.get_device(device.organization_id, generated_by)
+            realm_id = author.user_manifest_id
+
+            await self.backend.realm.create(
+                organization_id=author.organization_id,
+                self_granted_role=RealmGrantedRole(
+                    realm_id=realm_id,
+                    user_id=author.user_id,
+                    certificate=build_realm_role_certificate(
+                        certifier_id=author.device_id,
+                        certifier_key=author.signing_key,
+                        realm_id=realm_id,
+                        user_id=author.user_id,
+                        role=RealmRole.OWNER,
+                        timestamp=generated_on,
+                    ),
+                    role=RealmRole.OWNER,
+                    granted_by=author.device_id,
+                    granted_on=generated_on,
+                ),
+            )
+
+            await self.backend.vlob.create(
+                organization_id=author.organization_id,
+                author=generated_by,
+                realm_id=realm_id,
+                encryption_revision=1,
+                vlob_id=author.user_manifest_id,
+                timestamp=generated_on,
+                blob=ciphered,
+            )
+
+            # Avoid possible race condition in tests listening for events
+            await self.backend.event_bus.spy.wait_multiple_with_timeout(
+                [
+                    (
+                        "realm.roles_updated",
+                        {
+                            "organization_id": author.organization_id,
+                            "author": generated_by,
+                            "realm_id": author.user_manifest_id,
+                            "user": generated_by.user_id,
+                            "role": RealmRole.OWNER,
+                        },
+                    ),
+                    (
+                        "realm.vlobs_updated",
+                        {
+                            "organization_id": author.organization_id,
+                            "author": author.device_id,
+                            "realm_id": author.user_manifest_id,
+                            "checkpoint": 1,
+                            "src_id": author.user_manifest_id,
+                            "src_version": 1,
+                        },
+                    ),
+                ]
+            )
 
         async def bind_organization(
             self,
@@ -358,45 +428,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 self.binded_local_devices.append(first_device)
 
                 if not initial_user_manifest_in_v0:
-                    args = initial_user_manifest_state.get_user_manifest_v1_for_backend(
-                        first_device, ciphered=True
-                    )
-                    ciphered, generated_by, generated_on = args
-                    await self.backend.vlob.create(
-                        organization_id=first_device.organization_id,
-                        author=generated_by,
-                        realm_id=first_device.user_manifest_id,
-                        encryption_revision=1,
-                        vlob_id=first_device.user_manifest_id,
-                        timestamp=generated_on,
-                        blob=ciphered,
-                    )
-                    # Avoid possible race condition in tests listening for events
-                    await self.backend.event_bus.spy.wait_multiple_with_timeout(
-                        [
-                            (
-                                "realm.roles_updated",
-                                {
-                                    "organization_id": first_device.organization_id,
-                                    "author": generated_by,
-                                    "realm_id": first_device.user_manifest_id,
-                                    "user": generated_by.user_id,
-                                    "role": RealmRole.OWNER,
-                                },
-                            ),
-                            (
-                                "realm.vlobs_updated",
-                                {
-                                    "organization_id": first_device.organization_id,
-                                    "author": first_device.device_id,
-                                    "realm_id": first_device.user_manifest_id,
-                                    "checkpoint": 1,
-                                    "src_id": first_device.user_manifest_id,
-                                    "src_version": 1,
-                                },
-                            ),
-                        ]
-                    )
+                    await self._create_realm_and_first_vlob(first_device)
 
         async def bind_device(
             self,
@@ -441,45 +473,8 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 )
 
                 if not initial_user_manifest_in_v0:
-                    args = initial_user_manifest_state.get_user_manifest_v1_for_backend(
-                        device, ciphered=True
-                    )
-                    ciphered, generated_by, generated_on = args
-                    await self.backend.vlob.create(
-                        organization_id=device.organization_id,
-                        author=generated_by,
-                        realm_id=device.user_manifest_id,
-                        encryption_revision=1,
-                        vlob_id=device.user_manifest_id,
-                        timestamp=generated_on,
-                        blob=ciphered,
-                    )
-                    # Avoid possible race condition in tests listening for events
-                    await self.backend.event_bus.spy.wait_multiple_with_timeout(
-                        [
-                            (
-                                "realm.roles_updated",
-                                {
-                                    "organization_id": device.organization_id,
-                                    "author": generated_by,
-                                    "realm_id": device.user_manifest_id,
-                                    "user": generated_by.user_id,
-                                    "role": RealmRole.OWNER,
-                                },
-                            ),
-                            (
-                                "realm.vlobs_updated",
-                                {
-                                    "organization_id": device.organization_id,
-                                    "author": device.device_id,
-                                    "realm_id": device.user_manifest_id,
-                                    "checkpoint": 1,
-                                    "src_id": device.user_manifest_id,
-                                    "src_version": 1,
-                                },
-                            ),
-                        ]
-                    )
+                    await self._create_realm_and_first_vlob(device)
+
             self.binded_local_devices.append(device)
 
         async def bind_revocation(self, device: LocalDevice, certifier: LocalDevice):

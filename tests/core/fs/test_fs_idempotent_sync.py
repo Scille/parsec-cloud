@@ -10,7 +10,7 @@ from hypothesis_trio.stateful import (
     rule,
     invariant,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
     multiple,
 )
 
@@ -32,9 +32,15 @@ def check_fs_dump(entry):
 
 @pytest.mark.slow
 def test_fs_online_idempotent_sync(
-    hypothesis_settings, backend_addr, backend_factory, server_factory, user_fs_factory, alice
+    hypothesis_settings,
+    reset_testbed,
+    backend_addr,
+    backend_factory,
+    server_factory,
+    user_fs_factory,
+    alice,
 ):
-    class FSOnlineIdempotentSync(TrioRuleBasedStateMachine):
+    class FSOnlineIdempotentSync(TrioAsyncioRuleBasedStateMachine):
         BadPath = Bundle("bad_path")
         GoodFilePath = Bundle("good_file_path")
         GoodFolderPath = Bundle("good_folder_path")
@@ -61,6 +67,7 @@ def test_fs_online_idempotent_sync(
 
         @initialize(target=BadPath)
         async def init(self):
+            await reset_testbed()
             self.backend_controller = await self.start_backend()
             self.device = alice
             self.user_fs_controller = await self.start_user_fs(alice)

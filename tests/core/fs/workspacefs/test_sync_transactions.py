@@ -316,6 +316,7 @@ async def test_file_reshape(sync_transactions):
     workspace_id = sync_transactions.remote_loader.workspace_id
     device_id = sync_transactions.local_storage.device_id
     manifest = await sync_transactions.get_minimal_remote_manifest(workspace_id)
+    await sync_transactions.remote_loader.create_realm(workspace_id)
     await sync_transactions.remote_loader.upload_manifest(workspace_id, manifest)
 
     # No block

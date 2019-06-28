@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import trio
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocole import message_send_serializer, message_get_serializer
@@ -123,16 +122,16 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     await events_subscribe(alice_backend_sock)
 
     # Good message
-    await backend.message.send(
-        bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from bob to alice"
-    )
-    await backend.message.send(
-        bob.organization_id, bob.device_id, alice.user_id, d1, b"Goodbye from bob to alice"
-    )
+    with backend.event_bus.listen() as spy:
+        await backend.message.send(
+            bob.organization_id, bob.device_id, alice.user_id, d1, b"Hello from bob to alice"
+        )
+        await backend.message.send(
+            bob.organization_id, bob.device_id, alice.user_id, d1, b"Goodbye from bob to alice"
+        )
 
-    with trio.fail_after(1):
         # No guarantees those events occur before the commands' return
-        await backend.event_bus.spy.wait_multiple(["message.received", "message.received"])
+        await spy.wait_multiple_with_timeout(["message.received", "message.received"])
 
     reps = [
         await events_listen_nowait(alice_backend_sock),
@@ -146,13 +145,13 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     ]
 
     # Message to self also trigger event (not as silly as at sound: see workspace reencryption)
-    await backend.message.send(
-        alice.organization_id, alice.device_id, alice.user_id, d1, b"Hello to myself"
-    )
+    with backend.event_bus.listen() as spy:
+        await backend.message.send(
+            alice.organization_id, alice.device_id, alice.user_id, d1, b"Hello to myself"
+        )
 
-    with trio.fail_after(1):
         # No guarantees those events occur before the commands' return
-        await backend.event_bus.spy.wait_multiple(["message.received"])
+        await spy.wait_multiple_with_timeout(["message.received"])
 
     reps = [
         await events_listen_nowait(alice_backend_sock),

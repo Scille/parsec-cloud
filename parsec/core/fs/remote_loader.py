@@ -6,6 +6,7 @@ from pendulum import Pendulum
 
 from parsec.serde import SerdeError
 from parsec.crypto import (
+    build_realm_self_role_certificate,
     encrypt_signed_msg_with_secret_key,
     decrypt_raw_with_secret_key,
     encrypt_raw_with_secret_key,
@@ -226,6 +227,34 @@ class RemoteLoader:
 
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
+
+    async def create_realm(self, realm_id: EntryID):
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+        """
+        certif = build_realm_self_role_certificate(
+            self.device.device_id, self.device.signing_key, realm_id, pendulum.now()
+        )
+
+        try:
+            await self.backend_cmds.realm_create(certif)
+
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "already_exists":
+                # It's possible a previous attempt to create this realm
+                # succeeded but we didn't receive the confirmation, hence
+                # we play idempotent here.
+                return
+            else:
+                raise FSError(f"Cannot create realm {realm_id}: {exc}") from exc
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot create realm {realm_id}: {exc}") from exc
 
     async def upload_manifest(self, entry_id: EntryID, manifest: Manifest):
         """

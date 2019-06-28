@@ -172,8 +172,12 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
         device = local_device_factory(name, org)
         await binder.bind_device(device, certifier=godfrey1)
 
-    await binder.bind_revocation(binder.get_device("Philip_J_Fry@p1"), certifier=godfrey1)
-    await binder.bind_revocation(binder.get_device("Philippe@p2"), certifier=godfrey1)
+    await binder.bind_revocation(
+        binder.get_device(org.organization_id, "Philip_J_Fry@p1"), certifier=godfrey1
+    )
+    await binder.bind_revocation(
+        binder.get_device(org.organization_id, "Philippe@p2"), certifier=godfrey1
+    )
 
     # Also create homonyme in different organization, just to be sure...
     other_org = organization_factory("FilmMark")

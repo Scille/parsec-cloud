@@ -2,13 +2,14 @@
 
 import pendulum
 from uuid import UUID
-from typing import Dict, Optional
+from typing import Dict
 
 from parsec.api.protocole import RealmRole, MaintenanceType
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.backend.realm import (
     BaseRealmComponent,
     RealmStatus,
+    RealmGrantedRole,
     RealmAccessError,
     RealmNotFoundError,
     RealmAlreadyExistsError,
@@ -24,66 +25,6 @@ from parsec.backend.drivers.postgresql.message import send_message
 
 _STR_TO_ROLE = {role.value: role for role in RealmRole}
 _STR_TO_MAINTENANCE_TYPE = {type.value: type for type in MaintenanceType}
-
-
-async def create_realm(conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID):
-    realm_internal_id = await conn.fetchval(
-        """
-INSERT INTO realm (
-    organization,
-    realm_id,
-    encryption_revision
-) SELECT
-    get_organization_internal_id($1),
-    $2,
-    1
-ON CONFLICT (organization, realm_id) DO NOTHING
-RETURNING
-    _id
-""",
-        organization_id,
-        realm_id,
-    )
-    if not realm_internal_id:
-        raise RealmAlreadyExistsError()
-
-    await conn.execute(
-        """
-INSERT INTO realm_user_role(
-    realm, user_, role
-)
-SELECT
-    $1,
-    get_user_internal_id($2, $3),
-    'OWNER'
-""",
-        realm_internal_id,
-        organization_id,
-        author.user_id,
-    )
-
-    await conn.execute(
-        """
-INSERT INTO vlob_encryption_revision (
-    realm,
-    encryption_revision
-)
-SELECT
-    $1,
-    1
-""",
-        realm_internal_id,
-    )
-
-    await send_signal(
-        conn,
-        "realm.roles_updated",
-        organization_id=organization_id,
-        author=author,
-        realm_id=realm_id,
-        user=author.user_id,
-        role_str=RealmRole.OWNER.value,
-    )
 
 
 async def get_realm_status(conn, organization_id, realm_id):
@@ -106,47 +47,133 @@ WHERE _id = get_realm_internal_id($1, $2)
 
 
 async def get_realm_role_for(conn, organization_id, realm_id, users=None):
-    rep = await conn.fetch(
-        """
-WITH cte_users AS (
-SELECT
-    _id,
-    user_id
+    if users:
+        rep = await conn.fetch(
+            """
+WITH cte_current_realm_roles AS (
+    SELECT DISTINCT ON(user_) user_, role
+    FROM  realm_user_role
+    WHERE realm = get_realm_internal_id($1, $2)
+    ORDER BY user_, certified_on DESC
+)
+SELECT user_.user_id as realm_id, role
 FROM user_
+LEFT JOIN cte_current_realm_roles
+ON user_._id = cte_current_realm_roles.user_
 WHERE
     organization = get_organization_internal_id($1)
-),
-cte_realm_roles AS (
-SELECT
-    user_,
-    role
-FROM realm_user_role
-WHERE
-    realm = get_realm_internal_id($1, $2)
-)
-SELECT
-cte_users.user_id,
-cte_realm_roles.role
-FROM cte_users
-LEFT JOIN cte_realm_roles
-ON cte_users._id = cte_realm_roles.user_
-        """,
-        organization_id,
-        realm_id,
-    )
-    roles = {row["user_id"]: _STR_TO_ROLE.get(row["role"]) for row in rep}
-    for user in users or ():
-        if user not in roles:
-            raise RealmNotFoundError(f"User `{user}` doesn't exist")
-    if users:
-        return {user_id: role for user_id, role in roles.items() if user_id in users}
+    AND user_.user_id = ANY($3::VARCHAR[])
+""",
+            organization_id,
+            realm_id,
+            users,
+        )
+        roles = {
+            row["realm_id"]: _STR_TO_ROLE[row["role"]] if row["role"] is not None else None
+            for row in rep
+        }
+        for user in users or ():
+            if user not in roles:
+                raise RealmNotFoundError(f"User `{user}` doesn't exist")
+        return roles
+
     else:
-        return {user_id: role for user_id, role in roles.items() if role}
+        rep = await conn.fetch(
+            """
+SELECT DISTINCT ON(user_) get_user_id(user_) as realm_id, role
+FROM  realm_user_role
+WHERE realm = get_realm_internal_id($1, $2)
+ORDER BY user_, certified_on DESC
+""",
+            organization_id,
+            realm_id,
+        )
+
+        return {
+            row["realm_id"]: _STR_TO_ROLE[row["role"]] for row in rep if row["role"] is not None
+        }
 
 
 class PGRealmComponent(BaseRealmComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
+
+    async def create(
+        self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole
+    ) -> None:
+        assert self_granted_role.granted_by.user_id == self_granted_role.user_id
+        assert self_granted_role.role == RealmRole.OWNER
+
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                realm_internal_id = await conn.fetchval(
+                    """
+INSERT INTO realm (
+    organization,
+    realm_id,
+    encryption_revision
+) SELECT
+    get_organization_internal_id($1),
+    $2,
+    1
+ON CONFLICT (organization, realm_id) DO NOTHING
+RETURNING
+    _id
+""",
+                    organization_id,
+                    self_granted_role.realm_id,
+                )
+                if not realm_internal_id:
+                    raise RealmAlreadyExistsError()
+
+                await conn.execute(
+                    """
+INSERT INTO realm_user_role(
+    realm,
+    user_,
+    role,
+    certificate,
+    certified_by,
+    certified_on
+)
+SELECT
+    $1,
+    get_user_internal_id($2, $3),
+    'OWNER',
+    $4,
+    get_device_internal_id($2, $5),
+    $6
+""",
+                    realm_internal_id,
+                    organization_id,
+                    self_granted_role.user_id,
+                    self_granted_role.certificate,
+                    self_granted_role.granted_by,
+                    self_granted_role.granted_on,
+                )
+
+                await conn.execute(
+                    """
+INSERT INTO vlob_encryption_revision (
+    realm,
+    encryption_revision
+)
+SELECT
+    $1,
+    1
+""",
+                    realm_internal_id,
+                )
+
+                await send_signal(
+                    conn,
+                    "realm.roles_updated",
+                    organization_id=organization_id,
+                    author=self_granted_role.granted_by,
+                    realm_id=self_granted_role.realm_id,
+                    user=self_granted_role.user_id,
+                    role_str=self_granted_role.role.value,
+                )
 
     async def get_status(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
@@ -188,12 +215,10 @@ WHERE _id = get_realm_internal_id($1, $2)
             async with conn.transaction():
                 ret = await conn.fetch(
                     """
-SELECT
-    get_user_id(user_),
-    role
-FROM realm_user_role
-WHERE
-    realm = get_realm_internal_id($1, $2)
+SELECT DISTINCT ON(user_) get_user_id(user_), role
+FROM  realm_user_role
+WHERE realm = get_realm_internal_id($1, $2)
+ORDER BY user_, certified_on DESC
 """,
                     organization_id,
                     realm_id,
@@ -202,89 +227,82 @@ WHERE
                 if not ret:
                     # Existing group must have at least one owner user
                     raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
-                roles = {UserID(user_id): _STR_TO_ROLE[role] for user_id, role in ret}
+                roles = {
+                    UserID(user_id): _STR_TO_ROLE[role] for user_id, role in ret if role is not None
+                }
                 if author.user_id not in roles:
                     raise RealmAccessError()
 
         return roles
 
     async def update_roles(
-        self,
-        organization_id: OrganizationID,
-        author: UserID,
-        realm_id: UUID,
-        user: UserID,
-        role: Optional[RealmRole],
+        self, organization_id: OrganizationID, new_role: RealmGrantedRole
     ) -> None:
-        if author.user_id == user:
+        if new_role.granted_by.user_id == new_role.user_id:
             raise RealmAccessError("Cannot modify our own role")
 
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
                 # Retrieve realm and make sure it is not under maintenance
-                rep = await get_realm_status(conn, organization_id, realm_id)
+                rep = await get_realm_status(conn, organization_id, new_role.realm_id)
                 if rep["maintenance_type"]:
                     raise RealmInMaintenanceError("Data realm is currently under maintenance")
 
                 # Check access rights
                 roles = await get_realm_role_for(
-                    conn, organization_id, realm_id, (author.user_id, user)
+                    conn,
+                    organization_id,
+                    new_role.realm_id,
+                    (new_role.granted_by.user_id, new_role.user_id),
                 )
-                author_role = roles[author.user_id]
-                existing_user_role = roles[user]
+                author_role = roles[new_role.granted_by.user_id]
+                existing_user_role = roles[new_role.user_id]
 
-                if existing_user_role in (RealmRole.MANAGER, RealmRole.OWNER):
-                    needed_roles = (RealmRole.OWNER,)
+                owner_only = (RealmRole.OWNER,)
+                owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+                if existing_user_role in owner_or_manager or new_role.role in owner_or_manager:
+                    needed_roles = owner_only
                 else:
-                    needed_roles = (RealmRole.MANAGER, RealmRole.OWNER)
+                    needed_roles = owner_or_manager
 
                 if author_role not in needed_roles:
                     raise RealmAccessError()
 
-                # Do the changes
-                if not role:
-                    await conn.execute(
-                        """
-DELETE FROM realm_user_role
-WHERE
-    user_ = get_user_internal_id($1, $3)
-    AND realm = get_realm_internal_id($1, $2)
-                        """,
-                        organization_id,
-                        realm_id,
-                        user,
-                    )
-                else:
-                    await conn.execute(
-                        """
+                await conn.execute(
+                    """
 INSERT INTO realm_user_role(
     realm,
     user_,
-    role
+    role,
+    certificate,
+    certified_by,
+    certified_on
 ) SELECT
     get_realm_internal_id($1, $2),
     get_user_internal_id($1, $3),
-    $4
-ON CONFLICT (realm, user_)
-DO UPDATE
-SET
-    role = excluded.role
+    $4,
+    $5,
+    get_device_internal_id($1, $6),
+    $7
 """,
-                        organization_id,
-                        realm_id,
-                        user,
-                        role.value,
-                    )
+                    organization_id,
+                    new_role.realm_id,
+                    new_role.user_id,
+                    new_role.role.value if new_role.role else None,
+                    new_role.certificate,
+                    new_role.granted_by,
+                    new_role.granted_on,
+                )
 
                 await send_signal(
                     conn,
                     "realm.roles_updated",
                     organization_id=organization_id,
-                    author=author,
-                    realm_id=realm_id,
-                    user=user,
-                    role_str=role.value if role else None,
+                    author=new_role.granted_by,
+                    realm_id=new_role.realm_id,
+                    user=new_role.user_id,
+                    role_str=new_role.role.value if new_role.role else None,
                 )
 
     async def start_reencryption_maintenance(
@@ -442,11 +460,14 @@ WHERE
         async with self.dbh.pool.acquire() as conn:
             rep = await conn.fetch(
                 """
-SELECT get_realm_id(realm) as realm_id, role
-FROM realm_user_role
+SELECT DISTINCT ON(realm) get_realm_id(realm) as realm_id, role
+FROM  realm_user_role
 WHERE user_ = get_user_internal_id($1, $2)
+ORDER BY realm, certified_on DESC
 """,
                 organization_id,
                 user,
             )
-        return {row["realm_id"]: _STR_TO_ROLE.get(row["role"]) for row in rep}
+        return {
+            row["realm_id"]: _STR_TO_ROLE.get(row["role"]) for row in rep if row["role"] is not None
+        }

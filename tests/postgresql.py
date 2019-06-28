@@ -17,21 +17,16 @@ def _patch_url_if_xdist(url):
         return url
 
 
-def _execute_pg_query(url, query):
-    async def _execute_query():
-        conn = await asyncpg.connect(url)
-        if callable(query):
-            await query(conn)
-        else:
-            await conn.execute(query)
-        await conn.close()
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(_execute_query())
-
-
 _pg_db_url = None
+
+
+async def _execute_pg_query(url, query):
+    conn = await asyncpg.connect(url)
+    if callable(query):
+        await query(conn)
+    else:
+        await conn.execute(query)
+    await conn.close()
 
 
 def bootstrap_postgresql_testbed():
@@ -53,12 +48,13 @@ def bootstrap_postgresql_testbed():
     # - Most important: a trio loop is potentially already started inside this
     #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
     #   another thread just to run the new trio loop.
-    _execute_pg_query(_pg_db_url, _init_db)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_execute_pg_query(_pg_db_url, _init_db))
 
 
-def reset_postgresql_testbed():
-    # Cleanup the db tables from previous tests
-    _execute_pg_query(
+async def asyncio_reset_postgresql_testbed():
+    await _execute_pg_query(
         _pg_db_url,
         """
 TRUNCATE TABLE
@@ -82,6 +78,12 @@ TRUNCATE TABLE
 RESTART IDENTITY CASCADE
 """,
     )
+
+
+def reset_postgresql_testbed():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(asyncio_reset_postgresql_testbed())
 
 
 def get_postgresql_url():

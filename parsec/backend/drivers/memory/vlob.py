@@ -9,11 +9,7 @@ from collections import defaultdict
 from parsec.types import DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.api.protocole import RealmRole
-from parsec.backend.drivers.memory.realm import (
-    MemoryRealmComponent,
-    RealmNotFoundError,
-    RealmAlreadyExistsError,
-)
+from parsec.backend.drivers.memory.realm import MemoryRealmComponent, RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -136,12 +132,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
-    def _create_realm_if_needed(self, organization_id, realm_id, author):
-        try:
-            self._realm_component._create_realm(organization_id, realm_id, author)
-        except RealmAlreadyExistsError:
-            pass
-
     def _check_realm_read_access(self, organization_id, realm_id, user_id, encryption_revision):
         can_read_roles = (
             RealmRole.OWNER,
@@ -223,8 +213,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: pendulum.Pendulum,
         blob: bytes,
     ) -> None:
-        self._create_realm_if_needed(organization_id, realm_id, author)
-
         self._check_realm_write_access(
             organization_id, realm_id, author.user_id, encryption_revision
         )

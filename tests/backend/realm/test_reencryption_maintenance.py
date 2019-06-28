@@ -5,6 +5,7 @@ import trio
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocole import RealmRole, MaintenanceType
+from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
 from tests.backend.test_message import message_get
@@ -39,7 +40,14 @@ async def test_start_bad_timestamp(backend, alice_backend_sock, realm):
 async def test_start_bad_per_participant_message(backend, alice_backend_sock, alice, bob, realm):
     # Add bob for more fun !
     await backend.realm.update_roles(
-        alice.organization_id, alice.device_id, realm, bob.user_id, RealmRole.READER
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=RealmRole.READER,
+            granted_by=alice.device_id,
+        ),
     )
 
     for msg in [
@@ -61,7 +69,14 @@ async def test_start_send_message_to_participants(
     backend, alice, bob, alice_backend_sock, bob_backend_sock, realm
 ):
     await backend.realm.update_roles(
-        alice.organization_id, alice.device_id, realm, bob.user_id, RealmRole.READER
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=RealmRole.READER,
+            granted_by=alice.device_id,
+        ),
     )
 
     with freeze_time("2000-01-02"):
@@ -131,7 +146,14 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
     # User part of the realm with various role
     for not_allowed_role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER):
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, not_allowed_role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"<dummy>",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=not_allowed_role,
+                granted_by=alice.device_id,
+            ),
         )
 
         rep = await realm_start_reencryption_maintenance(
@@ -146,7 +168,14 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
 
     # Finally, just make sure owner can do it
     await backend.realm.update_roles(
-        alice.organization_id, alice.device_id, realm, bob.user_id, RealmRole.OWNER
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=RealmRole.OWNER,
+            granted_by=alice.device_id,
+        ),
     )
 
     rep = await realm_start_reencryption_maintenance(
@@ -258,7 +287,14 @@ async def test_reencrypt_and_finish_check_access_rights(
     start_reencryption_msgs["bob"] = b"bar"
     for not_allowed_role in (RealmRole.READER, RealmRole.CONTRIBUTOR, RealmRole.MANAGER):
         await backend.realm.update_roles(
-            alice.organization_id, alice.device_id, realm, bob.user_id, not_allowed_role
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"<dummy>",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=not_allowed_role,
+                granted_by=alice.device_id,
+            ),
         )
         await _ready_to_finish()
         await _assert_bob_maintenance_access(allowed=False)
@@ -266,7 +302,14 @@ async def test_reencrypt_and_finish_check_access_rights(
 
     # Finally, just make sure owner can do it
     await backend.realm.update_roles(
-        alice.organization_id, alice.device_id, realm, bob.user_id, RealmRole.OWNER
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=RealmRole.OWNER,
+            granted_by=alice.device_id,
+        ),
     )
     await _ready_to_finish()
     await _assert_bob_maintenance_access(allowed=True)

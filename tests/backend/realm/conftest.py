@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from uuid import UUID
+from uuid import UUID, uuid4
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocole import (
+    RealmRole,
+    realm_create_serializer,
     realm_status_serializer,
     realm_get_roles_serializer,
     realm_update_roles_serializer,
@@ -18,11 +20,26 @@ from parsec.api.protocole import (
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
+from parsec.backend.realm import RealmGrantedRole
+from parsec.crypto import build_realm_self_role_certificate
 
 
 VLOB_ID = UUID("10000000000000000000000000000000")
 REALM_ID = UUID("20000000000000000000000000000000")
 OTHER_VLOB_ID = UUID("30000000000000000000000000000000")
+
+
+async def realm_create(sock, role_certificate, check_rep=True):
+    raw_rep = await sock.send(
+        realm_create_serializer.req_dumps(
+            {"cmd": "realm_create", "role_certificate": role_certificate}
+        )
+    )
+    raw_rep = await sock.recv()
+    rep = realm_create_serializer.rep_loads(raw_rep)
+    if check_rep:
+        assert rep == {"status": "ok"}
+    return rep
 
 
 async def realm_status(sock, realm_id):
@@ -41,14 +58,27 @@ async def realm_get_roles(sock, realm_id):
     return realm_get_roles_serializer.rep_loads(raw_rep)
 
 
-async def realm_update_roles(sock, realm_id, user, role):
+async def realm_get_role_certificates(sock, realm_id):
     raw_rep = await sock.send(
-        realm_update_roles_serializer.req_dumps(
-            {"cmd": "realm_update_roles", "realm_id": realm_id, "user": user, "role": role}
+        realm_get_roles_serializer.req_dumps(
+            {"cmd": "realm_get_role_certificates", "realm_id": realm_id}
         )
     )
     raw_rep = await sock.recv()
-    return realm_update_roles_serializer.rep_loads(raw_rep)
+    return realm_get_roles_serializer.rep_loads(raw_rep)
+
+
+async def realm_update_roles(sock, role_certificate, check_rep=True):
+    raw_rep = await sock.send(
+        realm_update_roles_serializer.req_dumps(
+            {"cmd": "realm_update_roles", "role_certificate": role_certificate}
+        )
+    )
+    raw_rep = await sock.recv()
+    rep = realm_update_roles_serializer.rep_loads(raw_rep)
+    if check_rep:
+        assert rep == {"status": "ok"}
+    return rep
 
 
 async def realm_start_reencryption_maintenance(
@@ -207,25 +237,49 @@ async def vlob_maintenance_save_reencryption_batch(
 
 
 @pytest.fixture
-async def realm(backend, alice):
-    realm_id = UUID("A0000000000000000000000000000000")
-    vlob_id = UUID("10000000000000000000000000000000")
+def realm_factory():
+    async def _realm_factory(backend, author, realm_id=None, now=None):
+        realm_id = realm_id or uuid4()
+        now = now or pendulum_now()
+        certif = build_realm_self_role_certificate(
+            author.device_id, author.signing_key, realm_id, now
+        )
+        with backend.event_bus.listen() as spy:
+            await backend.realm.create(
+                organization_id=author.organization_id,
+                self_granted_role=RealmGrantedRole(
+                    realm_id=realm_id,
+                    user_id=author.user_id,
+                    certificate=certif,
+                    role=RealmRole.OWNER,
+                    granted_by=author.device_id,
+                    granted_on=now,
+                ),
+            )
+            await spy.wait_with_timeout("realm.roles_updated")
+        return realm_id
 
-    await backend.vlob.create(
-        organization_id=alice.organization_id,
-        author=alice.device_id,
-        realm_id=realm_id,
-        encryption_revision=1,
-        vlob_id=vlob_id,
-        timestamp=Pendulum(2000, 1, 2),
-        blob=b"r:A b:1 v:1",
-    )
-    return realm_id
+    return _realm_factory
+
+
+@pytest.fixture
+async def realm(backend, alice, realm_factory):
+    realm_id = UUID("A0000000000000000000000000000000")
+    return await realm_factory(backend, alice, realm_id, Pendulum(2000, 1, 2))
 
 
 @pytest.fixture
 async def vlobs(backend, alice, realm):
     vlob_ids = (UUID("10000000000000000000000000000000"), UUID("20000000000000000000000000000000"))
+    await backend.vlob.create(
+        organization_id=alice.organization_id,
+        author=alice.device_id,
+        realm_id=realm,
+        encryption_revision=1,
+        vlob_id=vlob_ids[0],
+        timestamp=Pendulum(2000, 1, 2),
+        blob=b"r:A b:1 v:1",
+    )
     await backend.vlob.update(
         organization_id=alice.organization_id,
         author=alice.device_id,
@@ -253,17 +307,12 @@ async def vlob_atoms(vlobs):
 
 
 @pytest.fixture
-async def other_realm(backend, bob):
+async def other_realm(backend, alice, realm_factory):
     realm_id = UUID("B0000000000000000000000000000000")
-    vlob_id = UUID("30000000000000000000000000000000")
+    return await realm_factory(backend, alice, realm_id, Pendulum(2000, 1, 2))
 
-    await backend.vlob.create(
-        organization_id=bob.organization_id,
-        author=bob.device_id,
-        realm_id=realm_id,
-        encryption_revision=1,
-        vlob_id=vlob_id,
-        timestamp=Pendulum(2000, 1, 2),
-        blob=b"r:B b:10 v:1",
-    )
-    return realm_id
+
+@pytest.fixture
+async def bob_realm(backend, bob, realm_factory):
+    realm_id = UUID("C0000000000000000000000000000000")
+    return await realm_factory(backend, bob, realm_id, Pendulum(2000, 1, 2))

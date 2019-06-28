@@ -236,7 +236,10 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-async def test_fuzz_core(running_backend, alice_core):
+async def test_fuzz_core(request, running_backend, alice_core):
+    if request.config.getoption("--postgresql"):
+        pytest.skip("TODO: Postgresql concurrency not handled yet :'(")
+
     await trio.sleep(0.1)  # Somehow fixes the test
     wid = await alice_core.user_fs.workspace_create("w")
     workspace = alice_core.user_fs.get_workspace(wid)

@@ -29,9 +29,11 @@ CREATE TABLE realm_user_role (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    role realm_role NOT NULL,
-
-    UNIQUE(realm, user_)
+    -- NULL if access revocation
+    role realm_role,
+    certificate BYTEA NOT NULL,
+    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL
 );
 
 

@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+from uuid import UUID
 from typing import Optional
 from pendulum import Pendulum
 
 from parsec.types import DeviceID, UserID
+from parsec.api.protocole.realm import RealmRole, RealmRoleField
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.crypto_types import SigningKey, VerifyKey, PublicKey
 from parsec.crypto.exceptions import CryptoWrappedMsgPackingError, CryptoWrappedMsgValidationError
@@ -37,6 +39,13 @@ class CertifiedDeviceRevokedSchema(UnknownCheckedSchema):
     device_id = fields.DeviceID(required=True)
 
 
+class CertifiedRealmRoleSchema(UnknownCheckedSchema):
+    type = fields.CheckedConstant("user", required=True)
+    realm_id = fields.UUID(required=True)
+    user_id = fields.UserID(required=True)
+    role = RealmRoleField(allow_none=True, missing=None)
+
+
 device_certificate_schema = Serializer(
     CertifiedDeviceSchema,
     validation_exc=CryptoWrappedMsgValidationError,
@@ -49,6 +58,11 @@ user_certificate_schema = Serializer(
 )
 revoked_device_certificate_schema = Serializer(
     CertifiedDeviceRevokedSchema,
+    validation_exc=CryptoWrappedMsgValidationError,
+    packing_exc=CryptoWrappedMsgPackingError,
+)
+realm_role_certificate_schema = Serializer(
+    CertifiedRealmRoleSchema,
     validation_exc=CryptoWrappedMsgValidationError,
     packing_exc=CryptoWrappedMsgPackingError,
 )
@@ -74,6 +88,15 @@ class CertifiedUserData:
     user_id: DeviceID
     public_key: VerifyKey
     is_admin: bool
+    certified_by: DeviceID
+    certified_on: Pendulum
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class CertifiedRealmRoleData:
+    realm_id: UUID
+    user_id: UserID
+    role: Optional[RealmRole]
     certified_by: DeviceID
     certified_on: Pendulum
 
@@ -135,6 +158,27 @@ def verify_user_certificate(
     )
 
 
+def verify_realm_role_certificate(
+    realm_role_certificate: bytes, expected_author_id: DeviceID, author_verify_key: VerifyKey
+) -> CertifiedRealmRoleData:
+    """
+    Raises:
+        CryptoError: if signature was forged or otherwise corrupt.
+        CryptoWrappedMsgValidationError
+        CryptoWrappedMsgPackingError
+        CryptoSignatureAuthorMismatchError
+        CryptoSignatureTimestampMismatchError
+    """
+    _, timestamp = unsecure_extract_signed_msg_meta(realm_role_certificate)
+    content = verify_signed_msg(
+        realm_role_certificate, expected_author_id, author_verify_key, timestamp
+    )
+    data = realm_role_certificate_schema.loads(content)
+    return CertifiedRealmRoleData(
+        data["realm_id"], data["user_id"], data["role"], expected_author_id, timestamp
+    )
+
+
 def unsecure_read_device_certificate(device_certificate: bytes) -> CertifiedDeviceData:
     """
     Raises:
@@ -184,6 +228,24 @@ def unsecure_read_user_certificate(user_certificate: bytes) -> CertifiedUserData
         user_id=data["user_id"],
         public_key=data["public_key"],
         is_admin=data["is_admin"],
+        certified_by=certified_by,
+        certified_on=certified_on,
+    )
+
+
+def unsecure_read_realm_role_certificate(realm_role_certificate: bytes) -> CertifiedRealmRoleData:
+    """
+    Raises:
+        CryptoWrappedMsgValidationError
+        CryptoWrappedMsgPackingError
+    """
+    certified_by, certified_on, content = unsecure_extract_signed_msg_meta_and_data(
+        realm_role_certificate
+    )
+    data = user_certificate_schema.loads(content)
+    return CertifiedRealmRoleData(
+        user_id=data["user_id"],
+        role=data["role"],
         certified_by=certified_by,
         certified_on=certified_on,
     )
@@ -244,3 +306,42 @@ def build_user_certificate(
         {"type": "user", "user_id": user_id, "public_key": public_key, "is_admin": is_admin}
     )
     return build_signed_msg(certifier_id, certifier_key, content, timestamp)
+
+
+def build_realm_role_certificate(
+    certifier_id: DeviceID,
+    certifier_key: SigningKey,
+    realm_id: UUID,
+    user_id: UserID,
+    role: RealmRole,
+    timestamp: Pendulum,
+) -> bytes:
+    """
+    Raises:
+        CryptoError: if the signature operation fails.
+        CryptoWrappedMsgValidationError
+        CryptoWrappedMsgPackingError
+    """
+    content = realm_role_certificate_schema.dumps(
+        {"type": "user", "realm_id": realm_id, "user_id": user_id, "role": role}
+    )
+    return build_signed_msg(certifier_id, certifier_key, content, timestamp)
+
+
+def build_realm_self_role_certificate(
+    self_id: DeviceID, self_key: SigningKey, realm_id: UUID, timestamp: Pendulum
+) -> bytes:
+    """
+    Raises:
+        CryptoError: if the signature operation fails.
+        CryptoWrappedMsgValidationError
+        CryptoWrappedMsgPackingError
+    """
+    return build_realm_role_certificate(
+        certifier_id=self_id,
+        certifier_key=self_key,
+        realm_id=realm_id,
+        user_id=self_id.user_id,
+        role=RealmRole.OWNER,
+        timestamp=timestamp,
+    )

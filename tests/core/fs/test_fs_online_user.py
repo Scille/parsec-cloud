@@ -7,7 +7,7 @@ from hypothesis_trio.stateful import (
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioRuleBasedStateMachine,
+    TrioAsyncioRuleBasedStateMachine,
     Bundle,
 )
 from string import ascii_lowercase
@@ -24,6 +24,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_online_user(
     hypothesis_settings,
+    reset_testbed,
     backend_addr,
     backend_factory,
     server_factory,
@@ -32,7 +33,7 @@ def test_fs_online_user(
     user_fs_factory,
     alice,
 ):
-    class FSOfflineUser(TrioRuleBasedStateMachine):
+    class FSOfflineUser(TrioAsyncioRuleBasedStateMachine):
         Workspaces = Bundle("workspace")
 
         async def restart_user_fs(self, device, local_storage):
@@ -61,6 +62,7 @@ def test_fs_online_user(
 
         @initialize()
         async def init(self):
+            await reset_testbed()
             self.device = alice
             self.local_storage = local_storage_factory(self.device)
             self.oracle_fs = oracle_fs_with_sync_factory()

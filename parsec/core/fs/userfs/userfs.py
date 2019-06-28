@@ -8,6 +8,8 @@ from structlog import get_logger
 from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
 from parsec.crypto import (
+    build_realm_self_role_certificate,
+    build_realm_role_certificate,
     encrypt_signed_msg_for,
     decrypt_and_verify_signed_msg_for,
     encrypt_signed_msg_with_secret_key,
@@ -33,6 +35,7 @@ from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.backend_connection import (
     BackendCmdsPool,
     BackendNotAvailable,
+    BackendCmdsBadResponse,
     BackendCmdsNotAllowed,
     BackendCmdsAlreadyExists,
     BackendCmdsBadVersion,
@@ -342,6 +345,33 @@ class UserFS:
         if not base_um.need_sync:
             return
 
+        # Make sure the corresponding realm has been created in the backend
+        if base_um.is_placeholder:
+            certif = build_realm_self_role_certificate(
+                self.device.device_id,
+                self.device.signing_key,
+                self.device.user_manifest_id,
+                pendulum_now(),
+            )
+
+            try:
+                await self.backend_cmds.realm_create(certif)
+
+            except BackendCmdsBadResponse as exc:
+                if exc.status == "already_exists":
+                    # It's possible a previous attempt to create this realm
+                    # succeeded but we didn't receive the confirmation, hence
+                    # we play idempotent here.
+                    pass
+                else:
+                    raise FSError(f"Cannot create user manifest's realm in backend: {exc}") from exc
+
+            except BackendNotAvailable as exc:
+                raise FSBackendOfflineError(str(exc)) from exc
+
+            except BackendConnectionError as exc:
+                raise FSError(f"Cannot create user manifest's realm in backend: {exc}") from exc
+
         # Sync placeholders
         for w in base_um.workspaces:
             await self._workspace_minimal_sync(w)
@@ -451,8 +481,16 @@ class UserFS:
         # given they are idempotent
 
         # Step 1)
+        role_certificate = build_realm_role_certificate(
+            certifier_id=self.device.device_id,
+            certifier_key=self.device.signing_key,
+            realm_id=workspace_id,
+            user_id=recipient,
+            role=role,
+            timestamp=pendulum_now(),
+        )
         try:
-            await self.backend_cmds.realm_update_roles(workspace_entry.id, recipient, role=role)
+            await self.backend_cmds.realm_update_roles(role_certificate)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
