@@ -1,18 +1,49 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import trio
 import pytest
+from unittest.mock import ANY
 import pendulum
 from uuid import UUID, uuid4
 
 from parsec.backend.block import BlockTimeoutError
 from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.raid5_blockstore import (
+    split_block_in_chunks,
+    generate_checksum_chunk,
+    rebuild_block_from_chunks,
+)
 from parsec.api.protocole import block_create_serializer, block_read_serializer, packb, RealmRole
+
+from hypothesis import given, strategies as st
 
 
 BLOCK_ID = UUID("00000000000000000000000000000001")
 VLOB_ID = UUID("00000000000000000000000000000002")
 BLOCK_DATA = b"Hodi ho !"
+
+
+@pytest.fixture
+def get_raid5_records_msg(caplog):
+    # Caplog doesn't works with logging configuration on windows
+    if os.name == "nt":
+
+        def _get_raid5_records_msg():
+            return ANY
+
+    else:
+
+        def _get_raid5_records_msg():
+            msgs = [
+                record.msg
+                for record in caplog.records
+                if isinstance(record.msg, dict)
+                and record.msg["logger"] == "parsec.backend.raid5_blockstore"
+            ]
+            return sorted(msgs, key=lambda msg: msg["event"])
+
+    return _get_raid5_records_msg
 
 
 @pytest.fixture
@@ -165,56 +196,77 @@ async def test_raid5_block_create_and_read(alice_backend_sock, realm):
 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
-async def test_raid5_block_create_partial_failure_0(alice_backend_sock, backend, realm):
-    await _test_raid5_block_create_partial_failure(alice_backend_sock, backend, realm, 0)
-
-
-@pytest.mark.trio
-@pytest.mark.raid5_blockstore
-async def test_raid5_block_create_partial_failure_1(alice_backend_sock, backend, realm):
-    await _test_raid5_block_create_partial_failure(alice_backend_sock, backend, realm, 1)
-
-
-@pytest.mark.trio
-@pytest.mark.raid5_blockstore
-async def test_raid5_block_create_partial_failure_2(alice_backend_sock, backend, realm):
-    await _test_raid5_block_create_partial_failure(alice_backend_sock, backend, realm, 2)
-
-
-async def _test_raid5_block_create_partial_failure(
-    alice_backend_sock, backend, realm, failing_blockstore_pos
+@pytest.mark.parametrize("failing_blockstore", (0, 1, 2))
+async def test_raid5_block_create_single_failure(
+    get_raid5_records_msg, alice_backend_sock, backend, realm, failing_blockstore
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
         raise BlockTimeoutError()
 
-    backend.blockstore.blockstores[failing_blockstore_pos].create = mock_create
+    backend.blockstore.blockstores[failing_blockstore].create = mock_create
+
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    assert rep == {"status": "ok"}
+
+    # Should be notified of blockstore malfunction
+    assert get_raid5_records_msg() == [
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "warning",
+            "timestamp": ANY,
+            "event": f"Cannot reach RAID5 blockstore #{failing_blockstore} to create block {BLOCK_ID}",
+            "exception": ANY,
+        }
+    ]
+
+
+@pytest.mark.trio
+@pytest.mark.raid5_blockstore
+@pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
+async def test_raid5_block_create_multiple_failure(
+    get_raid5_records_msg, alice_backend_sock, backend, realm, failing_blockstores
+):
+    async def mock_create(organization_id, id, block):
+        await trio.sleep(0)
+        raise BlockTimeoutError()
+
+    fb1, fb2 = failing_blockstores
+
+    backend.blockstore.blockstores[fb1].create = mock_create
+    backend.blockstore.blockstores[fb2].create = mock_create
 
     rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
     assert rep == {"status": "timeout"}
 
+    # Should be notified of blockstore malfunction
+    assert get_raid5_records_msg() == [
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "error",
+            "timestamp": ANY,
+            "event": f"Block {BLOCK_ID} cannot be created: Too many failing blockstores in the RAID5 cluster",
+        },
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "warning",
+            "timestamp": ANY,
+            "event": f"Cannot reach RAID5 blockstore #{fb1} to create block {BLOCK_ID}",
+            "exception": ANY,
+        },
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "warning",
+            "timestamp": ANY,
+            "event": f"Cannot reach RAID5 blockstore #{fb2} to create block {BLOCK_ID}",
+            "exception": ANY,
+        },
+    ]
+
 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
-async def test_raid5_block_create_partial_exists_0(alice_backend_sock, alice, backend, realm):
-    await _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm, 0)
-
-
-@pytest.mark.trio
-@pytest.mark.raid5_blockstore
-async def test_raid5_block_create_partial_exists_1(alice_backend_sock, alice, backend, realm):
-    await _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm, 1)
-
-
-@pytest.mark.trio
-@pytest.mark.raid5_blockstore
-async def test_raid5_block_create_partial_exists_2(alice_backend_sock, alice, backend, realm):
-    await _test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm, 2)
-
-
-async def _test_raid5_block_create_partial_exists(
-    alice_backend_sock, alice, backend, realm, failing_blockstore_pos
-):
+async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
     rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
@@ -223,33 +275,87 @@ async def _test_raid5_block_create_partial_exists(
 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
-async def test_raid5_block_read_partial_failure_0(alice_backend_sock, alice, backend, block):
-    await _test_raid5_block_read_partial_failure(alice_backend_sock, alice, backend, block, 0)
-
-
-@pytest.mark.trio
-@pytest.mark.raid5_blockstore
-async def test_raid5_block_read_partial_failure_1(alice_backend_sock, alice, backend, block):
-    await _test_raid5_block_read_partial_failure(alice_backend_sock, alice, backend, block, 1)
-
-
-@pytest.mark.trio
-@pytest.mark.raid5_blockstore
-async def test_raid5_block_read_partial_failure_2(alice_backend_sock, alice, backend, block):
-    await _test_raid5_block_read_partial_failure(alice_backend_sock, alice, backend, block, 2)
-
-
-async def _test_raid5_block_read_partial_failure(
-    alice_backend_sock, alice, backend, block, failing_blockstore_pos
+@pytest.mark.parametrize("failing_blockstore", (0, 1))  # Ignore checksum blockstore
+async def test_raid5_block_read_single_failure(
+    get_raid5_records_msg, alice_backend_sock, alice, backend, block, failing_blockstore
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
         raise BlockTimeoutError()
 
-    backend.blockstore.blockstores[failing_blockstore_pos].read = mock_read
+    backend.blockstore.blockstores[failing_blockstore].read = mock_read
 
     rep = await block_read(alice_backend_sock, block)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
+
+    # Should be notified of blockstore malfunction
+    assert get_raid5_records_msg() == [
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "warning",
+            "timestamp": ANY,
+            "event": f"Cannot reach RAID5 blockstore #{failing_blockstore} to read block {block}",
+            "exception": ANY,
+        }
+    ]
+
+
+@pytest.mark.trio
+@pytest.mark.raid5_blockstore
+@pytest.mark.parametrize("bad_chunk", (b"", b"too big"))
+async def test_raid5_block_read_single_invalid_chunk_size(
+    alice_backend_sock, alice, backend, block, bad_chunk
+):
+    async def mock_read(organization_id, id):
+        return bad_chunk
+
+    backend.blockstore.blockstores[1].read = mock_read
+
+    rep = await block_read(alice_backend_sock, block)
+    # A bad chunk result in a bad block, which should be detected by the client
+    assert rep == {"status": "ok", "block": ANY}
+
+
+@pytest.mark.trio
+@pytest.mark.raid5_blockstore
+@pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
+async def test_raid5_block_read_multiple_failure(
+    get_raid5_records_msg, alice_backend_sock, alice, backend, block, failing_blockstores
+):
+    async def mock_read(organization_id, id):
+        await trio.sleep(0)
+        raise BlockTimeoutError()
+
+    fb1, fb2 = failing_blockstores
+    backend.blockstore.blockstores[fb1].read = mock_read
+    backend.blockstore.blockstores[fb2].read = mock_read
+
+    rep = await block_read(alice_backend_sock, block)
+    assert rep == {"status": "timeout"}
+
+    # Should be notified of blockstore malfunction
+    assert get_raid5_records_msg() == [
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "error",
+            "timestamp": ANY,
+            "event": f"Block {block} cannot be read: Too many failing blockstores in the RAID5 cluster",
+        },
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "warning",
+            "timestamp": ANY,
+            "event": f"Cannot reach RAID5 blockstore #{fb1} to read block {block}",
+            "exception": ANY,
+        },
+        {
+            "logger": "parsec.backend.raid5_blockstore",
+            "level": "warning",
+            "timestamp": ANY,
+            "event": f"Cannot reach RAID5 blockstore #{fb2} to read block {block}",
+            "exception": ANY,
+        },
+    ]
 
 
 @pytest.mark.parametrize(
@@ -355,3 +461,24 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
 
     rep = await block_read(alice_backend_sock, block)
     assert rep == {"status": "in_maintenance"}
+
+
+@given(block=st.binary(max_size=2 ** 8), nb_blockstores=st.integers(min_value=3, max_value=16))
+def test_split_block(block, nb_blockstores):
+    nb_chunks = nb_blockstores - 1
+    chunks = split_block_in_chunks(block, nb_chunks)
+    assert len(chunks) == nb_chunks
+
+    chunk_size = len(chunks[0])
+    for chunk in chunks[1:]:
+        assert len(chunk) == chunk_size
+
+    rebuilt = rebuild_block_from_chunks(chunks, None)
+    assert rebuilt == block
+
+    checksum_chunk = generate_checksum_chunk(chunks)
+    for missing in range(len(chunks)):
+        partial_chunks = chunks.copy()
+        partial_chunks[missing] = None
+        rebuilt = rebuild_block_from_chunks(partial_chunks, checksum_chunk)
+        assert rebuilt == block
