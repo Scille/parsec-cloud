@@ -44,8 +44,8 @@ def rebuild_block_from_chunks(chunks: List[Optional[bytes]], checksum_chunk: byt
     valid_chunks = [chunk for chunk in chunks if chunk is not None]
     assert len(chunks) - len(valid_chunks) <= 1  # Cannot correct more than 1 chunk
     try:
-        missing_chunk_id = next(index for index, chunk in enumerate(chunks) if not chunk)
-        assert checksum_chunk
+        missing_chunk_id = next(index for index, chunk in enumerate(chunks) if chunk is None)
+        assert checksum_chunk is not None
         chunks[missing_chunk_id] = _xor_buffers(*valid_chunks, checksum_chunk)
     except StopIteration:
         pass

@@ -302,6 +302,22 @@ async def test_raid5_block_read_single_failure(
 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
+@pytest.mark.parametrize("bad_chunk", (b"", b"too big"))
+async def test_raid5_block_read_single_invalid_chunk_size(
+    alice_backend_sock, alice, backend, block, bad_chunk
+):
+    async def mock_read(organization_id, id):
+        return bad_chunk
+
+    backend.blockstore.blockstores[1].read = mock_read
+
+    rep = await block_read(alice_backend_sock, block)
+    # A bad chunk result in a bad block, which should be detected by the client
+    assert rep == {"status": "ok", "block": ANY}
+
+
+@pytest.mark.trio
+@pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_read_multiple_failure(
     get_raid5_records_msg, alice_backend_sock, alice, backend, block, failing_blockstores
