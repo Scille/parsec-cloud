@@ -20,7 +20,7 @@ build_script:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
   - which pg_config
   - pg_config --version
-  - choco install winfsp -y --version=1.4.19016
+  - choco install winfsp -y --version=1.4.19049
   - git --no-pager log -n2
   - echo %APPVEYOR_REPO_COMMIT%
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
