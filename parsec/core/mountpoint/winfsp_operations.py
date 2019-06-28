@@ -2,6 +2,7 @@
 
 from pathlib import PureWindowsPath
 from contextlib import contextmanager
+from trio import Cancelled, RunFinishedError
 from winfspy import (
     NTStatusError,
     BaseFileSystemOperations,
@@ -36,6 +37,11 @@ def translate_error():
 
     except OSError as exc:
         raise NTStatusError(posix_to_ntstatus(exc.errno)) from exc
+
+    except (Cancelled, RunFinishedError):
+        # WinFSP teardown operation doesn't make sure no concurrent operation
+        # are running
+        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE)
 
 
 def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):
