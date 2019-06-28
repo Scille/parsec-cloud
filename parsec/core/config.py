@@ -68,7 +68,7 @@ class CoreConfig:
 
     gui_last_device: Optional[str] = None
     gui_tray_enabled: bool = True
-    gui_language: Optional[str] = "en"
+    gui_language: Optional[str] = None
     gui_first_launch: bool = True
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-build/releases/latest"
@@ -93,7 +93,7 @@ def config_factory(
     ssl_certfile: str = None,
     gui_last_device: str = None,
     gui_tray_enabled: bool = True,
-    gui_language: str = "en",
+    gui_language: str = None,
     gui_first_launch: bool = True,
     gui_check_version_at_startup: bool = True,
     gui_workspace_color: bool = False,
