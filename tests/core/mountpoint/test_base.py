@@ -282,3 +282,37 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
 
         with pytest.raises(MountpointNotMounted):
             mountpoint_manager.get_path_in_mountpoint(wid2, FsPath("/foo.txt"))
+
+
+@pytest.mark.mountpoint
+def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch):
+    from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+
+    vanilla_entry_info = ThreadFSAccess.entry_info
+
+    def _entry_info_crash(self, path):
+        if str(path) == "/crash_me":
+            raise RuntimeError("Crashed !")
+        else:
+            return vanilla_entry_info(self, path)
+
+    monkeypatch.setattr(
+        "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.entry_info", _entry_info_crash
+    )
+
+    mountpoint_service.start()
+    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
+    with pytest.raises(OSError) as exc:
+        (mountpoint / "crash_me").stat()
+
+    if os.name == "nt":
+        assert exc.value.args == (22, "An internal error occurred")
+        caplog.assert_occured(
+            "[exception] mountpoint.request.unhandled_crash [parsec.core.mountpoint.winfsp_operations]"
+        )
+
+    else:
+        assert exc.value.args == (5, "Input/output error")
+        caplog.assert_occured(
+            "[exception] mountpoint.request.unhandled_crash [parsec.core.mountpoint.fuse_operations]"
+        )
