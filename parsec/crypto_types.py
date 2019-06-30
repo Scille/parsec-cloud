@@ -17,6 +17,10 @@ class SecretKey(bytes):
     def generate(cls) -> "SecretKey":
         return cls(random(SecretBox.KEY_SIZE))
 
+    def __repr__(self):
+        # Avoid leaking the key in logs
+        return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
+
 
 HashDigest = NewType("HashDigest", bytes)
 

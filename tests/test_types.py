@@ -9,7 +9,7 @@ from parsec.types import (
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
 )
-from parsec.crypto import SigningKey, export_root_verify_key
+from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
 
 
 def test_device_id():
@@ -90,3 +90,9 @@ def test_organization_bootstrap_addr_good(verify_key):
 def test_organization_bootstrap_addr_bad_value(url):
     with pytest.raises(ValueError):
         BackendOrganizationBootstrapAddr(url)
+
+
+@pytest.mark.parametrize("key_type", (SigningKey, PrivateKey, SecretKey))
+def test_keys_dont_leak_on_repr(key_type):
+    key = key_type.generate()
+    assert repr(key).startswith(f"<{key_type.__module__}.{key_type.__qualname__} object at ")
