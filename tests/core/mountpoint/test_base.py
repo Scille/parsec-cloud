@@ -6,7 +6,6 @@ from uuid import uuid4
 import trio
 import pytest
 from pathlib import Path, PurePath
-from unittest.mock import patch
 
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
@@ -20,27 +19,27 @@ from parsec.core.types import FsPath
 
 
 @pytest.mark.trio
-async def test_runner_not_available(alice_user_fs, event_bus):
+async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
-    with patch("parsec.core.mountpoint.manager.get_mountpoint_runner", return_value=None):
-        with pytest.raises(RuntimeError):
-            async with mountpoint_manager_factory(alice_user_fs, event_bus, base_mountpoint):
-                pass
+    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
+    with pytest.raises(RuntimeError):
+        async with mountpoint_manager_factory(alice_user_fs, event_bus, base_mountpoint):
+            pass
 
 
 @pytest.mark.trio
-async def test_mountpoint_disabled(alice_user_fs, event_bus):
+async def test_mountpoint_disabled(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
     wid = await alice_user_fs.workspace_create("/w")
 
-    with patch("parsec.core.mountpoint.manager.get_mountpoint_runner", return_value=None):
-        async with mountpoint_manager_factory(
-            alice_user_fs, event_bus, base_mountpoint, enabled=False
-        ) as mountpoint_manager:
-            with pytest.raises(MountpointDisabled):
-                await mountpoint_manager.mount_workspace(wid)
+    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint, enabled=False
+    ) as mountpoint_manager:
+        with pytest.raises(MountpointDisabled):
+            await mountpoint_manager.mount_workspace(wid)
 
 
 @pytest.mark.trio
