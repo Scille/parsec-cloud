@@ -36,7 +36,7 @@ def merge_workspace_entry(
         role = target.role
         role_cached_on = min(target.role_cached_on, diverged.role_cached_on)
 
-    elif target.role_cached_on >= diverged.role_cached_on:
+    elif target.role_cached_on > diverged.role_cached_on:
         role = target.role
         role_cached_on = target.role_cached_on
 
