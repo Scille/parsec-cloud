@@ -2,11 +2,13 @@
 
 import pytest
 import os
+import re
 import sys
 import attr
 import socket
 import contextlib
 from unittest.mock import patch
+import structlog
 import trio
 import trio_asyncio
 from async_generator import asynccontextmanager
@@ -14,7 +16,6 @@ import hypothesis
 from pathlib import Path
 
 from parsec.types import BackendAddr, OrganizationID
-from parsec.logging import configure_logging
 from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.mountpoint.manager import get_mountpoint_runner
@@ -81,16 +82,41 @@ def pytest_configure(config):
     patch_pytest_trio()
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
     os.environ.setdefault("TZ", "UTC")
-    # For some reason, Windows doesn't like our logging configuration and
-    # prevents pytest from capturing them properly.
-    if os.name != "nt":
-        configure_logging()
+    # Configure structlog to redirect everything in logging
+    structlog.configure(
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        processors=[
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.dev.ConsoleRenderer(),
+        ],
+    )
+    # Lock configuration
+    structlog.configure = lambda *args, **kwargs: None
+    # Add helper to caplog
+    patch_caplog()
     if config.getoption("--postgresql") and not is_xdist_master(config):
         bootstrap_postgresql_testbed()
     if config.getoption("--run-postgresql-cluster"):
         bootstrap_postgresql_testbed()
         input("Press enter when you're done with...")
         pytest.exit("bye")
+
+
+def patch_caplog():
+    from _pytest.logging import LogCaptureFixture
+
+    def _remove_colors(msg):
+        return re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]", "", str(msg))
+
+    def _assert_occured(self, log):
+        __tracebackhide__ = True
+        assert any([r for r in self.records if log in _remove_colors(r.msg)])
+
+    LogCaptureFixture.assert_occured = _assert_occured
 
 
 def patch_pytest_trio():
@@ -194,7 +220,7 @@ async def asyncio_loop():
     # When a ^C happens, trio send a Cancelled exception to each running
     # coroutine. We must protect this one to avoid deadlock if it is cancelled
     # before another coroutine that uses trio-asyncio.
-    with trio.open_cancel_scope(shield=True):
+    with trio.CancelScope(shield=True):
         async with trio_asyncio.open_loop() as loop:
             yield loop
 

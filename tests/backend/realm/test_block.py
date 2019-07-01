@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import trio
 import pytest
 from unittest.mock import ANY
@@ -22,28 +21,6 @@ from hypothesis import given, strategies as st
 BLOCK_ID = UUID("00000000000000000000000000000001")
 VLOB_ID = UUID("00000000000000000000000000000002")
 BLOCK_DATA = b"Hodi ho !"
-
-
-@pytest.fixture
-def get_raid5_records_msg(caplog):
-    # Caplog doesn't works with logging configuration on windows
-    if os.name == "nt":
-
-        def _get_raid5_records_msg():
-            return ANY
-
-    else:
-
-        def _get_raid5_records_msg():
-            msgs = [
-                record.msg
-                for record in caplog.records
-                if isinstance(record.msg, dict)
-                and record.msg["logger"] == "parsec.backend.raid5_blockstore"
-            ]
-            return sorted(msgs, key=lambda msg: msg["event"])
-
-    return _get_raid5_records_msg
 
 
 @pytest.fixture
@@ -198,7 +175,7 @@ async def test_raid5_block_create_and_read(alice_backend_sock, realm):
 @pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstore", (0, 1, 2))
 async def test_raid5_block_create_single_failure(
-    get_raid5_records_msg, alice_backend_sock, backend, realm, failing_blockstore
+    caplog, alice_backend_sock, backend, realm, failing_blockstore
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
@@ -210,22 +187,17 @@ async def test_raid5_block_create_single_failure(
     assert rep == {"status": "ok"}
 
     # Should be notified of blockstore malfunction
-    assert get_raid5_records_msg() == [
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "warning",
-            "timestamp": ANY,
-            "event": f"Cannot reach RAID5 blockstore #{failing_blockstore} to create block {BLOCK_ID}",
-            "exception": ANY,
-        }
-    ]
+    caplog.assert_occured(
+        f"[warning  ] Cannot reach RAID5 blockstore #{failing_blockstore} to "
+        f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
+    )
 
 
 @pytest.mark.trio
 @pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_create_multiple_failure(
-    get_raid5_records_msg, alice_backend_sock, backend, realm, failing_blockstores
+    caplog, alice_backend_sock, backend, realm, failing_blockstores
 ):
     async def mock_create(organization_id, id, block):
         await trio.sleep(0)
@@ -240,28 +212,18 @@ async def test_raid5_block_create_multiple_failure(
     assert rep == {"status": "timeout"}
 
     # Should be notified of blockstore malfunction
-    assert get_raid5_records_msg() == [
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "error",
-            "timestamp": ANY,
-            "event": f"Block {BLOCK_ID} cannot be created: Too many failing blockstores in the RAID5 cluster",
-        },
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "warning",
-            "timestamp": ANY,
-            "event": f"Cannot reach RAID5 blockstore #{fb1} to create block {BLOCK_ID}",
-            "exception": ANY,
-        },
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "warning",
-            "timestamp": ANY,
-            "event": f"Cannot reach RAID5 blockstore #{fb2} to create block {BLOCK_ID}",
-            "exception": ANY,
-        },
-    ]
+    caplog.assert_occured(
+        f"[warning  ] Cannot reach RAID5 blockstore #{fb1} to "
+        f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
+    )
+    caplog.assert_occured(
+        f"[warning  ] Cannot reach RAID5 blockstore #{fb2} to "
+        f"create block {BLOCK_ID} [parsec.backend.raid5_blockstore]"
+    )
+    caplog.assert_occured(
+        f"[error    ] Block {BLOCK_ID} cannot be created: Too many failing "
+        "blockstores in the RAID5 cluster [parsec.backend.raid5_blockstore]"
+    )
 
 
 @pytest.mark.trio
@@ -277,7 +239,7 @@ async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, back
 @pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstore", (0, 1))  # Ignore checksum blockstore
 async def test_raid5_block_read_single_failure(
-    get_raid5_records_msg, alice_backend_sock, alice, backend, block, failing_blockstore
+    caplog, alice_backend_sock, alice, backend, block, failing_blockstore
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
@@ -289,15 +251,10 @@ async def test_raid5_block_read_single_failure(
     assert rep == {"status": "ok", "block": BLOCK_DATA}
 
     # Should be notified of blockstore malfunction
-    assert get_raid5_records_msg() == [
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "warning",
-            "timestamp": ANY,
-            "event": f"Cannot reach RAID5 blockstore #{failing_blockstore} to read block {block}",
-            "exception": ANY,
-        }
-    ]
+    caplog.assert_occured(
+        f"[warning  ] Cannot reach RAID5 blockstore #{failing_blockstore} to "
+        f"read block {block} [parsec.backend.raid5_blockstore]"
+    )
 
 
 @pytest.mark.trio
@@ -320,7 +277,7 @@ async def test_raid5_block_read_single_invalid_chunk_size(
 @pytest.mark.raid5_blockstore
 @pytest.mark.parametrize("failing_blockstores", [(0, 1), (0, 2)])
 async def test_raid5_block_read_multiple_failure(
-    get_raid5_records_msg, alice_backend_sock, alice, backend, block, failing_blockstores
+    caplog, alice_backend_sock, alice, backend, block, failing_blockstores
 ):
     async def mock_read(organization_id, id):
         await trio.sleep(0)
@@ -334,28 +291,18 @@ async def test_raid5_block_read_multiple_failure(
     assert rep == {"status": "timeout"}
 
     # Should be notified of blockstore malfunction
-    assert get_raid5_records_msg() == [
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "error",
-            "timestamp": ANY,
-            "event": f"Block {block} cannot be read: Too many failing blockstores in the RAID5 cluster",
-        },
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "warning",
-            "timestamp": ANY,
-            "event": f"Cannot reach RAID5 blockstore #{fb1} to read block {block}",
-            "exception": ANY,
-        },
-        {
-            "logger": "parsec.backend.raid5_blockstore",
-            "level": "warning",
-            "timestamp": ANY,
-            "event": f"Cannot reach RAID5 blockstore #{fb2} to read block {block}",
-            "exception": ANY,
-        },
-    ]
+    caplog.assert_occured(
+        f"[warning  ] Cannot reach RAID5 blockstore #{fb1} to "
+        f"read block {block} [parsec.backend.raid5_blockstore]"
+    )
+    caplog.assert_occured(
+        f"[warning  ] Cannot reach RAID5 blockstore #{fb2} to "
+        f"read block {block} [parsec.backend.raid5_blockstore]"
+    )
+    caplog.assert_occured(
+        f"[error    ] Block {block} cannot be read: Too many failing "
+        "blockstores in the RAID5 cluster [parsec.backend.raid5_blockstore]"
+    )
 
 
 @pytest.mark.parametrize(

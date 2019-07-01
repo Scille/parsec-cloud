@@ -2,9 +2,9 @@
 
 import os
 from typing import Optional
-
+from structlog import get_logger
 from contextlib import contextmanager
-from errno import ENETDOWN, EBADF, ENOTDIR
+from errno import ENETDOWN, EBADF, ENOTDIR, EIO
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
@@ -14,6 +14,7 @@ from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.fs import FSBackendOfflineError
 
 
+logger = get_logger()
 MODES = {os.O_RDONLY: "r", os.O_WRONLY: "w", os.O_RDWR: "rw"}
 
 
@@ -30,6 +31,10 @@ def translate_error():
 
     except OSError as exc:
         raise FuseOSError(exc.errno) from exc
+
+    except Exception:
+        logger.exception("mountpoint.request.unhandled_crash")
+        raise FuseOSError(EIO)
 
 
 class FuseOperations(LoggingMixIn, Operations):

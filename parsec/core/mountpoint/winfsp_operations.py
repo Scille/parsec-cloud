@@ -3,6 +3,7 @@
 from pathlib import PureWindowsPath
 from contextlib import contextmanager
 from trio import Cancelled, RunFinishedError
+from structlog import get_logger
 from winfspy import (
     NTStatusError,
     BaseFileSystemOperations,
@@ -21,6 +22,7 @@ from parsec.core.fs import FSInvalidFileDescriptor, FSBackendOfflineError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
+logger = get_logger()
 MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}
 
 
@@ -42,6 +44,10 @@ def translate_error():
         # WinFSP teardown operation doesn't make sure no concurrent operation
         # are running
         raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE)
+
+    except Exception:
+        logger.exception("mountpoint.request.unhandled_crash")
+        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR)
 
 
 def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):

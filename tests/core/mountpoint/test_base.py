@@ -6,7 +6,6 @@ from uuid import uuid4
 import trio
 import pytest
 from pathlib import Path, PurePath
-from unittest.mock import patch
 
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
@@ -20,27 +19,27 @@ from parsec.core.types import FsPath
 
 
 @pytest.mark.trio
-async def test_runner_not_available(alice_user_fs, event_bus):
+async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
-    with patch("parsec.core.mountpoint.manager.get_mountpoint_runner", return_value=None):
-        with pytest.raises(RuntimeError):
-            async with mountpoint_manager_factory(alice_user_fs, event_bus, base_mountpoint):
-                pass
+    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
+    with pytest.raises(RuntimeError):
+        async with mountpoint_manager_factory(alice_user_fs, event_bus, base_mountpoint):
+            pass
 
 
 @pytest.mark.trio
-async def test_mountpoint_disabled(alice_user_fs, event_bus):
+async def test_mountpoint_disabled(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
     wid = await alice_user_fs.workspace_create("/w")
 
-    with patch("parsec.core.mountpoint.manager.get_mountpoint_runner", return_value=None):
-        async with mountpoint_manager_factory(
-            alice_user_fs, event_bus, base_mountpoint, enabled=False
-        ) as mountpoint_manager:
-            with pytest.raises(MountpointDisabled):
-                await mountpoint_manager.mount_workspace(wid)
+    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint, enabled=False
+    ) as mountpoint_manager:
+        with pytest.raises(MountpointDisabled):
+            await mountpoint_manager.mount_workspace(wid)
 
 
 @pytest.mark.trio
@@ -282,3 +281,37 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
 
         with pytest.raises(MountpointNotMounted):
             mountpoint_manager.get_path_in_mountpoint(wid2, FsPath("/foo.txt"))
+
+
+@pytest.mark.mountpoint
+def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch):
+    from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+
+    vanilla_entry_info = ThreadFSAccess.entry_info
+
+    def _entry_info_crash(self, path):
+        if str(path) == "/crash_me":
+            raise RuntimeError("Crashed !")
+        else:
+            return vanilla_entry_info(self, path)
+
+    monkeypatch.setattr(
+        "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.entry_info", _entry_info_crash
+    )
+
+    mountpoint_service.start()
+    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
+    with pytest.raises(OSError) as exc:
+        (mountpoint / "crash_me").stat()
+
+    if os.name == "nt":
+        assert exc.value.args == (22, "An internal error occurred")
+        caplog.assert_occured(
+            "[exception] mountpoint.request.unhandled_crash [parsec.core.mountpoint.winfsp_operations]"
+        )
+
+    else:
+        assert exc.value.args == (5, "Input/output error")
+        caplog.assert_occured(
+            "[exception] mountpoint.request.unhandled_crash [parsec.core.mountpoint.fuse_operations]"
+        )
