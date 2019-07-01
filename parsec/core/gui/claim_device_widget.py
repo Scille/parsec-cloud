@@ -100,7 +100,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
         self.claim_dialog = ClaimDialog(parent=self)
-        self.claim_dialog.setText(_("Please wait while the device is registered."))
+        self.claim_dialog.setText(_("LABEL_DEVICE_REGISTRATION"))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
         self.check_box_use_pkcs11.hide()
@@ -118,16 +118,20 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
 
         status = self.claim_device_job.status
         if status == "not_found":
-            errmsg = _("No invitation found for this device.")
+            errmsg = _("ERR_CLAIM_DEVICE_NOT_FOUND")
         elif status == "password-mismatch":
-            errmsg = _("Passwords don't match.")
+            errmsg = _("ERR_PASSWORD_MISMATCH")
         elif status == "password-size":
-            errmsg = _("Password must be at least 8 caracters long.")
-        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
-            errmsg = (_("URL or device is invalid."),)
+            errmsg = _("ERR_PASSWORD_COMPLEXITY")
+        elif status == "bad-url":
+            errmsg = _("ERR_BAD_URL")
+        elif status == "bad-device_name":
+            errmsg = _("ERR_BAD_DEVICE_NAME")
+        elif status == "bad-user_id":
+            errmsg = _("ERR_BAD_USER_NAME")
         else:
-            errmsg = _("Can not claim this device ({info}).")
-        show_error(self, errmsg.format(**self.claim_device_job.exc.params))
+            errmsg = _("ERR_CLAIM_DEVICE_UNKNOWN")
+        show_error(self, errmsg, exception=self.claim_device_job.exc)
         self.claim_device_job = None
         self.check_infos()
 
@@ -138,7 +142,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
 
         self.claim_dialog.hide()
         self.button_claim.setDisabled(False)
-        show_info(self, _("The device has been registered. You can now login."))
+        show_info(self, _("INFO_DEVICE_REGISTERED"))
         self.claim_device_job = None
         self.device_claimed.emit()
         self.check_infos()
@@ -154,7 +158,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                _("Password strength: {}").format(get_password_strength_text(score))
+                _("LABEL_PASSWORD_STRENGTH_{}").format(get_password_strength_text(score))
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

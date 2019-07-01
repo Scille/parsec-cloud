@@ -26,7 +26,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Register new device</string>
+   <string>TITLE_REGISTER_NEW_DEVICE</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog#RegisterDeviceDialog
@@ -85,7 +85,7 @@ background-color: rgb(255, 255, 255);
          <string notr="true">color: rgb(12, 65, 157);</string>
         </property>
         <property name="text">
-         <string>Register a new device</string>
+         <string>LABEL_REGISTER_NEW_DEVICE</string>
         </property>
        </widget>
       </item>
@@ -98,7 +98,7 @@ background-color: rgb(255, 255, 255);
          </size>
         </property>
         <property name="placeholderText">
-         <string>Device name</string>
+         <string>LABEL_DEVICE_NAME</string>
         </property>
        </widget>
       </item>
@@ -125,7 +125,7 @@ background-color: rgb(255, 255, 255);
             </font>
            </property>
            <property name="text">
-            <string>Use the following information to set up your new device:</string>
+            <string>LABEL_REGISTER_DEVICE_INSTRUCTIONS</string>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -151,7 +151,7 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>URL</string>
+              <string>LABEL_URL</string>
              </property>
             </widget>
            </item>
@@ -176,7 +176,7 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>Device name</string>
+              <string>LABEL_DEVICE_NAME</string>
              </property>
             </widget>
            </item>
@@ -188,7 +188,7 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>Token</string>
+              <string>LABEL_TOKEN</string>
              </property>
             </widget>
            </item>
@@ -224,7 +224,7 @@ background-color: rgb(255, 255, 255);
               <string>Copy to clipboard</string>
              </property>
              <property name="text">
-              <string>...</string>
+              <string/>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -247,7 +247,7 @@ background-color: rgb(255, 255, 255);
               <string>Copy to clipboard</string>
              </property>
              <property name="text">
-              <string>...</string>
+              <string/>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -270,7 +270,7 @@ background-color: rgb(255, 255, 255);
               <string>Copy to clipboard</string>
              </property>
              <property name="text">
-              <string>...</string>
+              <string/>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -334,7 +334,7 @@ background-color: rgb(255, 255, 255);
            </font>
           </property>
           <property name="text">
-           <string>Register the device</string>
+           <string>BUTTON_REGISTER_DEVICE</string>
           </property>
          </widget>
         </item>
@@ -352,7 +352,7 @@ background-color: rgb(255, 255, 255);
            </font>
           </property>
           <property name="text">
-           <string>Cancel</string>
+           <string>BUTTON_CANCEL</string>
           </property>
          </widget>
         </item>
@@ -403,7 +403,7 @@ background-color: rgb(255, 255, 255);
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
-           <string>Close</string>
+           <string>BUTTON_CLOSE</string>
           </property>
           <property name="iconSize">
            <size>

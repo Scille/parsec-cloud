@@ -88,7 +88,7 @@ background-color: rgb(255, 255, 255);
          </font>
         </property>
         <property name="text">
-         <string>A new version of Parsec is available !</string>
+         <string>LABEL_NEW_VERSION_AVAILABLE</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -130,7 +130,7 @@ background-color: rgb(255, 255, 255);
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>Download</string>
+           <string>BUTTON_DOWNLOAD</string>
           </property>
           <property name="iconSize">
            <size>
@@ -179,7 +179,7 @@ background-color: rgb(255, 255, 255);
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>Don't remind me in the future</string>
+           <string>CHECK_NO_REMINDER</string>
           </property>
          </widget>
         </item>
@@ -203,7 +203,7 @@ background-color: rgb(255, 255, 255);
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>Ignore</string>
+           <string>BUTTON_IGNORE</string>
           </property>
           <property name="iconSize">
            <size>

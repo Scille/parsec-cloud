@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>463</width>
-    <height>660</height>
+    <height>661</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,7 +49,7 @@ color: rgb(255, 255, 255);
       </font>
      </property>
      <property name="text">
-      <string>To bootstrap an organization, create one on the website and paste the information.</string>
+      <string>LABEL_BOOTSTRAP_ORG_INSTRUCTIONS</string>
      </property>
      <property name="scaledContents">
       <bool>false</bool>
@@ -126,7 +126,7 @@ color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>User name</string>
+              <string>LABEL_USER_NAME</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -163,7 +163,7 @@ color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>Device name</string>
+              <string>LABEL_DEVICE_NAME</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -200,7 +200,7 @@ color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>URL</string>
+              <string>LABEL_URL</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -255,7 +255,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>Password</string>
+                 <string>LABEL_PASSWORD</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -298,7 +298,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>Password check</string>
+                 <string>LABEL_PASSWORD_CHECK</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -394,7 +394,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 Token</string>
+                 <string>LABEL_PKCS_TOKEN</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -431,7 +431,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 Key</string>
+                 <string>LABEL_PKCS_KEY</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -466,7 +466,7 @@ color: rgb(255, 255, 255);
             </font>
            </property>
            <property name="text">
-            <string>Authenticate using PKCS #11</string>
+            <string>CHECK_PKCS_AUTH</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -502,7 +502,7 @@ color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>Cancel</string>
+              <string>BUTTON_CANCEL</string>
              </property>
             </widget>
            </item>
@@ -517,7 +517,7 @@ color: rgb(255, 255, 255);
               <enum>Qt::RightToLeft</enum>
              </property>
              <property name="text">
-              <string>Bootstrap</string>
+              <string>BUTTON_BOOTSTRAP_ORG</string>
              </property>
              <property name="iconSize">
               <size>

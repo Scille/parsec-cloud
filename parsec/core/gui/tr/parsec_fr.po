@@ -7,9 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-05-22 13:35+0200\n"
-"PO-Revision-Date: 2019-05-22 13:37+0200\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2019-07-01 14:44+0200\n"
+"PO-Revision-Date: 2019-07-01 18:21+0200\n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -17,1004 +16,852 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
+"Last-Translator: \n"
 "X-Generator: Poedit 2.2.1\n"
 
-msgid "Reader"
+msgid "WORKSPACE_ROLE_READER"
 msgstr "Lecteur"
 
-msgid "Contributor"
+msgid "WORKSPACE_ROLE_CONTRIBUTOR"
 msgstr "Contributeur"
 
-msgid "Manager"
+msgid "WORKSPACE_ROLE_MANAGER"
 msgstr "Gérant"
 
-msgid "Owner"
+msgid "WORKSPACE_ROLE_OWNER"
 msgstr "Propriétaire"
 
-msgid "Rename a file"
-msgstr "Renommer un fichier"
+msgid "ASK_FILE_RENAME_TITLE"
+msgstr "Renommer le fichier"
 
-msgid "Enter file new name"
+msgid "ASK_FILE_RENAME_CONTENT"
 msgstr "Entrez un nouveau nom de fichier"
 
-msgid "File \"{}\" could not be renamed."
-msgstr "Le fichier \"{}\" n'a pas pu être renommé."
+msgid "ASK_FILE_RENAME_PLACEHOLDER"
+msgstr "Nom de fichier"
 
-msgid "Rename {} files"
+msgid "ASK_MULTI_FILE_RENAME_TITLE_{}"
 msgstr "Renommer {} fichiers"
 
-msgid "Enter files new name (without extension)"
-msgstr "Entrez le nom des nouveaux fichiers (sans extensions)"
+msgid "ASK_MULTI_FILE_RENAME_CONTENT_{}"
+msgstr "Entrez le nouveau nom des fichiers (sans extension)."
 
-msgid "Some files could not be renamed."
-msgstr "Certains fichiers n'ont pas pu être renommés."
+msgid "ASK_MULTI_FILE_RENAME_PLACEHOLDER"
+msgstr "Files name"
 
-msgid "Confirmation"
-msgstr "Confirmation"
+msgid "ASK_FILE_DELETE_TITLE"
+msgstr "Supprimer le fichier"
 
-msgid "Are you sure you want to delete \"{}\"?"
-msgstr "Êtes-vous sûr de vouloir supprimer \"{}\" ?"
+msgid "ASK_FILE_DELETE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir supprimer le fichier \"{}\" ?"
 
-msgid "Are you sure you want to delete {} files?"
-msgstr "Êtes-vous sûr de vouloir supprimer {} fichiers ?"
+msgid "ASK_MULTI_FILE_DELETE_TITLE_{}"
+msgstr "Supprimer {} fichiers"
 
-msgid "Can not delete \"{}\"."
-msgstr "Impossible de supprimer \"{}\"."
+msgid "ASK_MULTI_FILE_DELETE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir supprimer les {} fichiers ?"
 
-msgid "Some files could not be deleted."
-msgstr "Certains fichiers n'ont pas pu être supprimés."
+msgid "ASK_OPEN_MULTI_FILE_TITLE_{}"
+msgstr "Ouvrir {} fichiers"
 
-msgid "Are you sure you want to open {} files?"
+msgid "ASK_OPEN_MULTI_FILE_CONTENT_{}"
 msgstr "Êtes-vous sûr de vouloir ouvrir {} fichiers ?"
 
-msgid "Select files to import"
+msgid "ASK_IMPORT_FILES_TITLE"
 msgstr "Sélectionnez les fichiers à importer"
 
-msgid "Select a directory to import"
-msgstr "Sélectionnez un répertoire à importer"
+msgid "ASK_IMPORT_FOLDER_TITLE"
+msgstr "Sélectionner un répertoire à importer"
 
-msgid "A folder with the same name already exists."
-msgstr "Un répertoire du même nom existe déjà."
+msgid "ASK_CREATE_FOLDER_TITLE"
+msgstr "Créer un répertoire"
 
-msgid "Folder name"
+msgid "ASK_CREATE_FOLDER_CONTENT"
+msgstr "Entrez le nom du répertoire"
+
+msgid "ASK_CREATE_FOLDER_PLACEHOLDER"
 msgstr "Nom du répertoire"
 
-msgid "Enter new folder name"
-msgstr "Entrez un nouveau nom de répertoire"
+msgid "ERR_RENAME_MULTI_FILE"
+msgstr "Impossible de renommer les fichiers."
 
-msgid "You no longer have the permission to access this workspace."
-msgstr "Vous n'avez plus la permission d'accéder à cet espace de travail."
+msgid "ERR_RENAME_FILE"
+msgstr "Impossible de renommer le fichier."
 
-msgid "You are now a reader on this workspace."
-msgstr "Vous êtes maintenant un lecteur de cet espace de travail."
+msgid "ERR_DELETE_MULTI_FILE"
+msgstr "Impossible de supprimer les fichiers."
 
-msgid ""
-"The file \"{}\" already exists.\n"
-"Do you want to replace it ?"
-msgstr "Le fichier \"{}\" existe déjà. Voulez-vous le remplacer ?"
+msgid "ERR_DELETE_FILE"
+msgstr "Impossible de supprimer le fichier."
 
-msgid "Too short"
+msgid "ERR_FOLDER_CREATE_ALREADY_EXISTS"
+msgstr "Un répertoire du même nom existe déjà."
+
+msgid "ERR_FOLDER_CREATE_UNKNOWN"
+msgstr "Impossible de créer le répertoire."
+
+msgid "ERR_IMPORT_FILES"
+msgstr "Impossible d'importer les fichiers."
+
+msgid "ERR_FILE_SHARING_REVOKED"
+msgstr "Vous n'avez plus l'autorisation d'accéder à cet espace de travail."
+
+msgid "WARN_FILE_SHARING_READER"
+msgstr "Vous êtes maintenant lecteur de cet espace de travail."
+
+msgid "ASK_FILE_EXISTS_REPLACE"
+msgstr "Un fichier nommé \"{}\" existe déjà. Voulez-vous le remplacer ?"
+
+msgid "PASSWORD_STR_TOO_SHORT"
 msgstr "Trop court"
 
-msgid "Very weak"
+msgid "PASSWORD_STR_VERY_WEAK"
 msgstr "Très faible"
 
-msgid "Weak"
+msgid "PASSWORD_STR_WEAK"
 msgstr "Faible"
 
-msgid "Average"
+msgid "PASSWORD_STR_AVERAGE"
 msgstr "Moyen"
 
-msgid "Good"
+msgid "PASSWORD_STR_GOOD"
 msgstr "Bon"
 
-msgid "Strong"
-msgstr "Excellent"
+msgid "PASSWORD_STR_STRONG"
+msgstr "Fort"
 
-msgid " (shared with others)"
-msgstr " (partagé)"
+msgid "WORKSPACE_SHARED_DISPLAY"
+msgstr "partagé"
 
-msgid "Bad device name."
-msgstr "Mauvais nom d'appareil."
+msgid "ERR_BAD_DEVICE_NAME"
+msgstr "Le nom de l'appareil est invalide."
 
-msgid "This device already exists."
-msgstr "Cet appareil existe déjà."
+msgid "ERR_REGISTER_DEVICE_EXISTS"
+msgstr "L'appareil existe déjà."
 
-msgid "Cannot invite a device without being online."
-msgstr "Impossible d'enregistrer un appareil sans être en ligne."
+msgid "ERR_REGISTER_DEVICE_OFFLINE"
+msgstr "Impossible de contacter le serveur."
 
-msgid "Device took too much time to register."
-msgstr "L'appareil a été trop long à s'enregistrer."
+msgid "ERR_REGISTER_DEVICE_TIMEOUT"
+msgstr "L'appareil a mis trop de temps à s'enregistrer."
 
-msgid "Cannot register this device ({info})."
-msgstr "Impossible d'enregistrer cet appareil ({info})."
+msgid "ERR_REGISTER_DEVICE_UNKNOWN"
+msgstr "Impossible d'enregistrer l'appareil."
 
-msgid "Device has been registered. You may now close this window."
+msgid "INFO_REGISTER_DEVICE_SUCCESS"
 msgstr "L'appareil a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
 
-msgid "Please enter a device name."
-msgstr "Entrez un nom d'appareil."
+msgid "WARN_REGISTER_DEVICE_EMPTY"
+msgstr "Le nom de l'appareil ne peut pas être vide."
 
-msgid "Please wait while the user is registered."
-msgstr "Veuillez patienter pendant que l'utilisateur est enregistré."
+msgid "LABEL_USER_REGISTRATION"
+msgstr "Veuillez patienter pendant que l'utilisateur s'enregistre."
 
-msgid "No invitation found for this user."
+msgid "ERR_CLAIM_USER_NOT_FOUND"
 msgstr "Aucune invitation trouvée pour cet utilisateur."
 
-msgid "Passwords don't match."
+msgid "ERR_PASSWORD_MISMATCH"
 msgstr "Les mots de passe ne correspondent pas."
 
-msgid "Password must be at least 8 caracters long."
-msgstr "Un mot de passe doit faire au moins 8 caractères de long."
+msgid "ERR_PASSWORD_COMPLEXITY"
+msgstr "Le mot de passe doit faire au moins huit caractères."
 
-msgid "URL or device is invalid."
-msgstr "L'URL ou l'appareil sont invalides."
+msgid "ERR_BAD_URL"
+msgstr "L'URL est invalide."
 
-msgid "Can not claim this user ({info})."
-msgstr "Impossible d'enregistrer cet utilisateur ({info})."
+msgid "ERR_BAD_USER_NAME"
+msgstr "Le nom d'utilisateur est invalide."
 
-msgid "Password strength: {}"
-msgstr "Force du mot de passe: {}"
+msgid "ERR_CLAIM_USER_UNKNOWN"
+msgstr "Impossible d'enregistrer l'utilisateur."
 
-msgid ""
-"\n"
-"(current)"
-msgstr ""
-"\n"
-"(actuel)"
+msgid "LABEL_PASSWORD_STRENGTH_{}"
+msgstr "Force du mot de passe : {}"
 
-msgid "Show info"
-msgstr "Informations"
+msgid "DEVICE_CURRENT_TEXT"
+msgstr "actuel"
 
-msgid "Revoke"
+msgid "DEVICE_MENU_SHOW_INFO"
+msgstr "Voir les informations"
+
+msgid "DEVICE_MENU_REVOKE"
 msgstr "Révoquer"
 
-msgid "Created on {}"
-msgstr "Crée le {}"
+msgid "DEVICE_CREATED_ON_{}"
+msgstr "Créé le {}"
 
-msgid "This device has been revoked."
+msgid "DEVICE_IS_REVOKED"
 msgstr "Cet appareil a été révoqué."
 
-msgid "Are you sure you want to revoke device \"{}\" ?"
+msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
+msgstr "L'appareil \"{}\" a été révoqué avec succès."
+
+msgid "ASK_DEVICE_REVOKE_TITLE"
+msgstr "Révoquer un appareil"
+
+msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
 msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
 
-msgid "Device \"{}\" has been revoked."
-msgstr "L'appareil \"{}\" a été révoqué."
+msgid "ERR_WORKSPACE_RENAME"
+msgstr "Impossible de renommer l'espace de travail."
 
-msgid "Device \"{}\" has already been revoked."
-msgstr "L'appareil \"{}\" a déjà été révoqué."
+msgid "ASK_WORKSPACE_DELETE_TITLE"
+msgstr "Supprimer un espace de travail"
 
-msgid "Device \"{}\" not found."
-msgstr "L'appareil \"{}\" n'a pas été trouvé."
+msgid "ASK_WORKSPACE_DELETE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir supprimer l'espace de travail \"{}\" ?"
 
-msgid "You don't have the permission to revoke this device."
-msgstr "Vous n'avez pas l'autorisation de révoquer cet appareil."
-
-msgid "Can not revoke this device."
-msgstr "Impossible de révoquer cet appareil."
-
-msgid "Can not acces this file."
-msgstr "Impossible d'accéder à ce fichier."
-
-msgid "Not yet implemented."
+msgid "WARN_WORKSPACE_DELETE"
 msgstr "Non implémenté."
 
-msgid "New name"
-msgstr "Nouveau nom"
+msgid "ASK_RENAME_WORKSPACE_TITLE"
+msgstr "Renommer un espace de travail"
 
-msgid "Enter workspace new name"
+msgid "ASK_RENAME_WORKSPACE_CONTENT"
 msgstr "Entrez le nouveau nom de l'espace de travail"
 
-msgid "Workspace name"
+msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
 msgstr "Nom de l'espace de travail"
 
-msgid "Can not rename the workspace."
-msgstr "Impossible de renommer cet espace de travail."
+msgid "ASK_NEW_WORKSPACE_TITLE"
+msgstr "Créer un espace de travail"
 
-msgid "New workspace"
-msgstr "Nouvel espace de travail"
+msgid "ASK_NEW_WORKSPACE_CONTENT"
+msgstr "Entrez le nom de l'espace de travail"
 
-msgid "Enter new workspace name"
-msgstr "Entrez le nom du nouvel espace de travail"
+msgid "ASK_NEW_WORKSPACE_PLACEHOLDER"
+msgstr "Nom de l'espace de travail"
 
-msgid ""
-"\n"
-"(you)"
-msgstr ""
-"\n"
-"(vous)"
+msgid "USER_CURRENT_TEXT"
+msgstr "vous"
 
-msgid "This user has been revoked."
+msgid "USER_MENU_SHOW_INFO"
+msgstr "Voir les informations"
+
+msgid "USER_MENU_REVOKE"
+msgstr "Révoquer"
+
+msgid "USER_CREATED_ON_{}"
+msgstr "Créé le {}"
+
+msgid "USER_IS_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
 
-msgid "Are you sure you want to revoke user \"{}\" ?"
-msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
+msgid "INFO_USER_REVOKED_SUCCESS_{}"
+msgstr "L'utilisateur \"{}\" a été révoqué avec succès."
 
-msgid "User \"{}\" has been revoked."
-msgstr "L'utilisateur \"{}\" a été révoqué."
+msgid "ERR_USER_REVOKED_ALREADY"
+msgstr "Cet utilisateur a déjà été révoqué."
 
-msgid "User \"{}\" has already been revoked."
-msgstr "L'utilisateur \"{}\" a déjà été révoqué."
+msgid "ERR_USER_REVOKED_NOT_FOUND"
+msgstr "Cet utilisateur n'existe pas."
 
-msgid "User \"{}\" not found."
-msgstr "L'utilisateur \"{}\" n'a pas été trouvé."
+msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
+msgstr "Vous n'avez pas les permissions de révoquer cet utilisateur."
 
-msgid "You don't have the permission to revoke this user."
-msgstr "Vous n'avez pas l'autorisation de révoquer cet utilisateur."
-
-msgid "Can not revoke this user."
+msgid "ERR_USER_REVOKED_UNKNOWN"
 msgstr "Impossible de révoquer cet utilisateur."
 
-msgid " TB"
-msgstr " To"
+msgid "ASK_USER_REVOKE_TITLE"
+msgstr "Révoquer un utilisateur"
 
-msgid " GB"
-msgstr " Go"
+msgid "ASK_USER_REVOKE_CONTENT"
+msgstr "Êtes-vous sûr de vouloir révoquer"
 
-msgid " MB"
-msgstr " Mo"
+msgid "FILE_SIZE_TB"
+msgstr "To"
 
-msgid " KB"
-msgstr " Ko"
+msgid "FILE_SIZE_GB"
+msgstr "Go"
 
-msgid " B"
-msgstr " o"
+msgid "FILE_SIZE_MB"
+msgstr "Mo"
 
-msgid "Welcome!"
-msgstr "Bienvenue!"
+msgid "FILE_SIZE_KB"
+msgstr "Ko"
 
-msgid ""
-"Parsec allows you to store data in the cloud with a very high security level.\n"
-"Find out more by letting us guide you step by step!"
+msgid "FILE_SIZE_B"
+msgstr "o"
+
+msgid "STARTING_GUIDE_WELCOME_TITLE"
+msgstr "Bienvenue !"
+
+msgid "STARTING_GUIDE_WELCOME_CONTENT"
 msgstr ""
-"Parsec permet de stocker vos fichiers dans le Cloud avec un très haut niveau de "
-"sécurité.\n"
-"Découvrez Parsec en vous laissant guider pas à pas !"
+"Parsec vous permet de stocker vos données avec un très haut niveau de sécurité.\n"
+"Découvrez l'application en nous laissant vous guider pas à pas."
 
-msgid ":/screenshots/images/screenshots/cloud-computing.png"
+msgid "STARTING_GUIDE_WELCOME_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/cloud-computing.png"
 
-msgid "Workspaces"
+msgid "STARTING_GUIDE_WORKSPACES_TITLE"
 msgstr "Espaces de travail"
 
-msgid ""
-"Arrange all your files by workspaces, a clear interface for an easy to use and "
-"simple process."
+msgid "STARTING_GUIDE_WORKSPACES_CONTENT"
 msgstr ""
-"Organisez tous vos fichiers par espace de travail, une interface claire pour "
-"une utilisation simple et efficace."
+"Arrangez tous vos fichiers par espaces de travail, une interface claire pour un processus simple\n"
+"et facile à utiliser."
 
-msgid ":/screenshots/images/screenshots/workspaces.png"
+msgid "STARTING_GUIDE_WORKSPACES_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/workspaces.png"
 
-msgid "Documents"
+msgid "STARTING_GUIDE_DOCUMENTS_TITLE"
 msgstr "Documents"
 
-msgid ""
-"In your workspaces, see and manage all your files, just as with a regular file "
-"explorer. A lightweight display to increase your productivity!"
+msgid "STARTING_GUIDE_DOCUMENTS_CONTENT"
 msgstr ""
-"Dans votre espace de travail, tous vos fichiers sont présents, comme si vous "
-"étiez dans votre explorateur de fichiers. Un affichage léger pour plus de "
-"productivité !"
+"Dans vos espaces de travail, vous avez accès à tous vos fichiers,\n"
+"comme dans votre explorateur favori.\n"
+"Un affichage simple pour améliorer votre productivité !"
 
-msgid ":/screenshots/images/screenshots/documents.png"
+msgid "STARTING_GUIDE_DOCUMENTS_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/documents.png"
 
-msgid "Sharing"
-msgstr "Partage"
+msgid "STARTING_GUIDE_SHARING_TITLE"
+msgstr "Partagez"
 
-msgid ""
-"Share your workspaces with a few clicks. See who can access it, and what others "
-"share with you.\n"
-"Everything shared with you automatically appears."
+msgid "STARTING_GUIDE_SHARING_CONTENT"
 msgstr ""
-"Partagez vos espaces de travail en quelques clics. Voyez rapidement qui peut y "
-"accéder.\n"
-"Ce qu'on vous partage s'affiche automatiquement dans votre interface."
+"Partagez vos espaces de travail en quelques clics. Gérer qui y a accès,\n"
+"et découvrez ceux que les autres partagent avec vous.\n"
+"Tout ce qui vous est partagé apparait automatiquement."
 
-msgid ":/screenshots/images/screenshots/page4.png"
+msgid "STARTING_GUIDE_SHARING_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/page4.png"
 
-msgid "Manage your devices"
-msgstr "Gestion de périphériques"
+msgid "STARTING_GUIDE_DEVICES_TITLE"
+msgstr "Gérez vos appareils"
 
-msgid ""
-"See and manage thee devices you trust. Those are the key to the guaranted "
-"security of your files."
+msgid "STARTING_GUIDE_DEVICES_CONTENT"
 msgstr ""
-"Visualisez et gérez aisément vos différents périphériques de confiance, qui "
-"sont la clé de la sécurisation assurée de vos fichiers."
+"Gérez vos appareils de confiance. Ils sont la clé de la sécurité garantie de\n"
+"vos fichiers."
 
-msgid ":/screenshots/images/screenshots/devices.png"
+msgid "STARTING_GUIDE_DEVICES_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/devices.png"
 
-msgid "Manage the users"
-msgstr "Gestion des utilisateurs"
+msgid "STARTING_GUIDE_USERS_TITLE"
+msgstr "Gérez vos utilisateurs"
 
-msgid ""
-"And for the administrators ? You can manage all users and their privileges, add "
-"users, or revoke them."
+msgid "STARTING_GUIDE_USERS_CONTENT"
 msgstr ""
-"Et pour les administrateurs ? Vous pouvez gérer la totalité des utilisateurs et "
-"leurs droits, en ajouter, en révoquer, ..."
+"Et pour les administrateurs ? Vous pouvez gérer les utilisateurs et leurs permissions,\n"
+"en ajouter, ou les révoquer."
 
-msgid ":/screenshots/images/screenshots/users.png"
+msgid "STARTING_GUIDE_USERS_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/users.png"
 
-msgid "Even offline"
+msgid "STARTING_GUIDE_OFFLINE_TITLE"
 msgstr "Même hors-ligne"
 
-msgid ""
-"No network ? Not a problem. You can access all your files. Modifications will "
-"be saved locally until your device comes online again."
+msgid "STARTING_GUIDE_OFFLINE_CONTENT"
 msgstr ""
-"Un soucis de réseau ? Aucun problème ! Vous avez accès à tous vos fichiers. Vos "
-"modifications sont sauvegardées localement, tout se synchronisera au retour du "
-"réseau !"
+"Pas de connexion ? Aucun problème. Vous pouvez accéder à tous vos fichiers.\n"
+"Les modifications seront sauvegardées localement et synchronisées automatiquement."
 
-msgid ":/screenshots/images/screenshots/offline_en.png"
+msgid "STARTING_GUIDE_OFFLINE_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/offline_fr.png"
 
-msgid "Now it's your turn !"
+msgid "STARTING_GUIDE_YOUR_TURN_TITLE"
 msgstr "À vous de jouer !"
 
-msgid ""
-"Create your first workspace, import your files, share your documents.\n"
-"Security waits for no one!"
+msgid "STARTING_GUIDE_YOUR_TURN_CONTENT"
 msgstr ""
-"Créez votre premier espace de travail, importez vos fichiers, partagez vos "
-"documents, ...\n"
-"Vous n'avez plus qu'à vous lancer, car la sécurité n'attend pas !"
+"Créez votre premier espace de travail, importez vos fichiers, partagez vos documents.\n"
+"\n"
+"La sécurité n'attend pas !"
 
-msgid ":/screenshots/images/screenshots/your_turn.png"
+msgid "STARTING_GUIDE_YOUR_TURN_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/your_turn.png"
 
-msgid "End"
-msgstr "Terminer"
+msgid "BUTTON_END"
+msgstr "Fin"
 
-msgid "Continue"
+msgid "BUTTON_CONTINUE"
 msgstr "Continuer"
 
-msgid "Start"
+msgid "BUTTON_START"
 msgstr "Commencer"
 
-msgid "Open"
+msgid "FILE_MENU_OPEN"
 msgstr "Ouvrir"
 
-msgid "Rename"
+msgid "FILE_MENU_RENAME"
 msgstr "Renommer"
 
-msgid "Delete"
+msgid "FILE_MENU_DELETE"
 msgstr "Supprimer"
 
-msgid "Parent Folder"
+msgid "FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"
 
-msgid "Parent Workspace"
-msgstr "Espace de travail parent"
+msgid "FILE_TREE_PARENT_WORKSPACE"
+msgstr "Retourner à la liste des espaces de travail"
 
-msgid "This organization does not exist (is the URL correct ?)."
-msgstr "Cette organisation n'existe pas (l'URL est-elle correcte ?)"
-
-msgid "This user already exists."
+msgid "ERR_REGISTER_USER_EXISTS"
 msgstr "Cet utilisateur existe déjà."
 
-msgid "Can not bootstrap this organization ({info})."
-msgstr "Impossible de démarrer l'organisation ({info})."
+msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
+msgstr "Impossible de démarrer cette organisation."
 
-msgid "Show window"
-msgstr "Afficher la fenêtre"
+msgid "MENU_SHOW_WINDOW"
+msgstr "Ouvrir la fenêtre"
 
-msgid "Exit"
+msgid "MENU_EXIT"
 msgstr "Quitter"
 
-msgid ""
-"The organization and the user have been created. You will now be logged in."
+msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
 msgstr ""
-"L'organisation et l'utilisateur ont été crées. Vous allez maintenant être "
-"connecté."
+"L'organisation et l'utilisateur ont été créés.\n"
+"Vous allez maintenant être connecté."
 
-msgid "The organization and the user have been created. You can now log in."
+msgid "INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"
+msgstr "L'organisation et l'utilisateur ont été créés. Vous pouvez maintenant vous connecter."
+
+msgid "INFO_USER_CREATED_SUCCESS_MONO_DEVICE"
 msgstr ""
-"L'organisation et l'utilisateur ont été crées. Vous pouvez maintenant vous "
-"connecter."
+"L'utilisateur a été créé.\n"
+"Vous allez maintenant être connecté."
 
-msgid "The user has been created. You will now be logged in."
-msgstr "L'utilisateur a été crée. Vous allez maintenant être connecté."
+msgid "INFO_USER_CREATED_SUCCESS_MULTI_DEVICE"
+msgstr "L'utilisateur a été créé. Vous pouvez maintenant vous connecter."
 
-msgid "The user has been created. You can now log in."
-msgstr "L'utilisateur a été crée. Vous pouvez maintenant vous connecter."
+msgid "LABEL_DEVICE_REGISTRATION"
+msgstr "Veuillez patienter pendant que l'appareil s'enregistre."
 
-msgid "Please wait while the device is registered."
-msgstr "Veuillez patienter pendant l'enregistrer de l'appareil."
+msgid "ERR_CLAIM_DEVICE_NOT_FOUND"
+msgstr "Aucune invitation trouvée pour cet appareil."
 
-msgid "No invitation found for this device."
-msgstr "Aucune invitation trouvée pour cet utilisateur."
+msgid "ERR_CLAIM_DEVICE_UNKNOWN"
+msgstr "Impossible d'enregistrer cet appareil."
 
-msgid "Can not claim this device ({info})."
-msgstr "Impossible d'enregistrer cet appareil ({info})."
+msgid "INFO_DEVICE_REGISTERED"
+msgstr "L'appareil a été créé. Vous pouvez maintenant vous connecter."
 
-msgid "The device has been registered. You can now login."
-msgstr "L'appareil a été enregistré. Vous pouvez maintenant vous connecter."
-
-msgid "Global"
+msgid "MENU_SETTINGS_GLOBAL"
 msgstr "Globale"
 
-msgid "Modification will take effect the next time you start the application."
-msgstr ""
-"Les modifications seront prises en compte au prochain lancement de "
-"l'application."
+msgid "SETTINGS_NEED_RESTART"
+msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
 
-msgid "Disconnected from the backend."
-msgstr "Déconnecté du serveur."
+msgid "NOTIF_WARN_LOST_CONNECTION."
+msgstr "Déconnecté du serveur"
 
-msgid "Connected to the backend."
+msgid "NOTIF_INFO_CONNECTED"
 msgstr "Connecté au serveur."
 
-msgid "Cannot connect to backend : incompatible version detected."
-msgstr "Connexion au backend impossible : version incompatible détectée."
+msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
+msgstr "Cette version de l'application est incompatible avec le serveur."
 
-msgid "Mountpoint has been unmounted."
+msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Le point de montage a été perdu."
 
-msgid "Workspace '{}' shared with you"
-msgstr "Espace de travail '{}' partagé avec vous"
+msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
+msgstr "L'espace de travail \"{}\" a été partagé avec vous."
 
-msgid "Your role on Workspace '{}' has changed changed"
-msgstr "Votre rôle sur l'espace de travail '{}' a été modifié"
+msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
+msgstr "Votre rôle sur l'espace de travail \"{}\" a changé."
 
-msgid "Workspace '{}' no longer shared with you"
-msgstr "L'espace de travail '{}' n'est plus partagé avec vous"
+msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
+msgstr "L'espace de travail \"{}\" n'est plus partagé avec vous."
 
-msgid "Conflict while syncing file '{}'."
-msgstr "Conflit lors de la synchronisation de '{}'."
+msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
+msgstr "Conflit lors de la synchronisation du fichier \"{}\"."
 
-msgid "Connected"
+msgid "BACKEND_STATE_CONNECTED"
 msgstr "Connecté"
 
-msgid "Disconnected"
+msgid "BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "Bad Version"
-msgstr "MàJ requise"
+msgid "BACKEND_STATE_INCOMPATIBLE_VERSION"
+msgstr "Version incompatible"
 
-msgid "Users"
+msgid "MENU_DOCUMENTS"
+msgstr "Documents"
+
+msgid "MENU_USERS"
 msgstr "Utilisateurs"
 
-msgid "Devices"
+msgid "MENU_DEVICES"
 msgstr "Appareils"
 
-msgid "Settings"
+msgid "MENU_SETTINGS"
 msgstr "Configuration"
 
-msgid "Cancelling..."
-msgstr "Annulation..."
+msgid "ERR_REGISTER_USER_NOT_ENOUGH_PERMISSIONS"
+msgstr "Seuls les administrateurs peuvent inviter de nouveaux utilisateurs."
 
-msgid "Bad user id."
-msgstr "User ID invalide."
+msgid "ERR_REGISTER_USER_OFFLINE"
+msgstr "Impossible de contacter le serveur."
 
-msgid "A user with the same name already exists."
-msgstr "Un utilisateur du même nom existe déjà."
+msgid "ERR_REGISTER_USER_TIMEOUT"
+msgstr "L'utilisateur a pris trop de temps pour s'enregistrer."
 
-msgid "Only admins can invite a new user."
-msgstr "Seuls les administrateurs peuvent inviter un nouvel utilisateur."
+msgid "ERR_REGISTER_USER_UNKNOWN"
+msgstr "Impossible d'enregistrer l'utilisateur."
 
-msgid "Cannot invite a user without being online."
-msgstr "Impossible d'inviter un utilisateur sans être en ligne."
+msgid "INFO_REGISTER_USER_SUCCESS"
+msgstr "L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
 
-msgid "User took too much time to register."
-msgstr "L'utilisateur a été trop long à s'enregistrer."
+msgid "WARN_REGISTER_USER_EMPTY"
+msgstr "Le nom d'utilisateur ne peut pas être vide."
 
-msgid "Cannot register this user ({info})."
-msgstr "Impossible d'enregistrer cet utilisateur ({info})."
+msgid "WARN_WORKSPACE_SHARING_WITH_YOURSELF"
+msgstr "Impossible de partager un espace de travail avec vous-même."
 
-msgid "Please enter a username."
-msgstr "Entrez un nom d'utilisateur."
+msgid "WARN_WORKSPACE_ALREADY_SHARED_{}"
+msgstr "L'espace de travail est déjà partagé avec \"{}\"."
 
-msgid "You can not share a workspace with yourself."
-msgstr "Vous ne pouvez pas partager un espace de travail avec vous-même."
+msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
+msgstr "Impossible de partage l'espace de travail avec \"{}\"."
 
-msgid "This workspace is already shared with \"{}\"."
-msgstr "Cet espace de travail est déjà partagé avec \"{}\"."
+msgid "ASK_WORKSPACE_UNSHARE_TITLE"
+msgstr "Retirer du partage"
 
-msgid "Can not share the workspace \"{}\" with this user."
-msgstr "Impossible de partager l'espace de travail \"{}\" avec cet utilisateur."
+msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir arrêter de partager l'espace de travail avec \"{}\" ?"
 
-msgid "Can not share the workspace \"{}\" with \"{}\"."
-msgstr "Impossible de partager l'espace de travail \"{}\" avec \"{}\"."
-
-msgid "Remove this user"
-msgstr "Supprimer cet utilisateur"
-
-msgid "Are you sure you want to stop sharing this workspace with {}?"
+msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
 msgstr ""
-"Êtes-vous sûr de vouloir arrêter de partager cet espace de travail avec {} ?"
-
-msgid "Permissions could not be updated for the following users: {}"
-msgstr ""
-"Les permissions n'ont pas pu être mises à jour pour les utilisateurs suivants : "
+"Impossible de mettre à jour les rôles des utilisateurs suivants :\n"
 "{}"
 
-msgid "Permissions have been updated."
-msgstr "Les permissions ont été mises à jour."
+msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
+msgstr "Les rôles ont été mis à jour."
 
-msgid "Are you sure?"
-msgstr "Êtes-vous sûr ?"
+msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
+msgstr "Oublier les modifications"
 
-msgid ""
-"You have made some modifications, but have not applied them by clicking \"Apply"
-"\". Are you sure you want to close this window and discard these modifications?"
-msgstr ""
-"Vous avez effectué des modifications mais ne les avez pas appliqué en cliquant "
-"sur \"Appliquer\". Êtes-vous sûr de vouloir fermer cette fenêtre et annuler les "
-"modifications ?"
+msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
+msgstr "Certaines modifications n'ont pas été sauvegardées. Êtes-vous sûr de vouloir fermer cette fenêtre et de les ignorer ?"
 
-msgid "User name"
+msgid "ASK_USER_NAME"
 msgstr "Nom d'utilisateur"
 
-msgid "Information"
-msgstr "Informations"
+msgid "INFO_DIALOG_TITLE"
+msgstr "Information"
 
-msgid "Warning"
-msgstr "Alerte"
+msgid "WARN_DIALOG_TITLE"
+msgstr "Avertissement"
 
-msgid "Error"
+msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
 
-msgid ""
-"Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data "
-"on the cloud"
-msgstr ""
-"Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de "
-"données sensibles sur le cloud"
+msgid "PARSEC_WINDOW_TITLE"
+msgstr "Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de données sensibles dans le cloud."
 
-msgid "Error reporting"
+msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
 
-msgid ""
-"Do you authorize Parsec to send data when it encounters an error to help us "
-"improve your experience ?"
-msgstr ""
-"Autorisez-vous Parsec à envoyer des données en cas d'erreur pour nous permettre "
-"d'améliorer votre expérience ?"
+msgid "ASK_ERROR_REPORTING_CONTENT"
+msgstr "Autorisez-vous l'application à nous envoyer des données quand elle rencontre une erreur pour nous aider à améliorer votre expérience ?"
 
-msgid "Unhandled error:\n\n{}"
-msgstr "Erreur non gérée:\n\n{}"
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr "Cet appareil a été révoqué."
 
-msgid "Authentication failed ({})."
-msgstr "L'authentification a échoué ({})."
+msgid "ERR_LOGIN_UNKNOWN"
+msgstr "Impossible de se connecter."
 
-msgid "Incompatible backend API version."
-msgstr "Votre version de l'application est incompatible avec le serveur."
+msgid "ERR_LOGIN_AUTH_FAILED"
+msgstr "L'authentification a échoué."
 
-msgid "User not registered in the backend."
+msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
+msgstr "Cette version de l'application est incompatible avec le serveur."
+
+msgid "ERR_LOGIN_UNKNOWN_USER"
 msgstr "L'utilisateur n'est pas enregistré sur le serveur."
 
-msgid "Mountpoint already in use."
+msgid "ERR_LOGIN_MOUNTPOINT"
 msgstr "Le point de montage est déjà utilisé."
 
-msgid "Can not login"
-msgstr "Impossible de se connecter."
+msgid "ASK_QUIT_TITLE"
+msgstr "Fermer l'application"
 
-msgid "Can not login."
-msgstr "Impossible de se connecter."
+msgid "ASK_QUIT_CONTENT"
+msgstr "Êtes-vous sûr de vouloir quitter l'application ?"
 
-msgid "Are you sure you want to quit ?"
-msgstr "Êtes-vous sûr de vouloir fermer l'application ?"
-
-msgid "Parsec is still running."
+msgid "TRAY_PARSEC_RUNNING"
 msgstr "Parsec est toujours ouvert."
 
-msgid "Form"
-msgstr "Form"
+msgid "LABEL_BOOTSTRAP_ORG_INSTRUCTIONS"
+msgstr "Pour démarrer une organisation, créez la sur le site and collez ici les informations."
 
-msgid ""
-"To bootstrap an organization, create one on the website and paste the "
-"information."
-msgstr ""
-"Pour démarrer une organisation, créez en une sur le site web et copiez ici les "
-"informations."
-
-msgid "Device name"
-msgstr "Nom de l'appareil"
-
-msgid "URL"
-msgstr "URL"
-
-msgid "Password"
-msgstr "Mot de passe"
-
-msgid "Password check"
-msgstr "Vérification du mot de passe"
-
-msgid "PKCS #11 Token"
-msgstr "Jeton PKCS #11"
-
-msgid "PKCS #11 Key"
-msgstr "Clef PKCS #11"
-
-msgid "Authenticate using PKCS #11"
-msgstr "S'authentifier en utilisant PKCS #11"
-
-msgid "Cancel"
-msgstr "Annuler"
-
-msgid "Bootstrap"
-msgstr "Démarrer"
-
-msgid ""
-"To register a new device, you need an existing device to declare a new device "
-"and get the resulting token."
-msgstr ""
-"Pour enregistrer un nouvel appareil, il faut le déclarer en utilisant un "
-"appareil existant et copier ici le jeton."
-
-msgid "Token"
-msgstr "Jeton"
-
-msgid "Register"
-msgstr "Enregistrer"
-
-msgid "Dialog"
-msgstr "Dialog"
-
-msgid ""
-"To register a new user, you need another user to create an account and get a "
-"token."
-msgstr ""
-"Pour enregistrer un nouvel utilisateur, un administrateur doit le déclarer et "
-"vous fournir un jeton."
-
-msgid "Search devices"
-msgstr "Rechercher un appareil"
-
-msgid "Search files or folders"
-msgstr "Rechercher un fichier ou un répertoire"
-
-msgid "Name"
-msgstr "Nom"
-
-msgid "Created"
-msgstr "Crée"
-
-msgid "Updated"
-msgstr "Modifié"
-
-msgid "Size"
-msgstr "Taille"
-
-msgid "Behavior"
-msgstr "Comportement"
-
-msgid "Close button minimizes Parsec in the tray"
-msgstr "Le bouton de fermeture place Parsec dans la barre de tâches"
-
-msgid "Localization"
-msgstr "Internationalisation"
-
-msgid "Language"
-msgstr "Langue"
-
-msgid "Version"
-msgstr "Version"
-
-msgid "Check for new version at startup"
-msgstr "Vérifier si une nouvelle version est disponible au démarrage"
-
-msgid "Check for new version now"
-msgstr "Vérifier si une nouvelle version est disponible"
-
-msgid "Send information when Parsec encounters an error."
-msgstr "Envoyer des informations quand Parsec rencontre une erreur."
-
-msgid "Save"
-msgstr "Sauvegarder"
-
-msgid "Interface"
-msgstr "Interface"
-
-msgid "Use colors for workspaces"
-msgstr "Utiliser des couleurs pour les espaces de travail"
-
-msgid "Ok"
-msgstr "Ok"
-
-msgid "Importing"
-msgstr "En cours d'importation"
-
-msgid "Identifier"
-msgstr "Identifiant"
-
-msgid "PKCS #11 PIN"
-msgstr "PIN PKCS #11"
-
-msgid "Log In"
-msgstr "Se connecter"
-
-msgid "Register a new account"
-msgstr "Enregistrer un nouvel utilisateur"
-
-msgid "Register a new device"
-msgstr "Enregistrer un nouvel appareil"
-
-msgid "Bootstrap an organization"
-msgstr "Démarrer une organisation"
-
-msgid "Parsec"
-msgstr "Parsec"
-
-msgid "   Documents"
-msgstr " Documents"
-
-msgid "   Users"
-msgstr " Utilisateurs"
-
-msgid "   Devices"
-msgstr " Appareils"
-
-msgid "   Settings"
-msgstr " Configuration"
-
-msgid "   Log Out"
-msgstr " Se déconnecter"
-
-msgid "Proxy"
-msgstr "Proxy"
-
-msgid "Proxy type"
-msgstr "Type de proxy"
-
-msgid "No proxy"
-msgstr "Aucun proxy"
-
-msgid "HTTP"
-msgstr "HTTP"
-
-msgid "Socks4"
-msgstr "Socks4"
-
-msgid "Socks5"
-msgstr "Socks5"
-
-msgid "Host"
-msgstr "Hôte"
-
-msgid "Port"
-msgstr "Port"
-
-msgid "Username"
+msgid "LABEL_USER_NAME"
 msgstr "Nom d'utilisateur"
 
-msgid "Speed limits"
-msgstr "Limite de vitesse"
+msgid "LABEL_DEVICE_NAME"
+msgstr "Nom de l'appareil"
 
-msgid "Upload"
-msgstr "Ascendant"
+msgid "LABEL_URL"
+msgstr "URL"
 
-msgid "No limit"
-msgstr "Aucune limite"
+msgid "LABEL_PASSWORD"
+msgstr "Mot de passe"
 
-msgid "Limit to"
-msgstr "Limité à"
+msgid "LABEL_PASSWORD_CHECK"
+msgstr "Vérification du mot de passe"
 
-msgid "10"
-msgstr "10"
+msgid "LABEL_PKCS_TOKEN"
+msgstr "Jeton PKCS#11"
 
-msgid "kb/s"
-msgstr "Ko/s"
+msgid "LABEL_PKCS_KEY"
+msgstr "Clé PKCS#11"
 
-msgid "Download"
-msgstr "Descendant"
+msgid "CHECK_PKCS_AUTH"
+msgstr "S'authentifier avec PKCS#11"
 
-msgid "Misc"
-msgstr "Divers"
+msgid "BUTTON_CANCEL"
+msgstr "Anuller"
 
-msgid "Number of simultaneous connections"
-msgstr "Nombre de connexions simultanées"
+msgid "BUTTON_BOOTSTRAP_ORG"
+msgstr "Démarrer l'organisation"
 
-msgid "A new version of Parsec is available !"
-msgstr "Une nouvelle version de Parsec est disponible !"
+msgid "LABEL_CLAIM_DEVICE_INSTRUCTIONS"
+msgstr "Pour enregistrer un nouvel appareil, créez-en un en utilisant un appareil existant et copiez ici les informations."
 
-msgid "Don't remind me in the future"
-msgstr "Ne pas me le rappeler à l'avenir"
+msgid "LABEL_TOKEN"
+msgstr "Jeton"
 
-msgid "Ignore"
-msgstr "Ignorer"
+msgid "BUTTON_CLAIM"
+msgstr "Enregistrer"
 
-msgid "Notifications"
-msgstr "Notifications"
+msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
+msgstr "Pour enregistrer un nouvel utilisateur, créez-en un en utilisant un utilisateur existant et copiez ici les informations."
 
-msgid "No"
-msgstr "Non"
+msgid "LABEL_SEARCH_DEVICES"
+msgstr "Rechercher des appareils"
 
-msgid "Yes"
-msgstr "Oui"
+msgid "LABEL_SEARCH_FILES"
+msgstr "Rechercher des fichiers ou dossiers"
 
-msgid "Register new device"
+msgid "LABEL_FILE_NAME"
+msgstr "Nom"
+
+msgid "LABEL_FILE_CREATED"
+msgstr "Créé le"
+
+msgid "LABEL_FILE_UPDATED"
+msgstr "Mis à jour le"
+
+msgid "LABEL_FILE_SIZE"
+msgstr "Taille"
+
+msgid "SETTINGS_TITLE_BEHAVIOR"
+msgstr "Comportement"
+
+msgid "CHECK_MINIMIZE_IN_TRAY"
+msgstr "Minimiser dans la barre des tâches"
+
+msgid "SETTINGS_TITLE_LOCALIZATION"
+msgstr "Localisation"
+
+msgid "LABEL_LANGUAGE"
+msgstr "Langues"
+
+msgid "SETTINGS_TITLE_VERSION"
+msgstr "Version"
+
+msgid "CHECK_CHECK_NEW_VERSION"
+msgstr "Vérifier si une nouvelle version est disponible au démarrage"
+
+msgid "BUTTON_CHECK_NEW_VERSION"
+msgstr "Vérifier si une nouvelle version est disponible"
+
+msgid "SETTINGS_TITLE_ERROR_REPORTING"
+msgstr "Rapport d'erreur"
+
+msgid "CHECK_SEND_CRASH_INFO"
+msgstr "Envoyer des informations en cas d'erreur"
+
+msgid "SETTINGS_TITLE_INTERFACE"
+msgstr "Interface"
+
+msgid "CHECK_USE_WORKSPACE_COLORS"
+msgstr "Utiliser des couleurs pour les espaces de travail"
+
+msgid "BUTTON_SAVE"
+msgstr "Sauvegarder"
+
+msgid "BUTTON_OK"
+msgstr "OK"
+
+msgid "LABEL_IMPORTING"
+msgstr "En cours d'import"
+
+msgid "LABEL_IDENTIFIER"
+msgstr "Identifiant"
+
+msgid "LABEL_PKCS_PIN"
+msgstr "PIN PKCS#11"
+
+msgid "BUTTON_LOG_IN"
+msgstr "Se connecter"
+
+msgid "BUTTON_REGISTER_NEW_USER"
+msgstr "Enregistrer un nouvel utilisateur"
+
+msgid "BUTTON_REGISTER_NEW_DEVICE"
 msgstr "Enregistrer un nouvel appareil"
 
-msgid "Use the following information to set up your new device:"
-msgstr ""
-"Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
+msgid "BUTTON_SETTINGS"
+msgstr "Configuration"
 
-msgid "..."
-msgstr "..."
+msgid "BUTTON_LOG_OUT"
+msgstr "Se déconnecter"
 
-msgid "Register the device"
+msgid "BUTTON_DETAILS"
+msgstr "Détails"
+
+msgid "BUTTON_COPY_TO_CLIPBOARD"
+msgstr "Copier dans le presse-papier"
+
+msgid "SETTINGS_TITLE_PROXY"
+msgstr "Proxy"
+
+msgid "LABEL_PROXY_TYPE"
+msgstr "Type de proxy"
+
+msgid "LABEL_NO_PROXY"
+msgstr "Aucun proxy"
+
+msgid "LABEL_PROXY_HTTP"
+msgstr "HTTP"
+
+msgid "LABEL_PROXY_SOCKS4"
+msgstr "Socks4"
+
+msgid "LABEL_PROXY_SOCKS5"
+msgstr "Socks5"
+
+msgid "LABEL_HOST"
+msgstr "Hôte"
+
+msgid "LABEL_PORT"
+msgstr "Port"
+
+msgid "SETTINGS_TITLE_SPEED_LIMITS"
+msgstr "Limitation de vitesse"
+
+msgid "LABEL_UPLOAD"
+msgstr "Montant"
+
+msgid "LABEL_SPEED_NO_LIMIT"
+msgstr "Aucune limite"
+
+msgid "LABEL_SPEED_LIMIT_TO"
+msgstr "Limiter à"
+
+msgid "LABEL_KB_S"
+msgstr "Ko/s"
+
+msgid "LABEL_DOWNLOAD"
+msgstr "Descendant"
+
+msgid "SETTINGS_TITLE_MISC"
+msgstr "Divers"
+
+msgid "LABEL_SIM_CONNECTIONS"
+msgstr "Nombre de connections simultanées"
+
+msgid "LABEL_NEW_VERSION_AVAILABLE"
+msgstr "Une nouvelle version est disponible !"
+
+msgid "BUTTON_DOWNLOAD"
+msgstr "Télécharger"
+
+msgid "CHECK_NO_REMINDER"
+msgstr "Ne pas me le rappeler"
+
+msgid "BUTTON_IGNORE"
+msgstr "Ignorer"
+
+msgid "LABEL_NOTIFICATIONS"
+msgstr "Notifications"
+
+msgid "BUTTON_NO"
+msgstr "Non"
+
+msgid "BUTTON_YES"
+msgstr "Oui"
+
+msgid "TITLE_REGISTER_NEW_DEVICE"
+msgstr "Enregistrer un nouvel appareil"
+
+msgid "LABEL_REGISTER_NEW_DEVICE"
+msgstr "Enregistrer un nouvel appareil"
+
+msgid "LABEL_REGISTER_DEVICE_INSTRUCTIONS"
+msgstr "Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
+
+msgid "BUTTON_REGISTER_DEVICE"
 msgstr "Enregistrer l'appareil"
 
-msgid "Close"
+msgid "BUTTON_CLOSE"
 msgstr "Fermer"
 
-msgid "Register new user"
+msgid "TITLE_REGISTER_NEW_USER"
 msgstr "Enregistrer un nouvel utilisateur"
 
-msgid "User is administrator"
-msgstr "L'utilisateur est un administrateur"
+msgid "LABEL_REGISTER_NEW_USER"
+msgstr "Enregistrer un nouvel utilisateur"
 
-msgid "Transmit the following information to the user:"
-msgstr "Transmettez les informations suivantes à l'utilisateur :"
+msgid "CHECK_USER_IS_ADMIN"
+msgstr "L'utilisateur est administrateur"
 
-msgid "Register the user"
+msgid "LABEL_REGISTER_USER_INSTRUCTIONS"
+msgstr "Utilisez les informations suivantes pour enregistrer votre nouvel utilisateur :"
+
+msgid "BUTTON_REGISTER_USER"
 msgstr "Enregistrer l'utilisateur"
 
-msgid "Register a new user"
-msgstr "Enregistrer un nouvel utilisateur"
+msgid "BUTTON_SKIP"
+msgstr "Ignorer"
 
-msgid "Skip"
-msgstr "Passer"
-
-msgid "Replace"
+msgid "BUTTON_REPLACE"
 msgstr "Remplacer"
 
-msgid "Do the same for all files"
-msgstr "Utiliser la même action pour tous les fichiers"
+msgid "CHECK_DO_THE_SAME"
+msgstr "Appliquer aux fichiers suivants"
 
-msgid "Remove user permissions."
-msgstr "Retirer les permissions."
+msgid "TITLE_SETTINGS"
+msgstr "Configuration"
 
-msgid "Back"
+msgid "BUTTON_BACK"
 msgstr "Retour"
 
-msgid "Search users"
-msgstr "Rechercher un utilisateur"
+msgid "LABEL_SEARCH_USERS"
+msgstr "Rechercher des utilisateurs"
 
-msgid "You are this workspace's owner."
-msgstr "Vous êtes le propriétaire de l'espace de travail."
+msgid "LABEL_WORKSPACE_OWNER"
+msgstr "Vous êtes le propriétaire de cet espace de travail."
 
-msgid "This workspace is shared."
+msgid "LABEL_WORKSPACE_SHARED"
 msgstr "Cet espace de travail est partagé."
 
-msgid "This workspace is empty."
+msgid "LABEL_WORKSPACE_EMPTY"
 msgstr "Cet espace de travail est vide."
 
-msgid "Rename the workspace"
-msgstr "Renommer l'espace de travail"
+msgid "LABEL_RENAME_WORKSPACE"
+msgstr "Renommer l'espace de travail."
 
-msgid "Share the workspace"
-msgstr "Partager l'espace de travail"
+msgid "LABEL_SHARE_WORKSPACE"
+msgstr "Partager l'espace de travail."
 
-msgid "Delete the workspace"
-msgstr "Supprimer l'espace de travail"
+msgid "LABEL_ENCRYPT_WORKSPACE"
+msgstr "Re-chiffrer l'espace de travail."
 
-msgid "Manage workspace sharing"
-msgstr "Gérer le partage de l'espace de travail"
+msgid "LABEL_DELETE_WORKSPACE"
+msgstr "Supprimer l'espace de travail."
 
-msgid "Share with"
-msgstr "Partagé avec"
+msgid "TITLE_WORKSPACE_SHARING"
+msgstr "Partage de l'espace de travail"
 
-msgid "Share"
+msgid "LABEL_SHARE_WITH"
+msgstr "Partager avec"
+
+msgid "BUTTON_SHARE"
 msgstr "Partager"
 
-msgid "Update"
+msgid "BUTTON_UPDATE"
 msgstr "Mettre à jour"
-
-msgid ""
-"A reader can see uploaded files.\n"
-"A contributor can upload files (and see them).\n"
-"A manager can add people and manage their permissions (and see and upload "
-"files)."
-msgstr ""
-"Un lecteur peut voir les fichiers.\n"
-"Un contributeur peut ajouter ou supprimer des fichiers.\n"
-"Un gérant peut gérer les permissions des utilisateurs."
-
-#~ msgid "URL or user is invalid."
-#~ msgstr "L'URL ou l'utilisateur sont invalides."
-
-#~ msgid "Are you sure you want to delete \"{}\" ?"
-#~ msgstr "Êtes-vous sûr de vouloir supprimer \"{}\" ?"
-
-#~ msgid "Can not delete \"{}\""
-#~ msgstr "Impossible de supprimer \"{}\""
-
-#~ msgid "Open in explorer"
-#~ msgstr "Ouvrir dans l'explorateur"
-
-#~ msgid "Can not rename."
-#~ msgstr "Impossible de renommer."
-
-#~ msgid "Unknown error."
-#~ msgstr "Erreur inconnue."
-
-#~ msgid "Can not register this device ({})."
-#~ msgstr "Impossible d'enregistrer cet appareil ({})."
-
-#~ msgid ""
-#~ "Can not close this window while waiting for the new device to register. "
-#~ "Please cancel first."
-#~ msgstr ""
-#~ "Cette fenêtre ne peut pas être fermée tant que l'appareil n'a pas été "
-#~ "enregistré. Veuillez annuler d'abord."
-
-#~ msgid "Could not register the device."
-#~ msgstr "Impossible d'enregistrer l'appareil."
-
-#~ msgid "Network"
-#~ msgstr "Réseau"
-
-#~ msgid "Unhandled response {}"
-#~ msgstr "Réponse non gérée {}"
-
-#~ msgid "User has been registered. You may now close this window."
-#~ msgstr ""
-#~ "L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
-
-#~ msgid ""
-#~ "Can not close this window while waiting for the new user to register. Please "
-#~ "cancel first."
-#~ msgstr ""
-#~ "Cette fenêtre ne peut pas être fermée tant que l'utilisateur n'a pas été "
-#~ "enregistré. Veuillez annuler d'abord."
-
-#~ msgid "Could not register the user."
-#~ msgstr "Impossible d'enregistrer l'utilisateur."
-
-#~ msgid "Do not close this window while the device registers."
-#~ msgstr "Ne fermez pas cette fenêtre pendant que l'appareil s'enregistre."
-
-#~ msgid "Do not close this window while the user registers."
-#~ msgstr "Ne fermez pas cette fenêtre pendant que l'utilisateur s'enregistre."
-
-#~ msgid " (shared)"
-#~ msgstr " (partagé)"
-
-#~ msgid " (shared by {})"
-#~ msgstr " (partagé par {})"
-
-#~ msgid "A workspace with the same name already exists."
-#~ msgstr "Un espace de travail du même nom existe déjà."
-
-#~ msgid "User can administer"
-#~ msgstr "Administrateur"
-
-#~ msgid "User can read"
-#~ msgstr "Lecture"
-
-#~ msgid "User can write"
-#~ msgstr "Écriture"
-
-#~ msgid "Admin"
-#~ msgstr "Administrateur"
-
-#~ msgid "Read"
-#~ msgstr "Lecture"
-
-#~ msgid "Write"
-#~ msgstr "Écriture"
-
-#~ msgid "Apply"
-#~ msgstr "Appliquer"
-
-#~ msgid ""
-#~ "A reader can see uploaded files.\n"
-#~ "A collaborator can upload files (and see them).\n"
-#~ "A manager can add people and manage their permissions (and see and upload "
-#~ "files)."
-#~ msgstr ""
-#~ "Un lecteur peut voir les fichiers.\n"
-#~ "Un collabor"
-
-#~ msgid "Workspace '{}' sharing rights have changed"
-#~ msgstr "Les droits de partage de l'espace de travail '{}' ont été modifiés."

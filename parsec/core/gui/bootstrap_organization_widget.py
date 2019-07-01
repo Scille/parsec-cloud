@@ -143,19 +143,23 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
 
         status = self.bootstrap_job.status
         if status == "invalid-url":
-            errmsg = _("This organization does not exist (is the URL correct ?).")
+            errmsg = _("ERR_BAD_URL")
         elif status == "user-exists":
-            errmsg = _("This user already exists.")
+            errmsg = _("ERR_REGISTER_USER_EXISTS")
         elif status == "password-mismatch":
-            errmsg = _("Passwords don't match.")
+            errmsg = _("ERR_PASSWORD_MISMATCH")
         elif status == "password-size":
-            errmsg = _("Password must be at least 8 caracters long.")
-        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
-            errmsg = _("URL or device is invalid.")
+            errmsg = _("ERR_PASSWORD_COMPLEXITY")
+        elif status == "bad-url":
+            errmsg = _("ERR_BAD_URL")
+        elif status == "bad-device_name":
+            errmsg = _("ERR_BAD_DEVICE_NAME")
+        elif status == "bad-user_id":
+            errmsg = _("ERR_BAD_USER_NAME")
         else:
-            errmsg = _("Can not bootstrap this organization ({info}).")
+            errmsg = _("ERR_BOOTSTRAP_ORG_UNKNOWN")
 
-        show_error(self, errmsg.format(**self.bootstrap_job.exc.params))
+        show_error(self, errmsg, exception=self.bootstrap_job.exc)
         self.bootstrap_job = None
         self.check_infos()
 
@@ -218,7 +222,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                _("Password strength: {}").format(get_password_strength_text(score))
+                _("LABEL_PASSWORD_STRENGTH_{}").format(get_password_strength_text(score))
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

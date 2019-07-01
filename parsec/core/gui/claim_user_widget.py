@@ -101,7 +101,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
 
         self.claim_dialog = ClaimDialog(parent=self)
-        self.claim_dialog.setText(_("Please wait while the user is registered."))
+        self.claim_dialog.setText(_("LABEL_USER_REGISTRATION"))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
 
@@ -120,16 +120,20 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
         status = self.claim_user_job.status
         if status == "not_found":
-            errmsg = _("No invitation found for this user.")
+            errmsg = _("ERR_CLAIM_USER_NOT_FOUND")
         elif status == "password-mismatch":
-            errmsg = _("Passwords don't match.")
+            errmsg = _("ERR_PASSWORD_MISMATCH")
         elif status == "password-size":
-            errmsg = _("Password must be at least 8 caracters long.")
-        elif status in ("bad-url", "bad-device_name", "bad-user_id"):
-            errmsg = _("URL or device is invalid.")
+            errmsg = _("ERR_PASSWORD_COMPLEXITY")
+        elif status == "bad-url":
+            errmsg = _("ERR_BAD_URL")
+        elif status == "bad-device_name":
+            errmsg = _("ERR_BAD_DEVICE_NAME")
+        elif status == "bad-user_id":
+            errmsg = _("ERR_BAD_USER_NAME")
         else:
-            errmsg = _("Can not claim this user ({info}).")
-        show_error(self, errmsg.format(**self.claim_user_job.exc.params))
+            errmsg = _("ERR_CLAIM_USER_UNKNOWN")
+        show_error(self, errmsg, exception=self.claim_user_job.exc)
         self.claim_user_job = None
         self.check_infos()
 
@@ -155,7 +159,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(
-                _("Password strength: {}").format(get_password_strength_text(score))
+                _("LABEL_PASSWORD_STRENGTH_{}").format(get_password_strength_text(score))
             )
             self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
         else:

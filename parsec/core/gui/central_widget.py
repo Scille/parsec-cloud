@@ -97,34 +97,28 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":
-            self.new_notification.emit("WARNING", _("Disconnected from the backend."))
+            self.new_notification.emit("WARNING", _("NOTIF_WARN_LOST_CONNECTION"))
         elif event == "backend.connection.ready":
-            self.new_notification.emit("INFO", _("Connected to the backend."))
+            self.new_notification.emit("INFO", _("NOTIF_INFO_CONNECTED"))
         elif event == "backend.connection.incompatible_version":
-            self.new_notification.emit(
-                "WARNING", _("Cannot connect to backend : incompatible version detected.")
-            )
+            self.new_notification.emit("WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
         elif event == "mountpoint.stopped":
-            self.new_notification.emit("WARNING", _("Mountpoint has been unmounted."))
+            self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == "sharing.granted":
             self.new_notification.emit(
-                "INFO", _("Workspace '{}' shared with you").format(kwargs["new_entry"].name)
+                "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(kwargs["new_entry"].name)
             )
         elif event == "sharing.updated":
             self.new_notification.emit(
-                "INFO",
-                _("Your role on Workspace '{}' has changed changed").format(
-                    kwargs["new_entry"].name
-                ),
+                "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(kwargs["new_entry"].name)
             )
         elif event == "sharing.revoked":
             self.new_notification.emit(
-                "INFO",
-                _("Workspace '{}' no longer shared with you").format(kwargs["previous_entry"].name),
+                "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(kwargs["previous_entry"].name)
             )
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(
-                "WARNING", _("Conflict while syncing file '{}'.").format(kwargs["path"])
+                "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )
 
     def close_notification_center(self):
@@ -142,17 +136,17 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def _on_connection_state_changed(self, state):
         if state == BackendState.READY.value:
-            self.menu.label_connection_text.setText(_("Connected"))
+            self.menu.label_connection_text.setText(_("BACKEND_STATE_CONNECTED"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_online.png")
             )
         elif state == BackendState.LOST.value:
-            self.menu.label_connection_text.setText(_("Disconnected"))
+            self.menu.label_connection_text.setText(_("BACKEND_STATE_DISCONNECTED"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
         elif state == BackendState.INCOMPATIBLE_VERSION.value:
-            self.menu.label_connection_text.setText(_("Bad Version"))
+            self.menu.label_connection_text.setText(_("BACKEND_STATE_INCOMPATIBLE_VERSION"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
@@ -176,7 +170,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         mount_widget = MountWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, mount_widget)
         self.menu.activate_files()
-        self.label_title.setText(_("Documents"))
+        self.label_title.setText(_("MENU_DOCUMENTS"))
         self.set_taskbar_buttons(mount_widget.get_taskbar_buttons())
         mount_widget.widget_switched.connect(self.set_taskbar_buttons)
         mount_widget.show()
@@ -186,7 +180,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         users_widget = UsersWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, users_widget)
         self.menu.activate_users()
-        self.label_title.setText(_("Users"))
+        self.label_title.setText(_("MENU_USERS"))
         self.set_taskbar_buttons(users_widget.get_taskbar_buttons())
         users_widget.show()
 
@@ -195,7 +189,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, devices_widget)
         self.menu.activate_devices()
-        self.label_title.setText(_("Devices"))
+        self.label_title.setText(_("MENU_DEVICES"))
         self.set_taskbar_buttons(devices_widget.get_taskbar_buttons())
         devices_widget.show()
 
@@ -204,7 +198,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         settings_widget = SettingsWidget(self.core.config, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, settings_widget)
         self.menu.activate_settings()
-        self.label_title.setText(_("Settings"))
+        self.label_title.setText(_("MENU_SETTINGS"))
         self.set_taskbar_buttons([])
         settings_widget.show()
 

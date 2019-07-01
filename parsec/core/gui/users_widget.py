@@ -41,7 +41,7 @@ class UserButton(QWidget, Ui_UserButton):
         if len(value) > 16:
             value = value[:16] + "-\n" + value[16:]
         if self.is_current_user:
-            value += _("\n(you)")
+            value += "\n({})".format(_("USER_CURRENT_TEXT"))
         self.label_user.setText(value)
 
     @property
@@ -56,19 +56,19 @@ class UserButton(QWidget, Ui_UserButton):
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
-        action = menu.addAction(_("Show info"))
+        action = menu.addAction(_("USER_MENU_SHOW_INFO"))
         action.triggered.connect(self.show_user_info)
         if not self.label.is_revoked and not self.is_current_user:
-            action = menu.addAction(_("Revoke"))
+            action = menu.addAction(_("USER_MENU_REVOKE"))
             action.triggered.connect(self.revoke)
         menu.exec_(global_pos)
 
     def show_user_info(self):
         text = "{}\n\n".format(self.user_name)
-        text += _("Created on {}").format(format_datetime(self.certified_on))
+        text += _("USER_CREATED_ON_{}").format(format_datetime(self.certified_on))
         if self.label.is_revoked:
             text += "\n\n"
-            text += _("This user has been revoked.")
+            text += _("USER_IS_REVOKED")
         show_info(self, text)
 
     def revoke(self):
@@ -165,25 +165,26 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def on_revoke_success(self, job):
         button = job.ret
-        show_info(self, _('User "{}" has been revoked.').format(button.user_name))
+        show_info(self, _("INFO_USER_REVOKED_SUCCESS_{}").format(button.user_name))
         button.is_revoked = True
 
     def on_revoke_error(self, job):
         status = job.status
         if status == "already_revoked":
-            show_error(self, _("User has already been revoked."))
+            errmsg = _("ERR_USER_REVOKED_ALREADY")
         elif status == "not_found":
-            show_error(self, _("User not found."))
+            errmsg = _("ERR_USER_REVOKED_NOT_FOUND")
         elif status == "invalid_role" or status == "invalid_certification":
-            show_error(self, _("You don't have the permission to revoke this user."))
+            errmsg = _("ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS")
         elif status == "error":
-            show_error(self, _("Can not revoke this user."))
+            errmsg = _("ERR_USER_REVOKED_UNKNOWN")
+        show_error(self, errmsg, exception=job.exc)
 
     def revoke_user(self, user_button):
         result = QuestionDialog.ask(
             self,
-            _("Confirmation"),
-            _('Are you sure you want to revoke user "{}" ?').format(user_button.user_name),
+            _("ASK_USER_REVOKE_TITLE"),
+            _("ASK_USER_REVOKE_CONTENT").format(user_button.user_name),
         )
         if not result:
             return

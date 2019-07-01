@@ -347,7 +347,7 @@ font-weight: 700;
         <string notr="true"/>
        </property>
        <property name="text">
-        <string>Back</string>
+        <string>BUTTON_BACK</string>
        </property>
       </widget>
      </item>
@@ -404,7 +404,7 @@ background-color: rgb(255, 255, 255);
         <string notr="true"/>
        </property>
        <property name="text">
-        <string>Start</string>
+        <string>BUTTON_START</string>
        </property>
        <property name="flat">
         <bool>false</bool>

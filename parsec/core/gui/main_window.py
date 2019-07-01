@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-import traceback
 from functools import partial
 from structlog import get_logger
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, pyqtSlot
@@ -77,12 +76,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.event_bus.connect("gui.config.changed", self.on_config_updated)
 
-        self.setWindowTitle(
-            _(
-                "Parsec - Community Edition - {} - Sovereign enclave for sharing "
-                "sensitive data on the cloud"
-            ).format(PARSEC_VERSION)
-        )
+        self.setWindowTitle(_("PARSEC_WINDOW_TITLE").format(PARSEC_VERSION))
         self.show_login_widget()
 
     def on_config_updated(self, event, **kwargs):
@@ -100,12 +94,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.config.gui_first_launch:
             self.show_starting_guide()
             r = QuestionDialog.ask(
-                self,
-                _("Error reporting"),
-                _(
-                    "Do you authorize Parsec to send data when it encounters an error to help "
-                    "us improve your experience ?"
-                ),
+                self, _("ASK_ERROR_REPORTING_TITLE"), _("ASK_ERROR_REPORTING_CONTENT")
             )
             self.event_bus.send("gui.config.changed", gui_first_launch=False, telemetry_enabled=r)
         telemetry.init(self.config)
@@ -148,15 +137,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         assert self.runing_core_job.is_finished()
         if self.runing_core_job.status is not None:
             if "Device has been revoked" in str(self.runing_core_job.exc):
-                show_error(
-                    self, _("This device has been revoked."), exception=self.running_core_job.exc
-                )
+                show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=self.running_core_job.exc)
             else:
                 logger.error("Unhandled error", exc_info=self.runing_core_job.exc)
-                error = "\n".join(traceback.format_tb(self.runing_core_job.exc.__traceback__))
-                show_error(
-                    self, _("Unhandled error.").format(error), exception=self.running_core_job.exc
-                )
+                show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=self.running_core_job.exc)
         self.runing_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -187,24 +171,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = load_device_with_password(key_file, password)
             self.start_core(device)
         except LocalDeviceError as exc:
-            show_error(self, _("Authentication failed."), exception=exc)
+            show_error(self, _("ERR_LOGIN_AUTH_FAILED"), exception=exc)
 
         except BackendHandshakeAPIVersionError as exc:
-            show_error(self, _("Incompatible backend API version."), exception=exc)
+            show_error(self, _("ERR_LOGIN_INCOMPATIBLE_VERSION"), exception=exc)
 
         except BackendDeviceRevokedError as exc:
-            show_error(self, _("This device has been revoked."), exception=exc)
+            show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=exc)
 
         except BackendHandshakeError as exc:
-            show_error(self, _("User not registered in the backend."), exception=exc)
+            show_error(self, _("ERR_LOGIN_UNKNOWN_USER"), exception=exc)
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
-            show_error(self, _("Mountpoint already in use."), exception=exc)
+            show_error(self, _("ERR_LOGIN_MOUNTPOINT"), exception=exc)
 
         except Exception as exc:
             logger.exception("Unhandled error during login")
-            error = "\n".join(traceback.format_tb(exc.__traceback__))
-            show_error(self, _("Unhandled error.").format(error), exception=exc)
+            show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
@@ -213,24 +196,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.start_core(device)
         except LocalDeviceError:
-            show_error(self, _("Authentication failed."))
+            show_error(self, _("ERR_LOGIN_AUTH_FAILED"))
 
         except BackendHandshakeAPIVersionError:
-            show_error(self, _("Incompatible backend API version."))
+            show_error(self, _("ERR_LOGIN_INCOMPATIBLE_VERSION"))
 
         except BackendDeviceRevokedError:
-            show_error(self, _("This device has been revoked."))
+            show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"))
 
         except BackendHandshakeError:
-            show_error(self, _("User not registered in the backend."))
+            show_error(self, _("ERR_LOGIN_UNKNOWN_USER"))
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            show_error(self, _("Mountpoint already in use."))
+            show_error(self, _("ERR_LOGIN_MOUNTPOINT"))
 
         except Exception as exc:
             logger.exception("Unhandled error during login")
-            error = "\n".join(traceback.format_tb(exc.__traceback__))
-            show_error(self, _("Unhandled error:\n\n{}").format(error))
+            show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
 
     def close_app(self, force=False):
         self.need_close = True
@@ -244,13 +226,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
-                result = QuestionDialog.ask(
-                    self, _("Confirmation"), _("Are you sure you want to quit ?")
-                )
+                result = QuestionDialog.ask(self, _("ASK_QUIT_TITLE"), _("ASK_QUIT_CONTENT"))
                 if not result:
                     event.ignore()
                     return
-            msg = _("Parsec is still running.")
+            msg = _("TRAY_PARSEC_RUNNING")
             self.jobs_ctx.run_sync(
                 partial(self.event_bus.send, "gui.systray.notif", title="Parsec", msg=msg)
             )

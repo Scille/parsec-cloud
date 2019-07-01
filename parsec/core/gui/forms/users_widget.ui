@@ -93,7 +93,7 @@ color: rgb(46, 46, 46);</string>
         <string/>
        </property>
        <property name="placeholderText">
-        <string>Search users</string>
+        <string>LABEL_SEARCH_USERS</string>
        </property>
       </widget>
      </item>

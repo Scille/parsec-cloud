@@ -15,75 +15,51 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
     def init_pages(self):
         self.PAGES = [
             {
-                "title": _("Welcome!"),
-                "text": _(
-                    "Parsec allows you to store data in the cloud with a very high security level."
-                    "\nFind out more by letting us guide you step by step!"
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/cloud-computing.png"),
+                "title": _("STARTING_GUIDE_WELCOME_TITLE"),
+                "text": _("STARTING_GUIDE_WELCOME_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_WELCOME_SCREENSHOT"),
                 "size": QSize(300, 300),
             },
             {
-                "title": _("Workspaces"),
-                "text": _(
-                    "Arrange all your files by workspaces, a clear interface for an easy to use "
-                    "and simple process."
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/workspaces.png"),
+                "title": _("STARTING_GUIDE_WORKSPACES_TITLE"),
+                "text": _("STARTING_GUIDE_WORKSPACES_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_WORKSPACES_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
             {
-                "title": _("Documents"),
-                "text": _(
-                    "In your workspaces, see and manage all your files, just as with a regular "
-                    "file explorer. A lightweight display to increase your productivity!"
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/documents.png"),
+                "title": _("STARTING_GUIDE_DOCUMENTS_TITLE"),
+                "text": _("STARTING_GUIDE_DOCUMENTS_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_DOCUMENTS_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
             {
-                "title": _("Sharing"),
-                "text": _(
-                    "Share your workspaces with a few clicks. See who can access it, and what "
-                    "others share with you.\nEverything shared with you automatically appears."
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/page4.png"),
+                "title": _("STARTING_GUIDE_SHARING_TITLE"),
+                "text": _("STARTING_GUIDE_SHARING_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_SHARING_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
             {
-                "title": _("Manage your devices"),
-                "text": _(
-                    "See and manage thee devices you trust. Those are the key to the guaranted "
-                    "security of your files."
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/devices.png"),
+                "title": _("STARTING_GUIDE_DEVICES_TITLE"),
+                "text": _("STARTING_GUIDE_DEVICES_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_DEVICES_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
             {
-                "title": _("Manage the users"),
-                "text": _(
-                    "And for the administrators ? You can manage all users and their privileges, "
-                    "add users, or revoke them."
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/users.png"),
+                "title": _("STARTING_GUIDE_USERS_TITLE"),
+                "text": _("STARTING_GUIDE_USERS_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_USERS_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
             {
-                "title": _("Even offline"),
-                "text": _(
-                    "No network ? Not a problem. You can access all your files. Modifications will "
-                    "be saved locally until your device comes online again."
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/offline_en.png"),
+                "title": _("STARTING_GUIDE_OFFLINE_TITLE"),
+                "text": _("STARTING_GUIDE_OFFLINE_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_OFFLINE_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
             {
-                "title": _("Now it's your turn !"),
-                "text": _(
-                    "Create your first workspace, import your files, share your documents."
-                    "\nSecurity waits for no one!"
-                ),
-                "screenshot": _(":/screenshots/images/screenshots/your_turn.png"),
+                "title": _("STARTING_GUIDE_YOUR_TURN_TITLE"),
+                "text": _("STARTING_GUIDE_YOUR_TURN_CONTENT"),
+                "screenshot": _("STARTING_GUIDE_YOUR_TURN_SCREENSHOT"),
                 "size": QSize(450, 300),
             },
         ]
@@ -115,12 +91,12 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
             self.button_next.show()
             self.button_previous.show()
             self.button_placeholder.hide()
-            self.button_next.setText(_("End"))
+            self.button_next.setText(_("BUTTON_END"))
         else:
             self.button_next.show()
             self.button_previous.show()
             self.button_placeholder.hide()
-            self.button_next.setText(_("Continue"))
+            self.button_next.setText(_("BUTTON_CONTINUE"))
         self.label_page.page = self.page
         self.label_title.setText(self.PAGES[self.page]["title"])
         self.label_doc.setText(self.PAGES[self.page]["text"])
@@ -135,12 +111,12 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
             self.button_next.show()
             self.button_previous.hide()
             self.button_placeholder.show()
-            self.button_next.setText(_("Start"))
+            self.button_next.setText(_("BUTTON_START"))
         else:
             self.button_next.show()
             self.button_previous.show()
             self.button_placeholder.hide()
-            self.button_next.setText(_("Continue"))
+            self.button_next.setText(_("BUTTON_CONTINUE"))
         self.label_page.page = self.page
         self.label_title.setText(self.PAGES[self.page]["title"])
         self.label_doc.setText(self.PAGES[self.page]["text"])

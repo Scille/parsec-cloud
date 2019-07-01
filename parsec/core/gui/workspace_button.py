@@ -98,7 +98,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             )
 
     def button_delete_clicked(self):
-        self.delete_clicked.emit(self.workspace_fs)
+        self.delete_clicked.emit(self)
 
     def button_rename_clicked(self):
         self.rename_clicked.emit(self)
@@ -132,7 +132,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         if self.is_shared:
             if self.is_creator:
-                display += _(" (shared with others)")
+                display += " {}".format(_("WORKSPACE_SHARED_DISPLAY"))
             # TODO: uncomment once the workspace name does not contain "shared by XX" anymore
             # else:
             #     display += _(" (shared with you)")

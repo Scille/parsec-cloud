@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Register new user</string>
+   <string>TITLE_REGISTER_NEW_USER</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog#RegisterUserDialog
@@ -80,7 +80,7 @@ background-color: rgb(255, 255, 255);
          <string notr="true">color: rgb(12, 65, 157);</string>
         </property>
         <property name="text">
-         <string>Register a new user</string>
+         <string>LABEL_REGISTER_NEW_USER</string>
         </property>
        </widget>
       </item>
@@ -93,14 +93,14 @@ background-color: rgb(255, 255, 255);
          </size>
         </property>
         <property name="placeholderText">
-         <string>User name</string>
+         <string>LABEL_USER_NAME</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="checkbox_is_admin">
         <property name="text">
-         <string>User is administrator</string>
+         <string>CHECK_USER_IS_ADMIN</string>
         </property>
        </widget>
       </item>
@@ -127,7 +127,7 @@ background-color: rgb(255, 255, 255);
             </font>
            </property>
            <property name="text">
-            <string>Transmit the following information to the user:</string>
+            <string>LABEL_REGISTER_USER_INSTRUCTIONS</string>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -153,7 +153,7 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>URL</string>
+              <string>LABEL_URL</string>
              </property>
             </widget>
            </item>
@@ -178,7 +178,7 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>User name</string>
+              <string>LABEL_USER_NAME</string>
              </property>
             </widget>
            </item>
@@ -190,7 +190,7 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>Token</string>
+              <string>LABEL_TOKEN</string>
              </property>
             </widget>
            </item>
@@ -226,7 +226,7 @@ background-color: rgb(255, 255, 255);
               <string>Copy to clipboard</string>
              </property>
              <property name="text">
-              <string>...</string>
+              <string/>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -249,7 +249,7 @@ background-color: rgb(255, 255, 255);
               <string>Copy to clipboard</string>
              </property>
              <property name="text">
-              <string>...</string>
+              <string/>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -272,7 +272,7 @@ background-color: rgb(255, 255, 255);
               <string>Copy to clipboard</string>
              </property>
              <property name="text">
-              <string>...</string>
+              <string/>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -339,7 +339,7 @@ background-color: rgb(255, 255, 255);
            </font>
           </property>
           <property name="text">
-           <string>Cancel</string>
+           <string>BUTTON_CANCEL</string>
           </property>
          </widget>
         </item>
@@ -357,7 +357,7 @@ background-color: rgb(255, 255, 255);
            </font>
           </property>
           <property name="text">
-           <string>Register the user</string>
+           <string>BUTTON_REGISTER_USER</string>
           </property>
          </widget>
         </item>
@@ -408,7 +408,7 @@ background-color: rgb(255, 255, 255);
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
-           <string>Close</string>
+           <string>BUTTON_CLOSE</string>
           </property>
           <property name="iconSize">
            <size>

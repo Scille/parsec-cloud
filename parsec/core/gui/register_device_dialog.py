@@ -18,16 +18,6 @@ from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 
-STATUS_TO_ERRMSG = {
-    "registration-invite-bad-value": _("Bad device name."),
-    "already_exists": _("This device already exists."),
-    "registration-invite-offline": _("Cannot invite a device without being online."),
-    "timeout": _("Device took too much time to register."),
-}
-
-DEFAULT_ERRMSG = _("Cannot register this device ({info}).")
-
-
 async def _do_registration(device, new_device_name, token):
     try:
         new_device_name = DeviceName(new_device_name)
@@ -97,18 +87,31 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_close.show()
         self.adjust_size()
 
-        if self.registration_job:
-            assert self.registration_job.is_finished()
-            if self.registration_job.status == "cancelled":
-                return
-            assert self.registration_job.status != "ok"
-            errmsg = STATUS_TO_ERRMSG.get(self.registration_job.status, DEFAULT_ERRMSG)
-            show_error(self, errmsg.format(**self.registration_job.exc.params))
+        if not self.registration_job:
+            return
+
+        assert self.registration_job.is_finished()
+        if self.registration_job.status == "cancelled":
+            return
+        assert self.registration_job.status != "ok"
+
+        status = self.registration_job.status
+        if status == "registration-invite-bad-value":
+            errmsg = _("ERR_BAD_DEVICE_NAME")
+        elif status == "already_exists":
+            errmsg = _("ERR_REGISTER_DEVICE_EXISTS")
+        elif status == "registration-invite-offline":
+            errmsg = _("ERR_REGISTER_DEVICE_OFFLINE")
+        elif status == "timeout":
+            errmsg = _("ERR_REGISTER_DEVICE_TIMEOUT")
+        else:
+            errmsg = _("ERR_REGISTER_DEVICE_UNKNOWN")
+        show_error(self, errmsg, exception=self.registration_job.status)
 
     def on_registration_success(self):
         assert self.registration_job.is_finished()
         assert self.registration_job.status == "ok"
-        show_info(self, _("Device has been registered. You may now close this window."))
+        show_info(self, _("INFO_REGISTER_DEVICE_SUCCESS"))
         new_device_name, token = self.registration_job.ret
         self.device_registered.emit(self.core.device.organization_addr, new_device_name, token)
         self.registration_job = None
@@ -138,7 +141,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
 
     def register_device(self):
         if not self.line_edit_device_name.text():
-            show_warning(self, _("Please enter a device name."))
+            show_warning(self, _("WARN_REGISTER_DEVICE_EMPTY"))
             return
 
         token = core_generate_invitation_token()

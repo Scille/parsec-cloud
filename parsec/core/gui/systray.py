@@ -15,8 +15,8 @@ class Systray(QSystemTrayIcon):
         super().__init__(**kwargs)
 
         self.menu = QMenu()
-        self.show_action = self.menu.addAction(_("Show window"))
-        self.close_action = self.menu.addAction(_("Exit"))
+        self.show_action = self.menu.addAction(_("MENU_SHOW_WINDOW"))
+        self.close_action = self.menu.addAction(_("MENU_EXIT"))
 
         self.on_show = self.show_action.triggered
         self.on_close = self.close_action.triggered

@@ -3,6 +3,9 @@
 import xml.etree.ElementTree as ET
 
 
+IGNORE_LIST = ["Dialog", "Form"]
+
+
 def get_location(elem):
     loc = elem.find("location")
     return loc.attrib["filename"], int(loc.attrib["line"])
@@ -19,4 +22,6 @@ def extract_qt(fileobj, keywords, comment_tags, options):
     for message in root.iter("message"):
         loc = get_location(message)
         s = get_translation_string(message)
+        if s in IGNORE_LIST:
+            continue
         yield (loc[1], None, s, [])

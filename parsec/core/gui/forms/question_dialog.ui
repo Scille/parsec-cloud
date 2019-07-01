@@ -292,7 +292,7 @@ border: 0;
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>No</string>
+               <string>BUTTON_NO</string>
               </property>
               <property name="iconSize">
                <size>
@@ -324,7 +324,7 @@ border: 0;
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>Yes</string>
+               <string>BUTTON_YES</string>
               </property>
               <property name="iconSize">
                <size>

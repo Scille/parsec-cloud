@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Parsec</string>
+   <string>PARSEC_WINDOW_TITLE</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../rc/resources.qrc">

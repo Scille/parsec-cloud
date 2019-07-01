@@ -275,7 +275,7 @@ padding-left: 10px;
 color: rgb(46, 46, 46);</string>
         </property>
         <property name="placeholderText">
-         <string>Search files or folders</string>
+         <string>LABEL_SEARCH_FILES</string>
         </property>
        </widget>
       </item>
@@ -375,22 +375,22 @@ color: rgb(46, 46, 46);</string>
           </column>
           <column>
            <property name="text">
-            <string>Name</string>
+            <string>LABEL_FILE_NAME</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Created</string>
+            <string>LABEL_FILE_CREATED</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Updated</string>
+            <string>LABEL_FILE_UPDATED</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Size</string>
+            <string>LABEL_FILE_SIZE</string>
            </property>
           </column>
          </widget>

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Settings</string>
+   <string>TITLE_SETTINGS</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog#SettingsDialog
@@ -199,7 +199,7 @@ width: 20px;
         <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>Close</string>
+        <string>BUTTON_CLOSE</string>
        </property>
        <property name="iconSize">
         <size>

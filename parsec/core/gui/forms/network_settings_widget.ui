@@ -124,7 +124,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Proxy</string>
+               <string>SETTINGS_TITLE_PROXY</string>
               </property>
              </widget>
             </item>
@@ -143,7 +143,7 @@ background-color: rgb(255, 255, 255);
               <item>
                <widget class="QLabel" name="label_7">
                 <property name="text">
-                 <string>Proxy type</string>
+                 <string>LABEL_PROXY_TYPE</string>
                 </property>
                </widget>
               </item>
@@ -163,22 +163,22 @@ background-color: rgb(255, 255, 255);
                 </property>
                 <item>
                  <property name="text">
-                  <string>No proxy</string>
+                  <string>LABEL_NO_PROXY</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>HTTP</string>
+                  <string>LABEL_PROXY_HTTP</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Socks4</string>
+                  <string>LABEL_PROXY_SOCKS4</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Socks5</string>
+                  <string>LABEL_PROXY_SOCKS5</string>
                  </property>
                 </item>
                </widget>
@@ -229,7 +229,7 @@ background-color: rgb(255, 255, 255);
                     <string/>
                    </property>
                    <property name="placeholderText">
-                    <string>Host</string>
+                    <string>LABEL_HOST</string>
                    </property>
                   </widget>
                  </item>
@@ -251,7 +251,7 @@ background-color: rgb(255, 255, 255);
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>Port</string>
+                    <string>LABEL_PORT</string>
                    </property>
                   </widget>
                  </item>
@@ -277,7 +277,7 @@ background-color: rgb(255, 255, 255);
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>Username</string>
+                    <string>LABEL_USER_NAME</string>
                    </property>
                   </widget>
                  </item>
@@ -302,7 +302,7 @@ background-color: rgb(255, 255, 255);
                     <enum>QLineEdit::Password</enum>
                    </property>
                    <property name="placeholderText">
-                    <string>Password</string>
+                    <string>LABEL_PASSWORD</string>
                    </property>
                   </widget>
                  </item>
@@ -371,7 +371,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Speed limits</string>
+               <string>SETTINGS_TITLE_SPEED_LIMITS</string>
               </property>
              </widget>
             </item>
@@ -385,14 +385,14 @@ background-color: rgb(255, 255, 255);
             <item>
              <widget class="QLabel" name="label_13">
               <property name="text">
-               <string>Upload</string>
+               <string>LABEL_UPLOAD</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QRadioButton" name="radio_upload_no_limit">
               <property name="text">
-               <string>No limit</string>
+               <string>LABEL_SPEED_NO_LIMIT</string>
               </property>
               <property name="checked">
                <bool>true</bool>
@@ -407,7 +407,7 @@ background-color: rgb(255, 255, 255);
               <item>
                <widget class="QRadioButton" name="radio_upload_limit">
                 <property name="text">
-                 <string>Limit to</string>
+                 <string>LABEL_SPEED_LIMIT_TO</string>
                 </property>
                 <property name="autoExclusive">
                  <bool>false</bool>
@@ -438,7 +438,7 @@ padding-right: 10px;
 }</string>
                 </property>
                 <property name="text">
-                 <string>10</string>
+                 <string/>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -451,7 +451,7 @@ padding-right: 10px;
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>kb/s</string>
+                 <string>LABEL_KB_S</string>
                 </property>
                </widget>
               </item>
@@ -467,14 +467,14 @@ padding-right: 10px;
             <item>
              <widget class="QLabel" name="label_15">
               <property name="text">
-               <string>Download</string>
+               <string>LABEL_DOWNLOAD</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QRadioButton" name="radio_download_no_limit">
               <property name="text">
-               <string>No limit</string>
+               <string>LABEL_SPEED_NO_LIMIT</string>
               </property>
               <property name="checked">
                <bool>true</bool>
@@ -489,7 +489,7 @@ padding-right: 10px;
               <item>
                <widget class="QRadioButton" name="radio_download_limit">
                 <property name="text">
-                 <string>Limit to</string>
+                 <string>LABEL_SPEED_LIMIT_TO</string>
                 </property>
                 <property name="autoExclusive">
                  <bool>false</bool>
@@ -520,7 +520,7 @@ padding-right: 10px;
 }</string>
                 </property>
                 <property name="text">
-                 <string>10</string>
+                 <string/>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -533,7 +533,7 @@ padding-right: 10px;
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>kb/s</string>
+                 <string>LABEL_KB_S</string>
                 </property>
                </widget>
               </item>
@@ -596,7 +596,7 @@ padding-right: 10px;
                </font>
               </property>
               <property name="text">
-               <string>Misc</string>
+               <string>SETTINGS_TITLE_MISC</string>
               </property>
              </widget>
             </item>
@@ -610,7 +610,7 @@ padding-right: 10px;
             <item>
              <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>Number of simultaneous connections</string>
+               <string>LABEL_SIM_CONNECTIONS</string>
               </property>
              </widget>
             </item>
@@ -721,7 +721,7 @@ padding-right: 10px;
         <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>Save</string>
+        <string>BUTTON_SAVE</string>
        </property>
        <property name="iconSize">
         <size>

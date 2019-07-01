@@ -252,7 +252,7 @@ padding-left: 10px;</string>
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
-           <string>Ok</string>
+           <string>BUTTON_OK</string>
           </property>
           <property name="iconSize">
            <size>

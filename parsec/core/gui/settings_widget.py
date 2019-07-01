@@ -17,7 +17,9 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.event_bus = event_bus
         self.global_settings = GlobalSettingsWidget(config, self.event_bus)
         self.tab_settings.addTab(
-            self.global_settings, QIcon(":/icons/images/icons/settings_on.png"), _("Global")
+            self.global_settings,
+            QIcon(":/icons/images/icons/settings_on.png"),
+            _("MENU_SETTINGS_GLOBAL"),
         )
         # self.network_settings = NetworkSettingsWidget()
         # self.tab_settings.addTab(
@@ -32,4 +34,4 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
     def save(self):
         self.global_settings.save()
         # self.network_settings.save()
-        show_info(self, _("Modification will take effect the next time you start the application."))
+        show_info(self, _("SETTINGS_NEED_RESTART"))

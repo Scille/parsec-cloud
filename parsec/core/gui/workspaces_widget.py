@@ -196,7 +196,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_button.reload_workspace_name()
 
     def on_rename_error(self, job):
-        show_error(self, _("Can not rename the workspace."))
+        show_error(self, _("ERR_WORKSPACE_RENAME"), exception=job.exc)
 
     def on_list_success(self, job):
         if not job.ret:
@@ -309,11 +309,23 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 timestamp=workspace_fs.timestamp,
             )
             return
-        show_warning(self, _("Not yet implemented."))
+        else:
+            result = QuestionDialog.ask(
+                self,
+                _("ASK_WORKSPACE_DELETE_TITLE"),
+                _("ASK_WORKSPACE_DELETE_CONTENT_{}").format(workspace_fs.workspace_name),
+            )
+            if not result:
+                return
+            show_warning(self, _("WARN_WORKSPACE_DELETE"))
 
     def rename_workspace(self, workspace_button):
         new_name = TextInputDialog.get_text(
-            self, _("New name"), _("Enter workspace new name"), placeholder=_("Workspace name")
+            self,
+            _("ASK_RENAME_WORKSPACE_TITLE"),
+            _("ASK_RENAME_WORKSPACE_CONTENT"),
+            placeholder=_("ASK_RENAME_WORKSPACE_PLACEHOLDER"),
+            default_text=workspace_button.name,
         )
         if not new_name:
             return
@@ -393,7 +405,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def create_workspace_clicked(self):
         workspace_name = TextInputDialog.get_text(
-            self, _("New workspace"), _("Enter new workspace name"), _("Workspace name")
+            self,
+            _("ASK_NEW_WORKSPACE_TITLE"),
+            _("ASK_NEW_WORKSPACE_CONTENT"),
+            _("ASK_NEW_WORKSPACE_PLACEHOLDER"),
         )
         if not workspace_name:
             return

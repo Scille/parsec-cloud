@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QPoint
+from PyQt5.QtCore import pyqtSignal, Qt, QPoint
 from PyQt5.QtWidgets import QDialog, QToolTip
 
 from parsec.core.invite_claim import (
@@ -17,17 +17,6 @@ from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-
-
-STATUS_TO_ERRMSG = {
-    "registration-invite-bad-value": _("Bad user id."),
-    "registration-invite-already-exists": _("A user with the same name already exists."),
-    "registration-invite-error": _("Only admins can invite a new user."),
-    "registration-invite-offline": _("Cannot invite a user without being online."),
-    "timeout": _("User took too much time to register."),
-}
-
-DEFAULT_ERRMSG = _("Cannot register this user ({info}).")
 
 
 async def _do_registration(core, device, new_user_id, token, is_admin):
@@ -110,24 +99,36 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_close.show()
         self.adjust_size()
 
-        if self.registration_job:
-            assert self.registration_job.is_finished()
-            if self.registration_job.status == "cancelled":
-                return
-            assert self.registration_job.status != "ok"
-            errmsg = STATUS_TO_ERRMSG.get(self.registration_job.status, DEFAULT_ERRMSG)
-            show_error(self, errmsg.format(**self.registration_job.exc.params))
+        if not self.registration_job:
+            return
+        assert self.registration_job.is_finished()
+        if self.registration_job.status == "cancelled":
+            self.registration_job = None
+            return
+        assert self.registration_job.status != "ok"
+
+        status = self.registration_job.status
+        if status == "registration-invite-bad-value":
+            errmsg = _("ERR_BAD_USER_NAME")
+        elif status == "registration-invite-already-exists":
+            errmsg = _("ERR_REGISTER_USER_EXISTS")
+        elif status == "registration-invite-error":
+            errmsg = _("ERR_REGISTER_USER_NOT_ENOUGH_PERMISSIONS")
+        elif status == "registration-invite-offline":
+            errmsg = _("ERR_REGISTER_USER_OFFLINE")
+        elif status == "timeout":
+            errmsg = _("ERR_REGISTER_USER_TIMEOUT")
+        else:
+            errmsg = _("ERR_REGISTER_USER_UNKNOWN")
+        show_error(self, errmsg, exception=self.registration_job.exc)
+        self.registration_job = None
 
     def on_registration_success(self):
         assert self.registration_job.is_finished()
         assert self.registration_job.status == "ok"
-        show_info(
-            self,
-            QCoreApplication.translate(
-                "RegisterUserDialog", "User has been registered. You may now close this window."
-            ),
-        )
+        show_info(self, _("INFO_REGISTER_USER_SUCCESS"))
         new_user_id, token = self.registration_job.ret
+        self.registration_job = None
         self.user_registered.emit(self.core.device.organization_addr, new_user_id, token)
         self.registration_job = None
         self.line_edit_token.setText("")
@@ -144,21 +145,10 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
     def cancel_registration(self):
         if self.registration_job:
             self.registration_job.cancel_and_join()
-            self.registration_job = None
-        self.line_edit_token.setText("")
-        self.line_edit_url.setText("")
-        self.line_edit_user.setText("")
-        self.widget_registration.hide()
-        self.button_cancel.hide()
-        self.button_register.show()
-        self.line_edit_username.show()
-        self.checkbox_is_admin.show()
-        self.button_close.show()
-        self.adjust_size()
 
     def register_user(self):
         if not self.line_edit_username.text():
-            show_warning(self, _("Please enter a username."))
+            show_warning(self, _("WARN_REGISTER_USER_EMPTY"))
             return
 
         token = core_generate_invitation_token()
