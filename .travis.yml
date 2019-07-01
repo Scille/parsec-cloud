@@ -26,8 +26,8 @@ script:
 - sed -i 's#omit = \(.*\)#omit = \1,../\1#' ../setup.cfg  # fix path
 # TODO: cause freeze
 # - xvfb-run py.test ../tests/gui --cov=parsec --cov-config=../setup.cfg --rungui --log-level=DEBUG -vvv -x
-- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv -x
-- py.test ../tests -n 2 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv -x
+- py.test ../tests -n 2 --max-worker-restart=0 --cov=parsec --cov-config=../setup.cfg --runmountpoint --log-level=DEBUG -vvv -x
+- py.test ../tests -n 2 --max-worker-restart=0 --cov=parsec --cov-config=../setup.cfg --runslow --postgresql --log-level=DEBUG -vvv -x
 - set +e
 after_success:
 - pip install -U codecov
