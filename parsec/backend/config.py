@@ -14,9 +14,11 @@ DEFAULT_ADMINISTRATION_TOKEN = "CCDCC27B6108438D99EF8AF5E847C3BB"
 
 
 blockstore_environ_vars = {
-    "S3": ["S3_REGION", "S3_BUCKET", "S3_KEY", "S3_SECRET"],
+    "S3": ["S3_REGION", "S3_BUCKET", "S3_KEY", "S3_SECRET", "S3_ENDPOINT_URL"],
     "SWIFT": ["SWIFT_AUTHURL", "SWIFT_TENANT", "SWIFT_CONTAINER", "SWIFT_USER", "SWIFT_PASSWORD"],
 }
+
+blockstore_optional_environ_vars = {"S3_ENDPOINT_URL": None}
 
 
 def _extract_s3_blockstore_config(environ):
@@ -26,9 +28,12 @@ def _extract_s3_blockstore_config(environ):
         try:
             config.__dict__[key.lower()] = environ[key]
         except KeyError:
-            raise ValueError(
-                f"Blockstore `S3` requires environment variables: {', '.join(needed_vars)}"
-            )
+            try:
+                config.__dict__[key.lower()] = blockstore_optional_environ_vars[key]
+            except KeyError:
+                raise ValueError(
+                    f"Blockstore `S3` requires environment variables: {', '.join(needed_vars)}"
+                )
     return config
 
 
@@ -39,9 +44,12 @@ def _extract_swift_blockstore_config(environ):
         try:
             config.__dict__[key.lower()] = environ[key]
         except KeyError:
-            raise ValueError(
-                f"Blockstore `SWIFT` requires environment variables: {', '.join(needed_vars)}"
-            )
+            try:
+                config.__dict__[key.lower()] = blockstore_optional_environ_vars[key]
+            except KeyError:
+                raise ValueError(
+                    f"Blockstore `SWIFT` requires environment variables: {', '.join(needed_vars)}"
+                )
     return config
 
 
@@ -143,6 +151,7 @@ class S3BlockStoreConfig(BaseBlockStoreConfig):
     s3_bucket = attr.ib(default=None)
     s3_key = attr.ib(default=None)
     s3_secret = attr.ib(default=None)
+    s3_endpoint_url = attr.ib(default=None)
 
 
 @attr.s(frozen=True)
