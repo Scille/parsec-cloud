@@ -177,13 +177,16 @@ class ExtractTranslations(Command):
         CommandLineInterface().run(args)
         languages = ["fr", "en"]
         for lang in languages:
+            po_file = tr_dir / f"parsec_{lang}.po"
+            if not po_file.is_file():
+                po_file.touch()
             args = [
                 "_",
                 "update",
                 "-i",
                 str(tr_dir / "translation.pot"),
                 "-o",
-                str(tr_dir / f"parsec_{lang}.po"),
+                str(po_file),
                 "-l",
                 lang,
             ]
