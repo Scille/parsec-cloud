@@ -144,12 +144,18 @@ class WorkspaceFS:
             return {}
 
     # Timestamped version
+
     def to_timestamped(self, timestamp: Pendulum):
         return workspacefs.WorkspaceFSTimestamped(self, timestamp)
 
     # Pathlib-like interface
 
     async def exists(self, path: AnyPath) -> bool:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         try:
             await self.entry_transactions.entry_info(path)
@@ -158,16 +164,31 @@ class WorkspaceFS:
         return True
 
     async def is_dir(self, path: AnyPath) -> bool:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(path)
         return info["type"] == "folder"
 
     async def is_file(self, path: AnyPath) -> bool:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(FsPath(path))
         return info["type"] == "file"
 
     async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         info = await self.entry_transactions.entry_info(path)
         if "children" not in info:
@@ -176,14 +197,29 @@ class WorkspaceFS:
             yield path / child
 
     async def listdir(self, path: AnyPath) -> Iterator[FsPath]:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         return [child async for child in self.iterdir(path)]
 
     async def rename(self, source: AnyPath, destination: AnyPath, overwrite: bool = True) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         source = FsPath(source)
         destination = FsPath(destination)
         await self.entry_transactions.entry_rename(source, destination, overwrite=overwrite)
 
     async def mkdir(self, path: AnyPath, parents: bool = False, exist_ok: bool = False) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         try:
             await self.entry_transactions.folder_create(path)
@@ -197,10 +233,20 @@ class WorkspaceFS:
                 raise
 
     async def rmdir(self, path: AnyPath) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         await self.entry_transactions.folder_delete(path)
 
     async def touch(self, path: AnyPath, exist_ok: bool = True) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         try:
             await self.entry_transactions.file_create(path, open=False)
@@ -209,10 +255,20 @@ class WorkspaceFS:
                 raise
 
     async def unlink(self, path: AnyPath) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         await self.entry_transactions.file_delete(path)
 
     async def truncate(self, path: AnyPath, length: int) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         _, fd = await self.entry_transactions.file_open(path, "w")
         try:
@@ -221,6 +277,11 @@ class WorkspaceFS:
             await self.file_transactions.fd_close(fd)
 
     async def read_bytes(self, path: AnyPath, size: int = -1, offset: int = 0) -> bytes:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         _, fd = await self.entry_transactions.file_open(path, "r")
         try:
@@ -229,6 +290,11 @@ class WorkspaceFS:
             await self.file_transactions.fd_close(fd)
 
     async def write_bytes(self, path: AnyPath, data: bytes, offset: int = 0) -> int:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         _, fd = await self.entry_transactions.file_open(path, "w")
         try:
@@ -241,7 +307,8 @@ class WorkspaceFS:
     async def move(self, source: AnyPath, destination: AnyPath):
         """
         Raises:
-            FileExistsError
+            OSError
+            FSError
         """
         source = FsPath(source)
         destination = FsPath(destination)
@@ -287,6 +354,11 @@ class WorkspaceFS:
     async def copyfile(
         self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024, exist_ok: bool = False
     ):
+        """
+        Raises:
+            OSError
+            FSError
+        """
         await self.touch(target_path, exist_ok=exist_ok)
         offset = 0
         while True:
@@ -297,6 +369,11 @@ class WorkspaceFS:
             offset += 1
 
     async def rmtree(self, path: AnyPath):
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         async for child in self.iterdir(path):
             if await self.is_dir(child):
@@ -318,7 +395,10 @@ class WorkspaceFS:
                 await self.remote_loader.upload_block(access, data)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
-        """Raises: FSBackendOfflineError"""
+        """
+        Raises:
+            FSError
+        """
         # Get a minimal manifest to upload
         try:
             remote_manifest = await self.sync_transactions.get_minimal_remote_manifest(entry_id)
@@ -353,7 +433,6 @@ class WorkspaceFS:
                 return
 
     async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> Manifest:
-        """Raises: FSBackendOfflineError"""
         # Get the current remote manifest if it has changed
         remote_manifest = None
         if remote_changed:
@@ -415,6 +494,11 @@ class WorkspaceFS:
     async def sync_by_id(
         self, entry_id: EntryID, remote_changed: bool = True, recursive: bool = True
     ):
+        """
+        Raises:
+            OSError
+            FSError
+        """
         await self._create_realm_if_needed()
 
         # Sync parent first
@@ -442,6 +526,11 @@ class WorkspaceFS:
     async def sync(
         self, path: AnyPath, remote_changed: bool = True, recursive: bool = True
     ) -> None:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         path = FsPath(path)
         entry_id, _ = await self.entry_transactions._get_entry(path)
         # TODO: Maybe the path itself is not synchronized with the remote
