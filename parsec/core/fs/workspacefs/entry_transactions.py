@@ -17,6 +17,8 @@ from parsec.core.types import (
     LocalFolderManifest,
     FileDescriptor,
 )
+
+from parsec.core.fs.exceptions import FSEntryNotFound
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -162,9 +164,43 @@ class EntryTransactions:
 
     # Reverse lookup logic
 
-    async def _get_path(self, id: EntryID) -> FsPath:
-        # TODO
-        pass
+    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
+
+        # Get first manifest
+        try:
+            current_id = entry_id
+            current_manifest = self.local_storage.get_manifest(current_id)
+        except LocalStorageMissingError:
+            raise FSEntryNotFound(entry_id)
+
+        # Loop over parts
+        parts = []
+        while current_id != self.workspace_id:
+
+            # Get the manifest
+            try:
+                parent_manifest = self.local_storage.get_manifest(current_manifest.parent_id)
+            except LocalStorageMissingError:
+                raise FSEntryNotFound(entry_id)
+
+            # Find the child name
+            try:
+                name = next(
+                    name
+                    for name, child_id in parent_manifest.children.items()
+                    if child_id == current_id
+                )
+            except StopIteration:
+                raise FSEntryNotFound(entry_id)
+            else:
+                parts.append(name)
+
+            # Continue until root is found
+            current_id = current_manifest.parent_id
+            current_manifest = parent_manifest
+
+        # Return the path
+        return FsPath("/" + "/".join(reversed(parts)))
 
     # Transactions
 

@@ -23,7 +23,6 @@ from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
 from parsec.core.fs.exceptions import (
-    FSEntryNotFound,
     FSRemoteManifestNotFound,
     FSRemoteSyncError,
     FSNoSynchronizationRequired,
@@ -100,49 +99,28 @@ class WorkspaceFS:
     # Information
 
     async def path_info(self, path: AnyPath) -> dict:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         return await self.entry_transactions.entry_info(FsPath(path))
 
     async def path_id(self, path: AnyPath) -> UUID:
+        """
+        Raises:
+            OSError
+            FSError
+        """
         info = await self.entry_transactions.entry_info(FsPath(path))
         return info["id"]
 
     async def get_entry_path(self, entry_id: EntryID) -> FsPath:
-
-        # Get first manifest
-        try:
-            current_id = entry_id
-            current_manifest = self.local_storage.get_manifest(current_id)
-        except LocalStorageMissingError:
-            raise FSEntryNotFound(entry_id)
-
-        # Loop over parts
-        parts = []
-        while current_id != self.workspace_id:
-
-            # Get the manifest
-            try:
-                parent_manifest = self.local_storage.get_manifest(current_manifest.parent_id)
-            except LocalStorageMissingError:
-                raise FSEntryNotFound(entry_id)
-
-            # Find the child name
-            try:
-                name = next(
-                    name
-                    for name, child_id in parent_manifest.children.items()
-                    if child_id == current_id
-                )
-            except StopIteration:
-                raise FSEntryNotFound(entry_id)
-            else:
-                parts.append(name)
-
-            # Continue until root is found
-            current_id = current_manifest.parent_id
-            current_manifest = parent_manifest
-
-        # Return the path
-        return FsPath("/" + "/".join(reversed(parts)))
+        """
+        Raises:
+           FSEntryNotFound
+        """
+        return await self.entry_transactions.get_entry_path(entry_id)
 
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
