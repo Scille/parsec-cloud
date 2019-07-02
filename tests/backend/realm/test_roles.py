@@ -3,12 +3,18 @@
 import pytest
 from uuid import UUID
 from pendulum import Pendulum, now as pendulum_now
+from unittest.mock import ANY
 
 from parsec.api.protocole import RealmRole
 from parsec.backend.realm import RealmGrantedRole
 from parsec.crypto import build_realm_role_certificate
 
-from tests.backend.realm.conftest import realm_get_roles, realm_update_roles
+from tests.common import freeze_time
+from tests.backend.realm.conftest import (
+    realm_get_roles,
+    realm_update_roles,
+    realm_get_role_certificates,
+)
 
 
 NOW = Pendulum(2000, 1, 1)
@@ -50,6 +56,7 @@ async def _backend_realm_generate_certif_and_update_roles(backend, author, realm
             granted_on=now,
         ),
     )
+    return certif
 
 
 @pytest.mark.trio
@@ -272,6 +279,9 @@ async def test_role_access_during_maintenance(
     rep = await realm_get_roles(alice_backend_sock, realm)
     assert rep == {"status": "ok", "users": {"alice": RealmRole.OWNER}}
 
+    rep = await realm_get_role_certificates(alice_backend_sock, realm)
+    assert rep == {"status": "ok", "certificates": [ANY]}
+
     # ...buit not update role
     rep = await _realm_generate_certif_and_update_roles_or_fail(
         alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER
@@ -279,4 +289,41 @@ async def test_role_access_during_maintenance(
     assert rep == {"status": "in_maintenance"}
 
 
-# TODO: add tests on realm_get_role_certificates
+@pytest.mark.trio
+async def test_get_role_certificates_partial(backend, alice, bob, adam, bob_backend_sock, realm):
+    # Realm is created on 2000-01-02
+
+    with freeze_time("2000-01-03"):
+        c3 = await _backend_realm_generate_certif_and_update_roles(
+            backend, alice, realm, bob.user_id, RealmRole.OWNER
+        )
+
+    with freeze_time("2000-01-04"):
+        c4 = await _backend_realm_generate_certif_and_update_roles(
+            backend, bob, realm, adam.user_id, RealmRole.MANAGER
+        )
+
+    with freeze_time("2000-01-05"):
+        c5 = await _backend_realm_generate_certif_and_update_roles(
+            backend, bob, realm, alice.user_id, RealmRole.READER
+        )
+
+    with freeze_time("2000-01-06"):
+        c6 = await _backend_realm_generate_certif_and_update_roles(
+            backend, bob, realm, alice.user_id, None
+        )
+
+    rep = await realm_get_role_certificates(bob_backend_sock, realm)
+    assert rep == {"status": "ok", "certificates": [ANY, c3, c4, c5, c6]}
+
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 3))
+    assert rep == {"status": "ok", "certificates": [c4, c5, c6]}
+
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 5))
+    assert rep == {"status": "ok", "certificates": [c6]}
+
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 7))
+    assert rep == {"status": "ok", "certificates": []}
+
+    rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 6))
+    assert rep == {"status": "ok", "certificates": []}

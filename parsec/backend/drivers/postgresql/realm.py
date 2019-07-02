@@ -2,7 +2,7 @@
 
 import pendulum
 from uuid import UUID
-from typing import Dict
+from typing import Dict, List
 
 from parsec.api.protocole import RealmRole, MaintenanceType
 from parsec.types import DeviceID, UserID, OrganizationID
@@ -234,6 +234,43 @@ ORDER BY user_, certified_on DESC
                     raise RealmAccessError()
 
         return roles
+
+    async def get_role_certificates(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        since: pendulum.Pendulum,
+    ) -> List[bytes]:
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                ret = await conn.fetch(
+                    """
+SELECT get_user_id(user_), role, certificate, certified_on
+FROM  realm_user_role
+WHERE realm = get_realm_internal_id($1, $2)
+ORDER BY certified_on DESC
+""",
+                    organization_id,
+                    realm_id,
+                )
+
+                if not ret:
+                    # Existing group must have at least one owner user
+                    raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+                out = []
+                author_current_role = None
+                for user_id, role, certif, certified_on in reversed(ret):
+                    if not since or certified_on > since:
+                        out.append(certif)
+                    if user_id == author.user_id and not author_current_role:
+                        author_current_role = role
+
+                if author_current_role is None:
+                    raise RealmAccessError()
+
+                return out
 
     async def update_roles(
         self, organization_id: OrganizationID, new_role: RealmGrantedRole

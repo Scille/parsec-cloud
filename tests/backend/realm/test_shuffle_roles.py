@@ -12,11 +12,14 @@ from hypothesis_trio.stateful import (
     TrioAsyncioRuleBasedStateMachine,
     multiple,
 )
+from unittest.mock import ANY
+from pendulum import now as pendulum_now
 
 from parsec.api.protocole import RealmRole
+from parsec.crypto import build_realm_role_certificate
 
 from tests.common import call_with_control
-from tests.backend.realm.test_roles import _realm_generate_certif_and_update_roles_or_fail
+from tests.backend.realm.conftest import realm_get_role_certificates, realm_update_roles
 
 
 @pytest.mark.slow
@@ -61,6 +64,7 @@ def test_shuffle_roles(
             # Create realm
             self.realm_id = await realm_factory(self.backend, alice)
             self.current_roles = {alice.user_id: RealmRole.OWNER}
+            self.certifs = [ANY]
 
             self.socks = {}
             return alice
@@ -100,9 +104,16 @@ def test_shuffle_roles(
 
         async def _give_role(self, author_sock, author, recipient, role):
             author_sock = await self.get_sock(author)
-            rep = await _realm_generate_certif_and_update_roles_or_fail(
-                author_sock, author, self.realm_id, recipient.user_id, role
+
+            certif = build_realm_role_certificate(
+                author.device_id,
+                author.signing_key,
+                self.realm_id,
+                recipient.user_id,
+                role,
+                pendulum_now(),
             )
+            rep = await realm_update_roles(author_sock, certif, check_rep=False)
             if author.user_id == recipient.user_id:
                 assert rep == {
                     "status": "invalid_data",
@@ -122,11 +133,22 @@ def test_shuffle_roles(
                     assert rep == {"status": "ok"}
                     print(f"+ {author.user_id} -{role.value}-> {recipient.user_id}")
                     self.current_roles[recipient.user_id] = role
+                    self.certifs.append(certif)
                 else:
                     print(f"- {author.user_id} -{role.value}-> {recipient.user_id}")
                     assert rep == {"status": "not_allowed"}
 
             return rep["status"] == "ok"
+
+        @rule(author=User)
+        async def get_role_certificates(self, author):
+            sock = await self.get_sock(author)
+            rep = await realm_get_role_certificates(sock, self.realm_id)
+            if self.current_roles.get(author.user_id) is not None:
+                assert rep["status"] == "ok"
+                assert rep["certificates"] == self.certifs
+            else:
+                assert rep == {}
 
         @invariant()
         async def check_current_roles(self):
@@ -138,6 +160,5 @@ def test_shuffle_roles(
                 alice.organization_id, alice.device_id, self.realm_id
             )
             assert roles == {k: v for k, v in self.current_roles.items() if v is not None}
-            # TODO: test realm.get_role_certificates output
 
     run_state_machine_as_test(ShuffleRoles, settings=hypothesis_settings)

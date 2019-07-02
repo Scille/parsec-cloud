@@ -9,6 +9,7 @@ from parsec.api.protocole import (
     realm_create_serializer,
     realm_status_serializer,
     realm_get_roles_serializer,
+    realm_get_role_certificates_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
@@ -58,14 +59,14 @@ async def realm_get_roles(sock, realm_id):
     return realm_get_roles_serializer.rep_loads(raw_rep)
 
 
-async def realm_get_role_certificates(sock, realm_id):
+async def realm_get_role_certificates(sock, realm_id, since=None):
     raw_rep = await sock.send(
-        realm_get_roles_serializer.req_dumps(
-            {"cmd": "realm_get_role_certificates", "realm_id": realm_id}
+        realm_get_role_certificates_serializer.req_dumps(
+            {"cmd": "realm_get_role_certificates", "realm_id": realm_id, "since": since}
         )
     )
     raw_rep = await sock.recv()
-    return realm_get_roles_serializer.rep_loads(raw_rep)
+    return realm_get_role_certificates_serializer.rep_loads(raw_rep)
 
 
 async def realm_update_roles(sock, role_certificate, check_rep=True):
