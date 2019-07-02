@@ -327,17 +327,20 @@ class WorkspaceFS:
         # - a new entry with the same name as source, but inside the destination directory
         except FileNotFoundError:
             pass
+
+        # Rename if possible
         if source.parent == real_destination.parent:
             return await self.rename(source, real_destination)
-        elif await self.is_dir(source):
+
+        # Copy directory
+        if await self.is_dir(source):
             await self.copytree(source, real_destination)
             await self.rmtree(source)
             return
-        elif await self.is_file(source):
-            await self.copyfile(source, real_destination)
-            await self.unlink(source)
-            return
-        raise NotImplementedError
+
+        # Copy file
+        await self.copyfile(source, real_destination)
+        await self.unlink(source)
 
     async def copytree(self, source_path: AnyPath, target_path: AnyPath):
         source_path = FsPath(source_path)
