@@ -249,7 +249,7 @@ ORDER BY user_, certified_on DESC
 SELECT get_user_id(user_), role, certificate, certified_on
 FROM  realm_user_role
 WHERE realm = get_realm_internal_id($1, $2)
-ORDER BY certified_on DESC
+ORDER BY certified_on ASC
 """,
                     organization_id,
                     realm_id,
@@ -261,10 +261,10 @@ ORDER BY certified_on DESC
 
                 out = []
                 author_current_role = None
-                for user_id, role, certif, certified_on in reversed(ret):
+                for user_id, role, certif, certified_on in ret:
                     if not since or certified_on > since:
                         out.append(certif)
-                    if user_id == author.user_id and not author_current_role:
+                    if user_id == author.user_id:
                         author_current_role = role
 
                 if author_current_role is None:

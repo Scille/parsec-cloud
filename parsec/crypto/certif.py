@@ -242,8 +242,9 @@ def unsecure_read_realm_role_certificate(realm_role_certificate: bytes) -> Certi
     certified_by, certified_on, content = unsecure_extract_signed_msg_meta_and_data(
         realm_role_certificate
     )
-    data = user_certificate_schema.loads(content)
+    data = realm_role_certificate_schema.loads(content)
     return CertifiedRealmRoleData(
+        realm_id=data["realm_id"],
         user_id=data["user_id"],
         role=data["role"],
         certified_by=certified_by,

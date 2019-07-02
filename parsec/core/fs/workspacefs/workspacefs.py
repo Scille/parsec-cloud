@@ -10,11 +10,6 @@ import attr
 
 from parsec.types import UserID
 from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
-from parsec.core.backend_connection import (
-    BackendNotAvailable,
-    BackendCmdsNotAllowed,
-    BackendConnectionError,
-)
 
 from parsec.core.local_storage import LocalStorageMissingError
 
@@ -28,14 +23,13 @@ from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
 from parsec.core.fs.exceptions import (
-    FSError,
     FSEntryNotFound,
-    FSBackendOfflineError,
     FSRemoteManifestNotFound,
     FSRemoteSyncError,
     FSNoSynchronizationRequired,
     FSFileConflictError,
     FSReshapingRequiredError,
+    FSWorkspaceNoAccess,
 )
 
 
@@ -165,17 +159,11 @@ class WorkspaceFS:
             pass
 
         try:
-            return await self.backend_cmds.realm_get_roles(self.workspace_id)
+            return await self.remote_loader.load_realm_roles()
 
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendCmdsNotAllowed:
+        except FSWorkspaceNoAccess:
             # Seems we lost all the access roles
             return {}
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
     # Timestamped version
     def to_timestamped(self, timestamp: Pendulum):

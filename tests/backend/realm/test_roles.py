@@ -327,3 +327,23 @@ async def test_get_role_certificates_partial(backend, alice, bob, adam, bob_back
 
     rep = await realm_get_role_certificates(bob_backend_sock, realm, Pendulum(2000, 1, 6))
     assert rep == {"status": "ok", "certificates": []}
+
+
+@pytest.mark.trio
+async def test_get_role_certificates_no_longer_allowed(
+    backend, alice, bob, alice_backend_sock, realm
+):
+    # Realm is created on 2000-01-02
+
+    with freeze_time("2000-01-03"):
+        await _backend_realm_generate_certif_and_update_roles(
+            backend, alice, realm, bob.user_id, RealmRole.OWNER
+        )
+
+    with freeze_time("2000-01-04"):
+        await _backend_realm_generate_certif_and_update_roles(
+            backend, bob, realm, alice.user_id, None
+        )
+
+    rep = await realm_get_role_certificates(alice_backend_sock, realm)
+    assert rep == {"status": "not_allowed"}
