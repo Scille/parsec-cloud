@@ -110,6 +110,7 @@ async def test_exists(alice_workspace):
     assert await alice_workspace.exists("/fiz") is False
     assert await alice_workspace.exists("/foo/fiz") is False
     assert await alice_workspace.exists("/fiz/foo") is False
+    assert await alice_workspace.exists("/foo/bar/baz") is False
 
 
 @pytest.mark.trio

@@ -159,7 +159,7 @@ class WorkspaceFS:
         path = FsPath(path)
         try:
             await self.entry_transactions.entry_info(path)
-        except FileNotFoundError:
+        except (FileNotFoundError, NotADirectoryError):
             return False
         return True
 
