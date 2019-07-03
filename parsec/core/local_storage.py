@@ -7,6 +7,8 @@ import trio
 from trio import hazmat
 from typing import Tuple, Dict, Union, Set
 
+from pendulum import Pendulum
+
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -23,7 +25,11 @@ from parsec.core.types import (
     local_manifest_serializer,
     remote_manifest_serializer,
 )
-from parsec.core.persistent_storage import PersistentStorage, LocalStorageMissingError
+from parsec.core.persistent_storage import (
+    PersistentStorage,
+    LocalStorageMissingError,
+    LocalStorageError,
+)
 
 
 logger = get_logger()
@@ -261,3 +267,76 @@ class LocalStorage:
         cursor = FileCursor(entry_id)
         self.add_file_reference(entry_id)
         return self.create_file_descriptor(cursor)
+
+    def to_timestamped(self, timestamp: Pendulum):
+        return LocalStorageTimestamped(self, timestamp)
+
+
+class LocalStorageTimestamped(LocalStorage):
+    """Timestamped version to access a local storage as it was at a given timestamp
+
+    That includes:
+    - another cache in memory for fast access to deserialized data
+    - the timestamped persistent storage to keep serialized data on the disk :
+      vlobs are in common, not manifests. Actually only vlobs are used, manifests are mocked
+    - the same lock mecanism to protect against race conditions, although it is useless there
+    """
+
+    def __init__(self, local_storage: LocalStorage, timestamp: Pendulum):
+        self.device_id = local_storage.device_id
+
+        # Cursors and file descriptors
+        self.open_cursors: Dict[FileDescriptor, FileCursor] = {}
+        self.file_references: Dict[EntryID, Set[Union[EntryID, FileDescriptor]]] = defaultdict(set)
+        self._fd_counter = 0
+
+        # Locking structures
+        self.locking_tasks = {}
+        self.entry_locks = defaultdict(trio.Lock)
+
+        # Manifest and block storage
+        self.base_manifest_cache = {}
+        self.local_manifest_cache = {}  # should delete? seems used for dirty, base for clean...
+
+        self.persistent_storage = local_storage.persistent_storage
+
+        self.set_dirty_block = self._throw_permission_error
+        self.clear_block = self._throw_permission_error
+        self.set_manifest = self._throw_permission_error
+
+    def _throw_permission_error(*e, **ke):
+        raise LocalStorageError("Not implemented : LocalStorage is timestamped")
+
+    # Manifest interface
+
+    def get_base_manifest(self, entry_id: EntryID) -> RemoteManifest:
+        """Raises: LocalStorageMissingError"""
+        assert isinstance(entry_id, EntryID)
+        try:
+            return self.base_manifest_cache[entry_id]
+        except KeyError:
+            raise LocalStorageMissingError(entry_id)
+
+    def get_manifest(self, entry_id: EntryID) -> LocalManifest:
+        """Raises: LocalStorageMissingError"""
+        assert isinstance(entry_id, EntryID)
+        try:
+            return self.local_manifest_cache[entry_id]
+        except KeyError:
+            pass
+        manifest = self.get_base_manifest(entry_id).to_local(self.device_id)
+        self.local_manifest_cache[entry_id] = manifest
+        return manifest
+
+    def set_base_manifest(
+        self, entry_id: EntryID, manifest: RemoteManifest
+    ) -> None:  # initially for clean
+        assert isinstance(entry_id, EntryID)
+        self._check_lock_status(entry_id)
+        self.base_manifest_cache[entry_id] = manifest
+
+    def clear_manifest(self, entry_id: EntryID) -> None:
+        assert isinstance(entry_id, EntryID)
+        self._check_lock_status(entry_id)
+        self.base_manifest_cache.pop(entry_id, None)
+        self.local_manifest_cache.pop(entry_id, None)
