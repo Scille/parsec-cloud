@@ -246,7 +246,10 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
         core_config = core_config.evolve(
-            gui_check_version_at_startup=False, gui_first_launch=False, mountpoint_enabled=False
+            gui_check_version_at_startup=False,
+            gui_first_launch=False,
+            mountpoint_enabled=False,
+            gui_windows_left_panel=False,
         )
         event_bus = event_bus or EventBus()
 

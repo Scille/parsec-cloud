@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
+import platform
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -17,10 +17,11 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.core_config = core_config
         self.event_bus = event_bus
         self.setupUi(self)
-        if os.name != "nt":
+        if platform.system() != "Windows":
             self.widget_version.hide()
+            self.check_windows_left_panel.hide()
         self.button_save.clicked.connect(self.save_clicked)
-        self.checkbox_tray.setChecked(self.core_config.gui_tray_enabled)
+        self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None
         for lg, key in lang.LANGUAGES.items():
             self.combo_languages.addItem(lg, key)
@@ -31,6 +32,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
         self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
         self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
+        self.check_box_windows_left_panel.setChecked(self.core_config.gui_windows_left_panel)
 
         # self.button_check_version.clicked.connect(self.check_version)
 
@@ -51,8 +53,9 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.event_bus.send(
             "gui.config.changed",
             telemetry_enabled=self.check_box_send_data.isChecked(),
-            gui_tray_enabled=self.checkbox_tray.isChecked(),
+            gui_tray_enabled=self.check_box_tray.isChecked(),
             gui_language=self.combo_languages.currentData(),
             gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
             gui_workspace_color=self.check_box_workspace_color.isChecked(),
+            gui_windows_left_panel=self.check_box_windows_left_panel.isChecked(),
         )

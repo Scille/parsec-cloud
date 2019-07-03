@@ -218,9 +218,16 @@ background: none;
              <number>20</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="checkbox_tray">
+             <widget class="QCheckBox" name="check_box_tray">
               <property name="text">
                <string>Close button minimizes Parsec in the tray</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="check_box_windows_left_panel">
+              <property name="text">
+               <string>Add Parsec mountpoint to Windows File Explorer left panel</string>
               </property>
              </widget>
             </item>
