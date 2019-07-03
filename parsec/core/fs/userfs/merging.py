@@ -26,9 +26,11 @@ def merge_workspace_entry(
     # Keep last encryption
     if diverged.encryption_revision < target.encryption_revision:
         encryption_revision = target.encryption_revision
+        encrypted_on = target.encrypted_on
         key = target.key
     else:
         encryption_revision = diverged.encryption_revision
+        encrypted_on = diverged.encrypted_on
         key = diverged.key
 
     # Keep last role
@@ -49,6 +51,7 @@ def merge_workspace_entry(
         id=target.id,
         key=key,
         encryption_revision=encryption_revision,
+        encrypted_on=encrypted_on,
         role_cached_on=role_cached_on,
         role=role,
     )

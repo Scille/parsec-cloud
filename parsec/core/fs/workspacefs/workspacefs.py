@@ -3,7 +3,7 @@
 import errno
 from uuid import UUID
 
-from typing import Union, Iterator, Dict
+from typing import Union, Iterator, Dict, Tuple
 from pendulum import Pendulum
 
 import attr
@@ -42,6 +42,16 @@ def _destinsrc(src: AnyPath, dst: AnyPath):
         return True
     except ValueError:
         return False
+
+
+@attr.s(frozen=True)
+class ReencryptionNeed:
+    user_revoked: Tuple = attr.ib(factory=tuple)
+    role_revoked: Tuple = attr.ib(factory=tuple)
+
+    @property
+    def need_reencryption(self):
+        return self.role_revoked or self.user_revoked
 
 
 class WorkspaceFS:
@@ -159,11 +169,51 @@ class WorkspaceFS:
             pass
 
         try:
-            return await self.remote_loader.load_realm_roles()
+            return await self.remote_loader.load_realm_current_roles()
 
         except FSWorkspaceNoAccess:
             # Seems we lost all the access roles
             return {}
+
+    async def get_reencryption_need(self) -> ReencryptionNeed:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+        """
+        wentry = self.get_workspace_entry()
+        try:
+            workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+            if workspace_manifest.is_placeholder:
+                return ReencryptionNeed()
+
+        except LocalStorageMissingError:
+            pass
+
+        certificates = await self.remote_loader.load_realm_role_certificates()
+        has_role = set()
+        role_revoked = set()
+        for certif in certificates:
+            if certif.role is None:
+                if certif.certified_on > wentry.encrypted_on:
+                    role_revoked.add(certif.user_id)
+                has_role.discard(certif.user_id)
+            else:
+                role_revoked.discard(certif.user_id)
+                has_role.add(certif.user_id)
+
+        user_revoked = []
+        for user_id in has_role:
+            _, devices = await self.remote_device_manager.get_user_and_devices(user_id)
+            try:
+                revocation_date = min([d.revoked_on for d in devices if d.revoked_on])
+                if revocation_date > wentry.encrypted_on:
+                    user_revoked.append(user_id)
+            except ValueError:
+                continue
+
+        return ReencryptionNeed(user_revoked=tuple(user_revoked), role_revoked=tuple(role_revoked))
 
     # Timestamped version
     def to_timestamped(self, timestamp: Pendulum):

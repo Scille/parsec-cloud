@@ -43,6 +43,7 @@ async def test_create_workspace(alice_user_fs, alice):
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -93,6 +94,7 @@ async def test_rename_workspace(alice_user_fs, alice):
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -159,6 +161,7 @@ async def test_sync(running_backend, alice2_user_fs, alice2):
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -171,10 +174,10 @@ async def test_sync(running_backend, alice2_user_fs, alice2):
 async def test_sync_under_concurrency(
     running_backend, alice_user_fs, alice2_user_fs, alice, alice2
 ):
-    with freeze_time("2000-01-03"):
+    with freeze_time("2000-01-02"):
         waid = await alice_user_fs.workspace_create("wa")
 
-    with freeze_time("2000-01-02"):
+    with freeze_time("2000-01-03"):
         wa2id = await alice2_user_fs.workspace_create("wa2")
 
     await alice_user_fs.sync()
@@ -199,7 +202,8 @@ async def test_sync_under_concurrency(
                 id=waid,
                 key=ANY,
                 encryption_revision=1,
-                role_cached_on=Pendulum(2000, 1, 3),
+                encrypted_on=Pendulum(2000, 1, 2),
+                role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
             WorkspaceEntry(
@@ -207,7 +211,8 @@ async def test_sync_under_concurrency(
                 id=wa2id,
                 key=ANY,
                 encryption_revision=1,
-                role_cached_on=Pendulum(2000, 1, 2),
+                encrypted_on=Pendulum(2000, 1, 3),
+                role_cached_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.OWNER,
             ),
         ),
@@ -259,6 +264,7 @@ async def test_sync_placeholder(
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 2),
                         role_cached_on=Pendulum(2000, 1, 2),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -324,6 +330,7 @@ async def test_concurrent_sync_placeholder(
                         id=w1id,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 1),
                         role_cached_on=Pendulum(2000, 1, 1),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -332,6 +339,7 @@ async def test_concurrent_sync_placeholder(
                         id=w2id,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 2),
                         role_cached_on=Pendulum(2000, 1, 2),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -352,6 +360,7 @@ async def test_concurrent_sync_placeholder(
                         id=w1id,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 1),
                         role_cached_on=Pendulum(2000, 1, 1),
                         role=WorkspaceRole.OWNER,
                     ),
@@ -399,6 +408,7 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),

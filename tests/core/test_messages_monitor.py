@@ -3,6 +3,7 @@
 import trio
 import pytest
 from unittest.mock import ANY
+from pendulum import Pendulum
 
 from tests.common import create_shared_workspace, freeze_time
 
@@ -12,7 +13,8 @@ from parsec.core.types import WorkspaceEntry, WorkspaceRole
 @pytest.mark.trio
 async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     # First, create a folder and sync it on backend
-    wid = await alice_core.user_fs.workspace_create("foo")
+    with freeze_time("2000-01-01"):
+        wid = await alice_core.user_fs.workspace_create("foo")
     workspace = alice_core.user_fs.get_workspace(wid)
     with freeze_time("2000-01-02"):
         await workspace.sync("/")
@@ -34,6 +36,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 1),
                         role_cached_on=ANY,
                         role=WorkspaceRole.MANAGER,
                     )
@@ -60,6 +63,7 @@ async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, ru
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 2),
                         role_cached_on=ANY,
                         role=None,
                     ),
@@ -68,6 +72,7 @@ async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, ru
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 2),
                         role_cached_on=ANY,
                         role=WorkspaceRole.MANAGER,
                     ),
@@ -94,6 +99,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                         id=wid,
                         key=ANY,
                         encryption_revision=2,
+                        encrypted_on=Pendulum(2000, 1, 3),
                         role_cached_on=ANY,
                         role=WorkspaceRole.OWNER,
                     ),
@@ -102,6 +108,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 2),
                         role_cached_on=ANY,
                         role=WorkspaceRole.OWNER,
                     ),
@@ -115,6 +122,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                         id=wid,
                         key=ANY,
                         encryption_revision=2,
+                        encrypted_on=Pendulum(2000, 1, 3),
                         role_cached_on=ANY,
                         role=WorkspaceRole.MANAGER,
                     ),
@@ -123,6 +131,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                         id=wid,
                         key=ANY,
                         encryption_revision=1,
+                        encrypted_on=Pendulum(2000, 1, 2),
                         role_cached_on=ANY,
                         role=WorkspaceRole.MANAGER,
                     ),

@@ -533,6 +533,7 @@ class UserFS:
             msg["type"] = "sharing.granted"
             msg["key"] = workspace_entry.key
             msg["encryption_revision"] = workspace_entry.encryption_revision
+            msg["encrypted_on"] = workspace_entry.encrypted_on
         else:
             msg["type"] = "sharing.revoked"
 
@@ -644,7 +645,12 @@ class UserFS:
 
         if msg["type"] in ("sharing.granted", "sharing.reencrypted"):
             await self._process_message_sharing_granted(
-                sender, msg["id"], msg["key"], msg["encryption_revision"], msg["name"]
+                sender,
+                msg["id"],
+                msg["key"],
+                msg["encryption_revision"],
+                msg["encrypted_on"],
+                msg["name"],
             )
 
         elif msg["type"] == "sharing.revoked":
@@ -655,7 +661,13 @@ class UserFS:
             self.event_bus.send("pinged")
 
     async def _process_message_sharing_granted(
-        self, sender, workspace_id, workspace_key, workspace_encryption_revision, workspace_name
+        self,
+        sender,
+        workspace_id,
+        workspace_key,
+        workspace_encryption_revision,
+        workspace_encrypted_on,
+        workspace_name,
     ):
         """
         Raises:
@@ -670,7 +682,7 @@ class UserFS:
         # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            roles = await self.remote_loader.load_realm_roles(workspace_id)
+            roles = await self.remote_loader.load_realm_current_roles(workspace_id)
 
         except FSWorkspaceNoAccess:
             # Seems we lost the access roles anyway, nothing to do then
@@ -692,6 +704,7 @@ class UserFS:
             id=workspace_id,
             key=workspace_key,
             encryption_revision=workspace_encryption_revision,
+            encrypted_on=workspace_encrypted_on,
             role=self_role,
             role_cached_on=pendulum_now(),
         )
@@ -739,7 +752,7 @@ class UserFS:
         # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.remote_loader.load_realm_roles(workspace_id)
+            await self.remote_loader.load_realm_current_roles(workspace_id)
 
         except FSWorkspaceNoAccess:
             # Exactly what we expected !
@@ -784,7 +797,7 @@ class UserFS:
             FSWorkspaceNoAccess
         """
         # First retrieve workspace participants list
-        roles = await self.remote_loader.load_realm_roles(workspace_id)
+        roles = await self.remote_loader.load_realm_current_roles(workspace_id)
 
         # Then retrieve each participant user data
         try:
@@ -812,19 +825,22 @@ class UserFS:
             "id": new_workspace_entry.id,
             "key": new_workspace_entry.key,
             "encryption_revision": new_workspace_entry.encryption_revision,
+            "encrypted_on": new_workspace_entry.encrypted_on,
             "name": new_workspace_entry.name,
         }
         # Should never raise error given we control the inputs
         raw_msg = message_content_serializer.dumps(msg)
-
-        now = pendulum_now()
 
         # Encrypt message for each user
         per_user_ciphered_msgs = {}
         for user in users:
             try:
                 ciphered = encrypt_signed_msg_for(
-                    self.device.device_id, self.device.signing_key, user.public_key, raw_msg, now
+                    self.device.device_id,
+                    self.device.signing_key,
+                    user.public_key,
+                    raw_msg,
+                    new_workspace_entry.encrypted_on,
                 )
                 per_user_ciphered_msgs[user.user_id] = ciphered
 
@@ -833,7 +849,7 @@ class UserFS:
                     f"Cannot create reencryption message for `{user.user_id}`: {exc}"
                 ) from exc
 
-        return now, per_user_ciphered_msgs
+        return per_user_ciphered_msgs
 
     async def _send_start_reencryption_cmd(
         self, workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
@@ -882,15 +898,18 @@ class UserFS:
         if not workspace_entry:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
+        now = pendulum_now()
         new_workspace_entry = workspace_entry.evolve(
-            encryption_revision=workspace_entry.encryption_revision + 1, key=SecretKey.generate()
+            encryption_revision=workspace_entry.encryption_revision + 1,
+            encrypted_on=now,
+            key=SecretKey.generate(),
         )
 
         while True:
             # In order to provide the new key to each participant, we must
             # encrypt a message for each of them
             participants = await self._retreive_participants(workspace_entry.id)
-            msgs_timestamp, reencryption_msgs = self._generate_reencryption_messages(
+            reencryption_msgs = self._generate_reencryption_messages(
                 new_workspace_entry, participants
             )
 
@@ -899,7 +918,7 @@ class UserFS:
                 await self._send_start_reencryption_cmd(
                     workspace_entry.id,
                     new_workspace_entry.encryption_revision,
-                    msgs_timestamp,
+                    now,
                     reencryption_msgs,
                 )
 
