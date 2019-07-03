@@ -474,3 +474,38 @@ class RemoteLoader:
         # Another backend error
         except BackendConnectionError as exc:
             raise FSError(f"Cannot update vlob: {exc}") from exc
+
+    def to_timestamped(self, timestamp):
+        return RemoteLoaderTimestamped(self, timestamp)
+
+
+class RemoteLoaderTimestamped(RemoteLoader):
+    def __init__(self, remote_loader: RemoteLoader, timestamp: Pendulum):
+        self.device = remote_loader.device
+        self.workspace_id = remote_loader.workspace_id
+        self.get_workspace_entry = remote_loader.get_workspace_entry
+        self.backend_cmds = remote_loader.backend_cmds
+        self.remote_device_manager = remote_loader.remote_device_manager
+        self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
+        self.timestamp = timestamp
+
+    async def upload_block(self, *e, **ke):
+        raise FSError(f"Cannot upload block through a timestamped remote loader")
+
+    async def load_manifest(
+        self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
+    ) -> Manifest:
+        if timestamp is not None and timestamp != self.timestamp:
+            raise FSError(
+                f"Cannot load a manifest at a different timestamp through a timestamped remote loader"
+            )
+        return await super().load_manifest(entry_id, version=version, timestamp=self.timestamp)
+
+    async def upload_manifest(self, *e, **ke):
+        raise FSError(f"Cannot upload manifest through a timestamped remote loader")
+
+    async def _vlob_create(self, *e, **ke):
+        raise FSError(f"Cannot create vlob through a timestamped remote loader")
+
+    async def _vlob_update(self, *e, **ke):
+        raise FSError(f"Cannot update vlob through a timestamped remote loader")
