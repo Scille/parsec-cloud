@@ -3,7 +3,7 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 from parsec.api.protocole import RealmRole
 from parsec.types import DeviceID, UserID, OrganizationID
@@ -118,16 +118,14 @@ class MemoryRealmComponent(BaseRealmComponent):
         author: DeviceID,
         realm_id: UUID,
         since: pendulum.Pendulum,
-    ) -> Tuple[RealmGrantedRole]:
-        """
-        Raises:
-            RealmNotFoundError
-            RealmAccessError
-        """
+    ) -> List[bytes]:
         realm = self._get_realm(organization_id, realm_id)
         if author.user_id not in realm.roles:
             raise RealmAccessError()
-        return tuple(x for x in realm.granted_roles if x.granted_on > since)
+        if since:
+            return [x.certificate for x in realm.granted_roles if x.granted_on > since]
+        else:
+            return [x.certificate for x in realm.granted_roles]
 
     async def update_roles(
         self, organization_id: OrganizationID, new_role: RealmGrantedRole

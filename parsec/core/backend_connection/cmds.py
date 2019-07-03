@@ -26,6 +26,7 @@ from parsec.api.protocole import (
     vlob_maintenance_save_reencryption_batch_serializer,
     realm_create_serializer,
     realm_status_serializer,
+    realm_get_role_certificates_serializer,
     realm_get_roles_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
@@ -46,7 +47,12 @@ from parsec.api.protocole import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice, EntryID
+from parsec.core.types import (
+    UnverifiedRemoteUser,
+    UnverifiedRemoteDevice,
+    UnverifiedRealmRole,
+    EntryID,
+)
 from parsec.core.backend_connection.exceptions import (
     raise_on_bad_response,
     BackendNotAvailable,
@@ -280,6 +286,18 @@ async def realm_get_roles(transport: Transport, realm_id: UUID) -> Dict[UserID, 
         transport, realm_get_roles_serializer, cmd="realm_get_roles", realm_id=realm_id
     )
     return rep["users"]
+
+
+async def realm_get_role_certificates(
+    transport: Transport, realm_id: UUID
+) -> List[UnverifiedRealmRole]:
+    rep = await _send_cmd(
+        transport,
+        realm_get_role_certificates_serializer,
+        cmd="realm_get_role_certificates",
+        realm_id=realm_id,
+    )
+    return [UnverifiedRealmRole(realm_role_certificate=c) for c in rep["certificates"]]
 
 
 async def realm_update_roles(transport: Transport, role_certificate: bytes) -> None:

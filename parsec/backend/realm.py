@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Dict, Tuple, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 import pendulum
 import attr
@@ -370,7 +370,7 @@ class BaseRealmComponent:
         author: DeviceID,
         realm_id: UUID,
         since: pendulum.Pendulum,
-    ) -> Tuple[RealmGrantedRole]:
+    ) -> List[bytes]:
         """
         Raises:
             RealmNotFoundError

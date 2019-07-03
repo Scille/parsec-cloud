@@ -50,6 +50,7 @@ from parsec.core.remote_devices_manager import (
 )
 
 from parsec.core.fs.workspacefs import WorkspaceFS
+from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
@@ -143,6 +144,21 @@ class UserFS:
         # it concurrently
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
+
+        wentry = WorkspaceEntry(
+            name="<user manifest>",
+            id=device.user_manifest_id,
+            key=device.user_manifest_key,
+            encryption_revision=1,
+        )
+        self.remote_loader = RemoteLoader(
+            self.device,
+            self.device.user_manifest_id,
+            lambda: wentry,
+            self.backend_cmds,
+            self.remote_devices_manager,
+            self.local_storage,
+        )
 
     @property
     def user_manifest_id(self) -> EntryID:
@@ -489,6 +505,7 @@ class UserFS:
             role=role,
             timestamp=pendulum_now(),
         )
+
         try:
             await self.backend_cmds.realm_update_roles(role_certificate)
 
@@ -653,17 +670,11 @@ class UserFS:
         # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            roles = await self.backend_cmds.realm_get_roles(workspace_id)
+            roles = await self.remote_loader.load_realm_roles(workspace_id)
 
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendCmdsNotAllowed:
+        except FSWorkspaceNoAccess:
             # Seems we lost the access roles anyway, nothing to do then
             return
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
         if roles.get(sender.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
@@ -728,17 +739,11 @@ class UserFS:
         # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.backend_cmds.realm_get_roles(workspace_id)
+            await self.remote_loader.load_realm_roles(workspace_id)
 
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendCmdsNotAllowed:
+        except FSWorkspaceNoAccess:
             # Exactly what we expected !
             pass
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace per-user roles: {exc}") from exc
 
         else:
             # We still have access over the workspace, nothing to do then
@@ -779,19 +784,7 @@ class UserFS:
             FSWorkspaceNoAccess
         """
         # First retrieve workspace participants list
-        try:
-            roles = await self.backend_cmds.realm_get_roles(workspace_id)
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendCmdsNotAllowed as exc:
-            raise FSWorkspaceNoAccess(
-                f"No longer allowed to access to workspace {workspace_id}: {exc}"
-            ) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace {workspace_id} participants: {exc}") from exc
+        roles = await self.remote_loader.load_realm_roles(workspace_id)
 
         # Then retrieve each participant user data
         try:

@@ -3,6 +3,7 @@
 from hashlib import sha256
 import pendulum
 from pendulum import Pendulum
+from typing import Dict, Optional
 
 from parsec.serde import SerdeError
 from parsec.crypto import (
@@ -11,14 +12,18 @@ from parsec.crypto import (
     decrypt_raw_with_secret_key,
     encrypt_raw_with_secret_key,
     decrypt_and_verify_signed_msg_with_secret_key,
+    unsecure_read_realm_role_certificate,
+    verify_realm_role_certificate,
     CryptoError,
 )
-
+from parsec.types import UserID
+from parsec.api.protocole import RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsInMaintenance,
     BackendCmdsAlreadyExists,
     BackendCmdsNotFound,
+    BackendCmdsNotAllowed,
     BackendCmdsBadVersion,
     BackendNotAvailable,
     BackendConnectionError,
@@ -33,6 +38,7 @@ from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
+    FSWorkspaceNoAccess,
 )
 
 
@@ -52,6 +58,81 @@ class RemoteLoader:
         self.backend_cmds = backend_cmds
         self.remote_device_manager = remote_device_manager
         self.local_storage = local_storage
+
+    async def load_realm_roles(
+        self, realm_id: Optional[EntryID] = None, since: Optional[Pendulum] = None
+    ) -> Dict[UserID, RealmRole]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+        """
+        try:
+            unverifieds = await self.backend_cmds.realm_get_role_certificates(
+                realm_id or self.workspace_id
+            )
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendCmdsNotAllowed as exc:
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoAccess(f"Not allowed to access this realm") from exc
+
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot retrieve realm roles: {exc}") from exc
+
+        try:
+            # Must read unverified certificates to access metadata
+            unsecure_certifs = sorted(
+                [
+                    (
+                        unsecure_read_realm_role_certificate(unverified.realm_role_certificate),
+                        unverified.realm_role_certificate,
+                    )
+                    for unverified in unverifieds
+                ],
+                key=lambda x: x[0].certified_on,
+            )
+
+            current_roles = {}
+            owner_only = (RealmRole.OWNER,)
+            owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+
+            # Now verify each certif
+            for unsecure_certif, raw_certif in unsecure_certifs:
+                author = await self.remote_device_manager.get_device(unsecure_certif.certified_by)
+
+                verify_realm_role_certificate(raw_certif, author.device_id, author.verify_key)
+
+                # Make sure author had the right to do this
+                existing_user_role = current_roles.get(unsecure_certif.user_id)
+                if not current_roles and unsecure_certif.user_id == author.user_id:
+                    # First user is autosigned
+                    needed_roles = (None,)
+                elif (
+                    existing_user_role in owner_or_manager
+                    or unsecure_certif.role in owner_or_manager
+                ):
+                    needed_roles = owner_only
+                else:
+                    needed_roles = owner_or_manager
+                if current_roles.get(unsecure_certif.certified_by.user_id) not in needed_roles:
+                    raise FSError(
+                        f"Invalid realm role certificates: "
+                        f"{unsecure_certif.certified_by} has not right to give "
+                        f"{unsecure_certif.role} role to {unsecure_certif.user_id} "
+                        f"on {unsecure_certif.certified_on}"
+                    )
+
+                current_roles[unsecure_certif.user_id] = unsecure_certif.role
+
+        # Decryption error
+        except CryptoError as exc:
+            raise FSError(f"Invalid realm role certificates: {exc}") from exc
+
+        return current_roles
 
     async def load_block(self, access: BlockAccess) -> bytes:
         """

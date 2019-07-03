@@ -23,8 +23,10 @@ from parsec.core.types.local_manifests import (
 from parsec.core.types.remote_device import (
     UnverifiedRemoteUser,
     UnverifiedRemoteDevice,
+    UnverifiedRealmRole,
     VerifiedRemoteUser,
     VerifiedRemoteDevice,
+    VerifiedRealmRole,
 )
 from parsec.core.types.remote_manifests import (
     FileManifest,
@@ -69,8 +71,10 @@ __all__ = (
     # remote_device
     "UnverifiedRemoteUser",
     "UnverifiedRemoteDevice",
+    "UnverifiedRealmRole",
     "VerifiedRemoteUser",
     "VerifiedRemoteDevice",
+    "VerifiedRealmRole",
     # remote_manifests
     "FileManifest",
     "FolderManifest",
