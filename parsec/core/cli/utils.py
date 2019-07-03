@@ -5,6 +5,7 @@ import trio
 import click
 from functools import wraps
 from pathlib import Path
+import pendulum
 
 from parsec.types import DeviceID, OrganizationID
 from parsec.logging import configure_logging, configure_sentry_logging
@@ -79,6 +80,7 @@ def _unslug(val):
 def core_config_and_device_options(fn):
     @core_config_options
     @click.option("--device", "-D", type=_unslug, required=True)
+    @click.option("--timestamp", "-t", type=pendulum.parse)
     @click.option("--password", "-P")
     @click.option("--pkcs11", is_flag=True)
     @wraps(fn)
