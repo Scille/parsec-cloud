@@ -6,6 +6,7 @@ import warnings
 import logging
 from functools import partial
 from pathlib import PurePath
+from pendulum import Pendulum
 
 from async_generator import asynccontextmanager
 
@@ -66,9 +67,9 @@ class MountpointManager:
         self._nursery = nursery
         self._mountpoint_tasks = {}
 
-    def _get_workspace(self, workspace_id: EntryID):
+    def _get_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None):
         try:
-            return self.user_fs.get_workspace(workspace_id)
+            return self.user_fs.get_workspace(workspace_id, timestamp=timestamp)
         except FSWorkspaceNotFoundError as exc:
             raise MountpointConfigurationError(f"Workspace `{workspace_id}` doesn't exist") from exc
 
@@ -81,8 +82,8 @@ class MountpointManager:
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
 
-    async def mount_workspace(self, workspace_id: EntryID) -> PurePath:
-        workspace = self._get_workspace(workspace_id)
+    async def mount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None) -> PurePath:
+        workspace = self._get_workspace(workspace_id, timestamp)
         if workspace_id in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
 
@@ -104,11 +105,11 @@ class MountpointManager:
         await self._mountpoint_tasks[workspace_id].cancel_and_join()
         del self._mountpoint_tasks[workspace_id]
 
-    async def mount_all(self):
+    async def mount_all(self, timestamp: Pendulum = None):
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
             try:
-                await self.mount_workspace(workspace_entry.id)
+                await self.mount_workspace(workspace_entry.id, timestamp=timestamp)
             except MountpointAlreadyMounted:
                 pass
 

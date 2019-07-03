@@ -3,6 +3,7 @@
 import trio
 import click
 from pathlib import Path
+from pendulum import Pendulum
 
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
@@ -26,10 +27,10 @@ else:
         _run_gui(config)
 
 
-async def _run_mountpoint(config, device):
+async def _run_mountpoint(config, device, timestamp: Pendulum = None):
     config = config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(config, device) as core:
-        await core.mountpoint_manager.mount_all()
+        await core.mountpoint_manager.mount_all(timestamp)
         display_device = click.style(device.device_id, fg="yellow")
         mountpoint_display = click.style(str(config.mountpoint_base_dir.absolute()), fg="yellow")
         click.echo(f"{display_device}'s drive mounted at {mountpoint_display}")
@@ -48,4 +49,4 @@ def run_mountpoint(config, device, mountpoint, **kwargs):
     if mountpoint:
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
-        trio.run(_run_mountpoint, config, device)
+        trio.run(_run_mountpoint, config, device, kwargs["timestamp"])
