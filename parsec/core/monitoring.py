@@ -22,7 +22,7 @@ def format_stack(coro):
 
 
 class TaskMonitoringInstrument(trio.abc.Instrument):
-    def __init__(self, threshold=0.05):
+    def __init__(self, threshold=0.2):
         self.start_dict = {}
         self.threshold = threshold
 
