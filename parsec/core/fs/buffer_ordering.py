@@ -218,7 +218,11 @@ def _merge_in_contiguous_space(overlaid_contiguous_spaces, buff):
 
         unsorted_spaces += trimmed
 
-    return ContiguousSpace(start, end, sorted(unsorted_spaces))
+    # Comparing attrs instances is costy and causes this sorting process to be
+    # really slow (0.5 seconds for 500 items). Using a lambda key speeds up the
+    # process by a factor of 20.
+    sorted_spaces = sorted(unsorted_spaces, key=lambda x: (x.start, x.end))
+    return ContiguousSpace(start, end, sorted_spaces)
 
 
 def merge_buffers(buffers):
