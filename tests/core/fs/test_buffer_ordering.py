@@ -146,3 +146,22 @@ def test_merge_buffers_with_limits_and_alignment(buffers, limits, alignment):
     result = _build_data_from_uncontiguous_space(merged)
 
     assert result[start:end] == expected[start:end]
+
+
+def test_merge_buffers_performance():
+    blocks = []
+    dirty_size = 4 * 1024
+    clean_size = 512 * 1024
+    total_size = 2 * 1024 * 1024
+    for offset in range(0, total_size, dirty_size):
+        block = Buffer(offset, offset + dirty_size, None)
+        blocks.append(block)
+
+    merged = merge_buffers_with_limits_and_alignment(blocks, 0, total_size, clean_size)
+
+    assert merged.start == 0
+    assert merged.end == merged.size == total_size
+    assert len(merged.spaces) == 4
+    assert sum(len(space.buffers) for space in merged.spaces) == 512
+    buffers = [buff.buffer for space in merged.spaces for buff in space.buffers]
+    assert buffers == blocks
