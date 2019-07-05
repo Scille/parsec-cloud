@@ -56,8 +56,8 @@ class BackendAddr(str):
 
         self._split = urlsplit(raw)
 
-        if self._split.scheme not in ("ws", "wss"):
-            raise ValueError("Backend addr must start with ws:// or wss://")
+        if self._split.scheme not in ("parsec", "parsecs"):
+            raise ValueError("Backend addr must start with parsec:// or parsecs://")
 
     @property
     def scheme(self):
@@ -73,7 +73,7 @@ class BackendAddr(str):
         if port:
             return port
         else:
-            return 80 if self._split.scheme == "ws" else 443
+            return 80 if self._split.scheme == "parsec" else 443
 
 
 class BackendOrganizationAddr(BackendAddr):

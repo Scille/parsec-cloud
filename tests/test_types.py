@@ -25,8 +25,8 @@ def test_user_id():
 
 
 def test_backend_addr_good():
-    addr = BackendAddr("ws://foo:42")
-    assert addr.scheme == "ws"
+    addr = BackendAddr("parsec://foo:42")
+    assert addr.scheme == "parsec"
     assert addr.hostname == "foo"
     assert addr.port == 42
 
@@ -48,8 +48,8 @@ def exported_verify_key(verify_key):
 
 
 def test_organization_addr_good(verify_key):
-    addr = BackendOrganizationAddr.build("ws://foo:42", "org", verify_key)
-    assert addr.scheme == "ws"
+    addr = BackendOrganizationAddr.build("parsec://foo:42", "org", verify_key)
+    assert addr.scheme == "parsec"
     assert addr.hostname == "foo"
     assert addr.port == 42
     assert addr.organization_id == "org"
@@ -60,7 +60,8 @@ def test_organization_addr_good(verify_key):
 
 
 @pytest.mark.parametrize(
-    "url", ["ws://foo:42", "ws://foo:42/bad/org?rvk=<rvk>", "ws://foo:42/org?rvk=bad_rvk"]
+    "url",
+    ["parsec://foo:42", "parsec://foo:42/bad/org?rvk=<rvk>", "parsec://foo:42/org?rvk=bad_rvk"],
 )
 def test_organization_addr_bad_value(url, exported_verify_key):
     url = url.replace("<rvk>", exported_verify_key)
@@ -69,8 +70,8 @@ def test_organization_addr_bad_value(url, exported_verify_key):
 
 
 def test_organization_bootstrap_addr_good(verify_key):
-    addr = BackendOrganizationBootstrapAddr.build("ws://foo:42", "org", "token-123")
-    assert addr.scheme == "ws"
+    addr = BackendOrganizationBootstrapAddr.build("parsec://foo:42", "org", "token-123")
+    assert addr.scheme == "parsec"
     assert addr.hostname == "foo"
     assert addr.port == 42
     assert addr.organization_id == "org"
@@ -85,7 +86,8 @@ def test_organization_bootstrap_addr_good(verify_key):
 
 
 @pytest.mark.parametrize(
-    "url", ["ws://foo:42", "ws://foo:42/bad/org?bootstrap-token=123", "ws://foo:42/org?"]
+    "url",
+    ["parsec://foo:42", "parsec://foo:42/bad/org?bootstrap-token=123", "parsec://foo:42/org?"],
 )
 def test_organization_bootstrap_addr_bad_value(url):
     with pytest.raises(ValueError):

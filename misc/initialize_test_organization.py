@@ -40,7 +40,7 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
 
 
 @click.command()
-@click.option("-B", "--backend-address", default="ws://localhost:6777")
+@click.option("-B", "--backend-address", default="parsec://localhost:6777")
 @click.option("-O", "--organization-id", default="corp")
 @click.option("-a", "--alice-device-id", default="alice@laptop")
 @click.option("-b", "--bob-device-id", default="bob@laptop")
@@ -62,7 +62,7 @@ def main(*args, **kwargs):
         mkdir $XDG_CACHE_HOME $XDG_DATA_HOME $XDG_CONFIG_HOME
         parsec backend run -b MOCKED -P 6888 &
 
-    And use `-B ws://localhost:6888` as a backend adress.
+    And use `-B parsec://localhost:6888` as a backend adress.
 
     This scripts create two users, alice and bob who both own two devices,
     laptop and pc. They each have their workspace, respectively
@@ -72,7 +72,7 @@ def main(*args, **kwargs):
 
 
 async def amain(
-    backend_address="ws://localhost:6777",
+    backend_address="parsec://localhost:6777",
     organization_id="vcorp",
     alice_device_id="alice@laptop",
     bob_device_id="bob@laptop",

@@ -167,7 +167,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### Create organization #######")
         p = _run(
             "core create_organization "
-            f"{org} --addr=ws://localhost:{unused_tcp_port} "
+            f"{org} --addr=parsec://localhost:{unused_tcp_port} "
             f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}"
         )
         url = re.search(
