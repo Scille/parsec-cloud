@@ -92,7 +92,7 @@ async def _connect(
         logger.debug("Impossible to connect to backend", reason=exc)
         raise BackendNotAvailable(exc) from exc
 
-    if addr.scheme == "parsecs":
+    if addr.use_ssl:
         stream = _upgrade_stream_to_ssl(stream, addr.hostname)
 
     try:

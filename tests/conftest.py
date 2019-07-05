@@ -310,7 +310,7 @@ def server_factory(tcp_stream_spy):
 def backend_addr(tcp_stream_spy):
     # Depending on tcp_stream_spy fixture prevent from doing real connection
     # attempt (which can be long to resolve) when backend is not running
-    return BackendAddr("parsec://127.0.0.1:9999")
+    return BackendAddr("parsec://127.0.0.1:9999?no_ssl=true")
 
 
 @pytest.fixture(scope="session")
