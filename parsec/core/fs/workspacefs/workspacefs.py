@@ -413,6 +413,7 @@ class WorkspaceFS:
         if remote_manifest is None:
             return
 
+        # Make sure the corresponding realm exists
         await self._create_realm_if_needed()
 
         # Upload the miminal manifest
@@ -422,20 +423,25 @@ class WorkspaceFS:
         except FSRemoteSyncError:
             remote_manifest = await self.remote_loader.load_manifest(entry_id)
 
-        while True:
-            # Register the manifest to unset the placeholder tag
-            try:
-                await self.sync_transactions.synchronization_step(entry_id, remote_manifest)
-                return
-            # The manifest first requires reshaping
-            except FSReshapingRequiredError:
-                await self.sync_transactions.file_reshape(entry_id)
-                continue
-            # Not available locally so nothing to synchronize
-            except LocalStorageMissingError:
-                return
+        # Register the manifest to unset the placeholder tag
+        try:
+            await self.sync_transactions.synchronization_step(entry_id, remote_manifest, final=True)
+        # Not available locally so nothing to synchronize
+        except LocalStorageMissingError:
+            pass
 
     async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> Manifest:
+        """
+        Synchronize the entry corresponding to a specific ID.
+
+        This method keeps performing synchronization steps on the given ID until one of
+        those two conditions is met:
+        - there is no more changes to upload
+        - one upload operation has succeeded and has been acknowledged
+
+        This guarantees that any change prior to the call is saved remotely when this
+        method returns.
+        """
         # Get the current remote manifest if it has changed
         remote_manifest = None
         if remote_changed:
@@ -445,12 +451,13 @@ class WorkspaceFS:
                 pass
 
         # Loop over sync transactions
+        final = False
         while True:
 
             # Perform the transaction
             try:
                 new_remote_manifest = await self.sync_transactions.synchronization_step(
-                    entry_id, remote_manifest
+                    entry_id, remote_manifest, final
                 )
             # The manifest doesn't exist locally
             except LocalStorageMissingError:
@@ -478,8 +485,9 @@ class WorkspaceFS:
             # The upload has failed: download the latest remote manifest
             except FSRemoteSyncError:
                 remote_manifest = await self.remote_loader.load_manifest(entry_id)
-            # The upload has succeed: loop to acknowledge this new version
+            # The upload has succeed: loop one last time to acknowledge this new version
             else:
+                final = True
                 remote_manifest = new_remote_manifest
 
     async def _create_realm_if_needed(self):
@@ -502,6 +510,7 @@ class WorkspaceFS:
             OSError
             FSError
         """
+        # Make sure the corresponding realm exists
         await self._create_realm_if_needed()
 
         # Sync parent first

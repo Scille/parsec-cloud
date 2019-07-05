@@ -224,14 +224,27 @@ class SyncTransactions:
     # Atomic transactions
 
     async def synchronization_step(
-        self, entry_id: EntryID, remote_manifest: Optional[FolderManifest] = None
+        self,
+        entry_id: EntryID,
+        remote_manifest: Optional[FolderManifest] = None,
+        final: bool = False,
     ) -> Optional[FolderManifest]:
+        """Perform a synchronization step.
+
+        This step is meant to be called several times until the right state is reached.
+        It takes the current remote manifest as an argument and returns the new remote
+        manifest to upload. When the manifest is successfully uploaded, this method has
+        to be called once again with the new remote manifest as an argument. When there
+        is no more changes to upload, this method returns None. The `final` argument can
+        be set to true to indicate that the caller has no intention to upload a new
+        manifest. This also causes the method to return None.
+        """
 
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
             # Sync cannot be performed
-            if is_file_manifest(local_manifest) and local_manifest.dirty_blocks:
+            if not final and is_file_manifest(local_manifest) and local_manifest.dirty_blocks:
                 raise FSReshapingRequiredError(entry_id)
 
             # Get base manifest
@@ -276,7 +289,7 @@ class SyncTransactions:
                 self._send_event("fs.entry.synced", id=entry_id)
 
             # Nothing new to upload
-            if not new_local_manifest.need_sync:
+            if final or not new_local_manifest.need_sync:
                 return None
 
             # Produce the new remote manifest to upload
