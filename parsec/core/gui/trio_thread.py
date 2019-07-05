@@ -98,7 +98,10 @@ class QtToTrioJob:
 
     def cancel_and_join(self):
         assert self.cancel_scope
-        self._portal.run_sync(self.cancel_scope.cancel)
+        try:
+            self._portal.run_sync(self.cancel_scope.cancel)
+        except trio.RunFinishedError:
+            pass
         self._done.wait()
 
 
@@ -132,7 +135,10 @@ class QtToTrioJobScheduler:
         await self._stopped.wait()
 
     def stop(self):
-        self._portal.run(self._stop)
+        try:
+            self._portal.run(self._stop)
+        except trio.RunFinishedError:
+            pass
 
     def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
         # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
@@ -147,7 +153,18 @@ class QtToTrioJobScheduler:
             await self._send_job_channel.send(job)
             await job._started.wait()
 
-        self._portal.run(_submit_job)
+        try:
+            self._portal.run(_submit_job)
+
+        except trio.RunFinishedError as exc:
+            job.status = "cancelled"
+            job.exc = exc
+            job._done.set()
+            if job._qt_on_error.args_types:
+                job._qt_on_error.emit(job)
+            else:
+                job._qt_on_error.emit()
+
         return job
 
     # TODO: needed by legacy widget
