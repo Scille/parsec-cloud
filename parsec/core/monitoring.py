@@ -17,8 +17,12 @@ def format_stack(coro):
             return
     if hasattr(coro, "cr_frame"):
         yield from traceback.format_stack(coro.cr_frame)
-    if hasattr(coro, "cr_await"):
         yield from format_stack(coro.cr_await)
+        return
+    if hasattr(coro, "gi_frame"):
+        yield from traceback.format_stack(coro.gi_frame)
+        yield from format_stack(coro.gi_yieldfrom)
+        return
 
 
 class TaskMonitoringInstrument(trio.abc.Instrument):
@@ -35,10 +39,7 @@ class TaskMonitoringInstrument(trio.abc.Instrument):
         delta = time.time() - self.start_dict.pop(task)
         if delta <= self.threshold:
             return
-        if task.coro.cr_frame is None:
-            msg = f"The last step for task `{task.name}` took {delta:.3f} s"
-        else:
-            msg = f"The previous step for task `{task.name}` took {delta:.3f} s"
-            msg += "\nResuming afer:\n"
-            msg += "".join(format_stack(task.coro))
-        logger.warning(msg)
+        coro = task.coro
+        stack = None if coro.cr_frame is None else "".join(format_stack(coro))
+        msg = "Task step took too long"
+        logger.warning(msg, task_name=task.name, duration=delta, stack=stack)
