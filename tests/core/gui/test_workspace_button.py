@@ -187,4 +187,4 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs):
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.delete_clicked, timeout=500) as blocker:
         qtbot.mouseClick(w.button_delete, QtCore.Qt.LeftButton)
-    assert blocker.args == [workspace_fs]
+    assert blocker.args == [w]

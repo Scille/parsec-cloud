@@ -91,7 +91,9 @@ async def test_revoke_device(aqtbot, running_backend, autoclose_dialog, monkeypa
 
     async with aqtbot.wait_signal(d_w.revoke_success):
         dev2_w.revoke_clicked.emit(dev2_w)
-    assert autoclose_dialog.dialogs == [("Information", 'Device "dev2" has been revoked.')]
+    assert autoclose_dialog.dialogs == [
+        ("Information", 'Device "dev2" has been successfully revoked.')
+    ]
     assert dev2_w.is_revoked is True
 
 

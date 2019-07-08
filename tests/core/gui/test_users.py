@@ -105,7 +105,9 @@ async def test_revoke_user(
 
     async with aqtbot.wait_signal(u_w.revoke_success):
         bob_w.revoke_clicked.emit(bob_w)
-    assert autoclose_dialog.dialogs == [("Information", 'User "bob" has been revoked.')]
+    assert autoclose_dialog.dialogs == [
+        ("Information", 'User "bob" has been successfully revoked.')
+    ]
     assert bob_w.is_revoked is True
 
 
