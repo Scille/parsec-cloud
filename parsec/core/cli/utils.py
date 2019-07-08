@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import trio
 import click
 from functools import wraps
 from pathlib import Path
@@ -21,12 +20,6 @@ from parsec.core.local_device import (
 def core_config_options(fn):
     @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
     @click.option(
-        "--ssl-keyfile", type=click.Path(exists=True, dir_okay=False), help="SSL key file"
-    )
-    @click.option(
-        "--ssl-certfile", type=click.Path(exists=True, dir_okay=False), help="SSL certificate file"
-    )
-    @click.option(
         "--log-level",
         "-l",
         default="WARNING",
@@ -38,17 +31,6 @@ def core_config_options(fn):
     @wraps(fn)
     def wrapper(config_dir, *args, **kwargs):
         assert "config" not in kwargs
-
-        ssl_keyfile = kwargs["ssl_keyfile"]
-        ssl_certfile = kwargs["ssl_certfile"]
-
-        if ssl_certfile or ssl_keyfile:
-            ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.SERVER_CLIENT)
-            if ssl_certfile:
-                ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
-            else:
-                ssl_context.load_default_certs()
-            kwargs["ssl_context"] = ssl_context
 
         configure_logging(
             kwargs["log_level"], kwargs["log_format"], kwargs["log_file"], kwargs["log_filter"]

@@ -234,11 +234,6 @@ def unused_tcp_port():
 
 
 @pytest.fixture(scope="session")
-def unused_tcp_addr(unused_tcp_port):
-    return "ws://127.0.0.1:%s" % unused_tcp_port
-
-
-@pytest.fixture(scope="session")
 def event_bus_factory():
     return SpiedEventBus
 
@@ -277,12 +272,12 @@ def server_factory(tcp_stream_spy):
     count = 0
 
     @asynccontextmanager
-    async def _server_factory(entry_point, url=None):
+    async def _server_factory(entry_point, url=None, ssl=False):
         nonlocal count
         count += 1
 
         if not url:
-            url = f"ws://server-{count}.localhost:9999"
+            url = f"parsec://server-{count}.localhost:9999?no_ssl=true"
 
         async with trio.open_nursery() as nursery:
 
@@ -310,7 +305,7 @@ def server_factory(tcp_stream_spy):
 def backend_addr(tcp_stream_spy):
     # Depending on tcp_stream_spy fixture prevent from doing real connection
     # attempt (which can be long to resolve) when backend is not running
-    return BackendAddr("ws://127.0.0.1:9999")
+    return BackendAddr("parsec://127.0.0.1:9999?no_ssl=true")
 
 
 @pytest.fixture(scope="session")

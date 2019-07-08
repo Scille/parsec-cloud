@@ -63,9 +63,6 @@ class CoreConfig:
     sentry_url: Optional[str] = None
     telemetry_enabled: bool = True
 
-    ssl_keyfile: Optional[str] = None
-    ssl_certfile: Optional[str] = None
-
     gui_last_device: Optional[str] = None
     gui_tray_enabled: bool = True
     gui_language: Optional[str] = None
@@ -89,8 +86,6 @@ def config_factory(
     backend_max_connections: int = 4,
     telemetry_enabled: bool = True,
     debug: bool = False,
-    ssl_keyfile: str = None,
-    ssl_certfile: str = None,
     gui_last_device: str = None,
     gui_tray_enabled: bool = True,
     gui_language: str = None,
@@ -109,8 +104,6 @@ def config_factory(
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
         debug=debug,
-        ssl_keyfile=ssl_keyfile,
-        ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
         gui_last_device=gui_last_device,
         gui_tray_enabled=gui_tray_enabled,

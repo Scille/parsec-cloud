@@ -2,16 +2,16 @@
 
 import pytest
 import re
+import attr
 import os
 from pathlib import Path
 from contextlib import contextmanager
 from time import sleep
+import trustme
 import subprocess
 from unittest.mock import ANY, MagicMock, patch
-
 from async_generator import asynccontextmanager
 from click.testing import CliRunner
-
 
 import parsec
 from parsec.cli import cli
@@ -68,9 +68,9 @@ def test_share_workspace(tmpdir, alice, bob):
     share_mock.assert_called_once_with("/ws1", alice.user_id)
 
 
-def _run(cmd):
+def _run(cmd, env={}):
     print(f"========= RUN {cmd} ==============")
-    env = {**os.environ.copy(), "DEBUG": "true"}
+    env = {**os.environ.copy(), "DEBUG": "true", **env}
     cooked_cmd = ("python -m parsec.cli " + cmd).split()
     ret = subprocess.run(
         cooked_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=CWD, env=env
@@ -95,8 +95,8 @@ class LivingStream:
 
 
 @contextmanager
-def _running(cmd, wait_for=None):
-    env = {**os.environ.copy(), "DEBUG": "true"}
+def _running(cmd, wait_for=None, env={}):
+    env = {**os.environ.copy(), "DEBUG": "true", **env}
     cooked_cmd = ("python -m parsec.cli " + cmd).split()
     p = subprocess.Popen(
         cooked_cmd,
@@ -141,15 +141,41 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 
     # Test backend can run
     with _running(
-        ("backend run --blockstore=POSTGRESQL " f"--db={postgresql_url} --port={unused_tcp_port}"),
+        f"backend run --blockstore=POSTGRESQL --db={postgresql_url} --port={unused_tcp_port}",
         wait_for="Starting Parsec Backend",
     ):
         pass
 
 
+@pytest.fixture(params=(False, True))
+def ssl_conf(request):
+    @attr.s
+    class SSLConf:
+        @property
+        def use_ssl(self):
+            return bool(self.backend_opts)
+
+        client_env = attr.ib(factory=dict)
+        backend_opts = attr.ib(default="")
+
+    if not request.param:
+        yield SSLConf()
+    else:
+        ca = trustme.CA()
+        server_cert = ca.issue_cert("localhost")
+        with ca.cert_pem.tempfile() as ca_certfile, server_cert.cert_chain_pems[
+            0
+        ].tempfile() as server_certfile, server_cert.private_key_pem.tempfile() as server_keyfile:
+
+            yield SSLConf(
+                backend_opts=f" --ssl-keyfile={server_keyfile} --ssl-certfile={server_certfile} ",
+                client_env={"SSL_CAFILE": ca_certfile},
+            )
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
+def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
     org = alice.organization_id
@@ -162,13 +188,21 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
     password = "P@ssw0rd."
 
     print("######## START BACKEND #########")
-    with _running(f"backend run --port={unused_tcp_port}", wait_for="Starting Parsec Backend"):
+    with _running(
+        f"backend run --port={unused_tcp_port} {ssl_conf.backend_opts}",
+        wait_for="Starting Parsec Backend",
+    ):
 
         print("####### Create organization #######")
+        url = f"parsec://localhost:{unused_tcp_port}"
+        if not ssl_conf.use_ssl:
+            url += "?no_ssl=true"
+
         p = _run(
             "core create_organization "
-            f"{org} --addr=ws://localhost:{unused_tcp_port} "
-            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}"
+            f"{org} --addr={url} "
+            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
+            env=ssl_conf.client_env,
         )
         url = re.search(
             r"^Bootstrap organization url: (.*)$", p.stdout.decode(), re.MULTILINE
@@ -177,7 +211,8 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### Bootstrap organization #######")
         _run(
             "core bootstrap_organization "
-            f"{alice1} --addr={url} --config-dir={config_dir} --password={password}"
+            f"{alice1} --addr={url} --config-dir={config_dir} --password={password}",
+            env=ssl_conf.client_env,
         )
 
         print("####### Create another user #######")
@@ -186,6 +221,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
             f"--config-dir={config_dir} --device={alice1_slug} "
             f"--password={password} {bob1.user_id}",
             wait_for="Invitation token:",
+            env=ssl_conf.client_env,
         ) as p:
             stdout = p.live_stdout.read()
             url = re.search(r"^Backend url: (.*)$", stdout, re.MULTILINE).group(1)
@@ -194,7 +230,8 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
             _run(
                 "core claim_user "
                 f"--config-dir={config_dir} --addr={url} --token={token} "
-                f"--password={password} {bob1}"
+                f"--password={password} {bob1}",
+                env=ssl_conf.client_env,
             )
 
         print("####### Create another device #######")
@@ -203,6 +240,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
             f"--config-dir={config_dir} --device={alice1_slug} --password={password}"
             f" {alice2.device_name}",
             wait_for="Invitation token:",
+            env=ssl_conf.client_env,
         ) as p:
             stdout = p.live_stdout.read()
             url = re.search(r"^Backend url: (.*)$", stdout, re.MULTILINE).group(1)
@@ -211,11 +249,12 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
             _run(
                 "core claim_device "
                 f"--config-dir={config_dir} --addr={url} --token={token} "
-                f"--password={password} {alice2}"
+                f"--password={password} {alice2}",
+                env=ssl_conf.client_env,
             )
 
         print("####### List users #######")
-        p = _run(f"core list_devices --config-dir={config_dir}")
+        p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
         stdout = p.stdout.decode()
         assert alice1 in stdout
         assert alice2 in stdout
@@ -224,9 +263,11 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### New users can communicate with backend #######")
         _run(
             "core create_workspace wksp1 "
-            f"--config-dir={config_dir} --device={bob1_slug} --password={password}"
+            f"--config-dir={config_dir} --device={bob1_slug} --password={password}",
+            env=ssl_conf.client_env,
         )
         _run(
             "core create_workspace wksp2 "
-            f"--config-dir={config_dir} --device={alice2_slug} --password={password}"
+            f"--config-dir={config_dir} --device={alice2_slug} --password={password}",
+            env=ssl_conf.client_env,
         )

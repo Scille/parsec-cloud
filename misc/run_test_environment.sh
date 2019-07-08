@@ -33,4 +33,4 @@ Configure your test environment with the following variables:
 pkill -f "parsec backend run -b MOCKED -P $PORT"
 parsec backend run -b MOCKED -P $PORT &
 sleep 1
-python3 misc/initialize_test_organization.py -B "ws://localhost:$PORT" $@
+python3 misc/initialize_test_organization.py -B "parsec://localhost:$PORT" $@

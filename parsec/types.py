@@ -48,16 +48,45 @@ class OrganizationID(str):
 
 
 class BackendAddr(str):
-    __slots__ = ("_split",)
+    __slots__ = ("_split", "_use_ssl")
 
     def __init__(self, raw: str):
         if not isinstance(raw, str):
             raise ValueError("Invalid backend address.")
 
         self._split = urlsplit(raw)
+        self._parse_path(self._split.path)
+        if self._split.query:
+            params = parse_qs(self._split.query, keep_blank_values=True, strict_parsing=True)
+        else:
+            params = {}
+        self._parse_and_consume_params(params)
+        if params:
+            raise ValueError(f"Unknown params: {','.join(params)}")
 
-        if self._split.scheme not in ("ws", "wss"):
-            raise ValueError("Backend addr must start with ws:// or wss://")
+        if self._split.scheme != "parsec":
+            raise ValueError("Backend addr must start with `parsec://`")
+
+    def _parse_path(self, path):
+        if path not in ("", "/"):
+            raise ValueError("Backend addr cannot have path")
+
+    def _parse_and_consume_params(self, params):
+        value = params.pop("no_ssl", ("false",))
+        if len(value) != 1:
+            raise ValueError("Multiple values for param `no_ssl`")
+        value = value[0].lower()
+        # param is no_ssl, but we store use_ssl (so invert the values)
+        if value == "false":
+            self._use_ssl = True
+        elif value == "true":
+            self._use_ssl = False
+        else:
+            raise ValueError("Invalid `no_ssl` param value (must be true or false)")
+
+    @property
+    def use_ssl(self):
+        return self._use_ssl
 
     @property
     def scheme(self):
@@ -73,7 +102,7 @@ class BackendAddr(str):
         if port:
             return port
         else:
-            return 80 if self._split.scheme == "ws" else 443
+            return 443 if self._use_ssl else 80
 
 
 class BackendOrganizationAddr(BackendAddr):
@@ -83,22 +112,24 @@ class BackendOrganizationAddr(BackendAddr):
     def build(
         cls, backend_addr: str, name: str, root_verify_key: VerifyKey
     ) -> "BackendOrganizationAddr":
-        scheme, netloc, _, _, fragment = urlsplit(backend_addr)
+        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
         rvk = export_root_verify_key(root_verify_key)
-        query = f"rvk={rvk}"
+        query = f"{base_query}&rvk={rvk}" if base_query else f"rvk={rvk}"
+        name = f"{base_name}/{name}" if base_name else name
         return cls(urlunsplit((scheme, netloc, name, query, fragment)))
 
-    def __init__(self, raw: str):
-        super().__init__(raw)
-
-        self._organization_id = OrganizationID(self._split.path[1:])
-
-        query = parse_qs(self._split.query)
+    def _parse_and_consume_params(self, params):
+        super()._parse_and_consume_params(params)
+        value = params.pop("rvk", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `rvk` param")
         try:
-            self._root_verify_key = import_root_verify_key(query["rvk"][0])
+            self._root_verify_key = import_root_verify_key(value[0])
+        except ValueError as exc:
+            raise ValueError("Invalid `rvk` param value") from exc
 
-        except (KeyError, IndexError) as exc:
-            raise ValueError("Backend organization address must contains `rvk` params.") from exc
+    def _parse_path(self, path):
+        self._organization_id = OrganizationID(path[1:])
 
     @property
     def organization_id(self) -> OrganizationID:
@@ -116,8 +147,13 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     def build(
         cls, backend_addr: str, name: str, bootstrap_token: str
     ) -> "BackendOrganizationBootstrapAddr":
-        scheme, netloc, _, _, fragment = urlsplit(backend_addr)
-        query = f"bootstrap-token={bootstrap_token}"
+        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
+        query = (
+            f"{base_query}&bootstrap-token={bootstrap_token}"
+            if base_query
+            else f"bootstrap-token={bootstrap_token}"
+        )
+        name = f"{base_name}/{name}" if base_name else name
         return cls(urlunsplit((scheme, netloc, name, query, fragment)))
 
     def __init__(self, raw: str):
@@ -134,6 +170,16 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
                 "Backend domain address must contains a `bootstrap-token` param."
             ) from exc
 
+    def _parse_and_consume_params(self, params):
+        super()._parse_and_consume_params(params)
+        value = params.pop("bootstrap-token", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `bootstrap-token` param")
+        self._bootstrap_token = value[0]
+
+    def _parse_path(self, path):
+        self._organization_id = OrganizationID(path[1:])
+
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
@@ -143,12 +189,10 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
         return self._bootstrap_token
 
     def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
-        scheme, netloc, path, _, fragment = urlsplit(self)
-        query = f"rvk={export_root_verify_key(root_verify_key)}"
-        return BackendOrganizationAddr.build(
-            urlunsplit((scheme, netloc, "", "", fragment)), self.organization_id, root_verify_key
-        )
-        return BackendOrganizationAddr(urlunsplit((scheme, netloc, path, query, fragment)))
+        scheme, netloc, _, _, fragment = urlsplit(self)
+        query = "no_ssl=true" if not self.use_ssl else ""
+        backend_addr = urlunsplit((scheme, netloc, "", query, fragment))
+        return BackendOrganizationAddr.build(backend_addr, self.organization_id, root_verify_key)
 
 
 class UserID(str):
