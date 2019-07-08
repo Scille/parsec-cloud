@@ -29,9 +29,9 @@ script:
 # Run everything with memory driver
 - py.test ../tests/ --runmountpoint --runslow -n 2 --max-worker-restart=0  --log-level=DEBUG -vvv -x --cov=parsec --cov-config=../setup.cfg
 # Run backend tests with postgresql driver
-- py.test ../tests/backend --postgresql --runslow -n 2 --max-worker-restart=0  --log-level=DEBUG -vvv -x --cov=parsec --cov-config=../setup.cfg
+- py.test ../tests/backend --postgresql --runslow -n 2 --max-worker-restart=0  --log-level=DEBUG -vvv -x --cov=parsec --cov-config=../setup.cfg --cov-append
 # Finally only run gui tests without parallelism
-- py.test ../tests/ -m gui --runmountpoint --runslow -vvv -x --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg
+- py.test ../tests/ -m gui --runmountpoint --runslow -vvv -x --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
 - set +e
 after_success:
 - pip install -U codecov
