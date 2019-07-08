@@ -15,6 +15,7 @@ from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
 
+from parsec.monitoring import TaskMonitoringInstrument
 from parsec.types import BackendAddr, OrganizationID
 from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
@@ -173,6 +174,17 @@ def pytest_runtest_setup(item):
     if item.get_closest_marker("gui"):
         if not item.config.getoption("--rungui"):
             pytest.skip("need --rungui option to run")
+
+
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        if "trio" in item.keywords:
+            item.fixturenames.append("task_monitoring")
+
+
+@pytest.fixture
+async def task_monitoring():
+    trio.hazmat.add_instrument(TaskMonitoringInstrument())
 
 
 @pytest.fixture(autouse=True, scope="session", name="unmock_crypto")

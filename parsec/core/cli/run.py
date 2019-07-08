@@ -5,6 +5,7 @@ import click
 from pathlib import Path
 from pendulum import Pendulum
 
+from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
 from parsec.core.cli.utils import core_config_and_device_options, core_config_options
@@ -49,4 +50,4 @@ def run_mountpoint(config, device, mountpoint, **kwargs):
     if mountpoint:
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
-        trio.run(_run_mountpoint, config, device, kwargs["timestamp"])
+        trio_run(_run_mountpoint, config, device, kwargs["timestamp"])

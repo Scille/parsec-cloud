@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import click
 
+from parsec.utils import trio_run
 from parsec.types import UserID
 from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
@@ -23,4 +23,4 @@ def share_workspace(config, device, workspace_name, user_id, **kwargs):
     Create a new workspace for the given device.
     """
     with cli_exception_handler(config.debug):
-        trio.run(_share_workspace, config, device, workspace_name, user_id)
+        trio_run(_share_workspace, config, device, workspace_name, user_id)

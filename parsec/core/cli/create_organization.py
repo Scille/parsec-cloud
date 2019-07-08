@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import trio
 import click
 
+from parsec.utils import trio_run
 from parsec.types import OrganizationID, BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, cli_exception_handler
@@ -29,4 +29,4 @@ def create_organization(name, addr, administration_token):
     configure_logging(log_level="DEBUG" if debug else "WARNING")
 
     with cli_exception_handler(debug):
-        trio.run(_create_organization, debug, name, addr, administration_token)
+        trio_run(_create_organization, debug, name, addr, administration_token)

@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import trio
 import click
 
+from parsec.utils import trio_run
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.core.cli.utils import core_config_options
 from parsec.types import BackendOrganizationAddr, DeviceID
@@ -39,4 +39,4 @@ def claim_device(config, addr, device, token, password, pkcs11, **kwargs):
 
     debug = "DEBUG" in os.environ
     with cli_exception_handler(debug):
-        trio.run(_claim_device, config, addr, token, device, password, pkcs11)
+        trio_run(_claim_device, config, addr, token, device, password, pkcs11)
