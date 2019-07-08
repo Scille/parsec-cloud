@@ -57,7 +57,7 @@ async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_di
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_bootstrap_organization_backend_offline(
-    unused_tcp_addr, aqtbot, running_backend, gui, autoclose_dialog
+    aqtbot, running_backend, gui, autoclose_dialog
 ):
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
 

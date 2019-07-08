@@ -234,11 +234,6 @@ def unused_tcp_port():
 
 
 @pytest.fixture(scope="session")
-def unused_tcp_addr(unused_tcp_port):
-    return "parsec://127.0.0.1:%s" % unused_tcp_port
-
-
-@pytest.fixture(scope="session")
 def event_bus_factory():
     return SpiedEventBus
 
