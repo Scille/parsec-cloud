@@ -2,7 +2,8 @@
 
 import attr
 import trio
-
+import trio_asyncio
+from parsec.monitoring import TaskMonitoringInstrument
 
 # Task status
 
@@ -74,3 +75,10 @@ async def start_task(nursery, corofn, *args, name=None):
     It also contains the started value set by `task_status.started()`.
     """
     return await nursery.start(TaskStatus.wrap_task, corofn, *args, name=name)
+
+
+def trio_run(async_fn, *args, use_asyncio=False):
+    if use_asyncio:
+        return trio_asyncio.run(async_fn, *args)
+    instruments = (TaskMonitoringInstrument(),)
+    return trio.run(async_fn, *args, instruments=instruments)

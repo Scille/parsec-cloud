@@ -7,6 +7,7 @@ import itertools
 import click
 import pendulum
 
+from parsec.utils import trio_run
 from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
 from parsec.logging import configure_logging
@@ -69,7 +70,7 @@ def main(**kwargs):
     laptop and pc. They each have their workspace, respectively
     alice_workspace and bob_workspace, that their sharing with each other.
     """
-    trio.run(lambda: _amain(**kwargs))
+    trio_run(lambda: _amain(**kwargs))
 
 
 async def _amain(

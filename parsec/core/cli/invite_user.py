@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import click
 
+from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.types import UserID
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
@@ -30,4 +30,4 @@ async def _invite_user(config, device, invited_user_id, admin):
 @click.argument("invited_user_id", type=UserID, required=True)
 def invite_user(config, device, admin, invited_user_id, **kwargs):
     with cli_exception_handler(config.debug):
-        trio.run(_invite_user, config, device, invited_user_id, admin)
+        trio_run(_invite_user, config, device, invited_user_id, admin)

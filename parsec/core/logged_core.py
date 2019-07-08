@@ -20,7 +20,6 @@ from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
 from parsec.core.local_storage import LocalStorage
-from parsec.core.monitoring import TaskMonitoringInstrument
 
 
 logger = get_logger()
@@ -42,9 +41,6 @@ class LoggedCore:
 async def logged_core_factory(
     config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
 ):
-    # Add task monitoring instrument
-    trio.hazmat.add_instrument(TaskMonitoringInstrument())
-
     event_bus = event_bus or EventBus()
 
     # Plenty of nested scope to order components init/teardown

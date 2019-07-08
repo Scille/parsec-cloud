@@ -3,10 +3,10 @@
 import os
 import ssl
 import trio
-import trio_asyncio
 import click
 from structlog import get_logger
 
+from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
@@ -37,7 +37,7 @@ def init_cmd(db):
             if already_initialized:
                 click.echo("Database already initialized, nothing to do.")
 
-        trio_asyncio.run(_init_db, db)
+        trio_run(_init_db, db, use_asyncio=True)
 
 
 @click.command(short_help="run the server")
@@ -128,7 +128,7 @@ def run_cmd(
             f"blockstore={config.blockstore_config.type})"
         )
         try:
-            trio_asyncio.run(_run_backend)
+            trio_run(_run_backend, use_asyncio=True)
         except KeyboardInterrupt:
             print("bye ;-)")
 

@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import trio
 import click
 import pendulum
 from pathlib import Path
 
+from parsec.utils import trio_run
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
@@ -66,4 +66,4 @@ def bootstrap_organization(device, addr, config_dir, force, password):
     configure_logging(log_level="DEBUG" if debug else "WARNING")
 
     with cli_exception_handler(debug):
-        trio.run(_bootstrap_organization, debug, device, addr, config_dir, force, password)
+        trio_run(_bootstrap_organization, debug, device, addr, config_dir, force, password)

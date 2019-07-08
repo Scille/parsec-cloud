@@ -5,6 +5,7 @@ import trio
 import threading
 from inspect import iscoroutinefunction
 from structlog import get_logger
+from parsec.utils import trio_run
 from parsec.core.fs import FSError
 from PyQt5.QtCore import pyqtBoundSignal, Q_ARG, QMetaObject, Qt
 
@@ -167,13 +168,13 @@ class QtToTrioJobScheduler:
 #         self.job_scheduler = job_scheduler
 
 #     def run(self):
-#         trio.run(self.job_scheduler._start)
+#         trio_run(self.job_scheduler._start)
 
 
 @contextmanager
 def run_trio_thread():
     job_scheduler = QtToTrioJobScheduler()
-    thread = threading.Thread(target=trio.run, args=[job_scheduler._start])
+    thread = threading.Thread(target=trio_run, args=[job_scheduler._start])
     thread.setName("TrioLoop")
     thread.start()
     # thread = QtToTrioJobSchedulerThread(job_scheduler)

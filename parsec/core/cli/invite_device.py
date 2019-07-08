@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import click
 
+from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.types import DeviceName
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
@@ -29,4 +29,4 @@ async def _invite_device(config, device, new_device_name):
 @click.argument("new_device_name", type=DeviceName, required=True)
 def invite_device(config, device, new_device_name, **kwargs):
     with cli_exception_handler(config.debug):
-        trio.run(_invite_device, config, device, new_device_name)
+        trio_run(_invite_device, config, device, new_device_name)
