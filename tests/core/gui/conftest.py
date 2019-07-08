@@ -251,6 +251,7 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
             gui_first_launch=False,
             mountpoint_enabled=False,
             gui_windows_left_panel=False,
+            gui_language="en",
         )
         event_bus = event_bus or EventBus()
         # Language config rely on global var, must reset it for each test !
@@ -260,6 +261,7 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
             # Pass minimize_on_close to avoid having test blocked by the
             # closing confirmation prompt
 
+            switch_language(core_config, "en")
             main_w = MainWindow(jobs_ctx, event_bus, core_config, minimize_on_close=True)
             qtbot.add_widget(main_w)
             main_w.showMaximized()
