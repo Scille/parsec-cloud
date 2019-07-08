@@ -29,8 +29,9 @@ async def _do_registration(device, new_device_name, token):
     except InviteClaimBackendOfflineError as exc:
         raise JobResultError("registration-invite-offline") from exc
     except InviteClaimError as exc:
-        raise JobResultError("registration-invite-error", info=str(exc)) from exc
-
+        if "already_exists" in str(exc):
+            raise JobResultError("already_exists")
+        raise JobResultError("registration-invite-error", info=str(exc))
     return new_device_name, token
 
 
