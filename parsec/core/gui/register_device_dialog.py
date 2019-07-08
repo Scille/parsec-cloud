@@ -31,15 +31,15 @@ DEFAULT_ERRMSG = _("Cannot register this device ({info}).")
 async def _do_registration(device, new_device_name, token):
     try:
         new_device_name = DeviceName(new_device_name)
-    except ValueError:
-        raise JobResultError("registration-invite-bad-value")
+    except ValueError as exc:
+        raise JobResultError("registration-invite-bad-value") from exc
 
     try:
         await core_invite_and_create_device(device, new_device_name, token)
-    except InviteClaimBackendOfflineError:
-        raise JobResultError("registration-invite-offline")
+    except InviteClaimBackendOfflineError as exc:
+        raise JobResultError("registration-invite-offline") from exc
     except InviteClaimError as exc:
-        raise JobResultError("registration-invite-error", info=str(exc))
+        raise JobResultError("registration-invite-error", info=str(exc)) from exc
 
     return new_device_name, token
 

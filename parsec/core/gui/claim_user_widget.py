@@ -48,22 +48,22 @@ async def _do_claim_user(
 
     try:
         organization_addr = BackendOrganizationAddr(organization_addr)
-    except ValueError:
-        raise JobResultError("bad-url")
+    except ValueError as exc:
+        raise JobResultError("bad-url") from exc
 
     try:
         device_id = DeviceID(f"{user_id}@{device_name}")
-    except ValueError:
-        raise JobResultError("bad-device_name")
+    except ValueError as exc:
+        raise JobResultError("bad-device_name") from exc
 
     try:
         device = await core_claim_user(organization_addr, device_id, token)
 
     except InviteClaimBackendOfflineError as exc:
-        raise JobResultError("backend-offline", info=str(exc))
+        raise JobResultError("backend-offline", info=str(exc)) from exc
 
     except InviteClaimError as exc:
-        raise JobResultError("refused-by-backend", info=str(exc))
+        raise JobResultError("refused-by-backend", info=str(exc)) from exc
 
     try:
         if use_pkcs11:
@@ -71,8 +71,8 @@ async def _do_claim_user(
         else:
             save_device_with_password(config_dir, device, password)
 
-    except LocalDeviceAlreadyExistsError:
-        raise JobResultError("user-exists")
+    except LocalDeviceAlreadyExistsError as exc:
+        raise JobResultError("user-exists") from exc
 
     return device, password
 

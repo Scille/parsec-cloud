@@ -51,13 +51,13 @@ async def _do_bootstrap_organization(
 
     try:
         bootstrap_addr = BackendOrganizationBootstrapAddr(bootstrap_addr)
-    except ValueError:
-        raise JobResultError("bad-url")
+    except ValueError as exc:
+        raise JobResultError("bad-url") from exc
 
     try:
         device_id = DeviceID(f"{user_id}@{device_name}")
-    except ValueError:
-        raise JobResultError("bad-device_name")
+    except ValueError as exc:
+        raise JobResultError("bad-device_name") from exc
 
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
@@ -67,8 +67,8 @@ async def _do_bootstrap_organization(
         device = generate_new_device(device_id, organization_addr, True)
         save_device_with_password(config_dir, device, password)
 
-    except LocalDeviceAlreadyExistsError:
-        raise JobResultError("user-exists")
+    except LocalDeviceAlreadyExistsError as exc:
+        raise JobResultError("user-exists") from exc
 
     now = pendulum.now()
     user_certificate = build_user_certificate(
@@ -89,16 +89,16 @@ async def _do_bootstrap_organization(
             )
 
     except BackendIncompatibleVersion as exc:
-        raise JobResultError("bad-api-version", info=str(exc))
+        raise JobResultError("bad-api-version", info=str(exc)) from exc
 
-    except BackendHandshakeError:
-        raise JobResultError("invalid-url")
+    except BackendHandshakeError as exc:
+        raise JobResultError("invalid-url") from exc
 
     except BackendNotAvailable as exc:
-        raise JobResultError("backend-offline", info=str(exc))
+        raise JobResultError("backend-offline", info=str(exc)) from exc
 
     except BackendCmdsBadResponse as exc:
-        raise JobResultError("refused-by-backend", info=str(exc))
+        raise JobResultError("refused-by-backend", info=str(exc)) from exc
 
     return device, password
 
