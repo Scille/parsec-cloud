@@ -2,6 +2,7 @@
 
 import os
 import trio
+import ssl
 from async_generator import asynccontextmanager
 from structlog import get_logger
 from typing import Optional, Union
@@ -119,16 +120,15 @@ async def _connect(
 def _upgrade_stream_to_ssl(raw_stream, hostname):
     # The ssl context should be generated once and stored into the config
     # however this is tricky (should ssl configuration be stored per device ?)
-    keyfile = os.environ.get("SSL_KEYFILE")
-    certfile = os.environ.get("SSL_CERTFILE")
+    cafile = os.environ.get("SSL_CAFILE")
 
-    ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.CLIENT_AUTH)
-    if certfile:
-        ssl_context.load_cert_chain(certfile, keyfile)
+    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    if cafile:
+        ssl_context.load_verify_locations(cafile)
     else:
         ssl_context.load_default_certs()
 
-    return trio.ssl.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
+    return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
 async def _do_handshade(transport: Transport, ch):

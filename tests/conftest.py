@@ -272,12 +272,12 @@ def server_factory(tcp_stream_spy):
     count = 0
 
     @asynccontextmanager
-    async def _server_factory(entry_point, url=None):
+    async def _server_factory(entry_point, url=None, ssl=False):
         nonlocal count
         count += 1
 
         if not url:
-            url = f"parsec://server-{count}.localhost:9999"
+            url = f"parsec://server-{count}.localhost:9999?no_ssl=true"
 
         async with trio.open_nursery() as nursery:
 

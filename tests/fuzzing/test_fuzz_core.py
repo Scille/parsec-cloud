@@ -236,7 +236,7 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-async def test_fuzz_core(request, running_backend, alice_core):
+async def test_fuzz_core(request, running_backend, alice_core, monitor):
     if request.config.getoption("--postgresql"):
         pytest.skip("TODO: Postgresql concurrency not handled yet :'(")
 

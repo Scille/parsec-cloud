@@ -40,7 +40,7 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
 
 
 @click.command()
-@click.option("-B", "--backend-address", default="parsec://localhost:6777")
+@click.option("-B", "--backend-address", default="parsec://localhost:6777?no_ssl=true")
 @click.option("-O", "--organization-id", default="corp")
 @click.option("-a", "--alice-device-id", default="alice@laptop")
 @click.option("-b", "--bob-device-id", default="bob@laptop")
@@ -48,8 +48,9 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
 @click.option("-x", "--alice-workspace", default="alice_workspace")
 @click.option("-y", "--bob-workspace", default="bob_workspace")
 @click.option("-P", "--password", default="test")
+@click.option("-T", "--administration-token", default=DEFAULT_ADMINISTRATION_TOKEN)
 @click.option("--force/--no-force", default=False)
-def main(*args, **kwargs):
+def main(**kwargs):
     """Initialize a test origanization for parsec from a clean environment.
 
     You might want to create a test environment beforehand with the
@@ -62,26 +63,26 @@ def main(*args, **kwargs):
         mkdir $XDG_CACHE_HOME $XDG_DATA_HOME $XDG_CONFIG_HOME
         parsec backend run -b MOCKED -P 6888 &
 
-    And use `-B parsec://localhost:6888` as a backend adress.
+    And use `-B parsec://localhost:6888?no_ssl=true` as a backend adress.
 
     This scripts create two users, alice and bob who both own two devices,
     laptop and pc. They each have their workspace, respectively
     alice_workspace and bob_workspace, that their sharing with each other.
     """
-    trio.run(lambda: amain(*args, **kwargs))
+    trio.run(lambda: _amain(**kwargs))
 
 
-async def amain(
-    backend_address="parsec://localhost:6777",
-    organization_id="vcorp",
-    alice_device_id="alice@laptop",
-    bob_device_id="bob@laptop",
-    other_device_name="pc",
-    alice_workspace="alicews",
-    bob_workspace="bobws",
-    password="test",
-    administration_token=DEFAULT_ADMINISTRATION_TOKEN,
-    force=False,
+async def _amain(
+    backend_address,
+    organization_id,
+    alice_device_id,
+    bob_device_id,
+    other_device_name,
+    alice_workspace,
+    bob_workspace,
+    password,
+    administration_token,
+    force,
 ):
 
     configure_logging("WARNING")

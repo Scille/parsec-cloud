@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+import ssl
 import trio
 import trio_asyncio
 import click
@@ -92,7 +93,7 @@ def run_cmd(
         backend = BackendApp(config)
 
         if ssl_certfile or ssl_keyfile:
-            ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.SERVER_AUTH)
+            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
                 ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
             else:
@@ -102,7 +103,7 @@ def run_cmd(
 
         async def _serve_client(stream):
             if ssl_context:
-                stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
+                stream = trio.SSLStream(stream, ssl_context, server_side=True)
 
             try:
                 await backend.handle_client(stream)
