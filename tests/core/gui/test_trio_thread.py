@@ -11,9 +11,9 @@ def test_on_trio_loop_closed(monkeypatch):
     trio_loop_closed = threading.Event()
     vanilla_trio_run = trio.run
 
-    def patched_trio_run(*args):
+    def patched_trio_run(*args, **kwargs):
         try:
-            vanilla_trio_run(*args)
+            vanilla_trio_run(*args, **kwargs)
         finally:
             trio_loop_closed.set()
 
