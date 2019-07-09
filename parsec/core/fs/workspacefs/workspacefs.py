@@ -46,8 +46,8 @@ def _destinsrc(src: AnyPath, dst: AnyPath):
 
 @attr.s(frozen=True)
 class ReencryptionNeed:
-    user_revoked: Tuple = attr.ib(factory=tuple)
-    role_revoked: Tuple = attr.ib(factory=tuple)
+    user_revoked: Tuple[UserID] = attr.ib(factory=tuple)
+    role_revoked: Tuple[UserID] = attr.ib(factory=tuple)
 
     @property
     def need_reencryption(self):
