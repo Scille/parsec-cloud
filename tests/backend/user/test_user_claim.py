@@ -50,6 +50,11 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, alice, ma
 
             await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.created"})
 
+            # Ignored event
+            backend.event_bus.send(
+                "user.created", organization_id=coolorg.organization_id, user_id="dummy"
+            )
+
             await backend.user.create_user(
                 alice.organization_id,
                 User(
@@ -64,17 +69,7 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, alice, ma
                 ),
             )
 
-            backend.event_bus.send(
-                "user.created", organization_id=coolorg.organization_id, user_id="dummy"
-            )
-            backend.event_bus.send(
-                "user.created",
-                organization_id=coolorg.organization_id,
-                user_id=mallory_invitation.user_id,
-            )
-
-    assert prep[0]["status"] == "ok"
-    assert prep[0]["user_certificate"] == b"<foo>"
+    assert prep[0] == {"status": "ok", "user_certificate": b"<foo>"}
 
 
 @pytest.mark.trio
