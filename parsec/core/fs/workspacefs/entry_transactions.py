@@ -331,8 +331,8 @@ class EntryTransactions:
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
             # Clean up
-            # TODO: actually we can't do that: this child my require synchronization
-            self.local_storage.clear_manifest(child.id)
+            if not child.manifest.need_sync:
+                self.local_storage.clear_manifest(child.id)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)

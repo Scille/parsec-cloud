@@ -253,7 +253,7 @@ class LocalStorage:
 
     def cleanup_unreferenced_file(self, entry_id: EntryID, manifest: LocalFileManifest) -> None:
         self._assert_consistent_file_entry(entry_id, manifest)
-        if self.file_references[entry_id]:
+        if self.file_references[entry_id] or manifest.need_sync:
             return
         self.clear_manifest(entry_id)
         for block_access in manifest.dirty_blocks:
