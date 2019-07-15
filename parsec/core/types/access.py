@@ -99,6 +99,7 @@ class WorkspaceEntry:
     id: EntryID = attr.ib(factory=EntryID)
     key: SecretKey = attr.ib(factory=SecretKey.generate)
     encryption_revision: int = 1
+    encrypted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     role_cached_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     role: Optional[WorkspaceRole] = WorkspaceRole.OWNER
 
@@ -119,6 +120,7 @@ class WorkspaceEntrySchema(UnknownCheckedSchema):
     id = EntryIDField(required=True)
     key = fields.SecretKey(required=True)
     encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
+    encrypted_on = fields.DateTime(required=True)
     role_cached_on = fields.DateTime(required=True)
     role = WorkspaceRoleField(allow_none=True, missing=None)
 

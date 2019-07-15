@@ -66,6 +66,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
         id=wid,
         key=spy.ANY,
         encryption_revision=1,
+        encrypted_on=Pendulum(2000, 1, 2),
         role_cached_on=Pendulum(2000, 1, 2),
         role=WorkspaceRole.OWNER,
     )

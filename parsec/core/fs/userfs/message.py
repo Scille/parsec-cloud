@@ -11,6 +11,7 @@ class SharingGrantedMessageContentSchema(UnknownCheckedSchema):
     name = fields.String(required=True)
     id = EntryIDField(required=True)
     encryption_revision = fields.Integer(required=True)
+    encrypted_on = fields.DateTime(required=True)
     key = fields.SecretKey(missing=None)
     # Don't include access rights given the receiver will have anyway to
     # interrogate the backend for workspace's access rights list

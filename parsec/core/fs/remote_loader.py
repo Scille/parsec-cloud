@@ -3,7 +3,7 @@
 from hashlib import sha256
 import pendulum
 from pendulum import Pendulum
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from parsec.serde import SerdeError
 from parsec.crypto import (
@@ -15,6 +15,7 @@ from parsec.crypto import (
     unsecure_read_realm_role_certificate,
     verify_realm_role_certificate,
     CryptoError,
+    CertifiedRealmRoleData,
 )
 from parsec.types import UserID
 from parsec.api.protocole import RealmRole
@@ -59,15 +60,7 @@ class RemoteLoader:
         self.remote_device_manager = remote_device_manager
         self.local_storage = local_storage
 
-    async def load_realm_roles(
-        self, realm_id: Optional[EntryID] = None, since: Optional[Pendulum] = None
-    ) -> Dict[UserID, RealmRole]:
-        """
-        Raises:
-            FSError
-            FSBackendOfflineError
-            FSWorkspaceNoAccess
-        """
+    async def _load_realm_role_certificates(self, realm_id: Optional[EntryID] = None):
         try:
             unverifieds = await self.backend_cmds.realm_get_role_certificates(
                 realm_id or self.workspace_id
@@ -126,12 +119,40 @@ class RemoteLoader:
                         f"on {unsecure_certif.certified_on}"
                     )
 
-                current_roles[unsecure_certif.user_id] = unsecure_certif.role
+                if unsecure_certif.role is None:
+                    current_roles.pop(unsecure_certif.user_id, None)
+                else:
+                    current_roles[unsecure_certif.user_id] = unsecure_certif.role
 
         # Decryption error
         except CryptoError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
+        # Now unsecure_certifs is no longer unsecure we have valided it items
+        return [c for c, _ in unsecure_certifs], current_roles
+
+    async def load_realm_role_certificates(
+        self, realm_id: Optional[EntryID] = None
+    ) -> List[CertifiedRealmRoleData]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+        """
+        certificates, _ = await self._load_realm_role_certificates(realm_id)
+        return certificates
+
+    async def load_realm_current_roles(
+        self, realm_id: Optional[EntryID] = None
+    ) -> Dict[UserID, RealmRole]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+        """
+        _, current_roles = await self._load_realm_role_certificates(realm_id)
         return current_roles
 
     async def load_block(self, access: BlockAccess) -> bytes:

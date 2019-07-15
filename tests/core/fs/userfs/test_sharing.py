@@ -74,6 +74,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.MANAGER,
             )
@@ -157,6 +158,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 3),
                 role=None,
             ),
@@ -165,6 +167,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.OWNER,
             ),
@@ -324,6 +327,7 @@ async def test_share_with_sharing_name_already_taken(
                 id=awid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 1),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.MANAGER,
             )
@@ -352,7 +356,8 @@ async def test_share_workspace_then_conflict_on_rights(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, alice2, bob, first_to_sync
 ):
     # Bob shares a workspace with Alice...
-    wid = await bob_user_fs.workspace_create("w")
+    with freeze_time("2000-01-01"):
+        wid = await bob_user_fs.workspace_create("w")
     with freeze_time("2000-01-02"):
         await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
 
@@ -405,6 +410,7 @@ async def test_share_workspace_then_conflict_on_rights(
                 id=wid,
                 key=ANY,
                 encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 1),
                 role_cached_on=Pendulum(2000, 1, 5),
                 role=WorkspaceRole.CONTRIBUTOR,
             ),
@@ -439,6 +445,7 @@ async def test_share_workspace_then_conflict_on_rights(
         id=wid,
         key=ANY,
         encryption_revision=1,
+        encrypted_on=Pendulum(2000, 1, 1),
         role_cached_on=Pendulum(2000, 1, 5),
         role=WorkspaceRole.CONTRIBUTOR,
     )
