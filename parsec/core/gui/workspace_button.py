@@ -16,7 +16,7 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(WorkspaceFS)
     share_clicked = pyqtSignal(WorkspaceFS)
-    reencrypt_clicked = pyqtSignal(EntryID)
+    reencrypt_clicked = pyqtSignal(EntryID, bool, bool)
     delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(WorkspaceFS, str)
@@ -28,6 +28,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         is_creator,
         files=None,
         enable_workspace_color=False,
+        reencryption_needs=None,
         *args,
         **kwargs,
     ):
@@ -36,6 +37,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.workspace_fs = workspace_fs
         self.label_empty.show()
         self.widget_files.hide()
+        self.reencryption_needs = reencryption_needs
         self.is_shared = is_shared
         self.is_creator = is_creator
         self.reencrypting = None
@@ -86,7 +88,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.share_clicked.emit(self.workspace_fs)
 
     def button_reencrypt_clicked(self):
-        self.reencrypt_clicked.emit(self.workspace_fs.workspace_id)
+        if self.reencryption_needs:
+            self.reencrypt_clicked.emit(
+                self.workspace_fs.workspace_id,
+                bool(self.reencryption_needs.user_revoked),
+                bool(self.reencryption_needs.role_revoked),
+            )
 
     def button_delete_clicked(self):
         self.delete_clicked.emit(self.workspace_fs)
@@ -97,6 +104,20 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @property
     def name(self):
         return self.workspace_fs.workspace_name
+
+    @property
+    def reencryption_needs(self):
+        return self._reencryption_needs
+
+    @reencryption_needs.setter
+    def reencryption_needs(self, val):
+        self._reencryption_needs = val
+        if self.reencryption_needs and self.reencryption_needs.need_reencryption:
+            self.button_reencrypt.setDisabled(False)
+            self.button_reencrypt.setToolTip(_("This workspace needs to be reencrypted."))
+        else:
+            self.button_reencrypt.setDisabled(True)
+            self.button_reencrypt.setToolTip(_("This workspace does not need to be reencrypted."))
 
     def reload_workspace_name(self):
         workspace_name = self.workspace_fs.workspace_name
