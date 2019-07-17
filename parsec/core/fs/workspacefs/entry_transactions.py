@@ -330,10 +330,6 @@ class EntryTransactions:
             # Atomic change
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
-            # Clean up
-            if not child.manifest.need_sync:
-                self.local_storage.clear_manifest(child.id)
-
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)
 
@@ -362,9 +358,6 @@ class EntryTransactions:
 
             # Atomic change
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
-
-            # Clean up
-            self.local_storage.remove_file_reference(child.id, child.manifest)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)

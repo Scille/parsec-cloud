@@ -22,7 +22,6 @@ from hypothesis import strategies as st
 from parsec.core.types import FsPath
 from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
-from parsec.core.local_storage import LocalStorageMissingError
 
 from tests.common import freeze_time
 
@@ -81,7 +80,7 @@ async def test_folder_create_delete(entry_transactions, sync_transactions):
     foo_id = await entry_transactions.folder_create(FsPath("/foo"))
     assert await entry_transactions.folder_delete(FsPath("/foo")) == foo_id
 
-    # The directory is not synced so it still exists locally
+    # The directory is not synced
     assert entry_transactions.local_storage.get_manifest(foo_id).need_sync
 
     # Create and sync a bar directory
@@ -89,31 +88,29 @@ async def test_folder_create_delete(entry_transactions, sync_transactions):
     remote = await sync_transactions.synchronization_step(bar_id)
     assert await sync_transactions.synchronization_step(bar_id, remote) is None
 
-    # Remove the bar directory, the manifest should be removed too
+    # Remove the bar directory, the manifest is synced
     assert await entry_transactions.folder_delete(FsPath("/bar")) == bar_id
-    with pytest.raises(LocalStorageMissingError):
-        entry_transactions.local_storage.get_manifest(bar_id)
+    assert not entry_transactions.local_storage.get_manifest(bar_id).need_sync
 
 
 @pytest.mark.trio
 async def test_file_create_delete(entry_transactions, sync_transactions):
-    # Create and delete a foo directory
+    # Create and delete a foo file
     foo_id, fd = await entry_transactions.file_create(FsPath("/foo"), open=False)
     assert fd is None
     assert await entry_transactions.file_delete(FsPath("/foo")) == foo_id
 
-    # The directory is not synced so it still exists locally
+    # The file is not synced
     assert entry_transactions.local_storage.get_manifest(foo_id).need_sync
 
-    # Create and sync a bar directory
+    # Create and sync a bar file
     bar_id, fd = await entry_transactions.file_create(FsPath("/bar"), open=False)
     remote = await sync_transactions.synchronization_step(bar_id)
     assert await sync_transactions.synchronization_step(bar_id, remote) is None
 
-    # Remove the bar directory, the manifest should be removed too
+    # Remove the bar file, the manifest is synced
     assert await entry_transactions.file_delete(FsPath("/bar")) == bar_id
-    with pytest.raises(LocalStorageMissingError):
-        entry_transactions.local_storage.get_manifest(bar_id)
+    assert not entry_transactions.local_storage.get_manifest(bar_id).need_sync
 
 
 @pytest.mark.trio
