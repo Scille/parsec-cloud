@@ -17,7 +17,11 @@ from parsec.backend.vlob import (
     VlobInMaintenanceError,
     VlobNotInMaintenanceError,
 )
-from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
+from parsec.backend.drivers.postgresql.handler import (
+    PGHandler,
+    send_signal,
+    retry_on_unique_violation,
+)
 from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
 
 
@@ -157,6 +161,7 @@ class PGVlobComponent(BaseVlobComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
+    @retry_on_unique_violation
     async def create(
         self,
         organization_id: OrganizationID,
@@ -303,6 +308,7 @@ WHERE
 
         return list(data)
 
+    @retry_on_unique_violation
     async def update(
         self,
         organization_id: OrganizationID,
