@@ -3,15 +3,15 @@
 import pytest
 
 from parsec.api.protocole import packb, unpackb
-from parsec.api.transport import Transport
 from parsec.api.protocole.handshake import (
-    AuthenticatedClientHandshake,
-    AnonymousClientHandshake,
     AdministrationClientHandshake,
-    HandshakeRVKMismatch,
-    HandshakeBadIdentity,
+    AnonymousClientHandshake,
+    AuthenticatedClientHandshake,
     HandshakeBadAdministrationToken,
+    HandshakeBadIdentity,
+    HandshakeRVKMismatch,
 )
+from parsec.api.transport import Transport
 
 
 @pytest.mark.trio

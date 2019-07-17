@@ -1,28 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Tuple
 from pathlib import Path
+from typing import List, Tuple
 from uuid import uuid4
 
-from parsec.types import DeviceID, OrganizationID, BackendOrganizationAddr
-from parsec.serde import SerdeValidationError, SerdePackingError
-from parsec.crypto import SecretKey, SigningKey, PrivateKey
-from parsec.core.types import EntryID, LocalDevice, local_device_serializer
-from parsec.core.local_device.exceptions import (
-    LocalDeviceError,
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
-    LocalDeviceAlreadyExistsError,
-    LocalDeviceValidationError,
-    LocalDevicePackingError,
-)
 from parsec.core.local_device.cipher import (
     BaseLocalDeviceDecryptor,
     BaseLocalDeviceEncryptor,
-    PasswordDeviceEncryptor,
     PasswordDeviceDecryptor,
+    PasswordDeviceEncryptor,
 )
-from parsec.core.local_device.pkcs11_cipher import PKCS11DeviceEncryptor, PKCS11DeviceDecryptor
+from parsec.core.local_device.exceptions import (
+    LocalDeviceAlreadyExistsError,
+    LocalDeviceCryptoError,
+    LocalDeviceError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
+    LocalDeviceValidationError,
+)
+from parsec.core.local_device.pkcs11_cipher import PKCS11DeviceDecryptor, PKCS11DeviceEncryptor
+from parsec.core.types import EntryID, LocalDevice, local_device_serializer
+from parsec.crypto import PrivateKey, SecretKey, SigningKey
+from parsec.serde import SerdePackingError, SerdeValidationError
+from parsec.types import BackendOrganizationAddr, DeviceID, OrganizationID
 
 
 def generate_new_device(

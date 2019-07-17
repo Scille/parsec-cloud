@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import inspect
 from collections import defaultdict
 from contextlib import contextmanager
 from unittest.mock import patch
-import inspect
-import trio
 from urllib.parse import urlparse
+
+import trio
 
 
 def addr_to_netloc(addr):

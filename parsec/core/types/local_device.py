@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
-from typing import Tuple
 from hashlib import sha256
+from typing import Tuple
 
-from parsec.types import BackendOrganizationAddr, OrganizationID, DeviceID
-from parsec.crypto import SecretKey, PrivateKey, SigningKey
-from parsec.serde import UnknownCheckedSchema, fields, post_load
+import attr
+
 from parsec.core.types.base import EntryID, EntryIDField, serializer_factory
+from parsec.crypto import PrivateKey, SecretKey, SigningKey
+from parsec.serde import UnknownCheckedSchema, fields, post_load
+from parsec.types import BackendOrganizationAddr, DeviceID, OrganizationID
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)

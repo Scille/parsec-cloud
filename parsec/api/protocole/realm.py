@@ -2,9 +2,8 @@
 
 from enum import Enum
 
+from parsec.api.protocole.base import BaseRepSchema, BaseReqSchema, CmdSerializer
 from parsec.serde import fields
-from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-
 
 __all__ = (
     "RealmRole",

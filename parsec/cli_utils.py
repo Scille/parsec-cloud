@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import click
 import traceback
-from async_generator import asynccontextmanager
 from contextlib import contextmanager
+
+import click
+import trio
+from async_generator import asynccontextmanager
 
 # Scheme stolen from py-spinners
 # MIT License Copyright (c) 2017 Manraj Singh

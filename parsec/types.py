@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from urllib.parse import urlsplit, urlunsplit, parse_qs
+from urllib.parse import parse_qs, urlsplit, urlunsplit
 
 from parsec.crypto_types import VerifyKey, export_root_verify_key, import_root_verify_key
-
 
 __all__ = (
     "OrganizationID",

@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from unittest.mock import ANY
+
+import pytest
 
 from parsec.core.types import FsPath
 

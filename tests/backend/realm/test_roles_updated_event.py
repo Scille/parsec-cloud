@@ -1,15 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-import trio
-import pendulum
 from uuid import UUID
 
-from parsec.api.protocole import RealmRole
-from parsec.crypto import build_realm_self_role_certificate, build_realm_role_certificate
+import pendulum
+import pytest
+import trio
 
-from tests.backend.test_events import events_subscribe, events_listen_nowait
+from parsec.api.protocole import RealmRole
+from parsec.crypto import build_realm_role_certificate, build_realm_self_role_certificate
 from tests.backend.realm.conftest import realm_create, realm_update_roles
+from tests.backend.test_events import events_listen_nowait, events_subscribe
 
 
 @pytest.mark.trio

@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-from PyQt5 import QtCore
-from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from unittest.mock import patch
 
+import pytest
+from PyQt5 import QtCore
+
+from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.local_device import save_device_with_password
 
 

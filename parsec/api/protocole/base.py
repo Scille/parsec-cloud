@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.serde import (
+    OneOfSchema,
+    SerdePackingError,
+    SerdeValidationError,
+    Serializer,
     UnknownCheckedSchema,
     fields,
-    OneOfSchema,
-    post_load,
-    Serializer,
-    SerdeValidationError,
-    SerdePackingError,
-    packb as _packb,
-    unpackb as _unpackb,
 )
-
+from parsec.serde import packb as _packb
+from parsec.serde import post_load
+from parsec.serde import unpackb as _unpackb
 
 __all__ = ("ProtocoleError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
 

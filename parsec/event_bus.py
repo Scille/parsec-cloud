@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-from structlog import get_logger
 from collections import defaultdict
 from contextlib import contextmanager
 
+import trio
+from structlog import get_logger
 
 logger = get_logger()
 

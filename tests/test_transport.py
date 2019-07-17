@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-import trio
 from functools import partial
 
-from parsec.serde import UnknownCheckedSchema, fields
-from parsec.api.transport import Transport, TransportClosedByPeer
+import pytest
+import trio
+
 from parsec.api.protocole.base import Serializer
+from parsec.api.transport import Transport, TransportClosedByPeer
+from parsec.serde import UnknownCheckedSchema, fields
 
 
 @pytest.fixture

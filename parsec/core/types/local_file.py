@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
 from typing import NewType
 
-from parsec.core.types import EntryID
+import attr
 
+from parsec.core.types import EntryID
 
 FileDescriptor = NewType("FileDescriptor", int)
 

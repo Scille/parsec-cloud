@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from pendulum import Pendulum, now as pendulum_now
+from pendulum import Pendulum
+from pendulum import now as pendulum_now
 
-from parsec.api.protocole import message_send_serializer, message_get_serializer
-
+from parsec.api.protocole import message_get_serializer, message_send_serializer
+from tests.backend.test_events import events_listen, events_listen_nowait, events_subscribe
 from tests.common import freeze_time
-from tests.backend.test_events import events_subscribe, events_listen, events_listen_nowait
 
 
 async def message_send(sock, recipient, body, timestamp=None, check_rep=True):

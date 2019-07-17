@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pendulum
 import uuid
 from collections import namedtuple
 
-from parsec.serde import packb, unpackb, UnknownCheckedSchema, OneOfSchema, Serializer, fields
+import pendulum
+
+from parsec.serde import OneOfSchema, Serializer, UnknownCheckedSchema, fields, packb, unpackb
 
 
 def test_pack_datetime():

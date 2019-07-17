@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
-import pendulum
 from hashlib import sha256
 from typing import Optional
 
+import attr
+import pendulum
+
 from parsec.api.protocole import RealmRole, RealmRoleField
-from parsec.crypto import SecretKey, HashDigest
-from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import (
     BlockID,
     BlockIDField,
     EntryID,
     EntryIDField,
-    serializer_factory,
     EntryNameField,
+    serializer_factory,
 )
+from parsec.crypto import HashDigest, SecretKey
+from parsec.serde import UnknownCheckedSchema, fields, post_load, validate
 
 
 # TODO: legacy stuff, remove me

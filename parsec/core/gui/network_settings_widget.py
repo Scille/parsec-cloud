@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIntValidator
+from PyQt5.QtWidgets import QWidget
 
-from parsec.core.gui.validators import NetworkPortValidator
 from parsec.core.gui.ui.network_settings_widget import Ui_NetworkSettingsWidget
+from parsec.core.gui.validators import NetworkPortValidator
 
 
 class NetworkSettingsWidget(QWidget, Ui_NetworkSettingsWidget):

@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import uuid4
+
 import trio
-from trio import BrokenResourceError
 from structlog import get_logger
-from wsproto.frame_protocol import CloseReason
-from wsproto.connection import WSConnection, ConnectionType
+from trio import BrokenResourceError
+from wsproto.connection import ConnectionType, WSConnection
 from wsproto.events import (
+    BytesReceived,
     ConnectionClosed,
     ConnectionEstablished,
     ConnectionRequested,
-    BytesReceived,
     PingReceived,
     PongReceived,
 )
-
+from wsproto.frame_protocol import CloseReason
 
 __all__ = ("TransportError", "Transport")
 

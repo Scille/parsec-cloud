@@ -1,15 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-from pathlib import Path
 from contextlib import contextmanager
-from sqlite3 import Connection, connect as sqlite_connect
+from pathlib import Path
+from sqlite3 import Connection
+from sqlite3 import connect as sqlite_connect
 
 import pendulum
 
-from parsec.core.types import EntryID, BlockID
-from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
-
+from parsec.core.types import BlockID, EntryID
+from parsec.crypto import SecretKey, decrypt_raw_with_secret_key, encrypt_raw_with_secret_key
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024

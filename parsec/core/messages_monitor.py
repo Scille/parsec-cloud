@@ -3,8 +3,7 @@
 import trio
 from structlog import get_logger
 
-from parsec.core.fs import FSError, FSBackendOfflineError
-
+from parsec.core.fs import FSBackendOfflineError, FSError
 
 logger = get_logger()
 

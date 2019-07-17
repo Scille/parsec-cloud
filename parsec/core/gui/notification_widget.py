@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
-
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
-from PyQt5.QtGui import QPixmap, QPainter
+from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtWidgets import QStyle, QStyleOption, QWidget
 
 from parsec.core.gui.ui.notification_widget import Ui_NotificationWidget
 

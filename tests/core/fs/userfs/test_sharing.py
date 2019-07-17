@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from unittest.mock import ANY
+
+import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest, EntryID
-from parsec.core.fs import (
-    FSError,
-    FSWorkspaceNotFoundError,
-    FSBackendOfflineError,
-    FSSharingNotAllowedError,
-)
 from parsec.backend.realm import RealmGrantedRole, RealmRole
-
+from parsec.core.fs import (
+    FSBackendOfflineError,
+    FSError,
+    FSSharingNotAllowedError,
+    FSWorkspaceNotFoundError,
+)
+from parsec.core.types import EntryID, LocalUserManifest, WorkspaceEntry, WorkspaceRole
 from tests.common import freeze_time
 
 

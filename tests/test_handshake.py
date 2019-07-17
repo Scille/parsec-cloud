@@ -1,23 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from unittest.mock import ANY
 
-from parsec.api.protocole.base import packb, unpackb, InvalidMessageError
-from parsec.api.protocole.handshake import (
-    HandshakeFailedChallenge,
-    HandshakeBadIdentity,
-    HandshakeBadAdministrationToken,
-    HandshakeRVKMismatch,
-    HandshakeRevokedDevice,
-    HandshakeAPIVersionError,
-    ServerHandshake,
-    BaseClientHandshake,
-    AuthenticatedClientHandshake,
-    AnonymousClientHandshake,
-    AdministrationClientHandshake,
-)
+import pytest
+
 from parsec import __api_version__
+from parsec.api.protocole.base import InvalidMessageError, packb, unpackb
+from parsec.api.protocole.handshake import (
+    AdministrationClientHandshake,
+    AnonymousClientHandshake,
+    AuthenticatedClientHandshake,
+    BaseClientHandshake,
+    HandshakeAPIVersionError,
+    HandshakeBadAdministrationToken,
+    HandshakeBadIdentity,
+    HandshakeFailedChallenge,
+    HandshakeRevokedDevice,
+    HandshakeRVKMismatch,
+    ServerHandshake,
+)
 
 
 def test_good_handshake(alice):

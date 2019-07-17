@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from base64 import b64decode, b64encode
+from functools import lru_cache
+from uuid import uuid4
+
 import trio
 import triopg
-from uuid import uuid4
-from functools import lru_cache
-from structlog import get_logger
-from base64 import b64decode, b64encode
 from importlib_resources import read_text
+from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task
-
 
 logger = get_logger()
 

@@ -1,9 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, OneOfSchema, fields
-
+from parsec.core.fs.exceptions import FSPackingError, FSValidationError
 from parsec.core.types.base import EntryIDField
-from parsec.core.fs.exceptions import FSValidationError, FSPackingError
+from parsec.serde import OneOfSchema, Serializer, UnknownCheckedSchema, fields
 
 
 class SharingGrantedMessageContentSchema(UnknownCheckedSchema):

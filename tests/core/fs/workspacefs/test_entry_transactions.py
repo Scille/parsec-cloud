@@ -1,28 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import errno
+import os
 import pathlib
-from string import ascii_lowercase
 from contextlib import contextmanager
+from string import ascii_lowercase
 
 import attr
 import pytest
+from hypothesis import strategies as st
 from pendulum import Pendulum
+
 from hypothesis_trio.stateful import (
+    Bundle,
     TrioAsyncioRuleBasedStateMachine,
     initialize,
     invariant,
     rule,
     run_state_machine_as_test,
-    Bundle,
 )
-from hypothesis import strategies as st
-
-from parsec.core.types import FsPath
-from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
-
+from parsec.core.fs.utils import is_folder_manifest
+from parsec.core.types import FsPath
 from tests.common import freeze_time
 
 

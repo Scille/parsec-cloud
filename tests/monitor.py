@@ -2,19 +2,18 @@
 
 # Monitor POC, shamelessly taken from curio
 
+import argparse
+import logging
 import os
 import signal
 import socket
-import traceback
-import threading
 import telnetlib
-import argparse
-import logging
+import threading
+import traceback
 
-from trio.abc import Instrument
 from trio._threads import BlockingTrioPortal
+from trio.abc import Instrument
 from trio.hazmat import current_statistics
-
 
 LOGGER = logging.getLogger("trio.monitor")
 

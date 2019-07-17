@@ -3,9 +3,9 @@
 import pytest
 
 from parsec.core.backend_connection import (
-    backend_cmds_pool_factory,
-    backend_anonymous_cmds_factory,
     backend_administration_cmds_factory,
+    backend_anonymous_cmds_factory,
+    backend_cmds_pool_factory,
 )
 
 

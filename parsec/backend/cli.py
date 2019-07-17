@@ -2,16 +2,16 @@
 
 import os
 import ssl
-import trio
+
 import click
+import trio
 from structlog import get_logger
 
-from parsec.utils import trio_run
-from parsec.cli_utils import spinner, cli_exception_handler
-from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.drivers.postgresql import init_db
-
+from parsec.cli_utils import cli_exception_handler, spinner
+from parsec.logging import configure_logging, configure_sentry_logging
+from parsec.utils import trio_run
 
 __all__ = ("backend_cmd", "init_cmd", "run_cmd")
 

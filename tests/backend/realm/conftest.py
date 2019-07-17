@@ -1,29 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from uuid import UUID, uuid4
-from pendulum import Pendulum, now as pendulum_now
+
+import pytest
+from pendulum import Pendulum
+from pendulum import now as pendulum_now
 
 from parsec.api.protocole import (
     RealmRole,
     realm_create_serializer,
-    realm_status_serializer,
-    realm_get_roles_serializer,
-    realm_get_role_certificates_serializer,
-    realm_update_roles_serializer,
-    realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
+    realm_get_role_certificates_serializer,
+    realm_get_roles_serializer,
+    realm_start_reencryption_maintenance_serializer,
+    realm_status_serializer,
+    realm_update_roles_serializer,
     vlob_create_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
     vlob_group_check_serializer,
-    vlob_poll_changes_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
+    vlob_poll_changes_serializer,
+    vlob_read_serializer,
+    vlob_update_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
 from parsec.crypto import build_realm_self_role_certificate
-
 
 VLOB_ID = UUID("10000000000000000000000000000000")
 REALM_ID = UUID("20000000000000000000000000000000")

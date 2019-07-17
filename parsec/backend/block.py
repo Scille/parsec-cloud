@@ -2,9 +2,9 @@
 
 from uuid import UUID
 
-from parsec.types import DeviceID, OrganizationID
 from parsec.api.protocole import block_create_serializer, block_read_serializer
 from parsec.backend.utils import catch_protocole_errors
+from parsec.types import DeviceID, OrganizationID
 
 
 class BlockError(Exception):

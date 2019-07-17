@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from uuid import UUID
-from pendulum import Pendulum, now as pendulum_now
+
+import pytest
+from pendulum import Pendulum
+from pendulum import now as pendulum_now
 
 from parsec.api.protocole import RealmRole
 from parsec.crypto import build_realm_role_certificate
-
 from tests.backend.realm.conftest import (
-    realm_status,
     realm_get_roles,
+    realm_status,
     realm_update_roles,
     vlob_poll_changes,
 )

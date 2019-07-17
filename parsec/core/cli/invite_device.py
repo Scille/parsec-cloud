@@ -2,11 +2,11 @@
 
 import click
 
-from parsec.utils import trio_run
-from parsec.cli_utils import spinner, cli_exception_handler
-from parsec.types import DeviceName
-from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
+from parsec.cli_utils import cli_exception_handler, spinner
 from parsec.core.cli.utils import core_config_and_device_options
+from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
+from parsec.types import DeviceName
+from parsec.utils import trio_run
 
 
 async def _invite_device(config, device, new_device_name):

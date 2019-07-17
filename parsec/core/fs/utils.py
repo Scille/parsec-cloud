@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.core.types import (
-    LocalUserManifest,
-    LocalWorkspaceManifest,
-    LocalFolderManifest,
-    LocalFileManifest,
-    LocalManifest,
-    UserManifest,
-    WorkspaceManifest,
     FileManifest,
     FolderManifest,
+    LocalFileManifest,
+    LocalFolderManifest,
+    LocalManifest,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
     Manifest,
+    UserManifest,
+    WorkspaceManifest,
 )
 
 

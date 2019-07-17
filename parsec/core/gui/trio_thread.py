@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from contextlib import contextmanager
-import trio
 import threading
+from contextlib import contextmanager
 from inspect import iscoroutinefunction
-from structlog import get_logger
-from parsec.utils import trio_run
-from parsec.core.fs import FSError
-from PyQt5.QtCore import pyqtBoundSignal, Q_ARG, QMetaObject, Qt
 
+import trio
+from PyQt5.QtCore import Q_ARG, QMetaObject, Qt, pyqtBoundSignal
+from structlog import get_logger
+
+from parsec.core.fs import FSError
+from parsec.utils import trio_run
 
 logger = get_logger()
 

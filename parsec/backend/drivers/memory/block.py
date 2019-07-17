@@ -1,19 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import UUID
+
 import attr
 
-from parsec.types import DeviceID, OrganizationID
 from parsec.api.protocole import RealmRole
-from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
-from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (
     BaseBlockComponent,
-    BlockAlreadyExistsError,
     BlockAccessError,
-    BlockNotFoundError,
+    BlockAlreadyExistsError,
     BlockInMaintenanceError,
+    BlockNotFoundError,
 )
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
+from parsec.types import DeviceID, OrganizationID
 
 
 @attr.s(auto_attribs=True)

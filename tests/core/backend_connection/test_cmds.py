@@ -1,19 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 import pytest
 import trio
-import pendulum
 
 from parsec.api.protocole import ServerHandshake
-from parsec.crypto import build_revoked_device_certificate
-from parsec.api.transport import Transport, PingReceived, PongReceived
+from parsec.api.transport import PingReceived, PongReceived, Transport
 from parsec.core.backend_connection import (
-    BackendNotAvailable,
-    BackendHandshakeError,
     BackendDeviceRevokedError,
+    BackendHandshakeError,
+    BackendNotAvailable,
     backend_cmds_pool_factory,
 )
-
+from parsec.crypto import build_revoked_device_certificate
 from tests.open_tcp_stream_mock_wrapper import offline
 
 

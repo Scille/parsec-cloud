@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from parsec.core.local_device import (
+    LocalDeviceAlreadyExistsError,
+    LocalDeviceCryptoError,
+    LocalDeviceNotFoundError,
+    LocalDevicePackingError,
     get_key_file,
     list_available_devices,
     load_device_with_password,
-    save_device_with_password,
     load_device_with_pkcs11,
+    save_device_with_password,
     save_device_with_pkcs11,
-    LocalDeviceCryptoError,
-    LocalDeviceNotFoundError,
-    LocalDeviceAlreadyExistsError,
-    LocalDevicePackingError,
 )
-from parsec.core.local_device.pkcs11_tools import NoKeysFound, DevicePKCS11Error
+from parsec.core.local_device.pkcs11_tools import DevicePKCS11Error, NoKeysFound
 
 
 @pytest.fixture(autouse=True, scope="module")

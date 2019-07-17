@@ -2,16 +2,15 @@
 
 import pytest
 from hypothesis import strategies as st
+
 from hypothesis_trio.stateful import (
+    TrioAsyncioRuleBasedStateMachine,
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
 )
-
 from tests.common import call_with_control
 from tests.oracles import FileOracle
-
 
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10

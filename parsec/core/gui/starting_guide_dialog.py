@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QPixmap, QColor
+from PyQt5.QtGui import QColor, QPixmap
 from PyQt5.QtWidgets import QDialog, QGraphicsDropShadowEffect
 
 from parsec.core.gui.lang import translate as _
-
 from parsec.core.gui.ui.starting_guide_dialog import Ui_StartingGuideDialog
 
 

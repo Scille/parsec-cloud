@@ -1,22 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
-from parsec.core.invite_claim import (
-    InviteClaimBackendOfflineError,
-    InviteClaimError,
-    generate_invitation_token as core_generate_invitation_token,
-    invite_and_create_device as core_invite_and_create_device,
-)
-from parsec.types import BackendOrganizationAddr, DeviceName
-from parsec.core.gui import desktop
-from parsec.core.gui import validators
-from parsec.core.gui.custom_widgets import show_info, show_warning, show_error
+from parsec.core.gui import desktop, validators
+from parsec.core.gui.custom_widgets import show_error, show_info, show_warning
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-
+from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
+from parsec.core.invite_claim import InviteClaimBackendOfflineError, InviteClaimError
+from parsec.core.invite_claim import generate_invitation_token as core_generate_invitation_token
+from parsec.core.invite_claim import invite_and_create_device as core_invite_and_create_device
+from parsec.types import BackendOrganizationAddr, DeviceName
 
 STATUS_TO_ERRMSG = {
     "registration-invite-bad-value": _("Bad device name."),

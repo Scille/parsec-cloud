@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+
 import pytest
+from hypothesis import strategies as st
 from pendulum import Pendulum
+
 from hypothesis_trio.stateful import (
+    TrioAsyncioRuleBasedStateMachine,
     initialize,
     rule,
     run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
 )
-from hypothesis import strategies as st
-
-from parsec.core.types import EntryID, BlockAccess, LocalFileManifest
-from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSRemoteBlockNotFound
-
+from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
+from parsec.core.types import BlockAccess, EntryID, LocalFileManifest
 from tests.common import freeze_time
 
 

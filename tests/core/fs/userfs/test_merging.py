@@ -3,8 +3,8 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, LocalUserManifest, UserManifest
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_remote_user_manifests
+from parsec.core.types import LocalUserManifest, UserManifest, WorkspaceEntry
 
 
 @pytest.fixture

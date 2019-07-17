@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import sqlite3
-from unittest.mock import Mock
 from contextlib import ExitStack
 from inspect import iscoroutinefunction
+from unittest.mock import Mock
 
-import trio
 import attr
 import pendulum
+import trio
 
-from parsec.core.types import WorkspaceRole
-from parsec.core.logged_core import LoggedCore
-from parsec.core.fs import UserFS
-from parsec.core.persistent_storage import PersistentStorage
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.api.transport import Transport, TransportError
+from parsec.core.fs import UserFS
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.logged_core import LoggedCore
+from parsec.core.persistent_storage import PersistentStorage
+from parsec.core.types import WorkspaceRole
 
 
 class InMemoryPersistentStorage(PersistentStorage):

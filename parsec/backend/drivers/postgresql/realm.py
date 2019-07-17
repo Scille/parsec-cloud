@@ -1,27 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pendulum
-from uuid import UUID
 from typing import Dict, List
+from uuid import UUID
 
-from parsec.api.protocole import RealmRole, MaintenanceType
-from parsec.types import DeviceID, UserID, OrganizationID
+import pendulum
+
+from parsec.api.protocole import MaintenanceType, RealmRole
+from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
+from parsec.backend.drivers.postgresql.message import send_message
 from parsec.backend.realm import (
     BaseRealmComponent,
-    RealmStatus,
-    RealmGrantedRole,
     RealmAccessError,
-    RealmNotFoundError,
     RealmAlreadyExistsError,
     RealmEncryptionRevisionError,
-    RealmParticipantsMismatchError,
-    RealmMaintenanceError,
+    RealmGrantedRole,
     RealmInMaintenanceError,
+    RealmMaintenanceError,
+    RealmNotFoundError,
     RealmNotInMaintenanceError,
+    RealmParticipantsMismatchError,
+    RealmStatus,
 )
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
-from parsec.backend.drivers.postgresql.message import send_message
-
+from parsec.types import DeviceID, OrganizationID, UserID
 
 _STR_TO_ROLE = {role.value: role for role in RealmRole}
 _STR_TO_MAINTENANCE_TYPE = {type.value: type for type in MaintenanceType}

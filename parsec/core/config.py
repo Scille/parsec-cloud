@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
-import attr
 import json
-from typing import Optional
+import os
 from pathlib import Path
-from structlog import get_logger
+from typing import Optional
 
+import attr
+from structlog import get_logger
 
 logger = get_logger()
 

@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Tuple
 from collections import defaultdict
+from typing import List, Tuple
+
 from pendulum import Pendulum
 
-from parsec.types import UserID, DeviceID, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.backend.message import BaseMessageComponent
+from parsec.event_bus import EventBus
+from parsec.types import DeviceID, OrganizationID, UserID
 
 
 class MemoryMessageComponent(BaseMessageComponent):

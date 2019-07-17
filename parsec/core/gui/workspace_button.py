@@ -1,16 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
 from parsec.core.fs import WorkspaceFS
-from parsec.core.types import EntryID
-
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui.color import StringToColor
-
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
+from parsec.core.types import EntryID
 
 
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):

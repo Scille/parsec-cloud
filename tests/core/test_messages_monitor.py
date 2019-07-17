@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import pytest
 from unittest.mock import ANY
+
+import pytest
+import trio
 from pendulum import Pendulum
 
-from tests.common import create_shared_workspace, freeze_time
-
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
+from tests.common import create_shared_workspace, freeze_time
 
 
 @pytest.mark.trio

@@ -1,25 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-from unittest.mock import patch
-from functools import wraps, partial
-import trio
-from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
+from functools import partial, wraps
+from unittest.mock import patch
 
-from parsec.event_bus import EventBus
-from parsec.core.gui.main_window import MainWindow
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler
-from parsec.core.gui.login_widget import LoginWidget, LoginLoginWidget
+import pytest
+import trio
+from trio.testing import trio_test as vanilla_trio_test
+
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
-from parsec.core.gui.claim_user_widget import ClaimUserWidget
-from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.users_widget import UsersWidget
+from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.login_widget import LoginLoginWidget, LoginWidget
+from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.mount_widget import MountWidget
-
+from parsec.core.gui.trio_thread import QtToTrioJobScheduler
+from parsec.core.gui.users_widget import UsersWidget
+from parsec.event_bus import EventBus
 
 _qt_thread_gateway = None
 

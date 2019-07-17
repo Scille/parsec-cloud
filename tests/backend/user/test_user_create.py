@@ -1,15 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 import pytest
 import trio
-import pendulum
 
-from parsec.crypto import build_user_certificate, build_device_certificate
-from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocole import user_create_serializer
-
-from tests.common import freeze_time
+from parsec.backend.user import INVITATION_VALIDITY
+from parsec.crypto import build_device_certificate, build_user_certificate
 from tests.backend.user.test_access import user_get
+from tests.common import freeze_time
 
 
 async def user_create(sock, **kwargs):

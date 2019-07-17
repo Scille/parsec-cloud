@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
 from typing import List, Tuple
 
-from parsec.types import UserID, DeviceID, OrganizationID
+from pendulum import Pendulum
+
+from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
 from parsec.backend.message import BaseMessageComponent
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
+from parsec.types import DeviceID, OrganizationID, UserID
 
 
 async def send_message(conn, organization_id, sender, recipient, timestamp, body):

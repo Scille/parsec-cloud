@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 from uuid import UUID
 
-from parsec.types import OrganizationID
-from parsec.backend.blockstore import BaseBlockStoreComponent
+import trio
+
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.types import OrganizationID
 
 
 class RAID1BlockStoreComponent(BaseBlockStoreComponent):

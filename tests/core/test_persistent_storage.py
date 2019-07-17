@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from uuid import uuid4
+
 import pytest
+from hypothesis import strategies as st
 from hypothesis.stateful import (
-    RuleBasedStateMachine,
     Bundle,
+    RuleBasedStateMachine,
     initialize,
     invariant,
     rule,
     run_state_machine_as_test,
 )
-from hypothesis import strategies as st
-from uuid import uuid4
 
-from parsec.crypto import SecretKey
-from parsec.core.types import EntryID, BlockID
-from parsec.core.persistent_storage import PersistentStorage, LocalStorageMissingError
 from parsec.core.persistent_storage import DEFAULT_BLOCK_SIZE as block_size
-
+from parsec.core.persistent_storage import LocalStorageMissingError, PersistentStorage
+from parsec.core.types import BlockID, EntryID
+from parsec.crypto import SecretKey
 
 ENTRY_ID = EntryID("00000000000000000000000000000001")
 BLOCK_ID = BlockID("0000000000000000000000000000000A")

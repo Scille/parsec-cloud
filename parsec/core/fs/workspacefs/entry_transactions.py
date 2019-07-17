@@ -1,28 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import errno
-from typing import Tuple, Callable
+import os
 from collections import namedtuple
+from typing import Callable, Tuple
+
 from async_generator import asynccontextmanager
 
-from parsec.event_bus import EventBus
+from parsec.core.fs.exceptions import FSEntryNotFound
+from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.types import (
     EntryID,
+    FileDescriptor,
     FsPath,
-    WorkspaceRole,
     LocalDevice,
-    LocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
-    FileDescriptor,
+    LocalManifest,
+    WorkspaceRole,
 )
-
-from parsec.core.fs.exceptions import FSEntryNotFound
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
-from parsec.core.fs.remote_loader import RemoteLoader
-
+from parsec.event_bus import EventBus
 
 Entry = namedtuple("Entry", "id manifest")
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)

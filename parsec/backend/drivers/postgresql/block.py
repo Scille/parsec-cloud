@@ -1,22 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from triopg.exceptions import UniqueViolationError
 from uuid import UUID
-import pendulum
 
-from parsec.types import DeviceID, OrganizationID
-from parsec.backend.vlob import BaseVlobComponent
-from parsec.backend.blockstore import BaseBlockStoreComponent
+import pendulum
+from triopg.exceptions import UniqueViolationError
+
 from parsec.backend.block import (
     BaseBlockComponent,
-    BlockError,
-    BlockAlreadyExistsError,
-    BlockNotFoundError,
     BlockAccessError,
+    BlockAlreadyExistsError,
+    BlockError,
     BlockInMaintenanceError,
+    BlockNotFoundError,
 )
+from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.drivers.postgresql.handler import PGHandler
-from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
+from parsec.backend.drivers.postgresql.realm import RealmNotFoundError, get_realm_status
+from parsec.backend.vlob import BaseVlobComponent
+from parsec.types import DeviceID, OrganizationID
 
 
 async def _check_realm(conn, organization_id, realm_id):

@@ -3,20 +3,19 @@
 import trio
 from structlog import get_logger
 
-from parsec.event_bus import EventBus
 from parsec.api.transport import TransportError
-from parsec.core.types import LocalDevice, EntryID
 from parsec.core.backend_connection.exceptions import (
-    BackendNotAvailable,
-    BackendIncompatibleVersion,
-    BackendHandshakeError,
-    BackendHandshakeAPIVersionError,
-    BackendDeviceRevokedError,
-    BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
+    BackendCmdsInvalidResponse,
+    BackendDeviceRevokedError,
+    BackendHandshakeAPIVersionError,
+    BackendHandshakeError,
+    BackendIncompatibleVersion,
+    BackendNotAvailable,
 )
 from parsec.core.backend_connection.porcelain import backend_cmds_pool_factory
-
+from parsec.core.types import EntryID, LocalDevice
+from parsec.event_bus import EventBus
 
 MAX_COOLDOWN = 30
 logger = get_logger()

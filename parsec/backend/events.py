@@ -2,10 +2,10 @@
 
 import trio
 
-from parsec.event_bus import EventBus
-from parsec.api.protocole import events_subscribe_serializer, events_listen_serializer
-from parsec.backend.utils import catch_protocole_errors
+from parsec.api.protocole import events_listen_serializer, events_subscribe_serializer
 from parsec.backend.realm import BaseRealmComponent
+from parsec.backend.utils import catch_protocole_errors
+from parsec.event_bus import EventBus
 
 
 class EventsComponent:

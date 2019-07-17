@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from pendulum import Pendulum
 from async_generator import asynccontextmanager
+from pendulum import Pendulum
 
+from parsec.api.protocole import device_claim_serializer, device_get_invitation_creator_serializer
+from parsec.backend.user import PEER_EVENT_MAX_WAIT, Device, DeviceInvitation
 from parsec.types import DeviceID
-from parsec.api.protocole import device_get_invitation_creator_serializer, device_claim_serializer
-from parsec.backend.user import Device, DeviceInvitation, PEER_EVENT_MAX_WAIT
-
 from tests.common import freeze_time
 
 

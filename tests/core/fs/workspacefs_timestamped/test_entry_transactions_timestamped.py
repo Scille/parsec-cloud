@@ -3,8 +3,8 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import FsPath
 from parsec.core.persistent_storage import LocalStorageMissingError
+from parsec.core.types import FsPath
 
 
 @pytest.mark.trio

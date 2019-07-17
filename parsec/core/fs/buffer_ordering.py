@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
 import bisect
-from math import inf
 from itertools import dropwhile
+from math import inf
+
+import attr
 
 
 @attr.s(slots=True)

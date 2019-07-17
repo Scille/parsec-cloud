@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from collections import defaultdict
+from typing import Dict, Optional, Tuple
+
 import attr
 import pendulum
-from typing import Tuple, Optional, Dict
-from collections import defaultdict
 
-from parsec.types import UserID, DeviceID, DeviceName, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.backend.user import (
-    user_get_revoked_on,
-    user_is_revoked,
     BaseUserComponent,
-    User,
     Device,
-    UserInvitation,
     DeviceInvitation,
+    User,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
+    UserInvitation,
     UserNotFoundError,
+    user_get_revoked_on,
+    user_is_revoked,
 )
+from parsec.event_bus import EventBus
+from parsec.types import DeviceID, DeviceName, OrganizationID, UserID
 
 
 @attr.s

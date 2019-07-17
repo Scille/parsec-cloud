@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import pytest
 import pendulum
+import pytest
+import trio
 
-from parsec.crypto import build_device_certificate
+from parsec.api.protocole import device_create_serializer, packb, ping_serializer
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import packb, device_create_serializer, ping_serializer
-
+from parsec.crypto import build_device_certificate
 from tests.common import freeze_time
 
 

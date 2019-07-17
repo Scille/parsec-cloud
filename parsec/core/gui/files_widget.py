@@ -2,26 +2,25 @@
 
 import pathlib
 from uuid import UUID
-import trio
 
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+import trio
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
-from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
-
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
-from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
 from parsec.core.gui.custom_widgets import (
     QuestionDialog,
+    TaskbarButton,
+    TextInputDialog,
     show_error,
     show_warning,
-    TextInputDialog,
-    TaskbarButton,
 )
-from parsec.core.gui.loading_dialog import LoadingDialog
+from parsec.core.gui.file_items import TYPE_DATA_INDEX, UUID_DATA_INDEX, FileType
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.loading_dialog import LoadingDialog
+from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob, ThreadSafeQtSignal
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 
 
 class CancelException(Exception):

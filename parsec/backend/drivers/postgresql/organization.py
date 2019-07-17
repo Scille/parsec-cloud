@@ -2,20 +2,20 @@
 
 from triopg import UniqueViolationError
 
-from parsec.types import OrganizationID
-from parsec.crypto import VerifyKey
-from parsec.backend.user import BaseUserComponent, UserError, User, Device
+from parsec.backend.drivers.postgresql.handler import PGHandler
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
-    OrganizationError,
-    OrganizationAlreadyExistsError,
-    OrganizationInvalidBootstrapTokenError,
     OrganizationAlreadyBootstrappedError,
-    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
+    OrganizationError,
     OrganizationFirstUserCreationError,
+    OrganizationInvalidBootstrapTokenError,
+    OrganizationNotFoundError,
 )
-from parsec.backend.drivers.postgresql.handler import PGHandler
+from parsec.backend.user import BaseUserComponent, Device, User, UserError
+from parsec.crypto import VerifyKey
+from parsec.types import OrganizationID
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):

@@ -1,36 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
-from uuid import UUID as _UUID
-from collections import Mapping
-from marshmallow import ValidationError
-from marshmallow.fields import (
-    # Republishing
-    Int,
-    String,
-    List,
-    Dict,
-    Nested,
-    Integer,
-    Boolean,
-    Field,
-)
 import re
+from collections import Mapping
+from uuid import UUID as _UUID
 
-from parsec.types import (
-    DeviceID as _DeviceID,
-    UserID as _UserID,
-    DeviceName as _DeviceName,
-    BackendOrganizationAddr as _BackendOrganizationAddr,
-    OrganizationID as _OrganizationID,
+from marshmallow import ValidationError
+from marshmallow.fields import (  # Republishing
+    Boolean,
+    Dict,
+    Field,
+    Int,
+    Integer,
+    List,
+    Nested,
+    String,
 )
-from parsec.crypto_types import (
-    SigningKey as _SigningKey,
-    VerifyKey as _VerifyKey,
-    PrivateKey as _PrivateKey,
-    PublicKey as _PublicKey,
-)
+from pendulum import Pendulum
 
+from parsec.crypto_types import PrivateKey as _PrivateKey
+from parsec.crypto_types import PublicKey as _PublicKey
+from parsec.crypto_types import SigningKey as _SigningKey
+from parsec.crypto_types import VerifyKey as _VerifyKey
+from parsec.types import BackendOrganizationAddr as _BackendOrganizationAddr
+from parsec.types import DeviceID as _DeviceID
+from parsec.types import DeviceName as _DeviceName
+from parsec.types import OrganizationID as _OrganizationID
+from parsec.types import UserID as _UserID
 
 __all__ = (
     "enum_field_factory",

@@ -3,10 +3,9 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.types import DeviceID
 from parsec.api.protocole import device_get_invitation_creator_serializer
-from parsec.backend.user import DeviceInvitation, INVITATION_VALIDITY
-
+from parsec.backend.user import INVITATION_VALIDITY, DeviceInvitation
+from parsec.types import DeviceID
 from tests.common import freeze_time
 
 

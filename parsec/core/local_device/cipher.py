@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
-from parsec.crypto import (
-    CryptoError,
-    derivate_secret_key_from_password,
-    encrypt_raw_with_secret_key,
-    decrypt_raw_with_secret_key,
-)
 from parsec.core.local_device.exceptions import (
+    LocalDeviceCryptoError,
     LocalDevicePackingError,
     LocalDeviceValidationError,
-    LocalDeviceCryptoError,
 )
+from parsec.crypto import (
+    CryptoError,
+    decrypt_raw_with_secret_key,
+    derivate_secret_key_from_password,
+    encrypt_raw_with_secret_key,
+)
+from parsec.serde import Serializer, UnknownCheckedSchema, fields
 
 
 class BaseLocalDeviceEncryptor:

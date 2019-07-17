@@ -1,10 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 import pytest
 import trio
-import pendulum
 
-from parsec.types import DeviceID
+from parsec.core.backend_connection import backend_anonymous_cmds_factory, backend_cmds_pool_factory
+from parsec.core.invite_claim import (
+    extract_device_encrypted_answer,
+    extract_device_encrypted_claim,
+    generate_device_encrypted_answer,
+    generate_device_encrypted_claim,
+)
+from parsec.core.types import UnverifiedRemoteDevice, UnverifiedRemoteUser
 from parsec.crypto import (
     PrivateKey,
     SigningKey,
@@ -12,14 +19,7 @@ from parsec.crypto import (
     unsecure_read_device_certificate,
     unsecure_read_user_certificate,
 )
-from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
-from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
-from parsec.core.invite_claim import (
-    generate_device_encrypted_claim,
-    extract_device_encrypted_claim,
-    generate_device_encrypted_answer,
-    extract_device_encrypted_answer,
-)
+from parsec.types import DeviceID
 
 
 @pytest.mark.trio

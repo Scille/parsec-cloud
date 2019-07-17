@@ -1,7 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from parsec.api.protocole.base import packb, unpackb
 from parsec.backend.utils import anonymous_api, check_anonymous_api_allowed

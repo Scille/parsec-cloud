@@ -1,35 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
-
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
-from parsec.types import BackendOrganizationBootstrapAddr, DeviceID, OrganizationID
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
-    backend_anonymous_cmds_factory,
-    BackendNotAvailable,
-    BackendIncompatibleVersion,
     BackendHandshakeError,
+    BackendIncompatibleVersion,
+    BackendNotAvailable,
+    backend_anonymous_cmds_factory,
 )
-from parsec.core.local_device import (
-    generate_new_device,
-    save_device_with_password,
-    LocalDeviceAlreadyExistsError,
-)
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+from parsec.core.gui import validators
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui import validators
 from parsec.core.gui.password_validation import (
+    PASSWORD_CSS,
     get_password_strength,
     get_password_strength_text,
-    PASSWORD_CSS,
 )
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganizationWidget
+from parsec.core.local_device import (
+    LocalDeviceAlreadyExistsError,
+    generate_new_device,
+    save_device_with_password,
+)
+from parsec.crypto import SigningKey, build_device_certificate, build_user_certificate
+from parsec.types import BackendOrganizationBootstrapAddr, DeviceID, OrganizationID
 
 
 async def _do_bootstrap_organization(

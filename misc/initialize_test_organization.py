@@ -1,33 +1,33 @@
 #! /usr/bin/env python3
 
-import os
-import trio
 import itertools
+import os
 
 import click
 import pendulum
+import trio
 
-from parsec.utils import trio_run
-from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
-from parsec.logging import configure_logging
+from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 from parsec.core import logged_core_factory
-from parsec.core.types import WorkspaceRole
-from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
     backend_administration_cmds_factory,
     backend_anonymous_cmds_factory,
 )
-from parsec.core.local_device import generate_new_device, save_device_with_password
+from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.invite_claim import (
+    InviteClaimError,
+    claim_device,
+    claim_user,
     generate_invitation_token,
     invite_and_create_device,
     invite_and_create_user,
-    claim_device,
-    claim_user,
-    InviteClaimError,
 )
-from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
+from parsec.core.local_device import generate_new_device, save_device_with_password
+from parsec.core.types import WorkspaceRole
+from parsec.crypto import SigningKey, build_device_certificate, build_user_certificate
+from parsec.logging import configure_logging
+from parsec.types import BackendAddr, BackendOrganizationBootstrapAddr, DeviceID, OrganizationID
+from parsec.utils import trio_run
 
 
 async def retry_claim(corofn, *args, retries=10, tick=0.1):

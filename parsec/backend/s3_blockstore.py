@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import boto3
-from botocore.exceptions import (
-    ClientError as S3ClientError,
-    EndpointConnectionError as S3EndpointConnectionError,
-)
-from uuid import UUID
 from functools import partial
+from uuid import UUID
 
-from parsec.types import OrganizationID
-from parsec.backend.blockstore import BaseBlockStoreComponent
+import boto3
+import trio
+from botocore.exceptions import ClientError as S3ClientError
+from botocore.exceptions import EndpointConnectionError as S3EndpointConnectionError
+
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.types import OrganizationID
 
 
 class S3BlockStoreComponent(BaseBlockStoreComponent):

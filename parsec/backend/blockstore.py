@@ -2,8 +2,8 @@
 
 from uuid import UUID
 
-from parsec.types import OrganizationID
 from parsec.backend.config import BaseBlockStoreConfig
+from parsec.types import OrganizationID
 
 
 class BaseBlockStoreComponent:

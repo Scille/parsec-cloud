@@ -2,42 +2,41 @@
 
 from typing import Union
 
-from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
 from parsec.core.types.access import (
-    ManifestAccess,
     BlockAccess,
     DirtyBlockAccess,
+    ManifestAccess,
+    WorkspaceEntry,
     WorkspaceRole,
     WorkspaceRoleField,
-    WorkspaceEntry,
 )
+from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
+from parsec.core.types.local_file import FileCursor, FileDescriptor
 from parsec.core.types.local_manifests import (
     LocalFileManifest,
     LocalFolderManifest,
-    LocalWorkspaceManifest,
-    LocalUserManifest,
     LocalManifest,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
     local_manifest_serializer,
 )
 from parsec.core.types.remote_device import (
-    UnverifiedRemoteUser,
-    UnverifiedRemoteDevice,
     UnverifiedRealmRole,
-    VerifiedRemoteUser,
-    VerifiedRemoteDevice,
+    UnverifiedRemoteDevice,
+    UnverifiedRemoteUser,
     VerifiedRealmRole,
+    VerifiedRemoteDevice,
+    VerifiedRemoteUser,
 )
 from parsec.core.types.remote_manifests import (
     FileManifest,
     FolderManifest,
-    WorkspaceManifest,
-    UserManifest,
     RemoteManifest,
+    UserManifest,
+    WorkspaceManifest,
     remote_manifest_serializer,
 )
-from parsec.core.types.local_file import FileCursor, FileDescriptor
-
 
 Manifest = Union[LocalManifest, RemoteManifest]
 

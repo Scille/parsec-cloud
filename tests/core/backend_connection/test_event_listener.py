@@ -5,7 +5,6 @@ import trio
 
 from parsec.api.protocole import RealmRole
 from parsec.core.backend_connection import backend_listen_events
-
 from tests.common import create_shared_workspace
 from tests.open_tcp_stream_mock_wrapper import offline
 

@@ -3,13 +3,16 @@
 # Given `parsec.types` depends on this module, we cannot put it inside
 # package `parsec.crypto` (which in turn depends of `parsec.types`)
 
-from typing import NewType
 from base64 import b32decode, b32encode
-from nacl.utils import random
-from nacl.secret import SecretBox
-from nacl.public import PrivateKey as _PrivateKey, PublicKey as _PublicKey
-from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
+from typing import NewType
+
 from nacl.exceptions import CryptoError
+from nacl.public import PrivateKey as _PrivateKey
+from nacl.public import PublicKey as _PublicKey
+from nacl.secret import SecretBox
+from nacl.signing import SigningKey as _SigningKey
+from nacl.signing import VerifyKey as _VerifyKey
+from nacl.utils import random
 
 
 class SecretKey(bytes):

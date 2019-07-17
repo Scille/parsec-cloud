@@ -1,25 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-from pendulum import Pendulum
 from collections import namedtuple
 
-from parsec.crypto import (
-    build_user_certificate,
-    build_device_certificate,
-    build_revoked_device_certificate,
-)
+import pytest
+from pendulum import Pendulum
+
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
     RemoteDevicesManagerInvalidTrustchainError,
-    _verify_devices,
-    _verify_user,
     UnverifiedRemoteDevice,
     UnverifiedRemoteUser,
     VerifiedRemoteDevice,
     VerifiedRemoteUser,
+    _verify_devices,
+    _verify_user,
 )
-
+from parsec.crypto import (
+    build_device_certificate,
+    build_revoked_device_certificate,
+    build_user_certificate,
+)
 from tests.common import freeze_time
 
 

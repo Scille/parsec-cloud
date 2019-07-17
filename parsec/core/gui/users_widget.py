@@ -1,19 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QWidget, QMenu
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QMenu, QWidget
 
-from parsec.crypto import build_revoked_device_certificate
-from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
-
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
-from parsec.core.gui.register_user_dialog import RegisterUserDialog
-from parsec.core.gui.custom_widgets import TaskbarButton, show_error, show_info, QuestionDialog
+from parsec.core.backend_connection import BackendCmdsBadResponse, BackendNotAvailable
+from parsec.core.gui.custom_widgets import QuestionDialog, TaskbarButton, show_error, show_info
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.register_user_dialog import RegisterUserDialog
+from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob, ThreadSafeQtSignal
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
+from parsec.crypto import build_revoked_device_certificate
 
 
 class UserButton(QWidget, Ui_UserButton):

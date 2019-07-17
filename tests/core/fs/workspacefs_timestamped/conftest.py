@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 import pendulum
+import pytest
 
 from tests.common import freeze_time
-
 
 day1 = pendulum.Pendulum(2000, 1, 1)
 day2 = pendulum.Pendulum(2000, 1, 2)

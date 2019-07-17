@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-from zlib import adler32
-from pathlib import PurePath
-from structlog import get_logger
 from itertools import count
-from winfspy import FileSystem, enable_debug_log
-from winfspy.plumbing.winstuff import filetime_now
+from pathlib import PurePath
+from zlib import adler32
+
+import trio
+from structlog import get_logger
 
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
-from parsec.core.mountpoint.winfsp_operations import WinFSPOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-
+from parsec.core.mountpoint.winfsp_operations import WinFSPOperations
+from winfspy import FileSystem, enable_debug_log
+from winfspy.plumbing.winstuff import filetime_now
 
 __all__ = ("winfsp_mountpoint_runner",)
 

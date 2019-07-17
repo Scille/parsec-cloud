@@ -1,19 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Dict, List, Tuple, Union
+
 import attr
 import pendulum
-from typing import Tuple, Dict, List, Union
 
-from parsec.types import DeviceID, FrozenDict
-from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
 from parsec.core.types import remote_manifests
-from parsec.core.types.base import (
-    EntryID,
-    EntryIDField,
-    EntryName,
-    EntryNameField,
-    serializer_factory,
-)
 from parsec.core.types.access import (
     BlockAccess,
     BlockAccessSchema,
@@ -22,7 +14,15 @@ from parsec.core.types.access import (
     WorkspaceEntry,
     WorkspaceEntrySchema,
 )
-
+from parsec.core.types.base import (
+    EntryID,
+    EntryIDField,
+    EntryName,
+    EntryNameField,
+    serializer_factory,
+)
+from parsec.serde import OneOfSchema, UnknownCheckedSchema, fields, post_load, validate
+from parsec.types import DeviceID, FrozenDict
 
 __all__ = (
     "LocalFileManifest",

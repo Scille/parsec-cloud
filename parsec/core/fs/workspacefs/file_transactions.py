@@ -1,24 +1,23 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
 from typing import Optional
 
+import attr
 from async_generator import asynccontextmanager
 
-from parsec.event_bus import EventBus
-from parsec.core.types import FileDescriptor, EntryID
-from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.types import BlockAccess, LocalFileManifest
-from parsec.core.local_storage import (
-    LocalStorage,
-    LocalStorageMissingError,
-    FSInvalidFileDescriptor,
-)
 from parsec.core.fs.buffer_ordering import (
-    quick_filter_block_accesses,
     Buffer,
     merge_buffers_with_limits,
+    quick_filter_block_accesses,
 )
+from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.local_storage import (
+    FSInvalidFileDescriptor,
+    LocalStorage,
+    LocalStorageMissingError,
+)
+from parsec.core.types import BlockAccess, EntryID, FileDescriptor, LocalFileManifest
+from parsec.event_bus import EventBus
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 

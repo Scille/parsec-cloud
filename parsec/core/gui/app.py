@@ -1,15 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import signal
-from structlog import get_logger
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
+from structlog import get_logger
 
 from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
-
 
 try:
     from parsec.core.gui import lang

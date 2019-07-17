@@ -3,11 +3,10 @@
 import pytest
 from async_generator import asynccontextmanager
 
-from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
-from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.backend_connection import backend_anonymous_cmds_factory, backend_cmds_pool_factory
 from parsec.core.fs import UserFS
-
-from tests.common import freeze_time, InMemoryLocalStorage
+from parsec.core.remote_devices_manager import RemoteDevicesManager
+from tests.common import InMemoryLocalStorage, freeze_time
 
 
 @pytest.fixture

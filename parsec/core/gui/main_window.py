@@ -1,36 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import traceback
 from functools import partial
-from structlog import get_logger
+
+import trio
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow
+from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
-
+from parsec.core import logged_core_factory
+from parsec.core.backend_connection import (
+    BackendDeviceRevokedError,
+    BackendHandshakeAPIVersionError,
+    BackendHandshakeError,
+)
+from parsec.core.config import save_config
+from parsec.core.gui import telemetry
+from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.custom_widgets import QuestionDialog, show_error
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.login_widget import LoginWidget
+from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
+from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
+from parsec.core.gui.ui.main_window import Ui_MainWindow
 from parsec.core.local_device import (
     LocalDeviceError,
     load_device_with_password,
     load_device_with_pkcs11,
 )
-from parsec.core.config import save_config
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
-from parsec.core.backend_connection import (
-    BackendHandshakeError,
-    BackendHandshakeAPIVersionError,
-    BackendDeviceRevokedError,
-)
-from parsec.core import logged_core_factory
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui import telemetry
-from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
-from parsec.core.gui.login_widget import LoginWidget
-from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.custom_widgets import QuestionDialog, show_error
-from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
-from parsec.core.gui.ui.main_window import Ui_MainWindow
-
 
 logger = get_logger()
 

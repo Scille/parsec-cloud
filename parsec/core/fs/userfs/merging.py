@@ -2,8 +2,7 @@
 
 from typing import Optional, Tuple
 
-from parsec.core.types import UserManifest, LocalUserManifest, WorkspaceEntry
-
+from parsec.core.types import LocalUserManifest, UserManifest, WorkspaceEntry
 
 # TODO: replace sanity asserts by cleaner exceptions given they could be
 # triggered by a malicious client trying to make us crash

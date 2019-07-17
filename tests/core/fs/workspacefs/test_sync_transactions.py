@@ -3,13 +3,18 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import FsPath, BlockAccess, EntryID
-from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest, LocalFileManifest
+from parsec.core.fs.exceptions import FSFileConflictError, FSReshapingRequiredError
+from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children, merge_manifests
 from parsec.core.local_storage import LocalStorageMissingError
-
-from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
-from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs.exceptions import FSReshapingRequiredError, FSFileConflictError
+from parsec.core.types import (
+    BlockAccess,
+    EntryID,
+    FileManifest,
+    FolderManifest,
+    FsPath,
+    LocalFileManifest,
+    LocalFolderManifest,
+)
 
 
 def test_merge_folder_children():

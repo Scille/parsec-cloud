@@ -1,21 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from uuid import UUID, uuid4
+
+import pytest
 from pendulum import Pendulum
 
 from parsec.api.protocole import (
-    packb,
     RealmRole,
+    packb,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
-
+from tests.backend.realm.conftest import vlob_create, vlob_read, vlob_update
 from tests.common import freeze_time
-from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_read
-
 
 VLOB_ID = UUID("00000000000000000000000000000001")
 

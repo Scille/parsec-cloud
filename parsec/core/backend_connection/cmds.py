@@ -1,64 +1,65 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, List, Dict, Optional
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
+
 import pendulum
 
-from parsec.types import DeviceID, UserID, DeviceName, OrganizationID
-from parsec.crypto import VerifyKey
-from parsec.api.transport import Transport, TransportError
 from parsec.api.protocole import (
     ProtocoleError,
-    ping_serializer,
-    organization_create_serializer,
-    organization_bootstrap_serializer,
-    events_subscribe_serializer,
-    events_listen_serializer,
-    message_send_serializer,
-    message_get_serializer,
     RealmRole,
-    vlob_read_serializer,
-    vlob_create_serializer,
-    vlob_update_serializer,
-    vlob_group_check_serializer,
-    vlob_poll_changes_serializer,
-    vlob_maintenance_get_reencryption_batch_serializer,
-    vlob_maintenance_save_reencryption_batch_serializer,
-    realm_create_serializer,
-    realm_status_serializer,
-    realm_get_role_certificates_serializer,
-    realm_get_roles_serializer,
-    realm_update_roles_serializer,
-    realm_start_reencryption_maintenance_serializer,
-    realm_finish_reencryption_maintenance_serializer,
     block_create_serializer,
     block_read_serializer,
-    user_get_serializer,
-    user_find_serializer,
-    user_invite_serializer,
-    user_get_invitation_creator_serializer,
-    user_claim_serializer,
-    user_cancel_invitation_serializer,
-    user_create_serializer,
-    device_invite_serializer,
-    device_get_invitation_creator_serializer,
-    device_claim_serializer,
     device_cancel_invitation_serializer,
+    device_claim_serializer,
     device_create_serializer,
+    device_get_invitation_creator_serializer,
+    device_invite_serializer,
     device_revoke_serializer,
+    events_listen_serializer,
+    events_subscribe_serializer,
+    message_get_serializer,
+    message_send_serializer,
+    organization_bootstrap_serializer,
+    organization_create_serializer,
+    ping_serializer,
+    realm_create_serializer,
+    realm_finish_reencryption_maintenance_serializer,
+    realm_get_role_certificates_serializer,
+    realm_get_roles_serializer,
+    realm_start_reencryption_maintenance_serializer,
+    realm_status_serializer,
+    realm_update_roles_serializer,
+    user_cancel_invitation_serializer,
+    user_claim_serializer,
+    user_create_serializer,
+    user_find_serializer,
+    user_get_invitation_creator_serializer,
+    user_get_serializer,
+    user_invite_serializer,
+    vlob_create_serializer,
+    vlob_group_check_serializer,
+    vlob_maintenance_get_reencryption_batch_serializer,
+    vlob_maintenance_save_reencryption_batch_serializer,
+    vlob_poll_changes_serializer,
+    vlob_read_serializer,
+    vlob_update_serializer,
 )
-from parsec.core.types import (
-    UnverifiedRemoteUser,
-    UnverifiedRemoteDevice,
-    UnverifiedRealmRole,
-    EntryID,
-)
+from parsec.api.transport import Transport, TransportError
 from parsec.core.backend_connection.exceptions import (
-    raise_on_bad_response,
-    BackendNotAvailable,
     BackendCmdsInvalidRequest,
     BackendCmdsInvalidResponse,
+    BackendNotAvailable,
+    raise_on_bad_response,
 )
+from parsec.core.types import (
+    EntryID,
+    UnverifiedRealmRole,
+    UnverifiedRemoteDevice,
+    UnverifiedRemoteUser,
+)
+from parsec.crypto import VerifyKey
+from parsec.types import DeviceID, DeviceName, OrganizationID, UserID
 
 
 async def _send_cmd(transport, serializer, keepalive=False, **req):

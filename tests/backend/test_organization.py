@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-import pendulum
 from unittest.mock import ANY
 
+import pendulum
+import pytest
+
+from parsec.api.protocole import organization_bootstrap_serializer, organization_create_serializer
+from parsec.crypto import build_device_certificate, build_user_certificate
 from parsec.types import UserID
-from parsec.crypto import build_user_certificate, build_device_certificate
-
-from parsec.api.protocole import organization_create_serializer, organization_bootstrap_serializer
-
 from tests.backend.test_events import ping
 from tests.fixtures import local_device_to_backend_user
 

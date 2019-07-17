@@ -1,17 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.types import OrganizationID
-from parsec.crypto import VerifyKey
-from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     Organization,
-    OrganizationAlreadyExistsError,
-    OrganizationInvalidBootstrapTokenError,
     OrganizationAlreadyBootstrappedError,
-    OrganizationNotFoundError,
+    OrganizationAlreadyExistsError,
     OrganizationFirstUserCreationError,
+    OrganizationInvalidBootstrapTokenError,
+    OrganizationNotFoundError,
 )
+from parsec.backend.user import BaseUserComponent, Device, User, UserError
+from parsec.crypto import VerifyKey
+from parsec.types import OrganizationID
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):

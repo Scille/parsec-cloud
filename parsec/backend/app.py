@@ -1,44 +1,43 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import attr
+import trio
 from structlog import get_logger
 
-from parsec.event_bus import EventBus
-from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
 from parsec.api.protocole import (
+    InvalidMessageError,
+    MessageSerializationError,
+    ProtocoleError,
+    ServerHandshake,
     packb,
     unpackb,
-    ProtocoleError,
-    MessageSerializationError,
-    InvalidMessageError,
-    ServerHandshake,
 )
-from parsec.backend.events import EventsComponent
-from parsec.backend.utils import check_anonymous_api_allowed
+from parsec.api.transport import Transport, TransportClosedByPeer, TransportError
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
-    MemoryPingComponent,
-    MemoryOrganizationComponent,
-    MemoryUserComponent,
-    MemoryMessageComponent,
-    MemoryRealmComponent,
-    MemoryVlobComponent,
     MemoryBlockComponent,
+    MemoryMessageComponent,
+    MemoryOrganizationComponent,
+    MemoryPingComponent,
+    MemoryRealmComponent,
+    MemoryUserComponent,
+    MemoryVlobComponent,
 )
 from parsec.backend.drivers.postgresql import (
+    PGBlockComponent,
     PGHandler,
+    PGMessageComponent,
     PGOrganizationComponent,
     PGPingComponent,
-    PGUserComponent,
-    PGMessageComponent,
     PGRealmComponent,
+    PGUserComponent,
     PGVlobComponent,
-    PGBlockComponent,
 )
-from parsec.backend.user import UserNotFoundError
+from parsec.backend.events import EventsComponent
 from parsec.backend.organization import OrganizationNotFoundError
-
+from parsec.backend.user import UserNotFoundError
+from parsec.backend.utils import check_anonymous_api_allowed
+from parsec.event_bus import EventBus
 
 logger = get_logger()
 

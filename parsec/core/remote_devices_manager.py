@@ -1,26 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple
 from collections import OrderedDict
+from typing import Tuple
+
 import pendulum
 
-from parsec.types import DeviceID, UserID
-from parsec.crypto import (
-    CryptoError,
-    VerifyKey,
-    verify_user_certificate,
-    verify_device_certificate,
-    verify_revoked_device_certificate,
-    unsecure_read_user_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_revoked_device_certificate,
-)
 from parsec.core.backend_connection import (
-    BackendCmdsPool,
     BackendAnonymousCmds,
+    BackendCmdsNotFound,
+    BackendCmdsPool,
     BackendConnectionError,
     BackendNotAvailable,
-    BackendCmdsNotFound,
 )
 from parsec.core.types import (
     UnverifiedRemoteDevice,
@@ -28,6 +18,17 @@ from parsec.core.types import (
     VerifiedRemoteDevice,
     VerifiedRemoteUser,
 )
+from parsec.crypto import (
+    CryptoError,
+    VerifyKey,
+    unsecure_read_device_certificate,
+    unsecure_read_revoked_device_certificate,
+    unsecure_read_user_certificate,
+    verify_device_certificate,
+    verify_revoked_device_certificate,
+    verify_user_certificate,
+)
+from parsec.types import DeviceID, UserID
 
 
 class RemoteDevicesManagerError(Exception):

@@ -2,23 +2,23 @@
 
 import pathlib
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QSize, QPoint
-from PyQt5.QtGui import QPixmap, QIcon, QPainter, QColor, QPen
+from PyQt5.QtCore import QPoint, QSize, Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
-    QFileDialog,
     QAbstractItemView,
-    QListView,
-    QTreeView,
-    QDialog,
     QCompleter,
-    QLineEdit,
-    QPushButton,
+    QDialog,
+    QFileDialog,
     QLabel,
+    QLineEdit,
+    QListView,
+    QPushButton,
+    QTreeView,
 )
 
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.input_dialog import Ui_InputDialog
+from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
 
 

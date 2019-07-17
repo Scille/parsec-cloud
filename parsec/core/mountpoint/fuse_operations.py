@@ -1,18 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-from typing import Optional
-from structlog import get_logger
 from contextlib import contextmanager
-from errno import ENETDOWN, EBADF, ENOTDIR, EIO
-from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
+from errno import EBADF, EIO, ENETDOWN, ENOTDIR
+from stat import S_IFDIR, S_IFREG, S_IRWXG, S_IRWXO, S_IRWXU
+from typing import Optional
 
+from fuse import FuseOSError, LoggingMixIn, Operations, fuse_exit, fuse_get_context
+from structlog import get_logger
 
+from parsec.core.fs import FSBackendOfflineError, FSInvalidFileDescriptor
 from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor
-from parsec.core.fs import FSBackendOfflineError
-
 
 logger = get_logger()
 MODES = {os.O_RDONLY: "r", os.O_WRONLY: "w", os.O_RDWR: "rw"}

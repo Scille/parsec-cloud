@@ -2,17 +2,18 @@
 
 import click
 
-from parsec.core.cli import list_devices
-from parsec.core.cli import invite_user
-from parsec.core.cli import claim_user
-from parsec.core.cli import invite_device
-from parsec.core.cli import claim_device
-from parsec.core.cli import create_organization
-from parsec.core.cli import create_workspace
-from parsec.core.cli import share_workspace
-from parsec.core.cli import bootstrap_organization
-from parsec.core.cli import run
-
+from parsec.core.cli import (
+    bootstrap_organization,
+    claim_device,
+    claim_user,
+    create_organization,
+    create_workspace,
+    invite_device,
+    invite_user,
+    list_devices,
+    run,
+    share_workspace,
+)
 
 __all__ = ("core_cmd",)
 

@@ -1,46 +1,47 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from hashlib import sha256
+from typing import Dict, List, Optional
+
 import pendulum
 from pendulum import Pendulum
-from typing import Dict, Optional, List
 
-from parsec.serde import SerdeError
-from parsec.crypto import (
-    build_realm_self_role_certificate,
-    encrypt_signed_msg_with_secret_key,
-    decrypt_raw_with_secret_key,
-    encrypt_raw_with_secret_key,
-    decrypt_and_verify_signed_msg_with_secret_key,
-    unsecure_read_realm_role_certificate,
-    verify_realm_role_certificate,
-    CryptoError,
-    CertifiedRealmRoleData,
-)
-from parsec.types import UserID
 from parsec.api.protocole import RealmRole
 from parsec.core.backend_connection import (
-    BackendCmdsBadResponse,
-    BackendCmdsInMaintenance,
     BackendCmdsAlreadyExists,
-    BackendCmdsNotFound,
-    BackendCmdsNotAllowed,
+    BackendCmdsBadResponse,
     BackendCmdsBadVersion,
-    BackendNotAvailable,
+    BackendCmdsInMaintenance,
+    BackendCmdsNotAllowed,
+    BackendCmdsNotFound,
     BackendConnectionError,
+    BackendNotAvailable,
 )
-from parsec.core.types import EntryID, BlockAccess, remote_manifest_serializer, Manifest
 from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSBadEncryptionRevision,
     FSError,
-    FSRemoteSyncError,
+    FSRemoteBlockNotFound,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
-    FSRemoteBlockNotFound,
-    FSBackendOfflineError,
+    FSRemoteSyncError,
     FSWorkspaceInMaintenance,
-    FSBadEncryptionRevision,
     FSWorkspaceNoAccess,
 )
+from parsec.core.types import BlockAccess, EntryID, Manifest, remote_manifest_serializer
+from parsec.crypto import (
+    CertifiedRealmRoleData,
+    CryptoError,
+    build_realm_self_role_certificate,
+    decrypt_and_verify_signed_msg_with_secret_key,
+    decrypt_raw_with_secret_key,
+    encrypt_raw_with_secret_key,
+    encrypt_signed_msg_with_secret_key,
+    unsecure_read_realm_role_certificate,
+    verify_realm_role_certificate,
+)
+from parsec.serde import SerdeError
+from parsec.types import UserID
 
 
 class RemoteLoader:

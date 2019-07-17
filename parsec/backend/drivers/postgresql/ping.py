@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
 from parsec.backend.ping import BasePingComponent
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
+from parsec.types import DeviceID, OrganizationID
 
 
 class PGPingComponent(BasePingComponent):

@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from uuid import uuid4
+
 import pytest
 import trio
-from uuid import uuid4
 from async_generator import asynccontextmanager
 
 from parsec.api.protocole import (
-    events_subscribe_serializer,
     events_listen_serializer,
+    events_subscribe_serializer,
     ping_serializer,
 )
-
 
 BEACON_ID = uuid4()
 

@@ -1,19 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
-import pendulum
 from typing import Optional
 from uuid import UUID
 
-from parsec.types import DeviceID, DeviceName, UserID
+import attr
+import pendulum
+
 from parsec.api.protocole import RealmRole
 from parsec.crypto import (
     PublicKey,
     VerifyKey,
-    unsecure_read_user_certificate,
     unsecure_read_device_certificate,
     unsecure_read_realm_role_certificate,
+    unsecure_read_user_certificate,
 )
+from parsec.types import DeviceID, DeviceName, UserID
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)

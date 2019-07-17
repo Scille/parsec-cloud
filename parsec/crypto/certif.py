@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
+
+import attr
 from pendulum import Pendulum
 
-from parsec.types import DeviceID, UserID
 from parsec.api.protocole.realm import RealmRole, RealmRoleField
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
-from parsec.crypto_types import SigningKey, VerifyKey, PublicKey
 from parsec.crypto.exceptions import CryptoWrappedMsgPackingError, CryptoWrappedMsgValidationError
 from parsec.crypto.signed import (
     build_signed_msg,
-    unsecure_extract_signed_msg_meta_and_data,
     unsecure_extract_signed_msg_meta,
+    unsecure_extract_signed_msg_meta_and_data,
     verify_signed_msg,
 )
-
+from parsec.crypto_types import PublicKey, SigningKey, VerifyKey
+from parsec.serde import Serializer, UnknownCheckedSchema, fields
+from parsec.types import DeviceID, UserID
 
 # TODO: make certif schemas inherit from WrappedMsgSchema instead ?
 

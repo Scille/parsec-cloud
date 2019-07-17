@@ -5,7 +5,6 @@ from trio.hazmat import current_clock
 
 from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError
 
-
 MIN_WAIT = 5
 MAX_WAIT = 60
 

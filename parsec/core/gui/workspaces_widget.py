@@ -5,17 +5,16 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole, EntryID
-from parsec.core.fs import WorkspaceFS, FSBackendOfflineError
-from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
-
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.fs import FSBackendOfflineError, WorkspaceFS
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import show_error, show_warning, TextInputDialog, TaskbarButton
+from parsec.core.gui.custom_widgets import TaskbarButton, TextInputDialog, show_error, show_warning
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.trio_thread import JobResultError, QtToTrioJob, ThreadSafeQtSignal
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
+from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
+from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
+from parsec.core.types import EntryID, FsPath, WorkspaceEntry, WorkspaceRole
 
 
 async def _do_workspace_create(core, workspace_name):

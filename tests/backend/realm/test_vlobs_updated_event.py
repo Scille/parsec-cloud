@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from uuid import UUID
+
+import pytest
 from pendulum import Pendulum
 
 from parsec.api.protocole import RealmRole
 from parsec.backend.realm import RealmGrantedRole
-
-from tests.backend.test_events import events_subscribe, events_listen_nowait
-
+from tests.backend.test_events import events_listen_nowait, events_subscribe
 
 NOW = Pendulum(2000, 1, 1)
 VLOB_ID = UUID("00000000000000000000000000000001")

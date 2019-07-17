@@ -1,39 +1,38 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from secrets import token_hex
+
 import pendulum
 
-from parsec.types import DeviceID, UserID, DeviceName, BackendOrganizationAddr
-from parsec.crypto import (
-    CryptoError,
-    SecretKey,
-    PublicKey,
-    PrivateKey,
-    SigningKey,
-    VerifyKey,
-    encrypt_raw_for,
-    decrypt_raw_for,
-    build_device_certificate,
-    build_user_certificate,
-    verify_user_certificate,
-)
-
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
-from parsec.core.types import LocalDevice, EntryID, EntryIDField
 from parsec.core.backend_connection import (
     BackendConnectionError,
     BackendNotAvailable,
-    backend_cmds_pool_factory,
     backend_anonymous_cmds_factory,
+    backend_cmds_pool_factory,
 )
 from parsec.core.local_device import generate_new_device
 from parsec.core.remote_devices_manager import (
-    RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
-    get_user_invitation_creator,
+    RemoteDevicesManagerError,
     get_device_invitation_creator,
+    get_user_invitation_creator,
 )
-
+from parsec.core.types import EntryID, EntryIDField, LocalDevice
+from parsec.crypto import (
+    CryptoError,
+    PrivateKey,
+    PublicKey,
+    SecretKey,
+    SigningKey,
+    VerifyKey,
+    build_device_certificate,
+    build_user_certificate,
+    decrypt_raw_for,
+    encrypt_raw_for,
+    verify_user_certificate,
+)
+from parsec.serde import Serializer, UnknownCheckedSchema, fields
+from parsec.types import BackendOrganizationAddr, DeviceID, DeviceName, UserID
 
 # TODO: wrap exceptions from lower layers
 # TODO: handles backend_anonymous_cmds_factory for caller (just pass backend addr)

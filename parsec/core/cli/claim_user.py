@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+
 import click
 
-from parsec.utils import trio_run
-from parsec.types import BackendOrganizationAddr, DeviceID
-from parsec.cli_utils import spinner, operation, cli_exception_handler
+from parsec.cli_utils import cli_exception_handler, operation, spinner
 from parsec.core.cli.utils import core_config_options
-from parsec.core.local_device import save_device_with_password, save_device_with_pkcs11
 from parsec.core.invite_claim import claim_user as actual_claim_user
+from parsec.core.local_device import save_device_with_password, save_device_with_pkcs11
+from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.utils import trio_run
 
 
 async def _claim_user(config, backend_addr, token, new_device_id, password, pkcs11):

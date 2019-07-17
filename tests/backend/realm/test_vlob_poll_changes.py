@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from uuid import UUID
-from pendulum import Pendulum, now as pendulum_now
+
+import pytest
+from pendulum import Pendulum
+from pendulum import now as pendulum_now
 
 from parsec.api.protocole import RealmRole
 from parsec.crypto import build_realm_role_certificate
-
-from tests.backend.realm.conftest import realm_update_roles, vlob_update, vlob_poll_changes
-
+from tests.backend.realm.conftest import realm_update_roles, vlob_poll_changes, vlob_update
 
 NOW = Pendulum(2000, 1, 1)
 VLOB_ID = UUID("00000000000000000000000000000001")

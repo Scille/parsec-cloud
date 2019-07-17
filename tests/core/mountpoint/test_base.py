@@ -1,20 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+from pathlib import Path, PurePath
 from uuid import uuid4
 
-import trio
 import pytest
-from pathlib import Path, PurePath
+import trio
 
-from parsec.core.mountpoint import (
-    mountpoint_manager_factory,
-    MountpointDisabled,
-    MountpointConfigurationError,
-    MountpointAlreadyMounted,
-    MountpointNotMounted,
-)
 from parsec.core import logged_core_factory
+from parsec.core.mountpoint import (
+    MountpointAlreadyMounted,
+    MountpointConfigurationError,
+    MountpointDisabled,
+    MountpointNotMounted,
+    mountpoint_manager_factory,
+)
 from parsec.core.types import FsPath
 
 

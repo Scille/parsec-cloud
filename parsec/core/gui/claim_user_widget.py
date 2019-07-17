@@ -1,31 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from parsec.types import BackendOrganizationAddr, DeviceID, OrganizationID
+from parsec.core.gui import validators
+from parsec.core.gui.claim_dialog import ClaimDialog
+from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui.desktop import get_default_device
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.password_validation import (
+    PASSWORD_CSS,
+    get_password_strength,
+    get_password_strength_text,
+)
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
+from parsec.core.invite_claim import InviteClaimBackendOfflineError, InviteClaimError
+from parsec.core.invite_claim import claim_user as core_claim_user
 from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
     save_device_with_password,
     save_device_with_pkcs11,
 )
-from parsec.core.invite_claim import (
-    claim_user as core_claim_user,
-    InviteClaimError,
-    InviteClaimBackendOfflineError,
-)
-from parsec.core.gui import validators
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_widgets import show_error
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.claim_dialog import ClaimDialog
-from parsec.core.gui.password_validation import (
-    get_password_strength,
-    get_password_strength_text,
-    PASSWORD_CSS,
-)
-from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
+from parsec.types import BackendOrganizationAddr, DeviceID, OrganizationID
 
 
 async def _do_claim_user(

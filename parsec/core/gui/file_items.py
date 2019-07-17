@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from enum import IntEnum
 import pathlib
+from enum import IntEnum
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon, QPainter, QPixmap
 from PyQt5.QtWidgets import QTableWidgetItem
-from PyQt5.QtGui import QIcon, QPixmap, QPainter
-
 
 NAME_DATA_INDEX = Qt.UserRole
 TYPE_DATA_INDEX = Qt.UserRole + 1

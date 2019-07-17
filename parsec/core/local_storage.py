@@ -1,36 +1,33 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+from typing import Dict, Set, Tuple, Union
 
 import trio
-from trio import hazmat
-from typing import Tuple, Dict, Union, Set
-
-from pendulum import Pendulum
-
-from structlog import get_logger
 from async_generator import asynccontextmanager
+from pendulum import Pendulum
+from structlog import get_logger
+from trio import hazmat
 
-from parsec.types import DeviceID
-from parsec.crypto import SecretKey
+from parsec.core.persistent_storage import (
+    LocalStorageError,
+    LocalStorageMissingError,
+    PersistentStorage,
+)
 from parsec.core.types import (
-    EntryID,
     BlockID,
+    EntryID,
+    FileCursor,
     FileDescriptor,
+    LocalFileManifest,
     LocalManifest,
     RemoteManifest,
-    LocalFileManifest,
-    FileCursor,
     local_manifest_serializer,
     remote_manifest_serializer,
 )
-from parsec.core.persistent_storage import (
-    PersistentStorage,
-    LocalStorageMissingError,
-    LocalStorageError,
-)
-
+from parsec.crypto import SecretKey
+from parsec.types import DeviceID
 
 logger = get_logger()
 

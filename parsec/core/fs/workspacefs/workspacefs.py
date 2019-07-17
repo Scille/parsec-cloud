@@ -1,36 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import errno
+from typing import Dict, Iterator, Tuple, Union
 from uuid import UUID
 
-from typing import Union, Iterator, Dict, Tuple
+import attr
 from pendulum import Pendulum
 
-import attr
-
-from parsec.types import UserID
-from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
-
-from parsec.core.local_storage import LocalStorageMissingError
-
 from parsec.core.fs import workspacefs
-from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-
-
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
-
 from parsec.core.fs.exceptions import (
+    FSFileConflictError,
+    FSNoSynchronizationRequired,
     FSRemoteManifestNotFound,
     FSRemoteSyncError,
-    FSNoSynchronizationRequired,
-    FSFileConflictError,
     FSReshapingRequiredError,
     FSWorkspaceNoAccess,
 )
-
+from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.local_storage import LocalStorageMissingError
+from parsec.core.types import EntryID, FsPath, LocalDevice, Manifest, WorkspaceRole
+from parsec.types import UserID
 
 AnyPath = Union[FsPath, str]
 

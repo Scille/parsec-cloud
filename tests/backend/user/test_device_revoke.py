@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 import pendulum
+import pytest
 
-from parsec.crypto import build_revoked_device_certificate
+from parsec.api.protocole import HandshakeRevokedDevice, device_revoke_serializer
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import device_revoke_serializer, HandshakeRevokedDevice
-
+from parsec.crypto import build_revoked_device_certificate
 from tests.common import freeze_time
 
 

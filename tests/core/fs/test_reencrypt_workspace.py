@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-from pendulum import Pendulum
 from unittest.mock import ANY
 
-from parsec.core.types import EntryID
+import pytest
+from pendulum import Pendulum
+
 from parsec.core.fs import (
+    FSBadEncryptionRevision,
     FSError,
+    FSWorkspaceInMaintenance,
     FSWorkspaceNotFoundError,
     FSWorkspaceNotInMaintenance,
-    FSWorkspaceInMaintenance,
-    FSBadEncryptionRevision,
 )
-
+from parsec.core.types import EntryID
 from tests.common import freeze_time
 
 

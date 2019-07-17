@@ -1,68 +1,68 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import List, Optional, Tuple
+
 import trio
-from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional
+from pendulum import Pendulum
+from pendulum import now as pendulum_now
 from structlog import get_logger
 
-from parsec.types import UserID, DeviceID
-from parsec.event_bus import EventBus
-from parsec.crypto import (
-    build_realm_self_role_certificate,
-    build_realm_role_certificate,
-    encrypt_signed_msg_for,
-    decrypt_and_verify_signed_msg_for,
-    encrypt_signed_msg_with_secret_key,
-    decrypt_and_verify_signed_msg_with_secret_key,
-    encrypt_raw_with_secret_key,
-    decrypt_raw_with_secret_key,
-    CryptoError,
-    SecretKey,
-)
-from parsec.serde import SerdeError
 from parsec.api.protocole import MaintenanceType
-from parsec.core.types import (
-    EntryID,
-    LocalDevice,
-    LocalWorkspaceManifest,
-    WorkspaceEntry,
-    WorkspaceRole,
-    UserManifest,
-    LocalUserManifest,
-    remote_manifest_serializer,
-)
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.backend_connection import (
-    BackendCmdsPool,
-    BackendNotAvailable,
-    BackendCmdsBadResponse,
-    BackendCmdsNotAllowed,
     BackendCmdsAlreadyExists,
+    BackendCmdsBadResponse,
     BackendCmdsBadVersion,
     BackendCmdsInMaintenance,
+    BackendCmdsNotAllowed,
     BackendCmdsParticipantsMismatchError,
+    BackendCmdsPool,
     BackendConnectionError,
+    BackendNotAvailable,
 )
-from parsec.core.remote_devices_manager import (
-    RemoteDevicesManager,
-    RemoteDevicesManagerError,
-    RemoteDevicesManagerBackendOfflineError,
+from parsec.core.fs.exceptions import (
+    FSBackendOfflineError,
+    FSError,
+    FSSharingNotAllowedError,
+    FSWorkspaceInMaintenance,
+    FSWorkspaceNoAccess,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceNotInMaintenance,
 )
-
-from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.userfs.message import message_content_serializer
-from parsec.core.fs.exceptions import (
-    FSError,
-    FSWorkspaceNoAccess,
-    FSWorkspaceNotFoundError,
-    FSBackendOfflineError,
-    FSSharingNotAllowedError,
-    FSWorkspaceInMaintenance,
-    FSWorkspaceNotInMaintenance,
+from parsec.core.fs.workspacefs import WorkspaceFS
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.remote_devices_manager import (
+    RemoteDevicesManager,
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
 )
-
+from parsec.core.types import (
+    EntryID,
+    LocalDevice,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
+    UserManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
+    remote_manifest_serializer,
+)
+from parsec.crypto import (
+    CryptoError,
+    SecretKey,
+    build_realm_role_certificate,
+    build_realm_self_role_certificate,
+    decrypt_and_verify_signed_msg_for,
+    decrypt_and_verify_signed_msg_with_secret_key,
+    decrypt_raw_with_secret_key,
+    encrypt_raw_with_secret_key,
+    encrypt_signed_msg_for,
+    encrypt_signed_msg_with_secret_key,
+)
+from parsec.event_bus import EventBus
+from parsec.serde import SerdeError
+from parsec.types import DeviceID, UserID
 
 logger = get_logger()
 

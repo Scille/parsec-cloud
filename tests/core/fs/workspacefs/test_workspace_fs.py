@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import errno
-import pytest
 from unittest.mock import ANY
 
-from parsec.core.fs import FSEntryNotFound
-from parsec.core.types import FsPath, EntryID
+import pytest
+
 from parsec.api.protocole.realm import RealmRole
+from parsec.core.fs import FSEntryNotFound
+from parsec.core.types import EntryID, FsPath
 
 
 @pytest.fixture

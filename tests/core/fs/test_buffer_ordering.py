@@ -1,15 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import string
-from hypothesis import given, strategies as st
+
+from hypothesis import given
+from hypothesis import strategies as st
 
 from parsec.core.fs.buffer_ordering import (
+    Buffer,
     merge_buffers,
     merge_buffers_with_limits,
     merge_buffers_with_limits_and_alignment,
-    Buffer,
 )
-
 
 DATA_MAX_SIZE = 2 ** 8
 

@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
-import attr
 import itertools
-from typing import List
+import re
 from collections import defaultdict
+from typing import List
+
+import attr
 
 __all__ = ("config_factory", "BackendConfig", "BaseBlockStoreConfig")
 

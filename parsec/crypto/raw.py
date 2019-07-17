@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import Tuple
+
 from nacl.public import SealedBox
+from nacl.pwhash import argon2i
 from nacl.secret import SecretBox
 from nacl.utils import random
-from nacl.pwhash import argon2i
 
 from parsec.crypto_types import PrivateKey, PublicKey, SecretKey
-
 
 # TODO: SENSITIVE is really slow which is not good for unittests...
 # CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_SENSITIVE

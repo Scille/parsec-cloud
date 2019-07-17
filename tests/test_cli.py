@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
-import re
-import attr
 import os
-from pathlib import Path
-from contextlib import contextmanager
-from time import sleep
-import trustme
+import re
 import subprocess
+from contextlib import contextmanager
+from pathlib import Path
+from time import sleep
 from unittest.mock import ANY, MagicMock, patch
+
+import attr
+import pytest
+import trustme
 from async_generator import asynccontextmanager
 from click.testing import CliRunner
 
 import parsec
-from parsec.cli import cli
 from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
-
+from parsec.cli import cli
 
 CWD = Path(__file__).parent.parent
 

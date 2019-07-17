@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import threading
 from unittest.mock import MagicMock
 
-from parsec.core.gui.trio_thread import run_trio_thread, ThreadSafeQtSignal
+import trio
+
+from parsec.core.gui.trio_thread import ThreadSafeQtSignal, run_trio_thread
 
 
 def test_on_trio_loop_closed(monkeypatch):

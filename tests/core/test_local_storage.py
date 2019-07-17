@@ -2,12 +2,11 @@
 
 import pytest
 
-from parsec.types import DeviceID
-from parsec.crypto import SecretKey
 from parsec.core.local_storage import LocalStorage
 from parsec.core.persistent_storage import LocalStorageMissingError
-from parsec.core.types import LocalUserManifest, EntryID
-
+from parsec.core.types import EntryID, LocalUserManifest
+from parsec.crypto import SecretKey
+from parsec.types import DeviceID
 
 DEVICE = DeviceID("a@b")
 

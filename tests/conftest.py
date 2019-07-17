@@ -1,49 +1,48 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
+import contextlib
 import os
 import re
-import sys
-import attr
 import socket
-import contextlib
+import sys
+from pathlib import Path
 from unittest.mock import patch
+
+import attr
+import hypothesis
+import pytest
 import structlog
 import trio
 import trio_asyncio
 from async_generator import asynccontextmanager
-import hypothesis
-from pathlib import Path
 
-from parsec.monitoring import TaskMonitoringInstrument
-from parsec.types import BackendAddr, OrganizationID
+from parsec.api.protocole import (
+    AdministrationClientHandshake,
+    AnonymousClientHandshake,
+    AuthenticatedClientHandshake,
+)
+from parsec.api.transport import Transport
+from parsec.backend import BackendApp
+from parsec.backend import config_factory as backend_config_factory
 from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.backend import BackendApp, config_factory as backend_config_factory
-from parsec.api.protocole import (
-    AdministrationClientHandshake,
-    AuthenticatedClientHandshake,
-    AnonymousClientHandshake,
+from parsec.monitoring import TaskMonitoringInstrument
+from parsec.types import BackendAddr, OrganizationID
+from tests.common import FreezeTestOnTransportError, freeze_time
+from tests.event_bus_spy import SpiedEventBus
+from tests.fixtures import *  # noqa
+from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper, offline
+from tests.oracles import oracle_fs_factory, oracle_fs_with_sync_factory  # noqa: Republishing
+from tests.postgresql import (
+    asyncio_reset_postgresql_testbed,
+    bootstrap_postgresql_testbed,
+    get_postgresql_url,
+    reset_postgresql_testbed,
 )
-from parsec.api.transport import Transport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
-
-from tests.common import freeze_time, FreezeTestOnTransportError
-from tests.postgresql import (
-    get_postgresql_url,
-    bootstrap_postgresql_testbed,
-    reset_postgresql_testbed,
-    asyncio_reset_postgresql_testbed,
-)
-from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper, offline
-from tests.event_bus_spy import SpiedEventBus
-from tests.fixtures import *  # noqa
-
-
-from tests.oracles import oracle_fs_factory, oracle_fs_with_sync_factory  # noqa: Republishing
 
 
 def pytest_addoption(parser):

@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
 from secrets import token_bytes
 
-from parsec.crypto import CryptoError
-from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
-from parsec.api.protocole.base import ProtocoleError, InvalidMessageError, serializer_factory
+import attr
+
 from parsec import __api_version__
+from parsec.api.protocole.base import InvalidMessageError, ProtocoleError, serializer_factory
+from parsec.crypto import CryptoError
+from parsec.serde import OneOfSchema, UnknownCheckedSchema, fields
 
 
 class HandshakeError(ProtocoleError):

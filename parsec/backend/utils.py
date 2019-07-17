@@ -2,7 +2,7 @@
 
 from functools import wraps
 
-from parsec.api.protocole import ProtocoleError, InvalidMessageError
+from parsec.api.protocole import InvalidMessageError, ProtocoleError
 
 
 def anonymous_api(fn):

@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 from distutils.version import StrictVersion
 from urllib.parse import urlsplit
-import requests
 
+import requests
+import trio
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
@@ -13,7 +13,6 @@ from parsec.core.config import save_config
 from parsec.core.gui import desktop
 from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
-
 
 RELEASE_URL = "https://github.com/Scille/parsec-build/releases/latest"
 

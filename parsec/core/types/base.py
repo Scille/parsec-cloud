@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from uuid import UUID, uuid4
 from pathlib import PurePosixPath
+from uuid import UUID, uuid4
 
 from parsec.serde import Serializer, fields
-
 
 __all__ = (
     "BlockID",

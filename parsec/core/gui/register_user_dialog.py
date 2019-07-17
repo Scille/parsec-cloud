@@ -1,23 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
+from PyQt5.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
-from parsec.core.invite_claim import (
-    InviteClaimBackendOfflineError,
-    InviteClaimError,
-    generate_invitation_token as core_generate_invitation_token,
-    invite_and_create_user as core_invite_and_create_user,
-)
-from parsec.types import BackendOrganizationAddr, UserID
-from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
-from parsec.core.gui import desktop
-from parsec.core.gui import validators
-from parsec.core.gui.custom_widgets import show_info, show_warning, show_error
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
+from parsec.core.gui import desktop, validators
+from parsec.core.gui.custom_widgets import show_error, show_info, show_warning
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-
+from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
+from parsec.core.invite_claim import InviteClaimBackendOfflineError, InviteClaimError
+from parsec.core.invite_claim import generate_invitation_token as core_generate_invitation_token
+from parsec.core.invite_claim import invite_and_create_user as core_invite_and_create_user
+from parsec.types import BackendOrganizationAddr, UserID
 
 STATUS_TO_ERRMSG = {
     "registration-invite-bad-value": _("Bad user id."),

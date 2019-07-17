@@ -1,14 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from marshmallow import (
-    Schema,
     MarshalResult,
+    Schema,
     UnmarshalResult,
     ValidationError,
-    validates_schema,
     post_load,
+    validates_schema,
 )
 
+from parsec.serde.fields import String
 
 try:
     import toastedmarshmallow
@@ -20,8 +21,6 @@ try:
 
 except ImportError:
     BaseSchema = Schema
-
-from parsec.serde.fields import String
 
 
 __all__ = ("UnknownCheckedSchema", "BaseCmdSchema")

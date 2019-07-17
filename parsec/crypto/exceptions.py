@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from nacl.exceptions import CryptoError, BadSignatureError  # noqa: republishing
-
+from nacl.exceptions import BadSignatureError, CryptoError  # noqa: republishing
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
 

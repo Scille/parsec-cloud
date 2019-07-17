@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 from uuid import UUID
+
+import pytest
 from pendulum import Pendulum
 
-from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_group_check
+from tests.backend.realm.conftest import vlob_create, vlob_group_check, vlob_update
 
 
 @pytest.mark.trio

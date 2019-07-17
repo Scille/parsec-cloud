@@ -1,36 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
-import pytest
-import pendulum
 from collections import defaultdict
-from typing import Union, Optional, Tuple
+from typing import Optional, Tuple, Union
+
+import attr
+import pendulum
+import pytest
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import (
-    SigningKey,
-    encrypt_signed_msg_with_secret_key,
-    build_user_certificate,
-    build_device_certificate,
-    build_revoked_device_certificate,
-    build_realm_role_certificate,
-)
 from parsec.api.protocole import RealmRole
+from parsec.backend.realm import RealmGrantedRole
+from parsec.backend.user import Device as BackendDevice
+from parsec.backend.user import User as BackendUser
+from parsec.backend.user import new_user_factory as new_backend_user_factory
+from parsec.core.local_device import generate_new_device
 from parsec.core.types import (
     LocalDevice,
-    remote_manifest_serializer,
-    local_manifest_serializer,
     LocalUserManifest,
+    local_manifest_serializer,
+    remote_manifest_serializer,
 )
-from parsec.core.local_device import generate_new_device
-from parsec.backend.user import (
-    User as BackendUser,
-    Device as BackendDevice,
-    new_user_factory as new_backend_user_factory,
+from parsec.crypto import (
+    SigningKey,
+    build_device_certificate,
+    build_realm_role_certificate,
+    build_revoked_device_certificate,
+    build_user_certificate,
+    encrypt_signed_msg_with_secret_key,
 )
-from parsec.backend.realm import RealmGrantedRole
-
+from parsec.types import BackendOrganizationBootstrapAddr, DeviceID
 from tests.common import freeze_time
 
 

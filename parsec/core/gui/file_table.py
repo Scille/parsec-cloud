@@ -1,32 +1,31 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from collections import namedtuple
-import pendulum
 
+import pendulum
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
-    QTableWidget,
     QHeaderView,
+    QMenu,
+    QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QStyle,
-    QMenu,
+    QTableWidget,
 )
 
-from parsec.core.types import WorkspaceRole
-
-from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import (
-    FileTableItem,
-    CustomTableItem,
-    FolderTableItem,
-    FileType,
     NAME_DATA_INDEX,
     TYPE_DATA_INDEX,
     UUID_DATA_INDEX,
+    CustomTableItem,
+    FileTableItem,
+    FileType,
+    FolderTableItem,
 )
 from parsec.core.gui.file_size import get_filesize
+from parsec.core.gui.lang import translate as _
+from parsec.core.types import WorkspaceRole
 
 
 class ItemDelegate(QStyledItemDelegate):

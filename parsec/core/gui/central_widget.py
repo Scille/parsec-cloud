@@ -1,20 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, QSize
-from PyQt5.QtGui import QPixmap, QColor
+from PyQt5.QtCore import QSize, pyqtSignal
+from PyQt5.QtGui import QColor, QPixmap
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
-from parsec.core.gui.mount_widget import MountWidget
-from parsec.core.gui.users_widget import UsersWidget
-from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.devices_widget import DevicesWidget
-from parsec.core.gui.menu_widget import MenuWidget
-from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import NotificationTaskbarButton
-from parsec.core.gui.notification_center_widget import NotificationCenterWidget
-from parsec.core.gui.ui.central_widget import Ui_CentralWidget
-
 from parsec.core.backend_connection.monitor import BackendState, current_backend_connection_state
+from parsec.core.gui.custom_widgets import NotificationTaskbarButton
+from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.menu_widget import MenuWidget
+from parsec.core.gui.mount_widget import MountWidget
+from parsec.core.gui.notification_center_widget import NotificationCenterWidget
+from parsec.core.gui.settings_widget import SettingsWidget
+from parsec.core.gui.ui.central_widget import Ui_CentralWidget
+from parsec.core.gui.users_widget import UsersWidget
 
 
 class CentralWidget(QWidget, Ui_CentralWidget):

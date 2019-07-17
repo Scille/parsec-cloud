@@ -1,22 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import pytest
 from unittest.mock import ANY
-import pendulum
 from uuid import UUID, uuid4
 
+import pendulum
+import pytest
+import trio
+from hypothesis import given
+from hypothesis import strategies as st
+
+from parsec.api.protocole import RealmRole, block_create_serializer, block_read_serializer, packb
 from parsec.backend.block import BlockTimeoutError
-from parsec.backend.realm import RealmGrantedRole
 from parsec.backend.raid5_blockstore import (
-    split_block_in_chunks,
     generate_checksum_chunk,
     rebuild_block_from_chunks,
+    split_block_in_chunks,
 )
-from parsec.api.protocole import block_create_serializer, block_read_serializer, packb, RealmRole
-
-from hypothesis import given, strategies as st
-
+from parsec.backend.realm import RealmGrantedRole
 
 BLOCK_ID = UUID("00000000000000000000000000000001")
 VLOB_ID = UUID("00000000000000000000000000000002")

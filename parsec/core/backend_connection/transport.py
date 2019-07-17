@@ -1,37 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
-import trio
 import ssl
-from async_generator import asynccontextmanager
-from structlog import get_logger
 from typing import Optional, Union
 
+import trio
+from async_generator import asynccontextmanager
+from structlog import get_logger
+
+from parsec.api.protocole import (
+    AdministrationClientHandshake,
+    AnonymousClientHandshake,
+    AuthenticatedClientHandshake,
+    HandshakeAPIVersionError,
+    HandshakeRevokedDevice,
+    ProtocoleError,
+)
+from parsec.api.transport import Transport, TransportClosedByPeer, TransportError
+from parsec.core.backend_connection.exceptions import (
+    BackendConnectionError,
+    BackendDeviceRevokedError,
+    BackendHandshakeAPIVersionError,
+    BackendHandshakeError,
+    BackendIncompatibleVersion,
+    BackendNotAvailable,
+)
+from parsec.crypto import SigningKey
 from parsec.types import (
-    DeviceID,
     BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
+    DeviceID,
 )
-from parsec.crypto import SigningKey
-from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
-from parsec.api.protocole import (
-    ProtocoleError,
-    HandshakeRevokedDevice,
-    HandshakeAPIVersionError,
-    AnonymousClientHandshake,
-    AuthenticatedClientHandshake,
-    AdministrationClientHandshake,
-)
-from parsec.core.backend_connection.exceptions import (
-    BackendConnectionError,
-    BackendNotAvailable,
-    BackendIncompatibleVersion,
-    BackendHandshakeError,
-    BackendHandshakeAPIVersionError,
-    BackendDeviceRevokedError,
-)
-
 
 __all__ = (
     "anonymous_transport_factory",

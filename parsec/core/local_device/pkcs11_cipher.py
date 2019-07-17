@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
+from parsec.core.local_device.cipher import BaseLocalDeviceDecryptor, BaseLocalDeviceEncryptor
 from parsec.core.local_device.exceptions import (
+    LocalDeviceCryptoError,
     LocalDevicePackingError,
     LocalDeviceValidationError,
-    LocalDeviceCryptoError,
 )
-from parsec.core.local_device.cipher import BaseLocalDeviceEncryptor, BaseLocalDeviceDecryptor
 from parsec.core.local_device.pkcs11_tools import (
     DevicePKCS11Error,
-    encrypt_data,
     decrypt_data,
+    encrypt_data,
     get_LIB,
 )
+from parsec.serde import Serializer, UnknownCheckedSchema, fields
 
 
 class PKCS11PayloadSchema(UnknownCheckedSchema):

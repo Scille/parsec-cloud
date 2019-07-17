@@ -1,24 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pendulum
 import itertools
-from triopg.exceptions import UniqueViolationError
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
-from parsec.types import UserID, DeviceID, OrganizationID
-from parsec.event_bus import EventBus
+import pendulum
+from triopg.exceptions import UniqueViolationError
+
+from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
 from parsec.backend.user import (
     BaseUserComponent,
-    User,
     Device,
-    UserInvitation,
     DeviceInvitation,
-    UserError,
+    User,
     UserAlreadyExistsError,
     UserAlreadyRevokedError,
+    UserError,
+    UserInvitation,
     UserNotFoundError,
 )
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
+from parsec.event_bus import EventBus
+from parsec.types import DeviceID, OrganizationID, UserID
 
 
 class PGUserComponent(BaseUserComponent):

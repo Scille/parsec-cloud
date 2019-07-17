@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-
 from enum import Enum
+
+import trio
 
 BackendState = Enum("BackendState", "READY LOST INCOMPATIBLE_VERSION INITIALIZING")
 

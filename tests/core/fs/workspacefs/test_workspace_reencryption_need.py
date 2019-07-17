@@ -1,21 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from hypothesis_trio.stateful import (
-    initialize,
-    rule,
-    consumes,
-    invariant,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-    Bundle,
-)
 from pendulum import now as pendulum_now
 
+from hypothesis_trio.stateful import (
+    Bundle,
+    TrioAsyncioRuleBasedStateMachine,
+    consumes,
+    initialize,
+    invariant,
+    rule,
+    run_state_machine_as_test,
+)
 from parsec.api.protocole import RealmRole
-from parsec.crypto import build_realm_role_certificate
 from parsec.backend.realm import RealmGrantedRole
-
+from parsec.crypto import build_realm_role_certificate
 from tests.common import call_with_control
 
 

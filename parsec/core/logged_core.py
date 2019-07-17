@@ -1,26 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import attr
 from typing import Optional
-from structlog import get_logger
-from async_generator import asynccontextmanager
 
-from parsec.event_bus import EventBus
-from parsec.core.types import LocalDevice
-from parsec.core.config import CoreConfig
+import attr
+import trio
+from async_generator import asynccontextmanager
+from structlog import get_logger
+
 from parsec.core.backend_connection import (
     backend_cmds_pool_factory,
     backend_listen_events,
     monitor_backend_connection,
 )
-from parsec.core.mountpoint import mountpoint_manager_factory
-from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.messages_monitor import monitor_messages
-from parsec.core.sync_monitor import monitor_sync
+from parsec.core.config import CoreConfig
 from parsec.core.fs import UserFS
 from parsec.core.local_storage import LocalStorage
-
+from parsec.core.messages_monitor import monitor_messages
+from parsec.core.mountpoint import mountpoint_manager_factory
+from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.sync_monitor import monitor_sync
+from parsec.core.types import LocalDevice
+from parsec.event_bus import EventBus
 
 logger = get_logger()
 

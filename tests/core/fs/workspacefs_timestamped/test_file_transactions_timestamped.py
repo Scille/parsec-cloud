@@ -2,9 +2,9 @@
 
 import pytest
 
-from parsec.core.types import FsPath
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.persistent_storage import LocalStorageError
+from parsec.core.types import FsPath
 
 
 @pytest.mark.trio

@@ -5,7 +5,6 @@ import click
 import parsec
 from parsec.cli_utils import generate_not_available_cmd
 
-
 try:
     from parsec.core.cli import core_cmd
 except ImportError as exc:

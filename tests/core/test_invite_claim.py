@@ -3,15 +3,15 @@
 import pytest
 import trio
 
-from parsec.types import DeviceID
-from parsec.core.invite_claim import (
-    generate_invitation_token,
-    invite_and_create_user,
-    claim_user,
-    invite_and_create_device,
-    claim_device,
-)
 from parsec.core.backend_connection import backend_cmds_pool_factory
+from parsec.core.invite_claim import (
+    claim_device,
+    claim_user,
+    generate_invitation_token,
+    invite_and_create_device,
+    invite_and_create_user,
+)
+from parsec.types import DeviceID
 
 
 async def _invite_and_claim(running_backend, invite_func, claim_func, event_name="user.claimed"):

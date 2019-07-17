@@ -1,26 +1,26 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pathlib import PureWindowsPath
 from contextlib import contextmanager
-from trio import Cancelled, RunFinishedError
+from pathlib import PureWindowsPath
+
 from structlog import get_logger
+from trio import Cancelled, RunFinishedError
+
+from parsec.core.fs import FSBackendOfflineError, FSInvalidFileDescriptor
+from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
+from parsec.core.types import FsPath
 from winfspy import (
-    NTStatusError,
-    BaseFileSystemOperations,
-    FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
+    FILE_ATTRIBUTE,
+    BaseFileSystemOperations,
+    NTStatusError,
 )
 from winfspy.plumbing.winstuff import (
-    dt_to_filetime,
     NTSTATUS,
-    posix_to_ntstatus,
     SecurityDescriptor,
+    dt_to_filetime,
+    posix_to_ntstatus,
 )
-
-from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor, FSBackendOfflineError
-from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
-
 
 logger = get_logger()
 MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}

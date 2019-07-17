@@ -1,19 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from structlog import get_logger
 from async_generator import asynccontextmanager
+from structlog import get_logger
 
-from parsec.types import DeviceID, BackendOrganizationAddr, BackendAddr
-from parsec.crypto import SigningKey
+from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.transport import (
-    authenticated_transport_pool_factory,
-    anonymous_transport_factory,
-    administration_transport_factory,
     TransportError,
+    administration_transport_factory,
+    anonymous_transport_factory,
+    authenticated_transport_pool_factory,
 )
-from parsec.core.backend_connection import cmds
-
+from parsec.crypto import SigningKey
+from parsec.types import BackendAddr, BackendOrganizationAddr, DeviceID
 
 __all__ = (
     "backend_cmds_pool_factory",

@@ -1,21 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, Optional
-from pendulum import Pendulum
-from nacl.public import SealedBox
-from nacl.bindings import crypto_sign_BYTES
-from nacl.secret import SecretBox
+from typing import Optional, Tuple
 
-from parsec.types import DeviceID
-from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
+from nacl.bindings import crypto_sign_BYTES
+from nacl.public import SealedBox
+from nacl.secret import SecretBox
+from pendulum import Pendulum
+
 from parsec.crypto.exceptions import (
-    CryptoWrappedMsgPackingError,
-    CryptoWrappedMsgValidationError,
     CryptoSignatureAuthorMismatchError,
     CryptoSignatureTimestampMismatchError,
+    CryptoWrappedMsgPackingError,
+    CryptoWrappedMsgValidationError,
 )
+from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
-
+from parsec.types import DeviceID
 
 TIMESTAMP_MAX_DT = 30 * 60
 

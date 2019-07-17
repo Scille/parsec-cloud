@@ -1,21 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Tuple, Dict, Optional
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
+
 import pendulum
 
-from parsec.types import DeviceID, OrganizationID
 from parsec.api.protocole import (
     vlob_create_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
     vlob_group_check_serializer,
-    vlob_poll_changes_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
+    vlob_poll_changes_serializer,
+    vlob_read_serializer,
+    vlob_update_serializer,
 )
 from parsec.backend.utils import catch_protocole_errors
 from parsec.crypto import timestamps_in_the_ballpark
+from parsec.types import DeviceID, OrganizationID
 
 
 class VlobError(Exception):

@@ -4,21 +4,21 @@ import pytest
 from pendulum import now as pendulum_now
 
 from parsec.crypto import (
-    CertifiedUserData,
     CertifiedDeviceData,
     CertifiedRevokedDeviceData,
+    CertifiedUserData,
     CryptoError,
-    CryptoWrappedMsgPackingError,
     CryptoSignatureAuthorMismatchError,
-    verify_device_certificate,
-    verify_revoked_device_certificate,
-    verify_user_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_revoked_device_certificate,
-    unsecure_read_user_certificate,
+    CryptoWrappedMsgPackingError,
     build_device_certificate,
     build_revoked_device_certificate,
     build_user_certificate,
+    unsecure_read_device_certificate,
+    unsecure_read_revoked_device_certificate,
+    unsecure_read_user_certificate,
+    verify_device_certificate,
+    verify_revoked_device_certificate,
+    verify_user_certificate,
 )
 
 

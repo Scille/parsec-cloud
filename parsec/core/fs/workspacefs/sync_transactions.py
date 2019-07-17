@@ -1,26 +1,24 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from itertools import count
-from typing import Optional, List, Dict, Iterator
+from typing import Dict, Iterator, List, Optional
 
-from parsec.event_bus import EventBus
-from parsec.types import DeviceID
+from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
+from parsec.core.fs.exceptions import FSFileConflictError, FSReshapingRequiredError
 from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.utils import is_file_manifest
+from parsec.core.fs.workspacefs.file_transactions import BlockBuffer, DirtyBlockBuffer
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
 from parsec.core.types import (
+    BlockAccess,
     EntryID,
     EntryName,
     FolderManifest,
-    Manifest,
     LocalManifest,
-    BlockAccess,
+    Manifest,
 )
-from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
-from parsec.core.fs.workspacefs.file_transactions import DirtyBlockBuffer, BlockBuffer
-
-from parsec.core.fs.exceptions import FSFileConflictError, FSReshapingRequiredError
-
-from parsec.core.fs.utils import is_file_manifest
+from parsec.event_bus import EventBus
+from parsec.types import DeviceID
 
 __all__ = "SyncTransactions"
 

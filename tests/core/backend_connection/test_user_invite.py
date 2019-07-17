@@ -1,18 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 import pytest
 import trio
-import pendulum
 
+from parsec.core.backend_connection import backend_anonymous_cmds_factory, backend_cmds_pool_factory
+from parsec.core.invite_claim import extract_user_encrypted_claim, generate_user_encrypted_claim
+from parsec.core.types import UnverifiedRemoteDevice, UnverifiedRemoteUser
 from parsec.crypto import (
-    build_user_certificate,
     build_device_certificate,
+    build_user_certificate,
     unsecure_read_device_certificate,
     unsecure_read_user_certificate,
 )
-from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
-from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
-from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
 
 
 @pytest.mark.trio

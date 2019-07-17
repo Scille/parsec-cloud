@@ -1,25 +1,25 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Dict, List, Optional, Tuple
+from uuid import UUID
+
 import pendulum
 from triopg import UniqueViolationError
-from uuid import UUID
-from typing import List, Tuple, Dict, Optional
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
+from parsec.backend.drivers.postgresql.realm import RealmNotFoundError, get_realm_status
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
-    VlobVersionError,
-    VlobNotFoundError,
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
     VlobInMaintenanceError,
+    VlobNotFoundError,
     VlobNotInMaintenanceError,
+    VlobVersionError,
 )
-from parsec.backend.drivers.postgresql.handler import PGHandler, send_signal
-from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
-
+from parsec.types import DeviceID, OrganizationID
 
 _STR_TO_ROLE = {role.value: role for role in RealmRole}
 

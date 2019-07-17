@@ -4,7 +4,6 @@ from zxcvbn import zxcvbn
 
 from parsec.core.gui.lang import translate as _
 
-
 PASSWORD_CSS = {
     0: "color: white; background-color: rgb(64, 64, 64);",
     1: "color: white; background-color: rgb(194, 51, 51);",

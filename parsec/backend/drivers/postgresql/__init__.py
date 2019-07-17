@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from .block import PGBlockComponent, PGBlockStoreComponent
 from .handler import PGHandler, init_db
+from .message import PGMessageComponent
 from .organization import PGOrganizationComponent
 from .ping import PGPingComponent
-from .user import PGUserComponent
-from .message import PGMessageComponent
 from .realm import PGRealmComponent
+from .user import PGUserComponent
 from .vlob import PGVlobComponent
-from .block import PGBlockComponent, PGBlockStoreComponent
-
 
 __all__ = [
     "init_db",
