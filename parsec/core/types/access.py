@@ -18,15 +18,6 @@ from parsec.core.types.base import (
 )
 
 
-# TODO: legacy stuff, remove me
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class ManifestAccess:
-    id: EntryID
-    realm_id: EntryID
-    key: SecretKey
-    encryption_revision: int
-
-
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BlockAccess:
     id: BlockID
