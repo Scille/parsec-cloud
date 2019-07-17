@@ -4,7 +4,6 @@ from typing import Union
 
 from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
 from parsec.core.types.access import (
-    ManifestAccess,
     BlockAccess,
     DirtyBlockAccess,
     WorkspaceRole,
@@ -52,7 +51,6 @@ __all__ = (
     "FileDescriptor",
     "FsPath",
     # access
-    "ManifestAccess",
     "BlockAccess",
     "DirtyBlockAccess",
     "WorkspaceRole",
