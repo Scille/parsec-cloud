@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import find_packages, distutils, Command
+import glob
+import itertools
+
+from setuptools import Command, distutils, find_packages
 from setuptools.command.build_py import build_py
 
 try:
@@ -12,9 +15,6 @@ except ImportError:
         return x
 
     from setuptools import setup
-
-import itertools
-import glob
 
 
 # Awesome hack to load `__version__`
@@ -310,6 +310,7 @@ test_requirements = [
     "hypothesis-trio==0.4.0",
     "trustme==0.5.2",
     "black==19.3b0",  # Pin black to avoid flaky style check
+    "isort==4.3.21",
 ]
 
 

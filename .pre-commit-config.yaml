@@ -1,4 +1,9 @@
 repos:
+# TODO: Enable this once we are confident Isort&Black end-up in a formatting deadlock
+# -   repo: https://github.com/pre-commit/mirrors-isort
+#     rev: v4.3.21
+#     hooks:
+#     -   id: isort
 -   repo: https://github.com/ambv/black
     rev: 19.3b0
     hooks:
@@ -13,7 +18,7 @@ repos:
     hooks:
     - id: flake8
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.2.3  # Use the ref you want to point at
+    rev: v2.2.3
     hooks:
     - id: mixed-line-ending
       args:
