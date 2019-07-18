@@ -2,8 +2,9 @@
 
 import trio
 import triopg
+from triopg import UniqueViolationError
 from uuid import uuid4
-from functools import lru_cache
+from functools import lru_cache, wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
 from importlib_resources import read_text
@@ -52,6 +53,18 @@ async def _is_db_initialized(conn):
         """
     )
     return bool(root_key)
+
+
+def retry_on_unique_violation(fn):
+    @wraps(fn)
+    async def wrapper(*args, **kwargs):
+        while True:
+            try:
+                return await fn(*args, **kwargs)
+            except UniqueViolationError as exc:
+                logger.warning("unique violation error, retrying...", exc_info=exc)
+
+    return wrapper
 
 
 # TODO: replace by a fonction
