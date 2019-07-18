@@ -223,12 +223,6 @@ class LocalUserManifest:
     last_processed_message: int = 0
     workspaces: List[WorkspaceEntry] = attr.ib(converter=tuple, default=())
 
-    # TODO: remove this legacy stuff
-    @property
-    def children(self):
-        # return {w.name: w.access for w in self.workspaces if not w.is_revoked()}
-        return {w.name: w.id for w in self.workspaces}
-
     def __attrs_post_init__(self):
         if not self.created:
             object.__setattr__(self, "created", pendulum.now())
