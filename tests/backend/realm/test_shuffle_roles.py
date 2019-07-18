@@ -130,12 +130,15 @@ def test_shuffle_roles(
                     allowed_roles = owner_or_manager
 
                 if self.current_roles[author.user_id] in allowed_roles:
-                    assert rep == {"status": "ok"}
-                    print(f"+ {author.user_id} -{role.value}-> {recipient.user_id}")
-                    self.current_roles[recipient.user_id] = role
-                    self.certifs.append(certif)
+                    # print(f"+ {author.user_id} -{role.value}-> {recipient.user_id}")
+                    if existing_recipient_role != role:
+                        assert rep == {"status": "ok"}
+                        self.current_roles[recipient.user_id] = role
+                        self.certifs.append(certif)
+                    else:
+                        assert rep == {"status": "already_granted"}
                 else:
-                    print(f"- {author.user_id} -{role.value}-> {recipient.user_id}")
+                    # print(f"- {author.user_id} -{role.value}-> {recipient.user_id}")
                     assert rep == {"status": "not_allowed"}
 
             return rep["status"] == "ok"
@@ -156,9 +159,7 @@ def test_shuffle_roles(
                 backend = self.backend
             except AttributeError:
                 return
-            roles = await backend.realm.get_roles(
-                alice.organization_id, alice.device_id, self.realm_id
-            )
+            roles = await backend.realm.get_current_roles(alice.organization_id, self.realm_id)
             assert roles == {k: v for k, v in self.current_roles.items() if v is not None}
 
     run_state_machine_as_test(ShuffleRoles, settings=hypothesis_settings)

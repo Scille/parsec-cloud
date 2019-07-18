@@ -38,6 +38,7 @@ from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsNotAllowed,
     BackendCmdsAlreadyExists,
+    BackendCmdsRoleAlreadyGranted,
     BackendCmdsBadVersion,
     BackendCmdsInMaintenance,
     BackendCmdsParticipantsMismatchError,
@@ -526,6 +527,10 @@ class UserFS:
             raise FSWorkspaceInMaintenance(
                 f"Cannot share workspace while it is in maintenance"
             ) from exc
+
+        except BackendCmdsRoleAlreadyGranted:
+            # Stay idempotent
+            return
 
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to set vlob group roles in backend: {exc}") from exc

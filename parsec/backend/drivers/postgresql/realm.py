@@ -13,6 +13,7 @@ from parsec.backend.realm import (
     RealmAccessError,
     RealmNotFoundError,
     RealmAlreadyExistsError,
+    RealmRoleAlreadyGranted,
     RealmEncryptionRevisionError,
     RealmParticipantsMismatchError,
     RealmMaintenanceError,
@@ -208,8 +209,8 @@ WHERE _id = get_realm_internal_id($1, $2)
             encryption_revision=ret["encryption_revision"],
         )
 
-    async def get_roles(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    async def get_current_roles(
+        self, organization_id: OrganizationID, realm_id: UUID
     ) -> Dict[UserID, RealmRole]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -230,8 +231,6 @@ ORDER BY user_, certified_on DESC
                 roles = {
                     UserID(user_id): _STR_TO_ROLE[role] for user_id, role in ret if role is not None
                 }
-                if author.user_id not in roles:
-                    raise RealmAccessError()
 
         return roles
 
@@ -305,6 +304,9 @@ ORDER BY certified_on ASC
 
                 if author_role not in needed_roles:
                     raise RealmAccessError()
+
+                if existing_user_role == new_role.role:
+                    raise RealmRoleAlreadyGranted()
 
                 await conn.execute(
                     """

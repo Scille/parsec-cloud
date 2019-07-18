@@ -60,20 +60,23 @@ def test_workspace_reencryption_need(
                 call_with_control, _backend_controlled_cb
             )
 
-        def _give_role(self, user):
-            assert user.user_id not in self.users_revoked
+        def _oracle_give_or_change_role(self, user):
+            current_role = self.user_roles.get(user.user_id)
+            new_role = RealmRole.MANAGER if current_role != RealmRole.MANAGER else RealmRole.READER
             self.since_reencryption_role_revoked.discard(user.user_id)
-            self.users_with_role.add(user.user_id)
+            self.user_roles[user.user_id] = new_role
+            return new_role
 
-        def _revoke_role(self, user):
-            assert user.user_id not in self.users_revoked
-            self.since_reencryption_role_revoked.add(user.user_id)
-            self.users_with_role.discard(user.user_id)
+        def _oracle_revoke_role(self, user):
+            if user.user_id in self.user_roles:
+                self.since_reencryption_role_revoked.add(user.user_id)
+                self.user_roles.pop(user.user_id, None)
+                return True
+            else:
+                return False
 
-        def _revoke_user(self, user):
-            assert user.user_id not in self.users_revoked
-            self.users_revoked.add(user.user_id)
-            if user.user_id in self.users_with_role:
+        def _oracle_revoke_user(self, user):
+            if user.user_id in self.user_roles:
                 self.since_reencryption_user_revoked.add(user.user_id)
 
         async def _update_role(self, author, user, role=RealmRole.MANAGER):
@@ -106,8 +109,7 @@ def test_workspace_reencryption_need(
         async def init(self):
             await reset_testbed()
 
-            self.users_with_role = set()
-            self.users_revoked = set()
+            self.user_roles = {}
             self.since_reencryption_user_revoked = set()
             self.since_reencryption_role_revoked = set()
 
@@ -123,25 +125,24 @@ def test_workspace_reencryption_need(
         async def give_role(self):
             new_user = local_device_factory()
             await self.backend_data_binder.bind_device(new_user)
-            await self._update_role(alice, new_user)
-            self._give_role(new_user)
+            new_role = self._oracle_give_or_change_role(new_user)
+            await self._update_role(alice, new_user, role=new_role)
             return new_user
 
         @rule(user=Users)
         async def change_role(self, user):
-            await self._update_role(alice, user)
-            self._give_role(user)
+            new_role = self._oracle_give_or_change_role(user)
+            await self._update_role(alice, user, role=new_role)
 
         @rule(user=Users)
         async def revoke_role(self, user):
-            await self._update_role(alice, user, role=None)
-            self._revoke_role(user)
-            return user
+            if self._oracle_revoke_role(user):
+                await self._update_role(alice, user, role=None)
 
         @rule(user=consumes(Users))
         async def revoke_user(self, user):
             await self.backend_data_binder.bind_revocation(user, alice)
-            self._revoke_user(user)
+            self._oracle_revoke_user(user)
 
         @rule()
         async def reencrypt(self):

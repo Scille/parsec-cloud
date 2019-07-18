@@ -16,7 +16,6 @@ from parsec.api.protocole import (
     events_listen_serializer,
     message_send_serializer,
     message_get_serializer,
-    RealmRole,
     vlob_read_serializer,
     vlob_create_serializer,
     vlob_update_serializer,
@@ -27,7 +26,6 @@ from parsec.api.protocole import (
     realm_create_serializer,
     realm_status_serializer,
     realm_get_role_certificates_serializer,
-    realm_get_roles_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
@@ -279,13 +277,6 @@ async def realm_status(transport: Transport, realm_id: UUID) -> dict:
     rep.pop("status")
     # TODO: return RealmStatus object ?
     return rep
-
-
-async def realm_get_roles(transport: Transport, realm_id: UUID) -> Dict[UserID, RealmRole]:
-    rep = await _send_cmd(
-        transport, realm_get_roles_serializer, cmd="realm_get_roles", realm_id=realm_id
-    )
-    return rep["users"]
 
 
 async def realm_get_role_certificates(

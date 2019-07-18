@@ -15,6 +15,7 @@ from parsec.backend.realm import (
     RealmStatus,
     RealmAccessError,
     RealmAlreadyExistsError,
+    RealmRoleAlreadyGranted,
     RealmNotFoundError,
     RealmEncryptionRevisionError,
     RealmParticipantsMismatchError,
@@ -98,12 +99,10 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAccessError()
         return realm.status
 
-    async def get_roles(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    async def get_current_roles(
+        self, organization_id: OrganizationID, realm_id: UUID
     ) -> Dict[UserID, RealmRole]:
         realm = self._get_realm(organization_id, realm_id)
-        if author.user_id not in realm.roles:
-            raise RealmAccessError()
         roles = {}
         for x in realm.granted_roles:
             if x.role is None:
@@ -153,6 +152,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         author_role = realm.roles.get(new_role.granted_by.user_id)
         if author_role not in needed_roles:
             raise RealmAccessError()
+
+        if existing_user_role == new_role.role:
+            raise RealmRoleAlreadyGranted()
 
         realm.granted_roles.append(new_role)
 

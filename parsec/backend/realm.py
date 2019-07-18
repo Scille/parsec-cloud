@@ -12,7 +12,6 @@ from parsec.api.protocole import (
     MaintenanceType,
     realm_status_serializer,
     realm_create_serializer,
-    realm_get_roles_serializer,
     realm_get_role_certificates_serializer,
     realm_update_roles_serializer,
     realm_start_reencryption_maintenance_serializer,
@@ -34,6 +33,10 @@ class RealmNotFoundError(RealmError):
 
 
 class RealmAlreadyExistsError(RealmError):
+    pass
+
+
+class RealmRoleAlreadyGranted(RealmError):
     pass
 
 
@@ -165,21 +168,6 @@ class BaseRealmComponent:
         )
 
     @catch_protocole_errors
-    async def api_realm_get_roles(self, client_ctx, msg):
-        msg = realm_get_roles_serializer.req_load(msg)
-
-        try:
-            roles = await self.get_roles(client_ctx.organization_id, client_ctx.device_id, **msg)
-
-        except RealmAccessError:
-            return realm_get_roles_serializer.rep_dump({"status": "not_allowed"})
-
-        except RealmNotFoundError as exc:
-            return realm_get_roles_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
-
-        return realm_get_roles_serializer.rep_dump({"status": "ok", "users": roles})
-
-    @catch_protocole_errors
     async def api_realm_get_role_certificates(self, client_ctx, msg):
         msg = realm_get_role_certificates_serializer.req_load(msg)
 
@@ -238,6 +226,9 @@ class BaseRealmComponent:
 
         try:
             await self.update_roles(client_ctx.organization_id, granted_role)
+
+        except RealmRoleAlreadyGranted:
+            return realm_update_roles_serializer.rep_dump({"status": "already_granted"})
 
         except RealmAccessError:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
@@ -354,13 +345,12 @@ class BaseRealmComponent:
         """
         raise NotImplementedError()
 
-    async def get_roles(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    async def get_current_roles(
+        self, organization_id: OrganizationID, realm_id: UUID
     ) -> Dict[UserID, RealmRole]:
         """
         Raises:
             RealmNotFoundError
-            RealmAccessError
         """
         raise NotImplementedError()
 
