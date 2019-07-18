@@ -281,8 +281,15 @@ class UserFS:
                 f" backend returned version {expected_version}"
             )
 
-        # TODO: add try/except ?
-        author = await self.remote_devices_manager.get_device(expected_author_id)
+        try:
+            author = await self.remote_devices_manager.get_device(expected_author_id)
+
+        except RemoteDevicesManagerBackendOfflineError as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except RemoteDevicesManagerError as exc:
+            raise FSError(f"Cannot retrieve author public key: {exc}") from exc
+
         try:
             raw = decrypt_and_verify_signed_msg_with_secret_key(
                 self.device.user_manifest_key,
