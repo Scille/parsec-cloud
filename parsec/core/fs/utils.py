@@ -6,7 +6,6 @@ from parsec.core.types import (
     LocalFolderManifest,
     LocalFileManifest,
     LocalManifest,
-    UserManifest,
     WorkspaceManifest,
     FileManifest,
     FolderManifest,
@@ -34,15 +33,6 @@ def is_folderish_manifest(manifest: Manifest) -> bool:
             LocalFolderManifest,
             WorkspaceManifest,
             LocalWorkspaceManifest,
-            UserManifest,  # TODO: remove when migration is over
             LocalUserManifest,
         ),
     )
-
-
-def is_workspace_manifest(manifest: Manifest) -> bool:
-    return isinstance(manifest, (WorkspaceManifest, LocalWorkspaceManifest))
-
-
-def is_user_manifest(manifest: Manifest) -> bool:
-    return isinstance(manifest, (UserManifest, LocalUserManifest))
