@@ -60,6 +60,10 @@ class BackendCmdsAlreadyExists(BackendCmdsBadResponse):
     status = "already_exists"
 
 
+class BackendCmdsRoleAlreadyGranted(BackendCmdsBadResponse):
+    status = "already_granted"
+
+
 class BackendCmdsNotAllowed(BackendCmdsBadResponse):
     status = "not_allowed"
 
@@ -133,6 +137,7 @@ STATUS_TO_EXC_CLS = {
     for exc_cls in (
         BackendCmdsBadResponse,
         BackendCmdsAlreadyExists,
+        BackendCmdsRoleAlreadyGranted,
         BackendCmdsNotAllowed,
         BackendCmdsBadVersion,
         BackendCmdsNotFound,

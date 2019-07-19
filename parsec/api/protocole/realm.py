@@ -13,7 +13,6 @@ __all__ = (
     "MaintenanceTypeField",
     "realm_create_serializer",
     "realm_status_serializer",
-    "realm_get_roles_serializer",
     "realm_get_role_certificates_serializer",
     "realm_update_roles_serializer",
     "realm_start_reencryption_maintenance_serializer",
@@ -75,19 +74,6 @@ class RealmGetRoleCertificatesRepSchema(BaseRepSchema):
 realm_get_role_certificates_serializer = CmdSerializer(
     RealmGetRoleCertificatesReqSchema, RealmGetRoleCertificatesRepSchema
 )
-
-
-# TODO: get_roles api is deprecated
-class RealmGetRolesReqSchema(BaseReqSchema):
-    realm_id = fields.UUID(required=True)
-
-
-class RealmGetRolesRepSchema(BaseRepSchema):
-    # TODO: add granted_on, granted_by, terminated_on, terminated_by fields ?
-    users = fields.Map(fields.UserID(), RealmRoleField(required=True), required=True)
-
-
-realm_get_roles_serializer = CmdSerializer(RealmGetRolesReqSchema, RealmGetRolesRepSchema)
 
 
 class RealmUpdateRolesReqSchema(BaseReqSchema):
