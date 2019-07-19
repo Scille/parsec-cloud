@@ -6,15 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>437</width>
-    <height>139</height>
+    <width>435</width>
+    <height>125</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+   <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>435</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>435</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -28,6 +40,9 @@ border: 0;
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>0</number>
+   </property>
+   <property name="sizeConstraint">
+    <enum>QLayout::SetDefaultConstraint</enum>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -59,6 +74,9 @@ background-color: rgb(255, 255, 255);
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
        <number>0</number>
+      </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
       </property>
       <property name="leftMargin">
        <number>10</number>
@@ -139,7 +157,7 @@ background-color: rgb(255, 255, 255);
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <property name="sizeConstraint">
-         <enum>QLayout::SetMaximumSize</enum>
+         <enum>QLayout::SetDefaultConstraint</enum>
         </property>
         <item>
          <widget class="QLabel" name="label_icon">
@@ -175,7 +193,7 @@ background-color: rgb(255, 255, 255);
            <number>10</number>
           </property>
           <property name="rightMargin">
-           <number>10</number>
+           <number>15</number>
           </property>
           <item>
            <widget class="QLabel" name="label_title">
@@ -200,21 +218,19 @@ background-color: rgb(255, 255, 255);
           <item>
            <widget class="QLabel" name="label_message">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(12, 65, 157);</string>
-            </property>
             <property name="text">
              <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>false</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignJustify|Qt::AlignVCenter</set>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -225,6 +241,9 @@ background-color: rgb(255, 255, 255);
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <property name="spacing">
              <number>8</number>
+            </property>
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
             </property>
             <item>
              <spacer name="horizontalSpacer_2">

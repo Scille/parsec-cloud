@@ -599,7 +599,7 @@ border: 0;
               </property>
               <property name="icon">
                <iconset resource="../rc/resources.qrc">
-                <normaloff>:/icons/images/icons/return_on.png</normaloff>:/icons/images/icons/return_on.png</iconset>
+                <normaloff>:/icons/images/icons/settings_on.png</normaloff>:/icons/images/icons/settings_on.png</iconset>
               </property>
               <property name="iconSize">
                <size>

@@ -11,11 +11,22 @@ from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, Mountpoi
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import show_error, show_warning, TextInputDialog, TaskbarButton
+from parsec.core.gui.custom_widgets import (
+    show_error,
+    show_warning,
+    TextInputDialog,
+    TaskbarButton,
+    QuestionDialog,
+)
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
+
+
+async def _get_reencryption_needs(workspace_fs):
+    reenc_needs = await workspace_fs.get_reencryption_need()
+    return workspace_fs.workspace_id, reenc_needs
 
 
 async def _do_workspace_create(core, workspace_name):
@@ -85,6 +96,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     list_error = pyqtSignal(QtToTrioJob)
     mount_success = pyqtSignal(QtToTrioJob)
     mount_error = pyqtSignal(QtToTrioJob)
+    reencryption_needs_success = pyqtSignal(QtToTrioJob)
+    reencryption_needs_error = pyqtSignal(QtToTrioJob)
 
     COLUMNS_NUMBER = 3
 
@@ -113,6 +126,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.list_error.connect(self.on_list_error)
         self.mount_success.connect(self.on_mount_success)
         self.mount_error.connect(self.on_mount_error)
+        self.reencryption_needs_success.connect(self.on_reencryption_needs_success)
+        self.reencryption_needs_error.connect(self.on_reencryption_needs_error)
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
@@ -179,6 +194,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_mount_error(self, job):
         pass
 
+    def on_reencryption_needs_success(self, job):
+        workspace_id, reencryption_needs = job.ret
+        for idx in range(self.layout_workspaces.count()):
+            widget = self.layout_workspaces.itemAt(idx).widget()
+            if widget.workspace_fs.workspace_id == workspace_id:
+                widget.reencryption_needs = reencryption_needs
+                break
+
+    def on_reencryption_needs_error(self, job):
+        pass
+
     def add_workspace(self, workspace_fs, ws_entry, users_roles, files, count=None):
         button = WorkspaceButton(
             workspace_fs,
@@ -205,6 +231,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             _do_workspace_mount,
             core=self.core,
             workspace_id=workspace_fs.workspace_id,
+        )
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
+            _get_reencryption_needs,
+            workspace_fs=workspace_fs,
         )
 
     def open_workspace_file(self, workspace_fs, file_name):
@@ -239,9 +271,30 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def share_workspace(self, workspace_fs):
         d = WorkspaceSharingDialog(self.core.user_fs, workspace_fs, self.core, self.jobs_ctx)
         d.exec_()
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
+            _get_reencryption_needs,
+            workspace_fs=workspace_fs,
+        )
 
-    def reencrypt_workspace(self, workspace_id):
-        if workspace_id in self.reencrypting:
+    def reencrypt_workspace(self, workspace_id, user_revoked, role_revoked):
+        if workspace_id in self.reencrypting or (not user_revoked and not role_revoked):
+            return
+
+        question = ""
+        if user_revoked:
+            question += _("A user on this workspace has been revoked.\n")
+        if role_revoked:
+            question += _("A user has been removed from this workspace sharing.\n")
+        question += _(
+            "This workspace needs to be reencrypted to ensure the security of your data.\n"
+            "This operation will take some time and prevent the workspace synchronisation.\n\n"
+            "Do you want to continue?"
+        )
+
+        r = QuestionDialog.ask(self, _("Workspace reencryption"), question)
+        if not r:
             return
 
         async def _reencrypt(on_progress, workspace_id):
@@ -269,8 +322,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_workspace_reencryption_progress(self, workspace_id, total, done):
         for idx in range(self.layout_workspaces.count()):
             widget = self.layout_workspaces.itemAt(idx).widget()
-            print(widget)
-            print(dir(widget))
             if widget.workspace_fs.workspace_id == workspace_id:
                 if done == total:
                     widget.reencrypting = None
