@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import trio
 from trio import hazmat
-from typing import Tuple, Dict, Union, Set
+from typing import Tuple, Dict
 
 from pendulum import Pendulum
 
@@ -53,7 +53,6 @@ class LocalStorage:
 
         # Cursors and file descriptors
         self.open_cursors: Dict[FileDescriptor, FileCursor] = {}
-        self.file_references: Dict[EntryID, Set[Union[EntryID, FileDescriptor]]] = defaultdict(set)
         self._fd_counter = 0
 
         # Locking structures
@@ -221,7 +220,6 @@ class LocalStorage:
         self._assert_consistent_file_entry(cursor.entry_id)
         fd = self._get_next_fd()
         self.open_cursors[fd] = cursor
-        self.file_references[cursor.entry_id].add(fd)
         return fd
 
     def load_file_descriptor(self, fd: FileDescriptor) -> Tuple[FileCursor, LocalFileManifest]:
@@ -236,36 +234,14 @@ class LocalStorage:
     def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
         self._assert_consistent_file_descriptor(fd, manifest)
         try:
-            cursor = self.open_cursors.pop(fd)
+            self.open_cursors.pop(fd)
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
-        self.file_references[cursor.entry_id].discard(fd)
-        self.cleanup_unreferenced_file(cursor.entry_id, manifest)
-
-    def add_file_reference(self, entry_id: EntryID) -> None:
-        self._assert_consistent_file_entry(entry_id)
-        self.file_references[entry_id].add(entry_id)
-
-    def remove_file_reference(self, entry_id: EntryID, manifest: LocalFileManifest) -> None:
-        self._assert_consistent_file_entry(entry_id, manifest)
-        self.file_references[entry_id].discard(entry_id)
-        self.cleanup_unreferenced_file(entry_id, manifest)
-
-    def cleanup_unreferenced_file(self, entry_id: EntryID, manifest: LocalFileManifest) -> None:
-        self._assert_consistent_file_entry(entry_id, manifest)
-        if self.file_references[entry_id]:
-            return
-        self.clear_manifest(entry_id)
-        for block_access in manifest.dirty_blocks:
-            self.clear_block(block_access.id)
-        for block_access in manifest.blocks:
-            self.clear_block(block_access.id)
 
     # Cursor helper
 
     def create_cursor(self, entry_id: EntryID) -> FileDescriptor:
         cursor = FileCursor(entry_id)
-        self.add_file_reference(entry_id)
         return self.create_file_descriptor(cursor)
 
     def to_timestamped(self, timestamp: Pendulum):
@@ -287,7 +263,6 @@ class LocalStorageTimestamped(LocalStorage):
 
         # Cursors and file descriptors
         self.open_cursors: Dict[FileDescriptor, FileCursor] = {}
-        self.file_references: Dict[EntryID, Set[Union[EntryID, FileDescriptor]]] = defaultdict(set)
         self._fd_counter = 0
 
         # Locking structures
