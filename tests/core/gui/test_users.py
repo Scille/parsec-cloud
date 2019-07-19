@@ -52,6 +52,7 @@ async def test_list_users(aqtbot, running_backend, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skip(reason="waiting for pendulum format fix")
 async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui):
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
