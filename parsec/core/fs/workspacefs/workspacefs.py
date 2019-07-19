@@ -504,18 +504,23 @@ class WorkspaceFS:
         final = False
         while True:
 
-            # Perform the transaction
+            # Protect against race conditions on the entry id
             try:
-                new_remote_manifest = await self.sync_transactions.synchronization_step(
-                    entry_id, remote_manifest, final
-                )
+
+                # Perform the sync step transaction
+                try:
+                    new_remote_manifest = await self.sync_transactions.synchronization_step(
+                        entry_id, remote_manifest, final
+                    )
+
+                # The entry first requires reshaping
+                except FSReshapingRequiredError:
+                    await self.sync_transactions.file_reshape(entry_id)
+                    continue
+
             # The manifest doesn't exist locally
             except LocalStorageMissingError:
                 raise FSNoSynchronizationRequired(entry_id)
-            # The manifest first requires reshaping
-            except FSReshapingRequiredError:
-                await self.sync_transactions.file_reshape(entry_id)
-                continue
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
@@ -532,10 +537,12 @@ class WorkspaceFS:
             # Upload the new manifest containing the latest changes
             try:
                 await self.remote_loader.upload_manifest(entry_id, new_remote_manifest)
+
             # The upload has failed: download the latest remote manifest
             except FSRemoteSyncError:
                 remote_manifest = await self.remote_loader.load_manifest(entry_id)
-            # The upload has succeed: loop one last time to acknowledge this new version
+
+            # The upload has succeeded: loop one last time to acknowledge this new version
             else:
                 final = True
                 remote_manifest = new_remote_manifest
