@@ -11,7 +11,7 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadRe
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.custom_widgets import TaskbarButton, show_error, show_info, QuestionDialog
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 
@@ -64,7 +64,7 @@ class UserButton(QWidget, Ui_UserButton):
 
     def show_user_info(self):
         text = "{}\n\n".format(self.user_name)
-        text += _("Created on {}").format(self.certified_on.format("%x %X"))
+        text += _("Created on {}").format(format_datetime(self.certified_on))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("This user has been revoked.")

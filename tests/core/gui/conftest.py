@@ -19,6 +19,7 @@ from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.mount_widget import MountWidget
+from parsec.core.gui.lang import switch_language
 
 
 _qt_thread_gateway = None
@@ -249,6 +250,8 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
             gui_check_version_at_startup=False, gui_first_launch=False, mountpoint_enabled=False
         )
         event_bus = event_bus or EventBus()
+        # Language config rely on global var, must reset it for each test !
+        switch_language(core_config)
 
         def _create_main_window():
             # Pass minimize_on_close to avoid having test blocked by the

@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 
 from parsec.core.types import WorkspaceRole
 
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.file_items import (
     FileTableItem,
     CustomTableItem,
@@ -233,12 +233,12 @@ class FileTable(QTableWidget):
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 1, item)
-        item = CustomTableItem(created_on.format("%x %X"))
+        item = CustomTableItem(format_datetime(created_on))
         item.setData(NAME_DATA_INDEX, created_on)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 2, item)
-        item = CustomTableItem(updated_on.format("%x %X"))
+        item = CustomTableItem(format_datetime(updated_on))
         item.setData(NAME_DATA_INDEX, updated_on)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)

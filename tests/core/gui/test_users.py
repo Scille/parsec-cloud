@@ -4,6 +4,7 @@ import pytest
 from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
+from parsec.core.gui.lang import switch_language
 
 
 @pytest.fixture
@@ -52,8 +53,10 @@ async def test_list_users(aqtbot, running_backend, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
-@pytest.mark.skip(reason="waiting for pendulum format fix")
-async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui):
+@pytest.mark.parametrize("custom_locale", (False, True))
+async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui, custom_locale):
+    if custom_locale:
+        switch_language(None, "fr")
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
 
@@ -67,11 +70,18 @@ async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui):
     item.widget().show_user_info()
     item = u_w.layout_users.itemAt(2)
     item.widget().show_user_info()
-    assert autoclose_dialog.dialogs == [
-        ("Information", "adam\n\nCreated on 01/01/00 00:00:00"),
-        ("Information", "alice\n\nCreated on 01/01/00 00:00:00"),
-        ("Information", "bob\n\nCreated on 01/01/00 00:00:00"),
-    ]
+    if custom_locale:
+        assert autoclose_dialog.dialogs == [
+            ("Informations", "adam\n\nCrée le 1 janvier 2000 00:00"),
+            ("Informations", "alice\n\nCrée le 1 janvier 2000 00:00"),
+            ("Informations", "bob\n\nCrée le 1 janvier 2000 00:00"),
+        ]
+    else:
+        assert autoclose_dialog.dialogs == [
+            ("Information", "adam\n\nCreated on January 1, 2000 12:00 AM"),
+            ("Information", "alice\n\nCreated on January 1, 2000 12:00 AM"),
+            ("Information", "bob\n\nCreated on January 1, 2000 12:00 AM"),
+        ]
 
 
 @pytest.mark.gui
