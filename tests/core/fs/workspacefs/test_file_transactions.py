@@ -170,6 +170,32 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     assert data == block1 + block2[:4]
 
 
+@pytest.mark.trio
+async def test_load_block_from_remote(file_transactions, foo_txt):
+    # Prepare the backend
+    workspace_id = file_transactions.remote_loader.workspace_id
+    await file_transactions.remote_loader.create_realm(workspace_id)
+
+    foo_manifest = foo_txt.get_manifest()
+    block1 = b"a" * 10
+    block2 = b"b" * 5
+    block1_access = BlockAccess.from_block(block1, 0)
+    block2_access = BlockAccess.from_block(block2, 10)
+    foo_manifest = foo_manifest.evolve(
+        blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
+    )
+    foo_txt.set_manifest(foo_manifest)
+
+    fd = foo_txt.open()
+    await file_transactions.remote_loader.upload_block(block1_access, block1)
+    await file_transactions.remote_loader.upload_block(block2_access, block2)
+    file_transactions.local_storage.clear_block(block1_access.id)
+    file_transactions.local_storage.clear_block(block2_access.id)
+
+    data = await file_transactions.fd_read(fd, 14)
+    assert data == block1 + block2[:4]
+
+
 size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 
 
