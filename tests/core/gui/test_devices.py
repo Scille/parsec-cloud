@@ -49,6 +49,7 @@ async def test_list_devices(aqtbot, running_backend, logged_gui):
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.skip(reason="waiting for pendulum format fix")
 async def test_device_info(aqtbot, running_backend, autoclose_dialog, logged_gui):
     d_w = logged_gui.test_get_devices_widget()
     assert d_w is not None
