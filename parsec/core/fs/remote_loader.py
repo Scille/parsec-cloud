@@ -155,7 +155,7 @@ class RemoteLoader:
         _, current_roles = await self._load_realm_role_certificates(realm_id)
         return current_roles
 
-    async def load_block(self, access: BlockAccess) -> bytes:
+    async def load_block(self, access: BlockAccess) -> None:
         """
         Raises:
             FSError
@@ -199,7 +199,6 @@ class RemoteLoader:
         # has an unique key, valid blocks cannot be switched together.
         assert sha256(block).hexdigest() == access.digest, access
         self.local_storage.set_clean_block(access.id, block)
-        return block
 
     async def upload_block(self, access: BlockAccess, data: bytes):
         """
