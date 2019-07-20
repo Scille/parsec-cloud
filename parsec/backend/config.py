@@ -18,7 +18,7 @@ blockstore_environ_vars = {
     "SWIFT": ["SWIFT_AUTHURL", "SWIFT_TENANT", "SWIFT_CONTAINER", "SWIFT_USER", "SWIFT_PASSWORD"],
 }
 
-blockstore_optional_environ_vars = {"S3_ENDPOINT_URL": None}
+blockstore_optional_environ_vars = {"S3": ["S3_ENDPOINT_URL"], "SWIFT": []}
 
 
 def _extract_s3_blockstore_config(environ):
@@ -28,11 +28,12 @@ def _extract_s3_blockstore_config(environ):
         try:
             config.__dict__[key.lower()] = environ[key]
         except KeyError:
-            try:
-                config.__dict__[key.lower()] = blockstore_optional_environ_vars[key]
-            except KeyError:
+            if key not in blockstore_optional_environ_vars["S3"]:
+                required_vars = [
+                    var for var in needed_vars if var not in blockstore_optional_environ_vars["S3"]
+                ]
                 raise ValueError(
-                    f"Blockstore `S3` requires environment variables: {', '.join(needed_vars)}"
+                    f"Blockstore `S3` requires environment variables: {', '.join(required_vars)}"
                 )
     return config
 
@@ -44,11 +45,14 @@ def _extract_swift_blockstore_config(environ):
         try:
             config.__dict__[key.lower()] = environ[key]
         except KeyError:
-            try:
-                config.__dict__[key.lower()] = blockstore_optional_environ_vars[key]
-            except KeyError:
+            if key not in blockstore_optional_environ_vars["SWIFT"]:
+                required_vars = [
+                    var
+                    for var in needed_vars
+                    if var not in blockstore_optional_environ_vars["SWIFT"]
+                ]
                 raise ValueError(
-                    f"Blockstore `SWIFT` requires environment variables: {', '.join(needed_vars)}"
+                    f"Blockstore `SWIFT` requires environment variables: {', '.join(required_vars)}"
                 )
     return config
 

@@ -18,7 +18,7 @@ async def test_s3_read():
     with mock.patch("boto3.client") as client_mock:
         client_mock.return_value = Mock()
         client_mock().head_bucket.return_value = True
-        blockstore = S3BlockStoreComponent("europe", "parsec", "john", "secret", None)
+        blockstore = S3BlockStoreComponent("europe", "parsec", "john", "secret")
         # Ok
         response_mock = Mock()
         response_mock.read.return_value = "content"
@@ -47,7 +47,7 @@ async def test_s3_create():
     with mock.patch("boto3.client") as client_mock:
         client_mock.return_value = Mock()
         client_mock().head_container.return_value = True
-        blockstore = S3BlockStoreComponent("europe", "parsec", "john", "secret", None)
+        blockstore = S3BlockStoreComponent("europe", "parsec", "john", "secret")
         # Ok
         client_mock().head_object.side_effect = S3ClientError(
             error_response={"Error": {"Code": "404"}}, operation_name="HEAD"
