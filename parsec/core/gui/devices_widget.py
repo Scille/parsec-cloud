@@ -10,7 +10,7 @@ from parsec.crypto import build_revoked_device_certificate
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_widgets import TaskbarButton, show_info, show_error, QuestionDialog
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
@@ -62,8 +62,8 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         menu.exec_(global_pos)
 
     def show_device_info(self):
-        text = "{}\n\n".format(self.device_name)
-        text += _("Created on {}").format(self.certified_on.format("%x %X"))
+        text = f"{self.device_name}\n\n"
+        text += _("Created on {}").format(format_datetime(self.certified_on))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("This device has been revoked.")

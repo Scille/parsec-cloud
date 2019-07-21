@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
 from PyQt5.QtGui import QPixmap, QPainter
 
 from parsec.core.gui.ui.notification_widget import Ui_NotificationWidget
+from parsec.core.gui.lang import format_datetime
 
 
 class NotificationWidget(QWidget, Ui_NotificationWidget):
@@ -16,7 +17,7 @@ class NotificationWidget(QWidget, Ui_NotificationWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         now = pendulum.now()
-        self.label_date.setText(now.format("%x %X"))
+        self.label_date.setText(format_datetime(now))
         self.button_close.clicked.connect(self.emit_close_clicked)
 
     @property

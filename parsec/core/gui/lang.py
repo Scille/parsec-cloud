@@ -2,6 +2,7 @@
 
 import io
 import gettext
+import pendulum
 
 from structlog import get_logger
 
@@ -13,8 +14,15 @@ from parsec.core.gui.desktop import get_locale_language
 LANGUAGES = {"English": "en", "Français": "fr"}
 
 _current_translator = None
+_current_locale_language = None
 
 logger = get_logger()
+
+
+def format_datetime(dt):
+    return dt.in_tz(pendulum.local_timezone()).format(
+        "LLL", locale=_current_locale_language, formatter="alternative"
+    )
 
 
 def qt_translate(_, string):
@@ -29,6 +37,7 @@ def translate(string):
 
 def switch_language(core_config, lang_key=None):
     global _current_translator
+    global _current_locale_language
 
     QCoreApplication.translate = qt_translate
 
@@ -41,6 +50,8 @@ def switch_language(core_config, lang_key=None):
         if lang_key != "en":
             logger.info(f"Language '{lang_key}' unavailable, defaulting to English")
         lang_key = "en"
+
+    _current_locale_language = lang_key
 
     rc_file = QFile(f":/translations/translations/parsec_{lang_key}.mo")
     if not rc_file.open(QIODevice.ReadOnly):
