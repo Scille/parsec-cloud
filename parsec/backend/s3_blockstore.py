@@ -15,11 +15,15 @@ from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, Bl
 
 
 class S3BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, s3_region, s3_bucket, s3_key, s3_secret):
+    def __init__(self, s3_region, s3_bucket, s3_key, s3_secret, s3_endpoint_url=None):
         self._s3 = None
         self._s3_bucket = None
         self._s3 = boto3.client(
-            "s3", region_name=s3_region, aws_access_key_id=s3_key, aws_secret_access_key=s3_secret
+            "s3",
+            region_name=s3_region,
+            aws_access_key_id=s3_key,
+            aws_secret_access_key=s3_secret,
+            endpoint_url=s3_endpoint_url,
         )
         self._s3_bucket = s3_bucket
         self._s3.head_bucket(Bucket=s3_bucket)

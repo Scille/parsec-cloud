@@ -44,7 +44,11 @@ def blockstore_factory(
             from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
             return S3BlockStoreComponent(
-                config.s3_region, config.s3_bucket, config.s3_key, config.s3_secret
+                config.s3_region,
+                config.s3_bucket,
+                config.s3_key,
+                config.s3_secret,
+                config.s3_endpoint_url,
             )
         except ImportError as exc:
             raise ValueError("S3 block store is not available") from exc
