@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QPoint
+from PyQt5.QtWidgets import QDialog, QToolTip
 
 from parsec.core.invite_claim import (
     InviteClaimBackendOfflineError,
@@ -71,9 +71,15 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_cancel.hide()
         self.button_register.clicked.connect(self.register_user)
         self.button_cancel.clicked.connect(self.cancel_registration)
-        self.button_copy_username.clicked.connect(self.copy_field(self.line_edit_user))
-        self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
-        self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
+        self.button_copy_username.clicked.connect(
+            self.copy_field(self.button_copy_username, self.line_edit_user)
+        )
+        self.button_copy_token.clicked.connect(
+            self.copy_field(self.button_copy_token, self.line_edit_token)
+        )
+        self.button_copy_url.clicked.connect(
+            self.copy_field(self.button_copy_url, self.line_edit_url)
+        )
         self.registration_success.connect(self.on_registration_success)
         self.registration_error.connect(self.on_registration_error)
         self.line_edit_username.setValidator(validators.UserIDValidator())
@@ -85,9 +91,10 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         size.setWidth(400)
         self.resize(size)
 
-    def copy_field(self, widget):
+    def copy_field(self, button, widget):
         def _inner_copy_field():
             desktop.copy_to_clipboard(widget.text())
+            QToolTip.showText(button.mapToGlobal(QPoint(0, 0)), _("Copied to clipboard"))
 
         return _inner_copy_field
 
