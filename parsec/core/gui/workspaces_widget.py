@@ -99,8 +99,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     reencryption_needs_success = pyqtSignal(QtToTrioJob)
     reencryption_needs_error = pyqtSignal(QtToTrioJob)
 
-    COLUMNS_NUMBER = 3
-
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
@@ -216,8 +214,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if count is None:
             count = len(self.core.user_fs.get_user_manifest().workspaces) - 1
 
+        columns_count = int(self.size().width() / 400)
+
         self.layout_workspaces.addWidget(
-            button, int(count / self.COLUMNS_NUMBER), int(count % self.COLUMNS_NUMBER)
+            button, int(count / columns_count), int(count % columns_count)
         )
         button.clicked.connect(self.load_workspace)
         button.share_clicked.connect(self.share_workspace)
