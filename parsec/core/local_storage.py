@@ -104,7 +104,7 @@ class LocalStorage:
             return self.local_manifest_cache[entry_id]
         except KeyError:
             pass
-        raw = self.persistent_storage.get_dirty_manifest(entry_id)
+        raw = self.persistent_storage.get_manifest(entry_id)
         manifest = local_manifest_serializer.loads(raw)
         self.local_manifest_cache[entry_id] = manifest
         return manifest
@@ -114,14 +114,14 @@ class LocalStorage:
         assert manifest.author == self.device_id
         self._check_lock_status(entry_id)
         raw = local_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_dirty_manifest(entry_id, raw)
+        self.persistent_storage.set_manifest(entry_id, raw)
         self.local_manifest_cache[entry_id] = manifest
 
     def clear_manifest(self, entry_id: EntryID) -> None:
         assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
         try:
-            self.persistent_storage.clear_dirty_manifest(entry_id)
+            self.persistent_storage.clear_manifest(entry_id)
         except LocalStorageMissingError:
             pass
         self.local_manifest_cache.pop(entry_id, None)

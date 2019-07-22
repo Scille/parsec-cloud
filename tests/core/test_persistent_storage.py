@@ -45,12 +45,26 @@ def test_persistent_storage_cache_size(persistent_storage):
     assert persistent_storage.get_cache_size() > 4
 
 
-@pytest.mark.parametrize("dtype", ["block", "manifest"])
+def test_persistent_storage_set_get_clear_manifest(persistent_storage):
+    persistent_storage.set_manifest(ENTRY_ID, b"data")
+
+    data = persistent_storage.get_manifest(ENTRY_ID)
+    assert data == b"data"
+
+    persistent_storage.clear_manifest(ENTRY_ID)
+
+    with pytest.raises(LocalStorageMissingError):
+        persistent_storage.clear_manifest(ENTRY_ID)
+
+    with pytest.raises(LocalStorageMissingError):
+        persistent_storage.get_manifest(ENTRY_ID)
+
+
 @pytest.mark.parametrize("sensitivity", ["dirty", "clean"])
-def test_persistent_storage_set_get_clear(persistent_storage, dtype, sensitivity):
-    get_method = getattr(persistent_storage, f"get_{sensitivity}_{dtype}")
-    set_method = getattr(persistent_storage, f"set_{sensitivity}_{dtype}")
-    clear_method = getattr(persistent_storage, f"clear_{sensitivity}_{dtype}")
+def test_persistent_storage_set_get_clear_block(persistent_storage, sensitivity):
+    get_method = getattr(persistent_storage, f"get_{sensitivity}_block")
+    set_method = getattr(persistent_storage, f"set_{sensitivity}_block")
+    clear_method = getattr(persistent_storage, f"clear_{sensitivity}_block")
 
     set_method(ENTRY_ID, b"data")
 
@@ -67,14 +81,14 @@ def test_persistent_storage_set_get_clear(persistent_storage, dtype, sensitivity
 
 
 def test_persistent_storage_on_disk(tmpdir, persistent_storage):
-    persistent_storage.set_clean_manifest(ENTRY_ID, b"vlob_data")
+    persistent_storage.set_manifest(ENTRY_ID, b"vlob_data")
     persistent_storage.set_clean_block(BLOCK_ID, b"block_data")
     persistent_storage.close()
 
     with PersistentStorage(
         persistent_storage.local_symkey, tmpdir, max_cache_size=128 * block_size
     ) as persistent_storage_copy:
-        vlob_data = persistent_storage_copy.get_clean_manifest(ENTRY_ID)
+        vlob_data = persistent_storage_copy.get_manifest(ENTRY_ID)
         block_data = persistent_storage_copy.get_clean_block(BLOCK_ID)
 
     assert vlob_data == b"vlob_data"
