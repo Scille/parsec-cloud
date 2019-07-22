@@ -21,7 +21,6 @@ from parsec.core.types import (
     LocalManifest,
     RemoteManifest,
     LocalFileManifest,
-    FileCursor,
     local_manifest_serializer,
     remote_manifest_serializer,
 )
@@ -51,9 +50,9 @@ class LocalStorage:
     def __init__(self, device_id: DeviceID, key: SecretKey, path: Path, **kwargs):
         self.device_id = device_id
 
-        # Cursors and file descriptors
-        self.open_cursors: Dict[FileDescriptor, FileCursor] = {}
-        self._fd_counter = 0
+        # File descriptors
+        self.open_fds: Dict[FileDescriptor, EntryID] = {}
+        self.fd_counter = 0
 
         # Locking structures
         self.locking_tasks = {}
@@ -65,8 +64,8 @@ class LocalStorage:
         self.persistent_storage = PersistentStorage(key, path, **kwargs)
 
     def _get_next_fd(self) -> FileDescriptor:
-        self._fd_counter += 1
-        return FileDescriptor(self._fd_counter)
+        self.fd_counter += 1
+        return FileDescriptor(self.fd_counter)
 
     def __enter__(self):
         self.persistent_storage.__enter__()
@@ -199,50 +198,37 @@ class LocalStorage:
 
     # File management interface
 
-    def _assert_consistent_file_entry(self, entry_id, manifest=None):
+    def _assert_consistent_file_entry(self, entry_id):
         try:
-            local_manifest = self.get_manifest(entry_id)
+            manifest = self.get_manifest(entry_id)
         except LocalStorageMissingError:
-            local_manifest = None
-        if manifest and local_manifest:
-            assert local_manifest == manifest
-        if manifest or local_manifest:
-            assert isinstance(manifest or local_manifest, LocalFileManifest)
-
-    def _assert_consistent_file_descriptor(self, fd, manifest=None):
-        cursor = self.open_cursors.get(fd)
-        if cursor is not None:
-            return self._assert_consistent_file_entry(cursor.entry_id, manifest)
-        if manifest is not None:
+            pass
+        else:
             assert isinstance(manifest, LocalFileManifest)
 
-    def create_file_descriptor(self, cursor: FileCursor) -> FileDescriptor:
-        self._assert_consistent_file_entry(cursor.entry_id)
+    def create_file_descriptor(self, entry_id) -> FileDescriptor:
+        self._assert_consistent_file_entry(entry_id)
         fd = self._get_next_fd()
-        self.open_cursors[fd] = cursor
+        self.open_fds[fd] = entry_id
         return fd
 
-    def load_file_descriptor(self, fd: FileDescriptor) -> Tuple[FileCursor, LocalFileManifest]:
-        self._assert_consistent_file_descriptor(fd)
+    def load_file_descriptor(self, fd: FileDescriptor) -> Tuple[EntryID, LocalFileManifest]:
         try:
-            cursor = self.open_cursors[fd]
+            entry_id = self.open_fds[fd]
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
-        manifest = self.get_manifest(cursor.entry_id)
-        return cursor, manifest
+        manifest = self.get_manifest(entry_id)
+        assert isinstance(manifest, LocalFileManifest)
+        return entry_id, manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
-        self._assert_consistent_file_descriptor(fd, manifest)
+        assert isinstance(manifest, LocalFileManifest)
         try:
-            self.open_cursors.pop(fd)
+            self.open_fds.pop(fd)
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
 
-    # Cursor helper
-
-    def create_cursor(self, entry_id: EntryID) -> FileDescriptor:
-        cursor = FileCursor(entry_id)
-        return self.create_file_descriptor(cursor)
+    # Timestamped workspace
 
     def to_timestamped(self, timestamp: Pendulum):
         return LocalStorageTimestamped(self, timestamp)
@@ -261,9 +247,9 @@ class LocalStorageTimestamped(LocalStorage):
     def __init__(self, local_storage: LocalStorage, timestamp: Pendulum):
         self.device_id = local_storage.device_id
 
-        # Cursors and file descriptors
-        self.open_cursors: Dict[FileDescriptor, FileCursor] = {}
-        self._fd_counter = 0
+        # File descriptors
+        self.open_fds: Dict[FileDescriptor, EntryID] = {}
+        self.fd_counter = 0
 
         # Locking structures
         self.locking_tasks = {}

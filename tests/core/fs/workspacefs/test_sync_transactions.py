@@ -176,7 +176,7 @@ async def test_synchronization_step_transaction(
     # Local change
     if type == "file":
         a_id, fd = await entry_transactions.file_create(FsPath("/a"))
-        await file_transactions.fd_write(fd, b"abc")
+        await file_transactions.fd_write(fd, b"abc", 0)
         await file_transactions.fd_close(fd)
     else:
         a_id = await entry_transactions.folder_create(FsPath("/a"))
@@ -402,7 +402,7 @@ async def test_get_minimal_remote_manifest(
     # Prepare
     w_id = sync_transactions.workspace_id
     a_id, fd = await entry_transactions.file_create(FsPath("/a"))
-    await file_transactions.fd_write(fd, b"abc")
+    await file_transactions.fd_write(fd, b"abc", 0)
     await file_transactions.fd_close(fd)
     b_id = await entry_transactions.folder_create(FsPath("/b"))
     c_id = await entry_transactions.folder_create(FsPath("/b/c"))
@@ -441,7 +441,7 @@ async def test_get_minimal_remote_manifest(
 async def test_file_conflict(sync_transactions, entry_transactions, file_transactions):
     # Prepare
     a_id, fd = await entry_transactions.file_create(FsPath("/a"))
-    await file_transactions.fd_write(fd, b"abc")
+    await file_transactions.fd_write(fd, b"abc", offset=0)
     await sync_transactions.file_reshape(a_id)
     remote = await sync_transactions.synchronization_step(a_id)
     assert await sync_transactions.synchronization_step(a_id, remote) is None
@@ -462,9 +462,9 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
 
     # Solve conflict
     await sync_transactions.file_conflict(a_id, local, remote)
-    assert await file_transactions.fd_read(fd) == b""
+    assert await file_transactions.fd_read(fd, size=-1, offset=0) == b""
     a2_id, fd2 = await entry_transactions.file_open(FsPath("/a (conflicting with b@b - 2)"))
-    assert await file_transactions.fd_read(fd2) == b"abcdefghi"
+    assert await file_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
 
     # Finish synchronization
     await sync_transactions.file_reshape(a2_id)
@@ -473,7 +473,7 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     assert await sync_transactions.synchronization_step(a2_id, remote2) is None
 
     # Create a new conflict then remove a
-    await file_transactions.fd_write(fd, b"abc")
+    await file_transactions.fd_write(fd, b"abc", 0)
     await sync_transactions.file_reshape(a_id)
     changed_remote = changed_remote.evolve(version=3)
     await entry_transactions.file_delete(FsPath("/a"))

@@ -26,12 +26,8 @@ __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 # Helpers
 
 
-def normalize_offset(offset, cursor, manifest):
-    if offset is None:
-        return cursor.offset
-    if offset < 0:
-        return manifest.size
-    return offset
+def normalize_argument(arg, manifest):
+    return manifest.size if arg < 0 else arg
 
 
 def pad_content(offset: int, size: int, content: bytes = b""):
@@ -69,19 +65,18 @@ class FileTransactions:
     have access to the remote loader to download missing resources.
 
     The exposed transactions all take a file descriptor as first argument.
-    The file descriptors correspond to a file cursor which points to a file
-    on the file system (using access and manifest).
+    The file descriptors correspond to an entry id which points to a file
+    on the file system (i.e. a file manifest).
 
     The corresponding file is locked while performing the change (i.e. between
-    the reading and writing of the file cursor and manifest) in order to avoid
+    the reading and writing of the corresponding manifest) in order to avoid
     race conditions and data corruption.
 
     The table below lists the effects of the 6 file transactions:
     - close    -> remove file descriptor from local storage
-    - seek     -> affects cursor offset
-    - write    -> affects cursor offset, file content and possibly file size
+    - write    -> affects file content and possibly file size
     - truncate -> affects file size and possibly file content
-    - read     -> affects cursor offset
+    - read     -> no side effect
     - flush    -> no-op
     """
 
@@ -111,8 +106,7 @@ class FileTransactions:
         # corresponding to valid file descriptor is always available locally
 
         # Get the corresponding entry_id
-        cursor, _ = self.local_storage.load_file_descriptor(fd)
-        entry_id = cursor.entry_id
+        entry_id, _ = self.local_storage.load_file_descriptor(fd)
 
         # Lock the entry_id
         async with self.local_storage.lock_manifest(entry_id):
@@ -151,31 +145,21 @@ class FileTransactions:
 
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
-        async with self._load_and_lock_file(fd) as (cursor, manifest):
+        async with self._load_and_lock_file(fd) as (entry_id, manifest):
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
 
-    async def fd_seek(self, fd: FileDescriptor, offset: int) -> None:
+    async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int) -> int:
         # Fetch and lock
-        async with self._load_and_lock_file(fd) as (cursor, manifest):
-
-            # Prepare
-            offset = normalize_offset(offset, cursor, manifest)
-
-            # Atomic change
-            cursor.offset = offset
-
-    async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
-        # Fetch and lock
-        async with self._load_and_lock_file(fd) as (cursor, manifest):
+        async with self._load_and_lock_file(fd) as (entry_id, manifest):
 
             # No-op
             if not content:
                 return 0
 
             # Prepare
-            offset = normalize_offset(offset, cursor, manifest)
+            offset = normalize_argument(offset, manifest)
             start, padded_content = pad_content(offset, manifest.size, content)
             block_access = BlockAccess.from_block(padded_content, start)
 
@@ -188,16 +172,15 @@ class FileTransactions:
 
             # Atomic change
             self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_manifest(cursor.entry_id, manifest)
-            cursor.offset = new_offset
+            self.local_storage.set_manifest(entry_id, manifest)
 
         # Notify
-        self._send_event("fs.entry.updated", id=cursor.entry_id)
+        self._send_event("fs.entry.updated", id=entry_id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
         # Fetch and lock
-        async with self._load_and_lock_file(fd) as (cursor, manifest):
+        async with self._load_and_lock_file(fd) as (entry_id, manifest):
 
             # No-op
             if manifest.size == length:
@@ -214,12 +197,12 @@ class FileTransactions:
             # Atomic change
             if padded_content:
                 self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_manifest(cursor.entry_id, manifest)
+            self.local_storage.set_manifest(entry_id, manifest)
 
         # Notify
-        self._send_event("fs.entry.updated", id=cursor.entry_id)
+        self._send_event("fs.entry.updated", id=entry_id)
 
-    async def fd_read(self, fd: FileDescriptor, size: int = -1, offset: int = None) -> bytes:
+    async def fd_read(self, fd: FileDescriptor, size: int, offset: int) -> bytes:
         # Loop over attemps
         missing = []
         while True:
@@ -231,27 +214,22 @@ class FileTransactions:
                 await self.remote_loader.load_block(block_access)
 
             # Fetch and lock
-            async with self._load_and_lock_file(fd) as (cursor, manifest):
+            async with self._load_and_lock_file(fd) as (entry_id, manifest):
 
                 # No-op
-                offset = normalize_offset(offset, cursor, manifest)
+                offset = normalize_argument(offset, manifest)
                 if offset is not None and offset > manifest.size:
                     return b""
 
                 # Prepare
                 start = offset
-                size = manifest.size if size < 0 else size
+                size = normalize_argument(size, manifest)
                 end = min(offset + size, manifest.size)
                 data, missing = self._attempt_read(manifest, start, end)
 
-                # Retry
-                if missing:
-                    continue
-
-                # Atomic change
-                cursor.offset = end
-
-                return data
+                # Return the data
+                if not missing:
+                    return data
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
         # No-op

@@ -419,7 +419,7 @@ class EntryTransactions:
             # ~ Atomic change
             self.local_storage.set_manifest(child_entry_id, child_manifest)
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
-            fd = self.local_storage.create_cursor(child_entry_id) if open else None
+            fd = self.local_storage.create_file_descriptor(child_entry_id) if open else None
 
         # Send events
         self._send_event("fs.entry.updated", id=parent.id)
@@ -441,4 +441,4 @@ class EntryTransactions:
                 raise from_errno(errno.EISDIR, str(path))
 
             # Return the entry id of the open file and the file descriptor
-            return entry.id, self.local_storage.create_cursor(entry.id)
+            return entry.id, self.local_storage.create_file_descriptor(entry.id)

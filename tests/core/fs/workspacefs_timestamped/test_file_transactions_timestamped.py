@@ -22,40 +22,37 @@ async def test_operations_on_file(alice_workspace_t4, alice_workspace_t5):
     assert isinstance(fd5, int)
     file_transactions_t5 = alice_workspace_t5.file_transactions
 
-    data = await file_transactions_t4.fd_read(fd4, 1)
+    data = await file_transactions_t4.fd_read(fd4, 1, 0)
     assert data == b"a"
-    data = await file_transactions_t4.fd_read(fd4, 3)
+    data = await file_transactions_t4.fd_read(fd4, 3, 1)
     assert data == b"bcd"
-    data = await file_transactions_t4.fd_read(fd4, 100)
+    data = await file_transactions_t4.fd_read(fd4, 100, 4)
     assert data == b"e"
 
-    await file_transactions_t4.fd_seek(fd4, 0)
-    data = await file_transactions_t4.fd_read(fd4, 4)
+    data = await file_transactions_t4.fd_read(fd4, 4, 0)
     assert data == b"abcd"
-    await file_transactions_t4.fd_seek(fd4, 1)
-    data = await file_transactions_t4.fd_read(fd4, 1)
-    assert data == b"b"
+    data = await file_transactions_t4.fd_read(fd4, -1, 0)
+    assert data == b"abcde"
 
     with pytest.raises(LocalStorageError):  # if removed from local_storage, no write right error?..
-        await alice_workspace_t4.file_transactions.fd_write(fd4, b"hello ")
+        await alice_workspace_t4.file_transactions.fd_write(fd4, b"hello ", 0)
 
-    data = await file_transactions_t5.fd_read(fd5, 100)
+    data = await file_transactions_t5.fd_read(fd5, 100, 0)
     assert data == b"fghij"
-    await file_transactions_t5.fd_seek(fd5, 1)
-    data = await file_transactions_t5.fd_read(fd5, 1)
+    data = await file_transactions_t5.fd_read(fd5, 1, 1)
     assert data == b"g"
 
-    data = await file_transactions_t4.fd_read(fd4, 1)
+    data = await file_transactions_t4.fd_read(fd4, 1, 2)
     assert data == b"c"
 
     await file_transactions_t5.fd_close(fd5)
     with pytest.raises(FSInvalidFileDescriptor):
-        data = await file_transactions_t5.fd_read(fd5, 1)
-    data = await file_transactions_t4.fd_read(fd4, 1)
+        data = await file_transactions_t5.fd_read(fd5, 1, 0)
+    data = await file_transactions_t4.fd_read(fd4, 1, 3)
     assert data == b"d"
 
     _, fd5 = await alice_workspace_t5.entry_transactions.file_open(FsPath("/files/content"), "r")
-    data = await file_transactions_t5.fd_read(fd5, 3)
+    data = await file_transactions_t5.fd_read(fd5, 3, 0)
     assert data == b"fgh"
 
 
