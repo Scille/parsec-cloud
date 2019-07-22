@@ -52,14 +52,10 @@ class FileManifest:
     def to_local(self, author: DeviceID) -> "local_manifests.LocalFileManifest":
         return local_manifests.LocalFileManifest(
             author=author,
-            parent_id=self.parent_id,
-            base_version=self.version,
-            created=self.created,
+            base_manifest=self,
             updated=self.updated,
             size=self.size,
             blocks=self.blocks,
-            is_placeholder=False,
-            need_sync=False,
         )
 
 
@@ -68,7 +64,7 @@ class FileManifestSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("file_manifest", required=True)
     author = fields.DeviceID(required=True)
     parent_id = EntryIDField(required=True)
-    version = fields.Integer(required=True, validate=validate.Range(min=1))
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -101,14 +97,7 @@ class FolderManifest:
 
     def to_local(self, author: DeviceID) -> "local_manifests.LocalFolderManifest":
         return local_manifests.LocalFolderManifest(
-            author=author,
-            parent_id=self.parent_id,
-            base_version=self.version,
-            created=self.created,
-            updated=self.updated,
-            children=self.children,
-            is_placeholder=False,
-            need_sync=False,
+            author=author, base_manifest=self, updated=self.updated, children=self.children
         )
 
 
@@ -117,7 +106,7 @@ class FolderManifestSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("folder_manifest", required=True)
     author = fields.DeviceID(required=True)
     parent_id = EntryIDField(required=True)
-    version = fields.Integer(required=True, validate=validate.Range(min=1))
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     children = fields.Map(
@@ -143,14 +132,7 @@ folder_manifest_serializer = serializer_factory(FolderManifestSchema)
 class WorkspaceManifest(FolderManifest):
     def to_local(self, author: DeviceID) -> "local_manifests.LocalWorkspaceManifest":
         return local_manifests.LocalWorkspaceManifest(
-            author=author,
-            parent_id=self.parent_id,
-            base_version=self.version,
-            created=self.created,
-            updated=self.updated,
-            children=self.children,
-            is_placeholder=False,
-            need_sync=False,
+            author=author, base_manifest=self, updated=self.updated, children=self.children
         )
 
 

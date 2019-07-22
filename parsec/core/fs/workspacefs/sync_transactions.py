@@ -14,6 +14,7 @@ from parsec.core.types import (
     Manifest,
     LocalManifest,
     BlockAccess,
+    LocalFileManifest,
 )
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
 from parsec.core.fs.workspacefs.file_transactions import DirtyBlockBuffer, BlockBuffer
@@ -159,7 +160,7 @@ def merge_manifests(
 
     # The remote changes are ours: no reason to risk a meaningless conflict
     if remote_manifest.author == local_manifest.author:
-        return local_manifest.evolve(is_placeholder=False, base_version=remote_version)
+        return local_manifest.evolve(base_manifest=remote_manifest)
 
     # The remote has been updated by some other device
     assert remote_manifest.author != local_manifest.author
@@ -177,7 +178,7 @@ def merge_manifests(
         remote_manifest.author,
     )
     return local_manifest.evolve_and_mark_updated(
-        is_placeholder=False, base_version=remote_version, children=new_children
+        base_manifest=remote_manifest, children=new_children
     )
 
 
@@ -215,11 +216,7 @@ class SyncTransactions:
         manifest = self.local_storage.get_manifest(enty_id)
         if not manifest.is_placeholder:
             return None
-        if is_file_manifest(manifest):
-            new_manifest = manifest.evolve(updated=manifest.created, size=0, blocks=[])
-        else:
-            new_manifest = manifest.evolve(updated=manifest.created, children={})
-        return new_manifest.to_remote().evolve(version=1)
+        return manifest.base_manifest.evolve(version=1)
 
     # Atomic transactions
 
@@ -368,11 +365,10 @@ class SyncTransactions:
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
-                new_manifest = current_manifest.evolve(
-                    blocks=new_blocks,
-                    dirty_blocks=new_dirty_blocks,
-                    base_version=0,
-                    is_placeholder=True,
+                new_manifest = LocalFileManifest.make_placeholder(
+                    author=current_manifest.author, parent_id=parent_id
+                ).evolve(
+                    size=current_manifest.size, blocks=new_blocks, dirty_blocks=new_dirty_blocks
                 )
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_entry_id}

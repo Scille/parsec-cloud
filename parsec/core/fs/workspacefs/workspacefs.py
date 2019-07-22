@@ -636,7 +636,7 @@ class WorkspaceFS:
             except LocalStorageMissingError:
                 return result
 
-            result.update(attr.asdict(manifest))
+            result.update(manifest.asdict())
             try:
                 children = manifest.children
             except AttributeError:
