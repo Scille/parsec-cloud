@@ -544,7 +544,7 @@ class WorkspaceFS:
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest or self.local_storage.get_base_manifest(entry_id)
+                return remote_manifest or self.local_storage.get_manifest(entry_id).base_manifest
 
             # Synchronize placeholder children
             if is_folder_manifest(new_remote_manifest):

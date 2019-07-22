@@ -410,7 +410,9 @@ async def test_get_minimal_remote_manifest(
     # Workspace manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
     local = sync_transactions.local_storage.get_manifest(w_id)
-    assert minimal == local.to_remote().evolve(version=1, children={}, updated=local.created)
+    expected = local.to_remote().evolve(version=1, children={}, updated=local.created)
+    assert minimal == expected
+
     await sync_transactions.synchronization_step(w_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
 

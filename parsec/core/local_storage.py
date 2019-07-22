@@ -19,10 +19,8 @@ from parsec.core.types import (
     BlockID,
     FileDescriptor,
     LocalManifest,
-    RemoteManifest,
     LocalFileManifest,
     local_manifest_serializer,
-    remote_manifest_serializer,
 )
 from parsec.core.persistent_storage import (
     PersistentStorage,
@@ -59,7 +57,6 @@ class LocalStorage:
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
-        self.base_manifest_cache = {}
         self.local_manifest_cache = {}
         self.persistent_storage = PersistentStorage(key, path, **kwargs)
 
@@ -75,7 +72,6 @@ class LocalStorage:
         self.persistent_storage.__exit__(*args)
 
     def clear_memory_cache(self):
-        self.base_manifest_cache.clear()
         self.local_manifest_cache.clear()
 
     # Locking helpers
@@ -101,18 +97,6 @@ class LocalStorage:
 
     # Manifest interface
 
-    def get_base_manifest(self, entry_id: EntryID) -> RemoteManifest:
-        """Raises: LocalStorageMissingError"""
-        assert isinstance(entry_id, EntryID)
-        try:
-            return self.base_manifest_cache[entry_id]
-        except KeyError:
-            pass
-        raw = self.persistent_storage.get_clean_manifest(entry_id)
-        manifest = remote_manifest_serializer.loads(raw)
-        self.base_manifest_cache[entry_id] = manifest
-        return manifest
-
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """Raises: LocalStorageMissingError"""
         assert isinstance(entry_id, EntryID)
@@ -120,28 +104,10 @@ class LocalStorage:
             return self.local_manifest_cache[entry_id]
         except KeyError:
             pass
-        try:
-            raw = self.persistent_storage.get_dirty_manifest(entry_id)
-        except LocalStorageMissingError:
-            manifest = self.get_base_manifest(entry_id).to_local(self.device_id)
-        else:
-            manifest = local_manifest_serializer.loads(raw)
+        raw = self.persistent_storage.get_dirty_manifest(entry_id)
+        manifest = local_manifest_serializer.loads(raw)
         self.local_manifest_cache[entry_id] = manifest
         return manifest
-
-    def set_base_manifest(self, entry_id: EntryID, manifest: RemoteManifest) -> None:
-        assert isinstance(entry_id, EntryID)
-        self._check_lock_status(entry_id)
-        # Remove the corresponding local manifest if it exists
-        try:
-            self.persistent_storage.clear_dirty_manifest(entry_id)
-        except LocalStorageMissingError:
-            pass
-        self.local_manifest_cache.pop(entry_id, None)
-        # Serialize and set remote manifest
-        raw = remote_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_clean_manifest(entry_id, raw)
-        self.base_manifest_cache[entry_id] = manifest
 
     def set_manifest(self, entry_id: EntryID, manifest: LocalManifest) -> None:
         assert isinstance(entry_id, EntryID)
@@ -155,14 +121,9 @@ class LocalStorage:
         assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
         try:
-            self.persistent_storage.clear_clean_manifest(entry_id)
-        except LocalStorageMissingError:
-            pass
-        try:
             self.persistent_storage.clear_dirty_manifest(entry_id)
         except LocalStorageMissingError:
             pass
-        self.base_manifest_cache.pop(entry_id, None)
         self.local_manifest_cache.pop(entry_id, None)
 
     # Block interface
@@ -256,27 +217,17 @@ class LocalStorageTimestamped(LocalStorage):
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
-        self.base_manifest_cache = {}
         self.local_manifest_cache = {}  # should delete? seems used for dirty, base for clean...
 
         self.persistent_storage = local_storage.persistent_storage
 
         self.set_dirty_block = self._throw_permission_error
         self.clear_block = self._throw_permission_error
-        self.set_manifest = self._throw_permission_error
 
     def _throw_permission_error(*e, **ke):
         raise LocalStorageError("Not implemented : LocalStorage is timestamped")
 
     # Manifest interface
-
-    def get_base_manifest(self, entry_id: EntryID) -> RemoteManifest:
-        """Raises: LocalStorageMissingError"""
-        assert isinstance(entry_id, EntryID)
-        try:
-            return self.base_manifest_cache[entry_id]
-        except KeyError:
-            raise LocalStorageMissingError(entry_id)
 
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """Raises: LocalStorageMissingError"""
@@ -284,20 +235,18 @@ class LocalStorageTimestamped(LocalStorage):
         try:
             return self.local_manifest_cache[entry_id]
         except KeyError:
-            pass
-        manifest = self.get_base_manifest(entry_id).to_local(self.device_id)
-        self.local_manifest_cache[entry_id] = manifest
-        return manifest
+            raise LocalStorageMissingError(entry_id)
 
-    def set_base_manifest(
-        self, entry_id: EntryID, manifest: RemoteManifest
+    def set_manifest(
+        self, entry_id: EntryID, manifest: LocalManifest
     ) -> None:  # initially for clean
         assert isinstance(entry_id, EntryID)
+        if manifest.need_sync:
+            return self._throw_permission_error()
         self._check_lock_status(entry_id)
-        self.base_manifest_cache[entry_id] = manifest
+        self.local_manifest_cache[entry_id] = manifest
 
     def clear_manifest(self, entry_id: EntryID) -> None:
         assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
-        self.base_manifest_cache.pop(entry_id, None)
         self.local_manifest_cache.pop(entry_id, None)

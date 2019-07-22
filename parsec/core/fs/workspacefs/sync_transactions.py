@@ -245,10 +245,7 @@ class SyncTransactions:
                 raise FSReshapingRequiredError(entry_id)
 
             # Get base manifest
-            if local_manifest.is_placeholder:
-                base_manifest = None
-            else:
-                base_manifest = self.local_storage.get_base_manifest(entry_id)
+            base_manifest = local_manifest.base_manifest
 
             # Merge manifests
             new_local_manifest = merge_manifests(local_manifest, base_manifest, remote_manifest)
@@ -265,16 +262,7 @@ class SyncTransactions:
             remote_version = base_version if remote_manifest is None else remote_manifest.version
 
             # Set the new base manifest
-            if base_version != remote_version:
-                self.local_storage.set_base_manifest(entry_id, remote_manifest)
-
-            # TODO: setting base and local manifest should be done with a single API
-            # call in order to prevent corruption if a failure happens at this moment.
-            # The local storage should also ensure that base_manifest.version corresponds
-            # to local_manifest.base_version at all times
-
-            # Set the new local manifest
-            if new_local_manifest.need_sync:
+            if base_version != remote_version or new_local_manifest.need_sync:
                 self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
@@ -373,10 +361,12 @@ class SyncTransactions:
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_entry_id}
                 )
+                other_manifest = remote_manifest.to_local(current_manifest.author)
 
+                # Set manifests
                 self.local_storage.set_manifest(new_entry_id, new_manifest)
                 self.local_storage.set_manifest(parent_id, new_parent_manifest)
-                self.local_storage.set_base_manifest(entry_id, remote_manifest)
+                self.local_storage.set_manifest(entry_id, other_manifest)
 
     def _reshape_blocks(self, manifest):
         # Merge the blocks
