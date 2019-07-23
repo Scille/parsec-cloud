@@ -36,7 +36,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         )
 
     def timestamp_get_entry(self, get_original_workspace_entry):
-        def get_timestamped_workspace_entry():
-            return get_original_workspace_entry().evolve(role=WorkspaceRole.READER)
+        async def get_timestamped_workspace_entry():
+            return (await get_original_workspace_entry()).evolve(role=WorkspaceRole.READER)
 
         return get_timestamped_workspace_entry

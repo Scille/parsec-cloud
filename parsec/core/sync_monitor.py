@@ -64,9 +64,9 @@ class SyncMonitor:
             # before considering ourself up and running...
             try:
                 await self.user_fs.sync()
-                user_manifest = self.user_fs.get_user_manifest()
+                user_manifest = await self.user_fs.get_user_manifest()
                 for entry in user_manifest.workspaces:
-                    workspace = self.user_fs.get_workspace(entry.id)
+                    workspace = await self.user_fs.get_workspace(entry.id)
                     await workspace.sync("/")
             finally:
                 self.event_bus.send("sync_monitor.reconnection_sync.done")
@@ -136,7 +136,7 @@ class SyncMonitor:
                 await self.user_fs.sync()
             elif wid is not None:
                 try:
-                    workspace = self.user_fs.get_workspace(wid)
+                    workspace = await self.user_fs.get_workspace(wid)
                 except FSWorkspaceNotFoundError:
                     # If the workspace is not present, nothing to do
                     # (this can happen when a workspace is just shared with

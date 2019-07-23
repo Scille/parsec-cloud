@@ -354,7 +354,8 @@ class SyncTransactions:
                 other_manifest = remote_manifest.to_local(current_manifest.author)
 
                 # Set manifests
-                self.local_storage.set_manifest(new_entry_id, new_manifest)
+                async with self.local_storage.lock_entry_id(new_entry_id):
+                    self.local_storage.set_manifest(new_entry_id, new_manifest)
                 self.local_storage.set_manifest(parent_id, new_parent_manifest)
                 self.local_storage.set_manifest(entry_id, other_manifest)
 

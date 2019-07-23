@@ -53,8 +53,8 @@ class EntryTransactions:
 
     # Right management helper
 
-    def _check_write_rights(self, path: FsPath):
-        if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
+    async def _check_write_rights(self, path: FsPath):
+        if (await self.get_workspace_entry()).role not in WRITE_RIGHT_ROLES:
             raise from_errno(errno.EACCES, str(path))
 
     # Event helper
@@ -90,7 +90,7 @@ class EntryTransactions:
     async def _lock_entry(self, path: FsPath) -> Tuple[EntryID, LocalManifest]:
         # Root entry_id and manifest
         assert path.parts[0] == "/"
-        entry_id = self.get_workspace_entry().id
+        entry_id = (await self.get_workspace_entry()).id
 
         # Follow the path
         for name in path.parts[1:]:
@@ -234,7 +234,7 @@ class EntryTransactions:
         self, source: FsPath, destination: FsPath, overwrite: bool = True
     ) -> EntryID:
         # Check write rights
-        self._check_write_rights(source)
+        await self._check_write_rights(source)
 
         # Source is root
         if source.is_root():
@@ -306,7 +306,7 @@ class EntryTransactions:
 
     async def folder_delete(self, path: FsPath) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        await self._check_write_rights(path)
 
         # Fetch and lock
         async with self._lock_parent_entry(path) as (parent, child):
@@ -339,7 +339,7 @@ class EntryTransactions:
 
     async def file_delete(self, path: FsPath) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        await self._check_write_rights(path)
 
         # Fetch and lock
         async with self._lock_parent_entry(path) as (parent, child):
@@ -368,7 +368,7 @@ class EntryTransactions:
 
     async def folder_create(self, path: FsPath) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        await self._check_write_rights(path)
 
         # Lock parent and child
         async with self._lock_parent_entry(path) as (parent, child):
@@ -387,7 +387,8 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child_entry_id, child_manifest)
+            async with self.local_storage.lock_entry_id(child_entry_id):
+                self.local_storage.set_manifest(child_entry_id, child_manifest)
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
         # Send events
@@ -399,7 +400,7 @@ class EntryTransactions:
 
     async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
-        self._check_write_rights(path)
+        await self._check_write_rights(path)
 
         # Lock parent in write mode
         async with self._lock_parent_entry(path) as (parent, child):
@@ -418,7 +419,8 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child_entry_id, child_manifest)
+            async with self.local_storage.lock_entry_id(child_entry_id):
+                self.local_storage.set_manifest(child_entry_id, child_manifest)
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
             fd = self.local_storage.create_file_descriptor(child_entry_id) if open else None
 
@@ -432,7 +434,7 @@ class EntryTransactions:
     async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
         if "w" in mode:
-            self._check_write_rights(path)
+            await self._check_write_rights(path)
 
         # Lock path in read mode
         async with self._lock_entry(path) as entry:
