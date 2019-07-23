@@ -2,9 +2,9 @@
 
 import pytest
 
-from parsec.api.protocole import packb, unpackb
+from parsec.api.protocol import packb, unpackb
 from parsec.api.transport import Transport
-from parsec.api.protocole.handshake import (
+from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
     AnonymousClientHandshake,
     AdministrationClientHandshake,

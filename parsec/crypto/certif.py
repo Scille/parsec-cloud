@@ -6,7 +6,7 @@ from typing import Optional
 from pendulum import Pendulum
 
 from parsec.types import DeviceID, UserID
-from parsec.api.protocole.realm import RealmRole, RealmRoleField
+from parsec.api.protocol.realm import RealmRole, RealmRoleField
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.crypto_types import SigningKey, VerifyKey, PublicKey
 from parsec.crypto.exceptions import CryptoWrappedMsgPackingError, CryptoWrappedMsgValidationError

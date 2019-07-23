@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.backend.user import UserInvitation
-from parsec.api.protocole import user_cancel_invitation_serializer
+from parsec.api.protocol import user_cancel_invitation_serializer
 
 from tests.common import freeze_time
 

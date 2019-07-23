@@ -5,7 +5,7 @@ from uuid import UUID
 import pendulum
 
 from parsec.types import DeviceID, OrganizationID
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
@@ -14,7 +14,7 @@ from parsec.api.protocole import (
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
-from parsec.backend.utils import catch_protocole_errors
+from parsec.backend.utils import catch_protocol_errors
 from parsec.crypto import timestamps_in_the_ballpark
 
 
@@ -55,7 +55,7 @@ class VlobMaintenanceError(VlobError):
 
 
 class BaseVlobComponent:
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_create(self, client_ctx, msg):
         msg = vlob_create_serializer.req_load(msg)
 
@@ -80,7 +80,7 @@ class BaseVlobComponent:
 
         return vlob_create_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_read(self, client_ctx, msg):
         msg = vlob_read_serializer.req_load(msg)
 
@@ -114,7 +114,7 @@ class BaseVlobComponent:
             }
         )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_update(self, client_ctx, msg):
         msg = vlob_update_serializer.req_load(msg)
 
@@ -142,7 +142,7 @@ class BaseVlobComponent:
 
         return vlob_update_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_group_check(self, client_ctx, msg):
         msg = vlob_group_check_serializer.req_load(msg)
         try:
@@ -155,7 +155,7 @@ class BaseVlobComponent:
 
         return vlob_group_check_serializer.rep_dump({"status": "ok", "changed": changed})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_poll_changes(self, client_ctx, msg):
         msg = vlob_poll_changes_serializer.req_load(msg)
 
@@ -183,7 +183,7 @@ class BaseVlobComponent:
             {"status": "ok", "current_checkpoint": checkpoint, "changes": changes}
         )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_maintenance_get_reencryption_batch(self, client_ctx, msg):
         msg = vlob_maintenance_get_reencryption_batch_serializer.req_load(msg)
 
@@ -225,7 +225,7 @@ class BaseVlobComponent:
             }
         )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_vlob_maintenance_save_reencryption_batch(self, client_ctx, msg):
         msg = vlob_maintenance_save_reencryption_batch_serializer.req_load(msg)
 

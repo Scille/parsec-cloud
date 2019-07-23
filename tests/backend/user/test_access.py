@@ -3,7 +3,7 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.api.protocole import packb, user_get_serializer, user_find_serializer
+from parsec.api.protocol import packb, user_get_serializer, user_find_serializer
 
 from tests.common import freeze_time
 

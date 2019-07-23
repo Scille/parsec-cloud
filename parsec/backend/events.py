@@ -3,8 +3,8 @@
 import trio
 
 from parsec.event_bus import EventBus
-from parsec.api.protocole import events_subscribe_serializer, events_listen_serializer
-from parsec.backend.utils import catch_protocole_errors
+from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer
+from parsec.backend.utils import catch_protocol_errors
 from parsec.backend.realm import BaseRealmComponent
 
 
@@ -13,7 +13,7 @@ class EventsComponent:
         self.event_bus = event_bus
         self.realm_component = realm_component
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
@@ -91,7 +91,7 @@ class EventsComponent:
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_events_listen(self, client_ctx, msg):
         msg = events_listen_serializer.req_load(msg)
 

@@ -13,7 +13,7 @@ from parsec.backend.raid5_blockstore import (
     generate_checksum_chunk,
     rebuild_block_from_chunks,
 )
-from parsec.api.protocole import block_create_serializer, block_read_serializer, packb, RealmRole
+from parsec.api.protocol import block_create_serializer, block_read_serializer, packb, RealmRole
 
 from hypothesis import given, strategies as st
 

@@ -5,7 +5,7 @@ from pendulum import Pendulum
 
 from parsec.types import DeviceID
 from parsec.backend.user import DeviceInvitation
-from parsec.api.protocole import device_cancel_invitation_serializer
+from parsec.api.protocol import device_cancel_invitation_serializer
 
 from tests.common import freeze_time
 

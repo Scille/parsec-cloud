@@ -17,7 +17,7 @@ from parsec.crypto import (
     unsecure_read_user_certificate,
     timestamps_in_the_ballpark,
 )
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     user_get_serializer,
     user_find_serializer,
     user_get_invitation_creator_serializer,
@@ -32,7 +32,7 @@ from parsec.api.protocole import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.backend.utils import anonymous_api, catch_protocole_errors
+from parsec.backend.utils import anonymous_api, catch_protocol_errors
 
 
 class UserError(Exception):
@@ -178,7 +178,7 @@ class DeviceInvitation:
 class BaseUserComponent:
     #### Access user API ####
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_get(self, client_ctx, msg):
         msg = user_get_serializer.req_load(msg)
 
@@ -199,7 +199,7 @@ class BaseUserComponent:
             }
         )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_find(self, client_ctx, msg):
         msg = user_find_serializer.req_load(msg)
         results, total = await self.find(client_ctx.organization_id, **msg)
@@ -215,7 +215,7 @@ class BaseUserComponent:
 
     #### User creation API ####
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
         if not client_ctx.is_admin:
             return {
@@ -253,7 +253,7 @@ class BaseUserComponent:
             )
 
     @anonymous_api
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_get_invitation_creator(self, client_ctx, msg):
         msg = user_get_invitation_creator_serializer.req_load(msg)
 
@@ -281,7 +281,7 @@ class BaseUserComponent:
         )
 
     @anonymous_api
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_claim(self, client_ctx, msg):
         msg = user_claim_serializer.req_load(msg)
 
@@ -342,7 +342,7 @@ class BaseUserComponent:
             user_certificate = user.user_certificate
             return {"status": "ok", "user_certificate": user_certificate}
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
         msg = user_cancel_invitation_serializer.req_load(msg)
 
@@ -350,7 +350,7 @@ class BaseUserComponent:
 
         return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_user_create(self, client_ctx, msg):
         msg = user_create_serializer.req_load(msg)
 
@@ -410,7 +410,7 @@ class BaseUserComponent:
 
     #### Device creation API ####
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_device_invite(self, client_ctx, msg):
         msg = device_invite_serializer.req_load(msg)
 
@@ -445,7 +445,7 @@ class BaseUserComponent:
             )
 
     @anonymous_api
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_device_get_invitation_creator(self, client_ctx, msg):
         msg = device_get_invitation_creator_serializer.req_load(msg)
 
@@ -473,7 +473,7 @@ class BaseUserComponent:
         )
 
     @anonymous_api
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_device_claim(self, client_ctx, msg):
         msg = device_claim_serializer.req_load(msg)
 
@@ -534,7 +534,7 @@ class BaseUserComponent:
                 {"status": "ok", "encrypted_answer": encrypted_answer}
             )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_device_cancel_invitation(self, client_ctx, msg):
         msg = device_cancel_invitation_serializer.req_load(msg)
 
@@ -544,7 +544,7 @@ class BaseUserComponent:
 
         return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_device_create(self, client_ctx, msg):
         msg = device_create_serializer.req_load(msg)
 
@@ -583,7 +583,7 @@ class BaseUserComponent:
 
         return device_create_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_device_revoke(self, client_ctx, msg):
         msg = device_revoke_serializer.req_load(msg)
 

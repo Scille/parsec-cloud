@@ -5,7 +5,7 @@ from uuid import UUID
 from pendulum import Pendulum, now as pendulum_now
 from unittest.mock import ANY
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.backend.realm import RealmGrantedRole
 from parsec.crypto import (
     build_realm_role_certificate,

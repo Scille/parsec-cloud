@@ -4,7 +4,7 @@ import pytest
 from uuid import UUID
 from pendulum import Pendulum
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait

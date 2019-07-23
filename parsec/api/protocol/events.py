@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.serde import OneOfSchema, fields, validate
-from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocole.realm import RealmRoleField
+from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.realm import RealmRoleField
 
 
 EVENTS = (

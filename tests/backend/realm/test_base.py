@@ -3,7 +3,7 @@
 import pytest
 from pendulum import now as pendulum_now
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.crypto import build_realm_role_certificate
 
 from tests.backend.realm.conftest import realm_status, realm_update_roles

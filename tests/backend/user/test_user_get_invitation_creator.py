@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocole import user_get_invitation_creator_serializer
+from parsec.api.protocol import user_get_invitation_creator_serializer
 from parsec.backend.user import UserInvitation, INVITATION_VALIDITY
 
 from tests.common import freeze_time

@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import patch
 
-from parsec.api.protocole.base import packb, unpackb
+from parsec.api.protocol.base import packb, unpackb
 from parsec.backend.utils import anonymous_api, check_anonymous_api_allowed
 
 

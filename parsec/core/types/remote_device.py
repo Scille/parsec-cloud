@@ -6,7 +6,7 @@ from typing import Optional
 from uuid import UUID
 
 from parsec.types import DeviceID, DeviceName, UserID
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.crypto import (
     PublicKey,
     VerifyKey,

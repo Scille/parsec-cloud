@@ -7,7 +7,7 @@ import pendulum
 from parsec.types import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     ProtocoleError,
     ping_serializer,
     organization_create_serializer,

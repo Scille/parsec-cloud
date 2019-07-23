@@ -6,7 +6,7 @@ from unittest.mock import ANY
 
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.types import FsPath, EntryID
-from parsec.api.protocole.realm import RealmRole
+from parsec.api.protocol.realm import RealmRole
 
 
 @pytest.fixture

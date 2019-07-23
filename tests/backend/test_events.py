@@ -5,7 +5,7 @@ import trio
 from uuid import uuid4
 from async_generator import asynccontextmanager
 
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     events_subscribe_serializer,
     events_listen_serializer,
     ping_serializer,

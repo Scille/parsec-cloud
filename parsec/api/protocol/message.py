@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.serde import UnknownCheckedSchema, fields
-from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
 __all__ = ("message_send_serializer", "message_get_serializer")

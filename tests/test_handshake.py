@@ -3,8 +3,8 @@
 import pytest
 from unittest.mock import ANY
 
-from parsec.api.protocole.base import packb, unpackb, InvalidMessageError
-from parsec.api.protocole.handshake import (
+from parsec.api.protocol.base import packb, unpackb, InvalidMessageError
+from parsec.api.protocol.handshake import (
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
     HandshakeBadAdministrationToken,
@@ -150,7 +150,7 @@ def test_process_challenge_req_bad_format(alice, req):
     ],
 )
 def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocole.handshake.__api_version__", "1.1.1")
+    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", "1.1.1")
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
@@ -168,7 +168,7 @@ def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
     ],
 )
 def test_process_challenge_req_good_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocole.handshake.__api_version__", "1.1.1")
+    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", "1.1.1")
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )

@@ -13,9 +13,9 @@ from parsec.crypto import (
     verify_user_certificate,
     timestamps_in_the_ballpark,
 )
-from parsec.api.protocole import organization_create_serializer, organization_bootstrap_serializer
+from parsec.api.protocol import organization_create_serializer, organization_bootstrap_serializer
 from parsec.backend.user import new_user_factory, User, Device
-from parsec.backend.utils import catch_protocole_errors, anonymous_api
+from parsec.backend.utils import catch_protocol_errors, anonymous_api
 
 
 class OrganizationError(Exception):
@@ -59,7 +59,7 @@ class BaseOrganizationComponent:
     def __init__(self, bootstrap_token_size: int = 32):
         self.bootstrap_token_size = bootstrap_token_size
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_organization_create(self, client_ctx, msg):
         msg = organization_create_serializer.req_load(msg)
 
@@ -75,7 +75,7 @@ class BaseOrganizationComponent:
         )
 
     @anonymous_api
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_organization_bootstrap(self, client_ctx, msg):
         msg = organization_bootstrap_serializer.req_load(msg)
         root_verify_key = msg["root_verify_key"]

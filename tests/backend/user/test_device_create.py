@@ -6,7 +6,7 @@ import pendulum
 
 from parsec.crypto import build_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import packb, device_create_serializer, ping_serializer
+from parsec.api.protocol import packb, device_create_serializer, ping_serializer
 
 from tests.common import freeze_time
 

@@ -4,7 +4,7 @@ import pytest
 from uuid import UUID
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.crypto import build_realm_role_certificate
 
 from tests.backend.realm.conftest import realm_update_roles, vlob_update, vlob_poll_changes

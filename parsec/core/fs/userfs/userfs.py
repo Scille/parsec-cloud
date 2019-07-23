@@ -20,7 +20,7 @@ from parsec.crypto import (
     SecretKey,
 )
 from parsec.serde import SerdeError
-from parsec.api.protocole import MaintenanceType
+from parsec.api.protocol import MaintenanceType
 from parsec.core.types import (
     EntryID,
     LocalDevice,

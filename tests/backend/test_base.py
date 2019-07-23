@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocole import packb, unpackb
+from parsec.api.protocol import packb, unpackb
 
 
 @pytest.mark.trio
