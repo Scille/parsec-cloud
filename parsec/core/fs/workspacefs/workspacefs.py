@@ -19,11 +19,13 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
+from parsec.core.types import WorkspaceManifest
 
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
+    FSRemoteManifestNotFoundBadVersion,
     FSRemoteSyncError,
     FSNoSynchronizationRequired,
     FSFileConflictError,
@@ -31,6 +33,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoAccess,
 )
 
+# FSWorkspaceTimestampedTooEarly, # Add later
 
 AnyPath = Union[FsPath, str]
 
@@ -194,9 +197,26 @@ class WorkspaceFS:
         return ReencryptionNeed(user_revoked=tuple(user_revoked), role_revoked=tuple(role_revoked))
 
     # Timestamped version
-
-    def to_timestamped(self, timestamp: Pendulum):
-        return workspacefs.WorkspaceFSTimestamped(self, timestamp)
+    async def to_timestamped(self, timestamp: Pendulum):
+        workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
+        try:
+            await workspace.path_info("/")
+        except FSRemoteManifestNotFoundBadVersion:  # as exc:
+            # Temp hack...
+            fake_manifest = WorkspaceManifest(
+                author=self.device.device_id,
+                parent_id=self.workspace_id,
+                version=1,
+                created=timestamp,
+                updated=timestamp,
+                children=[],
+            )
+            workspace.local_storage.set_base_manifest(
+                workspace.get_workspace_entry().id, fake_manifest
+            )
+            # TODO : use this exception instead of mocking an empty fs when the API is ready
+            # raise FSWorkspaceTimestampedTooEarly from exc
+        return workspace
 
     # Pathlib-like interface
 
