@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
-from parsec.core.fs import WorkspaceFS
+from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.types import EntryID
 
 from parsec.core.gui.lang import translate as _
@@ -20,6 +20,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(WorkspaceFS, str)
+    remount_ts_clicked = pyqtSignal(WorkspaceFS)
 
     def __init__(
         self,
@@ -72,6 +73,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_delete.clicked.connect(self.button_delete_clicked)
         self.button_rename.clicked.connect(self.button_rename_clicked)
         self.button_open_workspace.clicked.connect(self.button_open_workspace_clicked)
+        self.button_remount_ts.clicked.connect(self.button_remount_ts_clicked)
         if not self.is_creator:
             self.label_owner.hide()
         if not self.is_shared:
@@ -100,6 +102,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def button_rename_clicked(self):
         self.rename_clicked.emit(self)
+
+    def button_remount_ts_clicked(self):
+        self.remount_ts_clicked.emit(self.workspace_fs)
 
     @property
     def name(self):
@@ -131,6 +136,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             # TODO: uncomment once the workspace name does not contain "shared by XX" anymore
             # else:
             #     display += _(" (shared with you)")
+
+        if isinstance(self.workspace_fs, WorkspaceFSTimestamped):
+            display += f" - at {self.workspace_fs.timestamp}"
 
         if self.reencrypting:
             total, done = self.reencrypting
