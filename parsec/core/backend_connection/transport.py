@@ -103,7 +103,7 @@ async def _connect(
         raise BackendNotAvailable(exc) from exc
 
     try:
-        await _do_handshade(transport, ch)
+        await _do_handshake(transport, ch)
 
     except BackendHandshakeAPIVersionError as exc:
         logger.debug("Incompatible API version", reason=f"Server API version {str(exc)}")
@@ -131,7 +131,7 @@ def _upgrade_stream_to_ssl(raw_stream, hostname):
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
-async def _do_handshade(transport: Transport, ch):
+async def _do_handshake(transport: Transport, ch):
     try:
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
