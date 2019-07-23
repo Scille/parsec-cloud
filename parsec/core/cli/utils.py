@@ -62,7 +62,7 @@ def _unslug(val):
 def core_config_and_device_options(fn):
     @core_config_options
     @click.option("--device", "-D", type=_unslug, required=True)
-    @click.option("--timestamp", "-t", type=pendulum.parse)
+    @click.option("--timestamp", "-t", type=lambda t: pendulum.parse(t, tz="local"))
     @click.option("--password", "-P")
     @click.option("--pkcs11", is_flag=True)
     @wraps(fn)
