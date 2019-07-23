@@ -14,7 +14,7 @@ from tests.common import freeze_time, InMemoryLocalStorage
 def local_storage_factory(initial_user_manifest_state):
     local_storages = {}
 
-    def _local_storage_factory(device, user_manifest_in_v0=False, force=True):
+    async def _local_storage_factory(device, user_manifest_in_v0=False, force=True):
         device_id = device.device_id
         assert force or (device_id not in local_storages)
 
@@ -23,28 +23,29 @@ def local_storage_factory(initial_user_manifest_state):
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
             user_manifest = user_manifest.evolve(author=device_id)
-            local_storage.set_manifest(device.user_manifest_id, user_manifest)
+            async with local_storage.lock_entry_id(device.user_manifest_id):
+                local_storage.set_manifest(device.user_manifest_id, user_manifest)
         return local_storage
 
     return _local_storage_factory
 
 
 @pytest.fixture()
-def alice_local_storage(local_storage_factory, alice):
+async def alice_local_storage(local_storage_factory, alice):
     with freeze_time("2000-01-01"):
-        return local_storage_factory(alice)
+        return await local_storage_factory(alice)
 
 
 @pytest.fixture()
-def alice2_local_storage(local_storage_factory, alice2):
+async def alice2_local_storage(local_storage_factory, alice2):
     with freeze_time("2000-01-01"):
-        return local_storage_factory(alice2)
+        return await local_storage_factory(alice2)
 
 
 @pytest.fixture()
-def bob_local_storage(local_storage_factory, bob):
+async def bob_local_storage(local_storage_factory, bob):
     with freeze_time("2000-01-01"):
-        return local_storage_factory(bob)
+        return await local_storage_factory(bob)
 
 
 @pytest.fixture
@@ -128,7 +129,7 @@ def user_fs_factory(local_storage_factory, event_bus_factory):
     @asynccontextmanager
     async def _user_fs_factory(device, local_storage=None, event_bus=None):
         event_bus = event_bus or event_bus_factory()
-        local_storage = local_storage or local_storage_factory(device)
+        local_storage = local_storage or await local_storage_factory(device)
 
         async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key

@@ -83,7 +83,7 @@ async def test_realm_notif_on_new_entry_sync(
 ):
     mock_clock.rate = 1
     wid = await create_shared_workspace("w", alice_core, alice2_user_fs)
-    workspace = alice2_user_fs.get_workspace(wid)
+    workspace = await alice2_user_fs.get_workspace(wid)
 
     # Suspend time to freeze core background tasks
     mock_clock.rate = 0

@@ -62,7 +62,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event
     mountpoint = f"{base_mountpoint.absolute()}/w"
 
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
+    workspace = await alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint}/bar.txt")
@@ -88,8 +88,8 @@ async def test_mountpoint_path_already_in_use(
     await alice2_user_fs.sync()
 
     # Easily differenciate alice&alice2
-    await alice2_user_fs.get_workspace(wid).touch("/I_am_alice2.txt")
-    await alice_user_fs.get_workspace(wid).touch("/I_am_alice.txt")
+    await (await alice2_user_fs.get_workspace(wid)).touch("/I_am_alice2.txt")
+    await (await alice_user_fs.get_workspace(wid)).touch("/I_am_alice.txt")
 
     naive_workspace_path = (base_mountpoint / "w").absolute()
 
@@ -124,7 +124,7 @@ async def test_mount_and_explore_workspace(
     # Populate a bit the fs first...
 
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
+    workspace = await alice_user_fs.get_workspace(wid)
     await workspace.mkdir("/foo")
     await workspace.touch("/bar.txt")
     await workspace.write_bytes("/bar.txt", b"Hello world !")
@@ -183,7 +183,7 @@ async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manua
     # Populate a bit the fs first...
 
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
+    workspace = await alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
@@ -221,7 +221,7 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 
     async with logged_core_factory(core_config, alice) as alice_core:
         wid = await alice_core.user_fs.workspace_create("w")
-        workspace = alice_core.user_fs.get_workspace(wid)
+        workspace = await alice_core.user_fs.get_workspace(wid)
         await workspace.touch("/bar.txt")
 
         assert not await bar_txt.exists()
@@ -237,10 +237,11 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 def test_manifest_not_available(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
         wid = await user_fs.workspace_create("x")
-        workspace = user_fs.get_workspace(wid)
+        workspace = await user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
         foo_id = await workspace.path_id("/foo.txt")
-        user_fs.local_storage.clear_manifest(foo_id)
+        async with user_fs.local_storage.lock_entry_id(foo_id):
+            user_fs.local_storage.clear_manifest(foo_id)
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()
@@ -261,8 +262,8 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
     # Populate a bit the fs first...
     wid = await alice_user_fs.workspace_create("mounted_wksp")
     wid2 = await alice_user_fs.workspace_create("not_mounted_wksp")
-    workspace1 = alice_user_fs.get_workspace(wid)
-    workspace2 = alice_user_fs.get_workspace(wid2)
+    workspace1 = await alice_user_fs.get_workspace(wid)
+    workspace2 = await alice_user_fs.get_workspace(wid2)
     await workspace1.touch("/bar.txt")
     await workspace2.touch("/foo.txt")
 
@@ -272,7 +273,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
     ) as mountpoint_manager:
         await mountpoint_manager.mount_workspace(wid)
 
-        bar_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+        bar_path = await mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
 
         assert isinstance(bar_path, PurePath)
         expected = base_mountpoint / f"mounted_wksp" / "bar.txt"
@@ -280,7 +281,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
         assert await trio.Path(bar_path).exists()
 
         with pytest.raises(MountpointNotMounted):
-            mountpoint_manager.get_path_in_mountpoint(wid2, FsPath("/foo.txt"))
+            await mountpoint_manager.get_path_in_mountpoint(wid2, FsPath("/foo.txt"))
 
 
 @pytest.mark.mountpoint

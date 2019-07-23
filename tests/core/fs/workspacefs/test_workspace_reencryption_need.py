@@ -119,7 +119,7 @@ def test_workspace_reencryption_need(
             await self.start_user_fs()
             self.wid = await self.user_fs.workspace_create("w")
             await self.user_fs.sync()
-            self.workspacefs = self.user_fs.get_workspace(self.wid)
+            self.workspacefs = await self.user_fs.get_workspace(self.wid)
 
         @rule(target=Users)
         async def give_role(self):

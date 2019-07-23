@@ -12,8 +12,8 @@ from tests.common import create_shared_workspace
 @pytest.mark.trio
 async def shared_workspaces(alice_user_fs, bob_user_fs, running_backend):
     wid = await create_shared_workspace("w", alice_user_fs, bob_user_fs)
-    alice_workspace = alice_user_fs.get_workspace(wid)
-    bob_workspace = bob_user_fs.get_workspace(wid)
+    alice_workspace = await alice_user_fs.get_workspace(wid)
+    bob_workspace = await bob_user_fs.get_workspace(wid)
     return alice_workspace, bob_workspace
 
 
@@ -34,7 +34,7 @@ def bob_workspace(shared_workspaces):
 async def test_sync_by_id_single(alice_workspace, remote_changed):
     # Assuming the the remote has changed when it hasn't should not be an issue
     sync_by_id = partial(alice_workspace.sync_by_id, remote_changed=remote_changed)
-    entry = alice_workspace.get_workspace_entry()
+    entry = await alice_workspace.get_workspace_entry()
     wid = entry.id
 
     # Empty workspace
@@ -71,9 +71,9 @@ async def test_sync_by_id_single(alice_workspace, remote_changed):
 
 @pytest.mark.trio
 async def test_sync_by_id_couple(alice_workspace, bob_workspace):
-    alice_entry = alice_workspace.get_workspace_entry()
+    alice_entry = await alice_workspace.get_workspace_entry()
     alice_wid = alice_entry.id
-    bob_entry = bob_workspace.get_workspace_entry()
+    bob_entry = await bob_workspace.get_workspace_entry()
     bob_wid = bob_entry.id
 
     # Create directories

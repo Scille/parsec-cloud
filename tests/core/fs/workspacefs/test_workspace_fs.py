@@ -13,7 +13,7 @@ from parsec.api.protocol.realm import RealmRole
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs, running_backend):
     wid = await alice_user_fs.workspace_create("w")
-    workspace = alice_user_fs.get_workspace(wid)
+    workspace = await alice_user_fs.get_workspace(wid)
     await workspace.mkdir("/foo")
     await workspace.touch("/foo/bar")
     await workspace.touch("/foo/baz")
@@ -23,8 +23,8 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 @pytest.mark.trio
 async def test_workspace_properties(alice_workspace):
-    assert alice_workspace.workspace_name == "w"
-    assert alice_workspace.encryption_revision == 1
+    assert await alice_workspace.get_workspace_name() == "w"
+    assert await alice_workspace.get_encryption_revision() == 1
 
 
 @pytest.mark.trio
@@ -377,7 +377,8 @@ async def test_rmtree(alice_workspace):
 async def test_dump(alice_workspace):
     device_id = alice_workspace.device.device_id
     baz_id = await alice_workspace.path_id("/foo/baz")
-    alice_workspace.local_storage.clear_manifest(baz_id)
+    async with alice_workspace.local_storage.lock_entry_id(baz_id):
+        alice_workspace.local_storage.clear_manifest(baz_id)
     assert alice_workspace.dump() == {
         "author": device_id,
         "base_version": 1,

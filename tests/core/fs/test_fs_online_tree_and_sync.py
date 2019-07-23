@@ -72,9 +72,8 @@ def test_fs_online_tree_and_sync(
         def backend(self):
             return self.backend_controller.backend
 
-        @property
-        def workspace(self):
-            return self.user_fs.get_workspace(self.wid)
+        async def get_workspace(self):
+            return await self.user_fs.get_workspace(self.wid)
 
         @initialize(target=Folders)
         async def init(self):
@@ -82,12 +81,12 @@ def test_fs_online_tree_and_sync(
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.oracle_fs.create_workspace("/w")
             self.device = alice
-            self.local_storage = local_storage_factory(self.device)
+            self.local_storage = await local_storage_factory(self.device)
 
             await self.start_backend()
             await self.restart_user_fs(self.device, self.local_storage)
             self.wid = await self.user_fs.workspace_create("w")
-            workspace = self.user_fs.get_workspace(self.wid)
+            workspace = await self.user_fs.get_workspace(self.wid)
             await workspace.sync("/")
             await self.user_fs.sync()
 
@@ -100,7 +99,7 @@ def test_fs_online_tree_and_sync(
         @rule()
         async def reset(self):
             # TODO: would be cleaner to recreate a new device...
-            self.local_storage = local_storage_factory(self.device, force=True)
+            self.local_storage = await local_storage_factory(self.device, force=True)
             await self.restart_user_fs(self.device, self.local_storage)
             self.oracle_fs.reset()
             self.oracle_fs.create_workspace("/w")
@@ -108,7 +107,7 @@ def test_fs_online_tree_and_sync(
 
         @rule()
         async def sync_root(self):
-            await self.workspace.sync("/")
+            await (await self.get_workspace()).sync("/")
             await self.user_fs.sync()
             self.oracle_fs.sync("/")
 
@@ -125,10 +124,10 @@ def test_fs_online_tree_and_sync(
             path = os.path.join(parent, name)
             expected_status = self.oracle_fs.create_file(path)
             if expected_status == "ok":
-                await self.workspace.touch(path=get_path(path), exist_ok=False)
+                await (await self.get_workspace()).touch(path=get_path(path), exist_ok=False)
             else:
                 with pytest.raises((FileExistsError, FileNotFoundError, NotADirectoryError)):
-                    await self.workspace.touch(path=get_path(path), exist_ok=False)
+                    await (await self.get_workspace()).touch(path=get_path(path), exist_ok=False)
             return path
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
@@ -136,30 +135,30 @@ def test_fs_online_tree_and_sync(
             path = os.path.join(parent, name)
             expected_status = self.oracle_fs.create_folder(path)
             if expected_status == "ok":
-                await self.workspace.mkdir(path=get_path(path), exist_ok=False)
+                await (await self.get_workspace()).mkdir(path=get_path(path), exist_ok=False)
             else:
                 with pytest.raises((FileExistsError, FileNotFoundError, NotADirectoryError)):
-                    await self.workspace.mkdir(path=get_path(path), exist_ok=False)
+                    await (await self.get_workspace()).mkdir(path=get_path(path), exist_ok=False)
             return path
 
         @rule(path=Files)
         async def delete_file(self, path):
             expected_status = self.oracle_fs.unlink(path)
             if expected_status == "ok":
-                await self.workspace.unlink(path=get_path(path))
+                await (await self.get_workspace()).unlink(path=get_path(path))
             else:
                 with pytest.raises(OSError):
-                    await self.workspace.unlink(path=get_path(path))
+                    await (await self.get_workspace()).unlink(path=get_path(path))
             return path
 
         @rule(path=Folders)
         async def delete_folder(self, path):
             expected_status = self.oracle_fs.rmdir(path)
             if expected_status == "ok":
-                await self.workspace.rmdir(path=get_path(path))
+                await (await self.get_workspace()).rmdir(path=get_path(path))
             else:
                 with pytest.raises(OSError):
-                    await self.workspace.rmdir(path=get_path(path))
+                    await (await self.get_workspace()).rmdir(path=get_path(path))
             return path
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
@@ -167,10 +166,10 @@ def test_fs_online_tree_and_sync(
             dst = os.path.join(dst_parent, dst_name)
             expected_status = self.oracle_fs.move(src, dst)
             if expected_status == "ok":
-                await self.workspace.rename(get_path(src), get_path(dst))
+                await (await self.get_workspace()).rename(get_path(src), get_path(dst))
             else:
                 with pytest.raises(OSError):
-                    await self.workspace.rename(get_path(src), get_path(dst))
+                    await (await self.get_workspace()).rename(get_path(src), get_path(dst))
             return dst
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
@@ -178,22 +177,22 @@ def test_fs_online_tree_and_sync(
             dst = os.path.join(dst_parent, dst_name)
             expected_status = self.oracle_fs.move(src, dst)
             if expected_status == "ok":
-                await self.workspace.rename(get_path(src), get_path(dst))
+                await (await self.get_workspace()).rename(get_path(src), get_path(dst))
             else:
                 with pytest.raises(OSError):
-                    await self.workspace.rename(get_path(src), get_path(dst))
+                    await (await self.get_workspace()).rename(get_path(src), get_path(dst))
             return dst
 
         async def _stat(self, path):
             expected = self.oracle_fs.stat(path)
             if expected["status"] != "ok":
                 if path == "/w":
-                    await self.workspace.path_info(get_path(path))
+                    await (await self.get_workspace()).path_info(get_path(path))
                 else:
                     with pytest.raises(OSError):
-                        await self.workspace.path_info(get_path(path))
+                        await (await self.get_workspace()).path_info(get_path(path))
             else:
-                path_info = await self.workspace.path_info(get_path(path))
+                path_info = await (await self.get_workspace()).path_info(get_path(path))
                 assert path_info["type"] == expected["type"]
                 # TODO: oracle's `base_version` is broken (synchronization
                 # strategy with parent placeholder make it complex to get right)

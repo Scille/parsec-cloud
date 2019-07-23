@@ -34,21 +34,23 @@ class File:
     def get_manifest(self):
         return self.local_storage.get_manifest(self.entry_id)
 
-    def set_manifest(self, manifest):
-        self.local_storage.set_manifest(self.entry_id, manifest)
+    async def set_manifest(self, manifest):
+        async with self.local_storage.lock_manifest(self.entry_id):
+            self.local_storage.set_manifest(self.entry_id, manifest)
 
     def open(self):
         return self.local_storage.create_file_descriptor(self.entry_id)
 
 
 @pytest.fixture
-def foo_txt(alice, file_transactions):
+async def foo_txt(alice, file_transactions):
     local_storage = file_transactions.local_storage
     with freeze_time("2000-01-02"):
         entry_id = EntryID()
         placeholder = LocalFileManifest.make_placeholder(alice.device_id, EntryID())
         manifest = placeholder.to_remote().evolve(version=1)
-        local_storage.set_manifest(entry_id, manifest.to_local(manifest.author))
+        async with local_storage.lock_entry_id(entry_id):
+            local_storage.set_base_manifest(entry_id, manifest.to_local(manifest.author))
     return File(local_storage, entry_id)
 
 
@@ -154,7 +156,8 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     foo_manifest = foo_manifest.evolve(
         blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
     )
-    foo_txt.set_manifest(foo_manifest)
+    async with file_transactions.local_storage.lock_entry_id(foo_manifest.parent_id):
+        await foo_txt.set_manifest(foo_manifest)
 
     fd = foo_txt.open()
     with pytest.raises(FSRemoteBlockNotFound):
@@ -181,7 +184,7 @@ async def test_load_block_from_remote(file_transactions, foo_txt):
     foo_manifest = foo_manifest.evolve(
         blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
     )
-    foo_txt.set_manifest(foo_manifest)
+    await foo_txt.set_manifest(foo_manifest)
 
     fd = foo_txt.open()
     await file_transactions.remote_loader.upload_block(block1_access, block1)
@@ -217,9 +220,9 @@ def test_file_operations(
             await reset_testbed()
 
             self.device = alice
-            self.local_storage = local_storage_factory(self.device)
+            self.local_storage = await local_storage_factory(self.device)
 
-            self.file_transactions = file_transactions_factory(
+            self.file_transactions = await file_transactions_factory(
                 self.device, self.local_storage, alice_backend_cmds
             )
 
@@ -227,7 +230,8 @@ def test_file_operations(
             manifest = LocalFileManifest.make_placeholder(
                 self.device.device_id, parent_id=EntryID()
             )
-            self.local_storage.set_manifest(self.entry_id, manifest)
+            async with self.local_storage.lock_entry_id(self.entry_id):
+                self.local_storage.set_manifest(self.entry_id, manifest)
 
             self.fd = self.local_storage.create_file_descriptor(self.entry_id)
             self.file_oracle_path = tmpdir / f"oracle-test-{tentative}.txt"

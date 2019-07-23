@@ -15,7 +15,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     # First, create a folder and sync it on backend
     with freeze_time("2000-01-01"):
         wid = await alice_core.user_fs.workspace_create("foo")
-    workspace = alice_core.user_fs.get_workspace(wid)
+    workspace = await alice_core.user_fs.get_workspace(wid)
     with freeze_time("2000-01-02"):
         await workspace.sync("/")
 

@@ -239,7 +239,7 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
 async def test_fuzz_core(request, running_backend, alice_core, monitor):
     await trio.sleep(0.1)  # Somehow fixes the test
     wid = await alice_core.user_fs.workspace_create("w")
-    workspace = alice_core.user_fs.get_workspace(wid)
+    workspace = await alice_core.user_fs.get_workspace(wid)
     try:
         async with trio.open_nursery() as nursery:
             fs_state = FSState()

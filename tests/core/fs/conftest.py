@@ -15,8 +15,8 @@ from tests.common import freeze_time
 def file_transactions_factory(
     event_bus, remote_devices_manager_factory, entry_transactions_factory
 ):
-    def _file_transactions_factory(device, local_storage, backend_cmds):
-        entry_transactions = entry_transactions_factory(device, local_storage, backend_cmds)
+    async def _file_transactions_factory(device, local_storage, backend_cmds):
+        entry_transactions = await entry_transactions_factory(device, local_storage, backend_cmds)
         workspace_id = entry_transactions.workspace_id
         remote_loader = entry_transactions.remote_loader
         return FileTransactions(workspace_id, local_storage, remote_loader, event_bus)
@@ -25,33 +25,35 @@ def file_transactions_factory(
 
 
 @pytest.fixture
-def file_transactions(file_transactions_factory, alice, alice_local_storage, alice_backend_cmds):
-    return file_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+async def file_transactions(
+    file_transactions_factory, alice, alice_local_storage, alice_backend_cmds
+):
+    return await file_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
 
 
 @pytest.fixture
 def entry_transactions_factory(event_bus, remote_devices_manager_factory):
-    def _entry_transactions_factory(device, local_storage, backend_cmds):
+    async def _entry_transactions_factory(device, local_storage, backend_cmds):
+        async def _get_workspace_entry():
+            return workspace_entry
 
         with freeze_time("2000-01-01"):
             workspace_entry = WorkspaceEntry("test")
             workspace_manifest = LocalWorkspaceManifest.make_placeholder(
                 device.device_id, device.user_manifest_id
             )
-        local_storage.set_manifest(workspace_entry.id, workspace_manifest)
+        async with local_storage.lock_entry_id(workspace_entry.id):
+            local_storage.set_manifest(workspace_entry.id, workspace_manifest)
 
         remote_devices_manager = remote_devices_manager_factory(device)
         remote_loader = RemoteLoader(
             device,
             workspace_entry.id,
-            lambda: workspace_entry,
+            _get_workspace_entry,
             backend_cmds,
             remote_devices_manager,
             local_storage,
         )
-
-        def _get_workspace_entry():
-            return workspace_entry
 
         return EntryTransactions(
             workspace_entry.id,
@@ -66,8 +68,10 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
 
 
 @pytest.fixture
-def entry_transactions(entry_transactions_factory, alice, alice_local_storage, alice_backend_cmds):
-    return entry_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+async def entry_transactions(
+    entry_transactions_factory, alice, alice_local_storage, alice_backend_cmds
+):
+    return await entry_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
 
 
 @pytest.fixture

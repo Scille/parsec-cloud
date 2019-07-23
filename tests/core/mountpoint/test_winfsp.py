@@ -9,7 +9,7 @@ import threading
 def test_rename_to_another_drive(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
         xid = await user_fs.workspace_create("x")
-        xworkspace = user_fs.get_workspace(xid)
+        xworkspace = await user_fs.get_workspace(xid)
         await xworkspace.touch("/foo.txt")
         await user_fs.workspace_create("y")
         await mountpoint_manager.mount_all()

@@ -81,8 +81,8 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
         },
     )
 
-    aum = alice_user_fs.get_user_manifest()
-    bum = bob_user_fs.get_user_manifest()
+    aum = await alice_user_fs.get_user_manifest()
+    bum = await bob_user_fs.get_user_manifest()
     assert len(aum.workspaces) == 1
     assert len(bum.workspaces) == 1
     awe = aum.get_workspace_entry(wid)
@@ -92,8 +92,8 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
     assert bwe.id == awe.id
     assert bwe.role == WorkspaceRole.MANAGER
 
-    aw = alice_user_fs.get_workspace(wid)
-    bw = bob_user_fs.get_workspace(wid)
+    aw = await alice_user_fs.get_workspace(wid)
+    bw = await bob_user_fs.get_workspace(wid)
     aw_stat = await aw.path_info("/")
     bw_stat = await bw.path_info("/")
     # TODO: currently workspace minimal sync in userfs cannot
@@ -122,8 +122,8 @@ async def test_share_workspace_then_rename_it(
     await alice_user_fs.sync()
 
     # This should have not changed the workspace in any way
-    bw = bob_user_fs.get_workspace(wid)
-    aw = alice_user_fs.get_workspace(wid)
+    bw = await bob_user_fs.get_workspace(wid)
+    aw = await alice_user_fs.get_workspace(wid)
     await bw.touch("/ping_bob.txt")
     await aw.mkdir("/ping_alice")
 
@@ -174,7 +174,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
         },
     )
 
-    aum = alice_user_fs.get_user_manifest()
+    aum = await alice_user_fs.get_user_manifest()
     aw = aum.workspaces[0]
     assert not aw.role
 
@@ -191,7 +191,7 @@ async def test_unshare_not_shared(running_backend, alice_user_fs, bob_user_fs, a
     assert not spy.events
 
     # Workspace unsharing should have been ignored
-    bum = bob_user_fs.get_user_manifest()
+    bum = await bob_user_fs.get_user_manifest()
     assert not bum.workspaces
 
 
@@ -231,8 +231,8 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
     await bob_user_fs.process_last_messages()
 
     # Check access
-    aum = alice_user_fs.get_user_manifest()
-    bum = bob_user_fs.get_user_manifest()
+    aum = await alice_user_fs.get_user_manifest()
+    bum = await bob_user_fs.get_user_manifest()
     assert len(aum.workspaces) == 1
     assert len(bum.workspaces) == 1
     aw = aum.workspaces[0]
@@ -247,7 +247,7 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
 async def test_share_with_different_role(running_backend, alice_user_fs, bob_user_fs, alice, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    aum = alice_user_fs.get_user_manifest()
+    aum = await alice_user_fs.get_user_manifest()
     aw = aum.workspaces[0]
 
     for role in WorkspaceRole:
@@ -256,7 +256,7 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
         await bob_user_fs.process_last_messages()
 
         # Check access
-        bum = bob_user_fs.get_user_manifest()
+        bum = await bob_user_fs.get_user_manifest()
         assert len(bum.workspaces) == 1
         bw = bum.workspaces[0]
 
@@ -334,19 +334,19 @@ async def test_share_with_sharing_name_already_taken(
         },
     )
 
-    assert len(bob_user_fs.get_user_manifest().workspaces) == 3
+    assert len((await bob_user_fs.get_user_manifest()).workspaces) == 3
 
-    b_aw_stat = await bob_user_fs.get_workspace(awid).path_info("/")
-    a_aw_stat = await alice_user_fs.get_workspace(awid).path_info("/")
+    b_aw_stat = await (await bob_user_fs.get_workspace(awid)).path_info("/")
+    a_aw_stat = await (await alice_user_fs.get_workspace(awid)).path_info("/")
     b_aw_stat.pop("need_sync")
     a_aw_stat.pop("need_sync")
     assert b_aw_stat == a_aw_stat
 
-    b_bw_stat = await bob_user_fs.get_workspace(bwid).path_info("/")
+    b_bw_stat = await (await bob_user_fs.get_workspace(bwid)).path_info("/")
     assert b_bw_stat["id"] == bwid
     # TODO: currently workspaces with same name shadow each other
     # should be solve once legacy FS class is dropped
-    # b_bw2_stat = await bob_user_fs.get_workspace(bw2id).stat("/")
+    # b_bw2_stat = (await bob_user_fs.get_workspace(bw2id)).stat("/")
     # assert b_bw2_stat["id"] == bw2id
 
 
@@ -394,8 +394,8 @@ async def test_share_workspace_then_conflict_on_rights(
     with freeze_time("2000-01-08"):
         await first.sync()
 
-    am = alice_user_fs.get_user_manifest()
-    a2m = alice2_user_fs.get_user_manifest()
+    am = await alice_user_fs.get_user_manifest()
+    a2m = await alice2_user_fs.get_user_manifest()
     expected = LocalUserManifest(
         author=alice.device_id,
         created=Pendulum(2000, 1, 1),
@@ -419,14 +419,14 @@ async def test_share_workspace_then_conflict_on_rights(
     assert am == expected
     assert a2m == expected.evolve(author=alice2.device_id)
 
-    a_w = alice_user_fs.get_workspace(wid)
-    a2_w = alice2_user_fs.get_workspace(wid)
+    a_w = await alice_user_fs.get_workspace(wid)
+    a2_w = await alice2_user_fs.get_workspace(wid)
 
     a_w_stat = await a_w.path_info("/")
     a2_w_stat = await a2_w.path_info("/")
 
-    a_w_entry = a_w.get_workspace_entry()
-    a2_w_entry = a2_w.get_workspace_entry()
+    a_w_entry = await a_w.get_workspace_entry()
+    a2_w_entry = await a2_w.get_workspace_entry()
 
     assert a_w_stat == {
         "type": "folder",
