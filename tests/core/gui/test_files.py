@@ -54,7 +54,14 @@ async def logged_gui(
         classmethod(lambda *args, **kwargs: ("Workspace")),
     )
 
-    async with aqtbot.wait_signals([wk_widget.create_success, wk_widget.list_success]):
+    async with aqtbot.wait_signals(
+        [
+            wk_widget.create_success,
+            wk_widget.list_success,
+            wk_widget.mount_success,
+            wk_widget.reencryption_needs_success,
+        ]
+    ):
         aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
 
     assert wk_widget.layout_workspaces.count() == 1

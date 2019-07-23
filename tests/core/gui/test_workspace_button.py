@@ -10,7 +10,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 @pytest.mark.trio
 async def workspace_fs(alice_user_fs, running_backend):
     wid = await alice_user_fs.workspace_create("Workspace")
-    workspace = alice_user_fs.get_workspace(wid)
+    workspace = await alice_user_fs.get_workspace(wid)
     return workspace
 
 
@@ -19,6 +19,7 @@ async def workspace_fs(alice_user_fs, running_backend):
 async def test_workspace_button(qtbot, workspace_fs):
 
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=False,
         is_creator=False,
@@ -42,6 +43,7 @@ async def test_workspace_button(qtbot, workspace_fs):
 async def test_workspace_button_shared_by(qtbot, workspace_fs):
 
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=True,
         is_creator=False,
@@ -65,6 +67,7 @@ async def test_workspace_button_shared_by(qtbot, workspace_fs):
 async def test_workspace_button_shared_with(qtbot, workspace_fs):
 
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=True,
         is_creator=True,
@@ -87,6 +90,7 @@ async def test_workspace_button_shared_with(qtbot, workspace_fs):
 @pytest.mark.trio
 async def test_workspace_button_files(qtbot, workspace_fs):
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=True,
         is_creator=True,
@@ -125,6 +129,7 @@ async def test_workspace_button_files(qtbot, workspace_fs):
 @pytest.mark.trio
 async def test_workspace_button_clicked(qtbot, workspace_fs):
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=True,
         is_creator=True,
@@ -143,6 +148,7 @@ async def test_workspace_button_clicked(qtbot, workspace_fs):
 @pytest.mark.trio
 async def test_workspace_button_share_clicked(qtbot, workspace_fs):
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=False,
         is_creator=True,
@@ -160,6 +166,7 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs):
 @pytest.mark.trio
 async def test_workspace_button_rename_clicked(qtbot, workspace_fs):
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=False,
         is_creator=True,
@@ -177,6 +184,7 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs):
 @pytest.mark.trio
 async def test_workspace_button_delete_clicked(qtbot, workspace_fs):
     w = WorkspaceButton(
+        workspace_name="Workspace",
         workspace_fs=workspace_fs,
         is_shared=False,
         is_creator=True,
