@@ -182,7 +182,7 @@ class UserFS:
             self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
             return user_manifest
 
-    def get_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None) -> WorkspaceFS:
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
@@ -199,7 +199,7 @@ class UserFS:
         # Sanity check to make sure workspace_id is valid
         _get_workspace_entry()
 
-        workspace_fs = WorkspaceFS(
+        return WorkspaceFS(
             workspace_id=workspace_id,
             get_workspace_entry=_get_workspace_entry,
             device=self.device,
@@ -208,11 +208,6 @@ class UserFS:
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
         )
-
-        if timestamp is None:
-            return workspace_fs
-        else:
-            return workspace_fs.to_timestamped(timestamp)
 
     async def workspace_create(self, name: str) -> EntryID:
         """

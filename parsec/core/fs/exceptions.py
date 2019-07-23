@@ -53,6 +53,10 @@ class FSWorkspaceNoAccess(FSError):
     pass
 
 
+class FSWorkspaceTimestampedTooEarly(FSError):
+    pass
+
+
 class FSWorkspaceInMaintenance(FSError):
     pass
 

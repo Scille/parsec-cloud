@@ -13,7 +13,7 @@ from parsec.core.fs.exceptions import (
     FSSharingNotAllowedError,
     FSBadEncryptionRevision,
 )
-from parsec.core.fs.workspacefs import WorkspaceFS
+from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
 
 # TODO: refactor local storage exceptions
 from parsec.core.local_storage import FSInvalidFileDescriptor
@@ -33,4 +33,5 @@ __all__ = (
     "FSBadEncryptionRevision",
     "FSInvalidFileDescriptor",
     "WorkspaceFS",
+    "WorkspaceFSTimestamped",
 )
