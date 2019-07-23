@@ -41,30 +41,25 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 
 @pytest.fixture
-@pytest.mark.trio
 async def alice_workspace_t1(alice_workspace):
-    return alice_workspace.to_timestamped(day1)
+    return await alice_workspace.to_timestamped(day1)
 
 
 @pytest.fixture
-@pytest.mark.trio
 async def alice_workspace_t2(alice_workspace):
-    return alice_workspace.to_timestamped(day2)
+    return await alice_workspace.to_timestamped(day2)
 
 
 @pytest.fixture
-@pytest.mark.trio
 async def alice_workspace_t3(alice_workspace):
-    return alice_workspace.to_timestamped(day3)
+    return await alice_workspace.to_timestamped(day3)
 
 
 @pytest.fixture
-@pytest.mark.trio
 async def alice_workspace_t4(alice_workspace):
-    return alice_workspace.to_timestamped(day4)
+    return await alice_workspace.to_timestamped(day4)
 
 
 @pytest.fixture
-@pytest.mark.trio
 async def alice_workspace_t5(alice_workspace):
-    return alice_workspace.to_timestamped(day5)
+    return await alice_workspace.to_timestamped(day5)
