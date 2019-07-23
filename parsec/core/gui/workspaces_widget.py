@@ -5,9 +5,16 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+from pendulum import Pendulum
+
 from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole, EntryID
-from parsec.core.fs import WorkspaceFS, FSBackendOfflineError
-from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted, MountpointDisabled
+from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped, FSBackendOfflineError
+from parsec.core.mountpoint.exceptions import (
+    MountpointAlreadyMounted,
+    MountpointDisabled,
+    MountpointConfigurationError,
+    MountpointConfigurationWorkspaceFSTimestampedError,
+)
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
@@ -20,6 +27,7 @@ from parsec.core.gui.custom_widgets import (
 )
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.ts_ws_dialog import TsWsDialog
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 
@@ -50,11 +58,8 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
 
 async def _do_workspace_list(core):
     workspaces = []
-    user_manifest = core.user_fs.get_user_manifest()
-    available_workspaces = [w for w in user_manifest.workspaces if w.role]
-    for count, workspace in enumerate(available_workspaces):
-        workspace_id = workspace.id
-        workspace_fs = core.user_fs.get_workspace(workspace_id)
+
+    async def _add_workspacefs(workspace_fs):
         ws_entry = workspace_fs.get_workspace_entry()
         try:
             users_roles = await workspace_fs.get_user_roles()
@@ -66,12 +71,32 @@ async def _do_workspace_list(core):
         except FSBackendOfflineError:
             files = []
         workspaces.append((workspace_fs, ws_entry, users_roles, files))
+
+    user_manifest = core.user_fs.get_user_manifest()
+    available_workspaces = [w for w in user_manifest.workspaces if w.role]
+    for count, workspace in enumerate(available_workspaces):
+        workspace_id = workspace.id
+        workspace_fs = core.user_fs.get_workspace(workspace_id)
+        await _add_workspacefs(workspace_fs)
+    worspaces_timestamped_dict = await core.mountpoint_manager.get_timestamped_mounted()
+    for (workspace_id, timestamp), workspace_fs in worspaces_timestamped_dict.items():
+        await _add_workspacefs(workspace_fs)
+
     return workspaces
 
 
-async def _do_workspace_mount(core, workspace_id):
+async def _do_workspace_mount(core, workspace_id, timestamp: Pendulum = None):
     try:
-        await core.mountpoint_manager.mount_workspace(workspace_id)
+        await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
+    except (MountpointAlreadyMounted, MountpointDisabled):
+        pass
+    except MountpointConfigurationError as exc:
+        raise JobResultError(exc)
+
+
+async def _do_workspace_unmount(core, workspace_id, timestamp: Pendulum = None):
+    try:
+        await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
     except (MountpointAlreadyMounted, MountpointDisabled):
         pass
 
@@ -87,6 +112,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     workspace_reencryption_success = pyqtSignal()
     workspace_reencryption_error = pyqtSignal()
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
+    workspace_mount_timestamped_requested = pyqtSignal(EntryID, Pendulum)
+    workspace_mounted = pyqtSignal(QtToTrioJob)
+    workspace_unmounted = pyqtSignal(QtToTrioJob)
 
     rename_success = pyqtSignal(QtToTrioJob)
     rename_error = pyqtSignal(QtToTrioJob)
@@ -129,6 +157,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reencryption_needs_success.connect(self.on_reencryption_needs_success)
         self.reencryption_needs_error.connect(self.on_reencryption_needs_error)
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
+        self.workspace_mount_timestamped_requested.connect(self.mount_workspace_timestamped)
+        self.workspace_mounted.connect(self._on_workspace_mounted)
+        self.workspace_unmounted.connect(self._on_workspace_unmounted)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
@@ -192,7 +223,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def on_mount_error(self, job):
-        pass
+        if isinstance(job.status, MountpointConfigurationWorkspaceFSTimestampedError):
+            show_error(
+                self,
+                _('Can\'t mount worskpace "{}" at {}.').format(
+                    job.status.args[3], job.status.args[2].format("%x %X")
+                ),
+            )
 
     def on_reencryption_needs_success(self, job):
         workspace_id, reencryption_needs = job.ret
@@ -225,6 +262,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
         button.file_clicked.connect(self.open_workspace_file)
+        button.remount_ts_clicked.connect(self.remount_workspace_ts)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
@@ -242,14 +280,40 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def open_workspace_file(self, workspace_fs, file_name):
         file_name = FsPath("/", file_name)
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
-            workspace_fs.workspace_id, file_name
+            workspace_fs.workspace_id,
+            file_name,
+            workspace_fs.timestamp if isinstance(workspace_fs, WorkspaceFSTimestamped) else None,
         )
         desktop.open_file(str(path))
+
+    def remount_workspace_ts(self, workspace_fs):
+        ts_ws = TsWsDialog(workspace_fs=workspace_fs, parent=self)
+        ts_ws.exec_()
+
+    def mount_workspace_timestamped(self, workspace_id, timestamp):
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "workspace_mounted", QtToTrioJob),
+            ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
+            _do_workspace_mount,
+            core=self.core,
+            workspace_id=workspace_id,
+            timestamp=timestamp,
+        )
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
 
-    def delete_workspace(self, workspace_entry):
+    def delete_workspace(self, workspace_fs):
+        if isinstance(workspace_fs, WorkspaceFSTimestamped):
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "workspace_unmounted", QtToTrioJob),
+                ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
+                _do_workspace_unmount,
+                core=self.core,
+                workspace_id=workspace_fs.workspace_id,
+                timestamp=workspace_fs.timestamp,
+            )
+            return
         show_warning(self, _("Not yet implemented."))
 
     def rename_workspace(self, workspace_button):
@@ -381,4 +445,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def _on_fs_updated_qt(self, event, workspace_id):
+        self.reset()
+
+    def _on_workspace_mounted(self, job):
+        self.reset()
+
+    def _on_workspace_unmounted(self, job):
         self.reset()

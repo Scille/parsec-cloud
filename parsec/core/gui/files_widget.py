@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
 from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
+from parsec.core.fs import WorkspaceFSTimestamped
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
@@ -298,7 +299,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def open_file(self, file_name):
         path = self.core.mountpoint_manager.get_path_in_mountpoint(
-            self.workspace_fs.workspace_id, self.current_directory / file_name
+            self.workspace_fs.workspace_id,
+            self.current_directory / file_name,
+            self.workspace_fs.timestamp
+            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
+            else None,
         )
         desktop.open_file(str(path))
 
