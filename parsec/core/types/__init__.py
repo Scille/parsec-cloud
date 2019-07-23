@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Union
+from typing import Union, NewType
 
 from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
 from parsec.core.types.access import (
@@ -35,10 +35,10 @@ from parsec.core.types.remote_manifests import (
     RemoteManifest,
     remote_manifest_serializer,
 )
-from parsec.core.types.local_file import FileCursor, FileDescriptor
 
 
 Manifest = Union[LocalManifest, RemoteManifest]
+FileDescriptor = NewType("FileDescriptor", int)
 
 
 __all__ = (
@@ -82,6 +82,5 @@ __all__ = (
     "remote_manifest_serializer",
     "Manifest",
     # local file
-    "FileCursor",
     "FileDescriptor",
 )
