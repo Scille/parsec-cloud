@@ -37,6 +37,7 @@ FORMS += forms/main_window.ui \
          forms/loading_dialog.ui \
          forms/replace_dialog.ui \
          forms/claim_dialog.ui \
-         forms/new_version_dialog.ui
+         forms/new_version_dialog.ui \
+         forms/ts_ws_dialog.ui
 
 RESOURCES += rc/resources.qrc

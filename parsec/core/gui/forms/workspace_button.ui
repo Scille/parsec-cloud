@@ -72,6 +72,11 @@ QToolTip
 background-color: rgb(46, 146, 208);
 border: 1px solid rgb(12, 65, 157);
 color: rgb(255, 255, 255);
+}
+
+Line
+{
+color: rgb(9, 66, 155);
 }</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -489,10 +494,7 @@ border: 0;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">Line#line_7
-{
-color: rgb(9, 66, 155);
-}</string>
+               <string notr="true"/>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>
@@ -555,10 +557,43 @@ border: 0;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">Line#line_6
-{
-color: rgb(9, 66, 155);
-}</string>
+               <string notr="true"/>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Plain</enum>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="button_remount_ts">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="../rc/resources.qrc">
+                <normaloff>:/icons/images/icons/return_on.png</normaloff>:/icons/images/icons/return_on.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_5">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>17</height>
+               </size>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>
@@ -621,10 +656,7 @@ border: 0;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">Line#line_6
-{
-color: rgb(9, 66, 155);
-}</string>
+               <string notr="true"/>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>
