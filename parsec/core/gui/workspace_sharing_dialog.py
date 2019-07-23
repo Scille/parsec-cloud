@@ -9,6 +9,7 @@ from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_thread import ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
@@ -26,6 +27,26 @@ def _index_to_role(index):
         if index == idx:
             return role
     return None
+
+
+async def _do_init(instance):
+    return await instance.workspace_fs.get_workspace_entry()
+
+
+async def _do_popup(instance, user, exc, fs_error):
+    workspace_name = instance.workspace_fs.workspace_name
+    if fs_error:
+        show_error(
+            self,
+            _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+            exception=exc,
+        )
+    else:
+        show_error(
+            self,
+            _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+            execption=exc,
+        )
 
 
 class SharingWidget(QWidget, Ui_SharingWidget):
@@ -103,6 +124,10 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.setWindowFlags(Qt.SplashScreen)
         self.line_edit_share.textChanged.connect(self.text_changed)
         self.timer = QTimer()
+        self.init_success = pyqtSignal(QtToTrioJob)
+        self.init_error = pyqtSignal(QtToTrioJob)
+        self.popup_success = pyqtSignal(QtToTrioJob)
+        self.popup_error = pyqtSignal(QtToTrioJob)
         self.timer.timeout.connect(self.show_auto_complete)
         self.button_close.clicked.connect(self.on_close_requested)
         self.button_share.clicked.connect(self.on_share_clicked)
@@ -126,6 +151,13 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         ):
             self.widget_add.hide()
             self.button_apply.hide()
+        self.init_success.connect(self.on_init_success)
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "init_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "init_error", QtToTrioJob),
+            _do_init,
+            self,
+        )
         self.reset()
 
     def text_changed(self, text):
@@ -173,16 +205,24 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             )
             self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
         except FSError as exc:
-            show_error(
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "reload_workspace_name_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "reload_workspace_name_error", QtToTrioJob),
+                _do_popup,
                 self,
-                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
-                exception=exc,
+                user,
+                exc,
+                True
             )
         except Exception as exc:
-            show_error(
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "reload_workspace_name_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "reload_workspace_name_error", QtToTrioJob),
+                _do_popup,
                 self,
-                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
-                execption=exc,
+                user,
+                exc,
+                False
             )
 
     def add_participant(self, user, is_current_user, role):
@@ -239,6 +279,27 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         elif updated:
             show_info(self, _("INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"))
         self.reset()
+
+    def on_init_success(self, job):
+        ws_entry = job.ret
+        self.current_user_role = ws_entry.role
+        current_index = _ROLES_TO_INDEX[self.current_user_role]
+        for role, index in _ROLES_TO_INDEX.items():
+            if index <= current_index:
+                if role == WorkspaceRole.READER:
+                    self.combo_role.insertItem(index, _("Reader"))
+                elif role == WorkspaceRole.CONTRIBUTOR:
+                    self.combo_role.insertItem(index, _("Contributor"))
+                elif role == WorkspaceRole.MANAGER:
+                    self.combo_role.insertItem(index, _("Manager"))
+                elif role == WorkspaceRole.OWNER:
+                    self.combo_role.insertItem(index, _("Owner"))
+        if (
+            self.current_user_role == WorkspaceRole.READER
+            or self.current_user_role == WorkspaceRole.CONTRIBUTOR
+        ):
+            self.widget_add.hide()
+            self.button_apply.hide()
 
     def has_changes(self):
         for i in range(self.scroll_content.layout().count() - 1):

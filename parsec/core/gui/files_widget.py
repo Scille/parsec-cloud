@@ -25,6 +25,14 @@ class CancelException(Exception):
     pass
 
 
+async def _do_reset(workspace_fs):
+    return await workspace_fs.get_workspace_name()
+
+
+async def _do_set_workspace_fs(workspace_fs):
+    return await workspace_fs.get_workspace_entry()
+
+
 async def _do_rename(workspace_fs, paths):
     new_names = {}
     for (old_path, new_path, uuid) in paths:
@@ -110,6 +118,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     folder_create_error = pyqtSignal(QtToTrioJob)
     import_success = pyqtSignal(QtToTrioJob)
     import_error = pyqtSignal(QtToTrioJob)
+    set_workspace_fs_success = pyqtSignal(QtToTrioJob)
+    set_workspace_fs_error = pyqtSignal(QtToTrioJob)
+    reset_success = pyqtSignal(QtToTrioJob)
+    reset_error = pyqtSignal(QtToTrioJob)
 
     import_progress = pyqtSignal(int)
 
@@ -122,6 +134,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspace_fs = None
         self.import_job = None
 
+        self.current_user_role = None
         self.ROLES_TEXTS = {
             WorkspaceRole.READER: _("WORKSPACE_ROLE_READER"),
             WorkspaceRole.CONTRIBUTOR: _("WORKSPACE_ROLE_CONTRIBUTOR"),
@@ -167,6 +180,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.folder_create_error.connect(self._on_folder_create_error)
         self.import_success.connect(self._on_import_success)
         self.import_error.connect(self._on_import_error)
+        self.set_workspace_fs_success.connect(self._on_set_workspace_fs_success)
+        self.reset_success.connect(self._on_reset_success)
 
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
@@ -189,19 +204,36 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         except ValueError:
             pass
 
-    def set_workspace_fs(self, wk_fs):
-        self.current_directory = FsPath("/")
-        self.workspace_fs = wk_fs
-        ws_entry = self.workspace_fs.get_workspace_entry()
+    def _on_set_workspace_fs_success(self, job):
+        ws_entry = job.ret
         self.current_user_role = ws_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
         self.reset()
 
-    def reset(self):
-        self.label_current_workspace.setText(self.workspace_fs.workspace_name)
+    def set_workspace_fs(self, wk_fs):
+        self.current_directory = FsPath("/")
+        self.workspace_fs = wk_fs
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "set_workspace_fs_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "set_workspace_fs_error", QtToTrioJob),
+            _do_set_workspace_fs,
+            self.workspace_fs,
+        )
+
+    def _on_reset_success(self, job):
+        workspace_name = job.ret
+        self.label_current_workspace.setText(workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
+
+    def reset(self):
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "reset_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "reset_error", QtToTrioJob),
+            _do_reset,
+            self.workspace_fs,
+        )
 
     def rename_files(self):
         files = self.table_files.selected_files()
