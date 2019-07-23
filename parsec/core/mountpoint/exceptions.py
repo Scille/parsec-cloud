@@ -27,3 +27,7 @@ class MountpointDisabled(MountpointError):
 
 class MountpointConfigurationError(MountpointError):
     pass
+
+
+class MountpointConfigurationWorkspaceFSTimestampedError(MountpointConfigurationError):
+    pass

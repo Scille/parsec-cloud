@@ -12,9 +12,10 @@ from async_generator import asynccontextmanager
 
 from parsec.utils import start_task
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.exceptions import FSWorkspaceNotFoundError
+from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationError,
+    MountpointConfigurationWorkspaceFSTimestampedError,
     MountpointAlreadyMounted,
     MountpointNotMounted,
     MountpointDisabled,
@@ -66,25 +67,53 @@ class MountpointManager:
         self._runner = runner
         self._nursery = nursery
         self._mountpoint_tasks = {}
+        self._timestamped_workspacefs = {}
 
-    def _get_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None):
+    def _get_workspace(self, workspace_id: EntryID):
         try:
-            return self.user_fs.get_workspace(workspace_id, timestamp=timestamp)
+            return self.user_fs.get_workspace(workspace_id)
         except FSWorkspaceNotFoundError as exc:
             raise MountpointConfigurationError(f"Workspace `{workspace_id}` doesn't exist") from exc
 
-    def get_path_in_mountpoint(self, workspace_id: EntryID, path: FsPath) -> PurePath:
-        self._get_workspace(workspace_id)
+    async def _get_workspace_timestamped(self, workspace_id: EntryID, timestamp: Pendulum):
         try:
-            runner_task = self._mountpoint_tasks[workspace_id]
+            return self._timestamped_workspacefs[(workspace_id, timestamp)]
+        except KeyError:
+            pass
+        try:
+            current = self._get_workspace(workspace_id)
+            self._timestamped_workspacefs[(workspace_id, timestamp)] = await current.to_timestamped(
+                timestamp
+            )
+            return self._timestamped_workspacefs[(workspace_id, timestamp)]
+        except FSWorkspaceTimestampedTooEarly as exc:
+            raise MountpointConfigurationWorkspaceFSTimestampedError(
+                f"Workspace `{workspace_id}` didn't exist at `{timestamp}`",
+                workspace_id,
+                timestamp,
+                current.workspace_name,
+            ) from exc
+
+    def get_path_in_mountpoint(
+        self, workspace_id: EntryID, path: FsPath, timestamp: Pendulum = None
+    ) -> PurePath:
+        if timestamp is None:
+            self._get_workspace(workspace_id)
+        else:
+            self._get_workspace_timestamped(workspace_id, timestamp)
+        try:
+            runner_task = self._mountpoint_tasks[(workspace_id, timestamp)]
             return runner_task.value / path.relative_to(path.root)
 
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
 
     async def mount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None) -> PurePath:
-        workspace = self._get_workspace(workspace_id, timestamp)
-        if workspace_id in self._mountpoint_tasks:
+        if timestamp is None:
+            workspace = self._get_workspace(workspace_id)
+        else:
+            workspace = await self._get_workspace_timestamped(workspace_id, timestamp)
+        if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
 
         curried_runner = partial(
@@ -95,15 +124,15 @@ class MountpointManager:
             event_bus=self.event_bus,
         )
         runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[workspace_id] = runner_task
+        self._mountpoint_tasks[(workspace_id, timestamp)] = runner_task
         return runner_task.value
 
-    async def unmount_workspace(self, workspace_id: EntryID):
-        if workspace_id not in self._mountpoint_tasks:
+    async def unmount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None):
+        if (workspace_id, timestamp) not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
-        await self._mountpoint_tasks[workspace_id].cancel_and_join()
-        del self._mountpoint_tasks[workspace_id]
+        await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
+        del self._mountpoint_tasks[(workspace_id, timestamp)]
 
     async def mount_all(self, timestamp: Pendulum = None):
         user_manifest = self.user_fs.get_user_manifest()
@@ -114,8 +143,15 @@ class MountpointManager:
                 pass
 
     async def unmount_all(self):
-        for workspace_id in list(self._mountpoint_tasks.keys()):
-            await self.unmount_workspace(workspace_id)
+        for workspace_id_ts_combination in list(self._mountpoint_tasks.keys()):
+            await self.unmount_workspace(*workspace_id_ts_combination)
+
+    async def get_timestamped_mounted(self):
+        return {
+            workspace_id_and_ts: await self._get_workspace_timestamped(*workspace_id_and_ts)
+            for workspace_id_and_ts in self._mountpoint_tasks.keys()
+            if workspace_id_and_ts[1] is not None
+        }
 
 
 @asynccontextmanager
