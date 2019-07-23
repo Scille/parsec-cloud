@@ -30,6 +30,7 @@ def _index_to_role(index):
 
 class SharingWidget(QWidget, Ui_SharingWidget):
     delete_clicked = pyqtSignal(UserID)
+    role_changed = pyqtSignal()
 
     def __init__(self, user, is_current_user, current_user_role, role, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,6 +76,10 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
         self.combo_role.setCurrentIndex(_ROLES_TO_INDEX[self.role])
         self.button_delete.clicked.connect(self.on_delete_clicked)
+        self.combo_role.currentIndexChanged.connect(self.on_role_changed)
+
+    def on_role_changed(self):
+        self.role_changed.emit()
 
     @property
     def new_role(self):
@@ -128,7 +133,10 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         # we wait a little bit after the user has stopped pressing keys
         # to make the query.
         if len(text):
+            self.button_share.setDisabled(False)
             self.timer.start(500)
+        else:
+            self.button_share.setDisabled(True)
 
     def show_auto_complete(self):
         self.timer.stop()
@@ -189,8 +197,15 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             role=role,
             parent=self,
         )
+        w.role_changed.connect(self.on_role_changed)
         self.scroll_content.layout().insertWidget(0, w)
         w.delete_clicked.connect(self.on_remove_user_clicked)
+
+    def on_role_changed(self):
+        if self.has_changes():
+            self.button_apply.setDisabled(False)
+        else:
+            self.button_apply.setDisabled(True)
 
     def on_remove_user_clicked(self, user):
         r = QuestionDialog.ask(
@@ -270,3 +285,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         participants = self.jobs_ctx.run(self.workspace_fs.get_user_roles)
         for user, role in participants.items():
             self.add_participant(user, user == self.core.device.user_id, role)
+        self.line_edit_share.setText("")
+        self.button_share.setDisabled(True)
+        self.button_apply.setDisabled(True)
