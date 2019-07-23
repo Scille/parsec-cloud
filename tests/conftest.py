@@ -21,7 +21,7 @@ from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.backend import BackendApp, config_factory as backend_config_factory
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     AdministrationClientHandshake,
     AuthenticatedClientHandshake,
     AnonymousClientHandshake,

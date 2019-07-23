@@ -12,7 +12,7 @@ from hypothesis_trio.stateful import (
 )
 from pendulum import now as pendulum_now
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.crypto import build_realm_role_certificate
 from parsec.backend.realm import RealmGrantedRole
 

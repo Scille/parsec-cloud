@@ -5,7 +5,7 @@ import trio
 import pendulum
 from uuid import UUID
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.crypto import build_realm_self_role_certificate, build_realm_role_certificate
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait

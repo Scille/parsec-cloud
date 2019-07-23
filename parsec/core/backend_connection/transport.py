@@ -15,7 +15,7 @@ from parsec.types import (
 )
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     ProtocoleError,
     HandshakeRevokedDevice,
     HandshakeAPIVersionError,

@@ -4,7 +4,7 @@ import pytest
 from uuid import UUID, uuid4
 from pendulum import Pendulum
 
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     packb,
     RealmRole,
     vlob_create_serializer,

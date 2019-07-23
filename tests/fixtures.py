@@ -16,7 +16,7 @@ from parsec.crypto import (
     build_revoked_device_certificate,
     build_realm_role_certificate,
 )
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.core.types import (
     LocalDevice,
     remote_manifest_serializer,

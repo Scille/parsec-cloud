@@ -15,7 +15,7 @@ from hypothesis_trio.stateful import (
 from unittest.mock import ANY
 from pendulum import now as pendulum_now
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.crypto import build_realm_role_certificate
 
 from tests.common import call_with_control

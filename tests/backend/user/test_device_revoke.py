@@ -5,7 +5,7 @@ import pendulum
 
 from parsec.crypto import build_revoked_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import device_revoke_serializer, HandshakeRevokedDevice
+from parsec.api.protocol import device_revoke_serializer, HandshakeRevokedDevice
 
 from tests.common import freeze_time
 

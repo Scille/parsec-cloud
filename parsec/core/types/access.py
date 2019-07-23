@@ -5,7 +5,7 @@ import pendulum
 from hashlib import sha256
 from typing import Optional
 
-from parsec.api.protocole import RealmRole, RealmRoleField
+from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import (

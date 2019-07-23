@@ -3,7 +3,7 @@
 import pytest
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.api.protocole import message_send_serializer, message_get_serializer
+from parsec.api.protocol import message_send_serializer, message_get_serializer
 
 from tests.common import freeze_time
 from tests.backend.test_events import events_subscribe, events_listen, events_listen_nowait

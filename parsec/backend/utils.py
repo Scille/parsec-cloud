@@ -2,7 +2,7 @@
 
 from functools import wraps
 
-from parsec.api.protocole import ProtocoleError, InvalidMessageError
+from parsec.api.protocol import ProtocoleError, InvalidMessageError
 
 
 def anonymous_api(fn):
@@ -18,7 +18,7 @@ def check_anonymous_api_allowed(fn):
         )
 
 
-def catch_protocole_errors(fn):
+def catch_protocol_errors(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs):
         try:

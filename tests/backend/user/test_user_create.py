@@ -6,7 +6,7 @@ import pendulum
 
 from parsec.crypto import build_user_certificate, build_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import user_create_serializer
+from parsec.api.protocol import user_create_serializer
 
 from tests.common import freeze_time
 from tests.backend.user.test_access import user_get

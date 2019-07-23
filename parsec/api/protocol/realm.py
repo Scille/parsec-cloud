@@ -3,7 +3,7 @@
 from enum import Enum
 
 from parsec.serde import fields
-from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
 __all__ = (

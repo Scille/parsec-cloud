@@ -5,7 +5,7 @@ from secrets import token_bytes
 
 from parsec.crypto import CryptoError
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
-from parsec.api.protocole.base import ProtocoleError, InvalidMessageError, serializer_factory
+from parsec.api.protocol.base import ProtocoleError, InvalidMessageError, serializer_factory
 from parsec import __api_version__
 
 

@@ -4,8 +4,8 @@ from typing import List, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import DeviceID, UserID, OrganizationID
-from parsec.api.protocole import message_send_serializer, message_get_serializer
-from parsec.backend.utils import catch_protocole_errors
+from parsec.api.protocol import message_send_serializer, message_get_serializer
+from parsec.backend.utils import catch_protocol_errors
 from parsec.crypto import timestamps_in_the_ballpark
 
 
@@ -14,7 +14,7 @@ class MessageError(Exception):
 
 
 class BaseMessageComponent:
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_message_send(self, client_ctx, msg):
         msg = message_send_serializer.req_load(msg)
 
@@ -32,7 +32,7 @@ class BaseMessageComponent:
 
         return message_send_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_message_get(self, client_ctx, msg):
         msg = message_get_serializer.req_load(msg)
 

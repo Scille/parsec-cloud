@@ -7,7 +7,7 @@ import attr
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.crypto import timestamps_in_the_ballpark, verify_realm_role_certificate, CryptoError
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     RealmRole,
     MaintenanceType,
     realm_status_serializer,
@@ -17,7 +17,7 @@ from parsec.api.protocole import (
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
 )
-from parsec.backend.utils import catch_protocole_errors
+from parsec.backend.utils import catch_protocol_errors
 
 
 class RealmError(Exception):
@@ -89,7 +89,7 @@ class RealmGrantedRole:
 
 
 class BaseRealmComponent:
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
         msg = realm_create_serializer.req_load(msg)
 
@@ -141,7 +141,7 @@ class BaseRealmComponent:
 
         return realm_create_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_realm_status(self, client_ctx, msg):
         msg = realm_status_serializer.req_load(msg)
 
@@ -167,7 +167,7 @@ class BaseRealmComponent:
             }
         )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_realm_get_role_certificates(self, client_ctx, msg):
         msg = realm_get_role_certificates_serializer.req_load(msg)
 
@@ -188,7 +188,7 @@ class BaseRealmComponent:
             {"status": "ok", "certificates": certificates}
         )
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_realm_update_roles(self, client_ctx, msg):
         msg = realm_update_roles_serializer.req_load(msg)
 
@@ -243,7 +243,7 @@ class BaseRealmComponent:
 
         return realm_update_roles_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_realm_start_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_start_reencryption_maintenance_serializer.req_load(msg)
 
@@ -288,7 +288,7 @@ class BaseRealmComponent:
 
         return realm_start_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocole_errors
+    @catch_protocol_errors
     async def api_realm_finish_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_finish_reencryption_maintenance_serializer.req_load(msg)
 

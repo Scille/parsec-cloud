@@ -4,7 +4,7 @@ import pytest
 import trio
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.api.protocole import RealmRole, MaintenanceType
+from parsec.api.protocol import RealmRole, MaintenanceType
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time

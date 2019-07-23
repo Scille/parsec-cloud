@@ -18,7 +18,7 @@ from parsec.crypto import (
     CertifiedRealmRoleData,
 )
 from parsec.types import UserID
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsInMaintenance,

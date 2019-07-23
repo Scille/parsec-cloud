@@ -5,7 +5,7 @@ import pendulum
 from uuid import UUID
 from typing import List, Dict
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.realm import (

@@ -4,7 +4,7 @@ import pytest
 import trio
 import pendulum
 
-from parsec.api.protocole import ServerHandshake
+from parsec.api.protocol import ServerHandshake
 from parsec.crypto import build_revoked_device_certificate
 from parsec.api.transport import Transport, PingReceived, PongReceived
 from parsec.core.backend_connection import (

@@ -6,7 +6,7 @@ from functools import partial
 
 from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.transport import Transport, TransportClosedByPeer
-from parsec.api.protocole.base import Serializer
+from parsec.api.protocol.base import Serializer
 
 
 @pytest.fixture

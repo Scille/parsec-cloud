@@ -4,7 +4,7 @@ import pytest
 from async_generator import asynccontextmanager
 
 from parsec.backend.user import PEER_EVENT_MAX_WAIT
-from parsec.api.protocole import user_invite_serializer
+from parsec.api.protocol import user_invite_serializer
 
 
 @asynccontextmanager

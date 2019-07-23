@@ -6,7 +6,7 @@ from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
-from parsec.api.protocole import (
+from parsec.api.protocol import (
     packb,
     unpackb,
     ProtocoleError,

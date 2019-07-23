@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from parsec.api.protocole import RealmRole
+from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import backend_listen_events
 
 from tests.common import create_shared_workspace

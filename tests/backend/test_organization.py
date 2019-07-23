@@ -7,7 +7,7 @@ from unittest.mock import ANY
 from parsec.types import UserID
 from parsec.crypto import build_user_certificate, build_device_certificate
 
-from parsec.api.protocole import organization_create_serializer, organization_bootstrap_serializer
+from parsec.api.protocol import organization_create_serializer, organization_bootstrap_serializer
 
 from tests.backend.test_events import ping
 from tests.fixtures import local_device_to_backend_user
