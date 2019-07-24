@@ -61,66 +61,64 @@ def test_merge_folder_manifests():
 
     # Initial base manifest
     m1 = v1.to_local("a@a")
-    assert merge_manifests(m1, v1) == m1
+    assert merge_manifests(m1) == m1
 
     # Local change
     m2 = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    assert merge_manifests(m2, v1) == m2
+    assert merge_manifests(m2) == m2
 
     # Successful upload
     v2 = m2.to_remote().evolve(version=2)
-    m3 = merge_manifests(m2, v1, v2)
+    m3 = merge_manifests(m2, v2)
     assert m3 == v2.to_local("a@a")
 
     # Two local changes
     m4 = m3.evolve_children_and_mark_updated({"b": EntryID()})
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
     m5 = m4.evolve_children_and_mark_updated({"c": EntryID()})
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote().evolve(version=3)
-    m6 = merge_manifests(m5, v2, v3)
-    assert m6 == m5.evolve(base_version=3)
+    m6 = merge_manifests(m5, v3)
+    assert m6 == m5.evolve(base_manifest=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, children={"d": EntryID(), **v3.children}, author="b@b")
-    m7 = merge_manifests(m6, v3, v4)
+    m7 = merge_manifests(m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
 
     # Successful upload
     v5 = m7.to_remote().evolve(version=5)
-    m8 = merge_manifests(m7, v4, v5)
+    m8 = merge_manifests(m7, v5)
     assert m8 == v5.to_local("a@a")
 
     # The remote has changed
     v6 = v5.evolve(version=6, children={"e": EntryID(), **v5.children}, author="b@b")
-    m9 = merge_manifests(m8, v5, v6)
+    m9 = merge_manifests(m8, v6)
     assert m9 == v6.to_local("a@a")
 
 
 def test_merge_manifests_with_a_placeholder():
-    m1 = LocalFolderManifest("a@a", parent_id=EntryID())
+    m1 = LocalFolderManifest.make_placeholder("a@a", parent_id=EntryID())
     m2 = merge_manifests(m1)
     assert m2 == m1
     v1 = m1.to_remote().evolve(version=1)
 
-    m2a = merge_manifests(m1, None, v1)
+    m2a = merge_manifests(m1, v1)
     assert m2a == v1.to_local(author="a@a")
 
     m2b = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    m3b = merge_manifests(m2b, None, v1)
-    assert m3b == m2b.evolve(base_version=1, is_placeholder=False)
+    m3b = merge_manifests(m2b, v1)
+    assert m3b == m2b.evolve(base_manifest=v1)
 
     v2 = v1.evolve(version=2, author="b@b", children={"b": EntryID()})
     m2c = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    m3c = merge_manifests(m2c, None, v2)
+    m3c = merge_manifests(m2c, v2)
     children = {**v2.children, **m2c.children}
-    assert m3c == m2c.evolve(
-        is_placeholder=False, base_version=2, children=children, updated=m3c.updated
-    )
+    assert m3c == m2c.evolve(base_manifest=v2, children=children, updated=m3c.updated)
 
 
 def test_merge_file_manifests():
@@ -131,32 +129,32 @@ def test_merge_file_manifests():
 
     # Initial base manifest
     m1 = v1.to_local("a@a")
-    assert merge_manifests(m1, v1) == m1
+    assert merge_manifests(m1) == m1
 
     # Local change
     m2 = m1.evolve_and_mark_updated(size=1)
-    assert merge_manifests(m2, v1) == m2
+    assert merge_manifests(m2) == m2
 
     # Successful upload
     v2 = m2.to_remote().evolve(version=2)
-    m3 = merge_manifests(m2, v1, v2)
+    m3 = merge_manifests(m2, v2)
     assert m3 == v2.to_local("a@a")
 
     # Two local changes
     m4 = m3.evolve_and_mark_updated(size=2)
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
     m5 = m4.evolve_and_mark_updated(size=3)
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote().evolve(version=3)
-    m6 = merge_manifests(m5, v2, v3)
-    assert m6 == m5.evolve(base_version=3)
+    m6 = merge_manifests(m5, v3)
+    assert m6 == m5.evolve(base_manifest=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, size=4, author="b@b")
     with pytest.raises(FSFileConflictError):
-        merge_manifests(m6, v3, v4)
+        merge_manifests(m6, v4)
 
 
 @pytest.mark.trio
@@ -227,14 +225,15 @@ async def test_synchronization_step_transaction(
 
 def test_reshape_blocks(sync_transactions):
     # No block
-    manifest = LocalFileManifest("a@a", EntryID(), blocks=[], dirty_blocks=[])
+    placeholder = LocalFileManifest.make_placeholder("a@a", EntryID())
+    manifest = placeholder.evolve()
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
     assert blocks == old_blocks == new_blocks == missing == []
 
     # One block
     access = BlockAccess.from_block(b"abc", 0)
-    manifest = LocalFileManifest("a@a", EntryID(), blocks=[access], dirty_blocks=[], size=3)
+    manifest = placeholder.evolve(blocks=[access], dirty_blocks=[], size=3)
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
     assert old_blocks == new_blocks == missing == []
@@ -242,7 +241,7 @@ def test_reshape_blocks(sync_transactions):
 
     # One dirty block
     access = BlockAccess.from_block(b"abc", 0)
-    manifest = LocalFileManifest("a@a", EntryID(), blocks=[], dirty_blocks=[access], size=3)
+    manifest = placeholder.evolve(blocks=[], dirty_blocks=[access], size=3)
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
     assert old_blocks == new_blocks == missing == []
@@ -256,7 +255,7 @@ def test_reshape_blocks(sync_transactions):
         sync_transactions.local_storage.set_dirty_block(access.id, data)
         size += len(data)
         dirty.append(access)
-    manifest = LocalFileManifest("a@a", EntryID(), blocks=[], dirty_blocks=dirty, size=size)
+    manifest = placeholder.evolve(blocks=[], dirty_blocks=dirty, size=size)
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
     assert missing == []
@@ -278,7 +277,7 @@ def test_reshape_blocks(sync_transactions):
         sync_transactions.local_storage.set_dirty_block(access.id, data)
         size += len(data)
         dirty.append(access)
-    manifest = LocalFileManifest("a@a", EntryID(), blocks=clean, dirty_blocks=dirty, size=size)
+    manifest = placeholder.evolve(blocks=clean, dirty_blocks=dirty, size=size)
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
     assert missing == []
@@ -299,7 +298,7 @@ def test_reshape_blocks(sync_transactions):
         sync_transactions.local_storage.set_dirty_block(access.id, data)
         size += len(data)
         dirty.append(access)
-    manifest = LocalFileManifest("a@a", EntryID(), blocks=clean, dirty_blocks=dirty, size=size)
+    manifest = placeholder.evolve(blocks=clean, dirty_blocks=dirty, size=size)
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
     assert missing == clean
@@ -321,7 +320,8 @@ async def test_file_reshape(sync_transactions):
 
     # No block
     entry_id = EntryID()
-    manifest = LocalFileManifest(device_id, entry_id, blocks=[], dirty_blocks=[])
+    placeholder = LocalFileManifest.make_placeholder(device_id, entry_id)
+    manifest = placeholder.evolve()
     sync_transactions.local_storage.set_manifest(entry_id, manifest)
 
     await sync_transactions.file_reshape(entry_id)
@@ -329,7 +329,7 @@ async def test_file_reshape(sync_transactions):
     # One block
     entry_id = EntryID()
     access = BlockAccess.from_block(b"abc", 0)
-    manifest = LocalFileManifest(device_id, EntryID(), blocks=[access], dirty_blocks=[], size=3)
+    manifest = placeholder.evolve(blocks=[access], dirty_blocks=[], size=3)
     sync_transactions.local_storage.set_manifest(entry_id, manifest)
 
     await sync_transactions.file_reshape(entry_id)
@@ -337,7 +337,7 @@ async def test_file_reshape(sync_transactions):
     # One dirty block
     entry_id = EntryID()
     access = BlockAccess.from_block(b"abc", 0)
-    manifest = LocalFileManifest(device_id, EntryID(), blocks=[], dirty_blocks=[access], size=3)
+    manifest = placeholder.evolve(blocks=[], dirty_blocks=[access], size=3)
     sync_transactions.local_storage.set_manifest(entry_id, manifest)
 
     await sync_transactions.file_reshape(entry_id)
@@ -354,7 +354,7 @@ async def test_file_reshape(sync_transactions):
         sync_transactions.local_storage.set_dirty_block(access.id, data)
         size += len(data)
         dirty.append(access)
-    manifest = LocalFileManifest(device_id, EntryID(), blocks=[], dirty_blocks=dirty, size=size)
+    manifest = placeholder.evolve(blocks=[], dirty_blocks=dirty, size=size)
     sync_transactions.local_storage.set_manifest(entry_id, manifest)
 
     await sync_transactions.file_reshape(entry_id)
@@ -381,7 +381,7 @@ async def test_file_reshape(sync_transactions):
         sync_transactions.local_storage.set_dirty_block(access.id, data)
         size += len(data)
         dirty.append(access)
-    manifest = LocalFileManifest(device_id, EntryID(), blocks=clean, dirty_blocks=dirty, size=size)
+    manifest = placeholder.evolve(blocks=clean, dirty_blocks=dirty, size=size)
     sync_transactions.local_storage.set_manifest(entry_id, manifest)
 
     await sync_transactions.file_reshape(entry_id)
@@ -410,7 +410,9 @@ async def test_get_minimal_remote_manifest(
     # Workspace manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
     local = sync_transactions.local_storage.get_manifest(w_id)
-    assert minimal == local.to_remote().evolve(version=1, children={}, updated=local.created)
+    expected = local.to_remote().evolve(version=1, children={}, updated=local.created)
+    assert minimal == expected
+
     await sync_transactions.synchronization_step(w_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(w_id) is None
 

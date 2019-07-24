@@ -217,7 +217,7 @@ class UserFS:
         # TODO: At the moment, a workspace manifest is its own parent
         # Maybe a the data model should be updated to remove the parent_id
         # attribute for the workspace manifest classes
-        workspace_manifest = LocalWorkspaceManifest(
+        workspace_manifest = LocalWorkspaceManifest.make_placeholder(
             author=self.device.device_id, parent_id=workspace_entry.id
         )
         async with self._update_user_manifest_lock:

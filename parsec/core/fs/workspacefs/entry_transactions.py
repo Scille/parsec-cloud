@@ -75,11 +75,12 @@ class EntryTransactions:
     async def _load_and_lock_manifest(self, entry_id: EntryID):
         async with self.local_storage.lock_entry_id(entry_id):
             try:
-                yield self.local_storage.get_manifest(entry_id)
+                local_manifest = self.local_storage.get_manifest(entry_id)
             except LocalStorageMissingError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(exc.id)
-                self.local_storage.set_base_manifest(entry_id, remote_manifest)
-                yield self.local_storage.get_manifest(entry_id)
+                local_manifest = remote_manifest.to_local(self.local_author)
+                self.local_storage.set_manifest(entry_id, local_manifest)
+            yield local_manifest
 
     async def _load_manifest(self, entry_id: EntryID) -> LocalManifest:
         async with self._load_and_lock_manifest(entry_id) as manifest:
@@ -378,7 +379,7 @@ class EntryTransactions:
 
             # Create folder
             child_entry_id = EntryID()
-            child_manifest = LocalFolderManifest(self.local_author, parent.id)
+            child_manifest = LocalFolderManifest.make_placeholder(self.local_author, parent.id)
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
@@ -409,7 +410,7 @@ class EntryTransactions:
 
             # Create file
             child_entry_id = EntryID()
-            child_manifest = LocalFileManifest(self.local_author, parent.id)
+            child_manifest = LocalFileManifest.make_placeholder(self.local_author, parent.id)
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(

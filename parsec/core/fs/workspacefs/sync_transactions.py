@@ -14,6 +14,7 @@ from parsec.core.types import (
     Manifest,
     LocalManifest,
     BlockAccess,
+    LocalFileManifest,
 )
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
 from parsec.core.fs.workspacefs.file_transactions import DirtyBlockBuffer, BlockBuffer
@@ -132,14 +133,9 @@ def merge_folder_children(
     return children
 
 
-def merge_manifests(
-    local_manifest: LocalManifest,
-    base_manifest: Optional[Manifest] = None,
-    remote_manifest: Optional[Manifest] = None,
-):
+def merge_manifests(local_manifest: LocalManifest, remote_manifest: Optional[Manifest] = None):
     # Exctract versions
     local_version = local_manifest.base_version
-    assert base_manifest is None or base_manifest.version == local_version
     remote_version = local_version if remote_manifest is None else remote_manifest.version
 
     # The remote hasn't changed
@@ -159,7 +155,7 @@ def merge_manifests(
 
     # The remote changes are ours: no reason to risk a meaningless conflict
     if remote_manifest.author == local_manifest.author:
-        return local_manifest.evolve(is_placeholder=False, base_version=remote_version)
+        return local_manifest.evolve(base_manifest=remote_manifest)
 
     # The remote has been updated by some other device
     assert remote_manifest.author != local_manifest.author
@@ -169,15 +165,14 @@ def merge_manifests(
         raise FSFileConflictError(local_manifest, remote_manifest)
 
     # Solve the folder conflict
-    base_manifest_children = {} if base_manifest is None else base_manifest.children
     new_children = merge_folder_children(
-        base_manifest_children,
+        local_manifest.base_manifest.children,
         local_manifest.children,
         remote_manifest.children,
         remote_manifest.author,
     )
     return local_manifest.evolve_and_mark_updated(
-        is_placeholder=False, base_version=remote_version, children=new_children
+        base_manifest=remote_manifest, children=new_children
     )
 
 
@@ -215,11 +210,7 @@ class SyncTransactions:
         manifest = self.local_storage.get_manifest(enty_id)
         if not manifest.is_placeholder:
             return None
-        if is_file_manifest(manifest):
-            new_manifest = manifest.evolve(updated=manifest.created, size=0, blocks=[])
-        else:
-            new_manifest = manifest.evolve(updated=manifest.created, children={})
-        return new_manifest.to_remote().evolve(version=1)
+        return manifest.base_manifest.evolve(version=1)
 
     # Atomic transactions
 
@@ -247,41 +238,25 @@ class SyncTransactions:
             if not final and is_file_manifest(local_manifest) and local_manifest.dirty_blocks:
                 raise FSReshapingRequiredError(entry_id)
 
-            # Get base manifest
-            if local_manifest.is_placeholder:
-                base_manifest = None
-            else:
-                base_manifest = self.local_storage.get_base_manifest(entry_id)
-
             # Merge manifests
-            new_local_manifest = merge_manifests(local_manifest, base_manifest, remote_manifest)
+            new_local_manifest = merge_manifests(local_manifest, remote_manifest)
 
             # Extract authors
             local_author = local_manifest.author
-            base_author = local_author if base_manifest is None else base_manifest.author
+            base_author = local_manifest.base_manifest.author
             remote_author = base_author if remote_manifest is None else remote_manifest.author
 
             # Extract versions
-            local_version = local_manifest.base_version
-            new_local_version = new_local_manifest.base_version
-            base_version = 0 if base_manifest is None else base_manifest.version
+            base_version = local_manifest.base_version
+            new_base_version = new_local_manifest.base_version
             remote_version = base_version if remote_manifest is None else remote_manifest.version
 
             # Set the new base manifest
-            if base_version != remote_version:
-                self.local_storage.set_base_manifest(entry_id, remote_manifest)
-
-            # TODO: setting base and local manifest should be done with a single API
-            # call in order to prevent corruption if a failure happens at this moment.
-            # The local storage should also ensure that base_manifest.version corresponds
-            # to local_manifest.base_version at all times
-
-            # Set the new local manifest
-            if new_local_manifest.need_sync:
+            if base_version != remote_version or new_local_manifest.need_sync:
                 self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
-            if local_version != new_local_version and remote_author != local_author:
+            if base_version != new_base_version and remote_author != local_author:
                 self._send_event("fs.entry.downsynced", id=entry_id)
 
             # Send synced event
@@ -368,19 +343,20 @@ class SyncTransactions:
                 new_name = get_conflict_filename(
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
-                new_manifest = current_manifest.evolve(
-                    blocks=new_blocks,
-                    dirty_blocks=new_dirty_blocks,
-                    base_version=0,
-                    is_placeholder=True,
+                new_manifest = LocalFileManifest.make_placeholder(
+                    author=current_manifest.author, parent_id=parent_id
+                ).evolve(
+                    size=current_manifest.size, blocks=new_blocks, dirty_blocks=new_dirty_blocks
                 )
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_entry_id}
                 )
+                other_manifest = remote_manifest.to_local(current_manifest.author)
 
+                # Set manifests
                 self.local_storage.set_manifest(new_entry_id, new_manifest)
                 self.local_storage.set_manifest(parent_id, new_parent_manifest)
-                self.local_storage.set_base_manifest(entry_id, remote_manifest)
+                self.local_storage.set_manifest(entry_id, other_manifest)
 
     def _reshape_blocks(self, manifest):
         # Merge the blocks

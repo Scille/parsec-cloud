@@ -29,7 +29,7 @@ class PersistentStorage:
     """Manage the access to the persistent storage.
 
     That includes:
-    - the sqlite database for clean data (manifests and block metadata)
+    - the sqlite database for clean data (block metadata)
     - the sqlite database for dirty data (manifests and block metadata)
     - the clean block files
     - the dirty block files
@@ -169,10 +169,10 @@ class PersistentStorage:
             if os.path.isfile(os.path.join(cache, f))
         )
 
-    # Generic manifest operations
+    # Manifest operations
 
-    def _get_manifest(self, conn: Connection, entry_id: EntryID):
-        with self._open_cursor(conn) as cursor:
+    def get_manifest(self, entry_id: EntryID):
+        with self.open_dirty_cursor() as cursor:
             cursor.execute(
                 "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(entry_id),)
             )
@@ -182,46 +182,24 @@ class PersistentStorage:
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(self.local_symkey, blob)
 
-    def _set_manifest(self, conn: Connection, entry_id: EntryID, raw: bytes):
+    def set_manifest(self, entry_id: EntryID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
-        with self._open_cursor(conn) as cursor:
+        with self.open_dirty_cursor() as cursor:
             cursor.execute(
                 """INSERT OR REPLACE INTO manifests (manifest_id, blob)
                 VALUES (?, ?)""",
                 (str(entry_id), ciphered),
             )
 
-    def _clear_manifest(self, conn: Connection, entry_id: EntryID):
-        with self._open_cursor(conn) as cursor:
+    def clear_manifest(self, entry_id: EntryID):
+        with self.open_dirty_cursor() as cursor:
             cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(entry_id),))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted:
             raise LocalStorageMissingError(entry_id)
-
-    # Clean manifest operations
-
-    def get_clean_manifest(self, entry_id: EntryID):
-        return self._get_manifest(self.clean_conn, entry_id)
-
-    def set_clean_manifest(self, entry_id: EntryID, raw: bytes):
-        self._set_manifest(self.clean_conn, entry_id, raw)
-
-    def clear_clean_manifest(self, entry_id: EntryID):
-        self._clear_manifest(self.clean_conn, entry_id)
-
-    # Dirty manifest operations
-
-    def get_dirty_manifest(self, entry_id: EntryID):
-        return self._get_manifest(self.dirty_conn, entry_id)
-
-    def set_dirty_manifest(self, entry_id: EntryID, raw: bytes):
-        self._set_manifest(self.dirty_conn, entry_id, raw)
-
-    def clear_dirty_manifest(self, entry_id: EntryID):
-        self._clear_manifest(self.dirty_conn, entry_id)
 
     # Generic block operations
 

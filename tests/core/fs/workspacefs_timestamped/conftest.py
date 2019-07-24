@@ -5,7 +5,7 @@ import pendulum
 
 from tests.common import freeze_time
 
-
+day0 = pendulum.Pendulum(1999, 12, 31)
 day1 = pendulum.Pendulum(2000, 1, 1)
 day2 = pendulum.Pendulum(2000, 1, 2)
 day3 = pendulum.Pendulum(2000, 1, 3)
@@ -16,10 +16,11 @@ day5 = pendulum.Pendulum(2000, 1, 5)
 @pytest.fixture
 @pytest.mark.trio
 async def alice_workspace(alice_user_fs, running_backend):
-    with freeze_time(day1):
+    with freeze_time(day0):
         wid = await alice_user_fs.workspace_create("w")
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
+    with freeze_time(day1):
         await workspace.sync("/")
     with freeze_time(day2):
         await workspace.touch("/foo/bar")
@@ -38,6 +39,11 @@ async def alice_workspace(alice_user_fs, running_backend):
         await workspace.sync("/")
 
     return workspace
+
+
+@pytest.fixture
+async def alice_workspace_t0(alice_workspace):
+    return await alice_workspace.to_timestamped(day0)
 
 
 @pytest.fixture

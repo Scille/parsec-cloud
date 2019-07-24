@@ -19,7 +19,7 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
-from parsec.core.types import WorkspaceManifest
+from parsec.core.types import LocalWorkspaceManifest
 
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
 
@@ -197,25 +197,20 @@ class WorkspaceFS:
         return ReencryptionNeed(user_revoked=tuple(user_revoked), role_revoked=tuple(role_revoked))
 
     # Timestamped version
+
     async def to_timestamped(self, timestamp: Pendulum):
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
         try:
             await workspace.path_info("/")
         except FSRemoteManifestNotFoundBadVersion:  # as exc:
             # Temp hack...
-            fake_manifest = WorkspaceManifest(
-                author=self.device.device_id,
-                parent_id=self.workspace_id,
-                version=1,
-                created=timestamp,
-                updated=timestamp,
-                children=[],
+            fake_manifest = LocalWorkspaceManifest.make_placeholder(
+                author=self.device.device_id, parent_id=self.workspace_id, created=timestamp
             )
-            workspace.local_storage.set_base_manifest(
-                workspace.get_workspace_entry().id, fake_manifest
-            )
+            workspace.local_storage.local_manifest_cache[self.workspace_id] = fake_manifest
             # TODO : use this exception instead of mocking an empty fs when the API is ready
             # raise FSWorkspaceTimestampedTooEarly from exc
+
         return workspace
 
     # Pathlib-like interface
@@ -544,7 +539,7 @@ class WorkspaceFS:
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest or self.local_storage.get_base_manifest(entry_id)
+                return remote_manifest or self.local_storage.get_manifest(entry_id).base_manifest
 
             # Synchronize placeholder children
             if is_folder_manifest(new_remote_manifest):
@@ -636,7 +631,7 @@ class WorkspaceFS:
             except LocalStorageMissingError:
                 return result
 
-            result.update(attr.asdict(manifest))
+            result.update(manifest.asdict())
             try:
                 children = manifest.children
             except AttributeError:

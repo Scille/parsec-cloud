@@ -35,7 +35,9 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
 
         with freeze_time("2000-01-01"):
             workspace_entry = WorkspaceEntry("test")
-            workspace_manifest = LocalWorkspaceManifest(device.device_id, device.user_manifest_id)
+            workspace_manifest = LocalWorkspaceManifest.make_placeholder(
+                device.device_id, device.user_manifest_id
+            )
         local_storage.set_manifest(workspace_entry.id, workspace_manifest)
 
         remote_devices_manager = remote_devices_manager_factory(device)

@@ -7,7 +7,19 @@ from parsec.core.types import FsPath
 
 
 @pytest.mark.trio
-async def test_path_info(alice_workspace_t1, alice_workspace_t2):
+async def test_path_info(alice_workspace_t0, alice_workspace_t1, alice_workspace_t2):
+    info = await alice_workspace_t0.path_info("/")
+    assert info == {
+        "base_version": 0,
+        "children": [],
+        "created": ANY,
+        "id": ANY,
+        "is_placeholder": True,
+        "need_sync": True,
+        "type": "folder",
+        "updated": ANY,
+    }
+
     info = await alice_workspace_t1.path_info("/")
     assert info == {
         "base_version": ANY,

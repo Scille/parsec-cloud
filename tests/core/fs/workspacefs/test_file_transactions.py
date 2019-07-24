@@ -43,14 +43,9 @@ def foo_txt(alice, file_transactions):
     local_storage = file_transactions.local_storage
     with freeze_time("2000-01-02"):
         entry_id = EntryID()
-        manifest = LocalFileManifest(
-            author=alice.device_id,
-            parent_id=EntryID(),
-            is_placeholder=False,
-            need_sync=False,
-            base_version=1,
-        ).to_remote()
-        local_storage.set_base_manifest(entry_id, manifest)
+        placeholder = LocalFileManifest.make_placeholder(alice.device_id, EntryID())
+        manifest = placeholder.to_remote().evolve(version=1)
+        local_storage.set_manifest(entry_id, manifest.to_local(manifest.author))
     return File(local_storage, entry_id)
 
 
@@ -220,7 +215,9 @@ def test_file_operations(
             )
 
             self.entry_id = EntryID()
-            manifest = LocalFileManifest(self.device.device_id, parent_id=EntryID())
+            manifest = LocalFileManifest.make_placeholder(
+                self.device.device_id, parent_id=EntryID()
+            )
             self.local_storage.set_manifest(self.entry_id, manifest)
 
             self.fd = self.local_storage.create_file_descriptor(self.entry_id)
