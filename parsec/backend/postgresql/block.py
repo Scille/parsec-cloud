@@ -3,6 +3,7 @@
 from triopg.exceptions import UniqueViolationError
 from uuid import UUID
 import pendulum
+from pypika import Parameter
 
 from parsec.types import DeviceID, OrganizationID
 from parsec.backend.vlob import BaseVlobComponent
@@ -16,7 +17,64 @@ from parsec.backend.block import (
     BlockInMaintenanceError,
 )
 from parsec.backend.postgresql.handler import PGHandler
-from parsec.backend.postgresql.realm import get_realm_status, RealmNotFoundError
+from parsec.backend.postgresql.utils import Query, fn_exists
+from parsec.backend.postgresql.tables import (
+    t_block,
+    t_block_data,
+    q_block,
+    q_realm,
+    q_user_can_read_vlob,
+    q_user_can_write_vlob,
+    q_user_internal_id,
+    q_realm_internal_id,
+    q_organization_internal_id,
+    q_device_internal_id,
+)
+from parsec.backend.postgresql.realm_queries.maintenance import get_realm_status, RealmNotFoundError
+
+
+_q_get_realm_id_from_block_id = (
+    q_block(organization_id=Parameter("$1"), block_id=Parameter("$2"))
+    .select(q_realm(_id=t_block.realm).select("realm_id"))
+    .get_sql()
+)
+
+
+_q_get_block_meta = (
+    q_block(organization_id=Parameter("$1"), block_id=Parameter("$2"))
+    .select(
+        "deleted_on",
+        q_user_can_read_vlob(
+            user=q_user_internal_id(organization_id=Parameter("$1"), user_id=Parameter("$3")),
+            realm=t_block.realm,
+        ),
+    )
+    .get_sql()
+)
+
+
+_q_get_block_write_right_and_unicity = Query.select(
+    q_user_can_write_vlob(
+        user=q_user_internal_id(organization_id=Parameter("$1"), user_id=Parameter("$2")),
+        realm=q_realm_internal_id(organization_id=Parameter("$1"), realm_id=Parameter("$3")),
+    ),
+    fn_exists(q_block(organization_id=Parameter("$1"), block_id=Parameter("$4"))),
+).get_sql()
+
+
+_q_insert_block = (
+    Query.into(t_block)
+    .columns("organization", "block_id", "realm", "author", "size", "created_on")
+    .insert(
+        q_organization_internal_id(Parameter("$1")),
+        Parameter("$2"),
+        q_realm_internal_id(organization_id=Parameter("$1"), realm_id=Parameter("$3")),
+        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$4")),
+        Parameter("$5"),
+        Parameter("$6"),
+    )
+    .get_sql()
+)
 
 
 async def _check_realm(conn, organization_id, realm_id):
@@ -28,22 +86,6 @@ async def _check_realm(conn, organization_id, realm_id):
 
     if rep["maintenance_type"]:
         raise BlockInMaintenanceError("Data realm is currently under maintenance")
-
-
-async def _get_realm_id_from_block_id(conn, organization_id, block_id):
-    realm_id = await conn.fetchval(
-        """
-SELECT get_realm_id(realm)
-FROM block
-WHERE _id = get_block_internal_id($1, $2)
-LIMIT 1
-            """,
-        organization_id,
-        block_id,
-    )
-    if not realm_id:
-        raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
-    return realm_id
 
 
 class PGBlockComponent(BaseBlockComponent):
@@ -60,26 +102,12 @@ class PGBlockComponent(BaseBlockComponent):
     async def read(
         self, organization_id: OrganizationID, author: DeviceID, block_id: UUID
     ) -> bytes:
-        async with self.dbh.pool.acquire() as conn:
-            realm_id = await _get_realm_id_from_block_id(conn, organization_id, block_id)
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            realm_id = await conn.fetchval(_q_get_realm_id_from_block_id, organization_id, block_id)
+            if not realm_id:
+                raise BlockNotFoundError(f"Realm `{realm_id}` doesn't exist")
             await _check_realm(conn, organization_id, realm_id)
-            ret = await conn.fetchrow(
-                """
-SELECT
-    deleted_on,
-    user_can_read_vlob(
-        get_user_internal_id($1, $2),
-        realm
-    )
-FROM block
-WHERE
-    organization = get_organization_internal_id($1)
-    AND block_id = $3
-""",
-                organization_id,
-                author.user_id,
-                block_id,
-            )
+            ret = await conn.fetchrow(_q_get_block_meta, organization_id, block_id, author.user_id)
             if not ret or ret[0]:
                 raise BlockNotFoundError()
 
@@ -96,29 +124,16 @@ WHERE
         realm_id: UUID,
         block: bytes,
     ) -> None:
-        async with self.dbh.pool.acquire() as conn:
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
             await _check_realm(conn, organization_id, realm_id)
 
             # 1) Check access rights and block unicity
             ret = await conn.fetchrow(
-                """
-SELECT
-    user_can_write_vlob(
-        get_user_internal_id($1, $2),
-        get_realm_internal_id($1, $4)
-    ),
-    EXISTS (
-        SELECT _id
-        FROM block
-        WHERE
-            organization = get_organization_internal_id($1)
-            AND block_id = $3
-    )
-""",
+                _q_get_block_write_right_and_unicity,
                 organization_id,
                 author.user_id,
-                block_id,
                 realm_id,
+                block_id,
             )
 
             if not ret[0]:
@@ -140,27 +155,11 @@ SELECT
 
             # 3) Insert the block metadata into the database
             ret = await conn.execute(
-                """
-INSERT INTO block (
-    organization,
-    block_id,
-    realm,
-    author,
-    size,
-    created_on
-)
-SELECT
-    get_organization_internal_id($1),
-    $3,
-    get_realm_internal_id($1, $4),
-    get_device_internal_id($1, $2),
-    $5,
-    $6
-""",
+                _q_insert_block,
                 organization_id,
-                author,
                 block_id,
                 realm_id,
+                author,
                 len(block),
                 pendulum.now(),
             )
@@ -169,52 +168,41 @@ SELECT
                 raise BlockError(f"Insertion error: {ret}")
 
 
+_q_get_block_data = (
+    Query.from_(t_block_data)
+    .select("data")
+    .where(t_block_data.organization_id == Parameter("$1"))
+    .where(t_block_data.block_id == Parameter("$2"))
+).get_sql()
+
+
+_q_insert_block_data = (
+    Query.into(t_block_data)
+    .columns("organization_id", "block_id", "data")
+    .insert(Parameter("$1"), Parameter("$2"), Parameter("$3"))
+    .get_sql()
+)
+
+
 class PGBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
     async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                ret = await conn.fetchrow(
-                    """
-SELECT data
-FROM block_data
-WHERE
-    organization_id = $1 AND
-    block_id = $2
-""",
-                    organization_id,
-                    id,
-                )
-                if not ret:
-                    raise BlockNotFoundError()
+            ret = await conn.fetchrow(_q_get_block_data, organization_id, id)
+            if not ret:
+                raise BlockNotFoundError()
 
-                return ret[0]
+            return ret[0]
 
     async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                try:
-                    ret = await conn.execute(
-                        """
-INSERT INTO block_data (
-    organization_id,
-    block_id,
-    data
-)
-SELECT
-    $1,
-    $2,
-    $3
-""",
-                        organization_id,
-                        id,
-                        block,
-                    )
-                    if ret != "INSERT 0 1":
-                        raise BlockError(f"Insertion error: {ret}")
+            try:
+                ret = await conn.execute(_q_insert_block_data, organization_id, id, block)
+                if ret != "INSERT 0 1":
+                    raise BlockError(f"Insertion error: {ret}")
 
-                except UniqueViolationError:
-                    # Keep calm and stay idempotent
-                    pass
+            except UniqueViolationError:
+                # Keep calm and stay idempotent
+                pass
