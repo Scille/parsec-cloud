@@ -61,43 +61,43 @@ def test_merge_folder_manifests():
 
     # Initial base manifest
     m1 = v1.to_local("a@a")
-    assert merge_manifests(m1, v1) == m1
+    assert merge_manifests(m1) == m1
 
     # Local change
     m2 = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    assert merge_manifests(m2, v1) == m2
+    assert merge_manifests(m2) == m2
 
     # Successful upload
     v2 = m2.to_remote().evolve(version=2)
-    m3 = merge_manifests(m2, v1, v2)
+    m3 = merge_manifests(m2, v2)
     assert m3 == v2.to_local("a@a")
 
     # Two local changes
     m4 = m3.evolve_children_and_mark_updated({"b": EntryID()})
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
     m5 = m4.evolve_children_and_mark_updated({"c": EntryID()})
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote().evolve(version=3)
-    m6 = merge_manifests(m5, v2, v3)
+    m6 = merge_manifests(m5, v3)
     assert m6 == m5.evolve(base_manifest=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, children={"d": EntryID(), **v3.children}, author="b@b")
-    m7 = merge_manifests(m6, v3, v4)
+    m7 = merge_manifests(m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
 
     # Successful upload
     v5 = m7.to_remote().evolve(version=5)
-    m8 = merge_manifests(m7, v4, v5)
+    m8 = merge_manifests(m7, v5)
     assert m8 == v5.to_local("a@a")
 
     # The remote has changed
     v6 = v5.evolve(version=6, children={"e": EntryID(), **v5.children}, author="b@b")
-    m9 = merge_manifests(m8, v5, v6)
+    m9 = merge_manifests(m8, v6)
     assert m9 == v6.to_local("a@a")
 
 
@@ -107,16 +107,16 @@ def test_merge_manifests_with_a_placeholder():
     assert m2 == m1
     v1 = m1.to_remote().evolve(version=1)
 
-    m2a = merge_manifests(m1, None, v1)
+    m2a = merge_manifests(m1, v1)
     assert m2a == v1.to_local(author="a@a")
 
     m2b = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    m3b = merge_manifests(m2b, None, v1)
+    m3b = merge_manifests(m2b, v1)
     assert m3b == m2b.evolve(base_manifest=v1)
 
     v2 = v1.evolve(version=2, author="b@b", children={"b": EntryID()})
     m2c = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    m3c = merge_manifests(m2c, None, v2)
+    m3c = merge_manifests(m2c, v2)
     children = {**v2.children, **m2c.children}
     assert m3c == m2c.evolve(base_manifest=v2, children=children, updated=m3c.updated)
 
@@ -129,32 +129,32 @@ def test_merge_file_manifests():
 
     # Initial base manifest
     m1 = v1.to_local("a@a")
-    assert merge_manifests(m1, v1) == m1
+    assert merge_manifests(m1) == m1
 
     # Local change
     m2 = m1.evolve_and_mark_updated(size=1)
-    assert merge_manifests(m2, v1) == m2
+    assert merge_manifests(m2) == m2
 
     # Successful upload
     v2 = m2.to_remote().evolve(version=2)
-    m3 = merge_manifests(m2, v1, v2)
+    m3 = merge_manifests(m2, v2)
     assert m3 == v2.to_local("a@a")
 
     # Two local changes
     m4 = m3.evolve_and_mark_updated(size=2)
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
     m5 = m4.evolve_and_mark_updated(size=3)
-    assert merge_manifests(m4, v2) == m4
+    assert merge_manifests(m4) == m4
 
     # M4 has been successfully uploaded
     v3 = m4.to_remote().evolve(version=3)
-    m6 = merge_manifests(m5, v2, v3)
+    m6 = merge_manifests(m5, v3)
     assert m6 == m5.evolve(base_manifest=v3)
 
     # The remote has changed
     v4 = v3.evolve(version=4, size=4, author="b@b")
     with pytest.raises(FSFileConflictError):
-        merge_manifests(m6, v3, v4)
+        merge_manifests(m6, v4)
 
 
 @pytest.mark.trio

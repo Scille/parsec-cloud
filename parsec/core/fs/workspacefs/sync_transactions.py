@@ -133,14 +133,9 @@ def merge_folder_children(
     return children
 
 
-def merge_manifests(
-    local_manifest: LocalManifest,
-    base_manifest: Optional[Manifest] = None,
-    remote_manifest: Optional[Manifest] = None,
-):
+def merge_manifests(local_manifest: LocalManifest, remote_manifest: Optional[Manifest] = None):
     # Exctract versions
     local_version = local_manifest.base_version
-    assert base_manifest is None or base_manifest.version == local_version
     remote_version = local_version if remote_manifest is None else remote_manifest.version
 
     # The remote hasn't changed
@@ -170,9 +165,8 @@ def merge_manifests(
         raise FSFileConflictError(local_manifest, remote_manifest)
 
     # Solve the folder conflict
-    base_manifest_children = {} if base_manifest is None else base_manifest.children
     new_children = merge_folder_children(
-        base_manifest_children,
+        local_manifest.base_manifest.children,
         local_manifest.children,
         remote_manifest.children,
         remote_manifest.author,
@@ -244,21 +238,17 @@ class SyncTransactions:
             if not final and is_file_manifest(local_manifest) and local_manifest.dirty_blocks:
                 raise FSReshapingRequiredError(entry_id)
 
-            # Get base manifest
-            base_manifest = local_manifest.base_manifest
-
             # Merge manifests
-            new_local_manifest = merge_manifests(local_manifest, base_manifest, remote_manifest)
+            new_local_manifest = merge_manifests(local_manifest, remote_manifest)
 
             # Extract authors
             local_author = local_manifest.author
-            base_author = local_author if base_manifest is None else base_manifest.author
+            base_author = local_manifest.base_manifest.author
             remote_author = base_author if remote_manifest is None else remote_manifest.author
 
             # Extract versions
-            local_version = local_manifest.base_version
-            new_local_version = new_local_manifest.base_version
-            base_version = 0 if base_manifest is None else base_manifest.version
+            base_version = local_manifest.base_version
+            new_base_version = new_local_manifest.base_version
             remote_version = base_version if remote_manifest is None else remote_manifest.version
 
             # Set the new base manifest
@@ -266,7 +256,7 @@ class SyncTransactions:
                 self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
-            if local_version != new_local_version and remote_author != local_author:
+            if base_version != new_base_version and remote_author != local_author:
                 self._send_event("fs.entry.downsynced", id=entry_id)
 
             # Send synced event
