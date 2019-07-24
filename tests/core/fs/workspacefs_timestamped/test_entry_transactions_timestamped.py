@@ -16,8 +16,8 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
         "base_version": 1,
         "is_placeholder": False,
         "need_sync": False,
-        "created": Pendulum(2000, 1, 1),
-        "updated": Pendulum(2000, 1, 1),
+        "created": Pendulum(1999, 12, 31),
+        "updated": Pendulum(1999, 12, 31),
         "children": ["foo"],
     }
 
@@ -28,7 +28,7 @@ async def test_root_entry_info(alice_workspace_t2, alice_workspace_t4):
         "base_version": 2,
         "is_placeholder": False,
         "need_sync": False,
-        "created": Pendulum(2000, 1, 1),
+        "created": Pendulum(1999, 12, 31),
         "updated": Pendulum(2000, 1, 4),
         "children": ["files", "foo"],
     }
