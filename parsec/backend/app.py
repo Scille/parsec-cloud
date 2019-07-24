@@ -17,7 +17,7 @@ from parsec.api.protocol import (
 from parsec.backend.events import EventsComponent
 from parsec.backend.utils import check_anonymous_api_allowed
 from parsec.backend.blockstore import blockstore_factory
-from parsec.backend.drivers.memory import (
+from parsec.backend.memory import (
     MemoryPingComponent,
     MemoryOrganizationComponent,
     MemoryUserComponent,
@@ -26,7 +26,7 @@ from parsec.backend.drivers.memory import (
     MemoryVlobComponent,
     MemoryBlockComponent,
 )
-from parsec.backend.drivers.postgresql import (
+from parsec.backend.postgresql import (
     PGHandler,
     PGOrganizationComponent,
     PGPingComponent,

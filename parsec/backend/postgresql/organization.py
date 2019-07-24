@@ -15,7 +15,7 @@ from parsec.backend.organization import (
     OrganizationNotFoundError,
     OrganizationFirstUserCreationError,
 )
-from parsec.backend.drivers.postgresql.handler import PGHandler
+from parsec.backend.postgresql.handler import PGHandler
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):

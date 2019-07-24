@@ -15,8 +15,8 @@ from parsec.backend.block import (
     BlockAccessError,
     BlockInMaintenanceError,
 )
-from parsec.backend.drivers.postgresql.handler import PGHandler
-from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
+from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.realm import get_realm_status, RealmNotFoundError
 
 
 async def _check_realm(conn, organization_id, realm_id):

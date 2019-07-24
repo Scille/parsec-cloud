@@ -10,7 +10,7 @@ from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
-from parsec.backend.drivers.postgresql import init_db
+from parsec.backend.postgresql import init_db
 
 
 __all__ = ("backend_cmd", "init_cmd", "run_cmd")

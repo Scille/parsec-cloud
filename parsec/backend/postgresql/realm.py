@@ -20,8 +20,8 @@ from parsec.backend.realm import (
     RealmInMaintenanceError,
     RealmNotInMaintenanceError,
 )
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
-from parsec.backend.drivers.postgresql.message import send_message
+from parsec.backend.postgresql.handler import send_signal, PGHandler
+from parsec.backend.postgresql.message import send_message
 
 
 _STR_TO_ROLE = {role.value: role for role in RealmRole}

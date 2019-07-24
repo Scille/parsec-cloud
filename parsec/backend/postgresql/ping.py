@@ -2,7 +2,7 @@
 
 from parsec.types import DeviceID, OrganizationID
 from parsec.backend.ping import BasePingComponent
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
+from parsec.backend.postgresql.handler import send_signal, PGHandler
 
 
 class PGPingComponent(BasePingComponent):

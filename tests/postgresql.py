@@ -6,7 +6,7 @@ import asyncio
 import asyncpg
 from asyncpg.cluster import TempCluster
 
-from parsec.backend.drivers.postgresql.handler import _init_db
+from parsec.backend.postgresql.handler import _init_db
 
 
 def _patch_url_if_xdist(url):

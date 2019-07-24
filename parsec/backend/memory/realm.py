@@ -23,8 +23,8 @@ from parsec.backend.realm import (
     RealmInMaintenanceError,
     RealmNotInMaintenanceError,
 )
-from parsec.backend.drivers.memory.user import MemoryUserComponent, UserNotFoundError
-from parsec.backend.drivers.memory.message import MemoryMessageComponent
+from parsec.backend.memory.user import MemoryUserComponent, UserNotFoundError
+from parsec.backend.memory.message import MemoryMessageComponent
 
 
 @attr.s
