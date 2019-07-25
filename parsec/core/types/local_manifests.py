@@ -346,7 +346,7 @@ class LocalWorkspaceManifest:
 
 class LocalWorkspaceManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
-    type = fields.CheckedConstant("local_folder_manifest", required=True)
+    type = fields.CheckedConstant("local_workspace_manifest", required=True)
     author = fields.DeviceID(required=True)
     base_manifest = fields.Nested(remote_manifests.WorkspaceManifestSchema, required=True)
     need_sync = fields.Boolean(required=True)
