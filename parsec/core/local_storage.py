@@ -96,7 +96,8 @@ class LocalStorage:
 
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
-        assert task == hazmat.current_task()
+        # TODO: remove `task is None` to ensure that the lock is taken
+        assert task is None or task == hazmat.current_task()
 
     # Manifest interface
 
@@ -113,11 +114,16 @@ class LocalStorage:
         return manifest
 
     def set_manifest(
-        self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False
+        self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        cache_only: bool = False,
+        check_lock_status=True,
     ) -> None:
         assert isinstance(entry_id, EntryID)
         assert manifest.author == self.device_id
-        self._check_lock_status(entry_id)
+        if check_lock_status:
+            self._check_lock_status(entry_id)
         if not cache_only:
             raw = local_manifest_serializer.dumps(manifest)
             self.persistent_storage.set_manifest(entry_id, raw)

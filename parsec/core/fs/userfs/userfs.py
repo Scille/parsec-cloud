@@ -165,7 +165,7 @@ class UserFS:
     def user_manifest_id(self) -> EntryID:
         return self.device.user_manifest_id
 
-    async def get_user_manifest(self) -> LocalUserManifest:
+    def get_user_manifest(self) -> LocalUserManifest:
         """
         Raises: Nothing !
         """
@@ -179,26 +179,27 @@ class UserFS:
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
             user_manifest = LocalUserManifest(author=self.device.device_id)
-            async with self.local_storage.lock_entry_id(self.user_manifest_id):
-                self.local_storage.set_manifest(self.user_manifest_id, user_manifest)
+            self.local_storage.set_manifest(
+                self.user_manifest_id, user_manifest, check_lock_status=False
+            )
             return user_manifest
 
-    async def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
         """
         # Workspace entry can change at any time, so we provide a way for
-        # WorkpaceFS to load it each time it is needed
-        async def _get_workspace_entry():
-            user_manifest = await self.get_user_manifest()
+        # WorskpaeFS to load it each time it is needed
+        def _get_workspace_entry():
+            user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
             return workspace_entry
 
         # Sanity check to make sure workspace_id is valid
-        await _get_workspace_entry()
+        _get_workspace_entry()
 
         return WorkspaceFS(
             workspace_id=workspace_id,
@@ -222,7 +223,7 @@ class UserFS:
             author=self.device.device_id, parent_id=workspace_entry.id
         )
         async with self._update_user_manifest_lock:
-            user_manifest = await self.get_user_manifest()
+            user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             async with self.local_storage.lock_entry_id(workspace_entry.id):
                 self.local_storage.set_manifest(workspace_entry.id, workspace_manifest)
@@ -239,7 +240,7 @@ class UserFS:
             FSWorkspaceNotFoundError
         """
         async with self._update_user_manifest_lock:
-            user_manifest = await self.get_user_manifest()
+            user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
@@ -319,7 +320,7 @@ class UserFS:
             FSBackendOfflineError
             FSWorkspaceNotFoundError
         """
-        user_manifest = await self.get_user_manifest()
+        user_manifest = self.get_user_manifest()
         if user_manifest.need_sync:
             await self._outbound_sync()
         else:
@@ -328,7 +329,7 @@ class UserFS:
     async def _inbound_sync(self) -> None:
         # Retrieve remote
         target_um = await self._fetch_remote_user_manifest()
-        diverged_um = await self.get_user_manifest()
+        diverged_um = self.get_user_manifest()
         if target_um.version == diverged_um.base_version:
             # Nothing new
             return
@@ -345,7 +346,7 @@ class UserFS:
 
             # Merge and store result
             async with self._update_user_manifest_lock:
-                diverged_um = await self.get_user_manifest()
+                diverged_um = self.get_user_manifest()
                 if target_um.base_version <= diverged_um.base_version:
                     # Sync already achieved by a concurrent operation
                     return
@@ -371,7 +372,7 @@ class UserFS:
                 continue
 
     async def _outbound_sync_inner(self):
-        base_um = await self.get_user_manifest()
+        base_um = self.get_user_manifest()
         if not base_um.need_sync:
             return
 
@@ -453,12 +454,12 @@ class UserFS:
 
         # Merge back the manifest in local
         async with self._update_user_manifest_lock:
-            diverged_um = await self.get_user_manifest()
+            diverged_um = self.get_user_manifest()
             # Final merge could have been achieved by a concurrent operation
             if to_sync_um.base_version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-                async with self.local_storage.lock_entry_id(self.user_manifest_id):
-                    self.local_storage.set_manifest(self.user_manifest_id, merged_um)
+            async with self.local_storage.lock_entry_id(self.user_manifest_id):
+                self.local_storage.set_manifest(self.user_manifest_id, merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -467,7 +468,7 @@ class UserFS:
             FSError
             FSBackendOfflineError
         """
-        workspace = await self.get_workspace(workspace_entry.id)
+        workspace = self.get_workspace(workspace_entry.id)
         await workspace.minimal_sync(workspace_entry.id)
 
     async def workspace_share(
@@ -483,7 +484,7 @@ class UserFS:
         if self.device.user_id == recipient:
             raise FSError("Cannot share to oneself")
 
-        user_manifest = await self.get_user_manifest()
+        user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
@@ -594,7 +595,7 @@ class UserFS:
         errors = []
         # Concurrent message processing is totally pointless
         async with self._process_messages_lock:
-            user_manifest = await self.get_user_manifest()
+            user_manifest = self.get_user_manifest()
             initial_last_processed_message = user_manifest.last_processed_message
             try:
                 messages = await self.backend_cmds.message_get(
@@ -624,7 +625,7 @@ class UserFS:
 
             # Update message offset in user manifest
             async with self._update_user_manifest_lock:
-                user_manifest = await self.get_user_manifest()
+                user_manifest = self.get_user_manifest()
                 if user_manifest.last_processed_message < new_last_processed_message:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
@@ -730,7 +731,7 @@ class UserFS:
         )
 
         async with self._update_user_manifest_lock:
-            user_manifest = await self.get_user_manifest()
+            user_manifest = self.get_user_manifest()
 
             # Check if we already know this workspace
             already_existing_entry = user_manifest.get_workspace_entry(workspace_id)
@@ -784,7 +785,7 @@ class UserFS:
             return
 
         async with self._update_user_manifest_lock:
-            user_manifest = await self.get_user_manifest()
+            user_manifest = self.get_user_manifest()
 
             # Save the revocation information in the user manifest
             existing_workspace_entry = user_manifest.get_workspace_entry(workspace_id)
@@ -915,7 +916,7 @@ class UserFS:
             FSWorkspaceNoAccess
             FSWorkspaceNotFoundError
         """
-        user_manifest = await self.get_user_manifest()
+        user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
@@ -964,7 +965,7 @@ class UserFS:
             FSWorkspaceNoAccess
             FSWorkspaceNotFoundError
         """
-        user_manifest = await self.get_user_manifest()
+        user_manifest = self.get_user_manifest()
         workspace_entry = user_manifest.get_workspace_entry(workspace_id)
         if not workspace_entry:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")

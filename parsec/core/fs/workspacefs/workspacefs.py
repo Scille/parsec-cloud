@@ -99,14 +99,15 @@ class WorkspaceFS:
         )
 
     def __repr__(self):
-        return f"<{type(self).__name__}(id={self.workspace_id!r}, name=TODO)>"  # TODO
-        # return f"<{type(self).__name__}(id={self.workspace_id!r}, name={self.workspace_name!r})>"
+        return f"<{type(self).__name__}(id={self.workspace_id!r}, name={self.workspace_name!r})>"
 
-    async def get_workspace_name(self) -> str:
-        return (await self.get_workspace_entry()).name
+    @property
+    def workspace_name(self) -> str:
+        return self.get_workspace_entry().name
 
-    async def get_encryption_revision(self) -> int:
-        return (await self.get_workspace_entry()).encryption_revision
+    @property
+    def encryption_revision(self) -> int:
+        return self.get_workspace_entry().encryption_revision
 
     # Information
 
@@ -162,7 +163,7 @@ class WorkspaceFS:
             FSBackendOfflineError
             FSWorkspaceNoAccess
         """
-        wentry = await self.get_workspace_entry()
+        wentry = self.get_workspace_entry()
         try:
             workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
             if workspace_manifest.is_placeholder:

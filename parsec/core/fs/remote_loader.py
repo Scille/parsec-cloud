@@ -255,7 +255,7 @@ class RemoteLoader:
             FSBadEncryptionRevision
         """
         # Download the vlob
-        workspace_entry = await self.get_workspace_entry()
+        workspace_entry = self.get_workspace_entry()
         try:
             args = await self.backend_cmds.vlob_read(
                 workspace_entry.encryption_revision, entry_id, version=version, timestamp=timestamp
@@ -368,7 +368,7 @@ class RemoteLoader:
         """
         now = pendulum.now()
         assert manifest.author == self.device.device_id
-        workspace_entry = await self.get_workspace_entry()
+        workspace_entry = self.get_workspace_entry()
 
         # Manifest serialization
         try:
