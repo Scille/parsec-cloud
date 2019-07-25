@@ -76,7 +76,7 @@ class PGHandler:
         self.notification_conn = None
         self._task_status = None
         # Goes around recursive import
-        from parsec.backend.drivers.postgresql.realm import _STR_TO_ROLE
+        from parsec.backend.postgresql.realm import _STR_TO_ROLE
 
         self._str_to_role = _STR_TO_ROLE
 

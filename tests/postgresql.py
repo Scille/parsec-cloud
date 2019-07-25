@@ -6,7 +6,7 @@ import asyncio
 import asyncpg
 from asyncpg.cluster import TempCluster
 
-from parsec.backend.drivers.postgresql.handler import _init_db
+from parsec.backend.postgresql.handler import _init_db
 
 
 def _patch_url_if_xdist(url):
@@ -51,6 +51,7 @@ def bootstrap_postgresql_testbed():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_execute_pg_query(_pg_db_url, _init_db))
+    return _pg_db_url
 
 
 async def asyncio_reset_postgresql_testbed():

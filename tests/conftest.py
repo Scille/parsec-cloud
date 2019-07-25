@@ -102,7 +102,11 @@ def pytest_configure(config):
     if config.getoption("--postgresql") and not is_xdist_master(config):
         bootstrap_postgresql_testbed()
     if config.getoption("--run-postgresql-cluster"):
-        bootstrap_postgresql_testbed()
+        pgurl = bootstrap_postgresql_testbed()
+        capturemanager = config.pluginmanager.getplugin("capturemanager")
+        if capturemanager:
+            capturemanager.suspend(in_=True)
+        print(f"usage: PG_URL={pgurl} py.test tests")
         input("Press enter when you're done with...")
         pytest.exit("bye")
 

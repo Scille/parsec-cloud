@@ -18,7 +18,7 @@ from parsec.backend.user import (
     UserAlreadyRevokedError,
     UserNotFoundError,
 )
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
+from parsec.backend.postgresql.handler import send_signal, PGHandler
 
 
 class PGUserComponent(BaseUserComponent):

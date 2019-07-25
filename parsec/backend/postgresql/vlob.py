@@ -17,12 +17,8 @@ from parsec.backend.vlob import (
     VlobInMaintenanceError,
     VlobNotInMaintenanceError,
 )
-from parsec.backend.drivers.postgresql.handler import (
-    PGHandler,
-    send_signal,
-    retry_on_unique_violation,
-)
-from parsec.backend.drivers.postgresql.realm import get_realm_status, RealmNotFoundError
+from parsec.backend.postgresql.handler import PGHandler, send_signal, retry_on_unique_violation
+from parsec.backend.postgresql.realm import get_realm_status, RealmNotFoundError
 
 
 _STR_TO_ROLE = {role.value: role for role in RealmRole}

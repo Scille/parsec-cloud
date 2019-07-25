@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
-from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
+from parsec.backend.postgresql.handler import send_signal, PGHandler
 
 
 async def send_message(conn, organization_id, sender, recipient, timestamp, body):

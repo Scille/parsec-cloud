@@ -9,7 +9,7 @@ from collections import defaultdict
 from parsec.types import DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.api.protocol import RealmRole
-from parsec.backend.drivers.memory.realm import MemoryRealmComponent, RealmNotFoundError
+from parsec.backend.memory.realm import MemoryRealmComponent, RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,

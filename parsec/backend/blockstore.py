@@ -28,12 +28,12 @@ def blockstore_factory(
     config: BaseBlockStoreConfig, postgresql_dbh=None
 ) -> BaseBlockStoreComponent:
     if config.type == "MOCKED":
-        from parsec.backend.drivers.memory import MemoryBlockStoreComponent
+        from parsec.backend.memory import MemoryBlockStoreComponent
 
         return MemoryBlockStoreComponent()
 
     elif config.type == "POSTGRESQL":
-        from parsec.backend.drivers.postgresql import PGBlockStoreComponent
+        from parsec.backend.postgresql import PGBlockStoreComponent
 
         if not postgresql_dbh:
             raise ValueError("PostgreSQL block store is not available")
