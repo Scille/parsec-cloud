@@ -17,6 +17,7 @@ try:
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
     from parsec.core.gui.trio_thread import run_trio_thread
+    from parsec.core.gui import win_registry
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
@@ -66,6 +67,11 @@ def run_gui(config: CoreConfig):
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
         win.showMaximized()
+
+        if config.gui_windows_left_panel:
+            win_registry.add_nav_link(config.mountpoint_base_dir)
+        else:
+            win_registry.remove_nav_link()
 
         def kill_window(*args):
             win.close_app(force=True)

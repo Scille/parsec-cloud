@@ -71,6 +71,7 @@ class CoreConfig:
     gui_check_version_url: str = "https://github.com/Scille/parsec-build/releases/latest"
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
+    gui_windows_left_panel: bool = True
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -92,6 +93,7 @@ def config_factory(
     gui_first_launch: bool = True,
     gui_check_version_at_startup: bool = True,
     gui_workspace_color: bool = False,
+    gui_windows_left_panel: bool = True,
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
@@ -111,6 +113,7 @@ def config_factory(
         gui_first_launch=gui_first_launch,
         gui_check_version_at_startup=gui_check_version_at_startup,
         gui_workspace_color=gui_workspace_color,
+        gui_windows_left_panel=gui_windows_left_panel,
     )
 
 
@@ -171,6 +174,7 @@ def save_config(config: CoreConfig):
                 "gui_first_launch": config.gui_first_launch,
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
                 "gui_workspace_color": config.gui_workspace_color,
+                "gui_windows_left_panel": config.gui_windows_left_panel,
             },
             indent=True,
         )
