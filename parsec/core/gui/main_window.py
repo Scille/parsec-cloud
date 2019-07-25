@@ -148,11 +148,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         assert self.runing_core_job.is_finished()
         if self.runing_core_job.status is not None:
             if "Device has been revoked" in str(self.runing_core_job.exc):
-                show_error(self, _("This device has been revoked."))
+                show_error(
+                    self, _("This device has been revoked."), exception=self.running_core_job.exc
+                )
             else:
                 logger.error("Unhandled error", exc_info=self.runing_core_job.exc)
                 error = "\n".join(traceback.format_tb(self.runing_core_job.exc.__traceback__))
-                show_error(self, _("Unhandled error:\n\n{}").format(error))
+                show_error(
+                    self, _("Unhandled error.").format(error), exception=self.running_core_job.exc
+                )
         self.runing_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -183,24 +187,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = load_device_with_password(key_file, password)
             self.start_core(device)
         except LocalDeviceError as exc:
-            show_error(self, _("Authentication failed ({}).").format(str(exc)))
+            show_error(self, _("Authentication failed."), exception=exc)
 
-        except BackendHandshakeAPIVersionError:
-            show_error(self, _("Incompatible backend API version."))  # TODO
+        except BackendHandshakeAPIVersionError as exc:
+            show_error(self, _("Incompatible backend API version."), exception=exc)
 
-        except BackendDeviceRevokedError:
-            show_error(self, _("This device has been revoked."))
+        except BackendDeviceRevokedError as exc:
+            show_error(self, _("This device has been revoked."), exception=exc)
 
-        except BackendHandshakeError:
-            show_error(self, _("User not registered in the backend."))
+        except BackendHandshakeError as exc:
+            show_error(self, _("User not registered in the backend."), exception=exc)
 
-        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            show_error(self, _("Mountpoint already in use."))
+        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
+            show_error(self, _("Mountpoint already in use."), exception=exc)
 
         except Exception as exc:
             logger.exception("Unhandled error during login")
             error = "\n".join(traceback.format_tb(exc.__traceback__))
-            show_error(self, _("Unhandled error:\n\n{}").format(error))
+            show_error(self, _("Unhandled error.").format(error), exception=exc)
 
     def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
