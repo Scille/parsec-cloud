@@ -206,8 +206,8 @@ class SyncTransactions:
             if child_manifest.is_placeholder:
                 yield chield_entry_id
 
-    async def get_minimal_remote_manifest(self, enty_id: EntryID) -> Optional[Manifest]:
-        manifest = self.local_storage.get_manifest(enty_id)
+    async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[Manifest]:
+        manifest = self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
         return manifest.base_manifest.evolve(version=1)
