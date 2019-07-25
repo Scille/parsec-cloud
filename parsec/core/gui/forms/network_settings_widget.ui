@@ -18,107 +18,7 @@
 {
 background-color: rgb(255, 255, 255);
 }
-
-QLineEdit
-{
-border: 1px solid rgb(46, 46, 46);
-padding-left: 10px;
-}
-
-QSpinBox
-{
-border: 1px solid rgb(46, 46, 46);
-padding-right: 10px;
-}
-
-QSpinBox::up-button
-{
-border-image: url(:/icons/images/icons/sort_up_arrow.png);
-width: 20px;
-}
-
-QSpinBox::down-button
-{
-border-image: url(:/icons/images/icons/sort_down_arrow.png);
-width: 20px;
-}
-
-QLineEdit[readOnly=&quot;true&quot;]
-{
-background-color: rgb(230, 230, 230);
-}
-
-QLineEdit:!enabled
-{
-border: 1px solid rgb(180, 180, 180);
-}
-
-QPushButton
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(46, 46, 46);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton:disabled
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}
-
-QCheckBox::indicator
-{
-width: 15px;
-height: 15px;
-background-color: rgb(255, 255, 255);
-border: 2px solid rgb(46, 46,46);
-color: black;
-}
-
-QCheckBox::indicator:checked
-{
-image: url(:/icons/images/icons/checked.png)
-}
-
-QComboBox
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QComboBox::drop-down
-{
-border: 0px;
-}
-
-QComboBox::down-arrow
-{
-image: url(:/icons/images/icons/down-arrow.png);
-width: 16px;
-height: 16px;
-padding-right: 5px;
-}
-
-QScrollBar:vertical
-{
-background: rgb(255, 255, 255);
-}
-
-QScrollBar::handle:vertical
-{
-background: rgb(12, 65, 157);
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
-{
-border: none;
-background: none;
-}</string>
+</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -207,7 +107,7 @@ background: none;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
+               <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
@@ -454,7 +354,7 @@ background: none;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
+               <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
@@ -679,7 +579,7 @@ padding-right: 10px;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
+               <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
@@ -799,7 +699,7 @@ padding-right: 10px;
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_save">
+      <widget class="ShadowedButton" name="button_save">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -823,10 +723,6 @@ padding-right: 10px;
        <property name="text">
         <string>Save</string>
        </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
-       </property>
        <property name="iconSize">
         <size>
          <width>24</width>
@@ -839,7 +735,16 @@ padding-right: 10px;
    </item>
   </layout>
  </widget>
- <resources/>
+ <customwidgets>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>radio_download_no_limit</sender>

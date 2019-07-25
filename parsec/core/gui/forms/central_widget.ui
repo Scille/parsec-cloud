@@ -14,10 +14,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#CentralWidget
-{
-background-color: rgb(255, 255, 255);
-}</string>
+   <string notr="true"/>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
@@ -192,10 +189,7 @@ background-color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QLabel#label_mountpoint
-{
-color: rgb(124, 133, 166);
-}</string>
+                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string/>
@@ -213,7 +207,10 @@ color: rgb(124, 133, 166);
             <item>
              <widget class="Line" name="line_2">
               <property name="styleSheet">
-               <string notr="true">color: rgb(11, 65, 155);</string>
+               <string notr="true">#line_2
+{
+color: rgb(11, 65, 155);
+}</string>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>

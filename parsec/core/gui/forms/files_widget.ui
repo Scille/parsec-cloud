@@ -206,6 +206,7 @@ height: 16px;
            <string notr="true">QLineEdit#line_edit_current_directory
 {
 border: 0;
+background-color: rgb(255, 255, 255);
 }</string>
           </property>
           <property name="readOnly">

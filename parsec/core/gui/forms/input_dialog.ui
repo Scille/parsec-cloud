@@ -113,6 +113,13 @@ background-color: rgb(255, 255, 255);
             <height>20</height>
            </size>
           </property>
+          <property name="styleSheet">
+           <string notr="true">#button_close
+{
+background-color: rgb(255, 255, 255);
+border: 0;
+}</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -227,7 +234,7 @@ padding-left: 10px;</string>
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_ok">
+         <widget class="ShadowedButton" name="button_ok">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -244,19 +251,8 @@ padding-left: 10px;</string>
           <property name="layoutDirection">
            <enum>Qt::RightToLeft</enum>
           </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;</string>
-          </property>
           <property name="text">
            <string>Ok</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -273,6 +269,13 @@ padding-right: 10px;</string>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

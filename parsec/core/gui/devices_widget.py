@@ -11,7 +11,8 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadRe
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
-from parsec.core.gui.custom_widgets import TaskbarButton, show_info, show_error, QuestionDialog
+from parsec.core.gui.custom_widgets import TaskbarButton
+from parsec.core.gui.custom_dialogs import show_info, show_error, QuestionDialog
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from parsec.core.gui.ui.device_button import Ui_DeviceButton

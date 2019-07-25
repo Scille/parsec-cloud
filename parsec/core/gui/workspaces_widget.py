@@ -18,13 +18,8 @@ from parsec.core.mountpoint.exceptions import (
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import (
-    show_error,
-    show_warning,
-    TextInputDialog,
-    TaskbarButton,
-    QuestionDialog,
-)
+from parsec.core.gui.custom_dialogs import show_error, show_warning, TextInputDialog, QuestionDialog
+from parsec.core.gui.custom_widgets import TaskbarButton
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ts_ws_dialog import TsWsDialog
@@ -333,7 +328,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def share_workspace(self, workspace_fs):
-        d = WorkspaceSharingDialog(self.core.user_fs, workspace_fs, self.core, self.jobs_ctx)
+        d = WorkspaceSharingDialog(
+            self.core.user_fs, workspace_fs, self.core, self.jobs_ctx, parent=self
+        )
         d.exec_()
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),

@@ -111,7 +111,7 @@ background-color: rgb(255, 255, 255);
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_download">
+         <widget class="ShadowedButton" name="button_download">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -127,28 +127,10 @@ background-color: rgb(255, 255, 255);
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton:disabled
-{
-border: 1px solid rgb(65, 75, 106);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>Download</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/cloud_online.png</normaloff>:/icons/images/icons/cloud_online.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -194,19 +176,7 @@ color: rgb(255, 255, 255);
         <item>
          <widget class="QCheckBox" name="check_box_no_reminder">
           <property name="styleSheet">
-           <string notr="true">QCheckBox::indicator
-{
-width: 15px;
-height: 15px;
-background-color: rgb(255, 255, 255);
-border: 2px solid rgb(46, 46, 46);
-color: black;
-}
-
-QCheckBox::indicator:checked
-{
-image: url(:/icons/images/icons/checked.png)
-}</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>Don't remind me in the future</string>
@@ -214,7 +184,7 @@ image: url(:/icons/images/icons/checked.png)
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="button_ignore">
+         <widget class="ShadowedButton" name="button_ignore">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -230,28 +200,10 @@ image: url(:/icons/images/icons/checked.png)
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton:disabled
-{
-border: 1px solid rgb(65, 75, 106);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>Ignore</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/cancel_white.png</normaloff>:/icons/images/icons/cancel_white.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -281,6 +233,13 @@ color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

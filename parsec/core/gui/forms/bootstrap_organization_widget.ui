@@ -13,6 +13,27 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">#button_bootstrap,
+#button_cancel
+{
+background-color: rgb(12, 65, 156);
+height: 32px;
+}
+
+#button_bootstrap:pressed,
+#button_cancel:pressed
+{
+background-color: rgb(32, 85, 176);
+}
+
+#button_bootstrap:disabled,
+#button_cancel:disabled
+{
+background-color: rgb(112, 112, 112);
+color: rgb(255, 255, 255);
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <widget class="QLabel" name="label_9">
@@ -26,9 +47,6 @@
       <font>
        <pointsize>12</pointsize>
       </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
       <string>To bootstrap an organization, create one on the website and paste the information.</string>
@@ -61,69 +79,6 @@
        <height>0</height>
       </size>
      </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton:disabled
-{
-background-color: rgb(128, 128, 128);
-}
-
-QPushButton
-{
-border: 1px solid rgb(255, 255, 255);
-color: rgb(255, 255, 255);
-padding: 7px;
-}
-
-QPushButton:pressed
-{
-background-color: rgb(32, 85, 176);
-}
-
-QLabel
-{
-color: rgb(255, 255, 255);
-}
-
-QLineEdit
-{
-border: 2px solid rgb(46, 145, 208);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QComboBox
-{
-border: 2px solid rgb(46, 145, 208);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QComboBox::down-arrow
-{
-image: url(:/icons/images/icons/down-arrow.png);
-}
-
-QCheckBox
-{
-color: rgb(255, 255, 255);
-}
-
-QCheckBox::indicator
-{
-width: 15px;
-height: 15px;
-background-color: rgb(255, 255, 255);
-border: 2px solid rgb(46, 145, 208);
-color: black;
-}
-
-QCheckBox::indicator:checked
-{
-image: url(:/icons/images/icons/checked.png)
-}</string>
-     </property>
      <layout class="QVBoxLayout" name="verticalLayout_6">
       <property name="spacing">
        <number>0</number>
@@ -142,9 +97,6 @@ image: url(:/icons/images/icons/checked.png)
       </property>
       <item>
        <widget class="QWidget" name="widget_2" native="true">
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
           <number>10</number>
@@ -172,9 +124,6 @@ image: url(:/icons/images/icons/checked.png)
               <font>
                <pointsize>12</pointsize>
               </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
              </property>
              <property name="text">
               <string>User name</string>
@@ -212,9 +161,6 @@ image: url(:/icons/images/icons/checked.png)
               <font>
                <pointsize>12</pointsize>
               </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
              </property>
              <property name="text">
               <string>Device name</string>
@@ -308,9 +254,6 @@ image: url(:/icons/images/icons/checked.png)
                   <pointsize>12</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
                 <property name="text">
                  <string>Password</string>
                 </property>
@@ -331,9 +274,6 @@ image: url(:/icons/images/icons/checked.png)
                  <font>
                   <pointsize>12</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string/>
@@ -356,9 +296,6 @@ image: url(:/icons/images/icons/checked.png)
                  <font>
                   <pointsize>12</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string>Password check</string>
@@ -428,9 +365,6 @@ image: url(:/icons/images/icons/checked.png)
              <pointsize>12</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);</string>
-           </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <property name="spacing">
              <number>15</number>
@@ -459,9 +393,6 @@ image: url(:/icons/images/icons/checked.png)
                   <pointsize>12</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
                 <property name="text">
                  <string>PKCS #11 Token</string>
                 </property>
@@ -483,9 +414,6 @@ image: url(:/icons/images/icons/checked.png)
                   <pointsize>12</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">color: black;</string>
-                </property>
                </widget>
               </item>
              </layout>
@@ -501,9 +429,6 @@ image: url(:/icons/images/icons/checked.png)
                  <font>
                   <pointsize>12</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string>PKCS #11 Key</string>
@@ -526,9 +451,6 @@ image: url(:/icons/images/icons/checked.png)
                   <pointsize>12</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">color: black;</string>
-                </property>
                </widget>
               </item>
              </layout>
@@ -542,9 +464,6 @@ image: url(:/icons/images/icons/checked.png)
             <font>
              <pointsize>12</pointsize>
             </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true"/>
            </property>
            <property name="text">
             <string>Authenticate using PKCS #11</string>
@@ -582,9 +501,6 @@ image: url(:/icons/images/icons/checked.png)
                <pointsize>13</pointsize>
               </font>
              </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
              <property name="text">
               <string>Cancel</string>
              </property>
@@ -600,20 +516,17 @@ image: url(:/icons/images/icons/checked.png)
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
              <property name="text">
               <string>Bootstrap</string>
              </property>
              <property name="iconSize">
               <size>
-               <width>28</width>
-               <height>28</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="flat">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>

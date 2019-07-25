@@ -20,7 +20,7 @@ from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
 )
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators

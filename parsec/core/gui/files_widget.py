@@ -13,13 +13,9 @@ from parsec.core.fs import WorkspaceFSTimestamped
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
-from parsec.core.gui.custom_widgets import (
-    QuestionDialog,
-    show_error,
-    show_warning,
-    TextInputDialog,
-    TaskbarButton,
-)
+from parsec.core.gui.custom_dialogs import QuestionDialog, show_error, show_warning, TextInputDialog
+from parsec.core.gui.custom_widgets import TaskbarButton
+
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget

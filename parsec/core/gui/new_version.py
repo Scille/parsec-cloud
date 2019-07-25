@@ -25,6 +25,7 @@ async def _do_check_new_version(url):
     version = s.path.split("/")[-1:][0].split("-")[:1][0]
     new_version = version.replace("v", "")
     current_version = __version__.split("-")[0].replace("v", "")
+
     if StrictVersion(current_version) < StrictVersion(new_version):
         return new_version
     else:

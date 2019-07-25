@@ -9,7 +9,7 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.settings_dialog import SettingsDialog
-from parsec.core.gui.custom_widgets import show_info
+from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 

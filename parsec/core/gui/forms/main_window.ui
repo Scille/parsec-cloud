@@ -48,6 +48,124 @@ QToolTip
 background-color: rgb(46, 146, 208);
 border: 1px solid rgb(12, 65, 157);
 color: rgb(255, 255, 255);
+}
+
+QPushButton
+{
+color: white;
+background-color: rgb(38, 142, 212);
+border: 0;
+padding: 10px;
+font-size: 15px;
+font-weight: bold;
+height: 16px;
+padding-left: 20px;
+padding-right: 20px;
+}
+
+QPushButton:pressed
+{
+background-color: rgb(20, 122, 192);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(112, 112, 112);
+color: rgb(255, 255, 255);
+}
+
+QLineEdit
+{
+border: 1px solid rgb(46, 46, 46);
+padding-left: 10px;
+height: 16px;
+}
+
+QLineEdit[readOnly=&quot;true&quot;]
+{
+background-color: rgb(230, 230, 230);
+}
+
+QLineEdit:!enabled
+{
+border: 1px solid rgb(180, 180, 180);
+}
+
+QCheckBox::indicator
+{
+width: 15px;
+height: 15px;
+background-color: rgb(255, 255, 255);
+border: 2px solid rgb(46, 46, 46);
+color: black;
+}
+
+QCheckBox::indicator:checked
+{
+image: url(:/icons/images/icons/checked.png)
+}
+
+QComboBox
+{
+border: 1px solid rgb(46, 46, 46);
+background-color: white;
+color: black;
+padding-left: 5px;
+height: 16px;
+}
+
+QComboBox::drop-down
+{
+border: 0px;
+}
+
+QComboBox::down-arrow
+{
+image: url(:/icons/images/icons/down-arrow.png);
+width: 16px;
+height: 16px;
+padding-right: 5px;
+}
+
+QComboBox:disabled
+{
+background-color: rgb(220, 220, 220);
+}
+
+
+QScrollBar:vertical
+{
+background: rgb(255, 255, 255);
+}
+
+QScrollBar::handle:vertical
+{
+background: rgb(12, 65, 157);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+border: none;
+background: none;
+}
+
+QSpinBox
+{
+border: 1px solid rgb(46, 46, 46);
+padding-right: 10px;
+height: 16px;
+}
+
+QSpinBox::up-button
+{
+border-image: url(:/icons/images/icons/sort_up_arrow.png);
+width: 20px;
+}
+
+QSpinBox::down-button
+{
+border-image: url(:/icons/images/icons/sort_down_arrow.png);
+width: 20px;
 }</string>
   </property>
   <property name="documentMode">

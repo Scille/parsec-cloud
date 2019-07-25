@@ -12,7 +12,7 @@ from parsec.core.invite_claim import (
 from parsec.types import BackendOrganizationAddr, DeviceName
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
-from parsec.core.gui.custom_widgets import show_info, show_warning, show_error
+from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal

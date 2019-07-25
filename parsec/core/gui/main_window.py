@@ -27,7 +27,7 @@ from parsec.core.gui import telemetry
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.custom_widgets import QuestionDialog, show_error
+from parsec.core.gui.custom_dialogs import QuestionDialog, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 

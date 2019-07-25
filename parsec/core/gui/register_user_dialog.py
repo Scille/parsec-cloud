@@ -13,7 +13,7 @@ from parsec.types import BackendOrganizationAddr, UserID
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
-from parsec.core.gui.custom_widgets import show_info, show_warning, show_error
+from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal

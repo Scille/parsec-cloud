@@ -134,6 +134,18 @@ background-color: rgb(255, 255, 255);
             <height>20</height>
            </size>
           </property>
+          <property name="styleSheet">
+           <string notr="true">#button_close
+{
+background-color: rgb(255, 255, 255);
+border: 0;
+}
+
+#button_close:pressed
+{
+border: 0;
+}</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -259,11 +271,11 @@ background-color: rgb(255, 255, 255);
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="button_no">
+             <widget class="ShadowedButton" name="button_no">
               <property name="minimumSize">
                <size>
-                <width>0</width>
-                <height>32</height>
+                <width>64</width>
+                <height>16</height>
                </size>
               </property>
               <property name="font">
@@ -277,18 +289,10 @@ background-color: rgb(255, 255, 255);
                <enum>Qt::RightToLeft</enum>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;</string>
+               <string notr="true"/>
               </property>
               <property name="text">
                <string>No</string>
-              </property>
-              <property name="icon">
-               <iconset resource="../rc/resources.qrc">
-                <normaloff>:/icons/images/icons/white_cross.png</normaloff>:/icons/images/icons/white_cross.png</iconset>
               </property>
               <property name="iconSize">
                <size>
@@ -299,11 +303,11 @@ padding-right: 10px;</string>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="button_yes">
+             <widget class="ShadowedButton" name="button_yes">
               <property name="minimumSize">
                <size>
-                <width>0</width>
-                <height>32</height>
+                <width>64</width>
+                <height>16</height>
                </size>
               </property>
               <property name="font">
@@ -317,18 +321,10 @@ padding-right: 10px;</string>
                <enum>Qt::RightToLeft</enum>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;</string>
+               <string notr="true"/>
               </property>
               <property name="text">
                <string>Yes</string>
-              </property>
-              <property name="icon">
-               <iconset resource="../rc/resources.qrc">
-                <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
               </property>
               <property name="iconSize">
                <size>
@@ -349,6 +345,13 @@ padding-right: 10px;</string>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

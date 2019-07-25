@@ -89,6 +89,13 @@ background-color: rgb(255, 255, 255);
          <height>20</height>
         </size>
        </property>
+       <property name="styleSheet">
+        <string notr="true">#button_close
+{
+background-color: rgb(255, 255, 255);
+border: 0;
+}</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -323,7 +330,7 @@ font-weight: 700;
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_previous">
+      <widget class="ShadowedButton" name="button_previous">
        <property name="minimumSize">
         <size>
          <width>120</width>
@@ -337,19 +344,7 @@ font-weight: 700;
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton#button_previous
-{
-color: rgb(38, 142, 212);
-background-color: white;
-border: 1px solid rgb(38, 142, 212);
-padding: 10px;
-border-bottom-left-radius: 20px;
-border-bottom-right-radius: 20px;
-border-top-left-radius: 20px;
-border-top-right-radius: 20px;
-font-size: 15px;
-font-weight: bold;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>Back</string>
@@ -371,9 +366,10 @@ font-weight: bold;
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton#button_previous_placeholder
+        <string notr="true">#button_placeholder
 {
 border: 0;
+background-color: rgb(255, 255, 255);
 }</string>
        </property>
        <property name="text">
@@ -385,7 +381,7 @@ border: 0;
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="button_next">
+      <widget class="ShadowedButton" name="button_next">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -405,25 +401,13 @@ border: 0;
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">QPushButton#button_next
-{
-color: white;
-background-color: rgb(38, 142, 212);
-border: 0;
-padding: 10px;
-border-bottom-left-radius: 20px;
-border-bottom-right-radius: 20px;
-border-top-left-radius: 20px;
-border-top-right-radius: 20px;
-font-size: 15px;
-font-weight: bold;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>Start</string>
        </property>
        <property name="flat">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -435,6 +419,11 @@ font-weight: bold;
   <customwidget>
    <class>PageLabel</class>
    <extends>QLabel</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

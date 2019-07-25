@@ -20,14 +20,21 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#LoginRegisterDeviceWidget
+   <string notr="true">#button_claim
 {
 background-color: rgb(12, 65, 156);
+height: 32px;
 }
 
-QPushButton:disabled
+#button_claim:pressed
 {
-background-color: rgb(128, 128, 128);
+background-color: rgb(32, 85, 176);
+}
+
+#button_claim:disabled
+{
+background-color: rgb(112, 112, 112);
+color: rgb(255, 255, 255);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -37,9 +44,6 @@ background-color: rgb(128, 128, 128);
       <font>
        <pointsize>12</pointsize>
       </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
       <string>To register a new device, you need an existing device to declare a new device and get the resulting token.</string>
@@ -65,77 +69,6 @@ background-color: rgb(128, 128, 128);
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QLineEdit
-{
-border: 2px solid rgb(46, 145, 208);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QPushButton:disabled
-{
-background-color: rgb(128, 128, 128);
-}
-
-QPushButton
-{
-border: 1px solid rgb(255, 255, 255);
-color: rgb(255, 255, 255);
-padding: 7px;
-}
-
-QPushButton:pressed
-{
-background-color: rgb(32, 85, 176);
-}
-
-QLabel
-{
-color: rgb(255, 255, 255);
-}
-
-QComboBox
-{
-border: 2px solid rgb(46, 145, 208);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QComboBox::drop-down
-{
-border: 0px;
-}
-
-QComboBox::down-arrow
-{
-image: url(:/icons/images/icons/down-arrow.png);
-width: 16px;
-height: 16px;
-padding-right: 5px;
-}
-
-QCheckBox
-{
-color: rgb(255, 255, 255);
-}
-
-QCheckBox::indicator
-{
-width: 15px;
-height: 15px;
-background-color: rgb(255, 255, 255);
-border: 2px solid rgb(46, 145, 208);
-color: black;
-}
-
-QCheckBox::indicator:checked
-{
-image: url(:/icons/images/icons/checked.png)
-}</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="spacing">
@@ -458,7 +391,7 @@ image: url(:/icons/images/icons/checked.png)
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <property name="spacing">
@@ -556,7 +489,7 @@ image: url(:/icons/images/icons/checked.png)
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: black;</string>
+              <string notr="true"/>
              </property>
             </widget>
            </item>
@@ -622,12 +555,12 @@ image: url(:/icons/images/icons/checked.png)
           </property>
           <property name="iconSize">
            <size>
-            <width>28</width>
-            <height>28</height>
+            <width>16</width>
+            <height>16</height>
            </size>
           </property>
           <property name="flat">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>

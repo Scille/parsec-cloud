@@ -14,10 +14,7 @@
    <string>Manage workspace sharing</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QDialog#WorkspaceSharingDialog
-{
-background-color: rgb(255, 255, 255);
-}</string>
+   <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
@@ -42,50 +39,6 @@ background-color: rgb(255, 255, 255);
 {
 border: 2px solid rgb(12, 65, 157);
 background-color: rgb(255, 255, 255);
-}
-
-QLineEdit
-{
-border: 1px solid rgb(46, 46, 46);
-padding-left: 10px;
-color: rgb(0, 0, 0);
-}
-
-QLineEdit:disabled
-{
-background-color: rgb(200, 200, 200);
-}
-
-QComboBox
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QComboBox:disabled
-{
-background-color: rgb(220, 220, 220);
-}
-
-QComboBox::drop-down
-{
-border: 0px;
-background-color: rgb(255, 255, 255);
-}
-
-QComboBox::down-arrow
-{
-image: url(:/icons/images/icons/down-arrow.png);
-width: 16px;
-height: 16px;
-padding-right: 5px;
-}
-
-QComboBox::drop-down:disabled
-{
-background-color: rgb(220, 220, 220);
 }</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -105,144 +58,105 @@ background-color: rgb(220, 220, 220);
        <number>15</number>
       </property>
       <item>
-       <widget class="QWidget" name="widget_add" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <property name="spacing">
-          <number>10</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_6">
-           <item>
-            <widget class="QLineEdit" name="line_edit_share">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="placeholderText">
-              <string>Share with</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="combo_role">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>150</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="toolTip">
-              <string>A reader can see uploaded files.
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QLineEdit" name="line_edit_share">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="placeholderText">
+           <string>Share with</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="combo_role">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="toolTip">
+           <string>A reader can see uploaded files.
 A contributor can upload files (and see them).
 A manager can add people and manage their permissions (and see and upload files).</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_share">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QPushButton#button_share
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(46, 46, 46);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton#button_share:disabled
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}</string>
-             </property>
-             <property name="text">
-              <string>Share</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/menu_group.png</normaloff>:/icons/images/icons/menu_group.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="ShadowedButton" name="button_share">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string>Share</string>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QWidget" name="widget_2" native="true">
@@ -271,7 +185,7 @@ color: rgb(255, 255, 255);
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">QWidget#widget_title
+            <string notr="true">#widget_title
 {
 border: 0;
 background-color: rgb(46, 46, 46);
@@ -390,7 +304,7 @@ border: 1px solid rgb(46, 46, 46);
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_apply">
+         <widget class="ShadowedButton" name="button_apply">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -403,36 +317,15 @@ border: 1px solid rgb(46, 46, 46);
            </font>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton#button_apply
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(46, 46, 46);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton#button_apply:disabled
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}</string>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="text">
            <string>Update</string>
           </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
-          </property>
           <property name="iconSize">
            <size>
-            <width>20</width>
-            <height>20</height>
+            <width>16</width>
+            <height>16</height>
            </size>
           </property>
          </widget>
@@ -461,7 +354,7 @@ color: rgb(255, 255, 255);
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_close">
+         <widget class="ShadowedButton" name="button_close">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -474,40 +367,19 @@ color: rgb(255, 255, 255);
            </font>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton#button_close
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(46, 46, 46);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton#button_close:disabled
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}</string>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="text">
            <string>Close</string>
           </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/cancel_white.png</normaloff>:/icons/images/icons/cancel_white.png</iconset>
-          </property>
           <property name="iconSize">
            <size>
-            <width>20</width>
-            <height>20</height>
+            <width>16</width>
+            <height>16</height>
            </size>
           </property>
           <property name="flat">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -531,8 +403,13 @@ color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <customwidgets>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
  <connections/>
 </ui>

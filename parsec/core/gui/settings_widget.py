@@ -3,7 +3,7 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIcon
 
-from parsec.core.gui.custom_widgets import show_info
+from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.global_settings_widget import GlobalSettingsWidget
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget

@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtWidgets import QDialog, QGraphicsDropShadowEffect
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QDialog
 
 from parsec.core.gui.lang import translate as _
 
@@ -100,20 +100,6 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
         self.label_doc.setText(self.PAGES[self.page]["text"])
         self.label_screenshot.setPixmap(QPixmap(self.PAGES[self.page]["screenshot"]))
         self.label_screenshot.setFixedSize(self.PAGES[self.page]["size"])
-
-        effect = QGraphicsDropShadowEffect(self)
-        effect.setColor(QColor(164, 164, 164))
-        effect.setBlurRadius(5)
-        effect.setXOffset(0)
-        effect.setYOffset(4)
-        self.button_previous.setGraphicsEffect(effect)
-
-        effect = QGraphicsDropShadowEffect(self)
-        effect.setColor(QColor(164, 164, 164))
-        effect.setBlurRadius(5)
-        effect.setXOffset(0)
-        effect.setYOffset(4)
-        self.button_next.setGraphicsEffect(effect)
 
         self.button_next.clicked.connect(self.next_page)
         self.button_previous.clicked.connect(self.previous_page)
