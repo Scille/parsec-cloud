@@ -224,7 +224,7 @@ def autoclose_dialog(monkeypatch):
         spy.dialogs.append((dialog.label_title.text(), dialog.label_message.text()))
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_widgets.MessageDialog.exec_", _dialog_exec, raising=False
+        "parsec.core.gui.custom_dialogs.MessageDialog.exec_", _dialog_exec, raising=False
     )
     return spy
 

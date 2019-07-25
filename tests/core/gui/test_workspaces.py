@@ -46,7 +46,7 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_widgets.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
         classmethod(lambda *args, **kwargs: ("Workspace1")),
     )
 
@@ -75,7 +75,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_widgets.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
         classmethod(lambda *args, **kwargs: ("Workspace1")),
     )
 
@@ -87,7 +87,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     assert wk_button.name == "Workspace1"
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_widgets.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
         classmethod(lambda *args, **kwargs: ("Workspace1_Renamed")),
     )
 

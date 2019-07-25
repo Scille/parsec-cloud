@@ -19,7 +19,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.setupUi(self)
         if platform.system() != "Windows":
             self.widget_version.hide()
-            self.check_windows_left_panel.hide()
+            self.check_box_windows_left_panel.hide()
         self.button_save.clicked.connect(self.save_clicked)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None

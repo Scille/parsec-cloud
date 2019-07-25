@@ -86,7 +86,7 @@ async def test_revoke_device(aqtbot, running_backend, autoclose_dialog, monkeypa
     dev2_w = d_w.layout_devices.itemAt(1).widget()
     assert dev2_w.is_revoked is False
     monkeypatch.setattr(
-        "parsec.core.gui.custom_widgets.QuestionDialog.ask", classmethod(lambda *args: True)
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
 
     async with aqtbot.wait_signal(d_w.revoke_success):

@@ -3,14 +3,14 @@
 import pytest
 from PyQt5 import QtCore, QtWidgets
 
-from parsec.core.gui import custom_widgets
+from parsec.core.gui import custom_dialogs
 from parsec.core.gui.replace_dialog import ReplaceDialog
 
 
 @pytest.mark.gui
 def test_get_text_dialog_close(qtbot):
 
-    w = custom_widgets.TextInputDialog(title="Title", message="Message", parent=None)
+    w = custom_dialogs.TextInputDialog(title="Title", message="Message", parent=None)
     qtbot.addWidget(w)
     w.show()
 
@@ -28,7 +28,7 @@ def test_get_text_dialog_close(qtbot):
 @pytest.mark.gui
 def test_get_text_dialog_accept(qtbot):
 
-    w = custom_widgets.TextInputDialog(
+    w = custom_dialogs.TextInputDialog(
         title="Title",
         message="Message",
         placeholder="Placeholder",
@@ -53,7 +53,7 @@ def test_get_text_dialog_accept(qtbot):
 
 @pytest.mark.gui
 def test_ask_question_no(qtbot):
-    w = custom_widgets.QuestionDialog(title="Title", message="Message", parent=None)
+    w = custom_dialogs.QuestionDialog(title="Title", message="Message", parent=None)
     qtbot.addWidget(w)
 
     w.show()
@@ -67,7 +67,7 @@ def test_ask_question_no(qtbot):
 
 @pytest.mark.gui
 def test_ask_question_yes(qtbot):
-    w = custom_widgets.QuestionDialog(title="Title", message="Message", parent=None)
+    w = custom_dialogs.QuestionDialog(title="Title", message="Message", parent=None)
     qtbot.addWidget(w)
 
     w.show()
