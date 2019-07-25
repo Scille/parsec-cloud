@@ -109,16 +109,16 @@ def size(bytes, system=traditional):
             suffix = singular
         else:
             suffix = multiple
-    return str(amount) + suffix
+    return f"{amount} {suffix}"
 
 
 def get_filesize(bytesize):
     SYSTEM = [
-        (1024 ** 4, _(" TB")),
-        (1024 ** 3, _(" GB")),
-        (1024 ** 2, _(" MB")),
-        (1024 ** 1, _(" KB")),
-        (1024 ** 0, _(" B")),
+        (1024 ** 4, _("FILE_SIZE_TB")),
+        (1024 ** 3, _("FILE_SIZE_GB")),
+        (1024 ** 2, _("FILE_SIZE_MB")),
+        (1024 ** 1, _("FILE_SIZE_KB")),
+        (1024 ** 0, _("FILE_SIZE_B")),
     ]
 
     return size(bytesize, system=SYSTEM)

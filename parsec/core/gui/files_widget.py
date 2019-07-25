@@ -123,10 +123,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.import_job = None
 
         self.ROLES_TEXTS = {
-            WorkspaceRole.READER: _("Reader"),
-            WorkspaceRole.CONTRIBUTOR: _("Contributor"),
-            WorkspaceRole.MANAGER: _("Manager"),
-            WorkspaceRole.OWNER: _("Owner"),
+            WorkspaceRole.READER: _("WORKSPACE_ROLE_READER"),
+            WorkspaceRole.CONTRIBUTOR: _("WORKSPACE_ROLE_CONTRIBUTOR"),
+            WorkspaceRole.MANAGER: _("WORKSPACE_ROLE_MANAGER"),
+            WorkspaceRole.OWNER: _("WORKSPACE_ROLE_OWNER"),
         }
 
         self.button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
@@ -208,9 +208,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) == 1:
             new_name = TextInputDialog.get_text(
                 self,
-                _("Rename a file"),
-                _("Enter file new name"),
-                placeholder="File name",
+                _("ASK_FILE_RENAME_TITLE"),
+                _("ASK_FILE_RENAME_CONTENT"),
+                placeholder=_("ASK_FILE_RENAME_PLACEHOLDER"),
                 default_text=files[0].name,
             )
             if not new_name:
@@ -231,9 +231,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             new_name = TextInputDialog.get_text(
                 self,
-                _("Rename {} files").format(len(files)),
-                _("Enter files new name (without extension)"),
-                placeholder="Files name",
+                _("ASK_MULTI_FILE_RENAME_TITLE_{}").format(len(files)),
+                _("ASK_MULTI_FILE_RENAME_CONTENT_{}").format(len(files)),
+                placeholder=_("ASK_MULTI_FILE_RENAME_PLACEHOLDER"),
             )
             if not new_name:
                 return
@@ -259,14 +259,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if len(files) == 1:
             result = QuestionDialog.ask(
                 self,
-                _("Confirmation"),
-                _('Are you sure you want to delete "{}"?').format(files[0].name),
+                _("ASK_FILE_DELETE_TITLE"),
+                _("ASK_FILE_DELETE_CONTENT_{}").format(files[0].name),
             )
         else:
             result = QuestionDialog.ask(
                 self,
-                _("Confirmation"),
-                _("Are you sure you want to delete {} files?").format(len(files)),
+                _("ASK_MULTI_FILE_DELETE_TITLE_{}").format(len(files)),
+                _("ASK_MULTI_FILE_DELETE_CONTENT_{}").format(len(files)),
             )
         if not result:
             return
@@ -285,8 +285,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             result = QuestionDialog.ask(
                 self,
-                _("Confirmation"),
-                _("Are you sure you want to open {} files?").format(len(files)),
+                _("ASK_OPEN_MULTI_FILE_TITLE_{}").format(len(files)),
+                _("ASK_OPEN_MULTI_FILE_CONTENT_{}").format(len(files)),
             )
             if not result:
                 return
@@ -396,7 +396,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def import_files_clicked(self):
         paths, x = QFileDialog.getOpenFileNames(
-            self, _("Select files to import"), self.default_import_path
+            self, _("ASK_IMPORT_FILES_TITLE"), self.default_import_path
         )
         if not paths:
             return
@@ -407,7 +407,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def import_folder_clicked(self):
         path = QFileDialog.getExistingDirectory(
-            self, _("Select a directory to import"), self.default_import_path
+            self, _("ASK_IMPORT_FOLDER_TITLE"), self.default_import_path
         )
         if not path:
             return
@@ -429,7 +429,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def create_folder_clicked(self):
         folder_name = TextInputDialog.get_text(
-            self, _("Folder name"), _("Enter new folder name"), placeholder="Name"
+            self,
+            _("ASK_CREATE_FOLDER_TITLE"),
+            _("ASK_CREATE_FOLDER_CONTENT"),
+            placeholder=_("ASK_CREATE_FOLDER_PLACEHOLDER"),
         )
         if not folder_name:
             return
@@ -462,18 +465,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_rename_error(self, job):
         if job.exc.params.get("multi"):
-            show_error(self, _("Can not rename the files."))
+            show_error(self, _("ERR_RENAME_MULTI_FILE"), exception=job.exc)
         else:
-            show_error(self, _("Can not rename the file."))
+            show_error(self, _("ERR_RENAME_FILE"), exception=job.exc)
 
     def _on_delete_success(self, job):
         self.reset()
 
     def _on_delete_error(self, job):
         if job.exc.params.get("multi"):
-            show_error(self, _("Can not delete the files."))
+            show_error(self, _("ERR_DELETE_MULTI_FILE"), exception=job.exc)
         else:
-            show_error(self, _("Can not delete the file."))
+            show_error(self, _("ERR_DELETE_FILE"), exception=job.exc)
 
     def _on_folder_stat_success(self, job):
         self.current_directory, self.current_directory_uuid, files_stats = job.ret
@@ -514,9 +517,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_create_error(self, job):
         if job.status == "already-exists":
-            show_error(self, _("A folder with the same name already exists."))
+            show_error(self, _("ERR_FOLDER_CREATE_ALREADY_EXISTS"))
         else:
-            show_error(self, _("Can not create the folder."))
+            show_error(self, _("ERR_FOLDER_CREATE_UNKNOWN"))
 
     def _on_import_success(self):
         assert self.loading_dialog
@@ -537,7 +540,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 silent=True,
             )
         else:
-            show_error(self, _("Can not import files."))
+            show_error(self, _("ERR_IMPORT_FILES"), exception=self.import_job.exc)
         self.loading_dialog.hide()
         self.loading_dialog.setParent(None)
         self.loading_dialog = None
@@ -578,7 +581,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.sharing_revoked_qt.emit(new_entry, previous_entry)
 
     def _on_sharing_revoked_qt(self, new_entry, previous_entry):
-        show_error(self, _("You no longer have the permission to access this workspace."))
+        show_error(self, _("ERR_FILE_SHARING_REVOKED"))
         self.back_clicked.emit()
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
@@ -588,7 +591,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_user_role = new_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         if previous_entry.role != WorkspaceRole.READER and new_entry.role == WorkspaceRole.READER:
-            show_warning(self, _("You are now a reader on this workspace."))
+            show_warning(self, _("WARN_FILE_SHARING_READER"))
             self.taskbar_updated.emit()
         else:
             self.taskbar_updated.emit()

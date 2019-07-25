@@ -11,9 +11,7 @@ class ReplaceDialog(QDialog, Ui_ReplaceDialog):
     def __init__(self, dst, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.label_message.setText(
-            _('The file "{}" already exists.\nDo you want to replace it ?').format(dst)
-        )
+        self.label_message.setText(_("ASK_FILE_EXISTS_REPLACE").format(dst))
         self.button_skip.clicked.connect(self.skip_clicked)
         self.button_replace.clicked.connect(self.replace_clicked)
         self.skip = False

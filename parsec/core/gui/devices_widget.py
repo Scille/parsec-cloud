@@ -40,7 +40,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         if len(value) > 16:
             value = value[:16] + "-\n" + value[16:]
         if self.is_current_device:
-            value += _("\n(current)")
+            value += "\n({})".format(_("DEVICE_CURRENT_TEXT"))
         self.label_device.setText(value)
 
     @property
@@ -55,19 +55,19 @@ class DeviceButton(QWidget, Ui_DeviceButton):
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
         menu = QMenu(self)
-        action = menu.addAction(_("Show info"))
+        action = menu.addAction(_("DEVICE_MENU_SHOW_INFO"))
         action.triggered.connect(self.show_device_info)
         if not self.label.is_revoked and not self.is_current_device:
-            action = menu.addAction(_("Revoke"))
+            action = menu.addAction(_("DEVICE_MENU_REVOKE"))
             action.triggered.connect(self.revoke)
         menu.exec_(global_pos)
 
     def show_device_info(self):
         text = f"{self.device_name}\n\n"
-        text += _("Created on {}").format(format_datetime(self.certified_on))
+        text += _("DEVICE_CREATED_ON_{}").format(format_datetime(self.certified_on))
         if self.label.is_revoked:
             text += "\n\n"
-            text += _("This device has been revoked.")
+            text += _("DEVICE_IS_REVOKED")
         show_info(self, text)
 
     def revoke(self):
@@ -147,25 +147,26 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
 
     def on_revoke_success(self, job):
         button = job.ret
-        show_info(self, _('Device "{}" has been revoked.').format(button.device_name))
+        show_info(self, _("INFO_DEVICE_REVOKED_SUCCESS_{}").format(button.device_name))
         button.is_revoked = True
 
     def on_revoke_error(self, job):
         status = job.status
         if status == "already_revoked":
-            show_error(self, _("Device has already been revoked."))
+            errmsg = "ERR_DEVICE_REVOKED_ALREADY"
         elif status == "not_found":
-            show_error(self, _("Device not found."))
+            errmsg = "ERR_DEVICE_REVOKED_NOT_FOUND"
         elif status == "invalid_role" or status == "invalid_certification":
-            show_error(self, _("You don't have the permission to revoke this device."))
+            errmsg = "ERR_DEVICE_REVOKED_NOT_ENOUGHT_PERMISSIONS"
         elif status == "error":
-            show_error(self, _("Can not revoke this device."))
+            errmsg = "ERR_DEVICE_REVOKED_UNKNOWN"
+        show_error(self, errmsg, exception=job.exc)
 
     def revoke_device(self, device_button):
         result = QuestionDialog.ask(
             self,
-            _("Confirmation"),
-            _('Are you sure you want to revoke device "{}" ?').format(device_button.device_name),
+            _("ASK_DEVICE_REVOKE_TITLE"),
+            _("ASK_DEVICE_REVOKE_CONTENT_{}").format(device_button.device_name),
         )
         if not result:
             return

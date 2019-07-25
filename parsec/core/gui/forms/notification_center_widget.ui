@@ -148,7 +148,7 @@ border: 0;
         </font>
        </property>
        <property name="text">
-        <string>Notifications</string>
+        <string>LABEL_NOTIFICATIONS</string>
        </property>
       </widget>
      </item>

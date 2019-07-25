@@ -102,7 +102,7 @@ color: rgb(125, 125, 125);
    <item>
     <widget class="QToolButton" name="button_delete">
      <property name="toolTip">
-      <string>Remove user permissions.</string>
+      <string/>
      </property>
      <property name="text">
       <string/>

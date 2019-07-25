@@ -120,7 +120,7 @@ background-color: rgb(255, 255, 255);
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>Cancel</string>
+           <string>BUTTON_CANCEL</string>
           </property>
           <property name="iconSize">
            <size>

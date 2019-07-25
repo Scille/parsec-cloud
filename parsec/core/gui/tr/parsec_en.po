@@ -7,965 +7,945 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-05-22 13:35+0200\n"
-"PO-Revision-Date: 2019-04-04 15:23+0200\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2019-07-25 14:22+0200\n"
+"PO-Revision-Date: 2019-07-25 14:28+0200\n"
+"Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
+"X-Generator: Poedit 2.2.1\n"
 
-msgid "Reader"
+msgid "WORKSPACE_ROLE_READER"
+msgstr "Reader"
+
+msgid "WORKSPACE_ROLE_CONTRIBUTOR"
+msgstr "Contributor"
+
+msgid "WORKSPACE_ROLE_MANAGER"
+msgstr "Manager"
+
+msgid "WORKSPACE_ROLE_OWNER"
+msgstr "Owner"
+
+msgid "ASK_FILE_RENAME_TITLE"
+msgstr "Rename the file"
+
+msgid "ASK_FILE_RENAME_CONTENT"
+msgstr "Enter file new name"
+
+msgid "ASK_FILE_RENAME_PLACEHOLDER"
+msgstr "File Name"
+
+msgid "ASK_MULTI_FILE_RENAME_TITLE_{}"
+msgstr "Rename {} files"
+
+msgid "ASK_MULTI_FILE_RENAME_CONTENT_{}"
+msgstr "Enter the {} files new name (without extension)."
+
+msgid "ASK_MULTI_FILE_RENAME_PLACEHOLDER"
+msgstr "Files name"
+
+msgid "ASK_FILE_DELETE_TITLE"
+msgstr "Delete the file"
+
+msgid "ASK_FILE_DELETE_CONTENT_{}"
+msgstr "Are you sure you want to delete the file \"{}\"?"
+
+msgid "ASK_MULTI_FILE_DELETE_TITLE_{}"
+msgstr "Delete {} files"
+
+msgid "ASK_MULTI_FILE_DELETE_CONTENT_{}"
+msgstr "Are you sure you want to delete the {} files?"
+
+msgid "ASK_OPEN_MULTI_FILE_TITLE_{}"
+msgstr "Open {} files"
+
+msgid "ASK_OPEN_MULTI_FILE_CONTENT_{}"
+msgstr "Are you sure you want to open {} files?"
+
+msgid "ASK_IMPORT_FILES_TITLE"
+msgstr "Select files to import"
+
+msgid "ASK_IMPORT_FOLDER_TITLE"
+msgstr "Select a folder to import"
+
+msgid "ASK_CREATE_FOLDER_TITLE"
+msgstr "Create a folder"
+
+msgid "ASK_CREATE_FOLDER_CONTENT"
+msgstr "Enter folder name"
+
+msgid "ASK_CREATE_FOLDER_PLACEHOLDER"
+msgstr "Folder name"
+
+msgid "ERR_RENAME_MULTI_FILE"
+msgstr "Cannot rename the files."
+
+msgid "ERR_RENAME_FILE"
+msgstr "Cannot rename the file."
+
+msgid "ERR_DELETE_MULTI_FILE"
+msgstr "Cannot delete the files."
+
+msgid "ERR_DELETE_FILE"
+msgstr "Cannot delete the file."
+
+msgid "ERR_FOLDER_CREATE_ALREADY_EXISTS"
+msgstr "A folder with this name already exists."
+
+msgid "ERR_FOLDER_CREATE_UNKNOWN"
+msgstr "Cannot create the folder."
+
+msgid "ERR_IMPORT_FILES"
+msgstr "Cannot import the files."
+
+msgid "ERR_FILE_SHARING_REVOKED"
+msgstr "You no longer have permissions to access this workspace."
+
+msgid "WARN_FILE_SHARING_READER"
+msgstr "You are now a reader on this workspace."
+
+msgid "ASK_FILE_EXISTS_REPLACE"
+msgstr "A file with the name \"{}\" already exists. Do you want to replace it?"
+
+msgid "PASSWORD_STR_TOO_SHORT"
+msgstr "Too short"
+
+msgid "PASSWORD_STR_VERY_WEAK"
+msgstr "Very weak"
+
+msgid "PASSWORD_STR_WEAK"
+msgstr "Weak"
+
+msgid "PASSWORD_STR_AVERAGE"
+msgstr "Average"
+
+msgid "PASSWORD_STR_GOOD"
+msgstr "Good"
+
+msgid "PASSWORD_STR_STRONG"
+msgstr "Strong"
+
+msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
+msgstr "This workspace needs to be reencrypted."
+
+msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
+msgstr "This workspace does not need to be reencrypted."
+
+msgid "WORKSPACE_SHARED_DISPLAY"
+msgstr "shared with others"
+
+msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
+msgstr "- at {}"
+
+msgid "WORKSPACE_NAME_REENCRYPTION_{}"
+msgstr "- Reencrypting ({}%)"
+
+msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
+msgstr "Copied to clipboard."
+
+msgid "ERR_BAD_DEVICE_NAME"
+msgstr "The device name is invalid."
+
+msgid "ERR_REGISTER_DEVICE_EXISTS"
+msgstr "The device already exists."
+
+msgid "ERR_REGISTER_DEVICE_OFFLINE"
+msgstr "Cannot reach the server."
+
+msgid "ERR_REGISTER_DEVICE_TIMEOUT"
+msgstr "The device took too much time to register."
+
+msgid "ERR_REGISTER_DEVICE_UNKNOWN"
+msgstr "Cannot register the device."
+
+msgid "INFO_REGISTER_DEVICE_SUCCESS"
+msgstr "The device has been registered. You may now close this window."
+
+msgid "WARN_REGISTER_DEVICE_EMPTY"
+msgstr "The device name cannot be empty."
+
+msgid "LABEL_USER_REGISTRATION"
+msgstr "Please wait while the user is registering."
+
+msgid "ERR_CLAIM_USER_NOT_FOUND"
+msgstr "No invitation found for this user."
+
+msgid "ERR_PASSWORD_MISMATCH"
+msgstr "Passwords don't match."
+
+msgid "ERR_PASSWORD_COMPLEXITY"
+msgstr "The password must be at least 8 characters long."
+
+msgid "ERR_BAD_URL"
+msgstr "URL is invalid."
+
+msgid "ERR_BAD_USER_NAME"
+msgstr "User name is invalid."
+
+msgid "ERR_CLAIM_USER_UNKNOWN"
+msgstr "Cannot register the user."
+
+msgid "LABEL_PASSWORD_STRENGTH_{}"
+msgstr "Password strength: {}"
+
+msgid "DEVICE_CURRENT_TEXT"
+msgstr "current"
+
+msgid "DEVICE_MENU_SHOW_INFO"
+msgstr "Show info"
+
+msgid "DEVICE_MENU_REVOKE"
+msgstr "Revoke"
+
+msgid "DEVICE_CREATED_ON_{}"
+msgstr "Created on {}"
+
+msgid "DEVICE_IS_REVOKED"
+msgstr "This device has been revoked."
+
+msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
+msgstr "Device \"{}\" has been successfully revoked."
+
+msgid "ASK_DEVICE_REVOKE_TITLE"
+msgstr "Revoke a device"
+
+msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
+msgstr "Are you sure you want to revoke the device \"{}\"?"
+
+msgid "ERR_WORKSPACE_RENAME"
+msgstr "Cannot rename the workspace."
+
+msgid "ERR_WORKSPACE_MOUNT_{}"
+msgstr "Can not get the workspace \"{}\" at \"{}\"."
+
+msgid "ASK_WORKSPACE_DELETE_TITLE"
+msgstr "Delete a workspace"
+
+msgid "ASK_WORKSPACE_DELETE_CONTENT_{}"
+msgstr "Are you sure you want to delete the workspaces \"{}\"?"
+
+msgid "WARN_WORKSPACE_DELETE"
+msgstr "Not yet implemented."
+
+msgid "ASK_RENAME_WORKSPACE_TITLE"
+msgstr "Rename a workspace"
+
+msgid "ASK_RENAME_WORKSPACE_CONTENT"
+msgstr "Enter new workspace name"
+
+msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
+msgstr "Workspace Name"
+
+msgid "ASK_WORKSPACE_USER_REVOKED"
+msgstr "A user of this workspace has been revoked."
+
+msgid "ASK_WORKSPACE_USER_REMOVED"
+msgstr "A user has been removed from this workspace sharing."
+
+msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
 msgstr ""
-
-msgid "Contributor"
-msgstr ""
-
-msgid "Manager"
-msgstr ""
-
-msgid "Owner"
-msgstr ""
-
-msgid "Rename a file"
-msgstr ""
-
-msgid "Enter file new name"
-msgstr ""
-
-msgid "File \"{}\" could not be renamed."
-msgstr ""
-
-msgid "Rename {} files"
-msgstr ""
-
-msgid "Enter files new name (without extension)"
-msgstr ""
-
-msgid "Some files could not be renamed."
-msgstr ""
-
-msgid "Confirmation"
-msgstr ""
-
-msgid "Are you sure you want to delete \"{}\"?"
-msgstr ""
-
-msgid "Are you sure you want to delete {} files?"
-msgstr ""
-
-msgid "Can not delete \"{}\"."
-msgstr ""
-
-msgid "Some files could not be deleted."
-msgstr ""
-
-msgid "Are you sure you want to open {} files?"
-msgstr ""
-
-msgid "Select files to import"
-msgstr ""
-
-msgid "Select a directory to import"
-msgstr ""
-
-msgid "A folder with the same name already exists."
-msgstr ""
-
-msgid "Folder name"
-msgstr ""
-
-msgid "Enter new folder name"
-msgstr ""
-
-msgid "You no longer have the permission to access this workspace."
-msgstr ""
-
-msgid "You are now a reader on this workspace."
-msgstr ""
-
-msgid ""
-"The file \"{}\" already exists.\n"
-"Do you want to replace it ?"
-msgstr ""
-
-msgid "Too short"
-msgstr ""
-
-msgid "Very weak"
-msgstr ""
-
-msgid "Weak"
-msgstr ""
-
-msgid "Average"
-msgstr ""
-
-msgid "Good"
-msgstr ""
-
-msgid "Strong"
-msgstr ""
-
-msgid " (shared with others)"
-msgstr ""
-
-msgid "Bad device name."
-msgstr ""
-
-msgid "This device already exists."
-msgstr ""
-
-msgid "Cannot invite a device without being online."
-msgstr ""
-
-msgid "Device took too much time to register."
-msgstr ""
-
-msgid "Cannot register this device ({info})."
-msgstr ""
-
-msgid "Device has been registered. You may now close this window."
-msgstr ""
-
-msgid "Please enter a device name."
-msgstr ""
-
-msgid "Please wait while the user is registered."
-msgstr ""
-
-msgid "No invitation found for this user."
-msgstr ""
-
-msgid "Passwords don't match."
-msgstr ""
-
-msgid "Password must be at least 8 caracters long."
-msgstr ""
-
-msgid "URL or device is invalid."
-msgstr ""
-
-msgid "Can not claim this user ({info})."
-msgstr ""
-
-msgid "Password strength: {}"
-msgstr ""
-
-msgid ""
+"This workspace needs to be reencrypted to ensure the security of your data.\n"
+"This operation will take some time and prevent the workspace "
+"synchronization.\n"
 "\n"
-"(current)"
-msgstr ""
+"Do you want to continue?"
 
-msgid "Show info"
-msgstr ""
+msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
+msgstr "Workspace reencryption"
 
-msgid "Revoke"
-msgstr ""
+msgid "ASK_NEW_WORKSPACE_TITLE"
+msgstr "Create a workspace"
 
-msgid "Created on {}"
-msgstr ""
+msgid "ASK_NEW_WORKSPACE_CONTENT"
+msgstr "Enter workspace name"
 
-msgid "This device has been revoked."
-msgstr ""
+msgid "ASK_NEW_WORKSPACE_PLACEHOLDER"
+msgstr "Workspace Name"
 
-msgid "Are you sure you want to revoke device \"{}\" ?"
-msgstr ""
+msgid "USER_CURRENT_TEXT"
+msgstr "you"
 
-msgid "Device \"{}\" has been revoked."
-msgstr ""
+msgid "USER_MENU_SHOW_INFO"
+msgstr "Show info"
 
-msgid "Device \"{}\" has already been revoked."
-msgstr ""
+msgid "USER_MENU_REVOKE"
+msgstr "Revoke"
 
-msgid "Device \"{}\" not found."
-msgstr ""
+msgid "USER_CREATED_ON_{}"
+msgstr "Created on {}"
 
-msgid "You don't have the permission to revoke this device."
-msgstr ""
+msgid "USER_IS_REVOKED"
+msgstr "This user has been revoked."
 
-msgid "Can not revoke this device."
-msgstr ""
+msgid "INFO_USER_REVOKED_SUCCESS_{}"
+msgstr "User \"{}\" has been successfully revoked."
 
-msgid "Can not acces this file."
-msgstr ""
+msgid "ERR_USER_REVOKED_ALREADY"
+msgstr "This user has already been revoked."
 
-msgid "Not yet implemented."
-msgstr ""
+msgid "ERR_USER_REVOKED_NOT_FOUND"
+msgstr "This user does not exists."
 
-msgid "New name"
-msgstr ""
+msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
+msgstr "You don't have the permissions required to revoke this user."
 
-msgid "Enter workspace new name"
-msgstr ""
+msgid "ERR_USER_REVOKED_UNKNOWN"
+msgstr "Cannot revoke this user."
 
-msgid "Workspace name"
-msgstr ""
+msgid "ASK_USER_REVOKE_TITLE"
+msgstr "Revoke a user"
 
-msgid "Can not rename the workspace."
-msgstr ""
+msgid "ASK_USER_REVOKE_CONTENT"
+msgstr "Are you sure you want to revoke the user \"{}\"?"
 
-msgid "New workspace"
-msgstr ""
+msgid "FILE_SIZE_TB"
+msgstr "TB"
 
-msgid "Enter new workspace name"
-msgstr ""
+msgid "FILE_SIZE_GB"
+msgstr "GB"
 
-msgid ""
-"\n"
-"(you)"
-msgstr ""
+msgid "FILE_SIZE_MB"
+msgstr "MB"
 
-msgid "This user has been revoked."
-msgstr ""
+msgid "FILE_SIZE_KB"
+msgstr "KB"
 
-msgid "Are you sure you want to revoke user \"{}\" ?"
-msgstr ""
+msgid "FILE_SIZE_B"
+msgstr "B"
 
-msgid "User \"{}\" has been revoked."
-msgstr ""
+msgid "STARTING_GUIDE_WELCOME_TITLE"
+msgstr "Welcome!"
 
-msgid "User \"{}\" has already been revoked."
+msgid "STARTING_GUIDE_WELCOME_CONTENT"
 msgstr ""
-
-msgid "User \"{}\" not found."
-msgstr ""
-
-msgid "You don't have the permission to revoke this user."
-msgstr ""
-
-msgid "Can not revoke this user."
-msgstr ""
-
-msgid " TB"
-msgstr ""
-
-msgid " GB"
-msgstr ""
-
-msgid " MB"
-msgstr ""
-
-msgid " KB"
-msgstr ""
-
-msgid " B"
-msgstr ""
-
-msgid "Welcome!"
-msgstr ""
-
-msgid ""
 "Parsec allows you to store data in the cloud with a very high security "
 "level.\n"
 "Find out more by letting us guide you step by step!"
-msgstr ""
 
-msgid ":/screenshots/images/screenshots/cloud-computing.png"
-msgstr ""
+msgid "STARTING_GUIDE_WELCOME_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/cloud-computing.png"
 
-msgid "Workspaces"
-msgstr ""
+msgid "STARTING_GUIDE_WORKSPACES_TITLE"
+msgstr "Workspaces"
 
-msgid ""
-"Arrange all your files by workspaces, a clear interface for an easy to "
-"use and simple process."
+msgid "STARTING_GUIDE_WORKSPACES_CONTENT"
 msgstr ""
+"Arrange all your files by workspaces, a clear interface for an easy to use\n"
+"and simple process."
 
-msgid ":/screenshots/images/screenshots/workspaces.png"
+msgid "STARTING_GUIDE_WORKSPACES_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/workspaces.png"
+
+msgid "STARTING_GUIDE_DOCUMENTS_TITLE"
+msgstr "Document"
+
+msgid "STARTING_GUIDE_DOCUMENTS_CONTENT"
 msgstr ""
+"In your workspaces, see and manage all your files, just as with a regular\n"
+"file explorer. A lightweight display to increase your productivity!"
 
-msgid "Documents"
+msgid "STARTING_GUIDE_DOCUMENTS_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/documents.png"
+
+msgid "STARTING_GUIDE_SHARING_TITLE"
+msgstr "Sharing"
+
+msgid "STARTING_GUIDE_SHARING_CONTENT"
 msgstr ""
-
-msgid ""
-"In your workspaces, see and manage all your files, just as with a regular"
-" file explorer. A lightweight display to increase your productivity!"
-msgstr ""
-
-msgid ":/screenshots/images/screenshots/documents.png"
-msgstr ""
-
-msgid "Sharing"
-msgstr ""
-
-msgid ""
-"Share your workspaces with a few clicks. See who can access it, and what "
+"Share your workspaces with a few clicks. See who can access it, and what\n"
 "others share with you.\n"
 "Everything shared with you automatically appears."
-msgstr ""
 
-msgid ":/screenshots/images/screenshots/page4.png"
-msgstr ""
+msgid "STARTING_GUIDE_SHARING_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/page4.png"
 
-msgid "Manage your devices"
-msgstr ""
+msgid "STARTING_GUIDE_DEVICES_TITLE"
+msgstr "Manage your devices"
 
-msgid ""
-"See and manage thee devices you trust. Those are the key to the guaranted"
-" security of your files."
+msgid "STARTING_GUIDE_DEVICES_CONTENT"
 msgstr ""
+"See and manage thee devices you trust. Those are the key to the guaranted\n"
+"security of your files."
 
-msgid ":/screenshots/images/screenshots/devices.png"
+msgid "STARTING_GUIDE_DEVICES_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/devices.png"
+
+msgid "STARTING_GUIDE_USERS_TITLE"
+msgstr "Manage the users"
+
+msgid "STARTING_GUIDE_USERS_CONTENT"
 msgstr ""
+"And for the administrators ? You can manage all users and their privileges,\n"
+"add users, or revoke them."
 
-msgid "Manage the users"
+msgid "STARTING_GUIDE_USERS_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/users.png"
+
+msgid "STARTING_GUIDE_OFFLINE_TITLE"
+msgstr "Even offline"
+
+msgid "STARTING_GUIDE_OFFLINE_CONTENT"
 msgstr ""
-
-msgid ""
-"And for the administrators ? You can manage all users and their "
-"privileges, add users, or revoke them."
-msgstr ""
-
-msgid ":/screenshots/images/screenshots/users.png"
-msgstr ""
-
-msgid "Even offline"
-msgstr ""
-
-msgid ""
 "No network ? Not a problem. You can access all your files. Modifications "
-"will be saved locally until your device comes online again."
-msgstr ""
+"will\n"
+"be saved locally until your device comes online again."
 
-msgid ":/screenshots/images/screenshots/offline_en.png"
-msgstr ""
+msgid "STARTING_GUIDE_OFFLINE_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/offline_en.png"
 
-msgid "Now it's your turn !"
-msgstr ""
+msgid "STARTING_GUIDE_YOUR_TURN_TITLE"
+msgstr "Now it's your turn!"
 
-msgid ""
+msgid "STARTING_GUIDE_YOUR_TURN_CONTENT"
+msgstr ""
 "Create your first workspace, import your files, share your documents.\n"
+"\n"
 "Security waits for no one!"
-msgstr ""
-
-msgid ":/screenshots/images/screenshots/your_turn.png"
-msgstr ""
-
-msgid "End"
-msgstr ""
-
-msgid "Continue"
-msgstr ""
 
-msgid "Start"
-msgstr ""
+msgid "STARTING_GUIDE_YOUR_TURN_SCREENSHOT"
+msgstr ":/screenshots/images/screenshots/your_turn.png"
 
-msgid "Open"
-msgstr ""
+msgid "BUTTON_END"
+msgstr "End"
 
-msgid "Rename"
-msgstr ""
+msgid "BUTTON_CONTINUE"
+msgstr "Continue"
 
-msgid "Delete"
-msgstr ""
+msgid "BUTTON_START"
+msgstr "Start"
 
-msgid "Parent Folder"
-msgstr ""
+msgid "FILE_MENU_OPEN"
+msgstr "Open"
 
-msgid "Parent Workspace"
-msgstr ""
+msgid "FILE_MENU_RENAME"
+msgstr "Rename"
 
-msgid "This organization does not exist (is the URL correct ?)."
-msgstr ""
+msgid "FILE_MENU_DELETE"
+msgstr "Delete"
 
-msgid "This user already exists."
-msgstr ""
+msgid "FILE_TREE_PARENT_FOLDER"
+msgstr "Parent Folder"
 
-msgid "Can not bootstrap this organization ({info})."
-msgstr ""
+msgid "FILE_TREE_PARENT_WORKSPACE"
+msgstr "Return to workspaces list"
 
-msgid "Show window"
-msgstr ""
+msgid "ERR_REGISTER_USER_EXISTS"
+msgstr "This user already exists."
 
-msgid "Exit"
-msgstr ""
+msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
+msgstr "Cannot bootstrap this organization."
 
-msgid ""
-"The organization and the user have been created. You will now be logged "
-"in."
-msgstr ""
+msgid "LABEL_USER_NAME"
+msgstr "User name"
 
-msgid "The organization and the user have been created. You can now log in."
-msgstr ""
+msgid "INFO_DIALOG_TITLE"
+msgstr "Information"
 
-msgid "The user has been created. You will now be logged in."
-msgstr ""
+msgid "WARN_DIALOG_TITLE"
+msgstr "Warning"
 
-msgid "The user has been created. You can now log in."
-msgstr ""
+msgid "ERR_DIALOG_TITLE"
+msgstr "Error"
 
-msgid "Please wait while the device is registered."
-msgstr ""
+msgid "MENU_SHOW_WINDOW"
+msgstr "Show window"
 
-msgid "No invitation found for this device."
-msgstr ""
+msgid "MENU_EXIT"
+msgstr "Exit"
 
-msgid "Can not claim this device ({info})."
+msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
 msgstr ""
+"The organization and the user have been created.\n"
+"You will now be logged in."
 
-msgid "The device has been registered. You can now login."
-msgstr ""
+msgid "INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"
+msgstr "The organization and the user have been created. You can now log in."
 
-msgid "Global"
+msgid "INFO_USER_CREATED_SUCCESS_MONO_DEVICE"
 msgstr ""
+"The user has been created.\n"
+"You will now be logged in."
 
-msgid "Modification will take effect the next time you start the application."
-msgstr ""
+msgid "INFO_USER_CREATED_SUCCESS_MULTI_DEVICE"
+msgstr "The user has been created. You can now log in."
 
-msgid "Disconnected from the backend."
-msgstr ""
+msgid "LABEL_DEVICE_REGISTRATION"
+msgstr "Please wait while the device is being registered."
 
-msgid "Connected to the backend."
-msgstr ""
+msgid "ERR_CLAIM_DEVICE_NOT_FOUND"
+msgstr "No invitation found for this device."
 
-msgid "Cannot connect to backend : incompatible version detected."
-msgstr ""
+msgid "ERR_CLAIM_DEVICE_UNKNOWN"
+msgstr "Cannot claim this device."
 
-msgid "Mountpoint has been unmounted."
-msgstr ""
+msgid "INFO_DEVICE_REGISTERED"
+msgstr "The device has been created. You can now log in."
 
-msgid "Workspace '{}' shared with you"
-msgstr ""
+msgid "MENU_SETTINGS_GLOBAL"
+msgstr "Global"
 
-msgid "Your role on Workspace '{}' has changed changed"
-msgstr ""
+msgid "SETTINGS_NEED_RESTART"
+msgstr "Modifications will take effect the next time you start the application."
 
-msgid "Workspace '{}' no longer shared with you"
-msgstr ""
+msgid "NOTIF_WARN_LOST_CONNECTION"
+msgstr "Connection to the server has been lost."
 
-msgid "Conflict while syncing file '{}'."
-msgstr ""
+msgid "NOTIF_INFO_CONNECTED"
+msgstr "Connected to the server."
 
-msgid "Connected"
-msgstr ""
+msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
+msgstr "This version of the application is incompatible with the server."
 
-msgid "Disconnected"
-msgstr ""
+msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
+msgstr "Mountpoint has been lost."
 
-msgid "Bad Version"
-msgstr ""
+msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
+msgstr "Workspace \"{}\" shared with you."
 
-msgid "Users"
-msgstr ""
+msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
+msgstr "Role on workspace \"{}\" has changed."
 
-msgid "Devices"
-msgstr ""
+msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
+msgstr "Workspace \"{}\" no longer shared with you."
 
-msgid "Settings"
-msgstr ""
+msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
+msgstr "Conflict while syncing the file \"{}\"."
 
-msgid "Cancelling..."
-msgstr ""
+msgid "BACKEND_STATE_CONNECTED"
+msgstr "Connected"
 
-msgid "Bad user id."
-msgstr ""
+msgid "BACKEND_STATE_DISCONNECTED"
+msgstr "Disconnected"
 
-msgid "A user with the same name already exists."
-msgstr ""
+msgid "BACKEND_STATE_INCOMPATIBLE_VERSION"
+msgstr "Incompatible version"
 
-msgid "Only admins can invite a new user."
-msgstr ""
+msgid "MENU_DOCUMENTS"
+msgstr "Documents"
 
-msgid "Cannot invite a user without being online."
-msgstr ""
+msgid "MENU_USERS"
+msgstr "Users"
 
-msgid "User took too much time to register."
-msgstr ""
+msgid "MENU_DEVICES"
+msgstr "Devices"
 
-msgid "Cannot register this user ({info})."
-msgstr ""
+msgid "MENU_SETTINGS"
+msgstr "Settings"
 
-msgid "Please enter a username."
-msgstr ""
+msgid "ERR_REGISTER_USER_NOT_ENOUGH_PERMISSIONS"
+msgstr "Only administrators can invite new users."
 
-msgid "You can not share a workspace with yourself."
-msgstr ""
+msgid "ERR_REGISTER_USER_OFFLINE"
+msgstr "Cannot reach the server."
 
-msgid "This workspace is already shared with \"{}\"."
-msgstr ""
+msgid "ERR_REGISTER_USER_TIMEOUT"
+msgstr "The user took too much time to register."
 
-msgid "Can not share the workspace \"{}\" with this user."
-msgstr ""
+msgid "ERR_REGISTER_USER_UNKNOWN"
+msgstr "Cannot register the user."
 
-msgid "Can not share the workspace \"{}\" with \"{}\"."
-msgstr ""
+msgid "INFO_REGISTER_USER_SUCCESS"
+msgstr "The user has been registered. You may now close this window."
 
-msgid "Remove this user"
-msgstr ""
+msgid "WARN_REGISTER_USER_EMPTY"
+msgstr "The user name cannot be empty."
 
-msgid "Are you sure you want to stop sharing this workspace with {}?"
-msgstr ""
+msgid "WARN_WORKSPACE_SHARING_WITH_YOURSELF"
+msgstr "Cannot share a workspace with yourself."
 
-msgid "Permissions could not be updated for the following users: {}"
-msgstr ""
+msgid "WARN_WORKSPACE_ALREADY_SHARED_{}"
+msgstr "The workspace is already shared with \"{}\"."
 
-msgid "Permissions have been updated."
-msgstr ""
+msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
+msgstr "Cannot share the workspace with \"{}\"."
 
-msgid "Are you sure?"
-msgstr ""
+msgid "ASK_WORKSPACE_UNSHARE_TITLE"
+msgstr "Unshare the workspace"
 
-msgid ""
-"You have made some modifications, but have not applied them by clicking "
-"\"Apply\". Are you sure you want to close this window and discard these "
-"modifications?"
-msgstr ""
+msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
+msgstr "Are you sure you want to stop sharing the workspace with \"{}\"?"
 
-msgid "User name"
+msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
 msgstr ""
+"Roles could not be updated for the following users:\n"
+"{}"
 
-msgid "Information"
-msgstr ""
+msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
+msgstr "Roles have been updated."
 
-msgid "Warning"
-msgstr ""
+msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
+msgstr "Forget the modifications"
 
-msgid "Error"
+msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
 msgstr ""
+"You have made some unsaved modifications. Are you sure you want to close this "
+"window and discard them?"
 
-msgid ""
-"Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive"
-" data on the cloud"
+msgid "PARSEC_WINDOW_TITLE"
 msgstr ""
+"Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive "
+"data on the cloud"
 
-msgid "Error reporting"
-msgstr ""
+msgid "ASK_ERROR_REPORTING_TITLE"
+msgstr "Error reporting"
 
-msgid ""
-"Do you authorize Parsec to send data when it encounters an error to help "
-"us improve your experience ?"
+msgid "ASK_ERROR_REPORTING_CONTENT"
 msgstr ""
+"Do you authorize Parsec to send us some data when it encounters an error to "
+"help us improve your experience?"
 
-msgid "Unhandled error:\n\n{}"
-msgstr ""
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr "This device has been revoked."
 
-msgid "Authentication failed ({})."
-msgstr ""
+msgid "ERR_LOGIN_UNKNOWN"
+msgstr "Cannot login."
 
-msgid "Incompatible backend API version."
-msgstr ""
+msgid "ERR_LOGIN_AUTH_FAILED"
+msgstr "Authentication failed."
 
-msgid "User not registered in the backend."
-msgstr ""
+msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
+msgstr "This version of the application is incompatible with the server."
 
-msgid "Mountpoint already in use."
-msgstr ""
+msgid "ERR_LOGIN_UNKNOWN_USER"
+msgstr "User is not registered on the server."
 
-msgid "Can not login"
-msgstr ""
+msgid "ERR_LOGIN_MOUNTPOINT"
+msgstr "Mountpoint is already in use."
 
-msgid "Can not login."
-msgstr ""
+msgid "ASK_QUIT_TITLE"
+msgstr "Close the application"
 
-msgid "Are you sure you want to quit ?"
-msgstr ""
+msgid "ASK_QUIT_CONTENT"
+msgstr "Are you sure you want to close the application?"
 
-msgid "Parsec is still running."
-msgstr ""
+msgid "TRAY_PARSEC_RUNNING"
+msgstr "Parsec is still running."
 
-msgid "Form"
+msgid "LABEL_BOOTSTRAP_ORG_INSTRUCTIONS"
 msgstr ""
-
-msgid ""
 "To bootstrap an organization, create one on the website and paste the "
 "information."
-msgstr ""
-
-msgid "Device name"
-msgstr ""
-
-msgid "URL"
-msgstr ""
-
-msgid "Password"
-msgstr ""
-
-msgid "Password check"
-msgstr ""
-
-msgid "PKCS #11 Token"
-msgstr ""
-
-msgid "PKCS #11 Key"
-msgstr ""
-
-msgid "Authenticate using PKCS #11"
-msgstr ""
-
-msgid "Cancel"
-msgstr ""
-
-msgid "Bootstrap"
-msgstr ""
-
-msgid ""
-"To register a new device, you need an existing device to declare a new "
-"device and get the resulting token."
-msgstr ""
-
-msgid "Token"
-msgstr ""
-
-msgid "Register"
-msgstr ""
-
-msgid "Dialog"
-msgstr ""
-
-msgid ""
-"To register a new user, you need another user to create an account and "
-"get a token."
-msgstr ""
 
-msgid "Search devices"
-msgstr ""
+msgid "LABEL_DEVICE_NAME"
+msgstr "Device name"
 
-msgid "Search files or folders"
-msgstr ""
+msgid "LABEL_URL"
+msgstr "URL"
 
-msgid "Name"
-msgstr ""
+msgid "LABEL_PASSWORD"
+msgstr "Password"
 
-msgid "Created"
-msgstr ""
+msgid "LABEL_PASSWORD_CHECK"
+msgstr "Password check"
 
-msgid "Updated"
-msgstr ""
+msgid "LABEL_PKCS_TOKEN"
+msgstr "PKCS#11 Token"
 
-msgid "Size"
-msgstr ""
+msgid "LABEL_PKCS_KEY"
+msgstr "PKCS#11 Key"
 
-msgid "Behavior"
-msgstr ""
+msgid "CHECK_PKCS_AUTH"
+msgstr "Authenticate with PKCS#11"
 
-msgid "Close button minimizes Parsec in the tray"
-msgstr ""
+msgid "BUTTON_CANCEL"
+msgstr "Cancel"
 
-msgid "Localization"
-msgstr ""
+msgid "BUTTON_BOOTSTRAP_ORG"
+msgstr "Bootstrap the organization"
 
-msgid "Language"
+msgid "LABEL_CLAIM_DEVICE_INSTRUCTIONS"
 msgstr ""
+"To register a new device, declare a new device using an existing one and "
+"paste here the information."
 
-msgid "Version"
-msgstr ""
+msgid "LABEL_TOKEN"
+msgstr "Token"
 
-msgid "Check for new version at startup"
-msgstr ""
+msgid "BUTTON_CLAIM"
+msgstr "Register"
 
-msgid "Check for new version now"
+msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
 msgstr ""
+"To register a new user, you need another user to create an account and get a "
+"token."
 
-msgid "Send information when Parsec encounters an error."
-msgstr ""
+msgid "LABEL_SEARCH_DEVICES"
+msgstr "Search devices"
 
-msgid "Save"
-msgstr ""
+msgid "LABEL_SEARCH_FILES"
+msgstr "Search files or folders"
 
-msgid "Interface"
-msgstr ""
+msgid "LABEL_FILE_NAME"
+msgstr "Name"
 
-msgid "Use colors for workspaces"
-msgstr ""
+msgid "LABEL_FILE_CREATED"
+msgstr "Created"
 
-msgid "Ok"
-msgstr ""
+msgid "LABEL_FILE_UPDATED"
+msgstr "Updated"
 
-msgid "Importing"
-msgstr ""
+msgid "LABEL_FILE_SIZE"
+msgstr "Size"
 
-msgid "Identifier"
-msgstr ""
+msgid "SETTINGS_TITLE_BEHAVIOR"
+msgstr "Behavior"
 
-msgid "PKCS #11 PIN"
-msgstr ""
+msgid "CHECK_MINIMIZE_IN_TRAY"
+msgstr "Minimize in tray"
 
-msgid "Log In"
-msgstr ""
+msgid "SETTINGS_TITLE_LOCALIZATION"
+msgstr "Localization"
 
-msgid "Register a new account"
-msgstr ""
+msgid "LABEL_LANGUAGE"
+msgstr "Languages"
 
-msgid "Register a new device"
-msgstr ""
+msgid "SETTINGS_TITLE_VERSION"
+msgstr "Version"
 
-msgid "Bootstrap an organization"
-msgstr ""
+msgid "CHECK_CHECK_NEW_VERSION"
+msgstr "Check for the new versions on startup"
 
-msgid "Parsec"
-msgstr ""
+msgid "BUTTON_CHECK_NEW_VERSION"
+msgstr "Check for new version now"
 
-msgid "   Documents"
-msgstr ""
+msgid "SETTINGS_TITLE_ERROR_REPORTING"
+msgstr "Error reporting"
 
-msgid "   Users"
-msgstr ""
+msgid "CHECK_SEND_CRASH_INFO"
+msgstr "Send data when encountering an error"
 
-msgid "   Devices"
-msgstr ""
+msgid "SETTINGS_TITLE_INTERFACE"
+msgstr "Interface"
 
-msgid "   Settings"
-msgstr ""
+msgid "CHECK_USE_WORKSPACE_COLORS"
+msgstr "Use colors for workspaces"
 
-msgid "   Log Out"
-msgstr ""
+msgid "BUTTON_SAVE"
+msgstr "Save"
 
-msgid "Proxy"
-msgstr ""
+msgid "CHECK_WINDOWS_MOUNTPOINT"
+msgstr "Show the mountpoint in Windows Explorer left panel."
 
-msgid "Proxy type"
-msgstr ""
+msgid "BUTTON_OK"
+msgstr "OK"
 
-msgid "No proxy"
-msgstr ""
+msgid "LABEL_IMPORTING"
+msgstr "Importing"
 
-msgid "HTTP"
-msgstr ""
+msgid "LABEL_IDENTIFIER"
+msgstr "Identifier"
 
-msgid "Socks4"
-msgstr ""
+msgid "LABEL_PKCS_PIN"
+msgstr "PKCS#11 PIN"
 
-msgid "Socks5"
-msgstr ""
+msgid "BUTTON_LOG_IN"
+msgstr "Log In"
 
-msgid "Host"
-msgstr ""
+msgid "BUTTON_REGISTER_NEW_USER"
+msgstr "Register a new user"
 
-msgid "Port"
-msgstr ""
+msgid "BUTTON_REGISTER_NEW_DEVICE"
+msgstr "Register a new users"
 
-msgid "Username"
-msgstr ""
+msgid "BUTTON_SETTINGS"
+msgstr "Settings"
 
-msgid "Speed limits"
-msgstr ""
+msgid "BUTTON_LOG_OUT"
+msgstr "Log Out"
 
-msgid "Upload"
-msgstr ""
+msgid "BUTTON_DETAILS"
+msgstr "Details"
 
-msgid "No limit"
-msgstr ""
+msgid "BUTTON_COPY_TO_CLIPBOARD"
+msgstr "Copy to clipboard"
 
-msgid "Limit to"
-msgstr ""
+msgid "SETTINGS_TITLE_PROXY"
+msgstr "Proxy"
 
-msgid "10"
-msgstr ""
+msgid "LABEL_PROXY_TYPE"
+msgstr "Proxy type"
 
-msgid "kb/s"
-msgstr ""
+msgid "LABEL_NO_PROXY"
+msgstr "No Proxy"
 
-msgid "Download"
-msgstr ""
+msgid "LABEL_PROXY_HTTP"
+msgstr "HTTP"
 
-msgid "Misc"
-msgstr ""
+msgid "LABEL_PROXY_SOCKS4"
+msgstr "Socks4"
 
-msgid "Number of simultaneous connections"
-msgstr ""
+msgid "LABEL_PROXY_SOCKS5"
+msgstr "Socks5"
 
-msgid "A new version of Parsec is available !"
-msgstr ""
+msgid "LABEL_HOST"
+msgstr "Host"
 
-msgid "Don't remind me in the future"
-msgstr ""
+msgid "LABEL_PORT"
+msgstr "Port"
 
-msgid "Ignore"
-msgstr ""
+msgid "SETTINGS_TITLE_SPEED_LIMITS"
+msgstr "Speed limits"
 
-msgid "Notifications"
-msgstr ""
+msgid "LABEL_UPLOAD"
+msgstr "Upload"
 
-msgid "No"
-msgstr ""
+msgid "LABEL_SPEED_NO_LIMIT"
+msgstr "No limit"
 
-msgid "Yes"
-msgstr ""
+msgid "LABEL_SPEED_LIMIT_TO"
+msgstr "Limit to"
 
-msgid "Register new device"
-msgstr ""
+msgid "LABEL_KB_S"
+msgstr "KB/s"
 
-msgid "Use the following information to set up your new device:"
-msgstr ""
+msgid "LABEL_DOWNLOAD"
+msgstr "Download"
 
-msgid "..."
-msgstr ""
+msgid "SETTINGS_TITLE_MISC"
+msgstr "Miscellaneous"
 
-msgid "Register the device"
-msgstr ""
+msgid "LABEL_SIM_CONNECTIONS"
+msgstr "Simultaneous connections"
 
-msgid "Close"
-msgstr ""
+msgid "LABEL_NEW_VERSION_AVAILABLE"
+msgstr "A new version is available!"
 
-msgid "Register new user"
-msgstr ""
+msgid "BUTTON_DOWNLOAD"
+msgstr "Download"
 
-msgid "User is administrator"
-msgstr ""
+msgid "CHECK_NO_REMINDER"
+msgstr "Don't remind me"
 
-msgid "Transmit the following information to the user:"
-msgstr ""
+msgid "BUTTON_IGNORE"
+msgstr "Ignore"
 
-msgid "Register the user"
-msgstr ""
+msgid "LABEL_NOTIFICATIONS"
+msgstr "Notifications"
 
-msgid "Register a new user"
-msgstr ""
+msgid "BUTTON_NO"
+msgstr "No"
 
-msgid "Skip"
-msgstr ""
+msgid "BUTTON_YES"
+msgstr "Yes"
 
-msgid "Replace"
-msgstr ""
+msgid "TITLE_REGISTER_NEW_DEVICE"
+msgstr "Register a new device"
 
-msgid "Do the same for all files"
-msgstr ""
+msgid "LABEL_REGISTER_NEW_DEVICE"
+msgstr "Register a new device"
 
-msgid "Remove user permissions."
-msgstr ""
+msgid "LABEL_REGISTER_DEVICE_INSTRUCTIONS"
+msgstr "Use the following information to set up your new device:"
 
-msgid "Back"
-msgstr ""
+msgid "BUTTON_REGISTER_DEVICE"
+msgstr "Register the device"
 
-msgid "Search users"
-msgstr ""
+msgid "BUTTON_CLOSE"
+msgstr "Close"
 
-msgid "You are this workspace's owner."
-msgstr ""
+msgid "TITLE_REGISTER_NEW_USER"
+msgstr "Register a new user"
 
-msgid "This workspace is shared."
-msgstr ""
+msgid "LABEL_REGISTER_NEW_USER"
+msgstr "Register a new user"
 
-msgid "This workspace is empty."
-msgstr ""
+msgid "CHECK_USER_IS_ADMIN"
+msgstr "User is admin"
 
-msgid "Rename the workspace"
-msgstr ""
+msgid "LABEL_REGISTER_USER_INSTRUCTIONS"
+msgstr "Use the following information to set up your new user:"
 
-msgid "Share the workspace"
-msgstr ""
+msgid "BUTTON_REGISTER_USER"
+msgstr "Register the user"
 
-msgid "Delete the workspace"
-msgstr ""
+msgid "BUTTON_SKIP"
+msgstr "Skip"
 
-msgid "Manage workspace sharing"
-msgstr ""
+msgid "BUTTON_REPLACE"
+msgstr "Replace"
 
-msgid "Share with"
-msgstr ""
+msgid "CHECK_DO_THE_SAME"
+msgstr "Do the same for the following files"
 
-msgid "Share"
-msgstr ""
+msgid "TITLE_SETTINGS"
+msgstr "Settings"
 
-msgid "Update"
-msgstr ""
+msgid "BUTTON_BACK"
+msgstr "Back"
 
-msgid ""
-"A reader can see uploaded files.\n"
-"A contributor can upload files (and see them).\n"
-"A manager can add people and manage their permissions (and see and upload"
-" files)."
+msgid "WORKSPACE_REENCRYPTION_INFO"
 msgstr ""
-
-#~ msgid "URL or user is invalid."
-#~ msgstr ""
-
-#~ msgid "Are you sure you want to delete \"{}\" ?"
-#~ msgstr ""
-
-#~ msgid "Can not delete \"{}\""
-#~ msgstr ""
-
-#~ msgid "Open in explorer"
-#~ msgstr ""
-
-#~ msgid "Can not rename."
-#~ msgstr ""
-
-#~ msgid "Unknown error."
-#~ msgstr ""
-
-#~ msgid "Can not register this device ({})."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Can not close this window while "
-#~ "waiting for the new device to "
-#~ "register. Please cancel first."
-#~ msgstr ""
+"You will be able to see a workspace at a given point in time, with all your "
+"files exactly as they looked back then.\n"
+"Don't worry, you will not lose your current files."
 
-#~ msgid "Could not register the device."
-#~ msgstr ""
+msgid "WORKSPACE_REENCRYPTION_SELECT_DATE"
+msgstr "Just select a date..."
 
-#~ msgid "Network"
-#~ msgstr ""
+msgid "WORKSPACE_REENCRYPTION_SELECT_TIME"
+msgstr "...and a time"
 
-#~ msgid "Unhandled response {}"
-#~ msgstr ""
+msgid "WORKSPACE_REENCRYPTION_MOUNT"
+msgstr "See the workspace"
 
-#~ msgid "User has been registered. You may now close this window."
-#~ msgstr ""
+msgid "LABEL_SEARCH_USERS"
+msgstr "Search users"
 
-#~ msgid ""
-#~ "Can not close this window while "
-#~ "waiting for the new user to "
-#~ "register. Please cancel first."
-#~ msgstr ""
+msgid "LABEL_WORKSPACE_OWNER"
+msgstr "You are the owner of this workspace."
 
-#~ msgid "Could not register the user."
-#~ msgstr ""
+msgid "LABEL_WORKSPACE_SHARED"
+msgstr "This workspace is shared."
 
-#~ msgid "Do not close this window while the device registers."
-#~ msgstr ""
+msgid "LABEL_WORKSPACE_EMPTY"
+msgstr "This workspace is empty."
 
-#~ msgid "Do not close this window while the user registers."
-#~ msgstr ""
+msgid "LABEL_RENAME_WORKSPACE"
+msgstr "Rename the workspace."
 
-#~ msgid " (shared)"
-#~ msgstr ""
+msgid "LABEL_SHARE_WORKSPACE"
+msgstr "Share the workspace."
 
-#~ msgid " (shared by {})"
-#~ msgstr ""
+msgid "LABEL_ENCRYPT_WORKSPACE"
+msgstr "Re-encrypt the workspace."
 
-#~ msgid "A workspace with the same name already exists."
-#~ msgstr ""
+msgid "LABEL_DELETE_WORKSPACE"
+msgstr "Delete the workspace."
 
-#~ msgid "User can administer"
-#~ msgstr ""
+msgid "LABEL_MOUNT_TIMESTAMP"
+msgstr "See the workspace as it was at a specific date."
 
-#~ msgid "User can read"
-#~ msgstr ""
+msgid "TITLE_WORKSPACE_SHARING"
+msgstr "Workspace sharing"
 
-#~ msgid "User can write"
-#~ msgstr ""
+msgid "LABEL_SHARE_WITH"
+msgstr "Share with"
 
-#~ msgid "Admin"
-#~ msgstr ""
+msgid "BUTTON_SHARE"
+msgstr "Share"
 
-#~ msgid "Read"
-#~ msgstr ""
+msgid "BUTTON_UPDATE"
+msgstr "Update"
 
-#~ msgid "Write"
-#~ msgstr ""
+#~ msgid "ASK_MULTI_FILE_RENAME_CONTENT"
+#~ msgstr "Enter files new names"
 
-#~ msgid "Apply"
-#~ msgstr ""
+#~ msgid "ASK_MULTI_FILE_DELETE_TITLE"
+#~ msgstr "Delete files"
 
-#~ msgid "f\"Incompatible backend API version. Server is {str(exc)}\""
-#~ msgstr ""
+#~ msgid "ASK_OPEN_MULTI_FILE_TITLE"
+#~ msgstr "Open {} files"
 
-#~ msgid ""
-#~ "A reader can see uploaded files.\n"
-#~ "A collaborator can upload files (and see them).\n"
-#~ "A manager can add people and "
-#~ "manage their permissions (and see and"
-#~ " upload files)."
-#~ msgstr ""
+#~ msgid "WRN_WORKSPACE_ALREADY_SHARED"
+#~ msgstr "The workspace is already shared."
 
-#~ msgid "Workspace '{}' sharing rights have changed"
-#~ msgstr ""
+#~ msgid "NOTIF_WARN_LOST_CONNECTION."
+#~ msgstr "Disconnected from the server."
 
+#~ msgid "ASK_USER_NAME"
+#~ msgstr "User name"

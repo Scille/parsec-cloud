@@ -61,8 +61,11 @@ border: 1px solid rgb(46, 46, 46);
 padding-left: 10px;
 color: rgb(46, 46, 46);</string>
        </property>
+       <property name="text">
+        <string/>
+       </property>
        <property name="placeholderText">
-        <string>Search devices</string>
+        <string>LABEL_SEARCH_DEVICES</string>
        </property>
       </widget>
      </item>

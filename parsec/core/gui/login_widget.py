@@ -90,28 +90,20 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         devices = list_available_devices(self.config.config_dir)
         if len(devices) == 1:
             if devices[0][0] == organization and devices[0][1] == device:
-                show_info(
-                    self,
-                    _(
-                        "The organization and the user have been created. "
-                        "You will now be logged in."
-                    ),
-                )
+                show_info(self, _("INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"))
                 self.emit_login_with_password(devices[0][3], password)
         else:
-            show_info(
-                self, _("The organization and the user have been created. You can now log in.")
-            )
+            show_info(self, _("INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"))
             self.show_login_widget()
 
     def user_claimed(self, organization, device, password):
         devices = list_available_devices(self.config.config_dir)
         if len(devices) == 1:
             if devices[0][0] == organization and devices[0][1] == device:
-                show_info(self, _("The user has been created. You will now be logged in."))
+                show_info(self, _("INFO_USER_CREATED_SUCCESS_MONO_DEVICE"))
                 self.emit_login_with_password(devices[0][3], password)
         else:
-            show_info(self, _("The user has been created. You can now log in."))
+            show_info(self, _("INFO_USER_CREATED_SUCCESS_MULTI_DEVICE"))
             self.show_login_widget()
 
     def emit_login_with_password(self, key_file, password):

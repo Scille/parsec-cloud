@@ -126,7 +126,7 @@ color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>Identifier</string>
+              <string>LABEL_IDENTIFIER</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -181,7 +181,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>Password</string>
+                 <string>LABEL_PASSWORD</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -253,7 +253,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 PIN</string>
+                 <string>LABEL_PKCS_PIN</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -296,7 +296,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 Token</string>
+                 <string>LABEL_PKCS_TOKEN</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -333,7 +333,7 @@ color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 Key</string>
+                 <string>LABEL_PKCS_KEY</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -371,7 +371,7 @@ color: rgb(255, 255, 255);
             <string notr="true"/>
            </property>
            <property name="text">
-            <string>Authenticate using PKCS #11</string>
+            <string>CHECK_PKCS_AUTH</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -422,7 +422,7 @@ color: rgb(255, 255, 255);
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Log In</string>
+              <string>BUTTON_LOG_IN</string>
              </property>
              <property name="iconSize">
               <size>

@@ -93,7 +93,7 @@ async def test_register_device_modal_ok(
             )
         assert (
             "Information",
-            "Device has been registered. You may now close this window.",
+            "The device has been registered. You may now close this window.",
         ) in autoclose_dialog.dialogs
 
     await qt_thread_gateway.send_action(run_dialog)
@@ -119,7 +119,7 @@ async def test_register_device_modal_invalid_device_name(
                 aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
-    assert autoclose_dialog.dialogs == [("Error", "Bad device name.")]
+    assert autoclose_dialog.dialogs == [("Error", "The device name is invalid.")]
 
 
 @pytest.mark.gui
@@ -168,7 +168,7 @@ async def test_register_device_modal_offline(
 
     await qt_thread_gateway.send_action(run_dialog)
 
-    assert autoclose_dialog.dialogs == [("Error", "Cannot invite a device without being online.")]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot reach the server.")]
 
 
 @pytest.mark.gui
@@ -189,13 +189,7 @@ async def test_register_device_modal_already_registered(
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
-    assert autoclose_dialog.dialogs == [
-        (
-            "Error",
-            "Cannot register this device (Cannot invite device: Backend error `already_exists`: "
-            "Device `alice@dev1` already exists).",
-        )
-    ]
+    assert autoclose_dialog.dialogs == [("Error", "The device already exists.")]
 
 
 @pytest.mark.gui
@@ -219,9 +213,7 @@ async def test_register_device_unknown_error(
         aqtbot.qtbot.keyClicks(modal.line_edit_device_name, "new_device")
         with aqtbot.qtbot.waitSignal(modal.registration_error):
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
-        assert autoclose_dialog.dialogs == [
-            ("Error", "Cannot register this device (Unexpected error: RuntimeError()).")
-        ]
+        assert autoclose_dialog.dialogs == [("Error", "Cannot register the device.")]
 
     await qt_thread_gateway.send_action(run_dialog)
     # TODO: Make sure a log is emitted

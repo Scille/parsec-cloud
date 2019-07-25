@@ -17,12 +17,12 @@ PASSWORD_CSS = {
 
 def get_password_strength_text(password_score):
     PASSWORD_STRENGTH_TEXTS = [
-        _("Too short"),
-        _("Very weak"),
-        _("Weak"),
-        _("Average"),
-        _("Good"),
-        _("Strong"),
+        _("PASSWORD_STR_TOO_SHORT"),
+        _("PASSWORD_STR_VERY_WEAK"),
+        _("PASSWORD_STR_WEAK"),
+        _("PASSWORD_STR_AVERAGE"),
+        _("PASSWORD_STR_GOOD"),
+        _("PASSWORD_STR_STRONG"),
     ]
     return PASSWORD_STRENGTH_TEXTS[password_score]
 

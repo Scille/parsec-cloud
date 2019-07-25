@@ -162,7 +162,7 @@ color: rgb(9, 66, 155);
            </size>
           </property>
           <property name="toolTip">
-           <string>You are this workspace's owner.</string>
+           <string>LABEL_WORKSPACE_OWNER</string>
           </property>
           <property name="text">
            <string/>
@@ -190,7 +190,7 @@ color: rgb(9, 66, 155);
            </size>
           </property>
           <property name="toolTip">
-           <string>This workspace is shared.</string>
+           <string>LABEL_WORKSPACE_SHARED</string>
           </property>
           <property name="text">
            <string/>
@@ -244,7 +244,7 @@ border: 0;
 }</string>
           </property>
           <property name="text">
-           <string>...</string>
+           <string/>
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
@@ -280,7 +280,7 @@ border: 0;
              </font>
             </property>
             <property name="text">
-             <string>This workspace is empty.</string>
+             <string>LABEL_WORKSPACE_EMPTY</string>
             </property>
            </widget>
           </item>
@@ -453,7 +453,7 @@ border: 0;
                </size>
               </property>
               <property name="toolTip">
-               <string>Rename the workspace</string>
+               <string>LABEL_RENAME_WORKSPACE</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QPushButton#button_rename
@@ -519,7 +519,7 @@ border: 0;
                </size>
               </property>
               <property name="toolTip">
-               <string>Share the workspace</string>
+               <string>LABEL_SHARE_WORKSPACE</string>
               </property>
               <property name="statusTip">
                <string/>
@@ -569,6 +569,9 @@ border: 0;
             </item>
             <item>
              <widget class="QPushButton" name="button_remount_ts">
+              <property name="toolTip">
+               <string>LABEL_MOUNT_TIMESTAMP</string>
+              </property>
               <property name="text">
                <string/>
               </property>
@@ -618,7 +621,7 @@ border: 0;
                </size>
               </property>
               <property name="toolTip">
-               <string>Reencrypt the workspace</string>
+               <string>LABEL_ENCRYPT_WORKSPACE</string>
               </property>
               <property name="statusTip">
                <string/>
@@ -681,7 +684,7 @@ border: 0;
                </size>
               </property>
               <property name="toolTip">
-               <string>Delete the workspace</string>
+               <string>LABEL_DELETE_WORKSPACE</string>
               </property>
               <property name="statusTip">
                <string/>

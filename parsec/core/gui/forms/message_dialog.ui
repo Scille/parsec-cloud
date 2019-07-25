@@ -275,7 +275,7 @@ border: 0;
            </font>
           </property>
           <property name="text">
-           <string>Details</string>
+           <string>BUTTON_DETAILS</string>
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
@@ -304,7 +304,7 @@ border: 0;
            </font>
           </property>
           <property name="text">
-           <string>Copy to the clipboard</string>
+           <string>BUTTON_COPY_TO_CLIPBOARD</string>
           </property>
          </widget>
         </item>

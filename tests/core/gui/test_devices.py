@@ -65,8 +65,8 @@ async def test_device_info(aqtbot, running_backend, autoclose_dialog, logged_gui
     item.widget().show_device_info()
     if custom_locale:
         assert autoclose_dialog.dialogs == [
-            ("Informations", "dev1\n\nCrée le 1 janvier 2000 00:00"),
-            ("Informations", "dev2\n\nCrée le 1 janvier 2000 00:00"),
+            ("Information", "dev1\n\nCréé le 1 janvier 2000 00:00"),
+            ("Information", "dev2\n\nCréé le 1 janvier 2000 00:00"),
         ]
     else:
         assert autoclose_dialog.dialogs == [
@@ -91,7 +91,9 @@ async def test_revoke_device(aqtbot, running_backend, autoclose_dialog, monkeypa
 
     async with aqtbot.wait_signal(d_w.revoke_success):
         dev2_w.revoke_clicked.emit(dev2_w)
-    assert autoclose_dialog.dialogs == [("Information", 'Device "dev2" has been revoked.')]
+    assert autoclose_dialog.dialogs == [
+        ("Information", 'Device "dev2" has been successfully revoked.')
+    ]
     assert dev2_w.is_revoked is True
 
 

@@ -55,7 +55,7 @@ async def test_claim_user(aqtbot, gui, autoclose_dialog, alice_invite):
     async with aqtbot.wait_signal(claim_w.user_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
-        ("Information", "The user has been created. You will now be logged in.")
+        ("Information", "The user has been created.\nYou will now be logged in.")
     ]
 
 
@@ -71,9 +71,7 @@ async def test_claim_user_offline(aqtbot, gui, autoclose_dialog, running_backend
         async with aqtbot.wait_signal(claim_w.claim_error):
             await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs == [
-        ("Error", "Can not claim this user ([Errno 111] Connection refused).")
-    ]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot register the user.")]
 
 
 @pytest.mark.gui
@@ -91,7 +89,5 @@ async def test_claim_user_unknown_error(monkeypatch, aqtbot, gui, autoclose_dial
 
     async with aqtbot.wait_signal(claim_w.claim_error):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
-    assert autoclose_dialog.dialogs == [
-        ("Error", "Can not claim this user (Unexpected error: RuntimeError()).")
-    ]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot register the user.")]
     # TODO: Make sure a log is emitted

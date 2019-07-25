@@ -225,7 +225,7 @@ border: 0;
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>Skip</string>
+               <string>BUTTON_SKIP</string>
               </property>
              </widget>
             </item>
@@ -246,7 +246,7 @@ border: 0;
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>Replace</string>
+               <string>BUTTON_REPLACE</string>
               </property>
              </widget>
             </item>
@@ -276,7 +276,7 @@ border: 0;
              <string notr="true"/>
             </property>
             <property name="text">
-             <string>Do the same for all files</string>
+             <string>CHECK_DO_THE_SAME</string>
             </property>
            </widget>
           </item>

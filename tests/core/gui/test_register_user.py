@@ -101,7 +101,7 @@ async def test_register_user_modal_ok(
             )
         assert (
             "Information",
-            "User has been registered. You may now close this window.",
+            "The user has been registered. You may now close this window.",
         ) in autoclose_dialog.dialogs
 
     await qt_thread_gateway.send_action(run_dialog)
@@ -127,7 +127,7 @@ async def test_register_user_modal_invalid_user_id(
                 aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
-    assert autoclose_dialog.dialogs == [("Error", "Bad user id.")]
+    assert autoclose_dialog.dialogs == [("Error", "User name is invalid.")]
 
 
 @pytest.mark.gui
@@ -176,7 +176,7 @@ async def test_register_user_modal_offline(
 
     await qt_thread_gateway.send_action(run_dialog)
 
-    assert autoclose_dialog.dialogs == [("Error", "Cannot invite a user without being online.")]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot reach the server.")]
 
 
 @pytest.mark.gui
@@ -197,7 +197,7 @@ async def test_register_user_modal_already_registered(
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
-    assert autoclose_dialog.dialogs == [("Error", "A user with the same name already exists.")]
+    assert autoclose_dialog.dialogs == [("Error", "This user already exists.")]
 
 
 @pytest.mark.gui
@@ -216,7 +216,7 @@ async def test_register_user_modal_not_admin(
         aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user")
         with aqtbot.qtbot.waitSignal(modal.registration_error):
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
-        assert autoclose_dialog.dialogs == [("Error", "Only admins can invite a new user.")]
+        assert autoclose_dialog.dialogs == [("Error", "Only administrators can invite new users.")]
 
     await qt_thread_gateway.send_action(run_dialog)
 
@@ -246,9 +246,7 @@ async def test_register_user_unknown_error(
         aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user")
         with aqtbot.qtbot.waitSignal(modal.registration_error):
             aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
-        assert autoclose_dialog.dialogs == [
-            ("Error", "Cannot register this user (Unexpected error: RuntimeError()).")
-        ]
+        assert autoclose_dialog.dialogs == [("Error", "Cannot register the user.")]
 
     await qt_thread_gateway.send_action(run_dialog)
     # TODO: Make sure a log is emitted

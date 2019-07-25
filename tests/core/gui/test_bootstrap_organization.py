@@ -49,7 +49,7 @@ async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_di
     assert autoclose_dialog.dialogs == [
         (
             "Information",
-            "The organization and the user have been created. You will now be logged in.",
+            "The organization and the user have been created.\nYou will now be logged in.",
         )
     ]
 
@@ -66,9 +66,7 @@ async def test_bootstrap_organization_backend_offline(
 
         async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):
             await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
-        assert autoclose_dialog.dialogs == [
-            ("Error", "Can not bootstrap this organization ([Errno 111] Connection refused).")
-        ]
+        assert autoclose_dialog.dialogs == [("Error", "Cannot bootstrap this organization.")]
 
 
 @pytest.mark.gui
@@ -88,7 +86,5 @@ async def test_bootstrap_organization_unknown_error(
 
     async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):
         await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
-    assert autoclose_dialog.dialogs == [
-        ("Error", "Can not bootstrap this organization (Unexpected error: RuntimeError()).")
-    ]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot bootstrap this organization.")]
     # TODO: Make a log is emitted

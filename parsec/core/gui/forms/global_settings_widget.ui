@@ -60,8 +60,8 @@ background-color: rgb(255, 255, 255);
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>481</width>
-        <height>476</height>
+        <width>467</width>
+        <height>482</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -123,7 +123,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Behavior</string>
+               <string>SETTINGS_TITLE_BEHAVIOR</string>
               </property>
              </widget>
             </item>
@@ -137,14 +137,14 @@ background-color: rgb(255, 255, 255);
             <item>
              <widget class="QCheckBox" name="check_box_tray">
               <property name="text">
-               <string>Close button minimizes Parsec in the tray</string>
+               <string>CHECK_MINIMIZE_IN_TRAY</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="check_box_windows_left_panel">
               <property name="text">
-               <string>Add Parsec mountpoint to Windows File Explorer left panel</string>
+               <string>CHECK_WINDOWS_MOUNTPOINT</string>
               </property>
              </widget>
             </item>
@@ -208,7 +208,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Localization</string>
+               <string>SETTINGS_TITLE_LOCALIZATION</string>
               </property>
              </widget>
             </item>
@@ -224,7 +224,7 @@ background-color: rgb(255, 255, 255);
               <item>
                <widget class="QLabel" name="label_10">
                 <property name="text">
-                 <string>Language</string>
+                 <string>LABEL_LANGUAGE</string>
                 </property>
                </widget>
               </item>
@@ -306,7 +306,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Version</string>
+               <string>SETTINGS_TITLE_VERSION</string>
               </property>
              </widget>
             </item>
@@ -322,7 +322,7 @@ background-color: rgb(255, 255, 255);
               <item>
                <widget class="QCheckBox" name="check_box_check_at_startup">
                 <property name="text">
-                 <string>Check for new version at startup</string>
+                 <string>CHECK_CHECK_NEW_VERSION</string>
                 </property>
                </widget>
               </item>
@@ -344,7 +344,7 @@ background-color: rgb(255, 255, 255);
                  </font>
                 </property>
                 <property name="text">
-                 <string>Check for new version now</string>
+                 <string>BUTTON_CHECK_NEW_VERSION</string>
                 </property>
                </widget>
               </item>
@@ -420,7 +420,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Error reporting</string>
+               <string>SETTINGS_TITLE_ERROR_REPORTING</string>
               </property>
              </widget>
             </item>
@@ -434,7 +434,7 @@ background-color: rgb(255, 255, 255);
             <item>
              <widget class="QCheckBox" name="check_box_send_data">
               <property name="text">
-               <string>Send information when Parsec encounters an error.</string>
+               <string>CHECK_SEND_CRASH_INFO</string>
               </property>
              </widget>
             </item>
@@ -495,7 +495,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>Interface</string>
+               <string>SETTINGS_TITLE_INTERFACE</string>
               </property>
              </widget>
             </item>
@@ -509,7 +509,7 @@ background-color: rgb(255, 255, 255);
             <item>
              <widget class="QCheckBox" name="check_box_workspace_color">
               <property name="text">
-               <string>Use colors for workspaces</string>
+               <string>CHECK_USE_WORKSPACE_COLORS</string>
               </property>
              </widget>
             </item>
@@ -591,8 +591,15 @@ background-color: rgb(255, 255, 255);
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
        </property>
+       <property name="styleSheet">
+        <string notr="true">#button_save
+{
+padding-top: 5px;
+padding-bottom: 5px;
+}</string>
+       </property>
        <property name="text">
-        <string>Save</string>
+        <string>BUTTON_SAVE</string>
        </property>
        <property name="iconSize">
         <size>

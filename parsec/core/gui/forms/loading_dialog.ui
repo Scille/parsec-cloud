@@ -59,7 +59,7 @@ background-color: rgb(255, 255, 255);
         <item>
          <widget class="QLabel" name="label_status">
           <property name="text">
-           <string>Importing</string>
+           <string>LABEL_IMPORTING</string>
           </property>
          </widget>
         </item>
@@ -147,7 +147,7 @@ width: 20px;
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>Cancel</string>
+           <string>BUTTON_CANCEL</string>
           </property>
           <property name="iconSize">
            <size>

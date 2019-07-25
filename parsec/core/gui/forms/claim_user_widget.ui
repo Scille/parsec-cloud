@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>632</width>
-    <height>723</height>
+    <height>724</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -52,7 +52,7 @@ color: rgb(255, 255, 255);
       </font>
      </property>
      <property name="text">
-      <string>To register a new user, you need another user to create an account and get a token.</string>
+      <string>LABEL_CLAIM_USER_INSTRUCTIONS</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignJustify|Qt::AlignVCenter</set>
@@ -135,7 +135,7 @@ color: rgb(255, 255, 255);
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>User name</string>
+              <string>LABEL_USER_NAME</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -175,7 +175,7 @@ color: rgb(255, 255, 255);
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Device name</string>
+              <string>LABEL_DEVICE_NAME</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -215,7 +215,7 @@ color: rgb(255, 255, 255);
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Token</string>
+              <string>LABEL_TOKEN</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -252,7 +252,7 @@ color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="text">
-              <string>URL</string>
+              <string>LABEL_URL</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -310,7 +310,7 @@ color: rgb(255, 255, 255);
                  <string notr="true"/>
                 </property>
                 <property name="text">
-                 <string>Password</string>
+                 <string>LABEL_PASSWORD</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -359,7 +359,7 @@ color: rgb(255, 255, 255);
                  <string notr="true"/>
                 </property>
                 <property name="text">
-                 <string>Password check</string>
+                 <string>LABEL_PASSWORD_CHECK</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -461,7 +461,7 @@ color: rgb(255, 255, 255);
                  <string notr="true"/>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 Token</string>
+                 <string>LABEL_PKCS_TOKEN</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -504,7 +504,7 @@ color: rgb(255, 255, 255);
                  <string notr="true"/>
                 </property>
                 <property name="text">
-                 <string>PKCS #11 Key</string>
+                 <string>LABEL_PKCS_KEY</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -545,7 +545,7 @@ color: rgb(255, 255, 255);
             <string notr="true"/>
            </property>
            <property name="text">
-            <string>Authenticate using PKCS #11</string>
+            <string>CHECK_PKCS_AUTH</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -587,7 +587,7 @@ color: rgb(255, 255, 255);
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Register</string>
+              <string>BUTTON_CLAIM</string>
              </property>
              <property name="iconSize">
               <size>

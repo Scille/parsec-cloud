@@ -20,7 +20,7 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, show_warning, TextInputDialog, QuestionDialog
 from parsec.core.gui.custom_widgets import TaskbarButton
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ts_ws_dialog import TsWsDialog
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -196,7 +196,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_button.reload_workspace_name()
 
     def on_rename_error(self, job):
-        show_error(self, _("Can not rename the workspace."))
+        show_error(self, _("ERR_WORKSPACE_RENAME"), exception=job.exc)
 
     def on_list_success(self, job):
         if not job.ret:
@@ -221,8 +221,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if isinstance(job.status, MountpointConfigurationWorkspaceFSTimestampedError):
             show_error(
                 self,
-                _('Can\'t mount worskpace "{}" at {}.').format(
-                    job.status.args[3], job.status.args[2].format("%x %X")
+                _("ERR_WORKSPACE_MOUNT_{}").format(
+                    job.status.args[3], format_datetime(job.status.args[2])
                 ),
             )
 
@@ -309,11 +309,23 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 timestamp=workspace_fs.timestamp,
             )
             return
-        show_warning(self, _("Not yet implemented."))
+        else:
+            result = QuestionDialog.ask(
+                self,
+                _("ASK_WORKSPACE_DELETE_TITLE"),
+                _("ASK_WORKSPACE_DELETE_CONTENT_{}").format(workspace_fs.workspace_name),
+            )
+            if not result:
+                return
+            show_warning(self, _("WARN_WORKSPACE_DELETE"))
 
     def rename_workspace(self, workspace_button):
         new_name = TextInputDialog.get_text(
-            self, _("New name"), _("Enter workspace new name"), placeholder=_("Workspace name")
+            self,
+            _("ASK_RENAME_WORKSPACE_TITLE"),
+            _("ASK_RENAME_WORKSPACE_CONTENT"),
+            placeholder=_("ASK_RENAME_WORKSPACE_PLACEHOLDER"),
+            default_text=workspace_button.name,
         )
         if not new_name:
             return
@@ -345,16 +357,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         question = ""
         if user_revoked:
-            question += _("A user on this workspace has been revoked.\n")
+            question += "{}\n".format(_("ASK_WORKSPACE_USER_REVOKED"))
         if role_revoked:
-            question += _("A user has been removed from this workspace sharing.\n")
-        question += _(
-            "This workspace needs to be reencrypted to ensure the security of your data.\n"
-            "This operation will take some time and prevent the workspace synchronisation.\n\n"
-            "Do you want to continue?"
-        )
+            question += "{}\n".format(_("ASK_WORKSPACE_USER_REMOVED"))
+        question += _("ASK_WORKSPACE_REENCRYPTION_CONTENT")
 
-        r = QuestionDialog.ask(self, _("Workspace reencryption"), question)
+        r = QuestionDialog.ask(self, _("ASK_WORKSPACE_REENCRYPTION_TITLE"), question)
         if not r:
             return
 
@@ -393,7 +401,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def create_workspace_clicked(self):
         workspace_name = TextInputDialog.get_text(
-            self, _("New workspace"), _("Enter new workspace name"), _("Workspace name")
+            self,
+            _("ASK_NEW_WORKSPACE_TITLE"),
+            _("ASK_NEW_WORKSPACE_CONTENT"),
+            _("ASK_NEW_WORKSPACE_PLACEHOLDER"),
         )
         if not workspace_name:
             return

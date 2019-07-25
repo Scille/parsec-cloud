@@ -311,7 +311,7 @@ text-decoration: underline;
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Register a new account</string>
+              <string>BUTTON_REGISTER_NEW_USER</string>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -333,7 +333,7 @@ text-decoration: underline;
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Register a new device</string>
+              <string>BUTTON_REGISTER_NEW_DEVICE</string>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -355,7 +355,7 @@ text-decoration: underline;
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Log In</string>
+              <string>BUTTON_LOG_IN</string>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -374,7 +374,7 @@ text-decoration: underline;
               </font>
              </property>
              <property name="text">
-              <string>Bootstrap an organization</string>
+              <string>BUTTON_BOOTSTRAP_ORG</string>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
@@ -390,7 +390,7 @@ text-decoration: underline;
               </font>
              </property>
              <property name="text">
-              <string>Settings</string>
+              <string>BUTTON_SETTINGS</string>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">

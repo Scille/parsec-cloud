@@ -69,7 +69,7 @@ class UserInputDialog(QDialog, Ui_InputDialog):
         self.portal = portal
         self.label_title.setText(title)
         self.label_message.setText(message)
-        self.line_edit_text.setPlaceholderText(_("User name"))
+        self.line_edit_text.setPlaceholderText(_("LABEL_USER_NAME"))
         self.setWindowFlags(Qt.SplashScreen)
         self.exclude = exclude or []
         self.timer = QTimer()
@@ -168,7 +168,7 @@ class MessageDialog(QDialog, Ui_MessageDialog):
 def show_info(parent, text, exception=None):
     m = MessageDialog(
         QPixmap(":/icons/images/icons/info.png"),
-        _("Information"),
+        _("INFO_DIALOG_TITLE"),
         text,
         exception=exception,
         parent=parent,
@@ -179,7 +179,7 @@ def show_info(parent, text, exception=None):
 def show_warning(parent, text, exception=None):
     m = MessageDialog(
         QPixmap(":/icons/images/icons/warning.png"),
-        _("Warning"),
+        _("WARN_DIALOG_TITLE"),
         text,
         exception=exception,
         parent=parent,
@@ -190,7 +190,7 @@ def show_warning(parent, text, exception=None):
 def show_error(parent, text, exception=None):
     m = MessageDialog(
         QPixmap(":/icons/images/icons/error.png"),
-        _("Error"),
+        _("ERR_DIALOG_TITLE"),
         text,
         exception=exception,
         parent=parent,

@@ -106,12 +106,12 @@ class FileTable(QTableWidget):
             return
 
         menu = QMenu(self)
-        action = menu.addAction(_("Open"))
+        action = menu.addAction(_("FILE_MENU_OPEN"))
         action.triggered.connect(self.open_clicked.emit)
         if self.current_user_role != WorkspaceRole.READER:
-            action = menu.addAction(_("Rename"))
+            action = menu.addAction(_("FILE_MENU_RENAME"))
             action.triggered.connect(self.rename_clicked.emit)
-            action = menu.addAction(_("Delete"))
+            action = menu.addAction(_("FILE_MENU_DELETE"))
             action.triggered.connect(self.delete_clicked.emit)
         menu.exec_(global_pos)
 
@@ -152,7 +152,7 @@ class FileTable(QTableWidget):
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 0, item)
-        item = CustomTableItem(_("Parent Folder"))
+        item = CustomTableItem(_("FILE_TREE_PARENT_FOLDER"))
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 1, item)
@@ -176,7 +176,7 @@ class FileTable(QTableWidget):
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 0, item)
-        item = CustomTableItem(_("Parent Workspace"))
+        item = CustomTableItem(_("FILE_TREE_PARENT_WORKSPACE"))
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 1, item)

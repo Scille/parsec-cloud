@@ -7,7 +7,7 @@ from PyQt5.QtGui import QColor
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.types import EntryID
 
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.color import StringToColor
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
@@ -119,10 +119,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self._reencryption_needs = val
         if self.reencryption_needs and self.reencryption_needs.need_reencryption:
             self.button_reencrypt.setDisabled(False)
-            self.button_reencrypt.setToolTip(_("This workspace needs to be reencrypted."))
+            self.button_reencrypt.setToolTip(_("TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"))
         else:
             self.button_reencrypt.setDisabled(True)
-            self.button_reencrypt.setToolTip(_("This workspace does not need to be reencrypted."))
+            self.button_reencrypt.setToolTip(_("TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"))
 
     def reload_workspace_name(self):
         workspace_name = self.workspace_fs.workspace_name
@@ -132,17 +132,19 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
         if self.is_shared:
             if self.is_creator:
-                display += _(" (shared with others)")
+                display += " ({})".format(_("WORKSPACE_SHARED_DISPLAY"))
             # TODO: uncomment once the workspace name does not contain "shared by XX" anymore
             # else:
             #     display += _(" (shared with you)")
 
         if isinstance(self.workspace_fs, WorkspaceFSTimestamped):
-            display += f" - at {self.workspace_fs.timestamp}"
+            display += _("WORKSPACE_NAME_TIMESTAMPED_{}").format(
+                format_datetime(self.workspace_fs.timestamp)
+            )
 
         if self.reencrypting:
             total, done = self.reencrypting
-            display += f" - Rencrypting {int(done / total * 100)}%"
+            display += _("WORKSPACE_NAME_REENCRYPTION_{}").format(int(done / total * 100))
 
         self.label_workspace.setText(display)
         self.label_workspace.setToolTip(workspace_name)

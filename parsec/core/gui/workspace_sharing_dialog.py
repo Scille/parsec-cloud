@@ -36,10 +36,10 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.ROLES_TRANSLATIONS = {
-            WorkspaceRole.READER: _("Reader"),
-            WorkspaceRole.CONTRIBUTOR: _("Contributor"),
-            WorkspaceRole.MANAGER: _("Manager"),
-            WorkspaceRole.OWNER: _("Owner"),
+            WorkspaceRole.READER: _("WORKSPACE_ROLE_READER"),
+            WorkspaceRole.CONTRIBUTOR: _("WORKSPACE_ROLE_CONTRIBUTOR"),
+            WorkspaceRole.MANAGER: _("WORKSPACE_ROLE_MANAGER"),
+            WorkspaceRole.OWNER: _("WORKSPACE_ROLE_OWNER"),
         }
         self.role = role
         self.current_user_role = current_user_role
@@ -113,13 +113,13 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         for role, index in _ROLES_TO_INDEX.items():
             if index <= current_index:
                 if role == WorkspaceRole.READER:
-                    self.combo_role.insertItem(index, _("Reader"))
+                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_READER"))
                 elif role == WorkspaceRole.CONTRIBUTOR:
-                    self.combo_role.insertItem(index, _("Contributor"))
+                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_CONTRIBUTOR"))
                 elif role == WorkspaceRole.MANAGER:
-                    self.combo_role.insertItem(index, _("Manager"))
+                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_MANAGER"))
                 elif role == WorkspaceRole.OWNER:
-                    self.combo_role.insertItem(index, _("Owner"))
+                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_OWNER"))
         if (
             self.current_user_role == WorkspaceRole.READER
             or self.current_user_role == WorkspaceRole.CONTRIBUTOR
@@ -156,14 +156,12 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if not user_name:
             return
         if user_name == self.core.device.user_id:
-            show_warning(self, _("You can not share a workspace with yourself.").format(user_name))
+            show_warning(self, _("WARN_WORKSPACE_SHARING_WITH_YOURSELF"))
             return
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
             if item and item.widget() and item.widget().user == user_name:
-                show_warning(
-                    self, _('This workspace is already shared with "{}".').format(user_name)
-                )
+                show_warning(self, _("WARN_WORKSPACE_ALREADY_SHARED_{}").format(user_name))
                 return
         try:
             user = UserID(user_name)
@@ -174,19 +172,17 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 _index_to_role(self.combo_role.currentIndex()),
             )
             self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
-        except FSError:
-            show_warning(
-                self,
-                _('Can not share the workspace "{}" with this user.').format(
-                    self.workspace_fs.workspace_name
-                ),
-            )
-        except:
+        except FSError as exc:
             show_error(
                 self,
-                _('Can not share the workspace "{}" with "{}".').format(
-                    self.workspace_fs.workspace_name, user
-                ),
+                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+                exception=exc,
+            )
+        except Exception as exc:
+            show_error(
+                self,
+                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+                execption=exc,
             )
 
     def add_participant(self, user, is_current_user, role):
@@ -210,8 +206,8 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
     def on_remove_user_clicked(self, user):
         r = QuestionDialog.ask(
             parent=self,
-            title=_("Remove this user"),
-            message=_("Are you sure you want to stop sharing this workspace with {}?").format(user),
+            title=_("ASK_WORKSPACE_UNSHARE_TITLE"),
+            message=_("ASK_WORKSPACE_UNSHARE_CONTENT_{}").format(user),
         )
         if not r:
             return
@@ -239,16 +235,9 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 except:
                     errors.append(w.user)
         if errors:
-            show_error(
-                self,
-                _(
-                    "Permissions could not be updated for the following users: {}".format(
-                        "\n".join(errors)
-                    )
-                ),
-            )
+            show_error(self, _("ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}".format("\n".join(errors))))
         elif updated:
-            show_info(self, _("Permissions have been updated."))
+            show_info(self, _("INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"))
         self.reset()
 
     def has_changes(self):
@@ -263,12 +252,8 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if self.has_changes():
             r = QuestionDialog.ask(
                 parent=self,
-                title=_("Are you sure?"),
-                message=_(
-                    "You have made some modifications, but have not applied them by clicking "
-                    '"Apply". Are you sure you want to close this window and discard these '
-                    "modifications?"
-                ),
+                title=_("ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"),
+                message=_("ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"),
             )
             if r:
                 self.accept()
