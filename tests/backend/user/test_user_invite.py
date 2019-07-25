@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+import trio
 from async_generator import asynccontextmanager
 
 from parsec.backend.user import PEER_EVENT_MAX_WAIT
@@ -19,11 +20,11 @@ async def user_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_user_invite(backend, alice_backend_sock, alice, mallory):
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
 
             backend.event_bus.send(
                 "user.claimed",
@@ -43,8 +44,9 @@ async def test_user_invite(backend, alice_backend_sock, alice, mallory):
 
 @pytest.mark.trio
 async def test_user_invite_already_exists(backend, alice_backend_sock, alice, bob):
-    async with user_invite(alice_backend_sock, user_id=bob.user_id) as prep:
-        pass
+    with trio.fail_after(1):
+        async with user_invite(alice_backend_sock, user_id=bob.user_id) as prep:
+            pass
     assert prep[0] == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
 
 
@@ -64,8 +66,9 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
 
 @pytest.mark.trio
 async def test_user_invite_not_admin(bob_backend_sock, bob, mallory):
-    async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep:
-        pass
+    with trio.fail_after(1):
+        async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep:
+            pass
     assert prep[0] == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
 
 
@@ -73,16 +76,14 @@ async def test_user_invite_not_admin(bob_backend_sock, bob, mallory):
 async def test_concurrent_user_invite(
     backend, alice_backend_sock, adam_backend_sock, alice, adam, mallory
 ):
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep1:
 
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
             async with user_invite(adam_backend_sock, user_id=mallory.user_id) as prep2:
 
                 spy.clear()
-                await spy.wait_with_timeout(
-                    "event.connected", kwargs={"event_name": "user.claimed"}
-                )
+                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
 
                 backend.event_bus.send(
                     "user.claimed",
@@ -100,11 +101,11 @@ async def test_user_invite_same_name_different_organizations(
     backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, mallory
 ):
     # Mallory invitation from first organization
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
 
             backend.event_bus.send(
                 "user.claimed",
@@ -126,7 +127,7 @@ async def test_user_invite_same_name_different_organizations(
         async with user_invite(otheralice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
 
             backend.event_bus.send(
                 "user.claimed",

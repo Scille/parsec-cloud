@@ -35,7 +35,7 @@ class EventBusSpy:
         self.events.clear()
 
     async def wait_with_timeout(self, event, dt=ANY, kwargs=ANY, timeout=1):
-        with trio.move_on_after(timeout):
+        with trio.fail_after(timeout):
             await self.wait(event, dt, kwargs)
 
     async def wait(self, event, dt=ANY, kwargs=ANY):
@@ -58,9 +58,8 @@ class EventBusSpy:
         return await receive_channel.receive()
 
     async def wait_multiple_with_timeout(self, events, timeout=1):
-        with trio.move_on_after(timeout):
+        with trio.fail_after(timeout):
             await self.wait_multiple(events)
-        self.assert_events_occured(events)
 
     async def wait_multiple(self, events):
         expected_events = self._cook_events_params(events)
