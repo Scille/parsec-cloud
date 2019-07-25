@@ -569,6 +569,9 @@ border: 0;
             </item>
             <item>
              <widget class="QPushButton" name="button_remount_ts">
+              <property name="toolTip">
+               <string>LABEL_MOUNT_TIMESTAMP</string>
+              </property>
               <property name="text">
                <string/>
               </property>

@@ -10,12 +10,11 @@ from parsec.core.gui.ui.ts_ws_dialog import Ui_TsWsDialog
 
 
 class TsWsDialog(QDialog, Ui_TsWsDialog):
-    def __init__(self, workspace_fs, parent, *args, **kwargs):
+    def __init__(self, workspace_fs, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.setWindowFlags(Qt.SplashScreen)
         self.workspace_fs = workspace_fs
-        self.parent = parent
         creation = run(workspace_fs.path_info, "/")["created"].in_timezone("local")
         self.creation_date = (creation.year, creation.month, creation.day)
         self.creation_time = (creation.hour, creation.minute, creation.second)

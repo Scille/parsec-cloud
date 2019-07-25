@@ -69,7 +69,7 @@ class UserInputDialog(QDialog, Ui_InputDialog):
         self.portal = portal
         self.label_title.setText(title)
         self.label_message.setText(message)
-        self.line_edit_text.setPlaceholderText(_("User name"))
+        self.line_edit_text.setPlaceholderText(_("LABEL_USER_NAME"))
         self.setWindowFlags(Qt.SplashScreen)
         self.exclude = exclude or []
         self.timer = QTimer()

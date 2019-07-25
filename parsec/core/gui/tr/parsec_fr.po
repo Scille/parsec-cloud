@@ -7,8 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-01 14:44+0200\n"
-"PO-Revision-Date: 2019-07-01 18:21+0200\n"
+"POT-Creation-Date: 2019-07-25 14:22+0200\n"
+"PO-Revision-Date: 2019-07-25 14:34+0200\n"
+"Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -16,7 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-"Last-Translator: \n"
 "X-Generator: Poedit 2.2.1\n"
 
 msgid "WORKSPACE_ROLE_READER"
@@ -130,8 +130,23 @@ msgstr "Bon"
 msgid "PASSWORD_STR_STRONG"
 msgstr "Fort"
 
+msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
+msgstr "Cet espace de travail doit être rechiffré."
+
+msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
+msgstr "Cet espace de travail n'a pas besoin d'être rechiffré."
+
 msgid "WORKSPACE_SHARED_DISPLAY"
 msgstr "partagé"
+
+msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
+msgstr "- à {}"
+
+msgid "WORKSPACE_NAME_REENCRYPTION_{}"
+msgstr "- rechiffrement ({}%)"
+
+msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
+msgstr "Copié dans le presse-papier."
 
 msgid "ERR_BAD_DEVICE_NAME"
 msgstr "Le nom de l'appareil est invalide."
@@ -205,6 +220,9 @@ msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Impossible de renommer l'espace de travail."
 
+msgid "ERR_WORKSPACE_MOUNT_{}"
+msgstr "Impossible de voir l'espace de travail \"{}\" tel qu'il était le {}."
+
 msgid "ASK_WORKSPACE_DELETE_TITLE"
 msgstr "Supprimer un espace de travail"
 
@@ -222,6 +240,24 @@ msgstr "Entrez le nouveau nom de l'espace de travail"
 
 msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
 msgstr "Nom de l'espace de travail"
+
+msgid "ASK_WORKSPACE_USER_REVOKED"
+msgstr "Un utilisateur de cet espace de travail a été révoqué."
+
+msgid "ASK_WORKSPACE_USER_REMOVED"
+msgstr "Un utilisateur a été retiré du partage de cet espace de travail."
+
+msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
+msgstr ""
+"Cet espace de travail doit être rechiffré pour assurer la sécurité de vos "
+"données.\n"
+"Cette opération prend du temps et empêchera temporairement la synchronisation "
+"de l'espace de travail.\n"
+"\n"
+"Voulez-vous continuer ?"
+
+msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
+msgstr "Rechiffrement de l'espace de travail"
 
 msgid "ASK_NEW_WORKSPACE_TITLE"
 msgstr "Créer un espace de travail"
@@ -288,7 +324,8 @@ msgstr "Bienvenue !"
 
 msgid "STARTING_GUIDE_WELCOME_CONTENT"
 msgstr ""
-"Parsec vous permet de stocker vos données avec un très haut niveau de sécurité.\n"
+"Parsec vous permet de stocker vos données avec un très haut niveau de "
+"sécurité.\n"
 "Découvrez l'application en nous laissant vous guider pas à pas."
 
 msgid "STARTING_GUIDE_WELCOME_SCREENSHOT"
@@ -299,7 +336,8 @@ msgstr "Espaces de travail"
 
 msgid "STARTING_GUIDE_WORKSPACES_CONTENT"
 msgstr ""
-"Arrangez tous vos fichiers par espaces de travail, une interface claire pour un processus simple\n"
+"Arrangez tous vos fichiers par espaces de travail, une interface claire pour un "
+"processus simple\n"
 "et facile à utiliser."
 
 msgid "STARTING_GUIDE_WORKSPACES_SCREENSHOT"
@@ -345,7 +383,8 @@ msgstr "Gérez vos utilisateurs"
 
 msgid "STARTING_GUIDE_USERS_CONTENT"
 msgstr ""
-"Et pour les administrateurs ? Vous pouvez gérer les utilisateurs et leurs permissions,\n"
+"Et pour les administrateurs ? Vous pouvez gérer les utilisateurs et leurs "
+"permissions,\n"
 "en ajouter, ou les révoquer."
 
 msgid "STARTING_GUIDE_USERS_SCREENSHOT"
@@ -357,7 +396,8 @@ msgstr "Même hors-ligne"
 msgid "STARTING_GUIDE_OFFLINE_CONTENT"
 msgstr ""
 "Pas de connexion ? Aucun problème. Vous pouvez accéder à tous vos fichiers.\n"
-"Les modifications seront sauvegardées localement et synchronisées automatiquement."
+"Les modifications seront sauvegardées localement et synchronisées "
+"automatiquement."
 
 msgid "STARTING_GUIDE_OFFLINE_SCREENSHOT"
 msgstr ":/screenshots/images/screenshots/offline_fr.png"
@@ -367,7 +407,8 @@ msgstr "À vous de jouer !"
 
 msgid "STARTING_GUIDE_YOUR_TURN_CONTENT"
 msgstr ""
-"Créez votre premier espace de travail, importez vos fichiers, partagez vos documents.\n"
+"Créez votre premier espace de travail, importez vos fichiers, partagez vos "
+"documents.\n"
 "\n"
 "La sécurité n'attend pas !"
 
@@ -404,6 +445,18 @@ msgstr "Cet utilisateur existe déjà."
 msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
 msgstr "Impossible de démarrer cette organisation."
 
+msgid "LABEL_USER_NAME"
+msgstr "Nom d'utilisateur"
+
+msgid "INFO_DIALOG_TITLE"
+msgstr "Information"
+
+msgid "WARN_DIALOG_TITLE"
+msgstr "Avertissement"
+
+msgid "ERR_DIALOG_TITLE"
+msgstr "Erreur"
+
 msgid "MENU_SHOW_WINDOW"
 msgstr "Ouvrir la fenêtre"
 
@@ -416,7 +469,9 @@ msgstr ""
 "Vous allez maintenant être connecté."
 
 msgid "INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"
-msgstr "L'organisation et l'utilisateur ont été créés. Vous pouvez maintenant vous connecter."
+msgstr ""
+"L'organisation et l'utilisateur ont été créés. Vous pouvez maintenant vous "
+"connecter."
 
 msgid "INFO_USER_CREATED_SUCCESS_MONO_DEVICE"
 msgstr ""
@@ -444,8 +499,8 @@ msgstr "Globale"
 msgid "SETTINGS_NEED_RESTART"
 msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
 
-msgid "NOTIF_WARN_LOST_CONNECTION."
-msgstr "Déconnecté du serveur"
+msgid "NOTIF_WARN_LOST_CONNECTION"
+msgstr "La connection au serveur a été perdue."
 
 msgid "NOTIF_INFO_CONNECTED"
 msgstr "Connecté au serveur."
@@ -502,7 +557,8 @@ msgid "ERR_REGISTER_USER_UNKNOWN"
 msgstr "Impossible d'enregistrer l'utilisateur."
 
 msgid "INFO_REGISTER_USER_SUCCESS"
-msgstr "L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
+msgstr ""
+"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
 
 msgid "WARN_REGISTER_USER_EMPTY"
 msgstr "Le nom d'utilisateur ne peut pas être vide."
@@ -520,7 +576,8 @@ msgid "ASK_WORKSPACE_UNSHARE_TITLE"
 msgstr "Retirer du partage"
 
 msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir arrêter de partager l'espace de travail avec \"{}\" ?"
+msgstr ""
+"Êtes-vous sûr de vouloir arrêter de partager l'espace de travail avec \"{}\" ?"
 
 msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
 msgstr ""
@@ -534,28 +591,22 @@ msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
 msgstr "Oublier les modifications"
 
 msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
-msgstr "Certaines modifications n'ont pas été sauvegardées. Êtes-vous sûr de vouloir fermer cette fenêtre et de les ignorer ?"
-
-msgid "ASK_USER_NAME"
-msgstr "Nom d'utilisateur"
-
-msgid "INFO_DIALOG_TITLE"
-msgstr "Information"
-
-msgid "WARN_DIALOG_TITLE"
-msgstr "Avertissement"
-
-msgid "ERR_DIALOG_TITLE"
-msgstr "Erreur"
+msgstr ""
+"Certaines modifications n'ont pas été sauvegardées. Êtes-vous sûr de vouloir "
+"fermer cette fenêtre et de les ignorer ?"
 
 msgid "PARSEC_WINDOW_TITLE"
-msgstr "Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de données sensibles dans le cloud."
+msgstr ""
+"Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de "
+"données sensibles dans le cloud."
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
 
 msgid "ASK_ERROR_REPORTING_CONTENT"
-msgstr "Autorisez-vous l'application à nous envoyer des données quand elle rencontre une erreur pour nous aider à améliorer votre expérience ?"
+msgstr ""
+"Autorisez-vous l'application à nous envoyer des données quand elle rencontre "
+"une erreur pour nous aider à améliorer votre expérience ?"
 
 msgid "ERR_LOGIN_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué."
@@ -585,10 +636,9 @@ msgid "TRAY_PARSEC_RUNNING"
 msgstr "Parsec est toujours ouvert."
 
 msgid "LABEL_BOOTSTRAP_ORG_INSTRUCTIONS"
-msgstr "Pour démarrer une organisation, créez la sur le site and collez ici les informations."
-
-msgid "LABEL_USER_NAME"
-msgstr "Nom d'utilisateur"
+msgstr ""
+"Pour démarrer une organisation, créez la sur le site and collez ici les "
+"informations."
 
 msgid "LABEL_DEVICE_NAME"
 msgstr "Nom de l'appareil"
@@ -612,13 +662,15 @@ msgid "CHECK_PKCS_AUTH"
 msgstr "S'authentifier avec PKCS#11"
 
 msgid "BUTTON_CANCEL"
-msgstr "Anuller"
+msgstr "Annuler"
 
 msgid "BUTTON_BOOTSTRAP_ORG"
 msgstr "Démarrer l'organisation"
 
 msgid "LABEL_CLAIM_DEVICE_INSTRUCTIONS"
-msgstr "Pour enregistrer un nouvel appareil, créez-en un en utilisant un appareil existant et copiez ici les informations."
+msgstr ""
+"Pour enregistrer un nouvel appareil, créez-en un en utilisant un appareil "
+"existant et copiez ici les informations."
 
 msgid "LABEL_TOKEN"
 msgstr "Jeton"
@@ -627,7 +679,9 @@ msgid "BUTTON_CLAIM"
 msgstr "Enregistrer"
 
 msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
-msgstr "Pour enregistrer un nouvel utilisateur, créez-en un en utilisant un utilisateur existant et copiez ici les informations."
+msgstr ""
+"Pour enregistrer un nouvel utilisateur, créez-en un en utilisant un utilisateur "
+"existant et copiez ici les informations."
 
 msgid "LABEL_SEARCH_DEVICES"
 msgstr "Rechercher des appareils"
@@ -682,6 +736,11 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "BUTTON_SAVE"
 msgstr "Sauvegarder"
+
+msgid "CHECK_WINDOWS_MOUNTPOINT"
+msgstr ""
+"Afficher le point de montage dans le panneau gauche de l'explorateur de "
+"fichiers Windows."
 
 msgid "BUTTON_OK"
 msgstr "OK"
@@ -792,7 +851,8 @@ msgid "LABEL_REGISTER_NEW_DEVICE"
 msgstr "Enregistrer un nouvel appareil"
 
 msgid "LABEL_REGISTER_DEVICE_INSTRUCTIONS"
-msgstr "Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
+msgstr ""
+"Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
 
 msgid "BUTTON_REGISTER_DEVICE"
 msgstr "Enregistrer l'appareil"
@@ -810,7 +870,8 @@ msgid "CHECK_USER_IS_ADMIN"
 msgstr "L'utilisateur est administrateur"
 
 msgid "LABEL_REGISTER_USER_INSTRUCTIONS"
-msgstr "Utilisez les informations suivantes pour enregistrer votre nouvel utilisateur :"
+msgstr ""
+"Utilisez les informations suivantes pour enregistrer votre nouvel utilisateur :"
 
 msgid "BUTTON_REGISTER_USER"
 msgstr "Enregistrer l'utilisateur"
@@ -829,6 +890,21 @@ msgstr "Configuration"
 
 msgid "BUTTON_BACK"
 msgstr "Retour"
+
+msgid "WORKSPACE_REENCRYPTION_INFO"
+msgstr ""
+"Vous pourrez voir le contenu de l'espace de travail à un moment précis, avec "
+"vos fichiers tels qu'ils apparaissaient à ce moment.\n"
+"Pas d'inquiétude, vous ne perdrez pas vos fichiers actuels."
+
+msgid "WORKSPACE_REENCRYPTION_SELECT_DATE"
+msgstr "Sélectionnez une date..."
+
+msgid "WORKSPACE_REENCRYPTION_SELECT_TIME"
+msgstr "...et une heure"
+
+msgid "WORKSPACE_REENCRYPTION_MOUNT"
+msgstr "Voir l'espace de travail"
 
 msgid "LABEL_SEARCH_USERS"
 msgstr "Rechercher des utilisateurs"
@@ -854,6 +930,9 @@ msgstr "Re-chiffrer l'espace de travail."
 msgid "LABEL_DELETE_WORKSPACE"
 msgstr "Supprimer l'espace de travail."
 
+msgid "LABEL_MOUNT_TIMESTAMP"
+msgstr "Voir l'espace de travail à un moment précis dans le temps."
+
 msgid "TITLE_WORKSPACE_SHARING"
 msgstr "Partage de l'espace de travail"
 
@@ -865,3 +944,9 @@ msgstr "Partager"
 
 msgid "BUTTON_UPDATE"
 msgstr "Mettre à jour"
+
+#~ msgid "NOTIF_WARN_LOST_CONNECTION."
+#~ msgstr "Déconnecté du serveur"
+
+#~ msgid "ASK_USER_NAME"
+#~ msgstr "Nom d'utilisateur"

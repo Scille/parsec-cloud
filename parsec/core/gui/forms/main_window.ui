@@ -55,10 +55,10 @@ QPushButton
 color: white;
 background-color: rgb(38, 142, 212);
 border: 0;
-padding: 10px;
+padding: 3px;
 font-size: 15px;
 font-weight: bold;
-height: 16px;
+height: 32px;
 padding-left: 20px;
 padding-right: 20px;
 }
@@ -78,7 +78,7 @@ QLineEdit
 {
 border: 1px solid rgb(46, 46, 46);
 padding-left: 10px;
-height: 16px;
+height: 32px;
 }
 
 QLineEdit[readOnly=&quot;true&quot;]
@@ -111,7 +111,7 @@ border: 1px solid rgb(46, 46, 46);
 background-color: white;
 color: black;
 padding-left: 5px;
-height: 16px;
+height: 32px;
 }
 
 QComboBox::drop-down

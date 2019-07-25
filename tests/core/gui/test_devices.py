@@ -65,8 +65,8 @@ async def test_device_info(aqtbot, running_backend, autoclose_dialog, logged_gui
     item.widget().show_device_info()
     if custom_locale:
         assert autoclose_dialog.dialogs == [
-            ("Informations", "dev1\n\nCrée le 1 janvier 2000 00:00"),
-            ("Informations", "dev2\n\nCrée le 1 janvier 2000 00:00"),
+            ("Information", "dev1\n\nCréé le 1 janvier 2000 00:00"),
+            ("Information", "dev2\n\nCréé le 1 janvier 2000 00:00"),
         ]
     else:
         assert autoclose_dialog.dialogs == [

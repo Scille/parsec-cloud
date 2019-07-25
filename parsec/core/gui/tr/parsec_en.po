@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-01 14:44+0200\n"
-"PO-Revision-Date: 2019-07-08 11:41+0200\n"
+"POT-Creation-Date: 2019-07-25 14:22+0200\n"
+"PO-Revision-Date: 2019-07-25 14:28+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -130,8 +130,23 @@ msgstr "Good"
 msgid "PASSWORD_STR_STRONG"
 msgstr "Strong"
 
+msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
+msgstr "This workspace needs to be reencrypted."
+
+msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
+msgstr "This workspace does not need to be reencrypted."
+
 msgid "WORKSPACE_SHARED_DISPLAY"
 msgstr "shared with others"
+
+msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
+msgstr "- at {}"
+
+msgid "WORKSPACE_NAME_REENCRYPTION_{}"
+msgstr "- Reencrypting ({}%)"
+
+msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
+msgstr "Copied to clipboard."
 
 msgid "ERR_BAD_DEVICE_NAME"
 msgstr "The device name is invalid."
@@ -205,6 +220,9 @@ msgstr "Are you sure you want to revoke the device \"{}\"?"
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Cannot rename the workspace."
 
+msgid "ERR_WORKSPACE_MOUNT_{}"
+msgstr "Can not get the workspace \"{}\" at \"{}\"."
+
 msgid "ASK_WORKSPACE_DELETE_TITLE"
 msgstr "Delete a workspace"
 
@@ -222,6 +240,23 @@ msgstr "Enter new workspace name"
 
 msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
 msgstr "Workspace Name"
+
+msgid "ASK_WORKSPACE_USER_REVOKED"
+msgstr "A user of this workspace has been revoked."
+
+msgid "ASK_WORKSPACE_USER_REMOVED"
+msgstr "A user has been removed from this workspace sharing."
+
+msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
+msgstr ""
+"This workspace needs to be reencrypted to ensure the security of your data.\n"
+"This operation will take some time and prevent the workspace "
+"synchronization.\n"
+"\n"
+"Do you want to continue?"
+
+msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
+msgstr "Workspace reencryption"
 
 msgid "ASK_NEW_WORKSPACE_TITLE"
 msgstr "Create a workspace"
@@ -405,6 +440,18 @@ msgstr "This user already exists."
 msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
 msgstr "Cannot bootstrap this organization."
 
+msgid "LABEL_USER_NAME"
+msgstr "User name"
+
+msgid "INFO_DIALOG_TITLE"
+msgstr "Information"
+
+msgid "WARN_DIALOG_TITLE"
+msgstr "Warning"
+
+msgid "ERR_DIALOG_TITLE"
+msgstr "Error"
+
 msgid "MENU_SHOW_WINDOW"
 msgstr "Show window"
 
@@ -445,8 +492,8 @@ msgstr "Global"
 msgid "SETTINGS_NEED_RESTART"
 msgstr "Modifications will take effect the next time you start the application."
 
-msgid "NOTIF_WARN_LOST_CONNECTION."
-msgstr "Disconnected from the server."
+msgid "NOTIF_WARN_LOST_CONNECTION"
+msgstr "Connection to the server has been lost."
 
 msgid "NOTIF_INFO_CONNECTED"
 msgstr "Connected to the server."
@@ -539,18 +586,6 @@ msgstr ""
 "You have made some unsaved modifications. Are you sure you want to close this "
 "window and discard them?"
 
-msgid "ASK_USER_NAME"
-msgstr "User name"
-
-msgid "INFO_DIALOG_TITLE"
-msgstr "Information"
-
-msgid "WARN_DIALOG_TITLE"
-msgstr "Warning"
-
-msgid "ERR_DIALOG_TITLE"
-msgstr "Error"
-
 msgid "PARSEC_WINDOW_TITLE"
 msgstr ""
 "Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive "
@@ -595,9 +630,6 @@ msgid "LABEL_BOOTSTRAP_ORG_INSTRUCTIONS"
 msgstr ""
 "To bootstrap an organization, create one on the website and paste the "
 "information."
-
-msgid "LABEL_USER_NAME"
-msgstr "User name"
 
 msgid "LABEL_DEVICE_NAME"
 msgstr "Device name"
@@ -695,6 +727,9 @@ msgstr "Use colors for workspaces"
 
 msgid "BUTTON_SAVE"
 msgstr "Save"
+
+msgid "CHECK_WINDOWS_MOUNTPOINT"
+msgstr "Show the mountpoint in Windows Explorer left panel."
 
 msgid "BUTTON_OK"
 msgstr "OK"
@@ -843,6 +878,21 @@ msgstr "Settings"
 msgid "BUTTON_BACK"
 msgstr "Back"
 
+msgid "WORKSPACE_REENCRYPTION_INFO"
+msgstr ""
+"You will be able to see a workspace at a given point in time, with all your "
+"files exactly as they looked back then.\n"
+"Don't worry, you will not lose your current files."
+
+msgid "WORKSPACE_REENCRYPTION_SELECT_DATE"
+msgstr "Just select a date..."
+
+msgid "WORKSPACE_REENCRYPTION_SELECT_TIME"
+msgstr "...and a time"
+
+msgid "WORKSPACE_REENCRYPTION_MOUNT"
+msgstr "See the workspace"
+
 msgid "LABEL_SEARCH_USERS"
 msgstr "Search users"
 
@@ -867,6 +917,9 @@ msgstr "Re-encrypt the workspace."
 msgid "LABEL_DELETE_WORKSPACE"
 msgstr "Delete the workspace."
 
+msgid "LABEL_MOUNT_TIMESTAMP"
+msgstr "See the workspace as it was at a specific date."
+
 msgid "TITLE_WORKSPACE_SHARING"
 msgstr "Workspace sharing"
 
@@ -890,3 +943,9 @@ msgstr "Update"
 
 #~ msgid "WRN_WORKSPACE_ALREADY_SHARED"
 #~ msgstr "The workspace is already shared."
+
+#~ msgid "NOTIF_WARN_LOST_CONNECTION."
+#~ msgstr "Disconnected from the server."
+
+#~ msgid "ASK_USER_NAME"
+#~ msgstr "User name"

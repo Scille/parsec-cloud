@@ -20,7 +20,7 @@ from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtTo
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, show_warning, TextInputDialog, QuestionDialog
 from parsec.core.gui.custom_widgets import TaskbarButton
-from parsec.core.gui.lang import translate as _
+from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ts_ws_dialog import TsWsDialog
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -221,8 +221,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if isinstance(job.status, MountpointConfigurationWorkspaceFSTimestampedError):
             show_error(
                 self,
-                _('Can\'t mount worskpace "{}" at {}.').format(
-                    job.status.args[3], job.status.args[2].format("%x %X")
+                _("ERR_WORKSPACE_MOUNT_{}").format(
+                    job.status.args[3], format_datetime(job.status.args[2])
                 ),
             )
 
@@ -357,16 +357,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         question = ""
         if user_revoked:
-            question += _("A user on this workspace has been revoked.\n")
+            question += "{}\n".format(_("ASK_WORKSPACE_USER_REVOKED"))
         if role_revoked:
-            question += _("A user has been removed from this workspace sharing.\n")
-        question += _(
-            "This workspace needs to be reencrypted to ensure the security of your data.\n"
-            "This operation will take some time and prevent the workspace synchronisation.\n\n"
-            "Do you want to continue?"
-        )
+            question += "{}\n".format(_("ASK_WORKSPACE_USER_REMOVED"))
+        question += _("ASK_WORKSPACE_REENCRYPTION_CONTENT")
 
-        r = QuestionDialog.ask(self, _("Workspace reencryption"), question)
+        r = QuestionDialog.ask(self, _("ASK_WORKSPACE_REENCRYPTION_TITLE"), question)
         if not r:
             return
 

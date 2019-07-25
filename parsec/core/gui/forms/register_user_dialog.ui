@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>412</width>
     <height>384</height>
    </rect>
   </property>
@@ -223,7 +223,7 @@ background-color: rgb(255, 255, 255);
            <item row="0" column="2">
             <widget class="QToolButton" name="button_copy_username">
              <property name="toolTip">
-              <string>Copy to clipboard</string>
+              <string>BUTTON_COPY_TO_CLIPBOARD</string>
              </property>
              <property name="text">
               <string/>
@@ -246,7 +246,7 @@ background-color: rgb(255, 255, 255);
            <item row="1" column="2">
             <widget class="QToolButton" name="button_copy_token">
              <property name="toolTip">
-              <string>Copy to clipboard</string>
+              <string>BUTTON_COPY_TO_CLIPBOARD</string>
              </property>
              <property name="text">
               <string/>
@@ -269,7 +269,7 @@ background-color: rgb(255, 255, 255);
            <item row="2" column="2">
             <widget class="QToolButton" name="button_copy_url">
              <property name="toolTip">
-              <string>Copy to clipboard</string>
+              <string>BUTTON_COPY_TO_CLIPBOARD</string>
              </property>
              <property name="text">
               <string/>

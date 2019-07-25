@@ -73,7 +73,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
     def copy_field(self, button, widget):
         def _inner_copy_field():
             desktop.copy_to_clipboard(widget.text())
-            QToolTip.showText(button.mapToGlobal(QPoint(0, 0)), _("Copied to clipboard"))
+            QToolTip.showText(button.mapToGlobal(QPoint(0, 0)), _("TOOLTIP_COPIED_TO_CLIPBOARD"))
 
         return _inner_copy_field
 

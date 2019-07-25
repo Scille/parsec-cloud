@@ -66,7 +66,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.core = None
         self.core_jobs_ctx = None
-        self.runing_core_job = None
+        self.running_core_job = None
 
         self.run_core_success.connect(self.on_core_run_done)
         self.run_core_error.connect(self.on_core_run_error)
@@ -108,11 +108,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.run_core_ready.emit(core, core_jobs_ctx)
 
     def start_core(self, device):
-        assert not self.runing_core_job
+        assert not self.running_core_job
         assert not self.core
         assert not self.core_jobs_ctx
 
-        self.runing_core_job = self.jobs_ctx.submit_job(
+        self.running_core_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "run_core_success"),
             ThreadSafeQtSignal(self, "run_core_error"),
             _do_run_core,
@@ -134,28 +134,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.logged_in.emit()
 
     def on_core_run_error(self):
-        assert self.runing_core_job.is_finished()
-        if self.runing_core_job.status is not None:
-            if "Device has been revoked" in str(self.runing_core_job.exc):
+        assert self.running_core_job.is_finished()
+        if self.running_core_job.status is not None:
+            if "Device has been revoked" in str(self.running_core_job.exc):
                 show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=self.running_core_job.exc)
             else:
-                logger.error("Unhandled error", exc_info=self.runing_core_job.exc)
+                logger.error("Unhandled error", exc_info=self.running_core_job.exc)
                 show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=self.running_core_job.exc)
-        self.runing_core_job = None
+        self.running_core_job = None
         self.core_jobs_ctx = None
         self.core = None
         self.logged_out.emit()
 
     def on_core_run_done(self):
-        assert self.runing_core_job.is_finished()
-        self.runing_core_job = None
+        assert self.running_core_job.is_finished()
+        self.running_core_job = None
         self.core_jobs_ctx = None
         self.core = None
         self.logged_out.emit()
 
     def stop_core(self):
-        if self.runing_core_job:
-            self.runing_core_job.cancel_and_join()
+        if self.running_core_job:
+            self.running_core_job.cancel_and_join()
 
     def on_logged_out(self):
         self.show_login_widget()
