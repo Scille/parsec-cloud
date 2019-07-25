@@ -21,7 +21,7 @@ async def test_lazy_root_manifest_generation(
 
     async with user_fs_factory(alice, local_storage) as user_fs:
         wid = await user_fs.workspace_create("w")
-        workspace = await user_fs.get_workspace(wid)
+        workspace = user_fs.get_workspace(wid)
         with freeze_time("2000-01-02"):
             stat = await workspace.path_info("/")
 
@@ -81,10 +81,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
 
         with freeze_time("2000-01-03"):
             wid = await user_fs1.workspace_create("from_1")
-            workspace1 = await user_fs1.get_workspace(wid)
+            workspace1 = user_fs1.get_workspace(wid)
         with freeze_time("2000-01-04"):
             wid = await user_fs2.workspace_create("from_2")
-            workspace2 = await user_fs2.get_workspace(wid)
+            workspace2 = user_fs2.get_workspace(wid)
 
         with user_fs1.event_bus.listen() as spy:
             with freeze_time("2000-01-05"):
@@ -159,7 +159,7 @@ async def test_reloading_v0_user_manifest(
     async with user_fs_factory(alice, local_storage) as user_fs:
         with freeze_time("2000-01-02"):
             wid = await user_fs.workspace_create("foo")
-            workspace = await user_fs.get_workspace(wid)
+            workspace = user_fs.get_workspace(wid)
 
     local_storage.clear_memory_cache()
 

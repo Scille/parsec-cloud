@@ -163,7 +163,7 @@ async def test_synchronization_step_transaction(
     sync_transactions, entry_transactions, file_transactions, type
 ):
     synchronization_step = sync_transactions.synchronization_step
-    entry_id = (await entry_transactions.get_workspace_entry()).id
+    entry_id = entry_transactions.get_workspace_entry().id
 
     # Sync a placeholder
     manifest = await synchronization_step(entry_id)

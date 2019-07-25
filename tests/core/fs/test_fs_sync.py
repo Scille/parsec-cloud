@@ -36,7 +36,7 @@ async def assert_same_workspace(workspace, workspace2):
 async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_fs):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w")
-        workspace = await alice_user_fs.get_workspace(wid)
+        workspace = alice_user_fs.get_workspace(wid)
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
@@ -45,11 +45,11 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 3))]
     )
 
-    workspace2 = await alice_user_fs.get_workspace(wid)
+    workspace2 = alice_user_fs.get_workspace(wid)
     await alice_user_fs.sync()
     await workspace2.sync("/")
 
-    workspace_entry = await workspace.get_workspace_entry()
+    workspace_entry = workspace.get_workspace_entry()
     path_info = await workspace.path_info("/")
     assert path_info == {
         "type": "folder",
@@ -70,7 +70,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
         role_cached_on=Pendulum(2000, 1, 2),
         role=WorkspaceRole.OWNER,
     )
-    workspace_entry2 = await workspace.get_workspace_entry()
+    workspace_entry2 = workspace.get_workspace_entry()
     path_info2 = await workspace.path_info("/")
     assert workspace_entry == workspace_entry2
     assert path_info == path_info2
@@ -80,7 +80,7 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
 @pytest.mark.parametrize("type", ["file", "folder"])
 async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
     with freeze_time("2000-01-02"):
         if type == "file":
             await workspace.touch("/foo")
@@ -104,7 +104,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
         ]
     spy.assert_events_occured(expected_events)
 
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
     await workspace2.sync("/")
 
     info = await workspace.path_info("/foo")
@@ -137,8 +137,8 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 @pytest.mark.trio
 async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # 0) Make sure workspace is loaded for alice2
     # (otherwise won't get synced event during step 2)
@@ -181,7 +181,7 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
 @pytest.mark.trio
 async def test_fs_recursive_sync(running_backend, alice_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
 
     # 1) Create data
 
@@ -225,8 +225,8 @@ async def test_fs_recursive_sync(running_backend, alice_user_fs):
 @pytest.mark.trio
 async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # 1) Both fs have things to sync
 
@@ -286,8 +286,8 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
 @pytest.mark.trio
 async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # Growth by truncate is special because no blocks are created to hold
     # the newly created null bytes
@@ -310,8 +310,8 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alic
 @pytest.mark.trio
 async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # 1) Create existing items in both fs
 
@@ -403,7 +403,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
     # First create data locally
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-        workspace = await alice_user_fs.get_workspace(wid)
+        workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/x")
 
     remote_loader = workspace.remote_loader
@@ -433,7 +433,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
         "children": ["x"],
     }
 
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
     await workspace2.sync("/")
     info2 = await workspace2.path_info("/")
     assert info == info2
@@ -443,8 +443,8 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
 @pytest.mark.skip  # TODO: rewrite this test
 async def test_create_already_existing_file_vlob(running_backend, alice_user_fs, alice2_user_fs):
     wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-    workspace = await alice_user_fs.get_workspace(wid)
-    workspace2 = await alice2_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
+    workspace2 = alice2_user_fs.get_workspace(wid)
 
     # First create data locally
     with freeze_time("2000-01-02"):
@@ -488,8 +488,8 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
 
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
-        workspace = await alice_user_fs.get_workspace(wid)
-        workspace2 = await alice2_user_fs.get_workspace(wid)
+        workspace = alice_user_fs.get_workspace(wid)
+        workspace2 = alice2_user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
         await workspace.sync("/foo.txt")
 
@@ -546,7 +546,7 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
 async def test_sync_data_before_workspace(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w")
-    w = await alice_user_fs.get_workspace(wid)
+    w = alice_user_fs.get_workspace(wid)
     with freeze_time("2000-01-03"):
         await w.mkdir("/bar")
     with freeze_time("2000-01-04"):

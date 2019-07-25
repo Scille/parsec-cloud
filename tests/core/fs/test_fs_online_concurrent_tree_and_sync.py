@@ -72,7 +72,7 @@ def test_fs_online_concurrent_tree_and_sync(
             self.user_fs2_controller = await self.start_fs(self.device2, self.local_storage2)
 
             self.wid = await self.user_fs1.workspace_create("w")
-            workspace = await self.user_fs1.get_workspace(self.wid)
+            workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync("/")
             await self.user_fs1.sync()
             await self.user_fs2.sync()
@@ -90,7 +90,7 @@ def test_fs_online_concurrent_tree_and_sync(
         @rule(target=Files, fs=FSs, parent=Folders, name=st_entry_name)
         async def create_file(self, fs, parent, name):
             path = os.path.join(parent, name)
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.touch(path=path)
             except OSError:
@@ -100,7 +100,7 @@ def test_fs_online_concurrent_tree_and_sync(
         @rule(target=Folders, fs=FSs, parent=Folders, name=st_entry_name)
         async def create_folder(self, fs, parent, name):
             path = os.path.join(parent, name)
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.mkdir(path=path)
             except OSError:
@@ -109,7 +109,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(fs=FSs, path=Files)
         async def update_file(self, fs, path):
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.write_bytes(path, offset=0, data=b"a")
             except OSError:
@@ -117,7 +117,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(fs=FSs, path=Files)
         async def delete_file(self, fs, path):
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.unlink(path=path)
             except OSError:
@@ -126,7 +126,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(fs=FSs, path=Folders)
         async def delete_folder(self, fs, path):
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.rmdir(path=path)
             except OSError:
@@ -136,7 +136,7 @@ def test_fs_online_concurrent_tree_and_sync(
         @rule(target=Files, fs=FSs, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         async def move_file(self, fs, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.move(src, dst)
             except OSError:
@@ -146,7 +146,7 @@ def test_fs_online_concurrent_tree_and_sync(
         @rule(target=Folders, fs=FSs, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
         async def move_folder(self, fs, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
-            workspace = await fs.get_workspace(self.wid)
+            workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.move(src, dst)
             except OSError:
@@ -174,10 +174,10 @@ def test_fs_online_concurrent_tree_and_sync(
             # state.trio_run(steps)
             # ```
             # for fs in [self.user_fs1, self.user_fs2]:
-            #     workspace = await fs.get_workspace(self.wid)
+            #     workspace = fs.get_workspace(self.wid)
             retries = 4
-            workspace1 = await self.user_fs1.get_workspace(self.wid)
-            workspace2 = await self.user_fs2.get_workspace(self.wid)
+            workspace1 = self.user_fs1.get_workspace(self.wid)
+            workspace2 = self.user_fs2.get_workspace(self.wid)
             for _ in range(retries):
                 await workspace1.sync("/")
                 await workspace2.sync("/")

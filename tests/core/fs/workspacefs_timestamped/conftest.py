@@ -18,7 +18,7 @@ day5 = pendulum.Pendulum(2000, 1, 5)
 async def alice_workspace(alice_user_fs, running_backend):
     with freeze_time(day0):
         wid = await alice_user_fs.workspace_create("w")
-        workspace = await alice_user_fs.get_workspace(wid)
+        workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
     with freeze_time(day1):
         await workspace.sync("/")

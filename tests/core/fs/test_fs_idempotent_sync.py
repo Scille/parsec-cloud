@@ -73,7 +73,7 @@ def test_fs_online_idempotent_sync(
             self.user_fs_controller = await self.start_user_fs(alice)
 
             wid = await self.user_fs.workspace_create("w")
-            self.workspace = await self.user_fs.get_workspace(wid)
+            self.workspace = self.user_fs.get_workspace(wid)
             await self.workspace.touch("/good_file.txt")
             await self.workspace.mkdir("/good_folder")
             await self.workspace.touch("/good_folder/good_sub_file.txt")

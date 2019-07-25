@@ -34,7 +34,7 @@ async def file_transactions(
 @pytest.fixture
 def entry_transactions_factory(event_bus, remote_devices_manager_factory):
     async def _entry_transactions_factory(device, local_storage, backend_cmds):
-        async def _get_workspace_entry():
+        def _get_workspace_entry():
             return workspace_entry
 
         with freeze_time("2000-01-01"):

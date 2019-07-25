@@ -22,7 +22,7 @@ async def workspace(running_backend, alice_user_fs):
         wid = await alice_user_fs.workspace_create("w1")
         # Sync workspace manifest v1
         await alice_user_fs.sync()
-        w = await alice_user_fs.get_workspace(wid)
+        w = alice_user_fs.get_workspace(wid)
         await w.touch("/foo.txt")
         # Sync workspace manifest v1 + file manifest v1
         await w.sync("/")
@@ -168,7 +168,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     # Workspace have been created with alice_user_fs, hence user alice2_user_fs
     # start with no local cache
     await alice2_user_fs.sync()
-    aw = await alice2_user_fs.get_workspace(workspace)
+    aw = alice2_user_fs.get_workspace(workspace)
 
     # Populate local cache for workspace root manifest
     await aw.path_info("/")
@@ -177,7 +177,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     job = await alice2_user_fs.workspace_start_reencryption(workspace)
 
     # WorkspaceFS doesn't have encryption revision until user messages are processed
-    assert await aw.get_encryption_revision() == 1
+    assert aw.encryption_revision == 1
     # Data not in local cache cannot be accessed
     root_info = await aw.path_info("/")
     assert root_info == {
@@ -226,7 +226,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
 
     # Update encryption_revision in user manifest and check access is ok
     await alice2_user_fs.process_last_messages()
-    assert await aw.get_encryption_revision() == 2
+    assert aw.encryption_revision == 2
     file_info = await aw.path_info("/foo.txt")
     assert file_info == {
         "id": ANY,

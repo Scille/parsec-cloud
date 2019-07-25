@@ -64,7 +64,7 @@ def test_fs_offline_restart_and_tree(
             self.local_storage = await local_storage_factory(self.device)
             await self.restart_user_fs()
             wid = await self.user_fs.workspace_create("w")
-            self.workspace = await self.user_fs.get_workspace(wid)
+            self.workspace = self.user_fs.get_workspace(wid)
 
             self.oracle_fs = oracle_fs_factory()
             self.oracle_fs.create_workspace("/w")

@@ -158,7 +158,7 @@ async def test_cannot_replace_root(entry_transactions):
 
 @pytest.mark.trio
 async def test_access_not_loaded_entry(alice, bob, entry_transactions):
-    entry_id = (await entry_transactions.get_workspace_entry()).id
+    entry_id = entry_transactions.get_workspace_entry().id
     manifest = entry_transactions.local_storage.get_manifest(entry_id)
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
         entry_transactions.local_storage.clear_manifest(entry_id)
@@ -346,7 +346,7 @@ def test_folder_operations(
                 return
 
             local_storage = self.entry_transactions.local_storage
-            root_entry_id = (await self.entry_transactions.get_workspace_entry()).id
+            root_entry_id = self.entry_transactions.get_workspace_entry().id
             new_id_to_path = set()
 
             def _recursive_build_id_to_path(entry_id, parent_id):

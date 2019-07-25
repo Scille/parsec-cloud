@@ -12,7 +12,7 @@ from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverC
 @pytest.mark.mountpoint
 def test_delete_then_close_file(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
-        workspace = await user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
         await workspace.touch("/with_fsync.txt")
         await workspace.touch("/without_fsync.txt")
 
@@ -39,7 +39,7 @@ def test_delete_then_close_file(mountpoint_service):
 async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, event_bus):
     mountpoint_path = base_mountpoint / "w"
     wid = await alice_user_fs.workspace_create("w")
-    workspace = await alice_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
 
     bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")

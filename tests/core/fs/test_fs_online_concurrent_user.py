@@ -71,7 +71,7 @@ def test_fs_online_concurrent_user(
             self.user_fs2_controller = await self.start_user_fs(self.device2, self.local_storage2)
 
             self.wid = await self.user_fs1.workspace_create("w")
-            workspace = await self.user_fs1.get_workspace(self.wid)
+            workspace = self.user_fs1.get_workspace(self.wid)
             await workspace.sync("/")
             await self.user_fs1.sync()
             await self.user_fs2.sync()
@@ -90,7 +90,7 @@ def test_fs_online_concurrent_user(
         async def create_workspace(self, fs, name):
             try:
                 wid = await fs.workspace_create(name)
-                workspace = await fs.get_workspace(wid)
+                workspace = fs.get_workspace(wid)
                 await workspace.sync("/")
             except AssertionError:
                 return "wrong", name
@@ -112,8 +112,8 @@ def test_fs_online_concurrent_user(
             # Send two syncs in a row given file conflict results are not synced
             # once created
 
-            workspace1 = await self.user_fs1.get_workspace(self.wid)
-            workspace2 = await self.user_fs2.get_workspace(self.wid)
+            workspace1 = self.user_fs1.get_workspace(self.wid)
+            workspace2 = self.user_fs2.get_workspace(self.wid)
 
             # Sync 1
             await workspace1.sync("/")

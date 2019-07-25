@@ -18,7 +18,7 @@ from tests.common import freeze_time
 
 @pytest.mark.trio
 async def test_get_manifest(alice_user_fs):
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
     assert um.base_version == 1
     assert not um.need_sync
     assert um.workspaces == ()
@@ -28,7 +28,7 @@ async def test_get_manifest(alice_user_fs):
 async def test_create_workspace(alice_user_fs, alice):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
     expected_um = LocalUserManifest(
         author=alice.device_id,
         base_version=1,
@@ -72,7 +72,7 @@ async def test_rename_workspace(alice_user_fs, alice):
     with freeze_time("2000-01-03"):
         await alice_user_fs.workspace_rename(wid, "w2")
 
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
     expected_um = LocalUserManifest(
         author=alice.device_id,
         base_version=1,
@@ -117,7 +117,7 @@ async def test_create_workspace_same_name(alice_user_fs):
     with freeze_time("2000-01-03"):
         w2id = await alice_user_fs.workspace_create("w")
 
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
     assert um.updated == Pendulum(2000, 1, 3)
     assert len(um.workspaces) == 2
     assert [(x.id, x.name) for x in um.workspaces] == [(w1id, "w"), (w2id, "w")]
@@ -139,7 +139,7 @@ async def test_sync(running_backend, alice2_user_fs, alice2):
 
     await alice2_user_fs.sync()
 
-    um = await alice2_user_fs.get_user_manifest()
+    um = alice2_user_fs.get_user_manifest()
     expected_um = LocalUserManifest(
         author=alice2.device_id,
         base_version=2,
@@ -178,8 +178,8 @@ async def test_sync_under_concurrency(
     # Fetch back alice2's changes
     await alice_user_fs.sync()
 
-    um = await alice_user_fs.get_user_manifest()
-    um2 = await alice2_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
+    um2 = alice2_user_fs.get_user_manifest()
 
     expected_um = LocalUserManifest(
         author=alice.device_id,
@@ -231,7 +231,7 @@ async def test_sync_placeholder(
     async with user_fs_factory(device, local_storage=local_storage) as user_fs:
         with freeze_time("2000-01-01"):
             # User manifest should be lazily created on first access
-            um = await user_fs.get_user_manifest()
+            um = user_fs.get_user_manifest()
 
         expected_um = LocalUserManifest(
             author=device.device_id,
@@ -248,7 +248,7 @@ async def test_sync_placeholder(
         if with_workspace:
             with freeze_time("2000-01-02"):
                 wid = await user_fs.workspace_create("w1")
-            um = await user_fs.get_user_manifest()
+            um = user_fs.get_user_manifest()
             expected_um = expected_um.evolve(
                 updated=Pendulum(2000, 1, 2),
                 workspaces=(
@@ -266,7 +266,7 @@ async def test_sync_placeholder(
             assert um == expected_um
 
         await user_fs.sync()
-        um = await user_fs.get_user_manifest()
+        um = user_fs.get_user_manifest()
         expected_um = expected_um.evolve(base_version=1, need_sync=False, is_placeholder=False)
         assert um == expected_um
 
@@ -306,8 +306,8 @@ async def test_concurrent_sync_placeholder(
             with freeze_time("2000-01-03"):
                 await user_fs1.sync()
 
-        um1 = await user_fs1.get_user_manifest()
-        um2 = await user_fs2.get_user_manifest()
+        um1 = user_fs1.get_user_manifest()
+        um2 = user_fs2.get_user_manifest()
         if dev2_has_changes:
             expected_um = LocalUserManifest(
                 author=device1.device_id,
@@ -366,9 +366,9 @@ async def test_concurrent_sync_placeholder(
 
 @pytest.mark.trio
 async def test_sync_not_needed(running_backend, alice_user_fs, alice2_user_fs, alice, alice2):
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
     await alice_user_fs.sync()
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
 
     assert um == um
 
@@ -381,11 +381,11 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
     await alice2_user_fs.sync()
 
     # Alice retreive the changes
-    um = await alice_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
     await alice_user_fs.sync()
 
-    um = await alice_user_fs.get_user_manifest()
-    um2 = await alice2_user_fs.get_user_manifest()
+    um = alice_user_fs.get_user_manifest()
+    um2 = alice2_user_fs.get_user_manifest()
 
     expected_um = LocalUserManifest(
         author=alice.device_id,

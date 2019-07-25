@@ -50,7 +50,7 @@ async def foo_txt(alice, file_transactions):
         placeholder = LocalFileManifest.make_placeholder(alice.device_id, EntryID())
         manifest = placeholder.to_remote().evolve(version=1)
         async with local_storage.lock_entry_id(entry_id):
-            local_storage.set_base_manifest(entry_id, manifest.to_local(manifest.author))
+            local_storage.set_manifest(entry_id, manifest.to_local(manifest.author))
     return File(local_storage, entry_id)
 
 

@@ -108,7 +108,7 @@ def test_fs_online_user(
             path = os.path.join("/", name)
             self.oracle_fs.create_workspace(path)
             wid = await self.user_fs.workspace_create(name)
-            self.workspace = await self.user_fs.get_workspace(wid)
+            self.workspace = self.user_fs.get_workspace(wid)
             await self.user_fs.sync()
             return wid, name
 
