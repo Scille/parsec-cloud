@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>435</width>
-    <height>125</height>
+    <height>343</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -30,6 +30,15 @@
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#button_details,
+#button_copy
+{
+background-color: rgb(255, 255, 255);
+border: 0;
+color: rgb(0, 0, 0);
+}</string>
   </property>
   <property name="modal">
    <bool>true</bool>
