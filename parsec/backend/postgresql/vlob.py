@@ -459,6 +459,37 @@ ORDER BY index ASC
         new_checkpoint = ret[-1][0] if ret else checkpoint
         return (new_checkpoint, changes_since_checkpoint)
 
+    async def list_versions(
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
+    ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
+
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+
+                realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
+                await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
+
+                rows = await conn.fetch(
+                    """
+SELECT
+    version,
+    get_device_id(author) as author,
+    created_on
+FROM vlob_atom
+WHERE
+    organization = get_organization_internal_id($1)
+    AND vlob_id = $2
+ORDER BY version DESC
+""",
+                    organization_id,
+                    vlob_id,
+                )
+                assert rows
+        if not rows:
+            raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
+
+        return {row["version"]: (row["created_on"], row["author"]) for row in rows}
+
     async def maintenance_get_reencryption_batch(
         self,
         organization_id: OrganizationID,
