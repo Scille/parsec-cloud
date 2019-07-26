@@ -11,6 +11,7 @@ from parsec.api.protocol import (
     vlob_update_serializer,
     vlob_group_check_serializer,
     vlob_poll_changes_serializer,
+    vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
@@ -184,6 +185,30 @@ class BaseVlobComponent:
         )
 
     @catch_protocol_errors
+    async def api_vlob_list_versions(self, client_ctx, msg):
+        msg = vlob_list_versions_serializer.req_load(msg)
+
+        try:
+            version_dict = await self.list_versions(
+                client_ctx.organization_id, client_ctx.device_id, msg["vlob_id"]
+            )
+
+        except VlobAccessError:
+            return vlob_list_versions_serializer.rep_dump({"status": "not_allowed"})
+
+        except VlobNotFoundError as exc:
+            return vlob_list_versions_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
+
+        except VlobInMaintenanceError:
+            return vlob_list_versions_serializer.rep_dump({"status": "in_maintenance"})
+
+        return vlob_list_versions_serializer.rep_dump(
+            {"status": "ok", "version_dict": version_dict}
+        )
+
+    @catch_protocol_errors
     async def api_vlob_maintenance_get_reencryption_batch(self, client_ctx, msg):
         msg = vlob_maintenance_get_reencryption_batch_serializer.req_load(msg)
 
@@ -333,6 +358,17 @@ class BaseVlobComponent:
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:
+        """
+        Raises:
+            VlobInMaintenanceError
+            VlobNotFoundError
+            VlobAccessError
+        """
+        raise NotImplementedError()
+
+    async def list_versions(
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
+    ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
         """
         Raises:
             VlobInMaintenanceError

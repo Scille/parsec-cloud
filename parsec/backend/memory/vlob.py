@@ -319,6 +319,14 @@ class MemoryVlobComponent(BaseVlobComponent):
         }
         return (changes.checkpoint, changes_since_checkpoint)
 
+    async def list_versions(
+        self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
+    ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
+        vlobs = self._get_vlob(organization_id, vlob_id)
+
+        self._check_realm_read_access(organization_id, vlobs.realm_id, author.user_id, None)
+        return {k: (v[2], v[1]) for (k, v) in enumerate(vlobs.data, 1)}
+
     async def maintenance_get_reencryption_batch(
         self,
         organization_id: OrganizationID,

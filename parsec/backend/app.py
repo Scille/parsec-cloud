@@ -187,6 +187,7 @@ class BackendApp:
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
+            "vlob_list_versions": self.vlob.api_vlob_list_versions,
             "vlob_maintenance_get_reencryption_batch": self.vlob.api_vlob_maintenance_get_reencryption_batch,
             "vlob_maintenance_save_reencryption_batch": self.vlob.api_vlob_maintenance_save_reencryption_batch,
             # Realm
