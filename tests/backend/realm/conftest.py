@@ -15,6 +15,7 @@ from parsec.api.protocol import (
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
+    vlob_list_versions_serializer,
     vlob_group_check_serializer,
     vlob_poll_changes_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
@@ -181,6 +182,14 @@ async def vlob_update(
     if check_rep:
         assert rep == {"status": "ok"}
     return rep
+
+
+async def vlob_list_versions(sock, vlob_id, encryption_revision=1):
+    await sock.send(
+        vlob_list_versions_serializer.req_dumps({"cmd": "vlob_list_versions", "vlob_id": vlob_id})
+    )
+    raw_rep = await sock.recv()
+    return vlob_list_versions_serializer.rep_loads(raw_rep)
 
 
 async def vlob_poll_changes(sock, realm_id, last_checkpoint):
