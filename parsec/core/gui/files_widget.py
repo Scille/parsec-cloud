@@ -26,11 +26,11 @@ class CancelException(Exception):
 
 
 async def _do_reset(workspace_fs):
-    return await workspace_fs.get_workspace_name()
+    return workspace_fs.workspace_name
 
 
 async def _do_set_workspace_fs(workspace_fs):
-    return await workspace_fs.get_workspace_entry()
+    return workspace_fs.get_workspace_entry()
 
 
 async def _do_rename(workspace_fs, paths):

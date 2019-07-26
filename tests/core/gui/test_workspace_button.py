@@ -10,7 +10,7 @@ from parsec.core.gui.workspace_button import WorkspaceButton
 @pytest.mark.trio
 async def workspace_fs(alice_user_fs, running_backend):
     wid = await alice_user_fs.workspace_create("Workspace")
-    workspace = await alice_user_fs.get_workspace(wid)
+    workspace = alice_user_fs.get_workspace(wid)
     return workspace
 
 

@@ -37,14 +37,14 @@ async def _do_popup(instance, user, exc, fs_error):
     workspace_name = instance.workspace_fs.workspace_name
     if fs_error:
         show_error(
-            self,
-            _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+            instance,
+            _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),
             exception=exc,
         )
     else:
         show_error(
-            self,
-            _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+            instance,
+            _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),
             execption=exc,
         )
 
@@ -212,7 +212,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 self,
                 user,
                 exc,
-                True
+                True,
             )
         except Exception as exc:
             self.jobs_ctx.submit_job(
@@ -222,7 +222,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 self,
                 user,
                 exc,
-                False
+                False,
             )
 
     def add_participant(self, user, is_current_user, role):

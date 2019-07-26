@@ -37,10 +37,12 @@ async def _do_workspace_create(core, workspace_name):
     return workspace_id
 
 
-async def _do_add_workspace_step_1(instance, workspace_fs, ws_entry, users_roles, files, timestamped, count):
+async def _do_add_workspace_step_1(
+    instance, workspace_fs, ws_entry, users_roles, files, timestamped, count
+):
     return (
-        await instance.core.user_fs.get_user_manifest(),
-        await workspace_fs.get_workspace_name(),
+        instance.core.user_fs.get_user_manifest(),
+        workspace_fs.workspace_name,
         workspace_fs,
         ws_entry,
         users_roles,
@@ -252,7 +254,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def on_add_workspace_success(self, job):
-        user_manifest, workspace_name, workspace_fs, ws_entry, users_roles, files, timestamped, count = job.ret
+        user_manifest, workspace_name, workspace_fs, ws_entry, users_roles, files, timestamped, count = (
+            job.ret
+        )
         button = WorkspaceButton(
             workspace_name,
             workspace_fs,
@@ -416,8 +420,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
 
         async def _reencrypt(core, on_progress, workspace_id):
-            workspace_fs = await core.user_fs.get_workspace(workspace_id)
-            workspace_name = await workspace_fs.get_workspace_name()
+            workspace_fs = core.user_fs.get_workspace(workspace_id)
+            workspace_name = workspace_fs.workspace_name
             self.reencrypting.add(workspace_id)
             try:
                 job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
