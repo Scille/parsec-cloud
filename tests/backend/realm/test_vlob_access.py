@@ -10,11 +10,12 @@ from parsec.api.protocol import (
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
+    vlob_list_versions_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
-from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_read
+from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_read, vlob_list_versions
 
 
 VLOB_ID = UUID("00000000000000000000000000000001")
@@ -391,6 +392,84 @@ async def test_bad_encryption_revision(backend, alice, alice_backend_sock, realm
         check_rep=False,
     )
     assert rep == {"status": "bad_encryption_revision"}
+
+
+@pytest.mark.trio
+async def test_list_versions_ok(alice, alice_backend_sock, vlobs):
+    rep = await vlob_list_versions(alice_backend_sock, vlobs[0])
+    assert rep == {
+        "status": "ok",
+        "version_dict": {
+            1: (Pendulum(2000, 1, 2, 00, 00, 00), alice.device_id),
+            2: (Pendulum(2000, 1, 3, 00, 00, 00), alice.device_id),
+        },
+    }
+
+
+@pytest.mark.trio
+async def test_list_versions_not_found(alice_backend_sock):
+    rep = await vlob_list_versions(alice_backend_sock, VLOB_ID)
+    assert rep == {
+        "status": "not_found",
+        "reason": "Vlob `00000000-0000-0000-0000-000000000001` doesn't exist",
+    }
+
+
+@pytest.mark.trio
+async def test_list_versions_check_access_rights(
+    backend, alice, bob, bob_backend_sock, realm, vlobs
+):
+    # Not part of the realm
+    rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
+    assert rep == {"status": "not_allowed"}
+
+    for role in RealmRole:
+        await backend.realm.update_roles(
+            alice.organization_id,
+            RealmGrantedRole(
+                certificate=b"dummy",
+                realm_id=realm,
+                user_id=bob.user_id,
+                role=role,
+                granted_by=alice.device_id,
+            ),
+        )
+        rep = await vlob_list_versions(bob_backend_sock, vlobs[0])
+        assert rep["status"] == "ok"
+
+
+@pytest.mark.trio
+async def test_list_versions_other_organization(
+    backend, sock_from_other_organization_factory, vlobs
+):
+    async with sock_from_other_organization_factory(backend) as sock:
+        rep = await vlob_list_versions(sock, vlobs[0])
+    assert rep == {
+        "status": "not_found",
+        "reason": "Vlob `10000000-0000-0000-0000-000000000000` doesn't exist",
+    }
+
+
+@pytest.mark.parametrize(
+    "bad_msg",
+    [
+        {"id": str(VLOB_ID), "bad_field": "foo"},
+        {"id": "<not an uuid>"},
+        {"id": str(VLOB_ID)},  # TODO: really bad ?
+        {"id": 42},
+        {"id": None},
+        {"id": str(VLOB_ID), "version": 1},
+        {},
+    ],
+)
+@pytest.mark.trio
+async def test_list_versions_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send(packb({"cmd": "vlob_list_versions", **bad_msg}))
+    raw_rep = await alice_backend_sock.recv()
+    rep = vlob_list_versions_serializer.rep_loads(raw_rep)
+    # Id and trust_seed are invalid anyway, but here we test another layer
+    # so it's not important as long as we get our `bad_message` status
+    assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
