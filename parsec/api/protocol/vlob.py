@@ -10,6 +10,7 @@ __all__ = (
     "vlob_update_serializer",
     "vlob_group_check_serializer",
     "vlob_poll_changes_serializer",
+    "vlob_list_versions_serializer",
     "vlob_maintenance_get_reencryption_batch_serializer",
     "vlob_maintenance_save_reencryption_batch_serializer",
 )
@@ -106,6 +107,22 @@ class VlobPollChangesRepSchema(BaseRepSchema):
 
 
 vlob_poll_changes_serializer = CmdSerializer(VlobPollChangesReqSchema, VlobPollChangesRepSchema)
+
+
+# List available vlobs
+class VlobListVersionsReqSchema(BaseReqSchema):
+    vlob_id = fields.UUID(required=True)
+
+
+class VlobListVersionsRepSchema(BaseRepSchema):
+    version_dict = fields.Map(
+        fields.Integer(required=True),
+        fields.Tuple(fields.DateTime(required=True), fields.DeviceID(required=True)),
+        required=True,
+    )
+
+
+vlob_list_versions_serializer = CmdSerializer(VlobListVersionsReqSchema, VlobListVersionsRepSchema)
 
 
 # Maintenance stuff
