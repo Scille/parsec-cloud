@@ -387,8 +387,7 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            async with self.local_storage.lock_entry_id(child_entry_id):
-                self.local_storage.set_manifest(child_entry_id, child_manifest)
+            self.local_storage.set_manifest(child_entry_id, child_manifest, check_lock_status=False)
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
 
         # Send events
@@ -419,8 +418,7 @@ class EntryTransactions:
             )
 
             # ~ Atomic change
-            async with self.local_storage.lock_entry_id(child_entry_id):
-                self.local_storage.set_manifest(child_entry_id, child_manifest)
+            self.local_storage.set_manifest(child_entry_id, child_manifest, check_lock_status=False)
             self.local_storage.set_manifest(parent.id, new_parent_manifest)
             fd = self.local_storage.create_file_descriptor(child_entry_id) if open else None
 
