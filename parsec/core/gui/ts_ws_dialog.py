@@ -26,25 +26,14 @@ class TsWsDialog(QDialog, Ui_TsWsDialog):
         self.calendar_widget.selectionChanged.connect(self.set_time_limits)
         self.set_time_limits()
         self.time_edit.setDisplayFormat("h:mm:ss")
-        self.button_show.clicked.connect(self.mount_it)
 
-    def mount_it(self):
-        date = self.calendar_widget.selectedDate()
-        time = self.time_edit.time()
+    @property
+    def date(self):
+        return self.calendar_widget.selectedDate()
 
-        datetime = pendulum.datetime(
-            date.year(),
-            date.month(),
-            date.day(),
-            time.hour(),
-            time.minute(),
-            time.second(),
-            tzinfo="local",
-        )
-        self.parent.workspace_mount_timestamped_requested.emit(
-            self.workspace_fs.workspace_id, datetime
-        )
-        self.accept()
+    @property
+    def time(self):
+        return self.time_edit.time()
 
     def set_time_limits(self):
         selected_date = self.calendar_widget.selectedDate()

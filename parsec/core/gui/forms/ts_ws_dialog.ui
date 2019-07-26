@@ -267,7 +267,7 @@ background-color: rgb(255, 255, 255);
    <sender>button_close</sender>
    <signal>clicked()</signal>
    <receiver>TsWsDialog</receiver>
-   <slot>accept()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>296</x>
@@ -276,6 +276,22 @@ background-color: rgb(255, 255, 255);
     <hint type="destinationlabel">
      <x>296</x>
      <y>253</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_show</sender>
+   <signal>clicked()</signal>
+   <receiver>TsWsDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>421</x>
+     <y>392</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>296</x>
+     <y>271</y>
     </hint>
    </hints>
   </connection>

@@ -3,9 +3,9 @@
 from uuid import UUID
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QDialog
 
-from pendulum import Pendulum
+import pendulum
 
 from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole, EntryID
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped, FSBackendOfflineError
@@ -80,7 +80,7 @@ async def _do_workspace_list(core):
     return workspaces
 
 
-async def _do_workspace_mount(core, workspace_id, timestamp: Pendulum = None):
+async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.Pendulum = None):
     try:
         await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
     except (MountpointAlreadyMounted, MountpointDisabled):
@@ -89,7 +89,7 @@ async def _do_workspace_mount(core, workspace_id, timestamp: Pendulum = None):
         raise JobResultError(exc)
 
 
-async def _do_workspace_unmount(core, workspace_id, timestamp: Pendulum = None):
+async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.Pendulum = None):
     try:
         await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
     except (MountpointAlreadyMounted, MountpointDisabled):
@@ -107,7 +107,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     workspace_reencryption_success = pyqtSignal()
     workspace_reencryption_error = pyqtSignal()
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
-    workspace_mount_timestamped_requested = pyqtSignal(EntryID, Pendulum)
     workspace_mounted = pyqtSignal(QtToTrioJob)
     workspace_unmounted = pyqtSignal(QtToTrioJob)
 
@@ -150,7 +149,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reencryption_needs_success.connect(self.on_reencryption_needs_success)
         self.reencryption_needs_error.connect(self.on_reencryption_needs_error)
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
-        self.workspace_mount_timestamped_requested.connect(self.mount_workspace_timestamped)
         self.workspace_mounted.connect(self._on_workspace_mounted)
         self.workspace_unmounted.connect(self._on_workspace_unmounted)
 
@@ -283,15 +281,31 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def remount_workspace_ts(self, workspace_fs):
         ts_ws = TsWsDialog(workspace_fs=workspace_fs, parent=self)
-        ts_ws.exec_()
+        code = ts_ws.exec_()
+        if code == QDialog.Rejected:
+            return
 
-    def mount_workspace_timestamped(self, workspace_id, timestamp):
+        date = ts_ws.date
+        time = ts_ws.time
+
+        datetime = pendulum.datetime(
+            date.year(),
+            date.month(),
+            date.day(),
+            time.hour(),
+            time.minute(),
+            time.second(),
+            tzinfo="local",
+        )
+        self.mount_workspace_timestamped(workspace_fs, datetime)
+
+    def mount_workspace_timestamped(self, workspace_fs, timestamp):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "workspace_mounted", QtToTrioJob),
             ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
             _do_workspace_mount,
             core=self.core,
-            workspace_id=workspace_id,
+            workspace_id=workspace_fs.workspace_id,
             timestamp=timestamp,
         )
 
