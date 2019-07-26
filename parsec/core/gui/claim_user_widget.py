@@ -94,6 +94,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.line_edit_token.textChanged.connect(self.check_infos)
         self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
+        self.line_edit_password.textChanged.connect(self.check_infos)
+        self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.claim_success.connect(self.on_claim_success)
         self.claim_error.connect(self.on_claim_error)
         self.line_edit_login.setValidator(validators.UserIDValidator())
@@ -177,6 +179,9 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             and len(self.line_edit_device.text())
             and len(self.line_edit_url.text())
             and not self.claim_user_job
+            and len(self.line_edit_password.text())
+            and get_password_strength(self.line_edit_password.text()) > 0
+            and len(self.line_edit_password_check.text())
         ):
             self.button_claim.setDisabled(False)
         else:

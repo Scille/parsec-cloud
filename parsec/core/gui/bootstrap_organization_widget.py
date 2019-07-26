@@ -121,6 +121,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_url.textChanged.connect(self.check_infos)
+        self.line_edit_password.textChanged.connect(self.check_infos)
+        self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
@@ -212,6 +214,9 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             and len(self.line_edit_device.text())
             and len(self.line_edit_url.text())
             and not self.bootstrap_job
+            and len(self.line_edit_password.text())
+            and get_password_strength(self.line_edit_password.text()) > 0
+            and len(self.line_edit_password_check.text())
         ):
             self.button_bootstrap.setDisabled(False)
         else:
