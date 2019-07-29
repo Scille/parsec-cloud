@@ -12,7 +12,6 @@ from parsec.core.cli import create_workspace
 from parsec.core.cli import share_workspace
 from parsec.core.cli import bootstrap_organization
 from parsec.core.cli import run
-from parsec.core.cli import profile
 
 
 __all__ = ("core_cmd",)
@@ -34,4 +33,3 @@ core_cmd.add_command(invite_device.invite_device, "invite_device")
 core_cmd.add_command(claim_device.claim_device, "claim_device")
 core_cmd.add_command(create_organization.create_organization, "create_organization")
 core_cmd.add_command(bootstrap_organization.bootstrap_organization, "bootstrap_organization")
-core_cmd.add_command(profile.benchmark, "benchmark")
