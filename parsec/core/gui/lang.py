@@ -6,7 +6,7 @@ import pendulum
 
 from structlog import get_logger
 
-from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream
+from PyQt5.QtCore import QCoreApplication, QIODevice, QFile, QDataStream, QLocale
 
 from parsec.core.gui.desktop import get_locale_language
 
@@ -33,6 +33,12 @@ def translate(string):
     if _current_translator:
         return _current_translator.gettext(string)
     return gettext.gettext(string)
+
+
+def get_qlocale():
+    q = QLocale(_current_locale_language)
+    print(q.name())
+    return q
 
 
 def switch_language(core_config, lang_key=None):

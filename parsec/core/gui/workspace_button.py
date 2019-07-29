@@ -30,6 +30,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         files=None,
         enable_workspace_color=False,
         reencryption_needs=None,
+        timestamped=False,
         *args,
         **kwargs,
     ):
@@ -39,6 +40,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_empty.show()
         self.widget_files.hide()
         self.reencryption_needs = reencryption_needs
+        self.timestamped = timestamped
         self.is_shared = is_shared
         self.is_creator = is_creator
         self.reencrypting = None
@@ -61,6 +63,16 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if enable_workspace_color:
             c = StringToColor.from_string(str(self.workspace_fs.workspace_id))
             self.setStyleSheet("background-color: {};".format(c.hex()))
+
+        if self.timestamped:
+            self.button_reencrypt.hide()
+            self.button_remount_ts.hide()
+            self.button_share.hide()
+            self.button_rename.hide()
+            self.label_shared.hide()
+            self.label_owner.hide()
+            for i in range(5, 9):
+                getattr(self, f"line_{i}").hide()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))

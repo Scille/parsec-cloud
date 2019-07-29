@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QDialog
 import pendulum
 from trio import run
 
+from parsec.core.gui.lang import get_qlocale
+
 from parsec.core.gui.ui.ts_ws_dialog import Ui_TsWsDialog
 
 
@@ -16,6 +18,7 @@ class TsWsDialog(QDialog, Ui_TsWsDialog):
         self.setWindowFlags(Qt.SplashScreen)
         self.workspace_fs = workspace_fs
         creation = run(workspace_fs.path_info, "/")["created"].in_timezone("local")
+        self.calendar_widget.setLocale(get_qlocale())
         self.creation_date = (creation.year, creation.month, creation.day)
         self.creation_time = (creation.hour, creation.minute, creation.second)
         now = pendulum.now().in_timezone("local")
