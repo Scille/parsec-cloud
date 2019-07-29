@@ -252,6 +252,7 @@ class UserFS:
         """
         Raises:
             FSError
+            FSWorkspaceInMaintenance
             FSBackendOfflineError
         """
         try:

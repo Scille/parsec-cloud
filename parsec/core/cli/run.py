@@ -3,7 +3,7 @@
 import trio
 import click
 from pathlib import Path
-from pendulum import Pendulum
+from pendulum import Pendulum, parse as pendulum_parse
 
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
@@ -42,7 +42,8 @@ async def _run_mountpoint(config, device, timestamp: Pendulum = None):
 @click.command(short_help="run parsec mountpoint")
 @core_config_and_device_options
 @click.option("--mountpoint", "-m", type=click.Path(exists=False))
-def run_mountpoint(config, device, mountpoint, **kwargs):
+@click.option("--timestamp", "-t", type=lambda t: pendulum_parse(t, tz="local"))
+def run_mountpoint(config, device, mountpoint, timestamp, **kwargs):
     """
     Expose device's parsec drive on the given mountpoint.
     """
@@ -50,4 +51,4 @@ def run_mountpoint(config, device, mountpoint, **kwargs):
     if mountpoint:
         config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
-        trio_run(_run_mountpoint, config, device, kwargs["timestamp"])
+        trio_run(_run_mountpoint, config, device, timestamp)
