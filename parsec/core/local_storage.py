@@ -206,19 +206,7 @@ class LocalStorageTimestamped(LocalStorage):
     """
 
     def __init__(self, local_storage: LocalStorage, timestamp: Pendulum):
-        self.device_id = local_storage.device_id
-
-        # File descriptors
-        self.open_fds: Dict[FileDescriptor, EntryID] = {}
-        self.fd_counter = 0
-
-        # Locking structures
-        self.locking_tasks = {}
-        self.entry_locks = defaultdict(trio.Lock)
-
-        # Manifest and block storage
-        self.local_manifest_cache = {}  # should delete? seems used for dirty, base for clean...
-
+        super().__init__(local_storage.device_id, None, "")
         self.persistent_storage = local_storage.persistent_storage
 
         self.set_dirty_block = self._throw_permission_error
