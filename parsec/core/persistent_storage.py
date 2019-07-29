@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+from time import time
 from pathlib import Path
 from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
-
-import pendulum
 
 from parsec.core.types import EntryID, BlockID
 from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
@@ -74,9 +73,14 @@ class PersistentStorage:
         self.dirty_conn = sqlite_connect(str(self._path / "dirty_data.sqlite"))
         self.clean_conn = sqlite_connect(str(self._path / "clean_cache.sqlite"))
 
+        # Tune database access
         # Use auto-commit for dirty data since it is very sensitive
         self.dirty_conn.isolation_level = None
+        self.dirty_conn.execute("pragma journal_mode=wal")
         self.dirty_conn.execute("PRAGMA synchronous = OFF")
+        self.clean_conn.isolation_level = None
+        self.clean_conn.execute("PRAGMA synchronous = OFF")
+        self.clean_conn.execute("pragma journal_mode=wal")
 
         # Initialize
         self.create_db()
@@ -112,10 +116,12 @@ class PersistentStorage:
     @contextmanager
     def _open_cursor(self, conn: Connection):
         cursor = conn.cursor()
-        try:
-            yield cursor
-        finally:
-            cursor.close()
+        # Automatic rollback on exception
+        with conn:
+            try:
+                yield cursor
+            finally:
+                cursor.close()
 
     def open_dirty_cursor(self):
         return self._open_cursor(self.dirty_conn)
@@ -144,7 +150,8 @@ class PersistentStorage:
                          size INT NOT NULL,
                          offline BOOLEAN NOT NULL,
                          accessed_on TIMESTAMPTZ,
-                         file_path TEXT NOT NULL);"""
+                         data BLOB NOT NULL
+                    );"""
                 )
 
     # Size and blocks
@@ -211,47 +218,48 @@ class PersistentStorage:
 
     def _get_block(self, conn: Connection, path: Path, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
+            cursor.execute("BEGIN")
             cursor.execute(
-                """UPDATE blocks SET accessed_on = ? WHERE block_id = ?""",
-                (str(pendulum.now()), str(block_id)),
+                """
+                UPDATE blocks SET accessed_on = ? WHERE block_id = ?;
+                """,
+                (time(), str(block_id)),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
+            if not changes:
+                raise LocalStorageMissingError(block_id)
 
-        if not changes:
-            raise LocalStorageMissingError(block_id)
+            cursor.execute("""SELECT data FROM blocks WHERE block_id = ?""", (str(block_id),))
+            ciphered, = cursor.fetchone()
+            cursor.execute("END")
 
-        ciphered = self._read_file(block_id, path)
         return decrypt_raw_with_secret_key(self.local_symkey, ciphered)
 
     def _set_block(self, conn: Connection, path: Path, block_id: BlockID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        filepath = path / str(block_id)
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
         # Update database
         with self._open_cursor(conn) as cursor:
             cursor.execute(
                 """INSERT OR REPLACE INTO
-                blocks (block_id, size, offline, accessed_on, file_path)
+                blocks (block_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
                 # TODO: better serialization of DateTime
-                (str(block_id), len(ciphered), False, str(pendulum.now()), str(filepath)),
+                (str(block_id), len(ciphered), False, time(), ciphered),
             )
-
-        # Write file
-        self._write_file(block_id, ciphered, path)
 
     def _clear_block(self, conn: Connection, path: Path, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
+            cursor.execute("BEGIN")
             cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(block_id),))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
+            cursor.execute("END")
 
         if not changes:
             raise LocalStorageMissingError(block_id)
-
-        self._remove_file(block_id, path)
 
     # Clean block operations
 
@@ -283,42 +291,14 @@ class PersistentStorage:
     def clear_dirty_block(self, block_id: BlockID):
         self._clear_block(self.dirty_conn, self._dirty_db_files, block_id)
 
-    # Block file operations
-
-    def _read_file(self, block_id: BlockID, path: Path):
-        filepath = path / str(block_id)
-        try:
-            return filepath.read_bytes()
-        except FileNotFoundError:
-            raise LocalStorageMissingError(block_id)
-
-    def _write_file(self, block_id: BlockID, content: bytes, path: Path):
-        filepath = path / str(block_id)
-        filepath.write_bytes(content)
-
-    def _remove_file(self, block_id: BlockID, path: Path):
-        filepath = path / str(block_id)
-        try:
-            filepath.unlink()
-        except FileNotFoundError:
-            raise LocalStorageMissingError(block_id)
-
     # Garbage collection
 
     def clear_clean_blocks(self, limit=None):
-        limit_string = f" LIMIT {limit}" if limit is not None else ""
-
         with self.open_clean_cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT block_id FROM blocks ORDER BY accessed_on ASC
-                """
-                + limit_string
-            )
-            block_ids = [BlockID(block_id) for (block_id,) in cursor.fetchall()]
-
-        for block_id in block_ids:
-            self.clear_clean_block(block_id)
+            if not limit:
+                cursor.execute("DELETE FROM blocks")
+            else:
+                cursor.execute("DELETE FROM blocks ORDER BY accessed_on ASC LIMIT ?", (limit,))
 
     def run_block_garbage_collector(self):
         self.clear_clean_blocks()
