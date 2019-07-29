@@ -36,6 +36,12 @@
 {
 background-color: rgb(255, 255, 255);
 border-bottom: 1px solid rgb(11, 65, 155);
+}
+
+#button_close
+{
+background-color: rgb(255, 255, 255);
+border: 0;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

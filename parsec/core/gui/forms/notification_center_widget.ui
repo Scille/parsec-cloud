@@ -51,6 +51,12 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
 {
 border: none;
 background: none;
+}
+
+#button_close
+{
+background-color: rgb(255, 255, 255);
+border: 0;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -93,10 +99,7 @@ background: none;
      <item>
       <widget class="QPushButton" name="button_close">
        <property name="styleSheet">
-        <string notr="true">QPushButton#button_close
-{
-border: 0;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string/>
