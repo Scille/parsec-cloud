@@ -298,7 +298,14 @@ class PersistentStorage:
             if not limit:
                 cursor.execute("DELETE FROM blocks")
             else:
-                cursor.execute("DELETE FROM blocks ORDER BY accessed_on ASC LIMIT ?", (limit,))
+                cursor.execute(
+                    """
+                    DELETE FROM blocks WHERE block_id IN (
+                        SELECT block_id FROM blocks ORDER BY accessed_on ASC LIMIT ?
+                    )
+                    """,
+                    (limit,),
+                )
 
     def run_block_garbage_collector(self):
         self.clear_clean_blocks()
