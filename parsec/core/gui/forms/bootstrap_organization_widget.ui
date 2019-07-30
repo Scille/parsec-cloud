@@ -495,7 +495,7 @@ color: rgb(255, 255, 255);
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="button_cancel">
+            <widget class="PointingHandButton" name="button_cancel">
              <property name="font">
               <font>
                <pointsize>13</pointsize>
@@ -507,7 +507,7 @@ color: rgb(255, 255, 255);
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="button_bootstrap">
+            <widget class="PointingHandButton" name="button_bootstrap">
              <property name="font">
               <font>
                <pointsize>13</pointsize>
@@ -540,6 +540,13 @@ color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PointingHandButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

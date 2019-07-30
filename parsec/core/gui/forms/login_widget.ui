@@ -307,6 +307,9 @@ text-decoration: underline;
                <pointsize>12</pointsize>
               </font>
              </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
              <property name="styleSheet">
               <string notr="true"/>
              </property>
@@ -328,6 +331,9 @@ text-decoration: underline;
               <font>
                <pointsize>12</pointsize>
               </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
              </property>
              <property name="styleSheet">
               <string notr="true"/>
@@ -351,6 +357,9 @@ text-decoration: underline;
                <pointsize>12</pointsize>
               </font>
              </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
              <property name="styleSheet">
               <string notr="true"/>
              </property>
@@ -373,6 +382,9 @@ text-decoration: underline;
                <pointsize>12</pointsize>
               </font>
              </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
              <property name="text">
               <string>BUTTON_BOOTSTRAP_ORG</string>
              </property>
@@ -388,6 +400,9 @@ text-decoration: underline;
               <font>
                <pointsize>12</pointsize>
               </font>
+             </property>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
              </property>
              <property name="text">
               <string>BUTTON_SETTINGS</string>

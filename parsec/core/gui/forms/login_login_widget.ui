@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>695</width>
-    <height>391</height>
+    <height>392</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -400,7 +400,7 @@ color: rgb(255, 255, 255);
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="button_login">
+            <widget class="PointingHandButton" name="button_login">
              <property name="enabled">
               <bool>true</bool>
              </property>
@@ -451,6 +451,13 @@ color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PointingHandButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

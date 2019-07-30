@@ -439,7 +439,7 @@ border: 0;
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="button_rename">
+             <widget class="PointingHandButton" name="button_rename">
               <property name="minimumSize">
                <size>
                 <width>32</width>
@@ -505,7 +505,7 @@ border: 0;
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="button_share">
+             <widget class="PointingHandButton" name="button_share">
               <property name="minimumSize">
                <size>
                 <width>32</width>
@@ -568,7 +568,7 @@ border: 0;
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="button_remount_ts">
+             <widget class="PointingHandButton" name="button_remount_ts">
               <property name="minimumSize">
                <size>
                 <width>32</width>
@@ -619,7 +619,7 @@ border: 0;
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="button_reencrypt">
+             <widget class="PointingHandButton" name="button_reencrypt">
               <property name="minimumSize">
                <size>
                 <width>32</width>
@@ -682,7 +682,7 @@ border: 0;
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="button_delete">
+             <widget class="PointingHandButton" name="button_delete">
               <property name="minimumSize">
                <size>
                 <width>32</width>
@@ -740,6 +740,11 @@ border: 0;
   <customwidget>
    <class>FileLineEdit</class>
    <extends>QLineEdit</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>PointingHandButton</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

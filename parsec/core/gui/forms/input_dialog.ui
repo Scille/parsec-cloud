@@ -100,7 +100,7 @@ background-color: rgb(255, 255, 255);
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_close">
+         <widget class="PointingHandButton" name="button_close">
           <property name="minimumSize">
            <size>
             <width>20</width>
@@ -272,6 +272,11 @@ padding-left: 10px;</string>
  <customwidgets>
   <customwidget>
    <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>PointingHandButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint
-from PyQt5.QtGui import QIcon, QPainter, QColor, QPen
+from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor
 from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QGraphicsDropShadowEffect
 
 
@@ -133,7 +133,13 @@ class DeviceLabel(QLabel):
         painter.end()
 
 
-class ShadowedButton(QPushButton):
+class PointingHandButton(QPushButton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+
+
+class ShadowedButton(PointingHandButton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         effect = QGraphicsDropShadowEffect(self)

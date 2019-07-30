@@ -76,7 +76,7 @@ border: 0;
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_close">
+      <widget class="PointingHandButton" name="button_close">
        <property name="styleSheet">
         <string notr="true">QPushButton#button_close
 {
@@ -89,6 +89,12 @@ border: 0;
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
          <normaloff>:/icons/images/icons/menu_cancel.png</normaloff>:/icons/images/icons/menu_cancel.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
        </property>
        <property name="flat">
         <bool>true</bool>
@@ -188,6 +194,13 @@ border: 0;
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PointingHandButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
