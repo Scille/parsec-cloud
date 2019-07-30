@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 from time import time
 from pathlib import Path
 from contextlib import contextmanager
@@ -46,8 +45,6 @@ class PersistentStorage:
         self.max_cache_size = max_cache_size
         self.dirty_conn = None
         self.clean_conn = None
-        self._clean_db_files = self._path / "clean_data_cache"
-        self._dirty_db_files = self._path / "dirty_data_storage"
 
     # TODO: really needed ?
     @property
@@ -66,8 +63,6 @@ class PersistentStorage:
 
         # Create directories
         self._path.mkdir(parents=True, exist_ok=True)
-        self._clean_db_files.mkdir(parents=True, exist_ok=True)
-        self._dirty_db_files.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
         self.dirty_conn = sqlite_connect(str(self._path / "dirty_data.sqlite"))
@@ -168,14 +163,6 @@ class PersistentStorage:
             result, = cursor.fetchone()
             return result
 
-    def get_block_cache_size(self):
-        cache = str(self._clean_db_files)
-        return sum(
-            os.path.getsize(os.path.join(cache, f))
-            for f in os.listdir(cache)
-            if os.path.isfile(os.path.join(cache, f))
-        )
-
     # Manifest operations
 
     def get_manifest(self, entry_id: EntryID):
@@ -210,13 +197,13 @@ class PersistentStorage:
 
     # Generic block operations
 
-    def _is_block(self, conn: Connection, path: Path, block_id: BlockID):
+    def _is_block(self, conn: Connection, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("SELECT block_id FROM blocks WHERE block_id = ?", (str(block_id),))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
-    def _get_block(self, conn: Connection, path: Path, block_id: BlockID):
+    def _get_block(self, conn: Connection, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("BEGIN")
             cursor.execute(
@@ -236,7 +223,7 @@ class PersistentStorage:
 
         return decrypt_raw_with_secret_key(self.local_symkey, ciphered)
 
-    def _set_block(self, conn: Connection, path: Path, block_id: BlockID, raw: bytes):
+    def _set_block(self, conn: Connection, block_id: BlockID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
@@ -246,11 +233,10 @@ class PersistentStorage:
                 """INSERT OR REPLACE INTO
                 blocks (block_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
-                # TODO: better serialization of DateTime
                 (str(block_id), len(ciphered), False, time(), ciphered),
             )
 
-    def _clear_block(self, conn: Connection, path: Path, block_id: BlockID):
+    def _clear_block(self, conn: Connection, block_id: BlockID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("BEGIN")
             cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(block_id),))
@@ -264,10 +250,10 @@ class PersistentStorage:
     # Clean block operations
 
     def get_clean_block(self, block_id: BlockID):
-        return self._get_block(self.clean_conn, self._clean_db_files, block_id)
+        return self._get_block(self.clean_conn, block_id)
 
     def set_clean_block(self, block_id: BlockID, raw: bytes):
-        self._set_block(self.clean_conn, self._clean_db_files, block_id, raw)
+        self._set_block(self.clean_conn, block_id, raw)
 
         # Clean up if necessary
         limit = self.get_nb_clean_blocks() - self.block_limit
@@ -275,21 +261,21 @@ class PersistentStorage:
             self.clear_clean_blocks(limit=limit)
 
     def clear_clean_block(self, block_id: BlockID):
-        self._clear_block(self.clean_conn, self._clean_db_files, block_id)
+        self._clear_block(self.clean_conn, block_id)
 
     # Dirty block operations
 
     def is_dirty_block(self, block_id: BlockID):
-        return self._is_block(self.dirty_conn, self._dirty_db_files, block_id)
+        return self._is_block(self.dirty_conn, block_id)
 
     def get_dirty_block(self, block_id: BlockID):
-        return self._get_block(self.dirty_conn, self._dirty_db_files, block_id)
+        return self._get_block(self.dirty_conn, block_id)
 
     def set_dirty_block(self, block_id: BlockID, raw: bytes):
-        self._set_block(self.dirty_conn, self._dirty_db_files, block_id, raw)
+        self._set_block(self.dirty_conn, block_id, raw)
 
     def clear_dirty_block(self, block_id: BlockID):
-        self._clear_block(self.dirty_conn, self._dirty_db_files, block_id)
+        self._clear_block(self.dirty_conn, block_id)
 
     # Garbage collection
 

@@ -46,6 +46,9 @@ def test_persistent_storage_cache_size(persistent_storage):
     persistent_storage.set_clean_block(ENTRY_ID, b"data")
     assert persistent_storage.get_cache_size() > 4
 
+    persistent_storage.clear_clean_block(ENTRY_ID)
+    assert persistent_storage.get_cache_size() == 0
+
 
 def test_persistent_storage_set_get_clear_manifest(persistent_storage):
     persistent_storage.set_manifest(ENTRY_ID, b"data")
