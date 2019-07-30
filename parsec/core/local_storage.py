@@ -122,8 +122,9 @@ class LocalStorage:
         if not cache_only:
             raw = local_manifest_serializer.dumps(manifest)
             self.persistent_storage.set_manifest(entry_id, raw)
+        else:
+            self.cache_ahead_of_persistance_ids.add(entry_id)
         self.local_manifest_cache[entry_id] = manifest
-        self.cache_ahead_of_persistance_ids.discard(entry_id)
 
     def ensure_manifest_persistant(self, entry_id: EntryID) -> None:
         assert isinstance(entry_id, EntryID)
