@@ -225,7 +225,7 @@ async def test_sync_placeholder(
     with_workspace,
 ):
     device = local_device_factory()
-    local_storage = local_storage_factory(device, user_manifest_in_v0=True)
+    local_storage = await local_storage_factory(device, user_manifest_in_v0=True)
     await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
 
     async with user_fs_factory(device, local_storage=local_storage) as user_fs:
@@ -282,11 +282,11 @@ async def test_concurrent_sync_placeholder(
     dev2_has_changes,
 ):
     device1 = local_device_factory("a@1")
-    local_storage1 = local_storage_factory(device1, user_manifest_in_v0=True)
+    local_storage1 = await local_storage_factory(device1, user_manifest_in_v0=True)
     await backend_data_binder.bind_device(device1, initial_user_manifest_in_v0=True)
 
     device2 = local_device_factory("a@2")
-    local_storage2 = local_storage_factory(device2, user_manifest_in_v0=True)
+    local_storage2 = await local_storage_factory(device2, user_manifest_in_v0=True)
     await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
 
     async with user_fs_factory(device1, local_storage=local_storage1) as user_fs1, user_fs_factory(

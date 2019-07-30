@@ -82,7 +82,7 @@ def test_fs_online_tree_and_sync(
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.oracle_fs.create_workspace("/w")
             self.device = alice
-            self.local_storage = local_storage_factory(self.device)
+            self.local_storage = await local_storage_factory(self.device)
 
             await self.start_backend()
             await self.restart_user_fs(self.device, self.local_storage)
@@ -100,7 +100,7 @@ def test_fs_online_tree_and_sync(
         @rule()
         async def reset(self):
             # TODO: would be cleaner to recreate a new device...
-            self.local_storage = local_storage_factory(self.device, force=True)
+            self.local_storage = await local_storage_factory(self.device, force=True)
             await self.restart_user_fs(self.device, self.local_storage)
             self.oracle_fs.reset()
             self.oracle_fs.create_workspace("/w")

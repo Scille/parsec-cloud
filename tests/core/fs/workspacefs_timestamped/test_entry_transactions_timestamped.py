@@ -61,10 +61,12 @@ async def test_rename(alice_workspace_t4):
 @pytest.mark.trio
 async def test_access_not_loaded_entry(alice_workspace_t4):
     entry_id = alice_workspace_t4.entry_transactions.get_workspace_entry().id
-    alice_workspace_t4.entry_transactions.local_storage.clear_manifest(entry_id)
+    async with alice_workspace_t4.entry_transactions.local_storage.lock_entry_id(entry_id):
+        alice_workspace_t4.entry_transactions.local_storage.clear_manifest(entry_id)
     with pytest.raises(LocalStorageMissingError):
         await alice_workspace_t4.entry_transactions.local_storage.get_manifest(entry_id)
-    alice_workspace_t4.entry_transactions.local_storage.clear_manifest(entry_id)
+    async with alice_workspace_t4.entry_transactions.local_storage.lock_entry_id(entry_id):
+        alice_workspace_t4.entry_transactions.local_storage.clear_manifest(entry_id)
     await alice_workspace_t4.entry_transactions.entry_info(FsPath("/"))
 
 

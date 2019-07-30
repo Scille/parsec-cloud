@@ -44,15 +44,19 @@ def test_get_manifest(local_storage):
     assert local_storage.get_manifest(entry_id) == manifest
 
 
-def test_set_manifest(local_storage):
+@pytest.mark.trio
+async def test_set_manifest(local_storage):
     entry_id, manifest = create_entry()
-    local_storage.set_manifest(entry_id, manifest)
+    async with local_storage.lock_entry_id(entry_id):
+        local_storage.set_manifest(entry_id, manifest)
     assert local_storage.local_manifest_cache[entry_id] == manifest
 
 
-def test_clear_manifest(local_storage):
+@pytest.mark.trio
+async def test_clear_manifest(local_storage):
     entry_id, manifest = create_entry()
-    local_storage.set_manifest(entry_id, manifest)
+    async with local_storage.lock_entry_id(entry_id):
+        local_storage.set_manifest(entry_id, manifest)
     assert local_storage.get_manifest(entry_id) == manifest
 
     local_storage.clear_manifest(entry_id)
@@ -64,9 +68,11 @@ def test_clear_manifest(local_storage):
 @pytest.mark.parametrize(
     "type", [LocalUserManifest, LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest]
 )
-def test_get_manifest_with_cache_miss(local_storage, type):
+@pytest.mark.trio
+async def test_get_manifest_with_cache_miss(local_storage, type):
     entry_id, manifest = create_entry(type)
-    local_storage.set_manifest(entry_id, manifest)
+    async with local_storage.lock_entry_id(entry_id):
+        local_storage.set_manifest(entry_id, manifest)
     assert local_storage.get_manifest(entry_id) == manifest
     local_storage.clear_memory_cache()
     assert local_storage.get_manifest(entry_id) == manifest

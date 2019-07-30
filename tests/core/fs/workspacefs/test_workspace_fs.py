@@ -377,7 +377,8 @@ async def test_rmtree(alice_workspace):
 async def test_dump(alice_workspace):
     device_id = alice_workspace.device.device_id
     baz_id = await alice_workspace.path_id("/foo/baz")
-    alice_workspace.local_storage.clear_manifest(baz_id)
+    async with alice_workspace.local_storage.lock_entry_id(baz_id):
+        alice_workspace.local_storage.clear_manifest(baz_id)
     assert alice_workspace.dump() == {
         "author": device_id,
         "base_version": 1,

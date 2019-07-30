@@ -114,11 +114,16 @@ class LocalStorage:
         return manifest
 
     def set_manifest(
-        self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False
+        self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        cache_only: bool = False,
+        check_lock_status=True,
     ) -> None:
         assert isinstance(entry_id, EntryID)
         assert manifest.author == self.device_id
-        self._check_lock_status(entry_id)
+        if check_lock_status:
+            self._check_lock_status(entry_id)
         if not cache_only:
             raw = local_manifest_serializer.dumps(manifest)
             self.persistent_storage.set_manifest(entry_id, raw)

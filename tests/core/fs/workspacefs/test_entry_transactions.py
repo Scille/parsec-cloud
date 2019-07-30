@@ -160,12 +160,14 @@ async def test_cannot_replace_root(entry_transactions):
 async def test_access_not_loaded_entry(alice, bob, entry_transactions):
     entry_id = entry_transactions.get_workspace_entry().id
     manifest = entry_transactions.local_storage.get_manifest(entry_id)
-    entry_transactions.local_storage.clear_manifest(entry_id)
+    async with entry_transactions.local_storage.lock_entry_id(entry_id):
+        entry_transactions.local_storage.clear_manifest(entry_id)
 
     with pytest.raises(FSRemoteManifestNotFound):
         await entry_transactions.entry_info(FsPath("/"))
 
-    entry_transactions.local_storage.set_manifest(entry_id, manifest)
+    async with entry_transactions.local_storage.lock_entry_id(entry_id):
+        entry_transactions.local_storage.set_manifest(entry_id, manifest)
     entry_info = await entry_transactions.entry_info(FsPath("/"))
     assert entry_info == {
         "type": "folder",
@@ -247,11 +249,11 @@ def test_folder_operations(
 
             self.last_step_id_to_path = set()
             self.device = alice
-            self.local_storage = local_storage_factory(self.device)
-            self.entry_transactions = entry_transactions_factory(
+            self.local_storage = await local_storage_factory(self.device)
+            self.entry_transactions = await entry_transactions_factory(
                 self.device, self.local_storage, alice_backend_cmds
             )
-            self.file_transactions = file_transactions_factory(
+            self.file_transactions = await file_transactions_factory(
                 self.device, self.local_storage, alice_backend_cmds
             )
 

@@ -17,7 +17,7 @@ async def test_lazy_root_manifest_generation(
         await backend_data_binder.bind_organization(
             coolorg, alice, initial_user_manifest_in_v0=True
         )
-    local_storage = local_storage_factory(alice, user_manifest_in_v0=True)
+    local_storage = await local_storage_factory(alice, user_manifest_in_v0=True)
 
     async with user_fs_factory(alice, local_storage) as user_fs:
         wid = await user_fs.workspace_create("w")
@@ -72,8 +72,8 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         )
         await backend_data_binder.bind_device(alice2, initial_user_manifest_in_v0=True)
 
-    alice_local_storage = local_storage_factory(alice, user_manifest_in_v0=True)
-    alice2_local_storage = local_storage_factory(alice2, user_manifest_in_v0=True)
+    alice_local_storage = await local_storage_factory(alice, user_manifest_in_v0=True)
+    alice2_local_storage = await local_storage_factory(alice2, user_manifest_in_v0=True)
 
     async with user_fs_factory(alice, alice_local_storage) as user_fs1, user_fs_factory(
         alice2, alice2_local_storage
@@ -153,7 +153,7 @@ async def test_reloading_v0_user_manifest(
         await backend_data_binder.bind_organization(
             coolorg, alice, initial_user_manifest_in_v0=True
         )
-    local_storage = local_storage_factory(alice, user_manifest_in_v0=True)
+    local_storage = await local_storage_factory(alice, user_manifest_in_v0=True)
 
     # Create a workspace without syncronizing
     async with user_fs_factory(alice, local_storage) as user_fs:

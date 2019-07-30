@@ -49,7 +49,7 @@ def test_fs_offline_restart_and_rwfile(
         async def init(self):
             await reset_testbed()
             self.device = alice
-            self.local_storage = local_storage_factory(alice)
+            self.local_storage = await local_storage_factory(alice)
             await self.restart_user_fs()
             wid = await self.user_fs.workspace_create("w")
             self.workspace = self.user_fs.get_workspace(wid)

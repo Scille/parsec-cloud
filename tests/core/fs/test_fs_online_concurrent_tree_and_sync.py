@@ -64,8 +64,8 @@ def test_fs_online_concurrent_tree_and_sync(
             await reset_testbed()
             self.device1 = alice
             self.device2 = alice2
-            self.local_storage1 = local_storage_factory(self.device1)
-            self.local_storage2 = local_storage_factory(self.device2)
+            self.local_storage1 = await local_storage_factory(self.device1)
+            self.local_storage2 = await local_storage_factory(self.device2)
 
             self.backend_controller = await self.start_backend([self.device1, self.device2])
             self.user_fs1_controller = await self.start_fs(self.device1, self.local_storage1)
