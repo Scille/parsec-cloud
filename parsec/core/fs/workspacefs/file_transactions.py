@@ -146,6 +146,7 @@ class FileTransactions:
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
+            self.local_storage.ensure_manifest_persistant(entry_id)
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
@@ -172,7 +173,7 @@ class FileTransactions:
 
             # Atomic change
             self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_manifest(entry_id, manifest)
+            self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)
@@ -197,7 +198,7 @@ class FileTransactions:
             # Atomic change
             if padded_content:
                 self.local_storage.set_dirty_block(block_access.id, padded_content)
-            self.local_storage.set_manifest(entry_id, manifest)
+            self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)
@@ -232,5 +233,5 @@ class FileTransactions:
                     return data
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
-        # No-op
-        pass
+        async with self._load_and_lock_file(fd) as (entry_id, manifest):
+            self.local_storage.ensure_manifest_persistant(entry_id)

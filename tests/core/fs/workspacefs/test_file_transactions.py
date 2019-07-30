@@ -28,6 +28,9 @@ class File:
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
+    def is_cache_ahead_of_persistance(self):
+        return self.entry_id in self.local_storage.cache_ahead_of_persistance_ids
+
     def get_manifest(self):
         return self.local_storage.get_manifest(self.entry_id)
 
@@ -65,6 +68,7 @@ async def test_operations_on_file(file_transactions, foo_txt):
         await file_transactions.fd_write(fd, b"world !", -1)
         await file_transactions.fd_write(fd, b"H", 0)
         await file_transactions.fd_write(fd, b"", 0)
+        assert foo_txt.is_cache_ahead_of_persistance()
 
         fd2 = foo_txt.open()
 
@@ -78,6 +82,7 @@ async def test_operations_on_file(file_transactions, foo_txt):
     assert data == b"world"
 
     await file_transactions.fd_close(fd)
+    assert not foo_txt.is_cache_ahead_of_persistance()
 
     fd2 = foo_txt.open()
 
@@ -86,6 +91,7 @@ async def test_operations_on_file(file_transactions, foo_txt):
 
     await file_transactions.fd_close(fd2)
 
+    assert not foo_txt.is_cache_ahead_of_persistance()
     foo_txt.ensure_manifest(
         size=16,
         is_placeholder=False,
@@ -113,6 +119,7 @@ async def test_flush_file(file_transactions, foo_txt):
         await file_transactions.fd_write(fd, b"hello ", 0)
         await file_transactions.fd_write(fd, b"world !", -1)
 
+    assert foo_txt.is_cache_ahead_of_persistance()
     foo_txt.ensure_manifest(
         size=13,
         is_placeholder=False,
@@ -123,8 +130,10 @@ async def test_flush_file(file_transactions, foo_txt):
     )
 
     await file_transactions.fd_flush(fd)
-    await file_transactions.fd_close(fd)
+    assert not foo_txt.is_cache_ahead_of_persistance()
 
+    await file_transactions.fd_close(fd)
+    assert not foo_txt.is_cache_ahead_of_persistance()
     foo_txt.ensure_manifest(
         size=13,
         is_placeholder=False,

@@ -57,6 +57,7 @@ class LocalStorage:
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
+        self.cache_ahead_of_persistance_ids = set()
         self.local_manifest_cache = {}
         self.persistent_storage = PersistentStorage(key, path, **kwargs)
 
@@ -69,10 +70,13 @@ class LocalStorage:
         return self
 
     def __exit__(self, *args):
+        for entry_id in self.cache_ahead_of_persistance_ids.copy():
+            self.ensure_manifest_flushed_on_disk(entry_id)
         self.persistent_storage.__exit__(*args)
 
     def clear_memory_cache(self):
         self.local_manifest_cache.clear()
+        self.cache_ahead_of_persistance_ids.clear()
 
     # Locking helpers
 
@@ -109,13 +113,28 @@ class LocalStorage:
         self.local_manifest_cache[entry_id] = manifest
         return manifest
 
-    def set_manifest(self, entry_id: EntryID, manifest: LocalManifest) -> None:
+    def set_manifest(
+        self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False
+    ) -> None:
         assert isinstance(entry_id, EntryID)
         assert manifest.author == self.device_id
         self._check_lock_status(entry_id)
+        if not cache_only:
+            raw = local_manifest_serializer.dumps(manifest)
+            self.persistent_storage.set_manifest(entry_id, raw)
+        else:
+            self.cache_ahead_of_persistance_ids.add(entry_id)
+        self.local_manifest_cache[entry_id] = manifest
+
+    def ensure_manifest_persistant(self, entry_id: EntryID) -> None:
+        assert isinstance(entry_id, EntryID)
+        self._check_lock_status(entry_id)
+        if entry_id not in self.cache_ahead_of_persistance_ids:
+            return
+        manifest = self.local_manifest_cache[entry_id]
         raw = local_manifest_serializer.dumps(manifest)
         self.persistent_storage.set_manifest(entry_id, raw)
-        self.local_manifest_cache[entry_id] = manifest
+        self.cache_ahead_of_persistance_ids.remove(entry_id)
 
     def clear_manifest(self, entry_id: EntryID) -> None:
         assert isinstance(entry_id, EntryID)
@@ -125,6 +144,7 @@ class LocalStorage:
         except LocalStorageMissingError:
             pass
         self.local_manifest_cache.pop(entry_id, None)
+        self.cache_ahead_of_persistance_ids.discard(entry_id)
 
     # Block interface
 
@@ -212,7 +232,7 @@ class LocalStorageTimestamped(LocalStorage):
         self.set_dirty_block = self._throw_permission_error
         self.clear_block = self._throw_permission_error
 
-    def _throw_permission_error(*e, **ke):
+    def _throw_permission_error(*args, **kwargs):
         raise LocalStorageError("Not implemented : LocalStorage is timestamped")
 
     # Manifest interface
@@ -226,7 +246,7 @@ class LocalStorageTimestamped(LocalStorage):
             raise LocalStorageMissingError(entry_id)
 
     def set_manifest(
-        self, entry_id: EntryID, manifest: LocalManifest
+        self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False
     ) -> None:  # initially for clean
         assert isinstance(entry_id, EntryID)
         if manifest.need_sync:
@@ -238,3 +258,6 @@ class LocalStorageTimestamped(LocalStorage):
         assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
         self.local_manifest_cache.pop(entry_id, None)
+
+    def ensure_manifest_persistant(self, entry_id: EntryID) -> None:
+        pass
