@@ -37,21 +37,6 @@ async def _do_workspace_create(core, workspace_name):
     return workspace_id
 
 
-async def _do_add_workspace_step_1(
-    instance, workspace_fs, ws_entry, users_roles, files, timestamped, count
-):
-    return (
-        instance.core.user_fs.get_user_manifest(),
-        workspace_fs.workspace_name,
-        workspace_fs,
-        ws_entry,
-        users_roles,
-        files,
-        timestamped,
-        count,
-    )
-
-
 async def _do_workspace_rename(core, workspace_id, new_name, button):
     try:
         await core.user_fs.workspace_rename(workspace_id, new_name)
@@ -135,8 +120,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     mount_error = pyqtSignal(QtToTrioJob)
     reencryption_needs_success = pyqtSignal(QtToTrioJob)
     reencryption_needs_error = pyqtSignal(QtToTrioJob)
-    add_workspace_success = pyqtSignal(QtToTrioJob)
-    add_workspace_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -166,7 +149,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
         self.workspace_mounted.connect(self._on_workspace_mounted)
         self.workspace_unmounted.connect(self._on_workspace_unmounted)
-        self.add_workspace_success.connect(self.on_add_workspace_success)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
@@ -253,10 +235,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_reencryption_needs_error(self, job):
         pass
 
-    def on_add_workspace_success(self, job):
-        user_manifest, workspace_name, workspace_fs, ws_entry, users_roles, files, timestamped, count = (
-            job.ret
-        )
+    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped, count=None):
+        user_manifest = self.jobs_ctx.run_sync(self.core.user_fs.get_user_manifest)
+        workspace_name = self.jobs_ctx.get_async_attr(workspace_fs, "workspace_name")
         button = WorkspaceButton(
             workspace_name,
             workspace_fs,
@@ -293,20 +274,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
             _get_reencryption_needs,
             workspace_fs=workspace_fs,
-        )
-
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped, count=None):
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "add_workspace_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "add_workspace_error", QtToTrioJob),
-            _do_add_workspace_step_1,
-            self,
-            workspace_fs,
-            ws_entry,
-            users_roles,
-            files,
-            timestamped,
-            count,
         )
 
     def open_workspace_file(self, workspace_fs, file_name):
@@ -419,15 +386,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not r:
             return
 
-        async def _reencrypt(core, on_progress, workspace_id):
-            workspace_fs = core.user_fs.get_workspace(workspace_id)
-            workspace_name = workspace_fs.workspace_name
+        async def _reencrypt(on_progress, workspace_id):
             self.reencrypting.add(workspace_id)
             try:
                 job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
                 while True:
                     total, done = await job.do_one_batch(size=1)
-                    on_progress.emit(workspace_name, workspace_id, total, done)
+                    on_progress.emit(workspace_id, total, done)
                     if total == done:
                         break
             finally:
@@ -437,7 +402,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             ThreadSafeQtSignal(self, "workspace_reencryption_success"),
             ThreadSafeQtSignal(self, "workspace_reencryption_error"),
             _reencrypt,
-            core=self.core,
             on_progress=ThreadSafeQtSignal(
                 self, "workspace_reencryption_progress", EntryID, int, int
             ),
