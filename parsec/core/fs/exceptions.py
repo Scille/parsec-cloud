@@ -79,3 +79,12 @@ class FSReshapingRequiredError(FSError):
 
 class FSEntryNotFound(FSError):
     pass
+
+
+class FSInvalidFileDescriptor(FSError):
+    pass
+
+
+class FSLocalMissError(FSError):
+    def __init__(self, id):
+        self.id = id

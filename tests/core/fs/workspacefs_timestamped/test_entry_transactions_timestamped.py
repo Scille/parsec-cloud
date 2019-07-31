@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath
-from parsec.core.persistent_storage import LocalStorageMissingError
+from parsec.core.fs import FSLocalMissError
 
 
 @pytest.mark.trio
@@ -63,7 +63,7 @@ async def test_access_not_loaded_entry(alice_workspace_t4):
     entry_id = alice_workspace_t4.entry_transactions.get_workspace_entry().id
     async with alice_workspace_t4.entry_transactions.local_storage.lock_entry_id(entry_id):
         alice_workspace_t4.entry_transactions.local_storage.clear_manifest(entry_id)
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         await alice_workspace_t4.entry_transactions.local_storage.get_manifest(entry_id)
     async with alice_workspace_t4.entry_transactions.local_storage.lock_entry_id(entry_id):
         alice_workspace_t4.entry_transactions.local_storage.clear_manifest(entry_id)

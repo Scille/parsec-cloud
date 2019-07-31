@@ -5,11 +5,10 @@ from pendulum import Pendulum
 
 from parsec.core.types import FsPath, BlockAccess, EntryID
 from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest, LocalFileManifest
-from parsec.core.local_storage import LocalStorageMissingError
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs.exceptions import FSReshapingRequiredError, FSFileConflictError
+from parsec.core.fs import FSReshapingRequiredError, FSFileConflictError, FSLocalMissError
 
 
 def test_merge_folder_children():
@@ -382,7 +381,7 @@ async def test_file_reshape(sync_transactions):
     access, = new_manifest.blocks
     assert sync_transactions.local_storage.get_block(access.id) == b"abcdefghi"
     for access in dirty:
-        with pytest.raises(LocalStorageMissingError):
+        with pytest.raises(FSLocalMissError):
             sync_transactions.local_storage.get_block(access.id)
 
     # One missing block - several dirty blocks
@@ -410,7 +409,7 @@ async def test_file_reshape(sync_transactions):
     access, = new_manifest.blocks
     assert sync_transactions.local_storage.get_block(access.id) == b"abcdefghi"
     for access in dirty:
-        with pytest.raises(LocalStorageMissingError):
+        with pytest.raises(FSLocalMissError):
             sync_transactions.local_storage.get_block(access.id)
 
 

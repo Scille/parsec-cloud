@@ -19,7 +19,7 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
-from parsec.core.local_storage import LocalStorage
+from parsec.core.fs.local_storage import LocalStorage
 
 
 logger = get_logger()

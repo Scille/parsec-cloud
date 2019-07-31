@@ -21,15 +21,16 @@ from parsec.core.types import (
     FileDescriptor,
 )
 
-from parsec.core.fs.exceptions import FSEntryNotFound
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+
+from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.exceptions import FSEntryNotFound, FSLocalMissError
+from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
     is_workspace_manifest,
     is_folderish_manifest,
 )
-from parsec.core.fs.remote_loader import RemoteLoader
 
 
 Entry = namedtuple("Entry", "id manifest")
@@ -75,7 +76,7 @@ class EntryTransactions:
     async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
         try:
             return self.local_storage.get_manifest(entry_id)
-        except LocalStorageMissingError as exc:
+        except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(exc.id)
             return remote_manifest.to_local(self.local_author)
 
@@ -84,7 +85,7 @@ class EntryTransactions:
         async with self.local_storage.lock_entry_id(entry_id):
             try:
                 local_manifest = self.local_storage.get_manifest(entry_id)
-            except LocalStorageMissingError as exc:
+            except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(exc.id)
                 local_manifest = remote_manifest.to_local(self.local_author)
                 self.local_storage.set_manifest(entry_id, local_manifest)
@@ -165,7 +166,7 @@ class EntryTransactions:
                         return
 
                 # Child is not available
-                except LocalStorageMissingError as exc:
+                except FSLocalMissError as exc:
                     assert exc.id == entry_id
 
             # Release the lock and download the child manifest
@@ -179,7 +180,7 @@ class EntryTransactions:
         try:
             current_id = entry_id
             current_manifest = self.local_storage.get_manifest(current_id)
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             raise FSEntryNotFound(entry_id)
 
         # Loop over parts
@@ -189,7 +190,7 @@ class EntryTransactions:
             # Get the manifest
             try:
                 parent_manifest = self.local_storage.get_manifest(current_manifest.parent_id)
-            except LocalStorageMissingError:
+            except FSLocalMissError:
                 raise FSEntryNotFound(entry_id)
 
             # Find the child name

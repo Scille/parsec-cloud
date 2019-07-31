@@ -11,8 +11,6 @@ import attr
 from parsec.types import UserID
 from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
 
-from parsec.core.local_storage import LocalStorageMissingError
-
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
@@ -30,6 +28,7 @@ from parsec.core.fs.exceptions import (
     FSReshapingRequiredError,
     FSWorkspaceNoAccess,
     FSWorkspaceTimestampedTooEarly,
+    FSLocalMissError,
 )
 
 AnyPath = Union[FsPath, str]
@@ -143,7 +142,7 @@ class WorkspaceFS:
             if workspace_manifest.is_placeholder:
                 return {self.device.user_id: WorkspaceRole.OWNER}
 
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             pass
 
         try:
@@ -166,7 +165,7 @@ class WorkspaceFS:
             if workspace_manifest.is_placeholder:
                 return ReencryptionNeed()
 
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             pass
 
         certificates = await self.remote_loader.load_realm_role_certificates()
@@ -471,7 +470,7 @@ class WorkspaceFS:
         try:
             remote_manifest = await self.sync_transactions.get_minimal_remote_manifest(entry_id)
         # Not available locally so nothing to synchronize
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             return
 
         # No miminal manifest to upload, the entry is not a placeholder
@@ -492,7 +491,7 @@ class WorkspaceFS:
         try:
             await self.sync_transactions.synchronization_step(entry_id, remote_manifest, final=True)
         # Not available locally so nothing to synchronize
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             pass
 
     async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> Manifest:
@@ -534,7 +533,7 @@ class WorkspaceFS:
                     continue
 
             # The manifest doesn't exist locally
-            except LocalStorageMissingError:
+            except FSLocalMissError:
                 raise FSNoSynchronizationRequired(entry_id)
 
             # No new manifest to upload, the entry is synced!
@@ -568,7 +567,7 @@ class WorkspaceFS:
             workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
 
         # Cannot be a placeholder if we know about it but don't have it in local
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             return
 
         if workspace_manifest.is_placeholder:
@@ -630,7 +629,7 @@ class WorkspaceFS:
             result = {"id": entry_id}
             try:
                 manifest = self.local_storage.get_manifest(entry_id)
-            except LocalStorageMissingError:
+            except FSLocalMissError:
                 return result
 
             result.update(manifest.asdict())

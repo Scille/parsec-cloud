@@ -31,7 +31,7 @@ from parsec.core.types import (
     LocalUserManifest,
     remote_manifest_serializer,
 )
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.backend_connection import (
     BackendCmdsPool,
     BackendNotAvailable,
@@ -56,6 +56,7 @@ from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_work
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
     FSError,
+    FSLocalMissError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
@@ -176,7 +177,7 @@ class UserFS:
         try:
             return self.local_storage.get_manifest(self.user_manifest_id)
 
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             # In the unlikely event the user manifest is not present in
             # local (e.g. device just created or during tests), we fall
             # back on an empty manifest which is a good aproximation of

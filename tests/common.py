@@ -12,8 +12,8 @@ import pendulum
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
-from parsec.core.persistent_storage import PersistentStorage
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.fs.persistent_storage import PersistentStorage
+from parsec.core.fs.local_storage import LocalStorage, FSLocalMissError
 from parsec.api.transport import Transport, TransportError
 
 
@@ -47,7 +47,7 @@ class InMemoryPersistentStorage(PersistentStorage):
         try:
             return self._data[filepath]
         except KeyError:
-            raise LocalStorageMissingError(entry_id)
+            raise FSLocalMissError(entry_id)
 
     def _write_file(self, entry_id, content, path):
         filepath = path / str(entry_id)
@@ -58,7 +58,7 @@ class InMemoryPersistentStorage(PersistentStorage):
         try:
             del self._data[filepath]
         except KeyError:
-            raise LocalStorageMissingError(entry_id)
+            raise FSLocalMissError(entry_id)
 
 
 class InMemoryLocalStorage(LocalStorage):

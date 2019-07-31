@@ -3,8 +3,7 @@
 import pytest
 
 from parsec.core.types import FsPath
-from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
-from parsec.core.persistent_storage import LocalStorageError
+from parsec.core.fs import FSError, FSInvalidFileDescriptor
 
 
 @pytest.mark.trio
@@ -34,7 +33,7 @@ async def test_operations_on_file(alice_workspace_t4, alice_workspace_t5):
     data = await file_transactions_t4.fd_read(fd4, -1, 0)
     assert data == b"abcde"
 
-    with pytest.raises(LocalStorageError):  # if removed from local_storage, no write right error?..
+    with pytest.raises(FSError):  # if removed from local_storage, no write right error?..
         await alice_workspace_t4.file_transactions.fd_write(fd4, b"hello ", 0)
 
     data = await file_transactions_t5.fd_read(fd5, 100, 0)
