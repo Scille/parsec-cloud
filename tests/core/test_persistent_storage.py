@@ -17,6 +17,8 @@ from parsec.core.types import EntryID, BlockID
 from parsec.core.persistent_storage import PersistentStorage, LocalStorageMissingError
 from parsec.core.persistent_storage import DEFAULT_BLOCK_SIZE as block_size
 
+from tests.common import freeze_time
+
 
 ENTRY_ID = EntryID("00000000000000000000000000000001")
 BLOCK_ID = BlockID("0000000000000000000000000000000A")
@@ -43,6 +45,9 @@ def test_persistent_storage_cache_size(persistent_storage):
 
     persistent_storage.set_clean_block(ENTRY_ID, b"data")
     assert persistent_storage.get_cache_size() > 4
+
+    persistent_storage.clear_clean_block(ENTRY_ID)
+    assert persistent_storage.get_cache_size() == 0
 
 
 def test_persistent_storage_set_get_clear_manifest(persistent_storage):
@@ -106,6 +111,40 @@ def test_local_manual_run_block_garbage_collector(persistent_storage):
     persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
     with pytest.raises(LocalStorageMissingError):
         persistent_storage.get_clean_block(block_id_deletable)
+
+
+def test_local_manual_run_block_garbage_collector_with_limit(persistent_storage):
+    block_id_precious = BlockID()
+    # No matter how old, shouldn't be deleted
+    with freeze_time("2000-01-01"):
+        persistent_storage.set_dirty_block(block_id_precious, b"precious_data")
+
+    block_id_deletable1 = BlockID()
+    block_id_deletable2 = BlockID()
+    block_id_deletable3 = BlockID()
+    block_id_deletable4 = BlockID()
+    with freeze_time("2000-01-01"):
+        persistent_storage.set_clean_block(block_id_deletable1, b"deletable_data")
+        persistent_storage.set_clean_block(block_id_deletable2, b"deletable_data")
+        persistent_storage.set_clean_block(block_id_deletable3, b"deletable_data")
+
+    with freeze_time("2000-01-02"):
+        persistent_storage.get_clean_block(block_id_deletable2)
+
+    with freeze_time("2000-01-03"):
+        persistent_storage.get_clean_block(block_id_deletable3)
+        persistent_storage.set_clean_block(block_id_deletable4, b"deletable_data")
+
+    # Blocks 1 and 2 are the oldest
+    persistent_storage.clear_clean_blocks(limit=2)
+
+    persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
+    persistent_storage.get_clean_block(block_id_deletable3) == b"deletable_data"
+    persistent_storage.get_clean_block(block_id_deletable4) == b"deletable_data"
+    with pytest.raises(LocalStorageMissingError):
+        persistent_storage.get_clean_block(block_id_deletable1)
+    with pytest.raises(LocalStorageMissingError):
+        persistent_storage.get_clean_block(block_id_deletable2)
 
 
 def test_local_automatic_run_garbage_collector(persistent_storage):

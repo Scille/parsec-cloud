@@ -290,7 +290,7 @@ def add_method(cls):
     return _add_method
 
 
-# Since widgets are not longer persistant and are instancied only when needed,
+# Since widgets are not longer persistent and are instantiated only when needed,
 # we can no longer simply access them.
 # These methods help to retrieve a widget according to the current state of the GUI.
 # They're prefixed by "test_" to ensure that they do not erase any "real" methods.
