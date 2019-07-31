@@ -285,7 +285,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         desktop.open_file(str(path))
 
     def remount_workspace_ts(self, workspace_fs):
-        ts_ws = TsWsDialog(workspace_fs=workspace_fs, parent=self)
+        ts_ws = TsWsDialog(workspace_fs=workspace_fs, jobs_ctx=self.jobs_ctx, parent=self)
         code = ts_ws.exec_()
         if code == QDialog.Rejected:
             return

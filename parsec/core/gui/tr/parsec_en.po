@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-25 14:22+0200\n"
-"PO-Revision-Date: 2019-07-26 11:31+0200\n"
+"POT-Creation-Date: 2019-07-31 10:42+0200\n"
+"PO-Revision-Date: 2019-07-31 10:43+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -317,6 +317,18 @@ msgstr "KB"
 
 msgid "FILE_SIZE_B"
 msgstr "B"
+
+msgid "WORKSPACE_REENCRYPTION_WAIT"
+msgstr "Please wait while we are retrieving versions of this workspace."
+
+msgid "WORKSPACE_REENCRYPTION_INFO"
+msgstr ""
+"You will be able to see a workspace at a given point in time, with all your "
+"files exactly as they looked back then.\n"
+"Don't worry, you will not lose your current files."
+
+msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
+msgstr "Can not retrieve versions of this workspace."
 
 msgid "STARTING_GUIDE_WELCOME_TITLE"
 msgstr "Welcome!"
@@ -877,12 +889,6 @@ msgstr "Settings"
 
 msgid "BUTTON_BACK"
 msgstr "Back"
-
-msgid "WORKSPACE_REENCRYPTION_INFO"
-msgstr ""
-"You will be able to see a workspace at a given point in time, with all your "
-"files exactly as they looked back then.\n"
-"Don't worry, you will not lose your current files."
 
 msgid "WORKSPACE_REENCRYPTION_SELECT_DATE"
 msgstr "Just select a date..."
