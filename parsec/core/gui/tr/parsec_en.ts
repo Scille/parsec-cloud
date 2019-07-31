@@ -239,27 +239,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="278"/>
+        <location filename="../forms/files_widget.ui" line="281"/>
         <source>LABEL_SEARCH_FILES</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="378"/>
+        <location filename="../forms/files_widget.ui" line="381"/>
         <source>LABEL_FILE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="383"/>
+        <location filename="../forms/files_widget.ui" line="386"/>
         <source>LABEL_FILE_CREATED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="388"/>
+        <location filename="../forms/files_widget.ui" line="391"/>
         <source>LABEL_FILE_UPDATED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="393"/>
+        <location filename="../forms/files_widget.ui" line="396"/>
         <source>LABEL_FILE_SIZE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -655,7 +655,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/notification_center_widget.ui" line="151"/>
+        <location filename="../forms/notification_center_widget.ui" line="154"/>
         <source>LABEL_NOTIFICATIONS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -875,22 +875,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/ts_ws_dialog.ui" line="83"/>
+        <location filename="../forms/ts_ws_dialog.ui" line="86"/>
         <source>WORKSPACE_REENCRYPTION_SELECT_DATE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/ts_ws_dialog.ui" line="111"/>
+        <location filename="../forms/ts_ws_dialog.ui" line="105"/>
         <source>WORKSPACE_REENCRYPTION_SELECT_TIME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/ts_ws_dialog.ui" line="161"/>
+        <location filename="../forms/ts_ws_dialog.ui" line="155"/>
         <source>WORKSPACE_REENCRYPTION_MOUNT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/ts_ws_dialog.ui" line="224"/>
+        <location filename="../forms/ts_ws_dialog.ui" line="221"/>
         <source>BUTTON_CLOSE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -949,17 +949,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="624"/>
+        <location filename="../forms/workspace_button.ui" line="636"/>
         <source>LABEL_ENCRYPT_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="687"/>
+        <location filename="../forms/workspace_button.ui" line="699"/>
         <source>LABEL_DELETE_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="573"/>
+        <location filename="../forms/workspace_button.ui" line="585"/>
         <source>LABEL_MOUNT_TIMESTAMP</source>
         <translation type="unfinished"></translation>
     </message>

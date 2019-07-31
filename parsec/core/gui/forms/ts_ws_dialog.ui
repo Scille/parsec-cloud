@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>593</width>
-    <height>544</height>
+    <height>453</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@ background-color: rgb(255, 255, 255);
        <number>15</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_3">
+       <widget class="QLabel" name="label_info">
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -73,23 +73,20 @@ background-color: rgb(255, 255, 255);
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label">
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>WORKSPACE_REENCRYPTION_SELECT_DATE</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget_2" native="true">
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
+       <widget class="QWidget" name="widget_reencrypt" native="true">
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>WORKSPACE_REENCRYPTION_SELECT_DATE</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QCalendarWidget" name="calendar_widget">
            <property name="styleSheet">
@@ -97,78 +94,78 @@ background-color: rgb(255, 255, 255);
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="font">
+            <font>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>WORKSPACE_REENCRYPTION_SELECT_TIME</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTimeEdit" name="time_edit">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>32</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="ShadowedButton" name="button_show">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>WORKSPACE_REENCRYPTION_MOUNT</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
         </layout>
        </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>WORKSPACE_REENCRYPTION_SELECT_TIME</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTimeEdit" name="time_edit">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>32</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="ShadowedButton" name="button_show">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>WORKSPACE_REENCRYPTION_MOUNT</string>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-       </layout>
       </item>
       <item>
        <spacer name="verticalSpacer">
@@ -263,22 +260,6 @@ background-color: rgb(255, 255, 255);
  </customwidgets>
  <resources/>
  <connections>
-  <connection>
-   <sender>button_close</sender>
-   <signal>clicked()</signal>
-   <receiver>TsWsDialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>296</x>
-     <y>475</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>296</x>
-     <y>253</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>button_show</sender>
    <signal>clicked()</signal>

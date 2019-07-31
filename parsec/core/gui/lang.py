@@ -37,7 +37,6 @@ def translate(string):
 
 def get_qlocale():
     q = QLocale(_current_locale_language)
-    print(q.name())
     return q
 
 
