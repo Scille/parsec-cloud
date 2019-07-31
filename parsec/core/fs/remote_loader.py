@@ -3,7 +3,7 @@
 from hashlib import sha256
 import pendulum
 from pendulum import Pendulum
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 
 from parsec.serde import SerdeError
 from parsec.crypto import (
@@ -17,7 +17,7 @@ from parsec.crypto import (
     CryptoError,
     CertifiedRealmRoleData,
 )
-from parsec.types import UserID
+from parsec.types import UserID, DeviceID
 from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
@@ -328,6 +328,43 @@ class RemoteLoader:
 
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
+
+    async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[Pendulum, DeviceID]]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+        """
+        try:
+            versions_dict = await self.backend_cmds.vlob_list_versions(entry_id)
+
+        # Vlob is not found
+        except BackendCmdsNotFound as exc:
+            raise FSRemoteManifestNotFound(entry_id) from exc
+
+        # Backend is not available
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        # Workspace is in maintenance
+        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceInMaintenance(
+                f"Cannot download vlob while the workspace is in maintenance"
+            ) from exc
+
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "not_found":
+                raise FSRemoteManifestNotFound(entry_id)
+            else:
+                raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
+
+        # Another backend error
+        except BackendConnectionError as exc:
+            raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
+
+        return versions_dict
 
     async def create_realm(self, realm_id: EntryID):
         """
