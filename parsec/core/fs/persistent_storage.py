@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from time import time
+from typing import List
 from pathlib import Path
 from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
@@ -124,6 +125,7 @@ class PersistentStorage:
                 cursor.execute(
                     """CREATE TABLE IF NOT EXISTS manifests
                         (manifest_id UUID PRIMARY KEY NOT NULL,
+                         need_sync BOOLEAN NOT NULL,
                          blob BYTEA NOT NULL);"""
                 )
 
@@ -154,6 +156,11 @@ class PersistentStorage:
 
     # Manifest operations
 
+    def get_need_sync_entries(self) -> List[EntryID]:
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute("SELECT manifest_id FROM manifests WHERE need_sync = true")
+            return [EntryID(x) for (x,) in cursor.fetchall()]
+
     def get_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
@@ -165,15 +172,15 @@ class PersistentStorage:
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(self.local_symkey, blob)
 
-    def set_manifest(self, entry_id: EntryID, raw: bytes):
+    def set_manifest(self, entry_id: EntryID, need_sync: bool, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                """INSERT OR REPLACE INTO manifests (manifest_id, blob)
-                VALUES (?, ?)""",
-                (str(entry_id), ciphered),
+                """INSERT OR REPLACE INTO manifests (manifest_id, blob, need_sync)
+                VALUES (?, ?, ?)""",
+                (str(entry_id), ciphered, need_sync),
             )
 
     def clear_manifest(self, entry_id: EntryID):

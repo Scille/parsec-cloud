@@ -52,7 +52,7 @@ def test_persistent_storage_cache_size(persistent_storage):
 
 
 def test_persistent_storage_set_get_clear_manifest(persistent_storage):
-    persistent_storage.set_manifest(ENTRY_ID, b"data")
+    persistent_storage.set_manifest(ENTRY_ID, False, b"data")
 
     data = persistent_storage.get_manifest(ENTRY_ID)
     assert data == b"data"
@@ -87,7 +87,7 @@ def test_persistent_storage_set_get_clear_chunk(persistent_storage, dtype):
 
 
 def test_persistent_storage_on_disk(tmpdir, persistent_storage):
-    persistent_storage.set_manifest(ENTRY_ID, b"vlob_data")
+    persistent_storage.set_manifest(ENTRY_ID, True, b"vlob_data")
     persistent_storage.set_clean_block(BLOCK_ID, b"block_data")
     persistent_storage.close()
 
@@ -171,6 +171,24 @@ def test_local_automatic_run_garbage_collector(persistent_storage):
 
     data_c = persistent_storage.get_clean_block(block_id_c)
     assert data_c == b"c" * 5
+
+
+def test_persistent_storage_need_sync_flag(tmpdir, persistent_storage):
+    e1 = EntryID("00000000000000000000000000000001")
+    e2 = EntryID("00000000000000000000000000000002")
+    e3 = EntryID("00000000000000000000000000000003")
+    e4 = EntryID("00000000000000000000000000000004")
+
+    persistent_storage.set_manifest(e1, True, b"dummy")
+    persistent_storage.set_manifest(e2, True, b"dummy")
+    persistent_storage.set_manifest(e3, False, b"dummy")
+    persistent_storage.set_manifest(e4, False, b"dummy")
+
+    persistent_storage.set_manifest(e2, False, b"dummy")
+    persistent_storage.set_manifest(e3, True, b"dummy")
+
+    need_sync_ids = persistent_storage.get_need_sync_entries()
+    assert need_sync_ids == [e1, e3]
 
 
 @pytest.mark.slow

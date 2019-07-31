@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
+from typing import List
 
 import trio
 from trio import hazmat
@@ -99,6 +100,9 @@ class LocalStorage:
 
     # Manifest interface
 
+    def get_need_sync_entries(self) -> List[EntryID]:
+        return self.persistent_storage.get_need_sync_entries()
+
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """Raises: FSLocalMissError"""
         assert isinstance(entry_id, EntryID)
@@ -124,7 +128,7 @@ class LocalStorage:
             self._check_lock_status(entry_id)
         if not cache_only:
             raw = local_manifest_serializer.dumps(manifest)
-            self.persistent_storage.set_manifest(entry_id, raw)
+            self.persistent_storage.set_manifest(entry_id, manifest.need_sync, raw)
         else:
             self.cache_ahead_of_persistance_ids.add(entry_id)
         self.local_manifest_cache[entry_id] = manifest
@@ -139,7 +143,7 @@ class LocalStorage:
     def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
         raw = local_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_manifest(entry_id, raw)
+        self.persistent_storage.set_manifest(entry_id, manifest.need_sync, raw)
         self.cache_ahead_of_persistance_ids.remove(entry_id)
 
     def clear_manifest(self, entry_id: EntryID) -> None:
