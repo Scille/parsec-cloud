@@ -21,6 +21,7 @@ from parsec.api.protocol import (
     vlob_update_serializer,
     vlob_group_check_serializer,
     vlob_poll_changes_serializer,
+    vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
     realm_create_serializer,
@@ -230,6 +231,13 @@ async def vlob_poll_changes(
         last_checkpoint=last_checkpoint,
     )
     return (rep["current_checkpoint"], rep["changes"])
+
+
+async def vlob_list_versions(transport: Transport, vlob_id: UUID) -> None:
+    rep = await _send_cmd(
+        transport, vlob_list_versions_serializer, cmd="vlob_list_versions", vlob_id=vlob_id
+    )
+    return rep["versions"]
 
 
 async def vlob_maintenance_get_reencryption_batch(

@@ -115,7 +115,7 @@ class VlobListVersionsReqSchema(BaseReqSchema):
 
 
 class VlobListVersionsRepSchema(BaseRepSchema):
-    version_dict = fields.Map(
+    versions = fields.Map(
         fields.Integer(required=True),
         fields.Tuple(fields.DateTime(required=True), fields.DeviceID(required=True)),
         required=True,

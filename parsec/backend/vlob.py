@@ -189,7 +189,7 @@ class BaseVlobComponent:
         msg = vlob_list_versions_serializer.req_load(msg)
 
         try:
-            version_dict = await self.list_versions(
+            versions_dict = await self.list_versions(
                 client_ctx.organization_id, client_ctx.device_id, msg["vlob_id"]
             )
 
@@ -204,9 +204,7 @@ class BaseVlobComponent:
         except VlobInMaintenanceError:
             return vlob_list_versions_serializer.rep_dump({"status": "in_maintenance"})
 
-        return vlob_list_versions_serializer.rep_dump(
-            {"status": "ok", "version_dict": version_dict}
-        )
+        return vlob_list_versions_serializer.rep_dump({"status": "ok", "versions": versions_dict})
 
     @catch_protocol_errors
     async def api_vlob_maintenance_get_reencryption_batch(self, client_ctx, msg):
