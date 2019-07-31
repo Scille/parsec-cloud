@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QPoint
 from PyQt5.QtWidgets import QDialog, QToolTip
 
 from parsec.core.invite_claim import (
+    InviteClaimTimeoutError,
     InviteClaimBackendOfflineError,
     InviteClaimError,
     generate_invitation_token as core_generate_invitation_token,
@@ -37,6 +38,8 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
 
     try:
         await core_invite_and_create_user(device, new_user_id, token, is_admin)
+    except InviteClaimTimeoutError:
+        raise JobResultError("registration-invite-timeout")
     except InviteClaimBackendOfflineError as exc:
         raise JobResultError("registration-invite-offline") from exc
     except InviteClaimError as exc:
@@ -116,7 +119,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             errmsg = _("ERR_REGISTER_USER_NOT_ENOUGH_PERMISSIONS")
         elif status == "registration-invite-offline":
             errmsg = _("ERR_REGISTER_USER_OFFLINE")
-        elif status == "timeout":
+        elif status == "registration-invite-timeout":
             errmsg = _("ERR_REGISTER_USER_TIMEOUT")
         else:
             errmsg = _("ERR_REGISTER_USER_UNKNOWN")

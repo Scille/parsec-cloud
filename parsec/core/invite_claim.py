@@ -21,6 +21,7 @@ from parsec.crypto import (
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.core.types import LocalDevice, EntryID, EntryIDField
 from parsec.core.backend_connection import (
+    BackendCmdsTimeout,
     BackendConnectionError,
     BackendNotAvailable,
     backend_cmds_pool_factory,
@@ -56,6 +57,10 @@ class InviteClaimCryptoError(InviteClaimError):
 
 
 class InviteClaimBackendOfflineError(InviteClaimError):
+    pass
+
+
+class InviteClaimTimeoutError(InviteClaimError):
     pass
 
 
@@ -452,6 +457,9 @@ async def invite_and_create_user(
     ) as cmds:
         try:
             encrypted_claim = await cmds.user_invite(user_id)
+
+        except BackendCmdsTimeout as exc:
+            raise InviteClaimTimeoutError(str(exc)) from exc
 
         except BackendNotAvailable as exc:
             raise InviteClaimBackendOfflineError(str(exc)) from exc
