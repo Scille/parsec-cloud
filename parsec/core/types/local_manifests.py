@@ -52,10 +52,11 @@ class LocalFileManifest:
             object.__setattr__(self, "updated", self.base_manifest.updated)
 
     @classmethod
-    def make_placeholder(cls, author, parent_id, created=None):
+    def make_placeholder(cls, entry_id, author, parent_id, created=None):
         if created is None:
             created = pendulum.now()
         base_manifest = remote_manifests.FileManifest(
+            entry_id=entry_id,
             author=author,
             parent_id=parent_id,
             version=0,
@@ -67,6 +68,10 @@ class LocalFileManifest:
         return cls(author, base_manifest, need_sync=True)
 
     # Properties
+
+    @property
+    def entry_id(self):
+        return self.base_manifest.entry_id
 
     @property
     def parent_id(self):
@@ -99,6 +104,7 @@ class LocalFileManifest:
 
     def to_remote(self, **data) -> "remote_manifests.FileManifest":
         return remote_manifests.FileManifest(
+            entry_id=self.entry_id,
             author=self.author,
             parent_id=self.parent_id,
             version=self.base_version,
@@ -156,10 +162,11 @@ class LocalFolderManifest:
             object.__setattr__(self, "updated", self.base_manifest.updated)
 
     @classmethod
-    def make_placeholder(cls, author, parent_id, created=None):
+    def make_placeholder(cls, entry_id, author, parent_id, created=None):
         if created is None:
             created = pendulum.now()
         base_manifest = remote_manifests.FolderManifest(
+            entry_id=entry_id,
             author=author,
             parent_id=parent_id,
             version=0,
@@ -170,6 +177,10 @@ class LocalFolderManifest:
         return cls(author, base_manifest, need_sync=True)
 
     # Properties
+
+    @property
+    def entry_id(self):
+        return self.base_manifest.entry_id
 
     @property
     def parent_id(self):
@@ -212,6 +223,7 @@ class LocalFolderManifest:
 
     def to_remote(self, **data) -> "remote_manifests.FolderManifest":
         return remote_manifests.FolderManifest(
+            entry_id=self.entry_id,
             author=self.author,
             parent_id=self.parent_id,
             version=self.base_version,
@@ -270,10 +282,11 @@ class LocalWorkspaceManifest:
             object.__setattr__(self, "updated", self.base_manifest.updated)
 
     @classmethod
-    def make_placeholder(cls, author, parent_id, created=None):
+    def make_placeholder(cls, entry_id, author, parent_id, created=None):
         if created is None:
             created = pendulum.now()
         base_manifest = remote_manifests.WorkspaceManifest(
+            entry_id=entry_id,
             author=author,
             parent_id=parent_id,
             version=0,
@@ -284,6 +297,10 @@ class LocalWorkspaceManifest:
         return cls(author, base_manifest, need_sync=True)
 
     # Properties
+
+    @property
+    def entry_id(self):
+        return self.base_manifest.entry_id
 
     @property
     def parent_id(self):
@@ -326,6 +343,7 @@ class LocalWorkspaceManifest:
 
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(
+            entry_id=self.entry_id,
             author=self.author,
             parent_id=self.parent_id,
             version=self.base_version,

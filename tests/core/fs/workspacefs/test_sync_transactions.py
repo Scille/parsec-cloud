@@ -56,7 +56,13 @@ def test_merge_folder_children():
 def test_merge_folder_manifests():
     now = Pendulum.now()
     v1 = FolderManifest(
-        author="b@b", parent_id=EntryID(), version=1, created=now, updated=now, children={}
+        entry_id=EntryID(),
+        author="b@b",
+        parent_id=EntryID(),
+        version=1,
+        created=now,
+        updated=now,
+        children={},
     )
 
     # Initial base manifest
@@ -102,7 +108,7 @@ def test_merge_folder_manifests():
 
 
 def test_merge_manifests_with_a_placeholder():
-    m1 = LocalFolderManifest.make_placeholder("a@a", parent_id=EntryID())
+    m1 = LocalFolderManifest.make_placeholder(EntryID(), "a@a", parent_id=EntryID())
     m2 = merge_manifests(m1)
     assert m2 == m1
     v1 = m1.to_remote().evolve(version=1)
@@ -124,7 +130,14 @@ def test_merge_manifests_with_a_placeholder():
 def test_merge_file_manifests():
     now = Pendulum.now()
     v1 = FileManifest(
-        author="b@b", parent_id=EntryID(), version=1, created=now, updated=now, blocks=[], size=0
+        entry_id=EntryID(),
+        author="b@b",
+        parent_id=EntryID(),
+        version=1,
+        created=now,
+        updated=now,
+        blocks=[],
+        size=0,
     )
 
     # Initial base manifest
@@ -226,7 +239,7 @@ async def test_synchronization_step_transaction(
 @pytest.mark.trio
 async def test_reshape_blocks(sync_transactions):
     # No block
-    placeholder = LocalFileManifest.make_placeholder("a@a", EntryID())
+    placeholder = LocalFileManifest.make_placeholder(EntryID(), "a@a", EntryID())
     manifest = placeholder.evolve()
 
     blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
@@ -321,7 +334,7 @@ async def test_file_reshape(sync_transactions):
 
     # No block
     entry_id = EntryID()
-    placeholder = LocalFileManifest.make_placeholder(device_id, entry_id)
+    placeholder = LocalFileManifest.make_placeholder(EntryID(), device_id, entry_id)
     manifest = placeholder.evolve()
     async with sync_transactions.local_storage.lock_entry_id(entry_id):
         sync_transactions.local_storage.set_manifest(entry_id, manifest)

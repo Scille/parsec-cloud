@@ -38,6 +38,7 @@ __all__ = (
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class FileManifest:
+    entry_id: EntryID
     author: DeviceID
     parent_id: EntryID
     version: int
@@ -62,6 +63,7 @@ class FileManifest:
 class FileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("file_manifest", required=True)
+    entry_id = EntryIDField(required=True)
     author = fields.DeviceID(required=True)
     parent_id = EntryIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -85,6 +87,7 @@ file_manifest_serializer = serializer_factory(FileManifestSchema)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class FolderManifest:
+    entry_id: EntryID
     author: DeviceID
     parent_id: EntryID
     version: int
@@ -104,6 +107,7 @@ class FolderManifest:
 class FolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("folder_manifest", required=True)
+    entry_id = EntryIDField(required=True)
     author = fields.DeviceID(required=True)
     parent_id = EntryIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))

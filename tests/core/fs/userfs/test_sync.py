@@ -53,7 +53,7 @@ async def test_create_workspace(alice_user_fs, alice):
 
     w_manifest = alice_user_fs.local_storage.get_manifest(wid)
     expected_w_manifest = LocalWorkspaceManifest.make_placeholder(
-        author=alice.device_id, parent_id=wid, created=Pendulum(2000, 1, 2)
+        w_manifest.entry_id, author=alice.device_id, parent_id=wid, created=Pendulum(2000, 1, 2)
     )
     assert w_manifest == expected_w_manifest
 
