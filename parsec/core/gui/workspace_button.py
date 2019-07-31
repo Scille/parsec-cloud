@@ -24,6 +24,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def __init__(
         self,
+        workspace_name,
         workspace_fs,
         is_shared,
         is_creator,
@@ -36,6 +37,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.workspace_name = workspace_name
         self.workspace_fs = workspace_fs
         self.label_empty.show()
         self.widget_files.hide()
@@ -90,7 +92,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_owner.hide()
         if not self.is_shared:
             self.label_shared.hide()
-        self.reload_workspace_name()
+        self.reload_workspace_name(self.workspace_name)
 
     def button_open_workspace_clicked(self):
         self.open_clicked_file("/")
@@ -120,7 +122,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def name(self):
-        return self.workspace_fs.workspace_name
+        return self.workspace_name
 
     @property
     def reencryption_needs(self):
@@ -136,8 +138,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.button_reencrypt.setDisabled(True)
             self.button_reencrypt.setToolTip(_("TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"))
 
-    def reload_workspace_name(self):
-        workspace_name = self.workspace_fs.workspace_name
+    def reload_workspace_name(self, workspace_name):
+        self.workspace_name = workspace_name
         display = workspace_name
         if len(display) > 20:
             display = display[:20] + "..."

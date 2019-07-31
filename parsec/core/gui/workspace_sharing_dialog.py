@@ -9,6 +9,7 @@ from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
+from parsec.core.gui.trio_thread import ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
@@ -107,7 +108,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.button_close.clicked.connect(self.on_close_requested)
         self.button_share.clicked.connect(self.on_share_clicked)
         self.button_apply.clicked.connect(self.on_update_permissions_clicked)
-        ws_entry = self.workspace_fs.get_workspace_entry()
+        ws_entry = self.jobs_ctx.get_async_attr(self.workspace_fs, "get_workspace_entry")()
         self.current_user_role = ws_entry.role
         current_index = _ROLES_TO_INDEX[self.current_user_role]
         for role, index in _ROLES_TO_INDEX.items():
@@ -173,15 +174,16 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             )
             self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
         except FSError as exc:
+            workspace_name = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_name")
             show_error(
                 self,
-                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),
                 exception=exc,
             )
         except Exception as exc:
             show_error(
                 self,
-                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(self.workspace_fs.workspace_name, user),
+                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),
                 execption=exc,
             )
 

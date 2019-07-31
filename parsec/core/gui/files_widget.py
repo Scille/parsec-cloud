@@ -192,14 +192,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def set_workspace_fs(self, wk_fs):
         self.current_directory = FsPath("/")
         self.workspace_fs = wk_fs
-        ws_entry = self.workspace_fs.get_workspace_entry()
+        ws_entry = self.jobs_ctx.get_async_attr(self.workspace_fs, "get_workspace_entry")()
         self.current_user_role = ws_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
         self.reset()
 
     def reset(self):
-        self.label_current_workspace.setText(self.workspace_fs.workspace_name)
+        workspace_name = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_name")
+        self.label_current_workspace.setText(workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
 

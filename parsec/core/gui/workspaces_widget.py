@@ -40,7 +40,7 @@ async def _do_workspace_create(core, workspace_name):
 async def _do_workspace_rename(core, workspace_id, new_name, button):
     try:
         await core.user_fs.workspace_rename(workspace_id, new_name)
-        return button
+        return button, new_name
     except Exception as exc:
         raise JobResultError("rename-error") from exc
     else:
@@ -144,8 +144,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.create_error.connect(self.on_create_error)
         self.list_success.connect(self.on_list_success)
         self.list_error.connect(self.on_list_error)
-        self.mount_success.connect(self.on_mount_success)
-        self.mount_error.connect(self.on_mount_error)
         self.reencryption_needs_success.connect(self.on_reencryption_needs_success)
         self.reencryption_needs_error.connect(self.on_reencryption_needs_error)
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
@@ -188,8 +186,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def on_rename_success(self, job):
-        workspace_button = job.ret
-        workspace_button.reload_workspace_name()
+        workspace_button, workspace_name = job.ret
+        workspace_button.reload_workspace_name(workspace_name)
 
     def on_rename_error(self, job):
         show_error(self, _("ERR_WORKSPACE_RENAME"), exception=job.exc)
@@ -238,7 +236,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped, count=None):
+        user_manifest = self.jobs_ctx.run_sync(self.core.user_fs.get_user_manifest)
+        workspace_name = self.jobs_ctx.get_async_attr(workspace_fs, "workspace_name")
         button = WorkspaceButton(
+            workspace_name,
             workspace_fs,
             is_shared=len(users_roles) > 1,
             is_creator=ws_entry.role == WorkspaceRole.OWNER,
@@ -247,7 +248,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             timestamped=timestamped,
         )
         if count is None:
-            count = len(self.core.user_fs.get_user_manifest().workspaces) - 1
+            count = len(user_manifest.workspaces) - 1
 
         columns_count = int(self.size().width() / 400)
 
