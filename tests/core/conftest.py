@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from pathlib import Path
 from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.fs import UserFS
 
-from tests.common import freeze_time, InMemoryLocalStorage
+from tests.common import freeze_time, InMemoryUserFS, InMemoryLocalStorage
 
 
 @pytest.fixture
@@ -128,17 +128,20 @@ async def anonymous_backend_cmds(running_backend, coolorg):
 @pytest.fixture
 def user_fs_factory(local_storage_factory, event_bus_factory):
     @asynccontextmanager
-    async def _user_fs_factory(device, local_storage=None, event_bus=None):
+    async def _user_fs_factory(
+        device, local_storage=None, event_bus=None, user_manifest_in_v0=False
+    ):
         event_bus = event_bus or event_bus_factory()
         local_storage = local_storage or await local_storage_factory(device)
 
         async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
+            path = Path("/unused")
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            user_fs = UserFS(device, local_storage, cmds, rdm, event_bus)
-            user_fs.local_storage_class = InMemoryLocalStorage
-            yield user_fs
+            with InMemoryUserFS(device, path, cmds, rdm, event_bus) as user_fs:
+                user_fs.local_storage = local_storage
+                yield user_fs
 
     return _user_fs_factory
 

@@ -38,6 +38,8 @@ class LocalStorage:
     - a lock mecanism to protect against race conditions
     """
 
+    persistent_storage_class = PersistentStorage
+
     def __init__(self, device_id: DeviceID, key: SecretKey, path: Path, **kwargs):
         self.device_id = device_id
 
@@ -52,7 +54,7 @@ class LocalStorage:
         # Manifest and block storage
         self.cache_ahead_of_persistance_ids = set()
         self.local_manifest_cache = {}
-        self.persistent_storage = PersistentStorage(key, path, **kwargs)
+        self.persistent_storage = self.persistent_storage_class(key, path, **kwargs)
 
     def _get_next_fd(self) -> FileDescriptor:
         self.fd_counter += 1

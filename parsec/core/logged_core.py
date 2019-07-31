@@ -19,7 +19,6 @@ from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import UserFS
-from parsec.core.fs.local_storage import LocalStorage
 
 
 logger = get_logger()
@@ -29,7 +28,6 @@ logger = get_logger()
 class LoggedCore:
     config = attr.ib()
     device = attr.ib()
-    local_storage = attr.ib()
     event_bus = attr.ib()
     remote_devices_manager = attr.ib()
     mountpoint_manager = attr.ib()
@@ -58,16 +56,11 @@ async def logged_core_factory(
             keepalive_time=config.backend_connection_keepalive,
         ) as backend_cmds_pool:
 
-            with LocalStorage(
-                device.device_id, device.local_symkey, config.data_base_dir / device.slug
-            ) as local_storage:
-
-                remote_devices_manager = RemoteDevicesManager(
-                    backend_cmds_pool, device.root_verify_key
-                )
-                user_fs = UserFS(
-                    device, local_storage, backend_cmds_pool, remote_devices_manager, event_bus
-                )
+            path = config.data_base_dir / device.slug
+            remote_devices_manager = RemoteDevicesManager(backend_cmds_pool, device.root_verify_key)
+            with UserFS(
+                device, path, backend_cmds_pool, remote_devices_manager, event_bus
+            ) as user_fs:
 
                 async with trio.open_nursery() as monitor_nursery:
                     # Finally start monitors
@@ -90,7 +83,6 @@ async def logged_core_factory(
                         yield LoggedCore(
                             config=config,
                             device=device,
-                            local_storage=local_storage,
                             event_bus=event_bus,
                             remote_devices_manager=remote_devices_manager,
                             mountpoint_manager=mountpoint_manager,

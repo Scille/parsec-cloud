@@ -62,9 +62,11 @@ class InMemoryPersistentStorage(PersistentStorage):
 
 
 class InMemoryLocalStorage(LocalStorage):
-    def __init__(self, device_id, key, path):
-        super().__init__(device_id, key, path)
-        self.persistent_storage = InMemoryPersistentStorage(key, path)
+    persistent_storage_class = InMemoryPersistentStorage
+
+
+class InMemoryUserFS(UserFS):
+    local_storage_class = InMemoryLocalStorage
 
 
 def freeze_time(time):

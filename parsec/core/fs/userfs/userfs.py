@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+from pathlib import Path
+from contextlib import ExitStack
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional
 from structlog import get_logger
@@ -135,18 +137,22 @@ class UserFS:
     def __init__(
         self,
         device: LocalDevice,
-        local_storage: LocalStorage,
+        path: Path,
         backend_cmds: BackendCmdsPool,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
     ):
         self.device = device
-        self.local_storage = local_storage
+        self.path = path
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
+
+        self.local_storage = self.local_storage_class(device.device_id, device.local_symkey, path)
+
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
+        self._exit_stack = ExitStack()
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
         self._local_storages = {}
@@ -165,6 +171,13 @@ class UserFS:
             self.remote_devices_manager,
             self.local_storage,
         )
+
+    def __enter__(self):
+        self._exit_stack.enter_context(self.local_storage)
+        return self
+
+    def __exit__(self, *args):
+        self._exit_stack.close()
 
     @property
     def user_manifest_id(self) -> EntryID:
@@ -194,9 +207,9 @@ class UserFS:
     def get_workspace_local_storage(self, workspace_id):
         if workspace_id not in self._local_storages:
             cls = self.local_storage_class
-            path = self.local_storage.persistent_storage._path / str(workspace_id)
+            path = self.path / str(workspace_id)
             local_storage = cls(self.device.device_id, self.device.local_symkey, path)
-            local_storage.__enter__()
+            self._exit_stack.enter_context(local_storage)
             self._local_storages[workspace_id] = local_storage
         return self._local_storages[workspace_id]
 

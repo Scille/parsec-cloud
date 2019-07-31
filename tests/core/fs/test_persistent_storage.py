@@ -142,9 +142,9 @@ def test_local_manual_run_block_garbage_collector_with_limit(persistent_storage)
     persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
     persistent_storage.get_clean_block(block_id_deletable3) == b"deletable_data"
     persistent_storage.get_clean_block(block_id_deletable4) == b"deletable_data"
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_deletable1)
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_deletable2)
 
 
