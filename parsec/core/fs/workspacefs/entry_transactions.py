@@ -393,7 +393,9 @@ class EntryTransactions:
 
             # Create folder
             child_entry_id = EntryID()
-            child_manifest = LocalFolderManifest.make_placeholder(self.local_author, parent.id)
+            child_manifest = LocalFolderManifest.make_placeholder(
+                child_entry_id, self.local_author, parent.id
+            )
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(
@@ -424,7 +426,9 @@ class EntryTransactions:
 
             # Create file
             child_entry_id = EntryID()
-            child_manifest = LocalFileManifest.make_placeholder(self.local_author, parent.id)
+            child_manifest = LocalFileManifest.make_placeholder(
+                child_entry_id, self.local_author, parent.id
+            )
 
             # New parent manifest
             new_parent_manifest = parent.manifest.evolve_children_and_mark_updated(

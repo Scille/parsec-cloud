@@ -344,7 +344,7 @@ class SyncTransactions:
                     filename, list(parent_manifest.children), remote_manifest.author
                 )
                 new_manifest = LocalFileManifest.make_placeholder(
-                    author=current_manifest.author, parent_id=parent_id
+                    entry_id=new_entry_id, author=current_manifest.author, parent_id=parent_id
                 ).evolve(
                     size=current_manifest.size, blocks=new_blocks, dirty_blocks=new_dirty_blocks
                 )

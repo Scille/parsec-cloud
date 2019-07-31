@@ -47,7 +47,7 @@ async def foo_txt(alice, file_transactions):
     local_storage = file_transactions.local_storage
     with freeze_time("2000-01-02"):
         entry_id = EntryID()
-        placeholder = LocalFileManifest.make_placeholder(alice.device_id, EntryID())
+        placeholder = LocalFileManifest.make_placeholder(entry_id, alice.device_id, EntryID())
         manifest = placeholder.to_remote().evolve(version=1)
         async with local_storage.lock_entry_id(entry_id):
             local_storage.set_manifest(entry_id, manifest.to_local(manifest.author))
@@ -228,7 +228,7 @@ def test_file_operations(
 
             self.entry_id = EntryID()
             manifest = LocalFileManifest.make_placeholder(
-                self.device.device_id, parent_id=EntryID()
+                self.entry_id, self.device.device_id, parent_id=EntryID()
             )
             async with self.local_storage.lock_entry_id(self.entry_id):
                 self.local_storage.set_manifest(self.entry_id, manifest)
