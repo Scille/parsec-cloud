@@ -29,6 +29,7 @@ script:
 # Run backend tests with postgresql driver
 - py.test ../tests/backend --postgresql --runslow -n 2 --max-worker-restart=0  --log-level=DEBUG -vvv -x --cov=parsec --cov-config=../setup.cfg --cov-append
 # The GUI tests fail on travis for some reason, even with the xvfb service
+# - xvfb-run -s "-screen 0 1280x1024x24 -extension GLX" py.test ../tests/gui --cov=parsec --cov-config=../setup.cfg --rungui --log-level=DEBUG -vvv -x
 # - py.test ../tests/ -m gui --runmountpoint --runslow --rungui -vvv -x --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
 - set +e
 after_success:
