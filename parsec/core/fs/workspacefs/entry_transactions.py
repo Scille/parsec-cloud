@@ -2,11 +2,14 @@
 
 import os
 import errno
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Dict
 from collections import namedtuple
 from async_generator import asynccontextmanager
 
+from pendulum import Pendulum
+
 from parsec.event_bus import EventBus
+from parsec.types import DeviceID
 from parsec.core.types import (
     EntryID,
     FsPath,
@@ -229,6 +232,17 @@ class EntryTransactions:
             stats["children"] = sorted(manifest.children.keys())
 
         return stats
+
+    async def entry_versions(self, path: FsPath) -> Dict[int, Tuple[Pendulum, DeviceID]]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+        """
+        entry_id, manifest = await self._get_entry(path)
+        return await self.remote_loader.list_versions(entry_id)
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
