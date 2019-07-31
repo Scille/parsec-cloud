@@ -9,7 +9,6 @@ from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.trio_thread import ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 
