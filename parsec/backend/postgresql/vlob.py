@@ -512,21 +512,21 @@ ORDER BY index ASC
                 realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
                 await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
 
-                rows = await conn.fetch(
-                    """
+                query = """
 SELECT
     version,
-    get_device_id(author) as author,
+    ({}) as author,
     created_on
 FROM vlob_atom
 WHERE
-    organization = get_organization_internal_id($1)
+    organization = ({})
     AND vlob_id = $2
 ORDER BY version DESC
-""",
-                    organization_id,
-                    vlob_id,
+""".format(
+                    q_device(_id=Parameter("author")).select("device_id"),
+                    q_organization_internal_id(Parameter("$1")),
                 )
+                rows = await conn.fetch(query, organization_id, vlob_id)
                 assert rows
         if not rows:
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
