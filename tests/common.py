@@ -24,9 +24,9 @@ class InMemoryPersistentStorage(PersistentStorage):
     and has very permissive life cycle.
     """
 
-    def __init__(self, key, **kwargs):
+    def __init__(self, key, path, **kwargs):
         self._data = {}
-        super().__init__(key, "unused", **kwargs)
+        super().__init__(key, path, **kwargs)
 
         self.dirty_conn = sqlite3.connect(":memory:")
         self.clean_conn = sqlite3.connect(":memory:")
@@ -62,9 +62,9 @@ class InMemoryPersistentStorage(PersistentStorage):
 
 
 class InMemoryLocalStorage(LocalStorage):
-    def __init__(self, device_id, key):
-        super().__init__(device_id, key, "unused")
-        self.persistent_storage = InMemoryPersistentStorage(key)
+    def __init__(self, device_id, key, path):
+        super().__init__(device_id, key, path)
+        self.persistent_storage = InMemoryPersistentStorage(key, path)
 
 
 def freeze_time(time):

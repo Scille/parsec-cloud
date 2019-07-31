@@ -40,7 +40,7 @@ def test_fs_online_tree_and_sync(
         Files = Bundle("file")
         Folders = Bundle("folder")
 
-        async def restart_user_fs(self, device, local_storage):
+        async def restart_user_fs(self, device, local_storage, local_storages):
             try:
                 await self.user_fs_controller.stop()
             except AttributeError:
@@ -48,6 +48,7 @@ def test_fs_online_tree_and_sync(
 
             async def _user_fs_controlled_cb(started_cb):
                 async with user_fs_factory(device=device, local_storage=local_storage) as user_fs:
+                    user_fs._local_storages = local_storages
                     await started_cb(user_fs=user_fs)
 
             self.user_fs_controller = await self.get_root_nursery().start(
@@ -82,10 +83,11 @@ def test_fs_online_tree_and_sync(
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.oracle_fs.create_workspace("/w")
             self.device = alice
+            self.local_storages = {}
             self.local_storage = await local_storage_factory(self.device)
 
             await self.start_backend()
-            await self.restart_user_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device, self.local_storage, self.local_storages)
             self.wid = await self.user_fs.workspace_create("w")
             workspace = self.user_fs.get_workspace(self.wid)
             await workspace.sync("/")
@@ -95,13 +97,14 @@ def test_fs_online_tree_and_sync(
 
         @rule()
         async def restart(self):
-            await self.restart_user_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device, self.local_storage, self.local_storages)
 
         @rule()
         async def reset(self):
             # TODO: would be cleaner to recreate a new device...
+            self.local_storages = {}
             self.local_storage = await local_storage_factory(self.device, force=True)
-            await self.restart_user_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device, self.local_storage, self.local_storages)
             self.oracle_fs.reset()
             self.oracle_fs.create_workspace("/w")
             await self.user_fs.sync()

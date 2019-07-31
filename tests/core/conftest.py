@@ -18,7 +18,7 @@ def local_storage_factory(initial_user_manifest_state):
         device_id = device.device_id
         assert force or (device_id not in local_storages)
 
-        local_storage = InMemoryLocalStorage(device_id, device.local_symkey)
+        local_storage = InMemoryLocalStorage(device_id, device.local_symkey, "unused")
         local_storages[device_id] = local_storage
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
@@ -137,6 +137,7 @@ def user_fs_factory(local_storage_factory, event_bus_factory):
         ) as cmds:
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             user_fs = UserFS(device, local_storage, cmds, rdm, event_bus)
+            user_fs.local_storage_class = InMemoryLocalStorage
             yield user_fs
 
     return _user_fs_factory

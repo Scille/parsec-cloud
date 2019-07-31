@@ -51,7 +51,7 @@ async def test_create_workspace(alice_user_fs, alice):
     )
     assert um == expected_um
 
-    w_manifest = alice_user_fs.local_storage.get_manifest(wid)
+    w_manifest = alice_user_fs._local_storages[wid].get_manifest(wid)
     expected_w_manifest = LocalWorkspaceManifest.make_placeholder(
         w_manifest.entry_id, author=alice.device_id, created=Pendulum(2000, 1, 2)
     )
@@ -230,7 +230,7 @@ async def test_sync_placeholder(
 
     async with user_fs_factory(device, local_storage=local_storage) as user_fs:
         with freeze_time("2000-01-01"):
-            # User manifest should be lazily created on first access
+            # User manifest should be lazily created on each access
             um = user_fs.get_user_manifest()
 
         expected_um = LocalUserManifest(
@@ -250,6 +250,7 @@ async def test_sync_placeholder(
                 wid = await user_fs.workspace_create("w1")
             um = user_fs.get_user_manifest()
             expected_um = expected_um.evolve(
+                created=Pendulum(2000, 1, 2),
                 updated=Pendulum(2000, 1, 2),
                 workspaces=(
                     WorkspaceEntry(
@@ -265,9 +266,16 @@ async def test_sync_placeholder(
             )
             assert um == expected_um
 
-        await user_fs.sync()
+        with freeze_time("2000-01-02"):
+            await user_fs.sync()
         um = user_fs.get_user_manifest()
-        expected_um = expected_um.evolve(base_version=1, need_sync=False, is_placeholder=False)
+        expected_um = expected_um.evolve(
+            base_version=1,
+            need_sync=False,
+            is_placeholder=False,
+            created=Pendulum(2000, 1, 2),
+            updated=Pendulum(2000, 1, 2),
+        )
         assert um == expected_um
 
 
