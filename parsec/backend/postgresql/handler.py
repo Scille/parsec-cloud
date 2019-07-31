@@ -4,7 +4,7 @@ import trio
 import triopg
 from triopg import UniqueViolationError
 from uuid import uuid4
-from functools import lru_cache, wraps
+from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
 from importlib_resources import read_text
@@ -12,14 +12,10 @@ from importlib_resources import read_text
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task
+from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
 
 
 logger = get_logger()
-
-
-@lru_cache()
-def get_sql_query(name):
-    return read_text(__package__, f"{name}.sql")
 
 
 async def init_db(url: str) -> None:
@@ -37,10 +33,8 @@ async def _init_db(conn):
         return True
 
     async with conn.transaction():
-        # Init query is divided into multiple parts for readability
-        for part in ("organization", "user", "message", "realm", "vlob", "block"):
-            sub_query = get_sql_query(f"{part}_init")
-            await conn.execute(sub_query)
+        query = read_text(__package__, f"init_tables.sql")
+        await conn.execute(query)
     return False
 
 
@@ -75,10 +69,6 @@ class PGHandler:
         self.pool = None
         self.notification_conn = None
         self._task_status = None
-        # Goes around recursive import
-        from parsec.backend.postgresql.realm import _STR_TO_ROLE
-
-        self._str_to_role = _STR_TO_ROLE
 
     async def init(self, nursery):
         self._task_status = await start_task(nursery, self._run_connections)
@@ -99,7 +89,7 @@ class PGHandler:
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         # Kind of a hack, but fine enough for the moment
         if signal == "realm.roles_updated":
-            data["role"] = self._str_to_role.get(data.pop("role_str"))
+            data["role"] = STR_TO_REALM_ROLE.get(data.pop("role_str"))
         self.event_bus.send(signal, **data)
 
     async def teardown(self):

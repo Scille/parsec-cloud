@@ -2,10 +2,11 @@
 
 import pytest
 from pendulum import Pendulum
+import trio
 
 from parsec.types import DeviceID
 from parsec.backend.user import DeviceInvitation
-from parsec.api.protocol import device_cancel_invitation_serializer
+from parsec.api.protocol import device_cancel_invitation_serializer, device_claim_serializer
 
 from tests.common import freeze_time
 
@@ -28,14 +29,30 @@ async def device_cancel_invitation(sock, **kwargs):
     return rep
 
 
-@pytest.mark.trio
-async def test_device_cancel_invitation_ok(alice_backend_sock, alice_nd_invitation):
-    with freeze_time(alice_nd_invitation.created_on):
-        rep = await device_cancel_invitation(
-            alice_backend_sock, invited_device_name=alice_nd_invitation.device_id.device_name
-        )
+async def device_claim_cancelled_invitation(sock, **kwargs):
+    await sock.send(device_claim_serializer.req_dumps({"cmd": "device_claim", **kwargs}))
+    with trio.fail_after(1):
+        raw_rep = await sock.recv()
+    return device_claim_serializer.rep_loads(raw_rep)
 
+
+@pytest.mark.trio
+async def test_device_cancel_invitation_ok(
+    alice_backend_sock, alice_nd_invitation, anonymous_backend_sock
+):
+    rep = await device_cancel_invitation(
+        alice_backend_sock, invited_device_name=alice_nd_invitation.device_id.device_name
+    )
     assert rep == {"status": "ok"}
+
+    # Try to use the cancelled invitation
+    with freeze_time(alice_nd_invitation.created_on):
+        rep = await device_claim_cancelled_invitation(
+            anonymous_backend_sock,
+            invited_device_id=alice_nd_invitation.device_id,
+            encrypted_claim=b"<foo>",
+        )
+        assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio

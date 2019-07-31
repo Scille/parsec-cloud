@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from triopg import UniqueViolationError
+from pypika import Parameter
 
 from parsec.types import OrganizationID
 from parsec.crypto import VerifyKey
@@ -16,6 +17,34 @@ from parsec.backend.organization import (
     OrganizationFirstUserCreationError,
 )
 from parsec.backend.postgresql.handler import PGHandler
+from parsec.backend.postgresql.utils import Query
+from parsec.backend.postgresql.tables import t_organization, q_organization
+from parsec.backend.postgresql.user_queries.create import _create_user
+
+
+_q_insert_organization = (
+    Query.into(t_organization)
+    .columns("organization_id", "bootstrap_token")
+    .insert(Parameter("$1"), Parameter("$2"))
+    .get_sql()
+)
+
+
+_q_get_organization = (
+    q_organization(Parameter("$1")).select("bootstrap_token", "root_verify_key").get_sql()
+)
+
+
+_q_bootstrap_organization = (
+    Query.update(t_organization)
+    .where(
+        (t_organization.organization_id == Parameter("$1"))
+        & (t_organization.bootstrap_token == Parameter("$2"))
+        & (t_organization.root_verify_key.isnull())
+    )
+    .set(t_organization.root_verify_key, Parameter("$3"))
+    .get_sql()
+)
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
@@ -27,15 +56,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def create(self, id: OrganizationID, bootstrap_token: str) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
-                result = await conn.execute(
-                    """
-INSERT INTO organization (
-    organization_id, bootstrap_token
-) VALUES ($1, $2)
-""",
-                    id,
-                    bootstrap_token,
-                )
+                result = await conn.execute(_q_insert_organization, id, bootstrap_token)
             except UniqueViolationError:
                 raise OrganizationAlreadyExistsError()
 
@@ -48,14 +69,7 @@ INSERT INTO organization (
 
     @staticmethod
     async def _get(conn, id: OrganizationID) -> Organization:
-        data = await conn.fetchrow(
-            """
-SELECT bootstrap_token, root_verify_key
-FROM organization
-WHERE organization_id = $1
-""",
-            id,
-        )
+        data = await conn.fetchrow(_q_get_organization, id)
         if not data:
             raise OrganizationNotFoundError()
 
@@ -70,36 +84,26 @@ WHERE organization_id = $1
         bootstrap_token: str,
         root_verify_key: VerifyKey,
     ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                organization = await self._get(conn, organization_id)
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            organization = await self._get(conn, organization_id)
 
-                if organization.is_bootstrapped():
-                    raise OrganizationAlreadyBootstrappedError()
+            if organization.is_bootstrapped():
+                raise OrganizationAlreadyBootstrappedError()
 
-                if organization.bootstrap_token != bootstrap_token:
-                    raise OrganizationInvalidBootstrapTokenError()
+            if organization.bootstrap_token != bootstrap_token:
+                raise OrganizationInvalidBootstrapTokenError()
 
-                try:
-                    await self.user_component._create_user(
-                        conn, organization_id, user, first_device
-                    )
-                except UserError as exc:
-                    raise OrganizationFirstUserCreationError(exc) from exc
+            try:
+                await _create_user(conn, organization_id, user, first_device)
+            except UserError as exc:
+                raise OrganizationFirstUserCreationError(exc) from exc
 
-                result = await conn.execute(
-                    """
-UPDATE organization
-SET root_verify_key = $3
-WHERE
-    organization_id = $1
-    AND bootstrap_token = $2
-    AND root_verify_key IS NULL;
-""",
-                    organization_id,
-                    bootstrap_token,
-                    root_verify_key.encode(),
-                )
+            result = await conn.execute(
+                _q_bootstrap_organization,
+                organization_id,
+                bootstrap_token,
+                root_verify_key.encode(),
+            )
 
-                if result != "UPDATE 1":
-                    raise OrganizationError(f"Update error: {result}")
+            if result != "UPDATE 1":
+                raise OrganizationError(f"Update error: {result}")

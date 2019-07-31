@@ -26,13 +26,13 @@ async def device_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with device_invite(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
             # Waiting for device.claimed event
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
 
             backend.event_bus.send(
                 "device.claimed",
@@ -52,8 +52,9 @@ async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
 
 @pytest.mark.trio
 async def test_device_invite_already_exists(alice_backend_sock, alice):
-    async with device_invite(alice_backend_sock, invited_device_name=alice.device_name) as prep:
-        pass
+    with trio.fail_after(1):
+        async with device_invite(alice_backend_sock, invited_device_name=alice.device_name) as prep:
+            pass
     assert prep[0] == {
         "status": "already_exists",
         "reason": f"Device `{alice.device_id}` already exists",
@@ -79,21 +80,19 @@ async def test_device_invite_timeout(mock_clock, backend, alice_backend_sock, al
 async def test_concurrent_device_invite(
     backend, alice_backend_sock, alice2_backend_sock, alice, alice_nd_id
 ):
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with device_invite(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
             spy.clear()
 
             async with device_invite(
                 alice2_backend_sock, invited_device_name=alice_nd_id.device_name
             ) as prep2:
 
-                await spy.wait_with_timeout(
-                    "event.connected", kwargs={"event_name": "device.claimed"}
-                )
+                await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
 
                 backend.event_bus.send(
                     "device.claimed",
@@ -110,12 +109,12 @@ async def test_concurrent_device_invite(
 async def test_device_invite_same_name_different_organizations(
     backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, alice_nd_id
 ):
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with device_invite(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
 
             backend.event_bus.send(
                 "device.claimed",
