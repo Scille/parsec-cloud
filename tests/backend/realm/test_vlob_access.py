@@ -399,7 +399,7 @@ async def test_list_versions_ok(alice, alice_backend_sock, vlobs):
     rep = await vlob_list_versions(alice_backend_sock, vlobs[0])
     assert rep == {
         "status": "ok",
-        "version_dict": {
+        "versions": {
             1: (Pendulum(2000, 1, 2, 00, 00, 00), alice.device_id),
             2: (Pendulum(2000, 1, 3, 00, 00, 00), alice.device_id),
         },

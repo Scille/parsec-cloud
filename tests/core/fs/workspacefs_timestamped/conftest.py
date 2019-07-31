@@ -20,6 +20,7 @@ async def alice_workspace(alice_user_fs, running_backend):
         wid = await alice_user_fs.workspace_create("w")
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.mkdir("/foo")
+        # No sync, we want alice_workspace.to_timestamped to fail at day0
     with freeze_time(day1):
         await workspace.sync("/")
     with freeze_time(day2):
@@ -42,8 +43,8 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 
 @pytest.fixture
-async def alice_workspace_t0(alice_workspace):
-    return await alice_workspace.to_timestamped(day0)
+async def timestamp_0():
+    return day0
 
 
 @pytest.fixture

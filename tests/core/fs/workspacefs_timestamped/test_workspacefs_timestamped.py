@@ -4,21 +4,13 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.core.types import FsPath
+from parsec.core.fs.exceptions import FSWorkspaceTimestampedTooEarly
 
 
 @pytest.mark.trio
-async def test_path_info(alice_workspace_t0, alice_workspace_t1, alice_workspace_t2):
-    info = await alice_workspace_t0.path_info("/")
-    assert info == {
-        "base_version": 0,
-        "children": [],
-        "created": ANY,
-        "id": ANY,
-        "is_placeholder": True,
-        "need_sync": True,
-        "type": "folder",
-        "updated": ANY,
-    }
+async def test_path_info(alice_workspace, timestamp_0, alice_workspace_t1, alice_workspace_t2):
+    with pytest.raises(FSWorkspaceTimestampedTooEarly):
+        await alice_workspace.to_timestamped(timestamp_0)
 
     info = await alice_workspace_t1.path_info("/")
     assert info == {
