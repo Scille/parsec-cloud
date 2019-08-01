@@ -19,7 +19,7 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
-from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest, is_workspace_manifest
+from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -596,12 +596,10 @@ class WorkspaceFS:
         # A file conflict needs to be adressed first
         except FSFileConflictError as exc:
             local_manifest, remote_manifest = exc.args
+            # Only file manifest have synchronization conflict
+            assert is_file_manifest(local_manifest)
             await self.sync_transactions.file_conflict(entry_id, local_manifest, remote_manifest)
-            # TODO: what about workspace manifest ????
-            if is_workspace_manifest(local_manifest):
-                return await self.sync_by_id(entry_id)
-            else:
-                return await self.sync_by_id(local_manifest.parent_id)
+            return await self.sync_by_id(local_manifest.parent_id)
 
         # Non-recursive
         if not recursive or is_file_manifest(manifest):
