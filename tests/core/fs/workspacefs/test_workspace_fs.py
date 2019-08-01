@@ -414,6 +414,5 @@ async def test_dump(alice_workspace):
         "id": ANY,
         "is_placeholder": False,
         "need_sync": False,
-        "parent_id": ANY,
         "updated": ANY,
     }

@@ -19,7 +19,7 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest
+from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest, is_workspace_manifest
 
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -542,7 +542,7 @@ class WorkspaceFS:
                 return remote_manifest or self.local_storage.get_manifest(entry_id).base_manifest
 
             # Synchronize placeholder children
-            if is_folder_manifest(new_remote_manifest):
+            if is_folderish_manifest(new_remote_manifest):
                 await self._synchronize_placeholders(new_remote_manifest)
 
             # Upload blocks
@@ -597,7 +597,11 @@ class WorkspaceFS:
         except FSFileConflictError as exc:
             local_manifest, remote_manifest = exc.args
             await self.sync_transactions.file_conflict(entry_id, local_manifest, remote_manifest)
-            return await self.sync_by_id(local_manifest.parent_id)
+            # TODO: what about workspace manifest ????
+            if is_workspace_manifest(local_manifest):
+                return await self.sync_by_id(entry_id)
+            else:
+                return await self.sync_by_id(local_manifest.parent_id)
 
         # Non-recursive
         if not recursive or is_file_manifest(manifest):

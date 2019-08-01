@@ -24,6 +24,8 @@ def create_entry(type=LocalUserManifest):
         manifest = LocalUserManifest(
             author=DEVICE, base_version=0, is_placeholder=True, need_sync=True
         )
+    elif type is LocalWorkspaceManifest:
+        manifest = type.make_placeholder(entry_id=entry_id, author=DEVICE)
     else:
         manifest = type.make_placeholder(entry_id=entry_id, author=DEVICE, parent_id=EntryID())
     return entry_id, manifest

@@ -25,6 +25,10 @@ def is_folder_manifest(manifest: Manifest) -> bool:
     return isinstance(manifest, (FolderManifest, LocalFolderManifest))
 
 
+def is_workspace_manifest(manifest: Manifest) -> bool:
+    return isinstance(manifest, (WorkspaceManifest, LocalWorkspaceManifest))
+
+
 def is_folderish_manifest(manifest: Manifest) -> bool:
     return isinstance(
         manifest,

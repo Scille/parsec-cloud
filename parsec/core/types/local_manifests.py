@@ -282,13 +282,12 @@ class LocalWorkspaceManifest:
             object.__setattr__(self, "updated", self.base_manifest.updated)
 
     @classmethod
-    def make_placeholder(cls, entry_id, author, parent_id, created=None):
+    def make_placeholder(cls, entry_id, author, created=None):
         if created is None:
             created = pendulum.now()
         base_manifest = remote_manifests.WorkspaceManifest(
             entry_id=entry_id,
             author=author,
-            parent_id=parent_id,
             version=0,
             created=created,
             updated=created,
@@ -301,10 +300,6 @@ class LocalWorkspaceManifest:
     @property
     def entry_id(self):
         return self.base_manifest.entry_id
-
-    @property
-    def parent_id(self):
-        return self.base_manifest.parent_id
 
     @property
     def created(self):
@@ -345,7 +340,6 @@ class LocalWorkspaceManifest:
         return remote_manifests.WorkspaceManifest(
             entry_id=self.entry_id,
             author=self.author,
-            parent_id=self.parent_id,
             version=self.base_version,
             created=self.created,
             updated=self.updated,
@@ -356,7 +350,7 @@ class LocalWorkspaceManifest:
     def asdict(self):
         dct = attr.asdict(self)
         dct.pop("base_manifest")
-        props = "base_version", "is_placeholder", "parent_id", "created"
+        props = "base_version", "is_placeholder", "created"
         for name in props:
             dct[name] = getattr(self, name)
         return dct
