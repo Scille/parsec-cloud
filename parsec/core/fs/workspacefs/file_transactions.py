@@ -209,10 +209,7 @@ class FileTransactions:
         while True:
 
             # Load missing blocks
-            # TODO: add a `load_blocks` method to the remote loader
-            # to download the blocks in a concurrent way.
-            for block_access in missing:
-                await self.remote_loader.load_block(block_access)
+            await self.remote_loader.load_blocks(missing)
 
             # Fetch and lock
             async with self._load_and_lock_file(fd) as (entry_id, manifest):

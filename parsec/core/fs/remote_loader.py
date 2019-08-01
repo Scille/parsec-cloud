@@ -155,6 +155,17 @@ class RemoteLoader:
         _, current_roles = await self._load_realm_role_certificates(realm_id)
         return current_roles
 
+    async def load_blocks(self, accesses: List[BlockAccess]) -> None:
+        """
+        Raises:
+            FSError
+            FSRemoteBlockNotFound
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+        """
+        for access in accesses:
+            await self.load_block(access)
+
     async def load_block(self, access: BlockAccess) -> None:
         """
         Raises:
