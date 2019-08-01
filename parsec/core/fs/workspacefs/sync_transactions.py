@@ -278,10 +278,7 @@ class SyncTransactions:
         while True:
 
             # Load missing blocks
-            # TODO: add a `load_blocks` method to the remote loader
-            # to download the blocks in a concurrent way.
-            for access in missing:
-                await self.remote_loader.load_block(access)
+            await self.remote_loader.load_blocks(missing)
 
             # Fetch and lock
             async with self.local_storage.lock_manifest(entry_id) as manifest:
