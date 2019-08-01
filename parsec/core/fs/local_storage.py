@@ -100,6 +100,20 @@ class LocalStorage:
 
     # Manifest interface
 
+    def get_realm_checkpoint(self) -> int:
+        return self.persistent_storage.get_realm_checkpoint()
+
+    async def update_realm_checkpoint(
+        self, new_checkpoint: int, changed_vlob_ids: Tuple[EntryID]
+    ) -> None:
+        for entry_id in changed_vlob_ids:
+            # Must lock the entry to avoid concurrent issue when an outdated
+            # entry manifest has been fetched from backend but is not yet
+            # stored in the persistent storage.
+            async with self.lock_entry_id(entry_id):
+                self.persistent_storage.mark_entry_need_sync_if_present(entry_id)
+        self.persistent_storage.set_realm_checkpoint(new_checkpoint)
+
     def get_need_sync_entries(self) -> List[EntryID]:
         return self.persistent_storage.get_need_sync_entries()
 

@@ -119,23 +119,30 @@ class PersistentStorage:
     def create_db(self):
         with self.open_dirty_cursor() as dirty_cursor, self.open_clean_cursor() as clean_cursor:
 
-            for cursor in (dirty_cursor, clean_cursor):
+            # Manifest tables
+            dirty_cursor.execute(
+                """CREATE TABLE IF NOT EXISTS manifests
+                    (
+                     manifest_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                     need_sync INTEGER NOT NULL,  -- Boolean
+                     blob BLOB NOT NULL);"""
+            )
 
-                # Manifest tables
-                cursor.execute(
-                    """CREATE TABLE IF NOT EXISTS manifests
-                        (manifest_id UUID PRIMARY KEY NOT NULL,
-                         need_sync BOOLEAN NOT NULL,
-                         blob BYTEA NOT NULL);"""
-                )
+            dirty_cursor.execute(
+                """CREATE TABLE IF NOT EXISTS realm_checkpoints
+                    (realm_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                     checkpoint INTEGER NOT NULL);"""
+            )
+
+            for cursor in (dirty_cursor, clean_cursor):
 
                 # Chunks tables
                 cursor.execute(
                     """CREATE TABLE IF NOT EXISTS chunks
-                        (chunk_id UUID PRIMARY KEY NOT NULL,
-                         size INT NOT NULL,
-                         offline BOOLEAN NOT NULL,
-                         accessed_on TIMESTAMPTZ,
+                        (chunk_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                         size INTEGER NOT NULL,
+                         offline INTEGER NOT NULL,  -- Boolean
+                         accessed_on INTEGER, -- Timestamp
                          data BLOB NOT NULL
                     );"""
                 )
@@ -156,15 +163,38 @@ class PersistentStorage:
 
     # Manifest operations
 
+    def get_realm_checkpoint(self) -> int:
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute("SELECT checkpoint FROM realm_checkpoints WHERE realm_id = ?", ("self",))
+            rep = cursor.fetchone()
+            return rep[0] if rep else 0
+
+    def mark_entry_need_sync_if_present(self, entry_id: EntryID):
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE manifests SET need_sync = ? WHERE manifest_id = ?
+                """,
+                (True, entry_id.bytes),
+            )
+
+    def set_realm_checkpoint(self, new_checkpoint: int):
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute(
+                """INSERT OR REPLACE INTO realm_checkpoints(realm_id, checkpoint)
+                VALUES (?, ?)""",
+                ("self", new_checkpoint),
+            )
+
     def get_need_sync_entries(self) -> List[EntryID]:
         with self.open_dirty_cursor() as cursor:
-            cursor.execute("SELECT manifest_id FROM manifests WHERE need_sync = true")
+            cursor.execute("SELECT manifest_id FROM manifests WHERE need_sync = ?", (True,))
             return [EntryID(x) for (x,) in cursor.fetchall()]
 
     def get_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(entry_id),)
+                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (entry_id.bytes,)
             )
             manifest_row = cursor.fetchone()
         if not manifest_row:
@@ -180,12 +210,12 @@ class PersistentStorage:
             cursor.execute(
                 """INSERT OR REPLACE INTO manifests (manifest_id, blob, need_sync)
                 VALUES (?, ?, ?)""",
-                (str(entry_id), ciphered, need_sync),
+                (entry_id.bytes, ciphered, need_sync),
             )
 
     def clear_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:
-            cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(entry_id),))
+            cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted:
@@ -195,7 +225,7 @@ class PersistentStorage:
 
     def _is_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
-            cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (str(chunk_id),))
+            cursor.execute("SELECT chunk_id FROM chunks WHERE block_id = ?", (block_id.bytes,))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
@@ -206,14 +236,14 @@ class PersistentStorage:
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
                 """,
-                (time(), str(chunk_id)),
+                (time(), chunk_id.bytes),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             if not changes:
                 raise FSLocalMissError(chunk_id)
 
-            cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (str(chunk_id),))
+            cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (chunk_id.bytes,))
             ciphered, = cursor.fetchone()
             cursor.execute("END")
 
@@ -229,13 +259,13 @@ class PersistentStorage:
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
-                (str(chunk_id), len(ciphered), False, time(), ciphered),
+                (chunk_id.bytes, len(ciphered), False, time(), ciphered),
             )
 
     def _clear_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("BEGIN")
-            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (str(chunk_id),))
+            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             cursor.execute("END")

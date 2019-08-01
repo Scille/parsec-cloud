@@ -41,7 +41,7 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
 
-    # Plenty of nested scope to order components init/teardown
+    # Plenty of nested scopes to order components init/teardown
     async with trio.open_nursery() as root_nursery:
         # TODO: Currently backend_listen_events connect to backend and
         # switch to listen events mode, then monitors kick in and send it
