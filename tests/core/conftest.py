@@ -6,8 +6,10 @@ from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
+from parsec.core.fs import UserFS
+from parsec.core.fs.local_storage import LocalStorage
 
-from tests.common import freeze_time, InMemoryUserFS, InMemoryLocalStorage
+from tests.common import freeze_time
 
 
 @pytest.fixture
@@ -15,7 +17,7 @@ def local_storage_factory(initial_user_manifest_state, persistent_mockup):
     async def _local_storage_factory(device, user_manifest_in_v0=False):
         device_id = device.device_id
         path = Path("/") / device.slug
-        local_storage = InMemoryLocalStorage(device_id, device.local_symkey, path)
+        local_storage = LocalStorage(device_id, device.local_symkey, path)
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
             user_manifest = user_manifest.evolve(author=device_id)
@@ -132,7 +134,7 @@ def user_fs_factory(event_bus_factory, persistent_mockup):
         ) as cmds:
             path = Path("/") / device.slug
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            with InMemoryUserFS(device, path, cmds, rdm, event_bus) as user_fs:
+            with UserFS(device, path, cmds, rdm, event_bus) as user_fs:
                 yield user_fs
 
     return _user_fs_factory

@@ -13,7 +13,6 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
 from parsec.core.fs.persistent_storage import PersistentStorage
-from parsec.core.fs.local_storage import LocalStorage
 from parsec.api.transport import Transport, TransportError
 
 
@@ -64,14 +63,6 @@ class InMemoryPersistentStorage(PersistentStorage):
 
     def close(self):
         pass
-
-
-class InMemoryLocalStorage(LocalStorage):
-    persistent_storage_class = InMemoryPersistentStorage
-
-
-class InMemoryUserFS(UserFS):
-    local_storage_class = InMemoryLocalStorage
 
 
 def freeze_time(time):

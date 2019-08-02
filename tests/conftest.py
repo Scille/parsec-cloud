@@ -19,6 +19,7 @@ from parsec.monitoring import TaskMonitoringInstrument
 from parsec.types import BackendAddr, OrganizationID
 from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.api.protocol import (
@@ -325,7 +326,8 @@ def backend_addr(tcp_stream_spy):
 
 
 @pytest.fixture
-def persistent_mockup():
+def persistent_mockup(monkeypatch):
+    monkeypatch.setattr(LocalStorage, "persistent_storage_class", InMemoryPersistentStorage)
     with InMemoryPersistentStorage.mockup_context() as cache:
         yield cache
 
