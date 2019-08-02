@@ -9,6 +9,7 @@ from parsec.core.local_device import (
     list_available_devices,
     load_device_with_password,
     save_device_with_password,
+    change_device_password,
     load_device_with_pkcs11,
     save_device_with_pkcs11,
     LocalDeviceCryptoError,
@@ -126,6 +127,22 @@ def test_same_device_id_different_orginazations(config_dir, alice, otheralice):
         key_file = get_key_file(config_dir, device)
         device_reloaded = load_device_with_password(key_file, f"S3Cr37-{device.organization_id}")
         assert device == device_reloaded
+
+
+def test_change_password(config_dir, alice):
+    old_password = "0ldP@ss"
+    new_password = "N3wP@ss"
+
+    save_device_with_password(config_dir, alice, old_password)
+    key_file = get_key_file(config_dir, alice)
+
+    change_device_password(key_file, old_password, new_password)
+
+    alice_reloaded = load_device_with_password(key_file, new_password)
+    assert alice == alice_reloaded
+
+    with pytest.raises(LocalDeviceCryptoError):
+        load_device_with_password(key_file, old_password)
 
 
 @pytest.fixture

@@ -122,7 +122,23 @@ def save_device_with_password(
         LocalDevicePackingError
     """
     encryptor = PasswordDeviceEncryptor(password)
-    _save_device(config_dir, device, encryptor, force)
+    key_file = get_key_file(config_dir, device)
+    _save_device(key_file, device, encryptor, force)
+
+
+def change_device_password(key_file: Path, old_password: str, new_password: str) -> None:
+    """
+        LocalDeviceError
+        LocalDeviceNotFoundError
+        LocalDeviceCryptoError
+        LocalDeviceValidationError
+        LocalDevicePackingError
+    """
+    decryptor = PasswordDeviceDecryptor(old_password)
+    encryptor = PasswordDeviceEncryptor(new_password)
+
+    device = _load_device(key_file, decryptor)
+    _save_device(key_file, device, encryptor, force=True)
 
 
 def load_device_with_pkcs11(key_file: Path, token_id: int, key_id: int, pin: str) -> LocalDevice:
@@ -147,7 +163,8 @@ def save_device_with_pkcs11(
         LocalDevicePackingError
     """
     encryptor = PKCS11DeviceEncryptor(token_id, key_id)
-    _save_device(config_dir, device, encryptor)
+    key_file = get_key_file(config_dir, device)
+    _save_device(key_file, device, encryptor)
 
 
 def _load_device(key_file: Path, decryptor: BaseLocalDeviceDecryptor) -> LocalDevice:
@@ -174,7 +191,7 @@ def _load_device(key_file: Path, decryptor: BaseLocalDeviceDecryptor) -> LocalDe
 
 
 def _save_device(
-    config_dir: Path, device: LocalDevice, encryptor: BaseLocalDeviceEncryptor, force: bool = False
+    key_file: Path, device: LocalDevice, encryptor: BaseLocalDeviceEncryptor, force: bool = False
 ) -> None:
     """
     Raises:
@@ -184,7 +201,6 @@ def _save_device(
         LocalDeviceValidationError
         LocalDevicePackingError
     """
-    key_file = get_key_file(config_dir, device)
     if key_file.exists() and not force:
         raise LocalDeviceAlreadyExistsError(
             f"Device `{device.organization_id}:{device.device_id}` already exists"
