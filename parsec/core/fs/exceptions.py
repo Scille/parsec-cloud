@@ -37,6 +37,10 @@ class FSRemoteManifestNotFoundBadVersion(FSRemoteManifestNotFound):
     pass
 
 
+class FSRemoteManifestBadID(FSError):
+    pass
+
+
 class FSRemoteBlockNotFound(FSError):
     pass
 
