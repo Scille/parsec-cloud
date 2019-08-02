@@ -31,7 +31,7 @@ from parsec.api.transport import Transport
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, FreezeTestOnTransportError
+from tests.common import freeze_time, FreezeTestOnTransportError, InMemoryPersistentStorage
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -324,17 +324,18 @@ def backend_addr(tcp_stream_spy):
     return BackendAddr("parsec://127.0.0.1:9999?no_ssl=true")
 
 
-@pytest.fixture(scope="session")
-def reset_testbed(request):
-    if request.config.getoption("--postgresql"):
+@pytest.fixture
+def persistent_mockup():
+    with InMemoryPersistentStorage.mockup_context() as cache:
+        yield cache
 
-        async def _reset_testbed():
+
+@pytest.fixture
+def reset_testbed(request, persistent_mockup):
+    async def _reset_testbed():
+        if request.config.getoption("--postgresql"):
             await trio_asyncio.aio_as_trio(asyncio_reset_postgresql_testbed)
-
-    else:
-
-        async def _reset_testbed():
-            pass
+        persistent_mockup.clear()
 
     return _reset_testbed
 

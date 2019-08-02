@@ -26,12 +26,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_offline_restart_and_tree(
-    hypothesis_settings,
-    reset_testbed,
-    local_storage_factory,
-    oracle_fs_factory,
-    user_fs_factory,
-    alice,
+    hypothesis_settings, reset_testbed, oracle_fs_factory, user_fs_factory, alice
 ):
     class FSOfflineRestartAndTree(TrioAsyncioRuleBasedStateMachine):
         Files = Bundle("file")
@@ -44,9 +39,7 @@ def test_fs_offline_restart_and_tree(
                 pass
 
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(
-                    device=self.device, local_storage=self.local_storage
-                ) as user_fs:
+                async with user_fs_factory(device=self.device) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.user_fs_controller = await self.get_root_nursery().start(
@@ -61,7 +54,6 @@ def test_fs_offline_restart_and_tree(
         async def init(self):
             await reset_testbed()
             self.device = alice
-            self.local_storage = await local_storage_factory(self.device)
             await self.restart_user_fs()
             wid = await self.user_fs.workspace_create("w")
             self.workspace = self.user_fs.get_workspace(wid)

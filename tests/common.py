@@ -2,8 +2,8 @@
 
 import sqlite3
 from unittest.mock import Mock
-from contextlib import ExitStack
 from inspect import iscoroutinefunction
+from contextlib import ExitStack, contextmanager
 
 import trio
 import attr
@@ -13,7 +13,7 @@ from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
 from parsec.core.fs.persistent_storage import PersistentStorage
-from parsec.core.fs.local_storage import LocalStorage, FSLocalMissError
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.api.transport import Transport, TransportError
 
 
@@ -24,12 +24,37 @@ class InMemoryPersistentStorage(PersistentStorage):
     and has very permissive life cycle.
     """
 
+    # Mockup
+
+    cache = None
+
+    @classmethod
+    @contextmanager
+    def mockup_context(cls):
+        try:
+            cls.cache = {}
+            yield cls.cache
+        finally:
+            cls.cache = None
+
+    # Init
+
     def __init__(self, key, path, **kwargs):
-        self._data = {}
         super().__init__(key, path, **kwargs)
 
-        self.dirty_conn = sqlite3.connect(":memory:")
-        self.clean_conn = sqlite3.connect(":memory:")
+        if self.cache is None:
+            raise RuntimeError(
+                "The persistent_mockup fixture has to added "
+                "in order to use the InMemoryPersistentStorage class"
+            )
+
+        try:
+            self.dirty_conn, self.clean_conn = self.cache[path]
+        except KeyError:
+            self.dirty_conn = sqlite3.connect(":memory:")
+            self.clean_conn = sqlite3.connect(":memory:")
+            self.cache[path] = self.dirty_conn, self.clean_conn
+
         self.create_db()
 
     # Disable life cycle
@@ -39,26 +64,6 @@ class InMemoryPersistentStorage(PersistentStorage):
 
     def close(self):
         pass
-
-    # File systeme interface
-
-    def _read_file(self, entry_id, path):
-        filepath = path / str(entry_id)
-        try:
-            return self._data[filepath]
-        except KeyError:
-            raise FSLocalMissError(entry_id)
-
-    def _write_file(self, entry_id, content, path):
-        filepath = path / str(entry_id)
-        self._data[filepath] = content
-
-    def _remove_file(self, entry_id, path):
-        filepath = path / str(entry_id)
-        try:
-            del self._data[filepath]
-        except KeyError:
-            raise FSLocalMissError(entry_id)
 
 
 class InMemoryLocalStorage(LocalStorage):

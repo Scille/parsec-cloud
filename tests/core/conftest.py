@@ -11,15 +11,11 @@ from tests.common import freeze_time, InMemoryUserFS, InMemoryLocalStorage
 
 
 @pytest.fixture
-def local_storage_factory(initial_user_manifest_state):
-    local_storages = {}
-
-    async def _local_storage_factory(device, user_manifest_in_v0=False, force=True):
+def local_storage_factory(initial_user_manifest_state, persistent_mockup):
+    async def _local_storage_factory(device, user_manifest_in_v0=False):
         device_id = device.device_id
-        assert force or (device_id not in local_storages)
-
-        local_storage = InMemoryLocalStorage(device_id, device.local_symkey, "unused")
-        local_storages[device_id] = local_storage
+        path = Path("/") / device.slug
+        local_storage = InMemoryLocalStorage(device_id, device.local_symkey, path)
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
             user_manifest = user_manifest.evolve(author=device_id)
@@ -126,19 +122,17 @@ async def anonymous_backend_cmds(running_backend, coolorg):
 
 
 @pytest.fixture
-def user_fs_factory(local_storage_factory, event_bus_factory):
+def user_fs_factory(event_bus_factory, persistent_mockup):
     @asynccontextmanager
-    async def _user_fs_factory(device, local_storage=None, event_bus=None):
+    async def _user_fs_factory(device, event_bus=None):
         event_bus = event_bus or event_bus_factory()
-        local_storage = local_storage or await local_storage_factory(device)
 
         async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-            path = Path("/unused")
+            path = Path("/") / device.slug
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             with InMemoryUserFS(device, path, cmds, rdm, event_bus) as user_fs:
-                user_fs.local_storage = local_storage
                 yield user_fs
 
     return _user_fs_factory
@@ -146,17 +140,17 @@ def user_fs_factory(local_storage_factory, event_bus_factory):
 
 @pytest.fixture
 async def alice_user_fs(user_fs_factory, alice, alice_local_storage):
-    async with user_fs_factory(alice, local_storage=alice_local_storage) as user_fs:
+    async with user_fs_factory(alice) as user_fs:
         yield user_fs
 
 
 @pytest.fixture
 async def alice2_user_fs(user_fs_factory, alice2, alice2_local_storage):
-    async with user_fs_factory(alice2, local_storage=alice2_local_storage) as user_fs:
+    async with user_fs_factory(alice2) as user_fs:
         yield user_fs
 
 
 @pytest.fixture
 async def bob_user_fs(user_fs_factory, bob, bob_local_storage):
-    async with user_fs_factory(bob, local_storage=bob_local_storage) as user_fs:
+    async with user_fs_factory(bob) as user_fs:
         yield user_fs
