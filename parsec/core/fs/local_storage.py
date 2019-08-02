@@ -174,8 +174,8 @@ class LocalStorage:
         except FSLocalMissError:
             try:
                 self.persistent_storage.clear_clean_block(block_id)
-            except FSLocalMissError:
-                logger.warning("Tried to remove a dirty block that doesn't exist anymore")
+            except FSLocalMissError as exc:
+                logger.warning(f"Block {exc.id} is absent from the storage")
 
     # File management interface
 

@@ -128,9 +128,7 @@ async def anonymous_backend_cmds(running_backend, coolorg):
 @pytest.fixture
 def user_fs_factory(local_storage_factory, event_bus_factory):
     @asynccontextmanager
-    async def _user_fs_factory(
-        device, local_storage=None, event_bus=None, user_manifest_in_v0=False
-    ):
+    async def _user_fs_factory(device, local_storage=None, event_bus=None):
         event_bus = event_bus or event_bus_factory()
         local_storage = local_storage or await local_storage_factory(device)
 
