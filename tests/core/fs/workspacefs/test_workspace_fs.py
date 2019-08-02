@@ -4,8 +4,10 @@ import errno
 import pytest
 from unittest.mock import ANY
 
+from parsec.types import DeviceID
 from parsec.core.fs import FSEntryNotFound
-from parsec.core.types import FsPath, EntryID
+from parsec.core.fs.exceptions import FSRemoteManifestBadID, FSError
+from parsec.core.types import FsPath, EntryID, remote_manifest_serializer
 from parsec.api.protocol.realm import RealmRole
 
 
@@ -416,3 +418,33 @@ async def test_dump(alice_workspace):
         "need_sync": False,
         "updated": ANY,
     }
+
+
+@pytest.mark.trio
+async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
+    manifest = await alice_workspace.entry_transactions._get_manifest_from_path(FsPath("/foo/bar"))
+    async with alice_workspace.local_storage.lock_entry_id(manifest.entry_id):
+        alice_workspace.local_storage.clear_manifest(manifest.entry_id)
+
+    vanilla_manifest_loader = remote_manifest_serializer.loads
+
+    def mocked_manifest_loader(*args, **kwargs):
+        return vanilla_manifest_loader(*args, **kwargs).evolve(**manifest_modifiers)
+
+    monkeypatch.setattr(remote_manifest_serializer, "loads", mocked_manifest_loader)
+
+    manifest_modifiers = {"entry_id": EntryID()}
+    with pytest.raises(FSRemoteManifestBadID):
+        await alice_workspace.path_info(FsPath("/foo/bar"))
+
+    manifest_modifiers = {"version": 4}
+    with pytest.raises(FSError) as exc:
+        await alice_workspace.path_info(FsPath("/foo/bar"))
+    assert "version mismatch between signed metadata (4) and backend (1)" in str(exc.value)
+
+    manifest_modifiers = {"author": DeviceID("mallory@pc1")}
+    with pytest.raises(FSError) as exc:
+        await alice_workspace.path_info(FsPath("/foo/bar"))
+    assert "author mismatch between signed metadata (mallory@pc1) and backend (alice@dev1)" in str(
+        exc.value
+    )
