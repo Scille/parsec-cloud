@@ -2,11 +2,10 @@
 
 import attr
 import pendulum
-from hashlib import sha256
 from typing import Optional
 
 from parsec.api.protocol import RealmRole, RealmRoleField
-from parsec.crypto import SecretKey, HashDigest
+from parsec.crypto import SecretKey
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import (
     BlockID,
@@ -24,17 +23,10 @@ class BlockAccess:
     key: SecretKey
     offset: int
     size: int
-    digest: HashDigest
 
     @classmethod
     def from_block(cls, block: bytes, offset: int) -> "BlockAccess":
-        return cls(
-            id=BlockID(),
-            key=SecretKey.generate(),
-            offset=offset,
-            size=len(block),
-            digest=sha256(block).hexdigest(),
-        )
+        return cls(id=BlockID(), key=SecretKey.generate(), offset=offset, size=len(block))
 
 
 class BlockAccessSchema(UnknownCheckedSchema):
@@ -42,8 +34,6 @@ class BlockAccessSchema(UnknownCheckedSchema):
     key = fields.SecretKey(required=True)
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
-    # TODO: provide digest as hexa string
-    digest = fields.String(required=True, validate=validate.Length(min=1, max=64))
 
     @post_load
     def make_obj(self, data):

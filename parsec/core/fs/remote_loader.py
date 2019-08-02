@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from hashlib import sha256
 import pendulum
 from pendulum import Pendulum
 from typing import Dict, Optional, List, Tuple
@@ -204,11 +203,7 @@ class RemoteLoader:
         except CryptoError as exc:
             raise FSError(f"Cannot decrypt block: {exc}") from exc
 
-        # TODO: let encryption manager do the digest check ?
-        # TODO: is digest even useful ? Given nacl.secret.Box does digest check
-        # on the ciphered data they cannot be tempered. And given each block
-        # has an unique key, valid blocks cannot be switched together.
-        assert sha256(block).hexdigest() == access.digest, access
+        # Save block to the local storage
         self.local_storage.set_clean_block(access.id, block)
 
     async def upload_block(self, access: BlockAccess, data: bytes):
