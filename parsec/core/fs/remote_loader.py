@@ -35,6 +35,7 @@ from parsec.core.fs.exceptions import (
     FSRemoteSyncError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
+    FSRemoteManifestBadID,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
@@ -327,6 +328,11 @@ class RemoteLoader:
         # Deserialization error
         except SerdeError as exc:
             raise FSError(f"Cannot deserialize vlob: {exc}") from exc
+
+        if remote_manifest.entry_id != entry_id:
+            raise FSRemoteManifestBadID(
+                f"Vlob {entry_id} id mismatch with signed metadata ({remote_manifest.entry_id}) returned by backend."
+            )
 
         if remote_manifest.version != expected_version:
             raise FSError(
