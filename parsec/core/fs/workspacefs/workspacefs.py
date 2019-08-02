@@ -618,7 +618,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        entry_id, _ = await self.entry_transactions._get_entry(path)
+        entry_id = (await self.entry_transactions._get_manifest_from_path(path)).entry_id
         # TODO: Maybe the path itself is not synchronized with the remote
         # Should we do something about it?
         await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=recursive)
