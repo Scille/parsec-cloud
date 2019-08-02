@@ -155,7 +155,7 @@ class UserFS:
         self._exit_stack = ExitStack()
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
-        self._local_storages = {}
+        self._workspace_storages = {}
 
         wentry = WorkspaceEntry(
             name="<user manifest>",
@@ -205,13 +205,13 @@ class UserFS:
         self.local_storage.set_manifest(self.user_manifest_id, manifest, check_lock_status=False)
 
     def get_workspace_local_storage(self, workspace_id):
-        if workspace_id not in self._local_storages:
+        if workspace_id not in self._workspace_storages:
             cls = self.local_storage_class
             path = self.path / str(workspace_id)
             local_storage = cls(self.device.device_id, self.device.local_symkey, path)
             self._exit_stack.enter_context(local_storage)
-            self._local_storages[workspace_id] = local_storage
-        return self._local_storages[workspace_id]
+            self._workspace_storages[workspace_id] = local_storage
+        return self._workspace_storages[workspace_id]
 
     async def set_workspace_manifest(self, workspace_id, manifest):
         """
