@@ -23,7 +23,12 @@ from parsec.core.types import (
 
 from parsec.core.fs.exceptions import FSEntryNotFound
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
-from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
+from parsec.core.fs.utils import (
+    is_file_manifest,
+    is_folder_manifest,
+    is_workspace_manifest,
+    is_folderish_manifest,
+)
 from parsec.core.fs.remote_loader import RemoteLoader
 
 
@@ -93,7 +98,7 @@ class EntryTransactions:
     async def _lock_entry(self, path: FsPath) -> Tuple[EntryID, LocalManifest]:
         # Root entry_id and manifest
         assert path.parts[0] == "/"
-        entry_id = self.get_workspace_entry().id
+        entry_id = self.workspace_id
 
         # Follow the path
         for name in path.parts[1:]:
@@ -179,7 +184,7 @@ class EntryTransactions:
 
         # Loop over parts
         parts = []
-        while current_id != self.workspace_id:
+        while not is_workspace_manifest(current_manifest):
 
             # Get the manifest
             try:

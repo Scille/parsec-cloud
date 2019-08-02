@@ -133,15 +133,36 @@ folder_manifest_serializer = serializer_factory(FolderManifestSchema)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class WorkspaceManifest(FolderManifest):
+class WorkspaceManifest:
+    entry_id: EntryID
+    author: DeviceID
+    version: int
+    created: pendulum.Pendulum
+    updated: pendulum.Pendulum
+    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict)
+
+    def evolve(self, **data) -> "WorkspaceManifest":
+        return attr.evolve(self, **data)
+
     def to_local(self, author: DeviceID) -> "local_manifests.LocalWorkspaceManifest":
         return local_manifests.LocalWorkspaceManifest(
             author=author, base_manifest=self, updated=self.updated, children=self.children
         )
 
 
-class WorkspaceManifestSchema(FolderManifestSchema):
+class WorkspaceManifestSchema(UnknownCheckedSchema):
+    format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("workspace_manifest", required=True)
+    entry_id = EntryIDField(required=True)
+    author = fields.DeviceID(required=True)
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
+    created = fields.DateTime(required=True)
+    updated = fields.DateTime(required=True)
+    children = fields.Map(
+        EntryNameField(validate=validate.Length(min=1, max=256)),
+        EntryIDField(required=True),
+        required=True,
+    )
 
     @post_load
     def make_obj(self, data):

@@ -40,7 +40,7 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
         with freeze_time("2000-01-01"):
             workspace_entry = WorkspaceEntry("test")
             workspace_manifest = LocalWorkspaceManifest.make_placeholder(
-                workspace_entry.id, device.device_id, device.user_manifest_id
+                entry_id=workspace_entry.id, author=device.device_id
             )
         async with local_storage.lock_entry_id(workspace_entry.id):
             local_storage.set_manifest(workspace_entry.id, workspace_manifest)
