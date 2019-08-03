@@ -43,8 +43,8 @@ class InMemoryPersistentStorage(PersistentStorage):
 
         if self.cache is None:
             raise RuntimeError(
-                "The persistent_mockup fixture has to added "
-                "in order to use the InMemoryPersistentStorage class"
+                "Cannot use the in-memory persistent storage outside of its mockup context."
+                " Try adding the persistent_mockup fixture to your test."
             )
 
         try:
