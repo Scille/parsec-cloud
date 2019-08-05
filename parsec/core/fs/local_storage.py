@@ -66,7 +66,7 @@ class LocalStorage:
 
     def __exit__(self, *args):
         for entry_id in self.cache_ahead_of_persistance_ids.copy():
-            self.ensure_manifest_flushed_on_disk(entry_id)
+            self.ensure_manifest_persistant(entry_id)
         self.persistent_storage.__exit__(*args)
 
     def clear_memory_cache(self):
