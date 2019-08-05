@@ -17,8 +17,6 @@ from parsec.core.types.base import (
 from parsec.core.types.access import (
     BlockAccess,
     BlockAccessSchema,
-    DirtyBlockAccess,
-    DirtyBlockAccessSchema,
     WorkspaceEntry,
     WorkspaceEntrySchema,
 )
@@ -45,7 +43,7 @@ class LocalFileManifest:
     updated: pendulum.Pendulum = None
     size: int = 0
     blocks: Tuple[BlockAccess] = attr.ib(converter=tuple, default=())
-    dirty_blocks: Tuple[DirtyBlockAccess] = attr.ib(converter=tuple, default=())
+    dirty_blocks: Tuple[BlockAccess] = attr.ib(converter=tuple, default=())
 
     def __attrs_post_init__(self):
         if self.updated is None:
@@ -133,7 +131,7 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
-    dirty_blocks = fields.List(fields.Nested(DirtyBlockAccessSchema), required=True)
+    dirty_blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
 
     @post_load
     def make_obj(self, data):

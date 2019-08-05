@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Iterator
 from parsec.event_bus import EventBus
 from parsec.types import DeviceID
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.types import (
     EntryID,
     EntryName,
@@ -19,7 +19,11 @@ from parsec.core.types import (
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
 from parsec.core.fs.workspacefs.file_transactions import DirtyBlockBuffer, BlockBuffer
 
-from parsec.core.fs.exceptions import FSFileConflictError, FSReshapingRequiredError
+from parsec.core.fs.exceptions import (
+    FSFileConflictError,
+    FSReshapingRequiredError,
+    FSLocalMissError,
+)
 
 from parsec.core.fs.utils import is_file_manifest
 
@@ -201,7 +205,7 @@ class SyncTransactions:
         for chield_entry_id in remote_manifest.children.values():
             try:
                 child_manifest = self.local_storage.get_manifest(chield_entry_id)
-            except LocalStorageMissingError:
+            except FSLocalMissError:
                 continue
             if child_manifest.is_placeholder:
                 yield chield_entry_id
@@ -381,7 +385,7 @@ class SyncTransactions:
             for buffer_space in space.buffers:
                 try:
                     buff = self.local_storage.get_block(buffer_space.buffer.access.id)
-                except LocalStorageMissingError:
+                except FSLocalMissError:
                     missing.append(buffer_space.buffer.access)
                     continue
                 if buffer_space.buffer.access:

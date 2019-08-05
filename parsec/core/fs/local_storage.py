@@ -22,18 +22,11 @@ from parsec.core.types import (
     LocalFileManifest,
     local_manifest_serializer,
 )
-from parsec.core.persistent_storage import (
-    PersistentStorage,
-    LocalStorageMissingError,
-    LocalStorageError,
-)
+from parsec.core.fs.persistent_storage import PersistentStorage
+from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 
 logger = get_logger()
-
-
-class FSInvalidFileDescriptor(Exception):
-    pass
 
 
 class LocalStorage:
@@ -44,6 +37,8 @@ class LocalStorage:
     - the persistent storage to keep serialized data on the disk
     - a lock mecanism to protect against race conditions
     """
+
+    persistent_storage_class = PersistentStorage
 
     def __init__(self, device_id: DeviceID, key: SecretKey, path: Path, **kwargs):
         self.device_id = device_id
@@ -59,7 +54,7 @@ class LocalStorage:
         # Manifest and block storage
         self.cache_ahead_of_persistance_ids = set()
         self.local_manifest_cache = {}
-        self.persistent_storage = PersistentStorage(key, path, **kwargs)
+        self.persistent_storage = self.persistent_storage_class(key, path, **kwargs)
 
     def _get_next_fd(self) -> FileDescriptor:
         self.fd_counter += 1
@@ -71,7 +66,7 @@ class LocalStorage:
 
     def __exit__(self, *args):
         for entry_id in self.cache_ahead_of_persistance_ids.copy():
-            self.ensure_manifest_flushed_on_disk(entry_id)
+            self.ensure_manifest_persistant(entry_id)
         self.persistent_storage.__exit__(*args)
 
     def clear_memory_cache(self):
@@ -102,7 +97,7 @@ class LocalStorage:
     # Manifest interface
 
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
-        """Raises: LocalStorageMissingError"""
+        """Raises: FSLocalMissError"""
         assert isinstance(entry_id, EntryID)
         try:
             return self.local_manifest_cache[entry_id]
@@ -146,7 +141,7 @@ class LocalStorage:
         self._check_lock_status(entry_id)
         try:
             self.persistent_storage.clear_manifest(entry_id)
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             pass
         self.local_manifest_cache.pop(entry_id, None)
         self.cache_ahead_of_persistance_ids.discard(entry_id)
@@ -161,7 +156,7 @@ class LocalStorage:
         assert isinstance(block_id, BlockID)
         try:
             return self.persistent_storage.get_dirty_block(block_id)
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             return self.persistent_storage.get_clean_block(block_id)
 
     def set_dirty_block(self, block_id: BlockID, block: bytes) -> None:
@@ -176,18 +171,18 @@ class LocalStorage:
         assert isinstance(block_id, BlockID)
         try:
             self.persistent_storage.clear_dirty_block(block_id)
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             try:
                 self.persistent_storage.clear_clean_block(block_id)
-            except LocalStorageMissingError:
-                logger.warning("Tried to remove a dirty block that doesn't exist anymore")
+            except FSLocalMissError as exc:
+                logger.warning(f"Block {exc.id} is absent from the storage")
 
     # File management interface
 
     def _assert_consistent_file_entry(self, entry_id):
         try:
             manifest = self.get_manifest(entry_id)
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             pass
         else:
             assert isinstance(manifest, LocalFileManifest)
@@ -238,17 +233,17 @@ class LocalStorageTimestamped(LocalStorage):
         self.clear_block = self._throw_permission_error
 
     def _throw_permission_error(*args, **kwargs):
-        raise LocalStorageError("Not implemented : LocalStorage is timestamped")
+        raise FSError("Not implemented : LocalStorage is timestamped")
 
     # Manifest interface
 
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
-        """Raises: LocalStorageMissingError"""
+        """Raises: FSLocalMissError"""
         assert isinstance(entry_id, EntryID)
         try:
             return self.local_manifest_cache[entry_id]
         except KeyError:
-            raise LocalStorageMissingError(entry_id)
+            raise FSLocalMissError(entry_id)
 
     def set_manifest(
         self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False

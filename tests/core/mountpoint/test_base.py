@@ -241,7 +241,7 @@ def test_manifest_not_available(mountpoint_service):
         await workspace.touch("/foo.txt")
         foo_id = await workspace.path_id("/foo.txt")
         async with user_fs.local_storage.lock_entry_id(foo_id):
-            user_fs.local_storage.clear_manifest(foo_id)
+            workspace.local_storage.clear_manifest(foo_id)
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()

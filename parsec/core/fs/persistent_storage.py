@@ -6,21 +6,13 @@ from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
 
 from parsec.core.types import EntryID, BlockID
+from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
 
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
 DEFAULT_BLOCK_SIZE = 2 ** 16
-
-
-class LocalStorageError(Exception):
-    pass
-
-
-class LocalStorageMissingError(LocalStorageError):
-    def __init__(self, id):
-        self.id = id
 
 
 class PersistentStorage:
@@ -172,7 +164,7 @@ class PersistentStorage:
             )
             manifest_row = cursor.fetchone()
         if not manifest_row:
-            raise LocalStorageMissingError(entry_id)
+            raise FSLocalMissError(entry_id)
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(self.local_symkey, blob)
 
@@ -193,7 +185,7 @@ class PersistentStorage:
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted:
-            raise LocalStorageMissingError(entry_id)
+            raise FSLocalMissError(entry_id)
 
     # Generic block operations
 
@@ -215,7 +207,7 @@ class PersistentStorage:
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             if not changes:
-                raise LocalStorageMissingError(block_id)
+                raise FSLocalMissError(block_id)
 
             cursor.execute("""SELECT data FROM blocks WHERE block_id = ?""", (str(block_id),))
             ciphered, = cursor.fetchone()
@@ -245,7 +237,7 @@ class PersistentStorage:
             cursor.execute("END")
 
         if not changes:
-            raise LocalStorageMissingError(block_id)
+            raise FSLocalMissError(block_id)
 
     # Clean block operations
 

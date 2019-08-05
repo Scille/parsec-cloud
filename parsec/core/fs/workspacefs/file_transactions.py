@@ -8,12 +8,9 @@ from async_generator import asynccontextmanager
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, EntryID
 from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor
 from parsec.core.types import BlockAccess, LocalFileManifest
-from parsec.core.local_storage import (
-    LocalStorage,
-    LocalStorageMissingError,
-    FSInvalidFileDescriptor,
-)
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
@@ -101,7 +98,7 @@ class FileTransactions:
 
     @asynccontextmanager
     async def _load_and_lock_file(self, fd: FileDescriptor):
-        # The LocalStorageMissingError exception is not considered here.
+        # The FSLocalMissError exception is not considered here.
         # This is because we should be able to assume that the manifest
         # corresponding to valid file descriptor is always available locally
 
@@ -125,13 +122,13 @@ class FileTransactions:
                 if isinstance(bs.buffer, DirtyBlockBuffer):
                     try:
                         buff = self.local_storage.get_block(block_access.id)
-                    except LocalStorageMissingError as exc:
+                    except FSLocalMissError as exc:
                         raise RuntimeError(f"Unknown local block `{block_access.id}`") from exc
 
                 elif isinstance(bs.buffer, BlockBuffer):
                     try:
                         buff = self.local_storage.get_block(block_access.id)
-                    except LocalStorageMissingError:
+                    except FSLocalMissError:
                         missing.append(block_access)
                         continue
 

@@ -53,29 +53,6 @@ class BlockAccessSchema(UnknownCheckedSchema):
 block_access_serializer = serializer_factory(BlockAccessSchema)
 
 
-# TODO: not used yet, useful ?
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class DirtyBlockAccess:
-    id: BlockID
-    key: SecretKey
-    offset: int
-    size: int
-
-
-class DirtyBlockAccessSchema(UnknownCheckedSchema):
-    id = BlockIDField(required=True)
-    key = fields.SecretKey(required=True)
-    offset = fields.Integer(required=True, validate=validate.Range(min=0))
-    size = fields.Integer(required=True, validate=validate.Range(min=0))
-
-    @post_load
-    def make_obj(self, data):
-        return DirtyBlockAccess(**data)
-
-
-dirty_block_access_serializer = serializer_factory(DirtyBlockAccessSchema)
-
-
 # Republishing under a better name
 WorkspaceRole = RealmRole
 WorkspaceRoleField = RealmRoleField

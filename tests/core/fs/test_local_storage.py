@@ -4,8 +4,8 @@ import pytest
 
 from parsec.types import DeviceID
 from parsec.crypto import SecretKey
-from parsec.core.local_storage import LocalStorage
-from parsec.core.persistent_storage import LocalStorageMissingError
+from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs import FSLocalMissError
 from parsec.core.types import (
     LocalUserManifest,
     LocalWorkspaceManifest,
@@ -40,7 +40,7 @@ def local_storage(tmpdir):
 
 def test_get_manifest(local_storage):
     entry_id, manifest = create_entry()
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         local_storage.get_manifest(entry_id)
     local_storage.local_manifest_cache[entry_id] = manifest
     assert local_storage.get_manifest(entry_id) == manifest
@@ -63,7 +63,7 @@ async def test_clear_manifest(local_storage):
 
     local_storage.clear_manifest(entry_id)
     assert entry_id not in local_storage.local_manifest_cache
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         local_storage.get_manifest(entry_id)
 
 

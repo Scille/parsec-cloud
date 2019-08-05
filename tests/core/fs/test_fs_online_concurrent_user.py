@@ -26,7 +26,6 @@ def test_fs_online_concurrent_user(
     backend_addr,
     backend_factory,
     server_factory,
-    local_storage_factory,
     user_fs_factory,
     alice,
     alice2,
@@ -35,9 +34,9 @@ def test_fs_online_concurrent_user(
         Workspaces = Bundle("workspace")
         FSs = Bundle("fs")
 
-        async def start_user_fs(self, device, local_storage):
+        async def start_user_fs(self, device):
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=device, local_storage=local_storage) as fs:
+                async with user_fs_factory(device=device) as fs:
                     await started_cb(fs=fs)
 
             return await self.get_root_nursery().start(call_with_control, _user_fs_controlled_cb)
@@ -63,12 +62,10 @@ def test_fs_online_concurrent_user(
             await reset_testbed()
             self.device1 = alice
             self.device2 = alice2
-            self.local_storage1 = await local_storage_factory(self.device1)
-            self.local_storage2 = await local_storage_factory(self.device2)
 
             self.backend_controller = await self.start_backend([self.device1, self.device2])
-            self.user_fs1_controller = await self.start_user_fs(self.device1, self.local_storage1)
-            self.user_fs2_controller = await self.start_user_fs(self.device2, self.local_storage2)
+            self.user_fs1_controller = await self.start_user_fs(self.device1)
+            self.user_fs2_controller = await self.start_user_fs(self.device2)
 
             self.wid = await self.user_fs1.workspace_create("w")
             workspace = self.user_fs1.get_workspace(self.wid)

@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.core.types import EntryID
+
 
 class FSError(Exception):
     pass
@@ -83,3 +85,12 @@ class FSReshapingRequiredError(FSError):
 
 class FSEntryNotFound(FSError):
     pass
+
+
+class FSInvalidFileDescriptor(FSError):
+    pass
+
+
+class FSLocalMissError(FSError):
+    def __init__(self, id: EntryID):
+        self.id = id

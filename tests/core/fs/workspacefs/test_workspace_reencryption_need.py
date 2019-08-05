@@ -27,7 +27,6 @@ def test_workspace_reencryption_need(
     backend_factory,
     backend_data_binder_factory,
     server_factory,
-    local_storage_factory,
     oracle_fs_with_sync_factory,
     user_fs_factory,
     local_device_factory,

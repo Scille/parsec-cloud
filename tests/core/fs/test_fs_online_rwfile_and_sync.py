@@ -24,19 +24,19 @@ def test_fs_online_rwfile_and_sync(
     backend_addr,
     backend_factory,
     server_factory,
-    local_storage_factory,
     user_fs_factory,
     alice,
+    persistent_mockup,
 ):
     class FSOnlineRwFileAndSync(TrioAsyncioRuleBasedStateMachine):
-        async def restart_user_fs(self, device, local_storage):
+        async def restart_user_fs(self, device):
             try:
                 await self.user_fs_controller.stop()
             except AttributeError:
                 pass
 
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=device, local_storage=local_storage) as user_fs:
+                async with user_fs_factory(device=device) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.user_fs_controller = await self.get_root_nursery().start(
@@ -65,9 +65,8 @@ def test_fs_online_rwfile_and_sync(
         async def init(self):
             await reset_testbed()
             self.device = alice
-            self.local_storage = await local_storage_factory(self.device)
             await self.start_backend()
-            await self.restart_user_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device)
             self.wid = await self.user_fs.workspace_create("w")
             workspace = self.user_fs.get_workspace(self.wid)
             await workspace.touch("/foo.txt")
@@ -77,13 +76,13 @@ def test_fs_online_rwfile_and_sync(
 
         @rule()
         async def restart(self):
-            await self.restart_user_fs(self.device, self.local_storage)
+            await self.restart_user_fs(self.device)
 
         @rule()
         async def reset(self):
             # TODO: would be cleaner to recreate a new device...
-            self.local_storage = await local_storage_factory(self.device, force=True)
-            await self.restart_user_fs(self.device, self.local_storage)
+            persistent_mockup.clear()
+            await self.restart_user_fs(self.device)
             await self.user_fs.sync()
             self.file_oracle.reset()
 

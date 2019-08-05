@@ -206,9 +206,6 @@ class RemoteLoader:
             raise FSError(f"Cannot decrypt block: {exc}") from exc
 
         # TODO: let encryption manager do the digest check ?
-        # TODO: is digest even useful ? Given nacl.secret.Box does digest check
-        # on the ciphered data they cannot be tempered. And given each block
-        # has an unique key, valid blocks cannot be switched together.
         assert sha256(block).hexdigest() == access.digest, access
         self.local_storage.set_clean_block(access.id, block)
 

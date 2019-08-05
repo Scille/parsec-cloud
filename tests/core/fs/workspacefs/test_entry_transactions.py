@@ -226,7 +226,7 @@ def test_folder_operations(
     tmpdir,
     hypothesis_settings,
     reset_testbed,
-    local_storage_factory,
+    initialize_local_storage,
     entry_transactions_factory,
     file_transactions_factory,
     alice,
@@ -249,7 +249,7 @@ def test_folder_operations(
 
             self.last_step_id_to_path = set()
             self.device = alice
-            self.local_storage = await local_storage_factory(self.device)
+            self.local_storage = await initialize_local_storage(self.device)
             self.entry_transactions = await entry_transactions_factory(
                 self.device, self.local_storage, alice_backend_cmds
             )

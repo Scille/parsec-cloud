@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+from pathlib import Path
+from contextlib import ExitStack
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional
 from structlog import get_logger
@@ -31,7 +33,7 @@ from parsec.core.types import (
     LocalUserManifest,
     remote_manifest_serializer,
 )
-from parsec.core.local_storage import LocalStorage, LocalStorageMissingError
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.backend_connection import (
     BackendCmdsPool,
     BackendNotAvailable,
@@ -56,6 +58,7 @@ from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_work
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
     FSError,
+    FSLocalMissError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
@@ -128,23 +131,31 @@ class ReencryptionJob:
 
 
 class UserFS:
+
+    local_storage_class = LocalStorage
+
     def __init__(
         self,
         device: LocalDevice,
-        local_storage: LocalStorage,
+        path: Path,
         backend_cmds: BackendCmdsPool,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
     ):
         self.device = device
-        self.local_storage = local_storage
+        self.path = path
         self.backend_cmds = backend_cmds
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
+
+        self.local_storage = self.local_storage_class(device.device_id, device.local_symkey, path)
+
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
+        self._exit_stack = ExitStack()
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
+        self._workspace_storages = {}
 
         wentry = WorkspaceEntry(
             name="<user manifest>",
@@ -161,6 +172,13 @@ class UserFS:
             self.local_storage,
         )
 
+    def __enter__(self):
+        self._exit_stack.enter_context(self.local_storage)
+        return self
+
+    def __exit__(self, *args):
+        self._exit_stack.close()
+
     @property
     def user_manifest_id(self) -> EntryID:
         return self.device.user_manifest_id
@@ -172,17 +190,36 @@ class UserFS:
         try:
             return self.local_storage.get_manifest(self.user_manifest_id)
 
-        except LocalStorageMissingError:
+        except FSLocalMissError:
             # In the unlikely event the user manifest is not present in
             # local (e.g. device just created or during tests), we fall
             # back on an empty manifest which is a good aproximation of
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
-            user_manifest = LocalUserManifest(author=self.device.device_id)
-            self.local_storage.set_manifest(
-                self.user_manifest_id, user_manifest, check_lock_status=False
-            )
-            return user_manifest
+            return LocalUserManifest(author=self.device.device_id)
+
+    def set_user_manifest(self, manifest: LocalUserManifest) -> None:
+        """
+        Raises: Nothing
+        """
+        self.local_storage.set_manifest(self.user_manifest_id, manifest, check_lock_status=False)
+
+    def get_workspace_local_storage(self, workspace_id):
+        if workspace_id not in self._workspace_storages:
+            cls = self.local_storage_class
+            path = self.path / str(workspace_id)
+            local_storage = cls(self.device.device_id, self.device.local_symkey, path)
+            self._exit_stack.enter_context(local_storage)
+            self._workspace_storages[workspace_id] = local_storage
+        return self._workspace_storages[workspace_id]
+
+    async def set_workspace_manifest(self, workspace_id, manifest):
+        """
+        Raises: Nothing
+        """
+        local_storage = self.get_workspace_local_storage(workspace_id)
+        async with local_storage.lock_entry_id(workspace_id):
+            local_storage.set_manifest(workspace_id, manifest)
 
     def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
@@ -205,7 +242,7 @@ class UserFS:
             workspace_id=workspace_id,
             get_workspace_entry=_get_workspace_entry,
             device=self.device,
-            local_storage=self.local_storage,
+            local_storage=self.get_workspace_local_storage(workspace_id),
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
@@ -222,11 +259,8 @@ class UserFS:
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            async with self.local_storage.lock_entry_id(workspace_entry.id):
-                self.local_storage.set_manifest(workspace_entry.id, workspace_manifest)
-            self.local_storage.set_manifest(
-                self.user_manifest_id, user_manifest, check_lock_status=False
-            )
+            await self.set_workspace_manifest(workspace_entry.id, workspace_manifest)
+            self.set_user_manifest(user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
@@ -247,9 +281,7 @@ class UserFS:
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
-            self.local_storage.set_manifest(
-                self.user_manifest_id, updated_user_manifest, check_lock_status=False
-            )
+            self.set_user_manifest(updated_user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
     async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
@@ -352,9 +384,7 @@ class UserFS:
                 if base_um and diverged_um.base_version != base_um.base_version:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
-                self.local_storage.set_manifest(
-                    self.user_manifest_id, merged, check_lock_status=False
-                )
+                self.set_user_manifest(merged)
                 # TODO: deprecated event ?
                 self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
                 return
@@ -458,9 +488,7 @@ class UserFS:
             # Final merge could have been achieved by a concurrent operation
             if to_sync_um.base_version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
-                self.local_storage.set_manifest(
-                    self.user_manifest_id, merged_um, check_lock_status=False
-                )
+                self.set_user_manifest(merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -631,9 +659,7 @@ class UserFS:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
                     )
-                    self.local_storage.set_manifest(
-                        self.user_manifest_id, user_manifest, check_lock_status=False
-                    )
+                    self.set_user_manifest(user_manifest)
                     self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
         return errors
@@ -748,9 +774,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_manifest(
-                self.user_manifest_id, user_manifest, check_lock_status=False
-            )
+            self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
             if already_existing_entry:
                 self.event_bus.send(
@@ -806,9 +830,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.local_storage.set_manifest(
-                self.user_manifest_id, user_manifest, check_lock_status=False
-            )
+            self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
                 "sharing.revoked",

@@ -14,8 +14,9 @@ from uuid import uuid4
 
 from parsec.crypto import SecretKey
 from parsec.core.types import EntryID, BlockID
-from parsec.core.persistent_storage import PersistentStorage, LocalStorageMissingError
-from parsec.core.persistent_storage import DEFAULT_BLOCK_SIZE as block_size
+from parsec.core.fs import FSLocalMissError
+from parsec.core.fs.persistent_storage import PersistentStorage
+from parsec.core.fs.persistent_storage import DEFAULT_BLOCK_SIZE as block_size
 
 from tests.common import freeze_time
 
@@ -58,10 +59,10 @@ def test_persistent_storage_set_get_clear_manifest(persistent_storage):
 
     persistent_storage.clear_manifest(ENTRY_ID)
 
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.clear_manifest(ENTRY_ID)
 
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_manifest(ENTRY_ID)
 
 
@@ -78,10 +79,10 @@ def test_persistent_storage_set_get_clear_block(persistent_storage, sensitivity)
 
     clear_method(ENTRY_ID)
 
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         clear_method(ENTRY_ID)
 
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         get_method(ENTRY_ID)
 
 
@@ -109,7 +110,7 @@ def test_local_manual_run_block_garbage_collector(persistent_storage):
 
     persistent_storage.run_block_garbage_collector()
     persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_deletable)
 
 
@@ -141,9 +142,9 @@ def test_local_manual_run_block_garbage_collector_with_limit(persistent_storage)
     persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
     persistent_storage.get_clean_block(block_id_deletable3) == b"deletable_data"
     persistent_storage.get_clean_block(block_id_deletable4) == b"deletable_data"
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_deletable1)
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_deletable2)
 
 
@@ -165,7 +166,7 @@ def test_local_automatic_run_garbage_collector(persistent_storage):
     data_a = persistent_storage.get_dirty_block(block_id_a)
     assert data_a == b"a" * 10
 
-    with pytest.raises(LocalStorageMissingError):
+    with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_b)
 
     data_c = persistent_storage.get_clean_block(block_id_c)
@@ -205,7 +206,7 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
         def get_precious_data(self, entry):
             block_id, expected_data = entry
             if block_id in self.cleared_precious_data:
-                with pytest.raises(LocalStorageMissingError):
+                with pytest.raises(FSLocalMissError):
                     self.persistent_storage.get_dirty_block(block_id)
             else:
                 data = self.persistent_storage.get_dirty_block(block_id)
@@ -217,7 +218,7 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
             try:
                 data = self.persistent_storage.get_clean_block(block_id)
                 assert data == expected_data
-            except LocalStorageMissingError:
+            except FSLocalMissError:
                 pass
 
         @rule(target=DeletableEntry, data_size=st.integers(min_value=0, max_value=64))
@@ -238,7 +239,7 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
         def clear_precious_data(self, entry):
             block_id, _ = entry
             if block_id in self.cleared_precious_data:
-                with pytest.raises(LocalStorageMissingError):
+                with pytest.raises(FSLocalMissError):
                     self.persistent_storage.clear_dirty_block(block_id)
             else:
                 self.persistent_storage.clear_dirty_block(block_id)
@@ -249,7 +250,7 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
             block_id, _ = entry
             try:
                 self.persistent_storage.clear_clean_block(block_id)
-            except LocalStorageMissingError:
+            except FSLocalMissError:
                 pass
 
         @rule()
