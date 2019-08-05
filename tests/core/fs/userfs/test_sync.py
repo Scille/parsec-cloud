@@ -217,18 +217,12 @@ async def test_sync_under_concurrency(
 @pytest.mark.trio
 @pytest.mark.parametrize("with_workspace", (False, True))
 async def test_sync_placeholder(
-    running_backend,
-    backend_data_binder,
-    local_device_factory,
-    local_storage_factory,
-    user_fs_factory,
-    with_workspace,
+    running_backend, backend_data_binder, local_device_factory, user_fs_factory, with_workspace
 ):
     device = local_device_factory()
-    await local_storage_factory(device, user_manifest_in_v0=True)
     await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device) as user_fs:
+    async with user_fs_factory(device, initialize_local_storage=False) as user_fs:
         with freeze_time("2000-01-01"):
             # User manifest should be lazily created on each access
             um = user_fs.get_user_manifest()
@@ -282,22 +276,17 @@ async def test_sync_placeholder(
 @pytest.mark.trio
 @pytest.mark.parametrize("dev2_has_changes", (False, True))
 async def test_concurrent_sync_placeholder(
-    running_backend,
-    backend_data_binder,
-    local_device_factory,
-    local_storage_factory,
-    user_fs_factory,
-    dev2_has_changes,
+    running_backend, backend_data_binder, local_device_factory, user_fs_factory, dev2_has_changes
 ):
     device1 = local_device_factory("a@1")
-    await local_storage_factory(device1, user_manifest_in_v0=True)
     await backend_data_binder.bind_device(device1, initial_user_manifest_in_v0=True)
 
     device2 = local_device_factory("a@2")
-    await local_storage_factory(device2, user_manifest_in_v0=True)
     await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device1) as user_fs1, user_fs_factory(device2) as user_fs2:
+    async with user_fs_factory(
+        device1, initialize_local_storage=False
+    ) as user_fs1, user_fs_factory(device2, initialize_local_storage=False) as user_fs2:
         with freeze_time("2000-01-01"):
             w1id = await user_fs1.workspace_create("w1")
         if dev2_has_changes:

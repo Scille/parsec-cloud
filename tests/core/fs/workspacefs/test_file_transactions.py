@@ -205,7 +205,7 @@ def test_file_operations(
     tmpdir,
     hypothesis_settings,
     reset_testbed,
-    local_storage_factory,
+    initialize_local_storage,
     file_transactions_factory,
     alice,
     alice_backend_cmds,
@@ -220,7 +220,7 @@ def test_file_operations(
             await reset_testbed()
 
             self.device = alice
-            self.local_storage = await local_storage_factory(self.device)
+            self.local_storage = await initialize_local_storage(self.device)
 
             self.file_transactions = await file_transactions_factory(
                 self.device, self.local_storage, alice_backend_cmds
