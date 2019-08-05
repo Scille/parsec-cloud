@@ -91,8 +91,7 @@ class LocalStorage:
 
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
-        # TODO: remove `task is None` to ensure that the lock is taken
-        assert task is None or task == hazmat.current_task()
+        assert task == hazmat.current_task()
 
     # Manifest interface
 

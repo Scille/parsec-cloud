@@ -61,7 +61,8 @@ async def test_clear_manifest(local_storage):
         local_storage.set_manifest(entry_id, manifest)
     assert local_storage.get_manifest(entry_id) == manifest
 
-    local_storage.clear_manifest(entry_id)
+    async with local_storage.lock_entry_id(entry_id):
+        local_storage.clear_manifest(entry_id)
     assert entry_id not in local_storage.local_manifest_cache
     with pytest.raises(FSLocalMissError):
         local_storage.get_manifest(entry_id)
