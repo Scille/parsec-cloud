@@ -3,6 +3,7 @@
 # Given `parsec.types` depends on this module, we cannot put it inside
 # package `parsec.crypto` (which in turn depends of `parsec.types`)
 
+from typing import NewType
 from base64 import b32decode, b32encode
 from nacl.utils import random
 from nacl.secret import SecretBox
@@ -19,6 +20,9 @@ class SecretKey(bytes):
     def __repr__(self):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
+
+
+HashDigest = NewType("HashDigest", bytes)
 
 
 # Basically just add comparison support to nacl keys

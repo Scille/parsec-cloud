@@ -4,6 +4,7 @@
 # `parsec.crypto` only to avoid recursive imports
 from parsec.crypto_types import (
     SecretKey,
+    HashDigest,
     PrivateKey,
     PublicKey,
     SigningKey,
@@ -62,6 +63,7 @@ from parsec.crypto.certif import (
 __all__ = (
     # types
     "SecretKey",
+    "HashDigest",
     "PrivateKey",
     "PublicKey",
     "SigningKey",
@@ -76,6 +78,7 @@ __all__ = (
     "CryptoSignatureAuthorMismatchError",
     "CryptoSignatureTimestampMismatchError",
     # raw
+    "generate_secret_key",
     "derivate_secret_key_from_password",
     "encrypt_raw_with_secret_key",
     "decrypt_raw_with_secret_key",
