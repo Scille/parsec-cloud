@@ -28,6 +28,7 @@ background-color: rgb(255, 255, 255);
 #button_delete
 {
 border: 0;
+background: 0;
 }</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
