@@ -15,184 +15,151 @@ def timestamp():
     return current_clock().current_time()
 
 
-class SyncMonitor:
-    def __init__(self, user_fs, backend_cmds, event_bus):
-        super().__init__()
-        self.user_fs = user_fs
-        self.event_bus = event_bus
+async def _refresh_checkpoint(backend_cmds, realm_id, local_storage, r_updated_entries):
+    realm_checkpoint = local_storage.get_realm_checkpoint()
 
-        self._running = False
+    new_checkpoint, changes = await backend_cmds.vlob_poll_changes(realm_id, realm_checkpoint)
+    # TODO: handle exceptions
+    # BackendCmdsInvalidRequest
+    # BackendCmdsInvalidResponse
+    # BackendNotAvailable
+    # BackendCmdsBadResponse
+    await local_storage.update_realm_checkpoint(new_checkpoint, changes.keys())
+    need_sync_entries = local_storage.get_need_sync_entries()
+    now = timestamp()
+    # Use r_updated_entries to return result
+    r_updated_entries.update({(realm_id, entry_id): (now, now) for entry_id in need_sync_entries})
 
-        self._backend_online_event = trio.Event()
-        self._monitoring_cancel_scope = None
 
-        self.event_bus.connect("backend.online", self._on_backend_online)
-        self.event_bus.connect("backend.offline", self._on_backend_offline)
-
-    def _on_backend_online(self, event):
-        self._backend_online_event.set()
-
-    def _on_backend_offline(self, event):
-        self._backend_online_event.clear()
-        if self._monitoring_cancel_scope:
-            self._monitoring_cancel_scope.cancel()
-
-    @property
-    def running(self):
-        return self._running
-
-    async def run(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        if self.running:
-            raise RuntimeError("Already running")
-        self._running = True
-
-        task_status.started()
-        while True:
-            await self._backend_online_event.wait()
-            try:
-                await self._monitoring()
-            except FSBackendOfflineError:
-                self._backend_online_event.clear()
-            self._monitoring_cancel_scope = None
-            self.event_bus.send("sync_monitor.disconnected")
-
-    async def _refresh_checkpoint(self, realm_id, local_storage, r_updated_entries):
-        realm_checkpoint = local_storage.get_realm_checkpoint()
-
-        new_checkpoint, changes = await self.user_fs.backend_cmds.vlob_poll_changes(
-            realm_id, realm_checkpoint
+async def _get_updated_entries(user_fs):
+    updated_entries = {}
+    user_manifest = user_fs.get_user_manifest()
+    async with trio.open_nursery() as nursery:
+        nursery.start_soon(
+            _refresh_checkpoint,
+            user_fs.backend_cmds,
+            user_fs.user_manifest_id,
+            user_fs.local_storage,
+            updated_entries,
         )
-        # TODO: handle exceptions
-        # BackendCmdsInvalidRequest
-        # BackendCmdsInvalidResponse
-        # BackendNotAvailable
-        # BackendCmdsBadResponse
-        await local_storage.update_realm_checkpoint(new_checkpoint, changes.keys())
-        need_sync_entries = local_storage.get_need_sync_entries()
-        now = timestamp()
-        # Use r_updated_entries to return result
-        r_updated_entries.update(
-            {(realm_id, entry_id): (now, now) for entry_id in need_sync_entries}
-        )
-
-    async def _get_updated_entries(self):
-        updated_entries = {}
-        user_manifest = self.user_fs.get_user_manifest()
-        async with trio.open_nursery() as nursery:
+        for entry in user_manifest.workspaces:
+            wfs = user_fs.get_workspace(entry.id)
             nursery.start_soon(
-                self._refresh_checkpoint,
-                self.user_fs.user_manifest_id,
-                self.user_fs.local_storage,
+                _refresh_checkpoint,
+                user_fs.backend_cmds,
+                entry.id,
+                wfs.local_storage,
                 updated_entries,
             )
-            for entry in user_manifest.workspaces:
-                wfs = self.user_fs.get_workspace(entry.id)
-                nursery.start_soon(
-                    self._refresh_checkpoint, entry.id, wfs.local_storage, updated_entries
-                )
 
-        return updated_entries
+    return updated_entries
 
-    async def _monitoring(self):
-        with trio.CancelScope() as self._monitoring_cancel_scope:
-            self.event_bus.send("sync_monitor.reconnection_sync.started")
-            updated_entries = await self._get_updated_entries()
-            self.event_bus.send("sync_monitor.reconnection_sync.done")
 
-            await self._monitoring_loop(updated_entries)
+def _sorted_entries(updated_entries):
+    result = []
+    for (wid, id), (first_updated, last_updated) in updated_entries.items():
+        t = min(first_updated + MAX_WAIT, last_updated + MIN_WAIT)
+        result.append((t, id, wid))
+    return sorted(result)
 
-            # # TODO: currently we must finish *all* the sync operations
-            # # before considering ourself up and running...
-            # try:
-            #     await self.user_fs.sync()
-            #     user_manifest = self.user_fs.get_user_manifest()
-            #     for entry in user_manifest.workspaces:
-            #         workspace = self.user_fs.get_workspace(entry.id)
-            #         await workspace.sync("/")
-            # finally:
-            #     self.event_bus.send("sync_monitor.reconnection_sync.done")
 
-            # await self._monitoring_loop()
+async def _monitoring_tick(user_fs, updated_entries):
+    # Loop over entries to synchronize
+    for t, id, wid in _sorted_entries(updated_entries):
+        if t > timestamp():
+            return
 
-    async def _monitoring_loop(self, updated_entries):
-        # async def _monitoring_loop(self):
-        # updated_entries = {}
-        new_event = trio.Event()
+        # Pop from entries before the synchronization
+        updated_entries.pop((wid, id), None)
 
-        def _on_entry_updated(event, workspace_id=None, id=None):
-            assert id is not None
+        # Perform the synchronization
+        if id == user_fs.user_manifest_id:
+            await user_fs.sync()
+        elif wid is not None:
             try:
-                first_updated, _ = updated_entries[workspace_id, id]
-                last_updated = timestamp()
-            except KeyError:
-                first_updated = last_updated = timestamp()
-            updated_entries[workspace_id, id] = first_updated, last_updated
-            new_event.set()
+                workspace = user_fs.get_workspace(wid)
+            except FSWorkspaceNotFoundError:
+                # If the workspace is not present, nothing to do
+                # (this can happen when a workspace is just shared with
+                # us, hence we receive vlob updated events before having
+                # added the workspace entry to our user manifest)
+                continue
 
-        def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
-            updated_entries[realm_id, src_id] = timestamp() - MAX_WAIT, timestamp() - MAX_WAIT
-            new_event.set()
-
-        with self.event_bus.connect_in_context(
-            ("fs.entry.updated", _on_entry_updated),
-            ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
-        ):
-
-            async with trio.open_nursery() as nursery:
-                while True:
-                    self.event_bus.send("sync_monitor.ready")
-
-                    await new_event.wait()
-                    new_event.clear()
-
-                    await self._monitoring_tick(updated_entries)
-                    sorted_entries = self._sorted_entries(updated_entries)
-                    if sorted_entries:
-                        t, _, _ = sorted_entries[0]
-                        delta = max(0, t - timestamp())
-
-                        async def _wait():
-                            await trio.sleep(delta)
-                            new_event.set()
-
-                        nursery.start_soon(_wait)
-
-    def _sorted_entries(self, updated_entries):
-        result = []
-        for (wid, id), (first_updated, last_updated) in updated_entries.items():
-            t = min(first_updated + MAX_WAIT, last_updated + MIN_WAIT)
-            result.append((t, id, wid))
-        return sorted(result)
-
-    async def _monitoring_tick(self, updated_entries):
-        # Loop over entries to synchronize
-        for t, id, wid in self._sorted_entries(updated_entries):
-            if t > timestamp():
-                return
-
-            # Pop from entries before the synchronization
-            updated_entries.pop((wid, id), None)
-
-            # Perform the synchronization
-            if id == self.user_fs.user_manifest_id:
-                await self.user_fs.sync()
-            elif wid is not None:
-                try:
-                    workspace = self.user_fs.get_workspace(wid)
-                except FSWorkspaceNotFoundError:
-                    # If the workspace is not present, nothing to do
-                    # (this can happen when a workspace is just shared with
-                    # us, hence we receive vlob updated events before having
-                    # added the workspace entry to our user manifest)
-                    # TODO: add unittest about this...
-                    continue
-
-                # No recursion here: only the manifest that has changed
-                # (remotely or locally) should get synchronized
-                await workspace.sync_by_id(id, recursive=False)
+            # No recursion here: only the manifest that has changed
+            # (remotely or locally) should get synchronized
+            await workspace.sync_by_id(id, recursive=False)
 
 
-async def monitor_sync(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
-    with event_bus.connection_context() as event_bus_ctx:
-        sync_monitor = SyncMonitor(fs, fs.backend_cmds, event_bus_ctx)
-        await sync_monitor.run(task_status=task_status)
+async def _monitor_sync_online(user_fs, event_bus):
+    new_event = trio.Event()
+
+    def _on_entry_updated(event, workspace_id=None, id=None):
+        assert id is not None
+        try:
+            first_updated, _ = updated_entries[workspace_id, id]
+            last_updated = timestamp()
+        except KeyError:
+            first_updated = last_updated = timestamp()
+        updated_entries[workspace_id, id] = first_updated, last_updated
+        new_event.set()
+
+    def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
+        updated_entries[realm_id, src_id] = timestamp() - MAX_WAIT, timestamp() - MAX_WAIT
+        new_event.set()
+
+    with event_bus.connect_in_context(
+        ("fs.entry.updated", _on_entry_updated),
+        ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
+    ):
+
+        event_bus.send("sync_monitor.reconnection_sync.started")
+        updated_entries = await _get_updated_entries(user_fs)
+        event_bus.send("sync_monitor.reconnection_sync.done")
+
+        async with trio.open_nursery() as nursery:
+            event_bus.send("sync_monitor.ready")
+            while True:
+
+                await new_event.wait()
+                new_event.clear()
+
+                await _monitoring_tick(user_fs, updated_entries)
+                sorted_entries = _sorted_entries(updated_entries)
+                if sorted_entries:
+                    t, _, _ = sorted_entries[0]
+                    delta = max(0, t - timestamp())
+
+                    async def _wait():
+                        await trio.sleep(delta)
+                        new_event.set()
+
+                    nursery.start_soon(_wait)
+
+
+async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+    with event_bus.waiter_on("backend.online") as _on_backend_online, event_bus.waiter_on(
+        "backend.offline"
+    ) as _on_backend_offline:
+
+        task_status.started()
+
+        while True:
+            await _on_backend_online.wait()
+            _on_backend_online.clear()
+
+            try:
+                async with trio.open_nursery() as nursery:
+
+                    async def _reset_on_offline():
+                        await _on_backend_offline.wait()
+                        _on_backend_offline.clear()
+                        nursery.cancel_scope.cancel()
+
+                    nursery.start_soon(_reset_on_offline)
+                    await _monitor_sync_online(user_fs, event_bus)
+
+            except FSBackendOfflineError:
+                pass
+
+            finally:
+                event_bus.send("sync_monitor.disconnected")
