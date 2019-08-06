@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-
 from enum import Enum
 
-BackendState = Enum("BackendState", "READY LOST INCOMPATIBLE_VERSION INITIALIZING")
 
+BackendState = Enum("BackendState", "READY LOST INCOMPATIBLE_VERSION INITIALIZING")
 connection_states = {}
 
 
@@ -28,15 +27,14 @@ async def monitor_backend_connection(event_bus, *, task_status=trio.TASK_STATUS_
 
     async def wait_offline(nursery):
         await events["backend.offline"].wait()
-        nursery.cancel_scope.cancel()
         if connection_states[event_bus] != BackendState.INCOMPATIBLE_VERSION:
             event_bus.send("backend.connection.lost")
             connection_states[event_bus] = BackendState.LOST
-        nursery.cancel_scope.cancel()
         for e in events.values():
             e.clear()
+        nursery.cancel_scope.cancel()
 
-    async def wait_incompatible_version(nursery):
+    async def wait_incompatible_version():
         await events["backend.incompatible_version"].wait()
         if connection_states[event_bus] != BackendState.INCOMPATIBLE_VERSION:
             connection_states[event_bus] = BackendState.INCOMPATIBLE_VERSION
@@ -62,6 +60,6 @@ async def monitor_backend_connection(event_bus, *, task_status=trio.TASK_STATUS_
         task_status.started()
         while True:
             async with trio.open_nursery() as nursery:
-                nursery.start_soon(wait_incompatible_version, nursery)
+                nursery.start_soon(wait_incompatible_version)
                 nursery.start_soon(wait_offline, nursery)
                 nursery.start_soon(wait_connect)
