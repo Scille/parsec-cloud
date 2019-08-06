@@ -57,14 +57,14 @@ class EventBusSpy:
         self._waiters.add(_waiter)
         return await receive_channel.receive()
 
-    async def wait_multiple_with_timeout(self, events, timeout=1):
+    async def wait_multiple_with_timeout(self, events, timeout=1, in_order=True):
         with trio.fail_after(timeout):
-            await self.wait_multiple(events)
+            await self.wait_multiple(events, in_order=in_order)
 
-    async def wait_multiple(self, events):
+    async def wait_multiple(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         try:
-            self.assert_events_occured(expected_events)
+            self.assert_events_occured(expected_events, in_order=in_order)
             return
         except AssertionError:
             pass
@@ -73,7 +73,7 @@ class EventBusSpy:
 
         def _waiter(cooked_event):
             try:
-                self.assert_events_occured(expected_events)
+                self.assert_events_occured(expected_events, in_order=in_order)
                 self._waiters.remove(_waiter)
                 done.set()
             except AssertionError:
@@ -110,13 +110,14 @@ class EventBusSpy:
         else:
             raise AssertionError(f"Event {expected} didn't occured")
 
-    def assert_events_occured(self, events):
+    def assert_events_occured(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         current_events = self.events
         for event in expected_events:
             assert event in current_events, self.events
-            i = current_events.index(event)
-            current_events = current_events[i + 1 :]
+            if in_order:
+                i = current_events.index(event)
+                current_events = current_events[i + 1 :]
 
     def assert_events_exactly_occured(self, events):
         events = self._cook_events_params(events)
