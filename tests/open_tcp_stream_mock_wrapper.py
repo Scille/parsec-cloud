@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from collections import defaultdict
 from contextlib import contextmanager
 from unittest.mock import patch
 import inspect
@@ -14,52 +13,57 @@ def addr_to_netloc(addr):
 
 class OpenTCPStreamMockWrapper:
     def __init__(self):
-        self._socks = defaultdict(list)
+        self._socks = []
         self._hooks = {}
         self._offlines = set()
 
     @contextmanager
     def install_hook(self, addr, hook):
-        netloc = addr_to_netloc(addr)
-        self.push_hook(netloc, hook)
+        self.push_hook(addr, hook)
         try:
             yield
         finally:
-            self.pop_hook(netloc)
+            self.pop_hook(addr)
 
     def push_hook(self, addr, hook):
-        netloc = addr_to_netloc(addr)
-        assert netloc not in self._hooks
-        self._hooks[netloc] = hook
+        netloc_suffix = addr_to_netloc(addr)
+        assert netloc_suffix not in self._hooks
+        self._hooks[netloc_suffix] = hook
 
     def pop_hook(self, addr):
-        netloc = addr_to_netloc(addr)
-        self._hooks.pop(netloc)
+        netloc_suffix = addr_to_netloc(addr)
+        self._hooks.pop(netloc_suffix)
 
     def get_socks(self, addr):
-        netloc = addr_to_netloc(addr)
-        return self._socks[netloc]
+        netloc_suffix = addr_to_netloc(addr)
+        return [sock for netloc, sock in self._socks if netloc.endswith(netloc_suffix)]
 
-    async def __call__(self, host, port, **kwargs):
+    async def __call__(self, host, port, *args, **kwargs):
         netloc = f"{host}:{port}" if port is not None else host
-        hook = self._hooks.get(netloc)
-        if hook and netloc not in self._offlines:
+        hook = next(
+            (hook for netloc_suffix, hook in self._hooks.items() if netloc.endswith(netloc_suffix)),
+            None,
+        )
+        if hook and not any(netloc.endswith(offline) for offline in self._offlines):
             if inspect.iscoroutinefunction(hook):
-                sock = await hook(host, port, **kwargs)
+                sock = await hook(host, port, *args, **kwargs)
             else:
-                sock = hook(host, port, **kwargs)
-        else:
-            raise ConnectionRefusedError(111, "Connection refused")
+                sock = hook(host, port, *args, **kwargs)
 
-        self._socks[netloc].append(sock)
-        return sock
+            if sock:
+                self._socks.append((netloc, sock))
+                return sock
+
+        raise ConnectionRefusedError(111, "Connection refused")
 
     def switch_offline(self, addr):
-        netloc = addr_to_netloc(addr)
-        if netloc in self._offlines:
+        netloc_suffix = addr_to_netloc(addr)
+        if netloc_suffix in self._offlines:
             return
 
-        for sock in self._socks[netloc]:
+        for netloc, sock in self._socks:
+            if not netloc.endswith(netloc_suffix):
+                continue
 
             async def _broken_stream(*args, **kwargs):
                 raise trio.BrokenResourceError()
@@ -70,19 +74,22 @@ class OpenTCPStreamMockWrapper:
             sock.send_stream.send_all_hook = _broken_stream
             sock.receive_stream.receive_some_hook = _broken_stream
 
-        self._offlines.add(netloc)
+        self._offlines.add(netloc_suffix)
 
     def switch_online(self, addr):
-        netloc = addr_to_netloc(addr)
-        if netloc not in self._offlines:
+        netloc_suffix = addr_to_netloc(addr)
+        if netloc_suffix not in self._offlines:
             return
 
-        for sock in self._socks[netloc]:
+        for netloc, sock in self._socks:
+            if not netloc.endswith(netloc_suffix):
+                continue
+
             sock.send_stream.send_all_hook = sock.send_stream.send_all_hook.old_send_all_hook
             sock.receive_stream.receive_some_hook = (
                 sock.receive_stream.receive_some_hook.old_receive_some_hook
             )
-        self._offlines.remove(netloc)
+        self._offlines.remove(netloc_suffix)
 
     @contextmanager
     def offline(self, addr):

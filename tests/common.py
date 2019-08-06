@@ -16,6 +16,15 @@ from parsec.core.fs.persistent_storage import PersistentStorage
 from parsec.api.transport import Transport, TransportError
 
 
+def addr_with_device_subdomain(addr, device_id):
+    """
+    Useful to have each device access the same backend with a different hostname
+    so tcp_stream_spy can put some offline and leave others online
+    """
+    device_specific_hostname = f"{device_id.user_id}.{device_id.device_name}.{addr.hostname}"
+    return type(addr)(addr.replace(addr.hostname, device_specific_hostname, 1))
+
+
 class InMemoryPersistentStorage(PersistentStorage):
     """An in-memory version of the local database.
 
