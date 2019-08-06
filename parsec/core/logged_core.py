@@ -43,10 +43,6 @@ async def logged_core_factory(
 
     # Plenty of nested scopes to order components init/teardown
     async with trio.open_nursery() as root_nursery:
-        # TODO: Currently backend_listen_events connect to backend and
-        # switch to listen events mode, then monitors kick in and send it
-        # events about which vlob groups to listen on, obliging to restart the
-        # listen connection...
 
         async with backend_cmds_pool_factory(
             device.organization_addr,
@@ -71,6 +67,9 @@ async def logged_core_factory(
                     await monitor_nursery.start(monitor_messages, user_fs, event_bus)
                     await monitor_nursery.start(monitor_sync, user_fs, event_bus)
 
+                    # At startup monitors consider the backend connection is offline
+                    # Hence `backend_listen_events` should be started after them
+                    # to make sure it wont send a `backend.online` event too early
                     await root_nursery.start(backend_listen_events, device, event_bus)
 
                     async with mountpoint_manager_factory(
