@@ -11,6 +11,7 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadRe
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
+from parsec.core.gui.password_change_dialog import PasswordChangeDialog
 from parsec.core.gui.custom_widgets import TaskbarButton
 from parsec.core.gui.custom_dialogs import show_info, show_error, QuestionDialog
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
@@ -20,6 +21,7 @@ from parsec.core.gui.ui.device_button import Ui_DeviceButton
 
 class DeviceButton(QWidget, Ui_DeviceButton):
     revoke_clicked = pyqtSignal(QWidget)
+    change_password_clicked = pyqtSignal(str)
 
     def __init__(
         self, device_name, is_current_device, is_revoked, revoked_on, certified_on, *args, **kwargs
@@ -57,6 +59,9 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         menu = QMenu(self)
         action = menu.addAction(_("DEVICE_MENU_SHOW_INFO"))
         action.triggered.connect(self.show_device_info)
+        if self.is_current_device:
+            action = menu.addAction(_("DEVICE_MENU_CHANGE_PASSWORD"))
+            action.triggered.connect(self.change_password)
         if not self.label.is_revoked and not self.is_current_device:
             action = menu.addAction(_("DEVICE_MENU_REVOKE"))
             action.triggered.connect(self.revoke)
@@ -69,6 +74,9 @@ class DeviceButton(QWidget, Ui_DeviceButton):
             text += "\n\n"
             text += _("DEVICE_IS_REVOKED")
         show_info(self, text)
+
+    def change_password(self):
+        self.change_password_clicked.emit(self.device_name)
 
     def revoke(self):
         self.revoke_clicked.emit(self)
@@ -179,6 +187,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             button=device_button,
         )
 
+    def change_password(self, device_name):
+        dlg = PasswordChangeDialog(core=self.core, jobs_ctx=self.jobs_ctx, parent=self)
+        dlg.exec_()
+
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(
             core=self.core, jobs_ctx=self.jobs_ctx, parent=self
@@ -194,6 +206,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             button, int(len(self.devices) / 4), int(len(self.devices) % 4)
         )
         button.revoke_clicked.connect(self.revoke_device)
+        button.change_password_clicked.connect(self.change_password)
         button.show()
         self.devices.append(device_name)
 
