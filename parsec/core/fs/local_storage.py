@@ -65,8 +65,10 @@ class LocalStorage:
         return self
 
     def __exit__(self, *args):
+        if self.locking_tasks:
+            raise RuntimeError("Cannot teardown while entries are still locked")
         for entry_id in self.cache_ahead_of_persistance_ids.copy():
-            self.ensure_manifest_persistant(entry_id)
+            self._ensure_manifest_persistant(entry_id)
         self.persistent_storage.__exit__(*args)
 
     def clear_memory_cache(self):
@@ -91,7 +93,8 @@ class LocalStorage:
 
     def _check_lock_status(self, entry_id: EntryID) -> None:
         task = self.locking_tasks.get(entry_id)
-        assert task == hazmat.current_task()
+        if task != hazmat.current_task():
+            raise RuntimeError(f"Entry `{entry_id}` modified without beeing locked")
 
     # Manifest interface
 
@@ -130,6 +133,9 @@ class LocalStorage:
         self._check_lock_status(entry_id)
         if entry_id not in self.cache_ahead_of_persistance_ids:
             return
+        self._ensure_manifest_persistant(entry_id)
+
+    def _ensure_manifest_persistant(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
         raw = local_manifest_serializer.dumps(manifest)
         self.persistent_storage.set_manifest(entry_id, raw)
