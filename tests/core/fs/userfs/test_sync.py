@@ -361,11 +361,11 @@ async def test_concurrent_sync_placeholder(
 
 @pytest.mark.trio
 async def test_sync_not_needed(running_backend, alice_user_fs, alice2_user_fs, alice, alice2):
-    um = alice_user_fs.get_user_manifest()
+    um1 = alice_user_fs.get_user_manifest()
     await alice_user_fs.sync()
-    um = alice_user_fs.get_user_manifest()
+    um2 = alice_user_fs.get_user_manifest()
 
-    assert um == um
+    assert um1 == um2
 
 
 @pytest.mark.trio
