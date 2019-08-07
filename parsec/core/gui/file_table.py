@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 import pendulum
+import pathlib
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -44,6 +45,7 @@ class ItemDelegate(QStyledItemDelegate):
 class FileTable(QTableWidget):
     file_moved = pyqtSignal(str, str)
     item_activated = pyqtSignal(FileType, str)
+    files_dropped = pyqtSignal(list, str)
     delete_clicked = pyqtSignal()
     rename_clicked = pyqtSignal()
     open_clicked = pyqtSignal()
@@ -249,23 +251,48 @@ class FileTable(QTableWidget):
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 4, item)
 
-    def dropEvent(self, event):
-        if event.source() != self:
-            return
-        target_row = self.indexAt(event.pos()).row()
-        rows = set([i.row() for i in self.selectedIndexes() if i != target_row])
-        if not rows:
-            return
-        file_type = self.item(target_row, 0).data(TYPE_DATA_INDEX)
-        target_name = self.item(target_row, 1).text()
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
 
-        if file_type != FileType.ParentFolder and file_type != FileType.Folder:
-            return
-        for row in rows:
-            file_name = self.item(row, 1).text()
-            if file_type == FileType.ParentFolder:
-                self.file_moved.emit(file_name, "..")
-            else:
-                self.file_moved.emit(file_name, target_name)
-            self.removeRow(row)
+    def dragMoveEvent(self, event):
         event.accept()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+            target_row = self.indexAt(event.pos()).row()
+            target_item = self.item(target_row, 0)
+            files = [pathlib.Path(url.path()) for url in event.mimeData().urls()]
+            if not target_item:
+                self.files_dropped.emit(files, ".")
+                return
+            target_type = target_item.data(TYPE_DATA_INDEX)
+            if target_type == FileType.File or target_type == FileType.ParentWorkspace:
+                self.files_dropped.emit(files, ".")
+            elif target_type == FileType.ParentFolder:
+                self.files_dropped.emit(files, "..")
+            elif target_type == FileType.Folder:
+                self.files_dropped.emit(files, self.item(target_row, 1).text())
+        else:
+            if event.source() != self:
+                return
+            target_row = self.indexAt(event.pos()).row()
+            rows = set([i.row() for i in self.selectedIndexes() if i != target_row])
+            if not rows:
+                return
+            if not self.item(target_row, 0):
+                return
+            file_type = self.item(target_row, 0).data(TYPE_DATA_INDEX)
+            target_name = self.item(target_row, 1).text()
+
+            if file_type != FileType.ParentFolder and file_type != FileType.Folder:
+                return
+            for row in rows:
+                file_name = self.item(row, 1).text()
+                if file_type == FileType.ParentFolder:
+                    self.file_moved.emit(file_name, "..")
+                else:
+                    self.file_moved.emit(file_name, target_name)
+                self.removeRow(row)
+            event.accept()

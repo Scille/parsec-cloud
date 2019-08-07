@@ -154,6 +154,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.rename_clicked.connect(self.rename_files)
         self.table_files.delete_clicked.connect(self.delete_files)
         self.table_files.open_clicked.connect(self.open_files)
+        self.table_files.files_dropped.connect(self.on_files_dropped)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
@@ -367,26 +368,29 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         self.loading_dialog.set_progress(progress)
 
-    def get_files(self, paths):
+    def get_files(self, paths, dst_dir=None):
         files = []
         total_size = 0
         for path in paths:
             p = pathlib.Path(path)
-            dst = self.current_directory / p.name
+            if dst_dir is not None:
+                dst = dst_dir / p.name
+            else:
+                dst = self.current_directory / p.name
             files.append((p, dst))
             total_size += p.stat().st_size
         return files, total_size
 
-    def get_folder(self, src, parent=None):
+    def get_folder(self, src, dst_dir=None):
         files = []
         total_size = 0
-        if parent is None:
+        if dst_dir is None:
             dst = self.current_directory / src.name
         else:
-            dst = parent / src.name
+            dst = dst_dir / src.name
         for f in src.iterdir():
             if f.is_dir():
-                new_files, new_size = self.get_folder(f, parent=dst)
+                new_files, new_size = self.get_folder(f, dst_dir=dst)
                 files.extend(new_files)
                 total_size += new_size
             elif f.is_file():
@@ -417,6 +421,40 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.default_import_path = str(p)
         self.import_all(files, total_size)
 
+    def on_files_dropped(self, srcs, dst):
+        files = []
+        total_size = 0
+
+        if dst == "..":
+            dst_dir = self.current_directory.parent
+        elif dst == ".":
+            dst_dir = self.current_directory
+        else:
+            dst_dir = self.current_directory / dst
+
+        for src in srcs:
+            if src.is_dir():
+                tmp_files, tmp_total_size = self.get_folder(src, dst_dir=dst_dir)
+                files.extend(tmp_files)
+                total_size += tmp_total_size
+            elif src.is_file():
+                tmp_files, tmp_total_size = self.get_files([src], dst_dir=dst_dir)
+                files.extend(tmp_files)
+                total_size += tmp_total_size
+        self.import_all(files, total_size)
+
+    def on_file_moved(self, src, dst):
+        src_path = self.current_directory / src
+        dst_path = ""
+        if dst == "..":
+            target_dir = self.current_directory.parent
+            dst_path = FsPath("/") / target_dir / src
+        else:
+            dst_path = FsPath("/") / dst / src
+        self.jobs_ctx.run(self.workspace_fs.move, src_path, dst_path)
+
+        pass
+
     def filter_files(self, pattern):
         pattern = pattern.lower()
         for i in range(self.table_files.rowCount()):
@@ -445,16 +483,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             workspace_fs=self.workspace_fs,
             path=self.current_directory / folder_name,
         )
-
-    def on_file_moved(self, src, dst):
-        src_path = self.current_directory / src
-        dst_path = ""
-        if dst == "..":
-            target_dir = self.current_directory.parent
-            dst_path = FsPath("/") / target_dir / src
-        else:
-            dst_path = FsPath("/") / dst / src
-        self.jobs_ctx.run(self.workspace_fs.move, src_path, dst_path)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete:
