@@ -595,16 +595,18 @@ def core_config(tmpdir):
 
 
 @pytest.fixture
-def core_factory(running_backend_ready, event_bus_factory, core_config):
+def core_factory(request, running_backend_ready, event_bus_factory, core_config):
     @asynccontextmanager
     async def _core_factory(device):
         await running_backend_ready.wait()
         event_bus = event_bus_factory()
         with event_bus.listen() as spy:
             async with logged_core_factory(core_config, device, event_bus) as core:
-                # On startup, sync_monitor does a full sync that could
-                # cause concurrency issues in the tests
-                await spy.wait_with_timeout("backend.connection.ready")
+                # On startup core is always considered offline.
+                # Henc we risk concurrency issues if the connection to backend
+                # switches online concurrently with the test.
+                if "running_backend" in request.fixturenames:
+                    await spy.wait_with_timeout("backend.connection.ready")
 
                 yield core
 
