@@ -116,6 +116,7 @@ async def _monitoring_tick(user_fs, updated_entries):
 
 async def _monitor_sync_online(user_fs, event_bus):
     new_event = trio.Event()
+    updated_entries = {}
 
     def _on_entry_updated(event, workspace_id=None, id=None):
         assert id is not None
@@ -137,7 +138,7 @@ async def _monitor_sync_online(user_fs, event_bus):
     ):
 
         event_bus.send("sync_monitor.reconnection_sync.started")
-        updated_entries = await _get_updated_entries(user_fs)
+        updated_entries.update(await _get_updated_entries(user_fs))
         event_bus.send("sync_monitor.reconnection_sync.done")
 
         async with trio.open_nursery() as nursery:
