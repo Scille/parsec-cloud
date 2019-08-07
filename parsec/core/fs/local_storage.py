@@ -106,6 +106,9 @@ class LocalStorage:
     async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlob_ids: Tuple[EntryID]
     ) -> None:
+        """
+        Raises: Nothing !
+        """
         for entry_id in changed_vlob_ids:
             # Must lock the entry to avoid concurrent issue when an outdated
             # entry manifest has been fetched from backend but is not yet

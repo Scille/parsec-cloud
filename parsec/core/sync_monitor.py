@@ -4,6 +4,12 @@ import trio
 from trio.hazmat import current_clock
 
 from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError
+from parsec.core.backend_connection import (
+    BackendNotAvailable,
+    BackendCmdsInMaintenance,
+    BackendCmdsNotAllowed,
+    BackendConnectionError,
+)
 
 
 MIN_WAIT = 5
@@ -17,8 +23,26 @@ def timestamp():
 
 async def _refresh_checkpoint(backend_cmds, realm_id, local_storage, r_updated_entries):
     realm_checkpoint = local_storage.get_realm_checkpoint()
+    try:
+        new_checkpoint, changes = await backend_cmds.vlob_poll_changes(realm_id, realm_checkpoint)
 
-    new_checkpoint, changes = await backend_cmds.vlob_poll_changes(realm_id, realm_checkpoint)
+    except BackendNotAvailable as exc:
+        raise FSBackendOfflineError(str(exc)) from exc
+
+    # Workspace in maintenance
+    except BackendCmdsInMaintenance:
+        # TODO: should disable sync monitor of this workspace
+        raise
+
+    except BackendCmdsNotAllowed:
+        # TODO: should disable sync monitor of this workspace
+        raise
+
+    # Another backend error
+    except BackendConnectionError:
+        # TODO: log.warning()
+        raise
+
     # TODO: handle exceptions
     # BackendCmdsInvalidRequest
     # BackendCmdsInvalidResponse
@@ -119,10 +143,6 @@ async def _monitor_sync_online(user_fs, event_bus):
         async with trio.open_nursery() as nursery:
             event_bus.send("sync_monitor.ready")
             while True:
-
-                await new_event.wait()
-                new_event.clear()
-
                 await _monitoring_tick(user_fs, updated_entries)
                 sorted_entries = _sorted_entries(updated_entries)
                 if sorted_entries:
@@ -135,6 +155,9 @@ async def _monitor_sync_online(user_fs, event_bus):
 
                     nursery.start_soon(_wait)
 
+                await new_event.wait()
+                new_event.clear()
+
 
 async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     with event_bus.waiter_on("backend.online") as _on_backend_online, event_bus.waiter_on(
@@ -146,13 +169,13 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
         while True:
             await _on_backend_online.wait()
             _on_backend_online.clear()
+            _on_backend_offline.clear()
 
             try:
                 async with trio.open_nursery() as nursery:
 
                     async def _reset_on_offline():
                         await _on_backend_offline.wait()
-                        _on_backend_offline.clear()
                         nursery.cancel_scope.cancel()
 
                     nursery.start_soon(_reset_on_offline)
