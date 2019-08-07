@@ -71,15 +71,19 @@ async def test_revoked_device_handshake(running_backend, backend, alice, alice2)
 
 @pytest.mark.trio
 async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backend_addr):
+    client_answered = False
+
     async def poorly_serve_client(stream):
-        transport = await Transport.init_for_client(
-            stream, f"{backend_addr.host}:{backend_addr.port}"
-        )
+        nonlocal client_answered
+
+        transport = await Transport.init_for_server(stream)
         handshake = ServerHandshake()
         await transport.send(handshake.build_challenge_req())
         await transport.recv()
         # Close connection during handshake
         await stream.aclose()
+
+        client_answered = True
 
     async with trio.open_nursery() as nursery:
 
@@ -96,6 +100,8 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
                     await cmds.ping()
 
         nursery.cancel_scope.cancel()
+
+    assert client_answered
 
 
 @pytest.mark.trio
