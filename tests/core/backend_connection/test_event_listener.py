@@ -140,3 +140,30 @@ async def test_realm_notif_on_new_workspace_sync(
         await alice2_user_fs.sync()
         mock_clock.rate = 1
         await spy.wait_multiple_with_timeout(expected, 3)
+
+
+@pytest.mark.trio
+async def test_realm_notif_maintenance(running_backend, alice_core, bob_user_fs):
+    wid = await create_shared_workspace("w", bob_user_fs, alice_core)
+
+    with alice_core.event_bus.listen() as spy:
+        # Start maintenance
+        job = await bob_user_fs.workspace_start_reencryption(wid)
+
+        await spy.wait_multiple_with_timeout(
+            [
+                ("backend.realm.maintenance_started", {"realm_id": wid, "encryption_revision": 2}),
+                # Receive and process the new key and encryption revision
+                "backend.message.received",
+                "sharing.updated",
+            ]
+        )
+
+    with alice_core.event_bus.listen() as spy:
+        # Finish maintenance
+        total, done = await job.do_one_batch()
+        assert total == done
+
+        await spy.wait_with_timeout(
+            "backend.realm.maintenance_finished", {"realm_id": wid, "encryption_revision": 2}
+        )
