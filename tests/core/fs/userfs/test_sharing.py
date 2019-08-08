@@ -68,7 +68,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
             await bob_user_fs.process_last_messages()
     spy.assert_event_occured(
         "sharing.granted",
-        kwargs={
+        {
             "new_entry": WorkspaceEntry(
                 name="w1 (shared by alice)",
                 id=wid,
@@ -148,7 +148,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
             await alice_user_fs.process_last_messages()
     spy.assert_event_occured(
         "sharing.revoked",
-        kwargs={
+        {
             "new_entry": WorkspaceEntry(
                 name="w1",
                 id=wid,
@@ -316,7 +316,7 @@ async def test_share_with_sharing_name_already_taken(
             await bob_user_fs.process_last_messages()
     spy.assert_event_occured(
         "sharing.granted",
-        kwargs={
+        {
             "new_entry": WorkspaceEntry(
                 name="w (shared by alice)",
                 id=awid,

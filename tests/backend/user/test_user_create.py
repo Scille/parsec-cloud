@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import trio
 import pendulum
 
 from parsec.crypto import build_user_certificate, build_device_certificate
@@ -40,16 +39,15 @@ async def test_user_create_ok(
         )
         assert rep == {"status": "ok"}
 
-        with trio.fail_after(1):
-            # No guarantees this event occurs before the command's return
-            await spy.wait(
-                "user.created",
-                kwargs={
-                    "organization_id": alice.organization_id,
-                    "user_id": mallory.user_id,
-                    "first_device_id": mallory.device_id,
-                },
-            )
+        # No guarantees this event occurs before the command's return
+        await spy.wait_with_timeout(
+            "user.created",
+            {
+                "organization_id": alice.organization_id,
+                "user_id": mallory.user_id,
+                "first_device_id": mallory.device_id,
+            },
+        )
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:

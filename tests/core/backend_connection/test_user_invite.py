@@ -67,7 +67,7 @@ async def test_user_invite_then_claim_ok(
     with running_backend.backend.event_bus.listen() as spy:
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_alice_invite)
-            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
             nursery.start_soon(_mallory_claim)
 
     # Now mallory should be able to connect to backend

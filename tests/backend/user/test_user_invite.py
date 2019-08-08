@@ -24,7 +24,7 @@ async def test_user_invite(backend, alice_backend_sock, alice, mallory, monitor)
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", {"event_name": "user.claimed"})
 
             backend.event_bus.send(
                 "user.claimed",
@@ -55,7 +55,7 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
     with backend.event_bus.listen() as spy:
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -79,11 +79,11 @@ async def test_concurrent_user_invite(
     with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep1:
 
-            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", {"event_name": "user.claimed"})
             async with user_invite(adam_backend_sock, user_id=mallory.user_id) as prep2:
 
                 spy.clear()
-                await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+                await spy.wait("event.connected", {"event_name": "user.claimed"})
 
                 backend.event_bus.send(
                     "user.claimed",
@@ -105,7 +105,7 @@ async def test_user_invite_same_name_different_organizations(
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", {"event_name": "user.claimed"})
 
             backend.event_bus.send(
                 "user.claimed",
@@ -123,11 +123,11 @@ async def test_user_invite_same_name_different_organizations(
     assert prep[0] == {"status": "ok", "encrypted_claim": b"<good>"}
 
     # Mallory invitation from second organization
-    with backend.event_bus.listen() as spy:
+    with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(otheralice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
-            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait("event.connected", {"event_name": "user.claimed"})
 
             backend.event_bus.send(
                 "user.claimed",

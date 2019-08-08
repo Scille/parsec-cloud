@@ -432,9 +432,8 @@ async def test_reencryption_events(
         # Finish maintenance and check for events
         await realm_finish_reencryption_maintenance(alice2_backend_sock, realm, 2)
 
-        with trio.fail_after(1):
-            # No guarantees those events occur before the commands' return
-            await spy.wait("realm.maintenance_finished")
+        # No guarantees those events occur before the commands' return
+        await spy.wait_with_timeout("realm.maintenance_finished")
 
         rep = await events_listen_nowait(alice_backend_sock)
         assert rep == {

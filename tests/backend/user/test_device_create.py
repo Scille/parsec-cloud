@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import pytest
 import pendulum
 
@@ -36,16 +35,15 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
         )
         assert rep == {"status": "ok"}
 
-        with trio.fail_after(1):
-            # No guarantees this event occurs before the command's return
-            await spy.wait(
-                "device.created",
-                kwargs={
-                    "organization_id": alice_nd.organization_id,
-                    "device_id": alice_nd.device_id,
-                    "encrypted_answer": b"<good>",
-                },
-            )
+        # No guarantees this event occurs before the command's return
+        await spy.wait_with_timeout(
+            "device.created",
+            {
+                "organization_id": alice_nd.organization_id,
+                "device_id": alice_nd.device_id,
+                "encrypted_answer": b"<good>",
+            },
+        )
 
     # Make sure the new device can connect now
     async with backend_sock_factory(backend, alice_nd) as sock:

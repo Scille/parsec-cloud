@@ -23,7 +23,7 @@ async def alice_invite(running_backend, backend, alice):
     async with trio.open_nursery() as nursery:
         with backend.event_bus.listen() as spy:
             nursery.start_soon(_invite)
-            await spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
 
             yield invitation
 
