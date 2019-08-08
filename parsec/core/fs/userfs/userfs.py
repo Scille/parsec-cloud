@@ -385,9 +385,35 @@ class UserFS:
                     continue
                 merged = merge_local_user_manifests(base_um, diverged_um, target_um)
                 self.set_user_manifest(merged)
+                # In case we weren't online when the sharing message arrived,
+                # we will learn about the change in the sharing only now.
+                # Hence send the corresponding events !
+                self._detect_and_send_shared_events(diverged_um, merged)
                 # TODO: deprecated event ?
                 self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
                 return
+
+    def _detect_and_send_shared_events(self, old_um, new_um):
+        entries = {}
+        for old_entry in old_um.workspaces:
+            entries[old_entry.id] = [old_entry, None]
+        for new_entry in new_um.workspaces:
+            try:
+                entries[new_entry.id][1] = new_entry
+            except KeyError:
+                entries[new_entry.id] = [None, new_entry]
+
+        for old_entry, new_entry in entries.values():
+            if new_entry is None:
+                logger.warning(
+                    "Workspace entry has diseaper from user manifest", workspace_entry=old_entry
+                )
+            elif old_entry is None:
+                if new_entry.role is not None:
+                    self.event_bus.send("sharing.granted", new_entry=new_entry)
+            elif old_entry.role != new_entry.role:
+                event = "sharing.updated" if new_entry.role is not None else "sharing.revoked"
+                self.event_bus.send(event, new_entry=new_entry, previous_entry=old_entry)
 
     async def _outbound_sync(self) -> None:
         while True:
