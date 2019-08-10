@@ -7,7 +7,6 @@ from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import backend_listen_events
 
 from tests.common import create_shared_workspace
-from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
@@ -44,14 +43,14 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
 
 @pytest.mark.trio
 async def test_backend_switch_offline(
-    mock_clock, event_bus, backend_addr, backend, running_backend_listen_events, alice
+    mock_clock, event_bus, backend, running_backend, running_backend_listen_events, alice
 ):
     mock_clock.rate = 1.0
 
     # Switch backend offline and wait for according event
 
     with event_bus.listen() as spy:
-        with offline(backend_addr):
+        with running_backend.offline():
             await spy.wait_with_timeout("backend.offline")
 
         # Here backend switch back online, wait for the corresponding event

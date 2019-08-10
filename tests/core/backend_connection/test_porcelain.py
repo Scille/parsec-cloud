@@ -5,8 +5,6 @@ import trio
 
 from parsec.core.backend_connection import BackendNotAvailable, backend_cmds_pool_factory
 
-from tests.open_tcp_stream_mock_wrapper import offline
-
 
 @pytest.mark.trio
 async def test_backend_offline(alice):
@@ -39,7 +37,7 @@ async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
         assert pong == "Hello World !"
 
         # Now sockets will never be able to reach the backend no matter what
-        with offline(running_backend.addr):
+        with running_backend.offline():
             with pytest.raises(BackendNotAvailable):
                 await cmds.ping("Hello World !")
 

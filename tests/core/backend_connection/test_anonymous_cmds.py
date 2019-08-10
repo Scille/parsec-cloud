@@ -5,8 +5,6 @@ import trio
 
 from parsec.core.backend_connection import BackendNotAvailable, backend_anonymous_cmds_factory
 
-from tests.open_tcp_stream_mock_wrapper import offline
-
 
 @pytest.mark.trio
 async def test_anonymous_backend_offline(coolorg):
@@ -18,7 +16,7 @@ async def test_anonymous_backend_offline(coolorg):
 @pytest.mark.trio
 async def test_anonymous_backend_switch_offline(running_backend, coolorg):
     async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
-        with offline(running_backend.addr):
+        with running_backend.offline():
             with pytest.raises(BackendNotAvailable):
                 await cmds.ping("Whatever")
 
