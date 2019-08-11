@@ -216,15 +216,42 @@ async def test_reshare_workspace(running_backend, alice_user_fs, bob_user_fs, al
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
-    await bob_user_fs.process_last_messages()
+    with freeze_time("2000-01-03"):
+        await bob_user_fs.process_last_messages()
 
     # ...and unshare it...
     await alice_user_fs.workspace_share(wid, bob.user_id, None)
-    await bob_user_fs.process_last_messages()
+    with freeze_time("2000-01-04"):
+        await bob_user_fs.process_last_messages()
 
     # ...and re-share it !
     await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
-    await bob_user_fs.process_last_messages()
+    with bob_user_fs.event_bus.listen() as spy:
+        with freeze_time("2000-01-05"):
+            await bob_user_fs.process_last_messages()
+    spy.assert_event_occured(
+        "sharing.updated",
+        {
+            "new_entry": WorkspaceEntry(
+                name="w1 (shared by alice)",
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
+                role_cached_on=Pendulum(2000, 1, 5),
+                role=WorkspaceRole.MANAGER,
+            ),
+            "previous_entry": WorkspaceEntry(
+                name="w1 (shared by alice)",
+                id=wid,
+                key=ANY,
+                encryption_revision=1,
+                encrypted_on=Pendulum(2000, 1, 2),
+                role_cached_on=Pendulum(2000, 1, 4),
+                role=None,
+            ),
+        },
+    )
 
     # Check access
     aum = alice_user_fs.get_user_manifest()
@@ -246,10 +273,21 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
     aum = alice_user_fs.get_user_manifest()
     aw = aum.workspaces[0]
 
+    previous_entry = None
     for role in WorkspaceRole:
         # (re)share with rights
         await alice_user_fs.workspace_share(wid, bob.user_id, role)
-        await bob_user_fs.process_last_messages()
+        with bob_user_fs.event_bus.listen() as spy:
+            await bob_user_fs.process_last_messages()
+        new_entry = spy.partial_obj(WorkspaceEntry, name="w1 (shared by alice)", id=wid, role=role)
+        if not previous_entry:
+            spy.assert_event_occured("sharing.granted", {"new_entry": new_entry})
+
+        else:
+            spy.assert_event_occured(
+                "sharing.updated", {"new_entry": new_entry, "previous_entry": previous_entry}
+            )
+        previous_entry = new_entry
 
         # Check access
         bum = bob_user_fs.get_user_manifest()
