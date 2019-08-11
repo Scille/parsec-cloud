@@ -9,6 +9,47 @@ from unittest.mock import ANY
 from parsec.event_bus import EventBus
 
 
+class PartialDict(dict):
+    """
+    Allow to do partial comparison with a dict::
+
+        assert PartialDict(a=1, b=2) == {'a': 1, 'b': 2, 'c': 3}
+    """
+
+    def __repr__(self):
+        return f"PartialDict<{super().__repr__()}>"
+
+    def __eq__(self, other):
+        for key, expected_value in self.items():
+            if key not in other or other[key] != expected_value:
+                return False
+        return True
+
+
+class PartialObj:
+    """
+    Allow to do partial comparison with a object::
+
+        assert PartialObj(Foo, a=1, b=2) == Foo(a=1, b=2, c=3)
+    """
+
+    def __init__(self, obj_cls, **kwargs):
+        self._obj_cls = obj_cls
+        self._obj_kwargs = kwargs
+
+    def __repr__(self):
+        args = ", ".join([f"{k}={v!r}" for k, v in self._obj_kwargs.items()])
+        return f"PartialObj<{self._obj_cls.__name__}({args})>"
+
+    def __eq__(self, other):
+        if type(other) is not self._obj_cls:
+            return False
+        for key, expected_value in self._obj_kwargs.items():
+            if not hasattr(other, key) or getattr(other, key) != expected_value:
+                return False
+        return True
+
+
 @attr.s(frozen=True, slots=True)
 class SpiedEvent:
     event = attr.ib()
@@ -21,6 +62,12 @@ class EventBusSpy:
     ANY = ANY  # Easier to use than doing an import
     events = attr.ib(factory=list)
     _waiters = attr.ib(factory=set)
+
+    def partial_dict(self, *args, **kwargs):
+        return PartialDict(*args, **kwargs)
+
+    def partial_obj(self, obj_cls, **kwargs):
+        return PartialObj(obj_cls, **kwargs)
 
     def __repr__(self):
         return f"<{type(self).__name__}({[e.event for e in self.events]})>"
