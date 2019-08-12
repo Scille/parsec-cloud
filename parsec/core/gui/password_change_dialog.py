@@ -17,10 +17,9 @@ from parsec.core.gui.ui.password_change_dialog import Ui_PasswordChangeDialog
 
 
 class PasswordChangeDialog(QDialog, Ui_PasswordChangeDialog):
-    def __init__(self, core, jobs_ctx, *args, **kwargs):
+    def __init__(self, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.jobs_ctx = jobs_ctx
         self.core = core
         self.line_edit_old_password.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
@@ -42,7 +41,7 @@ class PasswordChangeDialog(QDialog, Ui_PasswordChangeDialog):
             self.button_change.setDisabled(True)
 
     def password_changed(self, text):
-        if len(text):
+        if text:
             self.label_password_strength.show()
             score = get_password_strength(text)
             self.label_password_strength.setText(

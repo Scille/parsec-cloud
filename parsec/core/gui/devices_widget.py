@@ -188,7 +188,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         )
 
     def change_password(self, device_name):
-        dlg = PasswordChangeDialog(core=self.core, jobs_ctx=self.jobs_ctx, parent=self)
+        dlg = PasswordChangeDialog(core=self.core, parent=self)
         dlg.exec_()
 
     def register_new_device(self):
