@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from time import time
-from typing import List
+from typing import List, Dict, Tuple
 from pathlib import Path
 from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
@@ -124,13 +124,16 @@ class PersistentStorage:
                 """CREATE TABLE IF NOT EXISTS manifests
                     (
                      manifest_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                     base_version INTEGER NOT NULL,
+                     remote_version INTEGER NOT NULL,
                      need_sync INTEGER NOT NULL,  -- Boolean
                      blob BLOB NOT NULL);"""
             )
 
+            # Singleton storing the checkpoint
             dirty_cursor.execute(
-                """CREATE TABLE IF NOT EXISTS realm_checkpoints
-                    (realm_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                """CREATE TABLE IF NOT EXISTS realm_checkpoint
+                    (_id INTEGER PRIMARY KEY NOT NULL,
                      checkpoint INTEGER NOT NULL);"""
             )
 
@@ -165,31 +168,41 @@ class PersistentStorage:
 
     def get_realm_checkpoint(self) -> int:
         with self.open_dirty_cursor() as cursor:
-            cursor.execute("SELECT checkpoint FROM realm_checkpoints WHERE realm_id = ?", ("self",))
+            cursor.execute("SELECT checkpoint FROM realm_checkpoint WHERE _id = 0")
             rep = cursor.fetchone()
             return rep[0] if rep else 0
 
-    def mark_entry_need_sync_if_present(self, entry_id: EntryID):
+    def update_realm_checkpoint(
+        self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
+    ) -> None:
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute("BEGIN")
+            cursor.executemany(
+                "UPDATE manifests SET remote_version = ? WHERE manifest_id = ?",
+                ((version, entry_id.bytes) for entry_id, version in changed_vlobs.items()),
+            )
+            cursor.execute(
+                """INSERT OR REPLACE INTO realm_checkpoint(_id, checkpoint)
+                VALUES (0, ?)""",
+                (new_checkpoint,),
+            )
+            cursor.execute("END")
+
+    def get_need_sync_entries(self) -> Tuple[List[EntryID], List[EntryID]]:
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                """
-                UPDATE manifests SET need_sync = ? WHERE manifest_id = ?
-                """,
-                (True, entry_id.bytes),
+                "SELECT manifest_id, need_sync FROM manifests WHERE need_sync = ? OR base_version != remote_version",
+                (True,),
             )
-
-    def set_realm_checkpoint(self, new_checkpoint: int):
-        with self.open_dirty_cursor() as cursor:
-            cursor.execute(
-                """INSERT OR REPLACE INTO realm_checkpoints(realm_id, checkpoint)
-                VALUES (?, ?)""",
-                ("self", new_checkpoint),
-            )
-
-    def get_need_sync_entries(self) -> List[EntryID]:
-        with self.open_dirty_cursor() as cursor:
-            cursor.execute("SELECT manifest_id FROM manifests WHERE need_sync = ?", (True,))
-            return [EntryID(x) for (x,) in cursor.fetchall()]
+            local_changes = []
+            remote_changes = []
+            for manifest_id, need_sync in cursor.fetchall():
+                if need_sync:
+                    local_changes.append(EntryID(manifest_id))
+                else:
+                    remote_changes.append(EntryID(manifest_id))
+            return local_changes, remote_changes
+            # return [EntryID(x) for (x,) in cursor.fetchall()]
 
     def get_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:
@@ -202,15 +215,21 @@ class PersistentStorage:
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(self.local_symkey, blob)
 
-    def set_manifest(self, entry_id: EntryID, need_sync: bool, raw: bytes):
+    def set_manifest(self, entry_id: EntryID, base_version: int, need_sync: bool, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                """INSERT OR REPLACE INTO manifests (manifest_id, blob, need_sync)
-                VALUES (?, ?, ?)""",
-                (entry_id.bytes, ciphered, need_sync),
+                """INSERT OR REPLACE INTO manifests (manifest_id, blob, need_sync, base_version, remote_version)
+                VALUES (
+                    ?, ?, ?, ?,
+                    max(
+                        ?,
+                        IFNULL((SELECT remote_version FROM manifests WHERE manifest_id=?), 0)
+                    )
+                )""",
+                (entry_id.bytes, ciphered, need_sync, base_version, base_version, entry_id.bytes),
             )
 
     def clear_manifest(self, entry_id: EntryID):

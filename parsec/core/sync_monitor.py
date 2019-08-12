@@ -92,16 +92,14 @@ class SyncContext:
             # TODO: logger.warning("Unexpected backend response during sync bootstrap", exc_info=exc)
             return False
 
-        # TODO: handle exceptions
-        # BackendCmdsInvalidRequest
-        # BackendCmdsInvalidResponse
-        # BackendNotAvailable
-        # BackendCmdsBadResponse
-        await self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes.keys())
-        need_sync_entries = self._get_local_storage().get_need_sync_entries()
+        self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
+        need_sync_local, need_sync_remote = self._get_local_storage().get_need_sync_entries()
 
-        for entry_id in need_sync_entries:
+        for entry_id in need_sync_local:
             self.local_change(entry_id)
+
+        for entry_id in need_sync_remote:
+            self.remote_change(entry_id)
 
         return True
 

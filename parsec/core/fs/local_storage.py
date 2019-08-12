@@ -103,19 +103,13 @@ class LocalStorage:
     def get_realm_checkpoint(self) -> int:
         return self.persistent_storage.get_realm_checkpoint()
 
-    async def update_realm_checkpoint(
-        self, new_checkpoint: int, changed_vlob_ids: Tuple[EntryID]
+    def update_realm_checkpoint(
+        self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
     ) -> None:
         """
         Raises: Nothing !
         """
-        for entry_id in changed_vlob_ids:
-            # Must lock the entry to avoid concurrent issue when an outdated
-            # entry manifest has been fetched from backend but is not yet
-            # stored in the persistent storage.
-            async with self.lock_entry_id(entry_id):
-                self.persistent_storage.mark_entry_need_sync_if_present(entry_id)
-        self.persistent_storage.set_realm_checkpoint(new_checkpoint)
+        self.persistent_storage.update_realm_checkpoint(new_checkpoint, changed_vlobs)
 
     def get_need_sync_entries(self) -> List[EntryID]:
         return self.persistent_storage.get_need_sync_entries()
@@ -145,7 +139,9 @@ class LocalStorage:
             self._check_lock_status(entry_id)
         if not cache_only:
             raw = local_manifest_serializer.dumps(manifest)
-            self.persistent_storage.set_manifest(entry_id, manifest.need_sync, raw)
+            self.persistent_storage.set_manifest(
+                entry_id, manifest.base_version, manifest.need_sync, raw
+            )
         else:
             self.cache_ahead_of_persistance_ids.add(entry_id)
         self.local_manifest_cache[entry_id] = manifest
@@ -160,7 +156,9 @@ class LocalStorage:
     def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
         raw = local_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_manifest(entry_id, manifest.need_sync, raw)
+        self.persistent_storage.set_manifest(
+            entry_id, manifest.base_version, manifest.need_sync, raw
+        )
         self.cache_ahead_of_persistance_ids.remove(entry_id)
 
     def clear_manifest(self, entry_id: EntryID) -> None:
