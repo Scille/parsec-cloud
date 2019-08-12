@@ -263,7 +263,7 @@ class FileTable(QTableWidget):
             event.accept()
             target_row = self.indexAt(event.pos()).row()
             target_item = self.item(target_row, 0)
-            files = [pathlib.Path(url.path()) for url in event.mimeData().urls()]
+            files = [pathlib.Path(url.toLocalFile()) for url in event.mimeData().urls()]
             if not target_item:
                 self.files_dropped.emit(files, ".")
                 return
