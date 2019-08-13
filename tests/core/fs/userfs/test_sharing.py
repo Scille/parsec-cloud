@@ -13,7 +13,7 @@ from parsec.core.fs import (
 )
 from parsec.backend.realm import RealmGrantedRole, RealmRole
 
-from tests.common import freeze_time
+from tests.common import freeze_time, create_shared_workspace
 
 
 @pytest.mark.trio
@@ -443,3 +443,108 @@ async def test_share_workspace_then_conflict_on_rights(
         role=WorkspaceRole.CONTRIBUTOR,
     )
     assert a2_w_entry == a_w_entry
+
+
+@pytest.mark.trio
+async def test_sharing_events_triggered_on_sync(
+    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
+):
+    # Share a first workspace
+    with freeze_time("2000-01-02"):
+        wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs)
+
+    with alice2_user_fs.event_bus.listen() as spy:
+        await alice2_user_fs.sync()
+    expected_entry_v1 = WorkspaceEntry(
+        name="w (shared by bob)",
+        id=wid,
+        key=ANY,
+        encryption_revision=1,
+        encrypted_on=Pendulum(2000, 1, 2),
+        role_cached_on=Pendulum(2000, 1, 2),
+        role=WorkspaceRole.MANAGER,
+    )
+    spy.assert_event_occured("sharing.granted", {"new_entry": expected_entry_v1})
+
+    # Change role
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
+    with freeze_time("2000-01-03"):
+        await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    with alice2_user_fs.event_bus.listen() as spy:
+        await alice2_user_fs.sync()
+    expected_entry_v2 = WorkspaceEntry(
+        name="w (shared by bob)",
+        id=wid,
+        key=ANY,
+        encryption_revision=1,
+        encrypted_on=Pendulum(2000, 1, 2),
+        role_cached_on=Pendulum(2000, 1, 3),
+        role=WorkspaceRole.OWNER,
+    )
+    spy.assert_event_occured(
+        "sharing.updated", {"new_entry": expected_entry_v2, "previous_entry": expected_entry_v1}
+    )
+
+    # Revoke
+    await bob_user_fs.workspace_share(wid, alice.user_id, None)
+    with freeze_time("2000-01-04"):
+        await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    with alice2_user_fs.event_bus.listen() as spy:
+        await alice2_user_fs.sync()
+    expected_entry_v3 = WorkspaceEntry(
+        name="w (shared by bob)",
+        id=wid,
+        key=ANY,
+        encryption_revision=1,
+        encrypted_on=Pendulum(2000, 1, 2),
+        role_cached_on=Pendulum(2000, 1, 4),
+        role=None,
+    )
+    spy.assert_event_occured(
+        "sharing.revoked", {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v2}
+    )
+
+
+@pytest.mark.trio
+async def test_no_sharing_event_on_sync_on_unknown_workspace(
+    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
+):
+    # Share a workspace...
+    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs)
+
+    # ...and unshare it before alice2 even know about it
+    await bob_user_fs.workspace_share(wid, alice.user_id, None)
+    await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    # No sharing event should be triggered !
+    with alice2_user_fs.event_bus.listen() as spy:
+        await alice2_user_fs.sync()
+    spy.assert_events_exactly_occured(["fs.entry.remote_changed"])
+
+
+@pytest.mark.trio
+async def test_no_sharing_event_on_sync_if_same_role(
+    running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
+):
+    # Share a workspace, alice2 knows about it
+    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+
+    # Then change alice's role...
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
+    await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    # ...and give back alice the same role
+    await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
+    await alice_user_fs.process_last_messages()
+    await alice_user_fs.sync()
+
+    # No sharing event should be triggered !
+    with alice2_user_fs.event_bus.listen() as spy:
+        await alice2_user_fs.sync()
+    spy.assert_events_exactly_occured(["fs.entry.remote_changed"])
