@@ -2,14 +2,10 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import List
-
 import trio
 from trio import hazmat
-from typing import Tuple, Dict
-
+from typing import Dict, Tuple, Set
 from pendulum import Pendulum
-
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -111,7 +107,7 @@ class LocalStorage:
         """
         self.persistent_storage.update_realm_checkpoint(new_checkpoint, changed_vlobs)
 
-    def get_need_sync_entries(self) -> List[EntryID]:
+    def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         return self.persistent_storage.get_need_sync_entries()
 
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:

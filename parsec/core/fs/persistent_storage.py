@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from time import time
-from typing import List, Dict, Tuple
+from typing import Set, Dict, Tuple
 from pathlib import Path
 from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
@@ -188,21 +188,20 @@ class PersistentStorage:
             )
             cursor.execute("END")
 
-    def get_need_sync_entries(self) -> Tuple[List[EntryID], List[EntryID]]:
+    def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
                 "SELECT manifest_id, need_sync FROM manifests WHERE need_sync = ? OR base_version != remote_version",
                 (True,),
             )
-            local_changes = []
-            remote_changes = []
+            local_changes = set()
+            remote_changes = set()
             for manifest_id, need_sync in cursor.fetchall():
                 if need_sync:
-                    local_changes.append(EntryID(manifest_id))
+                    local_changes.add(EntryID(manifest_id))
                 else:
-                    remote_changes.append(EntryID(manifest_id))
+                    remote_changes.add(EntryID(manifest_id))
             return local_changes, remote_changes
-            # return [EntryID(x) for (x,) in cursor.fetchall()]
 
     def get_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:

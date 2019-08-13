@@ -175,8 +175,8 @@ def test_local_automatic_run_garbage_collector(persistent_storage):
 
 def test_persistent_storage_get_need_sync_and_checkpoint_lazy_defined(persistent_storage):
     need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
-    assert need_sync_local == []
-    assert need_sync_remote == []
+    assert need_sync_local == set()
+    assert need_sync_remote == set()
 
     checkpoint = persistent_storage.get_realm_checkpoint()
     assert checkpoint == 0
@@ -197,8 +197,8 @@ def test_persistent_storage_local_need_sync(persistent_storage):
     persistent_storage.set_manifest(e3, 1, True, b"dummy")
 
     need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
-    assert need_sync_local == [e1, e3]
-    assert need_sync_remote == []
+    assert need_sync_local == {e1, e3}
+    assert need_sync_remote == set()
 
 
 def test_persistent_storage_remote_need_sync(persistent_storage):
@@ -216,8 +216,8 @@ def test_persistent_storage_remote_need_sync(persistent_storage):
     persistent_storage.update_realm_checkpoint(42, {e2: 2})
 
     need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
-    assert need_sync_local == []
-    assert need_sync_remote == [e3]
+    assert need_sync_local == set()
+    assert need_sync_remote == {e3}
 
     checkpoint = persistent_storage.get_realm_checkpoint()
     assert checkpoint == 42
