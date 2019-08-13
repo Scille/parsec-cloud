@@ -18,10 +18,14 @@ async def test_autosync_on_modification(mock_clock, running_backend, alice_core,
     with alice_core.event_bus.listen() as spy:
         await workspace.mkdir("/foo")
         foo_id = await workspace.path_id("/foo")
-        await spy.wait_with_timeout(
-            "fs.entry.synced",
-            {"workspace_id": wid, "id": foo_id},
+        root_id = await workspace.path_id("/")
+        await spy.wait_multiple_with_timeout(
+            [
+                ("fs.entry.synced", {"workspace_id": wid, "id": foo_id}),
+                ("fs.entry.synced", {"workspace_id": wid, "id": root_id}),
+            ],
             timeout=60,  # autojump, so not *really* 60s
+            in_order=False,
         )
 
     await alice2_user_fs.sync()
@@ -179,8 +183,10 @@ async def test_reconnect_but_offline(mock_clock, running_backend, alice_core):
             # Lure monitors into thinking the backend is back online ;-)
             alice_core.event_bus.send("backend.online")
             await spy.wait_multiple_with_timeout(
-                ["sync_monitor.reconnection_sync.started", "sync_monitor.disconnected"]
+                ["sync_monitor.reconnection_sync.started", "sync_monitor.disconnected"],
+                timeout=60,  # autojump, so not *really* 60s
             )
+            alice_core.event_bus.send("backend.offline")
             spy.clear()
 
         # Backend is really back online this time

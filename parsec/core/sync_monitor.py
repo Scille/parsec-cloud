@@ -3,9 +3,15 @@
 import trio
 from trio.hazmat import current_clock
 import math
+from structlog import get_logger
 
 from parsec.core.types import EntryID, WorkspaceRole
-from parsec.core.fs import FSBackendOfflineError, FSWorkspaceNotFoundError, FSWorkspaceNoAccess
+from parsec.core.fs import (
+    FSBackendOfflineError,
+    FSWorkspaceNotFoundError,
+    FSWorkspaceNoAccess,
+    FSWorkspaceInMaintenance,
+)
 from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendCmdsNotFound,
@@ -14,6 +20,8 @@ from parsec.core.backend_connection import (
     BackendConnectionError,
 )
 
+
+logger = get_logger()
 
 MIN_WAIT = 5
 MAX_WAIT = 60
@@ -41,6 +49,16 @@ class LocalChange:
 
 
 class SyncContext:
+    """
+    The SyncContext keeps track of local and remote changes and trigger sync
+    accordingly.
+    There is two way for it to be informed of remote changes:
+    - When online it receive `realm.vlobs_updated` updated events
+    - Otherwise (typically when the application starts or when back online after
+      an disconnection) it uses the realm's checkpoint stored in the persistent
+      storage to get the list of changes (entry id + version) it has missed
+    """
+
     def __init__(self, user_fs, id: EntryID):
         self.user_fs = user_fs
         self.id = id
@@ -51,6 +69,7 @@ class SyncContext:
         self.remote_changes = set()
         self.in_maintenance = False
         self.need_bootstrap = True
+        self.bootstrapped = False
         self.due_time = timestamp()
 
     def _sync(self, entry_id: EntryID):
@@ -65,7 +84,8 @@ class SyncContext:
     def __repr__(self):
         return f"{type(self).__name__}(id={self.id!r})"
 
-    async def _bootstrap(self) -> bool:
+    async def _refresh_checkpoint(self) -> bool:
+        # 1) Fetch new checkpoint and changes
         realm_checkpoint = self._get_local_storage().get_realm_checkpoint()
         try:
             new_checkpoint, changes = await self._get_backend_cmds().vlob_poll_changes(
@@ -88,18 +108,17 @@ class SyncContext:
             return False
 
         # Another backend error
-        except BackendConnectionError:
-            # TODO: logger.warning("Unexpected backend response during sync bootstrap", exc_info=exc)
+        except BackendConnectionError as exc:
+            logger.warning("Unexpected backend response during sync bootstrap", exc_info=exc)
             return False
 
+        # 2) Store new checkpoint and changes
         self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
+
+        # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = self._get_local_storage().get_need_sync_entries()
-
-        for entry_id in need_sync_local:
-            self.local_change(entry_id)
-
-        for entry_id in need_sync_remote:
-            self.remote_change(entry_id)
+        self.local_changes = {entry_id: LocalChange() for entry_id in need_sync_local}
+        self.remote_changes = need_sync_remote
 
         return True
 
@@ -152,14 +171,14 @@ class SyncContext:
             return False
 
     async def tick(self) -> float:
-        if self.need_bootstrap:
-            if await self._bootstrap():
-                self.need_bootstrap = False
-            else:
-                # Bootstrap error, no sync possible for the moment
+        if not self.bootstrapped:
+            if not await self._refresh_checkpoint():
+                # Error, no sync possible for the moment
                 return math.inf
+            self.bootstrapped = True
 
         now = timestamp()
+
         if self.due_time > now:
             return self.due_time
 
@@ -170,7 +189,9 @@ class SyncContext:
                 await self._sync(entry_id)
             except FSWorkspaceNoAccess:
                 self.read_only = True
-            # TODO: push back entry_id into remote_changes in case of exception ?
+            except FSWorkspaceInMaintenance:
+                self.maintenance_started = True
+
             # TODO: handle read only with entry_id modified by both local and remote
 
         elif self.local_changes and not self.read_only:
@@ -189,7 +210,8 @@ class SyncContext:
                 except FSWorkspaceNoAccess:
                     # No allowed anymore to do sync
                     self.read_only = True
-                # TODO: push back entry_id into remote_changes in case of exception ?
+                except FSWorkspaceInMaintenance:
+                    self.maintenance_started = True
 
         # Re-compute due time
         if self.remote_changes:
@@ -209,7 +231,6 @@ class WorkspaceSyncContext(SyncContext):
         self.workspace = self.user_fs.get_workspace(id)
 
     async def _sync(self, entry_id: EntryID):
-        # TODO: handle exceptions
         await self.workspace.sync_by_id(entry_id, recursive=False)
 
     def _get_backend_cmds(self):
@@ -224,7 +245,6 @@ class UserManifestSyncContext(SyncContext):
         assert entry_id == self.id
         # No recursion here: only the manifest that has changed
         # (remotely or locally) should get synchronized
-        # TODO: handle exceptions
         await self.user_fs.sync()
 
     def _get_backend_cmds(self):
@@ -285,8 +305,6 @@ async def _monitor_sync_online(user_fs, event_bus):
             # us, hence we receive vlob updated events before having
             # added the workspace entry to our user manifest)
             return
-        # TODO: checkpoint should be saved somewhere to keep track of the changes
-        # in case of restart
         if ctx.remote_change(src_id):
             early_wakeup.set()
 
@@ -332,7 +350,15 @@ async def _monitor_sync_online(user_fs, event_bus):
         user_manifest = user_fs.get_user_manifest()
         for entry in user_manifest.workspaces:
             if entry.role is not None:
-                wait_times.append(await ctxs.get(entry.id).tick())
+                try:
+                    wait_times.append(await ctxs.get(entry.id).tick())
+                except Exception as exc:
+                    logger.error("Sync monitor has crashed", workspace_id=entry.id, exc_info=exc)
+                    # Reset sync context which is now in an undefined state
+                    ctxs.discard(entry.id)
+                    ctx = ctxs.get(entry.id)
+                    # Add small cooldown just to be sure not end up in a crazy busy error loop
+                    ctx.due_time += 5
         event_bus.send("sync_monitor.reconnection_sync.done")
 
         event_bus.send("sync_monitor.ready")
@@ -342,27 +368,37 @@ async def _monitor_sync_online(user_fs, event_bus):
                 early_wakeup.clear()
             wait_times.clear()
             for ctx in ctxs.iter():
-                wait_times.append(await ctx.tick())
+                try:
+                    wait_times.append(await ctx.tick())
+                except FSBackendOfflineError:
+                    raise
+                except Exception as exc:
+                    logger.error("Sync monitor has crashed", workspace_id=ctx.id, exc_info=exc)
+                    # Reset sync context which is now in an undefined state
+                    ctxs.discard(ctx.id)
+                    ctx = ctxs.get(ctx.id)
+                    # Add small cooldown just to be sure not end up in a crazy busy error loop
+                    ctx.due_time += 5
 
 
 async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     cancel_scope = None
 
-    def _on_backend_offline(event):
+    def _on_backend_conn_lost(event):
         if cancel_scope:
             cancel_scope.cancel()
 
     with event_bus.waiter_on(
-        "backend.online"
-    ) as backend_online_event, event_bus.connect_in_context(
-        ("backend.offline", _on_backend_offline)
+        "backend.connection.bootstrapping"
+    ) as backend_conn_bootstrapping_event, event_bus.connect_in_context(
+        ("backend.connection.lost", _on_backend_conn_lost)
     ):
 
         task_status.started()
 
         while True:
-            await backend_online_event.wait()
-            backend_online_event.clear()
+            await backend_conn_bootstrapping_event.wait()
+            backend_conn_bootstrapping_event.clear()
 
             try:
                 with trio.CancelScope() as cancel_scope:
