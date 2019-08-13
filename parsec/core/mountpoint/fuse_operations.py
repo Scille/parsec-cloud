@@ -4,7 +4,7 @@ import os
 from typing import Optional
 from structlog import get_logger
 from contextlib import contextmanager
-from errno import ENETDOWN, EBADF, ENOTDIR, EIO
+from errno import ENETDOWN, EBADF, ENOTDIR, EIO, EINVAL
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
@@ -16,6 +16,24 @@ from parsec.core.fs import FSBackendOfflineError
 
 logger = get_logger()
 MODES = {os.O_RDONLY: "r", os.O_WRONLY: "w", os.O_RDWR: "rw"}
+
+
+# We are preventing the creation of file and folders starting with those prefixes
+# It might not be the best solution but it does fix our problems for the moment.
+# In particular:
+#
+# - .Thrash-XXXX which is used to store removed files and directories
+#   We don't really want this to be shared among users and our system already provides
+#   backup capabilities.
+#
+# - .goutputstream-XXXX which is used by the glib to provide atomicity when writing a file
+#   This causes a file to end up with a different ID in our system everytime it is written,
+#   which prevents the proper historization of those files.
+BANNED_PREFIXES = ".Trash-", ".goutputstream-"
+
+
+def is_banned(name):
+    return any(name.startswith(prefix) for prefix in BANNED_PREFIXES)
 
 
 @contextmanager
@@ -95,6 +113,8 @@ class FuseOperations(LoggingMixIn, Operations):
         return [".", ".."] + list(stat["children"])
 
     def create(self, path: FsPath, mode: int):
+        if is_banned(path.name):
+            raise FuseOSError(EINVAL)
         with translate_error():
             _, fd = self.fs_access.file_create(path, open=True)
             return fd
@@ -139,6 +159,8 @@ class FuseOperations(LoggingMixIn, Operations):
             self.fs_access.file_delete(path)
 
     def mkdir(self, path: FsPath, mode: int):
+        if is_banned(path.name):
+            raise FuseOSError(EINVAL)
         with translate_error():
             self.fs_access.folder_create(path)
         return 0
