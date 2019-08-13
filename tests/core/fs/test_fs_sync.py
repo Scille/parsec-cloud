@@ -567,7 +567,7 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         "type": "file",
         "base_version": 1,
         "created": Pendulum(2000, 1, 4),
-        "updated": Pendulum(2000, 1, 6),
+        "updated": Pendulum(2000, 1, 5),
         "is_placeholder": False,
         "need_sync": False,
         "size": 2,
