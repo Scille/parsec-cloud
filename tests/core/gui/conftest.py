@@ -218,6 +218,9 @@ def autoclose_dialog(monkeypatch):
         def __init__(self):
             self.dialogs = []
 
+        def reset(self):
+            self.dialogs = []
+
     spy = DialogSpy()
 
     def _dialog_exec(dialog):

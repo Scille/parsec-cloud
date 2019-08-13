@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-31 10:42+0200\n"
-"PO-Revision-Date: 2019-07-31 10:43+0200\n"
+"POT-Creation-Date: 2019-08-06 11:10+0200\n"
+"PO-Revision-Date: 2019-08-06 13:16+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -109,6 +109,18 @@ msgstr "Vous n'avez plus l'autorisation d'accéder à cet espace de travail."
 msgid "WARN_FILE_SHARING_READER"
 msgstr "Vous êtes maintenant lecteur de cet espace de travail."
 
+msgid "LABEL_PASSWORD_STRENGTH_{}"
+msgstr "Force du mot de passe : {}"
+
+msgid "ERR_PASSWORD_MISMATCH"
+msgstr "Les mots de passe ne correspondent pas."
+
+msgid "INFO_CHANGE_PASSWORD_SUCCESS"
+msgstr "Votre mot de passe a été modifié avec succès."
+
+msgid "ERR_PASSWORD_CHANGE_INVALID_PASSWORD"
+msgstr "Le mot de passe est invalide."
+
 msgid "ASK_FILE_EXISTS_REPLACE"
 msgstr "Un fichier nommé \"{}\" existe déjà. Voulez-vous le remplacer ?"
 
@@ -175,9 +187,6 @@ msgstr "Veuillez patienter pendant que l'utilisateur s'enregistre."
 msgid "ERR_CLAIM_USER_NOT_FOUND"
 msgstr "Aucune invitation trouvée pour cet utilisateur."
 
-msgid "ERR_PASSWORD_MISMATCH"
-msgstr "Les mots de passe ne correspondent pas."
-
 msgid "ERR_PASSWORD_COMPLEXITY"
 msgstr "Le mot de passe doit faire au moins huit caractères."
 
@@ -190,14 +199,14 @@ msgstr "Le nom d'utilisateur est invalide."
 msgid "ERR_CLAIM_USER_UNKNOWN"
 msgstr "Impossible d'enregistrer l'utilisateur."
 
-msgid "LABEL_PASSWORD_STRENGTH_{}"
-msgstr "Force du mot de passe : {}"
-
 msgid "DEVICE_CURRENT_TEXT"
 msgstr "actuel"
 
 msgid "DEVICE_MENU_SHOW_INFO"
 msgstr "Voir les informations"
+
+msgid "DEVICE_MENU_CHANGE_PASSWORD"
+msgstr "Modifier le mot de passe"
 
 msgid "DEVICE_MENU_REVOKE"
 msgstr "Révoquer"
@@ -851,6 +860,15 @@ msgstr "Ignorer"
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr "Notifications"
+
+msgid "LABEL_CHANGE_PASSWORD"
+msgstr "Entrez votre mot de passe actuel et le nouveau mot de passe."
+
+msgid "LABEL_PASSWORD_OLD"
+msgstr "Mot de passe actuel"
+
+msgid "BUTTON_CHANGE_PASSWORD"
+msgstr "Modifier le mot de passe"
 
 msgid "BUTTON_NO"
 msgstr "Non"

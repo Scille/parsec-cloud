@@ -419,27 +419,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="314"/>
+        <location filename="../forms/login_widget.ui" line="317"/>
         <source>BUTTON_REGISTER_NEW_USER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="336"/>
+        <location filename="../forms/login_widget.ui" line="342"/>
         <source>BUTTON_REGISTER_NEW_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="358"/>
+        <location filename="../forms/login_widget.ui" line="367"/>
         <source>BUTTON_LOG_IN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="377"/>
+        <location filename="../forms/login_widget.ui" line="389"/>
         <source>BUTTON_BOOTSTRAP_ORG</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="393"/>
+        <location filename="../forms/login_widget.ui" line="408"/>
         <source>BUTTON_SETTINGS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -665,6 +665,44 @@
     <message>
         <location filename="../forms/notification_widget.ui" line="32"/>
         <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PasswordChangeDialog</name>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="123"/>
+        <source>LABEL_CHANGE_PASSWORD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="146"/>
+        <source>LABEL_PASSWORD_OLD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="153"/>
+        <source>LABEL_PASSWORD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="160"/>
+        <source>LABEL_PASSWORD_CHECK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="228"/>
+        <source>BUTTON_CHANGE_PASSWORD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/password_change_dialog.ui" line="264"/>
+        <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
