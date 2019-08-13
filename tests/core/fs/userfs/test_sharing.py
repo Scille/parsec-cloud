@@ -67,7 +67,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
         with freeze_time("2000-01-03"):
             await bob_user_fs.process_last_messages()
     spy.assert_event_occured(
-        "sharing.granted",
+        "sharing.updated",
         {
             "new_entry": WorkspaceEntry(
                 name="w1 (shared by alice)",
@@ -77,7 +77,8 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
                 encrypted_on=Pendulum(2000, 1, 2),
                 role_cached_on=Pendulum(2000, 1, 3),
                 role=WorkspaceRole.MANAGER,
-            )
+            ),
+            "previous_entry": None,
         },
     )
 
@@ -147,7 +148,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
         with freeze_time("2000-01-03"):
             await alice_user_fs.process_last_messages()
     spy.assert_event_occured(
-        "sharing.revoked",
+        "sharing.updated",
         {
             "new_entry": WorkspaceEntry(
                 name="w1",
@@ -281,7 +282,9 @@ async def test_share_with_different_role(running_backend, alice_user_fs, bob_use
             await bob_user_fs.process_last_messages()
         new_entry = spy.partial_obj(WorkspaceEntry, name="w1 (shared by alice)", id=wid, role=role)
         if not previous_entry:
-            spy.assert_event_occured("sharing.granted", {"new_entry": new_entry})
+            spy.assert_event_occured(
+                "sharing.updated", {"new_entry": new_entry, "previous_entry": None}
+            )
 
         else:
             spy.assert_event_occured(
@@ -353,7 +356,7 @@ async def test_share_with_sharing_name_already_taken(
         with freeze_time("2000-01-02"):
             await bob_user_fs.process_last_messages()
     spy.assert_event_occured(
-        "sharing.granted",
+        "sharing.updated",
         {
             "new_entry": WorkspaceEntry(
                 name="w (shared by alice)",
@@ -363,7 +366,8 @@ async def test_share_with_sharing_name_already_taken(
                 encrypted_on=Pendulum(2000, 1, 1),
                 role_cached_on=Pendulum(2000, 1, 2),
                 role=WorkspaceRole.MANAGER,
-            )
+            ),
+            "previous_entry": None,
         },
     )
 
@@ -502,7 +506,9 @@ async def test_sharing_events_triggered_on_sync(
         role_cached_on=Pendulum(2000, 1, 2),
         role=WorkspaceRole.MANAGER,
     )
-    spy.assert_event_occured("sharing.granted", {"new_entry": expected_entry_v1})
+    spy.assert_event_occured(
+        "sharing.updated", {"new_entry": expected_entry_v1, "previous_entry": None}
+    )
 
     # Change role
     await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
@@ -543,7 +549,7 @@ async def test_sharing_events_triggered_on_sync(
         role=None,
     )
     spy.assert_event_occured(
-        "sharing.revoked", {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v2}
+        "sharing.updated", {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v2}
     )
 
 

@@ -27,7 +27,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
 
         # Bob should get a notification
         await spy.wait_with_timeout(
-            "sharing.granted",
+            "sharing.updated",
             {
                 "new_entry": WorkspaceEntry(
                     name="foo (shared by alice)",
@@ -37,7 +37,8 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
                     encrypted_on=Pendulum(2000, 1, 1),
                     role_cached_on=ANY,
                     role=WorkspaceRole.MANAGER,
-                )
+                ),
+                "previous_entry": None,
             },
         )
 
@@ -53,7 +54,7 @@ async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, ru
 
         # Each workspace participant should get the message
         await spy.wait_with_timeout(
-            "sharing.revoked",
+            "sharing.updated",
             {
                 "new_entry": WorkspaceEntry(
                     name="w (shared by alice)",

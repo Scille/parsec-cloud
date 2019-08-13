@@ -24,8 +24,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         "backend.connection.ready",
         "backend.connection.incompatible_version",
         "mountpoint.stopped",
-        "sharing.granted",
-        "sharing.revoked",
         "sharing.updated",
         "fs.entry.file_update_conflicted",
     ]
@@ -109,18 +107,23 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.new_notification.emit("WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
         elif event == "mountpoint.stopped":
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
-        elif event == "sharing.granted":
-            self.new_notification.emit(
-                "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(kwargs["new_entry"].name)
-            )
         elif event == "sharing.updated":
-            self.new_notification.emit(
-                "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(kwargs["new_entry"].name)
-            )
-        elif event == "sharing.revoked":
-            self.new_notification.emit(
-                "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(kwargs["previous_entry"].name)
-            )
+            new_entry = kwargs["new_entry"]
+            previous_entry = kwargs["previous_entry"]
+            new_role = getattr(new_entry, "role", None)
+            previous_role = getattr(previous_entry, "role", None)
+            if new_role is not None and previous_role is None:
+                self.new_notification.emit(
+                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
+                )
+            elif new_role is not None and previous_role is not None:
+                self.new_notification.emit(
+                    "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
+                )
+            elif new_role is None and previous_role is not None:
+                self.new_notification.emit(
+                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
+                )
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(
                 "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
