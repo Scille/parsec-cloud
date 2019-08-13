@@ -447,13 +447,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         src_path = self.current_directory / src
         dst_path = ""
         if dst == "..":
-            target_dir = self.current_directory.parent
-            dst_path = FsPath("/") / target_dir / src
+            dst_path = self.current_directory.parent / src
         else:
-            dst_path = FsPath("/") / dst / src
+            dst_path = self.current_directory / dst / src
         self.jobs_ctx.run(self.workspace_fs.move, src_path, dst_path)
-
-        pass
 
     def filter_files(self, pattern):
         pattern = pattern.lower()

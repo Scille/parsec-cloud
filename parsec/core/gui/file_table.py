@@ -255,7 +255,18 @@ class FileTable(QTableWidget):
         event.accept()
 
     def dragMoveEvent(self, event):
-        event.accept()
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            if event.source() != self:
+                event.ignore()
+                return
+            target_row = self.indexAt(event.pos()).row()
+            file_type = self.item(target_row, 0).data(TYPE_DATA_INDEX)
+            if file_type == FileType.ParentFolder or file_type == FileType.Folder:
+                event.accept()
+            else:
+                event.ignore()
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
@@ -277,7 +288,7 @@ class FileTable(QTableWidget):
             if event.source() != self:
                 return
             target_row = self.indexAt(event.pos()).row()
-            rows = set([i.row() for i in self.selectedIndexes() if i != target_row])
+            rows = set([i.row for i in self.selected_files() if i.row != target_row])
             if not rows:
                 return
             if not self.item(target_row, 0):
@@ -293,5 +304,6 @@ class FileTable(QTableWidget):
                     self.file_moved.emit(file_name, "..")
                 else:
                     self.file_moved.emit(file_name, target_name)
+            for row in rows:
                 self.removeRow(row)
             event.accept()
