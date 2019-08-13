@@ -101,7 +101,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_synced_qt = pyqtSignal(str, UUID)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
-    sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
     workspace_reencryption_success = pyqtSignal()
@@ -151,7 +150,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_unmounted.connect(self._on_workspace_unmounted)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
-        self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
 
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
         self.taskbar_buttons.append(button_add_workspace)
@@ -164,7 +162,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
-        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
 
     def hideEvent(self, event):
         try:
@@ -172,7 +169,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
             self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
-            self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
         except ValueError:
             pass
 
@@ -447,13 +443,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
         self.sharing_updated_qt.emit(new_entry, previous_entry)
 
-    def _on_sharing_revoked_trio(self, event, new_entry, previous_entry):
-        self.sharing_revoked_qt.emit(new_entry, previous_entry)
-
     def _on_sharing_updated_qt(self, new_entry, previous_entry):
-        self.reset()
-
-    def _on_sharing_revoked_qt(self, new_entry, previous_entry):
         self.reset()
 
     def _on_workspace_created_trio(self, event, new_entry):

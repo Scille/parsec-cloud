@@ -96,7 +96,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID)
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
-    sharing_revoked_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     taskbar_updated = pyqtSignal()
     back_clicked = pyqtSignal()
 
@@ -157,7 +156,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.files_dropped.connect(self.on_files_dropped)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
-        self.sharing_revoked_qt.connect(self._on_sharing_revoked_qt)
         self.rename_success.connect(self._on_rename_success)
         self.rename_error.connect(self._on_rename_error)
         self.delete_success.connect(self._on_delete_success)
@@ -179,14 +177,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
-        self.event_bus.connect("sharing.revoked", self._on_sharing_revoked_trio)
 
     def hideEvent(self, event):
         try:
             self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
             self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
-            self.event_bus.disconnect("sharing.revoked", self._on_sharing_revoked_trio)
         except ValueError:
             pass
 
@@ -603,21 +599,23 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if self.current_directory_uuid == uuid:
             self.update_timer.start(1000)
 
-    def _on_sharing_revoked_trio(self, event, new_entry, previous_entry):
-        self.sharing_revoked_qt.emit(new_entry, previous_entry)
-
-    def _on_sharing_revoked_qt(self, new_entry, previous_entry):
-        show_error(self, _("ERR_FILE_SHARING_REVOKED"))
-        self.back_clicked.emit()
-
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
         self.sharing_updated_qt.emit(new_entry, previous_entry)
 
     def _on_sharing_updated_qt(self, new_entry, previous_entry):
-        self.current_user_role = new_entry.role
-        self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
-        if previous_entry.role != WorkspaceRole.READER and new_entry.role == WorkspaceRole.READER:
-            show_warning(self, _("WARN_FILE_SHARING_READER"))
-            self.taskbar_updated.emit()
-        else:
-            self.taskbar_updated.emit()
+        if new_entry is None or new_entry.role is None:
+            # Sharing revoked
+            show_error(self, _("ERR_FILE_SHARING_REVOKED"))
+            self.back_clicked.emit()
+
+        elif previous_entry is not None and previous_entry.role is not None:
+            self.current_user_role = new_entry.role
+            self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
+            if (
+                previous_entry.role != WorkspaceRole.READER
+                and new_entry.role == WorkspaceRole.READER
+            ):
+                show_warning(self, _("WARN_FILE_SHARING_READER"))
+                self.taskbar_updated.emit()
+            else:
+                self.taskbar_updated.emit()

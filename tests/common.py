@@ -232,7 +232,7 @@ async def create_shared_workspace(name, creator, *shared_with):
                 )
             for spy in shared_with_spies:
                 await spy.wait_multiple(
-                    ["backend.realm.roles_updated", "backend.message.received", "sharing.granted"]
+                    ["backend.realm.roles_updated", "backend.message.received", "sharing.updated"]
                 )
 
         for user_fs in all_user_fss:

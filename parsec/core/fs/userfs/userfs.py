@@ -410,10 +410,13 @@ class UserFS:
                 )
             elif old_entry is None:
                 if new_entry.role is not None:
-                    self.event_bus.send("sharing.granted", new_entry=new_entry)
+                    # New sharing
+                    self.event_bus.send("sharing.updated", new_entry=new_entry, previous_entry=None)
             elif old_entry.role != new_entry.role:
-                event = "sharing.updated" if new_entry.role is not None else "sharing.revoked"
-                self.event_bus.send(event, new_entry=new_entry, previous_entry=old_entry)
+                # Sharing role has changed
+                self.event_bus.send(
+                    "sharing.updated", new_entry=new_entry, previous_entry=old_entry
+                )
 
     async def _outbound_sync(self) -> None:
         while True:
@@ -802,18 +805,16 @@ class UserFS:
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
-            if already_existing_entry:
-                self.event_bus.send(
-                    "sharing.updated",
-                    new_entry=workspace_entry,
-                    previous_entry=already_existing_entry,
-                )
-            else:
+
+            if not already_existing_entry:
                 # TODO: remove this event ?
                 self.event_bus.send(
                     "fs.entry.synced", id=workspace_entry.id, path=f"/{workspace_name}"
                 )
-                self.event_bus.send("sharing.granted", new_entry=workspace_entry)
+
+            self.event_bus.send(
+                "sharing.updated", new_entry=workspace_entry, previous_entry=already_existing_entry
+            )
 
     async def _process_message_sharing_revoked(self, sender, workspace_id):
         """
@@ -859,7 +860,7 @@ class UserFS:
             self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
-                "sharing.revoked",
+                "sharing.updated",
                 new_entry=workspace_entry,
                 previous_entry=existing_workspace_entry,
             )
