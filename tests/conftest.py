@@ -7,6 +7,7 @@ import sys
 import attr
 import socket
 import contextlib
+import pendulum
 from unittest.mock import patch
 import structlog
 import trio
@@ -84,11 +85,16 @@ def is_xdist_master(config):
     return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")
 
 
+@pytest.fixture(scope="session", autouse=True)
+def mock_timezone_utc(request):
+    # Mock and non-UTC timezones are a really bad mix, so keep things simple
+    with pendulum.tz.LocalTimezone.test(pendulum.timezone("utc")):
+        yield
+
+
 def pytest_configure(config):
     # Patch pytest-trio
     patch_pytest_trio()
-    # Mock and non-UTC timezones are a really bad mix, so keep things simple
-    os.environ.setdefault("TZ", "UTC")
     # Configure structlog to redirect everything in logging
     structlog.configure(
         logger_factory=structlog.stdlib.LoggerFactory(),
