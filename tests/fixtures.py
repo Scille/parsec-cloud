@@ -31,7 +31,7 @@ from parsec.backend.user import (
 )
 from parsec.backend.realm import RealmGrantedRole
 
-from tests.common import freeze_time
+from tests.common import freeze_time, addr_with_device_subdomain
 
 
 @attr.s
@@ -114,7 +114,11 @@ def local_device_factory(coolorg):
         except StopIteration:
             is_admin = bool(is_admin)
 
-        device = generate_new_device(device_id, org.addr, is_admin=is_admin)
+        # Force each device to access the backend trough a different hostname so
+        # tcp stream spy can switch offline certains while keeping the others online
+        org_addr = addr_with_device_subdomain(org.addr, device_id)
+
+        device = generate_new_device(device_id, org_addr, is_admin=is_admin)
         if parent_device is not None:
             device = device.evolve(
                 private_key=parent_device.private_key,

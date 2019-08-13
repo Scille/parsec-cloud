@@ -178,6 +178,13 @@ class BackendEventsManager:
                     encryption_revision=rep["encryption_revision"],
                 )
 
+            elif rep["event"] == "realm.maintenance_finished":
+                self.event_bus.send(
+                    "backend.realm.maintenance_finished",
+                    realm_id=rep["realm_id"],
+                    encryption_revision=rep["encryption_revision"],
+                )
+
             else:
                 logger.warning("Backend sent unknown event", event_msg=rep)
 

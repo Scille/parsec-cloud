@@ -9,6 +9,47 @@ from unittest.mock import ANY
 from parsec.event_bus import EventBus
 
 
+class PartialDict(dict):
+    """
+    Allow to do partial comparison with a dict::
+
+        assert PartialDict(a=1, b=2) == {'a': 1, 'b': 2, 'c': 3}
+    """
+
+    def __repr__(self):
+        return f"PartialDict<{super().__repr__()}>"
+
+    def __eq__(self, other):
+        for key, expected_value in self.items():
+            if key not in other or other[key] != expected_value:
+                return False
+        return True
+
+
+class PartialObj:
+    """
+    Allow to do partial comparison with a object::
+
+        assert PartialObj(Foo, a=1, b=2) == Foo(a=1, b=2, c=3)
+    """
+
+    def __init__(self, obj_cls, **kwargs):
+        self._obj_cls = obj_cls
+        self._obj_kwargs = kwargs
+
+    def __repr__(self):
+        args = ", ".join([f"{k}={v!r}" for k, v in self._obj_kwargs.items()])
+        return f"PartialObj<{self._obj_cls.__name__}({args})>"
+
+    def __eq__(self, other):
+        if type(other) is not self._obj_cls:
+            return False
+        for key, expected_value in self._obj_kwargs.items():
+            if not hasattr(other, key) or getattr(other, key) != expected_value:
+                return False
+        return True
+
+
 @attr.s(frozen=True, slots=True)
 class SpiedEvent:
     event = attr.ib()
@@ -21,6 +62,12 @@ class EventBusSpy:
     ANY = ANY  # Easier to use than doing an import
     events = attr.ib(factory=list)
     _waiters = attr.ib(factory=set)
+
+    def partial_dict(self, *args, **kwargs):
+        return PartialDict(*args, **kwargs)
+
+    def partial_obj(self, obj_cls, **kwargs):
+        return PartialObj(obj_cls, **kwargs)
 
     def __repr__(self):
         return f"<{type(self).__name__}({[e.event for e in self.events]})>"
@@ -57,14 +104,14 @@ class EventBusSpy:
         self._waiters.add(_waiter)
         return await receive_channel.receive()
 
-    async def wait_multiple_with_timeout(self, events, timeout=1):
+    async def wait_multiple_with_timeout(self, events, timeout=1, in_order=True):
         with trio.fail_after(timeout):
-            await self.wait_multiple(events)
+            await self.wait_multiple(events, in_order=in_order)
 
-    async def wait_multiple(self, events):
+    async def wait_multiple(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         try:
-            self.assert_events_occured(expected_events)
+            self.assert_events_occured(expected_events, in_order=in_order)
             return
         except AssertionError:
             pass
@@ -73,7 +120,7 @@ class EventBusSpy:
 
         def _waiter(cooked_event):
             try:
-                self.assert_events_occured(expected_events)
+                self.assert_events_occured(expected_events, in_order=in_order)
                 self._waiters.remove(_waiter)
                 done.set()
             except AssertionError:
@@ -110,13 +157,14 @@ class EventBusSpy:
         else:
             raise AssertionError(f"Event {expected} didn't occured")
 
-    def assert_events_occured(self, events):
+    def assert_events_occured(self, events, in_order=True):
         expected_events = self._cook_events_params(events)
         current_events = self.events
         for event in expected_events:
             assert event in current_events, self.events
-            i = current_events.index(event)
-            current_events = current_events[i + 1 :]
+            if in_order:
+                i = current_events.index(event)
+                current_events = current_events[i + 1 :]
 
     def assert_events_exactly_occured(self, events):
         events = self._cook_events_params(events)

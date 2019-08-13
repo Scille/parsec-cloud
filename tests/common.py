@@ -16,6 +16,15 @@ from parsec.core.fs.persistent_storage import PersistentStorage
 from parsec.api.transport import Transport, TransportError
 
 
+def addr_with_device_subdomain(addr, device_id):
+    """
+    Useful to have each device access the same backend with a different hostname
+    so tcp_stream_spy can put some offline and leave others online
+    """
+    device_specific_hostname = f"{device_id.user_id}.{device_id.device_name}.{addr.hostname}"
+    return type(addr)(addr.replace(addr.hostname, device_specific_hostname, 1))
+
+
 class InMemoryPersistentStorage(PersistentStorage):
     """An in-memory version of the local database.
 
@@ -171,42 +180,65 @@ async def create_shared_workspace(name, creator, *shared_with):
     This is more tricky than it seems given all Cores/FSs must agree on the
     workspace version and (only for the Cores) be ready to listen to the
     workspace's vlob group events.
+    This is *even* more tricky considering we want the cores involved in the
+    sharing to endup in a stable state (no event wildly fired or coroutine in
+    the middle of a processing when leaving this function) to avoid polluting
+    the actual test.
     """
-    spies = []
-    fss = []
-
     with ExitStack() as stack:
-        for x in (creator, *shared_with):
+        if isinstance(creator, LoggedCore):
+            creator_spy = stack.enter_context(creator.event_bus.listen())
+            creator_user_fs = creator.user_fs
+        elif isinstance(creator, UserFS):
+            creator_user_fs = creator
+            creator_spy = None
+        else:
+            raise ValueError(f"{creator!r} is not a {UserFS!r} or a {LoggedCore!r}")
+
+        all_user_fss = []
+        shared_with_spies = []
+        shared_with_cores_and_user_fss = []
+        for x in shared_with:
             if isinstance(x, LoggedCore):
-                # In case core has been passed
-                spies.append(stack.enter_context(x.event_bus.listen()))
-                fss.append(x.user_fs)
+                user_fs = x.user_fs
+                core = x
+                shared_with_spies.append(stack.enter_context(x.event_bus.listen()))
             elif isinstance(x, UserFS):
-                fss.append(x)
+                user_fs = x
+                core = None
             else:
                 raise ValueError(f"{x!r} is not a {UserFS!r} or a {LoggedCore!r}")
+            all_user_fss.append(user_fs)
+            if user_fs.device.user_id != creator_user_fs.device.user_id:
+                shared_with_cores_and_user_fss.append((core, user_fs))
 
-        creator_user_fs, *shared_with_fss = fss
         wid = await creator_user_fs.workspace_create(name)
         await creator_user_fs.sync()
         workspace = creator_user_fs.get_workspace(wid)
         await workspace.sync("/")
 
-        for recipient_user_fs in shared_with_fss:
-            if recipient_user_fs.device.user_id == creator_user_fs.device.user_id:
-                await recipient_user_fs.sync()
-            else:
-                await creator_user_fs.workspace_share(
-                    wid, recipient_user_fs.device.user_id, WorkspaceRole.MANAGER
-                )
+        for recipient_core, recipient_user_fs in shared_with_cores_and_user_fss:
+            await creator_user_fs.workspace_share(
+                wid, recipient_user_fs.device.user_id, WorkspaceRole.MANAGER
+            )
+            # Don't try to double-cross core's message monitor !
+            if not recipient_core:
                 await recipient_user_fs.process_last_messages()
-                await recipient_user_fs.sync()
 
         with trio.fail_after(1):
-            for spy in spies:
-                await spy.wait("backend.realm.roles_updated")
+            if creator_spy:
+                await creator_spy.wait_multiple(
+                    ["fs.workspace.created", "backend.realm.roles_updated"]
+                )
+            for spy in shared_with_spies:
+                await spy.wait_multiple(
+                    ["backend.realm.roles_updated", "backend.message.received", "sharing.granted"]
+                )
 
-        return wid
+        for user_fs in all_user_fss:
+            await user_fs.sync()
+
+    return wid
 
 
 def compare_fs_dumps(entry_1, entry_2):
