@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
+from parsec.core.gui import desktop
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
@@ -58,6 +59,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self._on_connection_state_changed(current_backend_connection_state(event_bus).value)
         self.label_mountpoint.setText(str(self.core.config.mountpoint_base_dir))
+        self.label_mountpoint.clicked.connect(self.open_mountpoint)
         self.menu.organization = self.core.device.organization_addr.organization_id
         self.menu.username = self.core.device.user_id
         self.menu.device = self.core.device.device_name
@@ -94,6 +96,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         item = self.widget_central.layout().itemAt(0)
         if item:
             item.widget().disconnect_all()
+
+    def open_mountpoint(self, path):
+        desktop.open_file(path)
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":

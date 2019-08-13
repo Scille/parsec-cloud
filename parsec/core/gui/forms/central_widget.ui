@@ -170,7 +170,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_mountpoint">
+               <widget class="ClickableLabel" name="label_mountpoint">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -358,6 +358,13 @@ border-bottom-left-radius: 34px;
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

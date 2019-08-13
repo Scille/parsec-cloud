@@ -148,3 +148,15 @@ class ShadowedButton(PointingHandButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
+
+
+class ClickableLabel(QLabel):
+    clicked = pyqtSignal(str)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+
+    def mousePressEvent(self, event):
+        if event.button() & Qt.LeftButton:
+            self.clicked.emit(self.text())
