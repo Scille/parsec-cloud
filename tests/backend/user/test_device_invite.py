@@ -32,7 +32,7 @@ async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
         ) as prep:
 
             # Waiting for device.claimed event
-            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait("event.connected", {"event_name": "device.claimed"})
 
             backend.event_bus.send(
                 "device.claimed",
@@ -67,7 +67,7 @@ async def test_device_invite_timeout(mock_clock, backend, alice_backend_sock, al
         async with device_invite(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "device.claimed"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -85,14 +85,14 @@ async def test_concurrent_device_invite(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait("event.connected", {"event_name": "device.claimed"})
             spy.clear()
 
             async with device_invite(
                 alice2_backend_sock, invited_device_name=alice_nd_id.device_name
             ) as prep2:
 
-                await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
+                await spy.wait("event.connected", {"event_name": "device.claimed"})
 
                 backend.event_bus.send(
                     "device.claimed",
@@ -114,7 +114,7 @@ async def test_device_invite_same_name_different_organizations(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait("event.connected", {"event_name": "device.claimed"})
 
             backend.event_bus.send(
                 "device.claimed",

@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import trio
 import pendulum
 from uuid import UUID
 
@@ -38,17 +37,16 @@ async def test_roles_updated_for_participant(
             rep = await realm_update_roles(alice_backend_sock, certif, check_rep=False)
             assert rep == {"status": "ok"}
 
-            with trio.fail_after(1):
-                await spy.wait(
-                    "realm.roles_updated",
-                    kwargs={
-                        "organization_id": alice.organization_id,
-                        "author": alice.device_id,
-                        "realm_id": realm,
-                        "user": bob.user_id,
-                        "role": role,
-                    },
-                )
+            await spy.wait_with_timeout(
+                "realm.roles_updated",
+                {
+                    "organization_id": alice.organization_id,
+                    "author": alice.device_id,
+                    "realm_id": realm,
+                    "user": bob.user_id,
+                    "role": role,
+                },
+            )
 
         # Check events propagated to the client
         rep = await events_listen_nowait(bob_backend_sock)

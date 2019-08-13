@@ -88,7 +88,7 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
     with running_backend.backend.event_bus.listen() as spy:
         async with trio.open_nursery() as nursery:
             nursery.start_soon(_alice_invite)
-            await spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "device.claimed"})
             nursery.start_soon(_alice_nd_claim)
 
     # Now alice's new device should be able to connect to backend

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
@@ -27,21 +26,20 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
             )
 
         # Bob should get a notification
-        with trio.fail_after(seconds=1):
-            await spy.wait(
-                "sharing.granted",
-                kwargs={
-                    "new_entry": WorkspaceEntry(
-                        name="foo (shared by alice)",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=1,
-                        encrypted_on=Pendulum(2000, 1, 1),
-                        role_cached_on=ANY,
-                        role=WorkspaceRole.MANAGER,
-                    )
-                },
-            )
+        await spy.wait_with_timeout(
+            "sharing.granted",
+            {
+                "new_entry": WorkspaceEntry(
+                    name="foo (shared by alice)",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=1,
+                    encrypted_on=Pendulum(2000, 1, 1),
+                    role_cached_on=ANY,
+                    role=WorkspaceRole.MANAGER,
+                )
+            },
+        )
 
 
 @pytest.mark.trio
@@ -54,30 +52,29 @@ async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, ru
             await alice_core.user_fs.workspace_share(wid, recipient="bob", role=None)
 
         # Each workspace participant should get the message
-        with trio.fail_after(seconds=1):
-            await spy.wait(
-                "sharing.revoked",
-                kwargs={
-                    "new_entry": WorkspaceEntry(
-                        name="w (shared by alice)",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=1,
-                        encrypted_on=Pendulum(2000, 1, 2),
-                        role_cached_on=ANY,
-                        role=None,
-                    ),
-                    "previous_entry": WorkspaceEntry(
-                        name="w (shared by alice)",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=1,
-                        encrypted_on=Pendulum(2000, 1, 2),
-                        role_cached_on=ANY,
-                        role=WorkspaceRole.MANAGER,
-                    ),
-                },
-            )
+        await spy.wait_with_timeout(
+            "sharing.revoked",
+            {
+                "new_entry": WorkspaceEntry(
+                    name="w (shared by alice)",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=1,
+                    encrypted_on=Pendulum(2000, 1, 2),
+                    role_cached_on=ANY,
+                    role=None,
+                ),
+                "previous_entry": WorkspaceEntry(
+                    name="w (shared by alice)",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=1,
+                    encrypted_on=Pendulum(2000, 1, 2),
+                    role_cached_on=ANY,
+                    role=WorkspaceRole.MANAGER,
+                ),
+            },
+        )
 
 
 @pytest.mark.trio
@@ -90,50 +87,49 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             await alice_core.user_fs.workspace_start_reencryption(wid)
 
         # Each workspace participant should get the message
-        with trio.fail_after(seconds=1):
-            await aspy.wait(
-                "sharing.updated",
-                kwargs={
-                    "new_entry": WorkspaceEntry(
-                        name="w",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=2,
-                        encrypted_on=Pendulum(2000, 1, 3),
-                        role_cached_on=ANY,
-                        role=WorkspaceRole.OWNER,
-                    ),
-                    "previous_entry": WorkspaceEntry(
-                        name="w",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=1,
-                        encrypted_on=Pendulum(2000, 1, 2),
-                        role_cached_on=ANY,
-                        role=WorkspaceRole.OWNER,
-                    ),
-                },
-            )
-            await bspy.wait(
-                "sharing.updated",
-                kwargs={
-                    "new_entry": WorkspaceEntry(
-                        name="w (shared by alice)",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=2,
-                        encrypted_on=Pendulum(2000, 1, 3),
-                        role_cached_on=ANY,
-                        role=WorkspaceRole.MANAGER,
-                    ),
-                    "previous_entry": WorkspaceEntry(
-                        name="w (shared by alice)",
-                        id=wid,
-                        key=ANY,
-                        encryption_revision=1,
-                        encrypted_on=Pendulum(2000, 1, 2),
-                        role_cached_on=ANY,
-                        role=WorkspaceRole.MANAGER,
-                    ),
-                },
-            )
+        await aspy.wait_with_timeout(
+            "sharing.updated",
+            {
+                "new_entry": WorkspaceEntry(
+                    name="w",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=2,
+                    encrypted_on=Pendulum(2000, 1, 3),
+                    role_cached_on=ANY,
+                    role=WorkspaceRole.OWNER,
+                ),
+                "previous_entry": WorkspaceEntry(
+                    name="w",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=1,
+                    encrypted_on=Pendulum(2000, 1, 2),
+                    role_cached_on=ANY,
+                    role=WorkspaceRole.OWNER,
+                ),
+            },
+        )
+        await bspy.wait_with_timeout(
+            "sharing.updated",
+            {
+                "new_entry": WorkspaceEntry(
+                    name="w (shared by alice)",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=2,
+                    encrypted_on=Pendulum(2000, 1, 3),
+                    role_cached_on=ANY,
+                    role=WorkspaceRole.MANAGER,
+                ),
+                "previous_entry": WorkspaceEntry(
+                    name="w (shared by alice)",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=1,
+                    encrypted_on=Pendulum(2000, 1, 2),
+                    role_cached_on=ANY,
+                    role=WorkspaceRole.MANAGER,
+                ),
+            },
+        )

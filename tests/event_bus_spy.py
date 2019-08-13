@@ -34,11 +34,11 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
-    async def wait_with_timeout(self, event, dt=ANY, kwargs=ANY, timeout=1):
+    async def wait_with_timeout(self, event, kwargs=ANY, dt=ANY, timeout=1):
         with trio.fail_after(timeout):
-            await self.wait(event, dt, kwargs)
+            await self.wait(event, kwargs, dt)
 
-    async def wait(self, event, dt=ANY, kwargs=ANY):
+    async def wait(self, event, kwargs=ANY, dt=ANY):
         expected = SpiedEvent(event, kwargs, dt)
         for occured_event in reversed(self.events):
             if expected == occured_event:
@@ -102,7 +102,7 @@ class EventBusSpy:
                 "or string"
             )
 
-    def assert_event_occured(self, event, dt=ANY, kwargs=ANY):
+    def assert_event_occured(self, event, kwargs=ANY, dt=ANY):
         expected = SpiedEvent(event, kwargs, dt)
         for occured in self.events:
             if occured == expected:

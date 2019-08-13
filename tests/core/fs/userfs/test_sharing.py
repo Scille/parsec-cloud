@@ -68,7 +68,7 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
             await bob_user_fs.process_last_messages()
     spy.assert_event_occured(
         "sharing.granted",
-        kwargs={
+        {
             "new_entry": WorkspaceEntry(
                 name="w1 (shared by alice)",
                 id=wid,
@@ -96,10 +96,6 @@ async def test_share_ok(running_backend, alice_user_fs, bob_user_fs, alice, bob,
     bw = bob_user_fs.get_workspace(wid)
     aw_stat = await aw.path_info("/")
     bw_stat = await bw.path_info("/")
-    # TODO: currently workspace minimal sync in userfs cannot
-    # update need_sync field
-    aw_stat.pop("need_sync")
-    bw_stat.pop("need_sync")
     assert aw_stat == bw_stat
 
 
@@ -152,7 +148,7 @@ async def test_unshare_ok(running_backend, alice_user_fs, bob_user_fs, alice, bo
             await alice_user_fs.process_last_messages()
     spy.assert_event_occured(
         "sharing.revoked",
-        kwargs={
+        {
             "new_entry": WorkspaceEntry(
                 name="w1",
                 id=wid,
@@ -308,8 +304,7 @@ async def test_share_with_sharing_name_already_taken(
     with freeze_time("2000-01-01"):
         awid = await alice_user_fs.workspace_create("w")
         bwid = await bob_user_fs.workspace_create("w")
-        # bw2id = await bob_user_fs.workspace_create("w (shared by alice)")
-        await bob_user_fs.workspace_create("w (shared by alice)")
+        bw2id = await bob_user_fs.workspace_create("w (shared by alice)")
 
     # Sharing them shouldn't be a trouble
     await bob_user_fs.sync()
@@ -321,7 +316,7 @@ async def test_share_with_sharing_name_already_taken(
             await bob_user_fs.process_last_messages()
     spy.assert_event_occured(
         "sharing.granted",
-        kwargs={
+        {
             "new_entry": WorkspaceEntry(
                 name="w (shared by alice)",
                 id=awid,
@@ -344,10 +339,8 @@ async def test_share_with_sharing_name_already_taken(
 
     b_bw_stat = await bob_user_fs.get_workspace(bwid).path_info("/")
     assert b_bw_stat["id"] == bwid
-    # TODO: currently workspaces with same name shadow each other
-    # should be solve once legacy FS class is dropped
-    # b_bw2_stat = await bob_user_fs.get_workspace(bw2id).stat("/")
-    # assert b_bw2_stat["id"] == bw2id
+    b_bw2_stat = await bob_user_fs.get_workspace(bw2id).path_info("/")
+    assert b_bw2_stat["id"] == bw2id
 
 
 @pytest.mark.trio

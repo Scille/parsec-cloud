@@ -590,12 +590,9 @@ def core_factory(running_backend_ready, event_bus_factory, core_config):
         event_bus = event_bus_factory()
         with event_bus.listen() as spy:
             async with logged_core_factory(core_config, device, event_bus) as core:
-                if running_backend_ready.is_set():
-                    # On startup, sync_monitor does a full sync that could
-                    # cause concurrency issues in the tests
-                    await spy.wait("backend.connection.ready")
-                else:
-                    await spy.wait("backend.connection.ready")
+                # On startup, sync_monitor does a full sync that could
+                # cause concurrency issues in the tests
+                await spy.wait_with_timeout("backend.connection.ready")
 
                 yield core
 

@@ -50,7 +50,7 @@ async def test_device_claim_ok(backend, anonymous_backend_sock, alice, alice_nd_
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.created"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "device.created"})
             backend.event_bus.send(
                 "device.created",
                 organization_id=alice.organization_id,
@@ -77,7 +77,7 @@ async def test_device_claim_timeout(
             encrypted_claim=b"<foo>",
         ) as prep:
 
-            await spy.wait_with_timeout("event.connected", kwargs={"event_name": "device.created"})
+            await spy.wait_with_timeout("event.connected", {"event_name": "device.created"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
     assert prep[0] == {
@@ -96,7 +96,7 @@ async def test_device_claim_denied(backend, anonymous_backend_sock, alice, alice
         ) as prep:
 
             await spy.wait_with_timeout(
-                "event.connected", kwargs={"event_name": "device.invitation.cancelled"}
+                "event.connected", {"event_name": "device.invitation.cancelled"}
             )
             backend.event_bus.send(
                 "device.created", organization_id=alice.organization_id, device_id="dummy"

@@ -52,17 +52,14 @@ async def test_backend_switch_offline(
 
     with event_bus.listen() as spy:
         with offline(backend_addr):
-            with trio.fail_after(1.0):
-                await spy.wait("backend.offline")
+            await spy.wait_with_timeout("backend.offline")
 
         # Here backend switch back online, wait for the corresponding event
 
         # Backend event manager waits before retrying to connect
         mock_clock.jump(5.0)
 
-        with trio.fail_after(1.0):
-            await spy.wait("backend.online")
-            await spy.wait("backend.listener.restarted")
+        await spy.wait_multiple_with_timeout(["backend.online", "backend.listener.restarted"])
 
     # Make sure event system still works as expected
 
@@ -71,8 +68,7 @@ async def test_backend_switch_offline(
             "pinged", organization_id=alice.organization_id, author="bob@test", ping="foo"
         )
 
-        with trio.fail_after(1.0):
-            await spy.wait("backend.pinged", kwargs={"ping": "foo"})
+        await spy.wait_with_timeout("backend.pinged", {"ping": "foo"})
 
 
 @pytest.mark.trio
