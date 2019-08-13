@@ -294,7 +294,7 @@ class SyncTransactions:
                     continue
 
                 # Prepare
-                new_manifest = manifest.evolve_and_mark_updated(blocks=blocks, dirty_blocks=[])
+                new_manifest = manifest.evolve(blocks=blocks, dirty_blocks=[])
                 # Atomic change
                 for access, data in new_blocks:
                     self.local_storage.set_dirty_block(access.id, data)
