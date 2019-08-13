@@ -252,8 +252,7 @@ class FileTable(QTableWidget):
         self.setItem(row_idx, 4, item)
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
+        event.accept()
 
     def dragMoveEvent(self, event):
         event.accept()
