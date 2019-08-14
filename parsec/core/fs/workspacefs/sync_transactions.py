@@ -16,8 +16,6 @@ from parsec.core.types import (
     BlockAccess,
     LocalFileManifest,
 )
-from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
-from parsec.core.fs.workspacefs.file_transactions import DirtyBlockBuffer, BlockBuffer
 
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
@@ -361,45 +359,46 @@ class SyncTransactions:
 
     def _reshape_blocks(self, manifest):
         # Merge the blocks
-        dirty_blocks = [
-            DirtyBlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks
-        ]
-        blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
-        merged = merge_buffers_with_limits_and_alignment(
-            blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
-        )
+        # dirty_blocks = [
+        #     DirtyBlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks
+        # ]
+        # blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
+        # merged = merge_buffers_with_limits_and_alignment(
+        #     blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
+        # )
 
-        # Loop over blocks
-        blocks, old_blocks, new_blocks, missing = [], [], [], []
-        for space in merged.spaces:
-            assert len(space.buffers) > 0
+        # # Loop over blocks
+        # blocks, old_blocks, new_blocks, missing = [], [], [], []
+        # for space in merged.spaces:
+        #     assert len(space.buffers) > 0
 
-            # Existing block
-            if len(space.buffers) == 1:
-                buffer_space, = space.buffers
-                blocks.append(buffer_space.buffer.access)
-                continue
+        #     # Existing block
+        #     if len(space.buffers) == 1:
+        #         buffer_space, = space.buffers
+        #         blocks.append(buffer_space.buffer.access)
+        #         continue
 
-            # Create data for new block
-            data = bytearray(space.size)
-            for buffer_space in space.buffers:
-                try:
-                    buff = self.local_storage.get_block(buffer_space.buffer.access.id)
-                except FSLocalMissError:
-                    missing.append(buffer_space.buffer.access)
-                    continue
-                if buffer_space.buffer.access:
-                    old_blocks.append(buffer_space.buffer.access)
-                start = buffer_space.start - space.start
-                end = buffer_space.end - space.start
-                data[start:end] = buff[
-                    buffer_space.buffer_slice_start : buffer_space.buffer_slice_end
-                ]
+        #     # Create data for new block
+        #     data = bytearray(space.size)
+        #     for buffer_space in space.buffers:
+        #         try:
+        #             buff = self.local_storage.get_block(buffer_space.buffer.access.id)
+        #         except FSLocalMissError:
+        #             missing.append(buffer_space.buffer.access)
+        #             continue
+        #         if buffer_space.buffer.access:
+        #             old_blocks.append(buffer_space.buffer.access)
+        #         start = buffer_space.start - space.start
+        #         end = buffer_space.end - space.start
+        #         data[start:end] = buff[
+        #             buffer_space.buffer_slice_start : buffer_space.buffer_slice_end
+        #         ]
 
-            # Create new block
-            block_access = BlockAccess.from_block(data, space.start)
-            blocks.append(block_access)
-            new_blocks.append((block_access, data))
+        #     # Create new block
+        #     block_access = BlockAccess.from_block(data, space.start)
+        #     blocks.append(block_access)
+        #     new_blocks.append((block_access, data))
 
-        # Return missing accesses
-        return blocks, old_blocks, new_blocks, missing
+        # # Return missing accesses
+        # return blocks, old_blocks, new_blocks, missing
+        pass
