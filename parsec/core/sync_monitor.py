@@ -171,7 +171,9 @@ class SyncContext:
             return False
 
     async def tick(self) -> float:
+        print("TICK", len(self.remote_changes), len(self.local_changes))
         if not self.bootstrapped:
+            print("TICK bootstrap")
             if not await self._refresh_checkpoint():
                 # Error, no sync possible for the moment
                 return math.inf
@@ -186,6 +188,7 @@ class SyncContext:
         if self.remote_changes:
             entry_id = self.remote_changes.pop()
             try:
+                print("TICK remote sync", entry_id)
                 await self._sync(entry_id)
             except FSWorkspaceNoAccess:
                 self.read_only = True
@@ -206,6 +209,7 @@ class SyncContext:
             if entry_id:
                 del self.local_changes[entry_id]
                 try:
+                    print("TICK local sync", entry_id)
                     await self._sync(entry_id)
                 except FSWorkspaceNoAccess:
                     # No allowed anymore to do sync
@@ -287,6 +291,7 @@ async def _monitor_sync_online(user_fs, event_bus):
     early_wakeup = trio.Event()
 
     def _on_entry_updated(event, id, workspace_id=None):
+        print("/////", id, workspace_id)
         if workspace_id is None:
             # User manifest
             assert id == user_fs.user_manifest_id
@@ -363,13 +368,14 @@ async def _monitor_sync_online(user_fs, event_bus):
 
         event_bus.send("sync_monitor.ready")
         while True:
-            with trio.move_on_after(min(wait_times)):
+            with trio.move_on_at(min(wait_times)):
                 await early_wakeup.wait()
                 early_wakeup.clear()
             wait_times.clear()
             for ctx in ctxs.iter():
                 try:
                     wait_times.append(await ctx.tick())
+                    print("TICK next", wait_times[-1])
                 except FSBackendOfflineError:
                     raise
                 except Exception as exc:
