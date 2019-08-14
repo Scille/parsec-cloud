@@ -51,12 +51,11 @@ class FileManifest:
         return attr.evolve(self, **data)
 
     def to_local(self, author: DeviceID) -> "local_manifests.LocalFileManifest":
+
+        blocks = tuple((access.to_chunk(),) for access in self.blocks)
+
         return local_manifests.LocalFileManifest(
-            author=author,
-            base_manifest=self,
-            updated=self.updated,
-            size=self.size,
-            blocks=self.blocks,
+            author=author, base_manifest=self, updated=self.updated, size=self.size, blocks=blocks
         )
 
 
