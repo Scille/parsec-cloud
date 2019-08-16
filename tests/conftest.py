@@ -339,8 +339,8 @@ def backend_addr(tcp_stream_spy):
 @pytest.fixture
 def persistent_mockup(monkeypatch):
     monkeypatch.setattr(LocalStorage, "persistent_storage_class", InMemoryPersistentStorage)
-    with InMemoryPersistentStorage.mockup_context() as cache:
-        yield cache
+    with InMemoryPersistentStorage.mockup_context() as ctx:
+        yield ctx
 
 
 @pytest.fixture
