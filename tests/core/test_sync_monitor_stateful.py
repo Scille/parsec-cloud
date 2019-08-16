@@ -2,11 +2,11 @@
 
 import pytest
 import trio
-from hypothesis import strategies as st, assume
+import trio.testing
+from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     Bundle,
     initialize,
-    consumes,
     rule,
     run_state_machine_as_test,
     TrioAsyncioRuleBasedStateMachine,
@@ -14,7 +14,7 @@ from hypothesis_trio.stateful import (
 )
 
 from parsec.core.types import WorkspaceRole
-from parsec.core.fs import FSWorkspaceNotFoundError
+from parsec.core.fs import FSWorkspaceNotFoundError, FSWorkspaceNoAccess
 
 from tests.common import call_with_control
 
@@ -49,7 +49,6 @@ def recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=False):
 @pytest.mark.slow
 def test_sync_monitor_stateful(
     hypothesis_settings,
-    mock_clock,
     reset_testbed,
     backend_addr,
     backend_factory,
@@ -62,10 +61,17 @@ def test_sync_monitor_stateful(
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
         def __init__(self):
             super().__init__()
+            # Core's sync and message monitors must be kept frozen
+            mock_clock = trio.testing.MockClock(rate=0, autojump_threshold=0)
             self.set_clock(mock_clock)
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
+
+        async def wait(self, time):
+            trio.hazmat.current_clock().rate = 1
+            await trio.sleep(time)
+            trio.hazmat.current_clock().rate = 0
 
         SharedWorkspaces = Bundle("shared_workspace")
         SyncedFiles = Bundle("synced_files")
@@ -119,9 +125,6 @@ def test_sync_monitor_stateful(
         async def init(self):
             await reset_testbed()
 
-            # Freeze core's sync monitors
-            mock_clock.rate = 0
-
             await self.start_backend()
             self.bob_user_fs = await self.start_bob_user_fs()
             self.alice_core = await self.start_alice_core()
@@ -141,6 +144,7 @@ def test_sync_monitor_stateful(
                 bob.device_id: self.bob_user_fs,
             }
             self.synced_files = set()
+            self.alice_workspaces_role = {}
 
         @rule(
             target=SharedWorkspaces,
@@ -150,26 +154,23 @@ def test_sync_monitor_stateful(
             wname = self.get_next_workspace_name()
             wid = await self.bob_user_fs.workspace_create(wname)
             await self.bob_user_fs.workspace_share(wid, alice.user_id, role)
-            return (wid, role)
+            self.alice_workspaces_role[wid] = role
+            return wid
 
         @rule(
-            target=SharedWorkspaces,
-            workspace=consumes(SharedWorkspaces),
+            wid=SharedWorkspaces,
             new_role=st.one_of(
                 st.just(WorkspaceRole.CONTRIBUTOR), st.just(WorkspaceRole.READER), st.just(None)
             ),
         )
-        async def update_sharing(self, workspace, new_role):
-            wid, previous_role = workspace
+        async def update_sharing(self, wid, new_role):
             await self.bob_user_fs.workspace_share(wid, alice.user_id, new_role)
-            return (wid, new_role)
+            self.alice_workspaces_role[wid] = new_role
 
         @rule(
-            author=st.one_of(st.just(alice.device_id), st.just(bob.device_id)),
-            workspace=SharedWorkspaces,
+            author=st.one_of(st.just(alice.device_id), st.just(bob.device_id)), wid=SharedWorkspaces
         )
-        async def create_file(self, author, workspace):
-            wid, _ = workspace
+        async def create_file(self, author, wid):
             file_path = self.get_next_file_path()
             if author == bob.device_id:
                 await self._bob_update_file(wid, file_path, create_file=True)
@@ -197,44 +198,30 @@ def test_sync_monitor_stateful(
             try:
                 wfs = self.get_workspace(alice.device_id, wid)
             except FSWorkspaceNotFoundError:
-                assume(False)
+                return
             if create_file:
                 try:
                     await wfs.touch(file_path)
-                except OSError:
-                    assume(False)
+                except (FSWorkspaceNoAccess, OSError):
+                    return
             else:
                 data = self.get_next_data()
                 try:
                     await wfs.write_bytes(file_path, data)
-                except OSError:
-                    assume(False)
-                # print('+A' if create_file else '~A')
-
-            # except (FSWorkspaceNotFoundError, FSWorkspaceNoAccess, OSError) as exc:
-            #     print(exc)
-            #     # Access revoked, workspace sharing not yet take into account
-            #     # print('+!!!!A' if create_file else '~!!!A')
-            #     # return
-            #     assume(False)
+                except (FSWorkspaceNoAccess, OSError):
+                    return
 
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
             # Wait for alice core to settle down
-            mock_clock.rate = 1
-            mock_clock.autojump_threshold = 0.1
-            # await trio.sleep(300)
-            await trio.testing.wait_all_tasks_blocked(cushion=0.1)
-
-            # Fetch back potential changes made by alice
+            await self.wait(300)
+            # Bob get back alice's changes
             await self.bob_user_fs.sync()
             for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
                 bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                 await bob_w.sync("/")
-
-            # await trio.sleep(300)
-            await trio.testing.wait_all_tasks_blocked(cushion=0.1)
-            mock_clock.rate = 0
+            # Alice get back possible changes from bob's sync
+            await self.wait(300)
 
             # Now alice and bob should have agreed on the data
             new_synced_files = []
@@ -248,7 +235,7 @@ def test_sync_monitor_stateful(
 
                 bob_dump = bob_w.dump()
                 alice_dump = alice_w.dump()
-                if alice_workspace_entry.role == WorkspaceRole.READER:
+                if self.alice_workspaces_role[alice_workspace_entry.id] == WorkspaceRole.READER:
                     # Synced with bob, but we can have local changes that cannot be synced
                     recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=True)
                 else:
@@ -261,6 +248,6 @@ def test_sync_monitor_stateful(
                         new_synced_files.append(key)
 
             self.synced_files.update(new_synced_files)
-            return multiple(*new_synced_files)
+            return multiple(*(sorted(new_synced_files)))
 
     run_state_machine_as_test(SyncMonitorStateful, settings=hypothesis_settings)

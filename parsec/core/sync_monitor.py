@@ -35,15 +35,15 @@ def timestamp():
 class LocalChange:
     __slots__ = ("first_changed_on", "last_changed_on", "due_time")
 
-    def __init__(self):
-        self.first_changed_on = self.last_changed_on = timestamp()
+    def __init__(self, now):
+        self.first_changed_on = self.last_changed_on = now
         self.due_time = self._compute_due_time()
 
     def _compute_due_time(self):
         return min(self.last_changed_on + MIN_WAIT, self.first_changed_on + MAX_WAIT)
 
-    def changed(self) -> bool:
-        self.last_changed_on = timestamp()
+    def changed(self, changed_on) -> bool:
+        self.last_changed_on = changed_on
         self.due_time = self._compute_due_time()
         return self.due_time <= self.last_changed_on
 
@@ -117,16 +117,18 @@ class SyncContext:
 
         # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = self._get_local_storage().get_need_sync_entries()
-        self.local_changes = {entry_id: LocalChange() for entry_id in need_sync_local}
+        now = timestamp()
+        self.local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
         self.remote_changes = need_sync_remote
 
         return True
 
     def local_change(self, entry_id: EntryID) -> bool:
+        now = timestamp()
         try:
-            new_due_time = self.local_changes[entry_id].changed()
+            new_due_time = self.local_changes[entry_id].changed(now)
         except KeyError:
-            local_change = LocalChange()
+            local_change = LocalChange(now)
             self.local_changes[entry_id] = local_change
             new_due_time = local_change.due_time
 
@@ -162,18 +164,23 @@ class SyncContext:
 
         elif new_role != WorkspaceRole.READER and self.read_only:
             # Switch to read&write, previously ignored local changes should
-            # be checked asap !
+            # be taken into account now !
             self.read_only = False
-            return True
+            if self.local_changes:
+                local_changes_due_time = min(
+                    change_info.due_time for change_info in self.local_changes.values()
+                )
+                if self.due_time > local_changes_due_time:
+                    self.due_time = local_changes_due_time
+                    return True
+            return False
 
         else:
             # Last possibility: switch between two read&write roles
             return False
 
     async def tick(self) -> float:
-        print("TICK", len(self.remote_changes), len(self.local_changes))
         if not self.bootstrapped:
-            print("TICK bootstrap")
             if not await self._refresh_checkpoint():
                 # Error, no sync possible for the moment
                 return math.inf
@@ -188,7 +195,6 @@ class SyncContext:
         if self.remote_changes:
             entry_id = self.remote_changes.pop()
             try:
-                print("TICK remote sync", entry_id)
                 await self._sync(entry_id)
             except FSWorkspaceNoAccess:
                 self.read_only = True
@@ -209,7 +215,6 @@ class SyncContext:
             if entry_id:
                 del self.local_changes[entry_id]
                 try:
-                    print("TICK local sync", entry_id)
                     await self._sync(entry_id)
                 except FSWorkspaceNoAccess:
                     # No allowed anymore to do sync
@@ -291,7 +296,6 @@ async def _monitor_sync_online(user_fs, event_bus):
     early_wakeup = trio.Event()
 
     def _on_entry_updated(event, id, workspace_id=None):
-        print("/////", id, workspace_id)
         if workspace_id is None:
             # User manifest
             assert id == user_fs.user_manifest_id
@@ -375,7 +379,6 @@ async def _monitor_sync_online(user_fs, event_bus):
             for ctx in ctxs.iter():
                 try:
                     wait_times.append(await ctx.tick())
-                    print("TICK next", wait_times[-1])
                 except FSBackendOfflineError:
                     raise
                 except Exception as exc:
