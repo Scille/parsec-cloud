@@ -133,7 +133,7 @@ class LocalFileManifest:
         self.assert_integrity()
 
         # Blocks
-        blocks = tuple(chunk.access for chunk, in self.blocks)
+        blocks = tuple(chunks[0].access if len(chunks) == 1 else None for chunks in self.blocks)
 
         # Remote manifest
         return remote_manifests.FileManifest(
