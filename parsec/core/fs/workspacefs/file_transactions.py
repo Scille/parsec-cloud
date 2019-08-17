@@ -142,9 +142,8 @@ class FileTransactions:
             manifest, write_operations, removed_ids = prepare_write(manifest, len(content), offset)
 
             # Writing
-            result = sum(
-                self._write_chunk(chunk, content, offset) for chunk, offset in write_operations
-            )
+            for chunk, offset in write_operations:
+                self._write_chunk(chunk, content, offset)
 
             # Atomic change
             self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
@@ -155,7 +154,7 @@ class FileTransactions:
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)
-        return result
+        return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
         # Fetch and lock
