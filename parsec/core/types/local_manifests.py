@@ -14,7 +14,7 @@ from parsec.core.types.base import (
     EntryNameField,
     serializer_factory,
 )
-from parsec.core.types.access import BlockAccessSchema, WorkspaceEntry, WorkspaceEntrySchema, Chunks
+from parsec.core.types.access import ChunkSchema, WorkspaceEntry, WorkspaceEntrySchema, Chunks
 
 
 __all__ = (
@@ -166,13 +166,13 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
-    blocks = fields.Tuple(fields.Nested(BlockAccessSchema), required=True)
+    blocks = fields.List(fields.List(fields.Nested(ChunkSchema)), required=True)
 
     @post_load
     def make_obj(self, data):
         data.pop("type")
         data.pop("format")
-        data["blocks"] = tuple(data["blocks"])
+        data["blocks"] = tuple(tuple(block) for block in data["blocks"])
         return LocalFileManifest(**data)
 
 

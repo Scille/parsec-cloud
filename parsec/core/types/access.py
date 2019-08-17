@@ -159,7 +159,7 @@ class ChunkSchema(UnknownCheckedSchema):
 
     @post_load
     def make_obj(self, data):
-        return BlockAccess(**data)
+        return Chunk(**data)
 
 
 chunk_serializer = serializer_factory(ChunkSchema)
