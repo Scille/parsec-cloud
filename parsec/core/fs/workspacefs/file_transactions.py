@@ -211,7 +211,7 @@ class FileTransactions:
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
-            # self._manifest_reshape(entry_id, manifest)
+            self._manifest_reshape(entry_id, manifest)
             self.local_storage.ensure_manifest_persistant(entry_id)
 
     async def file_reshape(self, entry_id: EntryID) -> None:
