@@ -131,10 +131,9 @@ class LocalFileManifest:
     def to_remote(self, **data) -> "remote_manifests.FileManifest":
         # Checks
         self.assert_integrity()
-        assert self.is_reshaped
 
         # Blocks
-        blocks = tuple(chunk.to_block_access() for chunk, in self.blocks)
+        blocks = tuple(chunk.access for chunk, in self.blocks)
 
         # Remote manifest
         return remote_manifests.FileManifest(

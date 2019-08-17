@@ -3,9 +3,9 @@
 # Imports
 
 import bisect
-from typing import Tuple, List, Set, Iterator
+from typing import Tuple, List, Set, Iterator, Callable, Dict
 
-from parsec.core.types import EntryID, LocalFileManifest, Chunk, Chunks
+from parsec.core.types import BlockID, LocalFileManifest, Chunk, Chunks
 
 
 # Helpers
@@ -83,7 +83,7 @@ def split_write(size: int, offset: int, blocksize: int) -> Iterator[Tuple[int, i
 
 def block_write(
     chunks: Chunks, size: int, start: int, new_chunk: Chunk
-) -> Tuple[Chunks, Set[EntryID]]:
+) -> Tuple[Chunks, Set[BlockID]]:
     # Init
     stop = start + size
 
@@ -124,10 +124,10 @@ def block_write(
 
 def prepare_write(
     manifest: LocalFileManifest, size: int, offset: int
-) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[EntryID]]:
+) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[BlockID]]:
     # Prepare
     padding = 0
-    removed_ids: Set[EntryID] = set()
+    removed_ids: Set[BlockID] = set()
     write_operations: List[Tuple[Chunk, int]] = []
 
     # Padding
@@ -170,7 +170,7 @@ def prepare_write(
 
 def prepare_truncate(
     manifest: LocalFileManifest, size: int
-) -> Tuple[LocalFileManifest, Set[EntryID]]:
+) -> Tuple[LocalFileManifest, Set[BlockID]]:
     # Prepare
     block, remainder = locate(size, manifest.blocksize)
     removed_ids = dirty_id_set(manifest.blocks[block])
@@ -199,8 +199,42 @@ def prepare_truncate(
 
 def prepare_resize(
     manifest: LocalFileManifest, size: int
-) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[EntryID]]:
+) -> Tuple[LocalFileManifest, List[Tuple[Chunk, int]], Set[BlockID]]:
     if size >= manifest.size:
         return prepare_write(manifest, 0, size)
     manifest, removed_ids = prepare_truncate(manifest, size)
     return manifest, [], removed_ids
+
+
+# Reshape
+
+
+def prepare_reshape(
+    manifest: LocalFileManifest
+) -> Tuple[Callable, Dict[int, Tuple[Chunks, Chunk, Set[BlockID]]]]:
+
+    # Prepare
+    operations = {}
+
+    # Loop over blocks
+    for block, chunks in enumerate(manifest.blocks):
+
+        # Already a block
+        if len(chunks) == 1 and chunks[0].is_block:
+            continue
+
+        # Write new block
+        start, stop = chunks[0].start, chunks[-1].stop
+        new_chunk = Chunk.new_chunk(start, stop)
+
+        # Update structures
+        removed_ids = dirty_id_set(chunks)
+        operations[block] = (chunks, new_chunk, removed_ids)
+
+    def build_manifest(result_dict: Dict[int, Chunk]) -> LocalFileManifest:
+        blocks = list(manifest.blocks)
+        for block, new_chunk in result_dict.items():
+            blocks[block] = (new_chunk,)
+        return manifest.evolve(blocks=tuple(blocks))
+
+    return build_manifest, operations

@@ -7,20 +7,18 @@ from hypothesis import settings, strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant
 
 from parsec.core.types import EntryID, Chunk, Chunks, LocalFileManifest
-from parsec.core.fs.workspacefs.file_operations import prepare_read, prepare_write, prepare_resize
+from parsec.core.fs.workspacefs.file_transactions import padded_data
+from parsec.core.fs.workspacefs.file_operations import (
+    prepare_read,
+    prepare_write,
+    prepare_resize,
+    prepare_reshape,
+)
 
 from tests.common import freeze_time
 
 max_size = 64
 size = strategies.integers(min_value=0, max_value=max_size)
-
-
-def padded_data(data: bytes, start: int, stop: int) -> bytes:
-    if start <= stop <= 0:
-        return b"\x00" * (stop - start)
-    if 0 <= start <= stop:
-        return data[start:stop]
-    return b"\x00" * (0 - start) + data[0:stop]
 
 
 class Storage(dict):
@@ -87,24 +85,23 @@ class Storage(dict):
         return new_manifest
 
     def reshape(self, manifest: LocalFileManifest) -> LocalFileManifest:
-        blocks = []
+        result_dict = {}
         removed_ids = set()
+        getter, operations = prepare_reshape(manifest)
 
-        for chunks in manifest.blocks:
-            if len(chunks) == 1 and chunks[0].is_block:
-                blocks.append(chunks)
-                continue
-            data = self.build_data(chunks)
-            start, stop = chunks[0].start, chunks[-1].stop
-            new_chunk = Chunk.new_chunk(start, stop).evolve_as_block(data)
-            removed_ids |= {chunk.id for chunk in chunks}
+        for block, (source, destination, cleanup) in operations.items():
+            data = self.build_data(source)
+            new_chunk = destination.evolve_as_block(data)
+            removed_ids |= cleanup
             self.write_chunk(new_chunk, data)
-            blocks.append((new_chunk,))
+            result_dict[block] = new_chunk
+
+        new_manifest = getter(result_dict)
 
         for removed_id in removed_ids:
             self.clear_chunk_data(removed_id)
 
-        return manifest.evolve(blocks=tuple(blocks))
+        return new_manifest
 
 
 def test_complete_scenario() -> None:

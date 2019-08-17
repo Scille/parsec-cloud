@@ -529,7 +529,7 @@ class WorkspaceFS:
 
                 # The entry first requires reshaping
                 except FSReshapingRequiredError:
-                    await self.sync_transactions.file_reshape(entry_id)
+                    await self.file_transactions.file_reshape(entry_id)
                     continue
 
             # The manifest doesn't exist locally

@@ -237,7 +237,7 @@ class SyncTransactions:
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
             # Sync cannot be performed
-            if not final and is_file_manifest(local_manifest) and local_manifest.dirty_blocks:
+            if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped:
                 raise FSReshapingRequiredError(entry_id)
 
             # Merge manifests
@@ -272,36 +272,6 @@ class SyncTransactions:
             # Produce the new remote manifest to upload
             new_remote_manifest = new_local_manifest.to_remote()
             return new_remote_manifest.evolve(version=new_remote_manifest.version + 1)
-
-    async def file_reshape(self, entry_id: EntryID) -> None:
-
-        # Loop over attemps
-        missing = []
-        while True:
-
-            # Load missing blocks
-            await self.remote_loader.load_blocks(missing)
-
-            # Fetch and lock
-            async with self.local_storage.lock_manifest(entry_id) as manifest:
-                assert is_file_manifest(manifest)
-
-                # Look for missing blocks
-                blocks, old_blocks, new_blocks, missing = self._reshape_blocks(manifest)
-                if missing:
-                    continue
-
-                # Prepare
-                new_manifest = manifest.evolve(blocks=blocks, dirty_blocks=[])
-                # Atomic change
-                for access, data in new_blocks:
-                    self.local_storage.set_dirty_block(access.id, data)
-                for access in old_blocks:
-                    self.local_storage.clear_block(access.id)
-                self.local_storage.set_manifest(entry_id, new_manifest)
-
-                # Break out of the retry loop
-                return
 
     async def file_conflict(
         self, entry_id: EntryID, local_manifest: LocalManifest, remote_manifest: Manifest
@@ -356,49 +326,3 @@ class SyncTransactions:
                 self.local_storage.set_manifest(new_entry_id, new_manifest, check_lock_status=False)
                 self.local_storage.set_manifest(parent_id, new_parent_manifest)
                 self.local_storage.set_manifest(entry_id, other_manifest)
-
-    def _reshape_blocks(self, manifest):
-        # Merge the blocks
-        # dirty_blocks = [
-        #     DirtyBlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks
-        # ]
-        # blocks = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
-        # merged = merge_buffers_with_limits_and_alignment(
-        #     blocks + dirty_blocks, 0, manifest.size, DEFAULT_BLOCK_SIZE
-        # )
-
-        # # Loop over blocks
-        # blocks, old_blocks, new_blocks, missing = [], [], [], []
-        # for space in merged.spaces:
-        #     assert len(space.buffers) > 0
-
-        #     # Existing block
-        #     if len(space.buffers) == 1:
-        #         buffer_space, = space.buffers
-        #         blocks.append(buffer_space.buffer.access)
-        #         continue
-
-        #     # Create data for new block
-        #     data = bytearray(space.size)
-        #     for buffer_space in space.buffers:
-        #         try:
-        #             buff = self.local_storage.get_block(buffer_space.buffer.access.id)
-        #         except FSLocalMissError:
-        #             missing.append(buffer_space.buffer.access)
-        #             continue
-        #         if buffer_space.buffer.access:
-        #             old_blocks.append(buffer_space.buffer.access)
-        #         start = buffer_space.start - space.start
-        #         end = buffer_space.end - space.start
-        #         data[start:end] = buff[
-        #             buffer_space.buffer_slice_start : buffer_space.buffer_slice_end
-        #         ]
-
-        #     # Create new block
-        #     block_access = BlockAccess.from_block(data, space.start)
-        #     blocks.append(block_access)
-        #     new_blocks.append((block_access, data))
-
-        # # Return missing accesses
-        # return blocks, old_blocks, new_blocks, missing
-        pass

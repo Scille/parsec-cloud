@@ -9,8 +9,13 @@ from parsec.core.types import FileDescriptor, EntryID
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor
-from parsec.core.types import Chunk, Chunks, BlockID
-from parsec.core.fs.workspacefs.file_operations import prepare_read, prepare_write, prepare_resize
+from parsec.core.types import Chunk, Chunks, BlockID, LocalFileManifest
+from parsec.core.fs.workspacefs.file_operations import (
+    prepare_read,
+    prepare_write,
+    prepare_resize,
+    prepare_reshape,
+)
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
 
@@ -206,4 +211,70 @@ class FileTransactions:
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
+            # self._manifest_reshape(entry_id, manifest)
             self.local_storage.ensure_manifest_persistant(entry_id)
+
+    async def file_reshape(self, entry_id: EntryID) -> None:
+
+        # Loop over attemps
+        while True:
+
+            # Fetch and lock
+            async with self.local_storage.lock_manifest(entry_id) as manifest:
+
+                # Normalize
+                missing = self._manifest_reshape(entry_id, manifest)
+
+            # Done
+            if not missing:
+                return
+
+            # Load missing blocks
+            await self.remote_loader.load_blocks(missing)
+
+    # Reshaping helper
+
+    def _manifest_reshape(self, entry_id: EntryID, manifest: LocalFileManifest) -> List[BlockID]:
+        """This internal helper does not perform any locking."""
+
+        # Prepare
+        getter, operations = prepare_reshape(manifest)
+
+        # No-op
+        if not operations:
+            return []
+
+        # Prepare data structures
+        missing = []
+        result_dict = {}
+        removed_ids = set()
+
+        # Perform operations
+        for block, (source, destination, cleanup) in operations.items():
+
+            # Build data block
+            data, extra_missing = self._build_data(source)
+
+            # Missing data
+            if extra_missing:
+                missing += extra_missing
+                continue
+
+            # Write data
+            new_chunk = destination.evolve_as_block(data)
+            self._write_chunk(new_chunk, data)
+
+            # Update structures
+            removed_ids |= cleanup
+            result_dict[block] = new_chunk
+
+        # Craft and set new manifest
+        new_manifest = getter(result_dict)
+        self.local_storage.set_manifest(entry_id, new_manifest)
+
+        # Perform cleanup
+        for removed_id in removed_ids:
+            self.local_storage.clear_block(removed_id)
+
+        # Return missing block ids
+        return missing
