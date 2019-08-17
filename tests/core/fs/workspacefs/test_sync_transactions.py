@@ -284,7 +284,6 @@ async def test_get_minimal_remote_manifest(
     assert await sync_transactions.get_minimal_remote_manifest(c_id) is None
 
 
-@pytest.mark.skip
 @pytest.mark.trio
 async def test_file_conflict(sync_transactions, entry_transactions, file_transactions):
     # Prepare

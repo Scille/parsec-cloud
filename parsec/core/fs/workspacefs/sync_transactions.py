@@ -8,12 +8,12 @@ from parsec.types import DeviceID
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.types import (
+    Chunk,
     EntryID,
     EntryName,
     FolderManifest,
     Manifest,
     LocalManifest,
-    BlockAccess,
     LocalFileManifest,
 )
 
@@ -293,19 +293,17 @@ class SyncTransactions:
 
                 # Copy blocks
                 new_blocks = []
-                for access in current_manifest.blocks:
-                    data = self.local_storage.get_block(access.id)
-                    new_access = BlockAccess.from_block(data, access.offset)
-                    self.local_storage.set_dirty_block(new_access.id, data)
-                    new_blocks.append(new_access)
-
-                # Copy dirty blocks
-                new_dirty_blocks = []
-                for access in current_manifest.dirty_blocks:
-                    data = self.local_storage.get_block(access.id)
-                    new_access = BlockAccess.from_block(data, access.offset)
-                    self.local_storage.set_dirty_block(new_access.id, data)
-                    new_dirty_blocks.append(new_access)
+                for chunks in current_manifest.blocks:
+                    new_chunks = []
+                    for chunk in chunks:
+                        data = self.local_storage.get_block(chunk.id)
+                        new_chunk = Chunk.new_chunk(chunk.start, chunk.stop)
+                        self.local_storage.set_dirty_block(new_chunk.id, data)
+                        if len(chunks) == 1:
+                            new_chunk = new_chunk.evolve_as_block(data)
+                        new_chunks.append(chunk)
+                    new_blocks.append(tuple(new_chunks))
+                new_blocks = tuple(new_blocks)
 
                 # Prepare
                 new_entry_id = EntryID()
@@ -314,9 +312,7 @@ class SyncTransactions:
                 )
                 new_manifest = LocalFileManifest.make_placeholder(
                     entry_id=new_entry_id, author=current_manifest.author, parent_id=parent_id
-                ).evolve(
-                    size=current_manifest.size, blocks=new_blocks, dirty_blocks=new_dirty_blocks
-                )
+                ).evolve(size=current_manifest.size, blocks=new_blocks)
                 new_parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {new_name: new_entry_id}
                 )
