@@ -392,7 +392,7 @@ async def test_dump(alice_workspace):
                     "bar": {
                         "author": device_id,
                         "base_version": 1,
-                        "blocksize": 536870912,
+                        "blocksize": 524288,
                         "blocks": [],
                         "created": ANY,
                         "id": ANY,
