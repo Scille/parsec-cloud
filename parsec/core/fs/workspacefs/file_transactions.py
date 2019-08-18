@@ -2,6 +2,7 @@
 
 from typing import Tuple, List
 
+from collections import defaultdict
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
@@ -68,6 +69,7 @@ class FileTransactions:
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
+        self._write_count = defaultdict(int)
 
     # Event helper
 
@@ -124,10 +126,15 @@ class FileTransactions:
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
+
+            # Force writing to disk
             self.local_storage.ensure_manifest_persistant(entry_id)
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
+
+            # Clear fd
+            self._write_count.pop(fd, None)
 
     async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int) -> int:
         # Fetch and lock
@@ -151,6 +158,12 @@ class FileTransactions:
             # Clean up
             for removed_id in removed_ids:
                 self.local_storage.clear_block(removed_id)
+
+            # Reshaping
+            self._write_count[fd] += 1
+            if self._write_count[fd] >= 128:
+                self._manifest_reshape(entry_id, manifest)
+                self._write_count[fd] = 0
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)

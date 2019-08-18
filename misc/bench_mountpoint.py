@@ -93,7 +93,7 @@ def main():
 
             # Create 10mo file
             file = workdir / "sample"
-            file.write_bytes(bytearray(10 * 2 ** 20))
+            file.write_bytes(bytearray(100 * 1024 * 1024))
 
             try:
                 # Copy it into the workspace
