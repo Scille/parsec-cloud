@@ -26,7 +26,7 @@ __all__ = (
     "local_manifest_loads",
 )
 
-DEFAULT_BLOCK_SIZE = 512 * 1024 * 1024  # 512 KB
+DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 
 
 # File manifest
