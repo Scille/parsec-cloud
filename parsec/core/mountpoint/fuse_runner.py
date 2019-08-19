@@ -35,7 +35,8 @@ def _reset_signals(signals=None):
         yield
     finally:
         for sig, handler in saved.items():
-            ctypes.pythonapi.PyOS_setsig(sig, handler)
+            if ctypes.pythonapi.PyOS_getsig(sig) != handler:
+                ctypes.pythonapi.PyOS_setsig(sig, handler)
 
 
 async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) -> PurePath:
