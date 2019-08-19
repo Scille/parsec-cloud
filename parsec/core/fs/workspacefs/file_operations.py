@@ -95,6 +95,9 @@ def block_write(
     start_index = index_of_chunk_before_start(chunks, start)
     stop_index = index_of_chunk_after_stop(chunks, stop)
 
+    # Removed ids
+    removed_ids = dirty_id_set(chunks[start_index:stop_index])
+
     # Prepare result
     result = list(chunks[:start_index])
 
@@ -102,6 +105,7 @@ def block_write(
     start_chunk = chunks[start_index]
     if start_chunk.start < start:
         result.append(start_chunk.evolve(stop=start))
+        removed_ids.discard(start_chunk.id)
 
     # Add new buffer
     result.append(new_chunk)
@@ -110,13 +114,14 @@ def block_write(
     stop_chunk = chunks[stop_index - 1]
     if stop_chunk.stop > stop:
         result.append(stop_chunk.evolve(start=stop))
+        removed_ids.discard(stop_chunk.id)
 
     # Fill up
     result += chunks[stop_index:]
 
-    # Clean up
-    removed_ids = dirty_id_set(chunks[start_index:stop_index])
-    removed_ids -= dirty_id_set(result)
+    # IDs might appear multiple times
+    if removed_ids:
+        removed_ids -= dirty_id_set(result)
 
     # Return immutable result
     return tuple(result), removed_ids
