@@ -68,7 +68,7 @@ class LocalStorage:
         if self.locking_tasks:
             raise RuntimeError("Cannot teardown while entries are still locked")
         for entry_id in self.cache_ahead_of_persistance_ids.copy():
-            self._ensure_manifest_persistant(entry_id)
+            self._ensure_manifest_persistent(entry_id)
         self.persistent_storage.__exit__(*args)
 
     def clear_memory_cache(self):
@@ -128,14 +128,14 @@ class LocalStorage:
             self.cache_ahead_of_persistance_ids.add(entry_id)
         self.local_manifest_cache[entry_id] = manifest
 
-    def ensure_manifest_persistant(self, entry_id: EntryID) -> None:
+    def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
         if entry_id not in self.cache_ahead_of_persistance_ids:
             return
-        self._ensure_manifest_persistant(entry_id)
+        self._ensure_manifest_persistent(entry_id)
 
-    def _ensure_manifest_persistant(self, entry_id: EntryID) -> None:
+    def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
         raw = local_manifest_serializer.dumps(manifest)
         self.persistent_storage.set_manifest(entry_id, raw)
@@ -264,5 +264,5 @@ class LocalStorageTimestamped(LocalStorage):
         self._check_lock_status(entry_id)
         self.local_manifest_cache.pop(entry_id, None)
 
-    def ensure_manifest_persistant(self, entry_id: EntryID) -> None:
+    def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass

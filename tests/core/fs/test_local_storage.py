@@ -42,7 +42,7 @@ async def test_lock_required(tmpdir, alice):
         assert str(exc.value) == msg
 
         with pytest.raises(RuntimeError) as exc:
-            als.ensure_manifest_persistant(entry_id)
+            als.ensure_manifest_persistent(entry_id)
         assert str(exc.value) == msg
 
         with pytest.raises(RuntimeError) as exc:
@@ -108,7 +108,7 @@ async def test_cache_set_get(tmpdir, alice):
                     als3.get_manifest(entry_id)
 
             # 4) Flush data
-            als.ensure_manifest_persistant(entry_id)
+            als.ensure_manifest_persistent(entry_id)
             assert als.get_manifest(entry_id) == manifest
             with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als4:
                 assert als4.get_manifest(entry_id) == manifest

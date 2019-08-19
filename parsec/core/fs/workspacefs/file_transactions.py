@@ -128,7 +128,7 @@ class FileTransactions:
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
 
             # Force writing to disk
-            self.local_storage.ensure_manifest_persistant(entry_id)
+            self.local_storage.ensure_manifest_persistent(entry_id)
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
@@ -224,7 +224,7 @@ class FileTransactions:
     async def fd_flush(self, fd: FileDescriptor) -> None:
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
             self._manifest_reshape(entry_id, manifest)
-            self.local_storage.ensure_manifest_persistant(entry_id)
+            self.local_storage.ensure_manifest_persistent(entry_id)
 
     async def file_reshape(self, entry_id: EntryID) -> None:
 
