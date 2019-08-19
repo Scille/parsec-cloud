@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import QDialog, QCompleter, QWidget
 from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
 from parsec.core.types import WorkspaceRole
+
+from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+
 from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
@@ -25,6 +28,43 @@ def _index_to_role(index):
         if index == idx:
             return role
     return None
+
+
+async def _do_get_participants(workspace_fs):
+    return await workspace_fs.get_user_roles()
+
+
+async def _do_user_find(core, text):
+    users = await core.backend_cmds.user_find(text, 1, 100, True)
+    users = [u for u in users if u != core.device.user_id]
+    return users
+
+
+async def _do_share_workspace(user_fs, workspace_fs, user, role):
+    user_id = UserID(user)
+    workspace_name = workspace_fs.get_workspace_name()
+    try:
+        await user_fs.workspace_share(workspace_fs.workspace_id, user_id, role)
+        return workspace_name, user_id, role
+    except ValueError as exc:
+        raise JobResultError("invalid-user", workspace_name=workspace_name, user=user_id) from exc
+    except FSError as exc:
+        raise JobResultError("fs-error", workspace_name=workspace_name, user=user_id) from exc
+    except Exception as exc:
+        raise JobResultError("error", workspace_name=workspace_name, user=user_id) from exc
+
+
+async def _do_share_workspace_multiple(user_fs, workspace_fs, user_roles):
+    errors = {}
+    successes = {}
+    for user, role in user_roles.items():
+        try:
+            user_id = UserID(user)
+            await user_fs.workspace_share(workspace_fs.workspace_id, user_id, role)
+            successes[user_id] = role
+        except Exception:
+            errors[user_id] = role
+    return workspace_fs.get_workspace_name(), successes, errors
 
 
 class SharingWidget(QWidget, Ui_SharingWidget):
@@ -92,6 +132,17 @@ class SharingWidget(QWidget, Ui_SharingWidget):
 
 
 class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
+    get_participants_success = pyqtSignal(QtToTrioJob)
+    get_participants_error = pyqtSignal(QtToTrioJob)
+    share_success = pyqtSignal(QtToTrioJob)
+    share_error = pyqtSignal(QtToTrioJob)
+    unshare_success = pyqtSignal(QtToTrioJob)
+    unshare_error = pyqtSignal(QtToTrioJob)
+    share_update_success = pyqtSignal(QtToTrioJob)
+    share_update_error = pyqtSignal(QtToTrioJob)
+    user_find_success = pyqtSignal(QtToTrioJob)
+    user_find_error = pyqtSignal(QtToTrioJob)
+
     def __init__(self, user_fs, workspace_fs, core, jobs_ctx, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -106,6 +157,18 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.button_close.clicked.connect(self.on_close_requested)
         self.button_share.clicked.connect(self.on_share_clicked)
         self.button_apply.clicked.connect(self.on_update_permissions_clicked)
+
+        self.share_success.connect(self._on_share_success)
+        self.share_error.connect(self._on_share_error)
+        self.unshare_success.connect(self._on_unshare_success)
+        self.unshare_error.connect(self._on_unshare_error)
+        self.share_update_success.connect(self._on_share_update_success)
+        self.share_update_error.connect(self._on_share_update_error)
+        self.get_participants_success.connect(self._on_get_participants_success)
+        self.get_participants_error.connect(self._on_get_participants_error)
+        self.user_find_success.connect(self._on_user_find_success)
+        self.user_find_error.connect(self._on_user_find_error)
+
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
         self.current_user_role = ws_entry.role
         current_index = _ROLES_TO_INDEX[self.current_user_role]
@@ -140,15 +203,13 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
     def show_auto_complete(self):
         self.timer.stop()
         if len(self.line_edit_share.text()):
-            users = self.jobs_ctx.run(
-                self.core.backend_cmds.user_find, self.line_edit_share.text(), 1, 100, True
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "user_find_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "user_find_error", QtToTrioJob),
+                _do_user_find,
+                core=self.core,
+                text=self.line_edit_share.text(),
             )
-            users = [u for u in users if u != self.core.device.user_id]
-            completer = QCompleter(users)
-            completer.setCaseSensitivity(Qt.CaseInsensitive)
-            completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
-            self.line_edit_share.setCompleter(completer)
-            self.line_edit_share.completer().complete()
 
     def on_share_clicked(self):
         user_name = self.line_edit_share.text()
@@ -162,28 +223,16 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             if item and item.widget() and item.widget().user == user_name:
                 show_warning(self, _("WARN_WORKSPACE_ALREADY_SHARED_{}").format(user_name))
                 return
-        try:
-            user = UserID(user_name)
-            self.jobs_ctx.run(
-                self.user_fs.workspace_share,
-                self.workspace_fs.workspace_id,
-                user,
-                _index_to_role(self.combo_role.currentIndex()),
-            )
-            self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
-        except FSError as exc:
-            workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
-            show_error(
-                self,
-                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),
-                exception=exc,
-            )
-        except Exception as exc:
-            show_error(
-                self,
-                _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),
-                execption=exc,
-            )
+
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "share_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "share_error", QtToTrioJob),
+            _do_share_workspace,
+            user_fs=self.user_fs,
+            workspace_fs=self.workspace_fs,
+            user=user_name,
+            role=_index_to_role(self.combo_role.currentIndex()),
+        )
 
     def add_participant(self, user, is_current_user, role):
         w = SharingWidget(
@@ -212,33 +261,35 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         if not r:
             return
 
-        self.jobs_ctx.run(self.user_fs.workspace_share, self.workspace_fs.workspace_id, user, None)
-        self.reset()
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "unshare_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "unshare_error", QtToTrioJob),
+            _do_share_workspace,
+            user_fs=self.user_fs,
+            workspace_fs=self.workspace_fs,
+            user=user,
+            role=None,
+        )
 
     def on_update_permissions_clicked(self):
-        errors = []
-        updated = False
+        user_roles = {}
+
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
             w = item.widget()
             if not w or not isinstance(w, SharingWidget):
                 continue
             if w.should_update():
-                try:
-                    self.jobs_ctx.run(
-                        self.user_fs.workspace_share,
-                        self.workspace_fs.workspace_id,
-                        w.user,
-                        w.new_role,
-                    )
-                    updated = True
-                except:
-                    errors.append(w.user)
-        if errors:
-            show_error(self, _("ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}".format("\n".join(errors))))
-        elif updated:
-            show_info(self, _("INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"))
-        self.reset()
+                user_roles[w.user] = w.new_role
+
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "share_update_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "share_update_error", QtToTrioJob),
+            _do_share_workspace_multiple,
+            user_fs=self.user_fs,
+            workspace_fs=self.workspace_fs,
+            user_roles=user_roles,
+        )
 
     def has_changes(self):
         for i in range(self.scroll_content.layout().count() - 1):
@@ -260,16 +311,84 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         else:
             self.accept()
 
-    def reset(self):
+    def _on_share_success(self, job):
+        workspace_name, user, role = job.ret
+        self.add_participant(user, False, role)
+
+    def _on_share_error(self, job):
+        exc = job.exc
+        show_error(
+            self,
+            _("ERR_WORKSPACE_CANNOT_SHARE_{}").format(
+                workspace=exc.params.get("workspace_name"), user=exc.params.get("user")
+            ),
+            exception=exc,
+        )
+
+    def _on_unshare_success(self, job):
+        self.reset()
+
+    def _on_unshare_error(self, job):
+        exc = job.exc
+        show_error(
+            self,
+            _(
+                "ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}".format(
+                    workspace=exc.params.get("workspace_name"), user=exc.params.get("user")
+                )
+            ),
+        )
+
+    def _on_share_update_success(self, job):
+        workspace_name, successes, errors = job.ret
+
+        if errors:
+            show_error(
+                self, _("ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}".format("\n".join(errors.keys())))
+            )
+        else:
+            show_info(self, _("INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"))
+            self.reset()
+
+    def _on_share_update_error(self, job):
+        pass
+
+    def _on_get_participants_success(self, job):
+        participants = job.ret
         while self.scroll_content.layout().count() > 1:
             item = self.scroll_content.layout().takeAt(0)
             w = item.widget()
             self.scroll_content.layout().removeItem(item)
             w.setParent(None)
         QCoreApplication.processEvents()
-        participants = self.jobs_ctx.run(self.workspace_fs.get_user_roles)
         for user, role in participants.items():
             self.add_participant(user, user == self.core.device.user_id, role)
         self.line_edit_share.setText("")
         self.button_share.setDisabled(True)
         self.button_apply.setDisabled(True)
+
+    def _on_get_participants_error(self, job):
+        pass
+
+    def _on_user_find_success(self, job):
+        users = job.ret
+        completer = QCompleter(users)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
+        self.line_edit_share.setCompleter(completer)
+        self.line_edit_share.completer().complete()
+
+    def _on_user_find_error(self, job):
+        pass
+
+    def reset(self):
+        self.line_edit_share.setText("")
+        self.button_share.setDisabled(True)
+        self.button_apply.setDisabled(True)
+
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "get_participants_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "get_participants_error", QtToTrioJob),
+            _do_get_participants,
+            workspace_fs=self.workspace_fs,
+        )
