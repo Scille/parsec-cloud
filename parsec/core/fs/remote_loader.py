@@ -40,7 +40,8 @@ from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
-    FSWorkspaceNoAccess,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
 )
 
 
@@ -72,7 +73,7 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Cannot get workspace roles: no read access") from exc
+            raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access") from exc
 
         except BackendConnectionError as exc:
             raise FSError(f"Cannot retrieve workspace roles: {exc}") from exc
@@ -186,7 +187,7 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Cannot load block: no read access") from exc
+            raise FSWorkspaceNoReadAccess("Cannot load block: no read access") from exc
 
         # Backend not available
         except BackendNotAvailable as exc:
@@ -242,7 +243,7 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Cannot upload block: no write access") from exc
+            raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access") from exc
 
         # Backend is not available
         except BackendNotAvailable as exc:
@@ -287,7 +288,7 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Cannot load manifest: no read access") from exc
+            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access") from exc
 
         # Backend is not available
         except BackendNotAvailable as exc:
@@ -487,7 +488,7 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Cannot upload manifest: no write access") from exc
+            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access") from exc
 
         # Backend not available
         except BackendNotAvailable as exc:
@@ -542,7 +543,7 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Cannot upload manifest: no write access") from exc
+            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access") from exc
 
         # Workspace in maintenance
         except BackendCmdsInMaintenance as exc:
