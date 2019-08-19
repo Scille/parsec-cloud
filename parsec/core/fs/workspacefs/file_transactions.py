@@ -162,7 +162,7 @@ class FileTransactions:
             # Reshaping
             self._write_count[fd] += 1
             if self._write_count[fd] >= 128:
-                self._manifest_reshape(entry_id, manifest)
+                self._manifest_reshape(entry_id, manifest, cache_only=True)
                 self._write_count[fd] = 0
 
         # Notify
@@ -246,7 +246,9 @@ class FileTransactions:
 
     # Reshaping helper
 
-    def _manifest_reshape(self, entry_id: EntryID, manifest: LocalFileManifest) -> List[BlockID]:
+    def _manifest_reshape(
+        self, entry_id: EntryID, manifest: LocalFileManifest, cache_only: bool = False
+    ) -> List[BlockID]:
         """This internal helper does not perform any locking."""
 
         # Prepare
@@ -282,7 +284,7 @@ class FileTransactions:
 
         # Craft and set new manifest
         new_manifest = getter(result_dict)
-        self.local_storage.set_manifest(entry_id, new_manifest)
+        self.local_storage.set_manifest(entry_id, new_manifest, cache_only=cache_only)
 
         # Perform cleanup
         for removed_id in removed_ids:
