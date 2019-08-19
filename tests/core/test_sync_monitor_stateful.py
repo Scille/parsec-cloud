@@ -59,6 +59,10 @@ def test_sync_monitor_stateful(
     bob,
 ):
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
+
+        SharedWorkspaces = Bundle("shared_workspace")
+        SyncedFiles = Bundle("synced_files")
+
         def __init__(self):
             super().__init__()
             # Core's sync and message monitors must be kept frozen
@@ -67,14 +71,6 @@ def test_sync_monitor_stateful(
             self.file_count = 0
             self.data_count = 0
             self.workspace_count = 0
-
-        async def wait(self, time):
-            trio.hazmat.current_clock().rate = 1
-            await trio.sleep(time)
-            trio.hazmat.current_clock().rate = 0
-
-        SharedWorkspaces = Bundle("shared_workspace")
-        SyncedFiles = Bundle("synced_files")
 
         def get_next_file_path(self):
             self.file_count = self.file_count + 1
@@ -128,17 +124,6 @@ def test_sync_monitor_stateful(
             await self.start_backend()
             self.bob_user_fs = await self.start_bob_user_fs()
             self.alice_core = await self.start_alice_core()
-
-            # Force a sleep before the message processing in order to freeze
-            # the message monitor when it is notified of a new sharing
-            vanilla_process_last_messages = self.alice_core.user_fs.process_last_messages
-
-            async def _process_last_messages():
-                await trio.sleep(0.001)
-                await vanilla_process_last_messages()
-
-            self.alice_core.user_fs.process_last_messages = _process_last_messages
-
             self.user_fs_per_device = {
                 alice.device_id: self.alice_core.user_fs,
                 bob.device_id: self.bob_user_fs,
@@ -214,14 +199,14 @@ def test_sync_monitor_stateful(
         @rule(target=SyncedFiles)
         async def let_core_monitors_process_changes(self):
             # Wait for alice core to settle down
-            await self.wait(300)
+            await trio.sleep(300)
             # Bob get back alice's changes
             await self.bob_user_fs.sync()
             for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
                 bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
                 await bob_w.sync("/")
             # Alice get back possible changes from bob's sync
-            await self.wait(300)
+            await trio.sleep(300)
 
             # Now alice and bob should have agreed on the data
             new_synced_files = []

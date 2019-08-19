@@ -9,7 +9,8 @@ from parsec.core.types import EntryID, WorkspaceRole
 from parsec.core.fs import (
     FSBackendOfflineError,
     FSWorkspaceNotFoundError,
-    FSWorkspaceNoAccess,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
 from parsec.core.backend_connection import (
@@ -25,6 +26,7 @@ logger = get_logger()
 
 MIN_WAIT = 5
 MAX_WAIT = 60
+MAINTENANCE_MIN_WAIT = 30
 
 
 def timestamp():
@@ -62,12 +64,9 @@ class SyncContext:
     def __init__(self, user_fs, id: EntryID):
         self.user_fs = user_fs
         self.id = id
-        # Always start with read_only=False, if needed we will switch this
-        # flag during our first sync raising an access error
         self.read_only = False
         self.local_changes = {}
         self.remote_changes = set()
-        self.in_maintenance = False
         self.need_bootstrap = True
         self.bootstrapped = False
         self.due_time = timestamp()
@@ -100,11 +99,7 @@ class SyncContext:
             new_checkpoint = 0
             changes = {}
 
-        except BackendCmdsInMaintenance:
-            self.in_maintenance = True
-            return False
-
-        except BackendCmdsNotAllowed:
+        except (BackendCmdsInMaintenance, BackendCmdsNotAllowed):
             return False
 
         # Another backend error
@@ -142,15 +137,6 @@ class SyncContext:
     def remote_change(self, entry_id: EntryID) -> bool:
         self.remote_changes.add(entry_id)
         self.due_time = timestamp()
-        return True
-
-    def maintenance_started(self):
-        self.in_maintenance = True
-        return False
-
-    def maintenance_finished(self):
-        self.in_maintenance = False
-        self.need_bootstrap = True
         return True
 
     def role_updated(self, new_role):
@@ -191,17 +177,29 @@ class SyncContext:
         if self.due_time > now:
             return self.due_time
 
+        min_due_time = None
+
         # Remote changes sync have priority over local changes
         if self.remote_changes:
             entry_id = self.remote_changes.pop()
             try:
                 await self._sync(entry_id)
-            except FSWorkspaceNoAccess:
-                self.read_only = True
+            except FSWorkspaceNoReadAccess:
+                # We've just lost the read access to the workspace.
+                # This likely means a `sharing.updated` event we soon arrive
+                # and destroy this sync context.
+                # Until then just pretent nothing happened.
+                min_due_time = now + MIN_WAIT
+                self.remote_changes.add(entry_id)
+            except FSWorkspaceNoWriteAccess:
+                # We don't have write access and this entry contains local
+                # modifications. Hence we can forget about this change given
+                # it's `self.local_changes` role to keep track of local changes.
+                pass
             except FSWorkspaceInMaintenance:
-                self.maintenance_started = True
-
-            # TODO: handle read only with entry_id modified by both local and remote
+                # Not the right time for the sync, retry later
+                min_due_time = now + MAINTENANCE_MIN_WAIT
+                self.remote_changes.add(entry_id)
 
         elif self.local_changes and not self.read_only:
             entry_id = next(
@@ -216,11 +214,18 @@ class SyncContext:
                 del self.local_changes[entry_id]
                 try:
                     await self._sync(entry_id)
-                except FSWorkspaceNoAccess:
-                    # No allowed anymore to do sync
-                    self.read_only = True
+                except (FSWorkspaceNoReadAccess, FSWorkspaceNoWriteAccess):
+                    # We've just lost the write access to the workspace, and
+                    # the corresponding `sharing.updated` event hasn't updated
+                    # the `read_only` flag yet.
+                    # We keep track of the change (given we may be given back
+                    # the write access in the future) but pretent it just accured
+                    # to avoid a busy sync loop until `read_only` flag is updated.
+                    self.local_changes[entry_id] = LocalChange(now)
                 except FSWorkspaceInMaintenance:
-                    self.maintenance_started = True
+                    # Not the right time for the sync, retry later
+                    min_due_time = now + MAINTENANCE_MIN_WAIT
+                    self.local_changes[entry_id] = LocalChange(now)
 
         # Re-compute due time
         if self.remote_changes:
@@ -231,15 +236,21 @@ class SyncContext:
         else:
             self.due_time = math.inf
 
+        if min_due_time:
+            self.due_time = max(self.due_time, min_due_time)
+
         return self.due_time
 
 
 class WorkspaceSyncContext(SyncContext):
     def __init__(self, user_fs, id: EntryID):
         super().__init__(user_fs, id)
-        self.workspace = self.user_fs.get_workspace(id)
+        self.workspace = user_fs.get_workspace(id)
+        self.read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
 
     async def _sync(self, entry_id: EntryID):
+        # No recursion here: only the manifest that has changed
+        # (remotely or locally) should get synchronized
         await self.workspace.sync_by_id(entry_id, recursive=False)
 
     def _get_backend_cmds(self):
@@ -252,8 +263,6 @@ class WorkspaceSyncContext(SyncContext):
 class UserManifestSyncContext(SyncContext):
     async def _sync(self, entry_id: EntryID):
         assert entry_id == self.id
-        # No recursion here: only the manifest that has changed
-        # (remotely or locally) should get synchronized
         await self.user_fs.sync()
 
     def _get_backend_cmds(self):
@@ -317,22 +326,6 @@ async def _monitor_sync_online(user_fs, event_bus):
         if ctx.remote_change(src_id):
             early_wakeup.set()
 
-    def _on_maintenance_started(sender, realm_id, encryption_revision):
-        try:
-            ctx = ctxs.get(realm_id)
-        except FSWorkspaceNotFoundError:
-            return
-        if ctx.maintenance_started():
-            early_wakeup.set()
-
-    def _on_maintenance_finished(sender, realm_id, encryption_revision):
-        try:
-            ctx = ctxs.get(realm_id)
-        except FSWorkspaceNotFoundError:
-            return
-        if ctx.maintenance_finished():
-            early_wakeup.set()
-
     def _on_sharing_updated(sender, new_entry, previous_entry):
         if new_entry.role is None:
             # No longer access to the workspace
@@ -348,8 +341,6 @@ async def _monitor_sync_online(user_fs, event_bus):
     with event_bus.connect_in_context(
         ("fs.entry.updated", _on_entry_updated),
         ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
-        ("backend.realm.maintenance_started", _on_maintenance_started),
-        ("backend.realm.maintenance_finished", _on_maintenance_finished),
         ("sharing.updated", _on_sharing_updated),
     ):
 
@@ -376,6 +367,8 @@ async def _monitor_sync_online(user_fs, event_bus):
                 await early_wakeup.wait()
                 early_wakeup.clear()
             wait_times.clear()
+            # Force a sleep to block here when time is frozen in tests
+            await trio.sleep(0.001)
             for ctx in ctxs.iter():
                 try:
                     wait_times.append(await ctx.tick())
