@@ -55,6 +55,8 @@ async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_I
                     while True:
                         await msg_arrived.wait()
                         msg_arrived.clear()
+                        # Force a sleep to block here when time is frozen in tests
+                        await trio.sleep(0.001)
                         await _process_last_messages()
 
             except FSBackendOfflineError:

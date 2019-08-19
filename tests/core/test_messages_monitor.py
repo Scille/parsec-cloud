@@ -44,7 +44,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
 
 
 @pytest.mark.trio
-async def test_revoke_sharing_trigger_event(mock_clock, alice_core, bob_core, running_backend):
+async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backend):
     with freeze_time("2000-01-02"):
         wid = await create_shared_workspace("w", alice_core, bob_core)
 
