@@ -127,12 +127,18 @@ class LocalFileManifest:
 
     # Export methods
 
+    def corresponds_to(self, remote_manifest: "remote_manifests.FileManifest") -> bool:
+        if not self.is_reshaped():
+            return False
+        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
+
     def to_remote(self, **data) -> "remote_manifests.FileManifest":
         # Checks
         self.assert_integrity()
+        assert self.is_reshaped()
 
         # Blocks
-        blocks = tuple(chunks[0].access if len(chunks) == 1 else None for chunks in self.blocks)
+        blocks = tuple(chunks[0].get_block_access() for chunks in self.blocks)
 
         # Remote manifest
         return remote_manifests.FileManifest(
@@ -254,6 +260,9 @@ class LocalFolderManifest:
 
     # Export methods
 
+    def corresponds_to(self, remote_manifest: "remote_manifests.FolderManifest") -> bool:
+        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
+
     def to_remote(self, **data) -> "remote_manifests.FolderManifest":
         return remote_manifests.FolderManifest(
             entry_id=self.entry_id,
@@ -368,6 +377,9 @@ class LocalWorkspaceManifest:
         )
 
     # Export methods
+
+    def corresponds_to(self, remote_manifest: "remote_manifests.WorkspaceManifest") -> bool:
+        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
 
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(

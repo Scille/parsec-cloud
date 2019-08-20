@@ -153,7 +153,7 @@ class Chunk:
 
     # Export
 
-    def to_block_access(self) -> BlockAccess:
+    def get_block_access(self) -> BlockAccess:
         if not self.is_block:
             raise TypeError("This chunk does not correspond to a block")
         return self.access

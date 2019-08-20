@@ -152,7 +152,7 @@ def merge_manifests(local_manifest: LocalManifest, remote_manifest: Optional[Man
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
-    if remote_manifest == local_manifest.to_remote().evolve(version=remote_version):
+    if local_manifest.corresponds_to(remote_manifest):
         return remote_manifest.to_local(local_manifest.author)
 
     # The remote changes are ours: no reason to risk a meaningless conflict

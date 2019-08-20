@@ -264,7 +264,9 @@ async def test_get_minimal_remote_manifest(
     # File manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
     local = sync_transactions.local_storage.get_manifest(a_id)
-    assert minimal == local.to_remote().evolve(version=1, blocks=[], updated=local.created, size=0)
+    assert minimal == local.evolve(blocks=(), updated=local.created, size=0).to_remote().evolve(
+        version=1
+    )
     await file_transactions.file_reshape(a_id)
     await sync_transactions.synchronization_step(a_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(a_id) is None
