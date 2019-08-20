@@ -151,36 +151,43 @@ class LocalStorage:
         self.local_manifest_cache.pop(entry_id, None)
         self.cache_ahead_of_persistance_ids.discard(entry_id)
 
-    # Block interface
+    # Clean block interface
 
-    def is_dirty_block(self, block_id: BlockID):
+    def is_clean_block(self, block_id: BlockID):
         assert isinstance(block_id, BlockID)
-        return self.persistent_storage.is_dirty_block(block_id)
+        return not self.persistent_storage.is_dirty_block(block_id)
 
-    def get_block(self, block_id: BlockID) -> bytes:
+    def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
+        assert isinstance(block_id, BlockID)
+        return self.persistent_storage.set_clean_block(block_id, block)
+
+    def clear_clean_block(self, block_id: BlockID) -> None:
+        assert isinstance(block_id, BlockID)
+        try:
+            self.persistent_storage.clear_clean_block(block_id)
+        except FSLocalMissError:
+            pass
+
+    # Chunk interface
+
+    def get_chunk(self, block_id: BlockID) -> bytes:
         assert isinstance(block_id, BlockID)
         try:
             return self.persistent_storage.get_dirty_block(block_id)
         except FSLocalMissError:
             return self.persistent_storage.get_clean_block(block_id)
 
-    def set_dirty_block(self, block_id: BlockID, block: bytes) -> None:
+    def set_chunk(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
         return self.persistent_storage.set_dirty_block(block_id, block)
 
-    def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
-        assert isinstance(block_id, BlockID)
-        return self.persistent_storage.set_clean_block(block_id, block)
-
-    def clear_block(self, block_id: BlockID) -> None:
+    def clear_chunk(self, block_id: BlockID, miss_ok: bool = False) -> None:
         assert isinstance(block_id, BlockID)
         try:
             self.persistent_storage.clear_dirty_block(block_id)
         except FSLocalMissError:
-            try:
-                self.persistent_storage.clear_clean_block(block_id)
-            except FSLocalMissError as exc:
-                logger.warning(f"Block {exc.id} is absent from the storage")
+            if not miss_ok:
+                raise
 
     # File management interface
 
@@ -234,8 +241,8 @@ class LocalStorageTimestamped(LocalStorage):
         super().__init__(local_storage.device_id, None, "")
         self.persistent_storage = local_storage.persistent_storage
 
-        self.set_dirty_block = self._throw_permission_error
-        self.clear_block = self._throw_permission_error
+        self.set_chunk = self._throw_permission_error
+        self.clean_chunk = self._throw_permission_error
 
     def _throw_permission_error(*args, **kwargs):
         raise FSError("Not implemented : LocalStorage is timestamped")

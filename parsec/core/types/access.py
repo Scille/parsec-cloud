@@ -29,7 +29,6 @@ class BlockAccess:
     offset: int
     size: int
     digest: HashDigest
-    uploaded: bool = False
 
     @classmethod
     def from_chunk(cls, chunk: "Chunk", digest: str) -> "BlockAccess":
@@ -58,7 +57,6 @@ class BlockAccessSchema(UnknownCheckedSchema):
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     # TODO: provide digest as hexa string
     digest = fields.String(required=True, validate=validate.Length(min=1, max=64))
-    uploaded = fields.Boolean(required=True)
 
     @post_load
     def make_obj(self, data):
@@ -123,12 +121,6 @@ class Chunk:
         if not self.stop == self.access.offset + self.access.size:
             return False
         return True
-
-    @property
-    def dirty(self):
-        if self.access is None:
-            return True
-        return not self.access.uploaded
 
     # Create
 

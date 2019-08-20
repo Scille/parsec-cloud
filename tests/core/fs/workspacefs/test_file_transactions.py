@@ -161,8 +161,8 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     with pytest.raises(FSRemoteBlockNotFound):
         await file_transactions.fd_read(fd, 14, 0)
 
-    file_transactions.local_storage.set_dirty_block(chunk1.id, chunk1_data)
-    file_transactions.local_storage.set_dirty_block(chunk2.id, chunk2_data)
+    file_transactions.local_storage.set_chunk(chunk1.id, chunk1_data)
+    file_transactions.local_storage.set_chunk(chunk2.id, chunk2_data)
 
     data = await file_transactions.fd_read(fd, 14, 0)
     assert data == chunk1_data + chunk2_data[:4]
@@ -185,8 +185,8 @@ async def test_load_block_from_remote(file_transactions, foo_txt):
     fd = foo_txt.open()
     await file_transactions.remote_loader.upload_block(chunk1.access, chunk1_data)
     await file_transactions.remote_loader.upload_block(chunk2.access, chunk2_data)
-    file_transactions.local_storage.clear_block(chunk1.id)
-    file_transactions.local_storage.clear_block(chunk2.id)
+    file_transactions.local_storage.clear_clean_block(chunk1.id)
+    file_transactions.local_storage.clear_clean_block(chunk2.id)
 
     data = await file_transactions.fd_read(fd, 14, 0)
     assert data == chunk1_data + chunk2_data[:4]

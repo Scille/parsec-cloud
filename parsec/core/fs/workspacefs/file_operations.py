@@ -33,8 +33,8 @@ def index_of_chunk_after_stop(chunks: Chunks, stop: int) -> int:
     return bisect.bisect_left(chunks, stop)
 
 
-def dirty_id_set(chunks):
-    return {chunk.id for chunk in chunks if chunk.dirty}
+def chunk_id_set(chunks):
+    return {chunk.id for chunk in chunks}
 
 
 # Read functions
@@ -96,7 +96,7 @@ def block_write(
     stop_index = index_of_chunk_after_stop(chunks, stop)
 
     # Removed ids
-    removed_ids = dirty_id_set(chunks[start_index:stop_index])
+    removed_ids = chunk_id_set(chunks[start_index:stop_index])
 
     # Prepare result
     result = list(chunks[:start_index])
@@ -121,7 +121,7 @@ def block_write(
 
     # IDs might appear multiple times
     if removed_ids:
-        removed_ids -= dirty_id_set(result)
+        removed_ids -= chunk_id_set(result)
 
     # Return immutable result
     return tuple(result), removed_ids
@@ -178,7 +178,7 @@ def prepare_truncate(
 ) -> Tuple[LocalFileManifest, Set[BlockID]]:
     # Prepare
     block, remainder = locate(size, manifest.blocksize)
-    removed_ids = dirty_id_set(manifest.blocks[block])
+    removed_ids = chunk_id_set(manifest.blocks[block])
 
     # Truncate buffers
     blocks = manifest.blocks[:block]
@@ -189,11 +189,11 @@ def prepare_truncate(
         chunks = chunks[: stop_index - 1]
         chunks += (last_chunk.evolve(stop=size),)
         blocks += (chunks,)
-        removed_ids -= dirty_id_set(chunks)
+        removed_ids -= chunk_id_set(chunks)
 
     # Clean up
     for chunks in manifest.blocks[block + 1 :]:
-        removed_ids |= dirty_id_set(chunks)
+        removed_ids |= chunk_id_set(chunks)
 
     # Craft new manifest
     new_manifest = manifest.evolve_and_mark_updated(size=size, blocks=blocks)
@@ -233,7 +233,7 @@ def prepare_reshape(
         new_chunk = Chunk.new_chunk(start, stop)
 
         # Update structures
-        removed_ids = dirty_id_set(chunks)
+        removed_ids = chunk_id_set(chunks)
         operations[block] = (chunks, new_chunk, removed_ids)
 
     def build_manifest(result_dict: Dict[int, Chunk]) -> LocalFileManifest:

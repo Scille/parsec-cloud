@@ -79,12 +79,12 @@ class FileTransactions:
     # Helper
 
     def _read_chunk(self, chunk: Chunk) -> bytes:
-        data = self.local_storage.get_block(chunk.id)
+        data = self.local_storage.get_chunk(chunk.id)
         return data[chunk.start - chunk.reference : chunk.stop - chunk.reference]
 
     def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
-        self.local_storage.set_dirty_block(chunk.id, data)
+        self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 
     def _build_data(self, chunks: Chunks) -> Tuple[bytes, List[BlockID]]:
@@ -157,7 +157,7 @@ class FileTransactions:
 
             # Clean up
             for removed_id in removed_ids:
-                self.local_storage.clear_block(removed_id)
+                self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
             # Reshaping
             self._write_count[fd] += 1
@@ -189,7 +189,7 @@ class FileTransactions:
 
             # Clean up
             for removed_id in removed_ids:
-                self.local_storage.clear_block(removed_id)
+                self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)
@@ -288,7 +288,7 @@ class FileTransactions:
 
         # Perform cleanup
         for removed_id in removed_ids:
-            self.local_storage.clear_block(removed_id)
+            self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
         # Return missing block ids
         return missing

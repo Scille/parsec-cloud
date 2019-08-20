@@ -457,8 +457,8 @@ class WorkspaceFS:
 
     async def _upload_blocks(self, manifest: Manifest) -> None:
         for access in manifest.blocks:
-            if self.local_storage.is_dirty_block(access.id):
-                data = self.local_storage.get_block(access.id)
+            if not self.local_storage.is_clean_block(access.id):
+                data = self.local_storage.get_chunk(access.id)
                 await self.remote_loader.upload_block(access, data)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:

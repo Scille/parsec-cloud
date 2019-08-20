@@ -296,9 +296,9 @@ class SyncTransactions:
                 for chunks in current_manifest.blocks:
                     new_chunks = []
                     for chunk in chunks:
-                        data = self.local_storage.get_block(chunk.id)
+                        data = self.local_storage.get_chunk(chunk.id)
                         new_chunk = Chunk.new_chunk(chunk.start, chunk.stop)
-                        self.local_storage.set_dirty_block(new_chunk.id, data)
+                        self.local_storage.set_chunk(new_chunk.id, data)
                         if len(chunks) == 1:
                             new_chunk = new_chunk.evolve_as_block(data)
                         new_chunks.append(chunk)
