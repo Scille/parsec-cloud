@@ -185,8 +185,8 @@ async def test_load_block_from_remote(file_transactions, foo_txt):
     fd = foo_txt.open()
     await file_transactions.remote_loader.upload_block(chunk1.access, chunk1_data)
     await file_transactions.remote_loader.upload_block(chunk2.access, chunk2_data)
-    file_transactions.local_storage.clear_clean_block(chunk1.id)
-    file_transactions.local_storage.clear_clean_block(chunk2.id)
+    file_transactions.local_storage.clear_clean_block(chunk1.access.id)
+    file_transactions.local_storage.clear_clean_block(chunk2.access.id)
 
     data = await file_transactions.fd_read(fd, 14, 0)
     assert data == chunk1_data + chunk2_data[:4]

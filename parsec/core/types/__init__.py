@@ -2,7 +2,16 @@
 
 from typing import Union, NewType
 
-from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
+from parsec.core.types.base import (
+    ChunkID,
+    ChunkIDField,
+    BlockID,
+    BlockIDField,
+    EntryID,
+    EntryIDField,
+    EntryName,
+    FsPath,
+)
 from parsec.core.types.access import (
     BlockAccess,
     Chunk,
@@ -44,6 +53,8 @@ FileDescriptor = NewType("FileDescriptor", int)
 
 __all__ = (
     # base
+    "ChunkID",
+    "ChunkIDField",
     "BlockID",
     "BlockIDField",
     "EntryID",

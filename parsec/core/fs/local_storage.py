@@ -17,6 +17,7 @@ from parsec.crypto import SecretKey
 from parsec.core.types import (
     EntryID,
     BlockID,
+    ChunkID,
     FileDescriptor,
     LocalManifest,
     LocalFileManifest,
@@ -155,7 +156,7 @@ class LocalStorage:
 
     def is_clean_block(self, block_id: BlockID):
         assert isinstance(block_id, BlockID)
-        return not self.persistent_storage.is_dirty_block(block_id)
+        return not self.persistent_storage.is_dirty_chunk(block_id)
 
     def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
@@ -170,21 +171,21 @@ class LocalStorage:
 
     # Chunk interface
 
-    def get_chunk(self, block_id: BlockID) -> bytes:
-        assert isinstance(block_id, BlockID)
+    def get_chunk(self, block_id: ChunkID) -> bytes:
+        assert isinstance(block_id, ChunkID)
         try:
-            return self.persistent_storage.get_dirty_block(block_id)
+            return self.persistent_storage.get_dirty_chunk(block_id)
         except FSLocalMissError:
             return self.persistent_storage.get_clean_block(block_id)
 
-    def set_chunk(self, block_id: BlockID, block: bytes) -> None:
-        assert isinstance(block_id, BlockID)
-        return self.persistent_storage.set_dirty_block(block_id, block)
+    def set_chunk(self, block_id: ChunkID, block: bytes) -> None:
+        assert isinstance(block_id, ChunkID)
+        return self.persistent_storage.set_dirty_chunk(block_id, block)
 
-    def clear_chunk(self, block_id: BlockID, miss_ok: bool = False) -> None:
-        assert isinstance(block_id, BlockID)
+    def clear_chunk(self, block_id: ChunkID, miss_ok: bool = False) -> None:
+        assert isinstance(block_id, ChunkID)
         try:
-            self.persistent_storage.clear_dirty_block(block_id)
+            self.persistent_storage.clear_dirty_chunk(block_id)
         except FSLocalMissError:
             if not miss_ok:
                 raise

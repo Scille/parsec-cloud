@@ -8,6 +8,8 @@ from parsec.serde import Serializer, fields
 
 
 __all__ = (
+    "ChunkID",
+    "ChunkIDField",
     "BlockID",
     "BlockIDField",
     "EntryID",
@@ -23,7 +25,7 @@ def serializer_factory(schema_cls):
     return Serializer(schema_cls)
 
 
-class BlockID(UUID):
+class ChunkID(UUID):
     __slots__ = ()
 
     def __init__(self, init=None):
@@ -32,6 +34,13 @@ class BlockID(UUID):
             super().__init__(init.hex)
         else:
             super().__init__(init)
+
+
+ChunkIDField = fields.uuid_based_field_factory(ChunkID)
+
+
+class BlockID(ChunkID):
+    pass
 
 
 BlockIDField = fields.uuid_based_field_factory(BlockID)

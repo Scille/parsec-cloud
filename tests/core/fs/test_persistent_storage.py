@@ -16,7 +16,7 @@ from parsec.crypto import SecretKey
 from parsec.core.types import EntryID, BlockID
 from parsec.core.fs import FSLocalMissError
 from parsec.core.fs.persistent_storage import PersistentStorage
-from parsec.core.fs.persistent_storage import DEFAULT_BLOCK_SIZE as block_size
+from parsec.core.types.local_manifests import DEFAULT_BLOCK_SIZE as block_size
 
 from tests.common import freeze_time
 
@@ -41,7 +41,7 @@ def test_persistent_storage_path(tmpdir, persistent_storage):
 def test_persistent_storage_cache_size(persistent_storage):
     assert persistent_storage.get_cache_size() == 0
 
-    persistent_storage.set_dirty_block(ENTRY_ID, b"data")
+    persistent_storage.set_dirty_chunk(ENTRY_ID, b"data")
     assert persistent_storage.get_cache_size() == 0
 
     persistent_storage.set_clean_block(ENTRY_ID, b"data")
@@ -66,11 +66,11 @@ def test_persistent_storage_set_get_clear_manifest(persistent_storage):
         persistent_storage.get_manifest(ENTRY_ID)
 
 
-@pytest.mark.parametrize("sensitivity", ["dirty", "clean"])
-def test_persistent_storage_set_get_clear_block(persistent_storage, sensitivity):
-    get_method = getattr(persistent_storage, f"get_{sensitivity}_block")
-    set_method = getattr(persistent_storage, f"set_{sensitivity}_block")
-    clear_method = getattr(persistent_storage, f"clear_{sensitivity}_block")
+@pytest.mark.parametrize("dtype", ["dirty_chunk", "clean_block"])
+def test_persistent_storage_set_get_clear_chunk(persistent_storage, dtype):
+    get_method = getattr(persistent_storage, f"get_{dtype}")
+    set_method = getattr(persistent_storage, f"set_{dtype}")
+    clear_method = getattr(persistent_storage, f"clear_{dtype}")
 
     set_method(ENTRY_ID, b"data")
 
@@ -103,13 +103,13 @@ def test_persistent_storage_on_disk(tmpdir, persistent_storage):
 
 def test_local_manual_run_block_garbage_collector(persistent_storage):
     block_id_precious = BlockID()
-    persistent_storage.set_dirty_block(block_id_precious, b"precious_data")
+    persistent_storage.set_dirty_chunk(block_id_precious, b"precious_data")
 
     block_id_deletable = BlockID()
     persistent_storage.set_clean_block(block_id_deletable, b"deletable_data")
 
     persistent_storage.run_block_garbage_collector()
-    persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
+    persistent_storage.get_dirty_chunk(block_id_precious) == b"precious_data"
     with pytest.raises(FSLocalMissError):
         persistent_storage.get_clean_block(block_id_deletable)
 
@@ -118,7 +118,7 @@ def test_local_manual_run_block_garbage_collector_with_limit(persistent_storage)
     block_id_precious = BlockID()
     # No matter how old, shouldn't be deleted
     with freeze_time("2000-01-01"):
-        persistent_storage.set_dirty_block(block_id_precious, b"precious_data")
+        persistent_storage.set_dirty_chunk(block_id_precious, b"precious_data")
 
     block_id_deletable1 = BlockID()
     block_id_deletable2 = BlockID()
@@ -139,7 +139,7 @@ def test_local_manual_run_block_garbage_collector_with_limit(persistent_storage)
     # Blocks 1 and 2 are the oldest
     persistent_storage.clear_clean_blocks(limit=2)
 
-    persistent_storage.get_dirty_block(block_id_precious) == b"precious_data"
+    persistent_storage.get_dirty_chunk(block_id_precious) == b"precious_data"
     persistent_storage.get_clean_block(block_id_deletable3) == b"deletable_data"
     persistent_storage.get_clean_block(block_id_deletable4) == b"deletable_data"
     with pytest.raises(FSLocalMissError):
@@ -152,7 +152,7 @@ def test_local_automatic_run_garbage_collector(persistent_storage):
     persistent_storage.max_cache_size = 1 * block_size
 
     block_id_a = BlockID()
-    persistent_storage.set_dirty_block(block_id_a, b"a" * 10)
+    persistent_storage.set_dirty_chunk(block_id_a, b"a" * 10)
 
     block_id_b = BlockID()
     persistent_storage.set_clean_block(block_id_b, b"b" * 5)
@@ -163,7 +163,7 @@ def test_local_automatic_run_garbage_collector(persistent_storage):
     block_id_c = BlockID()
     persistent_storage.set_clean_block(block_id_c, b"c" * 5)
 
-    data_a = persistent_storage.get_dirty_block(block_id_a)
+    data_a = persistent_storage.get_dirty_chunk(block_id_a)
     assert data_a == b"a" * 10
 
     with pytest.raises(FSLocalMissError):
@@ -207,9 +207,9 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
             block_id, expected_data = entry
             if block_id in self.cleared_precious_data:
                 with pytest.raises(FSLocalMissError):
-                    self.persistent_storage.get_dirty_block(block_id)
+                    self.persistent_storage.get_dirty_chunk(block_id)
             else:
-                data = self.persistent_storage.get_dirty_block(block_id)
+                data = self.persistent_storage.get_dirty_chunk(block_id)
                 assert data == expected_data
 
         @rule(entry=DeletableEntry)
@@ -232,7 +232,7 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
         def set_precious_data(self, data_size):
             block_id = BlockID(uuid4().hex)
             data = b"x" * data_size
-            self.persistent_storage.set_dirty_block(block_id, data)
+            self.persistent_storage.set_dirty_chunk(block_id, data)
             return block_id, data
 
         @rule(entry=PreciousEntry)
@@ -240,9 +240,9 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
             block_id, _ = entry
             if block_id in self.cleared_precious_data:
                 with pytest.raises(FSLocalMissError):
-                    self.persistent_storage.clear_dirty_block(block_id)
+                    self.persistent_storage.clear_dirty_chunk(block_id)
             else:
-                self.persistent_storage.clear_dirty_block(block_id)
+                self.persistent_storage.clear_dirty_chunk(block_id)
                 self.cleared_precious_data.add(block_id)
 
         @rule(entry=DeletableEntry)

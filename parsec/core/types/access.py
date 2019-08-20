@@ -12,6 +12,8 @@ from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
 from parsec.core.types.base import (
     BlockID,
     BlockIDField,
+    ChunkID,
+    ChunkIDField,
     EntryID,
     EntryIDField,
     serializer_factory,
@@ -33,7 +35,7 @@ class BlockAccess:
     @classmethod
     def from_chunk(cls, chunk: "Chunk", digest: str) -> "BlockAccess":
         return cls(
-            id=chunk.id,
+            id=BlockID(chunk.id),
             key=SecretKey.generate(),
             offset=chunk.start,
             size=chunk.stop - chunk.start,
@@ -42,7 +44,7 @@ class BlockAccess:
 
     def to_chunk(self) -> "Chunk":
         return Chunk(
-            id=self.id,
+            id=ChunkID(self.id),
             reference=self.offset,
             start=self.offset,
             stop=self.offset + self.size,
@@ -87,7 +89,7 @@ class Chunk:
     when the chunk corresponds to an actual block within the context of this manifest.
     """
 
-    id: BlockID
+    id: ChunkID
     reference: int
     start: int
     stop: int
@@ -126,7 +128,7 @@ class Chunk:
 
     @classmethod
     def new_chunk(cls, start: int, stop: int) -> "Chunk":
-        return cls(BlockID(), start, start, stop)
+        return cls(ChunkID(), start, start, stop)
 
     # Evolve
 
@@ -158,7 +160,7 @@ class Chunk:
 
 
 class ChunkSchema(UnknownCheckedSchema):
-    id = BlockIDField(required=True)
+    id = ChunkIDField(required=True)
     reference = fields.Integer(required=True, validate=validate.Range(min=0))
     start = fields.Integer(required=True, validate=validate.Range(min=0))
     stop = fields.Integer(required=True, validate=validate.Range(min=1))
