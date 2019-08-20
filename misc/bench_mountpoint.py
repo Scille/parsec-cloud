@@ -91,7 +91,7 @@ def main():
             else:
                 RuntimeError("Parsec failed to mount workspace")
 
-            # Create 10mo file
+            # Create 100 MB file
             file = workdir / "sample"
             file.write_bytes(bytearray(100 * 1024 * 1024))
 

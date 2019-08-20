@@ -74,6 +74,21 @@ block_access_serializer = serializer_factory(BlockAccessSchema)
 @attr.s(slots=True, frozen=True, auto_attribs=True, cmp=False)
 @functools.total_ordering
 class Chunk:
+    """Represents a chunk of a data in file manifest.
+
+    The raw data is identified by its `id` attribute and is aligned using the
+    `reference` attribute with respect to the file addressing.
+
+    The `start` and `stop` attributes then describes the span of the actual data
+    still with respect to the file addressing.
+
+    This means the following rule applies:
+        reference <= start < stop <= reference + len(raw_data)
+
+    Access is an optional block access that can be used to produce a remote manifest
+    when the chunk corresponds to an actual block within the context of this manifest.
+    """
+
     id: BlockID
     reference: int
     start: int

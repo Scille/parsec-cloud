@@ -17,8 +17,8 @@ from parsec.core.fs.workspacefs.file_operations import (
 
 from tests.common import freeze_time
 
-max_size = 64
-size = strategies.integers(min_value=0, max_value=max_size)
+MAX_SIZE = 64
+size = strategies.integers(min_value=0, max_value=MAX_SIZE)
 
 
 class Storage(dict):
@@ -221,7 +221,7 @@ class FileOperations(RuleBasedStateMachine):
         expected = self.oracle.read(size)
         assert data == expected
 
-    @rule(content=strategies.binary(max_size=max_size), offset=size)
+    @rule(content=strategies.binary(max_size=MAX_SIZE), offset=size)
     def write(self, content: bytes, offset: int) -> None:
         self.manifest = self.storage.write(self.manifest, content, offset)
         self.oracle.seek(offset)
