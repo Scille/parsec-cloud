@@ -237,7 +237,7 @@ class SyncTransactions:
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
             # Sync cannot be performed
-            if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped:
+            if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
                 raise FSReshapingRequiredError(entry_id)
 
             # Merge manifests

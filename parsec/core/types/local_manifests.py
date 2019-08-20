@@ -103,7 +103,6 @@ class LocalFileManifest:
         except IndexError:
             return ()
 
-    @property
     def is_reshaped(self) -> bool:
         for chunks in self.blocks:
             if len(chunks) != 1:

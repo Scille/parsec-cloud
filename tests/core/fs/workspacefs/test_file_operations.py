@@ -179,11 +179,11 @@ def test_complete_scenario() -> None:
     )
 
     with freeze_time("2000-01-08"):
-        assert not manifest.is_reshaped
+        assert not manifest.is_reshaped()
         manifest = storage.reshape(manifest)
         expected = b"Hello world !\n More conte"
         assert storage.read(manifest, 25, 0) == expected
-        assert manifest.is_reshaped
+        assert manifest.is_reshaped()
 
     (chunk10,), (chunk11,) = manifest.blocks
     assert storage[chunk10.id] == b"Hello world !\n M"
@@ -235,7 +235,7 @@ class FileOperations(RuleBasedStateMachine):
     @rule()
     def reshape(self) -> None:
         self.manifest = self.storage.reshape(self.manifest)
-        assert self.manifest.is_reshaped
+        assert self.manifest.is_reshaped()
 
 
 TestFileOperations = pytest.mark.slow(FileOperations.TestCase)
