@@ -29,6 +29,11 @@ def normalize_argument(arg, manifest):
 
 
 def padded_data(data: bytes, start: int, stop: int) -> bytes:
+    """Return the data between the start and stop index.
+
+    The data is treated as padded with an infinite amount of null bytes before index 0.
+    """
+    assert start <= stop
     if start <= stop <= 0:
         return b"\x00" * (stop - start)
     if 0 <= start <= stop:
