@@ -12,28 +12,8 @@ from tests.common import freeze_time
 
 
 @pytest.fixture
-def file_transactions_factory(
-    event_bus, remote_devices_manager_factory, entry_transactions_factory
-):
-    async def _file_transactions_factory(device, local_storage, backend_cmds):
-        entry_transactions = await entry_transactions_factory(device, local_storage, backend_cmds)
-        workspace_id = entry_transactions.workspace_id
-        remote_loader = entry_transactions.remote_loader
-        return FileTransactions(workspace_id, local_storage, remote_loader, event_bus)
-
-    return _file_transactions_factory
-
-
-@pytest.fixture
-async def file_transactions(
-    file_transactions_factory, alice, alice_local_storage, alice_backend_cmds
-):
-    return await file_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
-
-
-@pytest.fixture
-def entry_transactions_factory(event_bus, remote_devices_manager_factory):
-    async def _entry_transactions_factory(device, local_storage, backend_cmds):
+def transactions_factory(event_bus, remote_devices_manager_factory):
+    async def _transactions_factory(device, local_storage, backend_cmds, cls=SyncTransactions):
         def _get_workspace_entry():
             return workspace_entry
 
@@ -55,13 +35,38 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory):
             local_storage,
         )
 
-        return EntryTransactions(
+        return cls(
             workspace_entry.id,
             _get_workspace_entry,
             device,
             local_storage,
             remote_loader,
             event_bus,
+        )
+
+    return _transactions_factory
+
+
+@pytest.fixture
+def file_transactions_factory(event_bus, remote_devices_manager_factory, transactions_factory):
+    async def _file_transactions_factory(device, local_storage, backend_cmds):
+        return await transactions_factory(device, local_storage, backend_cmds, cls=FileTransactions)
+
+    return _file_transactions_factory
+
+
+@pytest.fixture
+async def file_transactions(
+    file_transactions_factory, alice, alice_local_storage, alice_backend_cmds
+):
+    return await file_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+
+
+@pytest.fixture
+def entry_transactions_factory(event_bus, remote_devices_manager_factory, transactions_factory):
+    async def _entry_transactions_factory(device, local_storage, backend_cmds):
+        return await transactions_factory(
+            device, local_storage, backend_cmds, cls=EntryTransactions
         )
 
     return _entry_transactions_factory
@@ -75,10 +80,5 @@ async def entry_transactions(
 
 
 @pytest.fixture
-def sync_transactions(entry_transactions):
-    return SyncTransactions(
-        entry_transactions.workspace_id,
-        entry_transactions.local_storage,
-        entry_transactions.remote_loader,
-        entry_transactions.event_bus,
-    )
+async def sync_transactions(transactions_factory, alice, alice_local_storage, alice_backend_cmds):
+    return await transactions_factory(alice, alice_local_storage, alice_backend_cmds)

@@ -80,7 +80,7 @@ async def test_get_entry_path(alice_workspace):
 
     # Remove an open file
     path = "/foo/bar"
-    bar_id, bar_fd = await alice_workspace.entry_transactions.file_open(FsPath(path))
+    bar_id, bar_fd = await alice_workspace.transactions.file_open(FsPath(path))
     await alice_workspace.unlink(path)
 
     # Get entry path of a removed entry
@@ -92,7 +92,7 @@ async def test_get_entry_path(alice_workspace):
     with pytest.raises(FSEntryNotFound):
         await alice_workspace.get_entry_path(bar_id)
 
-    await alice_workspace.file_transactions.fd_close(bar_fd)
+    await alice_workspace.transactions.fd_close(bar_fd)
 
 
 @pytest.mark.trio
@@ -422,7 +422,7 @@ async def test_dump(alice_workspace):
 
 @pytest.mark.trio
 async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
-    manifest = await alice_workspace.entry_transactions._get_manifest_from_path(FsPath("/foo/bar"))
+    manifest = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
     async with alice_workspace.local_storage.lock_entry_id(manifest.entry_id):
         alice_workspace.local_storage.clear_manifest(manifest.entry_id)
 
