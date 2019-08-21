@@ -191,8 +191,7 @@ class PersistentStorage:
     def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                "SELECT manifest_id, need_sync FROM manifests WHERE need_sync = ? OR base_version != remote_version",
-                (True,),
+                "SELECT manifest_id, need_sync FROM manifests WHERE need_sync = 1 OR base_version != remote_version"
             )
             local_changes = set()
             remote_changes = set()

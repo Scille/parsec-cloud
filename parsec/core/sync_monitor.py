@@ -27,6 +27,7 @@ logger = get_logger()
 MIN_WAIT = 5
 MAX_WAIT = 60
 MAINTENANCE_MIN_WAIT = 30
+TICK_CRASH_COOLDOWN = 5
 
 
 def timestamp():
@@ -118,7 +119,7 @@ class SyncContext:
 
         return True
 
-    def local_change(self, entry_id: EntryID) -> bool:
+    def set_local_change(self, entry_id: EntryID) -> bool:
         now = timestamp()
         try:
             new_due_time = self.local_changes[entry_id].changed(now)
@@ -134,7 +135,7 @@ class SyncContext:
         else:
             return False
 
-    def remote_change(self, entry_id: EntryID) -> bool:
+    def set_remote_change(self, entry_id: EntryID) -> bool:
         self.remote_changes.add(entry_id)
         self.due_time = timestamp()
         return True
@@ -311,7 +312,7 @@ async def _monitor_sync_online(user_fs, event_bus):
             ctx = ctxs.get(id)
         else:
             ctx = ctxs.get(workspace_id)
-        if ctx.local_change(id):
+        if ctx.set_local_change(id):
             early_wakeup.set()
 
     def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
@@ -323,7 +324,7 @@ async def _monitor_sync_online(user_fs, event_bus):
             # us, hence we receive vlob updated events before having
             # added the workspace entry to our user manifest)
             return
-        if ctx.remote_change(src_id):
+        if ctx.set_remote_change(src_id):
             early_wakeup.set()
 
     def _on_sharing_updated(sender, new_entry, previous_entry):
@@ -358,7 +359,7 @@ async def _monitor_sync_online(user_fs, event_bus):
                     ctxs.discard(entry.id)
                     ctx = ctxs.get(entry.id)
                     # Add small cooldown just to be sure not end up in a crazy busy error loop
-                    ctx.due_time += 5
+                    ctx.due_time += TICK_CRASH_COOLDOWN
         event_bus.send("sync_monitor.reconnection_sync.done")
 
         event_bus.send("sync_monitor.ready")
@@ -380,7 +381,7 @@ async def _monitor_sync_online(user_fs, event_bus):
                     ctxs.discard(ctx.id)
                     ctx = ctxs.get(ctx.id)
                     # Add small cooldown just to be sure not end up in a crazy busy error loop
-                    ctx.due_time += 5
+                    ctx.due_time += TICK_CRASH_COOLDOWN
 
 
 async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
