@@ -368,14 +368,14 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if u_data.certified_on != d_data.certified_on:
+        if u_data.timestamp != d_data.timestamp:
             return {
                 "status": "invalid_data",
                 "reason": "Device and User certifications must have the same timestamp.",
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(u_data.certified_on, now):
+        if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -392,14 +392,14 @@ class BaseUserComponent:
                 user_id=u_data.user_id,
                 is_admin=u_data.is_admin,
                 user_certificate=msg["user_certificate"],
-                user_certifier=u_data.certified_by,
-                created_on=u_data.certified_on,
+                user_certifier=u_data.author,
+                created_on=u_data.timestamp,
             )
             first_devices = Device(
                 device_id=d_data.device_id,
                 device_certificate=msg["device_certificate"],
-                device_certifier=d_data.certified_by,
-                created_on=d_data.certified_on,
+                device_certifier=d_data.author,
+                created_on=d_data.timestamp,
             )
             await self.create_user(client_ctx.organization_id, user, first_devices)
 
@@ -559,7 +559,7 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.certified_on, pendulum.now()):
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -572,8 +572,8 @@ class BaseUserComponent:
             device = Device(
                 device_id=data.device_id,
                 device_certificate=msg["device_certificate"],
-                device_certifier=data.certified_by,
-                created_on=data.certified_on,
+                device_certifier=data.author,
+                created_on=data.timestamp,
             )
             await self.create_device(
                 client_ctx.organization_id, device, encrypted_answer=msg["encrypted_answer"]
@@ -598,7 +598,7 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.certified_on, pendulum.now()):
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -622,8 +622,8 @@ class BaseUserComponent:
                 client_ctx.organization_id,
                 data.device_id,
                 msg["revoked_device_certificate"],
-                data.certified_by,
-                data.certified_on,
+                data.author,
+                data.timestamp,
             )
 
         except UserNotFoundError:

@@ -90,7 +90,7 @@ class BaseOrganizationComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if u_data.certified_on != d_data.certified_on:
+        if u_data.timestamp != d_data.timestamp:
             return {
                 "status": "invalid_data",
                 "reason": "Device and user certificates must have the same timestamp.",
@@ -103,7 +103,7 @@ class BaseOrganizationComponent:
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(u_data.certified_on, now):
+        if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",

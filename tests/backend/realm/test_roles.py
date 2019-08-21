@@ -6,12 +6,9 @@ from pendulum import Pendulum, now as pendulum_now
 from unittest.mock import ANY
 
 from parsec.api.protocol import RealmRole
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.backend.realm import RealmGrantedRole
-from parsec.crypto import (
-    build_realm_role_certificate,
-    unsecure_read_realm_role_certificate,
-    CertifiedRealmRoleData,
-)
+from parsec.crypto import build_realm_role_certificate, unsecure_read_realm_role_certificate
 
 from tests.common import freeze_time
 from tests.backend.realm.conftest import realm_update_roles, realm_get_role_certificates
@@ -35,7 +32,7 @@ async def _realm_get_clear_role_certifs(sock, realm_id):
     rep = await realm_get_role_certificates(sock, realm_id)
     assert rep["status"] == "ok"
     cooked = [unsecure_read_realm_role_certificate(certif) for certif in rep["certificates"]]
-    return [item for item in sorted(cooked, key=lambda x: x.certified_on)]
+    return [item for item in sorted(cooked, key=lambda x: x.timestamp)]
 
 
 async def _realm_generate_certif_and_update_roles_or_fail(
@@ -125,29 +122,29 @@ async def test_remove_role_idempotent(
 
     certifs = await _realm_get_clear_role_certifs(alice_backend_sock, realm)
     expected_certifs = [
-        CertifiedRealmRoleData(
+        RealmRoleCertificateContent(
+            author=alice.device_id,
+            timestamp=Pendulum(2000, 1, 2),
             realm_id=realm,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
-            certified_by=alice.device_id,
-            certified_on=Pendulum(2000, 1, 2),
         )
     ]
     if start_with_existing_role:
         expected_certifs += [
-            CertifiedRealmRoleData(
+            RealmRoleCertificateContent(
+                author=alice.device_id,
+                timestamp=Pendulum(2000, 1, 3),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=RealmRole.MANAGER,
-                certified_by=alice.device_id,
-                certified_on=Pendulum(2000, 1, 3),
             ),
-            CertifiedRealmRoleData(
+            RealmRoleCertificateContent(
+                author=alice.device_id,
+                timestamp=Pendulum(2000, 1, 4),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=None,
-                certified_by=alice.device_id,
-                certified_on=Pendulum(2000, 1, 4),
             ),
         ]
     assert certifs == expected_certifs

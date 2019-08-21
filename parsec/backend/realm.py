@@ -105,7 +105,7 @@ class BaseRealmComponent:
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(data.certified_on, now):
+        if not timestamps_in_the_ballpark(data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -116,8 +116,8 @@ class BaseRealmComponent:
             realm_id=data.realm_id,
             user_id=data.user_id,
             role=data.role,
-            granted_by=data.certified_by,
-            granted_on=data.certified_on,
+            granted_by=data.author,
+            granted_on=data.timestamp,
         )
         if granted_role.granted_by.user_id != granted_role.user_id:
             return {
@@ -204,7 +204,7 @@ class BaseRealmComponent:
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(data.certified_on, now):
+        if not timestamps_in_the_ballpark(data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -215,8 +215,8 @@ class BaseRealmComponent:
             realm_id=data.realm_id,
             user_id=data.user_id,
             role=data.role,
-            granted_by=data.certified_by,
-            granted_on=data.certified_on,
+            granted_by=data.author,
+            granted_on=data.timestamp,
         )
         if granted_role.granted_by.user_id == granted_role.user_id:
             return {

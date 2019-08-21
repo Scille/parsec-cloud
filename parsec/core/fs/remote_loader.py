@@ -15,8 +15,8 @@ from parsec.crypto import (
     unsecure_read_realm_role_certificate,
     verify_realm_role_certificate,
     CryptoError,
-    CertifiedRealmRoleData,
 )
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.types import UserID, DeviceID
 from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import (
@@ -88,7 +88,7 @@ class RemoteLoader:
                     )
                     for unverified in unverifieds
                 ],
-                key=lambda x: x[0].certified_on,
+                key=lambda x: x[0].timestamp,
             )
 
             current_roles = {}
@@ -97,7 +97,7 @@ class RemoteLoader:
 
             # Now verify each certif
             for unsecure_certif, raw_certif in unsecure_certifs:
-                author = await self.remote_device_manager.get_device(unsecure_certif.certified_by)
+                author = await self.remote_device_manager.get_device(unsecure_certif.author)
 
                 verify_realm_role_certificate(raw_certif, author.device_id, author.verify_key)
 
@@ -113,12 +113,12 @@ class RemoteLoader:
                     needed_roles = owner_only
                 else:
                     needed_roles = owner_or_manager
-                if current_roles.get(unsecure_certif.certified_by.user_id) not in needed_roles:
+                if current_roles.get(unsecure_certif.author.user_id) not in needed_roles:
                     raise FSError(
                         f"Invalid realm role certificates: "
-                        f"{unsecure_certif.certified_by} has not right to give "
+                        f"{unsecure_certif.author} has not right to give "
                         f"{unsecure_certif.role} role to {unsecure_certif.user_id} "
-                        f"on {unsecure_certif.certified_on}"
+                        f"on {unsecure_certif.timestamp}"
                     )
 
                 if unsecure_certif.role is None:
@@ -135,7 +135,7 @@ class RemoteLoader:
 
     async def load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
-    ) -> List[CertifiedRealmRoleData]:
+    ) -> List[RealmRoleCertificateContent]:
         """
         Raises:
             FSError

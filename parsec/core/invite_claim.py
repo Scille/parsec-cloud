@@ -17,7 +17,6 @@ from parsec.crypto import (
     build_user_certificate,
     verify_user_certificate,
 )
-
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.core.types import LocalDevice, EntryID, EntryIDField
 from parsec.core.backend_connection import (
