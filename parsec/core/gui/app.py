@@ -13,10 +13,13 @@ from parsec.event_bus import EventBus
 
 try:
     from parsec.core.gui import lang
+    from parsec.core.gui.lang import translate as _
     from parsec.core.gui.new_version import CheckNewVersion
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
     from parsec.core.gui.trio_thread import run_trio_thread
+    from parsec.core.gui.custom_dialogs import show_error
+    from parsec.core.gui import desktop
     from parsec.core.gui import win_registry
 except ImportError as exc:
     raise ModuleNotFoundError(
@@ -48,6 +51,10 @@ def run_gui(config: CoreConfig):
     app.setFont(f)
 
     lang.switch_language(config)
+
+    if not config.gui_allow_multiple_instances and desktop.parsec_instances_count() > 1:
+        show_error(None, _("PARSEC_ALREADY_RUNNING"))
+        return
 
     event_bus = EventBus()
     with run_trio_thread() as jobs_ctx:

@@ -282,58 +282,63 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="211"/>
+        <location filename="../forms/global_settings_widget.ui" line="218"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="227"/>
+        <location filename="../forms/global_settings_widget.ui" line="234"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="309"/>
+        <location filename="../forms/global_settings_widget.ui" line="316"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="325"/>
+        <location filename="../forms/global_settings_widget.ui" line="332"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="347"/>
+        <location filename="../forms/global_settings_widget.ui" line="354"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="423"/>
+        <location filename="../forms/global_settings_widget.ui" line="430"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="437"/>
+        <location filename="../forms/global_settings_widget.ui" line="444"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="498"/>
+        <location filename="../forms/global_settings_widget.ui" line="505"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="512"/>
+        <location filename="../forms/global_settings_widget.ui" line="519"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="602"/>
+        <location filename="../forms/global_settings_widget.ui" line="609"/>
         <source>BUTTON_SAVE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="147"/>
+        <location filename="../forms/global_settings_widget.ui" line="154"/>
         <source>CHECK_WINDOWS_MOUNTPOINT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="147"/>
+        <source>CHECK_ALLOW_MULTIPLE_INSTANCES</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -345,7 +350,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/input_dialog.ui" line="255"/>
+        <location filename="../forms/input_dialog.ui" line="254"/>
         <source>BUTTON_OK</source>
         <translation type="unfinished"></translation>
     </message>
@@ -358,12 +363,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/loading_dialog.ui" line="62"/>
+        <location filename="../forms/loading_dialog.ui" line="68"/>
         <source>LABEL_IMPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/loading_dialog.ui" line="150"/>
+        <location filename="../forms/loading_dialog.ui" line="156"/>
         <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
     </message>
@@ -498,12 +503,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/message_dialog.ui" line="278"/>
+        <location filename="../forms/message_dialog.ui" line="283"/>
         <source>BUTTON_DETAILS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/message_dialog.ui" line="307"/>
+        <location filename="../forms/message_dialog.ui" line="312"/>
         <source>BUTTON_COPY_TO_CLIPBOARD</source>
         <translation type="unfinished"></translation>
     </message>
@@ -627,22 +632,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="91"/>
+        <location filename="../forms/new_version_dialog.ui" line="97"/>
         <source>LABEL_NEW_VERSION_AVAILABLE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="133"/>
+        <location filename="../forms/new_version_dialog.ui" line="139"/>
         <source>BUTTON_DOWNLOAD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="182"/>
+        <location filename="../forms/new_version_dialog.ui" line="188"/>
         <source>CHECK_NO_REMINDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="206"/>
+        <location filename="../forms/new_version_dialog.ui" line="212"/>
         <source>BUTTON_IGNORE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -696,12 +701,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/password_change_dialog.ui" line="228"/>
+        <location filename="../forms/password_change_dialog.ui" line="237"/>
         <source>BUTTON_CHANGE_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/password_change_dialog.ui" line="264"/>
+        <location filename="../forms/password_change_dialog.ui" line="273"/>
         <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
     </message>
@@ -714,12 +719,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/question_dialog.ui" line="295"/>
+        <location filename="../forms/question_dialog.ui" line="300"/>
         <source>BUTTON_NO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/question_dialog.ui" line="327"/>
+        <location filename="../forms/question_dialog.ui" line="332"/>
         <source>BUTTON_YES</source>
         <translation type="unfinished"></translation>
     </message>
@@ -843,17 +848,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/replace_dialog.ui" line="228"/>
+        <location filename="../forms/replace_dialog.ui" line="234"/>
         <source>BUTTON_SKIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/replace_dialog.ui" line="249"/>
+        <location filename="../forms/replace_dialog.ui" line="255"/>
         <source>BUTTON_REPLACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/replace_dialog.ui" line="279"/>
+        <location filename="../forms/replace_dialog.ui" line="285"/>
         <source>CHECK_DO_THE_SAME</source>
         <translation type="unfinished"></translation>
     </message>
