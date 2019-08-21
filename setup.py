@@ -255,6 +255,7 @@ def _extract_libs_cffi_backend():
 
 build_exe_options = {
     "packages": [
+        "asyncio",
         "parsec.core.gui.ui",
         "idna",
         "sentry_sdk.integrations",
