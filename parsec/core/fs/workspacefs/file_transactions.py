@@ -120,20 +120,20 @@ class FileTransactions:
         # corresponding to valid file descriptor is always available locally
 
         # Get the corresponding entry_id
-        entry_id, _ = self.local_storage.load_file_descriptor(fd)
+        manifest = self.local_storage.load_file_descriptor(fd)
 
         # Lock the entry_id
-        async with self.local_storage.lock_manifest(entry_id):
+        async with self.local_storage.lock_manifest(manifest.entry_id):
             yield self.local_storage.load_file_descriptor(fd)
 
     # Atomic transactions
 
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
-        async with self._load_and_lock_file(fd) as (entry_id, manifest):
+        async with self._load_and_lock_file(fd) as manifest:
 
             # Force writing to disk
-            self.local_storage.ensure_manifest_persistent(entry_id)
+            self.local_storage.ensure_manifest_persistent(manifest.entry_id)
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
@@ -143,7 +143,7 @@ class FileTransactions:
 
     async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int) -> int:
         # Fetch and lock
-        async with self._load_and_lock_file(fd) as (entry_id, manifest):
+        async with self._load_and_lock_file(fd) as manifest:
 
             # No-op
             if not content:
@@ -158,7 +158,7 @@ class FileTransactions:
                 self._write_chunk(chunk, content, offset)
 
             # Atomic change
-            self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
+            self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
 
             # Clean up
             for removed_id in removed_ids:
@@ -167,11 +167,11 @@ class FileTransactions:
             # Reshaping
             self._write_count[fd] += 1
             if self._write_count[fd] >= 128:
-                self._manifest_reshape(entry_id, manifest, cache_only=True)
+                self._manifest_reshape(manifest, cache_only=True)
                 self._write_count[fd] = 0
 
         # Notify
-        self._send_event("fs.entry.updated", id=entry_id)
+        self._send_event("fs.entry.updated", id=manifest.entry_id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
@@ -197,7 +197,7 @@ class FileTransactions:
                 self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
         # Notify
-        self._send_event("fs.entry.updated", id=entry_id)
+        self._send_event("fs.entry.updated", id=manifest.entry_id)
 
     async def fd_read(self, fd: FileDescriptor, size: int, offset: int) -> bytes:
         # Loop over attemps
@@ -208,7 +208,7 @@ class FileTransactions:
             await self.remote_loader.load_blocks(missing)
 
             # Fetch and lock
-            async with self._load_and_lock_file(fd) as (entry_id, manifest):
+            async with self._load_and_lock_file(fd) as manifest:
 
                 # Normalize
                 offset = normalize_argument(offset, manifest)
@@ -227,9 +227,9 @@ class FileTransactions:
                     return data
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
-        async with self._load_and_lock_file(fd) as (entry_id, manifest):
-            self._manifest_reshape(entry_id, manifest)
-            self.local_storage.ensure_manifest_persistent(entry_id)
+        async with self._load_and_lock_file(fd) as manifest:
+            self._manifest_reshape(manifest)
+            self.local_storage.ensure_manifest_persistent(manifest.entry_id)
 
     async def file_reshape(self, entry_id: EntryID) -> None:
 
@@ -252,7 +252,7 @@ class FileTransactions:
     # Reshaping helper
 
     def _manifest_reshape(
-        self, entry_id: EntryID, manifest: LocalFileManifest, cache_only: bool = False
+        self, manifest: LocalFileManifest, cache_only: bool = False
     ) -> List[BlockID]:
         """This internal helper does not perform any locking."""
 
@@ -289,7 +289,7 @@ class FileTransactions:
 
         # Craft and set new manifest
         new_manifest = getter(result_dict)
-        self.local_storage.set_manifest(entry_id, new_manifest, cache_only=cache_only)
+        self.local_storage.set_manifest(new_manifest.entry_id, new_manifest, cache_only=cache_only)
 
         # Perform cleanup
         for removed_id in removed_ids:
