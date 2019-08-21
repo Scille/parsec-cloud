@@ -242,7 +242,7 @@ class PersistentStorage:
 
     def _is_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
-            cursor.execute("SELECT chunk_id FROM chunks WHERE block_id = ?", (block_id.bytes,))
+            cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
