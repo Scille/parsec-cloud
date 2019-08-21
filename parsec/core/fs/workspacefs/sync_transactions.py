@@ -258,6 +258,24 @@ class SyncTransactions(EntryTransactions):
             new_remote_manifest = new_local_manifest.to_remote()
             return new_remote_manifest.evolve(version=new_remote_manifest.version + 1)
 
+    async def file_reshape(self, entry_id: EntryID) -> None:
+
+        # Loop over attemps
+        while True:
+
+            # Fetch and lock
+            async with self.local_storage.lock_manifest(entry_id) as manifest:
+
+                # Normalize
+                missing = self._manifest_reshape(manifest)
+
+            # Done
+            if not missing:
+                return
+
+            # Load missing blocks
+            await self.remote_loader.load_blocks(missing)
+
     async def file_conflict(
         self, entry_id: EntryID, local_manifest: LocalManifest, remote_manifest: Manifest
     ) -> None:

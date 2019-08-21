@@ -141,14 +141,7 @@ class FuseOperations(LoggingMixIn, Operations):
             if fh:
                 self.fs_access.fd_resize(fh, length)
             else:
-                # TODO: investigate file_truncate
-                # Should it be atomic?
-                # Should it affect the file reference count?
-                fd = self.open(path)
-                try:
-                    self.fs_access.fd_resize(fd, length)
-                finally:
-                    self.fs_access.fd_close(fd)
+                self.fs_access.file_resize(path, length)
 
     def unlink(self, path: FsPath):
         with translate_error():

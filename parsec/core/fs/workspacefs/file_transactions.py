@@ -181,25 +181,10 @@ class FileTransactions:
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
         # Fetch and lock
-        async with self._load_and_lock_file(fd) as (entry_id, manifest):
+        async with self._load_and_lock_file(fd) as manifest:
 
-            # No-op
-            if manifest.size == length:
-                return
-
-            # Prepare
-            manifest, write_operations, removed_ids = prepare_resize(manifest, length)
-
-            # Writing
-            for chunk, offset in write_operations:
-                self._write_chunk(chunk, b"", offset)
-
-            # Atomic change
-            self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
-
-            # Clean up
-            for removed_id in removed_ids:
-                self.local_storage.clear_chunk(removed_id, miss_ok=True)
+            # Perform the resize operation
+            self._manifest_resize(manifest, length)
 
         # Notify
         self._send_event("fs.entry.updated", id=manifest.entry_id)
@@ -236,25 +221,27 @@ class FileTransactions:
             self._manifest_reshape(manifest)
             self.local_storage.ensure_manifest_persistent(manifest.entry_id)
 
-    async def file_reshape(self, entry_id: EntryID) -> None:
+    # Transaction helpers
 
-        # Loop over attemps
-        while True:
+    def _manifest_resize(self, manifest: LocalFileManifest, length: int) -> None:
+        """This internal helper does not perform any locking."""
+        # No-op
+        if manifest.size == length:
+            return
 
-            # Fetch and lock
-            async with self.local_storage.lock_manifest(entry_id) as manifest:
+        # Prepare
+        manifest, write_operations, removed_ids = prepare_resize(manifest, length)
 
-                # Normalize
-                missing = self._manifest_reshape(entry_id, manifest)
+        # Writing
+        for chunk, offset in write_operations:
+            self._write_chunk(chunk, b"", offset)
 
-            # Done
-            if not missing:
-                return
+        # Atomic change
+        self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
 
-            # Load missing blocks
-            await self.remote_loader.load_blocks(missing)
-
-    # Reshaping helper
+        # Clean up
+        for removed_id in removed_ids:
+            self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
     def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
