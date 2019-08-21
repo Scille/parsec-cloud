@@ -17,6 +17,7 @@ from parsec.core.types import (
     LocalFileManifest,
 )
 
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
     FSReshapingRequiredError,
@@ -178,23 +179,7 @@ def merge_manifests(local_manifest: LocalManifest, remote_manifest: Optional[Man
     )
 
 
-class SyncTransactions:
-    def __init__(
-        self,
-        workspace_id: EntryID,
-        local_storage: LocalStorage,
-        remote_loader: RemoteLoader,
-        event_bus: EventBus,
-    ):
-        self.workspace_id = workspace_id
-        self.local_storage = local_storage
-        self.remote_loader = remote_loader
-        self.event_bus = event_bus
-
-    # Event helper
-
-    def _send_event(self, event, **kwargs):
-        self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
+class SyncTransactions(EntryTransactions):
 
     # Public read-only helpers
 

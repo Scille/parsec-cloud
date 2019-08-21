@@ -13,8 +13,6 @@ from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manif
 
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
@@ -79,19 +77,13 @@ class WorkspaceFS:
             self.remote_device_manager,
             self.local_storage,
         )
-        self.file_transactions = FileTransactions(
-            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
-        )
-        self.entry_transactions = EntryTransactions(
+        self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
             self.device,
             self.local_storage,
             self.remote_loader,
             self.event_bus,
-        )
-        self.sync_transactions = SyncTransactions(
-            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
         )
 
     def __repr__(self):

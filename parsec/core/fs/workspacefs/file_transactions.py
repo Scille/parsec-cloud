@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, List
+from typing import Tuple, List, Callable
 
 from collections import defaultdict
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
-from parsec.core.types import FileDescriptor, EntryID
+from parsec.core.types import FileDescriptor, EntryID, LocalDevice
+
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor
@@ -66,11 +67,15 @@ class FileTransactions:
     def __init__(
         self,
         workspace_id: EntryID,
+        get_workspace_entry: Callable,
+        device: LocalDevice,
         local_storage: LocalStorage,
         remote_loader: RemoteLoader,
         event_bus: EventBus,
     ):
         self.workspace_id = workspace_id
+        self.get_workspace_entry = get_workspace_entry
+        self.local_author = device.device_id
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus

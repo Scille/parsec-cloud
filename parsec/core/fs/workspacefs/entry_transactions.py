@@ -22,6 +22,7 @@ from parsec.core.types import (
 
 
 from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.exceptions import FSEntryNotFound, FSLocalMissError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.utils import (
@@ -41,33 +42,13 @@ def from_errno(errno, message=None, filename=None, filename2=None):
     return OSError(errno, message, filename, None, filename2)
 
 
-class EntryTransactions:
-    def __init__(
-        self,
-        workspace_id: EntryID,
-        get_workspace_entry: Callable,
-        device: LocalDevice,
-        local_storage: LocalStorage,
-        remote_loader: RemoteLoader,
-        event_bus: EventBus,
-    ):
-        self.workspace_id = workspace_id
-        self.get_workspace_entry = get_workspace_entry
-        self.local_author = device.device_id
-        self.local_storage = local_storage
-        self.remote_loader = remote_loader
-        self.event_bus = event_bus
+class EntryTransactions(FileTransactions):
 
     # Right management helper
 
     def _check_write_rights(self, path: FsPath):
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
             raise from_errno(errno.EACCES, str(path))
-
-    # Event helper
-
-    def _send_event(self, event, **kwargs):
-        self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
     # Look-up helpers
 
