@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import tempfile
 
-from hypothesis import settings, strategies
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant
+from hypothesis import strategies
+from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
 
 from parsec.core.types import EntryID, Chunk, Chunks, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import padded_data
@@ -191,51 +190,51 @@ def test_complete_scenario() -> None:
     assert manifest == base.evolve(size=25, blocks=((chunk10,), (chunk11,)), updated=t7)
 
 
-@settings(max_examples=1000, deadline=None)
-class FileOperations(RuleBasedStateMachine):
-    def __init__(self) -> None:
-        super().__init__()
-        self.oracle = tempfile.TemporaryFile()
-        self.manifest = LocalFileManifest.make_placeholder(EntryID(), "a@a", EntryID()).evolve(
-            blocksize=8
-        )
-        self.storage = Storage()
+@pytest.mark.slow
+def test_file_operations(hypothesis_settings, tmpdir):
+    class FileOperations(RuleBasedStateMachine):
+        def __init__(self) -> None:
+            super().__init__()
+            self.oracle = open(tmpdir / "oracle.txt", "w+b")
+            self.manifest = LocalFileManifest.make_placeholder(EntryID(), "a@a", EntryID()).evolve(
+                blocksize=8
+            )
+            self.storage = Storage()
 
-    def teardown(self) -> None:
-        self.oracle.close()
-        self.storage.clear()
+        def teardown(self) -> None:
+            self.oracle.close()
+            self.storage.clear()
 
-    @invariant()
-    def integrity(self) -> None:
-        self.manifest.assert_integrity()
+        @invariant()
+        def integrity(self) -> None:
+            self.manifest.assert_integrity()
 
-    @invariant()
-    def leaks(self) -> None:
-        all_ids = {chunk.id for chunks in self.manifest.blocks for chunk in chunks}
-        assert set(self.storage) == all_ids
+        @invariant()
+        def leaks(self) -> None:
+            all_ids = {chunk.id for chunks in self.manifest.blocks for chunk in chunks}
+            assert set(self.storage) == all_ids
 
-    @rule(size=size, offset=size)
-    def read(self, size: int, offset: int) -> None:
-        data = self.storage.read(self.manifest, size, offset)
-        self.oracle.seek(offset)
-        expected = self.oracle.read(size)
-        assert data == expected
+        @rule(size=size, offset=size)
+        def read(self, size: int, offset: int) -> None:
+            data = self.storage.read(self.manifest, size, offset)
+            self.oracle.seek(offset)
+            expected = self.oracle.read(size)
+            assert data == expected
 
-    @rule(content=strategies.binary(max_size=MAX_SIZE), offset=size)
-    def write(self, content: bytes, offset: int) -> None:
-        self.manifest = self.storage.write(self.manifest, content, offset)
-        self.oracle.seek(offset)
-        self.oracle.write(content)
+        @rule(content=strategies.binary(max_size=MAX_SIZE), offset=size)
+        def write(self, content: bytes, offset: int) -> None:
+            self.manifest = self.storage.write(self.manifest, content, offset)
+            self.oracle.seek(offset)
+            self.oracle.write(content)
 
-    @rule(length=size)
-    def resize(self, length: int) -> None:
-        self.manifest = self.storage.resize(self.manifest, length)
-        self.oracle.truncate(length)
+        @rule(length=size)
+        def resize(self, length: int) -> None:
+            self.manifest = self.storage.resize(self.manifest, length)
+            self.oracle.truncate(length)
 
-    @rule()
-    def reshape(self) -> None:
-        self.manifest = self.storage.reshape(self.manifest)
-        assert self.manifest.is_reshaped()
+        @rule()
+        def reshape(self) -> None:
+            self.manifest = self.storage.reshape(self.manifest)
+            assert self.manifest.is_reshaped()
 
-
-TestFileOperations = pytest.mark.slow(FileOperations.TestCase)
+    run_state_machine_as_test(FileOperations, settings=hypothesis_settings)
