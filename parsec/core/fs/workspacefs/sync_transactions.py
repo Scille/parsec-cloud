@@ -3,10 +3,7 @@
 from itertools import count
 from typing import Optional, List, Dict, Iterator
 
-from parsec.event_bus import EventBus
 from parsec.types import DeviceID
-from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.types import (
     Chunk,
     EntryID,

@@ -2,18 +2,16 @@
 
 import os
 import errno
-from typing import Tuple, Callable, Dict
+from typing import Tuple, Dict
 from async_generator import asynccontextmanager
 
 from pendulum import Pendulum
 
-from parsec.event_bus import EventBus
 from parsec.types import DeviceID
 from parsec.core.types import (
     EntryID,
     FsPath,
     WorkspaceRole,
-    LocalDevice,
     LocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
@@ -21,10 +19,8 @@ from parsec.core.types import (
 )
 
 
-from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.exceptions import FSEntryNotFound, FSLocalMissError
-from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
