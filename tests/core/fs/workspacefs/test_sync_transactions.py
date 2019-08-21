@@ -8,7 +8,7 @@ from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs import FSReshapingRequiredError, FSFileConflictError
+from parsec.core.fs import FSFileConflictError
 
 
 def test_merge_folder_children():
@@ -204,9 +204,7 @@ async def test_synchronization_step_transaction(sync_transactions, type):
 
     # Sync child
     if type == "file":
-        with pytest.raises(FSReshapingRequiredError):
-            await synchronization_step(a_entry_id)
-        await sync_transactions.file_reshape(a_entry_id)
+        await synchronization_step(a_entry_id)
     a_manifest = await synchronization_step(a_entry_id)
     assert await synchronization_step(a_entry_id, a_manifest) is None
 

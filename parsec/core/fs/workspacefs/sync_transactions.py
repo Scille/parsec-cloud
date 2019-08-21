@@ -218,9 +218,19 @@ class SyncTransactions(EntryTransactions):
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
-            # Sync cannot be performed
+            # Sync cannot be performed yet
             if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
-                raise FSReshapingRequiredError(entry_id)
+
+                # Try a quick reshape (without downloading any block)
+                missing = self._manifest_reshape(local_manifest)
+
+                # Downloading block is necessary for this reshape
+                if missing:
+                    raise FSReshapingRequiredError(entry_id)
+
+                # The manifest should be reshaped by now
+                local_manifest = self.local_storage.get_manifest(entry_id)
+                assert local_manifest.is_reshaped()
 
             # Merge manifests
             new_local_manifest = merge_manifests(local_manifest, remote_manifest)
