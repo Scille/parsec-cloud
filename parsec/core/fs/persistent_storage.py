@@ -5,27 +5,24 @@ from pathlib import Path
 from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
 
-from parsec.core.types import EntryID, BlockID
+from parsec.core.types import EntryID, ChunkID, BlockID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
-
+from parsec.core.types.local_manifests import DEFAULT_BLOCK_SIZE
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
-DEFAULT_BLOCK_SIZE = 2 ** 16
 
 
 class PersistentStorage:
     """Manage the access to the persistent storage.
 
     That includes:
-    - the sqlite database for clean data (block metadata)
-    - the sqlite database for dirty data (manifests and block metadata)
-    - the clean block files
-    - the dirty block files
+    - the sqlite database for clean data (block data)
+    - the sqlite database for dirty data (manifests and chunk data)
 
     The only data that might be subject to garbage collection is the clean
-    blocks since they are large and non-sensitive.
+    chunks since they are large and non-sensitive.
 
     The data is always bytes, this class doesn't have knowledge about object
     types nor serialization processes.
@@ -130,10 +127,10 @@ class PersistentStorage:
                          blob BYTEA NOT NULL);"""
                 )
 
-                # Blocks tables
+                # Chunks tables
                 cursor.execute(
-                    """CREATE TABLE IF NOT EXISTS blocks
-                        (block_id UUID PRIMARY KEY NOT NULL,
+                    """CREATE TABLE IF NOT EXISTS chunks
+                        (chunk_id UUID PRIMARY KEY NOT NULL,
                          size INT NOT NULL,
                          offline BOOLEAN NOT NULL,
                          accessed_on TIMESTAMPTZ,
@@ -141,17 +138,17 @@ class PersistentStorage:
                     );"""
                 )
 
-    # Size and blocks
+    # Size and chunks
 
     def get_nb_clean_blocks(self):
         with self.open_clean_cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM blocks")
+            cursor.execute("SELECT COUNT(*) FROM chunks")
             result, = cursor.fetchone()
             return result
 
     def get_cache_size(self):
         with self.open_clean_cursor() as cursor:
-            cursor.execute("SELECT COALESCE(SUM(size), 0) FROM blocks")
+            cursor.execute("SELECT COALESCE(SUM(size), 0) FROM chunks")
             result, = cursor.fetchone()
             return result
 
@@ -187,35 +184,35 @@ class PersistentStorage:
         if not deleted:
             raise FSLocalMissError(entry_id)
 
-    # Generic block operations
+    # Generic chunk operations
 
-    def _is_block(self, conn: Connection, block_id: BlockID):
+    def _is_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
-            cursor.execute("SELECT block_id FROM blocks WHERE block_id = ?", (str(block_id),))
+            cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (str(chunk_id),))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
-    def _get_block(self, conn: Connection, block_id: BlockID):
+    def _get_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("BEGIN")
             cursor.execute(
                 """
-                UPDATE blocks SET accessed_on = ? WHERE block_id = ?;
+                UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
                 """,
-                (time(), str(block_id)),
+                (time(), str(chunk_id)),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             if not changes:
-                raise FSLocalMissError(block_id)
+                raise FSLocalMissError(chunk_id)
 
-            cursor.execute("""SELECT data FROM blocks WHERE block_id = ?""", (str(block_id),))
+            cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (str(chunk_id),))
             ciphered, = cursor.fetchone()
             cursor.execute("END")
 
         return decrypt_raw_with_secret_key(self.local_symkey, ciphered)
 
-    def _set_block(self, conn: Connection, block_id: BlockID, raw: bytes):
+    def _set_chunk(self, conn: Connection, chunk_id: ChunkID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
@@ -223,63 +220,63 @@ class PersistentStorage:
         with self._open_cursor(conn) as cursor:
             cursor.execute(
                 """INSERT OR REPLACE INTO
-                blocks (block_id, size, offline, accessed_on, data)
+                chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
-                (str(block_id), len(ciphered), False, time(), ciphered),
+                (str(chunk_id), len(ciphered), False, time(), ciphered),
             )
 
-    def _clear_block(self, conn: Connection, block_id: BlockID):
+    def _clear_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("BEGIN")
-            cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(block_id),))
+            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (str(chunk_id),))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             cursor.execute("END")
 
         if not changes:
-            raise FSLocalMissError(block_id)
+            raise FSLocalMissError(chunk_id)
 
     # Clean block operations
 
-    def get_clean_block(self, block_id: BlockID):
-        return self._get_block(self.clean_conn, block_id)
+    def get_clean_block(self, chunk_id: BlockID):
+        return self._get_chunk(self.clean_conn, chunk_id)
 
-    def set_clean_block(self, block_id: BlockID, raw: bytes):
-        self._set_block(self.clean_conn, block_id, raw)
+    def set_clean_block(self, chunk_id: BlockID, raw: bytes):
+        self._set_chunk(self.clean_conn, chunk_id, raw)
 
         # Clean up if necessary
         limit = self.get_nb_clean_blocks() - self.block_limit
         if limit > 0:
             self.clear_clean_blocks(limit=limit)
 
-    def clear_clean_block(self, block_id: BlockID):
-        self._clear_block(self.clean_conn, block_id)
+    def clear_clean_block(self, chunk_id: BlockID):
+        self._clear_chunk(self.clean_conn, chunk_id)
 
-    # Dirty block operations
+    # Dirty chunk operations
 
-    def is_dirty_block(self, block_id: BlockID):
-        return self._is_block(self.dirty_conn, block_id)
+    def is_dirty_chunk(self, chunk_id: ChunkID):
+        return self._is_chunk(self.dirty_conn, chunk_id)
 
-    def get_dirty_block(self, block_id: BlockID):
-        return self._get_block(self.dirty_conn, block_id)
+    def get_dirty_chunk(self, chunk_id: ChunkID):
+        return self._get_chunk(self.dirty_conn, chunk_id)
 
-    def set_dirty_block(self, block_id: BlockID, raw: bytes):
-        self._set_block(self.dirty_conn, block_id, raw)
+    def set_dirty_chunk(self, chunk_id: ChunkID, raw: bytes):
+        self._set_chunk(self.dirty_conn, chunk_id, raw)
 
-    def clear_dirty_block(self, block_id: BlockID):
-        self._clear_block(self.dirty_conn, block_id)
+    def clear_dirty_chunk(self, chunk_id: ChunkID):
+        self._clear_chunk(self.dirty_conn, chunk_id)
 
     # Garbage collection
 
     def clear_clean_blocks(self, limit=None):
         with self.open_clean_cursor() as cursor:
             if not limit:
-                cursor.execute("DELETE FROM blocks")
+                cursor.execute("DELETE FROM chunks")
             else:
                 cursor.execute(
                     """
-                    DELETE FROM blocks WHERE block_id IN (
-                        SELECT block_id FROM blocks ORDER BY accessed_on ASC LIMIT ?
+                    DELETE FROM chunks WHERE chunk_id IN (
+                        SELECT chunk_id FROM chunks ORDER BY accessed_on ASC LIMIT ?
                     )
                     """,
                     (limit,),

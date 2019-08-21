@@ -74,10 +74,12 @@ class InMemoryPersistentStorage(PersistentStorage):
         pass
 
 
+@contextmanager
 def freeze_time(time):
     if isinstance(time, str):
         time = pendulum.parse(time)
-    return pendulum.test(time)
+    with pendulum.test(time):
+        yield time
 
 
 class AsyncMock(Mock):

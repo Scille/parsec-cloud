@@ -11,7 +11,7 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import EntryID, BlockAccess, LocalFileManifest
+from parsec.core.types import EntryID, LocalFileManifest, Chunk
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 
@@ -149,13 +149,11 @@ async def test_flush_file(file_transactions, foo_txt):
 @pytest.mark.trio
 async def test_block_not_loaded_entry(file_transactions, foo_txt):
     foo_manifest = foo_txt.get_manifest()
-    block1 = b"a" * 10
-    block2 = b"b" * 5
-    block1_access = BlockAccess.from_block(block1, 0)
-    block2_access = BlockAccess.from_block(block2, 10)
-    foo_manifest = foo_manifest.evolve(
-        blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
-    )
+    chunk1_data = b"a" * 10
+    chunk2_data = b"b" * 5
+    chunk1 = Chunk.new_chunk(0, 10).evolve_as_block(chunk1_data)
+    chunk2 = Chunk.new_chunk(10, 15).evolve_as_block(chunk2_data)
+    foo_manifest = foo_manifest.evolve(blocks=((chunk1, chunk2),), size=15)
     async with file_transactions.local_storage.lock_entry_id(foo_manifest.parent_id):
         await foo_txt.set_manifest(foo_manifest)
 
@@ -163,11 +161,11 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
     with pytest.raises(FSRemoteBlockNotFound):
         await file_transactions.fd_read(fd, 14, 0)
 
-    file_transactions.local_storage.set_dirty_block(block1_access.id, block1)
-    file_transactions.local_storage.set_dirty_block(block2_access.id, block2)
+    file_transactions.local_storage.set_chunk(chunk1.id, chunk1_data)
+    file_transactions.local_storage.set_chunk(chunk2.id, chunk2_data)
 
     data = await file_transactions.fd_read(fd, 14, 0)
-    assert data == block1 + block2[:4]
+    assert data == chunk1_data + chunk2_data[:4]
 
 
 @pytest.mark.trio
@@ -177,23 +175,21 @@ async def test_load_block_from_remote(file_transactions, foo_txt):
     await file_transactions.remote_loader.create_realm(workspace_id)
 
     foo_manifest = foo_txt.get_manifest()
-    block1 = b"a" * 10
-    block2 = b"b" * 5
-    block1_access = BlockAccess.from_block(block1, 0)
-    block2_access = BlockAccess.from_block(block2, 10)
-    foo_manifest = foo_manifest.evolve(
-        blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
-    )
+    chunk1_data = b"a" * 10
+    chunk2_data = b"b" * 5
+    chunk1 = Chunk.new_chunk(0, 10).evolve_as_block(chunk1_data)
+    chunk2 = Chunk.new_chunk(10, 15).evolve_as_block(chunk2_data)
+    foo_manifest = foo_manifest.evolve(blocks=((chunk1, chunk2),), size=15)
     await foo_txt.set_manifest(foo_manifest)
 
     fd = foo_txt.open()
-    await file_transactions.remote_loader.upload_block(block1_access, block1)
-    await file_transactions.remote_loader.upload_block(block2_access, block2)
-    file_transactions.local_storage.clear_block(block1_access.id)
-    file_transactions.local_storage.clear_block(block2_access.id)
+    await file_transactions.remote_loader.upload_block(chunk1.access, chunk1_data)
+    await file_transactions.remote_loader.upload_block(chunk2.access, chunk2_data)
+    file_transactions.local_storage.clear_clean_block(chunk1.access.id)
+    file_transactions.local_storage.clear_clean_block(chunk2.access.id)
 
     data = await file_transactions.fd_read(fd, 14, 0)
-    assert data == block1 + block2[:4]
+    assert data == chunk1_data + chunk2_data[:4]
 
 
 size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB

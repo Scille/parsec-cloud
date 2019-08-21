@@ -14,12 +14,7 @@ from parsec.core.types.base import (
     EntryNameField,
     serializer_factory,
 )
-from parsec.core.types.access import (
-    BlockAccess,
-    BlockAccessSchema,
-    WorkspaceEntry,
-    WorkspaceEntrySchema,
-)
+from parsec.core.types.access import ChunkSchema, WorkspaceEntry, WorkspaceEntrySchema, Chunks
 
 
 __all__ = (
@@ -30,6 +25,8 @@ __all__ = (
     "local_manifest_dumps",
     "local_manifest_loads",
 )
+
+DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 
 
 # File manifest
@@ -42,8 +39,8 @@ class LocalFileManifest:
     need_sync: bool = False
     updated: pendulum.Pendulum = None
     size: int = 0
-    blocks: Tuple[BlockAccess] = attr.ib(converter=tuple, default=())
-    dirty_blocks: Tuple[BlockAccess] = attr.ib(converter=tuple, default=())
+    blocksize: int = DEFAULT_BLOCK_SIZE
+    blocks: Tuple[Chunks, ...] = attr.ib(default=())
 
     def __attrs_post_init__(self):
         if self.updated is None:
@@ -98,9 +95,52 @@ class LocalFileManifest:
     def evolve(self, **data) -> "LocalFileManifest":
         return attr.evolve(self, **data)
 
+    # File methods
+
+    def get_chunks(self, block: int) -> Chunks:
+        try:
+            return self.blocks[block]
+        except IndexError:
+            return ()
+
+    def is_reshaped(self) -> bool:
+        for chunks in self.blocks:
+            if len(chunks) != 1:
+                return False
+            if not chunks[0].is_block:
+                return False
+        return True
+
+    def assert_integrity(self) -> None:
+        current = 0
+        assert isinstance(self.blocks, tuple)
+        for i, chunks in enumerate(self.blocks):
+            assert i * self.blocksize == current
+            assert isinstance(chunks, tuple)
+            assert len(chunks) > 0
+            for chunk in chunks:
+                assert chunk.start == current
+                assert chunk.start < chunk.stop
+                assert chunk.reference <= chunk.start
+                current = chunk.stop
+        assert current == self.size
+
     # Export methods
 
+    def corresponds_to(self, remote_manifest: "remote_manifests.FileManifest") -> bool:
+        if not self.is_reshaped():
+            return False
+        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
+
     def to_remote(self, **data) -> "remote_manifests.FileManifest":
+        # Checks
+        self.assert_integrity()
+        assert self.is_reshaped()
+
+        # Blocks
+        blocks = tuple(chunks[0].get_block_access() for chunks in self.blocks)
+
+        # Remote manifest
         return remote_manifests.FileManifest(
             entry_id=self.entry_id,
             author=self.author,
@@ -109,7 +149,7 @@ class LocalFileManifest:
             created=self.created,
             updated=self.updated,
             size=self.size,
-            blocks=self.blocks,
+            blocks=blocks,
             **data,
         )
 
@@ -130,13 +170,14 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
-    blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
-    dirty_blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
+    blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
+    blocks = fields.List(fields.List(fields.Nested(ChunkSchema)), required=True)
 
     @post_load
     def make_obj(self, data):
         data.pop("type")
         data.pop("format")
+        data["blocks"] = tuple(tuple(block) for block in data["blocks"])
         return LocalFileManifest(**data)
 
 
@@ -218,6 +259,9 @@ class LocalFolderManifest:
         )
 
     # Export methods
+
+    def corresponds_to(self, remote_manifest: "remote_manifests.FolderManifest") -> bool:
+        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
 
     def to_remote(self, **data) -> "remote_manifests.FolderManifest":
         return remote_manifests.FolderManifest(
@@ -333,6 +377,9 @@ class LocalWorkspaceManifest:
         )
 
     # Export methods
+
+    def corresponds_to(self, remote_manifest: "remote_manifests.WorkspaceManifest") -> bool:
+        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
 
     def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
         return remote_manifests.WorkspaceManifest(

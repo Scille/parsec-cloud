@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
-from typing import Optional
+from typing import Tuple, List
 
+from collections import defaultdict
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
@@ -10,11 +10,12 @@ from parsec.core.types import FileDescriptor, EntryID
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor
-from parsec.core.types import BlockAccess, LocalFileManifest
-from parsec.core.fs.buffer_ordering import (
-    quick_filter_block_accesses,
-    Buffer,
-    merge_buffers_with_limits,
+from parsec.core.types import Chunk, Chunks, BlockID, LocalFileManifest
+from parsec.core.fs.workspacefs.file_operations import (
+    prepare_read,
+    prepare_write,
+    prepare_resize,
+    prepare_reshape,
 )
 
 __all__ = ("FSInvalidFileDescriptor", "FileTransactions")
@@ -27,32 +28,17 @@ def normalize_argument(arg, manifest):
     return manifest.size if arg < 0 else arg
 
 
-def pad_content(offset: int, size: int, content: bytes = b""):
-    empty_gap = offset - size
-    if empty_gap <= 0:
-        return offset, content
-    padded_content = b"\x00" * empty_gap + content
-    return size, padded_content
+def padded_data(data: bytes, start: int, stop: int) -> bytes:
+    """Return the data between the start and stop index.
 
-
-def merge_buffers(manifest: LocalFileManifest, start: int, end: int):
-    dirty_blocks = quick_filter_block_accesses(manifest.dirty_blocks, start, end)
-    dirty_buffers = [DirtyBlockBuffer(*args) for args in dirty_blocks]
-    blocks = quick_filter_block_accesses(manifest.blocks, start, end)
-    buffers = [BlockBuffer(*args) for args in blocks]
-    return merge_buffers_with_limits(buffers + dirty_buffers, start, end)
-
-
-@attr.s(slots=True)
-class DirtyBlockBuffer(Buffer):
-    access = attr.ib(type=BlockAccess)
-    data = attr.ib(default=None, type=Optional[bytes])
-
-
-@attr.s(slots=True)
-class BlockBuffer(Buffer):
-    access = attr.ib(type=BlockAccess)
-    data = attr.ib(default=None, type=Optional[bytes])
+    The data is treated as padded with an infinite amount of null bytes before index 0.
+    """
+    assert start <= stop
+    if start <= stop <= 0:
+        return b"\x00" * (stop - start)
+    if 0 <= start <= stop:
+        return data[start:stop]
+    return b"\x00" * (0 - start) + data[0:stop]
 
 
 class FileTransactions:
@@ -88,11 +74,42 @@ class FileTransactions:
         self.local_storage = local_storage
         self.remote_loader = remote_loader
         self.event_bus = event_bus
+        self._write_count = defaultdict(int)
 
     # Event helper
 
     def _send_event(self, event, **kwargs):
         self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
+
+    # Helper
+
+    def _read_chunk(self, chunk: Chunk) -> bytes:
+        data = self.local_storage.get_chunk(chunk.id)
+        return data[chunk.start - chunk.reference : chunk.stop - chunk.reference]
+
+    def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
+        data = padded_data(content, offset, offset + chunk.stop - chunk.start)
+        self.local_storage.set_chunk(chunk.id, data)
+        return len(data)
+
+    def _build_data(self, chunks: Chunks) -> Tuple[bytes, List[BlockID]]:
+        # Empty array
+        if not chunks:
+            return bytearray(), []
+
+        # Build byte array
+        missing = []
+        start, stop = chunks[0].start, chunks[-1].stop
+        result = bytearray(stop - start)
+        for chunk in chunks:
+            try:
+                result[chunk.start - start : chunk.stop - start] = self._read_chunk(chunk)
+            except FSLocalMissError:
+                assert chunk.access is not None
+                missing.append(chunk.access)
+
+        # Return byte array
+        return result, missing
 
     # Locking helper
 
@@ -109,44 +126,20 @@ class FileTransactions:
         async with self.local_storage.lock_manifest(entry_id):
             yield self.local_storage.load_file_descriptor(fd)
 
-    # Helpers
-
-    def _attempt_read(self, manifest: LocalFileManifest, start: int, end: int):
-        missing = []
-        data = bytearray(end - start)
-        merged = merge_buffers(manifest, start, end)
-        for cs in merged.spaces:
-            for bs in cs.buffers:
-                block_access = bs.buffer.access
-
-                if isinstance(bs.buffer, DirtyBlockBuffer):
-                    try:
-                        buff = self.local_storage.get_block(block_access.id)
-                    except FSLocalMissError as exc:
-                        raise RuntimeError(f"Unknown local block `{block_access.id}`") from exc
-
-                elif isinstance(bs.buffer, BlockBuffer):
-                    try:
-                        buff = self.local_storage.get_block(block_access.id)
-                    except FSLocalMissError:
-                        missing.append(block_access)
-                        continue
-
-                data[bs.start - cs.start : bs.end - cs.start] = buff[
-                    bs.buffer_slice_start : bs.buffer_slice_end
-                ]
-
-        return data, missing
-
     # Atomic transactions
 
     async def fd_close(self, fd: FileDescriptor) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
-            self.local_storage.ensure_manifest_persistant(entry_id)
+
+            # Force writing to disk
+            self.local_storage.ensure_manifest_persistent(entry_id)
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
+
+            # Clear fd
+            self._write_count.pop(fd, None)
 
     async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int) -> int:
         # Fetch and lock
@@ -158,19 +151,24 @@ class FileTransactions:
 
             # Prepare
             offset = normalize_argument(offset, manifest)
-            start, padded_content = pad_content(offset, manifest.size, content)
-            block_access = BlockAccess.from_block(padded_content, start)
+            manifest, write_operations, removed_ids = prepare_write(manifest, len(content), offset)
 
-            new_offset = offset + len(content)
-            new_size = max(manifest.size, new_offset)
-
-            manifest = manifest.evolve_and_mark_updated(
-                dirty_blocks=(*manifest.dirty_blocks, block_access), size=new_size
-            )
+            # Writing
+            for chunk, offset in write_operations:
+                self._write_chunk(chunk, content, offset)
 
             # Atomic change
-            self.local_storage.set_dirty_block(block_access.id, padded_content)
             self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
+
+            # Clean up
+            for removed_id in removed_ids:
+                self.local_storage.clear_chunk(removed_id, miss_ok=True)
+
+            # Reshaping
+            self._write_count[fd] += 1
+            if self._write_count[fd] >= 128:
+                self._manifest_reshape(entry_id, manifest, cache_only=True)
+                self._write_count[fd] = 0
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)
@@ -185,17 +183,18 @@ class FileTransactions:
                 return
 
             # Prepare
-            dirty_blocks = manifest.dirty_blocks
-            start, padded_content = pad_content(length, manifest.size)
-            block_access = BlockAccess.from_block(padded_content, start)
-            if padded_content:
-                dirty_blocks += (block_access,)
-            manifest = manifest.evolve_and_mark_updated(dirty_blocks=dirty_blocks, size=length)
+            manifest, write_operations, removed_ids = prepare_resize(manifest, length)
+
+            # Writing
+            for chunk, offset in write_operations:
+                self._write_chunk(chunk, b"", offset)
 
             # Atomic change
-            if padded_content:
-                self.local_storage.set_dirty_block(block_access.id, padded_content)
             self.local_storage.set_manifest(entry_id, manifest, cache_only=True)
+
+            # Clean up
+            for removed_id in removed_ids:
+                self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
         # Notify
         self._send_event("fs.entry.updated", id=entry_id)
@@ -211,16 +210,17 @@ class FileTransactions:
             # Fetch and lock
             async with self._load_and_lock_file(fd) as (entry_id, manifest):
 
-                # No-op
+                # Normalize
                 offset = normalize_argument(offset, manifest)
-                if offset is not None and offset > manifest.size:
+                size = normalize_argument(size, manifest)
+
+                # No-op
+                if offset > manifest.size:
                     return b""
 
                 # Prepare
-                start = offset
-                size = normalize_argument(size, manifest)
-                end = min(offset + size, manifest.size)
-                data, missing = self._attempt_read(manifest, start, end)
+                chunks = prepare_read(manifest, size, offset)
+                data, missing = self._build_data(chunks)
 
                 # Return the data
                 if not missing:
@@ -228,4 +228,72 @@ class FileTransactions:
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
         async with self._load_and_lock_file(fd) as (entry_id, manifest):
-            self.local_storage.ensure_manifest_persistant(entry_id)
+            self._manifest_reshape(entry_id, manifest)
+            self.local_storage.ensure_manifest_persistent(entry_id)
+
+    async def file_reshape(self, entry_id: EntryID) -> None:
+
+        # Loop over attemps
+        while True:
+
+            # Fetch and lock
+            async with self.local_storage.lock_manifest(entry_id) as manifest:
+
+                # Normalize
+                missing = self._manifest_reshape(entry_id, manifest)
+
+            # Done
+            if not missing:
+                return
+
+            # Load missing blocks
+            await self.remote_loader.load_blocks(missing)
+
+    # Reshaping helper
+
+    def _manifest_reshape(
+        self, entry_id: EntryID, manifest: LocalFileManifest, cache_only: bool = False
+    ) -> List[BlockID]:
+        """This internal helper does not perform any locking."""
+
+        # Prepare
+        getter, operations = prepare_reshape(manifest)
+
+        # No-op
+        if not operations:
+            return []
+
+        # Prepare data structures
+        missing = []
+        result_dict = {}
+        removed_ids = set()
+
+        # Perform operations
+        for block, (source, destination, cleanup) in operations.items():
+
+            # Build data block
+            data, extra_missing = self._build_data(source)
+
+            # Missing data
+            if extra_missing:
+                missing += extra_missing
+                continue
+
+            # Write data
+            new_chunk = destination.evolve_as_block(data)
+            self._write_chunk(new_chunk, data)
+
+            # Update structures
+            removed_ids |= cleanup
+            result_dict[block] = new_chunk
+
+        # Craft and set new manifest
+        new_manifest = getter(result_dict)
+        self.local_storage.set_manifest(entry_id, new_manifest, cache_only=cache_only)
+
+        # Perform cleanup
+        for removed_id in removed_ids:
+            self.local_storage.clear_chunk(removed_id, miss_ok=True)
+
+        # Return missing block ids
+        return missing

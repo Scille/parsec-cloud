@@ -2,8 +2,24 @@
 
 from typing import Union, NewType
 
-from parsec.core.types.base import BlockID, BlockIDField, EntryID, EntryIDField, EntryName, FsPath
-from parsec.core.types.access import BlockAccess, WorkspaceRole, WorkspaceRoleField, WorkspaceEntry
+from parsec.core.types.base import (
+    ChunkID,
+    ChunkIDField,
+    BlockID,
+    BlockIDField,
+    EntryID,
+    EntryIDField,
+    EntryName,
+    FsPath,
+)
+from parsec.core.types.access import (
+    BlockAccess,
+    Chunk,
+    Chunks,
+    WorkspaceRole,
+    WorkspaceRoleField,
+    WorkspaceEntry,
+)
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
 from parsec.core.types.local_manifests import (
     LocalFileManifest,
@@ -37,6 +53,8 @@ FileDescriptor = NewType("FileDescriptor", int)
 
 __all__ = (
     # base
+    "ChunkID",
+    "ChunkIDField",
     "BlockID",
     "BlockIDField",
     "EntryID",
@@ -46,6 +64,8 @@ __all__ = (
     "FsPath",
     # access
     "BlockAccess",
+    "Chunk",
+    "Chunks",
     "WorkspaceRole",
     "WorkspaceRoleField",
     "WorkspaceEntry",

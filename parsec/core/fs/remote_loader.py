@@ -249,8 +249,8 @@ class RemoteLoader:
             raise FSError(f"Cannot upload block: {exc}") from exc
 
         # Update local storage
-        self.local_storage.clear_block(access.id)
         self.local_storage.set_clean_block(access.id, data)
+        self.local_storage.clear_chunk(access.id, miss_ok=True)
 
     async def load_manifest(
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None

@@ -3,12 +3,12 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.types import FsPath, BlockAccess, EntryID
-from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest, LocalFileManifest
+from parsec.core.types import FsPath, EntryID, Chunk
+from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs import FSReshapingRequiredError, FSFileConflictError, FSLocalMissError
+from parsec.core.fs import FSReshapingRequiredError, FSFileConflictError
 
 
 def test_merge_folder_children():
@@ -139,12 +139,17 @@ def test_merge_file_manifests():
         size=0,
     )
 
+    def evolve(m, n):
+        chunk = Chunk.new_chunk(0, n).evolve_as_block(b"a" * n)
+        blocks = ((chunk,),)
+        return m1.evolve_and_mark_updated(size=n, blocks=blocks)
+
     # Initial base manifest
     m1 = v1.to_local("a@a")
     assert merge_manifests(m1) == m1
 
     # Local change
-    m2 = m1.evolve_and_mark_updated(size=1)
+    m2 = evolve(m1, 1)
     assert merge_manifests(m2) == m2
 
     # Successful upload
@@ -153,9 +158,9 @@ def test_merge_file_manifests():
     assert m3 == v2.to_local("a@a")
 
     # Two local changes
-    m4 = m3.evolve_and_mark_updated(size=2)
+    m4 = evolve(m3, 2)
     assert merge_manifests(m4) == m4
-    m5 = m4.evolve_and_mark_updated(size=3)
+    m5 = evolve(m4, 3)
     assert merge_manifests(m4) == m4
 
     # M4 has been successfully uploaded
@@ -164,7 +169,7 @@ def test_merge_file_manifests():
     assert m6 == m5.evolve(base_manifest=v3)
 
     # The remote has changed
-    v4 = v3.evolve(version=4, size=4, author="b@b")
+    v4 = v3.evolve(version=4, size=0, author="b@b")
     with pytest.raises(FSFileConflictError):
         merge_manifests(m6, v4)
 
@@ -203,7 +208,7 @@ async def test_synchronization_step_transaction(
     if type == "file":
         with pytest.raises(FSReshapingRequiredError):
             await synchronization_step(a_entry_id)
-        await sync_transactions.file_reshape(a_entry_id)
+        await file_transactions.file_reshape(a_entry_id)
     a_manifest = await synchronization_step(a_entry_id)
     assert await synchronization_step(a_entry_id, a_manifest) is None
 
@@ -236,184 +241,6 @@ async def test_synchronization_step_transaction(
 
 
 @pytest.mark.trio
-async def test_reshape_blocks(sync_transactions):
-    # No block
-    placeholder = LocalFileManifest.make_placeholder(EntryID(), "a@a", EntryID())
-    manifest = placeholder.evolve()
-
-    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
-    assert blocks == old_blocks == new_blocks == missing == []
-
-    # One block
-    access = BlockAccess.from_block(b"abc", 0)
-    manifest = placeholder.evolve(blocks=[access], dirty_blocks=[], size=3)
-
-    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
-    assert old_blocks == new_blocks == missing == []
-    assert blocks == [access]
-
-    # One dirty block
-    access = BlockAccess.from_block(b"abc", 0)
-    manifest = placeholder.evolve(blocks=[], dirty_blocks=[access], size=3)
-
-    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
-    assert old_blocks == new_blocks == missing == []
-    assert blocks == [access]
-
-    # Several dirty blocks
-    size = 0
-    dirty = []
-    for data in [b"abc", b"def", b"ghi"]:
-        access = BlockAccess.from_block(data, size)
-        sync_transactions.local_storage.set_dirty_block(access.id, data)
-        size += len(data)
-        dirty.append(access)
-    manifest = placeholder.evolve(blocks=[], dirty_blocks=dirty, size=size)
-
-    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
-    assert missing == []
-    assert old_blocks == dirty
-    assert len(new_blocks) == 1
-    (access, data), = new_blocks
-    assert data == b"abcdefghi"
-    assert blocks == [access]
-
-    # One block - several dirty blocks
-    size = 0
-    data = b"abc"
-    dirty = []
-    clean = [BlockAccess.from_block(data, size)]
-    sync_transactions.local_storage.set_clean_block(clean[0].id, data)
-    size += len(data)
-    for data in [b"def", b"ghi"]:
-        access = BlockAccess.from_block(data, size)
-        sync_transactions.local_storage.set_dirty_block(access.id, data)
-        size += len(data)
-        dirty.append(access)
-    manifest = placeholder.evolve(blocks=clean, dirty_blocks=dirty, size=size)
-
-    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
-    assert missing == []
-    assert old_blocks == clean + dirty
-    assert len(new_blocks) == 1
-    (access, data), = new_blocks
-    assert data == b"abcdefghi"
-    assert blocks == [access]
-
-    # One missing block - several dirty blocks
-    size = 0
-    data = b"abc"
-    dirty = []
-    clean = [BlockAccess.from_block(data, size)]
-    size += len(data)
-    for data in [b"def", b"ghi"]:
-        access = BlockAccess.from_block(data, size)
-        sync_transactions.local_storage.set_dirty_block(access.id, data)
-        size += len(data)
-        dirty.append(access)
-    manifest = placeholder.evolve(blocks=clean, dirty_blocks=dirty, size=size)
-
-    blocks, old_blocks, new_blocks, missing = sync_transactions._reshape_blocks(manifest)
-    assert missing == clean
-    assert old_blocks == dirty
-    assert len(new_blocks) == 1
-    (access, data), = new_blocks
-    assert data == b"\x00\x00\x00defghi"
-    assert blocks == [access]
-
-
-@pytest.mark.trio
-async def test_file_reshape(sync_transactions):
-    # Prepare the backend
-    workspace_id = sync_transactions.remote_loader.workspace_id
-    device_id = sync_transactions.local_storage.device_id
-    manifest = await sync_transactions.get_minimal_remote_manifest(workspace_id)
-    await sync_transactions.remote_loader.create_realm(workspace_id)
-    await sync_transactions.remote_loader.upload_manifest(workspace_id, manifest)
-
-    # No block
-    entry_id = EntryID()
-    placeholder = LocalFileManifest.make_placeholder(EntryID(), device_id, entry_id)
-    manifest = placeholder.evolve()
-    async with sync_transactions.local_storage.lock_entry_id(entry_id):
-        sync_transactions.local_storage.set_manifest(entry_id, manifest)
-
-    await sync_transactions.file_reshape(entry_id)
-
-    # One block
-    entry_id = EntryID()
-    access = BlockAccess.from_block(b"abc", 0)
-    manifest = placeholder.evolve(blocks=[access], dirty_blocks=[], size=3)
-    async with sync_transactions.local_storage.lock_entry_id(entry_id):
-        sync_transactions.local_storage.set_manifest(entry_id, manifest)
-
-    await sync_transactions.file_reshape(entry_id)
-
-    # One dirty block
-    entry_id = EntryID()
-    access = BlockAccess.from_block(b"abc", 0)
-    manifest = placeholder.evolve(blocks=[], dirty_blocks=[access], size=3)
-    async with sync_transactions.local_storage.lock_entry_id(entry_id):
-        sync_transactions.local_storage.set_manifest(entry_id, manifest)
-
-    await sync_transactions.file_reshape(entry_id)
-    new_manifest = sync_transactions.local_storage.get_manifest(entry_id)
-    assert new_manifest.blocks == (access,)
-    assert new_manifest.dirty_blocks == ()
-
-    # Several dirty blocks
-    entry_id = EntryID()
-    size = 0
-    dirty = []
-    for data in [b"abc", b"def", b"ghi"]:
-        access = BlockAccess.from_block(data, size)
-        sync_transactions.local_storage.set_dirty_block(access.id, data)
-        size += len(data)
-        dirty.append(access)
-    manifest = placeholder.evolve(blocks=[], dirty_blocks=dirty, size=size)
-    async with sync_transactions.local_storage.lock_entry_id(entry_id):
-        sync_transactions.local_storage.set_manifest(entry_id, manifest)
-
-    await sync_transactions.file_reshape(entry_id)
-    new_manifest = sync_transactions.local_storage.get_manifest(entry_id)
-    assert new_manifest.dirty_blocks == ()
-    assert len(new_manifest.blocks) == 1
-    access, = new_manifest.blocks
-    assert sync_transactions.local_storage.get_block(access.id) == b"abcdefghi"
-    for access in dirty:
-        with pytest.raises(FSLocalMissError):
-            sync_transactions.local_storage.get_block(access.id)
-
-    # One missing block - several dirty blocks
-    entry_id = EntryID()
-    size = 0
-    data = b"abc"
-    dirty = []
-    clean = [BlockAccess.from_block(data, size)]
-    await sync_transactions.remote_loader.upload_block(clean[0], data)
-    sync_transactions.local_storage.clear_block(clean[0].id)
-    size += len(data)
-    for data in [b"def", b"ghi"]:
-        access = BlockAccess.from_block(data, size)
-        sync_transactions.local_storage.set_dirty_block(access.id, data)
-        size += len(data)
-        dirty.append(access)
-    manifest = placeholder.evolve(blocks=clean, dirty_blocks=dirty, size=size)
-    async with sync_transactions.local_storage.lock_entry_id(entry_id):
-        sync_transactions.local_storage.set_manifest(entry_id, manifest)
-
-    await sync_transactions.file_reshape(entry_id)
-    new_manifest = sync_transactions.local_storage.get_manifest(entry_id)
-    assert new_manifest.dirty_blocks == ()
-    assert len(new_manifest.blocks) == 1
-    access, = new_manifest.blocks
-    assert sync_transactions.local_storage.get_block(access.id) == b"abcdefghi"
-    for access in dirty:
-        with pytest.raises(FSLocalMissError):
-            sync_transactions.local_storage.get_block(access.id)
-
-
-@pytest.mark.trio
 async def test_get_minimal_remote_manifest(
     sync_transactions, entry_transactions, file_transactions
 ):
@@ -437,8 +264,10 @@ async def test_get_minimal_remote_manifest(
     # File manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
     local = sync_transactions.local_storage.get_manifest(a_id)
-    assert minimal == local.to_remote().evolve(version=1, blocks=[], updated=local.created, size=0)
-    await sync_transactions.file_reshape(a_id)
+    assert minimal == local.evolve(blocks=(), updated=local.created, size=0).to_remote().evolve(
+        version=1
+    )
+    await file_transactions.file_reshape(a_id)
     await sync_transactions.synchronization_step(a_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(a_id) is None
 
@@ -462,11 +291,11 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     # Prepare
     a_id, fd = await entry_transactions.file_create(FsPath("/a"))
     await file_transactions.fd_write(fd, b"abc", offset=0)
-    await sync_transactions.file_reshape(a_id)
+    await file_transactions.file_reshape(a_id)
     remote = await sync_transactions.synchronization_step(a_id)
     assert await sync_transactions.synchronization_step(a_id, remote) is None
     await file_transactions.fd_write(fd, b"def", offset=3)
-    await sync_transactions.file_reshape(a_id)
+    await file_transactions.file_reshape(a_id)
     changed_remote = remote.evolve(version=2, blocks=[], size=0, author="b@b")
 
     # Try a synchronization
@@ -487,14 +316,14 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     assert await file_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
 
     # Finish synchronization
-    await sync_transactions.file_reshape(a2_id)
+    await file_transactions.file_reshape(a2_id)
     assert await sync_transactions.synchronization_step(a_id, changed_remote) is None
     remote2 = await sync_transactions.synchronization_step(a2_id)
     assert await sync_transactions.synchronization_step(a2_id, remote2) is None
 
     # Create a new conflict then remove a
     await file_transactions.fd_write(fd, b"abc", 0)
-    await sync_transactions.file_reshape(a_id)
+    await file_transactions.file_reshape(a_id)
     changed_remote = changed_remote.evolve(version=3)
     await entry_transactions.file_delete(FsPath("/a"))
 

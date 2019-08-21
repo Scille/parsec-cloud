@@ -10,6 +10,7 @@ from parsec.core.types import (
     LocalFolderManifest,
     LocalFileManifest,
     EntryID,
+    Chunk,
 )
 
 
@@ -41,7 +42,7 @@ async def test_lock_required(tmpdir, alice):
         assert str(exc.value) == msg
 
         with pytest.raises(RuntimeError) as exc:
-            als.ensure_manifest_persistant(entry_id)
+            als.ensure_manifest_persistent(entry_id)
         assert str(exc.value) == msg
 
         with pytest.raises(RuntimeError) as exc:
@@ -107,7 +108,7 @@ async def test_cache_set_get(tmpdir, alice):
                     als3.get_manifest(entry_id)
 
             # 4) Flush data
-            als.ensure_manifest_persistant(entry_id)
+            als.ensure_manifest_persistent(entry_id)
             assert als.get_manifest(entry_id) == manifest
             with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als4:
                 assert als4.get_manifest(entry_id) == manifest
@@ -149,7 +150,23 @@ async def test_clear_cache(tmpdir, alice):
 @pytest.mark.trio
 async def test_serialize_types(tmpdir, alice, type):
     entry_id, manifest = create_entry(alice, type)
+    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+        async with als.lock_entry_id(entry_id):
+            als.set_manifest(entry_id, manifest)
 
+    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
+        assert als2.get_manifest(entry_id) == manifest
+
+
+@pytest.mark.trio
+async def test_serialize_non_empty_local_file_manifest(tmpdir, alice):
+    entry_id, manifest = create_entry(alice, LocalFileManifest)
+    chunk1 = Chunk.new_chunk(0, 7).evolve_as_block(b"0123456")
+    chunk2 = Chunk.new_chunk(7, 8)
+    chunk3 = Chunk.new_chunk(8, 10)
+    blocks = (chunk1, chunk2), (chunk3,)
+    manifest = manifest.evolve_and_mark_updated(blocksize=8, size=10, blocks=blocks)
+    manifest.assert_integrity()
     with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
             als.set_manifest(entry_id, manifest)

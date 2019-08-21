@@ -78,7 +78,7 @@ def main():
         )
 
         with keep_running_cmd(
-            f"{PARSEC_PROFILE_CLI} core run"
+            f"{PARSEC_PROFILE_CLI} core run -l INFO"
             f" --device={DEVICE} --password={PASSWORD} --mountpoint={mountdir} --config-dir={confdir}"
         ):
 
@@ -91,14 +91,14 @@ def main():
             else:
                 RuntimeError("Parsec failed to mount workspace")
 
-            # Create 10mo file
+            # Create 100 MB file
             file = workdir / "sample"
-            file.write_bytes(bytearray(10 * 2 ** 20))
+            file.write_bytes(bytearray(100 * 1024 * 1024))
 
             try:
                 # Copy it into the workspace
                 print("********** starting bench ***********")
-                run(f"time cp {file} {mountdir}/w1/sample", shell=True)
+                run(f"time pv {file} > {mountdir}/w1/sample", shell=True)
                 print("********** bench done ***********")
             finally:
                 file.unlink()
