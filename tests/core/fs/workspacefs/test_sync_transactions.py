@@ -310,10 +310,23 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     await entry_transactions.file_create(FsPath("/a (conflicting with b@b)"), open=False)
 
     # Solve conflict
-    await sync_transactions.file_conflict(a_id, local, remote)
+    with sync_transactions.event_bus.listen() as spy:
+        await sync_transactions.file_conflict(a_id, local, remote)
     assert await file_transactions.fd_read(fd, size=-1, offset=0) == b""
     a2_id, fd2 = await entry_transactions.file_open(FsPath("/a (conflicting with b@b - 2)"))
     assert await file_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
+    spy.assert_events_exactly_occured(
+        [
+            ("fs.entry.updated", {"workspace_id": sync_transactions.workspace_id, "id": a2_id}),
+            (
+                "fs.entry.updated",
+                {
+                    "workspace_id": sync_transactions.workspace_id,
+                    "id": sync_transactions.workspace_id,
+                },
+            ),
+        ]
+    )
 
     # Finish synchronization
     await file_transactions.file_reshape(a2_id)
@@ -331,7 +344,9 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     with pytest.raises(FSFileConflictError) as ctx:
         await sync_transactions.synchronization_step(a_id, changed_remote)
     local, remote = ctx.value.args
-    await sync_transactions.file_conflict(a_id, local, remote)
+    with sync_transactions.event_bus.listen() as spy:
+        await sync_transactions.file_conflict(a_id, local, remote)
+    spy.assert_events_exactly_occured([])
 
     # Close fds
     await file_transactions.fd_close(fd)

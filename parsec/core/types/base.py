@@ -52,9 +52,11 @@ class EntryID(UUID):
     def __init__(self, init=None):
         init = uuid4() if init is None else init
         if isinstance(init, UUID):
-            super().__init__(init.hex)
+            super().__init__(bytes=init.bytes)
+        elif isinstance(init, bytes):
+            super().__init__(bytes=init)
         else:
-            super().__init__(init)
+            super().__init__(hex=init)
 
 
 EntryIDField = fields.uuid_based_field_factory(EntryID)

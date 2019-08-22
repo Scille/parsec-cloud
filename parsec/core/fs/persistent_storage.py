@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from time import time
+from typing import Set, Dict, Tuple
 from pathlib import Path
 from contextlib import contextmanager
 from sqlite3 import Connection, connect as sqlite_connect
@@ -118,22 +119,33 @@ class PersistentStorage:
     def create_db(self):
         with self.open_dirty_cursor() as dirty_cursor, self.open_clean_cursor() as clean_cursor:
 
-            for cursor in (dirty_cursor, clean_cursor):
+            # Manifest tables
+            dirty_cursor.execute(
+                """CREATE TABLE IF NOT EXISTS manifests
+                    (
+                     manifest_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                     base_version INTEGER NOT NULL,
+                     remote_version INTEGER NOT NULL,
+                     need_sync INTEGER NOT NULL,  -- Boolean
+                     blob BLOB NOT NULL);"""
+            )
 
-                # Manifest tables
-                cursor.execute(
-                    """CREATE TABLE IF NOT EXISTS manifests
-                        (manifest_id UUID PRIMARY KEY NOT NULL,
-                         blob BYTEA NOT NULL);"""
-                )
+            # Singleton storing the checkpoint
+            dirty_cursor.execute(
+                """CREATE TABLE IF NOT EXISTS realm_checkpoint
+                    (_id INTEGER PRIMARY KEY NOT NULL,
+                     checkpoint INTEGER NOT NULL);"""
+            )
+
+            for cursor in (dirty_cursor, clean_cursor):
 
                 # Chunks tables
                 cursor.execute(
                     """CREATE TABLE IF NOT EXISTS chunks
-                        (chunk_id UUID PRIMARY KEY NOT NULL,
-                         size INT NOT NULL,
-                         offline BOOLEAN NOT NULL,
-                         accessed_on TIMESTAMPTZ,
+                        (chunk_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                         size INTEGER NOT NULL,
+                         offline INTEGER NOT NULL,  -- Boolean
+                         accessed_on INTEGER, -- Timestamp
                          data BLOB NOT NULL
                     );"""
                 )
@@ -154,10 +166,46 @@ class PersistentStorage:
 
     # Manifest operations
 
+    def get_realm_checkpoint(self) -> int:
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute("SELECT checkpoint FROM realm_checkpoint WHERE _id = 0")
+            rep = cursor.fetchone()
+            return rep[0] if rep else 0
+
+    def update_realm_checkpoint(
+        self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
+    ) -> None:
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute("BEGIN")
+            cursor.executemany(
+                "UPDATE manifests SET remote_version = ? WHERE manifest_id = ?",
+                ((version, entry_id.bytes) for entry_id, version in changed_vlobs.items()),
+            )
+            cursor.execute(
+                """INSERT OR REPLACE INTO realm_checkpoint(_id, checkpoint)
+                VALUES (0, ?)""",
+                (new_checkpoint,),
+            )
+            cursor.execute("END")
+
+    def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
+        with self.open_dirty_cursor() as cursor:
+            cursor.execute(
+                "SELECT manifest_id, need_sync FROM manifests WHERE need_sync = 1 OR base_version != remote_version"
+            )
+            local_changes = set()
+            remote_changes = set()
+            for manifest_id, need_sync in cursor.fetchall():
+                if need_sync:
+                    local_changes.add(EntryID(manifest_id))
+                else:
+                    remote_changes.add(EntryID(manifest_id))
+            return local_changes, remote_changes
+
     def get_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(entry_id),)
+                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (entry_id.bytes,)
             )
             manifest_row = cursor.fetchone()
         if not manifest_row:
@@ -165,20 +213,26 @@ class PersistentStorage:
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(self.local_symkey, blob)
 
-    def set_manifest(self, entry_id: EntryID, raw: bytes):
+    def set_manifest(self, entry_id: EntryID, base_version: int, need_sync: bool, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
 
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
-                """INSERT OR REPLACE INTO manifests (manifest_id, blob)
-                VALUES (?, ?)""",
-                (str(entry_id), ciphered),
+                """INSERT OR REPLACE INTO manifests (manifest_id, blob, need_sync, base_version, remote_version)
+                VALUES (
+                    ?, ?, ?, ?,
+                    max(
+                        ?,
+                        IFNULL((SELECT remote_version FROM manifests WHERE manifest_id=?), 0)
+                    )
+                )""",
+                (entry_id.bytes, ciphered, need_sync, base_version, base_version, entry_id.bytes),
             )
 
     def clear_manifest(self, entry_id: EntryID):
         with self.open_dirty_cursor() as cursor:
-            cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(entry_id),))
+            cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted:
@@ -188,7 +242,7 @@ class PersistentStorage:
 
     def _is_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
-            cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (str(chunk_id),))
+            cursor.execute("SELECT chunk_id FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             manifest_row = cursor.fetchone()
         return bool(manifest_row)
 
@@ -199,14 +253,14 @@ class PersistentStorage:
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
                 """,
-                (time(), str(chunk_id)),
+                (time(), chunk_id.bytes),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             if not changes:
                 raise FSLocalMissError(chunk_id)
 
-            cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (str(chunk_id),))
+            cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (chunk_id.bytes,))
             ciphered, = cursor.fetchone()
             cursor.execute("END")
 
@@ -222,13 +276,13 @@ class PersistentStorage:
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
-                (str(chunk_id), len(ciphered), False, time(), ciphered),
+                (chunk_id.bytes, len(ciphered), False, time(), ciphered),
             )
 
     def _clear_chunk(self, conn: Connection, chunk_id: ChunkID):
         with self._open_cursor(conn) as cursor:
             cursor.execute("BEGIN")
-            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (str(chunk_id),))
+            cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
             cursor.execute("END")

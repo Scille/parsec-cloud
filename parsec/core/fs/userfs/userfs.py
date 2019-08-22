@@ -412,8 +412,13 @@ class UserFS:
                 if new_entry.role is not None:
                     # New sharing
                     self.event_bus.send("sharing.updated", new_entry=new_entry, previous_entry=None)
-            elif old_entry.role != new_entry.role:
+            else:
                 # Sharing role has changed
+                # Note it's possible to have `old_entry.role == new_entry.role`
+                # (e.g. if our role went A -> B then B -> A while we were offline)
+                # We should notify this anyway given it means some events could not
+                # have been delivered to us (typically if we got revoked for a
+                # short period of time while a `realm.vlobs_updated` event occured).
                 self.event_bus.send(
                     "sharing.updated", new_entry=new_entry, previous_entry=old_entry
                 )
@@ -797,10 +802,6 @@ class UserFS:
                 workspace_entry = merge_workspace_entry(
                     None, workspace_entry, already_existing_entry
                 )
-
-            if already_existing_entry == workspace_entry:
-                # Cheap idempotent check
-                return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             self.set_user_manifest(user_manifest)

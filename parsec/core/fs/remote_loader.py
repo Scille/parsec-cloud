@@ -40,7 +40,8 @@ from parsec.core.fs.exceptions import (
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
     FSBadEncryptionRevision,
-    FSWorkspaceNoAccess,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
 )
 
 
@@ -72,10 +73,10 @@ class RemoteLoader:
 
         except BackendCmdsNotAllowed as exc:
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoAccess(f"Not allowed to access this realm") from exc
+            raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access") from exc
 
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve realm roles: {exc}") from exc
+            raise FSError(f"Cannot retrieve workspace roles: {exc}") from exc
 
         try:
             # Must read unverified certificates to access metadata
@@ -174,6 +175,7 @@ class RemoteLoader:
             FSRemoteBlockNotFound
             FSBackendOfflineError
             FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
         """
         # Download
         try:
@@ -182,6 +184,10 @@ class RemoteLoader:
         # Block not found
         except BackendCmdsNotFound as exc:
             raise FSRemoteBlockNotFound(access) from exc
+
+        except BackendCmdsNotAllowed as exc:
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoReadAccess("Cannot load block: no read access") from exc
 
         # Backend not available
         except BackendNotAvailable as exc:
@@ -215,6 +221,7 @@ class RemoteLoader:
             FSError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
+            FSWorkspaceNoAccess
         """
         # Encryption
         try:
@@ -233,6 +240,10 @@ class RemoteLoader:
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage is updated
             pass
+
+        except BackendCmdsNotAllowed as exc:
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access") from exc
 
         # Backend is not available
         except BackendNotAvailable as exc:
@@ -262,6 +273,7 @@ class RemoteLoader:
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
             FSBadEncryptionRevision
+            FSWorkspaceNoAccess
         """
         # Download the vlob
         workspace_entry = self.get_workspace_entry()
@@ -273,6 +285,10 @@ class RemoteLoader:
         # Vlob is not found
         except BackendCmdsNotFound as exc:
             raise FSRemoteManifestNotFound(entry_id) from exc
+
+        except BackendCmdsNotAllowed as exc:
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access") from exc
 
         # Backend is not available
         except BackendNotAvailable as exc:
@@ -457,6 +473,7 @@ class RemoteLoader:
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSBadEncryptionRevision
+            FSWorkspaceNoAccess
         """
 
         # Vlob updload
@@ -468,6 +485,10 @@ class RemoteLoader:
         # Vlob alread exists
         except BackendCmdsAlreadyExists as exc:
             raise FSRemoteSyncError(entry_id) from exc
+
+        except BackendCmdsNotAllowed as exc:
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access") from exc
 
         # Backend not available
         except BackendNotAvailable as exc:
@@ -507,6 +528,8 @@ class RemoteLoader:
             FSRemoteSyncError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
+            FSBadEncryptionRevision
+            FSWorkspaceNoAccess
         """
         # Vlob upload
         try:
@@ -517,6 +540,10 @@ class RemoteLoader:
         # Vlob not found
         except BackendCmdsNotFound as exc:
             raise FSRemoteSyncError(entry_id) from exc
+
+        except BackendCmdsNotAllowed as exc:
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access") from exc
 
         # Workspace in maintenance
         except BackendCmdsInMaintenance as exc:

@@ -59,6 +59,14 @@ class FSWorkspaceNoAccess(FSError):
     pass
 
 
+class FSWorkspaceNoReadAccess(FSWorkspaceNoAccess):
+    pass
+
+
+class FSWorkspaceNoWriteAccess(FSWorkspaceNoAccess):
+    pass
+
+
 class FSWorkspaceTimestampedTooEarly(FSError):
     pass
 

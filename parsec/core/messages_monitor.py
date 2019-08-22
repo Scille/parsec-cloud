@@ -9,10 +9,17 @@ from parsec.core.fs import FSError, FSBackendOfflineError
 logger = get_logger()
 
 
+async def freeze_messages_monitor_mockpoint():
+    """
+    Noop function that could be mocked during tests to be able to freeze the
+    monitor coroutine running in background
+    """
+    pass
+
+
 async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     msg_arrived = trio.Event()
     backend_online_event = trio.Event()
-    backend_online_event.set()
     process_message_cancel_scope = None
 
     def _on_msg_arrived(event, index=None):
@@ -26,6 +33,16 @@ async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_I
         if process_message_cancel_scope:
             process_message_cancel_scope.cancel()
 
+    async def _process_last_messages():
+        try:
+            await user_fs.process_last_messages()
+
+        except FSBackendOfflineError:
+            raise
+
+        except FSError:
+            logger.exception("Invalid message from backend")
+
     with event_bus.connect_in_context(
         ("backend.message.received", _on_msg_arrived),
         ("backend.message.polling_needed", _on_msg_arrived),
@@ -35,29 +52,21 @@ async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_I
 
         task_status.started()
         while True:
-            try:
+            await backend_online_event.wait()
 
+            try:
                 with trio.CancelScope() as process_message_cancel_scope:
                     event_bus.send("message_monitor.reconnection_message_processing.started")
-                    await user_fs.process_last_messages()
+                    await _process_last_messages()
                     event_bus.send("message_monitor.reconnection_message_processing.done")
 
                     while True:
                         await msg_arrived.wait()
                         msg_arrived.clear()
-                        try:
-                            await user_fs.process_last_messages()
-
-                        except FSBackendOfflineError:
-                            raise
-
-                        except FSError:
-                            logger.exception("Invalid message from backend")
+                        await freeze_messages_monitor_mockpoint()
+                        await _process_last_messages()
 
             except FSBackendOfflineError:
-                pass
-
-            backend_online_event.clear()
-            process_message_cancel_scope = None
-            msg_arrived.clear()
-            await backend_online_event.wait()
+                backend_online_event.clear()
+                process_message_cancel_scope = None
+                msg_arrived.clear()

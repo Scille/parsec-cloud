@@ -33,10 +33,10 @@ def merge_workspace_entry(
         encrypted_on = diverged.encrypted_on
         key = diverged.key
 
-    # Keep last role
+    # Keep most recent cache info on role
     if target.role == diverged.role:
         role = target.role
-        role_cached_on = min(target.role_cached_on, diverged.role_cached_on)
+        role_cached_on = max(target.role_cached_on, diverged.role_cached_on)
 
     elif target.role_cached_on > diverged.role_cached_on:
         role = target.role

@@ -52,7 +52,7 @@ def test_persistent_storage_cache_size(persistent_storage):
 
 
 def test_persistent_storage_set_get_clear_manifest(persistent_storage):
-    persistent_storage.set_manifest(ENTRY_ID, b"data")
+    persistent_storage.set_manifest(ENTRY_ID, 1, False, b"data")
 
     data = persistent_storage.get_manifest(ENTRY_ID)
     assert data == b"data"
@@ -87,7 +87,7 @@ def test_persistent_storage_set_get_clear_chunk(persistent_storage, dtype):
 
 
 def test_persistent_storage_on_disk(tmpdir, persistent_storage):
-    persistent_storage.set_manifest(ENTRY_ID, b"vlob_data")
+    persistent_storage.set_manifest(ENTRY_ID, 1, True, b"vlob_data")
     persistent_storage.set_clean_block(BLOCK_ID, b"block_data")
     persistent_storage.close()
 
@@ -171,6 +171,56 @@ def test_local_automatic_run_garbage_collector(persistent_storage):
 
     data_c = persistent_storage.get_clean_block(block_id_c)
     assert data_c == b"c" * 5
+
+
+def test_persistent_storage_get_need_sync_and_checkpoint_lazy_defined(persistent_storage):
+    need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
+    assert need_sync_local == set()
+    assert need_sync_remote == set()
+
+    checkpoint = persistent_storage.get_realm_checkpoint()
+    assert checkpoint == 0
+
+
+def test_persistent_storage_local_need_sync(persistent_storage):
+    e1 = EntryID("00000000000000000000000000000001")
+    e2 = EntryID("00000000000000000000000000000002")
+    e3 = EntryID("00000000000000000000000000000003")
+    e4 = EntryID("00000000000000000000000000000004")
+
+    persistent_storage.set_manifest(e1, 1, True, b"dummy")
+    persistent_storage.set_manifest(e2, 1, True, b"dummy")
+    persistent_storage.set_manifest(e3, 1, False, b"dummy")
+    persistent_storage.set_manifest(e4, 1, False, b"dummy")
+
+    persistent_storage.set_manifest(e2, 1, False, b"dummy")
+    persistent_storage.set_manifest(e3, 1, True, b"dummy")
+
+    need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
+    assert need_sync_local == {e1, e3}
+    assert need_sync_remote == set()
+
+
+def test_persistent_storage_remote_need_sync(persistent_storage):
+    e1 = EntryID("00000000000000000000000000000001")
+    e2 = EntryID("00000000000000000000000000000002")
+    e3 = EntryID("00000000000000000000000000000003")
+    e4 = EntryID("00000000000000000000000000000004")
+
+    persistent_storage.set_manifest(e1, 1, False, b"dummy")
+    persistent_storage.set_manifest(e2, 1, False, b"dummy")
+    persistent_storage.set_manifest(e3, 1, False, b"dummy")
+
+    persistent_storage.update_realm_checkpoint(41, {e1: 1, e2: 2, e3: 2, e4: 2})
+    persistent_storage.set_manifest(e2, 2, False, b"dummy")
+    persistent_storage.update_realm_checkpoint(42, {e2: 2})
+
+    need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
+    assert need_sync_local == set()
+    assert need_sync_remote == {e3}
+
+    checkpoint = persistent_storage.get_realm_checkpoint()
+    assert checkpoint == 42
 
 
 @pytest.mark.slow

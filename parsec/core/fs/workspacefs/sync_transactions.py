@@ -322,3 +322,6 @@ class SyncTransactions:
                 self.local_storage.set_manifest(new_entry_id, new_manifest, check_lock_status=False)
                 self.local_storage.set_manifest(parent_id, new_parent_manifest)
                 self.local_storage.set_manifest(entry_id, other_manifest)
+
+                self._send_event("fs.entry.updated", id=new_entry_id)
+                self._send_event("fs.entry.updated", id=parent_id)
