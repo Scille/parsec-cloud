@@ -90,7 +90,7 @@ class FileTransactions:
 
     def _read_chunk(self, chunk: Chunk) -> bytes:
         data = self.local_storage.get_chunk(chunk.id)
-        return data[chunk.start - chunk.reference : chunk.stop - chunk.reference]
+        return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)

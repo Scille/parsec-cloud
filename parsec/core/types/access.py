@@ -45,7 +45,8 @@ class BlockAccess:
     def to_chunk(self) -> "Chunk":
         return Chunk(
             id=ChunkID(self.id),
-            reference=self.offset,
+            raw_offset=self.offset,
+            raw_size=self.size,
             start=self.offset,
             stop=self.offset + self.size,
             access=self,
@@ -77,22 +78,24 @@ class Chunk:
     """Represents a chunk of a data in file manifest.
 
     The raw data is identified by its `id` attribute and is aligned using the
-    `reference` attribute with respect to the file addressing.
+    `raw_offset` attribute with respect to the file addressing. The raw data
+    size is stored as `raw_size`.
 
     The `start` and `stop` attributes then describes the span of the actual data
     still with respect to the file addressing.
 
     This means the following rule applies:
-        reference <= start < stop <= reference + len(raw_data)
+        raw_offset <= start < stop <= raw_start + raw_size
 
     Access is an optional block access that can be used to produce a remote manifest
     when the chunk corresponds to an actual block within the context of this manifest.
     """
 
     id: ChunkID
-    reference: int
     start: int
     stop: int
+    raw_offset: int
+    raw_size: int
     access: Optional[BlockAccess] = None
 
     # Ordering
@@ -113,14 +116,27 @@ class Chunk:
 
     @property
     def is_block(self):
-        # No access
+        # Requires an access
         if self.access is None:
             return False
+        # Pseudo block
+        if not self.is_pseudo_block:
+            return False
+        # Offset inconsistent
+        if self.raw_offset != self.access.offset:
+            return False
+        # Size inconsistent
+        if self.raw_size != self.access.size:
+            return False
+        return True
+
+    @property
+    def is_pseudo_block(self):
         # Not left aligned
-        if not self.reference == self.start == self.access.offset:
+        if self.start != self.raw_offset:
             return False
         # Not right aligned
-        if not self.stop == self.access.offset + self.access.size:
+        if self.stop != self.raw_offset + self.raw_size:
             return False
         return True
 
@@ -128,7 +144,8 @@ class Chunk:
 
     @classmethod
     def new_chunk(cls, start: int, stop: int) -> "Chunk":
-        return cls(ChunkID(), start, start, stop)
+        assert start < stop
+        return cls(ChunkID(), start, stop, start, stop - start)
 
     # Evolve
 
@@ -141,7 +158,7 @@ class Chunk:
             return self
 
         # Check alignement
-        if self.reference != self.start:
+        if self.raw_offset != self.start:
             raise TypeError("This chunk is not aligned")
 
         # Craft access
@@ -161,9 +178,10 @@ class Chunk:
 
 class ChunkSchema(UnknownCheckedSchema):
     id = ChunkIDField(required=True)
-    reference = fields.Integer(required=True, validate=validate.Range(min=0))
     start = fields.Integer(required=True, validate=validate.Range(min=0))
     stop = fields.Integer(required=True, validate=validate.Range(min=1))
+    raw_offset = fields.Integer(required=True, validate=validate.Range(min=0))
+    raw_size = fields.Integer(required=True, validate=validate.Range(min=1))
     access = fields.Nested(BlockAccessSchema, missing=None)
 
     @post_load
