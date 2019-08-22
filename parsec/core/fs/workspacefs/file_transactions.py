@@ -271,9 +271,10 @@ class FileTransactions:
                 missing += extra_missing
                 continue
 
-            # Write data
+            # Write data if necessary
             new_chunk = destination.evolve_as_block(data)
-            self._write_chunk(new_chunk, data)
+            if source != (destination,):
+                self._write_chunk(new_chunk, data)
 
             # Update structures
             removed_ids |= cleanup

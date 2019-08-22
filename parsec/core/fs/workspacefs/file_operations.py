@@ -228,6 +228,11 @@ def prepare_reshape(
         if len(chunks) == 1 and chunks[0].is_block:
             continue
 
+        # Already a pseudo-block
+        if len(chunks) == 1 and chunks[0].is_pseudo_block:
+            operations[block] = (chunks, chunks[0], set())
+            continue
+
         # Write new block
         start, stop = chunks[0].start, chunks[-1].stop
         new_chunk = Chunk.new_chunk(start, stop)
