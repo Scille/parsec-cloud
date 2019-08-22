@@ -435,15 +435,19 @@ class EntryTransactions(FileTransactions):
             # Return the entry id of the open file and the file descriptor
             return manifest.entry_id, self.local_storage.create_file_descriptor(manifest.entry_id)
 
-    async def file_resize(self, path: FsPath) -> EntryID:
+    async def file_resize(self, path: FsPath, length: int) -> EntryID:
         # Check write rights
         self._check_write_rights(path)
 
         # Lock manifest
         async with self._lock_manifest_from_path(path) as manifest:
 
+            # Not a file
+            if not is_file_manifest(manifest):
+                raise from_errno(errno.EISDIR, str(path))
+
             # Perform resize
-            self._file_resize(manifest)
+            self._manifest_resize(manifest, length)
 
             # Return entry id
             return manifest.entry_id

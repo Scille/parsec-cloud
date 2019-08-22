@@ -35,8 +35,8 @@ class ThreadFSAccess:
     def file_delete(self, path):
         return self._portal.run(self.workspace_fs.transactions.file_delete, path)
 
-    def file_resize(self, path):
-        return self._portal.run(self.workspace_fs.transactions.file_resize, path)
+    def file_resize(self, path, length):
+        return self._portal.run(self.workspace_fs.transactions.file_resize, path, length)
 
     # File descriptor transactions
 

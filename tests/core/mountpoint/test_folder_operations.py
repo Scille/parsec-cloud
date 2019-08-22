@@ -174,6 +174,17 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
             with expect_raises(expected_exc):
                 path.to_parsec().unlink()
 
+        @rule(path=Files, length=st.integers(min_value=0, max_value=16))
+        def resize(self, path, length):
+            expected_exc = None
+            try:
+                os.truncate(path.to_oracle(), length)
+            except OSError as exc:
+                expected_exc = exc
+
+            with expect_raises(expected_exc):
+                os.truncate(path.to_parsec(), length)
+
         @rule(path=NonRootFolder)
         def rmdir(self, path):
             expected_exc = None
