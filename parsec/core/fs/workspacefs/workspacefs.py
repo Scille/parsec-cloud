@@ -600,19 +600,13 @@ class WorkspaceFS:
         for name, entry_id in manifest.children.items():
             await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=True)
 
-    async def sync(
-        self, path: AnyPath, remote_changed: bool = True, recursive: bool = True
-    ) -> None:
+    async def sync(self, *, remote_changed: bool = True) -> None:
         """
         Raises:
             OSError
             FSError
         """
-        path = FsPath(path)
-        entry_id = (await self.transactions._get_manifest_from_path(path)).entry_id
-        # TODO: Maybe the path itself is not synchronized with the remote
-        # Should we do something about it?
-        await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=recursive)
+        await self.sync_by_id(self.workspace_id, remote_changed=remote_changed, recursive=True)
 
     # Debugging helper
 

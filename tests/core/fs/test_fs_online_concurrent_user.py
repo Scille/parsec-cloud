@@ -69,7 +69,7 @@ def test_fs_online_concurrent_user(
 
             self.wid = await self.user_fs1.workspace_create("w")
             workspace = self.user_fs1.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace.sync()
             await self.user_fs1.sync()
             await self.user_fs2.sync()
 
@@ -88,7 +88,7 @@ def test_fs_online_concurrent_user(
             try:
                 wid = await fs.workspace_create(name)
                 workspace = fs.get_workspace(wid)
-                await workspace.sync("/")
+                await workspace.sync()
             except AssertionError:
                 return "wrong", name
             return wid, name
@@ -113,17 +113,17 @@ def test_fs_online_concurrent_user(
             workspace2 = self.user_fs2.get_workspace(self.wid)
 
             # Sync 1
-            await workspace1.sync("/")
+            await workspace1.sync()
             await self.user_fs1.sync()
             await self.user_fs1.sync()
 
             # Sync 2
-            await workspace2.sync("/")
+            await workspace2.sync()
             await self.user_fs2.sync()
             await self.user_fs2.sync()
 
             # Sync 1
-            await workspace1.sync("/")
+            await workspace1.sync()
             await self.user_fs1.sync()
 
             fs_dump_1 = workspace1.dump()

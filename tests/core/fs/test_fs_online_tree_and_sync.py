@@ -87,7 +87,7 @@ def test_fs_online_tree_and_sync(
             await self.restart_user_fs(self.device)
             self.wid = await self.user_fs.workspace_create("w")
             workspace = self.user_fs.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace.sync()
             await self.user_fs.sync()
 
             return "/w"
@@ -106,9 +106,9 @@ def test_fs_online_tree_and_sync(
 
         @rule()
         async def sync_root(self):
-            await self.workspace.sync("/")
+            await self.workspace.sync()
             await self.user_fs.sync()
-            self.oracle_fs.sync("/")
+            self.oracle_fs.sync()
 
         # TODO: really complex to implement...
         #         @rule(path=st.one_of(Folders, Files))

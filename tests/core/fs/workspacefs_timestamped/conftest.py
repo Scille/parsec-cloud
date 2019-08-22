@@ -22,22 +22,22 @@ async def alice_workspace(alice_user_fs, running_backend):
         await workspace.mkdir("/foo")
         # No sync, we want alice_workspace.to_timestamped to fail at day0
     with freeze_time(day1):
-        await workspace.sync("/")
+        await workspace.sync()
     with freeze_time(day2):
         await workspace.touch("/foo/bar")
-        await workspace.sync("/")
+        await workspace.sync()
     with freeze_time(day3):
         await workspace.touch("/foo/baz")
-        await workspace.sync("/")
+        await workspace.sync()
 
     with freeze_time(day4):
         await workspace.mkdir("/files")
         await workspace.touch("/files/content")
         await workspace.write_bytes("/files/content", b"abcde")
-        await workspace.sync("/")
+        await workspace.sync()
     with freeze_time(day5):
         await workspace.write_bytes("/files/content", b"fghij")
-        await workspace.sync("/")
+        await workspace.sync()
 
     return workspace
 

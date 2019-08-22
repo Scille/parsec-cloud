@@ -154,7 +154,7 @@ async def test_sync_then_fast_forward_on_start(
             await alice_core.user_fs.folder_create("/bar")
 
         async with wait_for_entries_synced(alice_core, ["/", "/bar", "/foo.txt"]):
-            await alice_core.user_fs.sync("/")
+            await alice_core.user_fs.sync()
 
         async with wait_for_entries_synced(alice2_core2, ["/"]):
             await alice2_core2.login(alice2)
@@ -214,7 +214,7 @@ async def test_fast_forward_on_offline_during_sync(
                         await alice2_core2.user_fs.folder_create("/bar")
 
                     async with wait_for_entries_synced(alice2_core2, ("/", "/bar", "/foo.txt")):
-                        await alice2_core2.user_fs.sync("/")
+                        await alice2_core2.user_fs.sync()
 
             for path in ("/", "/bar", "/foo.txt"):
                 stat = await alice_core.user_fs.stat(path)

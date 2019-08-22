@@ -70,7 +70,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
             self.wid = await self.user_fs1.workspace_create("w")
             workspace = self.user_fs1.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace.sync()
             await self.user_fs1.sync()
             await self.user_fs2.sync()
 
@@ -176,8 +176,8 @@ def test_fs_online_concurrent_tree_and_sync(
             workspace1 = self.user_fs1.get_workspace(self.wid)
             workspace2 = self.user_fs2.get_workspace(self.wid)
             for _ in range(retries):
-                await workspace1.sync("/")
-                await workspace2.sync("/")
+                await workspace1.sync()
+                await workspace2.sync()
                 await self.user_fs1.sync()
                 await self.user_fs2.sync()
 

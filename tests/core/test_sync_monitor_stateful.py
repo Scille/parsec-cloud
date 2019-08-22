@@ -189,7 +189,7 @@ def test_sync_monitor_stateful(
             else:
                 data = self.get_next_data()
                 await wfs.write_bytes(file_path, data)
-            await wfs.sync("/")
+            await wfs.sync()
 
         async def _alice_update_file(self, wid, file_path, create_file=False):
             try:
@@ -216,7 +216,7 @@ def test_sync_monitor_stateful(
             await self.bob_user_fs.sync()
             for bob_workspace_entry in self.bob_user_fs.get_user_manifest().workspaces:
                 bob_w = self.bob_user_fs.get_workspace(bob_workspace_entry.id)
-                await bob_w.sync("/")
+                await bob_w.sync()
             # Alice get back possible changes from bob's sync
             await trio.sleep(300)
 

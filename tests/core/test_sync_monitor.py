@@ -65,7 +65,7 @@ async def test_sync_on_missing_workspace(
         alice2_w = alice2_user_fs.get_workspace(wid)
         await alice2_w.mkdir("/foo")
         foo_id = await alice2_w.path_id("/foo")
-        await alice2_w.sync("/")
+        await alice2_w.sync()
 
         # Client receive vlob updated events, but doesn't process
         # them given the corresponding workspace is not loaded
@@ -95,7 +95,7 @@ async def test_reconnect_with_remote_changes(
     await alice_w.mkdir("/foo")
     await alice_w.touch("/bar.txt")
     await alice_core.user_fs.sync()
-    await alice_w.sync("/")
+    await alice_w.sync()
 
     with running_backend.offline_for(alice_core.device.device_id):
         # Modify the workspace while alice is offline
@@ -109,7 +109,7 @@ async def test_reconnect_with_remote_changes(
         bar_id = await alice2_w.path_id("/bar.txt")
 
         with running_backend.backend.event_bus.listen() as spy:
-            await alice2_w.sync("/")
+            await alice2_w.sync()
             # Alice misses the vlob updated events before being back online
             await spy.wait_multiple_with_timeout(
                 [

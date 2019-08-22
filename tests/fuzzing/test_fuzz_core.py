@@ -220,7 +220,8 @@ async def _fuzzer_cmd(id, core, workspace, fs_state):
     elif x < 90:
         path = fs_state.get_path()
         try:
-            await workspace.sync(path)
+            entry_id = await workspace.path_id(path)
+            await workspace.sync_by_id(entry_id)
             fs_state.add_stat(id, "sync_ok", f"path={path}")
         except OSError as exc:
             fs_state.add_stat(id, "sync_bad", f"path={path}, raised {exc!r}")

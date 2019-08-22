@@ -40,14 +40,14 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await workspace.sync("/")
+            await workspace.sync()
     spy.assert_events_occured(
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 3))]
     )
 
     workspace2 = alice_user_fs.get_workspace(wid)
     await alice_user_fs.sync()
-    await workspace2.sync("/")
+    await workspace2.sync()
 
     workspace_entry = workspace.get_workspace_entry()
     path_info = await workspace.path_info("/")
@@ -91,7 +91,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
     fid = info["id"]
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await workspace.sync("/")
+            await workspace.sync()
 
     if type == "file":  # TODO: file and folder should generate the same events after the migration
         expected_events = [
@@ -105,7 +105,7 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
     spy.assert_events_occured(expected_events)
 
     workspace2 = alice2_user_fs.get_workspace(wid)
-    await workspace2.sync("/")
+    await workspace2.sync()
 
     info = await workspace.path_info("/foo")
     if type == "file":
@@ -154,7 +154,7 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
 
     with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
-            await workspace.sync("/")
+            await workspace.sync()
     spy.assert_events_occured(
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
     )
@@ -164,7 +164,7 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
     with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
             # TODO: `sync` on not loaded entry should load it
-            await workspace2.sync("/")
+            await workspace2.sync()
     spy.assert_events_occured(
         [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 5))]
     )
@@ -195,7 +195,7 @@ async def test_fs_recursive_sync(running_backend, alice_user_fs):
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
-            await workspace.sync("/")
+            await workspace.sync()
     sync_date = Pendulum(2000, 1, 3)
     spy.assert_events_occured(
         [
@@ -209,7 +209,7 @@ async def test_fs_recursive_sync(running_backend, alice_user_fs):
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
-            await workspace.sync("/")
+            await workspace.sync()
     assert not spy.events
 
     # 3) Make sure everything is considered synced
@@ -241,7 +241,7 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
 
     with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
-            await workspace.sync("/")
+            await workspace.sync()
 
     spy.assert_events_occured(
         [("fs.entry.synced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 4))]
@@ -249,7 +249,7 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
 
     with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
-            await workspace2.sync("/")
+            await workspace2.sync()
 
     spy.assert_events_occured(
         [
@@ -262,7 +262,7 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
 
     with workspace.event_bus.listen() as spy:
         with freeze_time("2000-01-06"):
-            await workspace.sync("/")
+            await workspace.sync()
 
     spy.assert_events_occured(
         [("fs.entry.downsynced", {"workspace_id": wid, "id": wid}, Pendulum(2000, 1, 6))]
@@ -298,8 +298,8 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alic
     with freeze_time("2000-01-03"):
         await workspace.truncate("/foo.txt", length=24)
 
-    await workspace.sync("/")
-    await workspace2.sync("/")
+    await workspace.sync()
+    await workspace2.sync()
 
     path_info = await workspace2.path_info("/foo.txt")
     assert path_info["size"] == 24
@@ -321,8 +321,8 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         await workspace.mkdir("/bar")
         barid = await workspace.path_id("/bar")
 
-    await workspace.sync("/")
-    await workspace2.sync("/")
+    await workspace.sync()
+    await workspace2.sync()
 
     # 2) Make both fs diverged
 
@@ -342,7 +342,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
-            await workspace.sync("/")
+            await workspace.sync()
     date_sync = Pendulum(2000, 1, 5)
     spy.assert_events_occured(
         [
@@ -355,7 +355,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
 
     with alice2_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-06"):
-            await workspace2.sync("/")
+            await workspace2.sync()
     date_sync = Pendulum(2000, 1, 6)
     spy.assert_events_occured(
         [
@@ -381,7 +381,7 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
 
     with alice_user_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-08"):
-            await workspace.sync("/")
+            await workspace.sync()
     date_sync = Pendulum(2000, 1, 8)
     spy.assert_events_occured(
         [
@@ -416,10 +416,10 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
     remote_loader._vlob_create = mocked_vlob_create
 
     with pytest.raises(FSBackendOfflineError):
-        await workspace.sync("/")
+        await workspace.sync()
 
     remote_loader._vlob_create = original_vlob_create
-    await workspace.sync("/")
+    await workspace.sync()
 
     info = await workspace.path_info("/")
     assert info == {
@@ -434,7 +434,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
     }
 
     workspace2 = alice2_user_fs.get_workspace(wid)
-    await workspace2.sync("/")
+    await workspace2.sync()
     info2 = await workspace2.path_info("/")
     assert info == info2
 
@@ -449,6 +449,7 @@ async def test_create_already_existing_file_vlob(running_backend, alice_user_fs,
     # First create data locally
     with freeze_time("2000-01-02"):
         await workspace.touch("/foo.txt")
+        foo_id = await workspace.path_id("/foo.txt")
 
     vanilla_backend_vlob_create = alice_user_fs._syncer._backend_vlob_create
 
@@ -459,10 +460,10 @@ async def test_create_already_existing_file_vlob(running_backend, alice_user_fs,
     alice_user_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
 
     with pytest.raises(BackendNotAvailable):
-        await workspace.sync("/foo.txt")
+        await workspace.sync_by_id(foo_id)
 
     alice_user_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
-    await workspace.sync("/foo.txt")
+    await workspace.sync_by_id(foo_id)
 
     path_info = await workspace.path_info("/foo.txt")
     assert path_info == {
@@ -476,7 +477,7 @@ async def test_create_already_existing_file_vlob(running_backend, alice_user_fs,
         "size": 0,
     }
 
-    await workspace2.sync("/w")
+    await workspace2.sync()
     path_info_2 = await workspace2.path_info("/foo.txt")
     assert path_info == path_info_2
 
@@ -491,7 +492,8 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
         workspace = alice_user_fs.get_workspace(wid)
         workspace2 = alice2_user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
-        await workspace.sync("/foo.txt")
+        foo_id = await workspace.path_id("/foo.txt")
+        await workspace.sync_by_id(foo_id)
 
     path_info = await workspace.path_info("/foo.txt")
     assert path_info["base_version"] == 1
@@ -513,13 +515,13 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
     with freeze_time("2000-01-03"):
         await workspace.write_bytes("/foo.txt", b"data")
     with pytest.raises(BackendNotAvailable):
-        await workspace.sync("/foo.txt")
+        await workspace.sync_by_id(foo_id)
 
     # Now retry the sync with a good connection, we should be able to reach
     # eventual consistency.
 
     alice_user_fs._syncer._backend_block_create = vanilla_backend_block_create
-    await workspace.sync("/foo.txt")
+    await workspace.sync_by_id(foo_id)
 
     # Finally test this so-called consistency ;-)
 
@@ -537,7 +539,7 @@ async def test_create_already_existing_block(running_backend, alice_user_fs, ali
         "size": 4,
     }
 
-    await workspace2.sync("/")
+    await workspace2.sync()
     data2 = await workspace2.read_bytes("/foo.txt")
     assert data2 == b"data"
 
@@ -551,12 +553,13 @@ async def test_sync_data_before_workspace(running_backend, alice_user_fs):
         await w.mkdir("/bar")
     with freeze_time("2000-01-04"):
         await w.touch("/bar/foo.txt")
+        foo_id = await w.path_id("/bar/foo.txt")
     with freeze_time("2000-01-05"):
         await w.write_bytes("/bar/foo.txt", b"v2")
 
     # Syncing
     with freeze_time("2000-01-06"):
-        await w.sync("/bar/foo.txt")
+        await w.sync_by_id(foo_id)
 
     # Just to be sure, do
     await alice_user_fs.sync()

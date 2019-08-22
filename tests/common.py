@@ -240,7 +240,7 @@ async def create_shared_workspace(name, creator, *shared_with):
         wid = await creator_user_fs.workspace_create(name)
         await creator_user_fs.sync()
         workspace = creator_user_fs.get_workspace(wid)
-        await workspace.sync("/")
+        await workspace.sync()
 
         for recipient_core, recipient_user_fs in shared_with_cores_and_user_fss:
             await creator_user_fs.workspace_share(

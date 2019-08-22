@@ -25,10 +25,10 @@ async def workspace(running_backend, alice_user_fs):
         w = alice_user_fs.get_workspace(wid)
         await w.touch("/foo.txt")
         # Sync workspace manifest v1 + file manifest v1
-        await w.sync("/")
+        await w.sync()
         await w.write_bytes("/foo.txt", b"v2")
         # Sync file manifest v2
-        await w.sync("/")
+        await w.sync()
 
         # Should end up with 4 vlob atoms in the workspace
 
@@ -196,8 +196,9 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     # Also cannot sync data
     with freeze_time("2000-01-03"):
         await aw.touch("/bar.txt")
+        bar_id = await aw.path_id("/bar.txt")
     with pytest.raises(FSWorkspaceInMaintenance):
-        await aw.sync("/bar.txt")
+        await aw.sync_by_id(bar_id)
 
     # Finish reencryption
     while True:
@@ -222,7 +223,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
 
     # Stilly not allowed to do the sync
     with pytest.raises(FSBadEncryptionRevision):
-        await aw.sync("/bar.txt")
+        await aw.sync_by_id(bar_id)
 
     # Update encryption_revision in user manifest and check access is ok
     await alice2_user_fs.process_last_messages()
@@ -240,4 +241,4 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     }
 
     # Finally sync is ok
-    await aw.sync("/bar.txt")
+    await aw.sync_by_id(bar_id)

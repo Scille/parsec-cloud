@@ -126,6 +126,6 @@ def test_fs_online_user(
         @rule(workspace=Workspaces)
         async def sync(self, workspace):
             await self.user_fs.sync()
-            self.oracle_fs.sync("/")
+            self.oracle_fs.sync()
 
     run_state_machine_as_test(FSOfflineUser, settings=hypothesis_settings)

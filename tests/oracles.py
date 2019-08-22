@@ -206,13 +206,10 @@ def oracle_fs_factory(tmpdir):
 
             return "ok"
 
-        def sync(self, path, *, sync_cb=lambda path, stat: None):
-            path = self._cook_path(path)
-            if path.exists():
-                self._backward_recursive_sync(path, sync_cb)
-                self._recursive_children_sync(path, sync_cb)
-                return "ok"
-            return "invalid_path"
+        def sync(self, sync_cb=lambda path, stat: None):
+            self._backward_recursive_sync(self.root, sync_cb)
+            self._recursive_children_sync(self.root, sync_cb)
+            return "ok"
 
         def _relative_path(self, path):
             path = str(path.relative_to(self.root))
@@ -291,9 +288,9 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
     class OracleFSWithSync:
         def __init__(self):
             self.fs = oracle_fs_factory()
-            self.fs.sync("/")
+            self.fs.sync()
             self.synced_fs = oracle_fs_factory()
-            self.synced_fs.sync("/")
+            self.synced_fs.sync()
 
         def create_file(self, path):
             return self.fs.create_file(path)
@@ -322,13 +319,13 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
         def flush(self, path):
             return self.fs.flush(path)
 
-        def sync(self, path):
+        def sync(self):
             synced_items = []
 
             def sync_cb(path, stat):
                 synced_items.append((path, stat["base_version"], stat["type"]))
 
-            res = self.fs.sync(path, sync_cb=sync_cb)
+            res = self.fs.sync(sync_cb=sync_cb)
             if res == "ok":
                 new_synced = self.fs.copy()
 

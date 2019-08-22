@@ -71,10 +71,10 @@ async def test_backend_switch_offline(
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("sync", ("/", "/foo"))
 @pytest.mark.parametrize("type", ("folder", "file"))
+@pytest.mark.parametrize("sync_root", (False, True))
 async def test_realm_notif_on_new_entry_sync(
-    running_backend, alice_core, alice2_user_fs, mock_clock, sync, type
+    running_backend, alice_core, alice2_user_fs, mock_clock, sync_root, type
 ):
     mock_clock.rate = 1
     wid = await create_shared_workspace("w", alice_core, alice2_user_fs)
@@ -105,9 +105,12 @@ async def test_realm_notif_on_new_entry_sync(
         ("fs.entry.downsynced", {"workspace_id": wid, "id": wid}),
     ]
     with alice_core.event_bus.listen() as spy:
-        await workspace.sync(sync)
+        if sync_root:
+            await workspace.sync()
+        else:
+            await workspace.sync_by_id(entry_id)
         mock_clock.rate = 1
-        expected = entry_events if sync == "/foo" else entry_events + root_events
+        expected = entry_events + root_events if sync_root else entry_events
         await spy.wait_multiple_with_timeout(expected, 3)
 
 
