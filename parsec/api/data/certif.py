@@ -70,3 +70,13 @@ class RealmRoleCertificateContent(BaseSignedData):
     realm_id: UUID
     user_id: UserID
     role: Optional[RealmRole]  # Set to None if role removed
+
+    @classmethod
+    def build_realm_root_certif(cls, author, timestamp, realm_id):
+        return cls(
+            author=author,
+            timestamp=timestamp,
+            realm_id=realm_id,
+            user_id=author.user_id,
+            role=RealmRole.OWNER,
+        )

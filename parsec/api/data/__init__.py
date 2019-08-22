@@ -8,6 +8,7 @@ from parsec.api.data.certif import (
     RealmRoleCertificateContent,
 )
 
+
 __api_data_version__ = (1, 0)
 
 

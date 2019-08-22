@@ -6,7 +6,8 @@ import pendulum
 import attr
 
 from parsec.types import DeviceID, UserID, OrganizationID
-from parsec.crypto import timestamps_in_the_ballpark, verify_realm_role_certificate, CryptoError
+from parsec.crypto import timestamps_in_the_ballpark
+from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.api.protocol import (
     RealmRole,
     MaintenanceType,
@@ -94,11 +95,13 @@ class BaseRealmComponent:
         msg = realm_create_serializer.req_load(msg)
 
         try:
-            data = verify_realm_role_certificate(
-                msg["role_certificate"], client_ctx.device_id, client_ctx.verify_key
+            data = RealmRoleCertificateContent.verify_and_load(
+                msg["role_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
@@ -193,11 +196,13 @@ class BaseRealmComponent:
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:
-            data = verify_realm_role_certificate(
-                msg["role_certificate"], client_ctx.device_id, client_ctx.verify_key
+            data = RealmRoleCertificateContent.verify_and_load(
+                msg["role_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",

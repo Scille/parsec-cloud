@@ -132,7 +132,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         cls,
         signed: bytes,
         author_verify_key: VerifyKey,
-        expected_author: DeviceID,
+        expected_author: Optional[DeviceID],
         expected_timestamp: Pendulum = None,
     ) -> "BaseSignedData":
         """
@@ -147,7 +147,8 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
         data = cls._deserialize(raw)
         if data.author != expected_author:
-            raise DataError(f"Invalid author: expect `{expected_author}`, got `{data.author}`")
+            repr_expected_author = expected_author or "<root key>"
+            raise DataError(f"Invalid author: expect `{repr_expected_author}`, got `{data.author}`")
         if expected_timestamp is not None and data.timestamp != expected_timestamp:
             raise DataError(
                 f"Invalid timestamp: expect `{expected_timestamp}`, got `{data.timestamp}`"

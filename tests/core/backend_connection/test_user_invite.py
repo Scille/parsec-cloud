@@ -4,12 +4,7 @@ import pytest
 import trio
 import pendulum
 
-from parsec.crypto import (
-    build_user_certificate,
-    build_device_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_user_certificate,
-)
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
@@ -28,17 +23,19 @@ async def test_user_invite_then_claim_ok(
         assert claim["token"] == token
 
         now = pendulum.now()
-        user_certificate = build_user_certificate(
-            alice.device_id,
-            alice.signing_key,
-            claim["device_id"].user_id,
-            claim["public_key"],
-            False,
-            now,
-        )
-        device_certificate = build_device_certificate(
-            alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now
-        )
+        user_certificate = UserCertificateContent(
+            author=alice.device_id,
+            timestamp=now,
+            user_id=claim["device_id"].user_id,
+            public_key=claim["public_key"],
+            is_admin=False,
+        ).dump_and_sign(alice.signing_key)
+        device_certificate = DeviceCertificateContent(
+            author=alice.device_id,
+            timestamp=now,
+            device_id=claim["device_id"],
+            verify_key=claim["verify_key"],
+        ).dump_and_sign(alice.signing_key)
         with trio.fail_after(1):
             await alice_backend_cmds.user_create(user_certificate, device_certificate)
 
@@ -51,9 +48,9 @@ async def test_user_invite_then_claim_ok(
             assert isinstance(invitation_creator_user, UnverifiedRemoteUser)
             assert trustchain == []
 
-            creator = unsecure_read_user_certificate(invitation_creator_user.user_certificate)
+            creator = UserCertificateContent.unsecure_load(invitation_creator_user.user_certificate)
 
-            creator_device = unsecure_read_device_certificate(
+            creator_device = DeviceCertificateContent.unsecure_load(
                 invitation_creator_device.device_certificate
             )
             assert creator_device.device_id.user_id == creator.user_id

@@ -5,7 +5,7 @@ import trio
 import pendulum
 
 from parsec.api.protocol import ServerHandshake
-from parsec.crypto import build_revoked_device_certificate
+from parsec.api.data import RevokedDeviceCertificateContent
 from parsec.api.transport import Transport, PingReceived, PongReceived
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -55,9 +55,9 @@ async def test_backend_bad_handshake(running_backend, mallory):
 
 @pytest.mark.trio
 async def test_revoked_device_handshake(running_backend, backend, alice, alice2):
-    revoked_device_certificate = build_revoked_device_certificate(
-        alice.device_id, alice.signing_key, alice2.device_id, pendulum.now()
-    )
+    revoked_device_certificate = RevokedDeviceCertificateContent(
+        author=alice.device_id, timestamp=pendulum.now(), device_id=alice2.device_id
+    ).dump_and_sign(alice.signing_key)
     await backend.user.revoke_device(
         alice2.organization_id, alice2.device_id, revoked_device_certificate, alice.device_id
     )

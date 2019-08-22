@@ -5,10 +5,8 @@ import pendulum
 from unittest.mock import ANY
 
 from parsec.types import UserID
-from parsec.crypto import build_user_certificate, build_device_certificate
-
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.api.protocol import organization_create_serializer, organization_bootstrap_serializer
-
 from tests.backend.test_events import ping
 from tests.fixtures import local_device_to_backend_user
 
@@ -133,23 +131,29 @@ async def test_organization_bootstrap_bad_data(
     verify_key = newalice.verify_key
 
     now = pendulum.now()
-    good_cu = build_user_certificate(None, root_signing_key, good_user_id, public_key, False, now)
-    good_cd = build_device_certificate(None, root_signing_key, good_device_id, verify_key, now)
+    good_cu = UserCertificateContent(
+        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, is_admin=False
+    ).dump_and_sign(root_signing_key)
+    good_cd = DeviceCertificateContent(
+        author=None, timestamp=now, device_id=good_device_id, verify_key=verify_key
+    ).dump_and_sign(root_signing_key)
 
     bad_now = now - pendulum.interval(seconds=1)
-    bad_now_cu = build_user_certificate(
-        None, root_signing_key, good_user_id, public_key, False, bad_now
-    )
-    bad_now_cd = build_device_certificate(
-        None, root_signing_key, good_device_id, verify_key, bad_now
-    )
-    bad_id_cu = build_user_certificate(None, root_signing_key, bad_user_id, public_key, False, now)
-    bad_key_cu = build_user_certificate(
-        None, bad_root_signing_key, good_user_id, public_key, False, now
-    )
-    bad_key_cd = build_device_certificate(
-        None, bad_root_signing_key, good_device_id, verify_key, now
-    )
+    bad_now_cu = UserCertificateContent(
+        author=None, timestamp=bad_now, user_id=good_user_id, public_key=public_key, is_admin=False
+    ).dump_and_sign(root_signing_key)
+    bad_now_cd = DeviceCertificateContent(
+        author=None, timestamp=bad_now, device_id=good_device_id, verify_key=verify_key
+    ).dump_and_sign(root_signing_key)
+    bad_id_cu = UserCertificateContent(
+        author=None, timestamp=now, user_id=bad_user_id, public_key=public_key, is_admin=False
+    ).dump_and_sign(root_signing_key)
+    bad_key_cu = UserCertificateContent(
+        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, is_admin=False
+    ).dump_and_sign(bad_root_signing_key)
+    bad_key_cd = DeviceCertificateContent(
+        author=None, timestamp=now, device_id=good_device_id, verify_key=verify_key
+    ).dump_and_sign(bad_root_signing_key)
 
     for i, (status, organization_id, *params) in enumerate(
         [

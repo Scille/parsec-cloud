@@ -81,7 +81,7 @@ async def test_bootstrap_organization_unknown_error(
         raise RuntimeError()
 
     monkeypatch.setattr(
-        "parsec.core.gui.bootstrap_organization_widget.build_user_certificate", _broken
+        "parsec.core.gui.bootstrap_organization_widget.UserCertificateContent", _broken
     )
 
     async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
 from parsec.types import DeviceID
-from parsec.crypto import build_revoked_device_certificate
+from parsec.api.data import RevokedDeviceCertificateContent
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -84,12 +84,11 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
 async def _do_revoke_device(core, device_name, button):
     try:
-        revoked_device_certificate = build_revoked_device_certificate(
-            core.device.device_id,
-            core.device.signing_key,
-            DeviceID(f"{core.device.device_id.user_id}@{device_name}"),
-            pendulum.now(),
-        )
+        revoked_device_certificate = RevokedDeviceCertificateContent(
+            author=core.device.device_id,
+            timestamp=pendulum.now(),
+            device_id=DeviceID(f"{core.device.device_id.user_id}@{device_name}"),
+        ).dump_and_sign(core.device.signing_key)
         await core.user_fs.backend_cmds.device_revoke(revoked_device_certificate)
         return button
     except BackendCmdsBadResponse as exc:

@@ -5,15 +5,12 @@ from collections import OrderedDict
 import pendulum
 
 from parsec.types import DeviceID, UserID
-from parsec.crypto import (
-    CryptoError,
-    VerifyKey,
-    verify_user_certificate,
-    verify_device_certificate,
-    verify_revoked_device_certificate,
-    unsecure_read_user_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_revoked_device_certificate,
+from parsec.crypto import VerifyKey
+from parsec.api.data import (
+    DataError,
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedDeviceCertificateContent,
 )
 from parsec.core.backend_connection import (
     BackendCmdsPool,
@@ -69,9 +66,9 @@ def _verify_devices(root_verify_key, *uv_devices):
     all_devices = {}
     for uv_device in uv_devices:
         try:
-            d_certif = unsecure_read_device_certificate(uv_device.device_certificate)
+            d_certif = DeviceCertificateContent.unsecure_load(uv_device.device_certificate)
 
-        except CryptoError as exc:
+        except DataError as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(
                 f"Invalid format for device certificate: {exc}"
             ) from exc
@@ -88,11 +85,11 @@ def _verify_devices(root_verify_key, *uv_devices):
         }
         if uv_device.revoked_device_certificate:
             try:
-                r_certif = unsecure_read_revoked_device_certificate(
+                r_certif = RevokedDeviceCertificateContent.unsecure_load(
                     uv_device.revoked_device_certificate
                 )
 
-            except CryptoError as exc:
+            except DataError as exc:
                 raise RemoteDevicesManagerInvalidTrustchainError(
                     f"Invalid format for revoked device certificate: {exc}"
                 ) from exc
@@ -137,11 +134,13 @@ def _verify_devices(root_verify_key, *uv_devices):
             certifier_revoked_on = certifier.revoked_on
 
         try:
-            verify_device_certificate(
-                uv_device.device_certificate, d_certif.certified_by, certifier_verify_key
+            DeviceCertificateContent.verify_and_load(
+                uv_device.device_certificate,
+                author_verify_key=certifier_verify_key,
+                expected_author=d_certif.certified_by,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(
                 f"{sub_path}: invalid certificate: {exc}"
             ) from exc
@@ -157,11 +156,13 @@ def _verify_devices(root_verify_key, *uv_devices):
             sub_path = f"{path} <-revoke- `{d_certif.revoked_by}`"
             revoker = _recursive_verify_device(d_certif.revoked_by, sub_path)
             try:
-                verify_revoked_device_certificate(
-                    uv_device.revoked_device_certificate, d_certif.revoked_by, revoker.verify_key
+                RevokedDeviceCertificateContent.verify_and_load(
+                    uv_device.revoked_device_certificate,
+                    author_verify_key=revoker.verify_key,
+                    expected_author=d_certif.revoked_by,
                 )
 
-            except CryptoError as exc:
+            except DataError as exc:
                 raise RemoteDevicesManagerInvalidTrustchainError(
                     f"{sub_path}: invalid certificate: {exc}"
                 ) from exc
@@ -189,9 +190,9 @@ def _verify_user(root_verify_key, uv_user, verified_devices):
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
-        u_certif = unsecure_read_user_certificate(uv_user.user_certificate)
+        u_certif = UserCertificateContent.unsecure_load(uv_user.user_certificate)
 
-    except CryptoError as exc:
+    except DataError as exc:
         raise RemoteDevicesManagerInvalidTrustchainError(
             f"Invalid format for user certificate: {exc}"
         ) from exc
@@ -216,9 +217,13 @@ def _verify_user(root_verify_key, uv_user, verified_devices):
         certifier_revoked_on = certifier.revoked_on
 
     try:
-        verify_user_certificate(uv_user.user_certificate, u_certif.author, certifier_verify_key)
+        UserCertificateContent.verify_and_load(
+            uv_user.user_certificate,
+            author_verify_key=certifier_verify_key,
+            expected_author=u_certif.author,
+        )
 
-    except CryptoError as exc:
+    except DataError as exc:
         raise RemoteDevicesManagerInvalidTrustchainError(
             f"{sub_path}: invalid certificate: {exc}"
         ) from exc

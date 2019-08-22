@@ -9,7 +9,8 @@ from parsec.utils import trio_run
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey, build_device_certificate, build_user_certificate
+from parsec.crypto import SigningKey
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.config import get_default_config_dir
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 from parsec.core.local_device import generate_new_device, save_device_with_password
@@ -29,12 +30,16 @@ async def _bootstrap_organization(
         save_device_with_password(config_dir, device, password, force=force)
 
     now = pendulum.now()
-    user_certificate = build_user_certificate(
-        None, root_signing_key, device.user_id, device.public_key, device.is_admin, now
-    )
-    device_certificate = build_device_certificate(
-        None, root_signing_key, device_id, device.verify_key, now
-    )
+    user_certificate = UserCertificateContent(
+        author=None,
+        timestamp=now,
+        user_id=device.user_id,
+        public_key=device.public_key,
+        is_admin=device.is_admin,
+    ).dump_and_sign(root_signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=None, timestamp=now, device_id=device_id, verify_key=device.verify_key
+    ).dump_and_sign(root_signing_key)
 
     async with spinner(f"Sending {device_display} to server"):
         async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
