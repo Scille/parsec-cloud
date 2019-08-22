@@ -62,10 +62,10 @@ class SyncContext:
       storage to get the list of changes (entry id + version) it has missed
     """
 
-    def __init__(self, user_fs, id: EntryID):
+    def __init__(self, user_fs, id: EntryID, read_only: bool = False):
         self.user_fs = user_fs
         self.id = id
-        self.read_only = False
+        self.read_only = read_only
         self.local_changes = {}
         self.remote_changes = set()
         self.need_bootstrap = True
@@ -114,12 +114,18 @@ class SyncContext:
         # 3) Compute local and remote changes that need to be synced
         need_sync_local, need_sync_remote = self._get_local_storage().get_need_sync_entries()
         now = timestamp()
-        self.local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
+        # Ignore local changes in read only mode
+        if not self.read_only:
+            self.local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
         self.remote_changes = need_sync_remote
 
         return True
 
     def set_local_change(self, entry_id: EntryID) -> bool:
+        # Ignore local changes in read only mode
+        if self.read_only:
+            return
+
         now = timestamp()
         try:
             new_due_time = self.local_changes[entry_id].changed(now)
@@ -139,32 +145,6 @@ class SyncContext:
         self.remote_changes.add(entry_id)
         self.due_time = timestamp()
         return True
-
-    def role_updated(self, new_role):
-        if new_role is None:
-            return False
-
-        elif new_role == WorkspaceRole.READER and not self.read_only:
-            # Switch to read only, we will ignore local changes from now on
-            self.read_only = True
-            return False
-
-        elif new_role != WorkspaceRole.READER and self.read_only:
-            # Switch to read&write, previously ignored local changes should
-            # be taken into account now !
-            self.read_only = False
-            if self.local_changes:
-                local_changes_due_time = min(
-                    change_info.due_time for change_info in self.local_changes.values()
-                )
-                if self.due_time > local_changes_due_time:
-                    self.due_time = local_changes_due_time
-                    return True
-            return False
-
-        else:
-            # Last possibility: switch between two read&write roles
-            return False
 
     async def tick(self) -> float:
         if not self.bootstrapped:
@@ -202,7 +182,7 @@ class SyncContext:
                 min_due_time = now + MAINTENANCE_MIN_WAIT
                 self.remote_changes.add(entry_id)
 
-        elif self.local_changes and not self.read_only:
+        elif self.local_changes:
             entry_id = next(
                 (
                     entry_id
@@ -231,7 +211,7 @@ class SyncContext:
         # Re-compute due time
         if self.remote_changes:
             self.due_time = now
-        elif self.local_changes and not self.read_only:
+        elif self.local_changes:
             # TODO: index changes by due_time to avoid this O(n) operation
             self.due_time = min(change_info.due_time for change_info in self.local_changes.values())
         else:
@@ -245,9 +225,9 @@ class SyncContext:
 
 class WorkspaceSyncContext(SyncContext):
     def __init__(self, user_fs, id: EntryID):
-        super().__init__(user_fs, id)
         self.workspace = user_fs.get_workspace(id)
-        self.read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
+        read_only = self.workspace.get_workspace_entry().role == WorkspaceRole.READER
+        super().__init__(user_fs, id, read_only=read_only)
 
     async def _sync(self, entry_id: EntryID):
         # No recursion here: only the manifest that has changed
@@ -293,7 +273,14 @@ class SyncContextStore:
             if entry_id == self.user_fs.user_manifest_id:
                 ctx = UserManifestSyncContext(self.user_fs, entry_id)
             else:
-                ctx = WorkspaceSyncContext(self.user_fs, entry_id)
+                try:
+                    ctx = WorkspaceSyncContext(self.user_fs, entry_id)
+                except FSWorkspaceNotFoundError:
+                    # It's possible the workspace is not yet available
+                    # (this can happen when a workspace is just shared with
+                    # us, hence we receive vlob updated events before having
+                    # added the workspace entry to our user manifest)
+                    return None
             self._ctxs[entry_id] = ctx
             return ctx
 
@@ -312,32 +299,39 @@ async def _monitor_sync_online(user_fs, event_bus):
             ctx = ctxs.get(id)
         else:
             ctx = ctxs.get(workspace_id)
-        if ctx.set_local_change(id):
+        if ctx and ctx.set_local_change(id):
             early_wakeup.set()
 
     def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
-        try:
-            ctx = ctxs.get(realm_id)
-        except FSWorkspaceNotFoundError:
-            # If the workspace is not present, nothing to do
-            # (this can happen when a workspace is just shared with
-            # us, hence we receive vlob updated events before having
-            # added the workspace entry to our user manifest)
-            return
-        if ctx.set_remote_change(src_id):
+        ctx = ctxs.get(realm_id)
+        if ctx and ctx.set_remote_change(src_id):
             early_wakeup.set()
 
     def _on_sharing_updated(sender, new_entry, previous_entry):
-        if new_entry.role is None:
-            # No longer access to the workspace
-            ctxs.discard(new_entry.id)
-        else:
-            try:
-                ctx = ctxs.get(new_entry.id)
-            except FSWorkspaceNotFoundError:
-                return
-            if ctx.role_updated(new_entry.role):
+        # If role have changed we have to reset the sync context given
+        # behavior could have changed a lot (e.g. switching to/from read-only)
+        ctxs.discard(new_entry.id)
+        if new_entry.role is not None:
+            ctx = ctxs.get(new_entry.id)
+            if ctx:
                 early_wakeup.set()
+
+    async def _ctx_tick(ctx):
+        try:
+            return await ctx.tick()
+        except FSBackendOfflineError:
+            raise
+        except Exception as exc:
+            logger.error("Sync monitor has crashed", workspace_id=entry.id, exc_info=exc)
+            # Reset sync context which is now in an undefined state
+            ctxs.discard(entry.id)
+            ctx = ctxs.get(entry.id)
+            if ctx:
+                # Add small cooldown just to be sure not end up in a crazy busy error loop
+                ctx.due_time += TICK_CRASH_COOLDOWN
+                return ctx.due_time
+            else:
+                return math.inf
 
     with event_bus.connect_in_context(
         ("fs.entry.updated", _on_entry_updated),
@@ -351,15 +345,9 @@ async def _monitor_sync_online(user_fs, event_bus):
         user_manifest = user_fs.get_user_manifest()
         for entry in user_manifest.workspaces:
             if entry.role is not None:
-                try:
-                    wait_times.append(await ctxs.get(entry.id).tick())
-                except Exception as exc:
-                    logger.error("Sync monitor has crashed", workspace_id=entry.id, exc_info=exc)
-                    # Reset sync context which is now in an undefined state
-                    ctxs.discard(entry.id)
-                    ctx = ctxs.get(entry.id)
-                    # Add small cooldown just to be sure not end up in a crazy busy error loop
-                    ctx.due_time += TICK_CRASH_COOLDOWN
+                ctx = ctxs.get(entry.id)
+                if ctx:
+                    wait_times.append(await _ctx_tick(ctx))
         event_bus.send("sync_monitor.reconnection_sync.done")
 
         event_bus.send("sync_monitor.ready")
@@ -371,17 +359,7 @@ async def _monitor_sync_online(user_fs, event_bus):
             # Force a sleep to block here when time is frozen in tests
             await trio.sleep(0.001)
             for ctx in ctxs.iter():
-                try:
-                    wait_times.append(await ctx.tick())
-                except FSBackendOfflineError:
-                    raise
-                except Exception as exc:
-                    logger.error("Sync monitor has crashed", workspace_id=ctx.id, exc_info=exc)
-                    # Reset sync context which is now in an undefined state
-                    ctxs.discard(ctx.id)
-                    ctx = ctxs.get(ctx.id)
-                    # Add small cooldown just to be sure not end up in a crazy busy error loop
-                    ctx.due_time += TICK_CRASH_COOLDOWN
+                wait_times.append(await _ctx_tick(ctx))
 
 
 async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
