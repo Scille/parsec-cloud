@@ -10,14 +10,17 @@ from parsec.core.types.base import (
     EntryID,
     EntryIDField,
     EntryName,
+    EntryNameField,
     FsPath,
 )
 from parsec.core.types.access import (
     BlockAccess,
+    BlockAccessSchema,
     Chunk,
     Chunks,
     WorkspaceRole,
     WorkspaceRoleField,
+    WorkspaceEntrySchema,
     WorkspaceEntry,
 )
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
@@ -60,14 +63,17 @@ __all__ = (
     "EntryID",
     "EntryIDField",
     "EntryName",
+    "EntryNameField",
     "FileDescriptor",
     "FsPath",
     # access
     "BlockAccess",
+    "BlockAccessSchema",
     "Chunk",
     "Chunks",
     "WorkspaceRole",
     "WorkspaceRoleField",
+    "WorkspaceEntrySchema",
     "WorkspaceEntry",
     # local_device
     "LocalDevice",
