@@ -28,6 +28,7 @@ from parsec.core.types.local_manifests import (
     LocalUserManifest,
     LocalManifest,
     local_manifest_serializer,
+    DEFAULT_BLOCK_SIZE,
 )
 from parsec.core.types.remote_device import (
     UnverifiedRemoteUser,
@@ -79,6 +80,7 @@ __all__ = (
     "LocalUserManifest",
     "LocalManifest",
     "local_manifest_serializer",
+    "DEFAULT_BLOCK_SIZE",
     # remote_device
     "UnverifiedRemoteUser",
     "UnverifiedRemoteDevice",

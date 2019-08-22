@@ -19,6 +19,7 @@ from parsec.core.gui.custom_widgets import TaskbarButton
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 class CancelException(Exception):
@@ -79,15 +80,15 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
                 i = 0
                 read_size = 0
                 while True:
-                    chunk = fd_in.read(65536)
+                    chunk = fd_in.read(DEFAULT_BLOCK_SIZE)
                     if not chunk:
                         break
                     await workspace_fs.write_bytes(dst, chunk, read_size)
                     read_size += len(chunk)
                     i += 1
-                    progress_signal.emit(current_size + read_size)
+                    progress_signal.emit(current_size + read_size, False)
             current_size += src.stat().st_size + 1
-            progress_signal.emit(current_size)
+            progress_signal.emit(current_size, True)
         except trio.Cancelled as exc:
             raise JobResultError("cancelled", last_file=dst) from exc
 
@@ -110,7 +111,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     import_success = pyqtSignal(QtToTrioJob)
     import_error = pyqtSignal(QtToTrioJob)
 
-    import_progress = pyqtSignal(int)
+    import_progress = pyqtSignal(int, bool)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -350,7 +351,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             workspace_fs=self.workspace_fs,
             files=files,
             total_size=total_size,
-            progress_signal=ThreadSafeQtSignal(self, "import_progress", int),
+            progress_signal=ThreadSafeQtSignal(self, "import_progress", int, bool),
         )
 
     def cancel_import(self):
@@ -359,10 +360,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         self.import_job.cancel_and_join()
 
-    def _on_import_progress(self, progress):
+    def _on_import_progress(self, progress, file_finished):
         if not self.loading_dialog:
             return
         self.loading_dialog.set_progress(progress)
+        if file_finished:
+            self.update_timer.start(1000)
 
     def get_files(self, paths, dst_dir=None):
         files = []
