@@ -572,23 +572,38 @@ async def test_no_sharing_event_on_sync_on_unknown_workspace(
 
 
 @pytest.mark.trio
-async def test_no_sharing_event_on_sync_if_same_role(
+async def test_sharing_event_on_sync_if_same_role(
     running_backend, alice_user_fs, alice2_user_fs, bob_user_fs, alice, bob
 ):
     # Share a workspace, alice2 knows about it
-    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-02"):
+        wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+    expected_entry_v1 = WorkspaceEntry(
+        name="w (shared by bob)",
+        id=wid,
+        key=ANY,
+        encryption_revision=1,
+        encrypted_on=Pendulum(2000, 1, 2),
+        role_cached_on=Pendulum(2000, 1, 2),
+        role=WorkspaceRole.MANAGER,
+    )
 
     # Then change alice's role...
     await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.OWNER)
-    await alice_user_fs.process_last_messages()
+    with freeze_time("2000-01-03"):
+        await alice_user_fs.process_last_messages()
     await alice_user_fs.sync()
 
     # ...and give back alice the same role
     await bob_user_fs.workspace_share(wid, alice.user_id, WorkspaceRole.MANAGER)
-    await alice_user_fs.process_last_messages()
+    with freeze_time("2000-01-04"):
+        await alice_user_fs.process_last_messages()
+    expected_entry_v3 = expected_entry_v1.evolve(role_cached_on=Pendulum(2000, 1, 4))
     await alice_user_fs.sync()
 
-    # No sharing event should be triggered !
+    # A single sharing event should be triggered
     with alice2_user_fs.event_bus.listen() as spy:
         await alice2_user_fs.sync()
-    spy.assert_events_exactly_occured(["fs.entry.remote_changed"])
+    spy.assert_event_occured(
+        "sharing.updated", {"new_entry": expected_entry_v3, "previous_entry": expected_entry_v1}
+    )
