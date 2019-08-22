@@ -2,18 +2,16 @@
 
 import os
 import errno
-from typing import Tuple, Callable, Dict
+from typing import Tuple, Dict
 from async_generator import asynccontextmanager
 
 from pendulum import Pendulum
 
-from parsec.event_bus import EventBus
 from parsec.types import DeviceID
 from parsec.core.types import (
     EntryID,
     FsPath,
     WorkspaceRole,
-    LocalDevice,
     LocalManifest,
     LocalFileManifest,
     LocalFolderManifest,
@@ -21,9 +19,8 @@ from parsec.core.types import (
 )
 
 
-from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.exceptions import FSEntryNotFound, FSLocalMissError
-from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
@@ -41,33 +38,13 @@ def from_errno(errno, message=None, filename=None, filename2=None):
     return OSError(errno, message, filename, None, filename2)
 
 
-class EntryTransactions:
-    def __init__(
-        self,
-        workspace_id: EntryID,
-        get_workspace_entry: Callable,
-        device: LocalDevice,
-        local_storage: LocalStorage,
-        remote_loader: RemoteLoader,
-        event_bus: EventBus,
-    ):
-        self.workspace_id = workspace_id
-        self.get_workspace_entry = get_workspace_entry
-        self.local_author = device.device_id
-        self.local_storage = local_storage
-        self.remote_loader = remote_loader
-        self.event_bus = event_bus
+class EntryTransactions(FileTransactions):
 
     # Right management helper
 
     def _check_write_rights(self, path: FsPath):
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
             raise from_errno(errno.EACCES, str(path))
-
-    # Event helper
-
-    def _send_event(self, event, **kwargs):
-        self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
 
     # Look-up helpers
 
@@ -457,3 +434,16 @@ class EntryTransactions:
 
             # Return the entry id of the open file and the file descriptor
             return manifest.entry_id, self.local_storage.create_file_descriptor(manifest.entry_id)
+
+    async def file_resize(self, path: FsPath) -> EntryID:
+        # Check write rights
+        self._check_write_rights(path)
+
+        # Lock manifest
+        async with self._lock_manifest_from_path(path) as manifest:
+
+            # Perform resize
+            self._file_resize(manifest)
+
+            # Return entry id
+            return manifest.entry_id

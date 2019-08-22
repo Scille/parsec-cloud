@@ -3,10 +3,7 @@
 from itertools import count
 from typing import Optional, List, Dict, Iterator
 
-from parsec.event_bus import EventBus
 from parsec.types import DeviceID
-from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.types import (
     Chunk,
     EntryID,
@@ -17,6 +14,7 @@ from parsec.core.types import (
     LocalFileManifest,
 )
 
+from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.exceptions import (
     FSFileConflictError,
     FSReshapingRequiredError,
@@ -178,23 +176,7 @@ def merge_manifests(local_manifest: LocalManifest, remote_manifest: Optional[Man
     )
 
 
-class SyncTransactions:
-    def __init__(
-        self,
-        workspace_id: EntryID,
-        local_storage: LocalStorage,
-        remote_loader: RemoteLoader,
-        event_bus: EventBus,
-    ):
-        self.workspace_id = workspace_id
-        self.local_storage = local_storage
-        self.remote_loader = remote_loader
-        self.event_bus = event_bus
-
-    # Event helper
-
-    def _send_event(self, event, **kwargs):
-        self.event_bus.send(event, workspace_id=self.workspace_id, **kwargs)
+class SyncTransactions(EntryTransactions):
 
     # Public read-only helpers
 
@@ -236,9 +218,19 @@ class SyncTransactions:
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
 
-            # Sync cannot be performed
+            # Sync cannot be performed yet
             if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
-                raise FSReshapingRequiredError(entry_id)
+
+                # Try a quick reshape (without downloading any block)
+                missing = self._manifest_reshape(local_manifest)
+
+                # Downloading block is necessary for this reshape
+                if missing:
+                    raise FSReshapingRequiredError(entry_id)
+
+                # The manifest should be reshaped by now
+                local_manifest = self.local_storage.get_manifest(entry_id)
+                assert local_manifest.is_reshaped()
 
             # Merge manifests
             new_local_manifest = merge_manifests(local_manifest, remote_manifest)
@@ -272,6 +264,24 @@ class SyncTransactions:
             # Produce the new remote manifest to upload
             new_remote_manifest = new_local_manifest.to_remote()
             return new_remote_manifest.evolve(version=new_remote_manifest.version + 1)
+
+    async def file_reshape(self, entry_id: EntryID) -> None:
+
+        # Loop over attemps
+        while True:
+
+            # Fetch and lock
+            async with self.local_storage.lock_manifest(entry_id) as manifest:
+
+                # Normalize
+                missing = self._manifest_reshape(manifest)
+
+            # Done
+            if not missing:
+                return
+
+            # Load missing blocks
+            await self.remote_loader.load_blocks(missing)
 
     async def file_conflict(
         self, entry_id: EntryID, local_manifest: LocalManifest, remote_manifest: Manifest

@@ -5,6 +5,7 @@ from collections import defaultdict
 import trio
 from trio import hazmat
 from typing import Dict, Tuple, Set
+
 from pendulum import Pendulum
 from structlog import get_logger
 from async_generator import asynccontextmanager
@@ -221,14 +222,14 @@ class LocalStorage:
         self.open_fds[fd] = entry_id
         return fd
 
-    def load_file_descriptor(self, fd: FileDescriptor) -> Tuple[EntryID, LocalFileManifest]:
+    def load_file_descriptor(self, fd: FileDescriptor) -> LocalFileManifest:
         try:
             entry_id = self.open_fds[fd]
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
         manifest = self.get_manifest(entry_id)
         assert isinstance(manifest, LocalFileManifest)
-        return entry_id, manifest
+        return manifest
 
     def remove_file_descriptor(self, fd: FileDescriptor, manifest: LocalFileManifest) -> None:
         assert isinstance(manifest, LocalFileManifest)

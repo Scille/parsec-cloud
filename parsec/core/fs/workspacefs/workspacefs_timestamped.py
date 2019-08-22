@@ -2,8 +2,7 @@
 
 import pendulum
 
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
-from parsec.core.fs.workspacefs.file_transactions import FileTransactions
+from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
 from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
 
@@ -23,10 +22,7 @@ class WorkspaceFSTimestamped(WorkspaceFS):
         self.timestamp = timestamp
 
         self.remote_loader = workspacefs.remote_loader.to_timestamped(timestamp)
-        self.file_transactions = FileTransactions(
-            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
-        )
-        self.entry_transactions = EntryTransactions(
+        self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
             self.device,

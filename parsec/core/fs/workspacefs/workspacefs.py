@@ -13,8 +13,6 @@ from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manif
 
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
@@ -79,19 +77,13 @@ class WorkspaceFS:
             self.remote_device_manager,
             self.local_storage,
         )
-        self.file_transactions = FileTransactions(
-            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
-        )
-        self.entry_transactions = EntryTransactions(
+        self.transactions = SyncTransactions(
             self.workspace_id,
             self.get_workspace_entry,
             self.device,
             self.local_storage,
             self.remote_loader,
             self.event_bus,
-        )
-        self.sync_transactions = SyncTransactions(
-            self.workspace_id, self.local_storage, self.remote_loader, self.event_bus
         )
 
     def __repr__(self):
@@ -113,7 +105,7 @@ class WorkspaceFS:
             OSError
             FSError
         """
-        return await self.entry_transactions.entry_info(FsPath(path))
+        return await self.transactions.entry_info(FsPath(path))
 
     async def path_id(self, path: AnyPath) -> UUID:
         """
@@ -121,7 +113,7 @@ class WorkspaceFS:
             OSError
             FSError
         """
-        info = await self.entry_transactions.entry_info(FsPath(path))
+        info = await self.transactions.entry_info(FsPath(path))
         return info["id"]
 
     async def get_entry_path(self, entry_id: EntryID) -> FsPath:
@@ -129,7 +121,7 @@ class WorkspaceFS:
         Raises:
            FSEntryNotFound
         """
-        return await self.entry_transactions.get_entry_path(entry_id)
+        return await self.transactions.get_entry_path(entry_id)
 
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
@@ -201,7 +193,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        return await self.entry_transactions.entry_versions(path)
+        return await self.transactions.entry_versions(path)
 
     async def to_timestamped(self, timestamp: Pendulum):
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
@@ -222,7 +214,7 @@ class WorkspaceFS:
         """
         path = FsPath(path)
         try:
-            await self.entry_transactions.entry_info(path)
+            await self.transactions.entry_info(path)
         except (FileNotFoundError, NotADirectoryError):
             return False
         return True
@@ -234,7 +226,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        info = await self.entry_transactions.entry_info(path)
+        info = await self.transactions.entry_info(path)
         return info["type"] == "folder"
 
     async def is_file(self, path: AnyPath) -> bool:
@@ -244,7 +236,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        info = await self.entry_transactions.entry_info(FsPath(path))
+        info = await self.transactions.entry_info(FsPath(path))
         return info["type"] == "file"
 
     async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
@@ -254,7 +246,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        info = await self.entry_transactions.entry_info(path)
+        info = await self.transactions.entry_info(path)
         if "children" not in info:
             raise NotADirectoryError(str(path))
         for child in info["children"]:
@@ -276,7 +268,7 @@ class WorkspaceFS:
         """
         source = FsPath(source)
         destination = FsPath(destination)
-        await self.entry_transactions.entry_rename(source, destination, overwrite=overwrite)
+        await self.transactions.entry_rename(source, destination, overwrite=overwrite)
 
     async def mkdir(self, path: AnyPath, parents: bool = False, exist_ok: bool = False) -> None:
         """
@@ -286,7 +278,7 @@ class WorkspaceFS:
         """
         path = FsPath(path)
         try:
-            await self.entry_transactions.folder_create(path)
+            await self.transactions.folder_create(path)
         except FileNotFoundError:
             if not parents or path.parent == path:
                 raise
@@ -303,7 +295,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        await self.entry_transactions.folder_delete(path)
+        await self.transactions.folder_delete(path)
 
     async def touch(self, path: AnyPath, exist_ok: bool = True) -> None:
         """
@@ -313,7 +305,7 @@ class WorkspaceFS:
         """
         path = FsPath(path)
         try:
-            await self.entry_transactions.file_create(path, open=False)
+            await self.transactions.file_create(path, open=False)
         except FileExistsError:
             if not exist_ok:
                 raise
@@ -325,7 +317,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        await self.entry_transactions.file_delete(path)
+        await self.transactions.file_delete(path)
 
     async def truncate(self, path: AnyPath, length: int) -> None:
         """
@@ -334,11 +326,11 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        _, fd = await self.entry_transactions.file_open(path, "w")
+        _, fd = await self.transactions.file_open(path, "w")
         try:
-            return await self.file_transactions.fd_resize(fd, length)
+            return await self.transactions.fd_resize(fd, length)
         finally:
-            await self.file_transactions.fd_close(fd)
+            await self.transactions.fd_close(fd)
 
     async def read_bytes(self, path: AnyPath, size: int = -1, offset: int = 0) -> bytes:
         """
@@ -347,11 +339,11 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        _, fd = await self.entry_transactions.file_open(path, "r")
+        _, fd = await self.transactions.file_open(path, "r")
         try:
-            return await self.file_transactions.fd_read(fd, size, offset)
+            return await self.transactions.fd_read(fd, size, offset)
         finally:
-            await self.file_transactions.fd_close(fd)
+            await self.transactions.fd_close(fd)
 
     async def write_bytes(self, path: AnyPath, data: bytes, offset: int = 0) -> int:
         """
@@ -360,11 +352,11 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        _, fd = await self.entry_transactions.file_open(path, "w")
+        _, fd = await self.transactions.file_open(path, "w")
         try:
-            return await self.file_transactions.fd_write(fd, data, offset)
+            return await self.transactions.fd_write(fd, data, offset)
         finally:
-            await self.file_transactions.fd_close(fd)
+            await self.transactions.fd_close(fd)
 
     # Shutil-like interface
 
@@ -452,7 +444,7 @@ class WorkspaceFS:
     # Sync helpers
 
     async def _synchronize_placeholders(self, manifest: Manifest) -> None:
-        for child in self.sync_transactions.get_placeholder_children(manifest):
+        for child in self.transactions.get_placeholder_children(manifest):
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: Manifest) -> None:
@@ -468,7 +460,7 @@ class WorkspaceFS:
         """
         # Get a minimal manifest to upload
         try:
-            remote_manifest = await self.sync_transactions.get_minimal_remote_manifest(entry_id)
+            remote_manifest = await self.transactions.get_minimal_remote_manifest(entry_id)
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             return
@@ -489,7 +481,7 @@ class WorkspaceFS:
 
         # Register the manifest to unset the placeholder tag
         try:
-            await self.sync_transactions.synchronization_step(entry_id, remote_manifest, final=True)
+            await self.transactions.synchronization_step(entry_id, remote_manifest, final=True)
         # Not available locally so nothing to synchronize
         except FSLocalMissError:
             pass
@@ -523,13 +515,13 @@ class WorkspaceFS:
 
                 # Perform the sync step transaction
                 try:
-                    new_remote_manifest = await self.sync_transactions.synchronization_step(
+                    new_remote_manifest = await self.transactions.synchronization_step(
                         entry_id, remote_manifest, final
                     )
 
                 # The entry first requires reshaping
                 except FSReshapingRequiredError:
-                    await self.file_transactions.file_reshape(entry_id)
+                    await self.transactions.file_reshape(entry_id)
                     continue
 
             # The manifest doesn't exist locally
@@ -597,7 +589,7 @@ class WorkspaceFS:
             local_manifest, remote_manifest = exc.args
             # Only file manifest have synchronization conflict
             assert is_file_manifest(local_manifest)
-            await self.sync_transactions.file_conflict(entry_id, local_manifest, remote_manifest)
+            await self.transactions.file_conflict(entry_id, local_manifest, remote_manifest)
             return await self.sync_by_id(local_manifest.parent_id)
 
         # Non-recursive
@@ -617,7 +609,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        entry_id = (await self.entry_transactions._get_manifest_from_path(path)).entry_id
+        entry_id = (await self.transactions._get_manifest_from_path(path)).entry_id
         # TODO: Maybe the path itself is not synchronized with the remote
         # Should we do something about it?
         await self.sync_by_id(entry_id, remote_changed=remote_changed, recursive=recursive)

@@ -8,7 +8,7 @@ from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs import FSReshapingRequiredError, FSFileConflictError
+from parsec.core.fs import FSFileConflictError
 
 
 def test_merge_folder_children():
@@ -176,11 +176,9 @@ def test_merge_file_manifests():
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["file", "folder"])
-async def test_synchronization_step_transaction(
-    sync_transactions, entry_transactions, file_transactions, type
-):
+async def test_synchronization_step_transaction(sync_transactions, type):
     synchronization_step = sync_transactions.synchronization_step
-    entry_id = entry_transactions.get_workspace_entry().id
+    entry_id = sync_transactions.get_workspace_entry().id
 
     # Sync a placeholder
     manifest = await synchronization_step(entry_id)
@@ -190,11 +188,11 @@ async def test_synchronization_step_transaction(
 
     # Local change
     if type == "file":
-        a_id, fd = await entry_transactions.file_create(FsPath("/a"))
-        await file_transactions.fd_write(fd, b"abc", 0)
-        await file_transactions.fd_close(fd)
+        a_id, fd = await sync_transactions.file_create(FsPath("/a"))
+        await sync_transactions.fd_write(fd, b"abc", 0)
+        await sync_transactions.fd_close(fd)
     else:
-        a_id = await entry_transactions.folder_create(FsPath("/a"))
+        a_id = await sync_transactions.folder_create(FsPath("/a"))
 
     # Sync parent with a placeholder child
     manifest = await synchronization_step(entry_id)
@@ -206,9 +204,7 @@ async def test_synchronization_step_transaction(
 
     # Sync child
     if type == "file":
-        with pytest.raises(FSReshapingRequiredError):
-            await synchronization_step(a_entry_id)
-        await file_transactions.file_reshape(a_entry_id)
+        await synchronization_step(a_entry_id)
     a_manifest = await synchronization_step(a_entry_id)
     assert await synchronization_step(a_entry_id, a_manifest) is None
 
@@ -217,7 +213,7 @@ async def test_synchronization_step_transaction(
     assert await synchronization_step(entry_id, manifest) is None
 
     # Local change
-    b_id = await entry_transactions.folder_create(FsPath("/b"))
+    b_id = await sync_transactions.folder_create(FsPath("/b"))
 
     # Remote change
     children = {**manifest.children, "c": EntryID()}
@@ -241,16 +237,14 @@ async def test_synchronization_step_transaction(
 
 
 @pytest.mark.trio
-async def test_get_minimal_remote_manifest(
-    sync_transactions, entry_transactions, file_transactions
-):
+async def test_get_minimal_remote_manifest(sync_transactions,):
     # Prepare
     w_id = sync_transactions.workspace_id
-    a_id, fd = await entry_transactions.file_create(FsPath("/a"))
-    await file_transactions.fd_write(fd, b"abc", 0)
-    await file_transactions.fd_close(fd)
-    b_id = await entry_transactions.folder_create(FsPath("/b"))
-    c_id = await entry_transactions.folder_create(FsPath("/b/c"))
+    a_id, fd = await sync_transactions.file_create(FsPath("/a"))
+    await sync_transactions.fd_write(fd, b"abc", 0)
+    await sync_transactions.fd_close(fd)
+    b_id = await sync_transactions.folder_create(FsPath("/b"))
+    c_id = await sync_transactions.folder_create(FsPath("/b/c"))
 
     # Workspace manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
@@ -267,7 +261,7 @@ async def test_get_minimal_remote_manifest(
     assert minimal == local.evolve(blocks=(), updated=local.created, size=0).to_remote().evolve(
         version=1
     )
-    await file_transactions.file_reshape(a_id)
+    await sync_transactions.file_reshape(a_id)
     await sync_transactions.synchronization_step(a_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(a_id) is None
 
@@ -287,15 +281,15 @@ async def test_get_minimal_remote_manifest(
 
 
 @pytest.mark.trio
-async def test_file_conflict(sync_transactions, entry_transactions, file_transactions):
+async def test_file_conflict(sync_transactions):
     # Prepare
-    a_id, fd = await entry_transactions.file_create(FsPath("/a"))
-    await file_transactions.fd_write(fd, b"abc", offset=0)
-    await file_transactions.file_reshape(a_id)
+    a_id, fd = await sync_transactions.file_create(FsPath("/a"))
+    await sync_transactions.fd_write(fd, b"abc", offset=0)
+    await sync_transactions.file_reshape(a_id)
     remote = await sync_transactions.synchronization_step(a_id)
     assert await sync_transactions.synchronization_step(a_id, remote) is None
-    await file_transactions.fd_write(fd, b"def", offset=3)
-    await file_transactions.file_reshape(a_id)
+    await sync_transactions.fd_write(fd, b"def", offset=3)
+    await sync_transactions.file_reshape(a_id)
     changed_remote = remote.evolve(version=2, blocks=[], size=0, author="b@b")
 
     # Try a synchronization
@@ -304,17 +298,17 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     local, remote = ctx.value.args
 
     # Write some more
-    await file_transactions.fd_write(fd, b"ghi", offset=6)
+    await sync_transactions.fd_write(fd, b"ghi", offset=6)
 
     # Also create a fake previous conflict file
-    await entry_transactions.file_create(FsPath("/a (conflicting with b@b)"), open=False)
+    await sync_transactions.file_create(FsPath("/a (conflicting with b@b)"), open=False)
 
     # Solve conflict
     with sync_transactions.event_bus.listen() as spy:
         await sync_transactions.file_conflict(a_id, local, remote)
-    assert await file_transactions.fd_read(fd, size=-1, offset=0) == b""
-    a2_id, fd2 = await entry_transactions.file_open(FsPath("/a (conflicting with b@b - 2)"))
-    assert await file_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
+    assert await sync_transactions.fd_read(fd, size=-1, offset=0) == b""
+    a2_id, fd2 = await sync_transactions.file_open(FsPath("/a (conflicting with b@b - 2)"))
+    assert await sync_transactions.fd_read(fd2, size=-1, offset=0) == b"abcdefghi"
     spy.assert_events_exactly_occured(
         [
             ("fs.entry.updated", {"workspace_id": sync_transactions.workspace_id, "id": a2_id}),
@@ -329,16 +323,16 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     )
 
     # Finish synchronization
-    await file_transactions.file_reshape(a2_id)
+    await sync_transactions.file_reshape(a2_id)
     assert await sync_transactions.synchronization_step(a_id, changed_remote) is None
     remote2 = await sync_transactions.synchronization_step(a2_id)
     assert await sync_transactions.synchronization_step(a2_id, remote2) is None
 
     # Create a new conflict then remove a
-    await file_transactions.fd_write(fd, b"abc", 0)
-    await file_transactions.file_reshape(a_id)
+    await sync_transactions.fd_write(fd, b"abc", 0)
+    await sync_transactions.file_reshape(a_id)
     changed_remote = changed_remote.evolve(version=3)
-    await entry_transactions.file_delete(FsPath("/a"))
+    await sync_transactions.file_delete(FsPath("/a"))
 
     # Conflict solving should still succeed
     with pytest.raises(FSFileConflictError) as ctx:
@@ -349,5 +343,5 @@ async def test_file_conflict(sync_transactions, entry_transactions, file_transac
     spy.assert_events_exactly_occured([])
 
     # Close fds
-    await file_transactions.fd_close(fd)
-    await file_transactions.fd_close(fd2)
+    await sync_transactions.fd_close(fd)
+    await sync_transactions.fd_close(fd2)
