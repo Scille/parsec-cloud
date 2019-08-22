@@ -160,7 +160,7 @@ class FileTransactions:
 
             # Writing
             for chunk, offset in write_operations:
-                self._write_chunk(chunk, content, offset)
+                self._write_count[fd] += self._write_chunk(chunk, content, offset)
 
             # Atomic change
             self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
@@ -170,10 +170,9 @@ class FileTransactions:
                 self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
             # Reshaping
-            self._write_count[fd] += 1
-            if self._write_count[fd] >= 128:
+            if self._write_count[fd] >= manifest.blocksize:
                 self._manifest_reshape(manifest, cache_only=True)
-                self._write_count[fd] = 0
+                self._write_count.pop(fd, None)
 
         # Notify
         self._send_event("fs.entry.updated", id=manifest.entry_id)
