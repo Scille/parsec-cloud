@@ -8,7 +8,7 @@ from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey, encrypt_signed_msg_with_secret_key
+from parsec.crypto import SigningKey
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
@@ -16,12 +16,8 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
 )
 from parsec.api.protocol import RealmRole
-from parsec.core.types import (
-    LocalDevice,
-    remote_manifest_serializer,
-    local_manifest_serializer,
-    LocalUserManifest,
-)
+from parsec.api.data import UserManifest
+from parsec.core.types import LocalDevice, LocalUserManifest
 from parsec.core.local_device import generate_new_device
 from parsec.backend.user import (
     User as BackendUser,
@@ -187,57 +183,32 @@ class InitialUserManifestState:
             return self._v1[device.user_id]
 
         except KeyError:
-            user_manifest = LocalUserManifest(
-                author=device.device_id, base_version=1, is_placeholder=False, need_sync=False
-            )
-
-            remote_user_manifest = user_manifest.to_remote()
             now = pendulum.now()
 
-            ciphered = encrypt_signed_msg_with_secret_key(
-                device.device_id,
-                device.signing_key,
-                device.user_manifest_key,
-                local_manifest_serializer.dumps(user_manifest),
-                now,
+            remote_user_manifest = UserManifest(
+                author=device.device_id,
+                timestamp=now,
+                id=device.user_manifest_id,
+                version=1,
+                created=now,
+                updated=now,
+                last_processed_message=0,
+                workspaces=(),
             )
-
-            remote_ciphered = encrypt_signed_msg_with_secret_key(
-                device.device_id,
-                device.signing_key,
-                device.user_manifest_key,
-                remote_manifest_serializer.dumps(remote_user_manifest),
-                now,
-            )
-
-            self._v1[device.user_id] = {
-                "in_device": user_manifest,
-                "in_backend": remote_user_manifest,
-                "ciphered_in_device": ciphered,
-                "ciphered_in_backend": remote_ciphered,
-                "generated_by": device.device_id,
-                "generated_on": now,
-            }
+            local_user_manifest = LocalUserManifest.from_remote(remote_user_manifest)
+            self._v1[device.user_id] = (remote_user_manifest, local_user_manifest)
             return self._v1[device.user_id]
 
     def force_user_manifest_v1_generation(self, device):
         self._generate_or_retrieve_user_manifest_v1(device)
 
     def get_user_manifest_v1_for_device(self, device, ciphered=False):
-        data = self._generate_or_retrieve_user_manifest_v1(device)
-        if ciphered:
-            return data["ciphered_in_device"]
+        _, local = self._generate_or_retrieve_user_manifest_v1(device)
+        return local
 
-        else:
-            return data["in_device"]
-
-    def get_user_manifest_v1_for_backend(self, device, ciphered=False):
-        data = self._generate_or_retrieve_user_manifest_v1(device)
-        if ciphered:
-            return data["ciphered_in_backend"], data["generated_by"], data["generated_on"]
-
-        else:
-            return data["in_backend"], data["generated_by"], data["generated_on"]
+    def get_user_manifest_v1_for_backend(self, device):
+        remote, _ = self._generate_or_retrieve_user_manifest_v1(device)
+        return remote
 
 
 @pytest.fixture
@@ -340,15 +311,11 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                 raise ValueError((organization_id, device_id))
 
         async def _create_realm_and_first_vlob(self, device):
-            args = initial_user_manifest_state.get_user_manifest_v1_for_backend(
-                device, ciphered=True
-            )
-            ciphered, generated_by, generated_on = args
-
-            if generated_by == device.device_id:
+            manifest = initial_user_manifest_state.get_user_manifest_v1_for_backend(device)
+            if manifest.author == device.device_id:
                 author = device
             else:
-                author = self.get_device(device.organization_id, generated_by)
+                author = self.get_device(device.organization_id, manifest.author)
             realm_id = author.user_manifest_id
 
             with self.backend.event_bus.listen() as spy:
@@ -360,25 +327,27 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                         user_id=author.user_id,
                         certificate=RealmRoleCertificateContent(
                             author=author.device_id,
-                            timestamp=generated_on,
+                            timestamp=manifest.timestamp,
                             realm_id=realm_id,
                             user_id=author.user_id,
                             role=RealmRole.OWNER,
                         ).dump_and_sign(author.signing_key),
                         role=RealmRole.OWNER,
                         granted_by=author.device_id,
-                        granted_on=generated_on,
+                        granted_on=manifest.timestamp,
                     ),
                 )
 
                 await self.backend.vlob.create(
                     organization_id=author.organization_id,
-                    author=generated_by,
+                    author=author.device_id,
                     realm_id=realm_id,
                     encryption_revision=1,
                     vlob_id=author.user_manifest_id,
-                    timestamp=generated_on,
-                    blob=ciphered,
+                    timestamp=manifest.timestamp,
+                    blob=manifest.dump_sign_and_encrypt(
+                        author_signkey=author.signing_key, key=author.user_manifest_key
+                    ),
                 )
 
                 # Avoid possible race condition in tests listening for events
@@ -388,9 +357,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                             "realm.roles_updated",
                             {
                                 "organization_id": author.organization_id,
-                                "author": generated_by,
+                                "author": author.device_id,
                                 "realm_id": author.user_manifest_id,
-                                "user": generated_by.user_id,
+                                "user": author.user_id,
                                 "role": RealmRole.OWNER,
                             },
                         ),

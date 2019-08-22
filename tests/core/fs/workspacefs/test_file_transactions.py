@@ -3,6 +3,7 @@
 import os
 import pytest
 from pendulum import Pendulum
+from pathlib import Path
 from hypothesis_trio.stateful import (
     initialize,
     rule,
@@ -12,10 +13,11 @@ from hypothesis_trio.stateful import (
 from hypothesis import strategies as st
 
 from parsec.core.types import EntryID, LocalFileManifest, Chunk
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 
-from tests.common import freeze_time
+from tests.common import freeze_time, call_with_control
 
 
 class File:
@@ -209,6 +211,20 @@ def test_file_operations(
     tentative = 0
 
     class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
+        async def start_transactions(self):
+            async def _transactions_controlled_cb(started_cb):
+                with LocalStorage(
+                    alice.device_id, key=alice.local_symkey, path=Path("/dummy")
+                ) as local_storage:
+                    file_transactions = await file_transactions_factory(
+                        self.device, alice_backend_cmds, local_storage=local_storage
+                    )
+                    await started_cb(file_transactions=file_transactions)
+
+            self.transactions_controller = await self.get_root_nursery().start(
+                call_with_control, _transactions_controlled_cb
+            )
+
         @initialize()
         async def init(self):
             nonlocal tentative
@@ -216,11 +232,9 @@ def test_file_operations(
             await reset_testbed()
 
             self.device = alice
-            self.local_storage = await initialize_local_storage(self.device)
-
-            self.file_transactions = await file_transactions_factory(
-                self.device, self.local_storage, alice_backend_cmds
-            )
+            await self.start_transactions()
+            self.file_transactions = self.transactions_controller.file_transactions
+            self.local_storage = self.file_transactions.local_storage
 
             self.entry_id = EntryID()
             manifest = LocalFileManifest.make_placeholder(
