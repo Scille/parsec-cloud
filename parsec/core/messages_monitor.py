@@ -9,6 +9,14 @@ from parsec.core.fs import FSError, FSBackendOfflineError
 logger = get_logger()
 
 
+async def freeze_messages_monitor_mockpoint():
+    """
+    Noop function that could be mocked during tests to be able to freeze the
+    monitor coroutine running in background
+    """
+    pass
+
+
 async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     msg_arrived = trio.Event()
     backend_online_event = trio.Event()
@@ -55,8 +63,7 @@ async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_I
                     while True:
                         await msg_arrived.wait()
                         msg_arrived.clear()
-                        # Force a sleep to block here when time is frozen in tests
-                        await trio.sleep(0.001)
+                        await freeze_messages_monitor_mockpoint()
                         await _process_last_messages()
 
             except FSBackendOfflineError:

@@ -57,7 +57,19 @@ def test_sync_monitor_stateful(
     user_fs_factory,
     alice,
     bob,
+    monkeypatch,
 ):
+
+    # Force a sleep in the monitors mockpoints will freeze them until we reach
+    # the `let_core_monitors_process_changes` rule
+    async def mockpoint_sleep():
+        await trio.sleep(0.01)
+
+    monkeypatch.setattr("parsec.core.sync_monitor.freeze_sync_monitor_mockpoint", mockpoint_sleep)
+    monkeypatch.setattr(
+        "parsec.core.messages_monitor.freeze_messages_monitor_mockpoint", mockpoint_sleep
+    )
+
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
 
         SharedWorkspaces = Bundle("shared_workspace")

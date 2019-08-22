@@ -30,6 +30,14 @@ MAINTENANCE_MIN_WAIT = 30
 TICK_CRASH_COOLDOWN = 5
 
 
+async def freeze_sync_monitor_mockpoint():
+    """
+    Noop function that could be mocked during tests to be able to freeze the
+    monitor coroutine running in background
+    """
+    pass
+
+
 def timestamp():
     # Use time from trio clock to easily mock it
     return current_clock().current_time()
@@ -356,8 +364,7 @@ async def _monitor_sync_online(user_fs, event_bus):
                 await early_wakeup.wait()
                 early_wakeup.clear()
             wait_times.clear()
-            # Force a sleep to block here when time is frozen in tests
-            await trio.sleep(0.001)
+            await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
                 wait_times.append(await _ctx_tick(ctx))
 
