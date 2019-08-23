@@ -147,6 +147,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.update_timer = QTimer()
+        self.update_timer.setInterval(1000)
+        self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.reload)
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.file_moved.connect(self.on_file_moved)
@@ -327,8 +329,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory)
 
     def load(self, directory):
-        self.update_timer.stop()
-
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
@@ -598,7 +598,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
         if self.current_directory_uuid == uuid or self.table_files.has_file(uuid):
-            self.update_timer.start(1000)
+            if not self.update_timer.isActive():
+                self.update_timer.start()
+                self.reload()
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
         self.sharing_updated_qt.emit(new_entry, previous_entry)
