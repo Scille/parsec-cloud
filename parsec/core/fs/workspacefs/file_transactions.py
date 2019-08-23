@@ -90,7 +90,7 @@ class FileTransactions:
 
     def _read_chunk(self, chunk: Chunk) -> bytes:
         data = self.local_storage.get_chunk(chunk.id)
-        return data[chunk.start - chunk.reference : chunk.stop - chunk.reference]
+        return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
@@ -160,7 +160,7 @@ class FileTransactions:
 
             # Writing
             for chunk, offset in write_operations:
-                self._write_chunk(chunk, content, offset)
+                self._write_count[fd] += self._write_chunk(chunk, content, offset)
 
             # Atomic change
             self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
@@ -170,10 +170,9 @@ class FileTransactions:
                 self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
             # Reshaping
-            self._write_count[fd] += 1
-            if self._write_count[fd] >= 128:
+            if self._write_count[fd] >= manifest.blocksize:
                 self._manifest_reshape(manifest, cache_only=True)
-                self._write_count[fd] = 0
+                self._write_count.pop(fd, None)
 
         # Notify
         self._send_event("fs.entry.updated", id=manifest.entry_id)
@@ -271,9 +270,10 @@ class FileTransactions:
                 missing += extra_missing
                 continue
 
-            # Write data
+            # Write data if necessary
             new_chunk = destination.evolve_as_block(data)
-            self._write_chunk(new_chunk, data)
+            if source != (destination,):
+                self._write_chunk(new_chunk, data)
 
             # Update structures
             removed_ids |= cleanup

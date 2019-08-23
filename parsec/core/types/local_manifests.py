@@ -121,7 +121,8 @@ class LocalFileManifest:
             for chunk in chunks:
                 assert chunk.start == current
                 assert chunk.start < chunk.stop
-                assert chunk.reference <= chunk.start
+                assert chunk.raw_offset <= chunk.start
+                assert chunk.stop <= chunk.raw_offset + chunk.raw_size
                 current = chunk.stop
         assert current == self.size
 

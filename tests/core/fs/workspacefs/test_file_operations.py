@@ -33,7 +33,7 @@ class Storage(dict):
 
     def read_chunk(self, chunk: Chunk) -> bytes:
         data = self.read_chunk_data(chunk.id)
-        return data[chunk.start - chunk.reference : chunk.stop - chunk.reference]
+        return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     def write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
@@ -92,7 +92,8 @@ class Storage(dict):
             data = self.build_data(source)
             new_chunk = destination.evolve_as_block(data)
             removed_ids |= cleanup
-            self.write_chunk(new_chunk, data)
+            if source != (destination,):
+                self.write_chunk(new_chunk, data)
             result_dict[block] = new_chunk
 
         new_manifest = getter(result_dict)
@@ -118,7 +119,7 @@ def test_complete_scenario() -> None:
 
     (chunk0,), = manifest.blocks
     assert manifest == base.evolve(size=6, blocks=((chunk0,),), updated=t2)
-    assert chunk0 == Chunk(chunk0.id, reference=0, start=0, stop=6)
+    assert chunk0 == Chunk(chunk0.id, start=0, stop=6, raw_offset=0, raw_size=6)
     assert storage[chunk0.id] == b"Hello "
 
     with freeze_time("2000-01-03") as t3:
@@ -127,7 +128,7 @@ def test_complete_scenario() -> None:
 
     (_, chunk1), = manifest.blocks
     assert manifest == base.evolve(size=13, blocks=((chunk0, chunk1),), updated=t3)
-    assert chunk1 == Chunk(chunk1.id, reference=6, start=6, stop=13)
+    assert chunk1 == Chunk(chunk1.id, start=6, stop=13, raw_offset=6, raw_size=7)
     assert storage[chunk1.id] == b"world !"
 
     with freeze_time("2000-01-04") as t4:
