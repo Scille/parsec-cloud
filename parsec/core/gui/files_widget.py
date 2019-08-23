@@ -86,9 +86,9 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
                     await workspace_fs.write_bytes(dst, chunk, read_size)
                     read_size += len(chunk)
                     i += 1
-                    progress_signal.emit(current_size + read_size, False)
+                    progress_signal.emit(current_size + read_size)
             current_size += src.stat().st_size + 1
-            progress_signal.emit(current_size, True)
+            progress_signal.emit(current_size)
         except trio.Cancelled as exc:
             raise JobResultError("cancelled", last_file=dst) from exc
 
@@ -111,7 +111,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     import_success = pyqtSignal(QtToTrioJob)
     import_error = pyqtSignal(QtToTrioJob)
 
-    import_progress = pyqtSignal(int, bool)
+    import_progress = pyqtSignal(int)
 
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -351,7 +351,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             workspace_fs=self.workspace_fs,
             files=files,
             total_size=total_size,
-            progress_signal=ThreadSafeQtSignal(self, "import_progress", int, bool),
+            progress_signal=ThreadSafeQtSignal(self, "import_progress", int),
         )
 
     def cancel_import(self):
@@ -360,12 +360,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         self.import_job.cancel_and_join()
 
-    def _on_import_progress(self, progress, file_finished):
+    def _on_import_progress(self, progress):
         if not self.loading_dialog:
             return
         self.loading_dialog.set_progress(progress)
-        if file_finished:
-            self.update_timer.start(1000)
 
     def get_files(self, paths, dst_dir=None):
         files = []
