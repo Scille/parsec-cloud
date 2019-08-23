@@ -34,11 +34,16 @@ class SignedDataMeta(type):
     CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True)
 
     def __new__(cls, name, bases, nmspc):
+        # Sanity checks
         if "SCHEMA_CLS" not in nmspc:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
         if not issubclass(nmspc["SCHEMA_CLS"], BaseSignedDataSchema):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSignedDataSchema!r}")
 
+        # During the creation of a class, we wrap it with `attr.s`.
+        # Under the hood, attr recreate a class so this metaclass is going to
+        # be called a second time.
+        # We must detect this second call to avoid infinie loop.
         if "__attrs_attrs__" not in nmspc:
             if "SERIALIZER" in nmspc and bases:
                 raise RuntimeError("Attribute `SERIALIZER` is reserved")
@@ -52,6 +57,12 @@ class SignedDataMeta(type):
 
 
 class BaseSignedData(metaclass=SignedDataMeta):
+    """
+    All data within the api should inherit this class. The goal is to have
+    immutable data (thanks to attr frozen) that can be easily (de)serialize
+    with encryption/signature support.
+    """
+
     SCHEMA_CLS = BaseSignedDataSchema  # Must be overloaded by child class
     # SERIALIZER attribute sets by the metaclass
 
