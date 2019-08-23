@@ -70,7 +70,7 @@ def test_fs_online_rwfile_and_sync(
             self.wid = await self.user_fs.workspace_create("w")
             workspace = self.user_fs.get_workspace(self.wid)
             await workspace.touch("/foo.txt")
-            await workspace.sync("/")
+            await workspace.sync()
             await self.user_fs.sync()
             self.file_oracle = FileOracle(base_version=1)
 
@@ -89,7 +89,7 @@ def test_fs_online_rwfile_and_sync(
         @rule()
         async def sync(self):
             workspace = self.user_fs.get_workspace(self.wid)
-            await workspace.sync("/")
+            await workspace.sync()
             self.file_oracle.sync()
 
         @rule(

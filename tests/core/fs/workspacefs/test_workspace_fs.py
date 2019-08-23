@@ -19,7 +19,7 @@ async def alice_workspace(alice_user_fs, running_backend):
     await workspace.mkdir("/foo")
     await workspace.touch("/foo/bar")
     await workspace.touch("/foo/baz")
-    await workspace.sync("/")
+    await workspace.sync()
     return workspace
 
 

@@ -206,68 +206,25 @@ def oracle_fs_factory(tmpdir):
 
             return "ok"
 
-        def sync(self, path, *, sync_cb=lambda path, stat: None):
-            path = self._cook_path(path)
-            if path.exists():
-                self._backward_recursive_sync(path, sync_cb)
-                self._recursive_children_sync(path, sync_cb)
-                return "ok"
-            return "invalid_path"
+        def sync(self, sync_cb=lambda path, stat: None):
+            self._recursive_sync(self.root, sync_cb)
+            return "ok"
 
         def _relative_path(self, path):
             path = str(path.relative_to(self.root))
             return "/" if path == "." else f"/{path}"
 
-        def _recursive_children_sync(self, path, sync_cb):
+        def _recursive_sync(self, path, sync_cb):
+            stat = self.entries_stats[path]
+            if stat["need_sync"]:
+                stat["need_sync"] = False
+                stat["is_placeholder"] = False
+                stat["base_version"] += 1
+                sync_cb(self._relative_path(path), stat)
+
             if path.is_dir():
                 for child in path.iterdir():
-                    child_stat = self.entries_stats[child]
-                    if child_stat["need_sync"]:
-                        child_stat["need_sync"] = False
-                        child_stat["is_placeholder"] = False
-                        child_stat["base_version"] += 1
-                        sync_cb(self._relative_path(child), child_stat)
-                    self._recursive_children_sync(child, sync_cb)
-
-        def _backward_recursive_sync(self, path, sync_cb):
-            stat = self.entries_stats[path]
-            if not stat["need_sync"]:
-                return
-
-            def _recursive_sync_placeholder_parent(path):
-                parent_stat = self.entries_stats[path.parent]
-                parent_is_placeholder = parent_stat["is_placeholder"]
-
-                parent_stat["base_version"] += 1
-                parent_stat["is_placeholder"] = False
-                # Parent got a minimal sync: if other placeholder children are
-                # present they won't be synchronized
-                for otherchild in path.parent.iterdir():
-                    if otherchild == path:
-                        continue
-                    if self.entries_stats[otherchild]["is_placeholder"]:
-                        parent_stat["need_sync"] = True
-                else:
-                    parent_stat["need_sync"] = False
-                sync_cb(self._relative_path(path.parent), parent_stat)
-
-                if parent_is_placeholder:
-                    _recursive_sync_placeholder_parent(path.parent)
-
-            # If path is a placeholder, synchronizing it means we must
-            # synchronize it parents first
-
-            is_placeholder = stat["is_placeholder"]
-            stat["need_sync"] = False
-            stat["is_placeholder"] = False
-            stat["base_version"] += 1
-            sync_cb(self._relative_path(path), stat)
-
-            if path == self.root:
-                return
-
-            if is_placeholder:
-                _recursive_sync_placeholder_parent(path)
+                    self._recursive_sync(child, sync_cb)
 
         def stat(self, path):
             path = self._cook_path(path)
@@ -291,9 +248,9 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
     class OracleFSWithSync:
         def __init__(self):
             self.fs = oracle_fs_factory()
-            self.fs.sync("/")
+            self.fs.sync()
             self.synced_fs = oracle_fs_factory()
-            self.synced_fs.sync("/")
+            self.synced_fs.sync()
 
         def create_file(self, path):
             return self.fs.create_file(path)
@@ -322,13 +279,13 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
         def flush(self, path):
             return self.fs.flush(path)
 
-        def sync(self, path):
+        def sync(self):
             synced_items = []
 
             def sync_cb(path, stat):
                 synced_items.append((path, stat["base_version"], stat["type"]))
 
-            res = self.fs.sync(path, sync_cb=sync_cb)
+            res = self.fs.sync(sync_cb=sync_cb)
             if res == "ok":
                 new_synced = self.fs.copy()
 

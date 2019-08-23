@@ -77,7 +77,7 @@ def test_fs_online_idempotent_sync(
             await self.workspace.touch("/good_file.txt")
             await self.workspace.mkdir("/good_folder")
             await self.workspace.touch("/good_folder/good_sub_file.txt")
-            await self.workspace.sync("/")
+            await self.workspace.sync()
             await self.user_fs.sync()
 
             self.initial_fs_dump = self.workspace.dump()
@@ -142,7 +142,8 @@ def test_fs_online_idempotent_sync(
 
         @rule(path=GoodPath)
         async def sync(self, path):
-            await self.workspace.sync(path)
+            entry_id = await self.workspace.path_id(path)
+            await self.workspace.sync_by_id(entry_id)
 
         @invariant()
         async def check_fs(self):

@@ -124,9 +124,9 @@ async def test_share_workspace_then_rename_it(
     await bw.touch("/ping_bob.txt")
     await aw.mkdir("/ping_alice")
 
-    await bw.sync("/")
-    await aw.sync("/")
-    await bw.sync("/")
+    await bw.sync()
+    await aw.sync()
+    await bw.sync()
 
     aw_stat = await aw.path_info("/")
     bw_stat = await bw.path_info("/")

@@ -305,6 +305,17 @@ def test_folder_operations(
             with expect_raises(expected_exc):
                 await self.entry_transactions.file_delete(path.to_parsec())
 
+        @rule(path=Files, length=st.integers(min_value=0, max_value=32))
+        async def resize(self, path, length):
+            expected_exc = None
+            try:
+                os.truncate(path.to_oracle(), length)
+            except OSError as exc:
+                expected_exc = exc
+
+            with expect_raises(expected_exc):
+                await self.entry_transactions.file_resize(path.to_parsec(), length)
+
         @rule(path=Folders)
         async def rmdir(self, path):
             expected_exc = None
