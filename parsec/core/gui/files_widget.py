@@ -599,7 +599,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not self.workspace_fs:
             return
 
-        if self.current_directory_uuid == uuid:
+        if self.current_directory_uuid == uuid or self.table_files.has_file(uuid):
             self.update_timer.start(1000)
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
