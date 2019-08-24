@@ -4,14 +4,12 @@ import trio
 from pathlib import Path
 from contextlib import ExitStack
 from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 from structlog import get_logger
 
 from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
 from parsec.crypto import (
-    encrypt_signed_msg_for,
-    decrypt_and_verify_signed_msg_for,
     encrypt_signed_msg_with_secret_key,
     decrypt_and_verify_signed_msg_with_secret_key,
     encrypt_raw_with_secret_key,
@@ -20,7 +18,15 @@ from parsec.crypto import (
     SecretKey,
 )
 from parsec.serde import SerdeError
-from parsec.api.data import RealmRoleCertificateContent
+from parsec.api.data import (
+    DataError,
+    RealmRoleCertificateContent,
+    MessageContent,
+    SharingGrantedMessageContent,
+    SharingReencryptedMessageContent,
+    SharingRevokedMessageContent,
+    PingMessageContent,
+)
 from parsec.api.protocol import MaintenanceType
 from parsec.core.types import (
     EntryID,
@@ -54,7 +60,6 @@ from parsec.core.remote_devices_manager import (
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
-from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
     FSError,
     FSLocalMissError,
@@ -607,32 +612,31 @@ class UserFS:
 
         # Step 2)
 
-        # Build the sharing message
-        msg = {"id": workspace_entry.id, "name": workspace_entry.name}
-        if role:
-            msg["type"] = "sharing.granted"
-            msg["key"] = workspace_entry.key
-            msg["encryption_revision"] = workspace_entry.encryption_revision
-            msg["encrypted_on"] = workspace_entry.encrypted_on
-        else:
-            msg["type"] = "sharing.revoked"
-
-        # Should never raise error given we control the inputs
-        raw_msg = message_content_serializer.dumps(msg)
-
         now = pendulum_now()
 
-        # Encrypt&sign message
+        # Build the sharing message
         try:
-            ciphered = encrypt_signed_msg_for(
-                self.device.device_id,
-                self.device.signing_key,
-                recipient_user.public_key,
-                raw_msg,
-                now,
+            if role is not None:
+                msg = SharingGrantedMessageContent(
+                    author=self.device.device_id,
+                    timestamp=now,
+                    name=workspace_entry.name,
+                    id=workspace_entry.id,
+                    encryption_revision=workspace_entry.encryption_revision,
+                    encrypted_on=workspace_entry.encrypted_on,
+                    key=workspace_entry.key,
+                )
+
+            else:
+                msg = SharingRevokedMessageContent(
+                    author=self.device.device_id, timestamp=now, id=workspace_entry.id
+                )
+
+            ciphered = msg.dump_sign_and_encrypt_for(
+                author_signkey=self.device.signing_key, recipient_pubkey=recipient_user.public_key
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
 
         # And finally send the message
@@ -695,7 +699,9 @@ class UserFS:
 
         return errors
 
-    async def _process_message(self, sender_id: DeviceID, timestamp: Pendulum, ciphered: bytes):
+    async def _process_message(
+        self, sender_id: DeviceID, expected_timestamp: Pendulum, ciphered: bytes
+    ):
         """
         Raises:
             FSError
@@ -714,40 +720,28 @@ class UserFS:
 
         # Decrypt&verify message
         try:
-            raw = decrypt_and_verify_signed_msg_for(
-                self.device.private_key, ciphered, sender_id, sender.verify_key, timestamp
+            msg = MessageContent.decrypt_verify_and_load_for(
+                ciphered,
+                recipient_privkey=self.device.private_key,
+                author_verify_key=sender.verify_key,
+                expected_author=sender_id,
+                expected_timestamp=expected_timestamp,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             raise FSError(f"Cannot decrypt&validate message from `{sender_id}`: {exc}") from exc
 
-        msg = message_content_serializer.loads(raw)
+        if isinstance(msg, (SharingGrantedMessageContent, SharingReencryptedMessageContent)):
+            await self._process_message_sharing_granted(msg)
 
-        if msg["type"] in ("sharing.granted", "sharing.reencrypted"):
-            await self._process_message_sharing_granted(
-                sender,
-                msg["id"],
-                msg["key"],
-                msg["encryption_revision"],
-                msg["encrypted_on"],
-                msg["name"],
-            )
+        elif isinstance(msg, SharingRevokedMessageContent):
+            await self._process_message_sharing_revoked(msg)
 
-        elif msg["type"] == "sharing.revoked":
-            await self._process_message_sharing_revoked(sender, msg["id"])
-
-        else:
-            assert msg["type"] == "ping"
+        elif isinstance(msg, PingMessageContent):
             self.event_bus.send("pinged")
 
     async def _process_message_sharing_granted(
-        self,
-        sender,
-        workspace_id,
-        workspace_key,
-        workspace_encryption_revision,
-        workspace_encrypted_on,
-        workspace_name,
+        self, msg: Union[SharingRevokedMessageContent, SharingReencryptedMessageContent]
     ):
         """
         Raises:
@@ -762,15 +756,15 @@ class UserFS:
         # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            roles = await self.remote_loader.load_realm_current_roles(workspace_id)
+            roles = await self.remote_loader.load_realm_current_roles(msg.id)
 
         except FSWorkspaceNoAccess:
             # Seems we lost the access roles anyway, nothing to do then
             return
 
-        if roles.get(sender.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
+        if roles.get(msg.author.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
-                f"User {sender.user_id} cannot share workspace `{workspace_id}`"
+                f"User {msg.author.user_id} cannot share workspace `{msg.id}`"
                 " with us (requires owner or manager right)"
             )
 
@@ -780,11 +774,11 @@ class UserFS:
         # Finally insert the new workspace entry into our user manifest
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
-            name=f"{workspace_name} (shared by {sender.user_id})",
-            id=workspace_id,
-            key=workspace_key,
-            encryption_revision=workspace_encryption_revision,
-            encrypted_on=workspace_encrypted_on,
+            name=f"{msg.name} (shared by {msg.author.user_id})",
+            id=msg.id,
+            key=msg.key,
+            encryption_revision=msg.encryption_revision,
+            encrypted_on=msg.encrypted_on,
             role=self_role,
             role_cached_on=pendulum_now(),
         )
@@ -793,7 +787,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
 
             # Check if we already know this workspace
-            already_existing_entry = user_manifest.get_workspace_entry(workspace_id)
+            already_existing_entry = user_manifest.get_workspace_entry(msg.id)
             if already_existing_entry:
                 # Merge with existing as target to keep possible workpace rename
                 workspace_entry = merge_workspace_entry(
@@ -806,15 +800,13 @@ class UserFS:
 
             if not already_existing_entry:
                 # TODO: remove this event ?
-                self.event_bus.send(
-                    "fs.entry.synced", id=workspace_entry.id, path=f"/{workspace_name}"
-                )
+                self.event_bus.send("fs.entry.synced", id=workspace_entry.id, path=f"/{msg.name}")
 
             self.event_bus.send(
                 "sharing.updated", new_entry=workspace_entry, previous_entry=already_existing_entry
             )
 
-    async def _process_message_sharing_revoked(self, sender, workspace_id):
+    async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent):
         """
         Raises:
             FSError
@@ -826,7 +818,7 @@ class UserFS:
         # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.remote_loader.load_realm_current_roles(workspace_id)
+            await self.remote_loader.load_realm_current_roles(msg.id)
 
         except FSWorkspaceNoAccess:
             # Exactly what we expected !
@@ -840,7 +832,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
 
             # Save the revocation information in the user manifest
-            existing_workspace_entry = user_manifest.get_workspace_entry(workspace_id)
+            existing_workspace_entry = user_manifest.get_workspace_entry(msg.id)
             if not existing_workspace_entry:
                 # No workspace entry, nothing to update then
                 return
@@ -888,37 +880,29 @@ class UserFS:
 
         return users
 
-    def _generate_reencryption_messages(self, new_workspace_entry, users):
+    def _generate_reencryption_messages(self, new_workspace_entry, users, now: Pendulum):
         """
         Raises:
             FSError
         """
-        # Generate&sign reencryption message
-        msg = {
-            "type": "sharing.reencrypted",
-            "id": new_workspace_entry.id,
-            "key": new_workspace_entry.key,
-            "encryption_revision": new_workspace_entry.encryption_revision,
-            "encrypted_on": new_workspace_entry.encrypted_on,
-            "name": new_workspace_entry.name,
-        }
-        # Should never raise error given we control the inputs
-        raw_msg = message_content_serializer.dumps(msg)
+        msg = SharingReencryptedMessageContent(
+            author=self.device.device_id,
+            timestamp=now,
+            name=new_workspace_entry.name,
+            id=new_workspace_entry.id,
+            encryption_revision=new_workspace_entry.encryption_revision,
+            encrypted_on=new_workspace_entry.encrypted_on,
+            key=new_workspace_entry.key,
+        )
 
-        # Encrypt message for each user
         per_user_ciphered_msgs = {}
         for user in users:
             try:
-                ciphered = encrypt_signed_msg_for(
-                    self.device.device_id,
-                    self.device.signing_key,
-                    user.public_key,
-                    raw_msg,
-                    new_workspace_entry.encrypted_on,
+                ciphered = msg.dump_sign_and_encrypt_for(
+                    author_signkey=self.device.signing_key, recipient_pubkey=user.public_key
                 )
                 per_user_ciphered_msgs[user.user_id] = ciphered
-
-            except CryptoError as exc:
+            except DataError as exc:
                 raise FSError(
                     f"Cannot create reencryption message for `{user.user_id}`: {exc}"
                 ) from exc
@@ -984,7 +968,7 @@ class UserFS:
             # encrypt a message for each of them
             participants = await self._retreive_participants(workspace_entry.id)
             reencryption_msgs = self._generate_reencryption_messages(
-                new_workspace_entry, participants
+                new_workspace_entry, participants, now
             )
 
             # Actually ask the backend to start the reencryption

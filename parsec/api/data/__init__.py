@@ -7,7 +7,13 @@ from parsec.api.data.certif import (
     RevokedDeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-
+from parsec.api.data.message import (
+    MessageContent,
+    SharingGrantedMessageContent,
+    SharingReencryptedMessageContent,
+    SharingRevokedMessageContent,
+    PingMessageContent,
+)
 
 __api_data_version__ = (1, 0)
 
@@ -15,8 +21,15 @@ __api_data_version__ = (1, 0)
 __all__ = (
     "__api_data_version__",
     "DataError",
+    # Certifs
     "UserCertificateContent",
     "DeviceCertificateContent",
     "RevokedDeviceCertificateContent",
     "RealmRoleCertificateContent",
+    # Messages
+    "MessageContent",
+    "SharingGrantedMessageContent",
+    "SharingReencryptedMessageContent",
+    "SharingRevokedMessageContent",
+    "PingMessageContent",
 )
