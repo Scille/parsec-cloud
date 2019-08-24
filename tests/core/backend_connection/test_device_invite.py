@@ -5,13 +5,8 @@ import trio
 import pendulum
 
 from parsec.types import DeviceID
-from parsec.crypto import (
-    PrivateKey,
-    SigningKey,
-    build_device_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_user_certificate,
-)
+from parsec.crypto import PrivateKey, SigningKey
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (
@@ -33,13 +28,12 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
         claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
 
         assert claim["token"] == token
-        device_certificate = build_device_certificate(
-            alice.device_id,
-            alice.signing_key,
-            claim["device_id"],
-            claim["verify_key"],
-            pendulum.now(),
-        )
+        device_certificate = DeviceCertificateContent(
+            author=alice.device_id,
+            timestamp=pendulum.now(),
+            device_id=claim["device_id"],
+            verify_key=claim["verify_key"],
+        ).dump_and_sign(alice.signing_key)
         encrypted_answer = generate_device_encrypted_answer(
             claim["answer_public_key"],
             alice.private_key,
@@ -58,9 +52,9 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             assert isinstance(invitation_creator_user, UnverifiedRemoteUser)
             assert trustchain == []
 
-            creator = unsecure_read_user_certificate(invitation_creator_user.user_certificate)
+            creator = UserCertificateContent.unsecure_load(invitation_creator_user.user_certificate)
 
-            creator_device = unsecure_read_device_certificate(
+            creator_device = DeviceCertificateContent.unsecure_load(
                 invitation_creator_device.device_certificate
             )
             assert creator_device.device_id.user_id == creator.user_id

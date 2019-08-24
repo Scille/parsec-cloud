@@ -6,7 +6,8 @@ import pendulum
 import attr
 
 from parsec.types import DeviceID, UserID, OrganizationID
-from parsec.crypto import timestamps_in_the_ballpark, verify_realm_role_certificate, CryptoError
+from parsec.crypto import timestamps_in_the_ballpark
+from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.api.protocol import (
     RealmRole,
     MaintenanceType,
@@ -94,18 +95,20 @@ class BaseRealmComponent:
         msg = realm_create_serializer.req_load(msg)
 
         try:
-            data = verify_realm_role_certificate(
-                msg["role_certificate"], client_ctx.device_id, client_ctx.verify_key
+            data = RealmRoleCertificateContent.verify_and_load(
+                msg["role_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(data.certified_on, now):
+        if not timestamps_in_the_ballpark(data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -116,8 +119,8 @@ class BaseRealmComponent:
             realm_id=data.realm_id,
             user_id=data.user_id,
             role=data.role,
-            granted_by=data.certified_by,
-            granted_on=data.certified_on,
+            granted_by=data.author,
+            granted_on=data.timestamp,
         )
         if granted_role.granted_by.user_id != granted_role.user_id:
             return {
@@ -193,18 +196,20 @@ class BaseRealmComponent:
         msg = realm_update_roles_serializer.req_load(msg)
 
         try:
-            data = verify_realm_role_certificate(
-                msg["role_certificate"], client_ctx.device_id, client_ctx.verify_key
+            data = RealmRoleCertificateContent.verify_and_load(
+                msg["role_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(data.certified_on, now):
+        if not timestamps_in_the_ballpark(data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -215,8 +220,8 @@ class BaseRealmComponent:
             realm_id=data.realm_id,
             user_id=data.user_id,
             role=data.role,
-            granted_by=data.certified_by,
-            granted_on=data.certified_on,
+            granted_by=data.author,
+            granted_on=data.timestamp,
         )
         if granted_role.granted_by.user_id == granted_role.user_id:
             return {

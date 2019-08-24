@@ -4,10 +4,10 @@ import pytest
 from pendulum import Pendulum
 from collections import namedtuple
 
-from parsec.crypto import (
-    build_user_certificate,
-    build_device_certificate,
-    build_revoked_device_certificate,
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedDeviceCertificateContent,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
@@ -149,13 +149,12 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
             if revoker:
                 revoked_on = todo_device.get("revoked_on", now)
 
-            device_certificate = build_device_certificate(
-                certifier_id,
-                certifier_key,
-                local_device.device_id,
-                local_device.verify_key,
-                created_on,
-            )
+            device_certificate = DeviceCertificateContent(
+                author=certifier_id,
+                timestamp=created_on,
+                device_id=local_device.device_id,
+                verify_key=local_device.verify_key,
+            ).dump_and_sign(certifier_key)
 
             revoked_device_certificate = None
             if revoker:
@@ -164,9 +163,9 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
                     raise RuntimeError(f"Missing `{revoker}` to sign revocation of `{todo_device}`")
                 revoker_id = revoker_ld.device_id
                 revoker_key = revoker_ld.signing_key
-                revoked_device_certificate = build_revoked_device_certificate(
-                    revoker_id, revoker_key, local_device.device_id, revoked_on
-                )
+                revoked_device_certificate = RevokedDeviceCertificateContent(
+                    author=revoker_id, timestamp=revoked_on, device_id=local_device.device_id
+                ).dump_and_sign(revoker_key)
 
             remote_devices[local_device.device_id] = UnverifiedRemoteDevice(
                 device_certificate, revoked_device_certificate
@@ -177,14 +176,13 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
         local_user = next((u for u in local_devices.values() if str(u.user_id) == todo_user["id"]))
         certifier_id, certifier_key = _get_certifier_id_and_key(todo_user.get("certifier"))
         created_on = todo_user.get("created_on", now)
-        user_certif = build_user_certificate(
-            certifier_id=certifier_id,
-            certifier_key=certifier_key,
+        user_certif = UserCertificateContent(
+            author=certifier_id,
+            timestamp=created_on,
             user_id=local_user.user_id,
             public_key=local_user.public_key,
             is_admin=False,
-            timestamp=created_on,
-        )
+        ).dump_and_sign(certifier_key)
 
         remote_user = UnverifiedRemoteUser(user_certificate=user_certif)
         trustchain = {k: v for k, v in remote_devices.items() if k.user_id != local_user.user_id}

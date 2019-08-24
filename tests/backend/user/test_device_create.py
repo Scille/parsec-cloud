@@ -3,7 +3,7 @@
 import pytest
 import pendulum
 
-from parsec.crypto import build_device_certificate
+from parsec.api.data import DeviceCertificateContent
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocol import packb, device_create_serializer, ping_serializer
 
@@ -25,9 +25,12 @@ async def device_create(sock, **kwargs):
 @pytest.mark.trio
 async def test_device_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, alice_nd):
     now = pendulum.now()
-    device_certificate = build_device_certificate(
-        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now
-    )
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+    ).dump_and_sign(alice.signing_key)
 
     with backend.event_bus.listen() as spy:
         rep = await device_create(
@@ -56,9 +59,12 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
 @pytest.mark.trio
 async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd):
     now = pendulum.now()
-    device_certificate = build_device_certificate(
-        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now
-    )
+    device_certificate = DeviceCertificateContent(
+        author=bob.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+    ).dump_and_sign(bob.signing_key)
 
     rep = await device_create(
         alice_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
@@ -72,9 +78,12 @@ async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd
 @pytest.mark.trio
 async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
     now = pendulum.now()
-    device_certificate = build_device_certificate(
-        alice.device_id, alice.signing_key, alice2.device_id, alice2.verify_key, now
-    )
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice2.device_id,
+        verify_key=alice2.verify_key,
+    ).dump_and_sign(alice.signing_key)
 
     rep = await device_create(
         alice_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
@@ -88,9 +97,12 @@ async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
 @pytest.mark.trio
 async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
     now = pendulum.now()
-    device_certificate = build_device_certificate(
-        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now
-    )
+    device_certificate = DeviceCertificateContent(
+        author=bob.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+    ).dump_and_sign(bob.signing_key)
 
     rep = await device_create(
         bob_backend_sock, device_certificate=device_certificate, encrypted_answer=b"<good>"
@@ -101,9 +113,12 @@ async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
 @pytest.mark.trio
 async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd):
     now = pendulum.Pendulum(2000, 1, 1)
-    device_certificate = build_device_certificate(
-        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now
-    )
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+    ).dump_and_sign(alice.signing_key)
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await device_create(

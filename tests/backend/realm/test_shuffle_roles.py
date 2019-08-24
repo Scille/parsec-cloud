@@ -15,8 +15,8 @@ from hypothesis_trio.stateful import (
 from unittest.mock import ANY
 from pendulum import now as pendulum_now
 
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
-from parsec.crypto import build_realm_role_certificate
 
 from tests.common import call_with_control
 from tests.backend.realm.conftest import realm_get_role_certificates, realm_update_roles
@@ -105,14 +105,13 @@ def test_shuffle_roles(
         async def _give_role(self, author_sock, author, recipient, role):
             author_sock = await self.get_sock(author)
 
-            certif = build_realm_role_certificate(
-                author.device_id,
-                author.signing_key,
-                self.realm_id,
-                recipient.user_id,
-                role,
-                pendulum_now(),
-            )
+            certif = RealmRoleCertificateContent(
+                author=author.device_id,
+                timestamp=pendulum_now(),
+                realm_id=self.realm_id,
+                user_id=recipient.user_id,
+                role=role,
+            ).dump_and_sign(author.signing_key)
             rep = await realm_update_roles(author_sock, certif, check_rep=False)
             if author.user_id == recipient.user_id:
                 assert rep == {

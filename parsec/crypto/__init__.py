@@ -39,25 +39,6 @@ from parsec.crypto.signed import (
     decrypt_signed_msg_with_secret_key,
     decrypt_and_verify_signed_msg_with_secret_key,
 )
-from parsec.crypto.certif import (
-    CertifiedDeviceData,
-    CertifiedRevokedDeviceData,
-    CertifiedUserData,
-    CertifiedRealmRoleData,
-    verify_device_certificate,
-    verify_revoked_device_certificate,
-    verify_user_certificate,
-    verify_realm_role_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_revoked_device_certificate,
-    unsecure_read_user_certificate,
-    unsecure_read_realm_role_certificate,
-    build_device_certificate,
-    build_revoked_device_certificate,
-    build_user_certificate,
-    build_realm_role_certificate,
-    build_realm_self_role_certificate,
-)
 
 
 __all__ = (
@@ -95,22 +76,4 @@ __all__ = (
     "encrypt_signed_msg_with_secret_key",
     "decrypt_signed_msg_with_secret_key",
     "decrypt_and_verify_signed_msg_with_secret_key",
-    # certif
-    "CertifiedDeviceData",
-    "CertifiedRevokedDeviceData",
-    "CertifiedUserData",
-    "CertifiedRealmRoleData",
-    "verify_device_certificate",
-    "verify_revoked_device_certificate",
-    "verify_user_certificate",
-    "verify_realm_role_certificate",
-    "unsecure_read_device_certificate",
-    "unsecure_read_revoked_device_certificate",
-    "unsecure_read_user_certificate",
-    "unsecure_read_realm_role_certificate",
-    "build_device_certificate",
-    "build_revoked_device_certificate",
-    "build_user_certificate",
-    "build_realm_role_certificate",
-    "build_realm_self_role_certificate",
 )

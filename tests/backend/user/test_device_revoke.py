@@ -3,8 +3,8 @@
 import pytest
 import pendulum
 
-from parsec.crypto import build_revoked_device_certificate
 from parsec.backend.user import INVITATION_VALIDITY
+from parsec.api.data import RevokedDeviceCertificateContent
 from parsec.api.protocol import device_revoke_serializer, HandshakeRevokedDevice
 
 from tests.common import freeze_time
@@ -13,13 +13,17 @@ from tests.common import freeze_time
 @pytest.fixture
 def alice_revocation_from_bob(alice, bob):
     now = pendulum.now()
-    return build_revoked_device_certificate(bob.device_id, bob.signing_key, alice.device_id, now)
+    return RevokedDeviceCertificateContent(
+        author=bob.device_id, timestamp=now, device_id=alice.device_id
+    ).dump_and_sign(bob.signing_key)
 
 
 @pytest.fixture
 def bob_revocation_from_alice(alice, bob):
     now = pendulum.now()
-    return build_revoked_device_certificate(alice.device_id, alice.signing_key, bob.device_id, now)
+    return RevokedDeviceCertificateContent(
+        author=alice.device_id, timestamp=now, device_id=bob.device_id
+    ).dump_and_sign(alice.signing_key)
 
 
 async def device_revoke(sock, **kwargs):
@@ -34,12 +38,12 @@ async def test_device_revoke_ok(
     backend, backend_sock_factory, adam_backend_sock, alice, alice2, adam
 ):
     now = pendulum.Pendulum(2000, 10, 11)
-    alice_revocation = build_revoked_device_certificate(
-        adam.device_id, adam.signing_key, alice.device_id, now
-    )
-    alice2_revocation = build_revoked_device_certificate(
-        adam.device_id, adam.signing_key, alice2.device_id, now
-    )
+    alice_revocation = RevokedDeviceCertificateContent(
+        author=adam.device_id, timestamp=now, device_id=alice.device_id
+    ).dump_and_sign(adam.signing_key)
+    alice2_revocation = RevokedDeviceCertificateContent(
+        author=adam.device_id, timestamp=now, device_id=alice2.device_id
+    ).dump_and_sign(adam.signing_key)
 
     # Revoke Alice's first device
     with freeze_time(now):
@@ -81,9 +85,9 @@ async def test_device_revoke_own_device_not_admin(
     backend, backend_sock_factory, alice_backend_sock, alice, alice2
 ):
     now = pendulum.now()
-    alice2_revocation = build_revoked_device_certificate(
-        alice.device_id, alice.signing_key, alice2.device_id, now
-    )
+    alice2_revocation = RevokedDeviceCertificateContent(
+        author=alice.device_id, timestamp=now, device_id=alice2.device_id
+    ).dump_and_sign(alice.signing_key)
 
     rep = await device_revoke(alice_backend_sock, revoked_device_certificate=alice2_revocation)
     assert rep == {"status": "ok", "user_revoked_on": None}
@@ -96,9 +100,9 @@ async def test_device_revoke_own_device_not_admin(
 
 @pytest.mark.trio
 async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory):
-    revoked_device_certificate = build_revoked_device_certificate(
-        alice.device_id, alice.signing_key, mallory.device_id, pendulum.now()
-    )
+    revoked_device_certificate = RevokedDeviceCertificateContent(
+        author=alice.device_id, timestamp=pendulum.now(), device_id=mallory.device_id
+    ).dump_and_sign(alice.signing_key)
 
     rep = await device_revoke(
         alice_backend_sock, revoked_device_certificate=revoked_device_certificate
@@ -108,9 +112,9 @@ async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory
 
 @pytest.mark.trio
 async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
-    revoked_device_certificate = build_revoked_device_certificate(
-        alice.device_id, alice.signing_key, f"{alice.user_id}@foo", pendulum.now()
-    )
+    revoked_device_certificate = RevokedDeviceCertificateContent(
+        author=alice.device_id, timestamp=pendulum.now(), device_id=f"{alice.user_id}@foo"
+    ).dump_and_sign(alice.signing_key)
 
     rep = await device_revoke(
         alice_backend_sock, revoked_device_certificate=revoked_device_certificate
@@ -138,9 +142,9 @@ async def test_device_revoke_already_revoked(
 
 @pytest.mark.trio
 async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alice2, bob):
-    revoked_device_certificate = build_revoked_device_certificate(
-        alice2.device_id, alice2.signing_key, bob.device_id, pendulum.now()
-    )
+    revoked_device_certificate = RevokedDeviceCertificateContent(
+        author=alice2.device_id, timestamp=pendulum.now(), device_id=bob.device_id
+    ).dump_and_sign(alice2.signing_key)
 
     rep = await device_revoke(
         alice_backend_sock, revoked_device_certificate=revoked_device_certificate
@@ -154,9 +158,9 @@ async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alic
 @pytest.mark.trio
 async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice, bob):
     now = pendulum.Pendulum(2000, 1, 1)
-    revoked_device_certificate = build_revoked_device_certificate(
-        alice.device_id, alice.signing_key, bob.device_id, now
-    )
+    revoked_device_certificate = RevokedDeviceCertificateContent(
+        author=alice.device_id, timestamp=now, device_id=bob.device_id
+    ).dump_and_sign(alice.signing_key)
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await device_revoke(
@@ -177,9 +181,9 @@ async def test_device_revoke_other_organization(
         backend, mimick=alice.device_id, is_admin=True
     ) as sock:
 
-        revocation = build_revoked_device_certificate(
-            sock.device.device_id, sock.device.signing_key, bob.device_id, pendulum.now()
-        )
+        revocation = RevokedDeviceCertificateContent(
+            author=sock.device.device_id, timestamp=pendulum.now(), device_id=bob.device_id
+        ).dump_and_sign(sock.device.signing_key)
 
         rep = await device_revoke(sock, revoked_device_certificate=revocation)
         assert rep == {"status": "not_found"}

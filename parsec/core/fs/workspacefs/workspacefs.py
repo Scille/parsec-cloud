@@ -165,7 +165,7 @@ class WorkspaceFS:
         role_revoked = set()
         for certif in certificates:
             if certif.role is None:
-                if certif.certified_on > wentry.encrypted_on:
+                if certif.timestamp > wentry.encrypted_on:
                     role_revoked.add(certif.user_id)
                 has_role.discard(certif.user_id)
             else:

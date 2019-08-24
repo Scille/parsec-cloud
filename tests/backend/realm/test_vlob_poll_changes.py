@@ -4,8 +4,8 @@ import pytest
 from uuid import UUID
 from pendulum import Pendulum, now as pendulum_now
 
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
-from parsec.crypto import build_realm_role_certificate
 
 from tests.backend.realm.conftest import realm_update_roles, vlob_update, vlob_poll_changes
 
@@ -20,9 +20,13 @@ UNKNOWN_REALM_ID = UUID("0000000000000000000000000000000F")
 async def _realm_generate_certif_and_update_roles_or_fail(
     backend_sock, author, realm_id, user_id, role
 ):
-    certif = build_realm_role_certificate(
-        author.device_id, author.signing_key, realm_id, user_id, role, pendulum_now()
-    )
+    certif = RealmRoleCertificateContent(
+        author=author.device_id,
+        timestamp=pendulum_now(),
+        realm_id=realm_id,
+        user_id=user_id,
+        role=role,
+    ).dump_and_sign(author.signing_key)
     return await realm_update_roles(backend_sock, certif, check_rep=False)
 
 

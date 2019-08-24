@@ -4,6 +4,7 @@ import pytest
 from uuid import UUID, uuid4
 from pendulum import Pendulum, now as pendulum_now
 
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
     RealmRole,
     realm_create_serializer,
@@ -22,7 +23,6 @@ from parsec.api.protocol import (
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.backend.realm import RealmGrantedRole
-from parsec.crypto import build_realm_self_role_certificate
 
 
 VLOB_ID = UUID("10000000000000000000000000000000")
@@ -242,9 +242,9 @@ def realm_factory():
     async def _realm_factory(backend, author, realm_id=None, now=None):
         realm_id = realm_id or uuid4()
         now = now or pendulum_now()
-        certif = build_realm_self_role_certificate(
-            author.device_id, author.signing_key, realm_id, now
-        )
+        certif = RealmRoleCertificateContent.build_realm_root_certif(
+            author=author.device_id, timestamp=now, realm_id=realm_id
+        ).dump_and_sign(author.signing_key)
         with backend.event_bus.listen() as spy:
             await backend.realm.create(
                 organization_id=author.organization_id,

@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import RealmRole
-from parsec.crypto import build_realm_role_certificate
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import call_with_control
@@ -80,9 +80,13 @@ def test_workspace_reencryption_need(
 
         async def _update_role(self, author, user, role=RealmRole.MANAGER):
             now = pendulum_now()
-            certif = build_realm_role_certificate(
-                author.device_id, author.signing_key, self.wid, user.user_id, role, now
-            )
+            certif = RealmRoleCertificateContent(
+                author=author.device_id,
+                timestamp=now,
+                realm_id=self.wid,
+                user_id=user.user_id,
+                role=role,
+            ).dump_and_sign(author.signing_key)
             await self.backend.realm.update_roles(
                 author.organization_id,
                 RealmGrantedRole(

@@ -13,12 +13,9 @@ from parsec.crypto import (
     VerifyKey,
     encrypt_raw_for,
     decrypt_raw_for,
-    build_device_certificate,
-    build_user_certificate,
-    verify_user_certificate,
 )
-
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
+from parsec.api.data import DataError, UserCertificateContent, DeviceCertificateContent
 from parsec.core.types import LocalDevice, EntryID, EntryIDField
 from parsec.core.backend_connection import (
     BackendCmdsTimeout,
@@ -303,14 +300,14 @@ async def claim_user(
 
             # 4) Verify user certificate and check admin status
             try:
-                user = verify_user_certificate(
+                user = UserCertificateContent.verify_and_load(
                     unverified_user.user_certificate,
-                    invitation_creator_device.device_id,
-                    invitation_creator_device.verify_key,
+                    author_verify_key=invitation_creator_device.verify_key,
+                    expected_author=invitation_creator_device.device_id,
                 )
                 new_device = new_device.evolve(is_admin=user.is_admin)
 
-            except CryptoError as exc:
+            except DataError as exc:
                 raise InviteClaimCryptoError(str(exc)) from exc
 
     except BackendNotAvailable as exc:
@@ -416,11 +413,14 @@ async def invite_and_create_device(
 
         try:
             now = pendulum.now()
-            device_certificate = build_device_certificate(
-                device.device_id, device.signing_key, claim["device_id"], claim["verify_key"], now
-            )
+            device_certificate = DeviceCertificateContent(
+                author=device.device_id,
+                timestamp=now,
+                device_id=claim["device_id"],
+                verify_key=claim["verify_key"],
+            ).dump_and_sign(device.signing_key)
 
-        except CryptoError as exc:
+        except DataError as exc:
             raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
 
         encrypted_answer = generate_device_encrypted_answer(
@@ -477,19 +477,22 @@ async def invite_and_create_user(
         device_id = claim["device_id"]
         now = pendulum.now()
         try:
-            user_certificate = build_user_certificate(
-                device.device_id,
-                device.signing_key,
-                device_id.user_id,
-                claim["public_key"],
-                is_admin,
-                now,
-            )
-            device_certificate = build_device_certificate(
-                device.device_id, device.signing_key, device_id, claim["verify_key"], now
-            )
 
-        except CryptoError as exc:
+            user_certificate = UserCertificateContent(
+                author=device.device_id,
+                timestamp=now,
+                user_id=device_id.user_id,
+                public_key=claim["public_key"],
+                is_admin=is_admin,
+            ).dump_and_sign(device.signing_key)
+            device_certificate = DeviceCertificateContent(
+                author=device.device_id,
+                timestamp=now,
+                device_id=device_id,
+                verify_key=claim["verify_key"],
+            ).dump_and_sign(device.signing_key)
+
+        except DataError as exc:
             raise InviteClaimError(
                 f"Cannot generate user&first device certificates: {exc}"
             ) from exc

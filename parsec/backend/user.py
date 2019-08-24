@@ -6,16 +6,12 @@ from typing import List, Optional, Tuple
 import pendulum
 
 from parsec.types import UserID, DeviceID, OrganizationID
-from parsec.crypto import (
-    CryptoError,
-    VerifyKey,
-    PublicKey,
-    verify_user_certificate,
-    verify_device_certificate,
-    verify_revoked_device_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_user_certificate,
-    timestamps_in_the_ballpark,
+from parsec.crypto import VerifyKey, PublicKey, timestamps_in_the_ballpark
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedDeviceCertificateContent,
+    DataError,
 )
 from parsec.api.protocol import (
     user_get_serializer,
@@ -73,7 +69,7 @@ class Device:
 
     @property
     def verify_key(self) -> VerifyKey:
-        return unsecure_read_device_certificate(self.device_certificate).verify_key
+        return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
     device_certificate: bytes
@@ -95,7 +91,7 @@ class User:
 
     @property
     def public_key(self) -> PublicKey:
-        return unsecure_read_user_certificate(self.user_certificate).public_key
+        return UserCertificateContent.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
     user_certificate: bytes
@@ -355,27 +351,31 @@ class BaseUserComponent:
         msg = user_create_serializer.req_load(msg)
 
         try:
-            d_data = verify_device_certificate(
-                msg["device_certificate"], client_ctx.device_id, client_ctx.verify_key
+            d_data = DeviceCertificateContent.verify_and_load(
+                msg["device_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
-            u_data = verify_user_certificate(
-                msg["user_certificate"], client_ctx.device_id, client_ctx.verify_key
+            u_data = UserCertificateContent.verify_and_load(
+                msg["user_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if u_data.certified_on != d_data.certified_on:
+        if u_data.timestamp != d_data.timestamp:
             return {
                 "status": "invalid_data",
                 "reason": "Device and User certifications must have the same timestamp.",
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(u_data.certified_on, now):
+        if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -392,14 +392,14 @@ class BaseUserComponent:
                 user_id=u_data.user_id,
                 is_admin=u_data.is_admin,
                 user_certificate=msg["user_certificate"],
-                user_certifier=u_data.certified_by,
-                created_on=u_data.certified_on,
+                user_certifier=u_data.author,
+                created_on=u_data.timestamp,
             )
             first_devices = Device(
                 device_id=d_data.device_id,
                 device_certificate=msg["device_certificate"],
-                device_certifier=d_data.certified_by,
-                created_on=d_data.certified_on,
+                device_certifier=d_data.author,
+                created_on=d_data.timestamp,
             )
             await self.create_user(client_ctx.organization_id, user, first_devices)
 
@@ -549,17 +549,19 @@ class BaseUserComponent:
         msg = device_create_serializer.req_load(msg)
 
         try:
-            data = verify_device_certificate(
-                msg["device_certificate"], client_ctx.device_id, client_ctx.verify_key
+            data = DeviceCertificateContent.verify_and_load(
+                msg["device_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.certified_on, pendulum.now()):
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -572,8 +574,8 @@ class BaseUserComponent:
             device = Device(
                 device_id=data.device_id,
                 device_certificate=msg["device_certificate"],
-                device_certifier=data.certified_by,
-                created_on=data.certified_on,
+                device_certifier=data.author,
+                created_on=data.timestamp,
             )
             await self.create_device(
                 client_ctx.organization_id, device, encrypted_answer=msg["encrypted_answer"]
@@ -588,17 +590,19 @@ class BaseUserComponent:
         msg = device_revoke_serializer.req_load(msg)
 
         try:
-            data = verify_revoked_device_certificate(
-                msg["revoked_device_certificate"], client_ctx.device_id, client_ctx.verify_key
+            data = RevokedDeviceCertificateContent.verify_and_load(
+                msg["revoked_device_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if not timestamps_in_the_ballpark(data.certified_on, pendulum.now()):
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",
@@ -622,8 +626,8 @@ class BaseUserComponent:
                 client_ctx.organization_id,
                 data.device_id,
                 msg["revoked_device_certificate"],
-                data.certified_by,
-                data.certified_on,
+                data.author,
+                data.timestamp,
             )
 
         except UserNotFoundError:

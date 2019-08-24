@@ -10,8 +10,6 @@ from structlog import get_logger
 from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
 from parsec.crypto import (
-    build_realm_self_role_certificate,
-    build_realm_role_certificate,
     encrypt_signed_msg_for,
     decrypt_and_verify_signed_msg_for,
     encrypt_signed_msg_with_secret_key,
@@ -22,6 +20,7 @@ from parsec.crypto import (
     SecretKey,
 )
 from parsec.serde import SerdeError
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import MaintenanceType
 from parsec.core.types import (
     EntryID,
@@ -442,12 +441,11 @@ class UserFS:
 
         # Make sure the corresponding realm has been created in the backend
         if base_um.is_placeholder:
-            certif = build_realm_self_role_certificate(
-                self.device.device_id,
-                self.device.signing_key,
-                self.device.user_manifest_id,
-                pendulum_now(),
-            )
+            certif = RealmRoleCertificateContent.build_realm_root_certif(
+                author=self.device.device_id,
+                timestamp=pendulum_now(),
+                realm_id=self.device.user_manifest_id,
+            ).dump_and_sign(self.device.signing_key)
 
             try:
                 await self.backend_cmds.realm_create(certif)
@@ -576,14 +574,13 @@ class UserFS:
         # given they are idempotent
 
         # Step 1)
-        role_certificate = build_realm_role_certificate(
-            certifier_id=self.device.device_id,
-            certifier_key=self.device.signing_key,
+        role_certificate = RealmRoleCertificateContent(
+            author=self.device.device_id,
+            timestamp=pendulum_now(),
             realm_id=workspace_id,
             user_id=recipient,
             role=role,
-            timestamp=pendulum_now(),
-        )
+        ).dump_and_sign(self.device.signing_key)
 
         try:
             await self.backend_cmds.realm_update_roles(role_certificate)

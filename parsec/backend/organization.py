@@ -6,13 +6,8 @@ from typing import Optional
 from secrets import token_hex
 
 from parsec.types import OrganizationID
-from parsec.crypto import (
-    CryptoError,
-    VerifyKey,
-    verify_device_certificate,
-    verify_user_certificate,
-    timestamps_in_the_ballpark,
-)
+from parsec.crypto import VerifyKey, timestamps_in_the_ballpark
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
 from parsec.api.protocol import organization_create_serializer, organization_bootstrap_serializer
 from parsec.backend.user import new_user_factory, User, Device
 from parsec.backend.utils import catch_protocol_errors, anonymous_api
@@ -81,16 +76,20 @@ class BaseOrganizationComponent:
         root_verify_key = msg["root_verify_key"]
 
         try:
-            u_data = verify_user_certificate(msg["user_certificate"], None, root_verify_key)
-            d_data = verify_device_certificate(msg["device_certificate"], None, root_verify_key)
+            u_data = UserCertificateContent.verify_and_load(
+                msg["user_certificate"], author_verify_key=root_verify_key, expected_author=None
+            )
+            d_data = DeviceCertificateContent.verify_and_load(
+                msg["device_certificate"], author_verify_key=root_verify_key, expected_author=None
+            )
 
-        except CryptoError as exc:
+        except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
 
-        if u_data.certified_on != d_data.certified_on:
+        if u_data.timestamp != d_data.timestamp:
             return {
                 "status": "invalid_data",
                 "reason": "Device and user certificates must have the same timestamp.",
@@ -103,7 +102,7 @@ class BaseOrganizationComponent:
             }
 
         now = pendulum.now()
-        if not timestamps_in_the_ballpark(u_data.certified_on, now):
+        if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid timestamp in certification.",

@@ -6,13 +6,12 @@ from typing import Optional
 from uuid import UUID
 
 from parsec.types import DeviceID, DeviceName, UserID
+from parsec.crypto import PublicKey, VerifyKey
 from parsec.api.protocol import RealmRole
-from parsec.crypto import (
-    PublicKey,
-    VerifyKey,
-    unsecure_read_user_certificate,
-    unsecure_read_device_certificate,
-    unsecure_read_realm_role_certificate,
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RealmRoleCertificateContent,
 )
 
 
@@ -22,7 +21,7 @@ class UnverifiedRemoteUser:
     fetched_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
     def __repr__(self):
-        info = unsecure_read_user_certificate(self.user_certificate)
+        info = UserCertificateContent.unsecure_load(self.user_certificate)
         return f"{self.__class__.__name__}({info.user_id})"
 
 
@@ -33,7 +32,7 @@ class UnverifiedRemoteDevice:
     fetched_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
     def __repr__(self):
-        info = unsecure_read_device_certificate(self.device_certificate)
+        info = DeviceCertificateContent.unsecure_load(self.device_certificate)
         return f"{self.__class__.__name__}({info.device_id})"
 
 
@@ -43,7 +42,7 @@ class UnverifiedRealmRole:
     fetched_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
     def __repr__(self):
-        info = unsecure_read_realm_role_certificate(self.realm_role_certificate)
+        info = RealmRoleCertificateContent.unsecure_load(self.realm_role_certificate)
         return (
             f"{self.__class__.__name__}(realm={info.realm_id}, "
             f"user={info.user_id}, role={info.role})"

@@ -8,13 +8,12 @@ from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import (
-    SigningKey,
-    encrypt_signed_msg_with_secret_key,
-    build_user_certificate,
-    build_device_certificate,
-    build_revoked_device_certificate,
-    build_realm_role_certificate,
+from parsec.crypto import SigningKey, encrypt_signed_msg_with_secret_key
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedDeviceCertificateContent,
+    RealmRoleCertificateContent,
 )
 from parsec.api.protocol import RealmRole
 from parsec.core.types import (
@@ -265,12 +264,16 @@ def local_device_to_backend_user(
         certifier_signing_key = certifier.signing_key
 
     now = pendulum.now()
-    user_certificate = build_user_certificate(
-        certifier_id, certifier_signing_key, device.user_id, device.public_key, device.is_admin, now
-    )
-    device_certificate = build_device_certificate(
-        certifier_id, certifier_signing_key, device.device_id, device.verify_key, now
-    )
+    user_certificate = UserCertificateContent(
+        author=certifier_id,
+        timestamp=now,
+        user_id=device.user_id,
+        public_key=device.public_key,
+        is_admin=device.is_admin,
+    ).dump_and_sign(certifier_signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=certifier_id, timestamp=now, device_id=device.device_id, verify_key=device.verify_key
+    ).dump_and_sign(certifier_signing_key)
     return new_backend_user_factory(
         device_id=device.device_id,
         is_admin=device.is_admin,
@@ -355,14 +358,13 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     self_granted_role=RealmGrantedRole(
                         realm_id=realm_id,
                         user_id=author.user_id,
-                        certificate=build_realm_role_certificate(
-                            certifier_id=author.device_id,
-                            certifier_key=author.signing_key,
+                        certificate=RealmRoleCertificateContent(
+                            author=author.device_id,
+                            timestamp=generated_on,
                             realm_id=realm_id,
                             user_id=author.user_id,
                             role=RealmRole.OWNER,
-                            timestamp=generated_on,
-                        ),
+                        ).dump_and_sign(author.signing_key),
                         role=RealmRole.OWNER,
                         granted_by=author.device_id,
                         granted_on=generated_on,
@@ -484,9 +486,9 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             self.binded_local_devices.append(device)
 
         async def bind_revocation(self, device: LocalDevice, certifier: LocalDevice):
-            revoked_device_certificate = build_revoked_device_certificate(
-                certifier.device_id, certifier.signing_key, device.device_id, pendulum.now()
-            )
+            revoked_device_certificate = RevokedDeviceCertificateContent(
+                author=certifier.device_id, timestamp=pendulum.now(), device_id=device.device_id
+            ).dump_and_sign(certifier.signing_key)
             await self.backend.user.revoke_device(
                 device.organization_id,
                 device.device_id,

@@ -5,7 +5,8 @@ import pendulum
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
+from parsec.crypto import SigningKey
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.types import BackendOrganizationBootstrapAddr, DeviceID, OrganizationID
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
@@ -71,12 +72,16 @@ async def _do_bootstrap_organization(
         raise JobResultError("user-exists") from exc
 
     now = pendulum.now()
-    user_certificate = build_user_certificate(
-        None, root_signing_key, device.user_id, device.public_key, device.is_admin, now
-    )
-    device_certificate = build_device_certificate(
-        None, root_signing_key, device_id, device.verify_key, now
-    )
+    user_certificate = UserCertificateContent(
+        author=None,
+        timestamp=now,
+        user_id=device.user_id,
+        public_key=device.public_key,
+        is_admin=device.is_admin,
+    ).dump_and_sign(root_signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=None, timestamp=now, device_id=device_id, verify_key=device.verify_key
+    ).dump_and_sign(root_signing_key)
 
     try:
         async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:

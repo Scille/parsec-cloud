@@ -6,12 +6,8 @@ from pendulum import Pendulum, now as pendulum_now
 from unittest.mock import ANY
 
 from parsec.api.protocol import RealmRole
+from parsec.api.data import RealmRoleCertificateContent
 from parsec.backend.realm import RealmGrantedRole
-from parsec.crypto import (
-    build_realm_role_certificate,
-    unsecure_read_realm_role_certificate,
-    CertifiedRealmRoleData,
-)
 
 from tests.common import freeze_time
 from tests.backend.realm.conftest import realm_update_roles, realm_get_role_certificates
@@ -34,24 +30,28 @@ async def test_get_roles_not_found(alice_backend_sock):
 async def _realm_get_clear_role_certifs(sock, realm_id):
     rep = await realm_get_role_certificates(sock, realm_id)
     assert rep["status"] == "ok"
-    cooked = [unsecure_read_realm_role_certificate(certif) for certif in rep["certificates"]]
-    return [item for item in sorted(cooked, key=lambda x: x.certified_on)]
+    cooked = [RealmRoleCertificateContent.unsecure_load(certif) for certif in rep["certificates"]]
+    return [item for item in sorted(cooked, key=lambda x: x.timestamp)]
 
 
 async def _realm_generate_certif_and_update_roles_or_fail(
     backend_sock, author, realm_id, user_id, role
 ):
-    certif = build_realm_role_certificate(
-        author.device_id, author.signing_key, realm_id, user_id, role, pendulum_now()
-    )
+    certif = RealmRoleCertificateContent(
+        author=author.device_id,
+        timestamp=pendulum_now(),
+        realm_id=realm_id,
+        user_id=user_id,
+        role=role,
+    ).dump_and_sign(author.signing_key)
     return await realm_update_roles(backend_sock, certif, check_rep=False)
 
 
 async def _backend_realm_generate_certif_and_update_roles(backend, author, realm_id, user_id, role):
     now = pendulum_now()
-    certif = build_realm_role_certificate(
-        author.device_id, author.signing_key, realm_id, user_id, role, now
-    )
+    certif = RealmRoleCertificateContent(
+        author=author.device_id, timestamp=now, realm_id=realm_id, user_id=user_id, role=role
+    ).dump_and_sign(author.signing_key)
     await backend.realm.update_roles(
         author.organization_id,
         RealmGrantedRole(
@@ -125,29 +125,29 @@ async def test_remove_role_idempotent(
 
     certifs = await _realm_get_clear_role_certifs(alice_backend_sock, realm)
     expected_certifs = [
-        CertifiedRealmRoleData(
+        RealmRoleCertificateContent(
+            author=alice.device_id,
+            timestamp=Pendulum(2000, 1, 2),
             realm_id=realm,
             user_id=alice.user_id,
             role=RealmRole.OWNER,
-            certified_by=alice.device_id,
-            certified_on=Pendulum(2000, 1, 2),
         )
     ]
     if start_with_existing_role:
         expected_certifs += [
-            CertifiedRealmRoleData(
+            RealmRoleCertificateContent(
+                author=alice.device_id,
+                timestamp=Pendulum(2000, 1, 3),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=RealmRole.MANAGER,
-                certified_by=alice.device_id,
-                certified_on=Pendulum(2000, 1, 3),
             ),
-            CertifiedRealmRoleData(
+            RealmRoleCertificateContent(
+                author=alice.device_id,
+                timestamp=Pendulum(2000, 1, 4),
                 realm_id=realm,
                 user_id=bob.user_id,
                 role=None,
-                certified_by=alice.device_id,
-                certified_on=Pendulum(2000, 1, 4),
             ),
         ]
     assert certifs == expected_certifs

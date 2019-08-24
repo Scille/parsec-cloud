@@ -7,16 +7,13 @@ from typing import Dict, Optional, List, Tuple
 
 from parsec.serde import SerdeError
 from parsec.crypto import (
-    build_realm_self_role_certificate,
     encrypt_signed_msg_with_secret_key,
     decrypt_raw_with_secret_key,
     encrypt_raw_with_secret_key,
     decrypt_and_verify_signed_msg_with_secret_key,
-    unsecure_read_realm_role_certificate,
-    verify_realm_role_certificate,
     CryptoError,
-    CertifiedRealmRoleData,
 )
+from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.types import UserID, DeviceID
 from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import (
@@ -83,12 +80,14 @@ class RemoteLoader:
             unsecure_certifs = sorted(
                 [
                     (
-                        unsecure_read_realm_role_certificate(unverified.realm_role_certificate),
+                        RealmRoleCertificateContent.unsecure_load(
+                            unverified.realm_role_certificate
+                        ),
                         unverified.realm_role_certificate,
                     )
                     for unverified in unverifieds
                 ],
-                key=lambda x: x[0].certified_on,
+                key=lambda x: x[0].timestamp,
             )
 
             current_roles = {}
@@ -97,9 +96,13 @@ class RemoteLoader:
 
             # Now verify each certif
             for unsecure_certif, raw_certif in unsecure_certifs:
-                author = await self.remote_device_manager.get_device(unsecure_certif.certified_by)
+                author = await self.remote_device_manager.get_device(unsecure_certif.author)
 
-                verify_realm_role_certificate(raw_certif, author.device_id, author.verify_key)
+                RealmRoleCertificateContent.verify_and_load(
+                    raw_certif,
+                    author_verify_key=author.verify_key,
+                    expected_author=author.device_id,
+                )
 
                 # Make sure author had the right to do this
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
@@ -113,12 +116,12 @@ class RemoteLoader:
                     needed_roles = owner_only
                 else:
                     needed_roles = owner_or_manager
-                if current_roles.get(unsecure_certif.certified_by.user_id) not in needed_roles:
+                if current_roles.get(unsecure_certif.author.user_id) not in needed_roles:
                     raise FSError(
                         f"Invalid realm role certificates: "
-                        f"{unsecure_certif.certified_by} has not right to give "
+                        f"{unsecure_certif.author} has not right to give "
                         f"{unsecure_certif.role} role to {unsecure_certif.user_id} "
-                        f"on {unsecure_certif.certified_on}"
+                        f"on {unsecure_certif.timestamp}"
                     )
 
                 if unsecure_certif.role is None:
@@ -127,7 +130,7 @@ class RemoteLoader:
                     current_roles[unsecure_certif.user_id] = unsecure_certif.role
 
         # Decryption error
-        except CryptoError as exc:
+        except DataError as exc:
             raise FSError(f"Invalid realm role certificates: {exc}") from exc
 
         # Now unsecure_certifs is no longer unsecure we have valided it items
@@ -135,7 +138,7 @@ class RemoteLoader:
 
     async def load_realm_role_certificates(
         self, realm_id: Optional[EntryID] = None
-    ) -> List[CertifiedRealmRoleData]:
+    ) -> List[RealmRoleCertificateContent]:
         """
         Raises:
             FSError
@@ -402,9 +405,9 @@ class RemoteLoader:
             FSError
             FSBackendOfflineError
         """
-        certif = build_realm_self_role_certificate(
-            self.device.device_id, self.device.signing_key, realm_id, pendulum.now()
-        )
+        certif = RealmRoleCertificateContent.build_realm_root_certif(
+            author=self.device.device_id, timestamp=pendulum.now(), realm_id=realm_id
+        ).dump_and_sign(self.device.signing_key)
 
         try:
             await self.backend_cmds.realm_create(certif)
