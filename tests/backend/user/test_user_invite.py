@@ -19,7 +19,7 @@ async def user_invite(sock, **kwargs):
 
 
 @pytest.mark.trio
-async def test_user_invite(backend, alice_backend_sock, alice, mallory, monitor):
+async def test_user_invite(backend, alice_backend_sock, alice, mallory):
     with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
