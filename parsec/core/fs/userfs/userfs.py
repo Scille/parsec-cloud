@@ -53,6 +53,7 @@ from parsec.core.remote_devices_manager import (
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.realm_storage import RealmStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
@@ -130,9 +131,6 @@ class ReencryptionJob:
 
 
 class UserFS:
-
-    local_storage_class = LocalStorage
-
     def __init__(
         self,
         device: LocalDevice,
@@ -147,7 +145,7 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
 
-        self.local_storage = self.local_storage_class(device.device_id, device.local_symkey, path)
+        self.storage = None
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
@@ -168,11 +166,12 @@ class UserFS:
             lambda: wentry,
             self.backend_cmds,
             self.remote_devices_manager,
-            self.local_storage,
+            # Hack, but fine as long as we only call `load_realm_current_roles`
+            None,
         )
 
     def __enter__(self):
-        self._exit_stack.enter_context(self.local_storage)
+        self.storage = self._exit_stack.enter_context(RealmStorage.factory(self.device, self.path))
         return self
 
     def __exit__(self, *args):
@@ -187,7 +186,7 @@ class UserFS:
         Raises: Nothing !
         """
         try:
-            return self.local_storage.get_manifest(self.user_manifest_id)
+            return self.storage.get_manifest(self.user_manifest_id)
 
         except FSLocalMissError:
             # In the unlikely event the user manifest is not present in
@@ -201,13 +200,12 @@ class UserFS:
         """
         Raises: Nothing
         """
-        self.local_storage.set_manifest(self.user_manifest_id, manifest, check_lock_status=False)
+        self.storage.set_manifest(self.user_manifest_id, manifest)
 
     def get_workspace_local_storage(self, workspace_id):
         if workspace_id not in self._workspace_storages:
-            cls = self.local_storage_class
             path = self.path / str(workspace_id)
-            local_storage = cls(self.device.device_id, self.device.local_symkey, path)
+            local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
             self._exit_stack.enter_context(local_storage)
             self._workspace_storages[workspace_id] = local_storage
         return self._workspace_storages[workspace_id]

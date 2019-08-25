@@ -15,11 +15,13 @@ import trio_asyncio
 from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
+import sqlite3
 
 from parsec.monitoring import TaskMonitoringInstrument
 from parsec.types import BackendAddr, OrganizationID
 from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
+from parsec.core.fs.realm_storage import _connect as vanilla_realm_storage_connect
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.backend import BackendApp, config_factory as backend_config_factory
@@ -338,8 +340,37 @@ def backend_addr(tcp_stream_spy):
 
 @pytest.fixture
 def persistent_mockup(monkeypatch):
-    monkeypatch.setattr(LocalStorage, "persistent_storage_class", InMemoryPersistentStorage)
-    with InMemoryPersistentStorage.mockup_context() as ctx:
+    realm_connect_cache = {}
+    with contextlib.ExitStack() as realm_connect_stack, InMemoryPersistentStorage.mockup_context() as ctx:
+        monkeypatch.setattr(LocalStorage, "persistent_storage_class", InMemoryPersistentStorage)
+
+        @contextlib.contextmanager
+        def _mocked_realm_storage_connect(dbpath: str):
+            try:
+                open_cursor = realm_connect_cache[dbpath]
+            except KeyError:
+                open_cursor = realm_connect_stack.enter_context(
+                    vanilla_realm_storage_connect(":memory:")
+                )
+                realm_connect_cache[dbpath] = open_cursor
+            yield open_cursor
+
+        monkeypatch.setattr("parsec.core.fs.realm_storage._connect", _mocked_realm_storage_connect)
+
+        vanilla_clear = ctx.clear
+
+        def _mocked_clear():
+            try:
+                realm_connect_stack.pop_all().close()
+            except sqlite3.ProgrammingError:
+                # Connections will raise error if they were opened from another
+                # thread. This only occurs for a couple of tests so no big deal.
+                pass
+            realm_connect_cache.clear()
+            vanilla_clear()
+
+        ctx.clear = _mocked_clear
+
         yield ctx
 
 
