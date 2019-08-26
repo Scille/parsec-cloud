@@ -9,7 +9,8 @@ import pendulum
 
 from parsec.utils import trio_run
 from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
-from parsec.crypto import SigningKey, build_user_certificate, build_device_certificate
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.crypto import SigningKey
 from parsec.logging import configure_logging
 from parsec.core import logged_core_factory
 from parsec.core.types import WorkspaceRole
@@ -118,12 +119,19 @@ async def _amain(
         save_device_with_password(config_dir, alice_device, password, force=force)
 
         now = pendulum.now()
-        user_certificate = build_user_certificate(
-            None, root_signing_key, alice_device.user_id, alice_device.public_key, True, now
-        )
-        device_certificate = build_device_certificate(
-            None, root_signing_key, alice_device_id, alice_device.verify_key, now
-        )
+        user_certificate = UserCertificateContent(
+            author=None,
+            timestamp=now,
+            user_id=alice_device.user_id,
+            public_key=alice_device.public_key,
+            is_admin=True,
+        ).dump_and_sign(author_signkey=root_signing_key)
+        device_certificate = DeviceCertificateContent(
+            author=None,
+            timestamp=now,
+            device_id=alice_device.device_id,
+            verify_key=alice_device.verify_key,
+        ).dump_and_sign(author_signkey=root_signing_key)
 
         await cmds.organization_bootstrap(
             organization_bootstrap_addr.organization_id,
