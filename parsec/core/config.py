@@ -72,6 +72,7 @@ class CoreConfig:
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
     gui_windows_left_panel: bool = True
+    gui_allow_multiple_instances: bool = False
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -94,6 +95,7 @@ def config_factory(
     gui_check_version_at_startup: bool = True,
     gui_workspace_color: bool = False,
     gui_windows_left_panel: bool = True,
+    gui_allow_multiple_instances: bool = False,
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
@@ -114,6 +116,7 @@ def config_factory(
         gui_check_version_at_startup=gui_check_version_at_startup,
         gui_workspace_color=gui_workspace_color,
         gui_windows_left_panel=gui_windows_left_panel,
+        gui_allow_multiple_instances=gui_allow_multiple_instances,
     )
 
 
@@ -175,6 +178,7 @@ def save_config(config: CoreConfig):
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_windows_left_panel": config.gui_windows_left_panel,
+                "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
             },
             indent=True,
         )

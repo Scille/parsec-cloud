@@ -61,7 +61,7 @@ background-color: rgb(255, 255, 255);
         <x>0</x>
         <y>0</y>
         <width>467</width>
-        <height>482</height>
+        <height>511</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -138,6 +138,13 @@ background-color: rgb(255, 255, 255);
              <widget class="QCheckBox" name="check_box_tray">
               <property name="text">
                <string>CHECK_MINIMIZE_IN_TRAY</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="check_box_multiple_instances">
+              <property name="text">
+               <string>CHECK_ALLOW_MULTIPLE_INSTANCES</string>
               </property>
              </widget>
             </item>

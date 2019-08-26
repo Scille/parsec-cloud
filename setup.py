@@ -255,6 +255,7 @@ def _extract_libs_cffi_backend():
 
 build_exe_options = {
     "packages": [
+        "asyncio",
         "parsec.core.gui.ui",
         "idna",
         "sentry_sdk.integrations",
@@ -327,6 +328,7 @@ extra_requirements = {
         'fusepy==3.0.1;platform_system=="Linux"',
         'winfspy==0.4.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
+        "psutil==5.6.3",
     ],
     "backend": [
         # PostgreSQL
@@ -368,7 +370,7 @@ setup(
     # As you may know, setuptools is really broken, so we have to roll our
     # globing ourself to include non-python files...
     package_data={
-        "parsec.backend.drivers.postgresql": "*.sql",
+        "parsec.backend.drivers.postgresql": glob.glob("parsec/backend/**/*.sql"),
         "parsec.core.gui": [
             x[len("parsec/core/gui/") :]
             for x in itertools.chain(
