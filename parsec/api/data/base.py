@@ -212,4 +212,9 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(signed)
+        return self.verify_and_load(
+            signed,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author,
+            expected_timestamp=expected_timestamp,
+        )
