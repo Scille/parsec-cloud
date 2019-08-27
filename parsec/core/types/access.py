@@ -182,7 +182,7 @@ class ChunkSchema(UnknownCheckedSchema):
     stop = fields.Integer(required=True, validate=validate.Range(min=1))
     raw_offset = fields.Integer(required=True, validate=validate.Range(min=0))
     raw_size = fields.Integer(required=True, validate=validate.Range(min=1))
-    access = fields.Nested(BlockAccessSchema, missing=None)
+    access = fields.Nested(BlockAccessSchema, required=True, allow_none=True)
 
     @post_load
     def make_obj(self, data):
@@ -233,7 +233,7 @@ class WorkspaceEntrySchema(UnknownCheckedSchema):
     encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
     encrypted_on = fields.DateTime(required=True)
     role_cached_on = fields.DateTime(required=True)
-    role = WorkspaceRoleField(allow_none=True, missing=None)
+    role = WorkspaceRoleField(required=True, allow_none=True)
 
     @post_load
     def make_obj(self, data):

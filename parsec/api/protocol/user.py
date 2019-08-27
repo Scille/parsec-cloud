@@ -48,7 +48,7 @@ user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
 
 
 class FindUserReqSchema(BaseReqSchema):
-    query = fields.String(missing=None, allow_none=True)
+    query = fields.String(missing=None)
     omit_revoked = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)

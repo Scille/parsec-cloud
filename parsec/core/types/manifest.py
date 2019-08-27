@@ -12,7 +12,7 @@ from parsec.core.types import WorkspaceEntry, WorkspaceEntrySchema, EntryID, Ent
 
 class LocalUserManifestSchema(BaseSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
-    base = fields.Nested(UserManifest.SCHEMA_CLS, allow_none=True, missing=None)
+    base = fields.Nested(UserManifest.SCHEMA_CLS, required=True, allow_none=True)
     id = EntryIDField(required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)

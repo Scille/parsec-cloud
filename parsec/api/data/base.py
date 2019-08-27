@@ -26,7 +26,7 @@ class DataSerializationError(SerdePackingError, DataError):
 
 
 class BaseSignedDataSchema(BaseSchema):
-    author = fields.DeviceID(missing=None)
+    author = fields.DeviceID(required=True, allow_none=True)
     timestamp = fields.DateTime(required=True)
 
 

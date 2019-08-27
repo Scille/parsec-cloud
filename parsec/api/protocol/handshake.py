@@ -93,7 +93,7 @@ handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 class HandshakeResultSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("result", required=True)
     result = fields.String(required=True)
-    help = fields.String(allow_none=True, missing=None)
+    help = fields.String(missing=None)
 
 
 handshake_result_serializer = serializer_factory(HandshakeResultSchema)
