@@ -225,6 +225,44 @@ async def test_sync_under_concurrency(
 
 
 @pytest.mark.trio
+async def test_modify_user_manifest_placeholder(
+    running_backend, backend_data_binder, local_device_factory, user_fs_factory
+):
+    device = local_device_factory()
+    await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
+
+    async with user_fs_factory(device, initialize_local_storage=False) as user_fs:
+        with freeze_time("2000-01-02"):
+            wid = await user_fs.workspace_create("w1")
+        um = user_fs.get_user_manifest()
+
+        expected_um = LocalUserManifest(
+            base=None,
+            id=device.user_manifest_id,
+            need_sync=True,
+            updated=Pendulum(2000, 1, 2),
+            last_processed_message=0,
+            workspaces=(
+                WorkspaceEntry(
+                    name="w1",
+                    id=wid,
+                    key=ANY,
+                    encryption_revision=1,
+                    encrypted_on=Pendulum(2000, 1, 2),
+                    role_cached_on=Pendulum(2000, 1, 2),
+                    role=WorkspaceRole.OWNER,
+                ),
+            ),
+        )
+        assert um == expected_um
+
+    # Make sure we can fetch back data from the database on user_fs restart
+    async with user_fs_factory(device, initialize_local_storage=False) as user_fs2:
+        um2 = user_fs2.get_user_manifest()
+        assert um2 == expected_um
+
+
+@pytest.mark.trio
 @pytest.mark.parametrize("with_workspace", (False, True))
 async def test_sync_placeholder(
     running_backend, backend_data_binder, local_device_factory, user_fs_factory, with_workspace
