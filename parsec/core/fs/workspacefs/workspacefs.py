@@ -326,11 +326,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
-        _, fd = await self.transactions.file_open(path, "w")
-        try:
-            return await self.transactions.fd_resize(fd, length)
-        finally:
-            await self.transactions.fd_close(fd)
+        await self.transactions.file_resize(path, length)
 
     async def read_bytes(self, path: AnyPath, size: int = -1, offset: int = 0) -> bytes:
         """
