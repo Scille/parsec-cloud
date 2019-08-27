@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from pathlib import Path
 
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
@@ -56,10 +58,16 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 
 @pytest.fixture
+def transaction_local_storage(alice, persistent_mockup):
+    with LocalStorage(alice.device_id, key=alice.local_symkey, path=Path("/dummy")) as storage:
+        yield storage
+
+
+@pytest.fixture
 async def file_transactions(
-    file_transactions_factory, alice, alice_local_storage, alice_backend_cmds
+    file_transactions_factory, alice, alice_backend_cmds, transaction_local_storage
 ):
-    return await file_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+    return await file_transactions_factory(alice, transaction_local_storage, alice_backend_cmds)
 
 
 @pytest.fixture
@@ -74,11 +82,13 @@ def entry_transactions_factory(event_bus, remote_devices_manager_factory, transa
 
 @pytest.fixture
 async def entry_transactions(
-    entry_transactions_factory, alice, alice_local_storage, alice_backend_cmds
+    entry_transactions_factory, alice, alice_backend_cmds, transaction_local_storage
 ):
-    return await entry_transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+    return await entry_transactions_factory(alice, transaction_local_storage, alice_backend_cmds)
 
 
 @pytest.fixture
-async def sync_transactions(transactions_factory, alice, alice_local_storage, alice_backend_cmds):
-    return await transactions_factory(alice, alice_local_storage, alice_backend_cmds)
+async def sync_transactions(
+    transactions_factory, alice, alice_backend_cmds, transaction_local_storage
+):
+    return await transactions_factory(alice, transaction_local_storage, alice_backend_cmds)

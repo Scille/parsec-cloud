@@ -258,7 +258,7 @@ class UserManifestSyncContext(SyncContext):
         return self.user_fs.backend_cmds
 
     def _get_local_storage(self):
-        return self.user_fs.local_storage
+        return self.user_fs.storage
 
 
 class SyncContextStore:
