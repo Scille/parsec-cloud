@@ -2,11 +2,12 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict, List, Union
+from typing import Tuple, Dict
 
 from parsec.types import DeviceID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
 from parsec.core.types import remote_manifests
+from parsec.core.types.manifest import LocalManifest
 from parsec.core.types.base import (
     EntryID,
     EntryIDField,
@@ -14,14 +15,13 @@ from parsec.core.types.base import (
     EntryNameField,
     serializer_factory,
 )
-from parsec.core.types.access import ChunkSchema, WorkspaceEntry, WorkspaceEntrySchema, Chunks
+from parsec.core.types.access import ChunkSchema, Chunks
 
 
 __all__ = (
     "LocalFileManifest",
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
-    "LocalUserManifest",
     "local_manifest_dumps",
     "local_manifest_loads",
 )
@@ -425,87 +425,11 @@ class LocalWorkspaceManifestSchema(UnknownCheckedSchema):
 local_workspace_manifest_serializer = serializer_factory(LocalWorkspaceManifestSchema)
 
 
-# User manifest
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class LocalUserManifest:
-    author: DeviceID
-    base_version: int = 0
-    need_sync: bool = True
-    is_placeholder: bool = True
-    created: pendulum.Pendulum = None
-    updated: pendulum.Pendulum = None
-    last_processed_message: int = 0
-    workspaces: List[WorkspaceEntry] = attr.ib(converter=tuple, default=())
-
-    def __attrs_post_init__(self):
-        if not self.created:
-            object.__setattr__(self, "created", pendulum.now())
-        if not self.updated:
-            object.__setattr__(self, "updated", self.created)
-
-    def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
-        return remote_manifests.UserManifest(
-            author=self.author,
-            version=self.base_version,
-            created=self.created,
-            updated=self.updated,
-            last_processed_message=self.last_processed_message,
-            workspaces=tuple(self.workspaces),
-            **data,
-        )
-
-    def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
-        return next((w for w in self.workspaces if w.id == workspace_id), None)
-
-    def evolve_and_mark_updated(self, **data) -> "LocalUserManifest":
-        if "updated" not in data:
-            data["updated"] = pendulum.now()
-        data.setdefault("need_sync", True)
-        return attr.evolve(self, **data)
-
-    def evolve(self, **data) -> "LocalUserManifest":
-        return attr.evolve(self, **data)
-
-    def evolve_workspaces_and_mark_updated(self, *data) -> "LocalUserManifest":
-        workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
-        return self.evolve_and_mark_updated(workspaces=tuple(workspaces.values()))
-
-    def evolve_workspaces(self, *data) -> "LocalUserManifest":
-        workspaces = {**{w.id: w for w in self.workspaces}, **{w.id: w for w in data}}
-        return self.evolve(workspaces=tuple(workspaces.values()))
-
-
-# TODO: rename base_version ==> version since we don't have base_author and base_updated ?
-class LocalUserManifestSchema(UnknownCheckedSchema):
-    format = fields.CheckedConstant(1, required=True)
-    type = fields.CheckedConstant("local_user_manifest", required=True)
-    author = fields.DeviceID(required=True)
-    base_version = fields.Integer(required=True, validate=validate.Range(min=0))
-    need_sync = fields.Boolean(required=True)
-    is_placeholder = fields.Boolean(required=True)
-    created = fields.DateTime(required=True)
-    updated = fields.DateTime(required=True)
-    last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    workspaces = fields.List(fields.Nested(WorkspaceEntrySchema), required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        data.pop("format")
-        return LocalUserManifest(**data)
-
-
-local_user_manifest_serializer = serializer_factory(LocalUserManifestSchema)
-
-
 class TypedLocalManifestSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
     type_schemas = {
         "local_workspace_manifest": LocalWorkspaceManifestSchema,
-        "local_user_manifest": LocalUserManifestSchema,
         "local_folder_manifest": LocalFolderManifestSchema,
         "local_file_manifest": LocalFileManifestSchema,
     }
@@ -513,8 +437,6 @@ class TypedLocalManifestSchema(OneOfSchema):
     def get_obj_type(self, obj):
         if isinstance(obj, LocalWorkspaceManifest):
             return "local_workspace_manifest"
-        elif isinstance(obj, LocalUserManifest):
-            return "local_user_manifest"
         elif isinstance(obj, LocalFolderManifest):
             return "local_folder_manifest"
         elif isinstance(obj, LocalFileManifest):
@@ -524,11 +446,6 @@ class TypedLocalManifestSchema(OneOfSchema):
 
 
 local_manifest_serializer = serializer_factory(TypedLocalManifestSchema)
-
-
-LocalManifest = Union[
-    LocalFileManifest, LocalFolderManifest, LocalWorkspaceManifest, LocalUserManifest
-]
 
 
 def local_manifest_dumps(manifest: LocalManifest) -> bytes:

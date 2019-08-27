@@ -14,12 +14,10 @@ from parsec.core.types import (
 )
 
 
-def create_entry(device, type=LocalUserManifest):
+def create_entry(device, type=LocalWorkspaceManifest):
     entry_id = EntryID()
     if type is LocalUserManifest:
-        manifest = LocalUserManifest(
-            author=device.device_id, base_version=0, is_placeholder=True, need_sync=True
-        )
+        manifest = LocalUserManifest.new_placeholder(id=entry_id)
     elif type is LocalWorkspaceManifest:
         manifest = type.make_placeholder(entry_id=entry_id, author=device.device_id)
     else:
@@ -144,9 +142,7 @@ async def test_clear_cache(tmpdir, alice):
             als.get_manifest(entry_id2)
 
 
-@pytest.mark.parametrize(
-    "type", [LocalUserManifest, LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest]
-)
+@pytest.mark.parametrize("type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest])
 @pytest.mark.trio
 async def test_serialize_types(tmpdir, alice, type):
     entry_id, manifest = create_entry(alice, type)

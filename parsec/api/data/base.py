@@ -58,7 +58,7 @@ class SignedDataMeta(type):
 
 class BaseSignedData(metaclass=SignedDataMeta):
     """
-    All data within the api should inherit this class. The goal is to have
+    Most data within the api should inherit this class. The goal is to have
     immutable data (thanks to attr frozen) that can be easily (de)serialize
     with encryption/signature support.
     """
@@ -174,6 +174,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
+        **kwargs,
     ) -> "BaseSignedData":
         """
         Raises:
@@ -186,7 +187,13 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(signed)
+        return self.verify_and_load(
+            signed,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author,
+            expected_timestamp=expected_timestamp,
+            **kwargs,
+        )
 
     @classmethod
     def decrypt_verify_and_load_for(
@@ -196,6 +203,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
+        **kwargs,
     ) -> "BaseSignedData":
         """
         Raises:
@@ -217,4 +225,88 @@ class BaseSignedData(metaclass=SignedDataMeta):
             author_verify_key=author_verify_key,
             expected_author=expected_author,
             expected_timestamp=expected_timestamp,
+            **kwargs,
         )
+
+
+class DataMeta(type):
+    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True)
+
+    def __new__(cls, name, bases, nmspc):
+        # Sanity checks
+        if "SCHEMA_CLS" not in nmspc:
+            raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
+        if not issubclass(nmspc["SCHEMA_CLS"], BaseSchema):
+            raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSchema!r}")
+
+        # During the creation of a class, we wrap it with `attr.s`.
+        # Under the hood, attr recreate a class so this metaclass is going to
+        # be called a second time.
+        # We must detect this second call to avoid infinie loop.
+        if "__attrs_attrs__" not in nmspc:
+            if "SERIALIZER" in nmspc and bases:
+                raise RuntimeError("Attribute `SERIALIZER` is reserved")
+            nmspc["SERIALIZER"] = Serializer(
+                nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
+            )
+            raw_cls = type.__new__(cls, name, bases, nmspc)
+            return cls.CLS_ATTR_COOKING(raw_cls)
+        else:
+            return type.__new__(cls, name, bases, nmspc)
+
+
+class BaseData(metaclass=DataMeta):
+    """
+    Some data within the api don't have to be signed (e.g. claim info) and
+    should inherit this class.
+    The goal is to have immutable data (thanks to attr frozen) that can be
+    easily (de)serialize with encryption support.
+    """
+
+    SCHEMA_CLS = BaseSchema  # Must be overloaded by child class
+    # SERIALIZER attribute sets by the metaclass
+
+    def dump(self) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        return self.SERIALIZER.dumps(self)
+
+    @classmethod
+    def load(cls, raw: bytes) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        return cls.SERIALIZER.loads(raw)
+
+    def dump_and_encrypt(self, key: Union[bytes, SecretBox]) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = self.dump()
+            box = key if isinstance(key, SecretBox) else SecretBox(key)
+            return box.encrypt(raw)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+    @classmethod
+    def decrypt_and_load(
+        cls, encrypted: bytes, key: Union[bytes, SecretBox], **kwargs
+    ) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        try:
+            box = key if isinstance(key, SecretBox) else SecretBox(key)
+            raw = box.decrypt(encrypted)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+        return cls.load(raw, **kwargs)

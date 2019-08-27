@@ -29,7 +29,6 @@ def initialize_local_storage(local_storage_path, initial_user_manifest_state, pe
         local_storage = LocalStorage(device_id, device.local_symkey, path)
         with freeze_time("2000-01-01"):
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            user_manifest = user_manifest.evolve(author=device_id)
         try:
             local_storage.get_manifest(device.user_manifest_id)
         except FSLocalMissError:
@@ -49,7 +48,6 @@ def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
         except FSLocalMissError:
             with freeze_time("2000-01-01"):
                 user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-                user_manifest = user_manifest.evolve(author=device.device_id)
             storage.set_manifest(device.user_manifest_id, user_manifest)
 
     return _initialize_userfs_storage

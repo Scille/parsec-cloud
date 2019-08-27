@@ -1,6 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.api.data.base import DataError
+from parsec.api.data.base import (
+    DataError,
+    BaseSignedDataSchema,
+    SignedDataMeta,
+    BaseData,
+    BaseSchema,
+)
 from parsec.api.data.certif import (
     UserCertificateContent,
     DeviceCertificateContent,
@@ -14,6 +20,8 @@ from parsec.api.data.message import (
     SharingRevokedMessageContent,
     PingMessageContent,
 )
+from parsec.api.data.manifest import UserManifest, WorkspaceManifest, FolderManifest, FileManifest
+
 
 __api_data_version__ = (1, 0)
 
@@ -21,6 +29,10 @@ __api_data_version__ = (1, 0)
 __all__ = (
     "__api_data_version__",
     "DataError",
+    "BaseSignedDataSchema",
+    "SignedDataMeta",
+    "BaseData",
+    "BaseSchema",
     # Certifs
     "UserCertificateContent",
     "DeviceCertificateContent",
@@ -32,4 +44,9 @@ __all__ = (
     "SharingReencryptedMessageContent",
     "SharingRevokedMessageContent",
     "PingMessageContent",
+    # Manifests
+    "UserManifest",
+    "WorkspaceManifest",
+    "FolderManifest",
+    "FileManifest",
 )

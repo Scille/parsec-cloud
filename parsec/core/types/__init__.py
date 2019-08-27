@@ -28,10 +28,9 @@ from parsec.core.types.local_manifests import (
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-    LocalUserManifest,
-    LocalManifest,
     local_manifest_serializer,
 )
+from parsec.core.types.manifest import LocalUserManifest, LocalManifest
 from parsec.core.types.remote_device import (
     UnverifiedRemoteUser,
     UnverifiedRemoteDevice,

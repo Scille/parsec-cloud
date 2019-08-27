@@ -2,10 +2,9 @@
 
 import os
 import errno
-import pathlib
+from pathlib import Path
 from string import ascii_lowercase
 from contextlib import contextmanager
-
 import attr
 import pytest
 from pendulum import Pendulum
@@ -21,9 +20,10 @@ from hypothesis import strategies as st
 
 from parsec.core.types import FsPath
 from parsec.core.fs.utils import is_folder_manifest
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 
-from tests.common import freeze_time
+from tests.common import freeze_time, call_with_control
 
 
 @pytest.mark.trio
@@ -241,6 +241,25 @@ def test_folder_operations(
         Files = Bundle("file")
         Folders = Bundle("folder")
 
+        async def start_transactions(self):
+            async def _transactions_controlled_cb(started_cb):
+                with LocalStorage(
+                    alice.device_id, key=alice.local_symkey, path=Path("/dummy")
+                ) as local_storage:
+                    entry_transactions = await entry_transactions_factory(
+                        self.device, alice_backend_cmds, local_storage=local_storage
+                    )
+                    file_transactions = await file_transactions_factory(
+                        self.device, alice_backend_cmds, local_storage=local_storage
+                    )
+                    await started_cb(
+                        entry_transactions=entry_transactions, file_transactions=file_transactions
+                    )
+
+            self.transactions_controller = await self.get_root_nursery().start(
+                call_with_control, _transactions_controlled_cb
+            )
+
         @initialize(target=Folders)
         async def init_root(self):
             nonlocal tentative
@@ -249,15 +268,11 @@ def test_folder_operations(
 
             self.last_step_id_to_path = set()
             self.device = alice
-            self.local_storage = await initialize_local_storage(self.device)
-            self.entry_transactions = await entry_transactions_factory(
-                self.device, self.local_storage, alice_backend_cmds
-            )
-            self.file_transactions = await file_transactions_factory(
-                self.device, self.local_storage, alice_backend_cmds
-            )
+            await self.start_transactions()
+            self.entry_transactions = self.transactions_controller.entry_transactions
+            self.file_transactions = self.transactions_controller.file_transactions
 
-            self.folder_oracle = pathlib.Path(tmpdir / f"oracle-test-{tentative}")
+            self.folder_oracle = Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()

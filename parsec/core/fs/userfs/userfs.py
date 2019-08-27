@@ -9,15 +9,7 @@ from structlog import get_logger
 
 from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
-from parsec.crypto import (
-    encrypt_signed_msg_with_secret_key,
-    decrypt_and_verify_signed_msg_with_secret_key,
-    encrypt_raw_with_secret_key,
-    decrypt_raw_with_secret_key,
-    CryptoError,
-    SecretKey,
-)
-from parsec.serde import SerdeError
+from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key, SecretKey
 from parsec.api.data import (
     DataError,
     RealmRoleCertificateContent,
@@ -26,6 +18,7 @@ from parsec.api.data import (
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
     PingMessageContent,
+    UserManifest,
 )
 from parsec.api.protocol import MaintenanceType
 from parsec.core.types import (
@@ -34,9 +27,7 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
     WorkspaceEntry,
     WorkspaceRole,
-    UserManifest,
     LocalUserManifest,
-    remote_manifest_serializer,
 )
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.backend_connection import (
@@ -199,7 +190,7 @@ class UserFS:
             # back on an empty manifest which is a good aproximation of
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
-            return LocalUserManifest(author=self.device.device_id)
+            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
 
     def set_user_manifest(self, manifest: LocalUserManifest) -> None:
         """
@@ -297,7 +288,7 @@ class UserFS:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
             args = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
-            expected_author_id, expected_timestamp, expected_version, blob = args
+            expected_author, expected_timestamp, expected_version, blob = args
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -310,14 +301,8 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot fetch user manifest from backend: {exc}") from exc
 
-        if version and version != expected_version:
-            raise FSError(
-                f"User manifest version {version} was queried but"
-                f" backend returned version {expected_version}"
-            )
-
         try:
-            author = await self.remote_devices_manager.get_device(expected_author_id)
+            author = await self.remote_devices_manager.get_device(expected_author)
 
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -326,23 +311,18 @@ class UserFS:
             raise FSError(f"Cannot retrieve author public key: {exc}") from exc
 
         try:
-            raw = decrypt_and_verify_signed_msg_with_secret_key(
-                self.device.user_manifest_key,
+            manifest = UserManifest.decrypt_verify_and_load(
                 blob,
-                expected_author_id,
-                author.verify_key,
-                expected_timestamp,
+                key=self.device.user_manifest_key,
+                author_verify_key=author.verify_key,
+                expected_id=self.device.user_manifest_id,
+                expected_author=expected_author,
+                expected_timestamp=expected_timestamp,
+                expected_version=version if version is not None else expected_version,
             )
-            manifest = remote_manifest_serializer.loads(raw)
 
-        except (CryptoError, SerdeError) as exc:
+        except DataError as exc:
             raise FSError(f"Invalid user manifest: {exc}") from exc
-
-        if manifest.version != expected_version:
-            raise FSError(
-                "Invalid user manifest: version mismatch between backend"
-                f" ({expected_version}) and signed data ({manifest.version})"
-            )
 
         return manifest
 
@@ -368,32 +348,20 @@ class UserFS:
             return
 
         # New things in remote, merge is needed
-        target_um = target_um.to_local(self.device.device_id)
-
-        base_um = None
-        while True:
-            if diverged_um.base_version != 0:
-                # TODO: keep base manifest somewhere to avoid this query
-                base_um = await self._fetch_remote_user_manifest(version=diverged_um.base_version)
-                base_um = base_um.to_local(self.device.device_id)
-
-            # Merge and store result
-            async with self._update_user_manifest_lock:
-                diverged_um = self.get_user_manifest()
-                if target_um.base_version <= diverged_um.base_version:
-                    # Sync already achieved by a concurrent operation
-                    return
-                if base_um and diverged_um.base_version != base_um.base_version:
-                    continue
-                merged = merge_local_user_manifests(base_um, diverged_um, target_um)
-                self.set_user_manifest(merged)
-                # In case we weren't online when the sharing message arrived,
-                # we will learn about the change in the sharing only now.
-                # Hence send the corresponding events !
-                self._detect_and_send_shared_events(diverged_um, merged)
-                # TODO: deprecated event ?
-                self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
+        async with self._update_user_manifest_lock:
+            diverged_um = self.get_user_manifest()
+            if target_um.version <= diverged_um.base_version:
+                # Sync already achieved by a concurrent operation
                 return
+            merged_um = merge_local_user_manifests(diverged_um, target_um)
+            self.set_user_manifest(merged_um)
+            # In case we weren't online when the sharing message arrived,
+            # we will learn about the change in the sharing only now.
+            # Hence send the corresponding events !
+            self._detect_and_send_shared_events(diverged_um, merged_um)
+            # TODO: deprecated event ?
+            self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
+            return
 
     def _detect_and_send_shared_events(self, old_um, new_um):
         entries = {}
@@ -473,33 +441,23 @@ class UserFS:
             await self._workspace_minimal_sync(w)
 
         # Build vlob
-        to_sync_um = base_um.evolve(
-            workspaces=base_um.workspaces,
-            base_version=base_um.base_version + 1,
-            author=self.device.device_id,
-            need_sync=False,
-            is_placeholder=False,
-        )
         now = pendulum_now()
-        ciphered = encrypt_signed_msg_with_secret_key(
-            self.device.device_id,
-            self.device.signing_key,
-            self.device.user_manifest_key,
-            remote_manifest_serializer.dumps(to_sync_um.to_remote()),
-            now,
+        to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=now)
+        ciphered = to_sync_um.dump_sign_and_encrypt(
+            author_signkey=self.device.signing_key, key=self.device.user_manifest_key
         )
 
         # Sync the vlob with backend
         try:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
-            if to_sync_um.base_version == 1:
+            if to_sync_um.version == 1:
                 await self.backend_cmds.vlob_create(
                     self.user_manifest_id, 1, self.user_manifest_id, now, ciphered
                 )
             else:
                 await self.backend_cmds.vlob_update(
-                    1, self.user_manifest_id, to_sync_um.base_version, now, ciphered
+                    1, self.user_manifest_id, to_sync_um.version, now, ciphered
                 )
 
         except (BackendCmdsAlreadyExists, BackendCmdsBadVersion):
@@ -521,8 +479,8 @@ class UserFS:
         async with self._update_user_manifest_lock:
             diverged_um = self.get_user_manifest()
             # Final merge could have been achieved by a concurrent operation
-            if to_sync_um.base_version > diverged_um.base_version:
-                merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
+            if to_sync_um.version > diverged_um.base_version:
+                merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
                 self.set_user_manifest(merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 

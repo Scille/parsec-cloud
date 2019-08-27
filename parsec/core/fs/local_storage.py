@@ -131,7 +131,6 @@ class LocalStorage:
         check_lock_status=True,
     ) -> None:
         assert isinstance(entry_id, EntryID)
-        assert manifest.author == self.device_id
         if check_lock_status:
             self._check_lock_status(entry_id)
         if not cache_only:

@@ -6,9 +6,8 @@ from contextlib import contextmanager
 from structlog import get_logger
 from sqlite3 import connect as sqlite_connect
 
-from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, LocalDevice, LocalManifest, local_manifest_serializer
+from parsec.core.types import EntryID, LocalDevice, LocalManifest
 
 
 logger = get_logger()
@@ -152,14 +151,12 @@ class RealmStorage:
             pass
 
         with self._open_cursor() as cursor:
-            cursor.execute("SELECT vlob_id, blob FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
+            cursor.execute("SELECT blob FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             manifest_row = cursor.fetchone()
         if not manifest_row:
             raise FSLocalMissError(entry_id)
-        manifest_id, blob = manifest_row
 
-        raw = decrypt_raw_with_secret_key(self.device.local_symkey, blob)
-        manifest = local_manifest_serializer.loads(raw)
+        manifest = LocalManifest.decrypt_and_load(manifest_row[0], key=self.device.local_symkey)
         self._cache[entry_id] = manifest
 
         return manifest
@@ -171,7 +168,6 @@ class RealmStorage:
         Raises: Nothing !
         """
         assert isinstance(entry_id, EntryID)
-        assert manifest.author == self.device.device_id
 
         if not cache_only:
             self._set_manifest_in_db(entry_id, manifest)
@@ -181,9 +177,7 @@ class RealmStorage:
         self._cache[entry_id] = manifest
 
     def _set_manifest_in_db(self, entry_id: EntryID, manifest: LocalManifest) -> None:
-        raw = local_manifest_serializer.dumps(manifest)
-        ciphered = encrypt_raw_with_secret_key(self.device.local_symkey, raw)
-
+        ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
         with self._open_cursor() as cursor:
             cursor.execute(
                 """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
