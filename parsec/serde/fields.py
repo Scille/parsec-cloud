@@ -17,6 +17,7 @@ from marshmallow.fields import (
 )
 import re
 
+from parsec.types import FrozenDict as _FrozenDict
 from parsec.crypto_types import (
     SigningKey as _SigningKey,
     VerifyKey as _VerifyKey,
@@ -236,6 +237,11 @@ class Map(Field):
             v = self.nested_field._serialize(val, key, value)
             ret[k] = v
         return ret
+
+
+class FrozenMap(Map):
+    def _deserialize(self, value, attr, obj):
+        return _FrozenDict(super()._deserialize(value, attr, obj))
 
 
 class FrozenList(List):

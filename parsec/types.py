@@ -1,5 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import typing
+
+
+# Cheap typing
+typing.FrozenDict = typing.Dict
+
 
 class FrozenDict(dict):
     def __repr__(self):
