@@ -7,7 +7,6 @@ from async_generator import asynccontextmanager
 from structlog import get_logger
 from typing import Optional, Union
 
-from parsec.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
 from parsec.api.protocol import (
@@ -19,6 +18,7 @@ from parsec.api.protocol import (
     AuthenticatedClientHandshake,
     AdministrationClientHandshake,
 )
+from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,

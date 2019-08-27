@@ -3,8 +3,8 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QPoint
 from PyQt5.QtWidgets import QDialog, QToolTip
 
-from parsec.types import BackendOrganizationAddr
 from parsec.api.protocol import DeviceName
+from parsec.core.types import BackendOrganizationAddr
 from parsec.core.invite_claim import (
     InviteClaimTimeoutError,
     InviteClaimBackendOfflineError,

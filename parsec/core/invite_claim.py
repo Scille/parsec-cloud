@@ -3,7 +3,6 @@
 from secrets import token_hex
 import pendulum
 
-from parsec.types import BackendOrganizationAddr
 from parsec.crypto import (
     CryptoError,
     SecretKey,
@@ -17,7 +16,7 @@ from parsec.crypto import (
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.api.data import DataError, UserCertificateContent, DeviceCertificateContent
 from parsec.api.protocol import UserID, DeviceName, DeviceID, DeviceIDField
-from parsec.core.types import LocalDevice, EntryID, EntryIDField
+from parsec.core.types import LocalDevice, EntryID, EntryIDField, BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendCmdsTimeout,
     BackendConnectionError,

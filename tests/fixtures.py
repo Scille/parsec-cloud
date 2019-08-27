@@ -7,7 +7,6 @@ from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
 
-from parsec.types import BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey
 from parsec.api.data import (
     UserCertificateContent,
@@ -17,7 +16,7 @@ from parsec.api.data import (
 )
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import UserManifest
-from parsec.core.types import LocalDevice, LocalUserManifest
+from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 from parsec.backend.user import (
     User as BackendUser,

@@ -3,13 +3,13 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.types import BackendOrganizationAddr
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
     save_device_with_password,
     save_device_with_pkcs11,
 )
+from parsec.core.types import BackendOrganizationAddr
 from parsec.core.invite_claim import (
     claim_user as core_claim_user,
     InviteClaimError,

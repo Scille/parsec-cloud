@@ -4,10 +4,10 @@ import os
 import click
 
 from parsec.utils import trio_run
-from parsec.types import BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.api.protocol import OrganizationID
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, cli_exception_handler
+from parsec.core.types import BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import backend_administration_cmds_factory
 
 

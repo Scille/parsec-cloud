@@ -13,6 +13,12 @@ from parsec.core.types.base import (
     EntryNameField,
     FsPath,
 )
+from parsec.core.types.backend_address import (
+    BackendAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationAddrField,
+)
 from parsec.core.types.access import (
     BlockAccess,
     BlockAccessSchema,
@@ -65,6 +71,11 @@ __all__ = (
     "EntryNameField",
     "FileDescriptor",
     "FsPath",
+    # Backend address
+    "BackendAddr",
+    "BackendOrganizationAddr",
+    "BackendOrganizationBootstrapAddr",
+    "BackendOrganizationAddrField",
     # access
     "BlockAccess",
     "BlockAccessSchema",

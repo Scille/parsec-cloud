@@ -18,7 +18,6 @@ from pathlib import Path
 import sqlite3
 
 from parsec.monitoring import TaskMonitoringInstrument
-from parsec.types import BackendAddr
 from parsec.api.protocol import (
     OrganizationID,
     AdministrationClientHandshake,
@@ -27,6 +26,7 @@ from parsec.api.protocol import (
 )
 from parsec.api.transport import Transport
 from parsec.core import CoreConfig
+from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.fs.realm_storage import _connect as vanilla_realm_storage_connect
 from parsec.core.fs.local_storage import LocalStorage
