@@ -100,7 +100,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID)
 
-    sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
+    sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
     workspace_reencryption_success = pyqtSignal()
