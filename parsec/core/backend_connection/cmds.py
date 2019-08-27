@@ -4,10 +4,13 @@ from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
 
-from parsec.types import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceName,
+    DeviceID,
     ProtocoleError,
     ping_serializer,
     organization_create_serializer,

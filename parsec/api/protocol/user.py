@@ -2,6 +2,7 @@
 
 from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDField
 
 
 __all__ = (
@@ -25,17 +26,17 @@ __all__ = (
 
 
 class UserGetReqSchema(BaseReqSchema):
-    user_id = fields.UserID(required=True)
+    user_id = UserIDField(required=True)
 
 
 class DeviceSchema(UnknownCheckedSchema):
-    device_id = fields.DeviceID(required=True)
+    device_id = DeviceIDField(required=True)
     device_certificate = fields.Bytes(required=True)
     revoked_device_certificate = fields.Bytes(allow_none=True)
 
 
 class UserGetRepSchema(BaseRepSchema):
-    user_id = fields.UserID(required=True)
+    user_id = UserIDField(required=True)
 
     user_certificate = fields.Bytes(required=True)
 
@@ -55,7 +56,7 @@ class FindUserReqSchema(BaseReqSchema):
 
 
 class FindUserRepSchema(BaseRepSchema):
-    results = fields.List(fields.UserID())
+    results = fields.List(UserIDField())
     page = fields.Int(validate=lambda n: n > 0)
     per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
     total = fields.Int(validate=lambda n: n >= 0)
@@ -68,7 +69,7 @@ user_find_serializer = CmdSerializer(FindUserReqSchema, FindUserRepSchema)
 
 
 class UserInviteReqSchema(BaseReqSchema):
-    user_id = fields.UserID(required=True)
+    user_id = UserIDField(required=True)
 
 
 class UserInviteRepSchema(BaseRepSchema):
@@ -79,7 +80,7 @@ user_invite_serializer = CmdSerializer(UserInviteReqSchema, UserInviteRepSchema)
 
 
 class UserGetInvitationCreatorReqSchema(BaseReqSchema):
-    invited_user_id = fields.UserID(required=True)
+    invited_user_id = UserIDField(required=True)
 
 
 class UserGetInvitationCreatorRepSchema(BaseRepSchema):
@@ -94,7 +95,7 @@ user_get_invitation_creator_serializer = CmdSerializer(
 
 
 class UserClaimReqSchema(BaseReqSchema):
-    invited_user_id = fields.UserID(required=True)
+    invited_user_id = UserIDField(required=True)
     encrypted_claim = fields.Bytes(required=True)
 
 
@@ -106,7 +107,7 @@ user_claim_serializer = CmdSerializer(UserClaimReqSchema, UserClaimRepSchema)
 
 
 class UserCancelInvitationReqSchema(BaseReqSchema):
-    user_id = fields.UserID(required=True)
+    user_id = UserIDField(required=True)
 
 
 class UserCancelInvitationRepSchema(BaseRepSchema):
@@ -134,7 +135,7 @@ user_create_serializer = CmdSerializer(UserCreateReqSchema, UserCreateRepSchema)
 
 
 class DeviceInviteReqSchema(BaseReqSchema):
-    invited_device_name = fields.DeviceName(required=True)
+    invited_device_name = DeviceNameField(required=True)
 
 
 class DeviceInviteRepSchema(BaseRepSchema):
@@ -145,7 +146,7 @@ device_invite_serializer = CmdSerializer(DeviceInviteReqSchema, DeviceInviteRepS
 
 
 class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
-    invited_device_id = fields.DeviceID(required=True)
+    invited_device_id = DeviceIDField(required=True)
 
 
 class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
@@ -160,7 +161,7 @@ device_get_invitation_creator_serializer = CmdSerializer(
 
 
 class DeviceClaimReqSchema(BaseReqSchema):
-    invited_device_id = fields.DeviceID(required=True)
+    invited_device_id = DeviceIDField(required=True)
     encrypted_claim = fields.Bytes(required=True)
 
 
@@ -172,7 +173,7 @@ device_claim_serializer = CmdSerializer(DeviceClaimReqSchema, DeviceClaimRepSche
 
 
 class DeviceCancelInvitationReqSchema(BaseReqSchema):
-    invited_device_name = fields.DeviceName(required=True)
+    invited_device_name = DeviceNameField(required=True)
 
 
 class DeviceCancelInvitationRepSchema(BaseRepSchema):

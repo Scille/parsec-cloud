@@ -1,19 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 from urllib.parse import urlsplit, urlunsplit, parse_qs
 
+from parsec.serde import fields
 from parsec.crypto_types import VerifyKey, export_root_verify_key, import_root_verify_key
+from parsec.api.protocol import OrganizationID
 
 
-__all__ = (
-    "OrganizationID",
-    "BackendOrganizationBootstrapAddr",
-    "BackendOrganizationAddr",
-    "UserID",
-    "DeviceName",
-    "DeviceID",
-)
+__all__ = ("BackendOrganizationBootstrapAddr", "BackendOrganizationAddr")
 
 
 class FrozenDict(dict):
@@ -33,18 +27,6 @@ class FrozenDict(dict):
 
     def evolve(self, **data):
         return FrozenDict(**self, **data)
-
-
-class OrganizationID(str):
-    __slots__ = ()
-    regex = re.compile(r"^\w{1,32}$")
-
-    def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
-            raise ValueError("Invalid organization ID")
-
-    def __repr__(self):
-        return f"<OrganizationID {super().__repr__()}>"
 
 
 class BackendAddr(str):
@@ -195,45 +177,4 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
         return BackendOrganizationAddr.build(backend_addr, self.organization_id, root_verify_key)
 
 
-class UserID(str):
-    __slots__ = ()
-    regex = re.compile(r"^\w{1,32}$")
-
-    def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
-            raise ValueError("Invalid user name")
-
-    def __repr__(self):
-        return f"<UserID {super().__repr__()}>"
-
-
-class DeviceName(str):
-    __slots__ = ()
-    regex = re.compile(r"^\w{1,32}$")
-
-    def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
-            raise ValueError("Invalid device name")
-
-    def __repr__(self):
-        return f"<DeviceName {super().__repr__()}>"
-
-
-class DeviceID(str):
-    __slots__ = ()
-    regex = re.compile(r"^\w{1,32}@\w{1,32}$")
-
-    def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
-            raise ValueError("Invalid device ID")
-
-    def __repr__(self):
-        return f"<DeviceID {super().__repr__()}>"
-
-    @property
-    def user_id(self) -> UserID:
-        return UserID(self.split("@")[0])
-
-    @property
-    def device_name(self) -> DeviceName:
-        return DeviceName(self.split("@")[1])
+BackendOrganizationAddrField = fields.str_based_field_factory(BackendOrganizationAddr)

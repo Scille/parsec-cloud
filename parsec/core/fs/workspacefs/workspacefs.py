@@ -8,7 +8,7 @@ from pendulum import Pendulum
 
 import attr
 
-from parsec.types import UserID
+from parsec.api.protocol import UserID
 from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
 
 from parsec.core.fs import workspacefs

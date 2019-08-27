@@ -4,8 +4,9 @@ import attr
 import pendulum
 from typing import Tuple, Dict, Union
 
-from parsec.types import DeviceID, FrozenDict
+from parsec.types import FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
+from parsec.api.protocol import DeviceID, DeviceIDField
 from parsec.core.types import local_manifests
 from parsec.core.types.base import (
     EntryID,
@@ -63,7 +64,7 @@ class FileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("file_manifest", required=True)
     entry_id = EntryIDField(required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     parent_id = EntryIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
     created = fields.DateTime(required=True)
@@ -107,7 +108,7 @@ class FolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("folder_manifest", required=True)
     entry_id = EntryIDField(required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     parent_id = EntryIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
     created = fields.DateTime(required=True)
@@ -153,7 +154,7 @@ class WorkspaceManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("workspace_manifest", required=True)
     entry_id = EntryIDField(required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
@@ -207,7 +208,7 @@ class UserManifest:
 class UserManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("user_manifest", required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=1))
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)

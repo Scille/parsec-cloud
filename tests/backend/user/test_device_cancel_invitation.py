@@ -4,9 +4,12 @@ import pytest
 from pendulum import Pendulum
 import trio
 
-from parsec.types import DeviceID
 from parsec.backend.user import DeviceInvitation
-from parsec.api.protocol import device_cancel_invitation_serializer, device_claim_serializer
+from parsec.api.protocol import (
+    DeviceID,
+    device_cancel_invitation_serializer,
+    device_claim_serializer,
+)
 
 from tests.common import freeze_time
 

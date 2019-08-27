@@ -3,7 +3,8 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.types import BackendOrganizationAddr
+from parsec.api.protocol import DeviceID
 from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
     save_device_with_password,

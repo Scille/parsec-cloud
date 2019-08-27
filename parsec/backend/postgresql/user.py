@@ -3,7 +3,7 @@
 import pendulum
 from typing import Tuple, List, Optional
 
-from parsec.types import UserID, DeviceID, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.user import BaseUserComponent, User, Device, UserInvitation, DeviceInvitation
 from parsec.backend.postgresql.handler import PGHandler

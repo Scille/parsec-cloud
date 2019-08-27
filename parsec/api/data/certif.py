@@ -3,17 +3,23 @@
 from typing import Optional
 from uuid import UUID
 
-from parsec.types import DeviceID, UserID
 from parsec.crypto_types import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
-from parsec.api.protocol.realm import RealmRole, RealmRoleField
+from parsec.api.protocol import (
+    DeviceID,
+    UserID,
+    RealmRole,
+    DeviceIDField,
+    UserIDField,
+    RealmRoleField,
+)
 from parsec.api.data.base import BaseSignedData, BaseSignedDataSchema
 
 
 class UserCertificateContent(BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_certificate", required=True)
-        user_id = fields.UserID(required=True)
+        user_id = UserIDField(required=True)
         public_key = fields.PublicKey(required=True)
         is_admin = fields.Boolean(required=True)
 
@@ -30,7 +36,7 @@ class UserCertificateContent(BaseSignedData):
 class DeviceCertificateContent(BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("device_certificate", required=True)
-        device_id = fields.DeviceID(required=True)
+        device_id = DeviceIDField(required=True)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -45,7 +51,7 @@ class DeviceCertificateContent(BaseSignedData):
 class RevokedDeviceCertificateContent(BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("revoked_device_certificate", required=True)
-        device_id = fields.DeviceID(required=True)
+        device_id = DeviceIDField(required=True)
 
         @post_load
         def make_obj(self, data):
@@ -59,7 +65,7 @@ class RealmRoleCertificateContent(BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)
         realm_id = fields.UUID(required=True)
-        user_id = fields.UserID(required=True)
+        user_id = UserIDField(required=True)
         role = RealmRoleField(required=True, allow_none=True)
 
         @post_load

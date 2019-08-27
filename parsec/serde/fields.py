@@ -17,13 +17,6 @@ from marshmallow.fields import (
 )
 import re
 
-from parsec.types import (
-    DeviceID as _DeviceID,
-    UserID as _UserID,
-    DeviceName as _DeviceName,
-    BackendOrganizationAddr as _BackendOrganizationAddr,
-    OrganizationID as _OrganizationID,
-)
 from parsec.crypto_types import (
     SigningKey as _SigningKey,
     VerifyKey as _VerifyKey,
@@ -55,9 +48,6 @@ __all__ = (
     "PublicKey",
     "PrivateKey",
     "SecretKey",
-    "DeviceID",
-    "UserID",
-    "DeviceName",
     "SemVer",
 )
 
@@ -356,8 +346,3 @@ class SemVer(Field):
 
 SecretKey = bytes_based_field_factory(bytes)
 Bytes = bytes_based_field_factory(bytes)
-DeviceID = str_based_field_factory(_DeviceID)
-UserID = str_based_field_factory(_UserID)
-OrganizationID = str_based_field_factory(_OrganizationID)
-DeviceName = str_based_field_factory(_DeviceName)
-BackendOrganizationAddr = str_based_field_factory(_BackendOrganizationAddr)

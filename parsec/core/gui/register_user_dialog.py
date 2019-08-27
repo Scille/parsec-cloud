@@ -3,6 +3,8 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QPoint
 from PyQt5.QtWidgets import QDialog, QToolTip
 
+from parsec.types import BackendOrganizationAddr
+from parsec.api.protocol import UserID
 from parsec.core.invite_claim import (
     InviteClaimTimeoutError,
     InviteClaimBackendOfflineError,
@@ -10,7 +12,6 @@ from parsec.core.invite_claim import (
     generate_invitation_token as core_generate_invitation_token,
     invite_and_create_user as core_invite_and_create_user,
 )
-from parsec.types import BackendOrganizationAddr, UserID
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
 from parsec.core.gui import validators

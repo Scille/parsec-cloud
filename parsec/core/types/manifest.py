@@ -4,8 +4,8 @@ import attr
 from typing import Optional, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.types import DeviceID
 from parsec.serde import fields, OneOfSchema, validate, post_load
+from parsec.api.protocol import DeviceID
 from parsec.api.data import UserManifest, BaseSchema, BaseData
 from parsec.core.types import WorkspaceEntry, WorkspaceEntrySchema, EntryID, EntryIDField
 

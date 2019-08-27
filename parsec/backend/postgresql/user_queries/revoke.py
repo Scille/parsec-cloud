@@ -4,7 +4,7 @@ from typing import Optional
 from pypika import Parameter
 import pendulum
 
-from parsec.types import OrganizationID, DeviceID
+from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
 from parsec.backend.postgresql.utils import Query, query
 from parsec.backend.postgresql.tables import (

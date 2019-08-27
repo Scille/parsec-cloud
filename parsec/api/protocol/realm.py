@@ -4,6 +4,7 @@ from enum import Enum
 
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.types import UserIDField, DeviceIDField
 
 
 __all__ = (
@@ -55,7 +56,7 @@ class RealmStatusRepSchema(BaseRepSchema):
     in_maintenance = fields.Boolean(required=True)
     maintenance_type = MaintenanceTypeField(allow_none=True)
     maintenance_started_on = fields.DateTime(required=True, allow_none=True)
-    maintenance_started_by = fields.DeviceID(required=True, allow_none=True)
+    maintenance_started_by = DeviceIDField(required=True, allow_none=True)
     encryption_revision = fields.Integer(required=True)
 
 
@@ -91,9 +92,7 @@ class RealmStartReencryptionMaintenanceReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
     timestamp = fields.DateTime(required=True)
-    per_participant_message = fields.Map(
-        fields.UserID(), fields.Bytes(required=True), required=True
-    )
+    per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)
 
 
 class RealmStartReencryptionMaintenanceRepSchema(BaseRepSchema):

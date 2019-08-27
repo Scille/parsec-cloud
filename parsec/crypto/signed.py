@@ -6,7 +6,7 @@ from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
 from nacl.secret import SecretBox
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID, DeviceIDField
 from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
 from parsec.crypto.exceptions import (
     CryptoWrappedMsgPackingError,
@@ -36,7 +36,7 @@ def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MA
 
 class WrappedMsgSchema(UnknownCheckedSchema):
     # No device_id means it has been signed by the root key
-    device_id = fields.DeviceID(missing=None)
+    device_id = DeviceIDField(missing=None)
     timestamp = fields.DateTime(required=True)
     content = fields.Bytes(required=True)
 

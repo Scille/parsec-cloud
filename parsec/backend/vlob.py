@@ -4,7 +4,7 @@ from typing import List, Tuple, Dict, Optional
 from uuid import UUID
 import pendulum
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import (
     vlob_create_serializer,
     vlob_read_serializer,

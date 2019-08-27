@@ -5,7 +5,6 @@ import attr
 from typing import List, Optional, Tuple
 import pendulum
 
-from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.crypto import VerifyKey, PublicKey, timestamps_in_the_ballpark
 from parsec.api.data import (
     UserCertificateContent,
@@ -14,6 +13,9 @@ from parsec.api.data import (
     DataError,
 )
 from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
     user_get_serializer,
     user_find_serializer,
     user_get_invitation_creator_serializer,

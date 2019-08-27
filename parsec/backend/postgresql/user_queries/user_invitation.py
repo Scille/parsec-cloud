@@ -2,7 +2,7 @@
 
 from pypika import Parameter
 
-from parsec.types import OrganizationID, UserID, DeviceID
+from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyExistsError, UserInvitation
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query

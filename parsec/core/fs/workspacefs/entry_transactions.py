@@ -7,7 +7,7 @@ from async_generator import asynccontextmanager
 
 from pendulum import Pendulum
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.core.types import (
     EntryID,
     FsPath,

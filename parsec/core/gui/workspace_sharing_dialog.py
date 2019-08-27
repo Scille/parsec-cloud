@@ -3,10 +3,9 @@
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QCompleter, QWidget
 
+from parsec.api.protocol import UserID
 from parsec.core.fs import FSError
-from parsec.types import UserID
 from parsec.core.types import WorkspaceRole
-
 from parsec.core.gui.custom_dialogs import show_info, show_warning, show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog

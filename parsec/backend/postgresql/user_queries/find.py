@@ -5,7 +5,7 @@ import pendulum
 from typing import Tuple, List
 from pypika import PostgreSQLQuery as Query, Parameter
 
-from parsec.types import UserID, OrganizationID
+from parsec.api.protocol import UserID, OrganizationID
 from parsec.backend.postgresql.utils import IRegex, fn_exists, query
 from parsec.backend.postgresql.tables import t_user, t_device, q_organization_internal_id
 

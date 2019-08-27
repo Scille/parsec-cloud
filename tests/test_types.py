@@ -2,13 +2,8 @@
 
 import pytest
 
-from parsec.types import (
-    DeviceID,
-    UserID,
-    BackendAddr,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-)
+from parsec.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+from parsec.api.protocol import DeviceID, UserID
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
 
 

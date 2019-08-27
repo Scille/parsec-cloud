@@ -2,15 +2,8 @@
 
 from PyQt5.QtGui import QValidator, QIntValidator
 
-from parsec.types import (
-    OrganizationID,
-    BackendAddr,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-    UserID,
-    DeviceName,
-    DeviceID,
-)
+from parsec.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
 
 
 class NetworkPortValidator(QIntValidator):

@@ -2,6 +2,7 @@
 
 from parsec.serde import UnknownCheckedSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.types import DeviceIDField
 
 
 __all__ = (
@@ -50,7 +51,7 @@ class VlobReadReqSchema(BaseReqSchema):
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     timestamp = fields.DateTime(required=True)
 
 
@@ -117,7 +118,7 @@ class VlobListVersionsReqSchema(BaseReqSchema):
 class VlobListVersionsRepSchema(BaseRepSchema):
     versions = fields.Map(
         fields.Integer(required=True),
-        fields.Tuple(fields.DateTime(required=True), fields.DeviceID(required=True)),
+        fields.Tuple(fields.DateTime(required=True), DeviceIDField(required=True)),
         required=True,
     )
 

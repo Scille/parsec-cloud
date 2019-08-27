@@ -5,7 +5,7 @@ import click
 from functools import wraps
 from pathlib import Path
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import (
