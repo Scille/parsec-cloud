@@ -24,7 +24,7 @@ from parsec.core.backend_connection import (
 
 logger = get_logger()
 
-MIN_WAIT = 5
+MIN_WAIT = 1
 MAX_WAIT = 60
 MAINTENANCE_MIN_WAIT = 30
 TICK_CRASH_COOLDOWN = 5
@@ -330,10 +330,10 @@ async def _monitor_sync_online(user_fs, event_bus):
         except FSBackendOfflineError:
             raise
         except Exception as exc:
-            logger.error("Sync monitor has crashed", workspace_id=entry.id, exc_info=exc)
+            logger.error("Sync monitor has crashed", workspace_id=ctx.id, exc_info=exc)
             # Reset sync context which is now in an undefined state
-            ctxs.discard(entry.id)
-            ctx = ctxs.get(entry.id)
+            ctxs.discard(ctx.id)
+            ctx = ctxs.get(ctx.id)
             if ctx:
                 # Add small cooldown just to be sure not end up in a crazy busy error loop
                 ctx.due_time += TICK_CRASH_COOLDOWN
