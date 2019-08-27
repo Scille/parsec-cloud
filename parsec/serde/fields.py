@@ -248,6 +248,11 @@ class Map(Field):
         return ret
 
 
+class FrozenList(List):
+    def _deserialize(self, value, attr, obj):
+        return tuple(super()._deserialize(value, attr, obj))
+
+
 class Tuple(Field):
     default_error_messages = {"invalid": "Not a valid tuple type."}
 

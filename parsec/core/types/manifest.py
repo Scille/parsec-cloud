@@ -12,12 +12,12 @@ from parsec.core.types import WorkspaceEntry, WorkspaceEntrySchema, EntryID, Ent
 
 class LocalUserManifestSchema(BaseSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
-    base = fields.Nested(UserManifest.SCHEMA_CLS, required=True)
+    base = fields.Nested(UserManifest.SCHEMA_CLS, allow_none=True, missing=None)
     id = EntryIDField(required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    workspaces = fields.List(fields.Nested(WorkspaceEntrySchema), required=True)
+    workspaces = fields.FrozenList(fields.Nested(WorkspaceEntrySchema), required=True)
 
     @post_load
     def make_obj(self, data):
