@@ -9,7 +9,6 @@ import pendulum
 
 from parsec.utils import trio_run
 from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.crypto import SigningKey
 from parsec.logging import configure_logging
 from parsec.core import logged_core_factory
@@ -28,6 +27,7 @@ from parsec.core.invite_claim import (
     claim_user,
     InviteClaimError,
 )
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 
 
@@ -146,6 +146,7 @@ async def _amain(
     config = load_config(config_dir, debug="DEBUG" in os.environ)
     async with logged_core_factory(config, alice_device) as core:
         alice_ws_id = await core.user_fs.workspace_create(f"{alice_workspace}")
+        await core.user_fs.sync()
 
     # Register a new device for Alice
 
@@ -156,7 +157,10 @@ async def _amain(
     async def invite_task():
         await invite_and_create_device(alice_device, other_device_name, token)
 
+    other_alice_device = None
+
     async def claim_task():
+        nonlocal other_alice_device
         other_alice_device = await retry_claim(
             claim_device, alice_device.organization_addr, other_alice_device_id, token
         )
@@ -199,6 +203,12 @@ async def _amain(
         await core.user_fs.workspace_share(
             alice_ws_id, bob_device_id.user_id, WorkspaceRole.MANAGER
         )
+
+    # Synchronize every device
+    for device in (alice_device, other_alice_device, bob_device):
+        async with logged_core_factory(config, device) as core:
+            await core.user_fs.process_last_messages()
+            await core.user_fs.sync()
 
     # Print out
 
