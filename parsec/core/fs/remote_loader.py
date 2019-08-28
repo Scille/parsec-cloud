@@ -15,9 +15,6 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
-    WorkspaceManifest,
-    FolderManifest,
-    FileManifest,
 )
 from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.core.backend_connection import (
@@ -330,27 +327,19 @@ class RemoteLoader:
 
         author = await self.remote_device_manager.get_device(expected_author)
 
-        # TODO: big hack given we don't have OneOf schema of Manifests
-        # should be solved when we switch to typed EntryID
-        excs = []
-        for possible_cls in (WorkspaceManifest, FolderManifest, FileManifest):
-            try:
-                remote_manifest = possible_cls.decrypt_verify_and_load(
-                    encrypted,
-                    key=workspace_entry.key,
-                    author_verify_key=author.verify_key,
-                    expected_author=expected_author,
-                    expected_timestamp=expected_timestamp,
-                    expected_version=expected_version,
-                    expected_id=entry_id
-                    # TODO: check parent as well ?
-                )
-                break
-            except DataError as exc:
-                excs.append(exc)
-        else:
-            repr_excs = "\n".join([repr(exc) for exc in excs])
-            raise FSError(f"Cannot decrypt vlob: {repr_excs}") from excs[-1]
+        try:
+            remote_manifest = RemoteManifest.decrypt_verify_and_load(
+                encrypted,
+                key=workspace_entry.key,
+                author_verify_key=author.verify_key,
+                expected_author=expected_author,
+                expected_timestamp=expected_timestamp,
+                expected_version=expected_version,
+                expected_id=entry_id
+                # TODO: check parent as well ?
+            )
+        except DataError as exc:
+            raise FSError(f"Cannot decrypt vlob: {exc}") from exc
 
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
