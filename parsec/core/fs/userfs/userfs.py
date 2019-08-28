@@ -149,11 +149,15 @@ class UserFS:
         self._update_user_manifest_lock = trio.Lock()
         self._workspace_storages = {}
 
+        now = pendulum_now()
         wentry = WorkspaceEntry(
             name="<user manifest>",
             id=device.user_manifest_id,
             key=device.user_manifest_key,
             encryption_revision=1,
+            encrypted_on=now,
+            role_cached_on=now,
+            role=WorkspaceRole.OWNER,
         )
         self.remote_loader = RemoteLoader(
             self.device,
@@ -262,7 +266,7 @@ class UserFS:
         """
         Raises: Nothing !
         """
-        workspace_entry = WorkspaceEntry(name)
+        workspace_entry = WorkspaceEntry.new(name)
         workspace_manifest = LocalWorkspaceManifest.make_placeholder(
             entry_id=workspace_entry.id, author=self.device.device_id
         )

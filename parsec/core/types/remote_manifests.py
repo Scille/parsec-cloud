@@ -7,6 +7,7 @@ from typing import Tuple, Dict, Union
 from parsec.types import FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
 from parsec.api.protocol import DeviceID, DeviceIDField
+from parsec.api.data import WorkspaceEntry
 from parsec.core.types import local_manifests
 from parsec.core.types.base import (
     EntryID,
@@ -15,12 +16,7 @@ from parsec.core.types.base import (
     EntryNameField,
     serializer_factory,
 )
-from parsec.core.types.access import (
-    BlockAccess,
-    BlockAccessSchema,
-    WorkspaceEntry,
-    WorkspaceEntrySchema,
-)
+from parsec.core.types.access import BlockAccess, BlockAccessSchema
 
 
 __all__ = (
@@ -213,7 +209,7 @@ class UserManifestSchema(UnknownCheckedSchema):
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    workspaces = fields.List(fields.Nested(WorkspaceEntrySchema), required=True)
+    workspaces = fields.List(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
 
     @post_load
     def make_obj(self, data):

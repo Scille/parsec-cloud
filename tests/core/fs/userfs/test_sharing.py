@@ -4,8 +4,8 @@ import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
 
-from parsec.api.data import UserManifest
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest, EntryID
+from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,

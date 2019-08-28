@@ -2,8 +2,8 @@
 
 from typing import Tuple
 
-from parsec.api.data import UserManifest
-from parsec.core.types import LocalUserManifest, WorkspaceEntry
+from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.types import LocalUserManifest
 
 
 # TODO: replace sanity asserts by cleaner exceptions given they could be

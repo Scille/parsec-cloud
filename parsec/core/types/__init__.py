@@ -19,16 +19,7 @@ from parsec.core.types.backend_address import (
     BackendOrganizationBootstrapAddr,
     BackendOrganizationAddrField,
 )
-from parsec.core.types.access import (
-    BlockAccess,
-    BlockAccessSchema,
-    Chunk,
-    Chunks,
-    WorkspaceRole,
-    WorkspaceRoleField,
-    WorkspaceEntrySchema,
-    WorkspaceEntry,
-)
+from parsec.core.types.access import BlockAccess, BlockAccessSchema, Chunk, Chunks
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
 from parsec.core.types.local_manifests import (
     LocalFileManifest,
@@ -37,7 +28,12 @@ from parsec.core.types.local_manifests import (
     local_manifest_serializer,
     DEFAULT_BLOCK_SIZE,
 )
-from parsec.core.types.manifest import LocalUserManifest, LocalManifest
+from parsec.core.types.manifest import (
+    LocalUserManifest,
+    LocalManifest,
+    WorkspaceEntry,
+    WorkspaceRole,
+)
 from parsec.core.types.remote_device import (
     UnverifiedRemoteUser,
     UnverifiedRemoteDevice,
@@ -82,10 +78,6 @@ __all__ = (
     "BlockAccessSchema",
     "Chunk",
     "Chunks",
-    "WorkspaceRole",
-    "WorkspaceRoleField",
-    "WorkspaceEntrySchema",
-    "WorkspaceEntry",
     # local_device
     "LocalDevice",
     "local_device_serializer",
@@ -95,6 +87,8 @@ __all__ = (
     "LocalWorkspaceManifest",
     "LocalUserManifest",
     "LocalManifest",
+    "WorkspaceEntry",
+    "WorkspaceRole",
     "local_manifest_serializer",
     "DEFAULT_BLOCK_SIZE",
     # remote_device

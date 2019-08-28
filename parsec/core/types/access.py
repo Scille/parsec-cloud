@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-import pendulum
 import functools
 from hashlib import sha256
 from typing import Optional, Tuple
@@ -9,16 +8,7 @@ from typing import Optional, Tuple
 from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
-from parsec.core.types.base import (
-    BlockID,
-    BlockIDField,
-    ChunkID,
-    ChunkIDField,
-    EntryID,
-    EntryIDField,
-    serializer_factory,
-    EntryNameField,
-)
+from parsec.core.types.base import BlockID, BlockIDField, ChunkID, ChunkIDField, serializer_factory
 
 
 # Access
@@ -198,45 +188,3 @@ Chunks = Tuple[Chunk, ...]
 # Republishing under a better name
 WorkspaceRole = RealmRole
 WorkspaceRoleField = RealmRoleField
-
-
-# Not stricly speaking an access, but close enough...
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class WorkspaceEntry:
-    name: str
-    id: EntryID = attr.ib(factory=EntryID)
-    key: SecretKey = attr.ib(factory=SecretKey.generate)
-    encryption_revision: int = 1
-    encrypted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    role_cached_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    role: Optional[WorkspaceRole] = WorkspaceRole.OWNER
-
-    def is_revoked(self) -> bool:
-        return self.role is None
-
-    def evolve(self, **kwargs) -> "WorkspaceEntry":
-        return attr.evolve(self, **kwargs)
-
-    def evolve_and_mark_updated(self, **data) -> "WorkspaceEntry":
-        if "role_cached_on" not in data:
-            data["role_cached_on"] = pendulum.now()
-        return attr.evolve(self, **data)
-
-
-class WorkspaceEntrySchema(UnknownCheckedSchema):
-    name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
-    id = EntryIDField(required=True)
-    key = fields.SecretKey(required=True)
-    encryption_revision = fields.Int(required=True, validate=validate.Range(min=0))
-    encrypted_on = fields.DateTime(required=True)
-    role_cached_on = fields.DateTime(required=True)
-    role = WorkspaceRoleField(required=True, allow_none=True)
-
-    @post_load
-    def make_obj(self, data):
-        return WorkspaceEntry(**data)
-
-
-workspace_entry_serializer = serializer_factory(WorkspaceEntrySchema)

@@ -5,9 +5,16 @@ from typing import Optional, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.serde import fields, OneOfSchema, validate, post_load
-from parsec.api.protocol import DeviceID
-from parsec.api.data import UserManifest, BaseSchema, BaseData
-from parsec.core.types import WorkspaceEntry, WorkspaceEntrySchema, EntryID, EntryIDField
+from parsec.api.protocol import DeviceID, RealmRole
+from parsec.api.data import UserManifest, BaseSchema, BaseData, WorkspaceEntry
+from parsec.core.types import EntryID, EntryIDField
+
+
+__all__ = ("WorkspaceEntry", "WorkspaceRole")  # Republishing
+
+
+# Cheap rename
+WorkspaceRole = RealmRole
 
 
 class LocalUserManifestSchema(BaseSchema):
@@ -17,7 +24,7 @@ class LocalUserManifestSchema(BaseSchema):
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    workspaces = fields.FrozenList(fields.Nested(WorkspaceEntrySchema), required=True)
+    workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
 
     @post_load
     def make_obj(self, data):

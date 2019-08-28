@@ -10,7 +10,7 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.types import WorkspaceEntry, LocalWorkspaceManifest
+from parsec.core.types import LocalWorkspaceManifest, WorkspaceEntry
 
 from tests.common import freeze_time
 from tests.common import call_with_control
@@ -25,7 +25,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory, transaction_
             return workspace_entry
 
         with freeze_time("2000-01-01"):
-            workspace_entry = WorkspaceEntry("test")
+            workspace_entry = WorkspaceEntry.new("test")
             workspace_manifest = LocalWorkspaceManifest.make_placeholder(
                 entry_id=workspace_entry.id, author=device.device_id
             )
