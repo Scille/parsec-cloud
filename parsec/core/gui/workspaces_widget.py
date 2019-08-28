@@ -244,7 +244,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             timestamped=timestamped,
         )
         if count is None:
-            count = len(user_manifest.workspaces) - 1
+            count = len(user_manifest.workspaces) - 1 or 1
 
         columns_count = int(self.size().width() / 400)
 
@@ -431,6 +431,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             core=self.core,
             workspace_name=workspace_name,
         )
+
+    def resizeEvent(self, event):
+        self.reset()
 
     def reset(self):
         self.jobs_ctx.submit_job(
