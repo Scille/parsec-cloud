@@ -216,6 +216,11 @@ class SyncContext:
                     min_due_time = now + MAINTENANCE_MIN_WAIT
                     self.local_changes[entry_id] = LocalChange(now)
 
+                # This is where we plug our vacuuming routine
+                # as it corresponds to a fresh synchronized state
+                if not self.local_changes:
+                    self._get_local_storage().run_vacuum()
+
         # Re-compute due time
         if self.remote_changes:
             self.due_time = now

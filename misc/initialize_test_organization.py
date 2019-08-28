@@ -8,11 +8,11 @@ import click
 import pendulum
 
 from parsec.utils import trio_run
-from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey
 from parsec.logging import configure_logging
 from parsec.core import logged_core_factory
-from parsec.core.types import WorkspaceRole
+from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.core.types import WorkspaceRole, BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
     backend_administration_cmds_factory,

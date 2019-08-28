@@ -197,48 +197,66 @@ class UserFS:
         """
         self.storage.set_manifest(self.user_manifest_id, manifest)
 
-    def get_workspace_local_storage(self, workspace_id):
-        if workspace_id not in self._workspace_storages:
-            path = self.path / str(workspace_id)
-            local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
-            self._exit_stack.enter_context(local_storage)
-            self._workspace_storages[workspace_id] = local_storage
-        return self._workspace_storages[workspace_id]
+    def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
+        path = self.path / str(workspace_id)
+        local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
+        self._exit_stack.enter_context(local_storage)
+        return local_storage
 
-    async def set_workspace_manifest(self, workspace_id, manifest):
-        """
-        Raises: Nothing
-        """
-        local_storage = self.get_workspace_local_storage(workspace_id)
-        async with local_storage.lock_entry_id(workspace_id):
-            local_storage.set_manifest(workspace_id, manifest)
-
-    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
-        """
-        Raises:
-            FSWorkspaceNotFoundError
-        """
+    def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorskpaeFS to load it each time it is needed
-        def _get_workspace_entry():
+        def get_workspace_entry():
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
             return workspace_entry
 
-        # Sanity check to make sure workspace_id is valid
-        _get_workspace_entry()
+        # Instantiate the local storage
+        local_storage = self._instantiate_workspace_local_storage(workspace_id)
 
+        # Instantiate the workspace
         return WorkspaceFS(
             workspace_id=workspace_id,
-            get_workspace_entry=_get_workspace_entry,
+            get_workspace_entry=get_workspace_entry,
             device=self.device,
-            local_storage=self.get_workspace_local_storage(workspace_id),
+            local_storage=local_storage,
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
         )
+
+    async def _create_workspace(
+        self, workspace_id: EntryID, manifest: LocalWorkspaceManifest
+    ) -> None:
+        """
+        Raises: Nothing
+        """
+        workspace = self._instantiate_workspace(workspace_id)
+
+        async with workspace.local_storage.lock_entry_id(workspace_id):
+            workspace.local_storage.set_manifest(workspace_id, manifest)
+
+        self._workspace_storages.setdefault(workspace_id, workspace)
+
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+        """
+        Raises:
+            FSWorkspaceNotFoundError
+        """
+        # The workspace has already been instantiated
+        if workspace_id in self._workspace_storages:
+            return self._workspace_storages[workspace_id]
+
+        # Instantiate the workpace
+        workspace = self._instantiate_workspace(workspace_id)
+
+        # Sanity check to make sure workspace_id is valid
+        workspace.get_workspace_entry()
+
+        # Set and return
+        return self._workspace_storages.setdefault(workspace_id, workspace)
 
     async def workspace_create(self, name: str) -> EntryID:
         """
@@ -251,7 +269,7 @@ class UserFS:
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            await self.set_workspace_manifest(workspace_entry.id, workspace_manifest)
+            await self._create_workspace(workspace_entry.id, workspace_manifest)
             self.set_user_manifest(user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)

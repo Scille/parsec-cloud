@@ -39,7 +39,7 @@ async def main():
         # Touch file
         path = "/foo"
         block_size = 512 * 1024
-        file_size = 512 * 1024 * 16
+        file_size = 64 * 1024 * 1024
         await workspace.touch(path)
         info = await workspace.path_info(path)
 
@@ -62,6 +62,9 @@ async def main():
         # Printout
         print(f"File size: {naturalsize(file_size)}")
         print(f"Manifest size: {naturalsize(len(raw))}")
+
+        # Let sync monitor finish
+        await trio.sleep(2)
 
         # Debug
         # breakpoint()
