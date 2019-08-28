@@ -66,13 +66,8 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
     w2 = WorkspaceEntry.new(name="w2")
     w3 = WorkspaceEntry.new(name="w3")
 
-    diverged = LocalUserManifest(
-        base=None,
-        id=alice.user_manifest_id,
-        need_sync=True,
-        updated=d4,
-        last_processed_message=30,
-        workspaces=(w1, w3),
+    diverged = LocalUserManifest.new_placeholder(id=alice.user_manifest_id, now=d4).evolve(
+        last_processed_message=30, workspaces=(w1, w3)
     )
     target = UserManifest(
         author=alice.device_id,
@@ -85,12 +80,7 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
         workspaces=(w1, w2),
     )
     expected_merged = LocalUserManifest(
-        base=target,
-        id=alice.user_manifest_id,
-        updated=d4,
-        last_processed_message=30,
-        workspaces=(w1, w2, w3),
-        need_sync=True,
+        base=target, updated=d4, last_processed_message=30, workspaces=(w1, w2, w3), need_sync=True
     )
 
     merged = merge_local_user_manifests(diverged, target)

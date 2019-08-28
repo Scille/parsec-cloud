@@ -33,7 +33,6 @@ async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alic
     expected_base_um = initial_user_manifest_state.get_user_manifest_v1_for_backend(alice)
     expected_um = LocalUserManifest(
         base=expected_base_um,
-        id=expected_base_um.id,
         need_sync=True,
         updated=Pendulum(2000, 1, 2),
         last_processed_message=expected_base_um.last_processed_message,
@@ -78,7 +77,6 @@ async def test_rename_workspace(initial_user_manifest_state, alice_user_fs, alic
     expected_base_um = initial_user_manifest_state.get_user_manifest_v1_for_backend(alice)
     expected_um = LocalUserManifest(
         base=expected_base_um,
-        id=expected_base_um.id,
         need_sync=True,
         updated=Pendulum(2000, 1, 3),
         last_processed_message=expected_base_um.last_processed_message,
@@ -236,12 +234,9 @@ async def test_modify_user_manifest_placeholder(
             wid = await user_fs.workspace_create("w1")
         um = user_fs.get_user_manifest()
 
-        expected_um = LocalUserManifest(
-            base=None,
-            id=device.user_manifest_id,
-            need_sync=True,
-            updated=Pendulum(2000, 1, 2),
-            last_processed_message=0,
+        expected_um = LocalUserManifest.new_placeholder(
+            id=device.user_manifest_id, now=Pendulum(2000, 1, 2)
+        ).evolve(
             workspaces=(
                 WorkspaceEntry(
                     name="w1",
@@ -252,7 +247,7 @@ async def test_modify_user_manifest_placeholder(
                     role_cached_on=Pendulum(2000, 1, 2),
                     role=WorkspaceRole.OWNER,
                 ),
-            ),
+            )
         )
         assert um == expected_um
 
@@ -275,13 +270,8 @@ async def test_sync_placeholder(
             # User manifest should be lazily created on each access
             um = user_fs.get_user_manifest()
 
-        expected_um = LocalUserManifest(
-            base=None,
-            id=device.user_manifest_id,
-            need_sync=True,
-            updated=Pendulum(2000, 1, 1),
-            last_processed_message=0,
-            workspaces=(),
+        expected_um = LocalUserManifest.new_placeholder(
+            id=device.user_manifest_id, now=Pendulum(2000, 1, 1)
         )
         assert um == expected_um
 
@@ -289,8 +279,9 @@ async def test_sync_placeholder(
             with freeze_time("2000-01-02"):
                 wid = await user_fs.workspace_create("w1")
             um = user_fs.get_user_manifest()
-            expected_um = expected_um.evolve(
-                updated=Pendulum(2000, 1, 2),
+            expected_um = LocalUserManifest.new_placeholder(
+                id=device.user_manifest_id, now=Pendulum(2000, 1, 2)
+            ).evolve(
                 workspaces=(
                     WorkspaceEntry(
                         name="w1",
@@ -301,7 +292,7 @@ async def test_sync_placeholder(
                         role_cached_on=Pendulum(2000, 1, 2),
                         role=WorkspaceRole.OWNER,
                     ),
-                ),
+                )
             )
             assert um == expected_um
 
@@ -320,7 +311,6 @@ async def test_sync_placeholder(
         )
         expected_um = LocalUserManifest(
             base=expected_base_um,
-            id=expected_base_um.id,
             need_sync=False,
             updated=Pendulum(2000, 1, 2),
             last_processed_message=0,
@@ -391,7 +381,6 @@ async def test_concurrent_sync_placeholder(
             )
             expected_um = LocalUserManifest(
                 base=expected_base_um,
-                id=expected_base_um.id,
                 need_sync=False,
                 updated=Pendulum(2000, 1, 2),
                 last_processed_message=0,
@@ -421,7 +410,6 @@ async def test_concurrent_sync_placeholder(
             )
             expected_um = LocalUserManifest(
                 base=expected_base_um,
-                id=expected_base_um.id,
                 need_sync=False,
                 updated=Pendulum(2000, 1, 1),
                 last_processed_message=0,
@@ -478,7 +466,6 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
     )
     expected_um = LocalUserManifest(
         base=expected_base_um,
-        id=expected_base_um.id,
         need_sync=False,
         updated=Pendulum(2000, 1, 2),
         last_processed_message=0,

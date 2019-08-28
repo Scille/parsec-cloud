@@ -129,7 +129,6 @@ def merge_local_user_manifests(
 
     return LocalUserManifest(
         base=target,
-        id=target.id,
         need_sync=need_sync,
         updated=updated,
         last_processed_message=last_processed_message,

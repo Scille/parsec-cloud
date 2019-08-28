@@ -456,7 +456,6 @@ async def test_share_workspace_then_conflict_on_rights(
     )
     expected = LocalUserManifest(
         base=expected_remote,
-        id=expected_remote.id,
         need_sync=False,
         updated=expected_remote.updated,
         last_processed_message=expected_remote.last_processed_message,

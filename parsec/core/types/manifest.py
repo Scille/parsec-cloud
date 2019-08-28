@@ -19,7 +19,7 @@ from parsec.api.data import (
     UserManifest as RemoteUserManifest,
     Manifest as RemoteManifest,
 )
-from parsec.core.types import EntryID, EntryIDField
+from parsec.core.types import EntryID
 
 
 __all__ = (
@@ -178,8 +178,7 @@ class Chunk(BaseData):
 
 class LocalUserManifestSchema(BaseSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
-    base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True, allow_none=True)
-    id = EntryIDField(required=True)
+    base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -228,41 +227,53 @@ class LocalManifest(BaseData):
 class LocalUserManifest(LocalManifest):
     SCHEMA_CLS = LocalUserManifestSchema
 
-    base: Optional[RemoteUserManifest]
-    id: EntryID
+    base: RemoteUserManifest
     need_sync: bool
     updated: Pendulum
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry, ...]
 
     @classmethod
-    def new_placeholder(cls, id: EntryID = None) -> "LocalUserManifest":
+    def new_placeholder(cls, id: EntryID = None, now: Pendulum = None) -> "LocalUserManifest":
+        workspaces = ()
+        now = now or pendulum_now()
         return cls(
-            base=None,
-            id=id or EntryID(),
+            base=RemoteUserManifest(
+                author=None,
+                timestamp=now,
+                id=id or EntryID(),
+                version=0,
+                created=now,
+                updated=now,
+                last_processed_message=0,
+                workspaces=workspaces,
+            ),
             need_sync=True,
-            updated=pendulum_now(),
+            updated=now,
             last_processed_message=0,
-            workspaces=(),
+            workspaces=workspaces,
         )
 
     @property
+    def id(self):
+        return self.base.id
+
+    @property
     def created(self):
-        return self.base.created if self.base else self.updated
+        return self.base.created
 
     @property
     def base_version(self):
-        return self.base.version if self.base else 0
+        return self.base.version
 
     @property
     def is_placeholder(self):
-        return self.base is None
+        return self.base.version == 0
 
     @classmethod
     def from_remote(cls, remote: RemoteUserManifest) -> "LocalUserManifest":
         return cls(
             base=remote,
-            id=remote.id,
             need_sync=False,
             updated=remote.updated,
             last_processed_message=remote.last_processed_message,
