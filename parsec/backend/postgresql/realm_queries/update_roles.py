@@ -4,7 +4,7 @@ from pypika import Parameter
 from pypika.enums import Order
 
 from parsec.api.protocol import RealmRole
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.backend.realm import (
     RealmGrantedRole,
     RealmAccessError,

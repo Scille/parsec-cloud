@@ -4,7 +4,7 @@ from typing import List, Tuple
 from collections import defaultdict
 from pendulum import Pendulum
 
-from parsec.types import UserID, DeviceID, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.message import BaseMessageComponent
 

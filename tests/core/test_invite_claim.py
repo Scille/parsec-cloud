@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.core.invite_claim import (
     generate_invitation_token,
     invite_and_create_user,

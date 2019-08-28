@@ -4,7 +4,6 @@ import attr
 from typing import Optional, Dict, Tuple
 from pendulum import Pendulum
 
-from parsec.types import FrozenDict
 from parsec.serde import fields, validate, post_load
 from parsec.api.data.base import BaseSignedData, BaseSignedDataSchema, DataValidationError
 from parsec.core.types import (
@@ -53,7 +52,7 @@ class FolderManifest(BaseSignedData, VerifyVersionAndParentMixin):
         version = fields.Integer(required=True, validate=validate.Range(min=1))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.Map(
+        children = fields.FrozenMap(
             EntryNameField(validate=validate.Length(min=1, max=256)),
             EntryIDField(required=True),
             required=True,
@@ -69,7 +68,7 @@ class FolderManifest(BaseSignedData, VerifyVersionAndParentMixin):
     version: int
     created: Pendulum
     updated: Pendulum
-    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict)
+    children: Dict[EntryName, EntryID]
 
 
 class FileManifest(BaseSignedData, VerifyVersionAndParentMixin):
@@ -104,7 +103,7 @@ class WorkspaceManifest(BaseSignedData):
         version = fields.Integer(required=True, validate=validate.Range(min=1))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
-        children = fields.Map(
+        children = fields.FrozenMap(
             EntryNameField(validate=validate.Length(min=1, max=256)),
             EntryIDField(required=True),
             required=True,
@@ -119,7 +118,7 @@ class WorkspaceManifest(BaseSignedData):
     version: int
     created: Pendulum
     updated: Pendulum
-    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict)
+    children: Dict[EntryName, EntryID]
 
     @classmethod
     def verify_and_load(

@@ -5,7 +5,7 @@ import psutil
 from PyQt5.QtCore import QUrl, QFileInfo, QSysInfo, QLocale
 from PyQt5.QtGui import QDesktopServices, QGuiApplication, QClipboard
 
-from parsec.types import DeviceName
+from parsec.api.protocol import DeviceName
 
 
 def open_file(path):

@@ -4,15 +4,15 @@ import attr
 from typing import Optional, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.types import DeviceID
 from parsec.serde import fields, OneOfSchema, validate, post_load
+from parsec.api.protocol import DeviceID
 from parsec.api.data import UserManifest, BaseSchema, BaseData
 from parsec.core.types import WorkspaceEntry, WorkspaceEntrySchema, EntryID, EntryIDField
 
 
 class LocalUserManifestSchema(BaseSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
-    base = fields.Nested(UserManifest.SCHEMA_CLS, allow_none=True, missing=None)
+    base = fields.Nested(UserManifest.SCHEMA_CLS, required=True, allow_none=True)
     id = EntryIDField(required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)

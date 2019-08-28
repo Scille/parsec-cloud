@@ -3,7 +3,7 @@
 from typing import List, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
-from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.api.protocol import message_send_serializer, message_get_serializer
 from parsec.backend.utils import catch_protocol_errors
 from parsec.crypto import timestamps_in_the_ballpark

@@ -7,7 +7,6 @@ from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional, Union
 from structlog import get_logger
 
-from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
 from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key, SecretKey
 from parsec.api.data import (
@@ -20,7 +19,7 @@ from parsec.api.data import (
     PingMessageContent,
     UserManifest,
 )
-from parsec.api.protocol import MaintenanceType
+from parsec.api.protocol import UserID, DeviceID, MaintenanceType
 from parsec.core.types import (
     EntryID,
     LocalDevice,

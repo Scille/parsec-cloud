@@ -25,7 +25,7 @@ class EventsRealmRolesUpdatedRepSchema(BaseRepSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("realm.roles_updated", required=True)
     realm_id = fields.UUID(required=True)
-    role = RealmRoleField(allow_none=True, missing=None)
+    role = RealmRoleField(required=True, allow_none=True)
 
 
 class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):

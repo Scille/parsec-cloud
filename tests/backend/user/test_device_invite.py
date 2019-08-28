@@ -4,9 +4,8 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID, device_invite_serializer
 from parsec.backend.user import PEER_EVENT_MAX_WAIT
-from parsec.api.protocol import device_invite_serializer
 
 
 @pytest.fixture

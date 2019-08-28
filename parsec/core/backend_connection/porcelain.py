@@ -3,8 +3,9 @@
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID, BackendOrganizationAddr, BackendAddr
 from parsec.crypto import SigningKey
+from parsec.api.protocol import DeviceID
+from parsec.core.types import BackendOrganizationAddr, BackendAddr
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.transport import (
     authenticated_transport_pool_factory,

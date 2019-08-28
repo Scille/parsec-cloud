@@ -8,9 +8,9 @@ from nacl.secret import SecretBox
 from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
 
-from parsec.types import DeviceID
 from parsec.serde import BaseSchema, fields, SerdeValidationError, SerdePackingError, Serializer
 from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
+from parsec.api.protocol import DeviceID, DeviceIDField
 
 
 class DataError(Exception):
@@ -26,7 +26,7 @@ class DataSerializationError(SerdePackingError, DataError):
 
 
 class BaseSignedDataSchema(BaseSchema):
-    author = fields.DeviceID(missing=None)
+    author = DeviceIDField(required=True, allow_none=True)
     timestamp = fields.DateTime(required=True)
 
 

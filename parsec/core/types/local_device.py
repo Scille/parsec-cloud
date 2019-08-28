@@ -4,10 +4,11 @@ import attr
 from typing import Tuple
 from hashlib import sha256
 
-from parsec.types import BackendOrganizationAddr, OrganizationID, DeviceID
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import UnknownCheckedSchema, fields, post_load
+from parsec.api.protocol import DeviceID, OrganizationID, DeviceIDField
 from parsec.core.types.base import EntryID, EntryIDField, serializer_factory
+from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -70,8 +71,8 @@ class LocalDevice:
 
 
 class LocalDeviceSchema(UnknownCheckedSchema):
-    organization_addr = fields.BackendOrganizationAddr(required=True)
-    device_id = fields.DeviceID(required=True)
+    organization_addr = BackendOrganizationAddrField(required=True)
+    device_id = DeviceIDField(required=True)
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)
     is_admin = fields.Boolean(required=True)

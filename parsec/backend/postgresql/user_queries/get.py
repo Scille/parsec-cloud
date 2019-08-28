@@ -3,7 +3,7 @@
 from typing import Tuple
 from pypika import Parameter
 
-from parsec.types import UserID, DeviceID, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.user import User, Device, UserNotFoundError
 from parsec.backend.postgresql.utils import Query, query
 from parsec.backend.postgresql.tables import (

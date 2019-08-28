@@ -9,7 +9,7 @@ from botocore.exceptions import (
 from uuid import UUID
 from functools import partial
 
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 

@@ -4,8 +4,9 @@ import attr
 import pendulum
 from typing import Tuple, Dict
 
-from parsec.types import DeviceID, FrozenDict
+from parsec.types import FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
+from parsec.api.protocol import DeviceID, DeviceIDField
 from parsec.core.types import remote_manifests
 from parsec.core.types.manifest import LocalManifest
 from parsec.core.types.base import (
@@ -166,7 +167,7 @@ class LocalFileManifest:
 class LocalFileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_file_manifest", required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     base_manifest = fields.Nested(remote_manifests.FileManifestSchema, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
@@ -288,7 +289,7 @@ class LocalFolderManifest:
 class LocalFolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_folder_manifest", required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     base_manifest = fields.Nested(remote_manifests.FolderManifestSchema, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
@@ -405,7 +406,7 @@ class LocalWorkspaceManifest:
 class LocalWorkspaceManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    author = fields.DeviceID(required=True)
+    author = DeviceIDField(required=True)
     base_manifest = fields.Nested(remote_manifests.WorkspaceManifestSchema, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)

@@ -5,7 +5,7 @@ from uuid import UUID
 import pendulum
 from pypika import Parameter
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.block import (

@@ -10,8 +10,8 @@ from pendulum import Pendulum
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID
 from parsec.crypto import SecretKey
+from parsec.api.protocol import DeviceID
 from parsec.core.types import (
     EntryID,
     BlockID,

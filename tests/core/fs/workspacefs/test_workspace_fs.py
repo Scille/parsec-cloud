@@ -4,11 +4,10 @@ import errno
 import pytest
 from unittest.mock import ANY
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID, RealmRole
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.exceptions import FSRemoteManifestBadID, FSError
 from parsec.core.types import FsPath, EntryID, remote_manifest_serializer
-from parsec.api.protocol.realm import RealmRole
 
 
 @pytest.fixture

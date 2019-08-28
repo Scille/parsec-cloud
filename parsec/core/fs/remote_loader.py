@@ -14,8 +14,7 @@ from parsec.crypto import (
     CryptoError,
 )
 from parsec.api.data import DataError, RealmRoleCertificateContent
-from parsec.types import UserID, DeviceID
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsInMaintenance,

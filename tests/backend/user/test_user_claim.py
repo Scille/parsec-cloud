@@ -4,8 +4,11 @@ import pytest
 from pendulum import Pendulum
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID
-from parsec.api.protocol import user_get_invitation_creator_serializer, user_claim_serializer
+from parsec.api.protocol import (
+    DeviceID,
+    user_get_invitation_creator_serializer,
+    user_claim_serializer,
+)
 from parsec.backend.user import User, Device, UserInvitation, PEER_EVENT_MAX_WAIT
 
 from tests.common import freeze_time

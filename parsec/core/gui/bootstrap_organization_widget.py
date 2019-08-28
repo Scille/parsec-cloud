@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.crypto import SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
-from parsec.types import BackendOrganizationBootstrapAddr, DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     backend_anonymous_cmds_factory,

@@ -7,6 +7,16 @@ from parsec.api.protocol.base import (
     packb,
     unpackb,
 )
+from parsec.api.protocol.types import (
+    UserID,
+    DeviceID,
+    DeviceName,
+    OrganizationID,
+    UserIDField,
+    DeviceIDField,
+    DeviceNameField,
+    OrganizationIDField,
+)
 from parsec.api.protocol.handshake import (
     HandshakeError,
     HandshakeFailedChallenge,
@@ -80,6 +90,15 @@ __all__ = (
     "AuthenticatedClientHandshake",
     "AnonymousClientHandshake",
     "AdministrationClientHandshake",
+    # Types
+    "UserID",
+    "DeviceID",
+    "DeviceName",
+    "OrganizationID",
+    "UserIDField",
+    "DeviceIDField",
+    "DeviceNameField",
+    "OrganizationIDField",
     # Organization
     "organization_create_serializer",
     "organization_bootstrap_serializer",

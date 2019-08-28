@@ -3,10 +3,11 @@
 import attr
 from secrets import token_bytes
 
+from parsec import __api_version__
 from parsec.crypto import CryptoError
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.api.protocol.base import ProtocoleError, InvalidMessageError, serializer_factory
-from parsec import __api_version__
+from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
 
 
 class HandshakeError(ProtocoleError):
@@ -54,8 +55,8 @@ handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("authenticated", required=True)
-    organization_id = fields.OrganizationID(required=True)
-    device_id = fields.DeviceID(required=True)
+    organization_id = OrganizationIDField(required=True)
+    device_id = DeviceIDField(required=True)
     rvk = fields.VerifyKey(required=True)
     answer = fields.Bytes(required=True)
 
@@ -63,7 +64,7 @@ class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
 class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("anonymous", required=True)
-    organization_id = fields.OrganizationID(required=True)
+    organization_id = OrganizationIDField(required=True)
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
 
@@ -93,7 +94,7 @@ handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 class HandshakeResultSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("result", required=True)
     result = fields.String(required=True)
-    help = fields.String(allow_none=True, missing=None)
+    help = fields.String(missing=None)
 
 
 handshake_result_serializer = serializer_factory(HandshakeResultSchema)

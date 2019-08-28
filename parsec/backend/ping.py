@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import ping_serializer
 from parsec.backend.utils import catch_protocol_errors, anonymous_api
 

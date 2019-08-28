@@ -5,9 +5,8 @@ import pendulum
 from typing import Optional
 from uuid import UUID
 
-from parsec.types import DeviceID, DeviceName, UserID
 from parsec.crypto import PublicKey, VerifyKey
-from parsec.api.protocol import RealmRole
+from parsec.api.protocol import RealmRole, UserID, DeviceID, DeviceName
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,

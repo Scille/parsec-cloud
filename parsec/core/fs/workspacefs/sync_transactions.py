@@ -3,7 +3,7 @@
 from itertools import count
 from typing import Optional, List, Dict, Iterator
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.core.types import (
     Chunk,
     EntryID,

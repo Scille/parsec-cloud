@@ -5,7 +5,7 @@ import pendulum
 from typing import Optional
 from secrets import token_hex
 
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey, timestamps_in_the_ballpark
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
 from parsec.api.protocol import organization_create_serializer, organization_bootstrap_serializer

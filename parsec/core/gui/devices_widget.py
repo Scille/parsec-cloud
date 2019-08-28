@@ -5,10 +5,9 @@ from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.api.data import RevokedDeviceCertificateContent
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
-
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.password_change_dialog import PasswordChangeDialog

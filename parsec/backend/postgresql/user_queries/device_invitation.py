@@ -2,7 +2,7 @@
 
 from pypika import Parameter
 
-from parsec.types import OrganizationID, DeviceID, UserID
+from parsec.api.protocol import OrganizationID, DeviceID, UserID
 from parsec.backend.user import (
     UserError,
     UserNotFoundError,

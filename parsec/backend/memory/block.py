@@ -3,7 +3,7 @@
 from uuid import UUID
 import attr
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent

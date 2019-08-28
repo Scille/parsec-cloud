@@ -3,7 +3,6 @@
 from secrets import token_hex
 import pendulum
 
-from parsec.types import DeviceID, UserID, DeviceName, BackendOrganizationAddr
 from parsec.crypto import (
     CryptoError,
     SecretKey,
@@ -16,7 +15,8 @@ from parsec.crypto import (
 )
 from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.api.data import DataError, UserCertificateContent, DeviceCertificateContent
-from parsec.core.types import LocalDevice, EntryID, EntryIDField
+from parsec.api.protocol import UserID, DeviceName, DeviceID, DeviceIDField
+from parsec.core.types import LocalDevice, EntryID, EntryIDField, BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendCmdsTimeout,
     BackendConnectionError,
@@ -72,7 +72,7 @@ class UserClaimSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("user_claim", required=True)
     token = fields.String(required=True)
     # Note claiming user also imply creating a first device
-    device_id = fields.DeviceID(required=True)
+    device_id = DeviceIDField(required=True)
     public_key = fields.PublicKey(required=True)
     verify_key = fields.VerifyKey(required=True)
 
@@ -132,7 +132,7 @@ def extract_user_encrypted_claim(creator_private_key: PrivateKey, encrypted_clai
 class DeviceClaimSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("device_claim", required=True)
     token = fields.String(required=True)
-    device_id = fields.DeviceID(required=True)
+    device_id = DeviceIDField(required=True)
     verify_key = fields.VerifyKey(required=True)
     answer_public_key = fields.PublicKey(required=True)
 

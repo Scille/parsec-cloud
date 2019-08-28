@@ -4,10 +4,10 @@ from typing import List, Tuple
 from pathlib import Path
 from uuid import uuid4
 
-from parsec.types import DeviceID, OrganizationID, BackendOrganizationAddr
 from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.crypto import SecretKey, SigningKey, PrivateKey
-from parsec.core.types import EntryID, LocalDevice, local_device_serializer
+from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr, local_device_serializer
 from parsec.core.local_device.exceptions import (
     LocalDeviceError,
     LocalDeviceCryptoError,

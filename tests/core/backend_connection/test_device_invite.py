@@ -4,9 +4,9 @@ import pytest
 import trio
 import pendulum
 
-from parsec.types import DeviceID
-from parsec.crypto import PrivateKey, SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.api.protocol import DeviceID
+from parsec.crypto import PrivateKey, SigningKey
 from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (

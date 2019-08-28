@@ -5,10 +5,12 @@ from uuid import UUID
 import pendulum
 import attr
 
-from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.crypto import timestamps_in_the_ballpark
 from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
     RealmRole,
     MaintenanceType,
     realm_status_serializer,

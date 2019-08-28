@@ -6,7 +6,7 @@ from typing import Dict
 from pypika import Parameter
 
 from parsec.api.protocol import RealmRole
-from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.backend.realm import (
     RealmAccessError,
     RealmNotFoundError,
