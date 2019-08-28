@@ -2,11 +2,13 @@
 
 import errno
 from uuid import UUID
+from collections import defaultdict
 
 from typing import Union, Iterator, Dict, Tuple
 from pendulum import Pendulum
 
 import attr
+import trio
 
 from parsec.api.protocol import UserID
 from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
@@ -68,6 +70,7 @@ class WorkspaceFS:
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
         self.remote_device_manager = remote_device_manager
+        self.sync_locks = defaultdict(trio.Lock)
 
         self.remote_loader = RemoteLoader(
             self.device,
@@ -574,7 +577,8 @@ class WorkspaceFS:
 
         # Sync parent first
         try:
-            manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
+            async with self.sync_locks[entry_id]:
+                manifest = await self._sync_by_id(entry_id, remote_changed=remote_changed)
 
         # Nothing to synchronize if the manifest does not exist locally
         except FSNoSynchronizationRequired:
