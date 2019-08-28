@@ -95,6 +95,11 @@ class FileTable(QTableWidget):
                 )
         return files
 
+    def has_file(self, uuid):
+        return any(
+            uuid == self.item(row, 1).data(UUID_DATA_INDEX) for row in range(self.rowCount())
+        )
+
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
 
