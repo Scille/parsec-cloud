@@ -2,14 +2,8 @@
 
 import pytest
 from hypothesis import strategies as st
-from hypothesis_trio.stateful import (
-    initialize,
-    rule,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-)
+from hypothesis_trio.stateful import initialize, rule
 
-from tests.common import call_with_control
 from tests.oracles import FileOracle
 
 
@@ -18,34 +12,13 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
 @pytest.mark.slow
-def test_fs_offline_restart_and_rwfile(hypothesis_settings, reset_testbed, user_fs_factory, alice):
-    class FSOfflineRestartAndRWFile(TrioAsyncioRuleBasedStateMachine):
-        async def restart_user_fs(self):
-            try:
-                await self.fs_controller.stop()
-            except AttributeError:
-                pass
-
-            async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=self.device) as user_fs:
-                    await started_cb(user_fs=user_fs)
-
-            self.user_fs_controller = await self.get_root_nursery().start(
-                call_with_control, _user_fs_controlled_cb
-            )
-
-        @property
-        def user_fs(self):
-            if self.user_fs_controller:
-                return self.user_fs_controller.user_fs
-            else:
-                return None
-
+def test_fs_offline_restart_and_rwfile(user_fs_state_machine, alice):
+    class FSOfflineRestartAndRWFile(user_fs_state_machine):
         @initialize()
         async def init(self):
-            await reset_testbed()
+            await self.reset_all()
             self.device = alice
-            await self.restart_user_fs()
+            await self.restart_user_fs(self.device)
             wid = await self.user_fs.workspace_create("w")
             self.workspace = self.user_fs.get_workspace(wid)
             await self.workspace.touch("/foo.txt")
@@ -53,7 +26,7 @@ def test_fs_offline_restart_and_rwfile(hypothesis_settings, reset_testbed, user_
 
         @rule()
         async def restart(self):
-            await self.restart_user_fs()
+            await self.restart_user_fs(self.device)
 
         @rule(
             size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
@@ -77,4 +50,4 @@ def test_fs_offline_restart_and_rwfile(hypothesis_settings, reset_testbed, user_
             await self.workspace.truncate("/foo.txt", length=length)
             self.file_oracle.truncate(length)
 
-    run_state_machine_as_test(FSOfflineRestartAndRWFile, settings=hypothesis_settings)
+    FSOfflineRestartAndRWFile.run_as_test()
