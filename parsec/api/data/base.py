@@ -69,6 +69,9 @@ class BaseSignedData(metaclass=SignedDataMeta):
     author: Optional[DeviceID]  # Set to None if signed by the root key
     timestamp: Pendulum
 
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
     def _serialize(self) -> bytes:
         """
         Raises:
@@ -265,6 +268,9 @@ class BaseData(metaclass=DataMeta):
 
     SCHEMA_CLS = BaseSchema  # Must be overloaded by child class
     # SERIALIZER attribute sets by the metaclass
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
 
     def dump(self) -> bytes:
         """
