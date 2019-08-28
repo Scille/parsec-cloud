@@ -237,6 +237,11 @@ class LocalStorage:
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
 
+    # Vacuum
+
+    def run_vacuum(self):
+        self.persistent_storage.run_vacuum()
+
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: Pendulum):

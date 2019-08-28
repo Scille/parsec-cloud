@@ -13,6 +13,7 @@ from parsec.core.types.local_manifests import DEFAULT_BLOCK_SIZE
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
+DIRTY_VACUUM_THRESHOLD = 128 * 1024 * 1024
 
 
 class PersistentStorage:
@@ -31,15 +32,18 @@ class PersistentStorage:
 
     def __init__(self, key: SecretKey, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
         self.local_symkey = key
-        self._path = Path(path)
+        self.path = Path(path)
         self.max_cache_size = max_cache_size
         self.dirty_conn = None
         self.clean_conn = None
 
-    # TODO: really needed ?
     @property
-    def path(self):
-        return str(self._path)
+    def dirty_data_path(self):
+        return self.path / "dirty_data.sqlite"
+
+    @property
+    def clean_cache_path(self):
+        return self.path / "clean_cache.sqlite"
 
     @property
     def block_limit(self):
@@ -52,11 +56,11 @@ class PersistentStorage:
             raise RuntimeError("Already connected")
 
         # Create directories
-        self._path.mkdir(parents=True, exist_ok=True)
+        self.path.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
-        self.dirty_conn = sqlite_connect(str(self._path / "dirty_data.sqlite"))
-        self.clean_conn = sqlite_connect(str(self._path / "clean_cache.sqlite"))
+        self.dirty_conn = sqlite_connect(str(self.dirty_data_path))
+        self.clean_conn = sqlite_connect(str(self.clean_cache_path))
 
         # Tune database access
         # Use auto-commit for dirty data since it is very sensitive
@@ -338,3 +342,10 @@ class PersistentStorage:
 
     def run_block_garbage_collector(self):
         self.clear_clean_blocks()
+
+    # Vacuum
+
+    def run_vacuum(self):
+        # Vacuum is only necessary for the dirty database
+        if self.dirty_data_path.stat().st_size > DIRTY_VACUUM_THRESHOLD:
+            self.dirty_conn.execute("VACUUM")
