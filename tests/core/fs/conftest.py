@@ -96,9 +96,12 @@ async def alice_entry_transactions(
 
 
 @pytest.fixture
-<<<<<<< HEAD
-async def sync_transactions(transactions_factory, alice, alice_backend_cmds):
-    return await transactions_factory(alice, alice_backend_cmds)
+async def alice_sync_transactions(
+    transactions_factory, alice, alice_backend_cmds, alice_transaction_local_storage
+):
+    return await transactions_factory(
+        alice, backend_cmds=alice_backend_cmds, local_storage=alice_transaction_local_storage
+    )
 
 
 @pytest.fixture
@@ -170,11 +173,3 @@ def user_fs_state_machine(
             run_state_machine_as_test(cls, settings=hypothesis_settings)
 
     return UserFSStateMachine
-=======
-async def alice_sync_transactions(
-    transactions_factory, alice, alice_backend_cmds, alice_transaction_local_storage
-):
-    return await transactions_factory(
-        alice, backend_cmds=alice_backend_cmds, local_storage=alice_transaction_local_storage
-    )
->>>>>>> Move core workspacefs uses api.data schemas

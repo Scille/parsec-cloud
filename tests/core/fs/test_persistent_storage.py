@@ -13,16 +13,20 @@ from hypothesis import strategies as st
 from uuid import uuid4
 
 from parsec.crypto import SecretKey
-from parsec.core.types import EntryID, BlockID
+from parsec.api.protocol import DeviceID
+from parsec.core.types import (
+    EntryID,
+    BlockID,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
+    LocalFolderManifest,
+    LocalFileManifest,
+    DEFAULT_BLOCK_SIZE as block_size,
+)
 from parsec.core.fs import FSLocalMissError
 from parsec.core.fs.persistent_storage import PersistentStorage
-from parsec.core.types.local_manifests import DEFAULT_BLOCK_SIZE as block_size
 
 from tests.common import freeze_time
-
-
-ENTRY_ID = EntryID("00000000000000000000000000000001")
-BLOCK_ID = BlockID("0000000000000000000000000000000A")
 
 
 @pytest.fixture
@@ -39,65 +43,76 @@ def test_persistent_storage_path(tmpdir, persistent_storage):
 
 
 def test_persistent_storage_cache_size(persistent_storage):
+    entry_id = EntryID("00000000000000000000000000000001")
+
     assert persistent_storage.get_cache_size() == 0
 
-    persistent_storage.set_dirty_chunk(ENTRY_ID, b"data")
+    persistent_storage.set_dirty_chunk(entry_id, b"data")
     assert persistent_storage.get_cache_size() == 0
 
-    persistent_storage.set_clean_block(ENTRY_ID, b"data")
+    persistent_storage.set_clean_block(entry_id, b"data")
     assert persistent_storage.get_cache_size() > 4
 
-    persistent_storage.clear_clean_block(ENTRY_ID)
+    persistent_storage.clear_clean_block(entry_id)
     assert persistent_storage.get_cache_size() == 0
 
 
 def test_persistent_storage_set_get_clear_manifest(persistent_storage):
-    persistent_storage.set_manifest(ENTRY_ID, 1, False, b"data")
+    entry_id = EntryID("00000000000000000000000000000001")
 
-    data = persistent_storage.get_manifest(ENTRY_ID)
-    assert data == b"data"
+    expected_manifest = LocalWorkspaceManifest.new_placeholder()
+    persistent_storage.set_manifest(entry_id, expected_manifest)
 
-    persistent_storage.clear_manifest(ENTRY_ID)
+    manifest = persistent_storage.get_manifest(entry_id)
+    assert manifest == expected_manifest
+
+    persistent_storage.clear_manifest(entry_id)
 
     with pytest.raises(FSLocalMissError):
-        persistent_storage.clear_manifest(ENTRY_ID)
+        persistent_storage.clear_manifest(entry_id)
 
     with pytest.raises(FSLocalMissError):
-        persistent_storage.get_manifest(ENTRY_ID)
+        persistent_storage.get_manifest(entry_id)
 
 
 @pytest.mark.parametrize("dtype", ["dirty_chunk", "clean_block"])
 def test_persistent_storage_set_get_clear_chunk(persistent_storage, dtype):
+    entry_id = EntryID("00000000000000000000000000000001")
+
     get_method = getattr(persistent_storage, f"get_{dtype}")
     set_method = getattr(persistent_storage, f"set_{dtype}")
     clear_method = getattr(persistent_storage, f"clear_{dtype}")
 
-    set_method(ENTRY_ID, b"data")
+    set_method(entry_id, b"data")
 
-    data = get_method(ENTRY_ID)
+    data = get_method(entry_id)
     assert data == b"data"
 
-    clear_method(ENTRY_ID)
+    clear_method(entry_id)
 
     with pytest.raises(FSLocalMissError):
-        clear_method(ENTRY_ID)
+        clear_method(entry_id)
 
     with pytest.raises(FSLocalMissError):
-        get_method(ENTRY_ID)
+        get_method(entry_id)
 
 
 def test_persistent_storage_on_disk(tmpdir, persistent_storage):
-    persistent_storage.set_manifest(ENTRY_ID, 1, True, b"vlob_data")
-    persistent_storage.set_clean_block(BLOCK_ID, b"block_data")
+    entry_id = EntryID("00000000000000000000000000000001")
+    block_id = BlockID("0000000000000000000000000000000A")
+
+    expected_manifest = LocalWorkspaceManifest.new_placeholder(id=entry_id)
+    persistent_storage.set_manifest(entry_id, expected_manifest)
+    persistent_storage.set_clean_block(block_id, b"block_data")
     persistent_storage.close()
 
     with PersistentStorage(
         persistent_storage.local_symkey, tmpdir, max_cache_size=128 * block_size
     ) as persistent_storage_copy:
-        vlob_data = persistent_storage_copy.get_manifest(ENTRY_ID)
-        block_data = persistent_storage_copy.get_clean_block(BLOCK_ID)
+        manifest = persistent_storage_copy.get_manifest(entry_id)
+        block_data = persistent_storage_copy.get_clean_block(block_id)
 
-    assert vlob_data == b"vlob_data"
+    assert manifest == expected_manifest
     assert block_data == b"block_data"
 
 
@@ -183,18 +198,31 @@ def test_persistent_storage_get_need_sync_and_checkpoint_lazy_defined(persistent
 
 
 def test_persistent_storage_local_need_sync(persistent_storage):
+    author = DeviceID("a@a")
     e1 = EntryID("00000000000000000000000000000001")
     e2 = EntryID("00000000000000000000000000000002")
     e3 = EntryID("00000000000000000000000000000003")
     e4 = EntryID("00000000000000000000000000000004")
 
-    persistent_storage.set_manifest(e1, 1, True, b"dummy")
-    persistent_storage.set_manifest(e2, 1, True, b"dummy")
-    persistent_storage.set_manifest(e3, 1, False, b"dummy")
-    persistent_storage.set_manifest(e4, 1, False, b"dummy")
+    # m1&m2 need sync, m3&m4 doesn't
+    m1 = LocalUserManifest.new_placeholder(id=e1)
+    m2 = LocalWorkspaceManifest.new_placeholder(id=e2)
+    base_m3 = LocalFolderManifest.new_placeholder(id=e3, parent=e2).to_remote(author=author)
+    m3 = LocalFolderManifest.from_remote(base_m3)
+    base_m4 = LocalFileManifest.new_placeholder(id=e4, parent=e2).to_remote(author=author)
+    m4 = LocalFileManifest.from_remote(base_m4)
 
-    persistent_storage.set_manifest(e2, 1, False, b"dummy")
-    persistent_storage.set_manifest(e3, 1, True, b"dummy")
+    persistent_storage.set_manifest(e1, m1)
+    persistent_storage.set_manifest(e2, m2)
+    persistent_storage.set_manifest(e3, m3)
+    persistent_storage.set_manifest(e4, m4)
+
+    # m2 no longer need sync, m3 now need sync
+    m22 = LocalWorkspaceManifest.from_remote(m2.to_remote(author=author))
+    m32 = m3.evolve_and_mark_updated()
+
+    persistent_storage.set_manifest(e2, m22)
+    persistent_storage.set_manifest(e3, m32)
 
     need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()
     assert need_sync_local == {e1, e3}
@@ -202,17 +230,25 @@ def test_persistent_storage_local_need_sync(persistent_storage):
 
 
 def test_persistent_storage_remote_need_sync(persistent_storage):
+    author = DeviceID("a@a")
     e1 = EntryID("00000000000000000000000000000001")
     e2 = EntryID("00000000000000000000000000000002")
     e3 = EntryID("00000000000000000000000000000003")
     e4 = EntryID("00000000000000000000000000000004")
 
-    persistent_storage.set_manifest(e1, 1, False, b"dummy")
-    persistent_storage.set_manifest(e2, 1, False, b"dummy")
-    persistent_storage.set_manifest(e3, 1, False, b"dummy")
+    # m1, m2 and m3 doesn't need sync
+    base_m1 = LocalUserManifest.new_placeholder(id=e1).to_remote(author=author)
+    m1 = LocalUserManifest.from_remote(base_m1)
+    m2 = LocalUserManifest.from_remote(base_m1.evolve(id=e2))
+    m3 = LocalUserManifest.from_remote(base_m1.evolve(id=e3))
+
+    persistent_storage.set_manifest(e1, m1)
+    persistent_storage.set_manifest(e2, m2)
+    persistent_storage.set_manifest(e3, m3)
 
     persistent_storage.update_realm_checkpoint(41, {e1: 1, e2: 2, e3: 2, e4: 2})
-    persistent_storage.set_manifest(e2, 2, False, b"dummy")
+    m22 = m2.evolve(base=m2.base.evolve(version=2))
+    persistent_storage.set_manifest(e2, m22)
     persistent_storage.update_realm_checkpoint(42, {e2: 2})
 
     need_sync_local, need_sync_remote = persistent_storage.get_need_sync_entries()

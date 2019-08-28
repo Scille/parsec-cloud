@@ -19,7 +19,6 @@ from parsec.core.types import (
     FileDescriptor,
     LocalManifest,
     LocalFileManifest,
-    local_manifest_serializer,
 )
 from parsec.core.fs.persistent_storage import PersistentStorage
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
@@ -118,8 +117,7 @@ class LocalStorage:
             return self.local_manifest_cache[entry_id]
         except KeyError:
             pass
-        raw = self.persistent_storage.get_manifest(entry_id)
-        manifest = local_manifest_serializer.loads(raw)
+        manifest = self.persistent_storage.get_manifest(entry_id)
         self.local_manifest_cache[entry_id] = manifest
         return manifest
 
@@ -134,10 +132,7 @@ class LocalStorage:
         if check_lock_status:
             self._check_lock_status(entry_id)
         if not cache_only:
-            raw = local_manifest_serializer.dumps(manifest)
-            self.persistent_storage.set_manifest(
-                entry_id, manifest.base_version, manifest.need_sync, raw
-            )
+            self.persistent_storage.set_manifest(entry_id, manifest)
         else:
             self.cache_ahead_of_persistance_ids.add(entry_id)
         self.local_manifest_cache[entry_id] = manifest
@@ -151,10 +146,7 @@ class LocalStorage:
 
     def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
-        raw = local_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_manifest(
-            entry_id, manifest.base_version, manifest.need_sync, raw
-        )
+        self.persistent_storage.set_manifest(entry_id, manifest)
         self.cache_ahead_of_persistance_ids.remove(entry_id)
 
     def clear_manifest(self, entry_id: EntryID) -> None:

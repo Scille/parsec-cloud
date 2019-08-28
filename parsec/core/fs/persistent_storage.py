@@ -9,7 +9,7 @@ from sqlite3 import Connection, connect as sqlite_connect
 from parsec.core.types import EntryID, ChunkID, BlockID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
-from parsec.core.types.local_manifests import DEFAULT_BLOCK_SIZE
+from parsec.core.types import LocalManifest, DEFAULT_BLOCK_SIZE
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
@@ -214,12 +214,11 @@ class PersistentStorage:
             manifest_row = cursor.fetchone()
         if not manifest_row:
             raise FSLocalMissError(entry_id)
-        manifest_id, blob = manifest_row
-        return decrypt_raw_with_secret_key(self.local_symkey, blob)
+        manifest_id, ciphered = manifest_row
+        return LocalManifest.decrypt_and_load(ciphered, key=self.local_symkey)
 
-    def set_manifest(self, entry_id: EntryID, base_version: int, need_sync: bool, raw: bytes):
-        assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
+    def set_manifest(self, entry_id: EntryID, manifest: LocalManifest):
+        ciphered = manifest.dump_and_encrypt(key=self.local_symkey)
 
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
@@ -231,7 +230,14 @@ class PersistentStorage:
                         IFNULL((SELECT remote_version FROM manifests WHERE manifest_id=?), 0)
                     )
                 )""",
-                (entry_id.bytes, ciphered, need_sync, base_version, base_version, entry_id.bytes),
+                (
+                    entry_id.bytes,
+                    ciphered,
+                    manifest.need_sync,
+                    manifest.base_version,
+                    manifest.base_version,
+                    entry_id.bytes,
+                ),
             )
 
     def clear_manifest(self, entry_id: EntryID):

@@ -10,12 +10,11 @@ from parsec.core.types.backend_address import (
     BackendOrganizationAddrField,
 )
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
-from parsec.core.types.local_manifests import (
+from parsec.core.types.manifest import (
+    DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
-    local_manifest_serializer,
-    DEFAULT_BLOCK_SIZE,
 )
 from parsec.core.types.manifest import (
     LocalUserManifest,
@@ -36,31 +35,19 @@ from parsec.core.types.remote_device import (
     VerifiedRealmRole,
 )
 
-# from parsec.core.types.remote_manifests import (
-#     FileManifest,
-#     FolderManifest,
-#     WorkspaceManifest,
-#     UserManifest,
-#     RemoteManifest,
-#     remote_manifest_serializer,
-# )
 
-# Manifest = Union[LocalManifest, RemoteManifest]
 FileDescriptor = NewType("FileDescriptor", int)
 LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 
 
 __all__ = (
+    "FileDescriptor",
+    "LocalFolderishManifests",
     # base
-    "ChunkID",
-    "ChunkIDField",
-    "BlockID",
-    "BlockIDField",
     "EntryID",
     "EntryIDField",
     "EntryName",
     "EntryNameField",
-    "FileDescriptor",
     "FsPath",
     # Backend address
     "BackendAddr",
@@ -70,19 +57,17 @@ __all__ = (
     # local_device
     "LocalDevice",
     "local_device_serializer",
-    # local_manifests
+    # "manifest"
+    "DEFAULT_BLOCK_SIZE",
     "LocalFileManifest",
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
-    "local_manifest_serializer",
-    # Local manifest
     "LocalUserManifest",
     "LocalManifest",
     "WorkspaceEntry",
     "WorkspaceRole",
-    "local_manifest_serializer",
-    "DEFAULT_BLOCK_SIZE",
     "BlockAccess",
+    "BlockID",
     "Chunk",
     "ChunkID",
     # remote_device
@@ -92,14 +77,4 @@ __all__ = (
     "VerifiedRemoteUser",
     "VerifiedRemoteDevice",
     "VerifiedRealmRole",
-    # remote_manifests
-    "FileManifest",
-    "FolderManifest",
-    "WorkspaceManifest",
-    "UserManifest",
-    "RemoteManifest",
-    "remote_manifest_serializer",
-    # "Manifest",
-    # local file
-    "FileDescriptor",
 )
