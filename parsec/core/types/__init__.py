@@ -2,24 +2,13 @@
 
 from typing import Union, NewType
 
-from parsec.core.types.base import (
-    ChunkID,
-    ChunkIDField,
-    BlockID,
-    BlockIDField,
-    EntryID,
-    EntryIDField,
-    EntryName,
-    EntryNameField,
-    FsPath,
-)
+from parsec.core.types.base import EntryID, EntryIDField, EntryName, EntryNameField, FsPath
 from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationAddrField,
 )
-from parsec.core.types.access import BlockAccess, BlockAccessSchema, Chunk, Chunks
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
 from parsec.core.types.local_manifests import (
     LocalFileManifest,
@@ -33,6 +22,10 @@ from parsec.core.types.manifest import (
     LocalManifest,
     WorkspaceEntry,
     WorkspaceRole,
+    BlockAccess,
+    BlockID,
+    Chunk,
+    ChunkID,
 )
 from parsec.core.types.remote_device import (
     UnverifiedRemoteUser,
@@ -42,18 +35,19 @@ from parsec.core.types.remote_device import (
     VerifiedRemoteDevice,
     VerifiedRealmRole,
 )
-from parsec.core.types.remote_manifests import (
-    FileManifest,
-    FolderManifest,
-    WorkspaceManifest,
-    UserManifest,
-    RemoteManifest,
-    remote_manifest_serializer,
-)
 
+# from parsec.core.types.remote_manifests import (
+#     FileManifest,
+#     FolderManifest,
+#     WorkspaceManifest,
+#     UserManifest,
+#     RemoteManifest,
+#     remote_manifest_serializer,
+# )
 
-Manifest = Union[LocalManifest, RemoteManifest]
+# Manifest = Union[LocalManifest, RemoteManifest]
 FileDescriptor = NewType("FileDescriptor", int)
+LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 
 
 __all__ = (
@@ -73,11 +67,6 @@ __all__ = (
     "BackendOrganizationAddr",
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationAddrField",
-    # access
-    "BlockAccess",
-    "BlockAccessSchema",
-    "Chunk",
-    "Chunks",
     # local_device
     "LocalDevice",
     "local_device_serializer",
@@ -85,12 +74,17 @@ __all__ = (
     "LocalFileManifest",
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
+    "local_manifest_serializer",
+    # Local manifest
     "LocalUserManifest",
     "LocalManifest",
     "WorkspaceEntry",
     "WorkspaceRole",
     "local_manifest_serializer",
     "DEFAULT_BLOCK_SIZE",
+    "BlockAccess",
+    "Chunk",
+    "ChunkID",
     # remote_device
     "UnverifiedRemoteUser",
     "UnverifiedRemoteDevice",
@@ -105,7 +99,7 @@ __all__ = (
     "UserManifest",
     "RemoteManifest",
     "remote_manifest_serializer",
-    "Manifest",
+    # "Manifest",
     # local file
     "FileDescriptor",
 )

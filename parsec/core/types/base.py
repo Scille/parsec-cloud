@@ -7,43 +7,12 @@ from pathlib import PurePosixPath
 from parsec.serde import Serializer, fields
 
 
-__all__ = (
-    "ChunkID",
-    "ChunkIDField",
-    "BlockID",
-    "BlockIDField",
-    "EntryID",
-    "EntryIDField",
-    "EntryName",
-    "EntryNameField",
-    "FsPath",
-)
+__all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField", "FsPath")
 
 
 def serializer_factory(schema_cls):
     # TODO: add custom exceptions ?
     return Serializer(schema_cls)
-
-
-class ChunkID(UUID):
-    __slots__ = ()
-
-    def __init__(self, init=None):
-        init = uuid4() if init is None else init
-        if isinstance(init, UUID):
-            super().__init__(init.hex)
-        else:
-            super().__init__(init)
-
-
-ChunkIDField = fields.uuid_based_field_factory(ChunkID)
-
-
-class BlockID(ChunkID):
-    pass
-
-
-BlockIDField = fields.uuid_based_field_factory(BlockID)
 
 
 class EntryID(UUID):

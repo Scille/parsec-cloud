@@ -1,14 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-import pendulum
-from typing import Tuple, Dict
+from pendulum import Pendulum, now as pendulum_now
+from typing import Tuple
 
 from parsec.types import FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
-from parsec.api.protocol import DeviceID, DeviceIDField
-from parsec.core.types import remote_manifests
-from parsec.core.types.manifest import LocalManifest
+from parsec.api.protocol import DeviceID
+from parsec.api.data import (
+    FileManifest as RemoteFileManifest,
+    FolderManifest as RemoteFolderManifest,
+    WorkspaceManifest as RemoteWorkspaceManifest,
+)
+from parsec.core.types.manifest import LocalManifest, Chunk
 from parsec.core.types.base import (
     EntryID,
     EntryIDField,
@@ -16,7 +20,6 @@ from parsec.core.types.base import (
     EntryNameField,
     serializer_factory,
 )
-from parsec.core.types.access import ChunkSchema, Chunks
 
 
 __all__ = (
@@ -27,6 +30,7 @@ __all__ = (
     "local_manifest_loads",
 )
 
+
 DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 
 
@@ -35,61 +39,64 @@ DEFAULT_BLOCK_SIZE = 512 * 1024  # 512 KB
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalFileManifest:
-    author: DeviceID
-    base_manifest: remote_manifests.FileManifest
-    need_sync: bool = False
-    updated: pendulum.Pendulum = None
-    size: int = 0
-    blocksize: int = DEFAULT_BLOCK_SIZE
-    blocks: Tuple[Chunks, ...] = attr.ib(default=())
-
-    def __attrs_post_init__(self):
-        if self.updated is None:
-            object.__setattr__(self, "updated", self.base_manifest.updated)
+    base: RemoteFileManifest
+    need_sync: bool
+    updated: Pendulum
+    size: int
+    blocksize: int
+    blocks: Tuple[Tuple[Chunk], ...]
 
     @classmethod
-    def make_placeholder(cls, entry_id, author, parent_id, created=None):
-        if created is None:
-            created = pendulum.now()
-        base_manifest = remote_manifests.FileManifest(
-            entry_id=entry_id,
-            author=author,
-            parent_id=parent_id,
-            version=0,
-            created=created,
-            updated=created,
+    def new_placeholder(cls, parent: EntryID, id: EntryID = None, now: Pendulum = None):
+        now = now or pendulum_now()
+        blocks = ()
+        return cls(
+            base=RemoteFileManifest(
+                author=None,
+                timestamp=now,
+                id=id or EntryID(),
+                parent=parent,
+                version=0,
+                created=now,
+                updated=now,
+                blocksize=DEFAULT_BLOCK_SIZE,
+                size=0,
+                blocks=blocks,
+            ),
+            need_sync=True,
+            updated=now,
+            blocksize=DEFAULT_BLOCK_SIZE,
             size=0,
-            blocks=(),
+            blocks=blocks,
         )
-        return cls(author, base_manifest, need_sync=True)
 
     # Properties
 
     @property
-    def entry_id(self):
-        return self.base_manifest.entry_id
+    def id(self):
+        return self.base.id
 
     @property
-    def parent_id(self):
-        return self.base_manifest.parent_id
+    def parent(self):
+        return self.base.parent
 
     @property
     def created(self):
-        return self.base_manifest.created
+        return self.base.created
 
     @property
     def base_version(self):
-        return self.base_manifest.version
+        return self.base.version
 
     @property
     def is_placeholder(self):
-        return self.base_manifest.version == 0
+        return self.base.version == 0
 
     # Evolve methods
 
     def evolve_and_mark_updated(self, **data) -> "LocalFileManifest":
         if "updated" not in data:
-            data["updated"] = pendulum.now()
+            data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
         return attr.evolve(self, **data)
 
@@ -98,7 +105,7 @@ class LocalFileManifest:
 
     # File methods
 
-    def get_chunks(self, block: int) -> Chunks:
+    def get_chunks(self, block: int) -> Tuple[Chunk]:
         try:
             return self.blocks[block]
         except IndexError:
@@ -129,12 +136,28 @@ class LocalFileManifest:
 
     # Export methods
 
-    def corresponds_to(self, remote_manifest: "remote_manifests.FileManifest") -> bool:
+    def corresponds_to(self, remote_manifest: RemoteFileManifest) -> bool:
         if not self.is_reshaped():
             return False
-        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
+        return (
+            self.to_remote(
+                author=remote_manifest.author, timestamp=remote_manifest.timestamp
+            ).evolve(version=remote_manifest.version)
+            == remote_manifest
+        )
 
-    def to_remote(self, **data) -> "remote_manifests.FileManifest":
+    @classmethod
+    def from_remote(cls, remote: RemoteFileManifest) -> "LocalFileManifest":
+        return cls(
+            base=remote,
+            need_sync=False,
+            updated=remote.updated,
+            size=remote.size,
+            blocksize=remote.blocksize,
+            blocks=tuple((Chunk.from_block_acess(block_access),) for block_access in remote.blocks),
+        )
+
+    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteFileManifest:
         # Checks
         self.assert_integrity()
         assert self.is_reshaped()
@@ -142,44 +165,40 @@ class LocalFileManifest:
         # Blocks
         blocks = tuple(chunks[0].get_block_access() for chunks in self.blocks)
 
-        # Remote manifest
-        return remote_manifests.FileManifest(
-            entry_id=self.entry_id,
-            author=self.author,
-            parent_id=self.parent_id,
-            version=self.base_version,
+        return RemoteFileManifest(
+            author=author,
+            timestamp=timestamp or pendulum_now(),
+            id=self.id,
+            parent=self.parent,
+            version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
             size=self.size,
+            blocksize=self.blocksize,
             blocks=blocks,
-            **data,
         )
 
     def asdict(self):
         dct = attr.asdict(self)
-        dct.pop("base_manifest")
-        props = "base_version", "is_placeholder", "parent_id", "created"
+        dct.pop("base")
+        props = "base_version", "is_placeholder", "parent", "created"
         for name in props:
             dct[name] = getattr(self, name)
         return dct
 
 
 class LocalFileManifestSchema(UnknownCheckedSchema):
-    format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_file_manifest", required=True)
-    author = DeviceIDField(required=True)
-    base_manifest = fields.Nested(remote_manifests.FileManifestSchema, required=True)
+    base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
-    blocks = fields.List(fields.List(fields.Nested(ChunkSchema)), required=True)
+    blocks = fields.FrozenList(fields.FrozenList(fields.Nested(Chunk.SCHEMA_CLS)), required=True)
 
     @post_load
     def make_obj(self, data):
         data.pop("type")
-        data.pop("format")
-        data["blocks"] = tuple(tuple(block) for block in data["blocks"])
         return LocalFileManifest(**data)
 
 
@@ -191,59 +210,58 @@ local_file_manifest_serializer = serializer_factory(LocalFileManifestSchema)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalFolderManifest:
-
-    author: DeviceID
-    base_manifest: remote_manifests.FolderManifest
-    need_sync: bool = False
-    updated: pendulum.Pendulum = None
-    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict, factory=FrozenDict)
-
-    def __attrs_post_init__(self):
-        if self.updated is None:
-            object.__setattr__(self, "updated", self.base_manifest.updated)
+    base: RemoteFolderManifest
+    need_sync: bool
+    updated: Pendulum
+    children: FrozenDict[EntryName, EntryID]
 
     @classmethod
-    def make_placeholder(cls, entry_id, author, parent_id, created=None):
-        if created is None:
-            created = pendulum.now()
-        base_manifest = remote_manifests.FolderManifest(
-            entry_id=entry_id,
-            author=author,
-            parent_id=parent_id,
-            version=0,
-            created=created,
-            updated=created,
-            children={},
+    def new_placeholder(cls, parent: EntryID, id: EntryID = None, now: Pendulum = None):
+        now = now or pendulum_now()
+        children = FrozenDict()
+        return cls(
+            base=RemoteFolderManifest(
+                author=None,
+                timestamp=now,
+                id=id or EntryID(),
+                parent=parent,
+                version=0,
+                created=now,
+                updated=now,
+                children=children,
+            ),
+            need_sync=True,
+            updated=now,
+            children=children,
         )
-        return cls(author, base_manifest, need_sync=True)
 
     # Properties
 
     @property
-    def entry_id(self):
-        return self.base_manifest.entry_id
+    def id(self):
+        return self.base.id
 
     @property
-    def parent_id(self):
-        return self.base_manifest.parent_id
+    def parent(self):
+        return self.base.parent
 
     @property
     def created(self):
-        return self.base_manifest.created
+        return self.base.created
 
     @property
     def base_version(self):
-        return self.base_manifest.version
+        return self.base.version
 
     @property
     def is_placeholder(self):
-        return self.base_manifest.version == 0
+        return self.base.version == 0
 
     # Evolve methods
 
     def evolve_and_mark_updated(self, **data) -> "LocalFolderManifest":
         if "updated" not in data:
-            data["updated"] = pendulum.now()
+            data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
         return attr.evolve(self, **data)
 
@@ -262,47 +280,49 @@ class LocalFolderManifest:
 
     # Export methods
 
-    def corresponds_to(self, remote_manifest: "remote_manifests.FolderManifest") -> bool:
-        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
+    def corresponds_to(self, remote_manifest: RemoteFolderManifest) -> bool:
+        return (
+            self.to_remote(
+                author=remote_manifest.author, timestamp=remote_manifest.timestamp
+            ).evolve(version=remote_manifest.version)
+            == remote_manifest
+        )
 
-    def to_remote(self, **data) -> "remote_manifests.FolderManifest":
-        return remote_manifests.FolderManifest(
-            entry_id=self.entry_id,
-            author=self.author,
-            parent_id=self.parent_id,
-            version=self.base_version,
+    @classmethod
+    def from_remote(cls, remote: RemoteFolderManifest) -> "LocalFolderManifest":
+        return cls(base=remote, need_sync=False, updated=remote.updated, children=remote.children)
+
+    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteFolderManifest:
+        return RemoteFolderManifest(
+            author=author,
+            timestamp=timestamp or pendulum_now(),
+            id=self.id,
+            parent=self.parent,
+            version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
             children=self.children,
-            **data,
         )
 
     def asdict(self):
         dct = attr.asdict(self)
-        dct.pop("base_manifest")
-        props = "base_version", "is_placeholder", "parent_id", "created"
+        dct.pop("base")
+        props = "base_version", "is_placeholder", "parent", "created"
         for name in props:
             dct[name] = getattr(self, name)
         return dct
 
 
 class LocalFolderManifestSchema(UnknownCheckedSchema):
-    format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_folder_manifest", required=True)
-    author = DeviceIDField(required=True)
-    base_manifest = fields.Nested(remote_manifests.FolderManifestSchema, required=True)
+    base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
-    children = fields.Map(
-        EntryNameField(validate=validate.Length(min=1, max=256)),
-        EntryIDField(required=True),
-        required=True,
-    )
+    children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
 
     @post_load
     def make_obj(self, data):
         data.pop("type")
-        data.pop("format")
         return LocalFolderManifest(**data)
 
 
@@ -314,54 +334,57 @@ local_folder_manifest_serializer = serializer_factory(LocalFolderManifestSchema)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalWorkspaceManifest:
-
-    author: DeviceID
-    base_manifest: remote_manifests.WorkspaceManifest
-    need_sync: bool = False
-    updated: pendulum.Pendulum = None
-    children: Dict[EntryName, EntryID] = attr.ib(converter=FrozenDict, factory=FrozenDict)
-
-    def __attrs_post_init__(self):
-        if self.updated is None:
-            object.__setattr__(self, "updated", self.base_manifest.updated)
+    base: RemoteWorkspaceManifest
+    need_sync: bool
+    updated: Pendulum
+    children: FrozenDict[EntryName, EntryID]
 
     @classmethod
-    def make_placeholder(cls, entry_id, author, created=None):
-        if created is None:
-            created = pendulum.now()
-        base_manifest = remote_manifests.WorkspaceManifest(
-            entry_id=entry_id,
-            author=author,
-            version=0,
-            created=created,
-            updated=created,
-            children={},
+    def new_placeholder(cls, id: EntryID = None, now: Pendulum = None):
+        now = now or pendulum_now()
+        children = FrozenDict()
+        return cls(
+            base=RemoteWorkspaceManifest(
+                author=None,
+                timestamp=now,
+                id=id or EntryID(),
+                version=0,
+                created=now,
+                updated=now,
+                children=children,
+            ),
+            need_sync=True,
+            updated=now,
+            children=children,
         )
-        return cls(author, base_manifest, need_sync=True)
 
     # Properties
 
     @property
-    def entry_id(self):
-        return self.base_manifest.entry_id
+    def id(self):
+        return self.base.id
+
+    @property
+    def parent(self):
+        return self.base.parent
 
     @property
     def created(self):
-        return self.base_manifest.created
+        return self.base.created
 
     @property
     def base_version(self):
-        return self.base_manifest.version
+        return self.base.version
 
     @property
     def is_placeholder(self):
-        return self.base_manifest.version == 0
+        return self.base.version == 0
 
     # Evolve methods
 
     def evolve_and_mark_updated(self, **data) -> "LocalWorkspaceManifest":
         if "updated" not in data:
-            data["updated"] = pendulum.now()
+            data["updated"] = pendulum_now()
         data.setdefault("need_sync", True)
         return attr.evolve(self, **data)
 
@@ -380,23 +403,32 @@ class LocalWorkspaceManifest:
 
     # Export methods
 
-    def corresponds_to(self, remote_manifest: "remote_manifests.WorkspaceManifest") -> bool:
-        return self.to_remote().evolve(version=remote_manifest.version) == remote_manifest
+    def corresponds_to(self, remote_manifest: RemoteWorkspaceManifest) -> bool:
+        return (
+            self.to_remote(
+                author=remote_manifest.author, timestamp=remote_manifest.timestamp
+            ).evolve(version=remote_manifest.version)
+            == remote_manifest
+        )
 
-    def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
-        return remote_manifests.WorkspaceManifest(
-            entry_id=self.entry_id,
-            author=self.author,
-            version=self.base_version,
+    @classmethod
+    def from_remote(cls, remote: RemoteWorkspaceManifest) -> "LocalWorkspaceManifest":
+        return cls(base=remote, need_sync=False, updated=remote.updated, children=remote.children)
+
+    def to_remote(self, author: DeviceID, timestamp: Pendulum = None) -> RemoteWorkspaceManifest:
+        return RemoteWorkspaceManifest(
+            author=author,
+            timestamp=timestamp or pendulum_now(),
+            id=self.id,
+            version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
             children=self.children,
-            **data,
         )
 
     def asdict(self):
         dct = attr.asdict(self)
-        dct.pop("base_manifest")
+        dct.pop("base")
         props = "base_version", "is_placeholder", "created"
         for name in props:
             dct[name] = getattr(self, name)
@@ -404,22 +436,15 @@ class LocalWorkspaceManifest:
 
 
 class LocalWorkspaceManifestSchema(UnknownCheckedSchema):
-    format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    author = DeviceIDField(required=True)
-    base_manifest = fields.Nested(remote_manifests.WorkspaceManifestSchema, required=True)
+    base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
     need_sync = fields.Boolean(required=True)
     updated = fields.DateTime(required=True)
-    children = fields.Map(
-        EntryNameField(validate=validate.Length(min=1, max=256)),
-        EntryIDField(required=True),
-        required=True,
-    )
+    children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
 
     @post_load
     def make_obj(self, data):
         data.pop("type")
-        data.pop("format")
         return LocalWorkspaceManifest(**data)
 
 

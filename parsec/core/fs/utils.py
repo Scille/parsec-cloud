@@ -1,16 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.api.data import WorkspaceManifest, FileManifest, FolderManifest, Manifest
 from parsec.core.types import (
     LocalUserManifest,
     LocalWorkspaceManifest,
     LocalFolderManifest,
     LocalFileManifest,
     LocalManifest,
-    WorkspaceManifest,
-    FileManifest,
-    FolderManifest,
-    Manifest,
 )
+
+
+# TODO: remove those methods ?
 
 
 def is_placeholder_manifest(manifest: LocalManifest) -> bool:

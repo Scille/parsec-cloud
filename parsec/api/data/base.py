@@ -31,7 +31,7 @@ class BaseSignedDataSchema(BaseSchema):
 
 
 class SignedDataMeta(type):
-    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True)
+    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, cmp=False)
 
     def __new__(cls, name, bases, nmspc):
         # Sanity checks
@@ -47,11 +47,14 @@ class SignedDataMeta(type):
         if "__attrs_attrs__" not in nmspc:
             if "SERIALIZER" in nmspc and bases:
                 raise RuntimeError("Attribute `SERIALIZER` is reserved")
+
             nmspc["SERIALIZER"] = Serializer(
                 nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
             )
             raw_cls = type.__new__(cls, name, bases, nmspc)
+
             return cls.CLS_ATTR_COOKING(raw_cls)
+
         else:
             return type.__new__(cls, name, bases, nmspc)
 
@@ -69,6 +72,11 @@ class BaseSignedData(metaclass=SignedDataMeta):
     author: Optional[DeviceID]  # Set to None if signed by the root key
     timestamp: Pendulum
 
+    def __eq__(self, other: "BaseSignedData") -> bool:
+        if isinstance(other, type(self)):
+            return attr.astuple(self).__eq__(attr.astuple(other))
+        return NotImplemented
+
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
@@ -85,7 +93,10 @@ class BaseSignedData(metaclass=SignedDataMeta):
         Raises:
             DataError
         """
-        return cls.SERIALIZER.loads(raw)
+        try:
+            return cls.SERIALIZER.loads(raw)
+        except DataError:
+            raise
 
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes:
         """
@@ -233,7 +244,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
 
 
 class DataMeta(type):
-    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True)
+    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, cmp=False)
 
     def __new__(cls, name, bases, nmspc):
         # Sanity checks
@@ -249,11 +260,14 @@ class DataMeta(type):
         if "__attrs_attrs__" not in nmspc:
             if "SERIALIZER" in nmspc and bases:
                 raise RuntimeError("Attribute `SERIALIZER` is reserved")
+
             nmspc["SERIALIZER"] = Serializer(
                 nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
             )
             raw_cls = type.__new__(cls, name, bases, nmspc)
+
             return cls.CLS_ATTR_COOKING(raw_cls)
+
         else:
             return type.__new__(cls, name, bases, nmspc)
 
@@ -268,6 +282,11 @@ class BaseData(metaclass=DataMeta):
 
     SCHEMA_CLS = BaseSchema  # Must be overloaded by child class
     # SERIALIZER attribute sets by the metaclass
+
+    def __eq__(self, other: "BaseData") -> bool:
+        if isinstance(other, type(self)):
+            return attr.astuple(self).__eq__(attr.astuple(other))
+        return NotImplemented
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)

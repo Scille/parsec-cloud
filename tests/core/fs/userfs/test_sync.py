@@ -52,8 +52,8 @@ async def test_create_workspace(initial_user_manifest_state, alice_user_fs, alic
     assert um == expected_um
 
     w_manifest = alice_user_fs.get_workspace(wid).local_storage.get_manifest(wid)
-    expected_w_manifest = LocalWorkspaceManifest.make_placeholder(
-        w_manifest.entry_id, author=alice.device_id, created=Pendulum(2000, 1, 2)
+    expected_w_manifest = LocalWorkspaceManifest.new_placeholder(
+        id=w_manifest.id, now=Pendulum(2000, 1, 2)
     )
     assert w_manifest == expected_w_manifest
 

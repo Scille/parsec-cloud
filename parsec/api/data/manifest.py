@@ -1,10 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional, Tuple, FrozenDict
-from uuid import UUID
+from typing import Union, Optional, Tuple, FrozenDict
 from pendulum import Pendulum, now as pendulum_now
 
+from parsec.types import UUID4
 from parsec.serde import fields, validate, post_load
 from parsec.crypto_types import SecretKey, HashDigest
 from parsec.api.protocol import RealmRole, RealmRoleField
@@ -18,20 +18,26 @@ from parsec.api.data.base import (
 from parsec.core.types import EntryID, EntryIDField, EntryName, EntryNameField
 
 
+class BlockID(UUID4):
+    pass
+
+
+BlockIDField = fields.uuid_based_field_factory(BlockID)
+
+
 class BlockAccess(BaseData):
     class SCHEMA_CLS(BaseSchema):
-        id = fields.UUID(required=True)
+        id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
         offset = fields.Integer(required=True, validate=validate.Range(min=0))
         size = fields.Integer(required=True, validate=validate.Range(min=0))
-        # TODO: provide digest as hexa string
-        digest = fields.String(required=True, validate=validate.Length(min=1, max=64))
+        digest = fields.Bytes(required=True)
 
         @post_load
         def make_obj(self, data):
             return BlockAccess(**data)
 
-    id: UUID
+    id: BlockID
     key: SecretKey
     offset: int
     size: int
@@ -88,7 +94,7 @@ class VerifyVersionAndParentMixin:
         **kwargs,
     ) -> BaseSignedData:
         data = super().verify_and_load(*args, **kwargs)
-        if data.author is None:
+        if data.author is None and data.version != 0:
             raise DataValidationError("Manifest cannot be signed by root verify key")
         if expected_id is not None and data.id != expected_id:
             raise DataValidationError(f"Invalid ID: expected `{expected_id}`, got `{data.id}`")
@@ -103,12 +109,13 @@ class VerifyVersionAndParentMixin:
         return data
 
 
-class FolderManifest(BaseSignedData, VerifyVersionAndParentMixin):
+class FolderManifest(VerifyVersionAndParentMixin, BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("folder_manifest", required=True)
         id = EntryIDField(required=True)
         parent = EntryIDField(required=True)
-        version = fields.Integer(required=True, validate=validate.Range(min=1))
+        # Version 0 means the data is not synchronized (hence author sould be None)
+        version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(
@@ -130,15 +137,17 @@ class FolderManifest(BaseSignedData, VerifyVersionAndParentMixin):
     children: FrozenDict[EntryName, EntryID]
 
 
-class FileManifest(BaseSignedData, VerifyVersionAndParentMixin):
+class FileManifest(VerifyVersionAndParentMixin, BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("file_manifest", required=True)
         id = EntryIDField(required=True)
         parent = EntryIDField(required=True)
-        version = fields.Integer(required=True, validate=validate.Range(min=1))
+        # Version 0 means the data is not synchronized (hence author sould be None)
+        version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
         size = fields.Integer(required=True, validate=validate.Range(min=0))
+        blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
         blocks = fields.FrozenList(fields.Nested(BlockAccess.SCHEMA_CLS), required=True)
 
         @post_load
@@ -152,6 +161,7 @@ class FileManifest(BaseSignedData, VerifyVersionAndParentMixin):
     created: Pendulum
     updated: Pendulum
     size: int
+    blocksize: int
     blocks: Tuple[BlockAccess]
 
 
@@ -159,7 +169,8 @@ class WorkspaceManifest(BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("workspace_manifest", required=True)
         id = EntryIDField(required=True)
-        version = fields.Integer(required=True, validate=validate.Range(min=1))
+        # Version 0 means the data is not synchronized (hence author sould be None)
+        version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
         children = fields.FrozenMap(
@@ -205,7 +216,8 @@ class UserManifest(BaseSignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_manifest", required=True)
         id = EntryIDField(required=True)
-        version = fields.Integer(required=True, validate=validate.Range(min=1))
+        # Version 0 means the data is not synchronized (hence author sould be None)
+        version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
         last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -232,7 +244,7 @@ class UserManifest(BaseSignedData):
         **kwargs,
     ) -> "UserManifest":
         data = super().verify_and_load(*args, **kwargs)
-        if data.author is None:
+        if data.author is None and data.version != 0:
             raise DataValidationError("Manifest cannot be signed by root verify key")
         if expected_id is not None and data.id != expected_id:
             raise DataValidationError(
@@ -246,3 +258,6 @@ class UserManifest(BaseSignedData):
 
     def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
         return next((w for w in self.workspaces if w.id == workspace_id), None)
+
+
+Manifest = Union[UserManifest, WorkspaceManifest, FolderManifest, FileManifest]

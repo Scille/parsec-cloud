@@ -1,24 +1,27 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import attr
+import trio
 import errno
 from uuid import UUID
 from collections import defaultdict
-
 from typing import Union, Iterator, Dict, Tuple
 from pendulum import Pendulum
 
-import attr
-import trio
-
+from parsec.api.data import Manifest as RemoteManifest
 from parsec.api.protocol import UserID
-from parsec.core.types import FsPath, EntryID, LocalDevice, WorkspaceRole, Manifest
-
+from parsec.core.types import (
+    FsPath,
+    EntryID,
+    LocalDevice,
+    WorkspaceRole,
+    LocalFolderishManifests,
+    LocalFileManifest,
+)
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
-
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
@@ -110,7 +113,7 @@ class WorkspaceFS:
         """
         return await self.transactions.entry_info(FsPath(path))
 
-    async def path_id(self, path: AnyPath) -> UUID:
+    async def path_id(self, path: AnyPath) -> EntryID:
         """
         Raises:
             OSError
@@ -442,15 +445,17 @@ class WorkspaceFS:
 
     # Sync helpers
 
-    async def _synchronize_placeholders(self, manifest: Manifest) -> None:
+    async def _synchronize_placeholders(self, manifest: LocalFolderishManifests) -> None:
         for child in self.transactions.get_placeholder_children(manifest):
             await self.minimal_sync(child)
 
-    async def _upload_blocks(self, manifest: Manifest) -> None:
+    async def _upload_blocks(self, manifest: LocalFileManifest) -> None:
         for access in manifest.blocks:
-            if not self.local_storage.is_clean_block(access.id):
-                data = self.local_storage.get_chunk(access.id)
-                await self.remote_loader.upload_block(access, data)
+            try:
+                data = self.local_storage.get_dirty_block(access.id)
+            except FSLocalMissError:
+                continue
+            await self.remote_loader.upload_block(access, data)
 
     async def minimal_sync(self, entry_id: EntryID) -> None:
         """
@@ -485,7 +490,7 @@ class WorkspaceFS:
         except FSLocalMissError:
             pass
 
-    async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> Manifest:
+    async def _sync_by_id(self, entry_id: EntryID, remote_changed: bool = True) -> RemoteManifest:
         """
         Synchronize the entry corresponding to a specific ID.
 
@@ -529,7 +534,7 @@ class WorkspaceFS:
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest or self.local_storage.get_manifest(entry_id).base_manifest
+                return remote_manifest or self.local_storage.get_manifest(entry_id).base
 
             # Synchronize placeholder children
             if is_folderish_manifest(new_remote_manifest):
@@ -590,7 +595,7 @@ class WorkspaceFS:
             # Only file manifest have synchronization conflict
             assert is_file_manifest(local_manifest)
             await self.transactions.file_conflict(entry_id, local_manifest, remote_manifest)
-            return await self.sync_by_id(local_manifest.parent_id)
+            return await self.sync_by_id(local_manifest.parent)
 
         # Non-recursive
         if not recursive or is_file_manifest(manifest):

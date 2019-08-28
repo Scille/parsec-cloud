@@ -267,9 +267,7 @@ class UserFS:
         Raises: Nothing !
         """
         workspace_entry = WorkspaceEntry.new(name)
-        workspace_manifest = LocalWorkspaceManifest.make_placeholder(
-            entry_id=workspace_entry.id, author=self.device.device_id
-        )
+        workspace_manifest = LocalWorkspaceManifest.new_placeholder(id=workspace_entry.id)
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)

@@ -2,6 +2,7 @@
 
 import pytest
 from pathlib import Path
+from pendulum import Pendulum
 
 from hypothesis_trio.stateful import run_state_machine_as_test, TrioAsyncioRuleBasedStateMachine
 
@@ -12,23 +13,19 @@ from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.types import LocalWorkspaceManifest, WorkspaceEntry
 
-from tests.common import freeze_time
 from tests.common import call_with_control
 
 
 @pytest.fixture
-def transactions_factory(event_bus, remote_devices_manager_factory, transaction_local_storage):
-    async def _transactions_factory(
-        device, backend_cmds, local_storage=transaction_local_storage, cls=SyncTransactions
-    ):
+def transactions_factory(event_bus, remote_devices_manager_factory):
+    async def _transactions_factory(device, backend_cmds, local_storage, cls=SyncTransactions):
         def _get_workspace_entry():
             return workspace_entry
 
-        with freeze_time("2000-01-01"):
-            workspace_entry = WorkspaceEntry.new("test")
-            workspace_manifest = LocalWorkspaceManifest.make_placeholder(
-                entry_id=workspace_entry.id, author=device.device_id
-            )
+        workspace_entry = WorkspaceEntry.new("test")
+        workspace_manifest = LocalWorkspaceManifest.new_placeholder(
+            id=workspace_entry.id, now=Pendulum(2000, 1, 1)
+        )
         async with local_storage.lock_entry_id(workspace_entry.id):
             local_storage.set_manifest(workspace_entry.id, workspace_manifest)
 
@@ -55,54 +52,51 @@ def transactions_factory(event_bus, remote_devices_manager_factory, transaction_
 
 
 @pytest.fixture
-def file_transactions_factory(
-    event_bus, remote_devices_manager_factory, transactions_factory, transaction_local_storage
-):
-    async def _file_transactions_factory(
-        device, backend_cmds, local_storage=transaction_local_storage
-    ):
+def file_transactions_factory(event_bus, remote_devices_manager_factory, transactions_factory):
+    async def _file_transactions_factory(device, backend_cmds, local_storage):
         return await transactions_factory(
-            device, backend_cmds, local_storage=local_storage, cls=FileTransactions
+            device, backend_cmds=backend_cmds, local_storage=local_storage, cls=FileTransactions
         )
 
     return _file_transactions_factory
 
 
 @pytest.fixture
-def transaction_local_storage(alice, persistent_mockup):
+def alice_transaction_local_storage(alice, persistent_mockup):
     with LocalStorage(alice.device_id, key=alice.local_symkey, path=Path("/dummy")) as storage:
         yield storage
 
 
 @pytest.fixture
-async def file_transactions(
-    file_transactions_factory, alice, alice_backend_cmds, transaction_local_storage
+async def alice_file_transactions(
+    file_transactions_factory, alice, alice_backend_cmds, alice_transaction_local_storage
 ):
     return await file_transactions_factory(
-        alice, alice_backend_cmds, local_storage=transaction_local_storage
+        alice, backend_cmds=alice_backend_cmds, local_storage=alice_transaction_local_storage
     )
 
 
 @pytest.fixture
-def entry_transactions_factory(
-    event_bus, remote_devices_manager_factory, transactions_factory, transaction_local_storage
-):
-    async def _entry_transactions_factory(
-        device, backend_cmds, local_storage=transaction_local_storage
-    ):
+def entry_transactions_factory(event_bus, remote_devices_manager_factory, transactions_factory):
+    async def _entry_transactions_factory(device, backend_cmds, local_storage):
         return await transactions_factory(
-            device, backend_cmds, local_storage=local_storage, cls=EntryTransactions
+            device, backend_cmds=backend_cmds, local_storage=local_storage, cls=EntryTransactions
         )
 
     return _entry_transactions_factory
 
 
 @pytest.fixture
-async def entry_transactions(entry_transactions_factory, alice, alice_backend_cmds):
-    return await entry_transactions_factory(alice, alice_backend_cmds)
+async def alice_entry_transactions(
+    entry_transactions_factory, alice, alice_backend_cmds, alice_transaction_local_storage
+):
+    return await entry_transactions_factory(
+        alice, backend_cmds=alice_backend_cmds, local_storage=alice_transaction_local_storage
+    )
 
 
 @pytest.fixture
+<<<<<<< HEAD
 async def sync_transactions(transactions_factory, alice, alice_backend_cmds):
     return await transactions_factory(alice, alice_backend_cmds)
 
@@ -176,3 +170,11 @@ def user_fs_state_machine(
             run_state_machine_as_test(cls, settings=hypothesis_settings)
 
     return UserFSStateMachine
+=======
+async def alice_sync_transactions(
+    transactions_factory, alice, alice_backend_cmds, alice_transaction_local_storage
+):
+    return await transactions_factory(
+        alice, backend_cmds=alice_backend_cmds, local_storage=alice_transaction_local_storage
+    )
+>>>>>>> Move core workspacefs uses api.data schemas

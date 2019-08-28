@@ -184,23 +184,26 @@ class LocalStorage:
         except FSLocalMissError:
             pass
 
+    def get_dirty_block(self, block_id: BlockID) -> bytes:
+        return self.persistent_storage.get_dirty_chunk(ChunkID(block_id))
+
     # Chunk interface
 
-    def get_chunk(self, block_id: ChunkID) -> bytes:
-        assert isinstance(block_id, ChunkID)
+    def get_chunk(self, chunk_id: ChunkID) -> bytes:
+        assert isinstance(chunk_id, ChunkID)
         try:
-            return self.persistent_storage.get_dirty_chunk(block_id)
+            return self.persistent_storage.get_dirty_chunk(chunk_id)
         except FSLocalMissError:
-            return self.persistent_storage.get_clean_block(block_id)
+            return self.persistent_storage.get_clean_block(chunk_id)
 
-    def set_chunk(self, block_id: ChunkID, block: bytes) -> None:
-        assert isinstance(block_id, ChunkID)
-        return self.persistent_storage.set_dirty_chunk(block_id, block)
+    def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
+        assert isinstance(chunk_id, ChunkID)
+        return self.persistent_storage.set_dirty_chunk(chunk_id, block)
 
-    def clear_chunk(self, block_id: ChunkID, miss_ok: bool = False) -> None:
-        assert isinstance(block_id, ChunkID)
+    def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
+        assert isinstance(chunk_id, ChunkID)
         try:
-            self.persistent_storage.clear_dirty_chunk(block_id)
+            self.persistent_storage.clear_dirty_chunk(chunk_id)
         except FSLocalMissError:
             if not miss_ok:
                 raise
