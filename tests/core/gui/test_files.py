@@ -224,6 +224,7 @@ async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.isVisible() is False
 
 
+@pytest.mark.skip("Unconsistent results on appveyor")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
@@ -256,8 +257,6 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
-    for i in range(w_f.table_files.rowCount()):
-        print(w_f.table_files.item(i, 1).data(QtCore.Qt.UserRole))
     assert w_f.table_files.rowCount() == 1
     for i in range(5):
         assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentWorkspace
