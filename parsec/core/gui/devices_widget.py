@@ -68,7 +68,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
     def show_device_info(self):
         text = f"{self.device_name}\n\n"
-        text += _("DEVICE_CREATED_ON_{}").format(format_datetime(self.certified_on))
+        text += _("DEVICE_CREATED_ON_{}").format(format_datetime(self.certified_on, full=True))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("DEVICE_IS_REVOKED")

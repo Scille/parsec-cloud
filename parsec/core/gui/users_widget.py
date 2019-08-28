@@ -65,7 +65,7 @@ class UserButton(QWidget, Ui_UserButton):
 
     def show_user_info(self):
         text = "{}\n\n".format(self.user_name)
-        text += _("USER_CREATED_ON_{}").format(format_datetime(self.certified_on))
+        text += _("USER_CREATED_ON_{}").format(format_datetime(self.certified_on, full=True))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("USER_IS_REVOKED")
