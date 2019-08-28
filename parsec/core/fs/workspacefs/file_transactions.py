@@ -236,7 +236,7 @@ class FileTransactions:
             self._write_chunk(chunk, b"", offset)
 
         # Atomic change
-        self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
+        self.local_storage.set_manifest(manifest.entry_id, manifest)
 
         # Clean up
         for removed_id in removed_ids:

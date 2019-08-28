@@ -58,8 +58,7 @@ class BlockAccessSchema(UnknownCheckedSchema):
     key = fields.SecretKey(required=True)
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
-    # TODO: provide digest as hexa string
-    digest = fields.String(required=True, validate=validate.Length(min=1, max=64))
+    digest = fields.Bytes(required=True, validate=validate.Length(min=1, max=32))
 
     @post_load
     def make_obj(self, data):
@@ -162,7 +161,7 @@ class Chunk:
             raise TypeError("This chunk is not aligned")
 
         # Craft access
-        digest = sha256(data).hexdigest()
+        digest = sha256(data).digest()
         access = BlockAccess.from_chunk(self, digest)
 
         # Evolve

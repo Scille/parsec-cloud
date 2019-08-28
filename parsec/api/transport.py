@@ -153,6 +153,8 @@ class Transport:
                 raise TransportClosedByPeer("Peer has closed connection")
 
             elif isinstance(event, BytesReceived):
+                # TODO: check that data doesn't go over MAX_BIN_LEN (1 MB)
+                # Msgpack will refuse to unpack it so we should fail early on if that happens
                 data += event.data
                 if event.message_finished:
                     return data
