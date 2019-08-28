@@ -3,7 +3,6 @@
 import attr
 import trio
 import errno
-from uuid import UUID
 from collections import defaultdict
 from typing import Union, Iterator, Dict, Tuple
 from pendulum import Pendulum
