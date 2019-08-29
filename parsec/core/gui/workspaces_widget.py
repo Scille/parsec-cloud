@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QDialog
 
 import pendulum
@@ -148,6 +148,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
         self.workspace_mounted.connect(self._on_workspace_mounted)
         self.workspace_unmounted.connect(self._on_workspace_unmounted)
+
+        self.reset_timer = QTimer()
+        self.reset_timer.setInterval(500)
+        self.reset_timer.setSingleShot(True)
+        self.reset_timer.timeout.connect(self.list_workspaces)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
 
@@ -436,6 +441,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def reset(self):
+        if not self.reset_timer.isActive():
+            self.reset_timer.start()
+
+    def list_workspaces(self):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "list_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "list_error", QtToTrioJob),
