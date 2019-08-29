@@ -13,7 +13,7 @@ from parsec.api.protocol import (
     UserIDField,
     RealmRoleField,
 )
-from parsec.api.data.base import BaseSignedData, BaseSignedDataSchema
+from parsec.api.data.base import DataValidationError, BaseSignedData, BaseSignedDataSchema
 
 
 class UserCertificateContent(BaseSignedData):
@@ -27,6 +27,17 @@ class UserCertificateContent(BaseSignedData):
         def make_obj(self, data):
             data.pop("type")
             return UserCertificateContent(**data)
+
+    @classmethod
+    def verify_and_load(
+        cls, *args, expected_user: Optional[UserID] = None, **kwargs
+    ) -> BaseSignedData:
+        data = super().verify_and_load(*args, **kwargs)
+        if expected_user is not None and data.user_id != expected_user:
+            raise DataValidationError(
+                f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
+            )
+        return data
 
     user_id: UserID
     public_key: PublicKey
@@ -43,6 +54,17 @@ class DeviceCertificateContent(BaseSignedData):
         def make_obj(self, data):
             data.pop("type")
             return DeviceCertificateContent(**data)
+
+    @classmethod
+    def verify_and_load(
+        cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
+    ) -> BaseSignedData:
+        data = super().verify_and_load(*args, **kwargs)
+        if expected_device is not None and data.device_id != expected_device:
+            raise DataValidationError(
+                f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
+            )
+        return data
 
     device_id: DeviceID
     verify_key: VerifyKey

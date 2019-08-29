@@ -4,7 +4,9 @@ import pytest
 import trio
 
 from parsec.api.protocol import DeviceID
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.invite_claim import (
+    InviteClaimCryptoError,
     generate_invitation_token,
     invite_and_create_user,
     claim_user,
@@ -32,11 +34,11 @@ async def test_invite_claim_non_admin_user(running_backend, backend, alice):
     async def _from_alice():
         await invite_and_create_user(alice, new_device_id.user_id, token=token, is_admin=False)
 
-    async def _from_mallory():
+    async def _from_new_device():
         nonlocal new_device
         new_device = await claim_user(alice.organization_addr, new_device_id, token=token)
 
-    await _invite_and_claim(running_backend, _from_alice, _from_mallory)
+    await _invite_and_claim(running_backend, _from_alice, _from_new_device)
 
     assert new_device.is_admin is False
 
@@ -56,11 +58,11 @@ async def test_invite_claim_admin_user(running_backend, backend, alice):
     async def _from_alice():
         await invite_and_create_user(alice, new_device_id.user_id, token=token, is_admin=True)
 
-    async def _from_mallory():
+    async def _from_new_device():
         nonlocal new_device
         new_device = await claim_user(alice.organization_addr, new_device_id, token=token)
 
-    await _invite_and_claim(running_backend, _from_alice, _from_mallory)
+    await _invite_and_claim(running_backend, _from_alice, _from_new_device)
 
     assert new_device.is_admin
 
@@ -133,12 +135,12 @@ async def test_invite_claim_device(running_backend, backend, alice):
     async def _from_alice():
         await invite_and_create_device(alice, new_device_id.device_name, token=token)
 
-    async def _from_mallory():
+    async def _from_new_device():
         nonlocal new_device
         new_device = await claim_device(alice.organization_addr, new_device_id, token=token)
 
     await _invite_and_claim(
-        running_backend, _from_alice, _from_mallory, event_name="device.claimed"
+        running_backend, _from_alice, _from_new_device, event_name="device.claimed"
     )
 
     # Now connect as the new device
@@ -197,3 +199,144 @@ async def test_invite_claim_multiple_devices_from_chained_user(running_backend, 
         new_device_3.organization_addr, new_device_3.device_id, new_device_3.signing_key
     ) as cmds:
         await cmds.ping("foo")
+
+
+@pytest.fixture
+def backend_claim_response_hook(monkeypatch):
+    from parsec.core.backend_connection.cmds import _send_cmd as vanilla_send_cmd
+
+    # Mock to patch user_claim response messages
+    hooks = {"user_certificate": None, "device_certificate": None}
+
+    async def _mocked_send_cmd(*args, **req):
+        ret = await vanilla_send_cmd(*args, **req)
+        if req["cmd"] == "user_claim" and callable(hooks["user_certificate"]):
+            ret["user_certificate"] = hooks["user_certificate"](ret["user_certificate"])
+        if req["cmd"] in ("user_claim", "device_claim") and callable(hooks["device_certificate"]):
+            ret["device_certificate"] = hooks["device_certificate"](ret["device_certificate"])
+        return ret
+
+    monkeypatch.setattr("parsec.core.backend_connection.cmds._send_cmd", _mocked_send_cmd)
+
+    return hooks
+
+
+@pytest.mark.trio
+async def test_user_claim_invalid_returned_certificates(
+    running_backend, backend, alice, bob, backend_claim_response_hook
+):
+    hooks = backend_claim_response_hook
+
+    device_count = 0
+
+    async def _do_test():
+        nonlocal device_count
+        device_count += 1
+        new_device_id = DeviceID(f"user{device_count}@dev")
+        token = generate_invitation_token()
+        exception_occured = False
+
+        async def _from_alice():
+            await invite_and_create_user(alice, new_device_id.user_id, token=token, is_admin=False)
+
+        async def _from_new_device():
+            nonlocal exception_occured
+            with pytest.raises(InviteClaimCryptoError):
+                await claim_user(alice.organization_addr, new_device_id, token=token)
+            exception_occured = True
+
+        await _invite_and_claim(running_backend, _from_alice, _from_new_device)
+        assert exception_occured
+
+    # Invalid data
+
+    hooks["user_certificate"] = lambda x: b"dummy"
+    hooks["device_certificate"] = None
+    await _do_test()
+
+    hooks["user_certificate"] = None
+    hooks["device_certificate"] = lambda x: b"dummy"
+    await _do_test()
+
+    # Certificate author differs from invitation creator
+
+    def bob_sign(certif):
+        return certif.evolve(author=bob.device_id).dump_and_sign(author_signkey=bob.signing_key)
+
+    hooks["user_certificate"] = lambda raw: bob_sign(UserCertificateContent.unsecure_load(raw))
+    hooks["device_certificate"] = None
+    await _do_test()
+
+    hooks["user_certificate"] = None
+    hooks["device_certificate"] = lambda raw: bob_sign(DeviceCertificateContent.unsecure_load(raw))
+    await _do_test()
+
+    # Certificate info doesn't correspond to created user
+
+    hooks["user_certificate"] = (
+        lambda raw: UserCertificateContent.unsecure_load(raw)
+        .evolve(user_id=bob.user_id)
+        .dump_and_sign(author_signkey=alice.signing_key)
+    )
+    hooks["device_certificate"] = None
+    await _do_test()
+
+    hooks["user_certificate"] = None
+    hooks["device_certificate"] = (
+        lambda raw: DeviceCertificateContent.unsecure_load(raw)
+        .evolve(device_id=bob.device_id)
+        .dump_and_sign(author_signkey=alice.signing_key)
+    )
+    await _do_test()
+
+
+@pytest.mark.trio
+async def test_device_claim_invalid_returned_certificate(
+    running_backend, backend, alice, bob, backend_claim_response_hook
+):
+    hooks = backend_claim_response_hook
+
+    device_count = 0
+
+    async def _do_test():
+        nonlocal device_count
+        device_count += 1
+        new_device_id = DeviceID(f"{alice.user_id}@newdev{device_count}")
+        token = generate_invitation_token()
+        exception_occured = False
+
+        async def _from_alice():
+            await invite_and_create_device(alice, new_device_id.device_name, token=token)
+
+        async def _from_new_device():
+            nonlocal exception_occured
+            with pytest.raises(InviteClaimCryptoError):
+                await claim_device(alice.organization_addr, new_device_id, token=token)
+            exception_occured = True
+
+        await _invite_and_claim(
+            running_backend, _from_alice, _from_new_device, event_name="device.claimed"
+        )
+        assert exception_occured
+
+    # Invalid data
+
+    hooks["device_certificate"] = lambda x: b"dummy"
+    await _do_test()
+
+    # Certificate author differs from invitation creator
+
+    def bob_sign(certif):
+        return certif.evolve(author=bob.device_id).dump_and_sign(author_signkey=bob.signing_key)
+
+    hooks["device_certificate"] = lambda raw: bob_sign(DeviceCertificateContent.unsecure_load(raw))
+    await _do_test()
+
+    # Certificate info doesn't correspond to created user
+
+    hooks["device_certificate"] = (
+        lambda raw: DeviceCertificateContent.unsecure_load(raw)
+        .evolve(device_id=bob.device_id)
+        .dump_and_sign(author_signkey=alice.signing_key)
+    )
+    await _do_test()

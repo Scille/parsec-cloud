@@ -290,7 +290,9 @@ async def claim_user(
 
             # 3) Send claim
             try:
-                unverified_user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+                unverified_user, unverified_device = await cmds.user_claim(
+                    new_device_id.user_id, encrypted_claim
+                )
 
             except BackendNotAvailable as exc:
                 raise InviteClaimBackendOfflineError(str(exc)) from exc
@@ -298,13 +300,22 @@ async def claim_user(
             except BackendConnectionError as exc:
                 raise InviteClaimError(f"Cannot claim user: {exc}") from exc
 
-            # 4) Verify user certificate and check admin status
+            # 4) Verify user&device certificates and check admin status
             try:
                 user = UserCertificateContent.verify_and_load(
                     unverified_user.user_certificate,
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
+                    expected_user=new_device_id.user_id,
                 )
+
+                DeviceCertificateContent.verify_and_load(
+                    unverified_device.device_certificate,
+                    author_verify_key=invitation_creator_device.verify_key,
+                    expected_author=invitation_creator_device.device_id,
+                    expected_device=new_device_id,
+                )
+
                 new_device = new_device.evolve(is_admin=user.is_admin)
 
             except DataError as exc:
@@ -355,13 +366,27 @@ async def claim_device(
 
             # 3) Send claim
             try:
-                encrypted_answer = await cmds.device_claim(new_device_id, encrypted_claim)
+                unverified_device, encrypted_answer = await cmds.device_claim(
+                    new_device_id, encrypted_claim
+                )
 
             except BackendNotAvailable as exc:
                 raise InviteClaimBackendOfflineError(str(exc)) from exc
 
             except BackendConnectionError as exc:
                 raise InviteClaimError(f"Cannot claim device: {exc}") from exc
+
+            # 4) Verify device certificate
+            try:
+                DeviceCertificateContent.verify_and_load(
+                    unverified_device.device_certificate,
+                    author_verify_key=invitation_creator_device.verify_key,
+                    expected_author=invitation_creator_device.device_id,
+                    expected_device=new_device_id,
+                )
+
+            except DataError as exc:
+                raise InviteClaimCryptoError(str(exc)) from exc
 
             answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
 

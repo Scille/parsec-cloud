@@ -22,8 +22,11 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
     nd_id = DeviceID(f"{alice.user_id}@new_device")
     nd_signing_key = SigningKey.generate()
     token = "123456"
+    device_certificate = None
 
     async def _alice_invite():
+        nonlocal device_certificate
+
         encrypted_claim = await alice_backend_cmds.device_invite(nd_id.device_name)
         claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
 
@@ -68,10 +71,12 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
                 answer_public_key=answer_private_key.public_key,
             )
             with trio.fail_after(1):
-                encrypted_answer = await cmds.device_claim(nd_id, encrypted_claim)
+                unverified_device, encrypted_answer = await cmds.device_claim(
+                    nd_id, encrypted_claim
+                )
 
+            assert unverified_device.device_certificate == device_certificate
             answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
-            assert answer["private_key"] == alice.private_key
             assert answer == {
                 "type": "device_claim_answer",
                 "private_key": alice.private_key,
