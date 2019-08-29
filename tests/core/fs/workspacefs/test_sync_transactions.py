@@ -242,7 +242,9 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
     # Workspace manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
     local = sync_transactions.local_storage.get_manifest(w_id)
-    expected = local.to_remote(author=alice.device_id).evolve(children={}, updated=local.created)
+    expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp).evolve(
+        children={}, updated=local.created
+    )
     assert minimal == expected
 
     await sync_transactions.synchronization_step(w_id, minimal)
@@ -251,9 +253,10 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
     # File manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
     local = sync_transactions.local_storage.get_manifest(a_id)
-    assert minimal == local.evolve(blocks=(), updated=local.created, size=0).to_remote(
-        author=alice.device_id
+    expected = local.evolve(blocks=(), updated=local.created, size=0).to_remote(
+        author=alice.device_id, timestamp=minimal.timestamp
     )
+    assert minimal == expected
     await sync_transactions.file_reshape(a_id)
     await sync_transactions.synchronization_step(a_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(a_id) is None
@@ -261,16 +264,18 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
     # Folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(b_id)
     local = sync_transactions.local_storage.get_manifest(b_id)
-    assert minimal == local.to_remote(author=alice.device_id).evolve(
+    expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp).evolve(
         children={}, updated=local.created
     )
+    assert minimal == expected
     await sync_transactions.synchronization_step(b_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(b_id) is None
 
     # Empty folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(c_id)
     local = sync_transactions.local_storage.get_manifest(c_id)
-    assert minimal == local.to_remote(author=alice.device_id)
+    expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp)
+    assert minimal == expected
     await sync_transactions.synchronization_step(c_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(c_id) is None
 
