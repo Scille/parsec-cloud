@@ -60,13 +60,22 @@ def test_build_user_certificate(alice, bob, mallory):
         UserCertificateContent.verify_and_load(
             certif, author_verify_key=alice.verify_key, expected_author=mallory.device_id
         )
-    assert str(exc.value) == "Invalid author: expect `mallory@dev1`, got `alice@dev1`"
+    assert str(exc.value) == "Invalid author: expected `mallory@dev1`, got `alice@dev1`"
 
     with pytest.raises(DataError) as exc:
         UserCertificateContent.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
     assert str(exc.value) == "Signature was forged or corrupt"
+
+    with pytest.raises(DataError) as exc:
+        UserCertificateContent.verify_and_load(
+            certif,
+            author_verify_key=alice.verify_key,
+            expected_author=alice.device_id,
+            expected_user=mallory.user_id,
+        )
+    assert str(exc.value) == "Invalid user ID: expected `mallory`, got `bob`"
 
 
 def test_build_device_certificate(alice, bob, mallory):
@@ -92,13 +101,22 @@ def test_build_device_certificate(alice, bob, mallory):
         DeviceCertificateContent.verify_and_load(
             certif, author_verify_key=alice.verify_key, expected_author=mallory.device_id
         )
-    assert str(exc.value) == "Invalid author: expect `mallory@dev1`, got `alice@dev1`"
+    assert str(exc.value) == "Invalid author: expected `mallory@dev1`, got `alice@dev1`"
 
     with pytest.raises(DataError) as exc:
         DeviceCertificateContent.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
     assert str(exc.value) == "Signature was forged or corrupt"
+
+    with pytest.raises(DataError) as exc:
+        DeviceCertificateContent.verify_and_load(
+            certif,
+            author_verify_key=alice.verify_key,
+            expected_author=alice.device_id,
+            expected_device=mallory.device_id,
+        )
+    assert str(exc.value) == "Invalid device ID: expected `mallory@dev1`, got `bob@dev1`"
 
 
 def test_build_revoked_device_certificate(alice, bob, mallory):
@@ -123,10 +141,19 @@ def test_build_revoked_device_certificate(alice, bob, mallory):
         RevokedDeviceCertificateContent.verify_and_load(
             certif, author_verify_key=alice.verify_key, expected_author=mallory.device_id
         )
-    assert str(exc.value) == "Invalid author: expect `mallory@dev1`, got `alice@dev1`"
+    assert str(exc.value) == "Invalid author: expected `mallory@dev1`, got `alice@dev1`"
 
     with pytest.raises(DataError) as exc:
         RevokedDeviceCertificateContent.verify_and_load(
             certif, author_verify_key=mallory.verify_key, expected_author=alice.device_id
         )
     assert str(exc.value) == "Signature was forged or corrupt"
+
+    with pytest.raises(DataError) as exc:
+        RevokedDeviceCertificateContent.verify_and_load(
+            certif,
+            author_verify_key=alice.verify_key,
+            expected_author=alice.device_id,
+            expected_device=mallory.device_id,
+        )
+    assert str(exc.value) == "Invalid device ID: expected `mallory@dev1`, got `bob@dev1`"

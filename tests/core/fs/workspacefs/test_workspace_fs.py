@@ -444,4 +444,4 @@ async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, 
     manifest_modifiers = {"author": DeviceID("mallory@pc1")}
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
-    assert "Invalid author: expect `alice@dev1`, got `mallory@pc1`" in str(exc.value)
+    assert "Invalid author: expected `alice@dev1`, got `mallory@pc1`" in str(exc.value)

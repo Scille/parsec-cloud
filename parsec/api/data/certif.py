@@ -28,6 +28,10 @@ class UserCertificateContent(BaseSignedData):
             data.pop("type")
             return UserCertificateContent(**data)
 
+    user_id: UserID
+    public_key: PublicKey
+    is_admin: bool
+
     @classmethod
     def verify_and_load(
         cls, *args, expected_user: Optional[UserID] = None, **kwargs
@@ -38,10 +42,6 @@ class UserCertificateContent(BaseSignedData):
                 f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
             )
         return data
-
-    user_id: UserID
-    public_key: PublicKey
-    is_admin: bool
 
 
 class DeviceCertificateContent(BaseSignedData):
@@ -55,6 +55,9 @@ class DeviceCertificateContent(BaseSignedData):
             data.pop("type")
             return DeviceCertificateContent(**data)
 
+    device_id: DeviceID
+    verify_key: VerifyKey
+
     @classmethod
     def verify_and_load(
         cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
@@ -65,9 +68,6 @@ class DeviceCertificateContent(BaseSignedData):
                 f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
             )
         return data
-
-    device_id: DeviceID
-    verify_key: VerifyKey
 
 
 class RevokedDeviceCertificateContent(BaseSignedData):
@@ -81,6 +81,17 @@ class RevokedDeviceCertificateContent(BaseSignedData):
             return RevokedDeviceCertificateContent(**data)
 
     device_id: DeviceID
+
+    @classmethod
+    def verify_and_load(
+        cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
+    ) -> BaseSignedData:
+        data = super().verify_and_load(*args, **kwargs)
+        if expected_device is not None and data.device_id != expected_device:
+            raise DataValidationError(
+                f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
+            )
+        return data
 
 
 class RealmRoleCertificateContent(BaseSignedData):
@@ -108,3 +119,27 @@ class RealmRoleCertificateContent(BaseSignedData):
             user_id=author.user_id,
             role=RealmRole.OWNER,
         )
+
+    @classmethod
+    def verify_and_load(
+        cls,
+        *args,
+        expected_realm: Optional[UUID] = None,
+        expected_user: Optional[UserID] = None,
+        expected_role: Optional[RealmRole] = None,
+        **kwargs,
+    ) -> BaseSignedData:
+        data = super().verify_and_load(*args, **kwargs)
+        if expected_user is not None and data.user_id != expected_user:
+            raise DataValidationError(
+                f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
+            )
+        if expected_realm is not None and data.realm_id != expected_realm:
+            raise DataValidationError(
+                f"Invalid realm ID: expected `{expected_realm}`, got `{data.realm_id}`"
+            )
+        if expected_role is not None and data.role != expected_role:
+            raise DataValidationError(
+                f"Invalid role: expected `{expected_role}`, got `{data.role}`"
+            )
+        return data
