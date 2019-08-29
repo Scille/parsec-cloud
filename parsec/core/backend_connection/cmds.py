@@ -17,7 +17,6 @@ from parsec.api.protocol import (
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
-    message_send_serializer,
     message_get_serializer,
     vlob_read_serializer,
     vlob_create_serializer,
@@ -132,19 +131,6 @@ async def events_listen(transport: Transport, wait: bool = True) -> dict:
 
 
 ### Message API ###
-
-
-async def message_send(
-    transport: Transport, recipient: UserID, timestamp: pendulum.Pendulum, body: bytes
-) -> None:
-    await _send_cmd(
-        transport,
-        message_send_serializer,
-        cmd="message_send",
-        recipient=recipient,
-        timestamp=timestamp,
-        body=body,
-    )
 
 
 async def message_get(transport: Transport, offset: int) -> List[Tuple[int, DeviceID, bytes]]:

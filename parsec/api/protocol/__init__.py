@@ -49,7 +49,7 @@ from parsec.api.protocol.user import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.api.protocol.message import message_send_serializer, message_get_serializer
+from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
     RealmRole,
     RealmRoleField,
@@ -122,7 +122,6 @@ __all__ = (
     "device_create_serializer",
     "device_revoke_serializer",
     # Message
-    "message_send_serializer",
     "message_get_serializer",
     # Data group
     "RealmRole",
