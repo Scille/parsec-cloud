@@ -302,12 +302,15 @@ async def realm_get_role_certificates(
     return [UnverifiedRealmRole(realm_role_certificate=c) for c in rep["certificates"]]
 
 
-async def realm_update_roles(transport: Transport, role_certificate: bytes) -> None:
+async def realm_update_roles(
+    transport: Transport, role_certificate: bytes, recipient_message: bytes
+) -> None:
     await _send_cmd(
         transport,
         realm_update_roles_serializer,
         cmd="realm_update_roles",
         role_certificate=role_certificate,
+        recipient_message=recipient_message,
     )
 
 

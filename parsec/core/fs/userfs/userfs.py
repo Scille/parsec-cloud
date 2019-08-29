@@ -546,24 +546,45 @@ class UserFS:
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
 
-        # Actual sharing is done in two steps:
-        # 1) update access roles for the vlob group corresponding to the workspace
-        # 2) communicate to the new collaborator through a message the access to
-        #    the workspace manifest
-        # Those two steps are not atomic, but this is not that much of a trouble
-        # given they are idempotent
+        now = pendulum_now()
 
-        # Step 1)
+        # Build the sharing message
+        try:
+            if role is not None:
+                recipient_message = SharingGrantedMessageContent(
+                    author=self.device.device_id,
+                    timestamp=now,
+                    name=workspace_entry.name,
+                    id=workspace_entry.id,
+                    encryption_revision=workspace_entry.encryption_revision,
+                    encrypted_on=workspace_entry.encrypted_on,
+                    key=workspace_entry.key,
+                )
+
+            else:
+                recipient_message = SharingRevokedMessageContent(
+                    author=self.device.device_id, timestamp=now, id=workspace_entry.id
+                )
+
+            ciphered_recipient_message = recipient_message.dump_sign_and_encrypt_for(
+                author_signkey=self.device.signing_key, recipient_pubkey=recipient_user.public_key
+            )
+
+        except DataError as exc:
+            raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
+
+        # Build role certificate
         role_certificate = RealmRoleCertificateContent(
             author=self.device.device_id,
-            timestamp=pendulum_now(),
+            timestamp=now,
             realm_id=workspace_id,
             user_id=recipient,
             role=role,
         ).dump_and_sign(self.device.signing_key)
 
+        # Actually send the command to the backend
         try:
-            await self.backend_cmds.realm_update_roles(role_certificate)
+            await self.backend_cmds.realm_update_roles(role_certificate, ciphered_recipient_message)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -584,45 +605,6 @@ class UserFS:
 
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to set vlob group roles in backend: {exc}") from exc
-
-        # Step 2)
-
-        now = pendulum_now()
-
-        # Build the sharing message
-        try:
-            if role is not None:
-                msg = SharingGrantedMessageContent(
-                    author=self.device.device_id,
-                    timestamp=now,
-                    name=workspace_entry.name,
-                    id=workspace_entry.id,
-                    encryption_revision=workspace_entry.encryption_revision,
-                    encrypted_on=workspace_entry.encrypted_on,
-                    key=workspace_entry.key,
-                )
-
-            else:
-                msg = SharingRevokedMessageContent(
-                    author=self.device.device_id, timestamp=now, id=workspace_entry.id
-                )
-
-            ciphered = msg.dump_sign_and_encrypt_for(
-                author_signkey=self.device.signing_key, recipient_pubkey=recipient_user.public_key
-            )
-
-        except DataError as exc:
-            raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
-
-        # And finally send the message
-        try:
-            await self.backend_cmds.message_send(recipient=recipient, timestamp=now, body=ciphered)
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(*exc.arg) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Error while trying to send sharing message to backend: {exc}") from exc
 
     async def process_last_messages(self) -> List[Tuple[int, Exception]]:
         """

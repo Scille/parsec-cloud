@@ -232,7 +232,9 @@ class BaseRealmComponent:
             }
 
         try:
-            await self.update_roles(client_ctx.organization_id, granted_role)
+            await self.update_roles(
+                client_ctx.organization_id, granted_role, msg["recipient_message"]
+            )
 
         except RealmRoleAlreadyGranted:
             return realm_update_roles_serializer.rep_dump({"status": "already_granted"})
@@ -376,7 +378,10 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def update_roles(
-        self, organization_id: OrganizationID, new_role: RealmGrantedRole
+        self,
+        organization_id: OrganizationID,
+        new_role: RealmGrantedRole,
+        recipient_message: Optional[bytes] = None,
     ) -> None:
         """
         Raises:
