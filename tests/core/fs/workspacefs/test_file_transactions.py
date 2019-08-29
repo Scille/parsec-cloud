@@ -252,7 +252,7 @@ def test_file_operations(
             self.file_transactions = self.transactions_controller.file_transactions
             self.local_storage = self.file_transactions.local_storage
 
-            manifest = LocalFileManifest.new_placeholder()
+            manifest = LocalFileManifest.new_placeholder(parent=EntryID())
             self.entry_id = manifest.id
             async with self.local_storage.lock_entry_id(self.entry_id):
                 self.local_storage.set_manifest(self.entry_id, manifest)
@@ -262,6 +262,8 @@ def test_file_operations(
             self.file_oracle_fd = os.open(self.file_oracle_path, os.O_RDWR | os.O_CREAT)
 
         async def teardown(self):
+            if not hasattr(self, "fd"):
+                return
             await self.file_transactions.fd_close(self.fd)
             os.close(self.file_oracle_fd)
 
