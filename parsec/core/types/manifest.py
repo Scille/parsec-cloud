@@ -182,64 +182,6 @@ class Chunk(BaseData):
         return self.access
 
 
-# Manifests schemas
-
-
-class LocalFileManifestSchema(BaseSchema):
-    type = fields.CheckedConstant("local_file_manifest", required=True)
-    base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
-    need_sync = fields.Boolean(required=True)
-    updated = fields.DateTime(required=True)
-    size = fields.Integer(required=True, validate=validate.Range(min=0))
-    blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
-    blocks = fields.FrozenList(fields.FrozenList(fields.Nested(Chunk.SCHEMA_CLS)), required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return LocalFileManifest(**data)
-
-
-class LocalFolderManifestSchema(BaseSchema):
-    type = fields.CheckedConstant("local_folder_manifest", required=True)
-    base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
-    need_sync = fields.Boolean(required=True)
-    updated = fields.DateTime(required=True)
-    children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return LocalFolderManifest(**data)
-
-
-class LocalWorkspaceManifestSchema(BaseSchema):
-    type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
-    need_sync = fields.Boolean(required=True)
-    updated = fields.DateTime(required=True)
-    children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return LocalWorkspaceManifest(**data)
-
-
-class LocalUserManifestSchema(BaseSchema):
-    type = fields.CheckedConstant("local_user_manifest", required=True)
-    base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
-    need_sync = fields.Boolean(required=True)
-    updated = fields.DateTime(required=True)
-    last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return LocalUserManifest(**data)
-
-
 # Manifests data classes
 
 
@@ -247,12 +189,15 @@ class LocalManifest(BaseData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
         type_field_remove = False
-        type_schemas = {
-            "local_user_manifest": LocalUserManifestSchema,
-            "local_workspace_manifest": LocalWorkspaceManifestSchema,
-            "local_file_manifest": LocalFileManifestSchema,
-            "local_folder_manifest": LocalFolderManifestSchema,
-        }
+
+        @property
+        def type_schemas(self):
+            return {
+                "local_file_manifest": LocalFileManifest.SCHEMA_CLS,
+                "local_folder_manifest": LocalFolderManifest.SCHEMA_CLS,
+                "local_workspace_manifest": LocalWorkspaceManifest.SCHEMA_CLS,
+                "local_user_manifest": LocalUserManifest.SCHEMA_CLS,
+            }
 
         def get_obj_type(self, obj):
             return obj["type"]
@@ -270,7 +215,21 @@ class LocalManifest(BaseData):
 
 
 class LocalFileManifest(LocalManifest):
-    SCHEMA_CLS = LocalFileManifestSchema
+    class SCHEMA_CLS(BaseSchema):
+        type = fields.CheckedConstant("local_file_manifest", required=True)
+        base = fields.Nested(RemoteFileManifest.SCHEMA_CLS, required=True)
+        need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
+        size = fields.Integer(required=True, validate=validate.Range(min=0))
+        blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
+        blocks = fields.FrozenList(
+            fields.FrozenList(fields.Nested(Chunk.SCHEMA_CLS)), required=True
+        )
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return LocalFileManifest(**data)
 
     base: RemoteFileManifest
     need_sync: bool
@@ -421,7 +380,17 @@ class LocalFileManifest(LocalManifest):
 
 
 class LocalFolderManifest(LocalManifest):
-    SCHEMA_CLS = LocalFolderManifestSchema
+    class SCHEMA_CLS(BaseSchema):
+        type = fields.CheckedConstant("local_folder_manifest", required=True)
+        base = fields.Nested(RemoteFolderManifest.SCHEMA_CLS, required=True)
+        need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return LocalFolderManifest(**data)
 
     base: RemoteFolderManifest
     need_sync: bool
@@ -527,7 +496,17 @@ class LocalFolderManifest(LocalManifest):
 
 
 class LocalWorkspaceManifest(LocalManifest):
-    SCHEMA_CLS = LocalWorkspaceManifestSchema
+    class SCHEMA_CLS(BaseSchema):
+        type = fields.CheckedConstant("local_workspace_manifest", required=True)
+        base = fields.Nested(RemoteWorkspaceManifest.SCHEMA_CLS, required=True)
+        need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
+        children = fields.FrozenMap(EntryNameField(), EntryIDField(required=True), required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return LocalWorkspaceManifest(**data)
 
     base: RemoteWorkspaceManifest
     need_sync: bool
@@ -631,7 +610,18 @@ class LocalWorkspaceManifest(LocalManifest):
 
 
 class LocalUserManifest(LocalManifest):
-    SCHEMA_CLS = LocalUserManifestSchema
+    class SCHEMA_CLS(BaseSchema):
+        type = fields.CheckedConstant("local_user_manifest", required=True)
+        base = fields.Nested(RemoteUserManifest.SCHEMA_CLS, required=True)
+        need_sync = fields.Boolean(required=True)
+        updated = fields.DateTime(required=True)
+        last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
+        workspaces = fields.FrozenList(fields.Nested(WorkspaceEntry.SCHEMA_CLS), required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return LocalUserManifest(**data)
 
     base: RemoteUserManifest
     need_sync: bool

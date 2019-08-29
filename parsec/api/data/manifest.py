@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Union, Optional, Tuple, FrozenDict
+from typing import Optional, Tuple, FrozenDict
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4
-from parsec.serde import fields, validate, post_load
+from parsec.serde import fields, validate, post_load, OneOfSchema
 from parsec.crypto_types import SecretKey, HashDigest
 from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.api.data.base import (
@@ -83,25 +83,12 @@ class WorkspaceEntry(BaseData):
         return self.role is None
 
 
-class VerifyVersionAndParentMixin:
+class VerifyParentMixin:
     @classmethod
     def verify_and_load(
-        cls,
-        *args,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
-        expected_parent: Optional[EntryID] = None,
-        **kwargs,
+        cls, *args, expected_parent: Optional[EntryID] = None, **kwargs
     ) -> BaseSignedData:
         data = super().verify_and_load(*args, **kwargs)
-        if data.author is None and data.version != 0:
-            raise DataValidationError("Manifest cannot be signed by root verify key")
-        if expected_id is not None and data.id != expected_id:
-            raise DataValidationError(f"Invalid ID: expected `{expected_id}`, got `{data.id}`")
-        if expected_version is not None and data.version != expected_version:
-            raise DataValidationError(
-                f"Invalid version: expected `{expected_version}`, got `{data.version}`"
-            )
         if expected_parent is not None and data.parent != expected_parent:
             raise DataValidationError(
                 f"Invalid parent ID: expected `{expected_parent}`, got `{data.parent}`"
@@ -109,7 +96,46 @@ class VerifyVersionAndParentMixin:
         return data
 
 
-class FolderManifest(VerifyVersionAndParentMixin, BaseSignedData):
+class Manifest(BaseSignedData):
+    class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
+        type_field = "type"
+        type_field_remove = False
+
+        @property
+        def type_schemas(self):
+            return {
+                "file_manifest": FileManifest.SCHEMA_CLS,
+                "folder_manifest": FolderManifest.SCHEMA_CLS,
+                "workspace_manifest": WorkspaceManifest.SCHEMA_CLS,
+                "user_manifest": UserManifest.SCHEMA_CLS,
+            }
+
+        def get_obj_type(self, obj):
+            return obj["type"]
+
+    @classmethod
+    def verify_and_load(
+        cls,
+        *args,
+        expected_id: Optional[EntryID] = None,
+        expected_version: Optional[int] = None,
+        **kwargs,
+    ) -> "UserManifest":
+        data = super().verify_and_load(*args, **kwargs)
+        if data.author is None and data.version != 0:
+            raise DataValidationError("Manifest cannot be signed by root verify key")
+        if expected_id is not None and data.id != expected_id:
+            raise DataValidationError(
+                f"Invalid entry ID: expected `{expected_id}`, got `{data.id}`"
+            )
+        if expected_version is not None and data.version != expected_version:
+            raise DataValidationError(
+                f"Invalid version: expected `{expected_version}`, got `{data.version}`"
+            )
+        return data
+
+
+class FolderManifest(VerifyParentMixin, Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("folder_manifest", required=True)
         id = EntryIDField(required=True)
@@ -137,7 +163,7 @@ class FolderManifest(VerifyVersionAndParentMixin, BaseSignedData):
     children: FrozenDict[EntryName, EntryID]
 
 
-class FileManifest(VerifyVersionAndParentMixin, BaseSignedData):
+class FileManifest(VerifyParentMixin, Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("file_manifest", required=True)
         id = EntryIDField(required=True)
@@ -165,7 +191,7 @@ class FileManifest(VerifyVersionAndParentMixin, BaseSignedData):
     blocks: Tuple[BlockAccess]
 
 
-class WorkspaceManifest(BaseSignedData):
+class WorkspaceManifest(Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("workspace_manifest", required=True)
         id = EntryIDField(required=True)
@@ -190,29 +216,8 @@ class WorkspaceManifest(BaseSignedData):
     updated: Pendulum
     children: FrozenDict[EntryName, EntryID]
 
-    @classmethod
-    def verify_and_load(
-        cls,
-        *args,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
-        **kwargs,
-    ) -> "WorkspaceManifest":
-        data = super().verify_and_load(*args, **kwargs)
-        if data.author is None:
-            raise DataValidationError("Manifest cannot be signed by root verify key")
-        if expected_id is not None and data.id != expected_id:
-            raise DataValidationError(
-                f"Invalid entry ID: expected `{expected_id}`, got `{data.id}`"
-            )
-        if expected_version is not None and data.version != expected_version:
-            raise DataValidationError(
-                f"Invalid version: expected `{expected_version}`, got `{data.version}`"
-            )
-        return data
 
-
-class UserManifest(BaseSignedData):
+class UserManifest(Manifest):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_manifest", required=True)
         id = EntryIDField(required=True)
@@ -235,29 +240,5 @@ class UserManifest(BaseSignedData):
     last_processed_message: int
     workspaces: Tuple[WorkspaceEntry] = attr.ib(converter=tuple)
 
-    @classmethod
-    def verify_and_load(
-        cls,
-        *args,
-        expected_id: Optional[EntryID] = None,
-        expected_version: Optional[int] = None,
-        **kwargs,
-    ) -> "UserManifest":
-        data = super().verify_and_load(*args, **kwargs)
-        if data.author is None and data.version != 0:
-            raise DataValidationError("Manifest cannot be signed by root verify key")
-        if expected_id is not None and data.id != expected_id:
-            raise DataValidationError(
-                f"Invalid entry ID: expected `{expected_id}`, got `{data.id}`"
-            )
-        if expected_version is not None and data.version != expected_version:
-            raise DataValidationError(
-                f"Invalid version: expected `{expected_version}`, got `{data.version}`"
-            )
-        return data
-
     def get_workspace_entry(self, workspace_id: EntryID) -> WorkspaceEntry:
         return next((w for w in self.workspaces if w.id == workspace_id), None)
-
-
-Manifest = Union[UserManifest, WorkspaceManifest, FolderManifest, FileManifest]

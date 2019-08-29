@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceID, RealmRole
-from parsec.api.data import FileManifest
+from parsec.api.data import Manifest as RemoteManifest
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.exceptions import FSError
@@ -422,17 +422,17 @@ async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, 
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
         alice_workspace.local_storage.clear_manifest(manifest.id)
 
-    vanilla_file_manifest_deserialize = FileManifest._deserialize
+    vanilla_file_manifest_deserialize = RemoteManifest._deserialize
 
     def mocked_file_manifest_deserialize(*args, **kwargs):
         return vanilla_file_manifest_deserialize(*args, **kwargs).evolve(**manifest_modifiers)
 
-    monkeypatch.setattr(FileManifest, "_deserialize", mocked_file_manifest_deserialize)
+    monkeypatch.setattr(RemoteManifest, "_deserialize", mocked_file_manifest_deserialize)
 
     manifest_modifiers = {"id": EntryID()}
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
-    assert f"Invalid ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`" in str(
+    assert f"Invalid entry ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`" in str(
         exc.value
     )
 
