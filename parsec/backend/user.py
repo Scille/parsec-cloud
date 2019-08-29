@@ -305,9 +305,18 @@ class BaseUserComponent:
 
         send_channel, recv_channel = trio.open_memory_channel(1000)
 
-        def _on_organization_events(event, organization_id, user_id, first_device_id=None):
+        def _on_organization_events(
+            event,
+            organization_id,
+            user_id,
+            first_device_id=None,
+            user_certificate=None,
+            first_device_certificate=None,
+        ):
             if organization_id == client_ctx.organization_id:
-                send_channel.send_nowait((event, user_id))
+                send_channel.send_nowait(
+                    (event, user_id, first_device_id, user_certificate, first_device_certificate)
+                )
 
         with self.event_bus.connect_in_context(
             ("user.created", _on_organization_events),
@@ -327,7 +336,7 @@ class BaseUserComponent:
                 return {"status": "not_found"}
 
             # Wait for creator user to accept (or refuse) our claim
-            async for event, user_id in recv_channel:
+            async for event, user_id, first_device_id, user_certificate, first_device_certificate in recv_channel:
                 if user_id == invitation.user_id:
                     replied_ok = event == "user.created"
                     break
@@ -336,9 +345,11 @@ class BaseUserComponent:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
 
         else:
-            user = await self.get_user(client_ctx.organization_id, invitation.user_id)
-            user_certificate = user.user_certificate
-            return {"status": "ok", "user_certificate": user_certificate}
+            return {
+                "status": "ok",
+                "user_certificate": user_certificate,
+                "device_certificate": first_device_certificate,
+            }
 
     @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
@@ -501,9 +512,11 @@ class BaseUserComponent:
 
         send_channel, recv_channel = trio.open_memory_channel(1000)
 
-        def _on_organization_events(event, organization_id, device_id, encrypted_answer=None):
+        def _on_organization_events(
+            event, organization_id, device_id, device_certificate=None, encrypted_answer=None
+        ):
             if organization_id == client_ctx.organization_id:
-                send_channel.send_nowait((event, device_id, encrypted_answer))
+                send_channel.send_nowait((event, device_id, device_certificate, encrypted_answer))
 
         with self.event_bus.connect_in_context(
             ("device.created", _on_organization_events),
@@ -523,7 +536,7 @@ class BaseUserComponent:
                 return {"status": "not_found"}
 
             # Wait for creator device to accept (or refuse) our claim
-            async for event, device_id, encrypted_answer in recv_channel:
+            async for event, device_id, device_certificate, encrypted_answer in recv_channel:
                 if device_id == invitation.device_id:
                     replied_ok = event == "device.created"
                     break
@@ -533,7 +546,11 @@ class BaseUserComponent:
 
         else:
             return device_claim_serializer.rep_dump(
-                {"status": "ok", "encrypted_answer": encrypted_answer}
+                {
+                    "status": "ok",
+                    "device_certificate": device_certificate,
+                    "encrypted_answer": encrypted_answer,
+                }
             )
 
     @catch_protocol_errors

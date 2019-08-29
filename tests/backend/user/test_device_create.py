@@ -44,6 +44,7 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
             {
                 "organization_id": alice_nd.organization_id,
                 "device_id": alice_nd.device_id,
+                "device_certificate": device_certificate,
                 "encrypted_answer": b"<good>",
             },
         )

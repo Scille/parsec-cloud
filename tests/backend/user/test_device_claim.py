@@ -58,15 +58,21 @@ async def test_device_claim_ok(backend, anonymous_backend_sock, alice, alice_nd_
                 "device.created",
                 organization_id=alice.organization_id,
                 device_id="dummy@foo",
+                device_certificate=b"<dummy@foo certificate>",
                 encrypted_answer=b"<dummy>",
             )
             backend.event_bus.send(
                 "device.created",
                 organization_id=alice.organization_id,
                 device_id=alice_nd_invitation.device_id,
+                device_certificate=b"<alice@new_device certificate>",
                 encrypted_answer=b"<good>",
             )
-    assert prep[0] == {"status": "ok", "encrypted_answer": b"<good>"}
+    assert prep[0] == {
+        "status": "ok",
+        "encrypted_answer": b"<good>",
+        "device_certificate": b"<alice@new_device certificate>",
+    }
 
 
 @pytest.mark.trio
@@ -102,7 +108,11 @@ async def test_device_claim_denied(backend, anonymous_backend_sock, alice, alice
                 "event.connected", {"event_name": "device.invitation.cancelled"}
             )
             backend.event_bus.send(
-                "device.created", organization_id=alice.organization_id, device_id="dummy"
+                "device.created",
+                organization_id=alice.organization_id,
+                device_id="dummy@foo",
+                device_certificate=b"<dummy@foo certificate>",
+                encrypted_answer=b"<dummy>",
             )
             backend.event_bus.send(
                 "device.invitation.cancelled",
