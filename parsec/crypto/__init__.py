@@ -4,6 +4,7 @@
 # `parsec.crypto` only to avoid recursive imports
 from parsec.crypto_types import (
     SecretKey,
+    hashdigest,
     HashDigest,
     PrivateKey,
     PublicKey,
@@ -44,6 +45,7 @@ from parsec.crypto.signed import (
 __all__ = (
     # types
     "SecretKey",
+    "hashdigest",
     "HashDigest",
     "PrivateKey",
     "PublicKey",

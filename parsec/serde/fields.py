@@ -49,6 +49,7 @@ __all__ = (
     "PublicKey",
     "PrivateKey",
     "SecretKey",
+    "HashDigest",
     "SemVer",
 )
 
@@ -351,4 +352,5 @@ class SemVer(Field):
 
 
 SecretKey = bytes_based_field_factory(bytes)
+HashDigest = bytes_based_field_factory(bytes)
 Bytes = bytes_based_field_factory(bytes)

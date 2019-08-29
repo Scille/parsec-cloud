@@ -5,6 +5,7 @@
 
 from typing import NewType
 from base64 import b32decode, b32encode
+from hashlib import sha256
 from nacl.utils import random
 from nacl.secret import SecretBox
 from nacl.public import PrivateKey as _PrivateKey, PublicKey as _PublicKey
@@ -23,6 +24,11 @@ class SecretKey(bytes):
 
 
 HashDigest = NewType("HashDigest", bytes)
+
+
+def hashdigest(content: bytes) -> HashDigest:
+    # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
+    return sha256(content).digest()
 
 
 # Basically just add comparison support to nacl keys
