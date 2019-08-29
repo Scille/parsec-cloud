@@ -321,6 +321,23 @@ class BaseData(metaclass=DataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
+    def dump_and_encrypt_for(self, recipient_pubkey: Union[PublicKey, SealedBox]) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = self.dump()
+            box = (
+                recipient_pubkey
+                if isinstance(recipient_pubkey, SealedBox)
+                else SealedBox(recipient_pubkey)
+            )
+            return box.encrypt(raw)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
     @classmethod
     def decrypt_and_load(
         cls, encrypted: bytes, key: Union[bytes, SecretBox], **kwargs
@@ -337,3 +354,24 @@ class BaseData(metaclass=DataMeta):
             raise DataError(str(exc)) from exc
 
         return cls.load(raw, **kwargs)
+
+    @classmethod
+    def decrypt_and_load_for(
+        self, encrypted: bytes, recipient_privkey: Union[PrivateKey, SealedBox], **kwargs
+    ) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        try:
+            box = (
+                recipient_privkey
+                if isinstance(recipient_privkey, SealedBox)
+                else SealedBox(recipient_privkey)
+            )
+            raw = box.decrypt(encrypted)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+        return self.load(raw, **kwargs)

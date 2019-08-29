@@ -13,6 +13,11 @@ from parsec.api.data.certif import (
     RevokedDeviceCertificateContent,
     RealmRoleCertificateContent,
 )
+from parsec.api.data.invite_claim import (
+    UserClaimContent,
+    DeviceClaimContent,
+    DeviceClaimAnswerContent,
+)
 from parsec.api.data.message import (
     MessageContent,
     SharingGrantedMessageContent,
@@ -48,6 +53,10 @@ __all__ = (
     "DeviceCertificateContent",
     "RevokedDeviceCertificateContent",
     "RealmRoleCertificateContent",
+    # Invite&Claim
+    "UserClaimContent",
+    "DeviceClaimContent",
+    "DeviceClaimAnswerContent",
     # Messages
     "MessageContent",
     "SharingGrantedMessageContent",

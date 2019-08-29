@@ -4,10 +4,9 @@ import pytest
 import trio
 import pendulum
 
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserClaimContent
 from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
-from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
 
 
 @pytest.mark.trio
@@ -18,23 +17,25 @@ async def test_user_invite_then_claim_ok(
 
     async def _alice_invite():
         encrypted_claim = await alice_backend_cmds.user_invite(mallory.user_id)
-        claim = extract_user_encrypted_claim(alice.private_key, encrypted_claim)
+        claim = UserClaimContent.decrypt_and_load_for(
+            encrypted_claim, recipient_privkey=alice.private_key
+        )
 
-        assert claim["token"] == token
+        assert claim.token == token
 
         now = pendulum.now()
         user_certificate = UserCertificateContent(
             author=alice.device_id,
             timestamp=now,
-            user_id=claim["device_id"].user_id,
-            public_key=claim["public_key"],
+            user_id=claim.device_id.user_id,
+            public_key=claim.public_key,
             is_admin=False,
         ).dump_and_sign(alice.signing_key)
         device_certificate = DeviceCertificateContent(
             author=alice.device_id,
             timestamp=now,
-            device_id=claim["device_id"],
-            verify_key=claim["verify_key"],
+            device_id=claim.device_id,
+            verify_key=claim.verify_key,
         ).dump_and_sign(alice.signing_key)
         with trio.fail_after(1):
             await alice_backend_cmds.user_create(user_certificate, device_certificate)
@@ -55,9 +56,12 @@ async def test_user_invite_then_claim_ok(
             )
             assert creator_device.device_id.user_id == creator.user_id
 
-            encrypted_claim = generate_user_encrypted_claim(
-                creator.public_key, token, mallory.device_id, mallory.public_key, mallory.verify_key
-            )
+            encrypted_claim = UserClaimContent(
+                device_id=mallory.device_id,
+                token=token,
+                public_key=mallory.public_key,
+                verify_key=mallory.verify_key,
+            ).dump_and_encrypt_for(recipient_pubkey=creator.public_key)
             with trio.fail_after(1):
                 await cmds.user_claim(mallory.user_id, encrypted_claim)
 
