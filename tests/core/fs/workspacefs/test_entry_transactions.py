@@ -27,11 +27,11 @@ from tests.common import freeze_time, call_with_control
 
 
 @pytest.mark.trio
-async def test_root_entry_info(entry_transactions):
-    stat = await entry_transactions.entry_info(FsPath("/"))
+async def test_root_entry_info(alice_entry_transactions):
+    stat = await alice_entry_transactions.entry_info(FsPath("/"))
     assert stat == {
         "type": "folder",
-        "id": entry_transactions.workspace_id,
+        "id": alice_entry_transactions.workspace_id,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -42,7 +42,9 @@ async def test_root_entry_info(entry_transactions):
 
 
 @pytest.mark.trio
-async def test_file_create(entry_transactions, file_transactions, alice):
+async def test_file_create(alice_entry_transactions, alice_file_transactions, alice):
+    entry_transactions = alice_entry_transactions
+    file_transactions = alice_file_transactions
 
     with freeze_time("2000-01-02"):
         access_id, fd = await entry_transactions.file_create(FsPath("/foo.txt"))
@@ -75,7 +77,10 @@ async def test_file_create(entry_transactions, file_transactions, alice):
 
 
 @pytest.mark.trio
-async def test_folder_create_delete(entry_transactions, sync_transactions):
+async def test_folder_create_delete(alice_entry_transactions, alice_sync_transactions):
+    entry_transactions = alice_entry_transactions
+    sync_transactions = alice_sync_transactions
+
     # Create and delete a foo directory
     foo_id = await entry_transactions.folder_create(FsPath("/foo"))
     assert await entry_transactions.folder_delete(FsPath("/foo")) == foo_id
@@ -94,7 +99,10 @@ async def test_folder_create_delete(entry_transactions, sync_transactions):
 
 
 @pytest.mark.trio
-async def test_file_create_delete(entry_transactions, sync_transactions):
+async def test_file_create_delete(alice_entry_transactions, alice_sync_transactions):
+    entry_transactions = alice_entry_transactions
+    sync_transactions = alice_sync_transactions
+
     # Create and delete a foo file
     foo_id, fd = await entry_transactions.file_create(FsPath("/foo"), open=False)
     assert fd is None
@@ -114,7 +122,9 @@ async def test_file_create_delete(entry_transactions, sync_transactions):
 
 
 @pytest.mark.trio
-async def test_rename_non_empty_folder(entry_transactions, file_transactions):
+async def test_rename_non_empty_folder(alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     foo_id = await entry_transactions.folder_create(FsPath("/foo"))
     bar_id = await entry_transactions.folder_create(FsPath("/foo/bar"))
     zob_id = await entry_transactions.folder_create(FsPath("/foo/bar/zob"))
@@ -142,7 +152,9 @@ async def test_rename_non_empty_folder(entry_transactions, file_transactions):
 
 
 @pytest.mark.trio
-async def test_cannot_replace_root(entry_transactions):
+async def test_cannot_replace_root(alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     with pytest.raises(PermissionError):
         await entry_transactions.file_create(FsPath("/"), open=False)
     with pytest.raises(PermissionError):
@@ -157,7 +169,9 @@ async def test_cannot_replace_root(entry_transactions):
 
 
 @pytest.mark.trio
-async def test_access_not_loaded_entry(alice, bob, entry_transactions):
+async def test_access_not_loaded_entry(alice, bob, alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     entry_id = entry_transactions.get_workspace_entry().id
     manifest = entry_transactions.local_storage.get_manifest(entry_id)
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
@@ -182,7 +196,9 @@ async def test_access_not_loaded_entry(alice, bob, entry_transactions):
 
 
 @pytest.mark.trio
-async def test_access_unknown_entry(entry_transactions):
+async def test_access_unknown_entry(alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     with pytest.raises(FileNotFoundError):
         await entry_transactions.entry_info(FsPath("/dummy"))
 

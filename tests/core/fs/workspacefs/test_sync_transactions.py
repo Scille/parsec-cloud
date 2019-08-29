@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from pendulum import Pendulum
 
-from parsec.core.types import FsPath, EntryID, Chunk
-from parsec.core.types import FolderManifest, FileManifest, LocalFolderManifest
+from parsec.api.protocol import DeviceID
+from parsec.core.types import FsPath, EntryID, Chunk, LocalFolderManifest, LocalFileManifest
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
@@ -53,130 +52,122 @@ def test_merge_folder_children():
 
 
 def test_merge_folder_manifests():
-    now = Pendulum.now()
-    v1 = FolderManifest(
-        entry_id=EntryID(),
-        author="b@b",
-        parent_id=EntryID(),
-        version=1,
-        created=now,
-        updated=now,
-        children={},
-    )
+    my_device = DeviceID("b@b")
+    other_device = DeviceID("a@a")
+    parent = EntryID()
+    v1 = LocalFolderManifest.new_placeholder(parent=parent).to_remote(author=other_device)
 
     # Initial base manifest
-    m1 = v1.to_local("a@a")
-    assert merge_manifests(m1) == m1
+    m1 = LocalFolderManifest.from_remote(v1)
+    assert merge_manifests(my_device, m1) == m1
 
     # Local change
     m2 = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    assert merge_manifests(m2) == m2
+    assert merge_manifests(my_device, m2) == m2
 
     # Successful upload
-    v2 = m2.to_remote().evolve(version=2)
-    m3 = merge_manifests(m2, v2)
-    assert m3 == v2.to_local("a@a")
+    v2 = m2.to_remote(author=my_device)
+    m3 = merge_manifests(my_device, m2, v2)
+    assert m3 == LocalFolderManifest.from_remote(v2)
 
     # Two local changes
     m4 = m3.evolve_children_and_mark_updated({"b": EntryID()})
-    assert merge_manifests(m4) == m4
+    assert merge_manifests(my_device, m4) == m4
     m5 = m4.evolve_children_and_mark_updated({"c": EntryID()})
-    assert merge_manifests(m4) == m4
+    assert merge_manifests(my_device, m4) == m4
 
     # M4 has been successfully uploaded
-    v3 = m4.to_remote().evolve(version=3)
-    m6 = merge_manifests(m5, v3)
-    assert m6 == m5.evolve(base_manifest=v3)
+    v3 = m4.to_remote(author=my_device)
+    m6 = merge_manifests(my_device, m5, v3)
+    assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
-    v4 = v3.evolve(version=4, children={"d": EntryID(), **v3.children}, author="b@b")
-    m7 = merge_manifests(m6, v4)
+    v4 = v3.evolve(version=4, children={"d": EntryID(), **v3.children}, author=other_device)
+    m7 = merge_manifests(my_device, m6, v4)
     assert m7.base_version == 4
     assert sorted(m7.children) == ["a", "b", "c", "d"]
     assert m7.need_sync
 
     # Successful upload
-    v5 = m7.to_remote().evolve(version=5)
-    m8 = merge_manifests(m7, v5)
-    assert m8 == v5.to_local("a@a")
+    v5 = m7.to_remote(author=my_device)
+    m8 = merge_manifests(my_device, m7, v5)
+    assert m8 == LocalFolderManifest.from_remote(v5)
 
     # The remote has changed
-    v6 = v5.evolve(version=6, children={"e": EntryID(), **v5.children}, author="b@b")
-    m9 = merge_manifests(m8, v6)
-    assert m9 == v6.to_local("a@a")
+    v6 = v5.evolve(version=6, children={"e": EntryID(), **v5.children}, author=other_device)
+    m9 = merge_manifests(my_device, m8, v6)
+    assert m9 == LocalFolderManifest.from_remote(v6)
 
 
 def test_merge_manifests_with_a_placeholder():
-    m1 = LocalFolderManifest.make_placeholder(EntryID(), "a@a", parent_id=EntryID())
-    m2 = merge_manifests(m1)
-    assert m2 == m1
-    v1 = m1.to_remote().evolve(version=1)
+    my_device = DeviceID("b@b")
+    other_device = DeviceID("a@a")
+    parent = EntryID()
 
-    m2a = merge_manifests(m1, v1)
-    assert m2a == v1.to_local(author="a@a")
+    m1 = LocalFolderManifest.new_placeholder(parent=parent)
+    m2 = merge_manifests(my_device, m1)
+    assert m2 == m1
+    v1 = m1.to_remote(author=my_device)
+
+    m2a = merge_manifests(my_device, m1, v1)
+    assert m2a == LocalFolderManifest.from_remote(v1)
 
     m2b = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    m3b = merge_manifests(m2b, v1)
-    assert m3b == m2b.evolve(base_manifest=v1)
+    m3b = merge_manifests(my_device, m2b, v1)
+    assert m3b == m2b.evolve(base=v1)
 
-    v2 = v1.evolve(version=2, author="b@b", children={"b": EntryID()})
+    v2 = v1.evolve(version=2, author=other_device, children={"b": EntryID()})
     m2c = m1.evolve_children_and_mark_updated({"a": EntryID()})
-    m3c = merge_manifests(m2c, v2)
+    m3c = merge_manifests(my_device, m2c, v2)
     children = {**v2.children, **m2c.children}
-    assert m3c == m2c.evolve(base_manifest=v2, children=children, updated=m3c.updated)
+    assert m3c == m2c.evolve(base=v2, children=children, updated=m3c.updated)
 
 
 def test_merge_file_manifests():
-    now = Pendulum.now()
-    v1 = FileManifest(
-        entry_id=EntryID(),
-        author="b@b",
-        parent_id=EntryID(),
-        version=1,
-        created=now,
-        updated=now,
-        blocks=[],
-        size=0,
-    )
+    my_device = DeviceID("b@b")
+    other_device = DeviceID("a@a")
+    parent = EntryID()
+    v1 = LocalFileManifest.new_placeholder(parent=parent).to_remote(author=other_device)
 
     def evolve(m, n):
-        chunk = Chunk.new_chunk(0, n).evolve_as_block(b"a" * n)
+        chunk = Chunk.new(0, n).evolve_as_block(b"a" * n)
         blocks = ((chunk,),)
         return m1.evolve_and_mark_updated(size=n, blocks=blocks)
 
     # Initial base manifest
-    m1 = v1.to_local("a@a")
-    assert merge_manifests(m1) == m1
+    m1 = LocalFileManifest.from_remote(v1)
+    assert merge_manifests(my_device, m1) == m1
 
     # Local change
     m2 = evolve(m1, 1)
-    assert merge_manifests(m2) == m2
+    assert merge_manifests(my_device, m2) == m2
 
     # Successful upload
-    v2 = m2.to_remote().evolve(version=2)
-    m3 = merge_manifests(m2, v2)
-    assert m3 == v2.to_local("a@a")
+    v2 = m2.to_remote(author=my_device)
+    m3 = merge_manifests(my_device, m2, v2)
+    assert m3 == LocalFileManifest.from_remote(v2)
 
     # Two local changes
     m4 = evolve(m3, 2)
-    assert merge_manifests(m4) == m4
+    assert merge_manifests(my_device, m4) == m4
     m5 = evolve(m4, 3)
-    assert merge_manifests(m4) == m4
+    assert merge_manifests(my_device, m4) == m4
 
     # M4 has been successfully uploaded
-    v3 = m4.to_remote().evolve(version=3)
-    m6 = merge_manifests(m5, v3)
-    assert m6 == m5.evolve(base_manifest=v3)
+    v3 = m4.to_remote(author=my_device)
+    m6 = merge_manifests(my_device, m5, v3)
+    assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
-    v4 = v3.evolve(version=4, size=0, author="b@b")
+    v4 = v3.evolve(version=4, size=0, author=other_device)
     with pytest.raises(FSFileConflictError):
-        merge_manifests(m6, v4)
+        merge_manifests(my_device, m6, v4)
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["file", "folder"])
-async def test_synchronization_step_transaction(sync_transactions, type):
+async def test_synchronization_step_transaction(alice_sync_transactions, type):
+    sync_transactions = alice_sync_transactions
     synchronization_step = sync_transactions.synchronization_step
     entry_id = sync_transactions.get_workspace_entry().id
 
@@ -237,7 +228,9 @@ async def test_synchronization_step_transaction(sync_transactions, type):
 
 
 @pytest.mark.trio
-async def test_get_minimal_remote_manifest(sync_transactions,):
+async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
+    sync_transactions = alice_sync_transactions
+
     # Prepare
     w_id = sync_transactions.workspace_id
     a_id, fd = await sync_transactions.file_create(FsPath("/a"))
@@ -249,7 +242,9 @@ async def test_get_minimal_remote_manifest(sync_transactions,):
     # Workspace manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
     local = sync_transactions.local_storage.get_manifest(w_id)
-    expected = local.to_remote().evolve(version=1, children={}, updated=local.created)
+    expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp).evolve(
+        children={}, updated=local.created
+    )
     assert minimal == expected
 
     await sync_transactions.synchronization_step(w_id, minimal)
@@ -258,9 +253,10 @@ async def test_get_minimal_remote_manifest(sync_transactions,):
     # File manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
     local = sync_transactions.local_storage.get_manifest(a_id)
-    assert minimal == local.evolve(blocks=(), updated=local.created, size=0).to_remote().evolve(
-        version=1
+    expected = local.evolve(blocks=(), updated=local.created, size=0).to_remote(
+        author=alice.device_id, timestamp=minimal.timestamp
     )
+    assert minimal == expected
     await sync_transactions.file_reshape(a_id)
     await sync_transactions.synchronization_step(a_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(a_id) is None
@@ -268,20 +264,26 @@ async def test_get_minimal_remote_manifest(sync_transactions,):
     # Folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(b_id)
     local = sync_transactions.local_storage.get_manifest(b_id)
-    assert minimal == local.to_remote().evolve(version=1, children={}, updated=local.created)
+    expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp).evolve(
+        children={}, updated=local.created
+    )
+    assert minimal == expected
     await sync_transactions.synchronization_step(b_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(b_id) is None
 
     # Empty folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(c_id)
     local = sync_transactions.local_storage.get_manifest(c_id)
-    assert minimal == local.to_remote().evolve(version=1)
+    expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp)
+    assert minimal == expected
     await sync_transactions.synchronization_step(c_id, minimal)
     assert await sync_transactions.get_minimal_remote_manifest(c_id) is None
 
 
 @pytest.mark.trio
-async def test_file_conflict(sync_transactions):
+async def test_file_conflict(alice_sync_transactions):
+    sync_transactions = alice_sync_transactions
+
     # Prepare
     a_id, fd = await sync_transactions.file_create(FsPath("/a"))
     await sync_transactions.fd_write(fd, b"abc", offset=0)

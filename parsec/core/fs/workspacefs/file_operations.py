@@ -5,7 +5,10 @@
 import bisect
 from typing import Tuple, List, Set, Iterator, Callable, Dict
 
-from parsec.core.types import BlockID, LocalFileManifest, Chunk, Chunks
+from parsec.core.types import BlockID, LocalFileManifest, Chunk
+
+
+Chunks = Tuple[Chunk, ...]
 
 
 # Helpers
@@ -148,7 +151,7 @@ def prepare_write(
     for block, subsize, start, content_offset in split_write(size, offset, manifest.blocksize):
 
         # Prepare new chunk
-        new_chunk = Chunk.new_chunk(start, start + subsize)
+        new_chunk = Chunk.new(start, start + subsize)
         write_operations.append((new_chunk, content_offset - padding))
 
         # Lazy block write
@@ -235,7 +238,7 @@ def prepare_reshape(
 
         # Write new block
         start, stop = chunks[0].start, chunks[-1].stop
-        new_chunk = Chunk.new_chunk(start, stop)
+        new_chunk = Chunk.new(start, stop)
 
         # Update structures
         removed_ids = chunk_id_set(chunks)

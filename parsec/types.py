@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import typing
+from uuid import UUID, uuid4
 
 
-# Cheap typing
-typing.FrozenDict = typing.Dict
+K = typing.TypeVar("K")
+V = typing.TypeVar("V")
 
 
-class FrozenDict(dict):
+class FrozenDict(dict, typing.Generic[K, V]):
     def __repr__(self):
         return f"{self.__class__.__name__}({dict.__repr__(self)})"
 
@@ -24,3 +25,18 @@ class FrozenDict(dict):
 
     def evolve(self, **data):
         return FrozenDict(**self, **data)
+
+
+class UUID4(UUID):
+    __slots__ = ()
+
+    def __init__(self, init=None):
+        init = uuid4() if init is None else init
+        if isinstance(init, UUID):
+            super().__init__(bytes=init.bytes)
+        else:
+            super().__init__(init)
+
+
+# Cheap typing
+typing.FrozenDict = FrozenDict

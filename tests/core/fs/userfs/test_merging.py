@@ -3,8 +3,8 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.api.data import UserManifest
-from parsec.core.types import WorkspaceEntry, LocalUserManifest
+from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.types import LocalUserManifest
 from parsec.core.fs.userfs.merging import merge_local_user_manifests
 
 
@@ -26,7 +26,7 @@ def gen_date():
 def test_merge_local_user_manifest_no_changes_in_diverged_placeholder(
     gen_date, alice, alice2, with_ignored_changes
 ):
-    w1 = WorkspaceEntry(name="w1")
+    w1 = WorkspaceEntry.new(name="w1")
     d1, d2, d3, d4 = [gen_date() for _ in range(4)]
 
     base = UserManifest(
@@ -62,17 +62,12 @@ def test_merge_local_user_manifest_no_changes_in_diverged_placeholder(
 
 def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
     d1, d2, d3, d4 = [gen_date() for _ in range(4)]
-    w1 = WorkspaceEntry(name="w1")
-    w2 = WorkspaceEntry(name="w2")
-    w3 = WorkspaceEntry(name="w3")
+    w1 = WorkspaceEntry.new(name="w1")
+    w2 = WorkspaceEntry.new(name="w2")
+    w3 = WorkspaceEntry.new(name="w3")
 
-    diverged = LocalUserManifest(
-        base=None,
-        id=alice.user_manifest_id,
-        need_sync=True,
-        updated=d4,
-        last_processed_message=30,
-        workspaces=(w1, w3),
+    diverged = LocalUserManifest.new_placeholder(id=alice.user_manifest_id, now=d4).evolve(
+        last_processed_message=30, workspaces=(w1, w3)
     )
     target = UserManifest(
         author=alice.device_id,
@@ -85,12 +80,7 @@ def test_merge_local_user_manifest_changes_placeholder(gen_date, alice):
         workspaces=(w1, w2),
     )
     expected_merged = LocalUserManifest(
-        base=target,
-        id=alice.user_manifest_id,
-        updated=d4,
-        last_processed_message=30,
-        workspaces=(w1, w2, w3),
-        need_sync=True,
+        base=target, updated=d4, last_processed_message=30, workspaces=(w1, w2, w3), need_sync=True
     )
 
     merged = merge_local_user_manifests(diverged, target)

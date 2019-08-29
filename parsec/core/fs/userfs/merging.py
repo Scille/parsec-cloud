@@ -2,8 +2,8 @@
 
 from typing import Tuple
 
-from parsec.api.data import UserManifest
-from parsec.core.types import LocalUserManifest, WorkspaceEntry
+from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.types import LocalUserManifest
 
 
 # TODO: replace sanity asserts by cleaner exceptions given they could be
@@ -72,9 +72,9 @@ def merge_workspace_entries(
     assert not base_entries - diverged_entries
     assert not base_entries - target_entries
 
-    resolved = set(target)
+    resolved = {we.id: we for we in target}
     for d_entry in diverged:
-        t_entry = next((we for we in resolved if we.id == d_entry.id), None)
+        t_entry = resolved.get(d_entry.id)
 
         if t_entry == d_entry:
             # Target and diverged agree on the entry, nothing more to do
@@ -82,19 +82,18 @@ def merge_workspace_entries(
 
         elif not t_entry:
             # Diverged have added this entry alone, no conflict then
-            resolved.add(d_entry)
+            resolved[d_entry.id] = d_entry
 
         else:
             # Target and diverged have both modified this entry
             b_entry = next((we for we in base or () if we.id == d_entry.id), None)
             merged_entry = merge_workspace_entry(b_entry, d_entry, t_entry)
-            resolved.remove(t_entry)
-            resolved.add(merged_entry)
+            resolved[d_entry.id] = merged_entry
 
-    need_sync = resolved != set(target)
+    need_sync = resolved.keys() != target_entries
 
     # Sorting by names make things easier for tests
-    resolved_sorted = sorted(resolved, key=lambda w: w.name)
+    resolved_sorted = sorted(resolved.values(), key=lambda w: w.name)
 
     return tuple(resolved_sorted), need_sync
 
@@ -130,7 +129,6 @@ def merge_local_user_manifests(
 
     return LocalUserManifest(
         base=target,
-        id=target.id,
         need_sync=need_sync,
         updated=updated,
         last_processed_message=last_processed_message,

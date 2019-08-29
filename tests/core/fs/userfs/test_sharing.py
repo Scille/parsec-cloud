@@ -4,8 +4,8 @@ import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
 
-from parsec.api.data import UserManifest
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest, EntryID
+from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -456,7 +456,6 @@ async def test_share_workspace_then_conflict_on_rights(
     )
     expected = LocalUserManifest(
         base=expected_remote,
-        id=expected_remote.id,
         need_sync=False,
         updated=expected_remote.updated,
         last_processed_message=expected_remote.last_processed_message,

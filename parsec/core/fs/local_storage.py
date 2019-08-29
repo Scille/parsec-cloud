@@ -19,7 +19,6 @@ from parsec.core.types import (
     FileDescriptor,
     LocalManifest,
     LocalFileManifest,
-    local_manifest_serializer,
 )
 from parsec.core.fs.persistent_storage import PersistentStorage
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
@@ -118,8 +117,7 @@ class LocalStorage:
             return self.local_manifest_cache[entry_id]
         except KeyError:
             pass
-        raw = self.persistent_storage.get_manifest(entry_id)
-        manifest = local_manifest_serializer.loads(raw)
+        manifest = self.persistent_storage.get_manifest(entry_id)
         self.local_manifest_cache[entry_id] = manifest
         return manifest
 
@@ -134,10 +132,7 @@ class LocalStorage:
         if check_lock_status:
             self._check_lock_status(entry_id)
         if not cache_only:
-            raw = local_manifest_serializer.dumps(manifest)
-            self.persistent_storage.set_manifest(
-                entry_id, manifest.base_version, manifest.need_sync, raw
-            )
+            self.persistent_storage.set_manifest(entry_id, manifest)
         else:
             self.cache_ahead_of_persistance_ids.add(entry_id)
         self.local_manifest_cache[entry_id] = manifest
@@ -151,10 +146,7 @@ class LocalStorage:
 
     def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
-        raw = local_manifest_serializer.dumps(manifest)
-        self.persistent_storage.set_manifest(
-            entry_id, manifest.base_version, manifest.need_sync, raw
-        )
+        self.persistent_storage.set_manifest(entry_id, manifest)
         self.cache_ahead_of_persistance_ids.remove(entry_id)
 
     def clear_manifest(self, entry_id: EntryID) -> None:
@@ -184,23 +176,26 @@ class LocalStorage:
         except FSLocalMissError:
             pass
 
+    def get_dirty_block(self, block_id: BlockID) -> bytes:
+        return self.persistent_storage.get_dirty_chunk(ChunkID(block_id))
+
     # Chunk interface
 
-    def get_chunk(self, block_id: ChunkID) -> bytes:
-        assert isinstance(block_id, ChunkID)
+    def get_chunk(self, chunk_id: ChunkID) -> bytes:
+        assert isinstance(chunk_id, ChunkID)
         try:
-            return self.persistent_storage.get_dirty_chunk(block_id)
+            return self.persistent_storage.get_dirty_chunk(chunk_id)
         except FSLocalMissError:
-            return self.persistent_storage.get_clean_block(block_id)
+            return self.persistent_storage.get_clean_block(chunk_id)
 
-    def set_chunk(self, block_id: ChunkID, block: bytes) -> None:
-        assert isinstance(block_id, ChunkID)
-        return self.persistent_storage.set_dirty_chunk(block_id, block)
+    def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
+        assert isinstance(chunk_id, ChunkID)
+        return self.persistent_storage.set_dirty_chunk(chunk_id, block)
 
-    def clear_chunk(self, block_id: ChunkID, miss_ok: bool = False) -> None:
-        assert isinstance(block_id, ChunkID)
+    def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
+        assert isinstance(chunk_id, ChunkID)
         try:
-            self.persistent_storage.clear_dirty_chunk(block_id)
+            self.persistent_storage.clear_dirty_chunk(chunk_id)
         except FSLocalMissError:
             if not miss_ok:
                 raise

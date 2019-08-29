@@ -45,25 +45,27 @@ class File:
 
 
 @pytest.fixture
-async def foo_txt(alice, file_transactions):
-    local_storage = file_transactions.local_storage
-    with freeze_time("2000-01-02"):
-        entry_id = EntryID()
-        placeholder = LocalFileManifest.make_placeholder(entry_id, alice.device_id, EntryID())
-        manifest = placeholder.to_remote().evolve(version=1)
-        async with local_storage.lock_entry_id(entry_id):
-            local_storage.set_manifest(entry_id, manifest.to_local(manifest.author))
-    return File(local_storage, entry_id)
+async def foo_txt(alice, alice_file_transactions):
+    local_storage = alice_file_transactions.local_storage
+    now = Pendulum(2000, 1, 2)
+    placeholder = LocalFileManifest.new_placeholder(parent=EntryID(), now=now)
+    remote_v1 = placeholder.to_remote(author=alice.device_id, timestamp=now)
+    manifest = LocalFileManifest.from_remote(remote_v1)
+    async with local_storage.lock_entry_id(manifest.id):
+        local_storage.set_manifest(manifest.id, manifest)
+    return File(local_storage, manifest.id)
 
 
 @pytest.mark.trio
-async def test_close_unknown_fd(file_transactions):
+async def test_close_unknown_fd(alice_file_transactions):
     with pytest.raises(FSInvalidFileDescriptor):
-        await file_transactions.fd_close(42)
+        await alice_file_transactions.fd_close(42)
 
 
 @pytest.mark.trio
-async def test_operations_on_file(file_transactions, foo_txt):
+async def test_operations_on_file(alice_file_transactions, foo_txt):
+    file_transactions = alice_file_transactions
+
     fd = foo_txt.open()
     assert isinstance(fd, int)
 
@@ -81,6 +83,14 @@ async def test_operations_on_file(file_transactions, foo_txt):
         assert data == b"H"
 
         await file_transactions.fd_close(fd2)
+    foo_txt.ensure_manifest(
+        size=16,
+        is_placeholder=False,
+        need_sync=True,
+        base_version=1,
+        created=Pendulum(2000, 1, 2),
+        updated=Pendulum(2000, 1, 3),
+    )
 
     data = await file_transactions.fd_read(fd, 5, 6)
     assert data == b"world"
@@ -107,7 +117,9 @@ async def test_operations_on_file(file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-async def test_flush_file(file_transactions, foo_txt):
+async def test_flush_file(alice_file_transactions, foo_txt):
+    file_transactions = alice_file_transactions
+
     fd = foo_txt.open()
 
     foo_txt.ensure_manifest(
@@ -149,14 +161,16 @@ async def test_flush_file(file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-async def test_block_not_loaded_entry(file_transactions, foo_txt):
+async def test_block_not_loaded_entry(alice_file_transactions, foo_txt):
+    file_transactions = alice_file_transactions
+
     foo_manifest = foo_txt.get_manifest()
     chunk1_data = b"a" * 10
     chunk2_data = b"b" * 5
-    chunk1 = Chunk.new_chunk(0, 10).evolve_as_block(chunk1_data)
-    chunk2 = Chunk.new_chunk(10, 15).evolve_as_block(chunk2_data)
+    chunk1 = Chunk.new(0, 10).evolve_as_block(chunk1_data)
+    chunk2 = Chunk.new(10, 15).evolve_as_block(chunk2_data)
     foo_manifest = foo_manifest.evolve(blocks=((chunk1, chunk2),), size=15)
-    async with file_transactions.local_storage.lock_entry_id(foo_manifest.parent_id):
+    async with file_transactions.local_storage.lock_entry_id(foo_manifest.parent):
         await foo_txt.set_manifest(foo_manifest)
 
     fd = foo_txt.open()
@@ -171,7 +185,9 @@ async def test_block_not_loaded_entry(file_transactions, foo_txt):
 
 
 @pytest.mark.trio
-async def test_load_block_from_remote(file_transactions, foo_txt):
+async def test_load_block_from_remote(alice_file_transactions, foo_txt):
+    file_transactions = alice_file_transactions
+
     # Prepare the backend
     workspace_id = file_transactions.remote_loader.workspace_id
     await file_transactions.remote_loader.create_realm(workspace_id)
@@ -179,8 +195,8 @@ async def test_load_block_from_remote(file_transactions, foo_txt):
     foo_manifest = foo_txt.get_manifest()
     chunk1_data = b"a" * 10
     chunk2_data = b"b" * 5
-    chunk1 = Chunk.new_chunk(0, 10).evolve_as_block(chunk1_data)
-    chunk2 = Chunk.new_chunk(10, 15).evolve_as_block(chunk2_data)
+    chunk1 = Chunk.new(0, 10).evolve_as_block(chunk1_data)
+    chunk2 = Chunk.new(10, 15).evolve_as_block(chunk2_data)
     foo_manifest = foo_manifest.evolve(blocks=((chunk1, chunk2),), size=15)
     await foo_txt.set_manifest(foo_manifest)
 
@@ -236,10 +252,8 @@ def test_file_operations(
             self.file_transactions = self.transactions_controller.file_transactions
             self.local_storage = self.file_transactions.local_storage
 
-            self.entry_id = EntryID()
-            manifest = LocalFileManifest.make_placeholder(
-                self.entry_id, self.device.device_id, parent_id=EntryID()
-            )
+            manifest = LocalFileManifest.new_placeholder(parent=EntryID())
+            self.entry_id = manifest.id
             async with self.local_storage.lock_entry_id(self.entry_id):
                 self.local_storage.set_manifest(self.entry_id, manifest)
 
@@ -248,6 +262,8 @@ def test_file_operations(
             self.file_oracle_fd = os.open(self.file_oracle_path, os.O_RDWR | os.O_CREAT)
 
         async def teardown(self):
+            if not hasattr(self, "fd"):
+                return
             await self.file_transactions.fd_close(self.fd)
             os.close(self.file_oracle_fd)
 

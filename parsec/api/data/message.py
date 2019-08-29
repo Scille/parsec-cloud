@@ -8,76 +8,41 @@ from parsec.core.types.base import EntryID, EntryIDField
 from parsec.api.data.base import BaseSignedData, BaseSignedDataSchema
 
 
-class SharingGrantedMessageContentSchema(BaseSignedDataSchema):
-    type = fields.CheckedConstant("sharing.granted", required=True)
-    name = fields.String(required=True)
-    id = EntryIDField(required=True)
-    encryption_revision = fields.Integer(required=True)
-    encrypted_on = fields.DateTime(required=True)
-    key = fields.SecretKey(required=True)
-    # Don't include role given the only reliable way to get this information
-    # is to fetch the realm role certificate from the backend.
-    # Besides, we will also need the message sender's realm role certificate
-    # to make sure he is an owner.
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return SharingGrantedMessageContent(**data)
-
-
-class SharingReencryptedMessageContentSchema(SharingGrantedMessageContentSchema):
-    type = fields.CheckedConstant("sharing.reencrypted", required=True)
-    # This message is similar to `sharing.granted`. Hence both can be processed
-    # interchangeably, which avoid possible concurrency issues when a sharing
-    # occurs right before a reencryption.
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return SharingReencryptedMessageContent(**data)
-
-
-class SharingRevokedMessageContentSchema(BaseSignedDataSchema):
-    type = fields.CheckedConstant("sharing.revoked", required=True)
-    id = EntryIDField(required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return SharingRevokedMessageContent(**data)
-
-
-class PingMessageContentSchema(BaseSignedDataSchema):
-    type = fields.CheckedConstant("ping", required=True)
-    ping = fields.String(required=True)
-
-    @post_load
-    def make_obj(self, data):
-        data.pop("type")
-        return PingMessageContent(**data)
-
-
-class MessageContentSchema(OneOfSchema, BaseSignedDataSchema):
-    type_field = "type"
-    type_field_remove = False
-    type_schemas = {
-        "sharing.granted": SharingGrantedMessageContentSchema,
-        "sharing.reencrypted": SharingReencryptedMessageContentSchema,
-        "sharing.revoked": SharingRevokedMessageContentSchema,
-        "ping": PingMessageContentSchema,
-    }
-
-    def get_obj_type(self, obj):
-        return obj["type"]
-
-
 class MessageContent(BaseSignedData):
-    SCHEMA_CLS = MessageContentSchema
+    class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
+        type_field = "type"
+        type_field_remove = False
+
+        @property
+        def type_schemas(self):
+            return {
+                "sharing.granted": SharingGrantedMessageContent.SCHEMA_CLS,
+                "sharing.reencrypted": SharingReencryptedMessageContent.SCHEMA_CLS,
+                "sharing.revoked": SharingRevokedMessageContent.SCHEMA_CLS,
+                "ping": PingMessageContent.SCHEMA_CLS,
+            }
+
+        def get_obj_type(self, obj):
+            return obj["type"]
 
 
 class SharingGrantedMessageContent(MessageContent):
-    SCHEMA_CLS = SharingGrantedMessageContentSchema
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("sharing.granted", required=True)
+        name = fields.String(required=True)
+        id = EntryIDField(required=True)
+        encryption_revision = fields.Integer(required=True)
+        encrypted_on = fields.DateTime(required=True)
+        key = fields.SecretKey(required=True)
+        # Don't include role given the only reliable way to get this information
+        # is to fetch the realm role certificate from the backend.
+        # Besides, we will also need the message sender's realm role certificate
+        # to make sure he is an owner.
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return SharingGrantedMessageContent(**data)
 
     name: str
     id: EntryID
@@ -87,16 +52,39 @@ class SharingGrantedMessageContent(MessageContent):
 
 
 class SharingReencryptedMessageContent(SharingGrantedMessageContent):
-    SCHEMA_CLS = SharingReencryptedMessageContentSchema
+    class SCHEMA_CLS(SharingGrantedMessageContent.SCHEMA_CLS):
+        type = fields.CheckedConstant("sharing.reencrypted", required=True)
+        # This message is similar to `sharing.granted`. Hence both can be processed
+        # interchangeably, which avoid possible concurrency issues when a sharing
+        # occurs right before a reencryption.
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return SharingReencryptedMessageContent(**data)
 
 
 class SharingRevokedMessageContent(MessageContent):
-    SCHEMA_CLS = SharingRevokedMessageContentSchema
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("sharing.revoked", required=True)
+        id = EntryIDField(required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return SharingRevokedMessageContent(**data)
 
     id: EntryID
 
 
 class PingMessageContent(MessageContent):
-    SCHEMA_CLS = PingMessageContentSchema
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("ping", required=True)
+        ping = fields.String(required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return PingMessageContent(**data)
 
     ping: str

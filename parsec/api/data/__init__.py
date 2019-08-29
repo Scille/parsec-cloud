@@ -20,7 +20,17 @@ from parsec.api.data.message import (
     SharingRevokedMessageContent,
     PingMessageContent,
 )
-from parsec.api.data.manifest import UserManifest, WorkspaceManifest, FolderManifest, FileManifest
+from parsec.api.data.manifest import (
+    BlockID,
+    BlockIDField,
+    BlockAccess,
+    WorkspaceEntry,
+    Manifest,
+    UserManifest,
+    WorkspaceManifest,
+    FolderManifest,
+    FileManifest,
+)
 
 
 __api_data_version__ = (1, 0)
@@ -45,6 +55,11 @@ __all__ = (
     "SharingRevokedMessageContent",
     "PingMessageContent",
     # Manifests
+    "BlockID",
+    "BlockIDField",
+    "BlockAccess",
+    "WorkspaceEntry",
+    "Manifest",
     "UserManifest",
     "WorkspaceManifest",
     "FolderManifest",

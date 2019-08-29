@@ -5,9 +5,10 @@ import pytest
 from unittest.mock import ANY
 
 from parsec.api.protocol import DeviceID, RealmRole
+from parsec.api.data import Manifest as RemoteManifest
+from parsec.core.types import FsPath, EntryID
 from parsec.core.fs import FSEntryNotFound
-from parsec.core.fs.exceptions import FSRemoteManifestBadID, FSError
-from parsec.core.types import FsPath, EntryID, remote_manifest_serializer
+from parsec.core.fs.exceptions import FSError
 
 
 @pytest.fixture
@@ -376,20 +377,16 @@ async def test_rmtree(alice_workspace):
 
 @pytest.mark.trio
 async def test_dump(alice_workspace):
-    device_id = alice_workspace.device.device_id
     baz_id = await alice_workspace.path_id("/foo/baz")
     async with alice_workspace.local_storage.lock_entry_id(baz_id):
         alice_workspace.local_storage.clear_manifest(baz_id)
     assert alice_workspace.dump() == {
-        "author": device_id,
         "base_version": 1,
         "children": {
             "foo": {
-                "author": device_id,
                 "base_version": 2,
                 "children": {
                     "bar": {
-                        "author": device_id,
                         "base_version": 1,
                         "blocksize": 524288,
                         "blocks": [],
@@ -397,7 +394,7 @@ async def test_dump(alice_workspace):
                         "id": ANY,
                         "is_placeholder": False,
                         "need_sync": False,
-                        "parent_id": ANY,
+                        "parent": ANY,
                         "size": 0,
                         "updated": ANY,
                     },
@@ -407,7 +404,7 @@ async def test_dump(alice_workspace):
                 "id": ANY,
                 "is_placeholder": False,
                 "need_sync": False,
-                "parent_id": ANY,
+                "parent": ANY,
                 "updated": ANY,
             }
         },
@@ -422,28 +419,29 @@ async def test_dump(alice_workspace):
 @pytest.mark.trio
 async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
     manifest = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
-    async with alice_workspace.local_storage.lock_entry_id(manifest.entry_id):
-        alice_workspace.local_storage.clear_manifest(manifest.entry_id)
+    async with alice_workspace.local_storage.lock_entry_id(manifest.id):
+        alice_workspace.local_storage.clear_manifest(manifest.id)
 
-    vanilla_manifest_loader = remote_manifest_serializer.loads
+    vanilla_file_manifest_deserialize = RemoteManifest._deserialize
 
-    def mocked_manifest_loader(*args, **kwargs):
-        return vanilla_manifest_loader(*args, **kwargs).evolve(**manifest_modifiers)
+    def mocked_file_manifest_deserialize(*args, **kwargs):
+        return vanilla_file_manifest_deserialize(*args, **kwargs).evolve(**manifest_modifiers)
 
-    monkeypatch.setattr(remote_manifest_serializer, "loads", mocked_manifest_loader)
+    monkeypatch.setattr(RemoteManifest, "_deserialize", mocked_file_manifest_deserialize)
 
-    manifest_modifiers = {"entry_id": EntryID()}
-    with pytest.raises(FSRemoteManifestBadID):
+    manifest_modifiers = {"id": EntryID()}
+    with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
+    assert f"Invalid entry ID: expected `{manifest.id}`, got `{manifest_modifiers['id']}`" in str(
+        exc.value
+    )
 
     manifest_modifiers = {"version": 4}
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
-    assert "version mismatch between signed metadata (4) and backend (1)" in str(exc.value)
+    assert "Invalid version: expected `1`, got `4`" in str(exc.value)
 
     manifest_modifiers = {"author": DeviceID("mallory@pc1")}
     with pytest.raises(FSError) as exc:
         await alice_workspace.path_info(FsPath("/foo/bar"))
-    assert "author mismatch between signed metadata (mallory@pc1) and backend (alice@dev1)" in str(
-        exc.value
-    )
+    assert "Invalid author: expect `alice@dev1`, got `mallory@pc1`" in str(exc.value)
