@@ -4,10 +4,9 @@ import attr
 import functools
 from typing import Optional, Tuple
 from pendulum import Pendulum, now as pendulum_now
-from hashlib import sha256
 
 from parsec.types import UUID4, FrozenDict
-from parsec.crypto import SecretKey
+from parsec.crypto import SecretKey, hashdigest
 from parsec.serde import fields, OneOfSchema, validate, post_load
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import (
@@ -168,7 +167,7 @@ class Chunk(BaseData):
             key=SecretKey.generate(),
             offset=self.start,
             size=self.stop - self.start,
-            digest=sha256(data).digest(),
+            digest=hashdigest(data),
         )
 
         # Evolve

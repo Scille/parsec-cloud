@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from hashlib import sha256
 from pendulum import Pendulum, now as pendulum_now
 from typing import Dict, Optional, List, Tuple
 
@@ -8,6 +7,7 @@ from parsec.crypto import (
     timestamps_in_the_ballpark,
     decrypt_raw_with_secret_key,
     encrypt_raw_with_secret_key,
+    hashdigest,
     CryptoError,
 )
 from parsec.api.data import (
@@ -215,7 +215,7 @@ class RemoteLoader:
             raise FSError(f"Cannot decrypt block: {exc}") from exc
 
         # TODO: let encryption manager do the digest check ?
-        assert sha256(block).digest() == access.digest, access
+        assert hashdigest(block) == access.digest, access
         self.local_storage.set_clean_block(access.id, block)
 
     async def upload_block(self, access: BlockAccess, data: bytes):

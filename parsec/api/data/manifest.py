@@ -31,7 +31,7 @@ class BlockAccess(BaseData):
         key = fields.SecretKey(required=True)
         offset = fields.Integer(required=True, validate=validate.Range(min=0))
         size = fields.Integer(required=True, validate=validate.Range(min=0))
-        digest = fields.Bytes(required=True)
+        digest = fields.HashDigest(required=True)
 
         @post_load
         def make_obj(self, data):
