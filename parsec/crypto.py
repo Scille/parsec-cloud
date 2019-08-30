@@ -44,6 +44,8 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 
 class SecretKey(bytes):
+    __slots__ = ()
+
     @classmethod
     def generate(cls) -> "SecretKey":
         return cls(random(SecretBox.KEY_SIZE))
@@ -74,6 +76,8 @@ class SecretKey(bytes):
 
 
 class HashDigest(bytes):
+    __slots__ = ()
+
     @classmethod
     def from_data(self, data: bytes) -> "HashDigest":
         # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
