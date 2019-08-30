@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.crypto_types import VerifyKey, PublicKey, PrivateKey, SecretKey
+from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, DeviceIDField
 from parsec.api.data.base import BaseData, BaseSchema

@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
-from parsec.crypto import SecretKey, hashdigest
+from parsec.crypto import SecretKey, HashDigest
 from parsec.serde import fields, OneOfSchema, validate, post_load
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import (
@@ -167,7 +167,7 @@ class Chunk(BaseData):
             key=SecretKey.generate(),
             offset=self.start,
             size=self.stop - self.start,
-            digest=hashdigest(data),
+            digest=HashDigest.from_data(data),
         )
 
         # Evolve

@@ -222,14 +222,14 @@ def mock_crypto(request):
             data = password + salt
             return data[:size] + b"\x00" * (size - len(data))
 
-        from parsec.crypto.raw import argon2i
+        from parsec.crypto import argon2i
 
         vanilla_kdf = argon2i.kdf
 
         def unmock():
-            return patch("parsec.crypto.raw.argon2i.kdf", new=vanilla_kdf)
+            return patch("parsec.crypto.argon2i.kdf", new=vanilla_kdf)
 
-        with patch("parsec.crypto.raw.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
+        with patch("parsec.crypto.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
             yield unmock
 
 

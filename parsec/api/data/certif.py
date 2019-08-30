@@ -3,7 +3,7 @@
 from typing import Optional
 from uuid import UUID
 
-from parsec.crypto_types import VerifyKey, PublicKey
+from parsec.crypto import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import (
     DeviceID,

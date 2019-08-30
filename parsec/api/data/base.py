@@ -9,7 +9,7 @@ from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
 
 from parsec.serde import BaseSchema, fields, SerdeValidationError, SerdePackingError, Serializer
-from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
+from parsec.crypto import PrivateKey, PublicKey, SigningKey, VerifyKey
 from parsec.api.protocol import DeviceID, DeviceIDField
 
 

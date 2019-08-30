@@ -7,7 +7,7 @@ from parsec.crypto import (
     timestamps_in_the_ballpark,
     decrypt_raw_with_secret_key,
     encrypt_raw_with_secret_key,
-    hashdigest,
+    HashDigest,
     CryptoError,
 )
 from parsec.api.data import (
@@ -215,7 +215,7 @@ class RemoteLoader:
             raise FSError(f"Cannot decrypt block: {exc}") from exc
 
         # TODO: let encryption manager do the digest check ?
-        assert hashdigest(block) == access.digest, access
+        assert HashDigest.from_data(block) == access.digest, access
         self.local_storage.set_clean_block(access.id, block)
 
     async def upload_block(self, access: BlockAccess, data: bytes):
