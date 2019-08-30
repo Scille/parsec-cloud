@@ -53,6 +53,8 @@ async def test_user_create_ok(
                 "organization_id": alice.organization_id,
                 "user_id": mallory.user_id,
                 "first_device_id": mallory.device_id,
+                "user_certificate": user_certificate,
+                "first_device_certificate": device_certificate,
             },
         )
 

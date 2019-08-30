@@ -55,24 +55,33 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, alice, ma
 
             # Ignored event
             backend.event_bus.send(
-                "user.created", organization_id=coolorg.organization_id, user_id="dummy"
+                "user.created",
+                organization_id=coolorg.organization_id,
+                user_id="dummy",
+                user_certificate=b"<dummy user certif>",
+                first_device_id="dummy@dummy",
+                first_device_certificate=b"<dummy device certif>",
             )
 
             await backend.user.create_user(
                 alice.organization_id,
                 User(
                     user_id=mallory_invitation.user_id,
-                    user_certificate=b"<foo>",
+                    user_certificate=b"<user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
                     device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
-                    device_certificate=b"<bar>",
+                    device_certificate=b"<device certif>",
                     device_certifier=alice.device_id,
                 ),
             )
 
-    assert prep[0] == {"status": "ok", "user_certificate": b"<foo>"}
+    assert prep[0] == {
+        "status": "ok",
+        "user_certificate": b"<user certif>",
+        "device_certificate": b"<device certif>",
+    }
 
 
 @pytest.mark.trio
@@ -106,7 +115,12 @@ async def test_user_claim_denied(backend, anonymous_backend_sock, coolorg, mallo
                 "event.connected", {"event_name": "user.invitation.cancelled"}
             )
             backend.event_bus.send(
-                "user.created", organization_id=coolorg.organization_id, user_id="dummy"
+                "user.created",
+                organization_id=coolorg.organization_id,
+                user_id="dummy",
+                user_certificate=b"<dummy user certif>",
+                first_device_id="dummy@dummy",
+                first_device_certificate=b"<dummy device certif>",
             )
             backend.event_bus.send(
                 "user.invitation.cancelled",

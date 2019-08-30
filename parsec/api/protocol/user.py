@@ -101,6 +101,7 @@ class UserClaimReqSchema(BaseReqSchema):
 
 class UserClaimRepSchema(BaseRepSchema):
     user_certificate = fields.Bytes(required=True)
+    device_certificate = fields.Bytes(required=True)
 
 
 user_claim_serializer = CmdSerializer(UserClaimReqSchema, UserClaimRepSchema)
@@ -166,6 +167,7 @@ class DeviceClaimReqSchema(BaseReqSchema):
 
 
 class DeviceClaimRepSchema(BaseRepSchema):
+    device_certificate = fields.Bytes(required=True)
     encrypted_answer = fields.Bytes(required=True)
 
 

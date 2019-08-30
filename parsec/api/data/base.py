@@ -173,10 +173,12 @@ class BaseSignedData(metaclass=SignedDataMeta):
         data = cls._deserialize(raw)
         if data.author != expected_author:
             repr_expected_author = expected_author or "<root key>"
-            raise DataError(f"Invalid author: expect `{repr_expected_author}`, got `{data.author}`")
+            raise DataError(
+                f"Invalid author: expected `{repr_expected_author}`, got `{data.author}`"
+            )
         if expected_timestamp is not None and data.timestamp != expected_timestamp:
             raise DataError(
-                f"Invalid timestamp: expect `{expected_timestamp}`, got `{data.timestamp}`"
+                f"Invalid timestamp: expected `{expected_timestamp}`, got `{data.timestamp}`"
             )
         return data
 
@@ -319,6 +321,23 @@ class BaseData(metaclass=DataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
+    def dump_and_encrypt_for(self, recipient_pubkey: Union[PublicKey, SealedBox]) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = self.dump()
+            box = (
+                recipient_pubkey
+                if isinstance(recipient_pubkey, SealedBox)
+                else SealedBox(recipient_pubkey)
+            )
+            return box.encrypt(raw)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
     @classmethod
     def decrypt_and_load(
         cls, encrypted: bytes, key: Union[bytes, SecretBox], **kwargs
@@ -335,3 +354,24 @@ class BaseData(metaclass=DataMeta):
             raise DataError(str(exc)) from exc
 
         return cls.load(raw, **kwargs)
+
+    @classmethod
+    def decrypt_and_load_for(
+        self, encrypted: bytes, recipient_privkey: Union[PrivateKey, SealedBox], **kwargs
+    ) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        try:
+            box = (
+                recipient_privkey
+                if isinstance(recipient_privkey, SealedBox)
+                else SealedBox(recipient_privkey)
+            )
+            raw = box.decrypt(encrypted)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+        return self.load(raw, **kwargs)
