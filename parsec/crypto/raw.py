@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from pendulum import Pendulum
 from typing import Tuple
 from nacl.public import SealedBox
 from nacl.secret import SecretBox
@@ -14,6 +15,16 @@ from parsec.crypto_types import PrivateKey, PublicKey, SecretKey
 # CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
 CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
 CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
+
+TIMESTAMP_MAX_DT = 30 * 60
+
+
+def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MAX_DT) -> bool:
+    """
+    Useful to compare signed message timestamp with the one stored by the
+    backend.
+    """
+    return abs((ts1 - ts2).total_seconds()) < max_dt
 
 
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:

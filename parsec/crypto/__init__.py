@@ -27,18 +27,7 @@ from parsec.crypto.raw import (
     decrypt_raw_with_secret_key,
     encrypt_raw_for,
     decrypt_raw_for,
-)
-from parsec.crypto.signed import (
     timestamps_in_the_ballpark,
-    build_signed_msg,
-    unsecure_extract_signed_msg_meta,
-    verify_signed_msg,
-    encrypt_signed_msg_for,
-    decrypt_signed_msg_for,
-    decrypt_and_verify_signed_msg_for,
-    encrypt_signed_msg_with_secret_key,
-    decrypt_signed_msg_with_secret_key,
-    decrypt_and_verify_signed_msg_with_secret_key,
 )
 
 
@@ -67,15 +56,5 @@ __all__ = (
     "decrypt_raw_with_secret_key",
     "encrypt_raw_for",
     "decrypt_raw_for",
-    # signed
     "timestamps_in_the_ballpark",
-    "build_signed_msg",
-    "unsecure_extract_signed_msg_meta",
-    "verify_signed_msg",
-    "encrypt_signed_msg_for",
-    "decrypt_signed_msg_for",
-    "decrypt_and_verify_signed_msg_for",
-    "encrypt_signed_msg_with_secret_key",
-    "decrypt_signed_msg_with_secret_key",
-    "decrypt_and_verify_signed_msg_with_secret_key",
 )
