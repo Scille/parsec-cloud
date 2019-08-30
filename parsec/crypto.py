@@ -4,7 +4,7 @@ from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
 
-from nacl.exceptions import CryptoError, BadSignatureError  # noqa: republishing
+from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.secret import SecretBox
@@ -13,7 +13,12 @@ from nacl.pwhash import argon2i
 from nacl.utils import random
 
 
+# Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
+
+
 __all__ = (
+    # Exceptions
+    "CryptoError",
     # Types
     "SecretKey",
     "HashDigest",
@@ -21,16 +26,9 @@ __all__ = (
     "PublicKey",
     "SigningKey",
     "VerifyKey",
+    # Helpers
     "export_root_verify_key",
     "import_root_verify_key",
-    # Exceptions
-    "CryptoError",
-    "BadSignatureError",
-    "CryptoWrappedMsgValidationError",
-    "CryptoWrappedMsgPackingError",
-    "CryptoSignatureAuthorMismatchError",
-    "CryptoSignatureTimestampMismatchError",
-    # Helpers
     "derivate_secret_key_from_password",
 )
 
@@ -149,28 +147,6 @@ class PublicKey(_PublicKey):
             CryptoError
         """
         return SealedBox(self).encrypt(data)
-
-
-# Exceptions
-
-
-# Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
-
-
-class CryptoWrappedMsgValidationError(CryptoError):
-    pass
-
-
-class CryptoWrappedMsgPackingError(CryptoError):
-    pass
-
-
-class CryptoSignatureAuthorMismatchError(CryptoError):
-    pass
-
-
-class CryptoSignatureTimestampMismatchError(CryptoError):
-    pass
 
 
 # Helpers
