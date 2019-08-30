@@ -5,7 +5,8 @@ import attr
 from typing import List, Optional, Tuple
 import pendulum
 
-from parsec.crypto import VerifyKey, PublicKey, timestamps_in_the_ballpark
+from parsec.utils import timestamps_in_the_ballpark
+from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,

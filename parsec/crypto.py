@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
 from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
@@ -33,7 +32,6 @@ __all__ = (
     "CryptoSignatureTimestampMismatchError",
     # Helpers
     "derivate_secret_key_from_password",
-    "timestamps_in_the_ballpark",
 )
 
 
@@ -42,8 +40,6 @@ __all__ = (
 # CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
 CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
 CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
-
-TIMESTAMP_MAX_DT = 30 * 60
 
 
 # Types
@@ -203,14 +199,6 @@ def import_root_verify_key(raw: str) -> VerifyKey:
         return VerifyKey(b32decode(raw.replace("s", "=").encode("utf8")))
     except CryptoError as exc:
         raise ValueError("Invalid verify key") from exc
-
-
-def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MAX_DT) -> bool:
-    """
-    Useful to compare signed message timestamp with the one stored by the
-    backend.
-    """
-    return abs((ts1 - ts2).total_seconds()) < max_dt
 
 
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:

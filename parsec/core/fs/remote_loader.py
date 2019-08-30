@@ -3,14 +3,15 @@
 from pendulum import Pendulum, now as pendulum_now
 from typing import Dict, Optional, List, Tuple
 
-from parsec.crypto import timestamps_in_the_ballpark, HashDigest, CryptoError
+from parsec.utils import timestamps_in_the_ballpark
+from parsec.crypto import HashDigest, CryptoError
+from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.api.data import (
     DataError,
     BlockAccess,
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
 )
-from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsInMaintenance,
