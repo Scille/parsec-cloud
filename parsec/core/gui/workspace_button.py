@@ -132,11 +132,12 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def reencryption_needs(self, val):
         self._reencryption_needs = val
         if self.reencryption_needs and self.reencryption_needs.need_reencryption:
-            self.button_reencrypt.setDisabled(False)
+            self.button_reencrypt.show()
+            self.line_6.show()
             self.button_reencrypt.setToolTip(_("TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"))
         else:
-            self.button_reencrypt.setDisabled(True)
-            self.button_reencrypt.setToolTip(_("TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"))
+            self.button_reencrypt.hide()
+            self.line_6.hide()
 
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name

@@ -649,7 +649,7 @@ border: 0;
               </property>
               <property name="icon">
                <iconset resource="../rc/resources.qrc">
-                <normaloff>:/icons/images/icons/settings_on.png</normaloff>:/icons/images/icons/settings_on.png</iconset>
+                <normaloff>:/icons/images/icons/warning.png</normaloff>:/icons/images/icons/warning.png</iconset>
               </property>
               <property name="iconSize">
                <size>
@@ -738,13 +738,13 @@ border: 0;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FileLineEdit</class>
-   <extends>QLineEdit</extends>
+   <class>PointingHandButton</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>PointingHandButton</class>
-   <extends>QPushButton</extends>
+   <class>FileLineEdit</class>
+   <extends>QLineEdit</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
