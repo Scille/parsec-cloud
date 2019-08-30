@@ -3,12 +3,15 @@
 from pendulum import Pendulum
 
 from parsec.crypto import SecretKey
-from parsec.serde import fields, post_load, OneOfSchema
+from parsec.serde import fields, post_load, OneOfSchema, ZipMsgpackSerializer
 from parsec.core.types.base import EntryID, EntryIDField
 from parsec.api.data.base import BaseSignedData, BaseSignedDataSchema
 
 
 class MessageContent(BaseSignedData):
+
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
         type_field_remove = False

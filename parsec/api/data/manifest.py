@@ -5,8 +5,15 @@ from typing import Optional, Tuple, FrozenDict
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4
-from parsec.serde import fields, validate, post_load, OneOfSchema
 from parsec.crypto import SecretKey, HashDigest
+from parsec.serde import (
+    fields,
+    validate,
+    post_load,
+    OneOfSchema,
+    MsgpackSerializer,
+    ZipMsgpackSerializer,
+)
 from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.api.data.base import (
     BaseData,
@@ -26,6 +33,9 @@ BlockIDField = fields.uuid_based_field_factory(BlockID)
 
 
 class BlockAccess(BaseData):
+
+    SERIALIZER_CLS = MsgpackSerializer
+
     class SCHEMA_CLS(BaseSchema):
         id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
@@ -45,6 +55,9 @@ class BlockAccess(BaseData):
 
 
 class WorkspaceEntry(BaseData):
+
+    SERIALIZER_CLS = MsgpackSerializer
+
     class SCHEMA_CLS(BaseSchema):
         name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
         id = EntryIDField(required=True)
@@ -97,6 +110,9 @@ class VerifyParentMixin:
 
 
 class Manifest(BaseSignedData):
+
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
         type_field_remove = False

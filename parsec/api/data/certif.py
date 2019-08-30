@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 from parsec.crypto import VerifyKey, PublicKey
-from parsec.serde import fields, post_load
+from parsec.serde import fields, post_load, ZipMsgpackSerializer
 from parsec.api.protocol import (
     DeviceID,
     UserID,
@@ -17,6 +17,9 @@ from parsec.api.data.base import DataValidationError, BaseSignedData, BaseSigned
 
 
 class UserCertificateContent(BaseSignedData):
+
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
@@ -45,6 +48,9 @@ class UserCertificateContent(BaseSignedData):
 
 
 class DeviceCertificateContent(BaseSignedData):
+
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
@@ -71,6 +77,9 @@ class DeviceCertificateContent(BaseSignedData):
 
 
 class RevokedDeviceCertificateContent(BaseSignedData):
+
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("revoked_device_certificate", required=True)
         device_id = DeviceIDField(required=True)
@@ -95,6 +104,9 @@ class RevokedDeviceCertificateContent(BaseSignedData):
 
 
 class RealmRoleCertificateContent(BaseSignedData):
+
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)
         realm_id = fields.UUID(required=True)

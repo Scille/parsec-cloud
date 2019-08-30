@@ -4,15 +4,10 @@ import re
 from uuid import UUID, uuid4
 from pathlib import PurePosixPath
 
-from parsec.serde import Serializer, fields
+from parsec.serde import fields
 
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField", "FsPath")
-
-
-def serializer_factory(schema_cls):
-    # TODO: add custom exceptions ?
-    return Serializer(schema_cls)
 
 
 class EntryID(UUID):
