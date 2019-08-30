@@ -9,7 +9,7 @@ from parsec.core.types.backend_address import (
     BackendOrganizationBootstrapAddr,
     BackendOrganizationAddrField,
 )
-from parsec.core.types.local_device import LocalDevice, local_device_serializer
+from parsec.core.types.local_device import LocalDevice
 from parsec.core.types.manifest import (
     DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
@@ -56,7 +56,6 @@ __all__ = (
     "BackendOrganizationAddrField",
     # local_device
     "LocalDevice",
-    "local_device_serializer",
     # "manifest"
     "DEFAULT_BLOCK_SIZE",
     "LocalFileManifest",

@@ -4,17 +4,16 @@ from typing import List, Tuple
 from pathlib import Path
 from uuid import uuid4
 
-from parsec.serde import SerdeValidationError, SerdePackingError
 from parsec.crypto import SecretKey, SigningKey, PrivateKey
 from parsec.api.protocol import OrganizationID, DeviceID
-from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr, local_device_serializer
+from parsec.api.data import DataError
+from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device.exceptions import (
     LocalDeviceError,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
     LocalDeviceAlreadyExistsError,
     LocalDeviceValidationError,
-    LocalDevicePackingError,
 )
 from parsec.core.local_device.cipher import (
     BaseLocalDeviceDecryptor,
@@ -182,12 +181,10 @@ def _load_device(key_file: Path, decryptor: BaseLocalDeviceDecryptor) -> LocalDe
 
     raw = decryptor.decrypt(ciphertext)
     try:
-        return local_device_serializer.loads(raw)
+        return LocalDevice.load(raw)
 
-    except SerdeValidationError as exc:
-        raise LocalDeviceValidationError(str(exc)) from exc
-    except SerdePackingError as exc:
-        raise LocalDevicePackingError(str(exc)) from exc
+    except DataError as exc:
+        raise LocalDeviceValidationError(f"Cannot load local device: {exc}") from exc
 
 
 def _save_device(
@@ -207,13 +204,10 @@ def _save_device(
         )
 
     try:
-        raw = local_device_serializer.dumps(device)
+        raw = device.dump()
 
-    except SerdeValidationError as exc:
-        raise LocalDeviceValidationError(str(exc)) from exc
-
-    except SerdePackingError as exc:
-        raise LocalDevicePackingError(str(exc)) from exc
+    except DataError as exc:
+        raise LocalDeviceValidationError(f"Cannot dump local device: {exc}") from exc
 
     ciphertext = encryptor.encrypt(raw)
     try:

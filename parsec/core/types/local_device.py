@@ -1,18 +1,30 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import attr
 from typing import Tuple
 from hashlib import sha256
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
-from parsec.serde import UnknownCheckedSchema, fields, post_load
+from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, OrganizationID, DeviceIDField
-from parsec.core.types.base import EntryID, EntryIDField, serializer_factory
+from parsec.api.data import BaseData, BaseSchema
+from parsec.core.types.base import EntryID, EntryIDField
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
 
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class LocalDevice:
+class LocalDevice(BaseData):
+    class SCHEMA_CLS(BaseSchema):
+        organization_addr = BackendOrganizationAddrField(required=True)
+        device_id = DeviceIDField(required=True)
+        signing_key = fields.SigningKey(required=True)
+        private_key = fields.PrivateKey(required=True)
+        is_admin = fields.Boolean(required=True)
+        user_manifest_id = EntryIDField(required=True)
+        user_manifest_key = fields.SecretKey(required=True)
+        local_symkey = fields.SecretKey(required=True)
+
+        @post_load
+        def make_obj(self, data):
+            return LocalDevice(**data)
 
     organization_addr: BackendOrganizationAddr
     device_id: DeviceID
@@ -21,13 +33,10 @@ class LocalDevice:
     is_admin: bool
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
-    local_symkey: bytes
+    local_symkey: SecretKey
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
-
-    def evolve(self, **kwargs):
-        return attr.evolve(self, **kwargs)
 
     @property
     def slug(self):
@@ -68,21 +77,3 @@ class LocalDevice:
     @property
     def public_key(self):
         return self.private_key.public_key
-
-
-class LocalDeviceSchema(UnknownCheckedSchema):
-    organization_addr = BackendOrganizationAddrField(required=True)
-    device_id = DeviceIDField(required=True)
-    signing_key = fields.SigningKey(required=True)
-    private_key = fields.PrivateKey(required=True)
-    is_admin = fields.Boolean(required=True)
-    user_manifest_id = EntryIDField(required=True)
-    user_manifest_key = fields.SecretKey(required=True)
-    local_symkey = fields.Bytes(required=True)
-
-    @post_load
-    def make_obj(self, data):
-        return LocalDevice(**data)
-
-
-local_device_serializer = serializer_factory(LocalDeviceSchema)
