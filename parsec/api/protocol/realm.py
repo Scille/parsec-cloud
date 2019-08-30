@@ -79,6 +79,7 @@ realm_get_role_certificates_serializer = CmdSerializer(
 
 class RealmUpdateRolesReqSchema(BaseReqSchema):
     role_certificate = fields.Bytes(required=True)
+    recipient_message = fields.Bytes(required=True, allow_none=True)
 
 
 class RealmUpdateRolesRepSchema(BaseRepSchema):

@@ -61,10 +61,14 @@ async def realm_get_role_certificates(sock, realm_id, since=None):
     return realm_get_role_certificates_serializer.rep_loads(raw_rep)
 
 
-async def realm_update_roles(sock, role_certificate, check_rep=True):
+async def realm_update_roles(sock, role_certificate, recipient_message=None, check_rep=True):
     raw_rep = await sock.send(
         realm_update_roles_serializer.req_dumps(
-            {"cmd": "realm_update_roles", "role_certificate": role_certificate}
+            {
+                "cmd": "realm_update_roles",
+                "role_certificate": role_certificate,
+                "recipient_message": recipient_message,
+            }
         )
     )
     raw_rep = await sock.recv()

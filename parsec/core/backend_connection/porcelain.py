@@ -53,7 +53,6 @@ class BackendCmdsPool:
     events_subscribe = _expose_cmds_with_retrier("events_subscribe")
     events_listen = _expose_cmds_with_retrier("events_listen")
 
-    message_send = _expose_cmds_with_retrier("message_send")
     message_get = _expose_cmds_with_retrier("message_get")
 
     vlob_create = _expose_cmds_with_retrier("vlob_create")

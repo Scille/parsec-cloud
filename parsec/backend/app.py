@@ -167,7 +167,6 @@ class BackendApp:
             "ping": self.ping.api_ping,
             # Message
             "message_get": self.message.api_message_get,
-            "message_send": self.message.api_message_send,
             # User&Device
             "user_get": self.user.api_user_get,
             "user_find": self.user.api_user_find,
