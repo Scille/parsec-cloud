@@ -2,7 +2,7 @@
 
 from pendulum import Pendulum
 
-from parsec.crypto_types import SecretKey
+from parsec.crypto import SecretKey
 from parsec.serde import fields, post_load, OneOfSchema
 from parsec.core.types.base import EntryID, EntryIDField
 from parsec.api.data.base import BaseSignedData, BaseSignedDataSchema

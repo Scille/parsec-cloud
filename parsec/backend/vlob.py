@@ -4,8 +4,10 @@ from typing import List, Tuple, Dict, Optional
 from uuid import UUID
 import pendulum
 
-from parsec.api.protocol import DeviceID, OrganizationID
+from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
+    DeviceID,
+    OrganizationID,
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
@@ -16,7 +18,6 @@ from parsec.api.protocol import (
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors
-from parsec.crypto import timestamps_in_the_ballpark
 
 
 class VlobError(Exception):

@@ -1,19 +1,51 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-# Given `parsec.types` depends on this module, we cannot put it inside
-# package `parsec.crypto` (which in turn depends of `parsec.types`)
-
-from typing import NewType
+from typing import Tuple
 from base64 import b32decode, b32encode
 from hashlib import sha256
-from nacl.utils import random
-from nacl.secret import SecretBox
-from nacl.public import PrivateKey as _PrivateKey, PublicKey as _PublicKey
+
+from nacl.exceptions import CryptoError  # noqa: republishing
+from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
-from nacl.exceptions import CryptoError
+from nacl.secret import SecretBox
+from nacl.bindings import crypto_sign_BYTES
+from nacl.pwhash import argon2i
+from nacl.utils import random
+
+
+# Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
+
+
+__all__ = (
+    # Exceptions
+    "CryptoError",
+    # Types
+    "SecretKey",
+    "HashDigest",
+    "PrivateKey",
+    "PublicKey",
+    "SigningKey",
+    "VerifyKey",
+    # Helpers
+    "export_root_verify_key",
+    "import_root_verify_key",
+    "derivate_secret_key_from_password",
+)
+
+
+# TODO: SENSITIVE is really slow which is not good for unittests...
+# CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_SENSITIVE
+# CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
+CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
+CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
+
+
+# Types
 
 
 class SecretKey(bytes):
+    __slots__ = ()
+
     @classmethod
     def generate(cls) -> "SecretKey":
         return cls(random(SecretBox.KEY_SIZE))
@@ -22,13 +54,34 @@ class SecretKey(bytes):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
 
+    @classmethod
+    def from_password(cls, password: str) -> "SecretKey":
+        pass
 
-HashDigest = NewType("HashDigest", bytes)
+    def encrypt(self, data: bytes) -> bytes:
+        """
+        Raises:
+            CryptoError: if key is invalid.
+        """
+        box = SecretBox(self)
+        return box.encrypt(data)
+
+    def decrypt(self, ciphered: bytes) -> bytes:
+        """
+        Raises:
+            CryptoError: if key is invalid.
+        """
+        box = SecretBox(self)
+        return box.decrypt(ciphered)
 
 
-def hashdigest(content: bytes) -> HashDigest:
-    # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
-    return sha256(content).digest()
+class HashDigest(bytes):
+    __slots__ = ()
+
+    @classmethod
+    def from_data(self, data: bytes) -> "HashDigest":
+        # nacl's sha256 doesn't accept bytearray, so stick to `hashlib.sha256`
+        return HashDigest(sha256(data).digest())
 
 
 # Basically just add comparison support to nacl keys
@@ -57,6 +110,10 @@ class VerifyKey(_VerifyKey):
     def __eq__(self, other):
         return isinstance(other, _VerifyKey) and self._key == other._key
 
+    @classmethod
+    def unsecure_unwrap(self, signed: bytes) -> bytes:
+        return signed[crypto_sign_BYTES:]
+
 
 class PrivateKey(_PrivateKey):
     __slots__ = ()
@@ -74,12 +131,29 @@ class PrivateKey(_PrivateKey):
     def __eq__(self, other):
         return isinstance(other, _PrivateKey) and self._private_key == other._private_key
 
+    def decrypt_from_self(self, ciphered: bytes) -> bytes:
+        """
+        raises:
+            CryptoError
+        """
+        return SealedBox(self).decrypt(ciphered)
+
 
 class PublicKey(_PublicKey):
     __slots__ = ()
 
     def __eq__(self, other):
         return isinstance(other, _PublicKey) and self._public_key == other._public_key
+
+    def encrypt_for_self(self, data: bytes) -> bytes:
+        """
+        raises:
+            CryptoError
+        """
+        return SealedBox(self).encrypt(data)
+
+
+# Helpers
 
 
 def export_root_verify_key(key: VerifyKey) -> str:
@@ -105,3 +179,15 @@ def import_root_verify_key(raw: str) -> VerifyKey:
         return VerifyKey(b32decode(raw.replace("s", "=").encode("utf8")))
     except CryptoError as exc:
         raise ValueError("Invalid verify key") from exc
+
+
+def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:
+    salt = salt or random(argon2i.SALTBYTES)
+    rawkey = argon2i.kdf(
+        SecretBox.KEY_SIZE,
+        password.encode("utf8"),
+        salt,
+        opslimit=CRYPTO_OPSLIMIT,
+        memlimit=CRYPTO_MEMLIMIT,
+    )
+    return SecretKey(rawkey), salt

@@ -5,8 +5,7 @@ from uuid import UUID
 import pendulum
 import attr
 
-from parsec.crypto import timestamps_in_the_ballpark
-from parsec.api.data import DataError, RealmRoleCertificateContent
+from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -20,6 +19,7 @@ from parsec.api.protocol import (
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
 )
+from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.backend.utils import catch_protocol_errors
 
 

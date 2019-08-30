@@ -3,7 +3,7 @@
 from urllib.parse import urlsplit, urlunsplit, parse_qs
 
 from parsec.serde import fields
-from parsec.crypto_types import VerifyKey, export_root_verify_key, import_root_verify_key
+from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
 from parsec.api.protocol import OrganizationID
 
 

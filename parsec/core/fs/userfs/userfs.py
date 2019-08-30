@@ -8,7 +8,7 @@ from typing import List, Tuple, Optional, Union
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key, SecretKey
+from parsec.crypto import SecretKey
 from parsec.api.data import (
     DataError,
     RealmRoleCertificateContent,
@@ -92,8 +92,8 @@ class ReencryptionJob:
 
             donebatch = []
             for vlob_id, version, blob in batch:
-                cleartext = decrypt_raw_with_secret_key(self.old_workspace_entry.key, blob)
-                newciphered = encrypt_raw_with_secret_key(self.new_workspace_entry.key, cleartext)
+                cleartext = self.old_workspace_entry.key.decrypt(blob)
+                newciphered = self.new_workspace_entry.key.encrypt(cleartext)
                 donebatch.append((vlob_id, version, newciphered))
 
             total, done = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(

@@ -8,7 +8,7 @@ from sqlite3 import Connection, connect as sqlite_connect
 
 from parsec.core.types import EntryID, ChunkID, BlockID
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
+from parsec.crypto import SecretKey
 from parsec.core.types import LocalManifest, DEFAULT_BLOCK_SIZE
 
 # TODO: should be in config.py
@@ -274,11 +274,11 @@ class PersistentStorage:
             ciphered, = cursor.fetchone()
             cursor.execute("END")
 
-        return decrypt_raw_with_secret_key(self.local_symkey, ciphered)
+        return self.local_symkey.decrypt(ciphered)
 
     def _set_chunk(self, conn: Connection, chunk_id: ChunkID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
+        ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
         with self._open_cursor(conn) as cursor:

@@ -3,20 +3,15 @@
 from pendulum import Pendulum, now as pendulum_now
 from typing import Dict, Optional, List, Tuple
 
-from parsec.crypto import (
-    timestamps_in_the_ballpark,
-    decrypt_raw_with_secret_key,
-    encrypt_raw_with_secret_key,
-    hashdigest,
-    CryptoError,
-)
+from parsec.utils import timestamps_in_the_ballpark
+from parsec.crypto import HashDigest, CryptoError
+from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.api.data import (
     DataError,
     BlockAccess,
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
 )
-from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsInMaintenance,
@@ -208,14 +203,14 @@ class RemoteLoader:
 
         # Decryption
         try:
-            block = decrypt_raw_with_secret_key(access.key, ciphered_block)
+            block = access.key.decrypt(ciphered_block)
 
         # Decryption error
         except CryptoError as exc:
             raise FSError(f"Cannot decrypt block: {exc}") from exc
 
         # TODO: let encryption manager do the digest check ?
-        assert hashdigest(block) == access.digest, access
+        assert HashDigest.from_data(block) == access.digest, access
         self.local_storage.set_clean_block(access.id, block)
 
     async def upload_block(self, access: BlockAccess, data: bytes):
@@ -228,7 +223,7 @@ class RemoteLoader:
         """
         # Encryption
         try:
-            ciphered = encrypt_raw_with_secret_key(access.key, data)
+            ciphered = access.key.encrypt(data)
 
         # Encryption error
         except CryptoError as exc:

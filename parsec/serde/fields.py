@@ -18,7 +18,9 @@ from marshmallow.fields import (
 import re
 
 from parsec.types import FrozenDict as _FrozenDict
-from parsec.crypto_types import (
+from parsec.crypto import (
+    SecretKey as _SecretKey,
+    HashDigest as _HashDigest,
     SigningKey as _SigningKey,
     VerifyKey as _VerifyKey,
     PrivateKey as _PrivateKey,
@@ -351,6 +353,6 @@ class SemVer(Field):
     _deserialize = _serialize
 
 
-SecretKey = bytes_based_field_factory(bytes)
-HashDigest = bytes_based_field_factory(bytes)
+SecretKey = bytes_based_field_factory(_SecretKey)
+HashDigest = bytes_based_field_factory(_HashDigest)
 Bytes = bytes_based_field_factory(bytes)

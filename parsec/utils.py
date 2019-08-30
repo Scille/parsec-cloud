@@ -3,7 +3,21 @@
 import attr
 import trio
 import trio_asyncio
+from pendulum import Pendulum
+
 from parsec.monitoring import TaskMonitoringInstrument
+
+
+TIMESTAMP_MAX_DT = 30 * 60
+
+
+def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MAX_DT) -> bool:
+    """
+    Useful to compare signed message timestamp with the one stored by the
+    backend.
+    """
+    return abs((ts1 - ts2).total_seconds()) < max_dt
+
 
 # Task status
 

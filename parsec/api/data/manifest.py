@@ -6,7 +6,7 @@ from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4
 from parsec.serde import fields, validate, post_load, OneOfSchema
-from parsec.crypto_types import SecretKey, HashDigest
+from parsec.crypto import SecretKey, HashDigest
 from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.api.data.base import (
     BaseData,
