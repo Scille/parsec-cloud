@@ -3,13 +3,7 @@
 from pendulum import Pendulum, now as pendulum_now
 from typing import Dict, Optional, List, Tuple
 
-from parsec.crypto import (
-    timestamps_in_the_ballpark,
-    decrypt_raw_with_secret_key,
-    encrypt_raw_with_secret_key,
-    HashDigest,
-    CryptoError,
-)
+from parsec.crypto import timestamps_in_the_ballpark, HashDigest, CryptoError
 from parsec.api.data import (
     DataError,
     BlockAccess,
@@ -208,7 +202,7 @@ class RemoteLoader:
 
         # Decryption
         try:
-            block = decrypt_raw_with_secret_key(access.key, ciphered_block)
+            block = access.key.decrypt(ciphered_block)
 
         # Decryption error
         except CryptoError as exc:
@@ -228,7 +222,7 @@ class RemoteLoader:
         """
         # Encryption
         try:
-            ciphered = encrypt_raw_with_secret_key(access.key, data)
+            ciphered = access.key.encrypt(data)
 
         # Encryption error
         except CryptoError as exc:

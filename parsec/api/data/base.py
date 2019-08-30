@@ -1,15 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional, Union
+from typing import Optional
 from pendulum import Pendulum
-from nacl.exceptions import CryptoError
-from nacl.secret import SecretBox
-from nacl.public import SealedBox
-from nacl.bindings import crypto_sign_BYTES
 
 from parsec.serde import BaseSchema, fields, SerdeValidationError, SerdePackingError, Serializer
-from parsec.crypto import PrivateKey, PublicKey, SigningKey, VerifyKey
+from parsec.crypto import CryptoError, PrivateKey, PublicKey, SigningKey, VerifyKey, SecretKey
 from parsec.api.protocol import DeviceID, DeviceIDField
 
 
@@ -109,23 +105,20 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-    def dump_sign_and_encrypt(
-        self, author_signkey: SigningKey, key: Union[bytes, SecretBox]
-    ) -> bytes:
+    def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: bytes) -> bytes:
         """
         Raises:
             DataError
         """
         try:
             signed = author_signkey.sign(self._serialize())
-            box = key if isinstance(key, SecretBox) else SecretBox(key)
-            return box.encrypt(signed)
+            return key.encrypt(signed)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
     def dump_sign_and_encrypt_for(
-        self, author_signkey: SigningKey, recipient_pubkey: Union[PublicKey, SealedBox]
+        self, author_signkey: SigningKey, recipient_pubkey: PublicKey
     ) -> bytes:
         """
         Raises:
@@ -133,12 +126,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         """
         try:
             signed = author_signkey.sign(self._serialize())
-            box = (
-                recipient_pubkey
-                if isinstance(recipient_pubkey, SealedBox)
-                else SealedBox(recipient_pubkey)
-            )
-            return box.encrypt(signed)
+            return recipient_pubkey.encrypt_for_self(signed)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
@@ -149,7 +137,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         Raises:
             DataError
         """
-        raw = signed[crypto_sign_BYTES:]
+        raw = VerifyKey.unsecure_unwrap(signed)
         return self._deserialize(raw)
 
     @classmethod
@@ -186,7 +174,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
     def decrypt_verify_and_load(
         self,
         encrypted: bytes,
-        key: Union[bytes, SecretBox],
+        key: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
@@ -197,8 +185,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
             DataError
         """
         try:
-            box = key if isinstance(key, SecretBox) else SecretBox(key)
-            signed = box.decrypt(encrypted)
+            signed = key.decrypt(encrypted)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
@@ -215,7 +202,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
     def decrypt_verify_and_load_for(
         self,
         encrypted: bytes,
-        recipient_privkey: Union[PrivateKey, SealedBox],
+        recipient_privkey: PrivateKey,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
@@ -226,12 +213,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
             DataError
         """
         try:
-            box = (
-                recipient_privkey
-                if isinstance(recipient_privkey, SealedBox)
-                else SealedBox(recipient_privkey)
-            )
-            signed = box.decrypt(encrypted)
+            signed = recipient_privkey.decrypt_from_self(encrypted)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
@@ -308,47 +290,38 @@ class BaseData(metaclass=DataMeta):
         """
         return cls.SERIALIZER.loads(raw)
 
-    def dump_and_encrypt(self, key: Union[bytes, SecretBox]) -> bytes:
+    def dump_and_encrypt(self, key: SecretKey) -> bytes:
         """
         Raises:
             DataError
         """
         try:
             raw = self.dump()
-            box = key if isinstance(key, SecretBox) else SecretBox(key)
-            return box.encrypt(raw)
+            return key.encrypt(raw)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-    def dump_and_encrypt_for(self, recipient_pubkey: Union[PublicKey, SealedBox]) -> bytes:
+    def dump_and_encrypt_for(self, recipient_pubkey: PublicKey) -> bytes:
         """
         Raises:
             DataError
         """
         try:
             raw = self.dump()
-            box = (
-                recipient_pubkey
-                if isinstance(recipient_pubkey, SealedBox)
-                else SealedBox(recipient_pubkey)
-            )
-            return box.encrypt(raw)
+            return recipient_pubkey.encrypt_for_self(raw)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
     @classmethod
-    def decrypt_and_load(
-        cls, encrypted: bytes, key: Union[bytes, SecretBox], **kwargs
-    ) -> "BaseData":
+    def decrypt_and_load(cls, encrypted: bytes, key: SecretKey, **kwargs) -> "BaseData":
         """
         Raises:
             DataError
         """
         try:
-            box = key if isinstance(key, SecretBox) else SecretBox(key)
-            raw = box.decrypt(encrypted)
+            raw = key.decrypt(encrypted)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
@@ -357,19 +330,14 @@ class BaseData(metaclass=DataMeta):
 
     @classmethod
     def decrypt_and_load_for(
-        self, encrypted: bytes, recipient_privkey: Union[PrivateKey, SealedBox], **kwargs
+        self, encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
     ) -> "BaseData":
         """
         Raises:
             DataError
         """
         try:
-            box = (
-                recipient_privkey
-                if isinstance(recipient_privkey, SealedBox)
-                else SealedBox(recipient_privkey)
-            )
-            raw = box.decrypt(encrypted)
+            raw = recipient_privkey.decrypt_from_self(encrypted)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc

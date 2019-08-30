@@ -6,9 +6,10 @@ from base64 import b32decode, b32encode
 from hashlib import sha256
 
 from nacl.exceptions import CryptoError, BadSignatureError  # noqa: republishing
-from nacl.public import PrivateKey as _PrivateKey, PublicKey as _PublicKey, SealedBox
+from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.secret import SecretBox
+from nacl.bindings import crypto_sign_BYTES
 from nacl.pwhash import argon2i
 from nacl.utils import random
 
@@ -32,10 +33,6 @@ __all__ = (
     "CryptoSignatureTimestampMismatchError",
     # Helpers
     "derivate_secret_key_from_password",
-    "encrypt_raw_with_secret_key",
-    "decrypt_raw_with_secret_key",
-    "encrypt_raw_for",
-    "decrypt_raw_for",
     "timestamps_in_the_ballpark",
 )
 
@@ -60,6 +57,26 @@ class SecretKey(bytes):
     def __repr__(self):
         # Avoid leaking the key in logs
         return f"<{type(self).__module__}.{type(self).__qualname__} object at {hex(id(self))}>"
+
+    @classmethod
+    def from_password(cls, password: str) -> "SecretKey":
+        pass
+
+    def encrypt(self, data: bytes) -> bytes:
+        """
+        Raises:
+            CryptoError: if key is invalid.
+        """
+        box = SecretBox(self)
+        return box.encrypt(data)
+
+    def decrypt(self, ciphered: bytes) -> bytes:
+        """
+        Raises:
+            CryptoError: if key is invalid.
+        """
+        box = SecretBox(self)
+        return box.decrypt(ciphered)
 
 
 class HashDigest(bytes):
@@ -95,6 +112,10 @@ class VerifyKey(_VerifyKey):
     def __eq__(self, other):
         return isinstance(other, _VerifyKey) and self._key == other._key
 
+    @classmethod
+    def unsecure_unwrap(self, signed: bytes) -> bytes:
+        return signed[crypto_sign_BYTES:]
+
 
 class PrivateKey(_PrivateKey):
     __slots__ = ()
@@ -112,12 +133,26 @@ class PrivateKey(_PrivateKey):
     def __eq__(self, other):
         return isinstance(other, _PrivateKey) and self._private_key == other._private_key
 
+    def decrypt_from_self(self, ciphered: bytes) -> bytes:
+        """
+        raises:
+            CryptoError
+        """
+        return SealedBox(self).decrypt(ciphered)
+
 
 class PublicKey(_PublicKey):
     __slots__ = ()
 
     def __eq__(self, other):
         return isinstance(other, _PublicKey) and self._public_key == other._public_key
+
+    def encrypt_for_self(self, data: bytes) -> bytes:
+        """
+        raises:
+            CryptoError
+        """
+        return SealedBox(self).encrypt(data)
 
 
 # Exceptions
@@ -180,45 +215,11 @@ def timestamps_in_the_ballpark(ts1: Pendulum, ts2: Pendulum, max_dt=TIMESTAMP_MA
 
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[SecretKey, bytes]:
     salt = salt or random(argon2i.SALTBYTES)
-    key = argon2i.kdf(
+    rawkey = argon2i.kdf(
         SecretBox.KEY_SIZE,
         password.encode("utf8"),
         salt,
         opslimit=CRYPTO_OPSLIMIT,
         memlimit=CRYPTO_MEMLIMIT,
     )
-    return key, salt
-
-
-def encrypt_raw_for(recipient_pubkey: PublicKey, data: bytes) -> bytes:
-    """
-    Raises:
-        CryptoError: if key is invalid.
-    """
-    return SealedBox(recipient_pubkey).encrypt(data)
-
-
-def decrypt_raw_for(recipient_privkey: PrivateKey, ciphered: bytes):
-    """
-    Raises:
-        CryptoError: if key is invalid.
-    """
-    return SealedBox(recipient_privkey).decrypt(ciphered)
-
-
-def encrypt_raw_with_secret_key(key: SecretKey, data: bytes) -> bytes:
-    """
-    Raises:
-        CryptoError: if key is invalid.
-    """
-    box = SecretBox(key)
-    return box.encrypt(data)
-
-
-def decrypt_raw_with_secret_key(key: SecretKey, ciphered: bytes) -> bytes:
-    """
-    Raises:
-        CryptoError: if key is invalid.
-    """
-    box = SecretBox(key)
-    return box.decrypt(ciphered)
+    return SecretKey(rawkey), salt
