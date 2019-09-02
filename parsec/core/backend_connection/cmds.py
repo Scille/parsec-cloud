@@ -3,6 +3,7 @@
 from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
+from pendulum import Pendulum
 
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
@@ -438,12 +439,15 @@ async def device_create(
 # ping already defined in authenticated part
 
 
-async def organization_create(transport: Transport, organization_id: OrganizationID) -> str:
+async def organization_create(
+    transport: Transport, organization_id: OrganizationID, expiration_date: Pendulum = None
+) -> str:
     rep = await _send_cmd(
         transport,
         organization_create_serializer,
         cmd="organization_create",
         organization_id=organization_id,
+        expiration_date=expiration_date,
     )
     return rep["bootstrap_token"]
 

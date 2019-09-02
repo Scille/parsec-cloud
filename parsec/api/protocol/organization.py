@@ -10,10 +10,12 @@ __all__ = "organization_bootstrap_serializer"
 
 class OrganizationCreateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
+    expiration_date = fields.DateTime(allow_none=True)
 
 
 class OrganizationCreateRepSchema(BaseRepSchema):
     bootstrap_token = fields.String(required=True)
+    expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
 organization_create_serializer = CmdSerializer(

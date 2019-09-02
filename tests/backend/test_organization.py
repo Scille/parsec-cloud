@@ -14,12 +14,11 @@ from tests.backend.test_events import ping
 from tests.fixtures import local_device_to_backend_user
 
 
-async def organization_create(sock, organization_id):
-    raw_rep = await sock.send(
-        organization_create_serializer.req_dumps(
-            {"cmd": "organization_create", "organization_id": organization_id}
-        )
-    )
+async def organization_create(sock, organization_id, expiration_date=None):
+    req = {"cmd": "organization_create", "organization_id": organization_id}
+    if expiration_date:
+        req["expiration_date"] = expiration_date
+    raw_rep = await sock.send(organization_create_serializer.req_dumps(req))
     raw_rep = await sock.recv()
     return organization_create_serializer.rep_loads(raw_rep)
 
@@ -55,6 +54,12 @@ async def test_organization_create_bad_name(administration_backend_sock):
 
 
 @pytest.mark.trio
+async def test_organization_create_wrong_expiration_date(administration_backend_sock):
+    rep = await organization_create(administration_backend_sock, "new", "2010-01-01")
+    assert rep["status"] == "bad_message"
+
+
+@pytest.mark.trio
 async def test_organization_create_and_bootstrap(
     backend,
     organization_factory,
@@ -70,6 +75,55 @@ async def test_organization_create_and_bootstrap(
 
     rep = await organization_create(administration_backend_sock, neworg.organization_id)
     assert rep == {"status": "ok", "bootstrap_token": ANY}
+    bootstrap_token = rep["bootstrap_token"]
+
+    # 2) Bootstrap organization
+
+    # Use an existing user name to make sure they didn't mix together
+    newalice = local_device_factory("alice@dev1", neworg)
+    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
+
+    async with backend_sock_factory(backend, neworg.organization_id) as sock:
+        rep = await organization_bootstrap(
+            sock,
+            bootstrap_token,
+            backend_newalice.user_certificate,
+            backend_newalice_first_device.device_certificate,
+            neworg.root_verify_key,
+        )
+    assert rep == {"status": "ok"}
+
+    # 3) Now our new device can connect the backend
+
+    async with backend_sock_factory(backend, newalice) as sock:
+        await ping(sock)
+
+    # 4) Make sure alice from the other organization is still working
+
+    async with backend_sock_factory(backend, alice) as sock:
+        await ping(sock)
+
+
+@pytest.mark.trio
+async def test_organization_with_expiration_date_create_and_bootstrap(
+    backend,
+    organization_factory,
+    local_device_factory,
+    alice,
+    administration_backend_sock,
+    backend_sock_factory,
+):
+    neworg = organization_factory("NewOrg")
+
+    # 1) Create organization, note this means `neworg.bootstrap_token`
+    # will contain an invalid token
+
+    expiration_date = pendulum.now()
+
+    rep = await organization_create(
+        administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
+    )
+    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
     bootstrap_token = rep["bootstrap_token"]
 
     # 2) Bootstrap organization
