@@ -13,10 +13,10 @@ from parsec.api.protocol import (
     UserIDField,
     RealmRoleField,
 )
-from parsec.api.data.base import DataValidationError, BaseSignedData, BaseSignedDataSchema
+from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
 
 
-class UserCertificateContent(BaseSignedData):
+class UserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
@@ -35,7 +35,7 @@ class UserCertificateContent(BaseSignedData):
     @classmethod
     def verify_and_load(
         cls, *args, expected_user: Optional[UserID] = None, **kwargs
-    ) -> BaseSignedData:
+    ) -> "UserCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
             raise DataValidationError(
@@ -44,7 +44,7 @@ class UserCertificateContent(BaseSignedData):
         return data
 
 
-class DeviceCertificateContent(BaseSignedData):
+class DeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
@@ -61,7 +61,7 @@ class DeviceCertificateContent(BaseSignedData):
     @classmethod
     def verify_and_load(
         cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
-    ) -> BaseSignedData:
+    ) -> "DeviceCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_device is not None and data.device_id != expected_device:
             raise DataValidationError(
@@ -70,7 +70,7 @@ class DeviceCertificateContent(BaseSignedData):
         return data
 
 
-class RevokedDeviceCertificateContent(BaseSignedData):
+class RevokedDeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("revoked_device_certificate", required=True)
         device_id = DeviceIDField(required=True)
@@ -85,7 +85,7 @@ class RevokedDeviceCertificateContent(BaseSignedData):
     @classmethod
     def verify_and_load(
         cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
-    ) -> BaseSignedData:
+    ) -> "RevokedDeviceCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_device is not None and data.device_id != expected_device:
             raise DataValidationError(
@@ -94,7 +94,7 @@ class RevokedDeviceCertificateContent(BaseSignedData):
         return data
 
 
-class RealmRoleCertificateContent(BaseSignedData):
+class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)
         realm_id = fields.UUID(required=True)
@@ -128,7 +128,7 @@ class RealmRoleCertificateContent(BaseSignedData):
         expected_user: Optional[UserID] = None,
         expected_role: Optional[RealmRole] = None,
         **kwargs,
-    ) -> BaseSignedData:
+    ) -> "RealmRoleCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
             raise DataValidationError(

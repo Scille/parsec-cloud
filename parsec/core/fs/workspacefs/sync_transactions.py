@@ -155,7 +155,7 @@ def merge_manifests(
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
-    if local_manifest.corresponds_to(remote_manifest):
+    if local_manifest.match_remote(remote_manifest):
         return LocalManifest.from_remote(remote_manifest)
 
     # The remote changes are ours, simply acknowledge them and keep our local changes

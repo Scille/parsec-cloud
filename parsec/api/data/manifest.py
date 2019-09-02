@@ -5,17 +5,17 @@ from typing import Optional, Tuple, FrozenDict
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4
-from parsec.serde import fields, validate, post_load, OneOfSchema
 from parsec.crypto import SecretKey, HashDigest
+from parsec.serde import fields, validate, post_load, OneOfSchema
 from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
-    BaseSignedData,
+    BaseAPISignedData,
     BaseSignedDataSchema,
     DataValidationError,
 )
-from parsec.core.types import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 
 
 class BlockID(UUID4):
@@ -87,7 +87,7 @@ class VerifyParentMixin:
     @classmethod
     def verify_and_load(
         cls, *args, expected_parent: Optional[EntryID] = None, **kwargs
-    ) -> BaseSignedData:
+    ) -> BaseAPISignedData:
         data = super().verify_and_load(*args, **kwargs)
         if expected_parent is not None and data.parent != expected_parent:
             raise DataValidationError(
@@ -96,7 +96,7 @@ class VerifyParentMixin:
         return data
 
 
-class Manifest(BaseSignedData):
+class Manifest(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
         type_field_remove = False
@@ -120,7 +120,7 @@ class Manifest(BaseSignedData):
         expected_id: Optional[EntryID] = None,
         expected_version: Optional[int] = None,
         **kwargs,
-    ) -> "UserManifest":
+    ) -> "Manifest":
         data = super().verify_and_load(*args, **kwargs)
         if data.author is None and data.version != 0:
             raise DataValidationError("Manifest cannot be signed by root verify key")

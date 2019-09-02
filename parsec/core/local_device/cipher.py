@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
 from parsec.crypto import CryptoError, derivate_secret_key_from_password
+from parsec.serde import MsgpackSerializer, UnknownCheckedSchema, fields
 from parsec.core.local_device.exceptions import (
     LocalDevicePackingError,
     LocalDeviceValidationError,
@@ -41,7 +41,7 @@ class PasswordPayloadSchema(UnknownCheckedSchema):
     ciphertext = fields.Bytes(required=True)
 
 
-password_payload_serializer = Serializer(
+password_payload_serializer = MsgpackSerializer(
     PasswordPayloadSchema,
     validation_exc=LocalDeviceValidationError,
     packing_exc=LocalDevicePackingError,

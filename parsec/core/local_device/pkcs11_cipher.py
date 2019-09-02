@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
+from parsec.serde import MsgpackSerializer, UnknownCheckedSchema, fields
 from parsec.core.local_device.exceptions import (
     LocalDevicePackingError,
     LocalDeviceValidationError,
@@ -20,7 +20,7 @@ class PKCS11PayloadSchema(UnknownCheckedSchema):
     ciphertext = fields.Bytes(required=True)
 
 
-pkcs11_payload_serializer = Serializer(
+pkcs11_payload_serializer = MsgpackSerializer(
     PKCS11PayloadSchema,
     validation_exc=LocalDeviceValidationError,
     packing_exc=LocalDevicePackingError,

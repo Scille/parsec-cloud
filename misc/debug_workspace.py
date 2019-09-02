@@ -8,7 +8,6 @@ from humanize import naturalsize
 
 from parsec.logging import configure_logging
 from parsec.core.logged_core import logged_core_factory
-from parsec.core.types import local_manifest_serializer
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import list_available_devices, load_device_with_password
 
@@ -57,7 +56,7 @@ async def main():
 
         # Serialize
         manifest = workspace.local_storage.get_manifest(info["id"])
-        raw = local_manifest_serializer.dumps(manifest)
+        raw = manifest.dump()
 
         # Printout
         print(f"File size: {naturalsize(file_size)}")

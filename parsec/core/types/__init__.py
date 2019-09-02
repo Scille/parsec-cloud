@@ -2,7 +2,10 @@
 
 from typing import Union, NewType
 
-from parsec.core.types.base import EntryID, EntryIDField, EntryName, EntryNameField, FsPath
+from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
+
+from parsec.core.types.base import FsPath
+
 from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
@@ -43,12 +46,13 @@ LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 __all__ = (
     "FileDescriptor",
     "LocalFolderishManifests",
-    # base
+    # Base
+    "FsPath",
+    # Entry
     "EntryID",
     "EntryIDField",
     "EntryName",
     "EntryNameField",
-    "FsPath",
     # Backend address
     "BackendAddr",
     "BackendOrganizationAddr",

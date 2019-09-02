@@ -51,6 +51,18 @@ class PersistentStorage:
 
     # Life cycle
 
+    def _connect(self, path: Path) -> Connection:
+        conn = sqlite_connect(str(path))
+        conn.isolation_level = None
+        conn.execute("pragma journal_mode=wal")
+        conn.execute("PRAGMA synchronous = OFF")
+        return conn
+
+    def _close(self, conn: Connection) -> None:
+        # Auto-commit is used but do it once more just in case
+        conn.commit()
+        conn.close()
+
     def connect(self):
         if self.dirty_conn is not None or self.clean_conn is not None:
             raise RuntimeError("Already connected")
@@ -59,17 +71,8 @@ class PersistentStorage:
         self.path.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
-        self.dirty_conn = sqlite_connect(str(self.dirty_data_path))
-        self.clean_conn = sqlite_connect(str(self.clean_cache_path))
-
-        # Tune database access
-        # Use auto-commit for dirty data since it is very sensitive
-        self.dirty_conn.isolation_level = None
-        self.dirty_conn.execute("pragma journal_mode=wal")
-        self.dirty_conn.execute("PRAGMA synchronous = OFF")
-        self.clean_conn.isolation_level = None
-        self.clean_conn.execute("PRAGMA synchronous = OFF")
-        self.clean_conn.execute("pragma journal_mode=wal")
+        self.dirty_conn = self._connect(self.dirty_data_path)
+        self.clean_conn = self._connect(self.clean_cache_path)
 
         # Initialize
         self.create_db()
@@ -81,14 +84,10 @@ class PersistentStorage:
 
         # Write changes to the disk and close the connections
         try:
-            # Dirty connection uses auto-commit
-            # But let's perform a commit anyway, just in case
-            self.dirty_conn.commit()
-            self.dirty_conn.close()
+            self._close(self.dirty_conn)
             self.dirty_conn = None
         finally:
-            self.clean_conn.commit()
-            self.clean_conn.close()
+            self._close(self.clean_conn)
             self.clean_conn = None
 
     # Context management
@@ -355,3 +354,7 @@ class PersistentStorage:
         # Vacuum is only necessary for the dirty database
         if self.dirty_data_path.stat().st_size > DIRTY_VACUUM_THRESHOLD:
             self.dirty_conn.execute("VACUUM")
+
+            # The connection needs to be recreated
+            self._close(self.dirty_conn)
+            self.dirty_conn = self._connect(self.dirty_data_path)

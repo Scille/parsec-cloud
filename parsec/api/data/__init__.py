@@ -2,11 +2,14 @@
 
 from parsec.api.data.base import (
     DataError,
-    BaseSignedDataSchema,
-    SignedDataMeta,
     BaseData,
+    BaseAPIData,
     BaseSchema,
+    BaseSignedData,
+    BaseAPISignedData,
+    BaseSignedDataSchema,
 )
+from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.certif import (
     UserCertificateContent,
     DeviceCertificateContent,
@@ -43,11 +46,19 @@ __api_data_version__ = (1, 0)
 
 __all__ = (
     "__api_data_version__",
+    # Base
     "DataError",
-    "BaseSignedDataSchema",
-    "SignedDataMeta",
     "BaseData",
+    "BaseAPIData",
     "BaseSchema",
+    "BaseSignedData",
+    "BaseAPISignedData",
+    "BaseSignedDataSchema",
+    # Entry
+    "EntryID",
+    "EntryIDField",
+    "EntryName",
+    "EntryNameField",
     # Certifs
     "UserCertificateContent",
     "DeviceCertificateContent",
