@@ -21,8 +21,11 @@ from parsec.api.data import (
     WorkspaceManifest as RemoteWorkspaceManifest,
     FolderManifest as RemoteFolderManifest,
     FileManifest as RemoteFileManifest,
+    EntryID,
+    EntryName,
+    EntryNameField,
+    EntryIDField,
 )
-from parsec.core.types import EntryID, EntryName, EntryNameField, EntryIDField
 
 
 __all__ = (

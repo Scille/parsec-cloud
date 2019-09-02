@@ -15,7 +15,7 @@ from parsec.api.data.base import (
     BaseSignedDataSchema,
     DataValidationError,
 )
-from parsec.core.types import EntryID, EntryIDField, EntryName, EntryNameField
+from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 
 
 class BlockID(UUID4):

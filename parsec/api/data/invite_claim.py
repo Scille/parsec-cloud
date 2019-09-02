@@ -4,7 +4,7 @@ from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
 from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, DeviceIDField
 from parsec.api.data.base import BaseAPIData, BaseSchema
-from parsec.core.types import EntryID, EntryIDField
+from parsec.api.data.entry import EntryID, EntryIDField
 
 
 class UserClaimContent(BaseAPIData):
