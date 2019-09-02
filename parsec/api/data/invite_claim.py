@@ -1,16 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
-from parsec.serde import fields, post_load, ZipMsgpackSerializer
+from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, DeviceIDField
-from parsec.api.data.base import BaseData, BaseSchema
+from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.core.types import EntryID, EntryIDField
 
 
-class UserClaimContent(BaseData):
-
-    SERIALIZER_CLS = ZipMsgpackSerializer
-
+class UserClaimContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("user_claim", required=True)
         token = fields.String(required=True)
@@ -30,10 +27,7 @@ class UserClaimContent(BaseData):
     verify_key: VerifyKey
 
 
-class DeviceClaimContent(BaseData):
-
-    SERIALIZER_CLS = ZipMsgpackSerializer
-
+class DeviceClaimContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("device_claim", required=True)
         token = fields.String(required=True)
@@ -52,10 +46,7 @@ class DeviceClaimContent(BaseData):
     answer_public_key: PublicKey
 
 
-class DeviceClaimAnswerContent(BaseData):
-
-    SERIALIZER_CLS = ZipMsgpackSerializer
-
+class DeviceClaimAnswerContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("device_claim_answer", required=True)
         private_key = fields.PrivateKey(required=True)

@@ -4,17 +4,14 @@ from typing import Tuple
 from hashlib import sha256
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
-from parsec.serde import fields, post_load, MsgpackSerializer
+from parsec.serde import fields, post_load
 from parsec.api.protocol import DeviceID, OrganizationID, DeviceIDField
-from parsec.api.data import BaseData, BaseSchema
+from parsec.api.data import BaseLocalData, BaseSchema
 from parsec.core.types.base import EntryID, EntryIDField
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
 
-class LocalDevice(BaseData):
-
-    SERIALIZER_CLS = MsgpackSerializer
-
+class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
         device_id = DeviceIDField(required=True)

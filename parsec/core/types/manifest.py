@@ -7,11 +7,12 @@ from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4, FrozenDict
 from parsec.crypto import SecretKey, HashDigest
-from parsec.serde import fields, OneOfSchema, validate, post_load, MsgpackSerializer
+from parsec.serde import fields, OneOfSchema, validate, post_load
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import (
     BaseSchema,
     BaseData,
+    BaseLocalData,
     WorkspaceEntry,
     BlockAccess,
     BlockID,
@@ -63,8 +64,6 @@ class Chunk(BaseData):
     Access is an optional block access that can be used to produce a remote manifest
     when the chunk corresponds to an actual block within the context of this manifest.
     """
-
-    SERIALIZER_CLS = MsgpackSerializer
 
     class SCHEMA_CLS(BaseSchema):
         id = ChunkIDField(required=True)
@@ -186,10 +185,7 @@ class Chunk(BaseData):
 # Manifests data classes
 
 
-class LocalManifest(BaseData):
-
-    SERIALIZER_CLS = MsgpackSerializer
-
+class LocalManifest(BaseLocalData):
     class SCHEMA_CLS(OneOfSchema, BaseSchema):
         type_field = "type"
         type_field_remove = False

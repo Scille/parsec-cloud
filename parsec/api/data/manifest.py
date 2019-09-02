@@ -6,19 +6,12 @@ from pendulum import Pendulum, now as pendulum_now
 
 from parsec.types import UUID4
 from parsec.crypto import SecretKey, HashDigest
-from parsec.serde import (
-    fields,
-    validate,
-    post_load,
-    OneOfSchema,
-    MsgpackSerializer,
-    ZipMsgpackSerializer,
-)
+from parsec.serde import fields, validate, post_load, OneOfSchema
 from parsec.api.protocol import RealmRole, RealmRoleField
 from parsec.api.data.base import (
     BaseData,
     BaseSchema,
-    BaseSignedData,
+    BaseAPISignedData,
     BaseSignedDataSchema,
     DataValidationError,
 )
@@ -33,9 +26,6 @@ BlockIDField = fields.uuid_based_field_factory(BlockID)
 
 
 class BlockAccess(BaseData):
-
-    SERIALIZER_CLS = MsgpackSerializer
-
     class SCHEMA_CLS(BaseSchema):
         id = BlockIDField(required=True)
         key = fields.SecretKey(required=True)
@@ -55,9 +45,6 @@ class BlockAccess(BaseData):
 
 
 class WorkspaceEntry(BaseData):
-
-    SERIALIZER_CLS = MsgpackSerializer
-
     class SCHEMA_CLS(BaseSchema):
         name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
         id = EntryIDField(required=True)
@@ -100,7 +87,7 @@ class VerifyParentMixin:
     @classmethod
     def verify_and_load(
         cls, *args, expected_parent: Optional[EntryID] = None, **kwargs
-    ) -> BaseSignedData:
+    ) -> BaseAPISignedData:
         data = super().verify_and_load(*args, **kwargs)
         if expected_parent is not None and data.parent != expected_parent:
             raise DataValidationError(
@@ -109,10 +96,7 @@ class VerifyParentMixin:
         return data
 
 
-class Manifest(BaseSignedData):
-
-    SERIALIZER_CLS = ZipMsgpackSerializer
-
+class Manifest(BaseAPISignedData):
     class SCHEMA_CLS(OneOfSchema, BaseSignedDataSchema):
         type_field = "type"
         type_field_remove = False
@@ -136,7 +120,7 @@ class Manifest(BaseSignedData):
         expected_id: Optional[EntryID] = None,
         expected_version: Optional[int] = None,
         **kwargs,
-    ) -> "UserManifest":
+    ) -> "Manifest":
         data = super().verify_and_load(*args, **kwargs)
         if data.author is None and data.version != 0:
             raise DataValidationError("Manifest cannot be signed by root verify key")

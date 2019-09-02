@@ -4,7 +4,15 @@ import attr
 from typing import Optional
 from pendulum import Pendulum
 
-from parsec.serde import BaseSchema, fields, SerdeValidationError, SerdePackingError, BaseSerializer
+from parsec.serde import (
+    BaseSchema,
+    fields,
+    SerdeValidationError,
+    SerdePackingError,
+    BaseSerializer,
+    ZipMsgpackSerializer,
+    MsgpackSerializer,
+)
 from parsec.crypto import CryptoError, PrivateKey, PublicKey, SigningKey, VerifyKey, SecretKey
 from parsec.api.protocol import DeviceID, DeviceIDField
 
@@ -331,3 +339,27 @@ class BaseData(metaclass=DataMeta):
             raise DataError(str(exc)) from exc
 
         return self.load(raw, **kwargs)
+
+
+# Data class with serializers
+
+
+class BaseAPISignedData(BaseSignedData):
+    """Signed and compressed base class for API data"""
+
+    SCHEMA_CLS = BaseSignedDataSchema
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
+
+class BaseAPIData(BaseData):
+    """Unsigned and compressed base class for API data"""
+
+    SCHEMA_CLS = BaseSchema
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
+
+class BaseLocalData(BaseData):
+    """Unsigned and uncompressed base class for local data"""
+
+    SCHEMA_CLS = BaseSchema
+    SERIALIZER_CLS = MsgpackSerializer
