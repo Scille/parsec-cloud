@@ -5,7 +5,7 @@ from typing import Tuple
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
 
-from parsec.core.types import EntryID, Chunk, LocalFileManifest
+from parsec.core.types import EntryID, ChunkID, Chunk, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import padded_data
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
@@ -22,14 +22,14 @@ size = strategies.integers(min_value=0, max_value=MAX_SIZE)
 
 
 class Storage(dict):
-    def read_chunk_data(self, chunk_id: EntryID) -> bytes:
+    def read_chunk_data(self, chunk_id: ChunkID) -> bytes:
         return self[chunk_id]
 
-    def write_chunk_data(self, chunk_id: EntryID, data: bytes) -> None:
+    def write_chunk_data(self, chunk_id: ChunkID, data: bytes) -> None:
         assert chunk_id not in self
         self[chunk_id] = data
 
-    def clear_chunk_data(self, chunk_id: EntryID) -> None:
+    def clear_chunk_data(self, chunk_id: ChunkID) -> None:
         self.pop(chunk_id)
 
     def read_chunk(self, chunk: Chunk) -> bytes:
@@ -105,13 +105,11 @@ class Storage(dict):
         return new_manifest
 
 
-def test_complete_scenario() -> None:
+def test_complete_scenario():
     storage = Storage()
 
     with freeze_time("2000-01-01"):
-        base = manifest = LocalFileManifest.new_placeholder(EntryID(), "a@a", EntryID()).evolve(
-            blocksize=16
-        )
+        base = manifest = LocalFileManifest.new_placeholder(parent=EntryID(), blocksize=16)
         assert manifest == base.evolve(size=0)
 
     with freeze_time("2000-01-02") as t2:
@@ -198,9 +196,7 @@ def test_file_operations(hypothesis_settings, tmpdir):
         def __init__(self) -> None:
             super().__init__()
             self.oracle = open(tmpdir / "oracle.txt", "w+b")
-            self.manifest = LocalFileManifest.new_placeholder(EntryID(), "a@a", EntryID()).evolve(
-                blocksize=8
-            )
+            self.manifest = LocalFileManifest.new_placeholder(parent=EntryID(), blocksize=8)
             self.storage = Storage()
 
         def teardown(self) -> None:
