@@ -11,7 +11,6 @@ from parsec.serde import (
     SerdePackingError,
     BaseSerializer,
     ZipMsgpackSerializer,
-    MsgpackSerializer,
 )
 from parsec.crypto import CryptoError, PrivateKey, PublicKey, SigningKey, VerifyKey, SecretKey
 from parsec.api.protocol import DeviceID, DeviceIDField
@@ -356,10 +355,3 @@ class BaseAPIData(BaseData):
 
     SCHEMA_CLS = BaseSchema
     SERIALIZER_CLS = ZipMsgpackSerializer
-
-
-class BaseLocalData(BaseData):
-    """Unsigned and uncompressed base class for local data"""
-
-    SCHEMA_CLS = BaseSchema
-    SERIALIZER_CLS = MsgpackSerializer

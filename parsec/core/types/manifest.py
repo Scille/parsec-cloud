@@ -12,7 +12,6 @@ from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import (
     BaseSchema,
     BaseData,
-    BaseLocalData,
     WorkspaceEntry,
     BlockAccess,
     BlockID,
@@ -26,6 +25,7 @@ from parsec.api.data import (
     EntryNameField,
     EntryIDField,
 )
+from parsec.core.types.base import BaseLocalData
 
 
 __all__ = (

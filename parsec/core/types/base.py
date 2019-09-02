@@ -2,8 +2,18 @@
 
 from pathlib import PurePosixPath
 
+from parsec.serde import BaseSchema, MsgpackSerializer
+from parsec.api.data import BaseData
 
-__all__ = ("FsPath",)
+
+__all__ = ("BaseLocalData", "FsPath")
+
+
+class BaseLocalData(BaseData):
+    """Unsigned and uncompressed base class for local data"""
+
+    SCHEMA_CLS = BaseSchema
+    SERIALIZER_CLS = MsgpackSerializer
 
 
 class FsPath(PurePosixPath):

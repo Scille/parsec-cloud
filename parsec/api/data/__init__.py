@@ -8,7 +8,6 @@ from parsec.api.data.base import (
     BaseSignedData,
     BaseAPISignedData,
     BaseSignedDataSchema,
-    BaseLocalData,
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.certif import (
@@ -55,7 +54,6 @@ __all__ = (
     "BaseSignedData",
     "BaseAPISignedData",
     "BaseSignedDataSchema",
-    "BaseLocalData",
     # Entry
     "EntryID",
     "EntryIDField",

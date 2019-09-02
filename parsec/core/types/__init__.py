@@ -5,6 +5,7 @@ from typing import Union, NewType
 from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
 
 from parsec.core.types.base import FsPath
+
 from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
