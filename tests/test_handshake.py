@@ -154,8 +154,6 @@ def test_process_challenge_req_bad_format(alice, req):
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.1.1"},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.100.0"},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": "2.0.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.1"},
     ],
 )
 def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
@@ -170,6 +168,7 @@ def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
 @pytest.mark.parametrize(
     "req",
     [
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.0"},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.0"},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.2"},
         {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.10"},

@@ -34,13 +34,20 @@ class HandshakeRevokedDevice(HandshakeError):
     pass
 
 
-class HandshakeAPIVersionError(Exception):
-    def __init__(self, expected_version=None):
-        self.expected_version = expected_version
-        if expected_version is not None:
-            self.message = f"Bad API version : expected version {expected_version}"
-        else:
-            self.message = "Bad API version"
+class HandshakeAPIVersionError(HandshakeError):
+    def __init__(self, peer_version):
+        self.peer_version = peer_version
+        self.message = (
+            f"Incompatiblity between peer API version {peer_version} "
+            f"and local API version {__api_version__}"
+        )
+
+    @classmethod
+    def check_api_version(cls, peer_api_version):
+        local_major, _, _ = map(int, __api_version__.split("."))
+        peer_major, _, _ = map(int, peer_api_version.split("."))
+        if local_major != peer_major:
+            raise cls(peer_api_version)
 
 
 class HandshakeChallengeSchema(UnknownCheckedSchema):
@@ -142,6 +149,10 @@ class ServerHandshake:
         self.answer_data = data
         self.state = "answer"
 
+        # API Version check
+        # Is this necessary since the client is supposed to perform this test first?
+        HandshakeAPIVersionError.check_api_version(self.client_api_version)
+
     def build_bad_format_result_req(self, help="Invalid params") -> bytes:
         if self.state not in ("answer", "challenge"):
             raise HandshakeError("Invalid state.")
@@ -227,7 +238,7 @@ class BaseClientHandshake:
 
     def load_challenge_req(self, req: bytes):
         self.challenge_data = handshake_challenge_serializer.loads(req)
-        self.check_api_version()
+        HandshakeAPIVersionError.check_api_version(self.backend_api_version)
 
     def process_result_req(self, req: bytes) -> bytes:
         data = handshake_result_serializer.loads(req)
@@ -248,14 +259,6 @@ class BaseClientHandshake:
                 raise InvalidMessageError(
                     f"Bad `result` handshake: {data['result']} ({data['help']})"
                 )
-
-    def check_api_version(self):
-        remote_version = tuple(map(int, self.challenge_data["api_version"].split(".")))
-        local_version = tuple(map(int, __api_version__.split(".")))
-        if remote_version[0] != local_version[0]:
-            raise HandshakeAPIVersionError(self.challenge_data["api_version"])
-        if remote_version[1] < local_version[1]:
-            raise HandshakeAPIVersionError(self.challenge_data["api_version"])
 
 
 @attr.s
