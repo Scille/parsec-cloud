@@ -224,7 +224,7 @@ class BackendApp:
     async def _do_handshake(self, transport):
         context = None
         try:
-            handshake = ServerHandshake(self.config.handshake_challenge_size)
+            handshake = transport.handshake = ServerHandshake(self.config.handshake_challenge_size)
             challenge_req = handshake.build_challenge_req()
             await transport.send(challenge_req)
             answer_req = await transport.recv()

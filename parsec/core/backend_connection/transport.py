@@ -94,6 +94,7 @@ async def _connect(
 
     try:
         transport = await Transport.init_for_client(stream, addr.hostname)
+        transport.handshake = handshake
 
     except TransportError as exc:
         logger.debug("Connection lost during transport creation", reason=exc)

@@ -44,6 +44,22 @@ class Transport:
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
+        self._handshake = None
+
+    # Handshake interface
+    # TODO: Investigate a better place for providing an access to the peer API version
+
+    @property
+    def handshake(self):
+        if self._handshake is None:
+            raise TypeError("The handshake has not been set")
+        return self._handshake
+
+    @handshake.setter
+    def handshake(self, handshake):
+        if self._handshake is not None:
+            raise TypeError("The handshake has already been set")
+        self._handshake = handshake
 
     async def _next_ws_event(self):
         while True:
