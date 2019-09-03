@@ -11,7 +11,7 @@ from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
 from parsec.api.protocol import (
     DeviceID,
-    ProtocoleError,
+    ProtocolError,
     HandshakeRevokedDevice,
     HandshakeAPIVersionError,
     AnonymousClientHandshake,
@@ -149,7 +149,7 @@ async def _do_handshake(transport: Transport, handshake):
         transport.logger.warning("Handshake failed", reason=exc)
         raise BackendDeviceRevokedError(exc) from exc
 
-    except ProtocoleError as exc:
+    except ProtocolError as exc:
         transport.logger.warning("Handshake failed", reason=exc)
         raise BackendHandshakeError(exc) from exc
 

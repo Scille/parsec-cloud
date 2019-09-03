@@ -13,18 +13,18 @@ from parsec.serde import (
 )
 
 
-__all__ = ("ProtocoleError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
+__all__ = ("ProtocolError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
 
 
-class ProtocoleError(Exception):
+class ProtocolError(Exception):
     pass
 
 
-class InvalidMessageError(SerdeValidationError, ProtocoleError):
+class InvalidMessageError(SerdeValidationError, ProtocolError):
     pass
 
 
-class MessageSerializationError(SerdePackingError, ProtocoleError):
+class MessageSerializationError(SerdePackingError, ProtocolError):
     pass
 
 

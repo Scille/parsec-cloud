@@ -9,7 +9,7 @@ from parsec.api.transport import TransportError, TransportClosedByPeer, Transpor
 from parsec.api.protocol import (
     packb,
     unpackb,
-    ProtocoleError,
+    ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
     ServerHandshake,
@@ -284,7 +284,7 @@ class BackendApp:
                 else:
                     result_req = handshake.build_bad_administration_token_result_req()
 
-        except ProtocoleError as exc:
+        except ProtocolError as exc:
             result_req = handshake.build_bad_format_result_req(str(exc))
 
         await transport.send(result_req)
@@ -390,7 +390,7 @@ class BackendApp:
                         "reason": "Invalid message.",
                     }
 
-                except ProtocoleError as exc:
+                except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}
 
             client_ctx.logger.debug("rep", rep=_filter_binary_fields(rep))

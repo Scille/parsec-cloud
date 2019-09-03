@@ -2,7 +2,7 @@
 
 from functools import wraps
 
-from parsec.api.protocol import ProtocoleError, InvalidMessageError
+from parsec.api.protocol import ProtocolError, InvalidMessageError
 
 
 def anonymous_api(fn):
@@ -27,7 +27,7 @@ def catch_protocol_errors(fn):
         except InvalidMessageError as exc:
             return {"status": "bad_message", "errors": exc.errors, "reason": "Invalid message."}
 
-        except ProtocoleError as exc:
+        except ProtocolError as exc:
             return {"status": "bad_message", "reason": str(exc)}
 
     return wrapper
