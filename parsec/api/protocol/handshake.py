@@ -217,6 +217,18 @@ class ServerHandshake:
 
 
 class BaseClientHandshake:
+    challenge_data = attr.ib(default=None)
+
+    @property
+    def backend_api_version(self):
+        if self.challenge_data is None:
+            raise TypeError("The answer data is not available yet")
+        return self.challenge_data["api_version"]
+
+    def load_challenge_req(self, req: bytes):
+        self.challenge_data = handshake_challenge_serializer.loads(req)
+        self.check_api_version()
+
     def process_result_req(self, req: bytes) -> bytes:
         data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
@@ -237,13 +249,13 @@ class BaseClientHandshake:
                     f"Bad `result` handshake: {data['result']} ({data['help']})"
                 )
 
-    def check_api_version(self, data):
-        remote_version = tuple(map(int, data["api_version"].split(".")))
+    def check_api_version(self):
+        remote_version = tuple(map(int, self.challenge_data["api_version"].split(".")))
         local_version = tuple(map(int, __api_version__.split(".")))
         if remote_version[0] != local_version[0]:
-            raise HandshakeAPIVersionError(data["api_version"])
+            raise HandshakeAPIVersionError(self.challenge_data["api_version"])
         if remote_version[1] < local_version[1]:
-            raise HandshakeAPIVersionError(data["api_version"])
+            raise HandshakeAPIVersionError(self.challenge_data["api_version"])
 
 
 @attr.s
@@ -254,9 +266,8 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
     root_verify_key = attr.ib()
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)
-        self.check_api_version(data)
-        answer = self.user_signkey.sign(data["challenge"])
+        self.load_challenge_req(req)
+        answer = self.user_signkey.sign(self.challenge_data["challenge"])
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
@@ -276,8 +287,7 @@ class AnonymousClientHandshake(BaseClientHandshake):
     root_verify_key = attr.ib(default=None)
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)  # Sanity check
-        self.check_api_version(data)
+        self.load_challenge_req(req)
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
@@ -294,8 +304,7 @@ class AdministrationClientHandshake(BaseClientHandshake):
     token = attr.ib()
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)  # Sanity check
-        self.check_api_version(data)
+        self.load_challenge_req(req)
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
