@@ -55,6 +55,7 @@ handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("authenticated", required=True)
+    api_version = fields.SemVer(required=True)
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
     rvk = fields.VerifyKey(required=True)
@@ -64,6 +65,7 @@ class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
 class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("anonymous", required=True)
+    api_version = fields.SemVer(required=True)
     organization_id = OrganizationIDField(required=True)
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
@@ -72,6 +74,7 @@ class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
 class HandshakeAdministrationAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("administration", required=True)
+    api_version = fields.SemVer(required=True)
     token = fields.String(required=True)
 
 
@@ -107,6 +110,12 @@ class ServerHandshake:
     answer_type = attr.ib(default=None)
     answer_data = attr.ib(default=None)
     state = attr.ib(default="stalled")
+
+    @property
+    def client_api_version(self):
+        if self.answer_data is None:
+            raise TypeError("The answer data is not available yet")
+        return self.answer_data["api_version"]
 
     def is_anonymous(self):
         return self.device_id is None
@@ -252,6 +261,7 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
             {
                 "handshake": "answer",
                 "type": "authenticated",
+                "api_version": __api_version__,
                 "organization_id": self.organization_id,
                 "device_id": self.device_id,
                 "rvk": self.root_verify_key,
@@ -272,6 +282,7 @@ class AnonymousClientHandshake(BaseClientHandshake):
             {
                 "handshake": "answer",
                 "type": "anonymous",
+                "api_version": __api_version__,
                 "organization_id": self.organization_id,
                 "rvk": self.root_verify_key,
             }
@@ -286,5 +297,10 @@ class AdministrationClientHandshake(BaseClientHandshake):
         data = handshake_challenge_serializer.loads(req)  # Sanity check
         self.check_api_version(data)
         return handshake_answer_serializer.dumps(
-            {"handshake": "answer", "type": "administration", "token": self.token}
+            {
+                "handshake": "answer",
+                "type": "administration",
+                "api_version": __api_version__,
+                "token": self.token,
+            }
         )

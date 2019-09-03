@@ -38,6 +38,7 @@ def test_good_handshake(alice):
     assert sh.answer_type == "authenticated"
     assert sh.answer_data == {
         "answer": ANY,
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key,
@@ -46,6 +47,7 @@ def test_good_handshake(alice):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+    assert sh.client_api_version == __api_version__
 
 
 @pytest.mark.parametrize("check_rvk", (True, False))
@@ -68,15 +70,21 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     assert sh.answer_type == "anonymous"
     if check_rvk:
         assert sh.answer_data == {
+            "api_version": __api_version__,
             "organization_id": coolorg.organization_id,
             "rvk": coolorg.root_verify_key,
         }
     else:
-        assert sh.answer_data == {"organization_id": coolorg.organization_id, "rvk": None}
+        assert sh.answer_data == {
+            "api_version": __api_version__,
+            "organization_id": coolorg.organization_id,
+            "rvk": None,
+        }
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+    assert sh.client_api_version == __api_version__
 
 
 def test_good_administration_handshake():
@@ -94,11 +102,12 @@ def test_good_administration_handshake():
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
     assert sh.answer_type == "administration"
-    assert sh.answer_data == {"token": admin_token}
+    assert sh.answer_data == {"api_version": __api_version__, "token": admin_token}
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+    assert sh.client_api_version == __api_version__
 
 
 # 1) Server build challenge (nothing more to test...)
@@ -298,6 +307,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -314,6 +324,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -340,6 +351,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),

@@ -13,6 +13,8 @@ from parsec.api.protocol.handshake import (
     HandshakeBadAdministrationToken,
 )
 
+from parsec import __api_version__
+
 
 @pytest.mark.trio
 async def test_anonymous_handshake_invalid_format(backend, server_factory):
@@ -24,6 +26,7 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
         req = {
             "handshake": "answer",
             "type": "anonymous",
+            "api_version": __api_version__,
             "organization_id": "zob",
             "dummy": "field",
         }
