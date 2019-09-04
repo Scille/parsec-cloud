@@ -13,7 +13,7 @@ from parsec.api.protocol.handshake import (
     HandshakeBadAdministrationToken,
 )
 
-from parsec import __api_version__
+from parsec.api import API_VERSION
 
 
 @pytest.mark.trio
@@ -26,7 +26,7 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
         req = {
             "handshake": "foo",
             "type": "anonymous",
-            "client_api_version": __api_version__,
+            "client_api_version": API_VERSION,
             "organization_id": "zob",
         }
         await transport.send(packb(req))
@@ -54,7 +54,7 @@ async def test_authenticated_handshake_good(backend, server_factory, alice):
         result_req = await transport.recv()
         ch.process_result_req(result_req)
 
-        assert ch.backend_api_version == __api_version__
+        assert ch.backend_api_version == API_VERSION
 
 
 @pytest.mark.trio
@@ -71,7 +71,7 @@ async def test_administration_handshake_good(backend, server_factory):
         result_req = await transport.recv()
         ch.process_result_req(result_req)
 
-        assert ch.backend_api_version == __api_version__
+        assert ch.backend_api_version == API_VERSION
 
 
 @pytest.mark.trio
@@ -128,7 +128,7 @@ async def test_anonymous_handshake_good(backend, server_factory, coolorg, check_
         result_req = await transport.recv()
         ch.process_result_req(result_req)
 
-        assert ch.backend_api_version == __api_version__
+        assert ch.backend_api_version == API_VERSION
 
 
 @pytest.mark.trio

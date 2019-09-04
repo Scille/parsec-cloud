@@ -17,7 +17,7 @@ from parsec.api.protocol.handshake import (
     AnonymousClientHandshake,
     AdministrationClientHandshake,
 )
-from parsec import __api_version__
+from parsec.api import API_VERSION
 
 
 def test_good_handshake(alice):
@@ -38,7 +38,7 @@ def test_good_handshake(alice):
     assert sh.answer_type == "authenticated"
     assert sh.answer_data == {
         "answer": ANY,
-        "client_api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key,
@@ -47,7 +47,7 @@ def test_good_handshake(alice):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == __api_version__
+    assert sh.client_api_version == API_VERSION
 
 
 @pytest.mark.parametrize("check_rvk", (True, False))
@@ -70,13 +70,13 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     assert sh.answer_type == "anonymous"
     if check_rvk:
         assert sh.answer_data == {
-            "client_api_version": __api_version__,
+            "client_api_version": API_VERSION,
             "organization_id": coolorg.organization_id,
             "rvk": coolorg.root_verify_key,
         }
     else:
         assert sh.answer_data == {
-            "client_api_version": __api_version__,
+            "client_api_version": API_VERSION,
             "organization_id": coolorg.organization_id,
             "rvk": None,
         }
@@ -84,7 +84,7 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == __api_version__
+    assert sh.client_api_version == API_VERSION
 
 
 def test_good_administration_handshake():
@@ -102,12 +102,12 @@ def test_good_administration_handshake():
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
     assert sh.answer_type == "administration"
-    assert sh.answer_data == {"client_api_version": __api_version__, "token": admin_token}
+    assert sh.answer_data == {"client_api_version": API_VERSION, "token": admin_token}
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == __api_version__
+    assert sh.client_api_version == API_VERSION
 
 
 # 1) Server build challenge (nothing more to test...)
@@ -120,17 +120,13 @@ def test_good_administration_handshake():
     "req",
     [
         {},
-        {
-            "handshake": "foo",
-            "challenge": b"1234567890",
-            "supported_api_versions": (__api_version__,),
-        },
+        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": (API_VERSION,)},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "supported_api_versions": (__api_version__,)},
+        {"challenge": b"1234567890", "supported_api_versions": (API_VERSION,)},
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": None, "supported_api_versions": (__api_version__,)},
-        {"handshake": "challenge", "challenge": 42, "supported_api_versions": (__api_version__,)},
+        {"handshake": "challenge", "challenge": None, "supported_api_versions": (API_VERSION,)},
+        {"handshake": "challenge", "challenge": 42, "supported_api_versions": (API_VERSION,)},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
@@ -296,7 +292,7 @@ def test_process_answer_req_bad_format(req, alice):
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
-    req["supported_api_versions"] = (__api_version__,)
+    req["supported_api_versions"] = (API_VERSION,)
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
@@ -312,7 +308,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -329,7 +325,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -356,7 +352,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),

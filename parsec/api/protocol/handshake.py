@@ -3,7 +3,7 @@
 import attr
 from secrets import token_bytes
 
-from parsec import __api_version__ as API_VERSION
+from parsec.api import API_VERSION
 from parsec.crypto import CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
