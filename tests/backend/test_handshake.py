@@ -26,7 +26,7 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
         req = {
             "handshake": "foo",
             "type": "anonymous",
-            "api_version": __api_version__,
+            "client_api_version": __api_version__,
             "organization_id": "zob",
         }
         await transport.send(packb(req))
