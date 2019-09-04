@@ -11,7 +11,7 @@ from parsec.api.protocol import (
     UserID,
     DeviceName,
     DeviceID,
-    ProtocoleError,
+    ProtocolError,
     ping_serializer,
     organization_create_serializer,
     organization_bootstrap_serializer,
@@ -81,7 +81,7 @@ async def _send_cmd(transport, serializer, keepalive=False, **req):
     try:
         raw_req = serializer.req_dumps(req)
 
-    except ProtocoleError as exc:
+    except ProtocolError as exc:
         raise BackendCmdsInvalidRequest(exc) from exc
 
     try:
@@ -95,7 +95,7 @@ async def _send_cmd(transport, serializer, keepalive=False, **req):
     try:
         rep = serializer.rep_loads(raw_rep)
 
-    except ProtocoleError as exc:
+    except ProtocolError as exc:
         transport.logger.warning("Request failed (bad protocol)", cmd=req["cmd"], error=exc)
         raise BackendCmdsInvalidResponse(exc) from exc
 

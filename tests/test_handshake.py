@@ -38,6 +38,7 @@ def test_good_handshake(alice):
     assert sh.answer_type == "authenticated"
     assert sh.answer_data == {
         "answer": ANY,
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key,
@@ -46,6 +47,7 @@ def test_good_handshake(alice):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+    assert sh.client_api_version == __api_version__
 
 
 @pytest.mark.parametrize("check_rvk", (True, False))
@@ -68,15 +70,21 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     assert sh.answer_type == "anonymous"
     if check_rvk:
         assert sh.answer_data == {
+            "api_version": __api_version__,
             "organization_id": coolorg.organization_id,
             "rvk": coolorg.root_verify_key,
         }
     else:
-        assert sh.answer_data == {"organization_id": coolorg.organization_id, "rvk": None}
+        assert sh.answer_data == {
+            "api_version": __api_version__,
+            "organization_id": coolorg.organization_id,
+            "rvk": None,
+        }
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+    assert sh.client_api_version == __api_version__
 
 
 def test_good_administration_handshake():
@@ -94,11 +102,12 @@ def test_good_administration_handshake():
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
     assert sh.answer_type == "administration"
-    assert sh.answer_data == {"token": admin_token}
+    assert sh.answer_data == {"api_version": __api_version__, "token": admin_token}
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+    assert sh.client_api_version == __api_version__
 
 
 # 1) Server build challenge (nothing more to test...)
@@ -142,15 +151,13 @@ def test_process_challenge_req_bad_format(alice, req):
 @pytest.mark.parametrize(
     "req",
     [
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.1.1"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.100.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "2.0.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.1"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (0, 1)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (0, 100)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (2, 0)},
     ],
 )
 def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", "1.1.1")
+    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", (1, 1))
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
@@ -161,14 +168,14 @@ def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
 @pytest.mark.parametrize(
     "req",
     [
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.2"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.10"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.2.0"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 0)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 1)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 2)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 100)},
     ],
 )
 def test_process_challenge_req_good_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", "1.1.1")
+    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", (1, 1))
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
@@ -298,6 +305,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -314,6 +322,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -340,6 +349,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
+        "api_version": __api_version__,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),

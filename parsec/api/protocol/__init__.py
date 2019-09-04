@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.api.protocol.base import (
-    ProtocoleError,
+    ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
     packb,
@@ -76,7 +76,7 @@ from parsec.api.protocol.vlob import (
 
 
 __all__ = (
-    "ProtocoleError",
+    "ProtocolError",
     "MessageSerializationError",
     "InvalidMessageError",
     "packb",

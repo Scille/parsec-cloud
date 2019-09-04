@@ -6,11 +6,11 @@ from secrets import token_bytes
 from parsec import __api_version__
 from parsec.crypto import CryptoError
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
-from parsec.api.protocol.base import ProtocoleError, InvalidMessageError, serializer_factory
+from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
 
 
-class HandshakeError(ProtocoleError):
+class HandshakeError(ProtocolError):
     pass
 
 
@@ -34,19 +34,26 @@ class HandshakeRevokedDevice(HandshakeError):
     pass
 
 
-class HandshakeAPIVersionError(Exception):
-    def __init__(self, expected_version=None):
-        self.expected_version = expected_version
-        if expected_version is not None:
-            self.message = f"Bad API version : expected version {expected_version}"
-        else:
-            self.message = "Bad API version"
+class HandshakeAPIVersionError(HandshakeError):
+    def __init__(self, peer_version):
+        self.peer_version = peer_version
+        self.message = (
+            f"Incompatiblity between peer API version {peer_version} "
+            f"and local API version {__api_version__}"
+        )
+
+    @classmethod
+    def check_api_version(cls, peer_api_version):
+        local_major, _ = __api_version__
+        peer_major, _ = peer_api_version
+        if local_major != peer_major:
+            raise cls(peer_api_version)
 
 
 class HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
-    api_version = fields.SemVer(required=True)
+    api_version = fields.ApiVersion(required=True)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -55,6 +62,7 @@ handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("authenticated", required=True)
+    api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
     rvk = fields.VerifyKey(required=True)
@@ -64,6 +72,7 @@ class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
 class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("anonymous", required=True)
+    api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
@@ -72,6 +81,7 @@ class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
 class HandshakeAdministrationAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("administration", required=True)
+    api_version = fields.ApiVersion(required=True)
     token = fields.String(required=True)
 
 
@@ -108,6 +118,12 @@ class ServerHandshake:
     answer_data = attr.ib(default=None)
     state = attr.ib(default="stalled")
 
+    @property
+    def client_api_version(self):
+        if self.answer_data is None:
+            raise TypeError("The answer data is not available yet")
+        return self.answer_data["api_version"]
+
     def is_anonymous(self):
         return self.device_id is None
 
@@ -132,6 +148,10 @@ class ServerHandshake:
         self.answer_type = data.pop("type")
         self.answer_data = data
         self.state = "answer"
+
+        # API Version check
+        # Is this necessary since the client is supposed to perform this test first?
+        HandshakeAPIVersionError.check_api_version(self.client_api_version)
 
     def build_bad_format_result_req(self, help="Invalid params") -> bytes:
         if self.state not in ("answer", "challenge"):
@@ -208,6 +228,18 @@ class ServerHandshake:
 
 
 class BaseClientHandshake:
+    challenge_data = attr.ib(default=None)
+
+    @property
+    def backend_api_version(self):
+        if self.challenge_data is None:
+            raise TypeError("The answer data is not available yet")
+        return self.challenge_data["api_version"]
+
+    def load_challenge_req(self, req: bytes):
+        self.challenge_data = handshake_challenge_serializer.loads(req)
+        HandshakeAPIVersionError.check_api_version(self.backend_api_version)
+
     def process_result_req(self, req: bytes) -> bytes:
         data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
@@ -228,14 +260,6 @@ class BaseClientHandshake:
                     f"Bad `result` handshake: {data['result']} ({data['help']})"
                 )
 
-    def check_api_version(self, data):
-        remote_version = tuple(map(int, data["api_version"].split(".")))
-        local_version = tuple(map(int, __api_version__.split(".")))
-        if remote_version[0] != local_version[0]:
-            raise HandshakeAPIVersionError(data["api_version"])
-        if remote_version[1] < local_version[1]:
-            raise HandshakeAPIVersionError(data["api_version"])
-
 
 @attr.s
 class AuthenticatedClientHandshake(BaseClientHandshake):
@@ -245,13 +269,13 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
     root_verify_key = attr.ib()
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)
-        self.check_api_version(data)
-        answer = self.user_signkey.sign(data["challenge"])
+        self.load_challenge_req(req)
+        answer = self.user_signkey.sign(self.challenge_data["challenge"])
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
                 "type": "authenticated",
+                "api_version": __api_version__,
                 "organization_id": self.organization_id,
                 "device_id": self.device_id,
                 "rvk": self.root_verify_key,
@@ -266,12 +290,12 @@ class AnonymousClientHandshake(BaseClientHandshake):
     root_verify_key = attr.ib(default=None)
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)  # Sanity check
-        self.check_api_version(data)
+        self.load_challenge_req(req)
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
                 "type": "anonymous",
+                "api_version": __api_version__,
                 "organization_id": self.organization_id,
                 "rvk": self.root_verify_key,
             }
@@ -283,8 +307,12 @@ class AdministrationClientHandshake(BaseClientHandshake):
     token = attr.ib()
 
     def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)  # Sanity check
-        self.check_api_version(data)
+        self.load_challenge_req(req)
         return handshake_answer_serializer.dumps(
-            {"handshake": "answer", "type": "administration", "token": self.token}
+            {
+                "handshake": "answer",
+                "type": "administration",
+                "api_version": __api_version__,
+                "token": self.token,
+            }
         )
