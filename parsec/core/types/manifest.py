@@ -290,7 +290,9 @@ class LocalFileManifest(LocalManifest):
     blocks: Tuple[Tuple[Chunk], ...]
 
     @classmethod
-    def new_placeholder(cls, parent: EntryID, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(
+        cls, parent: EntryID, id: EntryID = None, now: Pendulum = None, blocksize=DEFAULT_BLOCK_SIZE
+    ):
         now = now or pendulum_now()
         blocks = ()
         return cls(
@@ -302,13 +304,13 @@ class LocalFileManifest(LocalManifest):
                 version=0,
                 created=now,
                 updated=now,
-                blocksize=DEFAULT_BLOCK_SIZE,
+                blocksize=blocksize,
                 size=0,
                 blocks=blocks,
             ),
             need_sync=True,
             updated=now,
-            blocksize=DEFAULT_BLOCK_SIZE,
+            blocksize=blocksize,
             size=0,
             blocks=blocks,
         )
