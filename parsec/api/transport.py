@@ -20,6 +20,7 @@ __all__ = ("TransportError", "Transport")
 
 
 logger = get_logger()
+WEBSOCKET_HANDSHAKE_TIMEOUT = 3.0
 
 
 class TransportError(Exception):
@@ -46,8 +47,9 @@ class Transport:
         self._ws_events = ws.events()
         self._handshake = None
 
-    # Handshake interface
+    # Application handshake interface
     # TODO: Investigate a better place for providing an access to the peer API version
+    # Note: This should not be confused with the websocket handshake
 
     @property
     def handshake(self):
@@ -119,7 +121,10 @@ class Transport:
         transport = cls(stream, ws)
 
         # Wait for client to init WebSocket handshake
-        event = await transport._next_ws_event()
+        event = "Websocket handshake timeout"
+        with trio.move_on_after(WEBSOCKET_HANDSHAKE_TIMEOUT):
+            event = await transport._next_ws_event()
+
         if isinstance(event, ConnectionRequested):
             transport.logger.debug("Accepting WebSocket upgrade")
             transport.ws.accept(event)
