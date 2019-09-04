@@ -151,13 +151,13 @@ def test_process_challenge_req_bad_format(alice, req):
 @pytest.mark.parametrize(
     "req",
     [
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.1.1"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "0.100.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "2.0.0"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (0, 1)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (0, 100)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (2, 0)},
     ],
 )
 def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", "1.1.1")
+    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", (1, 1))
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
@@ -168,15 +168,14 @@ def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
 @pytest.mark.parametrize(
     "req",
     [
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.0.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.0"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.2"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.1.10"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "1.2.0"},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 0)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 1)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 2)},
+        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 100)},
     ],
 )
 def test_process_challenge_req_good_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", "1.1.1")
+    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", (1, 1))
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )

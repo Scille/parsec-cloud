@@ -3,7 +3,7 @@
 from pendulum import Pendulum
 from uuid import UUID as _UUID
 from collections import Mapping
-from marshmallow import ValidationError
+from marshmallow import ValidationError, validate
 from marshmallow.fields import (
     # Republishing
     Int,
@@ -15,7 +15,6 @@ from marshmallow.fields import (
     Boolean,
     Field,
 )
-import re
 
 from parsec.types import FrozenDict as _FrozenDict
 from parsec.crypto import (
@@ -52,7 +51,7 @@ __all__ = (
     "PrivateKey",
     "SecretKey",
     "HashDigest",
-    "SemVer",
+    "ApiVersion",
 )
 
 
@@ -340,17 +339,11 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-class SemVer(Field):
-    default_error_messages = {"no_string": "Not a string.", "regex_failed": "String not a SemVer"}
-
-    def _serialize(self, value, attr, obj):
-        if not isinstance(value, str):
-            self.fail("no_string")
-        if not re.match("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)", value):
-            self.fail("regex_failed")
-        return value
-
-    _deserialize = _serialize
+class ApiVersion(Tuple):
+    def __init__(self, **kwargs):
+        version = Integer(required=True, validate=validate.Range(min=0))
+        revision = Integer(required=True, validate=validate.Range(min=0))
+        super().__init__(version, revision, **kwargs)
 
 
 SecretKey = bytes_based_field_factory(_SecretKey)

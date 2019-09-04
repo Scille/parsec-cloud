@@ -44,8 +44,8 @@ class HandshakeAPIVersionError(HandshakeError):
 
     @classmethod
     def check_api_version(cls, peer_api_version):
-        local_major, _, _ = map(int, __api_version__.split("."))
-        peer_major, _, _ = map(int, peer_api_version.split("."))
+        local_major, _ = __api_version__
+        peer_major, _ = peer_api_version
         if local_major != peer_major:
             raise cls(peer_api_version)
 
@@ -53,7 +53,7 @@ class HandshakeAPIVersionError(HandshakeError):
 class HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
-    api_version = fields.SemVer(required=True)
+    api_version = fields.ApiVersion(required=True)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -62,7 +62,7 @@ handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("authenticated", required=True)
-    api_version = fields.SemVer(required=True)
+    api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
     rvk = fields.VerifyKey(required=True)
@@ -72,7 +72,7 @@ class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
 class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("anonymous", required=True)
-    api_version = fields.SemVer(required=True)
+    api_version = fields.ApiVersion(required=True)
     organization_id = OrganizationIDField(required=True)
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
@@ -81,7 +81,7 @@ class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
 class HandshakeAdministrationAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("administration", required=True)
-    api_version = fields.SemVer(required=True)
+    api_version = fields.ApiVersion(required=True)
     token = fields.String(required=True)
 
 
