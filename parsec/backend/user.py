@@ -218,7 +218,7 @@ class BaseUserComponent:
     async def api_user_invite(self, client_ctx, msg):
         if not client_ctx.is_admin:
             return {
-                "status": "invalid_role",
+                "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
 
@@ -354,6 +354,12 @@ class BaseUserComponent:
 
     @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
+        if not client_ctx.is_admin:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+
         msg = user_cancel_invitation_serializer.req_load(msg)
 
         await self.cancel_user_invitation(client_ctx.organization_id, msg["user_id"])
@@ -362,6 +368,12 @@ class BaseUserComponent:
 
     @catch_protocol_errors
     async def api_user_create(self, client_ctx, msg):
+        if not client_ctx.is_admin:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+
         msg = user_create_serializer.req_load(msg)
 
         try:
@@ -637,7 +649,7 @@ class BaseUserComponent:
 
             if not user.is_admin:
                 return {
-                    "status": "invalid_role",
+                    "status": "not_allowed",
                     "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
                 }
 

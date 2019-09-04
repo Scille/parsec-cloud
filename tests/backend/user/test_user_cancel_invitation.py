@@ -61,7 +61,9 @@ async def test_user_cancel_invitation_other_organization(
     sock_from_other_organization_factory, alice, backend, mallory_invitation
 ):
     # Organizations should be isolated
-    async with sock_from_other_organization_factory(backend, mimick=alice.device_id) as sock:
+    async with sock_from_other_organization_factory(
+        backend, mimick=alice.device_id, is_admin=True
+    ) as sock:
         rep = await user_cancel_invitation(sock, user_id=mallory_invitation.user_id)
         # Cancel returns even if no invitation was found
         assert rep == {"status": "ok"}
@@ -71,3 +73,11 @@ async def test_user_cancel_invitation_other_organization(
         alice.organization_id, mallory_invitation.user_id
     )
     assert invitation == mallory_invitation
+
+
+@pytest.mark.trio
+async def test_user_cancel_invitation_ok_author_not_admin(
+    bob_backend_sock, mallory_invitation, anonymous_backend_sock
+):
+    rep = await user_cancel_invitation(bob_backend_sock, user_id=mallory_invitation.user_id)
+    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}

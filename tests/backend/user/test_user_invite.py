@@ -65,11 +65,11 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
 
 
 @pytest.mark.trio
-async def test_user_invite_not_admin(bob_backend_sock, bob, mallory):
+async def test_user_invite_not_admin(bob_backend_sock, mallory):
     with trio.fail_after(1):
         async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep:
             pass
-    assert prep[0] == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
+    assert prep[0] == {"status": "not_allowed", "reason": "User `bob` is not admin"}
 
 
 @pytest.mark.trio

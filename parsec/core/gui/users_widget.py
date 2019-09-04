@@ -179,7 +179,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("ERR_USER_REVOKED_ALREADY")
         elif status == "not_found":
             errmsg = _("ERR_USER_REVOKED_NOT_FOUND")
-        elif status == "invalid_role" or status == "invalid_certification":
+        elif status == "not_allowed" or status == "invalid_certification":
             errmsg = _("ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS")
         elif status == "error":
             errmsg = _("ERR_USER_REVOKED_UNKNOWN")

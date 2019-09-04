@@ -162,7 +162,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             errmsg = "ERR_DEVICE_REVOKED_ALREADY"
         elif status == "not_found":
             errmsg = "ERR_DEVICE_REVOKED_NOT_FOUND"
-        elif status == "invalid_role" or status == "invalid_certification":
+        elif status == "not_allowed" or status == "invalid_certification":
             errmsg = "ERR_DEVICE_REVOKED_NOT_ENOUGHT_PERMISSIONS"
         elif status == "error":
             errmsg = "ERR_DEVICE_REVOKED_UNKNOWN"
