@@ -2,6 +2,8 @@
 
 from urllib.parse import urlsplit, urlunsplit, parse_qs
 
+from pendulum import Pendulum
+
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
 from parsec.api.protocol import OrganizationID
@@ -66,7 +68,7 @@ class BackendAddr(str):
 
 
 class BackendOrganizationAddr(BackendAddr):
-    __slots__ = ("_root_verify_key", "_organization_id")
+    __slots__ = ("_root_verify_key", "_organization_id", "_expiration_date")
 
     @classmethod
     def build(
@@ -87,6 +89,9 @@ class BackendOrganizationAddr(BackendAddr):
             self._root_verify_key = import_root_verify_key(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `rvk` param value") from exc
+        expiration_date = params.pop("expiration_date", None)
+        if expiration_date:
+            self._expiration_date = expiration_date[0]
 
     def _parse_path(self, path):
         self._organization_id = OrganizationID(path[1:])
@@ -94,6 +99,10 @@ class BackendOrganizationAddr(BackendAddr):
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
+
+    @property
+    def expiration_date(self) -> Pendulum:
+        return self._expiration_date
 
     @property
     def root_verify_key(self) -> VerifyKey:
@@ -148,9 +157,13 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     def bootstrap_token(self) -> str:
         return self._bootstrap_token
 
-    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
+    def generate_organization_addr(
+        self, root_verify_key: VerifyKey, expiration_date: Pendulum = None
+    ) -> BackendOrganizationAddr:
         scheme, netloc, _, _, fragment = urlsplit(self)
         query = "no_ssl=true" if not self.use_ssl else ""
+        if expiration_date:
+            query += f"&expiration_date={expiration_date}"
         backend_addr = urlunsplit((scheme, netloc, "", query, fragment))
         return BackendOrganizationAddr.build(backend_addr, self.organization_id, root_verify_key)
 

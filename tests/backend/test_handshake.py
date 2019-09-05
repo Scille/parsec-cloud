@@ -13,6 +13,7 @@ from parsec.api.protocol.handshake import (
     HandshakeRVKMismatch,
     HandshakeBadIdentity,
     HandshakeBadAdministrationToken,
+    HandshakeOrganizationExpired,
     InvalidMessageError,
     ApiVersion,
 )
@@ -197,6 +198,25 @@ async def test_anonymous_handshake_unknown_organization(
         await transport.send(answer_req)
         result_req = await transport.recv()
         with pytest.raises(HandshakeBadIdentity):
+            ch.process_result_req(result_req)
+
+
+@pytest.mark.trio
+async def test_anonymous_handshake_expired_organization(backend, server_factory, expiredorg, alice):
+    ch = AuthenticatedClientHandshake(
+        expiredorg.organization_id, alice.device_id, alice.signing_key, expiredorg.root_verify_key
+    )
+
+    async with server_factory(backend.handle_client) as server:
+        stream = server.connection_factory()
+        transport = await Transport.init_for_client(stream, server.addr)
+
+        challenge_req = await transport.recv()
+        answer_req = ch.process_challenge_req(challenge_req)
+
+        await transport.send(answer_req)
+        result_req = await transport.recv()
+        with pytest.raises(HandshakeOrganizationExpired):
             ch.process_result_req(result_req)
 
 

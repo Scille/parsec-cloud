@@ -254,6 +254,12 @@ class BackendApp:
                     if organization.root_verify_key != expected_rvk:
                         result_req = handshake.build_rvk_mismatch_result_req()
 
+                    elif (
+                        organization.expiration_date
+                        and organization.expiration_date < pendulum_now()
+                    ):
+                        result_req = handshake.build_organization_expired_result_req()
+
                     elif user.revoked_on and user.revoked_on <= pendulum_now():
                         result_req = handshake.build_revoked_device_result_req()
 

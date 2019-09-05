@@ -17,6 +17,7 @@ from parsec.api.protocol.handshake import (
     AuthenticatedClientHandshake,
     AnonymousClientHandshake,
     AdministrationClientHandshake,
+    HandshakeOrganizationExpired,
 )
 from parsec.api.version import API_VERSION, ApiVersion
 
@@ -409,6 +410,7 @@ def test_build_result_req_bad_challenge(alice):
     [
         ("build_bad_protocol_result_req", "bad_protocol"),
         ("build_bad_identity_result_req", "bad_identity"),
+        ("build_organization_expired_result_req", "organization_expired"),
         ("build_rvk_mismatch_result_req", "rvk_mismatch"),
         ("build_revoked_device_result_req", "revoked_device"),
         ("build_bad_administration_token_result_req", "bad_admin_token"),
@@ -453,6 +455,7 @@ def test_process_result_req_bad_format(req):
     "result,exc_cls",
     [
         ("bad_identity", HandshakeBadIdentity),
+        ("organization_expired", HandshakeOrganizationExpired),
         ("rvk_mismatch", HandshakeRVKMismatch),
         ("revoked_device", HandshakeRevokedDevice),
         ("bad_admin_token", HandshakeBadAdministrationToken),
