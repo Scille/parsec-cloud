@@ -7,6 +7,8 @@ from pendulum import Pendulum, now as pendulum_now
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
     RealmRole,
+    block_create_serializer,
+    block_read_serializer,
     realm_create_serializer,
     realm_status_serializer,
     realm_get_role_certificates_serializer,
@@ -28,6 +30,25 @@ from parsec.backend.realm import RealmGrantedRole
 VLOB_ID = UUID("10000000000000000000000000000000")
 REALM_ID = UUID("20000000000000000000000000000000")
 OTHER_VLOB_ID = UUID("30000000000000000000000000000000")
+
+
+async def block_create(sock, block_id, realm_id, block, check_rep=True):
+    await sock.send(
+        block_create_serializer.req_dumps(
+            {"cmd": "block_create", "block_id": block_id, "realm_id": realm_id, "block": block}
+        )
+    )
+    raw_rep = await sock.recv()
+    rep = block_create_serializer.rep_loads(raw_rep)
+    if check_rep:
+        assert rep == {"status": "ok"}
+    return rep
+
+
+async def block_read(sock, block_id):
+    await sock.send(block_read_serializer.req_dumps({"cmd": "block_read", "block_id": block_id}))
+    raw_rep = await sock.recv()
+    return block_read_serializer.rep_loads(raw_rep)
 
 
 async def realm_create(sock, role_certificate, check_rep=True):
