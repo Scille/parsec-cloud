@@ -35,3 +35,18 @@ class OrganizationBootstrapRepSchema(BaseRepSchema):
 organization_bootstrap_serializer = CmdSerializer(
     OrganizationBootstrapReqSchema, OrganizationBootstrapRepSchema
 )
+
+
+class OrganizationStatsReqSchema(BaseReqSchema):
+    organization_id = OrganizationIDField(required=True)
+
+
+class OrganizationStatsRepSchema(BaseRepSchema):
+    data_size = fields.Integer(required=True)
+    metadata_size = fields.Integer(required=True)
+    users = fields.Integer(required=True)
+
+
+organization_stats_serializer = CmdSerializer(
+    OrganizationStatsReqSchema, OrganizationStatsRepSchema
+)

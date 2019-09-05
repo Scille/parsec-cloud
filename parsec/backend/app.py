@@ -134,7 +134,6 @@ class BackendApp:
 
         if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(self.event_bus)
-            self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
             self.realm = MemoryRealmComponent(self.event_bus, self.user, self.message)
             self.vlob = MemoryVlobComponent(self.event_bus, self.realm)
@@ -145,6 +144,9 @@ class BackendApp:
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
             self.block = MemoryBlockComponent(self.blockstore, self.realm)
+            self.organization = MemoryOrganizationComponent(
+                user_component=self.user, vlob_component=self.vlob, block_component=self.block
+            )
 
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
@@ -207,6 +209,7 @@ class BackendApp:
         }
         self.administration_cmds = {
             "organization_create": self.organization.api_organization_create,
+            "organization_stats": self.organization.api_organization_stats,
             "ping": self.ping.api_ping,
         }
         for fn in self.anonymous_cmds.values():

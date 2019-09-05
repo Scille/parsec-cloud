@@ -192,6 +192,7 @@ INSERT INTO vlob_atom (
     vlob_id,
     version,
     blob,
+    size,
     author,
     created_on
 )
@@ -201,8 +202,9 @@ SELECT
     $5,
     1,
     $6,
+    $7,
     ({}),
-    $7
+    $8
 RETURNING _id
 """.format(
                     q_organization_internal_id(organization_id=Parameter("$1")),
@@ -230,6 +232,7 @@ RETURNING _id
                     encryption_revision,
                     vlob_id,
                     blob,
+                    len(blob),
                     timestamp,
                 )
 
@@ -387,6 +390,7 @@ INSERT INTO vlob_atom (
     vlob_id,
     version,
     blob,
+    size,
     author,
     created_on
 )
@@ -394,10 +398,11 @@ SELECT
     ({}),
     ({}),
     $5,
-    $8,
+    $9,
     $6,
+    $7,
     ({}),
-    $7
+    $8
 RETURNING _id
 """.format(
                 q_organization_internal_id(Parameter("$1")),
@@ -418,6 +423,7 @@ RETURNING _id
                     encryption_revision,
                     vlob_id,
                     blob,
+                    len(blob),
                     timestamp,
                     version,
                 )
@@ -604,6 +610,7 @@ INSERT INTO vlob_atom(
     vlob_id,
     version,
     blob,
+    size,
     author,
     created_on,
     deleted_on
@@ -614,6 +621,7 @@ SELECT
     $3,
     $4,
     $6,
+    $7,
     author,
     created_on,
     deleted_on
@@ -633,7 +641,14 @@ ON CONFLICT DO NOTHING
                 )
 
                 await conn.execute(
-                    query, organization_id, realm_id, vlob_id, version, encryption_revision, blob
+                    query,
+                    organization_id,
+                    realm_id,
+                    vlob_id,
+                    version,
+                    encryption_revision,
+                    blob,
+                    len(blob),
                 )
 
             query = """

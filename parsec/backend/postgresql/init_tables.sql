@@ -154,6 +154,7 @@ CREATE TABLE vlob_atom (
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
+    size INTEGER NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted

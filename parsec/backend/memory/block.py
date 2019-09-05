@@ -19,6 +19,7 @@ from parsec.backend.block import (
 @attr.s(auto_attribs=True)
 class BlockMeta:
     realm_id: UUID
+    size: int
 
 
 class MemoryBlockComponent(BaseBlockComponent):
@@ -78,7 +79,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
 
         await self._blockstore_component.create(organization_id, block_id, block)
-        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id)
+        self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):

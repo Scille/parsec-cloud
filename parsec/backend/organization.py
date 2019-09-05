@@ -11,6 +11,7 @@ from parsec.api.protocol import (
     OrganizationID,
     organization_create_serializer,
     organization_bootstrap_serializer,
+    organization_stats_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
 from parsec.backend.user import new_user_factory, User, Device
@@ -54,6 +55,13 @@ class Organization:
         return attr.evolve(self, **kwargs)
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class OrganizationStats:
+    data_size: int
+    metadata_size: int
+    users: int
+
+
 class BaseOrganizationComponent:
     def __init__(self, bootstrap_token_size: int = 32):
         self.bootstrap_token_size = bootstrap_token_size
@@ -71,6 +79,25 @@ class BaseOrganizationComponent:
 
         return organization_create_serializer.rep_dump(
             {"bootstrap_token": bootstrap_token, "status": "ok"}
+        )
+
+    @catch_protocol_errors
+    async def api_organization_stats(self, client_ctx, msg):
+        msg = organization_stats_serializer.req_load(msg)
+
+        try:
+            stats = await self.stats(msg["organization_id"])
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_stats_serializer.rep_dump(
+            {
+                "status": "ok",
+                "users": stats.users,
+                "data_size": stats.data_size,
+                "metadata_size": stats.metadata_size,
+            }
         )
 
     @anonymous_api
@@ -167,5 +194,12 @@ class BaseOrganizationComponent:
             OrganizationAlreadyBootstrappedError
             OrganizationInvalidBootstrapTokenError
             OrganizationFirstUserCreationError
+        """
+        raise NotImplementedError()
+
+    async def stats(self, id: OrganizationID) -> OrganizationStats:
+        """
+        Raises:
+            OrganizationNotFoundError
         """
         raise NotImplementedError()
