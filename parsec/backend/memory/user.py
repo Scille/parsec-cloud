@@ -8,8 +8,6 @@ from collections import defaultdict
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.user import (
-    user_get_revoked_on,
-    user_is_revoked,
     BaseUserComponent,
     User,
     Device,
@@ -187,11 +185,13 @@ class MemoryUserComponent(BaseUserComponent):
             results = users.keys()
 
         if omit_revoked:
-            results = [
-                user_id
-                for user_id in results
-                if not user_is_revoked(org._devices[user_id].values())
-            ]
+            now = pendulum.now()
+
+            def _user_is_revoked(user_id):
+                revoked_on = org._users[user_id].revoked_on
+                return revoked_on is not None and revoked_on <= now
+
+            results = [user_id for user_id in results if not _user_is_revoked(user_id)]
 
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
@@ -309,4 +309,37 @@ class MemoryUserComponent(BaseUserComponent):
             revoked_device_certificate=revoked_device_certificate,
             revoked_device_certifier=revoked_device_certifier,
         )
-        return user_get_revoked_on(user_devices.values())
+
+        # Determine if user is revoked
+        revocations = [d.revoked_on for d in user_devices.values()]
+        if not revocations or None in revocations:
+            return None
+        else:
+            return sorted(revocations)[-1]
+
+    async def revoke_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        revoked_user_certificate: bytes,
+        revoked_user_certifier: DeviceID,
+        revoked_on: pendulum.Pendulum = None,
+    ) -> None:
+        org = self._organizations[organization_id]
+
+        try:
+            user = org._users[user_id]
+
+        except KeyError:
+            raise UserNotFoundError(user_id)
+
+        if user.revoked_on:
+            raise UserAlreadyRevokedError()
+
+        org._users[user_id] = user.evolve(
+            revoked_on=revoked_on or pendulum.now(),
+            revoked_user_certificate=revoked_user_certificate,
+            revoked_user_certifier=revoked_user_certifier,
+        )
+
+        self.event_bus.send("user.revoked", organization_id=organization_id, user_id=user_id)

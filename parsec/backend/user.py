@@ -10,6 +10,7 @@ from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
+    RevokedUserCertificateContent,
     RevokedDeviceCertificateContent,
     DataError,
 )
@@ -24,6 +25,7 @@ from parsec.api.protocol import (
     user_claim_serializer,
     user_cancel_invitation_serializer,
     user_create_serializer,
+    user_revoke_serializer,
     device_get_invitation_creator_serializer,
     device_invite_serializer,
     device_claim_serializer,
@@ -101,22 +103,9 @@ class User:
     user_certifier: Optional[DeviceID]
     is_admin: bool = False
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-
-
-def user_is_revoked(devices: List[Device]) -> bool:
-    now = pendulum.now()
-    for d in devices:
-        if not d.revoked_on or d.revoked_on > now:
-            return False
-    return True
-
-
-def user_get_revoked_on(devices: List[Device]) -> Optional[pendulum.Pendulum]:
-    revocations = [d.revoked_on for d in devices]
-    if not revocations or None in revocations:
-        return None
-    else:
-        return sorted(revocations)[-1]
+    revoked_on: pendulum.Pendulum = None
+    revoked_user_certificate: bytes = None
+    revoked_user_certifier: DeviceID = None
 
 
 def new_user_factory(
@@ -434,6 +423,52 @@ class BaseUserComponent:
 
         return user_create_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocol_errors
+    async def api_user_revoke(self, client_ctx, msg):
+        if not client_ctx.is_admin:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+
+        msg = user_revoke_serializer.req_load(msg)
+
+        try:
+            data = RevokedUserCertificateContent.verify_and_load(
+                msg["revoked_user_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.user_id,
+            )
+
+        except DataError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
+            }
+
+        try:
+            await self.revoke_user(
+                organization_id=client_ctx.organization_id,
+                user_id=data.user_id,
+                revoked_user_certificate=msg["revoked_user_certificate"],
+                revoked_user_certifier=data.author,
+                revoked_on=data.timestamp,
+            )
+
+        except UserNotFoundError:
+            return {"status": "not_found"}
+
+        except UserAlreadyRevokedError:
+            return {"status": "already_revoked", "reason": f"User `{data.user_id}` already revoked"}
+
+        return user_revoke_serializer.rep_dump({"status": "ok"})
+
     #### Device creation API ####
 
     @catch_protocol_errors
@@ -645,7 +680,7 @@ class BaseUserComponent:
                 user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
 
             except UserNotFoundError as exc:
-                raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !") from exc
+                raise RuntimeError(f"User `{client_ctx.device_id.user_id}` disappeared !") from exc
 
             if not user.is_admin:
                 return {
@@ -692,6 +727,21 @@ class BaseUserComponent:
         """
         Raises:
             UserAlreadyExistsError
+        """
+        raise NotImplementedError()
+
+    async def revoke_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        revoked_user_certificate: bytes,
+        revoked_user_certifier: DeviceID,
+        revoked_on: pendulum.Pendulum = None,
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+            UserAlreadyRevokedError
         """
         raise NotImplementedError()
 

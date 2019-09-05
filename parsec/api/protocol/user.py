@@ -13,6 +13,7 @@ __all__ = (
     "user_claim_serializer",
     "user_cancel_invitation_serializer",
     "user_create_serializer",
+    "user_revoke_serializer",
     "device_invite_serializer",
     "device_get_invitation_creator_serializer",
     "device_claim_serializer",
@@ -127,6 +128,17 @@ class UserCreateReqSchema(BaseReqSchema):
 
 class UserCreateRepSchema(BaseRepSchema):
     pass
+
+
+class UserRevokeReqSchema(BaseReqSchema):
+    revoked_user_certificate = fields.Bytes(required=True)
+
+
+class UserRevokeRepSchema(BaseRepSchema):
+    pass
+
+
+user_revoke_serializer = CmdSerializer(UserRevokeReqSchema, UserRevokeRepSchema)
 
 
 user_create_serializer = CmdSerializer(UserCreateReqSchema, UserCreateRepSchema)

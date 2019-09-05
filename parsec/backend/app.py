@@ -173,6 +173,7 @@ class BackendApp:
             "user_invite": self.user.api_user_invite,
             "user_cancel_invitation": self.user.api_user_cancel_invitation,
             "user_create": self.user.api_user_create,
+            "user_revoke": self.user.api_user_revoke,
             "device_invite": self.user.api_device_invite,
             "device_cancel_invitation": self.user.api_device_cancel_invitation,
             "device_create": self.user.api_device_create,
