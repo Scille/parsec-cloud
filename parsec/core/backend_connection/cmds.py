@@ -41,12 +41,12 @@ from parsec.api.protocol import (
     user_claim_serializer,
     user_cancel_invitation_serializer,
     user_create_serializer,
+    user_revoke_serializer,
     device_invite_serializer,
     device_get_invitation_creator_serializer,
     device_claim_serializer,
     device_cancel_invitation_serializer,
     device_create_serializer,
-    device_revoke_serializer,
 )
 from parsec.core.types import (
     UnverifiedRemoteUser,
@@ -417,6 +417,18 @@ async def user_create(
     )
 
 
+async def user_revoke(
+    transport: Transport, revoked_user_certificate: bytes
+) -> Optional[pendulum.Pendulum]:
+    rep = await _send_cmd(
+        transport,
+        user_revoke_serializer,
+        cmd="user_revoke",
+        revoked_user_certificate=revoked_user_certificate,
+    )
+    return rep["user_revoked_on"]
+
+
 async def device_invite(transport: Transport, invited_device_name: DeviceName) -> bytes:
     rep = await _send_cmd(
         transport,
@@ -446,18 +458,6 @@ async def device_create(
         device_certificate=device_certificate,
         encrypted_answer=encrypted_answer,
     )
-
-
-async def device_revoke(
-    transport: Transport, revoked_device_certificate: bytes
-) -> Optional[pendulum.Pendulum]:
-    rep = await _send_cmd(
-        transport,
-        device_revoke_serializer,
-        cmd="device_revoke",
-        revoked_device_certificate=revoked_device_certificate,
-    )
-    return rep["user_revoked_on"]
 
 
 ###  Backend anonymous cmds  ###

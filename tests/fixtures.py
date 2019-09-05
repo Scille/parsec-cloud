@@ -10,11 +10,11 @@ from async_generator import asynccontextmanager
 from parsec.crypto import SigningKey
 from parsec.api.data import (
     UserCertificateContent,
+    RevokedUserCertificateContent,
     DeviceCertificateContent,
-    RevokedDeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.protocol import DeviceID, RealmRole
+from parsec.api.protocol import UserID, DeviceID, RealmRole
 from parsec.api.data import UserManifest
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
@@ -257,7 +257,7 @@ class CertificatesStore:
     def __init__(self):
         self._user_certificates = {}
         self._device_certificates = {}
-        self._revoked_device_certificates = {}
+        self._revoked_user_certificates = {}
 
     def store_user(self, organization_id, user_id, certif):
         key = (organization_id, user_id)
@@ -269,10 +269,10 @@ class CertificatesStore:
         assert key not in self._device_certificates
         self._device_certificates[key] = certif
 
-    def store_revoked_device(self, organization_id, device_id, certif):
-        key = (organization_id, device_id)
-        assert key not in self._revoked_device_certificates
-        self._revoked_device_certificates[key] = certif
+    def store_revoked_user(self, organization_id, user_id, certif):
+        key = (organization_id, user_id)
+        assert key not in self._revoked_user_certificates
+        self._revoked_user_certificates[key] = certif
 
     def get_user(self, local_user):
         key = (local_user.organization_id, local_user.user_id)
@@ -282,9 +282,27 @@ class CertificatesStore:
         key = (local_device.organization_id, local_device.device_id)
         return self._device_certificates[key]
 
-    def get_revoked_device(self, local_device):
-        key = (local_device.organization_id, local_device.device_id)
-        return self._revoked_device_certificates.get(key)
+    def get_revoked_user(self, local_user):
+        key = (local_user.organization_id, local_user.user_id)
+        return self._revoked_user_certificates.get(key)
+
+    def translate_certif(self, needle):
+        for (_, user_id), certif in self._user_certificates.items():
+            if needle == certif:
+                return f"<{user_id} user certif>"
+
+        for (_, device_id), certif in self._device_certificates.items():
+            if needle == certif:
+                return f"<{device_id} device certif>"
+
+        for (_, user_id), certif in self._revoked_user_certificates.items():
+            if needle == certif:
+                return f"<{user_id} revoked user certif>"
+
+        raise RuntimeError("Unknown certificate !")
+
+    def translate_certifs(self, certifs):
+        return [self.translate_certif(certif) for certif in certifs]
 
 
 @pytest.fixture
@@ -453,18 +471,15 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
 
             self.binded_local_devices.append(device)
 
-        async def bind_revocation(self, device: LocalDevice, certifier: LocalDevice):
-            revoked_device_certificate = RevokedDeviceCertificateContent(
-                author=certifier.device_id, timestamp=pendulum.now(), device_id=device.device_id
+        async def bind_revocation(self, user_id: UserID, certifier: LocalDevice):
+            revoked_user_certificate = RevokedUserCertificateContent(
+                author=certifier.device_id, timestamp=pendulum.now(), user_id=user_id
             ).dump_and_sign(certifier.signing_key)
-            await self.backend.user.revoke_device(
-                device.organization_id,
-                device.device_id,
-                revoked_device_certificate,
-                certifier.device_id,
+            await self.backend.user.revoke_user(
+                certifier.organization_id, user_id, revoked_user_certificate, certifier.device_id
             )
-            self.certificates_store.store_revoked_device(
-                device.organization_id, device.device_id, revoked_device_certificate
+            self.certificates_store.store_revoked_user(
+                certifier.organization_id, user_id, revoked_user_certificate
             )
 
     # Binder must be unique per backend

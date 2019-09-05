@@ -60,7 +60,7 @@ async def test_user_get_invitation_creator_ok(
         "status": "ok",
         "device_certificate": certificates_store.get_device(alice),
         "user_certificate": certificates_store.get_user(alice),
-        "trustchain": [],
+        "trustchain": {"devices": [], "revoked_users": [], "users": []},
     }
 
 
@@ -81,7 +81,7 @@ async def test_user_get_invitation_creator_with_trustchain_ok(
 
     await binder.bind_device(roger1, certifier=alice)
     await binder.bind_device(mike1, certifier=roger1)
-    await binder.bind_revocation(mike1, certifier=roger1)
+    await binder.bind_revocation(roger1.user_id, certifier=mike1)
 
     invitation = UserInvitation(user_id=mallory.user_id, creator=mike1.device_id)
     await backend.user.create_user_invitation(alice.organization_id, invitation)
@@ -89,21 +89,32 @@ async def test_user_get_invitation_creator_with_trustchain_ok(
     rep = await user_get_invitation_creator(
         anonymous_backend_sock, invited_user_id=invitation.user_id
     )
-    rep["trustchain"] = sorted(rep["trustchain"], key=lambda x: x["device_id"])
-    assert rep == {
+    cooked_rep = {
+        **rep,
+        "device_certificate": certificates_store.translate_certif(rep["device_certificate"]),
+        "user_certificate": certificates_store.translate_certif(rep["user_certificate"]),
+        "trustchain": {
+            "devices": sorted(certificates_store.translate_certifs(rep["trustchain"]["devices"])),
+            "users": sorted(certificates_store.translate_certifs(rep["trustchain"]["users"])),
+            "revoked_users": sorted(
+                certificates_store.translate_certifs(rep["trustchain"]["revoked_users"])
+            ),
+        },
+    }
+
+    assert cooked_rep == {
         "status": "ok",
-        "device_certificate": certificates_store.get_device(mike1),
-        "user_certificate": certificates_store.get_user(mike1),
-        "trustchain": [
-            {
-                "device_id": alice.device_id,
-                "device_certificate": certificates_store.get_device(alice),
-                "revoked_device_certificate": certificates_store.get_revoked_device(alice),
-            },
-            {
-                "device_id": roger1.device_id,
-                "device_certificate": certificates_store.get_device(roger1),
-                "revoked_device_certificate": certificates_store.get_revoked_device(roger1),
-            },
-        ],
+        "device_certificate": "<mike@dev1 device certif>",
+        "user_certificate": "<mike user certif>",
+        "trustchain": {
+            "devices": sorted(
+                [
+                    "<alice@dev1 device certif>",
+                    "<roger@dev1 device certif>",
+                    "<mike@dev1 device certif>",
+                ]
+            ),
+            "users": sorted(["<alice user certif>", "<roger user certif>", "<mike user certif>"]),
+            "revoked_users": ["<roger revoked user certif>"],
+        },
     }

@@ -10,7 +10,7 @@ from parsec.api.data import (
     DataError,
     UserCertificateContent,
     DeviceCertificateContent,
-    RevokedDeviceCertificateContent,
+    RevokedUserCertificateContent,
 )
 from parsec.core.backend_connection import (
     BackendCmdsPool,
@@ -85,7 +85,7 @@ def _verify_devices(root_verify_key, *uv_devices):
         }
         if uv_device.revoked_device_certificate:
             try:
-                r_certif = RevokedDeviceCertificateContent.unsecure_load(
+                r_certif = RevokedUserCertificateContent.unsecure_load(
                     uv_device.revoked_device_certificate
                 )
 
@@ -156,7 +156,7 @@ def _verify_devices(root_verify_key, *uv_devices):
             sub_path = f"{path} <-revoke- `{d_certif.revoked_by}`"
             revoker = _recursive_verify_device(d_certif.revoked_by, sub_path)
             try:
-                RevokedDeviceCertificateContent.verify_and_load(
+                RevokedUserCertificateContent.verify_and_load(
                     uv_device.revoked_device_certificate,
                     author_verify_key=revoker.verify_key,
                     expected_author=d_certif.revoked_by,

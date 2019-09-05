@@ -114,16 +114,16 @@ def pytest_configure(config):
     structlog.configure = lambda *args, **kwargs: None
     # Add helper to caplog
     patch_caplog()
-    if config.getoption("--postgresql") and not is_xdist_master(config):
-        bootstrap_postgresql_testbed()
     if config.getoption("--run-postgresql-cluster"):
         pgurl = bootstrap_postgresql_testbed()
         capturemanager = config.pluginmanager.getplugin("capturemanager")
         if capturemanager:
             capturemanager.suspend(in_=True)
-        print(f"usage: PG_URL={pgurl} py.test tests")
+        print(f"usage: PG_URL={pgurl} py.test --postgresql tests")
         input("Press enter when you're done with...")
         pytest.exit("bye")
+    elif config.getoption("--postgresql") and not is_xdist_master(config):
+        bootstrap_postgresql_testbed()
 
 
 def patch_caplog():

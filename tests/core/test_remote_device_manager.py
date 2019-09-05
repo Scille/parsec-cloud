@@ -7,7 +7,7 @@ from collections import namedtuple
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
-    RevokedDeviceCertificateContent,
+    RevokedUserCertificateContent,
 )
 from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerBackendOfflineError,
@@ -156,19 +156,20 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
                 verify_key=local_device.verify_key,
             ).dump_and_sign(certifier_key)
 
-            revoked_device_certificate = None
+            # TODO: finish the fix !
+            revoked_user_certificate = None
             if revoker:
                 revoker_ld = local_devices.get(revoker)
                 if not revoker_ld:
                     raise RuntimeError(f"Missing `{revoker}` to sign revocation of `{todo_device}`")
                 revoker_id = revoker_ld.device_id
                 revoker_key = revoker_ld.signing_key
-                revoked_device_certificate = RevokedDeviceCertificateContent(
-                    author=revoker_id, timestamp=revoked_on, device_id=local_device.device_id
+                revoked_user_certificate = RevokedUserCertificateContent(
+                    author=revoker_id, timestamp=revoked_on, user_id=local_device.user_id
                 ).dump_and_sign(revoker_key)
 
             remote_devices[local_device.device_id] = UnverifiedRemoteDevice(
-                device_certificate, revoked_device_certificate
+                device_certificate, revoked_user_certificate
             )
             local_devices[str(local_device.device_id)] = local_device
 

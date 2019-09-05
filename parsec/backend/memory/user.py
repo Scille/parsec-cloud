@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Dict
 from collections import defaultdict
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
@@ -11,6 +11,7 @@ from parsec.backend.user import (
     BaseUserComponent,
     User,
     Device,
+    Trustchain,
     UserInvitation,
     DeviceInvitation,
     UserAlreadyExistsError,
@@ -74,20 +75,33 @@ class MemoryUserComponent(BaseUserComponent):
         )
 
     async def _get_trustchain(self, organization_id, *devices_ids):
-        trustchain = {}
+        trustchain_devices = set()
+        trustchain_users = set()
+        trustchain_revoked_users = set()
+        in_trustchain = set()
 
         async def _recursive_extract_creators(device_id):
-            if not device_id or device_id in trustchain:
+            if not device_id or device_id in in_trustchain:
                 return
+            in_trustchain.add(device_id)
+            user = self._get_user(organization_id, device_id.user_id)
             device = self._get_device(organization_id, device_id)
-            trustchain[device_id] = device
+            trustchain_devices.add(device.device_certificate)
+            trustchain_users.add(user.user_certificate)
+            if user.revoked_user_certificate:
+                trustchain_revoked_users.add(user.revoked_user_certificate)
             await _recursive_extract_creators(device.device_certifier)
-            await _recursive_extract_creators(device.revoked_device_certifier)
+            await _recursive_extract_creators(user.revoked_user_certifier)
+            await _recursive_extract_creators(user.user_certifier)
 
         for device_id in devices_ids:
             await _recursive_extract_creators(device_id)
 
-        return tuple(trustchain.values())
+        return Trustchain(
+            devices=tuple(trustchain_devices),
+            users=tuple(trustchain_users),
+            revoked_users=tuple(trustchain_revoked_users),
+        )
 
     def _get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         org = self._organizations[organization_id]
@@ -103,35 +117,37 @@ class MemoryUserComponent(BaseUserComponent):
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device]]:
+    ) -> Tuple[User, Trustchain]:
         user = self._get_user(organization_id, user_id)
-        trustchain = await self._get_trustchain(organization_id, user.user_certifier)
+        trustchain = await self._get_trustchain(
+            organization_id, user.user_certifier, user.revoked_user_certifier
+        )
         return user, trustchain
 
     async def get_user_with_device_and_trustchain(
         self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> Tuple[User, Device, Tuple[Device]]:
+    ) -> Tuple[User, Device, Trustchain]:
         user = self._get_user(organization_id, device_id.user_id)
         user_device = self._get_device(organization_id, device_id)
         trustchain = await self._get_trustchain(
             organization_id,
             user.user_certifier,
+            user.revoked_user_certifier,
             user_device.device_certifier,
-            user_device.revoked_device_certifier,
         )
         return user, user_device, trustchain
 
     async def get_user_with_devices_and_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
+    ) -> Tuple[User, Tuple[Device], Trustchain]:
         user = self._get_user(organization_id, user_id)
         user_devices = self._get_user_devices(organization_id, user_id)
         user_devices = tuple(user_devices.values())
         trustchain = await self._get_trustchain(
             organization_id,
             user.user_certifier,
+            user.revoked_user_certifier,
             *[device.device_certifier for device in user_devices],
-            *[device.revoked_device_certifier for device in user_devices],
         )
         return user, user_devices, trustchain
 
@@ -287,35 +303,6 @@ class MemoryUserComponent(BaseUserComponent):
             self.event_bus.send(
                 "device.invitation.cancelled", organization_id=organization_id, device_id=device_id
             )
-
-    async def revoke_device(
-        self,
-        organization_id: OrganizationID,
-        device_id: DeviceID,
-        revoked_device_certificate: bytes,
-        revoked_device_certifier: DeviceID,
-        revoked_on: pendulum.Pendulum = None,
-    ) -> Optional[pendulum.Pendulum]:
-        user_devices = self._get_user_devices(organization_id, device_id.user_id)
-        try:
-            if user_devices[device_id.device_name].revoked_on:
-                raise UserAlreadyRevokedError()
-
-        except KeyError:
-            raise UserNotFoundError(device_id)
-
-        user_devices[device_id.device_name] = user_devices[device_id.device_name].evolve(
-            revoked_on=revoked_on or pendulum.now(),
-            revoked_device_certificate=revoked_device_certificate,
-            revoked_device_certifier=revoked_device_certifier,
-        )
-
-        # Determine if user is revoked
-        revocations = [d.revoked_on for d in user_devices.values()]
-        if not revocations or None in revocations:
-            return None
-        else:
-            return sorted(revocations)[-1]
 
     async def revoke_user(
         self,

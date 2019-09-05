@@ -94,30 +94,6 @@ class DeviceCertificateContent(BaseAPISignedData):
         return data
 
 
-class RevokedDeviceCertificateContent(BaseAPISignedData):
-    class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("revoked_device_certificate", required=True)
-        device_id = DeviceIDField(required=True)
-
-        @post_load
-        def make_obj(self, data):
-            data.pop("type")
-            return RevokedDeviceCertificateContent(**data)
-
-    device_id: DeviceID
-
-    @classmethod
-    def verify_and_load(
-        cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
-    ) -> "RevokedDeviceCertificateContent":
-        data = super().verify_and_load(*args, **kwargs)
-        if expected_device is not None and data.device_id != expected_device:
-            raise DataValidationError(
-                f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
-            )
-        return data
-
-
 class RealmRoleCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("realm_role_certificate", required=True)

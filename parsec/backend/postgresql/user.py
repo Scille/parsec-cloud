@@ -1,11 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pendulum
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
-from parsec.backend.user import BaseUserComponent, User, Device, UserInvitation, DeviceInvitation
+from parsec.backend.user import (
+    BaseUserComponent,
+    User,
+    Device,
+    Trustchain,
+    UserInvitation,
+    DeviceInvitation,
+)
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
     query_create_user,
@@ -16,6 +23,7 @@ from parsec.backend.postgresql.user_queries import (
     query_get_user_with_device_and_trustchain,
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_device,
+    query_revoke_user,
     query_create_user_invitation,
     query_get_user_invitation,
     query_claim_user_invitation,
@@ -24,7 +32,6 @@ from parsec.backend.postgresql.user_queries import (
     query_get_device_invitation,
     query_claim_device_invitation,
     query_cancel_device_invitation,
-    query_revoke_device,
 )
 
 
@@ -51,19 +58,19 @@ class PGUserComponent(BaseUserComponent):
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device]]:
+    ) -> Tuple[User, Trustchain]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_user_with_trustchain(conn, organization_id, user_id)
 
     async def get_user_with_device_and_trustchain(
         self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> Tuple[User, Device, Tuple[Device]]:
+    ) -> Tuple[User, Device, Trustchain]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_user_with_device_and_trustchain(conn, organization_id, device_id)
 
     async def get_user_with_devices_and_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
+    ) -> Tuple[User, Tuple[Device], Trustchain]:
         async with self.dbh.pool.acquire() as conn:
             return await query_get_user_with_devices_and_trustchain(conn, organization_id, user_id)
 
@@ -136,20 +143,20 @@ class PGUserComponent(BaseUserComponent):
         async with self.dbh.pool.acquire() as conn:
             await query_cancel_device_invitation(conn, organization_id, device_id)
 
-    async def revoke_device(
+    async def revoke_user(
         self,
         organization_id: OrganizationID,
-        device_id: DeviceID,
-        revoked_device_certificate: bytes,
-        revoked_device_certifier: DeviceID,
+        user_id: UserID,
+        revoked_user_certificate: bytes,
+        revoked_user_certifier: DeviceID,
         revoked_on: pendulum.Pendulum = None,
-    ) -> Optional[pendulum.Pendulum]:
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            return await query_revoke_device(
+            return await query_revoke_user(
                 conn,
                 organization_id,
-                device_id,
-                revoked_device_certificate,
-                revoked_device_certifier,
+                user_id,
+                revoked_user_certificate,
+                revoked_user_certifier,
                 revoked_on,
             )

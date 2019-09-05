@@ -6,8 +6,8 @@ from typing import Tuple, List
 from pypika import PostgreSQLQuery as Query, Parameter
 
 from parsec.api.protocol import UserID, OrganizationID
-from parsec.backend.postgresql.utils import IRegex, fn_exists, query
-from parsec.backend.postgresql.tables import t_user, t_device, q_organization_internal_id
+from parsec.backend.postgresql.utils import IRegex, query
+from parsec.backend.postgresql.tables import t_user, q_organization_internal_id
 
 
 def _q_factory(query, omit_revoked):
@@ -25,16 +25,7 @@ def _q_factory(query, omit_revoked):
     if query:
         q = q.where(IRegex(t_user.user_id, _next_param()))
     if omit_revoked:
-        q = q.where(
-            fn_exists(
-                Query.from_(t_device)
-                .select("*")
-                .where(
-                    (t_device.user_ == t_user._id)
-                    & (t_device.revoked_on.isnull() | t_device.revoked_on > _next_param())
-                )
-            )
-        )
+        q = q.where(t_user.revoked_on.isnull() | t_user.revoked_on > _next_param())
     return q
 
 

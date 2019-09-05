@@ -28,6 +28,12 @@ CREATE TABLE user_ (
     -- NULL if certifier is the Root Verify Key
     user_certifier INTEGER,
     created_on TIMESTAMPTZ NOT NULL,
+    -- NULL if not yet revoked
+    revoked_on TIMESTAMPTZ,
+    -- NULL if not yet revoked
+    revoked_user_certificate BYTEA,
+    -- NULL if certifier is the Root Verify Key
+    revoked_user_certifier INTEGER,
 
     UNIQUE(organization, user_id)
 );
@@ -42,12 +48,6 @@ CREATE TABLE device (
     -- NULL if certifier is the Root Verify Key
     device_certifier INTEGER REFERENCES device (_id),
     created_on TIMESTAMPTZ NOT NULL,
-    -- NULL if not yet revoked
-    revoked_on TIMESTAMPTZ,
-    -- NULL if not yet revoked
-    revoked_device_certificate BYTEA,
-    -- NULL if certifier is the Root Verify Key
-    revoked_device_certifier INTEGER REFERENCES device (_id),
 
     UNIQUE(organization, device_id),
     UNIQUE(user_, device_id)
@@ -55,7 +55,9 @@ CREATE TABLE device (
 
 
 ALTER TABLE user_
-ADD CONSTRAINT FK_user_device FOREIGN KEY (user_certifier) REFERENCES device (_id);
+ADD CONSTRAINT FK_user_device_user_certifier FOREIGN KEY (user_certifier) REFERENCES device (_id);
+ALTER TABLE user_
+ADD CONSTRAINT FK_user_device_revoked_user_certifier FOREIGN KEY (revoked_user_certifier) REFERENCES device (_id);
 
 
 CREATE TABLE user_invitation (
