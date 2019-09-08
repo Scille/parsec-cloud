@@ -76,10 +76,6 @@ class BackendCmdsNotFound(BackendCmdsBadResponse):
     status = "not_found"
 
 
-class BackendCmdsInvalidRole(BackendCmdsBadResponse):
-    status = "invalid_role"
-
-
 class BackendCmdsDenied(BackendCmdsBadResponse):
     status = "denied"
 
@@ -141,7 +137,6 @@ STATUS_TO_EXC_CLS = {
         BackendCmdsNotAllowed,
         BackendCmdsBadVersion,
         BackendCmdsNotFound,
-        BackendCmdsInvalidRole,
         BackendCmdsDenied,
         BackendCmdsBadUserId,
         BackendCmdsInvalidCertification,
