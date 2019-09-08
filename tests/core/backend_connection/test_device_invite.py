@@ -12,7 +12,6 @@ from parsec.api.data import (
 )
 from parsec.api.protocol import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
-from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 
 
@@ -49,18 +48,12 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
 
     async def _alice_nd_claim():
         async with backend_anonymous_cmds_factory(alice.organization_addr) as cmds:
-            invitation_creator_device, invitation_creator_user, trustchain = await cmds.device_get_invitation_creator(
+            creator_user_certificate, creator_device_certificate, trustchain = await cmds.device_get_invitation_creator(
                 nd_id
             )
-            assert isinstance(invitation_creator_device, UnverifiedRemoteDevice)
-            assert isinstance(invitation_creator_user, UnverifiedRemoteUser)
-            assert trustchain == []
-
-            creator = UserCertificateContent.unsecure_load(invitation_creator_user.user_certificate)
-
-            creator_device = DeviceCertificateContent.unsecure_load(
-                invitation_creator_device.device_certificate
-            )
+            assert trustchain == {"devices": [], "revoked_users": [], "users": []}
+            creator = UserCertificateContent.unsecure_load(creator_user_certificate)
+            creator_device = DeviceCertificateContent.unsecure_load(creator_device_certificate)
             assert creator_device.device_id.user_id == creator.user_id
 
             answer_private_key = PrivateKey.generate()
@@ -71,11 +64,11 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
                 answer_public_key=answer_private_key.public_key,
             ).dump_and_encrypt_for(recipient_pubkey=creator.public_key)
             with trio.fail_after(1):
-                unverified_device, encrypted_answer = await cmds.device_claim(
+                claim_device_certificate, encrypted_answer = await cmds.device_claim(
                     nd_id, encrypted_claim
                 )
 
-            assert unverified_device.device_certificate == device_certificate
+            assert claim_device_certificate == device_certificate
             answer = DeviceClaimAnswerContent.decrypt_and_load_for(
                 encrypted_answer, recipient_privkey=answer_private_key
             )

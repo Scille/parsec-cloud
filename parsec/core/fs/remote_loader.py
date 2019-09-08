@@ -56,7 +56,7 @@ class RemoteLoader:
 
     async def _load_realm_role_certificates(self, realm_id: Optional[EntryID] = None):
         try:
-            unverifieds = await self.backend_cmds.realm_get_role_certificates(
+            uv_roles = await self.backend_cmds.realm_get_role_certificates(
                 realm_id or self.workspace_id
             )
 
@@ -74,13 +74,8 @@ class RemoteLoader:
             # Must read unverified certificates to access metadata
             unsecure_certifs = sorted(
                 [
-                    (
-                        RealmRoleCertificateContent.unsecure_load(
-                            unverified.realm_role_certificate
-                        ),
-                        unverified.realm_role_certificate,
-                    )
-                    for unverified in unverifieds
+                    (RealmRoleCertificateContent.unsecure_load(uv_role), uv_role)
+                    for uv_role in uv_roles
                 ],
                 key=lambda x: x[0].timestamp,
             )
@@ -101,7 +96,7 @@ class RemoteLoader:
 
                 # Make sure author had the right to do this
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
-                if not current_roles and unsecure_certif.user_id == author.user_id:
+                if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
                     # First user is autosigned
                     needed_roles = (None,)
                 elif (

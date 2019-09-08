@@ -29,14 +29,6 @@ from parsec.core.types.manifest import (
     Chunk,
     ChunkID,
 )
-from parsec.core.types.remote_device import (
-    UnverifiedRemoteUser,
-    UnverifiedRemoteDevice,
-    UnverifiedRealmRole,
-    VerifiedRemoteUser,
-    VerifiedRemoteDevice,
-    VerifiedRealmRole,
-)
 
 
 FileDescriptor = NewType("FileDescriptor", int)
@@ -73,11 +65,4 @@ __all__ = (
     "BlockID",
     "Chunk",
     "ChunkID",
-    # remote_device
-    "UnverifiedRemoteUser",
-    "UnverifiedRemoteDevice",
-    "UnverifiedRealmRole",
-    "VerifiedRemoteUser",
-    "VerifiedRemoteDevice",
-    "VerifiedRealmRole",
 )

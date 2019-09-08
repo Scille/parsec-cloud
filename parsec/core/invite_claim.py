@@ -83,7 +83,7 @@ async def claim_user(
         async with backend_anonymous_cmds_factory(backend_addr) as cmds:
             # 1) Retrieve invitation creator
             try:
-                invitation_creator_device, invitation_creator_user = await get_user_invitation_creator(
+                invitation_creator_user, invitation_creator_device = await get_user_invitation_creator(
                     cmds, new_device.root_verify_key, new_device.user_id
                 )
 
@@ -162,7 +162,7 @@ async def claim_device(
         async with backend_anonymous_cmds_factory(backend_addr) as cmds:
             # 1) Retrieve invitation creator
             try:
-                invitation_creator_device, invitation_creator_user = await get_device_invitation_creator(
+                invitation_creator_user, invitation_creator_device = await get_device_invitation_creator(
                     cmds, backend_addr.root_verify_key, new_device_id
                 )
 

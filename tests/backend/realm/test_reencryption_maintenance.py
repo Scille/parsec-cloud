@@ -37,8 +37,10 @@ async def test_start_bad_timestamp(backend, alice_backend_sock, realm):
 
 
 @pytest.mark.trio
-async def test_start_bad_per_participant_message(backend, alice_backend_sock, alice, bob, realm):
-    # Add bob for more fun !
+async def test_start_bad_per_participant_message(
+    backend, alice_backend_sock, alice, bob, adam, realm
+):
+    # Bob used to be part of the realm
     await backend.realm.update_roles(
         alice.organization_id,
         RealmGrantedRole(
@@ -49,11 +51,39 @@ async def test_start_bad_per_participant_message(backend, alice_backend_sock, al
             granted_by=alice.device_id,
         ),
     )
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=bob.user_id,
+            role=None,
+            granted_by=alice.device_id,
+        ),
+    )
+    # Adam is still part of the realm, but is revoked
+    await backend.realm.update_roles(
+        alice.organization_id,
+        RealmGrantedRole(
+            certificate=b"<dummy>",
+            realm_id=realm,
+            user_id=adam.user_id,
+            role=RealmRole.READER,
+            granted_by=alice.device_id,
+        ),
+    )
+    await backend.user.revoke_user(
+        alice.organization_id,
+        adam.user_id,
+        revoked_user_certificate=b"<dummy>",
+        revoked_user_certifier=alice.device_id,
+    )
 
     for msg in [
         {},
-        {alice.user_id: b"ok"},
-        {alice.user_id: b"ok", bob.user_id: b"ok", "zack": b"dunno this guy"},
+        {alice.user_id: b"ok", bob.user_id: b"bad"},
+        {alice.user_id: b"ok", "zack": b"bad"},
+        {alice.user_id: b"ok", adam.user_id: b"bad"},
     ]:
         rep = await realm_start_reencryption_maintenance(
             alice_backend_sock, realm, 2, pendulum_now(), {}, check_rep=False
@@ -62,6 +92,11 @@ async def test_start_bad_per_participant_message(backend, alice_backend_sock, al
             "status": "participants_mismatch",
             "reason": "Realm participants and message recipients mismatch",
         }
+
+    # Finally make sure the reencryption is possible
+    await realm_start_reencryption_maintenance(
+        alice_backend_sock, realm, 2, pendulum_now(), {alice.user_id: b"ok"}
+    )
 
 
 @pytest.mark.trio

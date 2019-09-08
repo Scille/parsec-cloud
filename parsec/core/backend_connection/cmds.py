@@ -347,9 +347,14 @@ async def block_read(transport: Transport, block_id: UUID) -> bytes:
 
 async def user_get(
     transport: Transport, user_id: UserID
-) -> Tuple[bytes, Optional[bytes], List[bytes]]:
+) -> Tuple[bytes, Optional[bytes], List[bytes], dict]:
     rep = await _send_cmd(transport, user_get_serializer, cmd="user_get", user_id=user_id)
-    return (rep["user_certificate"], rep["revoked_user_certificate"], rep["device_certificates"])
+    return (
+        rep["user_certificate"],
+        rep["revoked_user_certificate"],
+        rep["device_certificates"],
+        rep["trustchain"],
+    )
 
 
 async def user_find(
@@ -394,16 +399,13 @@ async def user_create(
     )
 
 
-async def user_revoke(
-    transport: Transport, revoked_user_certificate: bytes
-) -> Optional[pendulum.Pendulum]:
-    rep = await _send_cmd(
+async def user_revoke(transport: Transport, revoked_user_certificate: bytes) -> None:
+    await _send_cmd(
         transport,
         user_revoke_serializer,
         cmd="user_revoke",
         revoked_user_certificate=revoked_user_certificate,
     )
-    return rep["user_revoked_on"]
 
 
 async def device_invite(transport: Transport, invited_device_name: DeviceName) -> bytes:
@@ -482,7 +484,7 @@ async def user_get_invitation_creator(
         cmd="user_get_invitation_creator",
         invited_user_id=invited_user_id,
     )
-    return (rep["device_certificate"], rep["user_certificate"], rep["trustchain"])
+    return (rep["user_certificate"], rep["device_certificate"], rep["trustchain"])
 
 
 async def user_claim(
@@ -507,7 +509,7 @@ async def device_get_invitation_creator(
         cmd="device_get_invitation_creator",
         invited_device_id=invited_device_id,
     )
-    return (rep["device_certificate"], rep["user_certificate"], rep["trustchain"])
+    return (rep["user_certificate"], rep["device_certificate"], rep["trustchain"])
 
 
 async def device_claim(

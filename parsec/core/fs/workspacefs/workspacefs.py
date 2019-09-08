@@ -179,13 +179,9 @@ class WorkspaceFS:
 
         user_revoked = []
         for user_id in has_role:
-            _, devices = await self.remote_device_manager.get_user_and_devices(user_id)
-            try:
-                revocation_date = min([d.revoked_on for d in devices if d.revoked_on])
-                if revocation_date > wentry.encrypted_on:
-                    user_revoked.append(user_id)
-            except ValueError:
-                continue
+            _, revoked_user = await self.remote_device_manager.get_user(user_id, no_cache=True)
+            if revoked_user and revoked_user.timestamp > wentry.encrypted_on:
+                user_revoked.append(user_id)
 
         return ReencryptionNeed(user_revoked=tuple(user_revoked), role_revoked=tuple(role_revoked))
 

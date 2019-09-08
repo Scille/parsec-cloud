@@ -45,7 +45,16 @@ async def get_realm_status(conn, organization_id, realm_id):
     return rep
 
 
-async def get_realm_role_for(conn, organization_id, realm_id, users=None):
+async def get_realm_role_for_not_revoked(conn, organization_id, realm_id, users=None):
+    now = pendulum.now()
+
+    def _cook_role(row):
+        if row["revoked_on"] and row["revoked_on"] <= now:
+            return None
+        if row["role"] is None:
+            return None
+        return STR_TO_REALM_ROLE[row["role"]]
+
     if users:
 
         query = """
@@ -55,7 +64,7 @@ WITH cte_current_realm_roles AS (
     WHERE realm = ({})
     ORDER BY user_, certified_on DESC
 )
-SELECT user_.user_id as realm_id, role
+SELECT user_.user_id as user_id, user_.revoked_on as revoked_on, role
 FROM user_
 LEFT JOIN cte_current_realm_roles
 ON user_._id = cte_current_realm_roles.user_
@@ -69,34 +78,29 @@ WHERE
         )
 
         rep = await conn.fetch(query, organization_id, realm_id, users)
-        roles = {
-            row["realm_id"]: STR_TO_REALM_ROLE[row["role"]] if row["role"] is not None else None
-            for row in rep
-        }
+        roles = {row["user_id"]: _cook_role(row) for row in rep}
         for user in users or ():
             if user not in roles:
                 raise RealmNotFoundError(f"User `{user}` doesn't exist")
+
         return roles
 
     else:
 
         query = """
-SELECT DISTINCT ON(user_) ({}) as realm_id, role
+SELECT DISTINCT ON(user_) ({}) as user_id, ({}) as revoked_on, role
 FROM  realm_user_role
 WHERE realm = ({})
 ORDER BY user_, certified_on DESC
 """.format(
             q_user(_id=Parameter("realm_user_role.user_")).select("user_id"),
+            q_user(_id=Parameter("realm_user_role.user_")).select("revoked_on"),
             q_realm_internal_id(organization_id=Parameter("$1"), realm_id=Parameter("$2")),
         )
 
         rep = await conn.fetch(query, organization_id, realm_id)
 
-        return {
-            row["realm_id"]: STR_TO_REALM_ROLE[row["role"]]
-            for row in rep
-            if row["role"] is not None
-        }
+        return {row["user_id"]: _cook_role(row) for row in rep if _cook_role(row) is not None}
 
 
 @query(in_transaction=True)
@@ -116,7 +120,7 @@ async def query_start_reencryption_maintenance(
     if encryption_revision != rep["encryption_revision"] + 1:
         raise RealmEncryptionRevisionError("Invalid encryption revision")
 
-    roles = await get_realm_role_for(conn, organization_id, realm_id)
+    roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id)
     if per_participant_message.keys() ^ roles.keys():
         raise RealmParticipantsMismatchError("Realm participants and message recipients mismatch")
 
@@ -177,7 +181,7 @@ async def query_finish_reencryption_maintenance(
 ) -> None:
     # Retrieve realm and make sure it is not under maintenance
     rep = await get_realm_status(conn, organization_id, realm_id)
-    roles = await get_realm_role_for(conn, organization_id, realm_id, [author.user_id])
+    roles = await get_realm_role_for_not_revoked(conn, organization_id, realm_id, [author.user_id])
     if roles.get(author.user_id) != RealmRole.OWNER:
         raise RealmAccessError()
     if not rep["maintenance_type"]:
