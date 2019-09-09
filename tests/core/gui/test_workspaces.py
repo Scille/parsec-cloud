@@ -37,7 +37,8 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_w is not None
     async with aqtbot.wait_signal(w_w.list_success):
         pass
-    assert w_w.layout_workspaces.count() == 0
+    assert w_w.layout_workspaces.count() == 1
+    assert w_w.layout_workspaces.itemAt(0).widget().text() == "No workspace has been created yet."
 
     c_w = logged_gui.test_get_central_widget()
     assert c_w is not None
@@ -66,7 +67,8 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     assert w_w is not None
     async with aqtbot.wait_signal(w_w.list_success):
         pass
-    assert w_w.layout_workspaces.count() == 0
+    assert w_w.layout_workspaces.count() == 1
+    assert w_w.layout_workspaces.itemAt(0).widget().text() == "No workspace has been created yet."
 
     c_w = logged_gui.test_get_central_widget()
     assert c_w is not None

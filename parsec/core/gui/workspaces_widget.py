@@ -2,8 +2,8 @@
 
 from uuid import UUID
 
-from PyQt5.QtCore import pyqtSignal, QTimer
-from PyQt5.QtWidgets import QWidget, QDialog
+from PyQt5.QtCore import pyqtSignal, QTimer, Qt
+from PyQt5.QtWidgets import QWidget, QDialog, QLabel
 
 import pendulum
 
@@ -194,8 +194,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         show_error(self, _("ERR_WORKSPACE_RENAME"), exception=job.exc)
 
     def on_list_success(self, job):
-        if not job.ret:
-            return
         while self.layout_workspaces.count() != 0:
             item = self.layout_workspaces.takeAt(0)
             if item:
@@ -203,15 +201,28 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
         workspaces = job.ret
-        for count, (workspace_fs, ws_entry, users_roles, files, timestamped) in enumerate(
-            workspaces
-        ):
-            self.add_workspace(
-                workspace_fs, ws_entry, users_roles, files, timestamped=timestamped, count=count
-            )
+        if not workspaces:
+            label = QLabel(_("LABEL_NO_WORKSPACES"))
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            self.layout_workspaces.addWidget(label)
+        else:
+            for count, (workspace_fs, ws_entry, users_roles, files, timestamped) in enumerate(
+                workspaces
+            ):
+                self.add_workspace(
+                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped, count=count
+                )
 
     def on_list_error(self, job):
-        pass
+        while self.layout_workspaces.count() != 0:
+            item = self.layout_workspaces.takeAt(0)
+            if item:
+                w = item.widget()
+                self.layout_workspaces.removeWidget(w)
+                w.setParent(None)
+        label = QLabel(_("LABEL_NO_WORKSPACES"))
+        label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.layout_workspaces.addWidget(label)
 
     def on_mount_success(self, job):
         pass
