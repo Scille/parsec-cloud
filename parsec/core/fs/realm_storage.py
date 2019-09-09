@@ -231,3 +231,6 @@ class RealmStorage:
             deleted, = cursor.fetchone()
         if not deleted and not in_cache:
             raise FSLocalMissError(entry_id)
+
+    def run_vacuum(self) -> None:
+        pass
