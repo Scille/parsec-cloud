@@ -43,6 +43,9 @@ class HandshakeAPIVersionError(HandshakeError):
             f"and backend API versions {self.backend_versions}"
         )
 
+    def __str__(self):
+        return self.message
+
     @classmethod
     def match_versions(cls, backend_versions, client_versions):
         sorted_client_versions = sorted(client_versions)
