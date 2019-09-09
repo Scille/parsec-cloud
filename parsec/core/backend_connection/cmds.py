@@ -16,6 +16,7 @@ from parsec.api.protocol import (
     ping_serializer,
     organization_create_serializer,
     organization_stats_serializer,
+    organization_status_serializer,
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
@@ -460,6 +461,16 @@ async def organization_stats(transport: Transport, organization_id: Organization
         organization_id=organization_id,
     )
     rep.pop("status")
+    return rep
+
+
+async def organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
+    rep = await _send_cmd(
+        transport,
+        organization_status_serializer,
+        cmd="organization_status",
+        organization_id=organization_id,
+    )
     return rep
 
 

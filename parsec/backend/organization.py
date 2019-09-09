@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     organization_create_serializer,
     organization_bootstrap_serializer,
     organization_stats_serializer,
+    organization_status_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
 from parsec.backend.user import new_user_factory, User, Device
@@ -90,6 +91,20 @@ class BaseOrganizationComponent:
             rep["expiration_date"] = expiration_date
 
         return organization_create_serializer.rep_dump(rep)
+
+    @catch_protocol_errors
+    async def api_organization_status(self, client_ctx, msg):
+        msg = organization_status_serializer.req_load(msg)
+
+        try:
+            is_bootstrapped = await self.is_bootstrapped(msg["organization_id"])
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_status_serializer.rep_dump(
+            {"is_bootstrapped": is_bootstrapped, "status": "ok"}
+        )
 
     @catch_protocol_errors
     async def api_organization_stats(self, client_ctx, msg):
@@ -215,3 +230,11 @@ class BaseOrganizationComponent:
             OrganizationNotFoundError
         """
         raise NotImplementedError()
+
+    async def is_bootstrapped(self, id: OrganizationID) -> bool:
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        organization = await self.get(id)
+        return organization.is_bootstrapped()

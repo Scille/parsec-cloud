@@ -52,3 +52,16 @@ class OrganizationStatsRepSchema(BaseRepSchema):
 organization_stats_serializer = CmdSerializer(
     OrganizationStatsReqSchema, OrganizationStatsRepSchema
 )
+
+
+class OrganizationStatusReqSchema(BaseReqSchema):
+    organization_id = OrganizationIDField(required=True)
+
+
+class OrganizationStatusRepSchema(BaseRepSchema):
+    is_bootstrapped = fields.Boolean(required=True)
+
+
+organization_status_serializer = CmdSerializer(
+    OrganizationStatusReqSchema, OrganizationStatusRepSchema
+)
