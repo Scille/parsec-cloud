@@ -84,7 +84,7 @@ def _verify_certificates(root_verify_key, uv_devices, uv_users, known_devices, k
             )
 
         verified_devices[unsecure_device.device_id] = unsecure_device
-        updatable_devices_id += [unsecure_device.device_id] # TODO : select only needed ones
+        updatable_devices_id += [unsecure_device.device_id]  # TODO : select only needed ones
         return unsecure_user
 
     for d_certif, _ in all_devices.values():
@@ -92,8 +92,8 @@ def _verify_certificates(root_verify_key, uv_devices, uv_users, known_devices, k
         _recursive_verify_device(d_certif.device_id, f"`{d_certif.device_id}`")
 
     return (
-        {d_id : verified_devices[d_id] for d_id in updatable_devices_id},
-        {u_id : verified_users[u_id] for u_id in updatable_users_id},
+        {d_id: verified_devices[d_id] for d_id in updatable_devices_id},
+        {u_id: verified_users[u_id] for u_id in updatable_users_id},
     )
 
 
@@ -228,7 +228,7 @@ def _verify_user(
             certifier = verified_devices[unsecure_user.author]
             if not verified_users[certifier.user_id].is_admin:
                 if certifier.user_id != unsecure_user.user_id:
-                    raise Exception ################
+                    raise Exception  ################
 
         except KeyError:
             raise RemoteDevicesManagerInvalidTrustchainError(
@@ -275,9 +275,7 @@ def _check_users_are_equal_without_revocation(user0, user1):
 
 
 def _users_revocation_status_are_equal(new_user, old_user):
-    for attribute_to_compare in [
-        "revoked_user_certificate", "revoked_by", "revoked_on"
-    ]:
+    for attribute_to_compare in ["revoked_user_certificate", "revoked_by", "revoked_on"]:
         if new_user[attribute_to_compare] != old_use[attribute_to_compare]:
             if new_user[attribute_to_compare] is None:
                 raise RemoteDevicesManagerInvalidTrustchainError(
