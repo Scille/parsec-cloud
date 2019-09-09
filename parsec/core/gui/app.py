@@ -59,16 +59,17 @@ def run_gui(config: CoreConfig):
     event_bus = EventBus()
     with run_trio_thread() as jobs_ctx:
         systray = None
-        if systray_available() and config.gui_tray_enabled:
-            win = MainWindow(
-                jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, minimize_on_close=True
-            )
+        win = MainWindow(
+            jobs_ctx=jobs_ctx,
+            event_bus=event_bus,
+            config=config,
+            minimize_on_close=config.gui_tray_enabled and systray_available(),
+        )
+        if systray_available():
             systray = Systray(parent=win)
             systray.on_close.connect(win.close_app)
             systray.on_show.connect(win.show_top)
             app.aboutToQuit.connect(before_quit(systray))
-        else:
-            win = MainWindow(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config)
 
         if config.gui_check_version_at_startup:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)

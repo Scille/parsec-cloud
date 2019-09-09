@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-
+from typing import Tuple
 from hypothesis import strategies
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, run_state_machine_as_test
 
-from parsec.core.types import EntryID, Chunk, Chunks, LocalFileManifest
+from parsec.core.types import EntryID, ChunkID, Chunk, LocalFileManifest
 from parsec.core.fs.workspacefs.file_transactions import padded_data
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
@@ -16,19 +16,20 @@ from parsec.core.fs.workspacefs.file_operations import (
 
 from tests.common import freeze_time
 
+
 MAX_SIZE = 64
 size = strategies.integers(min_value=0, max_value=MAX_SIZE)
 
 
 class Storage(dict):
-    def read_chunk_data(self, chunk_id: EntryID) -> bytes:
+    def read_chunk_data(self, chunk_id: ChunkID) -> bytes:
         return self[chunk_id]
 
-    def write_chunk_data(self, chunk_id: EntryID, data: bytes) -> None:
+    def write_chunk_data(self, chunk_id: ChunkID, data: bytes) -> None:
         assert chunk_id not in self
         self[chunk_id] = data
 
-    def clear_chunk_data(self, chunk_id: EntryID) -> None:
+    def clear_chunk_data(self, chunk_id: ChunkID) -> None:
         self.pop(chunk_id)
 
     def read_chunk(self, chunk: Chunk) -> bytes:
@@ -39,7 +40,7 @@ class Storage(dict):
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
         self.write_chunk_data(chunk.id, data)
 
-    def build_data(self, chunks: Chunks) -> bytearray:
+    def build_data(self, chunks: Tuple[Chunk]) -> bytearray:
         # Empty array
         if not chunks:
             return bytearray()
@@ -104,13 +105,11 @@ class Storage(dict):
         return new_manifest
 
 
-def test_complete_scenario() -> None:
+def test_complete_scenario():
     storage = Storage()
 
     with freeze_time("2000-01-01"):
-        base = manifest = LocalFileManifest.make_placeholder(EntryID(), "a@a", EntryID()).evolve(
-            blocksize=16
-        )
+        base = manifest = LocalFileManifest.new_placeholder(parent=EntryID(), blocksize=16)
         assert manifest == base.evolve(size=0)
 
     with freeze_time("2000-01-02") as t2:
@@ -119,7 +118,7 @@ def test_complete_scenario() -> None:
 
     (chunk0,), = manifest.blocks
     assert manifest == base.evolve(size=6, blocks=((chunk0,),), updated=t2)
-    assert chunk0 == Chunk(chunk0.id, start=0, stop=6, raw_offset=0, raw_size=6)
+    assert chunk0 == Chunk(id=chunk0.id, start=0, stop=6, raw_offset=0, raw_size=6, access=None)
     assert storage[chunk0.id] == b"Hello "
 
     with freeze_time("2000-01-03") as t3:
@@ -128,7 +127,7 @@ def test_complete_scenario() -> None:
 
     (_, chunk1), = manifest.blocks
     assert manifest == base.evolve(size=13, blocks=((chunk0, chunk1),), updated=t3)
-    assert chunk1 == Chunk(chunk1.id, start=6, stop=13, raw_offset=6, raw_size=7)
+    assert chunk1 == Chunk(id=chunk1.id, start=6, stop=13, raw_offset=6, raw_size=7, access=None)
     assert storage[chunk1.id] == b"world !"
 
     with freeze_time("2000-01-04") as t4:
@@ -197,9 +196,7 @@ def test_file_operations(hypothesis_settings, tmpdir):
         def __init__(self) -> None:
             super().__init__()
             self.oracle = open(tmpdir / "oracle.txt", "w+b")
-            self.manifest = LocalFileManifest.make_placeholder(EntryID(), "a@a", EntryID()).evolve(
-                blocksize=8
-            )
+            self.manifest = LocalFileManifest.new_placeholder(parent=EntryID(), blocksize=8)
             self.storage = Storage()
 
         def teardown(self) -> None:

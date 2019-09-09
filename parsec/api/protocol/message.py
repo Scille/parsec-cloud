@@ -2,22 +2,10 @@
 
 from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.types import DeviceIDField
 
 
-__all__ = ("message_send_serializer", "message_get_serializer")
-
-
-class MessageSendReqSchema(BaseReqSchema):
-    recipient = fields.UserID(required=True)
-    timestamp = fields.DateTime(required=True)
-    body = fields.Bytes(required=True)
-
-
-class MessageSendRepSchema(BaseRepSchema):
-    pass
-
-
-message_send_serializer = CmdSerializer(MessageSendReqSchema, MessageSendRepSchema)
+__all__ = ("message_get_serializer",)
 
 
 class MessageGetReqSchema(BaseReqSchema):
@@ -26,7 +14,7 @@ class MessageGetReqSchema(BaseReqSchema):
 
 class MessageSchema(UnknownCheckedSchema):
     count = fields.Integer(required=True)
-    sender = fields.DeviceID(required=True)
+    sender = DeviceIDField(required=True)
     timestamp = fields.DateTime(required=True)
     body = fields.Bytes(required=True)
 

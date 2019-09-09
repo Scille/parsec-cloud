@@ -3,17 +3,10 @@
 import os
 import pytest
 from hypothesis import strategies as st
-from hypothesis_trio.stateful import (
-    initialize,
-    rule,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-    Bundle,
-)
+from hypothesis_trio.stateful import initialize, rule, Bundle
 from string import ascii_lowercase
 
 from parsec.core.fs import FSWorkspaceNotFoundError
-from tests.common import call_with_control
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -22,47 +15,13 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
-def test_fs_online_user(
-    hypothesis_settings,
-    reset_testbed,
-    backend_addr,
-    backend_factory,
-    server_factory,
-    oracle_fs_with_sync_factory,
-    user_fs_factory,
-    alice,
-    persistent_mockup,
-):
-    class FSOfflineUser(TrioAsyncioRuleBasedStateMachine):
+def test_fs_online_user(user_fs_state_machine, oracle_fs_with_sync_factory, alice):
+    class FSOfflineUser(user_fs_state_machine):
         Workspaces = Bundle("workspace")
-
-        async def restart_user_fs(self, device):
-            try:
-                await self.user_fs_controller.stop()
-            except AttributeError:
-                pass
-
-            async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=device) as user_fs:
-                    await started_cb(user_fs=user_fs)
-
-            self.user_fs_controller = await self.get_root_nursery().start(
-                call_with_control, _user_fs_controlled_cb
-            )
-
-        async def start_backend(self):
-            async def _backend_controlled_cb(started_cb):
-                async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
-                        await started_cb(backend=backend, server=server)
-
-            self.backend_controller = await self.get_root_nursery().start(
-                call_with_control, _backend_controlled_cb
-            )
 
         @initialize()
         async def init(self):
-            await reset_testbed()
+            await self.reset_all()
             self.device = alice
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.workspace = None
@@ -70,22 +29,13 @@ def test_fs_online_user(
             await self.start_backend()
             await self.restart_user_fs(self.device)
 
-        @property
-        def user_fs(self):
-            return self.user_fs_controller.user_fs
-
-        @property
-        def backend(self):
-            return self.backend_controller.backend
-
         @rule()
         async def restart(self):
             await self.restart_user_fs(self.device)
 
         @rule()
         async def reset(self):
-            persistent_mockup.clear()
-            await self.restart_user_fs(self.device)
+            await self.reset_user_fs(self.device)
             await self.user_fs.sync()
             self.oracle_fs.reset()
 
@@ -128,4 +78,4 @@ def test_fs_online_user(
             await self.user_fs.sync()
             self.oracle_fs.sync()
 
-    run_state_machine_as_test(FSOfflineUser, settings=hypothesis_settings)
+    FSOfflineUser.run_as_test()

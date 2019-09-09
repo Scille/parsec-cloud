@@ -4,7 +4,14 @@ import pendulum
 import uuid
 from collections import namedtuple
 
-from parsec.serde import packb, unpackb, UnknownCheckedSchema, OneOfSchema, Serializer, fields
+from parsec.serde import (
+    packb,
+    unpackb,
+    UnknownCheckedSchema,
+    OneOfSchema,
+    MsgpackSerializer,
+    fields,
+)
 
 
 def test_pack_datetime():
@@ -27,8 +34,8 @@ def test_repr_serializer():
     class MySchema(UnknownCheckedSchema):
         pass
 
-    serializer = Serializer(MySchema)
-    assert repr(serializer) == "Serializer(schema=MySchema)"
+    serializer = MsgpackSerializer(MySchema)
+    assert repr(serializer) == "MsgpackSerializer(schema=MySchema)"
 
 
 def test_oneof_schema():

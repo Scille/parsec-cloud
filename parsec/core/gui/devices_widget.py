@@ -5,10 +5,9 @@ from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.api.data import RevokedDeviceCertificateContent
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
-
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.password_change_dialog import PasswordChangeDialog
@@ -69,7 +68,7 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 
     def show_device_info(self):
         text = f"{self.device_name}\n\n"
-        text += _("DEVICE_CREATED_ON_{}").format(format_datetime(self.certified_on))
+        text += _("DEVICE_CREATED_ON_{}").format(format_datetime(self.certified_on, full=True))
         if self.label.is_revoked:
             text += "\n\n"
             text += _("DEVICE_IS_REVOKED")
@@ -163,7 +162,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             errmsg = "ERR_DEVICE_REVOKED_ALREADY"
         elif status == "not_found":
             errmsg = "ERR_DEVICE_REVOKED_NOT_FOUND"
-        elif status == "invalid_role" or status == "invalid_certification":
+        elif status == "not_allowed" or status == "invalid_certification":
             errmsg = "ERR_DEVICE_REVOKED_NOT_ENOUGHT_PERMISSIONS"
         elif status == "error":
             errmsg = "ERR_DEVICE_REVOKED_UNKNOWN"

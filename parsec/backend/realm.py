@@ -5,10 +5,11 @@ from uuid import UUID
 import pendulum
 import attr
 
-from parsec.types import DeviceID, UserID, OrganizationID
-from parsec.crypto import timestamps_in_the_ballpark
-from parsec.api.data import DataError, RealmRoleCertificateContent
+from parsec.utils import timestamps_in_the_ballpark
 from parsec.api.protocol import (
+    OrganizationID,
+    UserID,
+    DeviceID,
     RealmRole,
     MaintenanceType,
     realm_status_serializer,
@@ -18,6 +19,7 @@ from parsec.api.protocol import (
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
 )
+from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.backend.utils import catch_protocol_errors
 
 
@@ -230,7 +232,9 @@ class BaseRealmComponent:
             }
 
         try:
-            await self.update_roles(client_ctx.organization_id, granted_role)
+            await self.update_roles(
+                client_ctx.organization_id, granted_role, msg["recipient_message"]
+            )
 
         except RealmRoleAlreadyGranted:
             return realm_update_roles_serializer.rep_dump({"status": "already_granted"})
@@ -374,7 +378,10 @@ class BaseRealmComponent:
         raise NotImplementedError()
 
     async def update_roles(
-        self, organization_id: OrganizationID, new_role: RealmGrantedRole
+        self,
+        organization_id: OrganizationID,
+        new_role: RealmGrantedRole,
+        recipient_message: Optional[bytes] = None,
     ) -> None:
         """
         Raises:

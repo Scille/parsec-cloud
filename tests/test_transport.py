@@ -6,7 +6,7 @@ from functools import partial
 
 from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.transport import Transport, TransportClosedByPeer
-from parsec.api.protocol.base import Serializer
+from parsec.api.protocol.base import MsgpackSerializer
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ async def test_big_buffer_bench(backend_addr):
     class Schema(UnknownCheckedSchema):
         data = fields.Bytes()
 
-    schema = Serializer(Schema)
+    schema = MsgpackSerializer(Schema)
 
     # Base64 encoding of the bytes make the payload bigger once serialized
     # roughly_max = int(TCPTransport.MAX_MSG_SIZE * 2 / 3)

@@ -8,19 +8,27 @@ from parsec.core.backend_connection import backend_cmds_pool_factory, backend_an
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS, FSLocalMissError
 from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.realm_storage import RealmStorage
 
 from tests.common import freeze_time
 
 
 @pytest.fixture
-def initialize_local_storage(initial_user_manifest_state, persistent_mockup):
+def local_storage_path(tmpdir):
+    def _local_storage_path(device):
+        return Path(tmpdir) / "local_storage" / device.slug
+
+    return _local_storage_path
+
+
+@pytest.fixture
+def initialize_local_storage(local_storage_path, initial_user_manifest_state, persistent_mockup):
     async def _initialize_local_storage(device):
         device_id = device.device_id
-        path = Path("/") / device.slug
+        path = local_storage_path(device)
         local_storage = LocalStorage(device_id, device.local_symkey, path)
         with freeze_time("2000-01-01"):
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            user_manifest = user_manifest.evolve(author=device_id)
         try:
             local_storage.get_manifest(device.user_manifest_id)
         except FSLocalMissError:
@@ -32,19 +40,41 @@ def initialize_local_storage(initial_user_manifest_state, persistent_mockup):
     return _initialize_local_storage
 
 
-@pytest.fixture()
-async def alice_local_storage(initialize_local_storage, alice):
-    return await initialize_local_storage(alice)
+@pytest.fixture
+def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
+    def _initialize_userfs_storage(device, storage):
+        try:
+            storage.get_manifest(device.user_manifest_id)
+        except FSLocalMissError:
+            with freeze_time("2000-01-01"):
+                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
+            storage.set_manifest(device.user_manifest_id, user_manifest)
+
+    return _initialize_userfs_storage
 
 
 @pytest.fixture()
-async def alice2_local_storage(initialize_local_storage, alice2):
-    return await initialize_local_storage(alice2)
+async def alice_local_storage(local_storage_path, initialize_userfs_storage, alice):
+    path = local_storage_path(alice)
+    with RealmStorage.factory(alice, path) as storage:
+        initialize_userfs_storage(alice, storage)
+        yield storage
 
 
 @pytest.fixture()
-async def bob_local_storage(initialize_local_storage, bob):
-    return await initialize_local_storage(bob)
+async def alice2_local_storage(local_storage_path, initialize_userfs_storage, alice2):
+    path = local_storage_path(alice2)
+    with RealmStorage.factory(alice2, path) as storage:
+        initialize_userfs_storage(alice2, storage)
+        yield storage
+
+
+@pytest.fixture()
+async def bob_local_storage(local_storage_path, initialize_userfs_storage, bob):
+    path = local_storage_path(bob)
+    with RealmStorage.factory(bob, path) as storage:
+        initialize_userfs_storage(bob, storage)
+        yield storage
 
 
 @pytest.fixture
@@ -124,22 +154,22 @@ async def anonymous_backend_cmds(running_backend, coolorg):
 
 
 @pytest.fixture
-def user_fs_factory(event_bus_factory, persistent_mockup, initialize_local_storage):
+def user_fs_factory(
+    local_storage_path, event_bus_factory, persistent_mockup, initialize_userfs_storage
+):
     @asynccontextmanager
     async def _user_fs_factory(device, event_bus=None, initialize_local_storage=True):
         event_bus = event_bus or event_bus_factory()
-        if initialize_local_storage:
-            await _initialize_local_storage(device)
-
         async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
-            path = Path("/") / device.slug
+            path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             with UserFS(device, path, cmds, rdm, event_bus) as user_fs:
+                if initialize_local_storage:
+                    initialize_userfs_storage(device, user_fs.storage)
                 yield user_fs
 
-    _initialize_local_storage = initialize_local_storage
     return _user_fs_factory
 
 

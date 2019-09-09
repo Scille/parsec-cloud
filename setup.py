@@ -388,7 +388,9 @@ setup(
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],
     },
     options={"build_exe": build_exe_options},
-    executables=[Executable("parsec/cli.py", targetName="parsec")],
+    executables=[
+        Executable("parsec/parsec.py", targetName="parsec.exe", base="Win32GUI", icon="favicon.ico")
+    ],
     license="AGPLv3",
     zip_safe=False,
     keywords="parsec",

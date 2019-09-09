@@ -5,7 +5,7 @@ import pendulum
 from typing import Tuple, Optional, Dict
 from collections import defaultdict
 
-from parsec.types import UserID, DeviceID, DeviceName, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.user import (
     user_get_revoked_on,
@@ -49,7 +49,9 @@ class MemoryUserComponent(BaseUserComponent):
             "user.created",
             organization_id=organization_id,
             user_id=user.user_id,
+            user_certificate=user.user_certificate,
             first_device_id=first_device.device_id,
+            first_device_certificate=first_device.device_certificate,
         )
 
     async def create_device(
@@ -69,6 +71,7 @@ class MemoryUserComponent(BaseUserComponent):
             "device.created",
             organization_id=organization_id,
             device_id=device.device_id,
+            device_certificate=device.device_certificate,
             encrypted_answer=encrypted_answer,
         )
 

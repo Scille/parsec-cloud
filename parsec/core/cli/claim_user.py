@@ -4,8 +4,9 @@ import os
 import click
 
 from parsec.utils import trio_run
-from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.cli_utils import spinner, operation, cli_exception_handler
+from parsec.core.types import BackendOrganizationAddr
 from parsec.core.cli.utils import core_config_options
 from parsec.core.local_device import save_device_with_password, save_device_with_pkcs11
 from parsec.core.invite_claim import claim_user as actual_claim_user

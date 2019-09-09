@@ -1,11 +1,21 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.api.protocol.base import (
-    ProtocoleError,
+    ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
     packb,
     unpackb,
+)
+from parsec.api.protocol.types import (
+    UserID,
+    DeviceID,
+    DeviceName,
+    OrganizationID,
+    UserIDField,
+    DeviceIDField,
+    DeviceNameField,
+    OrganizationIDField,
 )
 from parsec.api.protocol.handshake import (
     HandshakeError,
@@ -39,7 +49,7 @@ from parsec.api.protocol.user import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.api.protocol.message import message_send_serializer, message_get_serializer
+from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
     RealmRole,
     RealmRoleField,
@@ -66,7 +76,7 @@ from parsec.api.protocol.vlob import (
 
 
 __all__ = (
-    "ProtocoleError",
+    "ProtocolError",
     "MessageSerializationError",
     "InvalidMessageError",
     "packb",
@@ -80,6 +90,15 @@ __all__ = (
     "AuthenticatedClientHandshake",
     "AnonymousClientHandshake",
     "AdministrationClientHandshake",
+    # Types
+    "UserID",
+    "DeviceID",
+    "DeviceName",
+    "OrganizationID",
+    "UserIDField",
+    "DeviceIDField",
+    "DeviceNameField",
+    "OrganizationIDField",
     # Organization
     "organization_create_serializer",
     "organization_bootstrap_serializer",
@@ -103,7 +122,6 @@ __all__ = (
     "device_create_serializer",
     "device_revoke_serializer",
     # Message
-    "message_send_serializer",
     "message_get_serializer",
     # Data group
     "RealmRole",

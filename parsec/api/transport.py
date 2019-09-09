@@ -44,6 +44,22 @@ class Transport:
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
+        self._handshake = None
+
+    # Handshake interface
+    # TODO: Investigate a better place for providing an access to the peer API version
+
+    @property
+    def handshake(self):
+        if self._handshake is None:
+            raise TypeError("The handshake has not been set")
+        return self._handshake
+
+    @handshake.setter
+    def handshake(self, handshake):
+        if self._handshake is not None:
+            raise TypeError("The handshake has already been set")
+        self._handshake = handshake
 
     async def _next_ws_event(self):
         while True:
@@ -153,6 +169,8 @@ class Transport:
                 raise TransportClosedByPeer("Peer has closed connection")
 
             elif isinstance(event, BytesReceived):
+                # TODO: check that data doesn't go over MAX_BIN_LEN (1 MB)
+                # Msgpack will refuse to unpack it so we should fail early on if that happens
                 data += event.data
                 if event.message_finished:
                     return data

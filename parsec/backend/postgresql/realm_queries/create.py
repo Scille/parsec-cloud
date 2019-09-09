@@ -4,7 +4,7 @@ from pypika import Parameter
 from pypika.terms import ValueWrapper
 
 from parsec.api.protocol import RealmRole
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.backend.realm import RealmGrantedRole, RealmAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query

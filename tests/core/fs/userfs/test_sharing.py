@@ -4,7 +4,8 @@ import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
 
-from parsec.core.types import WorkspaceEntry, WorkspaceRole, LocalUserManifest, EntryID
+from parsec.api.data import UserManifest, WorkspaceEntry
+from parsec.core.types import WorkspaceRole, LocalUserManifest, EntryID
 from parsec.core.fs import (
     FSError,
     FSWorkspaceNotFoundError,
@@ -414,10 +415,12 @@ async def test_share_workspace_then_conflict_on_rights(
     if first_to_sync == "alice2":
         first = alice_user_fs
         second = alice2_user_fs
+        synced_timestamp = Pendulum(2000, 1, 7)
         synced_version = 3
     else:
         first = alice2_user_fs
         second = alice_user_fs
+        synced_timestamp = Pendulum(2000, 1, 6)
         synced_version = 2
 
     # Finally Alice devices try to reconciliate
@@ -431,13 +434,13 @@ async def test_share_workspace_then_conflict_on_rights(
 
     am = alice_user_fs.get_user_manifest()
     a2m = alice2_user_fs.get_user_manifest()
-    expected = LocalUserManifest(
-        author=alice.device_id,
+    expected_remote = UserManifest(
+        author=alice2.device_id,
+        timestamp=synced_timestamp,
+        id=alice2.user_manifest_id,
+        version=synced_version,
         created=Pendulum(2000, 1, 1),
         updated=Pendulum(2000, 1, 5),
-        base_version=synced_version,
-        need_sync=False,
-        is_placeholder=False,
         last_processed_message=2,
         workspaces=(
             WorkspaceEntry(
@@ -451,8 +454,15 @@ async def test_share_workspace_then_conflict_on_rights(
             ),
         ),
     )
+    expected = LocalUserManifest(
+        base=expected_remote,
+        need_sync=False,
+        updated=expected_remote.updated,
+        last_processed_message=expected_remote.last_processed_message,
+        workspaces=expected_remote.workspaces,
+    )
     assert am == expected
-    assert a2m == expected.evolve(author=alice2.device_id)
+    assert a2m == expected
 
     a_w = alice_user_fs.get_workspace(wid)
     a2_w = alice2_user_fs.get_workspace(wid)

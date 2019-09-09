@@ -1,16 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import Optional, Union
+from typing import Optional
 from pendulum import Pendulum
-from nacl.exceptions import CryptoError
-from nacl.secret import SecretBox
-from nacl.public import SealedBox
-from nacl.bindings import crypto_sign_BYTES
 
-from parsec.types import DeviceID
-from parsec.serde import BaseSchema, fields, SerdeValidationError, SerdePackingError, Serializer
-from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
+from parsec.serde import (
+    BaseSchema,
+    fields,
+    SerdeValidationError,
+    SerdePackingError,
+    BaseSerializer,
+    ZipMsgpackSerializer,
+)
+from parsec.crypto import CryptoError, PrivateKey, PublicKey, SigningKey, VerifyKey, SecretKey
+from parsec.api.protocol import DeviceID, DeviceIDField
 
 
 class DataError(Exception):
@@ -26,48 +29,75 @@ class DataSerializationError(SerdePackingError, DataError):
 
 
 class BaseSignedDataSchema(BaseSchema):
-    author = fields.DeviceID(missing=None)
+    author = DeviceIDField(required=True, allow_none=True)
     timestamp = fields.DateTime(required=True)
 
 
-class SignedDataMeta(type):
-    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True)
+class DataMeta(type):
+
+    BASE_SCHEMA_CLS = BaseSchema
+    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, cmp=False)
 
     def __new__(cls, name, bases, nmspc):
+
         # Sanity checks
         if "SCHEMA_CLS" not in nmspc:
             raise RuntimeError("Missing attribute `SCHEMA_CLS` in class definition")
-        if not issubclass(nmspc["SCHEMA_CLS"], BaseSignedDataSchema):
+        if not issubclass(nmspc["SCHEMA_CLS"], cls.BASE_SCHEMA_CLS):
             raise RuntimeError(f"Attribute `SCHEMA_CLS` must inherit {BaseSignedDataSchema!r}")
 
         # During the creation of a class, we wrap it with `attr.s`.
         # Under the hood, attr recreate a class so this metaclass is going to
         # be called a second time.
         # We must detect this second call to avoid infinie loop.
-        if "__attrs_attrs__" not in nmspc:
-            if "SERIALIZER" in nmspc and bases:
-                raise RuntimeError("Attribute `SERIALIZER` is reserved")
-            nmspc["SERIALIZER"] = Serializer(
-                nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
-            )
-            raw_cls = type.__new__(cls, name, bases, nmspc)
-            return cls.CLS_ATTR_COOKING(raw_cls)
-        else:
+        if "__attrs_attrs__" in nmspc:
             return type.__new__(cls, name, bases, nmspc)
+
+        if "SERIALIZER" in nmspc:
+            raise RuntimeError("Attribute `SERIALIZER` is reserved")
+
+        raw_cls = type.__new__(cls, name, bases, nmspc)
+
+        try:
+            serializer_cls = raw_cls.SERIALIZER_CLS
+        except AttributeError:
+            raise RuntimeError("Missing attribute `SERIALIZER_CLS` in class definition")
+
+        if not issubclass(serializer_cls, BaseSerializer):
+            raise RuntimeError(f"Attribute `SERIALIZER_CLS` must inherit {BaseSerializer!r}")
+
+        raw_cls.SERIALIZER = serializer_cls(
+            nmspc["SCHEMA_CLS"], DataValidationError, DataSerializationError
+        )
+
+        return cls.CLS_ATTR_COOKING(raw_cls)
+
+
+class SignedDataMeta(DataMeta):
+    BASE_SCHEMA_CLS = BaseSignedDataSchema
 
 
 class BaseSignedData(metaclass=SignedDataMeta):
     """
-    All data within the api should inherit this class. The goal is to have
+    Most data within the api should inherit this class. The goal is to have
     immutable data (thanks to attr frozen) that can be easily (de)serialize
     with encryption/signature support.
     """
 
-    SCHEMA_CLS = BaseSignedDataSchema  # Must be overloaded by child class
-    # SERIALIZER attribute sets by the metaclass
+    # Must be overloaded by child classes
+    SCHEMA_CLS = BaseSignedDataSchema
+    SERIALIZER_CLS = BaseSerializer
 
     author: Optional[DeviceID]  # Set to None if signed by the root key
     timestamp: Pendulum
+
+    def __eq__(self, other: "BaseSignedData") -> bool:
+        if isinstance(other, type(self)):
+            return attr.astuple(self).__eq__(attr.astuple(other))
+        return NotImplemented
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
 
     def _serialize(self) -> bytes:
         """
@@ -82,7 +112,10 @@ class BaseSignedData(metaclass=SignedDataMeta):
         Raises:
             DataError
         """
-        return cls.SERIALIZER.loads(raw)
+        try:
+            return cls.SERIALIZER.loads(raw)
+        except DataError:
+            raise
 
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes:
         """
@@ -95,23 +128,20 @@ class BaseSignedData(metaclass=SignedDataMeta):
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-    def dump_sign_and_encrypt(
-        self, author_signkey: SigningKey, key: Union[bytes, SecretBox]
-    ) -> bytes:
+    def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: bytes) -> bytes:
         """
         Raises:
             DataError
         """
         try:
             signed = author_signkey.sign(self._serialize())
-            box = key if isinstance(key, SecretBox) else SecretBox(key)
-            return box.encrypt(signed)
+            return key.encrypt(signed)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
     def dump_sign_and_encrypt_for(
-        self, author_signkey: SigningKey, recipient_pubkey: Union[PublicKey, SealedBox]
+        self, author_signkey: SigningKey, recipient_pubkey: PublicKey
     ) -> bytes:
         """
         Raises:
@@ -119,12 +149,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         """
         try:
             signed = author_signkey.sign(self._serialize())
-            box = (
-                recipient_pubkey
-                if isinstance(recipient_pubkey, SealedBox)
-                else SealedBox(recipient_pubkey)
-            )
-            return box.encrypt(signed)
+            return recipient_pubkey.encrypt_for_self(signed)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
@@ -135,7 +160,7 @@ class BaseSignedData(metaclass=SignedDataMeta):
         Raises:
             DataError
         """
-        raw = signed[crypto_sign_BYTES:]
+        raw = VerifyKey.unsecure_unwrap(signed)
         return self._deserialize(raw)
 
     @classmethod
@@ -159,10 +184,12 @@ class BaseSignedData(metaclass=SignedDataMeta):
         data = cls._deserialize(raw)
         if data.author != expected_author:
             repr_expected_author = expected_author or "<root key>"
-            raise DataError(f"Invalid author: expect `{repr_expected_author}`, got `{data.author}`")
+            raise DataError(
+                f"Invalid author: expected `{repr_expected_author}`, got `{data.author}`"
+            )
         if expected_timestamp is not None and data.timestamp != expected_timestamp:
             raise DataError(
-                f"Invalid timestamp: expect `{expected_timestamp}`, got `{data.timestamp}`"
+                f"Invalid timestamp: expected `{expected_timestamp}`, got `{data.timestamp}`"
             )
         return data
 
@@ -170,46 +197,161 @@ class BaseSignedData(metaclass=SignedDataMeta):
     def decrypt_verify_and_load(
         self,
         encrypted: bytes,
-        key: Union[bytes, SecretBox],
+        key: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
+        **kwargs,
     ) -> "BaseSignedData":
         """
         Raises:
             DataError
         """
         try:
-            box = key if isinstance(key, SecretBox) else SecretBox(key)
-            signed = box.decrypt(encrypted)
+            signed = key.decrypt(encrypted)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(signed)
+        return self.verify_and_load(
+            signed,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author,
+            expected_timestamp=expected_timestamp,
+            **kwargs,
+        )
 
     @classmethod
     def decrypt_verify_and_load_for(
         self,
         encrypted: bytes,
-        recipient_privkey: Union[PrivateKey, SealedBox],
+        recipient_privkey: PrivateKey,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
         expected_timestamp: Pendulum,
+        **kwargs,
     ) -> "BaseSignedData":
         """
         Raises:
             DataError
         """
         try:
-            box = (
-                recipient_privkey
-                if isinstance(recipient_privkey, SealedBox)
-                else SealedBox(recipient_privkey)
-            )
-            signed = box.decrypt(encrypted)
+            signed = recipient_privkey.decrypt_from_self(encrypted)
 
         except CryptoError as exc:
             raise DataError(str(exc)) from exc
 
-        return self.verify_and_load(signed)
+        return self.verify_and_load(
+            signed,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author,
+            expected_timestamp=expected_timestamp,
+            **kwargs,
+        )
+
+
+class BaseData(metaclass=DataMeta):
+    """
+    Some data within the api don't have to be signed (e.g. claim info) and
+    should inherit this class.
+    The goal is to have immutable data (thanks to attr frozen) that can be
+    easily (de)serialize with encryption support.
+    """
+
+    # Must be overloaded by child classes
+    SCHEMA_CLS = BaseSchema
+    SERIALIZER_CLS = BaseSerializer
+
+    def __eq__(self, other: "BaseData") -> bool:
+        if isinstance(other, type(self)):
+            return attr.astuple(self).__eq__(attr.astuple(other))
+        return NotImplemented
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+    def dump(self) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        return self.SERIALIZER.dumps(self)
+
+    @classmethod
+    def load(cls, raw: bytes) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        return cls.SERIALIZER.loads(raw)
+
+    def dump_and_encrypt(self, key: SecretKey) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = self.dump()
+            return key.encrypt(raw)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+    def dump_and_encrypt_for(self, recipient_pubkey: PublicKey) -> bytes:
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = self.dump()
+            return recipient_pubkey.encrypt_for_self(raw)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+    @classmethod
+    def decrypt_and_load(cls, encrypted: bytes, key: SecretKey, **kwargs) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = key.decrypt(encrypted)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+        return cls.load(raw, **kwargs)
+
+    @classmethod
+    def decrypt_and_load_for(
+        self, encrypted: bytes, recipient_privkey: PrivateKey, **kwargs
+    ) -> "BaseData":
+        """
+        Raises:
+            DataError
+        """
+        try:
+            raw = recipient_privkey.decrypt_from_self(encrypted)
+
+        except CryptoError as exc:
+            raise DataError(str(exc)) from exc
+
+        return self.load(raw, **kwargs)
+
+
+# Data class with serializers
+
+
+class BaseAPISignedData(BaseSignedData):
+    """Signed and compressed base class for API data"""
+
+    SCHEMA_CLS = BaseSignedDataSchema
+    SERIALIZER_CLS = ZipMsgpackSerializer
+
+
+class BaseAPIData(BaseData):
+    """Unsigned and compressed base class for API data"""
+
+    SCHEMA_CLS = BaseSchema
+    SERIALIZER_CLS = ZipMsgpackSerializer

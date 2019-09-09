@@ -21,6 +21,7 @@ EXPLORER_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop
 DK_ICON_PATH = (
     "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel"
 )
+PARSEC_INSTALL_PATH = "Software\\Parsec"
 
 
 # Keys and values that will have to be removed when uninstalling Parsec on Windows
@@ -113,16 +114,15 @@ def _add_nav_link(mountpoint):
         logger.warning("OS is Windows but cannot import winreg")
         return
 
-    EXE_PATH = os.path.join(os.getcwd(), "..", "parsec.exe")
     MOUNTPOINT = mountpoint
 
-    def _add_keys(handle, x64):
+    def _add_keys(handle, x64, exe_path):
         app_handle = winreg.CreateKey(handle, APP_KEY)
         winreg.SetValueEx(app_handle, None, 0, winreg.REG_SZ, "Parsec")
         winreg.SetValueEx(app_handle, "System.IsPinnedToNamespaceTree", 0, winreg.REG_DWORD, 0x1)
         winreg.SetValueEx(app_handle, "SortOrderIndex", 0, winreg.REG_DWORD, 0x42)
         with winreg.CreateKey(app_handle, "DefaultIcon") as icon_handle:
-            winreg.SetValueEx(icon_handle, None, 0, winreg.REG_SZ, f"{EXE_PATH},0")
+            winreg.SetValueEx(icon_handle, None, 0, winreg.REG_SZ, f"{exe_path},0")
         with winreg.CreateKey(app_handle, "InProcServer32") as proc_handle:
             if not x64:
                 winreg.SetValueEx(
@@ -153,11 +153,18 @@ def _add_nav_link(mountpoint):
         winreg.CloseKey(app_handle)
 
     handle = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+
+    exe_path = os.path.join(os.getcwd(), "parsec.exe")
+    with winreg.OpenKey(handle, PARSEC_INSTALL_PATH, access=winreg.KEY_READ) as install_handle:
+        val = winreg.QueryValueEx(install_handle, None)
+        if val:
+            exe_path = os.path.join(val[0], "parsec.exe")
+
     with winreg.OpenKey(handle, CLSID_PATH) as clsid_handle:
-        _add_keys(clsid_handle, False)
+        _add_keys(clsid_handle, False, exe_path)
     try:
         with winreg.OpenKey(handle, CLSID_64_PATH) as clsid_64_handle:
-            _add_keys(clsid_64_handle, True)
+            _add_keys(clsid_64_handle, True, exe_path)
     except FileNotFoundError:
         pass
 

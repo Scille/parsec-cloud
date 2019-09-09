@@ -96,6 +96,9 @@ class InMemoryPersistentStorage(PersistentStorage):
     def close(self):
         pass
 
+    def run_vacuum(self):
+        pass
+
 
 @contextmanager
 def freeze_time(time):

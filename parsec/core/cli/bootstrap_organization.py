@@ -8,9 +8,10 @@ from pathlib import Path
 from parsec.utils import trio_run
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, operation, cli_exception_handler
-from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey
+from parsec.api.protocol import DeviceID
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 from parsec.core.local_device import generate_new_device, save_device_with_password

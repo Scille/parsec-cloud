@@ -95,6 +95,11 @@ class FileTable(QTableWidget):
                 )
         return files
 
+    def has_file(self, uuid):
+        return any(
+            uuid == self.item(row, 1).data(UUID_DATA_INDEX) for row in range(self.rowCount())
+        )
+
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
 
@@ -155,6 +160,7 @@ class FileTable(QTableWidget):
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("FILE_TREE_PARENT_FOLDER"))
+        item.setToolTip(_("FILE_TREE_PARENT_FOLDER_TOOLTIP"))
         item.setData(TYPE_DATA_INDEX, FileType.ParentFolder)
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 1, item)
@@ -179,6 +185,7 @@ class FileTable(QTableWidget):
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(_("FILE_TREE_PARENT_WORKSPACE"))
+        item.setToolTip(_("FILE_TREE_PARENT_WORKSPACE_TOOLTIP"))
         item.setData(TYPE_DATA_INDEX, FileType.ParentWorkspace)
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 1, item)
@@ -203,6 +210,7 @@ class FileTable(QTableWidget):
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(folder_name)
         item.setData(NAME_DATA_INDEX, folder_name)
+        item.setToolTip("\n".join(folder_name[i : i + 64] for i in range(0, len(folder_name), 64)))
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 1, item)
@@ -231,6 +239,7 @@ class FileTable(QTableWidget):
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 0, item)
         item = CustomTableItem(file_name)
+        item.setToolTip("\n".join(file_name[i : i + 64] for i in range(0, len(file_name), 64)))
         item.setData(NAME_DATA_INDEX, file_name)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)

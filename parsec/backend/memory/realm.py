@@ -3,10 +3,10 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from parsec.api.protocol import RealmRole
-from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.realm import (
     MaintenanceType,
@@ -127,7 +127,10 @@ class MemoryRealmComponent(BaseRealmComponent):
             return [x.certificate for x in realm.granted_roles]
 
     async def update_roles(
-        self, organization_id: OrganizationID, new_role: RealmGrantedRole
+        self,
+        organization_id: OrganizationID,
+        new_role: RealmGrantedRole,
+        recipient_message: Optional[bytes] = None,
     ) -> None:
         assert new_role.granted_by.user_id != new_role.user_id
 
@@ -166,6 +169,15 @@ class MemoryRealmComponent(BaseRealmComponent):
             user=new_role.user_id,
             role=new_role.role,
         )
+
+        if recipient_message is not None:
+            await self._message_component.send(
+                organization_id,
+                new_role.granted_by,
+                new_role.user_id,
+                new_role.granted_on,
+                recipient_message,
+            )
 
     async def start_reencryption_maintenance(
         self,

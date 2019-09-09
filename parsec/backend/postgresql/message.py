@@ -4,7 +4,7 @@ from pendulum import Pendulum
 from typing import List, Tuple
 from pypika import Parameter, Order, functions as fn
 
-from parsec.types import UserID, DeviceID, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.postgresql.handler import send_signal, PGHandler
 from parsec.backend.postgresql.utils import Query

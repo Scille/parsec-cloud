@@ -72,12 +72,12 @@ async def test_device_revoke_ok(
 
 @pytest.mark.trio
 async def test_device_revoke_not_admin(
-    backend, backend_sock_factory, bob_backend_sock, bob, alice, alice_revocation_from_bob
+    backend, backend_sock_factory, bob_backend_sock, alice, alice_revocation_from_bob
 ):
     rep = await device_revoke(
         bob_backend_sock, revoked_device_certificate=alice_revocation_from_bob
     )
-    assert rep == {"status": "invalid_role", "reason": f"User `{bob.user_id}` is not admin"}
+    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}
 
 
 @pytest.mark.trio

@@ -2,14 +2,9 @@
 
 import pytest
 
-from parsec.types import (
-    DeviceID,
-    UserID,
-    BackendAddr,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-)
+from parsec.api.protocol import DeviceID, UserID
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
+from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 
 
 def test_device_id():

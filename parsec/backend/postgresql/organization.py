@@ -3,7 +3,7 @@
 from triopg import UniqueViolationError
 from pypika import Parameter
 
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (

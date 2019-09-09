@@ -2,10 +2,10 @@
 
 import pendulum
 from uuid import UUID
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from parsec.api.protocol import RealmRole
-from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.backend.realm import BaseRealmComponent, RealmStatus, RealmGrantedRole
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.realm_queries import (
@@ -59,10 +59,13 @@ class PGRealmComponent(BaseRealmComponent):
             return await query_get_realms_for_user(conn, organization_id, user)
 
     async def update_roles(
-        self, organization_id: OrganizationID, new_role: RealmGrantedRole
+        self,
+        organization_id: OrganizationID,
+        new_role: RealmGrantedRole,
+        recipient_message: Optional[bytes] = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
-            await query_update_roles(conn, organization_id, new_role)
+            await query_update_roles(conn, organization_id, new_role, recipient_message)
 
     async def start_reencryption_maintenance(
         self,

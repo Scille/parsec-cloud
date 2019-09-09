@@ -9,6 +9,8 @@ from msgpack.exceptions import ExtraData, FormatError, StackError
 
 from parsec.serde.exceptions import SerdePackingError
 
+MAX_BIN_LEN = 1024 * 1024  # 1 MB
+
 
 def packb(data: dict, exc_cls=SerdePackingError) -> bytes:
     """
@@ -48,7 +50,7 @@ def unpackb(raw_data: bytes, exc_cls=SerdePackingError) -> dict:
         return ExtType(code, data)
 
     try:
-        return msgpack_unpackb(raw_data, ext_hook=_ext_hook, raw=False)
+        return msgpack_unpackb(raw_data, ext_hook=_ext_hook, raw=False, max_bin_len=MAX_BIN_LEN)
 
     except (ExtraData, ValueError, FormatError, StackError) as exc:
         raise exc_cls(f"Invalid msgpack data: {exc}") from exc

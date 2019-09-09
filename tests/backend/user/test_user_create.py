@@ -53,6 +53,8 @@ async def test_user_create_ok(
                 "organization_id": alice.organization_id,
                 "user_id": mallory.user_id,
                 "first_device_id": mallory.device_id,
+                "user_certificate": user_certificate,
+                "first_device_certificate": device_certificate,
             },
         )
 
@@ -199,3 +201,27 @@ async def test_user_create_certify_too_old(alice_backend_sock, alice, mallory):
             "status": "invalid_certification",
             "reason": "Invalid timestamp in certification.",
         }
+
+
+@pytest.mark.trio
+async def test_user_create_author_not_admin(backend, bob_backend_sock, bob, mallory):
+    # Unlike alice, bob is not admin
+    now = pendulum.now()
+    user_certificate = UserCertificateContent(
+        author=bob.device_id,
+        timestamp=now,
+        user_id=mallory.user_id,
+        public_key=mallory.public_key,
+        is_admin=False,
+    ).dump_and_sign(bob.signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=bob.device_id,
+        timestamp=now,
+        device_id=mallory.device_id,
+        verify_key=mallory.verify_key,
+    ).dump_and_sign(bob.signing_key)
+
+    rep = await user_create(
+        bob_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+    )
+    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}

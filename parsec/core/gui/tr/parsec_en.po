@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-08-21 11:09+0200\n"
-"PO-Revision-Date: 2019-08-21 11:12+0200\n"
+"POT-Creation-Date: 2019-08-30 13:29+0200\n"
+"PO-Revision-Date: 2019-08-30 13:29+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -144,9 +144,6 @@ msgstr "Strong"
 
 msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
 msgstr "This workspace needs to be reencrypted."
-
-msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
-msgstr "This workspace does not need to be reencrypted."
 
 msgid "WORKSPACE_SHARED_DISPLAY"
 msgstr "shared with others"
@@ -287,6 +284,9 @@ msgstr "Revoke"
 
 msgid "USER_CREATED_ON_{}"
 msgstr "Created on {}"
+
+msgid "USER_IS_ADMIN"
+msgstr "Administrator"
 
 msgid "USER_IS_REVOKED"
 msgstr "This user has been revoked."
@@ -452,8 +452,14 @@ msgstr "Delete"
 msgid "FILE_TREE_PARENT_FOLDER"
 msgstr "Parent Folder"
 
+msgid "FILE_TREE_PARENT_FOLDER_TOOLTIP"
+msgstr "Go back to the parent folder"
+
 msgid "FILE_TREE_PARENT_WORKSPACE"
 msgstr "Return to workspaces list"
+
+msgid "FILE_TREE_PARENT_WORKSPACE_TOOLTIP"
+msgstr "Go back to workspace list"
 
 msgid "ERR_REGISTER_USER_EXISTS"
 msgstr "This user already exists."
@@ -979,3 +985,6 @@ msgstr "Update"
 
 #~ msgid "ASK_USER_NAME"
 #~ msgstr "User name"
+
+#~ msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
+#~ msgstr "This workspace does not need to be reencrypted."

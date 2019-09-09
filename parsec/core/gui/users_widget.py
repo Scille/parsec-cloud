@@ -25,6 +25,7 @@ class UserButton(QWidget, Ui_UserButton):
     ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.is_admin = is_admin
         if is_admin:
             self.label.setPixmap(QPixmap(":/icons/images/icons/owner2.png"))
         else:
@@ -65,7 +66,10 @@ class UserButton(QWidget, Ui_UserButton):
 
     def show_user_info(self):
         text = "{}\n\n".format(self.user_name)
-        text += _("USER_CREATED_ON_{}").format(format_datetime(self.certified_on))
+        text += _("USER_CREATED_ON_{}").format(format_datetime(self.certified_on, full=True))
+        if self.is_admin:
+            text += "\n\n"
+            text += _("USER_IS_ADMIN")
         if self.label.is_revoked:
             text += "\n\n"
             text += _("USER_IS_REVOKED")
@@ -175,7 +179,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("ERR_USER_REVOKED_ALREADY")
         elif status == "not_found":
             errmsg = _("ERR_USER_REVOKED_NOT_FOUND")
-        elif status == "invalid_role" or status == "invalid_certification":
+        elif status == "not_allowed" or status == "invalid_certification":
             errmsg = _("ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS")
         elif status == "error":
             errmsg = _("ERR_USER_REVOKED_UNKNOWN")
@@ -212,7 +216,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             self.add_user(
                 str(user_info.user_id),
                 is_current_user=current_user == user,
-                is_admin=False,
+                is_admin=user_info.is_admin,
                 certified_on=user_info.certified_on,
                 is_revoked=all([device.revoked_on for device in user_devices]),
             )

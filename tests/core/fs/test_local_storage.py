@@ -14,19 +14,14 @@ from parsec.core.types import (
 )
 
 
-def create_entry(device, type=LocalUserManifest):
-    entry_id = EntryID()
+def create_entry(device, type=LocalWorkspaceManifest):
     if type is LocalUserManifest:
-        manifest = LocalUserManifest(
-            author=device.device_id, base_version=0, is_placeholder=True, need_sync=True
-        )
+        manifest = LocalUserManifest.new_placeholder(parent=EntryID())
     elif type is LocalWorkspaceManifest:
-        manifest = type.make_placeholder(entry_id=entry_id, author=device.device_id)
+        manifest = type.new_placeholder()
     else:
-        manifest = type.make_placeholder(
-            entry_id=entry_id, author=device.device_id, parent_id=EntryID()
-        )
-    return entry_id, manifest
+        manifest = type.new_placeholder(parent=EntryID())
+    return manifest.id, manifest
 
 
 @pytest.mark.trio
@@ -144,9 +139,7 @@ async def test_clear_cache(tmpdir, alice):
             als.get_manifest(entry_id2)
 
 
-@pytest.mark.parametrize(
-    "type", [LocalUserManifest, LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest]
-)
+@pytest.mark.parametrize("type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest])
 @pytest.mark.trio
 async def test_serialize_types(tmpdir, alice, type):
     entry_id, manifest = create_entry(alice, type)
@@ -161,9 +154,9 @@ async def test_serialize_types(tmpdir, alice, type):
 @pytest.mark.trio
 async def test_serialize_non_empty_local_file_manifest(tmpdir, alice):
     entry_id, manifest = create_entry(alice, LocalFileManifest)
-    chunk1 = Chunk.new_chunk(0, 7).evolve_as_block(b"0123456")
-    chunk2 = Chunk.new_chunk(7, 8)
-    chunk3 = Chunk.new_chunk(8, 10)
+    chunk1 = Chunk.new(0, 7).evolve_as_block(b"0123456")
+    chunk2 = Chunk.new(7, 8)
+    chunk3 = Chunk.new(8, 10)
     blocks = (chunk1, chunk2), (chunk3,)
     manifest = manifest.evolve_and_mark_updated(blocksize=8, size=10, blocks=blocks)
     manifest.assert_integrity()

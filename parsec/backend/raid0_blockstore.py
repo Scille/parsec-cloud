@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.backend.blockstore import BaseBlockStoreComponent
 
 

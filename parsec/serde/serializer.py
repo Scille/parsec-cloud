@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import zlib
+
 from marshmallow import ValidationError
 
 from parsec.serde.packing import packb, unpackb, SerdePackingError
 from parsec.serde.exceptions import SerdeValidationError
 
 
-class Serializer:
+class BaseSerializer:
     def __repr__(self):
         return f"{self.__class__.__name__}(schema={self.schema.__class__.__name__})"
 
@@ -42,8 +44,16 @@ class Serializer:
             return self.schema.dump(data).data
 
         except ValidationError as exc:
-            raise SerdeValidationError(exc.messages) from exc
+            raise self.validation_exc(exc.messages) from exc
 
+    def loads(self, data: bytes) -> dict:
+        raise NotImplementedError
+
+    def dumps(self, data: dict) -> bytes:
+        raise NotImplementedError
+
+
+class MsgpackSerializer(BaseSerializer):
     def loads(self, data: bytes) -> dict:
         """
         Raises:
@@ -59,3 +69,25 @@ class Serializer:
             SerdePackingError
         """
         return packb(self.dump(data), self.packing_exc)
+
+
+class ZipMsgpackSerializer(MsgpackSerializer):
+    def loads(self, data: bytes) -> dict:
+        """
+        Raises:
+            SerdeValidationError
+            SerdePackingError
+        """
+        try:
+            unzipped = zlib.decompress(data)
+        except zlib.error as exc:
+            raise self.packing_exc(str(exc)) from exc
+        return super().loads(unzipped)
+
+    def dumps(self, data: dict) -> bytes:
+        """
+        Raises:
+            SerdeValidationError
+            SerdePackingError
+        """
+        return zlib.compress(super().dumps(data))

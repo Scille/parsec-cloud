@@ -1,12 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
-from parsec.crypto import (
-    CryptoError,
-    derivate_secret_key_from_password,
-    encrypt_raw_with_secret_key,
-    decrypt_raw_with_secret_key,
-)
+from parsec.crypto import CryptoError, derivate_secret_key_from_password
+from parsec.serde import MsgpackSerializer, UnknownCheckedSchema, fields
 from parsec.core.local_device.exceptions import (
     LocalDevicePackingError,
     LocalDeviceValidationError,
@@ -46,7 +41,7 @@ class PasswordPayloadSchema(UnknownCheckedSchema):
     ciphertext = fields.Bytes(required=True)
 
 
-password_payload_serializer = Serializer(
+password_payload_serializer = MsgpackSerializer(
     PasswordPayloadSchema,
     validation_exc=LocalDeviceValidationError,
     packing_exc=LocalDevicePackingError,
@@ -66,7 +61,7 @@ class PasswordDeviceEncryptor(BaseLocalDeviceEncryptor):
         """
         try:
             key, salt = derivate_secret_key_from_password(self.password)
-            ciphertext = encrypt_raw_with_secret_key(key, plaintext)
+            ciphertext = key.encrypt(plaintext)
 
         except CryptoError as exc:
             raise LocalDeviceCryptoError(str(exc)) from exc
@@ -88,7 +83,7 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
         payload = password_payload_serializer.loads(ciphertext)
         try:
             key, _ = derivate_secret_key_from_password(self.password, payload["salt"])
-            return decrypt_raw_with_secret_key(key, payload["ciphertext"])
+            return key.decrypt(payload["ciphertext"])
 
         except CryptoError as exc:
             raise LocalDeviceCryptoError(str(exc)) from exc

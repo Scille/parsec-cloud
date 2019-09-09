@@ -4,15 +4,7 @@ import os
 import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
-from hypothesis_trio.stateful import (
-    Bundle,
-    initialize,
-    rule,
-    run_state_machine_as_test,
-    TrioAsyncioRuleBasedStateMachine,
-)
-
-from tests.common import call_with_control
+from hypothesis_trio.stateful import Bundle, initialize, rule
 
 
 def get_path(path):
@@ -25,52 +17,10 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
-def test_fs_online_tree_and_sync(
-    hypothesis_settings,
-    reset_testbed,
-    backend_addr,
-    backend_factory,
-    server_factory,
-    oracle_fs_with_sync_factory,
-    user_fs_factory,
-    alice,
-    persistent_mockup,
-):
-    class FSOnlineTreeAndSync(TrioAsyncioRuleBasedStateMachine):
+def test_fs_online_tree_and_sync(user_fs_state_machine, oracle_fs_with_sync_factory, alice):
+    class FSOnlineTreeAndSync(user_fs_state_machine):
         Files = Bundle("file")
         Folders = Bundle("folder")
-
-        async def restart_user_fs(self, device):
-            try:
-                await self.user_fs_controller.stop()
-            except AttributeError:
-                pass
-
-            async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=device) as user_fs:
-                    await started_cb(user_fs=user_fs)
-
-            self.user_fs_controller = await self.get_root_nursery().start(
-                call_with_control, _user_fs_controlled_cb
-            )
-
-        async def start_backend(self):
-            async def _backend_controlled_cb(started_cb):
-                async with backend_factory() as backend:
-                    async with server_factory(backend.handle_client, backend_addr) as server:
-                        await started_cb(backend=backend, server=server)
-
-            self.backend_controller = await self.get_root_nursery().start(
-                call_with_control, _backend_controlled_cb
-            )
-
-        @property
-        def user_fs(self):
-            return self.user_fs_controller.user_fs
-
-        @property
-        def backend(self):
-            return self.backend_controller.backend
 
         @property
         def workspace(self):
@@ -78,7 +28,7 @@ def test_fs_online_tree_and_sync(
 
         @initialize(target=Folders)
         async def init(self):
-            await reset_testbed()
+            await self.reset_all()
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.oracle_fs.create_workspace("/w")
             self.device = alice
@@ -98,8 +48,7 @@ def test_fs_online_tree_and_sync(
 
         @rule()
         async def reset(self):
-            persistent_mockup.clear()
-            await self.restart_user_fs(self.device)
+            await self.reset_user_fs(self.device)
             self.oracle_fs.reset()
             self.oracle_fs.create_workspace("/w")
             await self.user_fs.sync()
@@ -211,4 +160,4 @@ def test_fs_online_tree_and_sync(
         async def stat_folder(self, path):
             await self._stat(path)
 
-    run_state_machine_as_test(FSOnlineTreeAndSync, settings=hypothesis_settings)
+    FSOnlineTreeAndSync.run_as_test()

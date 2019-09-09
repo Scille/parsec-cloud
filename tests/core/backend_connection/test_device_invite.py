@@ -4,17 +4,16 @@ import pytest
 import trio
 import pendulum
 
-from parsec.types import DeviceID
+from parsec.api.data import (
+    UserCertificateContent,
+    DeviceCertificateContent,
+    DeviceClaimContent,
+    DeviceClaimAnswerContent,
+)
+from parsec.api.protocol import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
-from parsec.core.invite_claim import (
-    generate_device_encrypted_claim,
-    extract_device_encrypted_claim,
-    generate_device_encrypted_answer,
-    extract_device_encrypted_answer,
-)
 
 
 @pytest.mark.trio
@@ -22,24 +21,29 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
     nd_id = DeviceID(f"{alice.user_id}@new_device")
     nd_signing_key = SigningKey.generate()
     token = "123456"
+    device_certificate = None
 
     async def _alice_invite():
-        encrypted_claim = await alice_backend_cmds.device_invite(nd_id.device_name)
-        claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
+        nonlocal device_certificate
 
-        assert claim["token"] == token
+        encrypted_claim = await alice_backend_cmds.device_invite(nd_id.device_name)
+        claim = DeviceClaimContent.decrypt_and_load_for(
+            encrypted_claim, recipient_privkey=alice.private_key
+        )
+
+        assert claim.token == token
+
         device_certificate = DeviceCertificateContent(
             author=alice.device_id,
             timestamp=pendulum.now(),
-            device_id=claim["device_id"],
-            verify_key=claim["verify_key"],
+            device_id=claim.device_id,
+            verify_key=claim.verify_key,
         ).dump_and_sign(alice.signing_key)
-        encrypted_answer = generate_device_encrypted_answer(
-            claim["answer_public_key"],
-            alice.private_key,
-            alice.user_manifest_id,
-            alice.user_manifest_key,
-        )
+        encrypted_answer = DeviceClaimAnswerContent(
+            private_key=alice.private_key,
+            user_manifest_id=alice.user_manifest_id,
+            user_manifest_key=alice.user_manifest_key,
+        ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
         with trio.fail_after(1):
             await alice_backend_cmds.device_create(device_certificate, encrypted_answer)
 
@@ -60,24 +64,26 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             assert creator_device.device_id.user_id == creator.user_id
 
             answer_private_key = PrivateKey.generate()
-            encrypted_claim = generate_device_encrypted_claim(
-                creator_public_key=creator.public_key,
+            encrypted_claim = DeviceClaimContent(
                 token=token,
                 device_id=nd_id,
                 verify_key=nd_signing_key.verify_key,
                 answer_public_key=answer_private_key.public_key,
-            )
+            ).dump_and_encrypt_for(recipient_pubkey=creator.public_key)
             with trio.fail_after(1):
-                encrypted_answer = await cmds.device_claim(nd_id, encrypted_claim)
+                unverified_device, encrypted_answer = await cmds.device_claim(
+                    nd_id, encrypted_claim
+                )
 
-            answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
-            assert answer["private_key"] == alice.private_key
-            assert answer == {
-                "type": "device_claim_answer",
-                "private_key": alice.private_key,
-                "user_manifest_id": alice.user_manifest_id,
-                "user_manifest_key": alice.user_manifest_key,
-            }
+            assert unverified_device.device_certificate == device_certificate
+            answer = DeviceClaimAnswerContent.decrypt_and_load_for(
+                encrypted_answer, recipient_privkey=answer_private_key
+            )
+            assert answer == DeviceClaimAnswerContent(
+                private_key=alice.private_key,
+                user_manifest_id=alice.user_manifest_id,
+                user_manifest_key=alice.user_manifest_key,
+            )
 
     with running_backend.backend.event_bus.listen() as spy:
         async with trio.open_nursery() as nursery:

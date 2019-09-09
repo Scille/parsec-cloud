@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-08-21 11:09+0200\n"
-"PO-Revision-Date: 2019-08-21 11:12+0200\n"
+"POT-Creation-Date: 2019-08-30 13:29+0200\n"
+"PO-Revision-Date: 2019-08-30 13:29+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -144,9 +144,6 @@ msgstr "Fort"
 
 msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
 msgstr "Cet espace de travail doit être rechiffré."
-
-msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
-msgstr "Cet espace de travail n'a pas besoin d'être rechiffré."
 
 msgid "WORKSPACE_SHARED_DISPLAY"
 msgstr "partagé"
@@ -288,6 +285,9 @@ msgstr "Révoquer"
 
 msgid "USER_CREATED_ON_{}"
 msgstr "Créé le {}"
+
+msgid "USER_IS_ADMIN"
+msgstr "Administrateur"
 
 msgid "USER_IS_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
@@ -459,8 +459,14 @@ msgstr "Supprimer"
 msgid "FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"
 
+msgid "FILE_TREE_PARENT_FOLDER_TOOLTIP"
+msgstr "Retour au répertoire parent"
+
 msgid "FILE_TREE_PARENT_WORKSPACE"
 msgstr "Retourner à la liste des espaces de travail"
+
+msgid "FILE_TREE_PARENT_WORKSPACE_TOOLTIP"
+msgstr "Retour à la liste des espaces de travail"
 
 msgid "ERR_REGISTER_USER_EXISTS"
 msgstr "Cet utilisateur existe déjà."
@@ -982,3 +988,6 @@ msgstr "Mettre à jour"
 
 #~ msgid "ASK_USER_NAME"
 #~ msgstr "Nom d'utilisateur"
+
+#~ msgid "TOOLTIP_WORKSPACE_DOESNT_NEED_REENCRYPTION"
+#~ msgstr "Cet espace de travail n'a pas besoin d'être rechiffré."

@@ -19,6 +19,7 @@ from parsec.core.gui.custom_widgets import TaskbarButton
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
+from parsec.core.types import DEFAULT_BLOCK_SIZE
 
 
 class CancelException(Exception):
@@ -79,7 +80,7 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
                 i = 0
                 read_size = 0
                 while True:
-                    chunk = fd_in.read(65536)
+                    chunk = fd_in.read(DEFAULT_BLOCK_SIZE)
                     if not chunk:
                         break
                     await workspace_fs.write_bytes(dst, chunk, read_size)
@@ -146,6 +147,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.update_timer = QTimer()
+        self.update_timer.setInterval(1000)
+        self.update_timer.setSingleShot(True)
         self.update_timer.timeout.connect(self.reload)
         self.default_import_path = str(pathlib.Path.home())
         self.table_files.file_moved.connect(self.on_file_moved)
@@ -326,8 +329,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory)
 
     def load(self, directory):
-        self.update_timer.stop()
-
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
@@ -596,8 +597,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not self.workspace_fs:
             return
 
-        if self.current_directory_uuid == uuid:
-            self.update_timer.start(1000)
+        if self.current_directory_uuid == uuid or self.table_files.has_file(uuid):
+            if not self.update_timer.isActive():
+                self.update_timer.start()
+                self.reload()
 
     def _on_sharing_updated_trio(self, event, new_entry, previous_entry):
         self.sharing_updated_qt.emit(new_entry, previous_entry)

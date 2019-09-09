@@ -3,8 +3,9 @@
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID, BackendOrganizationAddr, BackendAddr
 from parsec.crypto import SigningKey
+from parsec.api.protocol import DeviceID
+from parsec.core.types import BackendOrganizationAddr, BackendAddr
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.transport import (
     authenticated_transport_pool_factory,
@@ -52,7 +53,6 @@ class BackendCmdsPool:
     events_subscribe = _expose_cmds_with_retrier("events_subscribe")
     events_listen = _expose_cmds_with_retrier("events_listen")
 
-    message_send = _expose_cmds_with_retrier("message_send")
     message_get = _expose_cmds_with_retrier("message_get")
 
     vlob_create = _expose_cmds_with_retrier("vlob_create")

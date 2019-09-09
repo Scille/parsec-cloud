@@ -9,7 +9,7 @@ from parsec.api.transport import TransportError, TransportClosedByPeer, Transpor
 from parsec.api.protocol import (
     packb,
     unpackb,
-    ProtocoleError,
+    ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
     ServerHandshake,
@@ -167,7 +167,6 @@ class BackendApp:
             "ping": self.ping.api_ping,
             # Message
             "message_get": self.message.api_message_get,
-            "message_send": self.message.api_message_send,
             # User&Device
             "user_get": self.user.api_user_get,
             "user_find": self.user.api_user_find,
@@ -225,30 +224,30 @@ class BackendApp:
     async def _do_handshake(self, transport):
         context = None
         try:
-            hs = ServerHandshake(self.config.handshake_challenge_size)
-            challenge_req = hs.build_challenge_req()
+            handshake = transport.handshake = ServerHandshake(self.config.handshake_challenge_size)
+            challenge_req = handshake.build_challenge_req()
             await transport.send(challenge_req)
             answer_req = await transport.recv()
 
-            hs.process_answer_req(answer_req)
+            handshake.process_answer_req(answer_req)
 
-            if hs.answer_type == "authenticated":
-                organization_id = hs.answer_data["organization_id"]
-                device_id = hs.answer_data["device_id"]
-                expected_rvk = hs.answer_data["rvk"]
+            if handshake.answer_type == "authenticated":
+                organization_id = handshake.answer_data["organization_id"]
+                device_id = handshake.answer_data["device_id"]
+                expected_rvk = handshake.answer_data["rvk"]
                 try:
                     organization = await self.organization.get(organization_id)
                     user, device = await self.user.get_user_with_device(organization_id, device_id)
 
                 except (OrganizationNotFoundError, UserNotFoundError, KeyError):
-                    result_req = hs.build_bad_identity_result_req()
+                    result_req = handshake.build_bad_identity_result_req()
 
                 else:
                     if organization.root_verify_key != expected_rvk:
-                        result_req = hs.build_rvk_mismatch_result_req()
+                        result_req = handshake.build_rvk_mismatch_result_req()
 
                     elif device.revoked_on:
-                        result_req = hs.build_revoked_device_result_req()
+                        result_req = handshake.build_revoked_device_result_req()
 
                     else:
                         context = LoggedClientContext(
@@ -259,34 +258,34 @@ class BackendApp:
                             user.public_key,
                             device.verify_key,
                         )
-                        result_req = hs.build_result_req(device.verify_key)
+                        result_req = handshake.build_result_req(device.verify_key)
 
-            elif hs.answer_type == "anonymous":
-                organization_id = hs.answer_data["organization_id"]
-                expected_rvk = hs.answer_data["rvk"]
+            elif handshake.answer_type == "anonymous":
+                organization_id = handshake.answer_data["organization_id"]
+                expected_rvk = handshake.answer_data["rvk"]
                 try:
                     organization = await self.organization.get(organization_id)
 
                 except OrganizationNotFoundError:
-                    result_req = hs.build_bad_identity_result_req()
+                    result_req = handshake.build_bad_identity_result_req()
 
                 else:
                     if expected_rvk and organization.root_verify_key != expected_rvk:
-                        result_req = hs.build_rvk_mismatch_result_req()
+                        result_req = handshake.build_rvk_mismatch_result_req()
 
                     else:
                         context = AnonymousClientContext(transport, organization_id)
-                        result_req = hs.build_result_req()
+                        result_req = handshake.build_result_req()
 
             else:  # admin
                 context = AdministrationClientContext(transport)
-                if hs.answer_data["token"] == self.config.administration_token:
-                    result_req = hs.build_result_req()
+                if handshake.answer_data["token"] == self.config.administration_token:
+                    result_req = handshake.build_result_req()
                 else:
-                    result_req = hs.build_bad_administration_token_result_req()
+                    result_req = handshake.build_bad_administration_token_result_req()
 
-        except ProtocoleError as exc:
-            result_req = hs.build_bad_format_result_req(str(exc))
+        except ProtocolError as exc:
+            result_req = handshake.build_bad_format_result_req(str(exc))
 
         await transport.send(result_req)
         return context
@@ -391,7 +390,7 @@ class BackendApp:
                         "reason": "Invalid message.",
                     }
 
-                except ProtocoleError as exc:
+                except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}
 
             client_ctx.logger.debug("rep", rep=_filter_binary_fields(rep))

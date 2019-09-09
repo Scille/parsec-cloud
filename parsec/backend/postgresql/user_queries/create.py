@@ -5,7 +5,7 @@ from triopg import UniqueViolationError
 from pypika import Parameter, Case, functions as fn
 from pypika.enums import SqlTypes
 
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.backend.user import User, Device, UserError, UserNotFoundError, UserAlreadyExistsError
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import Query, query
@@ -105,7 +105,9 @@ async def _create_user(
         "user.created",
         organization_id=organization_id,
         user_id=user.user_id,
+        user_certificate=user.user_certificate,
         first_device_id=first_device.device_id,
+        first_device_certificate=first_device.device_certificate,
     )
 
 
@@ -157,5 +159,6 @@ async def query_create_device(
         "device.created",
         organization_id=organization_id,
         device_id=device.device_id,
+        device_certificate=device.device_certificate,
         encrypted_answer=encrypted_answer,
     )

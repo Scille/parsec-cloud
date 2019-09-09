@@ -2,35 +2,32 @@
 
 from typing import Union, NewType
 
-from parsec.core.types.base import (
-    ChunkID,
-    ChunkIDField,
-    BlockID,
-    BlockIDField,
-    EntryID,
-    EntryIDField,
-    EntryName,
-    EntryNameField,
-    FsPath,
+from parsec.api.data import EntryID, EntryIDField, EntryName, EntryNameField
+
+from parsec.core.types.base import FsPath
+
+from parsec.core.types.backend_address import (
+    BackendAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationAddrField,
 )
-from parsec.core.types.access import (
-    BlockAccess,
-    BlockAccessSchema,
-    Chunk,
-    Chunks,
-    WorkspaceRole,
-    WorkspaceRoleField,
-    WorkspaceEntrySchema,
-    WorkspaceEntry,
-)
-from parsec.core.types.local_device import LocalDevice, local_device_serializer
-from parsec.core.types.local_manifests import (
+from parsec.core.types.local_device import LocalDevice
+from parsec.core.types.manifest import (
+    DEFAULT_BLOCK_SIZE,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
+)
+from parsec.core.types.manifest import (
     LocalUserManifest,
     LocalManifest,
-    local_manifest_serializer,
+    WorkspaceEntry,
+    WorkspaceRole,
+    BlockAccess,
+    BlockID,
+    Chunk,
+    ChunkID,
 )
 from parsec.core.types.remote_device import (
     UnverifiedRemoteUser,
@@ -40,51 +37,42 @@ from parsec.core.types.remote_device import (
     VerifiedRemoteDevice,
     VerifiedRealmRole,
 )
-from parsec.core.types.remote_manifests import (
-    FileManifest,
-    FolderManifest,
-    WorkspaceManifest,
-    UserManifest,
-    RemoteManifest,
-    remote_manifest_serializer,
-)
 
 
-Manifest = Union[LocalManifest, RemoteManifest]
 FileDescriptor = NewType("FileDescriptor", int)
+LocalFolderishManifests = Union[LocalFolderManifest, LocalWorkspaceManifest]
 
 
 __all__ = (
-    # base
-    "ChunkID",
-    "ChunkIDField",
-    "BlockID",
-    "BlockIDField",
+    "FileDescriptor",
+    "LocalFolderishManifests",
+    # Base
+    "FsPath",
+    # Entry
     "EntryID",
     "EntryIDField",
     "EntryName",
     "EntryNameField",
-    "FileDescriptor",
-    "FsPath",
-    # access
-    "BlockAccess",
-    "BlockAccessSchema",
-    "Chunk",
-    "Chunks",
-    "WorkspaceRole",
-    "WorkspaceRoleField",
-    "WorkspaceEntrySchema",
-    "WorkspaceEntry",
+    # Backend address
+    "BackendAddr",
+    "BackendOrganizationAddr",
+    "BackendOrganizationBootstrapAddr",
+    "BackendOrganizationAddrField",
     # local_device
     "LocalDevice",
-    "local_device_serializer",
-    # local_manifests
+    # "manifest"
+    "DEFAULT_BLOCK_SIZE",
     "LocalFileManifest",
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
     "LocalManifest",
-    "local_manifest_serializer",
+    "WorkspaceEntry",
+    "WorkspaceRole",
+    "BlockAccess",
+    "BlockID",
+    "Chunk",
+    "ChunkID",
     # remote_device
     "UnverifiedRemoteUser",
     "UnverifiedRemoteDevice",
@@ -92,14 +80,4 @@ __all__ = (
     "VerifiedRemoteUser",
     "VerifiedRemoteDevice",
     "VerifiedRealmRole",
-    # remote_manifests
-    "FileManifest",
-    "FolderManifest",
-    "WorkspaceManifest",
-    "UserManifest",
-    "RemoteManifest",
-    "remote_manifest_serializer",
-    "Manifest",
-    # local file
-    "FileDescriptor",
 )

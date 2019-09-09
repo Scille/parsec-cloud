@@ -7,7 +7,7 @@ from async_generator import asynccontextmanager
 
 from pendulum import Pendulum
 
-from parsec.types import DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.core.types import (
     EntryID,
     FsPath,
@@ -53,7 +53,7 @@ class EntryTransactions(FileTransactions):
             return self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(exc.id)
-            return remote_manifest.to_local(self.local_author)
+            return LocalManifest.from_remote(remote_manifest)
 
     @asynccontextmanager
     async def _load_and_lock_manifest(self, entry_id: EntryID):
@@ -62,7 +62,7 @@ class EntryTransactions(FileTransactions):
                 local_manifest = self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(exc.id)
-                local_manifest = remote_manifest.to_local(self.local_author)
+                local_manifest = LocalManifest.from_remote(remote_manifest)
                 self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
@@ -166,7 +166,7 @@ class EntryTransactions(FileTransactions):
 
             # Get the manifest
             try:
-                parent_manifest = self.local_storage.get_manifest(current_manifest.parent_id)
+                parent_manifest = self.local_storage.get_manifest(current_manifest.parent)
             except FSLocalMissError:
                 raise FSEntryNotFound(entry_id)
 
@@ -183,7 +183,7 @@ class EntryTransactions(FileTransactions):
                 parts.append(name)
 
             # Continue until root is found
-            current_id = current_manifest.parent_id
+            current_id = current_manifest.parent
             current_manifest = parent_manifest
 
         # Return the path
@@ -198,7 +198,7 @@ class EntryTransactions(FileTransactions):
 
         # General stats
         stats = {
-            "id": manifest.entry_id,
+            "id": manifest.id,
             "created": manifest.created,
             "updated": manifest.updated,
             "base_version": manifest.base_version,
@@ -225,7 +225,7 @@ class EntryTransactions(FileTransactions):
             FSRemoteManifestNotFound
         """
         manifest = await self._get_manifest_from_path(path)
-        return await self.remote_loader.list_versions(manifest.entry_id)
+        return await self.remote_loader.list_versions(manifest.id)
 
     async def entry_rename(
         self, source: FsPath, destination: FsPath, overwrite: bool = True
@@ -293,10 +293,10 @@ class EntryTransactions(FileTransactions):
             )
 
             # Atomic change
-            self.local_storage.set_manifest(parent.entry_id, new_parent)
+            self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.entry_id)
+        self._send_event("fs.entry.updated", id=parent.id)
 
         # Return the entry id of the renamed entry
         return parent.children[source.name]
@@ -324,13 +324,13 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
             # Atomic change
-            self.local_storage.set_manifest(parent.entry_id, new_parent)
+            self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.entry_id)
+        self._send_event("fs.entry.updated", id=parent.id)
 
         # Return the entry id of the removed folder
-        return child.entry_id
+        return child.id
 
     async def file_delete(self, path: FsPath) -> EntryID:
         # Check write rights
@@ -351,13 +351,13 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
             # Atomic change
-            self.local_storage.set_manifest(parent.entry_id, new_parent)
+            self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
-        self._send_event("fs.entry.updated", id=parent.entry_id)
+        self._send_event("fs.entry.updated", id=parent.id)
 
         # Return the entry id of the deleted file
-        return child.entry_id
+        return child.id
 
     async def folder_create(self, path: FsPath) -> EntryID:
         # Check write rights
@@ -371,23 +371,21 @@ class EntryTransactions(FileTransactions):
                 raise from_errno(errno.EEXIST, filename=str(path))
 
             # Create folder
-            child = LocalFolderManifest.make_placeholder(
-                EntryID(), self.local_author, parent.entry_id
-            )
+            child = LocalFolderManifest.new_placeholder(parent=parent.id)
 
             # New parent manifest
-            new_parent = parent.evolve_children_and_mark_updated({path.name: child.entry_id})
+            new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child.entry_id, child, check_lock_status=False)
-            self.local_storage.set_manifest(parent.entry_id, new_parent)
+            self.local_storage.set_manifest(child.id, child, check_lock_status=False)
+            self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send events
-        self._send_event("fs.entry.updated", id=parent.entry_id)
-        self._send_event("fs.entry.updated", id=child.entry_id)
+        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event("fs.entry.updated", id=child.id)
 
         # Return the entry id of the created folder
-        return child.entry_id
+        return child.id
 
     async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
@@ -401,24 +399,22 @@ class EntryTransactions(FileTransactions):
                 raise from_errno(errno.EEXIST, filename=str(path))
 
             # Create file
-            child = LocalFileManifest.make_placeholder(
-                EntryID(), self.local_author, parent.entry_id
-            )
+            child = LocalFileManifest.new_placeholder(parent=parent.id)
 
             # New parent manifest
-            new_parent = parent.evolve_children_and_mark_updated({path.name: child.entry_id})
+            new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child.entry_id, child, check_lock_status=False)
-            self.local_storage.set_manifest(parent.entry_id, new_parent)
-            fd = self.local_storage.create_file_descriptor(child.entry_id) if open else None
+            self.local_storage.set_manifest(child.id, child, check_lock_status=False)
+            self.local_storage.set_manifest(parent.id, new_parent)
+            fd = self.local_storage.create_file_descriptor(child.id) if open else None
 
         # Send events
-        self._send_event("fs.entry.updated", id=parent.entry_id)
-        self._send_event("fs.entry.updated", id=child.entry_id)
+        self._send_event("fs.entry.updated", id=parent.id)
+        self._send_event("fs.entry.updated", id=child.id)
 
         # Return the entry id of the created file and the file descriptor
-        return child.entry_id, fd
+        return child.id, fd
 
     async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
@@ -433,7 +429,7 @@ class EntryTransactions(FileTransactions):
                 raise from_errno(errno.EISDIR, str(path))
 
             # Return the entry id of the open file and the file descriptor
-            return manifest.entry_id, self.local_storage.create_file_descriptor(manifest.entry_id)
+            return manifest.id, self.local_storage.create_file_descriptor(manifest.id)
 
     async def file_resize(self, path: FsPath, length: int) -> EntryID:
         # Check write rights
@@ -450,4 +446,4 @@ class EntryTransactions(FileTransactions):
             self._manifest_resize(manifest, length)
 
             # Return entry id
-            return manifest.entry_id
+            return manifest.id

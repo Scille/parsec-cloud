@@ -2,10 +2,9 @@
 
 import os
 import errno
-import pathlib
+from pathlib import Path
 from string import ascii_lowercase
 from contextlib import contextmanager
-
 import attr
 import pytest
 from pendulum import Pendulum
@@ -21,17 +20,18 @@ from hypothesis import strategies as st
 
 from parsec.core.types import FsPath
 from parsec.core.fs.utils import is_folder_manifest
+from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 
-from tests.common import freeze_time
+from tests.common import freeze_time, call_with_control
 
 
 @pytest.mark.trio
-async def test_root_entry_info(entry_transactions):
-    stat = await entry_transactions.entry_info(FsPath("/"))
+async def test_root_entry_info(alice_entry_transactions):
+    stat = await alice_entry_transactions.entry_info(FsPath("/"))
     assert stat == {
         "type": "folder",
-        "id": entry_transactions.workspace_id,
+        "id": alice_entry_transactions.workspace_id,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -42,7 +42,9 @@ async def test_root_entry_info(entry_transactions):
 
 
 @pytest.mark.trio
-async def test_file_create(entry_transactions, file_transactions, alice):
+async def test_file_create(alice_entry_transactions, alice_file_transactions, alice):
+    entry_transactions = alice_entry_transactions
+    file_transactions = alice_file_transactions
 
     with freeze_time("2000-01-02"):
         access_id, fd = await entry_transactions.file_create(FsPath("/foo.txt"))
@@ -75,7 +77,10 @@ async def test_file_create(entry_transactions, file_transactions, alice):
 
 
 @pytest.mark.trio
-async def test_folder_create_delete(entry_transactions, sync_transactions):
+async def test_folder_create_delete(alice_entry_transactions, alice_sync_transactions):
+    entry_transactions = alice_entry_transactions
+    sync_transactions = alice_sync_transactions
+
     # Create and delete a foo directory
     foo_id = await entry_transactions.folder_create(FsPath("/foo"))
     assert await entry_transactions.folder_delete(FsPath("/foo")) == foo_id
@@ -94,7 +99,10 @@ async def test_folder_create_delete(entry_transactions, sync_transactions):
 
 
 @pytest.mark.trio
-async def test_file_create_delete(entry_transactions, sync_transactions):
+async def test_file_create_delete(alice_entry_transactions, alice_sync_transactions):
+    entry_transactions = alice_entry_transactions
+    sync_transactions = alice_sync_transactions
+
     # Create and delete a foo file
     foo_id, fd = await entry_transactions.file_create(FsPath("/foo"), open=False)
     assert fd is None
@@ -114,7 +122,9 @@ async def test_file_create_delete(entry_transactions, sync_transactions):
 
 
 @pytest.mark.trio
-async def test_rename_non_empty_folder(entry_transactions, file_transactions):
+async def test_rename_non_empty_folder(alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     foo_id = await entry_transactions.folder_create(FsPath("/foo"))
     bar_id = await entry_transactions.folder_create(FsPath("/foo/bar"))
     zob_id = await entry_transactions.folder_create(FsPath("/foo/bar/zob"))
@@ -142,7 +152,9 @@ async def test_rename_non_empty_folder(entry_transactions, file_transactions):
 
 
 @pytest.mark.trio
-async def test_cannot_replace_root(entry_transactions):
+async def test_cannot_replace_root(alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     with pytest.raises(PermissionError):
         await entry_transactions.file_create(FsPath("/"), open=False)
     with pytest.raises(PermissionError):
@@ -157,7 +169,9 @@ async def test_cannot_replace_root(entry_transactions):
 
 
 @pytest.mark.trio
-async def test_access_not_loaded_entry(alice, bob, entry_transactions):
+async def test_access_not_loaded_entry(alice, bob, alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     entry_id = entry_transactions.get_workspace_entry().id
     manifest = entry_transactions.local_storage.get_manifest(entry_id)
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
@@ -182,7 +196,9 @@ async def test_access_not_loaded_entry(alice, bob, entry_transactions):
 
 
 @pytest.mark.trio
-async def test_access_unknown_entry(entry_transactions):
+async def test_access_unknown_entry(alice_entry_transactions):
+    entry_transactions = alice_entry_transactions
+
     with pytest.raises(FileNotFoundError):
         await entry_transactions.entry_info(FsPath("/dummy"))
 
@@ -241,6 +257,25 @@ def test_folder_operations(
         Files = Bundle("file")
         Folders = Bundle("folder")
 
+        async def start_transactions(self):
+            async def _transactions_controlled_cb(started_cb):
+                with LocalStorage(
+                    alice.device_id, key=alice.local_symkey, path=Path("/dummy")
+                ) as local_storage:
+                    entry_transactions = await entry_transactions_factory(
+                        self.device, alice_backend_cmds, local_storage=local_storage
+                    )
+                    file_transactions = await file_transactions_factory(
+                        self.device, alice_backend_cmds, local_storage=local_storage
+                    )
+                    await started_cb(
+                        entry_transactions=entry_transactions, file_transactions=file_transactions
+                    )
+
+            self.transactions_controller = await self.get_root_nursery().start(
+                call_with_control, _transactions_controlled_cb
+            )
+
         @initialize(target=Folders)
         async def init_root(self):
             nonlocal tentative
@@ -249,15 +284,11 @@ def test_folder_operations(
 
             self.last_step_id_to_path = set()
             self.device = alice
-            self.local_storage = await initialize_local_storage(self.device)
-            self.entry_transactions = await entry_transactions_factory(
-                self.device, self.local_storage, alice_backend_cmds
-            )
-            self.file_transactions = await file_transactions_factory(
-                self.device, self.local_storage, alice_backend_cmds
-            )
+            await self.start_transactions()
+            self.entry_transactions = self.transactions_controller.entry_transactions
+            self.file_transactions = self.transactions_controller.file_transactions
 
-            self.folder_oracle = pathlib.Path(tmpdir / f"oracle-test-{tentative}")
+            self.folder_oracle = Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()

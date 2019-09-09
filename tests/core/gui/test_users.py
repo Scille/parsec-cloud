@@ -72,15 +72,21 @@ async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui, 
     item.widget().show_user_info()
     if custom_locale:
         assert autoclose_dialog.dialogs == [
-            ("Information", "adam\n\nCréé le 1 janvier 2000 00:00"),
-            ("Information", "alice\n\nCréé le 1 janvier 2000 00:00"),
-            ("Information", "bob\n\nCréé le 1 janvier 2000 00:00"),
+            ("Information", "adam\n\nCréé le samedi 1 janvier 2000 00:00\n\nAdministrateur"),
+            ("Information", "alice\n\nCréé le samedi 1 janvier 2000 00:00\n\nAdministrateur"),
+            ("Information", "bob\n\nCréé le samedi 1 janvier 2000 00:00"),
         ]
     else:
         assert autoclose_dialog.dialogs == [
-            ("Information", "adam\n\nCreated on January 1, 2000 12:00 AM"),
-            ("Information", "alice\n\nCreated on January 1, 2000 12:00 AM"),
-            ("Information", "bob\n\nCreated on January 1, 2000 12:00 AM"),
+            (
+                "Information",
+                "adam\n\nCreated on Saturday, January 1, 2000 12:00 AM\n\nAdministrator",
+            ),
+            (
+                "Information",
+                "alice\n\nCreated on Saturday, January 1, 2000 12:00 AM\n\nAdministrator",
+            ),
+            ("Information", "bob\n\nCreated on Saturday, January 1, 2000 12:00 AM"),
         ]
 
 

@@ -4,17 +4,19 @@ from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
 
-from parsec.types import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
-    ProtocoleError,
+    OrganizationID,
+    UserID,
+    DeviceName,
+    DeviceID,
+    ProtocolError,
     ping_serializer,
     organization_create_serializer,
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
-    message_send_serializer,
     message_get_serializer,
     vlob_read_serializer,
     vlob_create_serializer,
@@ -79,7 +81,7 @@ async def _send_cmd(transport, serializer, keepalive=False, **req):
     try:
         raw_req = serializer.req_dumps(req)
 
-    except ProtocoleError as exc:
+    except ProtocolError as exc:
         raise BackendCmdsInvalidRequest(exc) from exc
 
     try:
@@ -93,7 +95,7 @@ async def _send_cmd(transport, serializer, keepalive=False, **req):
     try:
         rep = serializer.rep_loads(raw_rep)
 
-    except ProtocoleError as exc:
+    except ProtocolError as exc:
         transport.logger.warning("Request failed (bad protocol)", cmd=req["cmd"], error=exc)
         raise BackendCmdsInvalidResponse(exc) from exc
 
@@ -129,19 +131,6 @@ async def events_listen(transport: Transport, wait: bool = True) -> dict:
 
 
 ### Message API ###
-
-
-async def message_send(
-    transport: Transport, recipient: UserID, timestamp: pendulum.Pendulum, body: bytes
-) -> None:
-    await _send_cmd(
-        transport,
-        message_send_serializer,
-        cmd="message_send",
-        recipient=recipient,
-        timestamp=timestamp,
-        body=body,
-    )
 
 
 async def message_get(transport: Transport, offset: int) -> List[Tuple[int, DeviceID, bytes]]:
@@ -299,12 +288,15 @@ async def realm_get_role_certificates(
     return [UnverifiedRealmRole(realm_role_certificate=c) for c in rep["certificates"]]
 
 
-async def realm_update_roles(transport: Transport, role_certificate: bytes) -> None:
+async def realm_update_roles(
+    transport: Transport, role_certificate: bytes, recipient_message: bytes
+) -> None:
     await _send_cmd(
         transport,
         realm_update_roles_serializer,
         cmd="realm_update_roles",
         role_certificate=role_certificate,
+        recipient_message=recipient_message,
     )
 
 
@@ -528,7 +520,7 @@ async def user_get_invitation_creator(
 
 async def user_claim(
     transport: Transport, invited_user_id: UserID, encrypted_claim: bytes
-) -> UnverifiedRemoteUser:
+) -> Tuple[UnverifiedRemoteUser, UnverifiedRemoteDevice]:
     rep = await _send_cmd(
         transport,
         user_claim_serializer,
@@ -536,7 +528,10 @@ async def user_claim(
         invited_user_id=invited_user_id,
         encrypted_claim=encrypted_claim,
     )
-    return UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
+    return (
+        UnverifiedRemoteUser(user_certificate=rep["user_certificate"]),
+        UnverifiedRemoteDevice(device_certificate=rep["device_certificate"]),
+    )
 
 
 async def device_get_invitation_creator(
@@ -563,7 +558,7 @@ async def device_get_invitation_creator(
 
 async def device_claim(
     transport: Transport, invited_device_id: DeviceID, encrypted_claim: bytes
-) -> bytes:
+) -> Tuple[UnverifiedRemoteDevice, bytes]:
     rep = await _send_cmd(
         transport,
         device_claim_serializer,
@@ -571,4 +566,7 @@ async def device_claim(
         invited_device_id=invited_device_id,
         encrypted_claim=encrypted_claim,
     )
-    return rep["encrypted_answer"]
+    return (
+        UnverifiedRemoteDevice(device_certificate=rep["device_certificate"]),
+        rep["encrypted_answer"],
+    )

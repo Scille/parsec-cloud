@@ -1,10 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from pypika import Parameter
 from pypika.enums import Order
 
 from parsec.api.protocol import RealmRole
-from parsec.types import OrganizationID
+from parsec.api.protocol import OrganizationID
 from parsec.backend.realm import (
     RealmGrantedRole,
     RealmAccessError,
@@ -14,6 +15,7 @@ from parsec.backend.realm import (
 )
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query
+from parsec.backend.postgresql.message import send_message
 from parsec.backend.postgresql.tables import (
     STR_TO_REALM_ROLE,
     q_realm_internal_id,
@@ -79,7 +81,10 @@ INSERT INTO realm_user_role(
 
 @query(in_transaction=True)
 async def query_update_roles(
-    conn, organization_id: OrganizationID, new_role: RealmGrantedRole
+    conn,
+    organization_id: OrganizationID,
+    new_role: RealmGrantedRole,
+    recipient_message: Optional[bytes],
 ) -> None:
     if new_role.granted_by.user_id == new_role.user_id:
         raise RealmAccessError("Cannot modify our own role")
@@ -137,3 +142,13 @@ async def query_update_roles(
         user=new_role.user_id,
         role_str=new_role.role.value if new_role.role else None,
     )
+
+    if recipient_message:
+        await send_message(
+            conn,
+            organization_id,
+            new_role.granted_by,
+            new_role.user_id,
+            new_role.granted_on,
+            recipient_message,
+        )

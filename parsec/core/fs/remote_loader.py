@@ -1,21 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from hashlib import sha256
-import pendulum
-from pendulum import Pendulum
+from pendulum import Pendulum, now as pendulum_now
 from typing import Dict, Optional, List, Tuple
 
-from parsec.serde import SerdeError
-from parsec.crypto import (
-    encrypt_signed_msg_with_secret_key,
-    decrypt_raw_with_secret_key,
-    encrypt_raw_with_secret_key,
-    decrypt_and_verify_signed_msg_with_secret_key,
-    CryptoError,
+from parsec.utils import timestamps_in_the_ballpark
+from parsec.crypto import HashDigest, CryptoError
+from parsec.api.protocol import UserID, DeviceID, RealmRole
+from parsec.api.data import (
+    DataError,
+    BlockAccess,
+    RealmRoleCertificateContent,
+    Manifest as RemoteManifest,
 )
-from parsec.api.data import DataError, RealmRoleCertificateContent
-from parsec.types import UserID, DeviceID
-from parsec.api.protocol import RealmRole
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     BackendCmdsInMaintenance,
@@ -26,13 +22,12 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendConnectionError,
 )
-from parsec.core.types import EntryID, BlockAccess, remote_manifest_serializer, Manifest
+from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.exceptions import (
     FSError,
     FSRemoteSyncError,
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
-    FSRemoteManifestBadID,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
@@ -208,14 +203,14 @@ class RemoteLoader:
 
         # Decryption
         try:
-            block = decrypt_raw_with_secret_key(access.key, ciphered_block)
+            block = access.key.decrypt(ciphered_block)
 
         # Decryption error
         except CryptoError as exc:
             raise FSError(f"Cannot decrypt block: {exc}") from exc
 
         # TODO: let encryption manager do the digest check ?
-        assert sha256(block).hexdigest() == access.digest, access
+        assert HashDigest.from_data(block) == access.digest, access
         self.local_storage.set_clean_block(access.id, block)
 
     async def upload_block(self, access: BlockAccess, data: bytes):
@@ -228,7 +223,7 @@ class RemoteLoader:
         """
         # Encryption
         try:
-            ciphered = encrypt_raw_with_secret_key(access.key, data)
+            ciphered = access.key.encrypt(data)
 
         # Encryption error
         except CryptoError as exc:
@@ -264,11 +259,11 @@ class RemoteLoader:
 
         # Update local storage
         self.local_storage.set_clean_block(access.id, data)
-        self.local_storage.clear_chunk(access.id, miss_ok=True)
+        self.local_storage.clear_chunk(ChunkID(access.id), miss_ok=True)
 
     async def load_manifest(
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
-    ) -> Manifest:
+    ) -> RemoteManifest:
         """
         Raises:
             FSError
@@ -319,45 +314,27 @@ class RemoteLoader:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
 
-        expected_author_id, expected_timestamp, expected_version, blob = args
+        expected_author, expected_timestamp, expected_version, encrypted = args
         if version not in (None, expected_version):
             raise FSError(
                 f"Backend returned invalid version for vlob {entry_id} (expecting {version}, got {expected_version})"
             )
 
-        author = await self.remote_device_manager.get_device(expected_author_id)
+        author = await self.remote_device_manager.get_device(expected_author)
 
-        # Vlob decryption
         try:
-            raw = decrypt_and_verify_signed_msg_with_secret_key(
-                workspace_entry.key, blob, expected_author_id, author.verify_key, expected_timestamp
+            remote_manifest = RemoteManifest.decrypt_verify_and_load(
+                encrypted,
+                key=workspace_entry.key,
+                author_verify_key=author.verify_key,
+                expected_author=expected_author,
+                expected_timestamp=expected_timestamp,
+                expected_version=expected_version,
+                expected_id=entry_id
+                # TODO: check parent as well ?
             )
-
-        # Decryption error
-        except CryptoError as exc:
+        except DataError as exc:
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
-
-        # Vlob deserialization
-        try:
-            remote_manifest = remote_manifest_serializer.loads(raw)
-
-        # Deserialization error
-        except SerdeError as exc:
-            raise FSError(f"Cannot deserialize vlob: {exc}") from exc
-
-        if remote_manifest.entry_id != entry_id:
-            raise FSRemoteManifestBadID(
-                f"Vlob {entry_id} id mismatch with signed metadata ({remote_manifest.entry_id}) returned by backend."
-            )
-
-        if remote_manifest.version != expected_version:
-            raise FSError(
-                f"Vlob {entry_id} version mismatch between signed metadata ({remote_manifest.version}) and backend ({expected_version})"
-            )
-        if remote_manifest.author != expected_author_id:
-            raise FSError(
-                f"Vlob {entry_id} author mismatch between signed metadata ({remote_manifest.author}) and backend ({expected_author_id})"
-            )
 
         # TODO: also store access id in remote_manifest and check it here
         return remote_manifest
@@ -406,7 +383,7 @@ class RemoteLoader:
             FSBackendOfflineError
         """
         certif = RealmRoleCertificateContent.build_realm_root_certif(
-            author=self.device.device_id, timestamp=pendulum.now(), realm_id=realm_id
+            author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
         ).dump_and_sign(self.device.signing_key)
 
         try:
@@ -427,7 +404,7 @@ class RemoteLoader:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot create realm {realm_id}: {exc}") from exc
 
-    async def upload_manifest(self, entry_id: EntryID, manifest: Manifest):
+    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifest):
         """
         Raises:
             FSError
@@ -436,34 +413,30 @@ class RemoteLoader:
             FSWorkspaceInMaintenance
             FSBadEncryptionRevision
         """
-        now = pendulum.now()
         assert manifest.author == self.device.device_id
+        assert timestamps_in_the_ballpark(manifest.timestamp, pendulum_now())
+
         workspace_entry = self.get_workspace_entry()
 
-        # Manifest serialization
         try:
-            raw = remote_manifest_serializer.dumps(manifest)
-
-        # Serialization error
-        except SerdeError as exc:
-            raise FSError(f"Cannot serialize vlob: {exc}") from exc
-
-        # Vlob encryption
-        try:
-            ciphered = encrypt_signed_msg_with_secret_key(
-                self.device.device_id, self.device.signing_key, workspace_entry.key, raw, now
+            ciphered = manifest.dump_sign_and_encrypt(
+                key=workspace_entry.key, author_signkey=self.device.signing_key
             )
-
-        # Encryption error
-        except CryptoError as exc:
+        except DataError as exc:
             raise FSError(f"Cannot encrypt vlob: {exc}") from exc
 
         # Upload the vlob
         if manifest.version == 1:
-            await self._vlob_create(workspace_entry.encryption_revision, entry_id, ciphered, now)
+            await self._vlob_create(
+                workspace_entry.encryption_revision, entry_id, ciphered, manifest.timestamp
+            )
         else:
             await self._vlob_update(
-                workspace_entry.encryption_revision, entry_id, ciphered, now, manifest.version
+                workspace_entry.encryption_revision,
+                entry_id,
+                ciphered,
+                manifest.timestamp,
+                manifest.version,
             )
 
     async def _vlob_create(
@@ -595,7 +568,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
 
     async def load_manifest(
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
-    ) -> Manifest:
+    ) -> RemoteManifest:
         if timestamp is not None and timestamp != self.timestamp:
             raise FSError(
                 f"Cannot load a manifest at a different timestamp through a timestamped remote loader"

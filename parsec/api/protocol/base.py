@@ -5,7 +5,7 @@ from parsec.serde import (
     fields,
     OneOfSchema,
     post_load,
-    Serializer,
+    MsgpackSerializer,
     SerdeValidationError,
     SerdePackingError,
     packb as _packb,
@@ -13,18 +13,18 @@ from parsec.serde import (
 )
 
 
-__all__ = ("ProtocoleError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
+__all__ = ("ProtocolError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
 
 
-class ProtocoleError(Exception):
+class ProtocolError(Exception):
     pass
 
 
-class InvalidMessageError(SerdeValidationError, ProtocoleError):
+class InvalidMessageError(SerdeValidationError, ProtocolError):
     pass
 
 
-class MessageSerializationError(SerdePackingError, ProtocoleError):
+class MessageSerializationError(SerdePackingError, ProtocolError):
     pass
 
 
@@ -37,7 +37,7 @@ def unpackb(data):
 
 
 def serializer_factory(schema_cls):
-    return Serializer(schema_cls, InvalidMessageError, MessageSerializationError)
+    return MsgpackSerializer(schema_cls, InvalidMessageError, MessageSerializationError)
 
 
 class BaseReqSchema(UnknownCheckedSchema):

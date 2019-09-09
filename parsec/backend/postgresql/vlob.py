@@ -6,7 +6,7 @@ from uuid import UUID
 from typing import List, Tuple, Dict, Optional
 from pypika import Parameter
 
-from parsec.types import DeviceID, OrganizationID
+from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.realm import RealmRole
 from parsec.backend.vlob import (
     BaseVlobComponent,

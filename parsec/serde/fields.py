@@ -3,7 +3,7 @@
 from pendulum import Pendulum
 from uuid import UUID as _UUID
 from collections import Mapping
-from marshmallow import ValidationError
+from marshmallow import ValidationError, validate
 from marshmallow.fields import (
     # Republishing
     Int,
@@ -15,16 +15,11 @@ from marshmallow.fields import (
     Boolean,
     Field,
 )
-import re
 
-from parsec.types import (
-    DeviceID as _DeviceID,
-    UserID as _UserID,
-    DeviceName as _DeviceName,
-    BackendOrganizationAddr as _BackendOrganizationAddr,
-    OrganizationID as _OrganizationID,
-)
-from parsec.crypto_types import (
+from parsec.types import FrozenDict as _FrozenDict
+from parsec.crypto import (
+    SecretKey as _SecretKey,
+    HashDigest as _HashDigest,
     SigningKey as _SigningKey,
     VerifyKey as _VerifyKey,
     PrivateKey as _PrivateKey,
@@ -55,10 +50,8 @@ __all__ = (
     "PublicKey",
     "PrivateKey",
     "SecretKey",
-    "DeviceID",
-    "UserID",
-    "DeviceName",
-    "SemVer",
+    "HashDigest",
+    "ApiVersion",
 )
 
 
@@ -248,6 +241,16 @@ class Map(Field):
         return ret
 
 
+class FrozenMap(Map):
+    def _deserialize(self, value, attr, obj):
+        return _FrozenDict(super()._deserialize(value, attr, obj))
+
+
+class FrozenList(List):
+    def _deserialize(self, value, attr, obj):
+        return tuple(super()._deserialize(value, attr, obj))
+
+
 class Tuple(Field):
     default_error_messages = {"invalid": "Not a valid tuple type."}
 
@@ -336,23 +339,13 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-class SemVer(Field):
-    default_error_messages = {"no_string": "Not a string.", "regex_failed": "String not a SemVer"}
-
-    def _serialize(self, value, attr, obj):
-        if not isinstance(value, str):
-            self.fail("no_string")
-        if not re.match("(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)", value):
-            self.fail("regex_failed")
-        return value
-
-    _deserialize = _serialize
+class ApiVersion(Tuple):
+    def __init__(self, **kwargs):
+        version = Integer(required=True, validate=validate.Range(min=0))
+        revision = Integer(required=True, validate=validate.Range(min=0))
+        super().__init__(version, revision, **kwargs)
 
 
-SecretKey = bytes_based_field_factory(bytes)
+SecretKey = bytes_based_field_factory(_SecretKey)
+HashDigest = bytes_based_field_factory(_HashDigest)
 Bytes = bytes_based_field_factory(bytes)
-DeviceID = str_based_field_factory(_DeviceID)
-UserID = str_based_field_factory(_UserID)
-OrganizationID = str_based_field_factory(_OrganizationID)
-DeviceName = str_based_field_factory(_DeviceName)
-BackendOrganizationAddr = str_based_field_factory(_BackendOrganizationAddr)

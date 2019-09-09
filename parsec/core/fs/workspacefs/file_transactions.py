@@ -11,7 +11,7 @@ from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor
-from parsec.core.types import Chunk, Chunks, BlockID, LocalFileManifest
+from parsec.core.types import Chunk, BlockID, LocalFileManifest
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
     prepare_write,
@@ -97,7 +97,7 @@ class FileTransactions:
         self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 
-    def _build_data(self, chunks: Chunks) -> Tuple[bytes, List[BlockID]]:
+    def _build_data(self, chunks: Tuple[Chunk]) -> Tuple[bytes, List[BlockID]]:
         # Empty array
         if not chunks:
             return bytearray(), []
@@ -128,7 +128,7 @@ class FileTransactions:
         manifest = self.local_storage.load_file_descriptor(fd)
 
         # Lock the entry_id
-        async with self.local_storage.lock_manifest(manifest.entry_id):
+        async with self.local_storage.lock_manifest(manifest.id):
             yield self.local_storage.load_file_descriptor(fd)
 
     # Atomic transactions
@@ -138,7 +138,7 @@ class FileTransactions:
         async with self._load_and_lock_file(fd) as manifest:
 
             # Force writing to disk
-            self.local_storage.ensure_manifest_persistent(manifest.entry_id)
+            self.local_storage.ensure_manifest_persistent(manifest.id)
 
             # Atomic change
             self.local_storage.remove_file_descriptor(fd, manifest)
@@ -163,7 +163,7 @@ class FileTransactions:
                 self._write_count[fd] += self._write_chunk(chunk, content, offset)
 
             # Atomic change
-            self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
+            self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
 
             # Clean up
             for removed_id in removed_ids:
@@ -175,7 +175,7 @@ class FileTransactions:
                 self._write_count.pop(fd, None)
 
         # Notify
-        self._send_event("fs.entry.updated", id=manifest.entry_id)
+        self._send_event("fs.entry.updated", id=manifest.id)
         return len(content)
 
     async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
@@ -186,7 +186,7 @@ class FileTransactions:
             self._manifest_resize(manifest, length)
 
         # Notify
-        self._send_event("fs.entry.updated", id=manifest.entry_id)
+        self._send_event("fs.entry.updated", id=manifest.id)
 
     async def fd_read(self, fd: FileDescriptor, size: int, offset: int) -> bytes:
         # Loop over attemps
@@ -218,7 +218,7 @@ class FileTransactions:
     async def fd_flush(self, fd: FileDescriptor) -> None:
         async with self._load_and_lock_file(fd) as manifest:
             self._manifest_reshape(manifest)
-            self.local_storage.ensure_manifest_persistent(manifest.entry_id)
+            self.local_storage.ensure_manifest_persistent(manifest.id)
 
     # Transaction helpers
 
@@ -236,7 +236,7 @@ class FileTransactions:
             self._write_chunk(chunk, b"", offset)
 
         # Atomic change
-        self.local_storage.set_manifest(manifest.entry_id, manifest, cache_only=True)
+        self.local_storage.set_manifest(manifest.id, manifest)
 
         # Clean up
         for removed_id in removed_ids:
@@ -281,7 +281,7 @@ class FileTransactions:
 
         # Craft and set new manifest
         new_manifest = getter(result_dict)
-        self.local_storage.set_manifest(new_manifest.entry_id, new_manifest, cache_only=cache_only)
+        self.local_storage.set_manifest(new_manifest.id, new_manifest, cache_only=cache_only)
 
         # Perform cleanup
         for removed_id in removed_ids:

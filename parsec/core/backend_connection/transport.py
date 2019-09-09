@@ -7,22 +7,18 @@ from async_generator import asynccontextmanager
 from structlog import get_logger
 from typing import Optional, Union
 
-from parsec.types import (
-    DeviceID,
-    BackendAddr,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-)
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
 from parsec.api.protocol import (
-    ProtocoleError,
+    DeviceID,
+    ProtocolError,
     HandshakeRevokedDevice,
     HandshakeAPIVersionError,
     AnonymousClientHandshake,
     AuthenticatedClientHandshake,
     AdministrationClientHandshake,
 )
+from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,
@@ -61,13 +57,13 @@ async def _connect(
     if administration_token:
         if not isinstance(addr, BackendAddr):
             raise BackendConnectionError(f"Invalid url format `{addr}`")
-        ch = AdministrationClientHandshake(administration_token)
+        handshake = AdministrationClientHandshake(administration_token)
 
     elif not device_id:
         if isinstance(addr, BackendOrganizationBootstrapAddr):
-            ch = AnonymousClientHandshake(addr.organization_id)
+            handshake = AnonymousClientHandshake(addr.organization_id)
         elif isinstance(addr, BackendOrganizationAddr):
-            ch = AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
+            handshake = AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
         else:
             raise BackendConnectionError(
                 f"Invalid url format `{addr}` "
@@ -82,7 +78,7 @@ async def _connect(
 
         if not signing_key:
             raise BackendConnectionError(f"Missing signing_key to connect as `{device_id}`")
-        ch = AuthenticatedClientHandshake(
+        handshake = AuthenticatedClientHandshake(
             addr.organization_id, device_id, signing_key, addr.root_verify_key
         )
 
@@ -98,12 +94,14 @@ async def _connect(
 
     try:
         transport = await Transport.init_for_client(stream, addr.hostname)
+        transport.handshake = handshake
+
     except TransportError as exc:
         logger.debug("Connection lost during transport creation", reason=exc)
         raise BackendNotAvailable(exc) from exc
 
     try:
-        await _do_handshake(transport, ch)
+        await _do_handshake(transport, handshake)
 
     except BackendHandshakeAPIVersionError as exc:
         logger.debug("Incompatible API version", reason=f"Server API version {str(exc)}")
@@ -131,13 +129,13 @@ def _upgrade_stream_to_ssl(raw_stream, hostname):
     return trio.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
-async def _do_handshake(transport: Transport, ch):
+async def _do_handshake(transport: Transport, handshake):
     try:
         challenge_req = await transport.recv()
-        answer_req = ch.process_challenge_req(challenge_req)
+        answer_req = handshake.process_challenge_req(challenge_req)
         await transport.send(answer_req)
         result_req = await transport.recv()
-        ch.process_result_req(result_req)
+        handshake.process_result_req(result_req)
         transport.logger.debug("Handshake done")
 
     except TransportError as exc:
@@ -151,7 +149,7 @@ async def _do_handshake(transport: Transport, ch):
         transport.logger.warning("Handshake failed", reason=exc)
         raise BackendDeviceRevokedError(exc) from exc
 
-    except ProtocoleError as exc:
+    except ProtocolError as exc:
         transport.logger.warning("Handshake failed", reason=exc)
         raise BackendHandshakeError(exc) from exc
 

@@ -2,13 +2,14 @@
 
 from parsec.serde import fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
+from parsec.api.protocol.types import OrganizationIDField
 
 
 __all__ = "organization_bootstrap_serializer"
 
 
 class OrganizationCreateReqSchema(BaseReqSchema):
-    organization_id = fields.OrganizationID(required=True)
+    organization_id = OrganizationIDField(required=True)
 
 
 class OrganizationCreateRepSchema(BaseRepSchema):

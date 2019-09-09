@@ -4,7 +4,7 @@ import click
 
 from parsec.utils import trio_run
 from parsec.cli_utils import spinner, cli_exception_handler
-from parsec.types import DeviceName
+from parsec.api.protocol import DeviceName
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 from parsec.core.cli.utils import core_config_and_device_options
 

@@ -4,33 +4,29 @@ import trio
 from pathlib import Path
 from contextlib import ExitStack
 from pendulum import Pendulum, now as pendulum_now
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 from structlog import get_logger
 
-from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
-from parsec.crypto import (
-    encrypt_signed_msg_for,
-    decrypt_and_verify_signed_msg_for,
-    encrypt_signed_msg_with_secret_key,
-    decrypt_and_verify_signed_msg_with_secret_key,
-    encrypt_raw_with_secret_key,
-    decrypt_raw_with_secret_key,
-    CryptoError,
-    SecretKey,
+from parsec.crypto import SecretKey
+from parsec.api.data import (
+    DataError,
+    RealmRoleCertificateContent,
+    MessageContent,
+    SharingGrantedMessageContent,
+    SharingReencryptedMessageContent,
+    SharingRevokedMessageContent,
+    PingMessageContent,
+    UserManifest,
 )
-from parsec.serde import SerdeError
-from parsec.api.data import RealmRoleCertificateContent
-from parsec.api.protocol import MaintenanceType
+from parsec.api.protocol import UserID, DeviceID, MaintenanceType
 from parsec.core.types import (
     EntryID,
     LocalDevice,
     LocalWorkspaceManifest,
     WorkspaceEntry,
     WorkspaceRole,
-    UserManifest,
     LocalUserManifest,
-    remote_manifest_serializer,
 )
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.backend_connection import (
@@ -53,8 +49,8 @@ from parsec.core.remote_devices_manager import (
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.realm_storage import RealmStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
-from parsec.core.fs.userfs.message import message_content_serializer
 from parsec.core.fs.exceptions import (
     FSError,
     FSLocalMissError,
@@ -96,8 +92,8 @@ class ReencryptionJob:
 
             donebatch = []
             for vlob_id, version, blob in batch:
-                cleartext = decrypt_raw_with_secret_key(self.old_workspace_entry.key, blob)
-                newciphered = encrypt_raw_with_secret_key(self.new_workspace_entry.key, cleartext)
+                cleartext = self.old_workspace_entry.key.decrypt(blob)
+                newciphered = self.new_workspace_entry.key.encrypt(cleartext)
                 donebatch.append((vlob_id, version, newciphered))
 
             total, done = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
@@ -130,9 +126,6 @@ class ReencryptionJob:
 
 
 class UserFS:
-
-    local_storage_class = LocalStorage
-
     def __init__(
         self,
         device: LocalDevice,
@@ -147,7 +140,7 @@ class UserFS:
         self.remote_devices_manager = remote_devices_manager
         self.event_bus = event_bus
 
-        self.local_storage = self.local_storage_class(device.device_id, device.local_symkey, path)
+        self.storage = None
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
@@ -156,11 +149,15 @@ class UserFS:
         self._update_user_manifest_lock = trio.Lock()
         self._workspace_storages = {}
 
+        now = pendulum_now()
         wentry = WorkspaceEntry(
             name="<user manifest>",
             id=device.user_manifest_id,
             key=device.user_manifest_key,
             encryption_revision=1,
+            encrypted_on=now,
+            role_cached_on=now,
+            role=WorkspaceRole.OWNER,
         )
         self.remote_loader = RemoteLoader(
             self.device,
@@ -168,11 +165,12 @@ class UserFS:
             lambda: wentry,
             self.backend_cmds,
             self.remote_devices_manager,
-            self.local_storage,
+            # Hack, but fine as long as we only call `load_realm_current_roles`
+            None,
         )
 
     def __enter__(self):
-        self._exit_stack.enter_context(self.local_storage)
+        self.storage = self._exit_stack.enter_context(RealmStorage.factory(self.device, self.path))
         return self
 
     def __exit__(self, *args):
@@ -187,7 +185,7 @@ class UserFS:
         Raises: Nothing !
         """
         try:
-            return self.local_storage.get_manifest(self.user_manifest_id)
+            return self.storage.get_manifest(self.user_manifest_id)
 
         except FSLocalMissError:
             # In the unlikely event the user manifest is not present in
@@ -195,70 +193,85 @@ class UserFS:
             # back on an empty manifest which is a good aproximation of
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
-            return LocalUserManifest(author=self.device.device_id)
+            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
 
     def set_user_manifest(self, manifest: LocalUserManifest) -> None:
         """
         Raises: Nothing
         """
-        self.local_storage.set_manifest(self.user_manifest_id, manifest, check_lock_status=False)
+        self.storage.set_manifest(self.user_manifest_id, manifest)
 
-    def get_workspace_local_storage(self, workspace_id):
-        if workspace_id not in self._workspace_storages:
-            cls = self.local_storage_class
-            path = self.path / str(workspace_id)
-            local_storage = cls(self.device.device_id, self.device.local_symkey, path)
-            self._exit_stack.enter_context(local_storage)
-            self._workspace_storages[workspace_id] = local_storage
-        return self._workspace_storages[workspace_id]
+    def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
+        path = self.path / str(workspace_id)
+        local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
+        self._exit_stack.enter_context(local_storage)
+        return local_storage
 
-    async def set_workspace_manifest(self, workspace_id, manifest):
-        """
-        Raises: Nothing
-        """
-        local_storage = self.get_workspace_local_storage(workspace_id)
-        async with local_storage.lock_entry_id(workspace_id):
-            local_storage.set_manifest(workspace_id, manifest)
-
-    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
-        """
-        Raises:
-            FSWorkspaceNotFoundError
-        """
+    def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorskpaeFS to load it each time it is needed
-        def _get_workspace_entry():
+        def get_workspace_entry():
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)
             if not workspace_entry:
                 raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
             return workspace_entry
 
-        # Sanity check to make sure workspace_id is valid
-        _get_workspace_entry()
+        # Instantiate the local storage
+        local_storage = self._instantiate_workspace_local_storage(workspace_id)
 
+        # Instantiate the workspace
         return WorkspaceFS(
             workspace_id=workspace_id,
-            get_workspace_entry=_get_workspace_entry,
+            get_workspace_entry=get_workspace_entry,
             device=self.device,
-            local_storage=self.get_workspace_local_storage(workspace_id),
+            local_storage=local_storage,
             backend_cmds=self.backend_cmds,
             event_bus=self.event_bus,
             remote_device_manager=self.remote_devices_manager,
         )
 
+    async def _create_workspace(
+        self, workspace_id: EntryID, manifest: LocalWorkspaceManifest
+    ) -> None:
+        """
+        Raises: Nothing
+        """
+        workspace = self._instantiate_workspace(workspace_id)
+
+        async with workspace.local_storage.lock_entry_id(workspace_id):
+            workspace.local_storage.set_manifest(workspace_id, manifest)
+
+        self._workspace_storages.setdefault(workspace_id, workspace)
+
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+        """
+        Raises:
+            FSWorkspaceNotFoundError
+        """
+        # The workspace has already been instantiated
+        if workspace_id in self._workspace_storages:
+            return self._workspace_storages[workspace_id]
+
+        # Instantiate the workpace
+        workspace = self._instantiate_workspace(workspace_id)
+
+        # Sanity check to make sure workspace_id is valid
+        workspace.get_workspace_entry()
+
+        # Set and return
+        return self._workspace_storages.setdefault(workspace_id, workspace)
+
     async def workspace_create(self, name: str) -> EntryID:
         """
         Raises: Nothing !
         """
-        workspace_entry = WorkspaceEntry(name)
-        workspace_manifest = LocalWorkspaceManifest.make_placeholder(
-            entry_id=workspace_entry.id, author=self.device.device_id
-        )
+        workspace_entry = WorkspaceEntry.new(name)
+        workspace_manifest = LocalWorkspaceManifest.new_placeholder(id=workspace_entry.id)
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            await self.set_workspace_manifest(workspace_entry.id, workspace_manifest)
+            await self._create_workspace(workspace_entry.id, workspace_manifest)
             self.set_user_manifest(user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
@@ -294,7 +307,7 @@ class UserFS:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
             args = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
-            expected_author_id, expected_timestamp, expected_version, blob = args
+            expected_author, expected_timestamp, expected_version, blob = args
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -307,14 +320,8 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot fetch user manifest from backend: {exc}") from exc
 
-        if version and version != expected_version:
-            raise FSError(
-                f"User manifest version {version} was queried but"
-                f" backend returned version {expected_version}"
-            )
-
         try:
-            author = await self.remote_devices_manager.get_device(expected_author_id)
+            author = await self.remote_devices_manager.get_device(expected_author)
 
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -323,23 +330,18 @@ class UserFS:
             raise FSError(f"Cannot retrieve author public key: {exc}") from exc
 
         try:
-            raw = decrypt_and_verify_signed_msg_with_secret_key(
-                self.device.user_manifest_key,
+            manifest = UserManifest.decrypt_verify_and_load(
                 blob,
-                expected_author_id,
-                author.verify_key,
-                expected_timestamp,
+                key=self.device.user_manifest_key,
+                author_verify_key=author.verify_key,
+                expected_id=self.device.user_manifest_id,
+                expected_author=expected_author,
+                expected_timestamp=expected_timestamp,
+                expected_version=version if version is not None else expected_version,
             )
-            manifest = remote_manifest_serializer.loads(raw)
 
-        except (CryptoError, SerdeError) as exc:
+        except DataError as exc:
             raise FSError(f"Invalid user manifest: {exc}") from exc
-
-        if manifest.version != expected_version:
-            raise FSError(
-                "Invalid user manifest: version mismatch between backend"
-                f" ({expected_version}) and signed data ({manifest.version})"
-            )
 
         return manifest
 
@@ -365,32 +367,20 @@ class UserFS:
             return
 
         # New things in remote, merge is needed
-        target_um = target_um.to_local(self.device.device_id)
-
-        base_um = None
-        while True:
-            if diverged_um.base_version != 0:
-                # TODO: keep base manifest somewhere to avoid this query
-                base_um = await self._fetch_remote_user_manifest(version=diverged_um.base_version)
-                base_um = base_um.to_local(self.device.device_id)
-
-            # Merge and store result
-            async with self._update_user_manifest_lock:
-                diverged_um = self.get_user_manifest()
-                if target_um.base_version <= diverged_um.base_version:
-                    # Sync already achieved by a concurrent operation
-                    return
-                if base_um and diverged_um.base_version != base_um.base_version:
-                    continue
-                merged = merge_local_user_manifests(base_um, diverged_um, target_um)
-                self.set_user_manifest(merged)
-                # In case we weren't online when the sharing message arrived,
-                # we will learn about the change in the sharing only now.
-                # Hence send the corresponding events !
-                self._detect_and_send_shared_events(diverged_um, merged)
-                # TODO: deprecated event ?
-                self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
+        async with self._update_user_manifest_lock:
+            diverged_um = self.get_user_manifest()
+            if target_um.version <= diverged_um.base_version:
+                # Sync already achieved by a concurrent operation
                 return
+            merged_um = merge_local_user_manifests(diverged_um, target_um)
+            self.set_user_manifest(merged_um)
+            # In case we weren't online when the sharing message arrived,
+            # we will learn about the change in the sharing only now.
+            # Hence send the corresponding events !
+            self._detect_and_send_shared_events(diverged_um, merged_um)
+            # TODO: deprecated event ?
+            self.event_bus.send("fs.entry.remote_changed", path="/", id=self.user_manifest_id)
+            return
 
     def _detect_and_send_shared_events(self, old_um, new_um):
         entries = {}
@@ -470,33 +460,23 @@ class UserFS:
             await self._workspace_minimal_sync(w)
 
         # Build vlob
-        to_sync_um = base_um.evolve(
-            workspaces=base_um.workspaces,
-            base_version=base_um.base_version + 1,
-            author=self.device.device_id,
-            need_sync=False,
-            is_placeholder=False,
-        )
         now = pendulum_now()
-        ciphered = encrypt_signed_msg_with_secret_key(
-            self.device.device_id,
-            self.device.signing_key,
-            self.device.user_manifest_key,
-            remote_manifest_serializer.dumps(to_sync_um.to_remote()),
-            now,
+        to_sync_um = base_um.to_remote(author=self.device.device_id, timestamp=now)
+        ciphered = to_sync_um.dump_sign_and_encrypt(
+            author_signkey=self.device.signing_key, key=self.device.user_manifest_key
         )
 
         # Sync the vlob with backend
         try:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
-            if to_sync_um.base_version == 1:
+            if to_sync_um.version == 1:
                 await self.backend_cmds.vlob_create(
                     self.user_manifest_id, 1, self.user_manifest_id, now, ciphered
                 )
             else:
                 await self.backend_cmds.vlob_update(
-                    1, self.user_manifest_id, to_sync_um.base_version, now, ciphered
+                    1, self.user_manifest_id, to_sync_um.version, now, ciphered
                 )
 
         except (BackendCmdsAlreadyExists, BackendCmdsBadVersion):
@@ -518,8 +498,8 @@ class UserFS:
         async with self._update_user_manifest_lock:
             diverged_um = self.get_user_manifest()
             # Final merge could have been achieved by a concurrent operation
-            if to_sync_um.base_version > diverged_um.base_version:
-                merged_um = merge_local_user_manifests(base_um, diverged_um, to_sync_um)
+            if to_sync_um.version > diverged_um.base_version:
+                merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
                 self.set_user_manifest(merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 
@@ -566,24 +546,45 @@ class UserFS:
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
 
-        # Actual sharing is done in two steps:
-        # 1) update access roles for the vlob group corresponding to the workspace
-        # 2) communicate to the new collaborator through a message the access to
-        #    the workspace manifest
-        # Those two steps are not atomic, but this is not that much of a trouble
-        # given they are idempotent
+        now = pendulum_now()
 
-        # Step 1)
+        # Build the sharing message
+        try:
+            if role is not None:
+                recipient_message = SharingGrantedMessageContent(
+                    author=self.device.device_id,
+                    timestamp=now,
+                    name=workspace_entry.name,
+                    id=workspace_entry.id,
+                    encryption_revision=workspace_entry.encryption_revision,
+                    encrypted_on=workspace_entry.encrypted_on,
+                    key=workspace_entry.key,
+                )
+
+            else:
+                recipient_message = SharingRevokedMessageContent(
+                    author=self.device.device_id, timestamp=now, id=workspace_entry.id
+                )
+
+            ciphered_recipient_message = recipient_message.dump_sign_and_encrypt_for(
+                author_signkey=self.device.signing_key, recipient_pubkey=recipient_user.public_key
+            )
+
+        except DataError as exc:
+            raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
+
+        # Build role certificate
         role_certificate = RealmRoleCertificateContent(
             author=self.device.device_id,
-            timestamp=pendulum_now(),
+            timestamp=now,
             realm_id=workspace_id,
             user_id=recipient,
             role=role,
         ).dump_and_sign(self.device.signing_key)
 
+        # Actually send the command to the backend
         try:
-            await self.backend_cmds.realm_update_roles(role_certificate)
+            await self.backend_cmds.realm_update_roles(role_certificate, ciphered_recipient_message)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -604,46 +605,6 @@ class UserFS:
 
         except BackendConnectionError as exc:
             raise FSError(f"Error while trying to set vlob group roles in backend: {exc}") from exc
-
-        # Step 2)
-
-        # Build the sharing message
-        msg = {"id": workspace_entry.id, "name": workspace_entry.name}
-        if role:
-            msg["type"] = "sharing.granted"
-            msg["key"] = workspace_entry.key
-            msg["encryption_revision"] = workspace_entry.encryption_revision
-            msg["encrypted_on"] = workspace_entry.encrypted_on
-        else:
-            msg["type"] = "sharing.revoked"
-
-        # Should never raise error given we control the inputs
-        raw_msg = message_content_serializer.dumps(msg)
-
-        now = pendulum_now()
-
-        # Encrypt&sign message
-        try:
-            ciphered = encrypt_signed_msg_for(
-                self.device.device_id,
-                self.device.signing_key,
-                recipient_user.public_key,
-                raw_msg,
-                now,
-            )
-
-        except CryptoError as exc:
-            raise FSError(f"Cannot create sharing message for `{recipient}`: {exc}") from exc
-
-        # And finally send the message
-        try:
-            await self.backend_cmds.message_send(recipient=recipient, timestamp=now, body=ciphered)
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(*exc.arg) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Error while trying to send sharing message to backend: {exc}") from exc
 
     async def process_last_messages(self) -> List[Tuple[int, Exception]]:
         """
@@ -695,7 +656,9 @@ class UserFS:
 
         return errors
 
-    async def _process_message(self, sender_id: DeviceID, timestamp: Pendulum, ciphered: bytes):
+    async def _process_message(
+        self, sender_id: DeviceID, expected_timestamp: Pendulum, ciphered: bytes
+    ):
         """
         Raises:
             FSError
@@ -714,40 +677,28 @@ class UserFS:
 
         # Decrypt&verify message
         try:
-            raw = decrypt_and_verify_signed_msg_for(
-                self.device.private_key, ciphered, sender_id, sender.verify_key, timestamp
+            msg = MessageContent.decrypt_verify_and_load_for(
+                ciphered,
+                recipient_privkey=self.device.private_key,
+                author_verify_key=sender.verify_key,
+                expected_author=sender_id,
+                expected_timestamp=expected_timestamp,
             )
 
-        except CryptoError as exc:
+        except DataError as exc:
             raise FSError(f"Cannot decrypt&validate message from `{sender_id}`: {exc}") from exc
 
-        msg = message_content_serializer.loads(raw)
+        if isinstance(msg, (SharingGrantedMessageContent, SharingReencryptedMessageContent)):
+            await self._process_message_sharing_granted(msg)
 
-        if msg["type"] in ("sharing.granted", "sharing.reencrypted"):
-            await self._process_message_sharing_granted(
-                sender,
-                msg["id"],
-                msg["key"],
-                msg["encryption_revision"],
-                msg["encrypted_on"],
-                msg["name"],
-            )
+        elif isinstance(msg, SharingRevokedMessageContent):
+            await self._process_message_sharing_revoked(msg)
 
-        elif msg["type"] == "sharing.revoked":
-            await self._process_message_sharing_revoked(sender, msg["id"])
-
-        else:
-            assert msg["type"] == "ping"
+        elif isinstance(msg, PingMessageContent):
             self.event_bus.send("pinged")
 
     async def _process_message_sharing_granted(
-        self,
-        sender,
-        workspace_id,
-        workspace_key,
-        workspace_encryption_revision,
-        workspace_encrypted_on,
-        workspace_name,
+        self, msg: Union[SharingRevokedMessageContent, SharingReencryptedMessageContent]
     ):
         """
         Raises:
@@ -762,15 +713,15 @@ class UserFS:
         # case the user can still ask for another manager to re-do the sharing
         # so it's no big deal).
         try:
-            roles = await self.remote_loader.load_realm_current_roles(workspace_id)
+            roles = await self.remote_loader.load_realm_current_roles(msg.id)
 
         except FSWorkspaceNoAccess:
             # Seems we lost the access roles anyway, nothing to do then
             return
 
-        if roles.get(sender.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
+        if roles.get(msg.author.user_id, None) not in (WorkspaceRole.OWNER, WorkspaceRole.MANAGER):
             raise FSSharingNotAllowedError(
-                f"User {sender.user_id} cannot share workspace `{workspace_id}`"
+                f"User {msg.author.user_id} cannot share workspace `{msg.id}`"
                 " with us (requires owner or manager right)"
             )
 
@@ -780,11 +731,11 @@ class UserFS:
         # Finally insert the new workspace entry into our user manifest
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
-            name=f"{workspace_name} (shared by {sender.user_id})",
-            id=workspace_id,
-            key=workspace_key,
-            encryption_revision=workspace_encryption_revision,
-            encrypted_on=workspace_encrypted_on,
+            name=f"{msg.name} (shared by {msg.author.user_id})",
+            id=msg.id,
+            key=msg.key,
+            encryption_revision=msg.encryption_revision,
+            encrypted_on=msg.encrypted_on,
             role=self_role,
             role_cached_on=pendulum_now(),
         )
@@ -793,7 +744,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
 
             # Check if we already know this workspace
-            already_existing_entry = user_manifest.get_workspace_entry(workspace_id)
+            already_existing_entry = user_manifest.get_workspace_entry(msg.id)
             if already_existing_entry:
                 # Merge with existing as target to keep possible workpace rename
                 workspace_entry = merge_workspace_entry(
@@ -806,15 +757,13 @@ class UserFS:
 
             if not already_existing_entry:
                 # TODO: remove this event ?
-                self.event_bus.send(
-                    "fs.entry.synced", id=workspace_entry.id, path=f"/{workspace_name}"
-                )
+                self.event_bus.send("fs.entry.synced", id=workspace_entry.id, path=f"/{msg.name}")
 
             self.event_bus.send(
                 "sharing.updated", new_entry=workspace_entry, previous_entry=already_existing_entry
             )
 
-    async def _process_message_sharing_revoked(self, sender, workspace_id):
+    async def _process_message_sharing_revoked(self, msg: SharingRevokedMessageContent):
         """
         Raises:
             FSError
@@ -826,7 +775,7 @@ class UserFS:
         # verifying the sender is manager/owner... But this is not really a trouble:
         # if we cannot access the workspace info, we have been revoked anyway !
         try:
-            await self.remote_loader.load_realm_current_roles(workspace_id)
+            await self.remote_loader.load_realm_current_roles(msg.id)
 
         except FSWorkspaceNoAccess:
             # Exactly what we expected !
@@ -840,7 +789,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
 
             # Save the revocation information in the user manifest
-            existing_workspace_entry = user_manifest.get_workspace_entry(workspace_id)
+            existing_workspace_entry = user_manifest.get_workspace_entry(msg.id)
             if not existing_workspace_entry:
                 # No workspace entry, nothing to update then
                 return
@@ -888,37 +837,29 @@ class UserFS:
 
         return users
 
-    def _generate_reencryption_messages(self, new_workspace_entry, users):
+    def _generate_reencryption_messages(self, new_workspace_entry, users, now: Pendulum):
         """
         Raises:
             FSError
         """
-        # Generate&sign reencryption message
-        msg = {
-            "type": "sharing.reencrypted",
-            "id": new_workspace_entry.id,
-            "key": new_workspace_entry.key,
-            "encryption_revision": new_workspace_entry.encryption_revision,
-            "encrypted_on": new_workspace_entry.encrypted_on,
-            "name": new_workspace_entry.name,
-        }
-        # Should never raise error given we control the inputs
-        raw_msg = message_content_serializer.dumps(msg)
+        msg = SharingReencryptedMessageContent(
+            author=self.device.device_id,
+            timestamp=now,
+            name=new_workspace_entry.name,
+            id=new_workspace_entry.id,
+            encryption_revision=new_workspace_entry.encryption_revision,
+            encrypted_on=new_workspace_entry.encrypted_on,
+            key=new_workspace_entry.key,
+        )
 
-        # Encrypt message for each user
         per_user_ciphered_msgs = {}
         for user in users:
             try:
-                ciphered = encrypt_signed_msg_for(
-                    self.device.device_id,
-                    self.device.signing_key,
-                    user.public_key,
-                    raw_msg,
-                    new_workspace_entry.encrypted_on,
+                ciphered = msg.dump_sign_and_encrypt_for(
+                    author_signkey=self.device.signing_key, recipient_pubkey=user.public_key
                 )
                 per_user_ciphered_msgs[user.user_id] = ciphered
-
-            except CryptoError as exc:
+            except DataError as exc:
                 raise FSError(
                     f"Cannot create reencryption message for `{user.user_id}`: {exc}"
                 ) from exc
@@ -984,7 +925,7 @@ class UserFS:
             # encrypt a message for each of them
             participants = await self._retreive_participants(workspace_entry.id)
             reencryption_msgs = self._generate_reencryption_messages(
-                new_workspace_entry, participants
+                new_workspace_entry, participants, now
             )
 
             # Actually ask the backend to start the reencryption

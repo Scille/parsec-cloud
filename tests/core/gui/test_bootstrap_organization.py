@@ -3,7 +3,7 @@
 import pytest
 from PyQt5 import QtCore
 
-from parsec.types import BackendOrganizationBootstrapAddr
+from parsec.core.types import BackendOrganizationBootstrapAddr
 
 
 async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):

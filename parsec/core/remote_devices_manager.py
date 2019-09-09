@@ -4,8 +4,8 @@ from typing import Tuple
 from collections import OrderedDict
 import pendulum
 
-from parsec.types import DeviceID, UserID
 from parsec.crypto import VerifyKey
+from parsec.api.protocol import DeviceID, UserID
 from parsec.api.data import (
     DataError,
     UserCertificateContent,

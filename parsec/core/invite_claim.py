@@ -3,20 +3,17 @@
 from secrets import token_hex
 import pendulum
 
-from parsec.types import DeviceID, UserID, DeviceName, BackendOrganizationAddr
-from parsec.crypto import (
-    CryptoError,
-    SecretKey,
-    PublicKey,
-    PrivateKey,
-    SigningKey,
-    VerifyKey,
-    encrypt_raw_for,
-    decrypt_raw_for,
+from parsec.crypto import SecretKey, PrivateKey, SigningKey
+from parsec.api.data import (
+    DataError,
+    UserCertificateContent,
+    DeviceCertificateContent,
+    UserClaimContent,
+    DeviceClaimContent,
+    DeviceClaimAnswerContent,
 )
-from parsec.serde import Serializer, UnknownCheckedSchema, fields
-from parsec.api.data import DataError, UserCertificateContent, DeviceCertificateContent
-from parsec.core.types import LocalDevice, EntryID, EntryIDField
+from parsec.api.protocol import UserID, DeviceName, DeviceID
+from parsec.core.types import LocalDevice, BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendCmdsTimeout,
     BackendConnectionError,
@@ -65,189 +62,6 @@ class InviteClaimInvalidTokenError(InviteClaimError):
     pass
 
 
-###  User claim  ###
-
-
-class UserClaimSchema(UnknownCheckedSchema):
-    type = fields.CheckedConstant("user_claim", required=True)
-    token = fields.String(required=True)
-    # Note claiming user also imply creating a first device
-    device_id = fields.DeviceID(required=True)
-    public_key = fields.PublicKey(required=True)
-    verify_key = fields.VerifyKey(required=True)
-
-
-user_claim_serializer = Serializer(
-    UserClaimSchema, validation_exc=InviteClaimValidationError, packing_exc=InviteClaimPackingError
-)
-
-
-def generate_user_encrypted_claim(
-    creator_public_key: PublicKey,
-    token: str,
-    device_id: DeviceID,
-    public_key: PublicKey,
-    verify_key: VerifyKey,
-) -> bytes:
-    """
-    Raises:
-        InviteClaimValidationError
-        InviteClaimPackingError
-        InviteClaimCryptoError
-    """
-    payload = {
-        "type": "user_claim",
-        "device_id": device_id,
-        "token": token,
-        "public_key": public_key,
-        "verify_key": verify_key,
-    }
-    raw = user_claim_serializer.dumps(payload)
-    try:
-        return encrypt_raw_for(creator_public_key, raw)
-
-    except CryptoError as exc:
-        raise InviteClaimCryptoError(str(exc)) from exc
-
-
-def extract_user_encrypted_claim(creator_private_key: PrivateKey, encrypted_claim: bytes) -> dict:
-    """
-    Raises:
-        InviteClaimValidationError
-        InviteClaimPackingError
-        InviteClaimCryptoError
-    """
-    try:
-        raw = decrypt_raw_for(creator_private_key, encrypted_claim)
-
-    except CryptoError as exc:
-        raise InviteClaimCryptoError(str(exc)) from exc
-
-    return user_claim_serializer.loads(raw)
-
-
-###  Device claim  ###
-
-
-class DeviceClaimSchema(UnknownCheckedSchema):
-    type = fields.CheckedConstant("device_claim", required=True)
-    token = fields.String(required=True)
-    device_id = fields.DeviceID(required=True)
-    verify_key = fields.VerifyKey(required=True)
-    answer_public_key = fields.PublicKey(required=True)
-
-
-device_claim_serializer = Serializer(
-    DeviceClaimSchema,
-    validation_exc=InviteClaimValidationError,
-    packing_exc=InviteClaimPackingError,
-)
-
-
-def generate_device_encrypted_claim(
-    creator_public_key: PublicKey,
-    token: str,
-    device_id: DeviceID,
-    verify_key: VerifyKey,
-    answer_public_key: PublicKey,
-) -> bytes:
-    """
-    Raises:
-        InviteClaimValidationError
-        InviteClaimPackingError
-        InviteClaimCryptoError
-    """
-    payload = {
-        "type": "device_claim",
-        "token": token,
-        "device_id": device_id,
-        "verify_key": verify_key,
-        "answer_public_key": answer_public_key,
-    }
-    raw = device_claim_serializer.dumps(payload)
-    try:
-        return encrypt_raw_for(creator_public_key, raw)
-
-    except CryptoError as exc:
-        raise InviteClaimCryptoError(str(exc)) from exc
-
-
-def extract_device_encrypted_claim(creator_private_key: PrivateKey, encrypted_claim: bytes) -> dict:
-    """
-    Raises:
-        InviteClaimValidationError
-        InviteClaimPackingError
-        InviteClaimCryptoError
-    """
-    try:
-        raw = decrypt_raw_for(creator_private_key, encrypted_claim)
-
-    except CryptoError as exc:
-        raise InviteClaimCryptoError(str(exc)) from exc
-
-    return device_claim_serializer.loads(raw)
-
-
-###  Device claim answer  ###
-
-
-class DeviceClaimAnswerSchema(UnknownCheckedSchema):
-    type = fields.CheckedConstant("device_claim_answer", required=True)
-    private_key = fields.PrivateKey(required=True)
-    user_manifest_id = EntryIDField(required=True)
-    user_manifest_key = fields.SecretKey(required=True)
-
-
-device_claim_answer_serializer = Serializer(DeviceClaimAnswerSchema)
-
-
-def generate_device_encrypted_answer(
-    creator_public_key: PublicKey,
-    private_key: PrivateKey,
-    user_manifest_id: EntryID,
-    user_manifest_key: SecretKey,
-) -> bytes:
-    """
-    Raises:
-        InviteClaimValidationError
-        InviteClaimPackingError
-        InviteClaimCryptoError
-    """
-    payload = {
-        "type": "device_claim_answer",
-        "private_key": private_key,
-        "user_manifest_id": user_manifest_id,
-        "user_manifest_key": user_manifest_key,
-    }
-    raw = device_claim_answer_serializer.dumps(payload)
-    try:
-        return encrypt_raw_for(creator_public_key, raw)
-
-    except CryptoError as exc:
-        raise InviteClaimCryptoError(str(exc)) from exc
-
-
-def extract_device_encrypted_answer(
-    creator_private_key: PrivateKey, encrypted_claim: bytes
-) -> dict:
-    """
-    Raises:
-        InviteClaimValidationError
-        InviteClaimPackingError
-        InviteClaimCryptoError
-    """
-    try:
-        raw = decrypt_raw_for(creator_private_key, encrypted_claim)
-
-    except CryptoError as exc:
-        raise InviteClaimCryptoError(str(exc)) from exc
-
-    return device_claim_answer_serializer.loads(raw)
-
-
-### Helpers ###
-
-
 def generate_invitation_token():
     return token_hex(8)
 
@@ -280,17 +94,22 @@ async def claim_user(
                 raise InviteClaimError(f"Cannot retrieve invitation creator: {exc}") from exc
 
             # 2) Generate claim info for invitation creator
-            encrypted_claim = generate_user_encrypted_claim(
-                invitation_creator_user.public_key,
-                token,
-                new_device_id,
-                new_device.public_key,
-                new_device.verify_key,
-            )
+            try:
+                encrypted_claim = UserClaimContent(
+                    device_id=new_device_id,
+                    token=token,
+                    public_key=new_device.public_key,
+                    verify_key=new_device.verify_key,
+                ).dump_and_encrypt_for(recipient_pubkey=invitation_creator_user.public_key)
+
+            except DataError as exc:
+                raise InviteClaimError(f"Cannot generate user claim message: {exc}") from exc
 
             # 3) Send claim
             try:
-                unverified_user = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+                unverified_user, unverified_device = await cmds.user_claim(
+                    new_device_id.user_id, encrypted_claim
+                )
 
             except BackendNotAvailable as exc:
                 raise InviteClaimBackendOfflineError(str(exc)) from exc
@@ -298,13 +117,22 @@ async def claim_user(
             except BackendConnectionError as exc:
                 raise InviteClaimError(f"Cannot claim user: {exc}") from exc
 
-            # 4) Verify user certificate and check admin status
+            # 4) Verify user&device certificates and check admin status
             try:
                 user = UserCertificateContent.verify_and_load(
                     unverified_user.user_certificate,
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
+                    expected_user=new_device_id.user_id,
                 )
+
+                DeviceCertificateContent.verify_and_load(
+                    unverified_device.device_certificate,
+                    author_verify_key=invitation_creator_device.verify_key,
+                    expected_author=invitation_creator_device.device_id,
+                    expected_device=new_device_id,
+                )
+
                 new_device = new_device.evolve(is_admin=user.is_admin)
 
             except DataError as exc:
@@ -345,17 +173,22 @@ async def claim_device(
                 raise InviteClaimError(f"Cannot retrieve invitation creator: {exc}") from exc
 
             # 2) Generate claim info for invitation creator
-            encrypted_claim = generate_device_encrypted_claim(
-                creator_public_key=invitation_creator_user.public_key,
-                token=token,
-                device_id=new_device_id,
-                verify_key=device_signing_key.verify_key,
-                answer_public_key=answer_private_key.public_key,
-            )
+            try:
+                encrypted_claim = DeviceClaimContent(
+                    token=token,
+                    device_id=new_device_id,
+                    verify_key=device_signing_key.verify_key,
+                    answer_public_key=answer_private_key.public_key,
+                ).dump_and_encrypt_for(recipient_pubkey=invitation_creator_user.public_key)
+
+            except DataError as exc:
+                raise InviteClaimError(f"Cannot generate device claim message: {exc}") from exc
 
             # 3) Send claim
             try:
-                encrypted_answer = await cmds.device_claim(new_device_id, encrypted_claim)
+                unverified_device, encrypted_answer = await cmds.device_claim(
+                    new_device_id, encrypted_claim
+                )
 
             except BackendNotAvailable as exc:
                 raise InviteClaimBackendOfflineError(str(exc)) from exc
@@ -363,7 +196,25 @@ async def claim_device(
             except BackendConnectionError as exc:
                 raise InviteClaimError(f"Cannot claim device: {exc}") from exc
 
-            answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
+            # 4) Verify device certificate
+            try:
+                DeviceCertificateContent.verify_and_load(
+                    unverified_device.device_certificate,
+                    author_verify_key=invitation_creator_device.verify_key,
+                    expected_author=invitation_creator_device.device_id,
+                    expected_device=new_device_id,
+                )
+
+            except DataError as exc:
+                raise InviteClaimCryptoError(str(exc)) from exc
+
+            try:
+                answer = DeviceClaimAnswerContent.decrypt_and_load_for(
+                    encrypted_answer, recipient_privkey=answer_private_key
+                )
+
+            except DataError as exc:
+                raise InviteClaimCryptoError(f"Cannot decrypt device claim answer: {exc}") from exc
 
     except BackendNotAvailable as exc:
         raise InviteClaimBackendOfflineError(str(exc)) from exc
@@ -372,10 +223,10 @@ async def claim_device(
         organization_addr=backend_addr,
         device_id=new_device_id,
         signing_key=device_signing_key,
-        private_key=answer["private_key"],
+        private_key=answer.private_key,
         is_admin=invitation_creator_user.is_admin,
-        user_manifest_id=answer["user_manifest_id"],
-        user_manifest_key=answer["user_manifest_key"],
+        user_manifest_id=answer.user_manifest_id,
+        user_manifest_key=answer.user_manifest_key,
         local_symkey=SecretKey.generate(),
     )
 
@@ -404,8 +255,15 @@ async def invite_and_create_device(
         except BackendConnectionError as exc:
             raise InviteClaimError(f"Cannot invite device: {exc}") from exc
 
-        claim = extract_device_encrypted_claim(device.private_key, encrypted_claim)
-        if claim["token"] != token:
+        try:
+            claim = DeviceClaimContent.decrypt_and_load_for(
+                encrypted_claim, recipient_privkey=device.private_key
+            )
+
+        except DataError as exc:
+            raise InviteClaimCryptoError(f"Cannot decrypt device claim info: {exc}") from exc
+
+        if claim.token != token:
             raise InviteClaimInvalidTokenError(
                 f"Invalid claim token provided by peer: `{claim['token']}`"
                 f" (was expecting `{token}`)"
@@ -416,19 +274,22 @@ async def invite_and_create_device(
             device_certificate = DeviceCertificateContent(
                 author=device.device_id,
                 timestamp=now,
-                device_id=claim["device_id"],
-                verify_key=claim["verify_key"],
+                device_id=claim.device_id,
+                verify_key=claim.verify_key,
             ).dump_and_sign(device.signing_key)
 
         except DataError as exc:
             raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
 
-        encrypted_answer = generate_device_encrypted_answer(
-            claim["answer_public_key"],
-            device.private_key,
-            device.user_manifest_id,
-            device.user_manifest_key,
-        )
+        try:
+            encrypted_answer = DeviceClaimAnswerContent(
+                private_key=device.private_key,
+                user_manifest_id=device.user_manifest_id,
+                user_manifest_key=device.user_manifest_key,
+            ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
+
+        except DataError as exc:
+            raise InviteClaimError(f"Cannot generate user claim answer message: {exc}") from exc
 
         try:
             await cmds.device_create(device_certificate, encrypted_answer)
@@ -467,14 +328,21 @@ async def invite_and_create_user(
         except BackendConnectionError as exc:
             raise InviteClaimError(f"Cannot invite user: {exc}") from exc
 
-        claim = extract_user_encrypted_claim(device.private_key, encrypted_claim)
-        if claim["token"] != token:
+        try:
+            claim = UserClaimContent.decrypt_and_load_for(
+                encrypted_claim, recipient_privkey=device.private_key
+            )
+
+        except DataError as exc:
+            raise InviteClaimCryptoError(f"Cannot decrypt user claim info: {exc}") from exc
+
+        if claim.token != token:
             raise InviteClaimInvalidTokenError(
-                f"Invalid claim token provided by peer: `{claim['token']}`"
+                f"Invalid claim token provided by peer: `{claim.token}`"
                 f" (was expecting `{token}`)"
             )
 
-        device_id = claim["device_id"]
+        device_id = claim.device_id
         now = pendulum.now()
         try:
 
@@ -482,14 +350,14 @@ async def invite_and_create_user(
                 author=device.device_id,
                 timestamp=now,
                 user_id=device_id.user_id,
-                public_key=claim["public_key"],
+                public_key=claim.public_key,
                 is_admin=is_admin,
             ).dump_and_sign(device.signing_key)
             device_certificate = DeviceCertificateContent(
                 author=device.device_id,
                 timestamp=now,
                 device_id=device_id,
-                verify_key=claim["verify_key"],
+                verify_key=claim.verify_key,
             ).dump_and_sign(device.signing_key)
 
         except DataError as exc:

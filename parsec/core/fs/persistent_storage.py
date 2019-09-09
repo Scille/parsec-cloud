@@ -8,11 +8,12 @@ from sqlite3 import Connection, connect as sqlite_connect
 
 from parsec.core.types import EntryID, ChunkID, BlockID
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.crypto import SecretKey, encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
-from parsec.core.types.local_manifests import DEFAULT_BLOCK_SIZE
+from parsec.crypto import SecretKey
+from parsec.core.types import LocalManifest, DEFAULT_BLOCK_SIZE
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
+DIRTY_VACUUM_THRESHOLD = 128 * 1024 * 1024
 
 
 class PersistentStorage:
@@ -31,15 +32,18 @@ class PersistentStorage:
 
     def __init__(self, key: SecretKey, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
         self.local_symkey = key
-        self._path = Path(path)
+        self.path = Path(path)
         self.max_cache_size = max_cache_size
         self.dirty_conn = None
         self.clean_conn = None
 
-    # TODO: really needed ?
     @property
-    def path(self):
-        return str(self._path)
+    def dirty_data_path(self):
+        return self.path / "dirty_data.sqlite"
+
+    @property
+    def clean_cache_path(self):
+        return self.path / "clean_cache.sqlite"
 
     @property
     def block_limit(self):
@@ -47,25 +51,28 @@ class PersistentStorage:
 
     # Life cycle
 
+    def _connect(self, path: Path) -> Connection:
+        conn = sqlite_connect(str(path))
+        conn.isolation_level = None
+        conn.execute("pragma journal_mode=wal")
+        conn.execute("PRAGMA synchronous = OFF")
+        return conn
+
+    def _close(self, conn: Connection) -> None:
+        # Auto-commit is used but do it once more just in case
+        conn.commit()
+        conn.close()
+
     def connect(self):
         if self.dirty_conn is not None or self.clean_conn is not None:
             raise RuntimeError("Already connected")
 
         # Create directories
-        self._path.mkdir(parents=True, exist_ok=True)
+        self.path.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
-        self.dirty_conn = sqlite_connect(str(self._path / "dirty_data.sqlite"))
-        self.clean_conn = sqlite_connect(str(self._path / "clean_cache.sqlite"))
-
-        # Tune database access
-        # Use auto-commit for dirty data since it is very sensitive
-        self.dirty_conn.isolation_level = None
-        self.dirty_conn.execute("pragma journal_mode=wal")
-        self.dirty_conn.execute("PRAGMA synchronous = OFF")
-        self.clean_conn.isolation_level = None
-        self.clean_conn.execute("PRAGMA synchronous = OFF")
-        self.clean_conn.execute("pragma journal_mode=wal")
+        self.dirty_conn = self._connect(self.dirty_data_path)
+        self.clean_conn = self._connect(self.clean_cache_path)
 
         # Initialize
         self.create_db()
@@ -77,14 +84,10 @@ class PersistentStorage:
 
         # Write changes to the disk and close the connections
         try:
-            # Dirty connection uses auto-commit
-            # But let's perform a commit anyway, just in case
-            self.dirty_conn.commit()
-            self.dirty_conn.close()
+            self._close(self.dirty_conn)
             self.dirty_conn = None
         finally:
-            self.clean_conn.commit()
-            self.clean_conn.close()
+            self._close(self.clean_conn)
             self.clean_conn = None
 
     # Context management
@@ -210,12 +213,11 @@ class PersistentStorage:
             manifest_row = cursor.fetchone()
         if not manifest_row:
             raise FSLocalMissError(entry_id)
-        manifest_id, blob = manifest_row
-        return decrypt_raw_with_secret_key(self.local_symkey, blob)
+        manifest_id, ciphered = manifest_row
+        return LocalManifest.decrypt_and_load(ciphered, key=self.local_symkey)
 
-    def set_manifest(self, entry_id: EntryID, base_version: int, need_sync: bool, raw: bytes):
-        assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
+    def set_manifest(self, entry_id: EntryID, manifest: LocalManifest):
+        ciphered = manifest.dump_and_encrypt(key=self.local_symkey)
 
         with self.open_dirty_cursor() as cursor:
             cursor.execute(
@@ -227,7 +229,14 @@ class PersistentStorage:
                         IFNULL((SELECT remote_version FROM manifests WHERE manifest_id=?), 0)
                     )
                 )""",
-                (entry_id.bytes, ciphered, need_sync, base_version, base_version, entry_id.bytes),
+                (
+                    entry_id.bytes,
+                    ciphered,
+                    manifest.need_sync,
+                    manifest.base_version,
+                    manifest.base_version,
+                    entry_id.bytes,
+                ),
             )
 
     def clear_manifest(self, entry_id: EntryID):
@@ -264,11 +273,11 @@ class PersistentStorage:
             ciphered, = cursor.fetchone()
             cursor.execute("END")
 
-        return decrypt_raw_with_secret_key(self.local_symkey, ciphered)
+        return self.local_symkey.decrypt(ciphered)
 
     def _set_chunk(self, conn: Connection, chunk_id: ChunkID, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(self.local_symkey, raw)
+        ciphered = self.local_symkey.encrypt(raw)
 
         # Update database
         with self._open_cursor(conn) as cursor:
@@ -338,3 +347,14 @@ class PersistentStorage:
 
     def run_block_garbage_collector(self):
         self.clear_clean_blocks()
+
+    # Vacuum
+
+    def run_vacuum(self):
+        # Vacuum is only necessary for the dirty database
+        if self.dirty_data_path.stat().st_size > DIRTY_VACUUM_THRESHOLD:
+            self.dirty_conn.execute("VACUUM")
+
+            # The connection needs to be recreated
+            self._close(self.dirty_conn)
+            self.dirty_conn = self._connect(self.dirty_data_path)

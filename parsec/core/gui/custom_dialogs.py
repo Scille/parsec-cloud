@@ -149,7 +149,7 @@ class MessageDialog(QDialog, Ui_MessageDialog):
         self.button_copy.clicked.connect(self.copy_to_clipboard)
         self.button_copy.hide()
         message_size = self.label_message.sizeHint()
-        self.resize(435, message_size.height() * 2 + 85)
+        self.resize(435, message_size.height() * 2 + 100)
 
     def copy_to_clipboard(self):
         desktop.copy_to_clipboard(self.text_details.toPlainText())
