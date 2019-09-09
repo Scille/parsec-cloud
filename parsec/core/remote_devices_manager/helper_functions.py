@@ -1,5 +1,6 @@
 # WiP
 
+
 def _verify_certificates(root_verify_key, uv_devices, uv_users, known_devices, known_users):
     unsecure_users = {u[user_id]: u for u in uv_users.map(_unsecure_read_user)}
     unsecure_devices = {d[device_id]: d for d in uv_devices.map(_unsecure_read_device)}
@@ -264,7 +265,12 @@ def _verify_user(
 
 def _check_users_are_equal_without_revocation(user0, user1):
     for attribute_to_compare in [
-        "user_id", "public_key", "user_certificate", "certified_by", "certified_on", "is_admin"
+        "user_id",
+        "public_key",
+        "user_certificate",
+        "certified_by",
+        "certified_on",
+        "is_admin",
     ]:
         if user0[attribute_to_compare] != user1[attribute_to_compare]:
             raise RemoteDevicesManagerInvalidTrustchainError(
