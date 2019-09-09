@@ -171,13 +171,13 @@ class ServerHandshake:
             self.supported_api_versions, client_api_versions
         )
 
-    def build_bad_format_result_req(self, help="Invalid params") -> bytes:
+    def build_bad_protocol_result_req(self, help="Invalid params") -> bytes:
         if self.state not in ("answer", "challenge"):
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
         return handshake_result_serializer.dumps(
-            {"handshake": "result", "result": "bad_format", "help": help}
+            {"handshake": "result", "result": "bad_protocol", "help": help}
         )
 
     def build_bad_administration_token_result_req(

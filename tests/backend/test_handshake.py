@@ -51,7 +51,7 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
         result_req = await transport.recv()
         assert unpackb(result_req) == {
             "handshake": "result",
-            "result": "bad_format",
+            "result": "bad_protocol",
             "help": "{'handshake': ['Invalid value, should be `answer`']}",
         }
 
