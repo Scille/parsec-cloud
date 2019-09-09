@@ -9,7 +9,7 @@ from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
 from tests.backend.test_message import message_get
-from tests.backend.realm.conftest import (
+from tests.backend.conftest import (
     realm_status,
     realm_start_reencryption_maintenance,
     realm_finish_reencryption_maintenance,

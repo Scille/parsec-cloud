@@ -388,7 +388,7 @@ async def test_dump(alice_workspace):
                 "children": {
                     "bar": {
                         "base_version": 1,
-                        "blocksize": 524288,
+                        "blocksize": 524_288,
                         "blocks": [],
                         "created": ANY,
                         "id": ANY,

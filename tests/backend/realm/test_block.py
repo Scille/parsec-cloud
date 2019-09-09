@@ -5,6 +5,7 @@ import pytest
 from unittest.mock import ANY
 import pendulum
 from uuid import UUID, uuid4
+from hypothesis import given, strategies as st
 
 from parsec.backend.block import BlockTimeoutError
 from parsec.backend.realm import RealmGrantedRole
@@ -15,7 +16,7 @@ from parsec.backend.raid5_blockstore import (
 )
 from parsec.api.protocol import block_create_serializer, block_read_serializer, packb, RealmRole
 
-from hypothesis import given, strategies as st
+from tests.backend.conftest import block_create, block_read
 
 
 BLOCK_ID = UUID("00000000000000000000000000000001")
@@ -29,22 +30,6 @@ async def block(backend, alice, realm):
 
     await backend.block.create(alice.organization_id, alice.device_id, block_id, realm, BLOCK_DATA)
     return block_id
-
-
-async def block_create(sock, block_id, realm_id, block):
-    await sock.send(
-        block_create_serializer.req_dumps(
-            {"cmd": "block_create", "block_id": block_id, "realm_id": realm_id, "block": block}
-        )
-    )
-    raw_rep = await sock.recv()
-    return block_create_serializer.rep_loads(raw_rep)
-
-
-async def block_read(sock, block_id):
-    await sock.send(block_read_serializer.req_dumps({"cmd": "block_read", "block_id": block_id}))
-    raw_rep = await sock.recv()
-    return block_read_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
@@ -74,7 +59,7 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
     block_id = uuid4()
 
     # User not part of the realm
-    rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA)
+    rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "not_allowed"}
 
     # User part of the realm with various role
@@ -95,7 +80,7 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
             ),
         )
         block_id = uuid4()
-        rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA)
+        rep = await block_create(bob_backend_sock, block_id, realm, BLOCK_DATA, check_rep=False)
         if access_granted:
             assert rep == {"status": "ok"}
 
@@ -105,8 +90,7 @@ async def test_block_create_check_access_rights(backend, alice, bob, bob_backend
 
 @pytest.mark.trio
 async def test_block_create_and_read(alice_backend_sock, realm):
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
-    assert rep == {"status": "ok"}
+    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
     rep = await block_read(alice_backend_sock, BLOCK_ID)
     assert rep == {"status": "ok", "block": BLOCK_DATA}
@@ -133,7 +117,7 @@ async def test_raid1_block_create_partial_failure(alice_backend_sock, backend, r
 
     backend.blockstore.blockstores[1].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
 
@@ -142,8 +126,7 @@ async def test_raid1_block_create_partial_failure(alice_backend_sock, backend, r
 async def test_raid1_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
-    assert rep == {"status": "ok"}
+    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
 
 @pytest.mark.trio
@@ -183,8 +166,7 @@ async def test_raid5_block_create_single_failure(
 
     backend.blockstore.blockstores[failing_blockstore].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
-    assert rep == {"status": "ok"}
+    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
     # Should be notified of blockstore malfunction
     caplog.assert_occured(
@@ -208,7 +190,7 @@ async def test_raid5_block_create_multiple_failure(
     backend.blockstore.blockstores[fb1].create = mock_create
     backend.blockstore.blockstores[fb2].create = mock_create
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "timeout"}
 
     # Should be notified of blockstore malfunction
@@ -231,8 +213,7 @@ async def test_raid5_block_create_multiple_failure(
 async def test_raid5_block_create_partial_exists(alice_backend_sock, alice, backend, realm):
     await backend.blockstore.blockstores[1].create(alice.organization_id, BLOCK_ID, BLOCK_DATA)
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
-    assert rep == {"status": "ok"}
+    await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
 
 
 @pytest.mark.trio
@@ -356,11 +337,10 @@ async def test_block_read_bad_msg(alice_backend_sock, bad_msg):
 @pytest.mark.trio
 async def test_block_conflicting_id(alice_backend_sock, realm):
     block_v1 = b"v1"
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, block_v1)
-    assert rep == {"status": "ok"}
+    await block_create(alice_backend_sock, BLOCK_ID, realm, block_v1)
 
     block_v2 = b"v2"
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, block_v2)
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, block_v2, check_rep=False)
     assert rep == {"status": "already_exists"}
 
     rep = await block_read(alice_backend_sock, BLOCK_ID)
@@ -385,8 +365,7 @@ async def test_block_check_other_organization(
                 granted_by=sock.device.device_id,
             ),
         )
-        rep = await block_create(sock, block, realm, b"other org data")
-        assert rep == {"status": "ok"}
+        await block_create(sock, block, realm, b"other org data")
 
         rep = await block_read(sock, block)
         assert rep == {"status": "ok", "block": b"other org data"}
@@ -403,7 +382,7 @@ async def test_access_during_maintenance(backend, alice, alice_backend_sock, rea
         pendulum.now(),
     )
 
-    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA)
+    rep = await block_create(alice_backend_sock, BLOCK_ID, realm, BLOCK_DATA, check_rep=False)
     assert rep == {"status": "in_maintenance"}
 
     rep = await block_read(alice_backend_sock, block)

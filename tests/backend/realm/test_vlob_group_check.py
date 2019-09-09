@@ -4,7 +4,7 @@ import pytest
 from uuid import UUID
 from pendulum import Pendulum
 
-from tests.backend.realm.conftest import vlob_create, vlob_update, vlob_group_check
+from tests.backend.conftest import vlob_create, vlob_update, vlob_group_check
 
 
 @pytest.mark.trio

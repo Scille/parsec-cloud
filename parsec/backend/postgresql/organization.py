@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from triopg import UniqueViolationError
-from pypika import Parameter
+from pypika import Parameter, functions as fn
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
+    OrganizationStats,
     Organization,
     OrganizationError,
     OrganizationAlreadyExistsError,
@@ -18,7 +19,14 @@ from parsec.backend.organization import (
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.utils import Query
-from parsec.backend.postgresql.tables import t_organization, q_organization
+from parsec.backend.postgresql.tables import (
+    t_organization,
+    q_organization,
+    q_organization_internal_id,
+    t_user,
+    t_vlob_atom,
+    t_block,
+)
 from parsec.backend.postgresql.user_queries.create import _create_user
 
 
@@ -45,6 +53,22 @@ _q_bootstrap_organization = (
     .set(t_organization.root_verify_key, Parameter("$3"))
     .get_sql()
 )
+
+
+_q_get_stats = Query.select(
+    Query.from_(t_user)
+    .where(t_user.organization == q_organization_internal_id(Parameter("$1")))
+    .select(fn.Count("*"))
+    .as_("users"),
+    Query.from_(t_vlob_atom)
+    .where(t_vlob_atom.organization == q_organization_internal_id(Parameter("$1")))
+    .select(fn.Coalesce(fn.Sum(t_vlob_atom.size), 0))
+    .as_("metadata_size"),
+    Query.from_(t_block)
+    .where(t_block.organization == q_organization_internal_id(Parameter("$1")))
+    .select(fn.Coalesce(fn.Sum(t_block.size), 0))
+    .as_("data_size"),
+).get_sql()
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
@@ -78,14 +102,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def bootstrap(
         self,
-        organization_id: OrganizationID,
+        id: OrganizationID,
         user: User,
         first_device: Device,
         bootstrap_token: str,
         root_verify_key: VerifyKey,
     ) -> None:
         async with self.dbh.pool.acquire() as conn, conn.transaction():
-            organization = await self._get(conn, organization_id)
+            organization = await self._get(conn, id)
 
             if organization.is_bootstrapped():
                 raise OrganizationAlreadyBootstrappedError()
@@ -94,16 +118,23 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationInvalidBootstrapTokenError()
 
             try:
-                await _create_user(conn, organization_id, user, first_device)
+                await _create_user(conn, id, user, first_device)
             except UserError as exc:
                 raise OrganizationFirstUserCreationError(exc) from exc
 
             result = await conn.execute(
-                _q_bootstrap_organization,
-                organization_id,
-                bootstrap_token,
-                root_verify_key.encode(),
+                _q_bootstrap_organization, id, bootstrap_token, root_verify_key.encode()
             )
 
             if result != "UPDATE 1":
                 raise OrganizationError(f"Update error: {result}")
+
+    async def stats(self, id: OrganizationID) -> OrganizationStats:
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            await self._get(conn, id)  # Check organization exists
+            result = await conn.fetchrow(_q_get_stats, id)
+        return OrganizationStats(
+            users=result["users"],
+            data_size=result["data_size"],
+            metadata_size=result["metadata_size"],
+        )
