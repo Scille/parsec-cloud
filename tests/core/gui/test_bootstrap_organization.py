@@ -66,7 +66,9 @@ async def test_bootstrap_organization_backend_offline(
 
         async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):
             await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
-        assert autoclose_dialog.dialogs == [("Error", "Cannot bootstrap this organization.")]
+        assert autoclose_dialog.dialogs == [
+            ("Error", "Cannot reach the server. Please check your internet connection.")
+        ]
 
 
 @pytest.mark.gui

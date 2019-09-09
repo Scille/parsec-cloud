@@ -158,15 +158,20 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             errmsg = _("ERR_PASSWORD_MISMATCH")
         elif status == "password-size":
             errmsg = _("ERR_PASSWORD_COMPLEXITY")
-        elif status == "bad-url":
+        elif status == "bad-url" or status == "invalid-url":
             errmsg = _("ERR_BAD_URL")
         elif status == "bad-device_name":
             errmsg = _("ERR_BAD_DEVICE_NAME")
         elif status == "bad-user_id":
             errmsg = _("ERR_BAD_USER_NAME")
+        elif status == "bad-api-version":
+            errmsg = _("ERR_BAD_API_VERSION")
+        elif status == "refused-by-backend":
+            errmsg = _("ERR_BACKEND_REFUSED")
+        elif status == "backend-offline":
+            errmsg = _("ERR_BACKEND_OFFLINE")
         else:
             errmsg = _("ERR_BOOTSTRAP_ORG_UNKNOWN")
-
         show_error(self, errmsg, exception=self.bootstrap_job.exc)
         self.bootstrap_job = None
         self.check_infos()
