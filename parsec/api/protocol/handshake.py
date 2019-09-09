@@ -36,8 +36,8 @@ class HandshakeRevokedDevice(HandshakeError):
 
 class HandshakeAPIVersionError(HandshakeError):
     def __init__(self, backend_versions, client_versions):
-        self.client_versions = list(client_versions)
-        self.backend_versions = list(backend_versions)
+        self.client_versions = client_versions
+        self.backend_versions = backend_versions
         self.message = (
             f"No overlap between client API versions {self.client_versions} "
             f"and backend API versions {self.backend_versions}"
@@ -52,13 +52,13 @@ class HandshakeAPIVersionError(HandshakeError):
                 backend_version = client_major, backend_dct[client_major]
                 client_version = client_major, client_minor
                 return (backend_version, client_version)
-        raise cls(client_versions, backend_versions)
+        raise cls(backend_versions, client_versions)
 
 
 class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
-    supported_api_versions = fields.FrozenList(fields.ApiVersion(), required=True)
+    supported_api_versions = fields.List(fields.ApiVersion(), required=True)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -117,6 +117,8 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 
 @attr.s
 class ServerHandshake:
+    # Class attribute
+    supported_api_versions = [API_VERSION]
 
     # Challenge
     challenge_size = attr.ib(default=48)
@@ -127,7 +129,6 @@ class ServerHandshake:
     # API version
     client_api_version = attr.ib(default=None)
     backend_api_version = attr.ib(default=None)
-    supported_api_versions = attr.ib(default=(API_VERSION,))
 
     # State
     state = attr.ib(default="stalled")
@@ -162,7 +163,7 @@ class ServerHandshake:
         self.state = "answer"
 
         # API version matching
-        client_api_versions = (self.answer_data["client_api_version"],)
+        client_api_versions = [self.answer_data["client_api_version"]]
         self.backend_api_version, self.client_api_version = HandshakeAPIVersionError.match_versions(
             self.supported_api_versions, client_api_versions
         )
@@ -243,10 +244,15 @@ class ServerHandshake:
 
 @attr.s
 class BaseClientHandshake:
+    # Class attribute
+    supported_api_versions = [API_VERSION]
+
+    # Challenge
     challenge_data = attr.ib(default=None)
+
+    # API version
     backend_api_version = attr.ib(default=None)
     client_api_version = attr.ib(default=None)
-    supported_api_versions = attr.ib(default=(API_VERSION,))
 
     def load_challenge_req(self, req: bytes):
         self.challenge_data = handshake_challenge_serializer.loads(req)
@@ -288,7 +294,6 @@ class AuthenticatedClientHandshake(BaseClientHandshake):
     challenge_data = attr.ib(default=None)
     backend_api_version = attr.ib(default=None)
     client_api_version = attr.ib(default=None)
-    supported_api_versions = attr.ib(default=(API_VERSION,))
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
@@ -314,7 +319,6 @@ class AnonymousClientHandshake(BaseClientHandshake):
     challenge_data = attr.ib(default=None)
     backend_api_version = attr.ib(default=None)
     client_api_version = attr.ib(default=None)
-    supported_api_versions = attr.ib(default=(API_VERSION,))
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
@@ -336,7 +340,6 @@ class AdministrationClientHandshake(BaseClientHandshake):
     challenge_data = attr.ib(default=None)
     backend_api_version = attr.ib(default=None)
     client_api_version = attr.ib(default=None)
-    supported_api_versions = attr.ib(default=(API_VERSION,))
 
     def process_challenge_req(self, req: bytes) -> bytes:
         self.load_challenge_req(req)
