@@ -1,9 +1,22 @@
-# WiP
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
+from collections import OrderedDict
+from typing import Boolean
+
+from parsec.api.data import (
+    DataError,
+    DataValidationError,
+    UserCertificateContent,
+    DeviceCertificateContent,
+    RevokedUserCertificateContent,
+)
+from parsec.core.types import VerifiedRemoteDevice, VerifiedRemoteUser
+from parsec.core.remote_devices_manager.exceptions import RemoteDevicesManagerInvalidTrustchainError
 
 
 def _verify_certificates(root_verify_key, uv_devices, uv_users, known_devices, known_users):
-    unsecure_users = {u[user_id]: u for u in uv_users.map(_unsecure_read_user)}
-    unsecure_devices = {d[device_id]: d for d in uv_devices.map(_unsecure_read_device)}
+    unsecure_users = {u.user_id: u for u in uv_users.map(_unsecure_read_user)}
+    unsecure_devices = {d.device_id: d for d in uv_devices.map(_unsecure_read_device)}
     verified_users = {}
     verified_devices = OrderedDict()
     updatable_users_id = []
@@ -71,13 +84,33 @@ def _verify_certificates(root_verify_key, uv_devices, uv_users, known_devices, k
                 known_devices,
                 known_users,
             ):
-                updatable_users_id += [unsecure_device.user_id]
+                updatable_users_id.append(unsecure_device.user_id)
             verified_users[unsecure_user.user_id] = unsecure_user
+
+        # Verify the device creator is owned by an admin, or the same user
+        if not verified_users[unsecure_device.certified_by.user_id].is_admin:
+            if unsecure_device.user_id != unsecure_device.certified_by.user_id:
+                raise RemoteDevicesManagerInvalidTrustchainError(
+                    f"{sub_path}: Device ({unsecure_device.certified_by}) tried to sign "
+                    f"Device ({unsecure_device.device_id}) although the signing user is neither "
+                    f"an administrator nor the owner of signed device"
+                )
 
         certifier_revoked_on = verified_users[unsecure_device.user_id].revoked_on
 
         # Verify device certificate. Check revocation time.
-        _verify_device_certificate(d_certif, certifier_verify_key, unsecure_device.certified_by)
+        try:
+            DeviceCertificateContent.verify_and_load(
+                d_certif, certifier_verify_key, unsecure_device.certified_by
+            )
+        except DataError as exc:
+            raise RemoteDevicesManagerInvalidTrustchainError(
+                f"{sub_path}: invalid certificate: {exc}"
+            ) from exc
+        except DataValidationError as exc:
+            raise RemoteDevicesManagerInvalidTrustchainError(
+                f"{sub_path}: invalid certificate: {exc}"
+            ) from exc
         if certifier_revoked_on and unsecure_user.certified_on > certifier_revoked_on:
             raise RemoteDevicesManagerInvalidTrustchainError(
                 f"{sub_path}: Signature ({unsecure_user.certified_on}) is "
@@ -85,12 +118,12 @@ def _verify_certificates(root_verify_key, uv_devices, uv_users, known_devices, k
             )
 
         verified_devices[unsecure_device.device_id] = unsecure_device
-        updatable_devices_id += [unsecure_device.device_id]  # TODO : select only needed ones
+        updatable_devices_id.append(unsecure_device.device_id)  # TODO : select only needed ones
         return unsecure_user
 
-    for d_certif, _ in all_devices.values():
+    for unsecure_device_id, _ in unsecure_devices:
         # verify each device here
-        _recursive_verify_device(d_certif.device_id, f"`{d_certif.device_id}`")
+        _recursive_verify_device(unsecure_device_id, f"`{unsecure_device_id}`")
 
     return (
         {d_id: verified_devices[d_id] for d_id in updatable_devices_id},
@@ -170,19 +203,17 @@ def _unsecure_read_user(uv_user):
     }
     if uv_user.revoked_user_certificate:
         try:
-            r_certif = RevokedUserCertificateContent.unsecure_load(
-                uv_device.revoked_device_certificate
-            )
+            r_certif = RevokedUserCertificateContent.unsecure_load(uv_user.revoked_user_certificate)
 
         except DataError as exc:
             raise RemoteDevicesManagerInvalidTrustchainError(
                 f"Invalid format for revoked device certificate: {exc}"
             ) from exc
 
-        if r_certif.user_id != d_certif.user_id:
+        if r_certif.user_id != uv_user.user_id:
             raise RemoteDevicesManagerInvalidTrustchainError(
-                f"Mismatch device_id in creation (`{d_certif.device_id}`)"
-                f" and revocation (`{r_certif.device_id}`) certificates"
+                f"Mismatch device_id in creation (`{uv_user.user_id}`)"
+                f" and revocation (`{uv_user.user_id}`) certificates"
             )
 
         params["revoked_by"] = r_certif.author
@@ -190,23 +221,6 @@ def _unsecure_read_user(uv_user):
 
     u_certif = VerifiedRemoteUser(**params)
     return u_certif
-
-
-def _verify_device_certificate(
-    device_certificate: bytes, author_verify_key: VerifyKey, expected_author_id: DeviceID
-):
-    """
-    Raises:
-        RemoteDevicesManagerInvalidTrustchainError
-    """
-    try:
-        DeviceCertificateContent.verify_and_load(
-            uv_device.device_certificate, author_verify_key, expected_author_id
-        )
-    except CryptoError as exc:
-        raise RemoteDevicesManagerInvalidTrustchainError(
-            f"{sub_path}: invalid certificate: {exc}"
-        ) from exc
 
 
 def _verify_user(
@@ -228,12 +242,12 @@ def _verify_user(
         try:
             certifier = verified_devices[unsecure_user.author]
             if not verified_users[certifier.user_id].is_admin:
-                if certifier.user_id != unsecure_user.user_id:
-                    raise Exception  ################
-
+                raise RemoteDevicesManagerInvalidTrustchainError(
+                    f"{sub_path}: {unsecure_user.author} is not admin and tried to sign user"
+                )
         except KeyError:
             raise RemoteDevicesManagerInvalidTrustchainError(
-                f"{sub_path}: Device not provided by backend"
+                f"{sub_path}: author Device or User unverified"
             )
         certifier_verify_key = certifier.verify_key
         certifier_revoked_on = certifier.revoked_on
@@ -256,9 +270,9 @@ def _verify_user(
             f"to user revocation {certifier_revoked_on})"
         )
 
-    if uv_device.user_id in known_users:
-        _check_users_are_equal_without_revocation(unsecure_user, known_user[uv_device.user_id])
-        if _users_revocation_status_are_equal(unsecure_user, known_user[uv_device.user_id]):
+    if unsecure_user.user_id in known_users:
+        _check_users_are_equal_without_revocation(unsecure_user, known_users[unsecure_user.user_id])
+        if _users_revocation_status_are_equal(unsecure_user, known_users[unsecure_user.user_id]):
             return False
     return True
 
@@ -282,7 +296,7 @@ def _check_users_are_equal_without_revocation(user0, user1):
 
 def _users_revocation_status_are_equal(new_user, old_user):
     for attribute_to_compare in ["revoked_user_certificate", "revoked_by", "revoked_on"]:
-        if new_user[attribute_to_compare] != old_use[attribute_to_compare]:
+        if new_user[attribute_to_compare] != old_user[attribute_to_compare]:
             if new_user[attribute_to_compare] is None:
                 raise RemoteDevicesManagerInvalidTrustchainError(
                     f"User {new_user.user_id} obtained from backend contains field "
