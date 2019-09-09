@@ -18,13 +18,9 @@ from parsec.core.gui.ui.device_button import Ui_DeviceButton
 class DeviceButton(QWidget, Ui_DeviceButton):
     change_password_clicked = pyqtSignal(str)
 
-    def __init__(
-        self, device_name, is_current_device, is_revoked, revoked_on, certified_on, *args, **kwargs
-    ):
+    def __init__(self, device_name, is_current_device, certified_on, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.revoked_on = revoked_on
-        self.label.is_revoked = is_revoked
         self.is_current_device = is_current_device
         self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
         self.device_name = device_name
@@ -74,7 +70,9 @@ class DeviceButton(QWidget, Ui_DeviceButton):
 async def _do_list_devices(core):
     try:
         current_device = core.device
-        _, devices = await core.remote_devices_manager.get_user_and_devices(current_device.user_id)
+        _, _, devices = await core.remote_devices_manager.get_user_and_devices(
+            current_device.user_id
+        )
         return devices
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
@@ -135,10 +133,10 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.register_device_dialog.exec_()
         self.reset()
 
-    def add_device(self, device_name, is_current_device, is_revoked, revoked_on, certified_on):
+    def add_device(self, device_name, is_current_device, certified_on):
         if device_name in self.devices:
             return
-        button = DeviceButton(device_name, is_current_device, is_revoked, revoked_on, certified_on)
+        button = DeviceButton(device_name, is_current_device, certified_on)
         self.layout_devices.addWidget(
             button, int(len(self.devices) / 4), int(len(self.devices) % 4)
         )
@@ -158,12 +156,11 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
                 w.setParent(None)
 
         for device in devices:
+            device_name = device.device_id.device_name
             self.add_device(
-                device.device_name,
-                is_current_device=device.device_name == current_device.device_name,
-                is_revoked=bool(device.revoked_on),
-                revoked_on=device.revoked_on,
-                certified_on=device.certified_on,
+                device_name,
+                is_current_device=device_name == current_device.device_id.device_name,
+                certified_on=device.timestamp,
             )
 
     def on_list_error(self, job):

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import DeviceID, UserID
@@ -122,7 +122,7 @@ class RemoteDevicesManager:
     ) -> Tuple[
         UserCertificateContent,
         Optional[RevokedUserCertificateContent],
-        Tuple[DeviceCertificateContent],
+        List[DeviceCertificateContent],
     ]:
         """
         Note: unlike `get_user` and `get_device`, this method don't rely on cache
