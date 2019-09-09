@@ -137,6 +137,7 @@ class BackendAdministrationCmds:
 
     ping = _expose_cmds("ping")
     organization_create = _expose_cmds("organization_create")
+    organization_stats = _expose_cmds("organization_stats")
 
 
 @asynccontextmanager

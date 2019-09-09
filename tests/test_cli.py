@@ -194,13 +194,13 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
     ):
 
         print("####### Create organization #######")
-        url = f"parsec://localhost:{unused_tcp_port}"
+        admin_url = f"parsec://localhost:{unused_tcp_port}"
         if not ssl_conf.use_ssl:
-            url += "?no_ssl=true"
+            admin_url += "?no_ssl=true"
 
         p = _run(
             "core create_organization "
-            f"{org} --addr={url} "
+            f"{org} --addr={admin_url} "
             f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
             env=ssl_conf.client_env,
         )
@@ -269,5 +269,13 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         _run(
             "core create_workspace wksp2 "
             f"--config-dir={config_dir} --device={alice2_slug} --password={password}",
+            env=ssl_conf.client_env,
+        )
+
+        print("####### Stats organization #######")
+        _run(
+            "core stats_organization "
+            f"{org} --addr={admin_url} "
+            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
             env=ssl_conf.client_env,
         )
