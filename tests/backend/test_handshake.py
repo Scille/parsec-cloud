@@ -22,15 +22,17 @@ def mock_api_versions(monkeypatch):
     default_client_version = 1, 11
     default_backend_version = 1, 22
 
-    def _mock_api_versions(
-        client_versions=[default_client_version], backend_versions=[default_backend_version]
-    ):
-        monkeypatch.setattr(BaseClientHandshake, "supported_api_versions", client_versions)
-        monkeypatch.setattr(ServerHandshake, "supported_api_versions", backend_versions)
+    def _mock_api_versions(client_versions=None, backend_versions=None):
+        if client_versions is not None:
+            monkeypatch.setattr(BaseClientHandshake, "supported_api_versions", client_versions)
+        if backend_versions is not None:
+            monkeypatch.setattr(ServerHandshake, "supported_api_versions", backend_versions)
 
     _mock_api_versions.default_client_version = default_client_version
     _mock_api_versions.default_backend_version = default_backend_version
-    _mock_api_versions()
+    _mock_api_versions(
+        client_versions=[default_client_version], backend_versions=[default_backend_version]
+    )
     return _mock_api_versions
 
 
