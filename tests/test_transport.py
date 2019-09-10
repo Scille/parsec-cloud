@@ -4,7 +4,7 @@ import pytest
 import trio
 from functools import partial
 
-from parsec.serde import UnknownCheckedSchema, fields
+from parsec.serde import BaseSchema, fields
 from parsec.api.transport import Transport, TransportClosedByPeer
 from parsec.api.protocol.base import MsgpackSerializer
 
@@ -90,7 +90,7 @@ async def test_big_buffer_bench(backend_addr):
         nursery.start_soon(_boot_client)
         nursery.start_soon(_boot_server)
 
-    class Schema(UnknownCheckedSchema):
+    class Schema(BaseSchema):
         data = fields.Bytes()
 
     schema = MsgpackSerializer(Schema)

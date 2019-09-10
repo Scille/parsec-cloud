@@ -1,13 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from marshmallow import (
-    Schema,
-    MarshalResult,
-    UnmarshalResult,
-    ValidationError,
-    validates_schema,
-    post_load,
-)
+from marshmallow import Schema, MarshalResult, UnmarshalResult, ValidationError, post_load
 
 
 try:
@@ -24,23 +17,7 @@ except ImportError:
 from parsec.serde.fields import String
 
 
-__all__ = ("UnknownCheckedSchema", "BaseCmdSchema")
-
-
-class UnknownCheckedSchema(BaseSchema):
-
-    """
-    ModelSchema with check for unknown field
-    """
-
-    @validates_schema(pass_original=True)
-    def check_unknown_fields(self, data, original_data):
-        for key in original_data:
-            if key not in self.fields or self.fields[key].dump_only:
-                raise ValidationError("Unknown field name {}".format(key))
-
-
-class BaseCmdSchema(UnknownCheckedSchema):
+class BaseCmdSchema(BaseSchema):
 
     cmd = String(required=True)
 
@@ -59,7 +36,7 @@ class BaseCmdSchema(UnknownCheckedSchema):
 # https://github.com/maximkulkin/marshmallow-oneofschema - MIT licensed)
 # This is needed because marshmallow-oneofschema depends of marshmallow which
 # cannot be installed along with toastedmarshmallow
-class OneOfSchema(UnknownCheckedSchema):
+class OneOfSchema(BaseSchema):
     """
     This is a special kind of schema that actually multiplexes other schemas
     based on object type. When serializing values, it uses get_obj_type() method

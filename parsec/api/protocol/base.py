@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.serde import (
-    UnknownCheckedSchema,
+    BaseSchema,
     fields,
     OneOfSchema,
     post_load,
@@ -40,7 +40,7 @@ def serializer_factory(schema_cls):
     return MsgpackSerializer(schema_cls, InvalidMessageError, MessageSerializationError)
 
 
-class BaseReqSchema(UnknownCheckedSchema):
+class BaseReqSchema(BaseSchema):
     cmd = fields.String(required=True)
 
     @post_load
@@ -54,7 +54,7 @@ class BaseReqSchema(UnknownCheckedSchema):
         self.drop_cmd_field = drop_cmd_field
 
 
-class BaseRepSchema(UnknownCheckedSchema):
+class BaseRepSchema(BaseSchema):
     status = fields.CheckedConstant("ok", required=True)
 
 

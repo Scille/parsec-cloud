@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from parsec.crypto import CryptoError, derivate_secret_key_from_password
-from parsec.serde import MsgpackSerializer, UnknownCheckedSchema, fields
+from parsec.serde import MsgpackSerializer, BaseSchema, fields
 from parsec.core.local_device.exceptions import (
     LocalDevicePackingError,
     LocalDeviceValidationError,
@@ -35,7 +35,7 @@ class BaseLocalDeviceDecryptor:
         raise NotImplementedError()
 
 
-class PasswordPayloadSchema(UnknownCheckedSchema):
+class PasswordPayloadSchema(BaseSchema):
     type = fields.CheckedConstant("password", required=True)
     salt = fields.Bytes(required=True)
     ciphertext = fields.Bytes(required=True)

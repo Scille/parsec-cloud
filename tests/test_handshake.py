@@ -124,12 +124,6 @@ def test_good_administration_handshake():
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
         {"challenge": b"1234567890", "api_version": __api_version__},
-        {
-            "handshake": "challenge",
-            "challenge": b"1234567890",
-            "api_version": __api_version__,
-            "foo": "bar",
-        },
         {"handshake": "challenge", "challenge": None},
         {"handshake": "challenge", "challenge": None, "api_version": __api_version__},
         {"handshake": "challenge", "challenge": 42, "api_version": __api_version__},
@@ -369,7 +363,6 @@ def test_build_bad_outcomes(alice, method, expected_result):
         {},
         {"handshake": "foo", "result": "ok"},
         {"result": "ok"},
-        {"handshake": "result", "result": "ok", "foo": "bar"},
         {"handshake": "result", "result": "error"},
     ],
 )

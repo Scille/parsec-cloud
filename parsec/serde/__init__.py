@@ -4,7 +4,7 @@ from marshmallow import validate, post_load  # noqa: republishing
 
 from parsec.serde import fields
 from parsec.serde.exceptions import SerdeError, SerdeValidationError, SerdePackingError
-from parsec.serde.schema import BaseSchema, UnknownCheckedSchema, OneOfSchema, BaseCmdSchema
+from parsec.serde.schema import BaseSchema, OneOfSchema, BaseCmdSchema
 from parsec.serde.packing import packb, unpackb
 from parsec.serde.serializer import BaseSerializer, MsgpackSerializer, ZipMsgpackSerializer
 
@@ -13,7 +13,6 @@ __all__ = (
     "SerdeValidationError",
     "SerdePackingError",
     "BaseSchema",
-    "UnknownCheckedSchema",
     "OneOfSchema",
     "BaseCmdSchema",
     "validate",

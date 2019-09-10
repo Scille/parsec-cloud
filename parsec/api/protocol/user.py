@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import UnknownCheckedSchema, fields
+from parsec.serde import BaseSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDField
 
@@ -25,7 +25,7 @@ __all__ = (
 #### Access user API ####
 
 
-class TrustchainSchema(UnknownCheckedSchema):
+class TrustchainSchema(BaseSchema):
     devices = fields.List(fields.Bytes(required=True))
     users = fields.List(fields.Bytes(required=True))
     revoked_users = fields.List(fields.Bytes(required=True))

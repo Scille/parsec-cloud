@@ -5,7 +5,7 @@ from secrets import token_bytes
 
 from parsec import __api_version__
 from parsec.crypto import CryptoError
-from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
+from parsec.serde import BaseSchema, OneOfSchema, fields
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
 
@@ -50,7 +50,7 @@ class HandshakeAPIVersionError(HandshakeError):
             raise cls(peer_api_version)
 
 
-class HandshakeChallengeSchema(UnknownCheckedSchema):
+class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
     api_version = fields.ApiVersion(required=True)
@@ -59,7 +59,7 @@ class HandshakeChallengeSchema(UnknownCheckedSchema):
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 
 
-class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
+class HandshakeAuthenticatedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("authenticated", required=True)
     api_version = fields.ApiVersion(required=True)
@@ -69,7 +69,7 @@ class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
     answer = fields.Bytes(required=True)
 
 
-class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
+class HandshakeAnonymousAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("anonymous", required=True)
     api_version = fields.ApiVersion(required=True)
@@ -78,7 +78,7 @@ class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
     rvk = fields.VerifyKey(missing=None)
 
 
-class HandshakeAdministrationAnswerSchema(UnknownCheckedSchema):
+class HandshakeAdministrationAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("administration", required=True)
     api_version = fields.ApiVersion(required=True)
@@ -101,7 +101,7 @@ class HandshakeAnswerSchema(OneOfSchema):
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 
 
-class HandshakeResultSchema(UnknownCheckedSchema):
+class HandshakeResultSchema(BaseSchema):
     handshake = fields.CheckedConstant("result", required=True)
     result = fields.String(required=True)
     help = fields.String(missing=None)
