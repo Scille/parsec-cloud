@@ -45,9 +45,9 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
 
         await transport.recv()  # Get challenge
         req = {
-            "handshake": "foo",
+            "handshake": ",foo",
             "type": "anonymous",
-            "client_api_version": ApiVersion(1, 1)._asdict(),
+            "client_api_version": ApiVersion(1, 1),
             "organization_id": "zob",
         }
         await transport.send(packb(req))
@@ -235,7 +235,7 @@ async def test_authenticated_handshake_bad_versions(
 
         # Alter answer
         answer_dict = unpackb(answer_req)
-        answer_dict["client_api_version"] = ApiVersion(2, 22)._asdict()
+        answer_dict["client_api_version"] = ApiVersion(2, 22)
         answer_req = packb(answer_dict)
 
         await transport.send(answer_req)

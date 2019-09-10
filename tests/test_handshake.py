@@ -121,25 +121,13 @@ def test_good_administration_handshake():
     "req",
     [
         {},
-        {
-            "handshake": "foo",
-            "challenge": b"1234567890",
-            "supported_api_versions": [API_VERSION._asdict()],
-        },
+        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION._asdict()]},
+        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": None},
-        {
-            "handshake": "challenge",
-            "challenge": None,
-            "supported_api_versions": [API_VERSION._asdict()],
-        },
-        {
-            "handshake": "challenge",
-            "challenge": 42,
-            "supported_api_versions": [API_VERSION._asdict()],
-        },
+        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_VERSION]},
+        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
@@ -182,7 +170,7 @@ def test_process_challenge_req_good_api_version(
     req = {
         "handshake": "challenge",
         "challenge": b"1234567890",
-        "supported_api_versions": [backend_version._asdict()],
+        "supported_api_versions": [backend_version],
     }
     monkeypatch.setattr(ch, "supported_api_versions", frozenset([client_version]))
 
@@ -244,7 +232,7 @@ def test_process_challenge_req_good_multiple_api_version(
     req = {
         "handshake": "challenge",
         "challenge": b"1234567890",
-        "supported_api_versions": [version._asdict() for version in backend_versions],
+        "supported_api_versions": list(backend_versions),
     }
     monkeypatch.setattr(ch, "supported_api_versions", client_versions)
 
@@ -372,7 +360,7 @@ def test_process_answer_req_bad_format(req, alice):
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
-    req["supported_api_versions"] = [API_VERSION._asdict()]
+    req["supported_api_versions"] = [API_VERSION]
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
@@ -388,7 +376,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": API_VERSION._asdict(),
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -405,7 +393,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": API_VERSION._asdict(),
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -432,7 +420,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": API_VERSION._asdict(),
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
