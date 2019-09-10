@@ -256,40 +256,51 @@ async def invite_and_create_device(
             raise InviteClaimError(f"Cannot invite device: {exc}") from exc
 
         try:
-            claim = DeviceClaimContent.decrypt_and_load_for(
-                encrypted_claim, recipient_privkey=device.private_key
-            )
 
-        except DataError as exc:
-            raise InviteClaimCryptoError(f"Cannot decrypt device claim info: {exc}") from exc
+            try:
+                claim = DeviceClaimContent.decrypt_and_load_for(
+                    encrypted_claim, recipient_privkey=device.private_key
+                )
 
-        if claim.token != token:
-            raise InviteClaimInvalidTokenError(
-                f"Invalid claim token provided by peer: `{claim['token']}`"
-                f" (was expecting `{token}`)"
-            )
+            except DataError as exc:
+                raise InviteClaimCryptoError(f"Cannot decrypt device claim info: {exc}") from exc
 
-        try:
-            now = pendulum.now()
-            device_certificate = DeviceCertificateContent(
-                author=device.device_id,
-                timestamp=now,
-                device_id=claim.device_id,
-                verify_key=claim.verify_key,
-            ).dump_and_sign(device.signing_key)
+            if claim.token != token:
+                raise InviteClaimInvalidTokenError(
+                    f"Invalid claim token provided by peer: `{claim.token}`"
+                    f" (was expecting `{token}`)"
+                )
 
-        except DataError as exc:
-            raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
+            try:
+                now = pendulum.now()
+                device_certificate = DeviceCertificateContent(
+                    author=device.device_id,
+                    timestamp=now,
+                    device_id=claim.device_id,
+                    verify_key=claim.verify_key,
+                ).dump_and_sign(device.signing_key)
 
-        try:
-            encrypted_answer = DeviceClaimAnswerContent(
-                private_key=device.private_key,
-                user_manifest_id=device.user_manifest_id,
-                user_manifest_key=device.user_manifest_key,
-            ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
+            except DataError as exc:
+                raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
 
-        except DataError as exc:
-            raise InviteClaimError(f"Cannot generate user claim answer message: {exc}") from exc
+            try:
+                encrypted_answer = DeviceClaimAnswerContent(
+                    private_key=device.private_key,
+                    user_manifest_id=device.user_manifest_id,
+                    user_manifest_key=device.user_manifest_key,
+                ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
+
+            except DataError as exc:
+                raise InviteClaimError(f"Cannot generate user claim answer message: {exc}") from exc
+
+        except:
+            # Cancel the invitation to prevent the claiming peer from
+            # waiting us until timeout
+            try:
+                await cmds.device_cancel_invitation(new_device_name)
+            except BackendConnectionError:
+                pass
+            raise
 
         try:
             await cmds.device_create(device_certificate, encrypted_answer)
@@ -329,41 +340,52 @@ async def invite_and_create_user(
             raise InviteClaimError(f"Cannot invite user: {exc}") from exc
 
         try:
-            claim = UserClaimContent.decrypt_and_load_for(
-                encrypted_claim, recipient_privkey=device.private_key
-            )
 
-        except DataError as exc:
-            raise InviteClaimCryptoError(f"Cannot decrypt user claim info: {exc}") from exc
+            try:
+                claim = UserClaimContent.decrypt_and_load_for(
+                    encrypted_claim, recipient_privkey=device.private_key
+                )
 
-        if claim.token != token:
-            raise InviteClaimInvalidTokenError(
-                f"Invalid claim token provided by peer: `{claim.token}`"
-                f" (was expecting `{token}`)"
-            )
+            except DataError as exc:
+                raise InviteClaimCryptoError(f"Cannot decrypt user claim info: {exc}") from exc
 
-        device_id = claim.device_id
-        now = pendulum.now()
-        try:
+            if claim.token != token:
+                raise InviteClaimInvalidTokenError(
+                    f"Invalid claim token provided by peer: `{claim.token}`"
+                    f" (was expecting `{token}`)"
+                )
 
-            user_certificate = UserCertificateContent(
-                author=device.device_id,
-                timestamp=now,
-                user_id=device_id.user_id,
-                public_key=claim.public_key,
-                is_admin=is_admin,
-            ).dump_and_sign(device.signing_key)
-            device_certificate = DeviceCertificateContent(
-                author=device.device_id,
-                timestamp=now,
-                device_id=device_id,
-                verify_key=claim.verify_key,
-            ).dump_and_sign(device.signing_key)
+            device_id = claim.device_id
+            now = pendulum.now()
+            try:
 
-        except DataError as exc:
-            raise InviteClaimError(
-                f"Cannot generate user&first device certificates: {exc}"
-            ) from exc
+                user_certificate = UserCertificateContent(
+                    author=device.device_id,
+                    timestamp=now,
+                    user_id=device_id.user_id,
+                    public_key=claim.public_key,
+                    is_admin=is_admin,
+                ).dump_and_sign(device.signing_key)
+                device_certificate = DeviceCertificateContent(
+                    author=device.device_id,
+                    timestamp=now,
+                    device_id=device_id,
+                    verify_key=claim.verify_key,
+                ).dump_and_sign(device.signing_key)
+
+            except DataError as exc:
+                raise InviteClaimError(
+                    f"Cannot generate user&first device certificates: {exc}"
+                ) from exc
+
+        except:
+            # Cancel the invitation to prevent the claiming peer from
+            # waiting us until timeout
+            try:
+                await cmds.user_cancel_invitation(user_id)
+            except BackendConnectionError:
+                pass
+            raise
 
         try:
             await cmds.user_create(user_certificate, device_certificate)

@@ -6,7 +6,9 @@ import trio
 from parsec.api.protocol import DeviceID
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.invite_claim import (
+    InviteClaimError,
     InviteClaimCryptoError,
+    InviteClaimInvalidTokenError,
     generate_invitation_token,
     invite_and_create_user,
     claim_user,
@@ -340,3 +342,71 @@ async def test_device_claim_invalid_returned_certificate(
         .dump_and_sign(author_signkey=alice.signing_key)
     )
     await _do_test()
+
+
+@pytest.mark.trio
+async def test_device_invite_claim_invalid_token(running_backend, backend, alice):
+    new_device_id = DeviceID(f"{alice.user_id}@NewDevice")
+    token = generate_invitation_token()
+    bad_token = generate_invitation_token()
+    invite_exception_occured = False
+    claim_exception_occured = False
+
+    async def _from_alice():
+        nonlocal invite_exception_occured
+        with pytest.raises(InviteClaimInvalidTokenError) as exc:
+            await invite_and_create_device(alice, new_device_id.device_name, token=token)
+        assert (
+            str(exc.value)
+            == f"Invalid claim token provided by peer: `{bad_token}` (was expecting `{token}`)"
+        )
+        invite_exception_occured = True
+
+    async def _from_new_device():
+        nonlocal claim_exception_occured
+        with pytest.raises(InviteClaimError) as exc:
+            await claim_device(alice.organization_addr, new_device_id, token=bad_token)
+        assert (
+            str(exc.value)
+            == "Cannot claim device: Backend error `denied`: Invitation creator rejected us."
+        )
+        claim_exception_occured = True
+
+    await _invite_and_claim(
+        running_backend, _from_alice, _from_new_device, event_name="device.claimed"
+    )
+    assert invite_exception_occured
+    assert claim_exception_occured
+
+
+@pytest.mark.trio
+async def test_user_invite_claim_invalid_token(running_backend, backend, alice):
+    new_device_id = DeviceID("zack@pc1")
+    token = generate_invitation_token()
+    bad_token = generate_invitation_token()
+    invite_exception_occured = False
+    claim_exception_occured = False
+
+    async def _from_alice():
+        nonlocal invite_exception_occured
+        with pytest.raises(InviteClaimInvalidTokenError) as exc:
+            await invite_and_create_user(alice, new_device_id.user_id, is_admin=False, token=token)
+        assert (
+            str(exc.value)
+            == f"Invalid claim token provided by peer: `{bad_token}` (was expecting `{token}`)"
+        )
+        invite_exception_occured = True
+
+    async def _from_new_device():
+        nonlocal claim_exception_occured
+        with pytest.raises(InviteClaimError) as exc:
+            await claim_user(alice.organization_addr, new_device_id, token=bad_token)
+        assert (
+            str(exc.value)
+            == "Cannot claim user: Backend error `denied`: Invitation creator rejected us."
+        )
+        claim_exception_occured = True
+
+    await _invite_and_claim(running_backend, _from_alice, _from_new_device)
+    assert invite_exception_occured
+    assert claim_exception_occured
