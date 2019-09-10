@@ -10,7 +10,7 @@ from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
-    RevokedDeviceCertificateContent,
+    RevokedUserCertificateContent,
     DataError,
 )
 from parsec.api.protocol import (
@@ -24,12 +24,12 @@ from parsec.api.protocol import (
     user_claim_serializer,
     user_cancel_invitation_serializer,
     user_create_serializer,
+    user_revoke_serializer,
     device_get_invitation_creator_serializer,
     device_invite_serializer,
     device_claim_serializer,
     device_cancel_invitation_serializer,
     device_create_serializer,
-    device_revoke_serializer,
 )
 from parsec.backend.utils import anonymous_api, catch_protocol_errors
 
@@ -77,11 +77,7 @@ class Device:
     device_id: DeviceID
     device_certificate: bytes
     device_certifier: Optional[DeviceID]
-
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    revoked_on: pendulum.Pendulum = None
-    revoked_device_certificate: bytes = None
-    revoked_device_certifier: DeviceID = None
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -101,22 +97,16 @@ class User:
     user_certifier: Optional[DeviceID]
     is_admin: bool = False
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    revoked_on: pendulum.Pendulum = None
+    revoked_user_certificate: bytes = None
+    revoked_user_certifier: DeviceID = None
 
 
-def user_is_revoked(devices: List[Device]) -> bool:
-    now = pendulum.now()
-    for d in devices:
-        if not d.revoked_on or d.revoked_on > now:
-            return False
-    return True
-
-
-def user_get_revoked_on(devices: List[Device]) -> Optional[pendulum.Pendulum]:
-    revocations = [d.revoked_on for d in devices]
-    if not revocations or None in revocations:
-        return None
-    else:
-        return sorted(revocations)[-1]
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class Trustchain:
+    users: Tuple[bytes, ...]
+    revoked_users: Tuple[bytes, ...]
+    devices: Tuple[bytes, ...]
 
 
 def new_user_factory(
@@ -191,10 +181,14 @@ class BaseUserComponent:
         return user_get_serializer.rep_dump(
             {
                 "status": "ok",
-                "user_id": user.user_id,
                 "user_certificate": user.user_certificate,
-                "devices": devices,
-                "trustchain": trustchain,
+                "revoked_user_certificate": user.revoked_user_certificate,
+                "device_certificates": [device.device_certificate for device in devices],
+                "trustchain": {
+                    "devices": trustchain.devices,
+                    "users": trustchain.users,
+                    "revoked_users": trustchain.revoked_users,
+                },
             }
         )
 
@@ -275,7 +269,11 @@ class BaseUserComponent:
                 "status": "ok",
                 "device_certificate": creator_device.device_certificate,
                 "user_certificate": creator_user.user_certificate,
-                "trustchain": trustchain,
+                "trustchain": {
+                    "devices": trustchain.devices,
+                    "users": trustchain.users,
+                    "revoked_users": trustchain.revoked_users,
+                },
             }
         )
 
@@ -434,6 +432,55 @@ class BaseUserComponent:
 
         return user_create_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocol_errors
+    async def api_user_revoke(self, client_ctx, msg):
+        if not client_ctx.is_admin:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+
+        msg = user_revoke_serializer.req_load(msg)
+
+        try:
+            data = RevokedUserCertificateContent.verify_and_load(
+                msg["revoked_user_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
+
+        except DataError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
+            }
+
+        if data.user_id == client_ctx.user_id:
+            return {"status": "not_allowed", "reason": "Cannot do self-revocation"}
+
+        try:
+            await self.revoke_user(
+                organization_id=client_ctx.organization_id,
+                user_id=data.user_id,
+                revoked_user_certificate=msg["revoked_user_certificate"],
+                revoked_user_certifier=data.author,
+                revoked_on=data.timestamp,
+            )
+
+        except UserNotFoundError:
+            return {"status": "not_found"}
+
+        except UserAlreadyRevokedError:
+            return {"status": "already_revoked", "reason": f"User `{data.user_id}` already revoked"}
+
+        return user_revoke_serializer.rep_dump({"status": "ok"})
+
     #### Device creation API ####
 
     @catch_protocol_errors
@@ -494,7 +541,11 @@ class BaseUserComponent:
                 "status": "ok",
                 "device_certificate": creator_device.device_certificate,
                 "user_certificate": creator_user.user_certificate,
-                "trustchain": trustchain,
+                "trustchain": {
+                    "devices": trustchain.devices,
+                    "users": trustchain.users,
+                    "revoked_users": trustchain.revoked_users,
+                },
             }
         )
 
@@ -617,64 +668,6 @@ class BaseUserComponent:
 
         return device_create_serializer.rep_dump({"status": "ok"})
 
-    @catch_protocol_errors
-    async def api_device_revoke(self, client_ctx, msg):
-        msg = device_revoke_serializer.req_load(msg)
-
-        try:
-            data = RevokedDeviceCertificateContent.verify_and_load(
-                msg["revoked_device_certificate"],
-                author_verify_key=client_ctx.verify_key,
-                expected_author=client_ctx.device_id,
-            )
-
-        except DataError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
-            }
-
-        if client_ctx.device_id.user_id != data.device_id.user_id:
-            try:
-                user = await self.get_user(client_ctx.organization_id, client_ctx.device_id.user_id)
-
-            except UserNotFoundError as exc:
-                raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !") from exc
-
-            if not user.is_admin:
-                return {
-                    "status": "not_allowed",
-                    "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-                }
-
-        try:
-            user_revoked_on = await self.revoke_device(
-                client_ctx.organization_id,
-                data.device_id,
-                msg["revoked_device_certificate"],
-                data.author,
-                data.timestamp,
-            )
-
-        except UserNotFoundError:
-            return {"status": "not_found"}
-
-        except UserAlreadyRevokedError:
-            return {
-                "status": "already_revoked",
-                "reason": f"Device `{data.device_id}` already revoked",
-            }
-
-        return device_revoke_serializer.rep_dump(
-            {"status": "ok", "user_revoked_on": user_revoked_on}
-        )
-
     #### Virtual methods ####
 
     async def create_user(
@@ -695,6 +688,21 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
+    async def revoke_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        revoked_user_certificate: bytes,
+        revoked_user_certifier: DeviceID,
+        revoked_on: pendulum.Pendulum = None,
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+            UserAlreadyRevokedError
+        """
+        raise NotImplementedError()
+
     async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         """
         Raises:
@@ -704,7 +712,7 @@ class BaseUserComponent:
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device]]:
+    ) -> Tuple[User, Trustchain]:
         """
         Raises:
             UserNotFoundError
@@ -713,7 +721,7 @@ class BaseUserComponent:
 
     async def get_user_with_device_and_trustchain(
         self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> Tuple[User, Device, Tuple[Device]]:
+    ) -> Tuple[User, Device, Trustchain]:
         """
         Raises:
             UserNotFoundError
@@ -722,7 +730,7 @@ class BaseUserComponent:
 
     async def get_user_with_devices_and_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device], Tuple[Device]]:
+    ) -> Tuple[User, Tuple[Device], Trustchain]:
         """
         Raises:
             UserNotFoundError
@@ -820,21 +828,5 @@ class BaseUserComponent:
     ) -> None:
         """
         Raises: Nothing
-        """
-        raise NotImplementedError()
-
-    async def revoke_device(
-        self,
-        organization_id: OrganizationID,
-        device_id: DeviceID,
-        revoked_device_certificate: bytes,
-        revoked_device_certifier: DeviceID,
-        revoked_on: pendulum.Pendulum = None,
-    ) -> Optional[pendulum.Pendulum]:
-        """
-        Raises:
-            UserNotFoundError
-            UserAlreadyRevokedError
-        Returns: User revoked date if any
         """
         raise NotImplementedError()

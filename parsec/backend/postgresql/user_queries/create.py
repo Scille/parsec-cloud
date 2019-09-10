@@ -2,8 +2,7 @@
 
 import itertools
 from triopg import UniqueViolationError
-from pypika import Parameter, Case, functions as fn
-from pypika.enums import SqlTypes
+from pypika import Parameter
 
 from parsec.api.protocol import OrganizationID
 from parsec.backend.user import User, Device, UserError, UserNotFoundError, UserAlreadyExistsError
@@ -49,15 +48,7 @@ _q_insert_user = (
 _q_insert_device = (
     Query.into(t_device)
     .columns(
-        "organization",
-        "user_",
-        "device_id",
-        "device_certificate",
-        "device_certifier",
-        "created_on",
-        "revoked_on",
-        "revoked_device_certificate",
-        "revoked_device_certifier",
+        "organization", "user_", "device_id", "device_certificate", "device_certifier", "created_on"
     )
     .insert(
         q_organization_internal_id(Parameter("$1")),
@@ -66,14 +57,6 @@ _q_insert_device = (
         Parameter("$4"),
         q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$5")),
         Parameter("$6"),
-        Parameter("$7"),
-        Parameter("$8"),
-        Case()
-        .when(
-            fn.Cast(Parameter("$9"), SqlTypes.VARCHAR).notnull(),
-            q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$9")),
-        )
-        .else_(None),
     )
     .get_sql()
 )
@@ -138,9 +121,6 @@ async def _create_device(
             device.device_certificate,
             device.device_certifier,
             device.created_on,
-            device.revoked_on,
-            device.revoked_device_certificate,
-            device.revoked_device_certifier,
         )
     except UniqueViolationError:
         raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")

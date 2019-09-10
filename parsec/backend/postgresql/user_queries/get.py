@@ -4,7 +4,7 @@ from typing import Tuple
 from pypika import Parameter
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
-from parsec.backend.user import User, Device, UserNotFoundError
+from parsec.backend.user import User, Device, Trustchain, UserNotFoundError
 from parsec.backend.postgresql.utils import Query, query
 from parsec.backend.postgresql.tables import (
     t_user,
@@ -22,6 +22,11 @@ _q_get_user = (
         "user_certificate",
         q_device(_id=t_user.user_certifier).select(t_device.device_id).as_("user_certifier"),
         "created_on",
+        "revoked_on",
+        "revoked_user_certificate",
+        q_device(_id=t_user.revoked_user_certifier)
+        .select(t_device.device_id)
+        .as_("revoked_user_certifier"),
     )
     .where(
         (t_user.organization == q_organization_internal_id(Parameter("$1")))
@@ -44,11 +49,6 @@ _q_get_device = (
         .select(_t_d2.device_id)
         .as_("device_certifier"),
         "created_on",
-        "revoked_on",
-        "revoked_device_certificate",
-        q_device(_id=_t_d1.revoked_device_certifier, table=_t_d3)
-        .select(_t_d3.device_id)
-        .as_("revoked_device_certifier"),
     )
     .where(
         (_t_d1.organization == q_organization_internal_id(Parameter("$1")))
@@ -67,11 +67,6 @@ _q_get_user_devices = (
         .select(_t_d2.device_id)
         .as_("device_certifier"),
         "created_on",
-        "revoked_on",
-        "revoked_device_certificate",
-        q_device(_id=_t_d1.revoked_device_certifier, table=_t_d3)
-        .select(_t_d3.device_id)
-        .as_("revoked_device_certifier"),
     )
     .where(
         _t_d1.user_ == q_user_internal_id(organization_id=Parameter("$1"), user_id=Parameter("$2"))
@@ -81,91 +76,116 @@ _q_get_user_devices = (
 
 
 _q_get_trustchain = """
-WITH nodes AS (
-    WITH RECURSIVE nodes(node_id, certifier_id, revoker_id, parents, depth) AS (
-        SELECT
-            _id,
-            device.device_certifier,
-            device.revoked_device_certifier,
-            ARRAY[device.device_certifier, device.revoked_device_certifier],
-            1
-        FROM device WHERE _id = ANY((SELECT _id FROM device WHERE organization = ({q_organization}) AND device_id = ANY($2::VARCHAR[])))
+WITH RECURSIVE cte2 (
+    _uid, _did, user_id, device_id,
+    user_certifier, revoked_user_certifier, device_certifier,
+    user_certificate, revoked_user_certificate, device_certificate
+) AS (
 
-        UNION ALL
-
-        SELECT
-            _id,
-            device.device_certifier,
-            device.revoked_device_certifier,
-            parents || device.device_certifier || device.revoked_device_certifier,
-            nd.depth + 1
-        FROM device, nodes as nd
-        WHERE (
-            (nd.certifier_id IS NOT NULL AND device._id = nd.certifier_id) OR
-            (nd.revoker_id IS NOT NULL AND device._id = nd.revoker_id)
-        )
+    WITH cte (
+        _uid, _did, user_id, device_id,
+        user_certifier, revoked_user_certifier, device_certifier,
+        user_certificate, revoked_user_certificate, device_certificate
+    ) AS (
+        SELECT user_._id AS _uid, device._id AS _did, user_id, device_id,
+        user_certifier, revoked_user_certifier, device_certifier,
+        user_certificate, revoked_user_certificate, device_certificate
+        FROM device LEFT JOIN user_ ON device.user_ = user_._id
+        WHERE device.organization = ({q_organization})
     )
-    SELECT * FROM (
-        SELECT unnest(parents) as _id FROM nodes
-        UNION
-        SELECT _id FROM device WHERE organization = ({q_organization}) AND device_id = ANY($2::VARCHAR[])
-    ) ss
-    GROUP BY _id
+
+    SELECT
+        _uid, _did, user_id, device_id,
+        user_certifier, revoked_user_certifier, device_certifier,
+        user_certificate, revoked_user_certificate, device_certificate
+    FROM cte
+    WHERE _did = ANY((SELECT _id FROM device WHERE organization = ({q_organization}) AND device_id = ANY($2::VARCHAR[])))
+
+    UNION
+
+    SELECT
+        cte._uid, cte._did, cte.user_id, cte.device_id,
+        cte.user_certifier, cte.revoked_user_certifier, cte.device_certifier,
+        cte.user_certificate, cte.revoked_user_certificate, cte.device_certificate
+    FROM cte, cte2
+    WHERE cte2.user_certifier = cte._did
+        OR cte2.device_certifier = cte._did
+        OR cte2.revoked_user_certifier = cte._did
+
 )
-SELECT
-    device_id,
-    device_certificate,
-    ({q_device_certifier}) as device_certifier,
-    created_on,
-    revoked_on,
-    revoked_device_certificate,
-    ({q_revoked_device_certifier}) as revoked_device_certifier
-FROM nodes
-INNER JOIN device
-ON nodes._id = device._id
+SELECT DISTINCT ON (_did)
+    _did, _uid, device_certificate, user_certificate, revoked_user_certificate
+FROM cte2;
 """.format(
-    q_organization=q_organization_internal_id(Parameter("$1")),
-    q_device_certifier=q_device(_id=Parameter("device_certifier")).select("_id"),
-    q_revoked_device_certifier=q_device(_id=Parameter("revoked_device_certifier")).select("_id"),
+    q_organization=q_organization_internal_id(Parameter("$1"))
 )
 
 
 async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> User:
-    data = await conn.fetchrow(_q_get_user, organization_id, user_id)
-    if not data:
+    row = await conn.fetchrow(_q_get_user, organization_id, user_id)
+    if not row:
         raise UserNotFoundError(user_id)
 
     return User(
-        user_id=UserID(user_id),
-        is_admin=data[0],
-        user_certificate=data[1],
-        user_certifier=data[2],
-        created_on=data[3],
+        user_id=user_id,
+        is_admin=row["is_admin"],
+        user_certificate=row["user_certificate"],
+        user_certifier=row["user_certifier"],
+        created_on=row["created_on"],
+        revoked_on=row["revoked_on"],
+        revoked_user_certificate=row["revoked_user_certificate"],
+        revoked_user_certifier=row["revoked_user_certifier"],
     )
 
 
 async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID) -> Device:
-    data = await conn.fetchrow(_q_get_device, organization_id, device_id)
-    if not data:
+    row = await conn.fetchrow(_q_get_device, organization_id, device_id)
+    if not row:
         raise UserNotFoundError(device_id)
 
-    return Device(device_id, *data)
+    return Device(
+        device_id=device_id,
+        device_certificate=row["device_certificate"],
+        device_certifier=row["device_certifier"],
+        created_on=row["created_on"],
+    )
 
 
 async def _get_trustchain(
     conn, organization_id: OrganizationID, *device_ids: Tuple[DeviceID]
 ) -> Tuple[Device]:
-    results = await conn.fetch(_q_get_trustchain, organization_id, device_ids)
+    rows = await conn.fetch(_q_get_trustchain, organization_id, device_ids)
 
-    return tuple(Device(*result) for result in results)
+    users = {}
+    revoked_users = {}
+    devices = {}
+    for row in rows:
+        users[row["_uid"]] = row["user_certificate"]
+        if row["revoked_user_certificate"] is not None:
+            revoked_users[row["_uid"]] = row["revoked_user_certificate"]
+        devices[row["_did"]] = row["device_certificate"]
+
+    return Trustchain(
+        users=tuple(users.values()),
+        revoked_users=tuple(revoked_users.values()),
+        devices=tuple(devices.values()),
+    )
 
 
 async def _get_user_devices(
     conn, organization_id: OrganizationID, user_id: UserID
 ) -> Tuple[Device]:
-    devices_results = await conn.fetch(_q_get_user_devices, organization_id, user_id)
+    results = await conn.fetch(_q_get_user_devices, organization_id, user_id)
 
-    return tuple([Device(DeviceID(d_id), *d_data) for d_id, *d_data in devices_results])
+    return tuple(
+        Device(
+            device_id=DeviceID(row["device_id"]),
+            device_certificate=row["device_certificate"],
+            device_certifier=row["device_certifier"],
+            created_on=row["created_on"],
+        )
+        for row in results
+    )
 
 
 @query()
@@ -176,7 +196,7 @@ async def query_get_user(conn, organization_id: OrganizationID, user_id: UserID)
 @query(in_transaction=True)
 async def query_get_user_with_trustchain(
     conn, organization_id: OrganizationID, user_id: UserID
-) -> Tuple[User, Tuple[Device]]:
+) -> Tuple[User, Trustchain]:
     user = await _get_user(conn, organization_id, user_id)
     trustchain = await _get_trustchain(conn, organization_id, user.user_certifier)
     return user, trustchain
@@ -185,15 +205,15 @@ async def query_get_user_with_trustchain(
 @query(in_transaction=True)
 async def query_get_user_with_device_and_trustchain(
     conn, organization_id: OrganizationID, device_id: DeviceID
-) -> Tuple[User, Device, Tuple[Device]]:
+) -> Tuple[User, Device, Trustchain]:
     user = await _get_user(conn, organization_id, device_id.user_id)
     user_device = await _get_device(conn, organization_id, device_id)
     trustchain = await _get_trustchain(
         conn,
         organization_id,
         user.user_certifier,
+        user.revoked_user_certifier,
         user_device.device_certifier,
-        user_device.revoked_device_certifier,
     )
     return user, user_device, trustchain
 
@@ -201,15 +221,15 @@ async def query_get_user_with_device_and_trustchain(
 @query(in_transaction=True)
 async def query_get_user_with_devices_and_trustchain(
     conn, organization_id: OrganizationID, user_id: UserID
-) -> Tuple[User, Tuple[Device], Tuple[Device]]:
+) -> Tuple[User, Tuple[Device], Trustchain]:
     user = await _get_user(conn, organization_id, user_id)
     user_devices = await _get_user_devices(conn, organization_id, user_id)
     trustchain = await _get_trustchain(
         conn,
         organization_id,
         user.user_certifier,
+        user.revoked_user_certifier,
         *[device.device_certifier for device in user_devices],
-        *[device.revoked_device_certifier for device in user_devices],
     )
     return user, user_devices, trustchain
 
@@ -218,17 +238,25 @@ async def query_get_user_with_devices_and_trustchain(
 async def query_get_user_with_device(
     conn, organization_id: OrganizationID, device_id: DeviceID
 ) -> Tuple[User, Device]:
-    d_data = await conn.fetchrow(_q_get_device, organization_id, device_id)
-    u_data = await conn.fetchrow(_q_get_user, organization_id, device_id.user_id)
-    if not u_data or not d_data:
+    d_row = await conn.fetchrow(_q_get_device, organization_id, device_id)
+    u_row = await conn.fetchrow(_q_get_user, organization_id, device_id.user_id)
+    if not u_row or not d_row:
         raise UserNotFoundError(device_id)
 
-    device = Device(device_id, *d_data)
+    device = Device(
+        device_id=device_id,
+        device_certificate=d_row["device_certificate"],
+        device_certifier=d_row["device_certifier"],
+        created_on=d_row["created_on"],
+    )
     user = User(
         user_id=device_id.user_id,
-        is_admin=u_data[0],
-        user_certificate=u_data[1],
-        user_certifier=u_data[2],
-        created_on=u_data[3],
+        is_admin=u_row["is_admin"],
+        user_certificate=u_row["user_certificate"],
+        user_certifier=u_row["user_certifier"],
+        created_on=u_row["created_on"],
+        revoked_on=u_row["revoked_on"],
+        revoked_user_certificate=u_row["revoked_user_certificate"],
+        revoked_user_certifier=u_row["revoked_user_certifier"],
     )
     return user, device

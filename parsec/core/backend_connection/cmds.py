@@ -42,19 +42,14 @@ from parsec.api.protocol import (
     user_claim_serializer,
     user_cancel_invitation_serializer,
     user_create_serializer,
+    user_revoke_serializer,
     device_invite_serializer,
     device_get_invitation_creator_serializer,
     device_claim_serializer,
     device_cancel_invitation_serializer,
     device_create_serializer,
-    device_revoke_serializer,
 )
-from parsec.core.types import (
-    UnverifiedRemoteUser,
-    UnverifiedRemoteDevice,
-    UnverifiedRealmRole,
-    EntryID,
-)
+from parsec.core.types import EntryID
 from parsec.core.backend_connection.exceptions import (
     raise_on_bad_response,
     BackendNotAvailable,
@@ -277,16 +272,14 @@ async def realm_status(transport: Transport, realm_id: UUID) -> dict:
     return rep
 
 
-async def realm_get_role_certificates(
-    transport: Transport, realm_id: UUID
-) -> List[UnverifiedRealmRole]:
+async def realm_get_role_certificates(transport: Transport, realm_id: UUID) -> List[bytes]:
     rep = await _send_cmd(
         transport,
         realm_get_role_certificates_serializer,
         cmd="realm_get_role_certificates",
         realm_id=realm_id,
     )
-    return [UnverifiedRealmRole(realm_role_certificate=c) for c in rep["certificates"]]
+    return rep["certificates"]
 
 
 async def realm_update_roles(
@@ -355,25 +348,14 @@ async def block_read(transport: Transport, block_id: UUID) -> bytes:
 
 async def user_get(
     transport: Transport, user_id: UserID
-) -> Tuple[UnverifiedRemoteUser, List[UnverifiedRemoteDevice], List[UnverifiedRemoteDevice]]:
+) -> Tuple[bytes, Optional[bytes], List[bytes], dict]:
     rep = await _send_cmd(transport, user_get_serializer, cmd="user_get", user_id=user_id)
-
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
-    devices = [
-        UnverifiedRemoteDevice(
-            device_certificate=d["device_certificate"],
-            revoked_device_certificate=d.get("revoked_device_certificate"),
-        )
-        for d in rep["devices"]
-    ]
-    trustchain = [
-        UnverifiedRemoteDevice(
-            device_certificate=d["device_certificate"],
-            revoked_device_certificate=d.get("revoked_device_certificate"),
-        )
-        for d in rep["trustchain"]
-    ]
-    return (user, devices, trustchain)
+    return (
+        rep["user_certificate"],
+        rep["revoked_user_certificate"],
+        rep["device_certificates"],
+        rep["trustchain"],
+    )
 
 
 async def user_find(
@@ -418,6 +400,15 @@ async def user_create(
     )
 
 
+async def user_revoke(transport: Transport, revoked_user_certificate: bytes) -> None:
+    await _send_cmd(
+        transport,
+        user_revoke_serializer,
+        cmd="user_revoke",
+        revoked_user_certificate=revoked_user_certificate,
+    )
+
+
 async def device_invite(transport: Transport, invited_device_name: DeviceName) -> bytes:
     rep = await _send_cmd(
         transport,
@@ -447,18 +438,6 @@ async def device_create(
         device_certificate=device_certificate,
         encrypted_answer=encrypted_answer,
     )
-
-
-async def device_revoke(
-    transport: Transport, revoked_device_certificate: bytes
-) -> Optional[pendulum.Pendulum]:
-    rep = await _send_cmd(
-        transport,
-        device_revoke_serializer,
-        cmd="device_revoke",
-        revoked_device_certificate=revoked_device_certificate,
-    )
-    return rep["user_revoked_on"]
 
 
 ###  Backend anonymous cmds  ###
@@ -510,29 +489,19 @@ async def organization_bootstrap(
 
 async def user_get_invitation_creator(
     transport: Transport, invited_user_id: UserID
-) -> Tuple[UnverifiedRemoteDevice, UnverifiedRemoteUser, List[UnverifiedRemoteDevice]]:
+) -> Tuple[bytes, bytes, dict]:
     rep = await _send_cmd(
         transport,
         user_get_invitation_creator_serializer,
         cmd="user_get_invitation_creator",
         invited_user_id=invited_user_id,
     )
-
-    device = UnverifiedRemoteDevice(device_certificate=rep["device_certificate"])
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
-    trustchain = [
-        UnverifiedRemoteDevice(
-            device_certificate=d["device_certificate"],
-            revoked_device_certificate=d.get("revoked_device_certificate"),
-        )
-        for d in rep["trustchain"]
-    ]
-    return (device, user, trustchain)
+    return (rep["user_certificate"], rep["device_certificate"], rep["trustchain"])
 
 
 async def user_claim(
     transport: Transport, invited_user_id: UserID, encrypted_claim: bytes
-) -> Tuple[UnverifiedRemoteUser, UnverifiedRemoteDevice]:
+) -> Tuple[bytes, bytes]:
     rep = await _send_cmd(
         transport,
         user_claim_serializer,
@@ -540,37 +509,24 @@ async def user_claim(
         invited_user_id=invited_user_id,
         encrypted_claim=encrypted_claim,
     )
-    return (
-        UnverifiedRemoteUser(user_certificate=rep["user_certificate"]),
-        UnverifiedRemoteDevice(device_certificate=rep["device_certificate"]),
-    )
+    return (rep["user_certificate"], rep["device_certificate"])
 
 
 async def device_get_invitation_creator(
     transport: Transport, invited_device_id: DeviceID
-) -> Tuple[UnverifiedRemoteDevice, UnverifiedRemoteUser, List[UnverifiedRemoteDevice]]:
+) -> Tuple[bytes, bytes, dict]:
     rep = await _send_cmd(
         transport,
         device_get_invitation_creator_serializer,
         cmd="device_get_invitation_creator",
         invited_device_id=invited_device_id,
     )
-
-    device = UnverifiedRemoteDevice(device_certificate=rep["device_certificate"])
-    user = UnverifiedRemoteUser(user_certificate=rep["user_certificate"])
-    trustchain = [
-        UnverifiedRemoteDevice(
-            device_certificate=d["device_certificate"],
-            revoked_device_certificate=d.get("revoked_device_certificate"),
-        )
-        for d in rep["trustchain"]
-    ]
-    return (device, user, trustchain)
+    return (rep["user_certificate"], rep["device_certificate"], rep["trustchain"])
 
 
 async def device_claim(
     transport: Transport, invited_device_id: DeviceID, encrypted_claim: bytes
-) -> Tuple[UnverifiedRemoteDevice, bytes]:
+) -> Tuple[bytes, bytes]:
     rep = await _send_cmd(
         transport,
         device_claim_serializer,
@@ -578,7 +534,4 @@ async def device_claim(
         invited_device_id=invited_device_id,
         encrypted_claim=encrypted_claim,
     )
-    return (
-        UnverifiedRemoteDevice(device_certificate=rep["device_certificate"]),
-        rep["encrypted_answer"],
-    )
+    return (rep["device_certificate"], rep["encrypted_answer"])

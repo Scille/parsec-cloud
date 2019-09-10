@@ -77,28 +77,6 @@ async def test_device_info(aqtbot, running_backend, autoclose_dialog, logged_gui
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_revoke_device(aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui):
-    d_w = logged_gui.test_get_devices_widget()
-    assert d_w is not None
-    async with aqtbot.wait_signal(d_w.list_success):
-        pass
-    assert d_w.layout_devices.count() == 2
-    dev2_w = d_w.layout_devices.itemAt(1).widget()
-    assert dev2_w.is_revoked is False
-    monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
-    )
-
-    async with aqtbot.wait_signal(d_w.revoke_success):
-        dev2_w.revoke_clicked.emit(dev2_w)
-    assert autoclose_dialog.dialogs == [
-        ("Information", 'Device "dev2" has been successfully revoked.')
-    ]
-    assert dev2_w.is_revoked is True
-
-
-@pytest.mark.gui
-@pytest.mark.trio
 async def test_filter_devices(aqtbot, running_backend, logged_gui):
     d_w = logged_gui.test_get_devices_widget()
     assert d_w is not None

@@ -13,7 +13,7 @@ from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameFie
 from parsec.api.data.certif import (
     UserCertificateContent,
     DeviceCertificateContent,
-    RevokedDeviceCertificateContent,
+    RevokedUserCertificateContent,
     RealmRoleCertificateContent,
 )
 from parsec.api.data.invite_claim import (
@@ -62,7 +62,7 @@ __all__ = (
     # Certifs
     "UserCertificateContent",
     "DeviceCertificateContent",
-    "RevokedDeviceCertificateContent",
+    "RevokedUserCertificateContent",
     "RealmRoleCertificateContent",
     # Invite&Claim
     "UserClaimContent",

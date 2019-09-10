@@ -5,7 +5,8 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
-from parsec.api.data import RevokedDeviceCertificateContent
+from parsec.api.protocol import UserID
+from parsec.api.data import RevokedUserCertificateContent
 from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
@@ -81,13 +82,11 @@ class UserButton(QWidget, Ui_UserButton):
 
 async def _do_revoke_user(core, user_name, button):
     try:
-        user_info, user_devices = await core.remote_devices_manager.get_user_and_devices(user_name)
         now = pendulum.now()
-        for device in user_devices:
-            revoked_device_certificate = RevokedDeviceCertificateContent(
-                author=core.device.device_id, timestamp=now, device_id=device.device_id
-            ).dump_and_sign(core.device.signing_key)
-            await core.user_fs.backend_cmds.device_revoke(revoked_device_certificate)
+        revoked_device_certificate = RevokedUserCertificateContent(
+            author=core.device.device_id, timestamp=now, user_id=UserID(user_name)
+        ).dump_and_sign(core.device.signing_key)
+        await core.user_fs.backend_cmds.user_revoke(revoked_device_certificate)
         return button
     except BackendCmdsBadResponse as exc:
         raise JobResultError(exc.status) from exc
@@ -95,11 +94,11 @@ async def _do_revoke_user(core, user_name, button):
 
 async def _do_list_users(core):
     try:
-        ret = {}
+        ret = []
         users = await core.user_fs.backend_cmds.user_find()
         for user in users:
-            user_info, user_devices = await core.remote_devices_manager.get_user_and_devices(user)
-            ret[user] = (user_info, user_devices)
+            user_info, user_revoked_info = await core.remote_devices_manager.get_user(user)
+            ret.append((user_info, user_revoked_info))
         return ret
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
@@ -203,7 +202,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         )
 
     def on_list_success(self, job):
-        users = job.ret
         self.users = []
         while self.layout_users.count() != 0:
             item = self.layout_users.takeAt(0)
@@ -212,13 +210,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
         current_user = self.core.device.user_id
-        for user, (user_info, user_devices) in users.items():
+        for user_info, user_revoked_info in job.ret:
             self.add_user(
                 str(user_info.user_id),
-                is_current_user=current_user == user,
+                is_current_user=current_user == user_info.user_id,
                 is_admin=user_info.is_admin,
-                certified_on=user_info.certified_on,
-                is_revoked=all([device.revoked_on for device in user_devices]),
+                certified_on=user_info.timestamp,
+                is_revoked=user_revoked_info is not None,
             )
 
     def on_list_error(self, job):

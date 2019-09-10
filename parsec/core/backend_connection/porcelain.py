@@ -87,11 +87,11 @@ class BackendCmdsPool:
     user_invite = _expose_cmds_with_retrier("user_invite")
     user_cancel_invitation = _expose_cmds_with_retrier("user_cancel_invitation")
     user_create = _expose_cmds_with_retrier("user_create")
+    user_revoke = _expose_cmds_with_retrier("user_revoke")
 
     device_invite = _expose_cmds_with_retrier("device_invite")
     device_cancel_invitation = _expose_cmds_with_retrier("device_cancel_invitation")
     device_create = _expose_cmds_with_retrier("device_create")
-    device_revoke = _expose_cmds_with_retrier("device_revoke")
 
 
 class BackendAnonymousCmds:

@@ -13,36 +13,34 @@ __all__ = (
     "user_claim_serializer",
     "user_cancel_invitation_serializer",
     "user_create_serializer",
+    "user_revoke_serializer",
     "device_invite_serializer",
     "device_get_invitation_creator_serializer",
     "device_claim_serializer",
     "device_cancel_invitation_serializer",
     "device_create_serializer",
-    "device_revoke_serializer",
 )
 
 
 #### Access user API ####
 
 
+class TrustchainSchema(UnknownCheckedSchema):
+    devices = fields.List(fields.Bytes(required=True))
+    users = fields.List(fields.Bytes(required=True))
+    revoked_users = fields.List(fields.Bytes(required=True))
+
+
 class UserGetReqSchema(BaseReqSchema):
     user_id = UserIDField(required=True)
 
 
-class DeviceSchema(UnknownCheckedSchema):
-    device_id = DeviceIDField(required=True)
-    device_certificate = fields.Bytes(required=True)
-    revoked_device_certificate = fields.Bytes(allow_none=True)
-
-
 class UserGetRepSchema(BaseRepSchema):
-    user_id = UserIDField(required=True)
-
     user_certificate = fields.Bytes(required=True)
+    revoked_user_certificate = fields.Bytes(required=True, allow_none=True)
+    device_certificates = fields.List(fields.Bytes(required=True), required=True)
 
-    devices = fields.List(fields.Nested(DeviceSchema), required=True)
-
-    trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
+    trustchain = fields.Nested(TrustchainSchema, required=True)
 
 
 user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
@@ -86,7 +84,7 @@ class UserGetInvitationCreatorReqSchema(BaseReqSchema):
 class UserGetInvitationCreatorRepSchema(BaseRepSchema):
     device_certificate = fields.Bytes(required=True)
     user_certificate = fields.Bytes(required=True)
-    trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
+    trustchain = fields.Nested(TrustchainSchema, required=True)
 
 
 user_get_invitation_creator_serializer = CmdSerializer(
@@ -132,6 +130,17 @@ class UserCreateRepSchema(BaseRepSchema):
 user_create_serializer = CmdSerializer(UserCreateReqSchema, UserCreateRepSchema)
 
 
+class UserRevokeReqSchema(BaseReqSchema):
+    revoked_user_certificate = fields.Bytes(required=True)
+
+
+class UserRevokeRepSchema(BaseRepSchema):
+    pass
+
+
+user_revoke_serializer = CmdSerializer(UserRevokeReqSchema, UserRevokeRepSchema)
+
+
 #### Device creation API ####
 
 
@@ -153,7 +162,7 @@ class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
 class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
     device_certificate = fields.Bytes(required=True)
     user_certificate = fields.Bytes(required=True)
-    trustchain = fields.List(fields.Nested(DeviceSchema), required=True)
+    trustchain = fields.Nested(TrustchainSchema, required=True)
 
 
 device_get_invitation_creator_serializer = CmdSerializer(
@@ -197,14 +206,3 @@ class DeviceCreateRepSchema(BaseRepSchema):
 
 
 device_create_serializer = CmdSerializer(DeviceCreateReqSchema, DeviceCreateRepSchema)
-
-
-class DeviceRevokeReqSchema(BaseReqSchema):
-    revoked_device_certificate = fields.Bytes(required=True)
-
-
-class DeviceRevokeRepSchema(BaseRepSchema):
-    user_revoked_on = fields.DateTime(allow_none=True)
-
-
-device_revoke_serializer = CmdSerializer(DeviceRevokeReqSchema, DeviceRevokeRepSchema)

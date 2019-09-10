@@ -195,7 +195,13 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
-        if per_participant_message.keys() ^ realm.roles.keys():
+        now = pendulum.now()
+        not_revoked_roles = set()
+        for user_id in realm.roles.keys():
+            user = await self._user_component.get_user(organization_id, user_id)
+            if not user.revoked_on or user.revoked_on > now:
+                not_revoked_roles.add(user_id)
+        if per_participant_message.keys() ^ not_revoked_roles:
             raise RealmParticipantsMismatchError(
                 "Realm participants and message recipients mismatch"
             )

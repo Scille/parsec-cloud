@@ -21,7 +21,7 @@ from parsec.backend.postgresql.user_queries.device_invitation import (
     query_claim_device_invitation,
     query_cancel_device_invitation,
 )
-from parsec.backend.postgresql.user_queries.revoke import query_revoke_device
+from parsec.backend.postgresql.user_queries.revoke import query_revoke_user
 
 
 __all__ = (
@@ -41,5 +41,5 @@ __all__ = (
     "query_get_device_invitation",
     "query_claim_device_invitation",
     "query_cancel_device_invitation",
-    "query_revoke_device",
+    "query_revoke_user",
 )

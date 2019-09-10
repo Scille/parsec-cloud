@@ -83,7 +83,7 @@ async def claim_user(
         async with backend_anonymous_cmds_factory(backend_addr) as cmds:
             # 1) Retrieve invitation creator
             try:
-                invitation_creator_device, invitation_creator_user = await get_user_invitation_creator(
+                invitation_creator_user, invitation_creator_device = await get_user_invitation_creator(
                     cmds, new_device.root_verify_key, new_device.user_id
                 )
 
@@ -107,7 +107,7 @@ async def claim_user(
 
             # 3) Send claim
             try:
-                unverified_user, unverified_device = await cmds.user_claim(
+                user_certificate, device_certificate = await cmds.user_claim(
                     new_device_id.user_id, encrypted_claim
                 )
 
@@ -120,14 +120,14 @@ async def claim_user(
             # 4) Verify user&device certificates and check admin status
             try:
                 user = UserCertificateContent.verify_and_load(
-                    unverified_user.user_certificate,
+                    user_certificate,
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
                     expected_user=new_device_id.user_id,
                 )
 
                 DeviceCertificateContent.verify_and_load(
-                    unverified_device.device_certificate,
+                    device_certificate,
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
                     expected_device=new_device_id,
@@ -162,7 +162,7 @@ async def claim_device(
         async with backend_anonymous_cmds_factory(backend_addr) as cmds:
             # 1) Retrieve invitation creator
             try:
-                invitation_creator_device, invitation_creator_user = await get_device_invitation_creator(
+                invitation_creator_user, invitation_creator_device = await get_device_invitation_creator(
                     cmds, backend_addr.root_verify_key, new_device_id
                 )
 
@@ -186,7 +186,7 @@ async def claim_device(
 
             # 3) Send claim
             try:
-                unverified_device, encrypted_answer = await cmds.device_claim(
+                device_certificate, encrypted_answer = await cmds.device_claim(
                     new_device_id, encrypted_claim
                 )
 
@@ -199,7 +199,7 @@ async def claim_device(
             # 4) Verify device certificate
             try:
                 DeviceCertificateContent.verify_and_load(
-                    unverified_device.device_certificate,
+                    device_certificate,
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
                     expected_device=new_device_id,

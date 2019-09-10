@@ -535,13 +535,18 @@ class UserFS:
 
         # Retrieve the user
         try:
-            recipient_user = await self.remote_devices_manager.get_user(recipient)
+            recipient_user, revoked_recipient_user = await self.remote_devices_manager.get_user(
+                recipient
+            )
 
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except RemoteDevicesManagerError as exc:
             raise FSError(f"Cannot retreive recipient: {exc}") from exc
+
+        if revoked_recipient_user:
+            raise FSError(f"User {recipient} revoked")
 
         # Note we don't bother to check workspace's access roles given they
         # could be outdated (and backend will do the check anyway)
@@ -826,8 +831,9 @@ class UserFS:
         try:
             users = []
             for user_id in roles.keys():
-                user = await self.remote_devices_manager.get_user(user_id)
-                users.append(user)
+                user, revoked_user = await self.remote_devices_manager.get_user(user_id)
+                if not revoked_user:
+                    users.append(user)
 
         except RemoteDevicesManagerBackendOfflineError as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -939,6 +945,10 @@ class UserFS:
 
             except BackendCmdsParticipantsMismatchError:
                 # Participant list has changed concurrently
+                logger.info(
+                    "Realm participants list has changed during start reencryption tentative, retrying",
+                    workspace_id=workspace_id,
+                )
                 continue
 
             else:

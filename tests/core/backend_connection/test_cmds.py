@@ -5,7 +5,7 @@ import trio
 import pendulum
 
 from parsec.api.protocol import ServerHandshake
-from parsec.api.data import RevokedDeviceCertificateContent
+from parsec.api.data import RevokedUserCertificateContent
 from parsec.api.transport import Transport, PingReceived, PongReceived
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -54,17 +54,20 @@ async def test_backend_bad_handshake(running_backend, mallory):
 
 
 @pytest.mark.trio
-async def test_revoked_device_handshake(running_backend, backend, alice, alice2):
-    revoked_device_certificate = RevokedDeviceCertificateContent(
-        author=alice.device_id, timestamp=pendulum.now(), device_id=alice2.device_id
+async def test_revoked_device_handshake(running_backend, backend, alice, bob):
+    revoked_user_certificate = RevokedUserCertificateContent(
+        author=alice.device_id, timestamp=pendulum.now(), user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
-    await backend.user.revoke_device(
-        alice2.organization_id, alice2.device_id, revoked_device_certificate, alice.device_id
+    await backend.user.revoke_user(
+        organization_id=alice.organization_id,
+        user_id=bob.user_id,
+        revoked_user_certificate=revoked_user_certificate,
+        revoked_user_certifier=alice.device_id,
     )
 
     with pytest.raises(BackendDeviceRevokedError):
         async with backend_cmds_pool_factory(
-            alice2.organization_addr, alice2.device_id, alice2.signing_key
+            bob.organization_addr, bob.device_id, bob.signing_key
         ) as cmds:
             await cmds.ping()
 

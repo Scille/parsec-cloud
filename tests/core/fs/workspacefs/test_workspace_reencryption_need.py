@@ -144,7 +144,7 @@ def test_workspace_reencryption_need(
 
         @rule(user=consumes(Users))
         async def revoke_user(self, user):
-            await self.backend_data_binder.bind_revocation(user, alice)
+            await self.backend_data_binder.bind_revocation(user.user_id, alice)
             self._oracle_revoke_user(user)
 
         @rule()

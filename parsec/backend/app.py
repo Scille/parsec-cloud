@@ -3,6 +3,7 @@
 import trio
 import attr
 from structlog import get_logger
+from pendulum import now as pendulum_now
 
 from parsec.event_bus import EventBus
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
@@ -175,10 +176,10 @@ class BackendApp:
             "user_invite": self.user.api_user_invite,
             "user_cancel_invitation": self.user.api_user_cancel_invitation,
             "user_create": self.user.api_user_create,
+            "user_revoke": self.user.api_user_revoke,
             "device_invite": self.user.api_device_invite,
             "device_cancel_invitation": self.user.api_device_cancel_invitation,
             "device_create": self.user.api_device_create,
-            "device_revoke": self.user.api_device_revoke,
             # Block
             "block_create": self.block.api_block_create,
             "block_read": self.block.api_block_read,
@@ -249,7 +250,7 @@ class BackendApp:
                     if organization.root_verify_key != expected_rvk:
                         result_req = handshake.build_rvk_mismatch_result_req()
 
-                    elif device.revoked_on:
+                    elif user.revoked_on and user.revoked_on <= pendulum_now():
                         result_req = handshake.build_revoked_device_result_req()
 
                     else:

@@ -44,6 +44,30 @@ class UserCertificateContent(BaseAPISignedData):
         return data
 
 
+class RevokedUserCertificateContent(BaseAPISignedData):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("revoked_user_certificate", required=True)
+        user_id = UserIDField(required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return RevokedUserCertificateContent(**data)
+
+    user_id: UserID
+
+    @classmethod
+    def verify_and_load(
+        cls, *args, expected_user: Optional[UserID] = None, **kwargs
+    ) -> "RevokedUserCertificateContent":
+        data = super().verify_and_load(*args, **kwargs)
+        if expected_user is not None and data.user_id != expected_user:
+            raise DataValidationError(
+                f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
+            )
+        return data
+
+
 class DeviceCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("device_certificate", required=True)
@@ -62,30 +86,6 @@ class DeviceCertificateContent(BaseAPISignedData):
     def verify_and_load(
         cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
     ) -> "DeviceCertificateContent":
-        data = super().verify_and_load(*args, **kwargs)
-        if expected_device is not None and data.device_id != expected_device:
-            raise DataValidationError(
-                f"Invalid device ID: expected `{expected_device}`, got `{data.device_id}`"
-            )
-        return data
-
-
-class RevokedDeviceCertificateContent(BaseAPISignedData):
-    class SCHEMA_CLS(BaseSignedDataSchema):
-        type = fields.CheckedConstant("revoked_device_certificate", required=True)
-        device_id = DeviceIDField(required=True)
-
-        @post_load
-        def make_obj(self, data):
-            data.pop("type")
-            return RevokedDeviceCertificateContent(**data)
-
-    device_id: DeviceID
-
-    @classmethod
-    def verify_and_load(
-        cls, *args, expected_device: Optional[DeviceID] = None, **kwargs
-    ) -> "RevokedDeviceCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_device is not None and data.device_id != expected_device:
             raise DataValidationError(

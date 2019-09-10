@@ -5,7 +5,6 @@ import trio
 import pendulum
 
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserClaimContent
-from parsec.core.types import UnverifiedRemoteUser, UnverifiedRemoteDevice
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 
 
@@ -42,18 +41,12 @@ async def test_user_invite_then_claim_ok(
 
     async def _mallory_claim():
         async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
-            invitation_creator_device, invitation_creator_user, trustchain = await cmds.user_get_invitation_creator(
+            creator_user_certificate, creator_device_certificate, trustchain = await cmds.user_get_invitation_creator(
                 mallory.user_id
             )
-            assert isinstance(invitation_creator_device, UnverifiedRemoteDevice)
-            assert isinstance(invitation_creator_user, UnverifiedRemoteUser)
-            assert trustchain == []
-
-            creator = UserCertificateContent.unsecure_load(invitation_creator_user.user_certificate)
-
-            creator_device = DeviceCertificateContent.unsecure_load(
-                invitation_creator_device.device_certificate
-            )
+            assert trustchain == {"devices": [], "revoked_users": [], "users": []}
+            creator = UserCertificateContent.unsecure_load(creator_user_certificate)
+            creator_device = DeviceCertificateContent.unsecure_load(creator_device_certificate)
             assert creator_device.device_id.user_id == creator.user_id
 
             encrypted_claim = UserClaimContent(
