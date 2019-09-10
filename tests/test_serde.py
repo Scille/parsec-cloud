@@ -1,10 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pytest
 import pendulum
 import uuid
 from collections import namedtuple
 
-from parsec.serde import packb, unpackb, BaseSchema, OneOfSchema, MsgpackSerializer, fields
+from parsec.serde import (
+    packb,
+    unpackb,
+    BaseSchema,
+    OneOfSchema,
+    MsgpackSerializer,
+    fields,
+    SerdeError,
+)
 
 
 def test_pack_datetime():
@@ -29,6 +38,16 @@ def test_repr_serializer():
 
     serializer = MsgpackSerializer(MySchema)
     assert repr(serializer) == "MsgpackSerializer(schema=MySchema)"
+
+
+def test_serializer_loads_bad_data():
+    class BirdSchema(BaseSchema):
+        flying = fields.Boolean(required=True)
+
+    serializer = MsgpackSerializer(BirdSchema)
+    for raw in (packb(0), packb([]), packb({}), b"dummy"):
+        with pytest.raises(SerdeError):
+            serializer.loads(raw)
 
 
 def test_oneof_schema():
