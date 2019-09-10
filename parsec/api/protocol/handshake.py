@@ -134,7 +134,7 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 @attr.s
 class ServerHandshake:
     # Class attribute
-    supported_api_versions = [API_VERSION]
+    supported_api_versions = frozenset([API_VERSION])
 
     # Challenge
     challenge_size = attr.ib(default=48)
@@ -179,7 +179,7 @@ class ServerHandshake:
         self.state = "answer"
 
         # API version matching
-        client_api_versions = [self.answer_data["client_api_version"]]
+        client_api_versions = frozenset([self.answer_data["client_api_version"]])
         self.backend_api_version, self.client_api_version = HandshakeAPIVersionError.match_versions(
             self.supported_api_versions, client_api_versions
         )
@@ -261,7 +261,7 @@ class ServerHandshake:
 @attr.s
 class BaseClientHandshake:
     # Class attribute
-    supported_api_versions = [API_VERSION]
+    supported_api_versions = frozenset([API_VERSION])
 
     # Challenge
     challenge_data = attr.ib(default=None)
@@ -274,7 +274,7 @@ class BaseClientHandshake:
         self.challenge_data = handshake_challenge_serializer.loads(req)
 
         # API version matching
-        backend_api_versions = self.challenge_data["supported_api_versions"]
+        backend_api_versions = frozenset(self.challenge_data["supported_api_versions"])
         self.backend_api_version, self.client_api_version = HandshakeAPIVersionError.match_versions(
             backend_api_versions, self.supported_api_versions
         )

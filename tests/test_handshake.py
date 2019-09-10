@@ -184,19 +184,19 @@ def test_process_challenge_req_good_api_version(
         "challenge": b"1234567890",
         "supported_api_versions": [backend_version._asdict()],
     }
-    monkeypatch.setattr(ch, "supported_api_versions", [client_version])
+    monkeypatch.setattr(ch, "supported_api_versions", frozenset([client_version]))
 
     # Invalid versioning
     if not valid:
         with pytest.raises(HandshakeAPIVersionError) as context:
             ch.process_challenge_req(packb(req))
-        assert context.value.client_versions == [client_version]
-        assert context.value.backend_versions == [backend_version]
+        assert context.value.client_versions == frozenset([client_version])
+        assert context.value.backend_versions == frozenset([backend_version])
         return
 
     # Valid versioning
     ch.process_challenge_req(packb(req))
-    assert ch.supported_api_versions == [client_version]
+    assert ch.supported_api_versions == frozenset([client_version])
     assert ch.challenge_data["supported_api_versions"] == [backend_version]
     assert ch.backend_api_version == backend_version
     assert ch.client_api_version == client_version
@@ -231,8 +231,8 @@ def test_process_challenge_req_good_multiple_api_version(
     expected_backend_version,
 ):
     # Cast parameters
-    client_versions = list(starmap(ApiVersion, client_versions))
-    backend_versions = list(starmap(ApiVersion, backend_versions))
+    client_versions = frozenset(starmap(ApiVersion, client_versions))
+    backend_versions = frozenset(starmap(ApiVersion, backend_versions))
     if expected_client_version:
         expected_client_version = ApiVersion(*expected_client_version)
     if expected_backend_version:
@@ -259,7 +259,7 @@ def test_process_challenge_req_good_multiple_api_version(
     # Valid versioning
     ch.process_challenge_req(packb(req))
     assert ch.supported_api_versions == client_versions
-    assert ch.challenge_data["supported_api_versions"] == backend_versions
+    assert ch.challenge_data["supported_api_versions"] == list(backend_versions)
     assert ch.backend_api_version == expected_backend_version
     assert ch.client_api_version == expected_client_version
 
@@ -372,7 +372,7 @@ def test_process_answer_req_bad_format(req, alice):
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
-    req["supported_api_versions"] = (API_VERSION,)
+    req["supported_api_versions"] = [API_VERSION._asdict()]
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
