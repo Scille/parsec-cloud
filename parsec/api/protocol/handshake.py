@@ -52,10 +52,10 @@ class HandshakeAPIVersionError(HandshakeError):
     @classmethod
     def match_versions(cls, backend_versions, client_versions):
         sorted_client_versions = sorted(client_versions)
-        backend_dct = {version.version: version for version in backend_versions}
+        backend_dct = {version[0]: version for version in backend_versions}
         for client_version in reversed(sorted_client_versions):
-            if client_version.version in backend_dct:
-                backend_version = backend_dct[client_version.version]
+            if client_version[0] in backend_dct:
+                backend_version = backend_dct[client_version[0]]
                 return (backend_version, client_version)
         raise cls(backend_versions, client_versions)
 
