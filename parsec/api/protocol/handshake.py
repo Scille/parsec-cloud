@@ -39,9 +39,11 @@ class HandshakeAPIVersionError(HandshakeError):
     def __init__(self, backend_versions, client_versions):
         self.client_versions = client_versions
         self.backend_versions = backend_versions
+        client_versions_str = "{" + ", ".join(map(str, client_versions)) + "}"
+        backend_versions_str = "{" + ", ".join(map(str, backend_versions)) + "}"
         self.message = (
-            f"No overlap between client API versions {self.client_versions} "
-            f"and backend API versions {self.backend_versions}"
+            f"No overlap between client API versions {client_versions_str} "
+            f"and backend API versions {backend_versions_str}"
         )
 
     def __str__(self):

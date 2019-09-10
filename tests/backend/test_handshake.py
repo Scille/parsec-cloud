@@ -244,5 +244,5 @@ async def test_authenticated_handshake_bad_versions(
         with pytest.raises(InvalidMessageError) as context:
             ch.process_result_req(result_req)
         assert "bad_protocol" in str(context.value)
-        assert "[ApiVersion(version=1, revision=22)]" in str(context.value)
-        assert "[ApiVersion(version=2, revision=22)]" in str(context.value)
+        assert "{1.22}" in str(context.value)
+        assert "{2.22}" in str(context.value)
