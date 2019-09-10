@@ -184,7 +184,6 @@ class BackendApp:
             "block_create": self.block.api_block_create,
             "block_read": self.block.api_block_read,
             # Vlob
-            "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_poll_changes": self.vlob.api_vlob_poll_changes,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,

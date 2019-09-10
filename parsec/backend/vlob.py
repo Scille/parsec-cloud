@@ -11,7 +11,6 @@ from parsec.api.protocol import (
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
-    vlob_group_check_serializer,
     vlob_poll_changes_serializer,
     vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
@@ -143,19 +142,6 @@ class BaseVlobComponent:
             return vlob_update_serializer.rep_dump({"status": "in_maintenance"})
 
         return vlob_update_serializer.rep_dump({"status": "ok"})
-
-    @catch_protocol_errors
-    async def api_vlob_group_check(self, client_ctx, msg):
-        msg = vlob_group_check_serializer.req_load(msg)
-        try:
-            changed = await self.group_check(
-                client_ctx.organization_id, client_ctx.device_id, msg["to_check"]
-            )
-
-        except VlobInMaintenanceError:
-            return vlob_group_check_serializer.rep_dump({"status": "in_maintenance"})
-
-        return vlob_group_check_serializer.rep_dump({"status": "ok", "changed": changed})
 
     @catch_protocol_errors
     async def api_vlob_poll_changes(self, client_ctx, msg):

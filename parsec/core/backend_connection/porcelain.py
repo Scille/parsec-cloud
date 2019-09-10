@@ -58,7 +58,6 @@ class BackendCmdsPool:
     vlob_create = _expose_cmds_with_retrier("vlob_create")
     vlob_read = _expose_cmds_with_retrier("vlob_read")
     vlob_update = _expose_cmds_with_retrier("vlob_update")
-    vlob_group_check = _expose_cmds_with_retrier("vlob_group_check")
     vlob_poll_changes = _expose_cmds_with_retrier("vlob_poll_changes")
     vlob_list_versions = _expose_cmds_with_retrier("vlob_list_versions")
     vlob_maintenance_get_reencryption_batch = _expose_cmds_with_retrier(
