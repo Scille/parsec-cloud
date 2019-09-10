@@ -3,12 +3,11 @@
 import attr
 from secrets import token_bytes
 
-from parsec.api import API_VERSION
 from parsec.crypto import CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
-from parsec.api.version import ApiVersion
+from parsec.api.version import ApiVersion, API_VERSION
 
 
 class HandshakeError(ProtocolError):
