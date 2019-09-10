@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from itertools import starmap
 from unittest.mock import ANY
 
 from parsec.api.protocol.base import packb, unpackb, InvalidMessageError
@@ -17,7 +18,7 @@ from parsec.api.protocol.handshake import (
     AnonymousClientHandshake,
     AdministrationClientHandshake,
 )
-from parsec import __api_version__
+from parsec.api.version import API_VERSION, ApiVersion
 
 
 def test_good_handshake(alice):
@@ -38,7 +39,7 @@ def test_good_handshake(alice):
     assert sh.answer_type == "authenticated"
     assert sh.answer_data == {
         "answer": ANY,
-        "api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key,
@@ -47,7 +48,7 @@ def test_good_handshake(alice):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == __api_version__
+    assert sh.client_api_version == API_VERSION
 
 
 @pytest.mark.parametrize("check_rvk", (True, False))
@@ -70,13 +71,13 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     assert sh.answer_type == "anonymous"
     if check_rvk:
         assert sh.answer_data == {
-            "api_version": __api_version__,
+            "client_api_version": API_VERSION,
             "organization_id": coolorg.organization_id,
             "rvk": coolorg.root_verify_key,
         }
     else:
         assert sh.answer_data == {
-            "api_version": __api_version__,
+            "client_api_version": API_VERSION,
             "organization_id": coolorg.organization_id,
             "rvk": None,
         }
@@ -84,7 +85,7 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == __api_version__
+    assert sh.client_api_version == API_VERSION
 
 
 def test_good_administration_handshake():
@@ -102,12 +103,12 @@ def test_good_administration_handshake():
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
     assert sh.answer_type == "administration"
-    assert sh.answer_data == {"api_version": __api_version__, "token": admin_token}
+    assert sh.answer_data == {"client_api_version": API_VERSION, "token": admin_token}
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
-    assert sh.client_api_version == __api_version__
+    assert sh.client_api_version == API_VERSION
 
 
 # 1) Server build challenge (nothing more to test...)
@@ -120,15 +121,15 @@ def test_good_administration_handshake():
     "req",
     [
         {},
-        {"handshake": "foo", "challenge": b"1234567890", "api_version": __api_version__},
+        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "api_version": __api_version__},
+        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": None, "api_version": __api_version__},
-        {"handshake": "challenge", "challenge": 42, "api_version": __api_version__},
+        {"handshake": "challenge", "challenge": None, "supported_api_versions": [API_VERSION]},
+        {"handshake": "challenge", "challenge": 42, "supported_api_versions": [API_VERSION]},
         {"handshake": "challenge", "challenge": b"1234567890"},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": "nosemver"},
+        {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
 )
 def test_process_challenge_req_bad_format(alice, req):
@@ -143,37 +144,112 @@ def test_process_challenge_req_bad_format(alice, req):
 
 
 @pytest.mark.parametrize(
-    "req",
+    "client_version, backend_version, valid",
     [
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (0, 1)},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (0, 100)},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (2, 0)},
+        ((2, 22), (1, 0), False),
+        ((2, 22), (1, 111), False),
+        ((2, 22), (2, 0), True),
+        ((2, 22), (2, 22), True),
+        ((2, 22), (2, 222), True),
+        ((2, 22), (3, 0), False),
+        ((2, 22), (3, 33), False),
+        ((2, 22), (3, 333), False),
     ],
+    ids=str,
 )
-def test_process_challenge_req_bad_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", (1, 1))
+def test_process_challenge_req_good_api_version(
+    alice, monkeypatch, client_version, backend_version, valid
+):
+    # Cast parameters
+    client_version = ApiVersion(*client_version)
+    backend_version = ApiVersion(*backend_version)
+
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
-    with pytest.raises(HandshakeAPIVersionError):
-        ch.process_challenge_req(packb(req))
+    req = {
+        "handshake": "challenge",
+        "challenge": b"1234567890",
+        "supported_api_versions": [backend_version],
+    }
+    monkeypatch.setattr(ch, "supported_api_versions", frozenset([client_version]))
+
+    # Invalid versioning
+    if not valid:
+        with pytest.raises(HandshakeAPIVersionError) as context:
+            ch.process_challenge_req(packb(req))
+        assert context.value.client_versions == frozenset([client_version])
+        assert context.value.backend_versions == frozenset([backend_version])
+        return
+
+    # Valid versioning
+    ch.process_challenge_req(packb(req))
+    assert ch.supported_api_versions == frozenset([client_version])
+    assert ch.challenge_data["supported_api_versions"] == [backend_version]
+    assert ch.backend_api_version == backend_version
+    assert ch.client_api_version == client_version
 
 
 @pytest.mark.parametrize(
-    "req",
+    "client_versions, backend_versions, expected_client_version, expected_backend_version",
     [
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 0)},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 1)},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 2)},
-        {"handshake": "challenge", "challenge": b"1234567890", "api_version": (1, 100)},
+        ([(2, 22), (3, 33)], [(0, 000), (1, 111)], None, None),
+        ([(2, 22), (3, 33)], [(1, 111), (2, 222)], (2, 22), (2, 222)),
+        ([(2, 22), (3, 33)], [(2, 222), (3, 333)], (3, 33), (3, 333)),
+        ([(2, 22), (3, 33)], [(3, 333), (4, 444)], (3, 33), (3, 333)),
+        ([(2, 22), (3, 33)], [(4, 444), (5, 555)], None, None),
+        ([(2, 22), (4, 44)], [(1, 111), (2, 222)], (2, 22), (2, 222)),
+        ([(2, 22), (4, 44)], [(1, 111), (3, 333)], None, None),
+        ([(2, 22), (4, 44)], [(2, 222), (3, 333)], (2, 22), (2, 222)),
+        ([(2, 22), (4, 44)], [(2, 222), (4, 444)], (4, 44), (4, 444)),
+        ([(2, 22), (4, 44)], [(3, 333), (4, 444)], (4, 44), (4, 444)),
+        ([(2, 22), (4, 44)], [(3, 333), (5, 555)], None, None),
+        ([(2, 22), (4, 44)], [(4, 444), (5, 555)], (4, 44), (4, 444)),
+        ([(2, 22), (4, 44)], [(4, 444), (6, 666)], (4, 44), (4, 444)),
+        ([(2, 22), (4, 44)], [(5, 555), (6, 666)], None, None),
     ],
+    ids=str,
 )
-def test_process_challenge_req_good_semver(alice, req, monkeypatch):
-    monkeypatch.setattr("parsec.api.protocol.handshake.__api_version__", (1, 1))
+def test_process_challenge_req_good_multiple_api_version(
+    alice,
+    monkeypatch,
+    client_versions,
+    backend_versions,
+    expected_client_version,
+    expected_backend_version,
+):
+    # Cast parameters
+    client_versions = frozenset(starmap(ApiVersion, client_versions))
+    backend_versions = frozenset(starmap(ApiVersion, backend_versions))
+    if expected_client_version:
+        expected_client_version = ApiVersion(*expected_client_version)
+    if expected_backend_version:
+        expected_backend_version = ApiVersion(*expected_backend_version)
+
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
+    req = {
+        "handshake": "challenge",
+        "challenge": b"1234567890",
+        "supported_api_versions": list(backend_versions),
+    }
+    monkeypatch.setattr(ch, "supported_api_versions", client_versions)
+
+    # Invalid versioning
+    if expected_client_version is None:
+        with pytest.raises(HandshakeAPIVersionError) as context:
+            ch.process_challenge_req(packb(req))
+        assert context.value.client_versions == client_versions
+        assert context.value.backend_versions == backend_versions
+        return
+
+    # Valid versioning
     ch.process_challenge_req(packb(req))
+    assert ch.supported_api_versions == client_versions
+    assert ch.challenge_data["supported_api_versions"] == list(backend_versions)
+    assert ch.backend_api_version == expected_backend_version
+    assert ch.client_api_version == expected_client_version
 
 
 # 3) Server process answer
@@ -284,6 +360,7 @@ def test_process_answer_req_bad_format(req, alice):
     ]:
         if req.get(key) == "<good>":
             req[key] = good_value
+    req["supported_api_versions"] = [API_VERSION]
     sh = ServerHandshake()
     sh.build_challenge_req()
     with pytest.raises(InvalidMessageError):
@@ -299,7 +376,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -316,7 +393,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -330,7 +407,7 @@ def test_build_result_req_bad_challenge(alice):
 @pytest.mark.parametrize(
     "method,expected_result",
     [
-        ("build_bad_format_result_req", "bad_format"),
+        ("build_bad_protocol_result_req", "bad_protocol"),
         ("build_bad_identity_result_req", "bad_identity"),
         ("build_rvk_mismatch_result_req", "rvk_mismatch"),
         ("build_revoked_device_result_req", "revoked_device"),
@@ -343,7 +420,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "api_version": __api_version__,
+        "client_api_version": API_VERSION,
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),

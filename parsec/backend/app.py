@@ -289,7 +289,7 @@ class BackendApp:
                     result_req = handshake.build_bad_administration_token_result_req()
 
         except ProtocolError as exc:
-            result_req = handshake.build_bad_format_result_req(str(exc))
+            result_req = handshake.build_bad_protocol_result_req(str(exc))
 
         await transport.send(result_req)
         return context

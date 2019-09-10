@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from marshmallow import validate, post_load  # noqa: republishing
+from marshmallow import validate, pre_dump, post_load  # noqa: republishing
 
 from parsec.serde import fields
 from parsec.serde.exceptions import SerdeError, SerdeValidationError, SerdePackingError
@@ -16,6 +16,7 @@ __all__ = (
     "OneOfSchema",
     "BaseCmdSchema",
     "validate",
+    "pre_dump",
     "post_load",
     "fields",
     "packb",
