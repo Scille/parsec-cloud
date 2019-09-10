@@ -22,10 +22,11 @@ class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(QWidget)
 
     def __init__(
-        self, user_name, is_current_user, is_admin, certified_on, is_revoked, *args, **kwargs
+        self, user_name, is_current_user, is_admin, certified_on, is_revoked, current_user_is_admin, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.current_user_is_admin = current_user_is_admin
         self.is_admin = is_admin
         if is_admin:
             self.label.setPixmap(QPixmap(":/icons/images/icons/owner2.png"))
@@ -60,7 +61,7 @@ class UserButton(QWidget, Ui_UserButton):
         menu = QMenu(self)
         action = menu.addAction(_("USER_MENU_SHOW_INFO"))
         action.triggered.connect(self.show_user_info)
-        if not self.label.is_revoked and not self.is_current_user:
+        if not self.label.is_revoked and not self.is_current_user and self.current_user_is_admin:
             action = menu.addAction(_("USER_MENU_REVOKE"))
             action.triggered.connect(self.revoke)
         menu.exec_(global_pos)
@@ -161,7 +162,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def add_user(self, user_name, is_current_user, is_admin, certified_on, is_revoked):
         if user_name in self.users:
             return
-        button = UserButton(user_name, is_current_user, is_admin, certified_on, is_revoked)
+        button = UserButton(user_name, is_current_user, is_admin, certified_on, is_revoked, current_user_is_admin=self.core.device.is_admin)
         self.layout_users.addWidget(button, int(len(self.users) / 4), int(len(self.users) % 4))
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
