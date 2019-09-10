@@ -22,7 +22,6 @@ from parsec.api.protocol import (
     vlob_read_serializer,
     vlob_create_serializer,
     vlob_update_serializer,
-    vlob_group_check_serializer,
     vlob_poll_changes_serializer,
     vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
@@ -196,13 +195,6 @@ async def vlob_update(
         timestamp=timestamp,
         blob=blob,
     )
-
-
-async def vlob_group_check(transport: Transport, to_check: list) -> list:
-    rep = await _send_cmd(
-        transport, vlob_group_check_serializer, cmd="vlob_group_check", to_check=to_check
-    )
-    return rep["changed"]
 
 
 async def vlob_poll_changes(

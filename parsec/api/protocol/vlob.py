@@ -9,7 +9,6 @@ __all__ = (
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
-    "vlob_group_check_serializer",
     "vlob_poll_changes_serializer",
     "vlob_list_versions_serializer",
     "vlob_maintenance_get_reencryption_batch_serializer",
@@ -71,30 +70,6 @@ class VlobUpdateRepSchema(BaseRepSchema):
 
 
 vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
-
-
-class CheckVlobSchema(BaseSchema):
-    vlob_id = fields.UUID(required=True)
-    version = fields.Integer(required=True, validate=validate.Range(min=0))
-
-
-class ChangedVlobSchema(BaseSchema):
-    vlob_id = fields.UUID(required=True)
-    version = fields.Integer(required=True)
-
-
-# TODO: still useful ? (replaced by vlob_poll)
-
-
-class VlobGroupCheckReqSchema(BaseReqSchema):
-    to_check = fields.List(fields.Nested(CheckVlobSchema), required=True)
-
-
-class VlobGroupCheckRepSchema(BaseRepSchema):
-    changed = fields.List(fields.Nested(ChangedVlobSchema), required=True)
-
-
-vlob_group_check_serializer = CmdSerializer(VlobGroupCheckReqSchema, VlobGroupCheckRepSchema)
 
 
 class VlobPollChangesReqSchema(BaseReqSchema):

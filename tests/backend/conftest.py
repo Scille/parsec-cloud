@@ -19,7 +19,6 @@ from parsec.api.protocol import (
     vlob_read_serializer,
     vlob_update_serializer,
     vlob_list_versions_serializer,
-    vlob_group_check_serializer,
     vlob_poll_changes_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
@@ -137,14 +136,6 @@ async def realm_finish_reencryption_maintenance(
     if check_rep:
         assert rep == {"status": "ok"}
     return rep
-
-
-async def vlob_group_check(sock, to_check):
-    await sock.send(
-        vlob_group_check_serializer.req_dumps({"cmd": "vlob_group_check", "to_check": to_check})
-    )
-    raw_rep = await sock.recv()
-    return vlob_group_check_serializer.rep_loads(raw_rep)
 
 
 async def vlob_create(
