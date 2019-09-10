@@ -14,13 +14,14 @@ from parsec.api.protocol.handshake import (
     HandshakeBadIdentity,
     HandshakeBadAdministrationToken,
     InvalidMessageError,
+    ApiVersion,
 )
 
 
 @pytest.fixture
 def mock_api_versions(monkeypatch):
-    default_client_version = 1, 11
-    default_backend_version = 1, 22
+    default_client_version = ApiVersion(1, 11)
+    default_backend_version = ApiVersion(1, 22)
 
     def _mock_api_versions(client_versions=None, backend_versions=None):
         if client_versions is not None:
@@ -46,7 +47,7 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
         req = {
             "handshake": "foo",
             "type": "anonymous",
-            "client_api_version": (1, 1),
+            "client_api_version": ApiVersion(1, 1)._asdict(),
             "organization_id": "zob",
         }
         await transport.send(packb(req))
@@ -234,7 +235,7 @@ async def test_authenticated_handshake_bad_versions(
 
         # Alter answer
         answer_dict = unpackb(answer_req)
-        answer_dict["client_api_version"] = (2, 22)
+        answer_dict["client_api_version"] = ApiVersion(2, 22)._asdict()
         answer_req = packb(answer_dict)
 
         await transport.send(answer_req)
@@ -243,4 +244,5 @@ async def test_authenticated_handshake_bad_versions(
         with pytest.raises(InvalidMessageError) as context:
             ch.process_result_req(result_req)
         assert "bad_protocol" in str(context.value)
-        assert "[(2, 22)]" in str(context.value)
+        assert "[ApiVersion(version=1, revision=22)]" in str(context.value)
+        assert "[ApiVersion(version=2, revision=22)]" in str(context.value)

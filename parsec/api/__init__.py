@@ -1,5 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-API_MAJOR_VERSION = 1
-API_MINOR_VERSION = 0
-API_VERSION = API_MAJOR_VERSION, API_MINOR_VERSION
+from parsec.api.version import API_VERSION
+
+__all__ = (API_VERSION,)

@@ -3,7 +3,7 @@
 from pendulum import Pendulum
 from uuid import UUID as _UUID
 from collections import Mapping
-from marshmallow import ValidationError, validate
+from marshmallow import ValidationError
 from marshmallow.fields import (
     # Republishing
     Int,
@@ -51,7 +51,6 @@ __all__ = (
     "PrivateKey",
     "SecretKey",
     "HashDigest",
-    "ApiVersion",
 )
 
 
@@ -337,13 +336,6 @@ class PublicKey(Field):
 
         except Exception:
             raise ValidationError("Invalid verify key.")
-
-
-class ApiVersion(Tuple):
-    def __init__(self, **kwargs):
-        version = Integer(required=True, validate=validate.Range(min=0))
-        revision = Integer(required=True, validate=validate.Range(min=0))
-        super().__init__(version, revision, **kwargs)
 
 
 SecretKey = bytes_based_field_factory(_SecretKey)

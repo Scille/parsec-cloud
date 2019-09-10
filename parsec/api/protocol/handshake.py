@@ -5,9 +5,10 @@ from secrets import token_bytes
 
 from parsec.api import API_VERSION
 from parsec.crypto import CryptoError
-from parsec.serde import BaseSchema, OneOfSchema, fields
+from parsec.serde import BaseSchema, OneOfSchema, fields, post_load, validate, pre_dump
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationIDField, DeviceIDField
+from parsec.api.version import ApiVersion
 
 
 class HandshakeError(ProtocolError):
@@ -49,19 +50,31 @@ class HandshakeAPIVersionError(HandshakeError):
     @classmethod
     def match_versions(cls, backend_versions, client_versions):
         sorted_client_versions = sorted(client_versions)
-        backend_dct = {major: minor for major, minor in backend_versions}
-        for client_major, client_minor in reversed(sorted_client_versions):
-            if client_major in backend_dct:
-                backend_version = client_major, backend_dct[client_major]
-                client_version = client_major, client_minor
+        backend_dct = {version.version: version for version in backend_versions}
+        for client_version in reversed(sorted_client_versions):
+            if client_version.version in backend_dct:
+                backend_version = backend_dct[client_version.version]
                 return (backend_version, client_version)
         raise cls(backend_versions, client_versions)
+
+
+class ApiVersionSchema(BaseSchema):
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
+    revision = fields.Integer(required=True, validate=validate.Range(min=0))
+
+    @pre_dump
+    def dump_obj(self, version):
+        return version._asdict()
+
+    @post_load
+    def make_obj(self, data):
+        return ApiVersion(**data)
 
 
 class HandshakeChallengeSchema(BaseSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Bytes(required=True)
-    supported_api_versions = fields.List(fields.ApiVersion(), required=True)
+    supported_api_versions = fields.List(fields.Nested(ApiVersionSchema), required=True)
 
 
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
@@ -70,7 +83,7 @@ handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 class HandshakeAuthenticatedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("authenticated", required=True)
-    client_api_version = fields.ApiVersion(required=True)
+    client_api_version = fields.Nested(ApiVersionSchema, required=True)
     organization_id = OrganizationIDField(required=True)
     device_id = DeviceIDField(required=True)
     rvk = fields.VerifyKey(required=True)
@@ -80,7 +93,7 @@ class HandshakeAuthenticatedAnswerSchema(BaseSchema):
 class HandshakeAnonymousAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("anonymous", required=True)
-    client_api_version = fields.ApiVersion(required=True)
+    client_api_version = fields.Nested(ApiVersionSchema, required=True)
     organization_id = OrganizationIDField(required=True)
     # Cannot provide rvk during organization bootstrap
     rvk = fields.VerifyKey(missing=None)
@@ -89,7 +102,7 @@ class HandshakeAnonymousAnswerSchema(BaseSchema):
 class HandshakeAdministrationAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.CheckedConstant("administration", required=True)
-    client_api_version = fields.ApiVersion(required=True)
+    client_api_version = fields.Nested(ApiVersionSchema, required=True)
     token = fields.String(required=True)
 
 

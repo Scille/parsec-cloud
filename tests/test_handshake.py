@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from itertools import starmap
 from unittest.mock import ANY
 
 from parsec.api.protocol.base import packb, unpackb, InvalidMessageError
@@ -17,7 +18,7 @@ from parsec.api.protocol.handshake import (
     AnonymousClientHandshake,
     AdministrationClientHandshake,
 )
-from parsec.api import API_VERSION
+from parsec.api.version import API_VERSION, ApiVersion
 
 
 def test_good_handshake(alice):
@@ -120,13 +121,25 @@ def test_good_administration_handshake():
     "req",
     [
         {},
-        {"handshake": "foo", "challenge": b"1234567890", "supported_api_versions": (API_VERSION,)},
+        {
+            "handshake": "foo",
+            "challenge": b"1234567890",
+            "supported_api_versions": [API_VERSION._asdict()],
+        },
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"challenge": b"1234567890"},
-        {"challenge": b"1234567890", "supported_api_versions": (API_VERSION,)},
+        {"challenge": b"1234567890", "supported_api_versions": [API_VERSION._asdict()]},
         {"handshake": "challenge", "challenge": None},
-        {"handshake": "challenge", "challenge": None, "supported_api_versions": (API_VERSION,)},
-        {"handshake": "challenge", "challenge": 42, "supported_api_versions": (API_VERSION,)},
+        {
+            "handshake": "challenge",
+            "challenge": None,
+            "supported_api_versions": [API_VERSION._asdict()],
+        },
+        {
+            "handshake": "challenge",
+            "challenge": 42,
+            "supported_api_versions": [API_VERSION._asdict()],
+        },
         {"handshake": "challenge", "challenge": b"1234567890"},
         {"handshake": "challenge", "challenge": b"1234567890", "supported_api_versions": "invalid"},
     ],
@@ -154,17 +167,22 @@ def test_process_challenge_req_bad_format(alice, req):
         ((2, 22), (3, 33), False),
         ((2, 22), (3, 333), False),
     ],
+    ids=str,
 )
 def test_process_challenge_req_good_api_version(
     alice, monkeypatch, client_version, backend_version, valid
 ):
+    # Cast parameters
+    client_version = ApiVersion(*client_version)
+    backend_version = ApiVersion(*backend_version)
+
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
     req = {
         "handshake": "challenge",
         "challenge": b"1234567890",
-        "supported_api_versions": [backend_version],
+        "supported_api_versions": [backend_version._asdict()],
     }
     monkeypatch.setattr(ch, "supported_api_versions", [client_version])
 
@@ -185,7 +203,7 @@ def test_process_challenge_req_good_api_version(
 
 
 @pytest.mark.parametrize(
-    "client_versions, backend_versions, client_expected, backend_expected",
+    "client_versions, backend_versions, expected_client_version, expected_backend_version",
     [
         ([(2, 22), (3, 33)], [(0, 000), (1, 111)], None, None),
         ([(2, 22), (3, 33)], [(1, 111), (2, 222)], (2, 22), (2, 222)),
@@ -205,20 +223,33 @@ def test_process_challenge_req_good_api_version(
     ids=str,
 )
 def test_process_challenge_req_good_multiple_api_version(
-    alice, monkeypatch, client_versions, backend_versions, client_expected, backend_expected
+    alice,
+    monkeypatch,
+    client_versions,
+    backend_versions,
+    expected_client_version,
+    expected_backend_version,
 ):
+    # Cast parameters
+    client_versions = list(starmap(ApiVersion, client_versions))
+    backend_versions = list(starmap(ApiVersion, backend_versions))
+    if expected_client_version:
+        expected_client_version = ApiVersion(*expected_client_version)
+    if expected_backend_version:
+        expected_backend_version = ApiVersion(*expected_backend_version)
+
     ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
     req = {
         "handshake": "challenge",
         "challenge": b"1234567890",
-        "supported_api_versions": backend_versions,
+        "supported_api_versions": [version._asdict() for version in backend_versions],
     }
     monkeypatch.setattr(ch, "supported_api_versions", client_versions)
 
     # Invalid versioning
-    if client_expected is None:
+    if expected_client_version is None:
         with pytest.raises(HandshakeAPIVersionError) as context:
             ch.process_challenge_req(packb(req))
         assert context.value.client_versions == client_versions
@@ -229,8 +260,8 @@ def test_process_challenge_req_good_multiple_api_version(
     ch.process_challenge_req(packb(req))
     assert ch.supported_api_versions == client_versions
     assert ch.challenge_data["supported_api_versions"] == backend_versions
-    assert ch.backend_api_version == backend_expected
-    assert ch.client_api_version == client_expected
+    assert ch.backend_api_version == expected_backend_version
+    assert ch.client_api_version == expected_client_version
 
 
 # 3) Server process answer
@@ -357,7 +388,7 @@ def test_build_result_req_bad_key(alice, bob):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": API_VERSION,
+        "client_api_version": API_VERSION._asdict(),
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -374,7 +405,7 @@ def test_build_result_req_bad_challenge(alice):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": API_VERSION,
+        "client_api_version": API_VERSION._asdict(),
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -401,7 +432,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     answer = {
         "handshake": "answer",
         "type": "authenticated",
-        "client_api_version": API_VERSION,
+        "client_api_version": API_VERSION._asdict(),
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
