@@ -133,7 +133,27 @@ border: 0;
      <item>
       <widget class="QScrollArea" name="scroll_area">
        <property name="styleSheet">
-        <string notr="true"/>
+        <string notr="true">#scroll_area
+{
+background-color: rgb(255, 255, 255);
+border: 1px solid rgb(46, 46, 46);
+}
+
+QScrollBar:vertical
+{
+background: rgb(255, 255, 255);
+}
+
+QScrollBar::handle:vertical
+{
+background: rgb(46, 46, 46);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+border: none;
+background: none;
+}</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
@@ -155,15 +175,14 @@ border: 0;
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>499</width>
-          <height>451</height>
+          <width>497</width>
+          <height>449</height>
          </rect>
         </property>
         <property name="styleSheet">
          <string notr="true">#widget_content
 {
 background-color: rgb(255, 255, 255);
-border: 1px solid rgb(46, 46, 46);
 }</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">

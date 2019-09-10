@@ -65,6 +65,11 @@ height: 32px;
 text-align: left;
 }
 
+QHeaderView
+{
+background-color: rgb(46, 46, 46);
+}
+
 QTableWidget::item
 {
 background-color: rgb(255, 255, 255);
@@ -97,7 +102,7 @@ subcontrol-origin: padding;
 padding-right: 32px;
 width: 16px;
 height: 16px;
-}s</string>
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
