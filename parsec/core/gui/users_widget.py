@@ -22,7 +22,15 @@ class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(QWidget)
 
     def __init__(
-        self, user_name, is_current_user, is_admin, certified_on, is_revoked, current_user_is_admin, *args, **kwargs
+        self,
+        user_name,
+        is_current_user,
+        is_admin,
+        certified_on,
+        is_revoked,
+        current_user_is_admin,
+        *args,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -162,7 +170,14 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def add_user(self, user_name, is_current_user, is_admin, certified_on, is_revoked):
         if user_name in self.users:
             return
-        button = UserButton(user_name, is_current_user, is_admin, certified_on, is_revoked, current_user_is_admin=self.core.device.is_admin)
+        button = UserButton(
+            user_name,
+            is_current_user,
+            is_admin,
+            certified_on,
+            is_revoked,
+            current_user_is_admin=self.core.device.is_admin,
+        )
         self.layout_users.addWidget(button, int(len(self.users) / 4), int(len(self.users) % 4))
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
