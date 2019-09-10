@@ -218,32 +218,37 @@ class BaseUserComponent:
 
         msg = user_invite_serializer.req_load(msg)
 
+        # Setting the cancel scope here instead of just were we are waiting
+        # for the event make testing easier.
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+            rep = await self._api_user_invite(client_ctx, msg)
+
+        if cancel_scope.cancelled_caught:
+            rep = {
+                "status": "timeout",
+                "reason": "Timeout while waiting for new user to be claimed.",
+            }
+
+        return user_invite_serializer.rep_dump(rep)
+
+    async def _api_user_invite(self, client_ctx, msg):
         invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
-        try:
-            await self.create_user_invitation(client_ctx.organization_id, invitation)
-
-        except UserAlreadyExistsError as exc:
-            return {"status": "already_exists", "reason": str(exc)}
-
-        # Wait for invited user to send `user_claim`
 
         def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
             return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
         with self.event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
-            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-                _, event_data = await waiter.wait()
 
-        if cancel_scope.cancelled_caught:
-            return {
-                "status": "timeout",
-                "reason": ("Timeout while waiting for new user to be claimed."),
-            }
+            try:
+                await self.create_user_invitation(client_ctx.organization_id, invitation)
 
-        else:
-            return user_invite_serializer.rep_dump(
-                {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
-            )
+            except UserAlreadyExistsError as exc:
+                return {"status": "already_exists", "reason": str(exc)}
+
+            # Wait for invited user to send `user_claim`
+            _, event_data = await waiter.wait()
+
+        return {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
 
     @anonymous_api
     @catch_protocol_errors
@@ -487,35 +492,38 @@ class BaseUserComponent:
     async def api_device_invite(self, client_ctx, msg):
         msg = device_invite_serializer.req_load(msg)
 
-        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
-        invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
-        try:
-            await self.create_device_invitation(client_ctx.organization_id, invitation)
-
-        except UserAlreadyExistsError as exc:
-            return {"status": "already_exists", "reason": str(exc)}
-
-        # Wait for invited user to send `user_claim`
-
-        def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
-            return (
-                organization_id == client_ctx.organization_id and device_id == invitation.device_id
-            )
-
-        with self.event_bus.waiter_on("device.claimed", filter=_filter_on_device_claimed) as waiter:
-            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-                _, event_data = await waiter.wait()
+        # Setting the cancel scope here instead of just were we are waiting
+        # for the event make testing easier.
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+            rep = await self._api_device_invite(client_ctx, msg)
 
         if cancel_scope.cancelled_caught:
-            return {
+            rep = {
                 "status": "timeout",
-                "reason": ("Timeout while waiting for new device to be claimed."),
+                "reason": "Timeout while waiting for new device to be claimed.",
             }
 
-        else:
-            return device_invite_serializer.rep_dump(
-                {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
-            )
+        return device_invite_serializer.rep_dump(rep)
+
+    async def _api_device_invite(self, client_ctx, msg):
+        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
+        invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
+
+        def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
+            return organization_id == client_ctx.organization_id and device_id == invited_device_id
+
+        with self.event_bus.waiter_on("device.claimed", filter=_filter_on_device_claimed) as waiter:
+
+            try:
+                await self.create_device_invitation(client_ctx.organization_id, invitation)
+
+            except UserAlreadyExistsError as exc:
+                return {"status": "already_exists", "reason": str(exc)}
+
+            # Wait for invited user to send `user_claim`
+            _, event_data = await waiter.wait()
+
+        return {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
 
     @anonymous_api
     @catch_protocol_errors
