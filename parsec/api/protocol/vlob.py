@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import UnknownCheckedSchema, fields, validate
+from parsec.serde import BaseSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import DeviceIDField
 
@@ -73,12 +73,12 @@ class VlobUpdateRepSchema(BaseRepSchema):
 vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
 
 
-class CheckVlobSchema(UnknownCheckedSchema):
+class CheckVlobSchema(BaseSchema):
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
-class ChangedVlobSchema(UnknownCheckedSchema):
+class ChangedVlobSchema(BaseSchema):
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(required=True)
 
@@ -135,7 +135,7 @@ class VlobMaintenanceGetReencryptionBatchReqSchema(BaseReqSchema):
     size = fields.Integer(required=True, validate=validate.Range(min=0, max=1000))
 
 
-class ReencryptionBatchEntrySchema(UnknownCheckedSchema):
+class ReencryptionBatchEntrySchema(BaseSchema):
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
     blob = fields.Bytes(required=True)

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.serde import UnknownCheckedSchema, fields
+from parsec.serde import BaseSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.types import DeviceIDField
 
@@ -12,7 +12,7 @@ class MessageGetReqSchema(BaseReqSchema):
     offset = fields.Integer(required=True, validate=lambda n: n >= 0)
 
 
-class MessageSchema(UnknownCheckedSchema):
+class MessageSchema(BaseSchema):
     count = fields.Integer(required=True)
     sender = DeviceIDField(required=True)
     timestamp = fields.DateTime(required=True)

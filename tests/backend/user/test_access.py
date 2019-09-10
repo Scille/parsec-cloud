@@ -126,9 +126,7 @@ async def test_api_user_get_ok_deep_trustchain(
     }
 
 
-@pytest.mark.parametrize(
-    "bad_msg", [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}]
-)
+@pytest.mark.parametrize("bad_msg", [{"user_id": 42}, {"user_id": None}, {}])
 @pytest.mark.trio
 async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
     await alice_backend_sock.send(packb({"cmd": "user_get", **bad_msg}))
@@ -236,7 +234,7 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
     }
 
     # Test bad params
-    for bad in [{"dummy": 42}, {"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
+    for bad in [{"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
         await sock.send(packb({"cmd": "user_find", **bad}))
         raw_rep = await sock.recv()
         rep = user_find_serializer.rep_loads(raw_rep)

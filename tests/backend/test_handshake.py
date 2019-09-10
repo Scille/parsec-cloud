@@ -24,18 +24,17 @@ async def test_anonymous_handshake_invalid_format(backend, server_factory):
 
         await transport.recv()  # Get challenge
         req = {
-            "handshake": "answer",
+            "handshake": "foo",
             "type": "anonymous",
             "api_version": __api_version__,
             "organization_id": "zob",
-            "dummy": "field",
         }
         await transport.send(packb(req))
         result_req = await transport.recv()
         assert unpackb(result_req) == {
             "handshake": "result",
             "result": "bad_format",
-            "help": "{'_schema': ['Unknown field name dummy']}",
+            "help": "{'handshake': ['Invalid value, should be `answer`']}",
         }
 
 
