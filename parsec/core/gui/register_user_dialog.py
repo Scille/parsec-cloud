@@ -117,7 +117,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         elif status == "registration-invite-already-exists":
             errmsg = _("ERR_REGISTER_USER_EXISTS")
         elif status == "registration-invite-error":
-            errmsg = _("ERR_REGISTER_USER_NOT_ENOUGH_PERMISSIONS")
+            errmsg = _("ERR_REGISTER_WRONG_PARAMETERS")
         elif status == "registration-invite-offline":
             errmsg = _("ERR_REGISTER_USER_OFFLINE")
         elif status == "registration-invite-timeout":

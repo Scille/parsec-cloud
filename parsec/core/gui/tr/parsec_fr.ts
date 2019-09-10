@@ -142,7 +142,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_dialog.ui" line="123"/>
+        <location filename="../forms/claim_dialog.ui" line="137"/>
         <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
     </message>

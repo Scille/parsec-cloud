@@ -200,6 +200,9 @@ async def test_register_user_modal_already_registered(
     assert autoclose_dialog.dialogs == [("Error", "This user already exists.")]
 
 
+@pytest.mark.skip(
+    "Useless test, since in the GUI, users have no way to open the RegisterUserDialog if they are not admin"
+)
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_not_admin(

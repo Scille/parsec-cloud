@@ -133,7 +133,7 @@ border: 0;
      <item>
       <widget class="QScrollArea" name="scroll_area">
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(255, 255, 255);</string>
+        <string notr="true"/>
        </property>
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
@@ -150,7 +150,7 @@ border: 0;
        <property name="widgetResizable">
         <bool>true</bool>
        </property>
-       <widget class="QWidget" name="scrollAreaWidgetContents_2">
+       <widget class="QWidget" name="widget_content">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -158,6 +158,13 @@ border: 0;
           <width>499</width>
           <height>451</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">#widget_content
+{
+background-color: rgb(255, 255, 255);
+border: 1px solid rgb(46, 46, 46);
+}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
