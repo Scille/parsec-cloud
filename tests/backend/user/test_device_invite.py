@@ -4,8 +4,8 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
+from parsec.backend.user import PEER_EVENT_MAX_WAIT, DeviceInvitation
 from parsec.api.protocol import DeviceID, device_invite_serializer
-from parsec.backend.user import PEER_EVENT_MAX_WAIT
 
 
 @pytest.fixture
@@ -24,29 +24,41 @@ async def device_invite(sock, **kwargs):
 
 
 @pytest.mark.trio
-async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
-    with backend.event_bus.listen() as spy, trio.fail_after(1):
+async def test_device_invite(monkeypatch, backend, alice_backend_sock, alice, alice_nd_id):
+    dummy_device_id = DeviceID(f"{alice.user_id}@pc1")
+    await backend.user.create_device_invitation(
+        alice.organization_id, DeviceInvitation(dummy_device_id, alice.device_id)
+    )
+
+    device_invitation_created = trio.Event()
+
+    vanilla_create_device_invitation = backend.user.create_device_invitation
+
+    async def _mocked_create_device_invitation(*args, **kwargs):
+        ret = await vanilla_create_device_invitation(*args, **kwargs)
+        device_invitation_created.set()
+        return ret
+
+    monkeypatch.setattr(backend.user, "create_device_invitation", _mocked_create_device_invitation)
+
+    with trio.fail_after(1):
         async with device_invite(
             alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
-            # Waiting for device.claimed event
-            await spy.wait("event.connected", {"event_name": "device.claimed"})
+            # Wait for invitation to be created before fetching it !
+            await device_invitation_created.wait()
 
-            backend.event_bus.send(
-                "device.claimed",
-                organization_id=alice.organization_id,
-                device_id="foo",
-                encrypted_claim=b"<dummy>",
-            )
-            backend.event_bus.send(
-                "device.claimed",
-                organization_id=alice.organization_id,
-                device_id=alice_nd_id,
-                encrypted_claim=b"<good>",
+            # No the user we are waiting for
+            await backend.user.claim_device_invitation(
+                alice.organization_id, dummy_device_id, b"<alice@dummy encrypted_claim>"
             )
 
-        assert prep[0] == {"status": "ok", "encrypted_claim": b"<good>"}
+            await backend.user.claim_device_invitation(
+                alice.organization_id, alice_nd_id, b"<alice@new_device encrypted_claim>"
+            )
+
+        assert prep[0] == {"status": "ok", "encrypted_claim": b"<alice@new_device encrypted_claim>"}
 
 
 @pytest.mark.trio
