@@ -242,7 +242,6 @@ def test_folder_operations(
     tmpdir,
     hypothesis_settings,
     reset_testbed,
-    initialize_local_storage,
     entry_transactions_factory,
     file_transactions_factory,
     alice,

@@ -229,7 +229,7 @@ async def test_modify_user_manifest_placeholder(
     device = local_device_factory()
     await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device, initialize_local_storage=False) as user_fs:
+    async with user_fs_factory(device, initialize_user_storage=False) as user_fs:
         with freeze_time("2000-01-02"):
             wid = await user_fs.workspace_create("w1")
         um = user_fs.get_user_manifest()
@@ -252,7 +252,7 @@ async def test_modify_user_manifest_placeholder(
         assert um == expected_um
 
     # Make sure we can fetch back data from the database on user_fs restart
-    async with user_fs_factory(device, initialize_local_storage=False) as user_fs2:
+    async with user_fs_factory(device, initialize_user_storage=False) as user_fs2:
         um2 = user_fs2.get_user_manifest()
         assert um2 == expected_um
 
@@ -265,7 +265,7 @@ async def test_sync_placeholder(
     device = local_device_factory()
     await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device, initialize_local_storage=False) as user_fs:
+    async with user_fs_factory(device, initialize_user_storage=False) as user_fs:
         with freeze_time("2000-01-01"):
             # User manifest should be lazily created on each access
             um = user_fs.get_user_manifest()
@@ -330,9 +330,9 @@ async def test_concurrent_sync_placeholder(
     device2 = local_device_factory("a@2")
     await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(
-        device1, initialize_local_storage=False
-    ) as user_fs1, user_fs_factory(device2, initialize_local_storage=False) as user_fs2:
+    async with user_fs_factory(device1, initialize_user_storage=False) as user_fs1, user_fs_factory(
+        device2, initialize_user_storage=False
+    ) as user_fs2:
         with freeze_time("2000-01-01"):
             w1id = await user_fs1.workspace_create("w1")
         if dev2_has_changes:
