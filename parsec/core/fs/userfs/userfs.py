@@ -2,10 +2,10 @@
 
 import trio
 from pathlib import Path
-from contextlib import ExitStack
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional, Union
 from structlog import get_logger
+from async_exit_stack import AsyncExitStack
 
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -143,7 +143,7 @@ class UserFS:
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
-        self._exit_stack = ExitStack()
+        self._exit_stack = AsyncExitStack()
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
         self._workspace_storages = {}
@@ -168,14 +168,14 @@ class UserFS:
             None,
         )
 
-    def __enter__(self):
-        self.storage = self._exit_stack.enter_context(
+    async def __aenter__(self):
+        self.storage = await self._exit_stack.enter_async_context(
             UserStorage.factory(self.device, self.path, self.user_manifest_id)
         )
         return self
 
-    def __exit__(self, *args):
-        self._exit_stack.close()
+    async def __aexit__(self, *args):
+        await self._exit_stack.aclose()
 
     @property
     def user_manifest_id(self) -> EntryID:
@@ -184,8 +184,8 @@ class UserFS:
     def get_user_manifest(self) -> LocalUserManifest:
         return self.storage.get_user_manifest()
 
-    def set_user_manifest(self, manifest: LocalUserManifest) -> None:
-        self.storage.set_user_manifest(manifest)
+    async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
+        await self.storage.set_user_manifest(manifest)
 
     def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
         path = self.path / str(workspace_id)
@@ -258,7 +258,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self._create_workspace(workspace_entry.id, workspace_manifest)
-            self.set_user_manifest(user_manifest)
+            await self.set_user_manifest(user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
@@ -279,7 +279,7 @@ class UserFS:
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
-            self.set_user_manifest(updated_user_manifest)
+            await self.set_user_manifest(updated_user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
     async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
@@ -359,7 +359,7 @@ class UserFS:
                 # Sync already achieved by a concurrent operation
                 return
             merged_um = merge_local_user_manifests(diverged_um, target_um)
-            self.set_user_manifest(merged_um)
+            await self.set_user_manifest(merged_um)
             # In case we weren't online when the sharing message arrived,
             # we will learn about the change in the sharing only now.
             # Hence send the corresponding events !
@@ -486,7 +486,7 @@ class UserFS:
             # Final merge could have been achieved by a concurrent operation
             if to_sync_um.version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
-                self.set_user_manifest(merged_um)
+                await self.set_user_manifest(merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -642,7 +642,7 @@ class UserFS:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
                     )
-                    self.set_user_manifest(user_manifest)
+                    await self.set_user_manifest(user_manifest)
                     self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
         return errors
@@ -743,7 +743,7 @@ class UserFS:
                 )
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.set_user_manifest(user_manifest)
+            await self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
 
             if not already_existing_entry:
@@ -795,7 +795,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.set_user_manifest(user_manifest)
+            await self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
                 "sharing.updated",

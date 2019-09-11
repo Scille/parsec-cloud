@@ -41,14 +41,14 @@ def initialize_local_storage(local_storage_path, initial_user_manifest_state, pe
 
 
 @pytest.fixture
-def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
-    def _initialize_userfs_storage(device, storage):
+async def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
+    async def _initialize_userfs_storage(device, storage):
         try:
-            storage.get_manifest(device.user_manifest_id)
+            await storage.get_manifest(device.user_manifest_id)
         except FSLocalMissError:
             with freeze_time("2000-01-01"):
                 user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            storage.set_manifest(device.user_manifest_id, user_manifest)
+            await storage.set_manifest(device.user_manifest_id, user_manifest)
 
     return _initialize_userfs_storage
 
@@ -56,24 +56,24 @@ def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
 @pytest.fixture()
 async def alice_local_storage(local_storage_path, initialize_userfs_storage, alice):
     path = local_storage_path(alice)
-    with RealmStorage.factory(alice, path) as storage:
-        initialize_userfs_storage(alice, storage)
+    async with RealmStorage.factory(alice, path) as storage:
+        await initialize_userfs_storage(alice, storage)
         yield storage
 
 
 @pytest.fixture()
 async def alice2_local_storage(local_storage_path, initialize_userfs_storage, alice2):
     path = local_storage_path(alice2)
-    with RealmStorage.factory(alice2, path) as storage:
-        initialize_userfs_storage(alice2, storage)
+    async with RealmStorage.factory(alice2, path) as storage:
+        await initialize_userfs_storage(alice2, storage)
         yield storage
 
 
 @pytest.fixture()
 async def bob_local_storage(local_storage_path, initialize_userfs_storage, bob):
     path = local_storage_path(bob)
-    with RealmStorage.factory(bob, path) as storage:
-        initialize_userfs_storage(bob, storage)
+    async with RealmStorage.factory(bob, path) as storage:
+        await initialize_userfs_storage(bob, storage)
         yield storage
 
 
@@ -165,9 +165,9 @@ def user_fs_factory(
         ) as cmds:
             path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            with UserFS(device, path, cmds, rdm, event_bus) as user_fs:
+            async with UserFS(device, path, cmds, rdm, event_bus) as user_fs:
                 if initialize_local_storage:
-                    initialize_userfs_storage(device, user_fs.storage)
+                    await initialize_userfs_storage(device, user_fs.storage)
                 yield user_fs
 
     return _user_fs_factory
