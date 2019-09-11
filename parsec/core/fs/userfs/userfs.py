@@ -49,11 +49,10 @@ from parsec.core.remote_devices_manager import (
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.realm_storage import RealmStorage
+from parsec.core.fs.realm_storage import UserStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
     FSError,
-    FSLocalMissError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
@@ -170,7 +169,9 @@ class UserFS:
         )
 
     def __enter__(self):
-        self.storage = self._exit_stack.enter_context(RealmStorage.factory(self.device, self.path))
+        self.storage = self._exit_stack.enter_context(
+            UserStorage.factory(self.device, self.path, self.user_manifest_id)
+        )
         return self
 
     def __exit__(self, *args):
@@ -181,25 +182,10 @@ class UserFS:
         return self.device.user_manifest_id
 
     def get_user_manifest(self) -> LocalUserManifest:
-        """
-        Raises: Nothing !
-        """
-        try:
-            return self.storage.get_manifest(self.user_manifest_id)
-
-        except FSLocalMissError:
-            # In the unlikely event the user manifest is not present in
-            # local (e.g. device just created or during tests), we fall
-            # back on an empty manifest which is a good aproximation of
-            # the very first version of the manifest (field `created` is
-            # invalid, but it will be corrected by the merge during sync).
-            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
+        return self.storage.get_user_manifest()
 
     def set_user_manifest(self, manifest: LocalUserManifest) -> None:
-        """
-        Raises: Nothing
-        """
-        self.storage.set_manifest(self.user_manifest_id, manifest)
+        self.storage.set_user_manifest(manifest)
 
     def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
         path = self.path / str(workspace_id)

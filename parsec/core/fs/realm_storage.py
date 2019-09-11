@@ -7,7 +7,7 @@ from structlog import get_logger
 from sqlite3 import connect as sqlite_connect
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, LocalDevice, LocalManifest
+from parsec.core.types import EntryID, LocalDevice, LocalManifest, LocalUserManifest
 
 
 logger = get_logger()
@@ -73,21 +73,22 @@ def _connect(dbpath: str):
 
 
 class RealmStorage:
-    def __init__(self, device: LocalDevice, open_cursor: Callable):
+    def __init__(self, device: LocalDevice, open_cursor: Callable, realm_id: EntryID):
         self.device = device
+        self.realm_id = realm_id
         self._open_cursor = open_cursor
         self._cache = {}
         self._cache_ahead_of_persistance_ids = set()
 
     @classmethod
     @contextmanager
-    def factory(cls, device: LocalDevice, path: Path):
+    def factory(cls, device: LocalDevice, path: Path, realm_id: EntryID):
         # Create directories if needed
         path.mkdir(parents=True, exist_ok=True)
 
         with _connect(str(path / "realmdb.sqlite")) as open_cursor:
             try:
-                storage = cls(device, open_cursor)
+                storage = cls(device, open_cursor, realm_id)
                 yield storage
 
             finally:
@@ -234,3 +235,38 @@ class RealmStorage:
 
     def run_vacuum(self) -> None:
         pass
+
+
+class UserStorage(RealmStorage):
+    @property
+    def user_manifest_id(self):
+        return self.realm_id
+
+    @classmethod
+    @contextmanager
+    def factory(cls, device: LocalDevice, path: Path, user_manifest_id: EntryID):
+        with super().factory(device, path, user_manifest_id) as storage:
+
+            # Load the user manifest
+            try:
+                storage.get_manifest(storage.user_manifest_id)
+            except FSLocalMissError:
+                pass
+            else:
+                assert storage.user_manifest_id in storage._cache
+
+            yield storage
+
+    def get_user_manifest(self):
+        try:
+            return self._cache[self.user_manifest_id]
+        except KeyError:
+            # In the unlikely event the user manifest is not present in
+            # local (e.g. device just created or during tests), we fall
+            # back on an empty manifest which is a good aproximation of
+            # the very first version of the manifest (field `created` is
+            # invalid, but it will be corrected by the merge during sync).
+            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
+
+    def set_user_manifest(self, user_manifest):
+        self.set_manifest(self.user_manifest_id, user_manifest)
