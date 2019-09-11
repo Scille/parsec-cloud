@@ -266,7 +266,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if count is None:
             count = len(user_manifest.workspaces) - 1 or 1
 
-        columns_count = int(self.size().width() / 400)
+        columns_count = int(self.size().width() / 400) or 1
 
         self.layout_workspaces.addWidget(
             button, int(count / columns_count), int(count % columns_count)
