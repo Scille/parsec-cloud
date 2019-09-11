@@ -122,21 +122,26 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         assert self.claim_user_job.status != "ok"
 
         status = self.claim_user_job.status
-        if status == "not_found":
-            errmsg = _("ERR_CLAIM_USER_NOT_FOUND")
-        elif status == "password-mismatch":
-            errmsg = _("ERR_PASSWORD_MISMATCH")
-        elif status == "password-size":
-            errmsg = _("ERR_PASSWORD_COMPLEXITY")
-        elif status == "bad-url":
-            errmsg = _("ERR_BAD_URL")
-        elif status == "bad-device_name":
-            errmsg = _("ERR_BAD_DEVICE_NAME")
-        elif status == "bad-user_id":
-            errmsg = _("ERR_BAD_USER_NAME")
-        else:
-            errmsg = _("ERR_CLAIM_USER_UNKNOWN")
-        show_error(self, errmsg, exception=self.claim_user_job.exc)
+        if status != "cancelled":
+            if status == "not_found":
+                errmsg = _("ERR_CLAIM_USER_NOT_FOUND")
+            elif status == "password-mismatch":
+                errmsg = _("ERR_PASSWORD_MISMATCH")
+            elif status == "password-size":
+                errmsg = _("ERR_PASSWORD_COMPLEXITY")
+            elif status == "bad-url":
+                errmsg = _("ERR_BAD_URL")
+            elif status == "bad-device_name":
+                errmsg = _("ERR_BAD_DEVICE_NAME")
+            elif status == "bad-user_id":
+                errmsg = _("ERR_BAD_USER_NAME")
+            elif status == "refused-by-backend":
+                errmsg = _("ERR_BACKEND_REFUSED")
+            elif status == "backend-offline":
+                errmsg = _("ERR_BACKEND_OFFLINE")
+            else:
+                errmsg = _("ERR_CLAIM_USER_UNKNOWN")
+            show_error(self, errmsg, exception=self.claim_user_job.exc)
         self.claim_user_job = None
         self.check_infos()
 
@@ -154,8 +159,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     def cancel_claim(self):
         if self.claim_user_job:
             self.claim_user_job.cancel_and_join()
-            self.claim_user_job = None
-        self.check_infos()
 
     def password_changed(self, text):
         if len(text):

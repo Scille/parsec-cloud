@@ -71,7 +71,9 @@ async def test_claim_user_offline(aqtbot, gui, autoclose_dialog, running_backend
         async with aqtbot.wait_signal(claim_w.claim_error):
             await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs == [("Error", "Cannot register the user.")]
+    assert autoclose_dialog.dialogs == [
+        ("Error", "Cannot reach the server. Please check your internet connection.")
+    ]
 
 
 @pytest.mark.gui

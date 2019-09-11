@@ -107,11 +107,13 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             errmsg = _("ERR_REGISTER_DEVICE_EXISTS")
         elif status == "registration-invite-offline":
             errmsg = _("ERR_REGISTER_DEVICE_OFFLINE")
+        elif status == "registration-invite-error":
+            errmsg = _("ERR_REGISTER_WRONG_PARAMETERS")
         elif status == "registration-invite-timeout":
             errmsg = _("ERR_REGISTER_DEVICE_TIMEOUT")
         else:
             errmsg = _("ERR_REGISTER_DEVICE_UNKNOWN")
-        show_error(self, errmsg, exception=self.registration_job.status)
+        show_error(self, errmsg, exception=self.registration_job.exc)
 
     def on_registration_success(self):
         assert self.registration_job.is_finished()

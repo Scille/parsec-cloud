@@ -75,7 +75,9 @@ async def test_claim_device_offline(aqtbot, gui, autoclose_dialog, running_backe
         async with aqtbot.wait_signal(claim_w.claim_error):
             await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
 
-    assert autoclose_dialog.dialogs == [("Error", "Cannot claim this device.")]
+    assert autoclose_dialog.dialogs == [
+        ("Error", "Cannot reach the server. Please check your internet connection.")
+    ]
 
 
 @pytest.mark.gui
