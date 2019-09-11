@@ -18,6 +18,8 @@ before_script:
 - sudo modprobe fuse
 script:
 - set -e  # stop build as soon as a command fails
+# If tag, check the version correspond with parsec/_version.py
+- python -c 'import os; tag=os.environ.get("TRAVIS_TAG"); exec(open("parsec/_version.py", encoding="utf-8").read()); assert not tag or tag == f"v{__version__}", (tag, __version__)'
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
 - flake8 setup.py parsec tests
