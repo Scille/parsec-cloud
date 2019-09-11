@@ -234,7 +234,7 @@ class UserFS:
         workspace = await self._instantiate_workspace(workspace_id)
 
         async with workspace.local_storage.lock_entry_id(workspace_id):
-            workspace.local_storage.set_manifest(workspace_id, manifest)
+            await workspace.local_storage.set_manifest(workspace_id, manifest)
 
         self._workspace_storages.setdefault(workspace_id, workspace)
 

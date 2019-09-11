@@ -33,15 +33,15 @@ async def test_lock_required(tmpdir, alice):
         msg = f"Entry `{entry_id}` modified without beeing locked"
 
         with pytest.raises(RuntimeError) as exc:
-            als.set_manifest(entry_id, manifest)
+            await als.set_manifest(entry_id, manifest)
         assert str(exc.value) == msg
 
         with pytest.raises(RuntimeError) as exc:
-            als.ensure_manifest_persistent(entry_id)
+            await als.ensure_manifest_persistent(entry_id)
         assert str(exc.value) == msg
 
         with pytest.raises(RuntimeError) as exc:
-            als.clear_manifest(entry_id)
+            await als.clear_manifest(entry_id)
         assert str(exc.value) == msg
 
         # Note: `get_manifest` doesn't need a lock before use
@@ -57,22 +57,22 @@ async def test_basic_set_get_clear(tmpdir, alice):
 
             # 1) No data
             with pytest.raises(FSLocalMissError):
-                als.get_manifest(entry_id)
+                await als.get_manifest(entry_id)
 
             # 2) Set data
-            als.set_manifest(entry_id, manifest)
-            assert als.get_manifest(entry_id) == manifest
+            await als.set_manifest(entry_id, manifest)
+            assert await als.get_manifest(entry_id) == manifest
             # Make sure data are not only stored in cache
             async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
-                assert als2.get_manifest(entry_id) == manifest
+                assert await als2.get_manifest(entry_id) == manifest
 
             # 3) Clear data
-            als.clear_manifest(entry_id)
+            await als.clear_manifest(entry_id)
             with pytest.raises(FSLocalMissError):
-                als.get_manifest(entry_id)
+                await als.get_manifest(entry_id)
             async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als3:
                 with pytest.raises(FSLocalMissError):
-                    assert als3.get_manifest(entry_id) == manifest
+                    assert await als3.get_manifest(entry_id) == manifest
 
 
 @pytest.mark.trio
@@ -84,29 +84,29 @@ async def test_cache_set_get(tmpdir, alice):
         async with als.lock_entry_id(entry_id):
 
             # 1) Set data
-            als.set_manifest(entry_id, manifest, cache_only=True)
-            assert als.get_manifest(entry_id) == manifest
+            await als.set_manifest(entry_id, manifest, cache_only=True)
+            assert await als.get_manifest(entry_id) == manifest
             async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
                 with pytest.raises(FSLocalMissError):
-                    als2.get_manifest(entry_id)
+                    await als2.get_manifest(entry_id)
 
             # 2) Clear should work as expected
-            als.clear_manifest(entry_id)
+            await als.clear_manifest(entry_id)
             with pytest.raises(FSLocalMissError):
-                als.get_manifest(entry_id)
+                await als.get_manifest(entry_id)
 
             # 3) Re-set data
-            als.set_manifest(entry_id, manifest, cache_only=True)
-            assert als.get_manifest(entry_id) == manifest
+            await als.set_manifest(entry_id, manifest, cache_only=True)
+            assert await als.get_manifest(entry_id) == manifest
             async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als3:
                 with pytest.raises(FSLocalMissError):
-                    als3.get_manifest(entry_id)
+                    await als3.get_manifest(entry_id)
 
             # 4) Flush data
-            als.ensure_manifest_persistent(entry_id)
-            assert als.get_manifest(entry_id) == manifest
+            await als.ensure_manifest_persistent(entry_id)
+            assert await als.get_manifest(entry_id) == manifest
             async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als4:
-                assert als4.get_manifest(entry_id) == manifest
+                assert await als4.get_manifest(entry_id) == manifest
 
 
 @pytest.mark.trio
@@ -115,10 +115,10 @@ async def test_cache_flushed_on_exit(tmpdir, alice):
 
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
-            als.set_manifest(entry_id, manifest, cache_only=True)
+            await als.set_manifest(entry_id, manifest, cache_only=True)
 
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
-        assert als2.get_manifest(entry_id) == manifest
+        assert await als2.get_manifest(entry_id) == manifest
 
 
 @pytest.mark.trio
@@ -128,15 +128,15 @@ async def test_clear_cache(tmpdir, alice):
 
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id1):
-            als.set_manifest(entry_id1, manifest1)
+            await als.set_manifest(entry_id1, manifest1)
         async with als.lock_entry_id(entry_id2):
-            als.set_manifest(entry_id2, manifest2, cache_only=True)
+            await als.set_manifest(entry_id2, manifest2, cache_only=True)
 
         als.clear_memory_cache()
 
-        assert als.get_manifest(entry_id1) == manifest1
+        assert await als.get_manifest(entry_id1) == manifest1
         with pytest.raises(FSLocalMissError):
-            als.get_manifest(entry_id2)
+            await als.get_manifest(entry_id2)
 
 
 @pytest.mark.parametrize("type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest])
@@ -145,10 +145,10 @@ async def test_serialize_types(tmpdir, alice, type):
     entry_id, manifest = create_entry(alice, type)
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
-            als.set_manifest(entry_id, manifest)
+            await als.set_manifest(entry_id, manifest)
 
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
-        assert als2.get_manifest(entry_id) == manifest
+        assert await als2.get_manifest(entry_id) == manifest
 
 
 @pytest.mark.trio
@@ -162,7 +162,7 @@ async def test_serialize_non_empty_local_file_manifest(tmpdir, alice):
     manifest.assert_integrity()
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
-            als.set_manifest(entry_id, manifest)
+            await als.set_manifest(entry_id, manifest)
 
     async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
-        assert als2.get_manifest(entry_id) == manifest
+        assert await als2.get_manifest(entry_id) == manifest

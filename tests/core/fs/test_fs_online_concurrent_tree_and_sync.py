@@ -181,8 +181,8 @@ def test_fs_online_concurrent_tree_and_sync(
                 await self.user_fs1.sync()
                 await self.user_fs2.sync()
 
-            user_fs_dump_1 = workspace1.dump()
-            user_fs_dump_2 = workspace2.dump()
+            user_fs_dump_1 = await workspace1.dump()
+            user_fs_dump_2 = await workspace2.dump()
             compare_fs_dumps(user_fs_dump_1, user_fs_dump_2)
 
     run_state_machine_as_test(FSOnlineConcurrentTreeAndSync, settings=hypothesis_settings)

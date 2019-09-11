@@ -230,8 +230,8 @@ def test_sync_monitor_stateful(
                     # No access, workspace can only diverge from bob's
                     continue
 
-                bob_dump = bob_w.dump()
-                alice_dump = alice_w.dump()
+                bob_dump = await bob_w.dump()
+                alice_dump = await alice_w.dump()
                 if self.alice_workspaces_role[alice_workspace_entry.id] == WorkspaceRole.READER:
                     # Synced with bob, but we can have local changes that cannot be synced
                     recursive_compare_fs_dumps(alice_dump, bob_dump, ignore_need_sync=True)

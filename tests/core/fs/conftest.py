@@ -27,7 +27,7 @@ def transactions_factory(event_bus, remote_devices_manager_factory):
             id=workspace_entry.id, now=Pendulum(2000, 1, 1)
         )
         async with local_storage.lock_entry_id(workspace_entry.id):
-            local_storage.set_manifest(workspace_entry.id, workspace_manifest)
+            await local_storage.set_manifest(workspace_entry.id, workspace_manifest)
 
         remote_devices_manager = remote_devices_manager_factory(device)
         remote_loader = RemoteLoader(

@@ -188,7 +188,7 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     # Sync parent with a placeholder child
     manifest = await synchronization_step(entry_id)
     children = []
-    for child in sync_transactions.get_placeholder_children(manifest):
+    async for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
     a_entry_id, = children
     assert a_entry_id == a_id
@@ -213,7 +213,7 @@ async def test_synchronization_step_transaction(alice_sync_transactions, type):
     # Sync parent with a placeholder child
     manifest = await synchronization_step(entry_id, manifest)
     children = []
-    for child in sync_transactions.get_placeholder_children(manifest):
+    async for child in sync_transactions.get_placeholder_children(manifest):
         children.append(child)
     b_entry_id, = children
     assert b_entry_id == b_id
@@ -241,7 +241,7 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
     # Workspace manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(w_id)
-    local = sync_transactions.local_storage.get_manifest(w_id)
+    local = await sync_transactions.local_storage.get_manifest(w_id)
     expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp).evolve(
         children={}, updated=local.created
     )
@@ -252,7 +252,7 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
     # File manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(a_id)
-    local = sync_transactions.local_storage.get_manifest(a_id)
+    local = await sync_transactions.local_storage.get_manifest(a_id)
     expected = local.evolve(blocks=(), updated=local.created, size=0).to_remote(
         author=alice.device_id, timestamp=minimal.timestamp
     )
@@ -263,7 +263,7 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
     # Folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(b_id)
-    local = sync_transactions.local_storage.get_manifest(b_id)
+    local = await sync_transactions.local_storage.get_manifest(b_id)
     expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp).evolve(
         children={}, updated=local.created
     )
@@ -273,7 +273,7 @@ async def test_get_minimal_remote_manifest(alice, alice_sync_transactions):
 
     # Empty folder manifest
     minimal = await sync_transactions.get_minimal_remote_manifest(c_id)
-    local = sync_transactions.local_storage.get_manifest(c_id)
+    local = await sync_transactions.local_storage.get_manifest(c_id)
     expected = local.to_remote(author=alice.device_id, timestamp=minimal.timestamp)
     assert minimal == expected
     await sync_transactions.synchronization_step(c_id, minimal)
