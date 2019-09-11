@@ -258,7 +258,7 @@ def test_folder_operations(
 
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                with LocalStorage(
+                async with LocalStorage(
                     alice.device_id, key=alice.local_symkey, path=Path("/dummy")
                 ) as local_storage:
                     entry_transactions = await entry_transactions_factory(

@@ -58,11 +58,11 @@ class LocalStorage:
         self.fd_counter += 1
         return FileDescriptor(self.fd_counter)
 
-    def __enter__(self):
+    async def __aenter__(self):
         self.persistent_storage.__enter__()
         return self
 
-    def __exit__(self, *args):
+    async def __aexit__(self, *args):
         if self.locking_tasks:
             raise RuntimeError("Cannot teardown while entries are still locked")
         for entry_id in self.cache_ahead_of_persistance_ids.copy():

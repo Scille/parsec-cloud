@@ -172,6 +172,11 @@ class UserFS:
         self.storage = await self._exit_stack.enter_async_context(
             UserStorage.factory(self.device, self.path, self.user_manifest_id)
         )
+
+        # Load the current workspaces
+        for workspace_entry in self.get_user_manifest().workspaces:
+            await self._load_workspace(workspace_entry.id)
+
         return self
 
     async def __aexit__(self, *args):
@@ -185,15 +190,18 @@ class UserFS:
         return self.storage.get_user_manifest()
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
+        # Load the new workspaces
+        for workspace_entry in manifest.workspaces:
+            await self._load_workspace(workspace_entry.id)
         await self.storage.set_user_manifest(manifest)
 
-    def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
+    async def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
         path = self.path / str(workspace_id)
         local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
-        self._exit_stack.enter_context(local_storage)
+        await self._exit_stack.enter_async_context(local_storage)
         return local_storage
 
-    def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorskpaeFS to load it each time it is needed
         def get_workspace_entry():
@@ -204,7 +212,7 @@ class UserFS:
             return workspace_entry
 
         # Instantiate the local storage
-        local_storage = self._instantiate_workspace_local_storage(workspace_id)
+        local_storage = await self._instantiate_workspace_local_storage(workspace_id)
 
         # Instantiate the workspace
         return WorkspaceFS(
@@ -223,14 +231,14 @@ class UserFS:
         """
         Raises: Nothing
         """
-        workspace = self._instantiate_workspace(workspace_id)
+        workspace = await self._instantiate_workspace(workspace_id)
 
         async with workspace.local_storage.lock_entry_id(workspace_id):
             workspace.local_storage.set_manifest(workspace_id, manifest)
 
         self._workspace_storages.setdefault(workspace_id, workspace)
 
-    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    async def _load_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
@@ -240,13 +248,21 @@ class UserFS:
             return self._workspace_storages[workspace_id]
 
         # Instantiate the workpace
-        workspace = self._instantiate_workspace(workspace_id)
+        workspace = await self._instantiate_workspace(workspace_id)
+
+        # Set and return
+        return self._workspace_storages.setdefault(workspace_id, workspace)
+
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+        try:
+            workspace = self._workspace_storages[workspace_id]
+        except KeyError:
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
         # Sanity check to make sure workspace_id is valid
         workspace.get_workspace_entry()
 
-        # Set and return
-        return self._workspace_storages.setdefault(workspace_id, workspace)
+        return workspace
 
     async def workspace_create(self, name: str) -> EntryID:
         """

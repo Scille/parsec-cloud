@@ -223,7 +223,7 @@ def test_file_operations(
     class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                with LocalStorage(
+                async with LocalStorage(
                     alice.device_id, key=alice.local_symkey, path=Path("/dummy")
                 ) as local_storage:
                     file_transactions = await file_transactions_factory(

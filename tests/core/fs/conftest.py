@@ -62,8 +62,10 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 
 @pytest.fixture
-def alice_transaction_local_storage(alice, persistent_mockup):
-    with LocalStorage(alice.device_id, key=alice.local_symkey, path=Path("/dummy")) as storage:
+async def alice_transaction_local_storage(alice, persistent_mockup):
+    async with LocalStorage(
+        alice.device_id, key=alice.local_symkey, path=Path("/dummy")
+    ) as storage:
         yield storage
 
 

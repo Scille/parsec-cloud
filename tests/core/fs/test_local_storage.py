@@ -28,7 +28,7 @@ def create_entry(device, type=LocalWorkspaceManifest):
 async def test_lock_required(tmpdir, alice):
     entry_id, manifest = create_entry(alice)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
 
         msg = f"Entry `{entry_id}` modified without beeing locked"
 
@@ -51,7 +51,7 @@ async def test_lock_required(tmpdir, alice):
 async def test_basic_set_get_clear(tmpdir, alice):
     entry_id, manifest = create_entry(alice)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
 
         async with als.lock_entry_id(entry_id):
 
@@ -63,14 +63,14 @@ async def test_basic_set_get_clear(tmpdir, alice):
             als.set_manifest(entry_id, manifest)
             assert als.get_manifest(entry_id) == manifest
             # Make sure data are not only stored in cache
-            with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
+            async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
                 assert als2.get_manifest(entry_id) == manifest
 
             # 3) Clear data
             als.clear_manifest(entry_id)
             with pytest.raises(FSLocalMissError):
                 als.get_manifest(entry_id)
-            with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als3:
+            async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als3:
                 with pytest.raises(FSLocalMissError):
                     assert als3.get_manifest(entry_id) == manifest
 
@@ -79,14 +79,14 @@ async def test_basic_set_get_clear(tmpdir, alice):
 async def test_cache_set_get(tmpdir, alice):
     entry_id, manifest = create_entry(alice)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
 
         async with als.lock_entry_id(entry_id):
 
             # 1) Set data
             als.set_manifest(entry_id, manifest, cache_only=True)
             assert als.get_manifest(entry_id) == manifest
-            with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
+            async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
                 with pytest.raises(FSLocalMissError):
                     als2.get_manifest(entry_id)
 
@@ -98,14 +98,14 @@ async def test_cache_set_get(tmpdir, alice):
             # 3) Re-set data
             als.set_manifest(entry_id, manifest, cache_only=True)
             assert als.get_manifest(entry_id) == manifest
-            with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als3:
+            async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als3:
                 with pytest.raises(FSLocalMissError):
                     als3.get_manifest(entry_id)
 
             # 4) Flush data
             als.ensure_manifest_persistent(entry_id)
             assert als.get_manifest(entry_id) == manifest
-            with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als4:
+            async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als4:
                 assert als4.get_manifest(entry_id) == manifest
 
 
@@ -113,11 +113,11 @@ async def test_cache_set_get(tmpdir, alice):
 async def test_cache_flushed_on_exit(tmpdir, alice):
     entry_id, manifest = create_entry(alice)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
             als.set_manifest(entry_id, manifest, cache_only=True)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
         assert als2.get_manifest(entry_id) == manifest
 
 
@@ -126,7 +126,7 @@ async def test_clear_cache(tmpdir, alice):
     entry_id1, manifest1 = create_entry(alice)
     entry_id2, manifest2 = create_entry(alice)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id1):
             als.set_manifest(entry_id1, manifest1)
         async with als.lock_entry_id(entry_id2):
@@ -143,11 +143,11 @@ async def test_clear_cache(tmpdir, alice):
 @pytest.mark.trio
 async def test_serialize_types(tmpdir, alice, type):
     entry_id, manifest = create_entry(alice, type)
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
             als.set_manifest(entry_id, manifest)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
         assert als2.get_manifest(entry_id) == manifest
 
 
@@ -160,9 +160,9 @@ async def test_serialize_non_empty_local_file_manifest(tmpdir, alice):
     blocks = (chunk1, chunk2), (chunk3,)
     manifest = manifest.evolve_and_mark_updated(blocksize=8, size=10, blocks=blocks)
     manifest.assert_integrity()
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als:
         async with als.lock_entry_id(entry_id):
             als.set_manifest(entry_id, manifest)
 
-    with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
+    async with LocalStorage(alice.device_id, alice.local_symkey, tmpdir) as als2:
         assert als2.get_manifest(entry_id) == manifest

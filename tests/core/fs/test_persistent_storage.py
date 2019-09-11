@@ -263,7 +263,7 @@ def test_persistent_storage_remote_need_sync(persistent_storage):
 def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
     tentative = 0
 
-    class LocalStorageStateMachine(RuleBasedStateMachine):
+    class PersistentStorageStateMachine(RuleBasedStateMachine):
         PreciousEntry = Bundle("precious_entry")
         DeletableEntry = Bundle("deletable_entry")
 
@@ -351,4 +351,4 @@ def test_persistent_storage_stateful(tmpdir, hypothesis_settings):
                 self.persistent_storage.get_cache_size() <= self.persistent_storage.max_cache_size
             )
 
-    run_state_machine_as_test(LocalStorageStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(PersistentStorageStateMachine, settings=hypothesis_settings)
