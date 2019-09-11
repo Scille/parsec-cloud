@@ -224,6 +224,107 @@ class BackendApp:
         if self.dbh:
             await self.dbh.teardown()
 
+    async def handle_client(self, stream):
+        import h11
+
+        MAX_RECV = 5
+        # Get the first HTTP request
+        conn = h11.Connection(h11.SERVER)
+        first_request_data = b""
+
+        while True:
+            if conn.they_are_waiting_for_100_continue:
+                self.info("Sending 100 Continue")
+                go_ahead = h11.InformationalResponse(status_code=100, headers=self.basic_headers())
+                await self.send(go_ahead)
+            try:
+                data = await stream.receive_some(MAX_RECV)
+                first_request_data += data
+
+            except ConnectionError:
+                # They've stopped listening. Not much we can do about it here.
+                data = b""
+            conn.receive_data(data)
+
+            event = conn.next_event()
+            if event is not h11.NEED_DATA:
+                break
+
+        if not isinstance(event, h11.Request):
+            await stream.aclose()
+            return
+
+        # Websocket upgrade
+        if (b"connection", b"Upgrade") in event.headers:
+            try:
+                transport = await Transport.init_for_server(
+                    stream, first_request_data=first_request_data
+                )
+
+            except TransportClosedByPeer:
+                return
+
+            except TransportError as exc:
+                logger.warning("transport error at initialization", exc_info=exc)
+                await stream.aclose()
+                return
+
+            await self._handle_ws_client(transport)
+
+        else:
+            print("HTTP request", event)
+            if event.target.startswith(b"/api/"):
+                status_code, headers, body = await self._handle_http_rest_request(event)
+
+            else:
+                status_code, headers, body = await self._handle_http_static_request(event)
+
+            from parsec._version import __version__ as parsec_version
+            from wsgiref.handlers import format_date_time
+
+            headers = [
+                *[(key, value) for key, value in headers.items()],
+                ("Date", format_date_time(None).encode("ascii")),
+                ("Server", f"parsec/{parsec_version} {h11.PRODUCT_ID}"),
+                ("Content-Length", str(len(body))),
+            ]
+            res = h11.Response(status_code=status_code, headers=headers)
+
+            print("response", res)
+            await stream.send_all(conn.send(res))
+            await stream.send_all(conn.send(h11.Data(data=body)))
+            await stream.send_all(conn.send(h11.EndOfMessage()))
+            print("all done")
+
+        try:
+            await stream.send_eof()
+        except trio.BrokenResourceError:
+            # They're already gone, nothing to do
+            return
+
+    async def _handle_http_rest_request(self, request):
+        # route = request.target[len("/api/") :]
+        # TODO...
+        return 403, {}, b""
+
+    async def _handle_http_static_request(self, request):
+        import importlib
+        import mimetypes
+
+        name = (request.target.decode("ascii", errors="ignore")).replace("/", "")
+        name = "index.html" if not name else name
+        try:
+            data = importlib.resources.read_binary("parsec.backend.http.static", name)
+            content_type, _ = mimetypes.guess_type(name)
+            if content_type:
+                headers = {"Content-Type": f"content-type: {content_type}; charset=utf-8"}
+            else:
+                headers = {}
+            return 200, headers, data
+
+        except Exception:
+            return 404, {}, b""
+
     async def _do_handshake(self, transport):
         context = None
         try:
@@ -293,37 +394,7 @@ class BackendApp:
         await transport.send(result_req)
         return context
 
-    async def handle_client(self, stream):
-        try:
-            transport = await Transport.init_for_server(stream)
-
-        except TransportClosedByPeer:
-            return
-
-        except TransportError:
-            # A crash during transport setup could mean the client tried to
-            # access us from a web browser (hence sending http request).
-
-            content_body = b"This service requires use of the WebSocket protocol"
-            content = (
-                b"HTTP/1.1 426 OK\r\n"
-                b"Upgrade: WebSocket\r\n"
-                b"Content-Length: %d\r\n"
-                b"Connection: Upgrade\r\n"
-                b"Content-Type: text/html; charset=UTF-8\r\n"
-                b"\r\n"
-            ) % len(content_body)
-
-            try:
-                await stream.send_all(content + content_body)
-                await stream.aclose()
-
-            except TransportError:
-                # Stream is really dead, nothing else to do...
-                pass
-
-            return
-
+    async def _handle_ws_client(self, transport):
         transport.logger.info("Client joined")
 
         try:
