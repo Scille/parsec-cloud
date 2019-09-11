@@ -96,6 +96,8 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID)
+    entry_downsynced_qt = pyqtSignal(UUID, UUID)
+
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
     taskbar_updated = pyqtSignal()
     back_clicked = pyqtSignal()
@@ -146,6 +148,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory_uuid = None
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
+        self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
         self.update_timer = QTimer()
         self.update_timer.setInterval(1000)
         self.update_timer.setSingleShot(True)
@@ -180,12 +183,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
 
     def hideEvent(self, event):
         try:
             self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
             self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
+            self.event_bus.disconnect("fs.entry.downsynced", self._on_entry_downsynced_trio)
         except ValueError:
             pass
 
@@ -576,6 +581,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         assert id is not None
         if workspace_id is None or workspace_id == self.workspace_fs.workspace_id:
             self.fs_updated_qt.emit(event, id)
+
+    def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):
+        self.entry_downsynced_qt.emit(workspace_id, id)
+
+    def _on_entry_downsynced_qt(self, workspace_id, id):
+        ws_id = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_id")
+        if ws_id != workspace_id:
+            return
+        if id == self.current_directory_uuid:
+            if not self.update_timer.isActive():
+                self.update_timer.start()
+                self.reload()
 
     def _on_fs_synced_qt(self, event, uuid):
         if not self.workspace_fs:

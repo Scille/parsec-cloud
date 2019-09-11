@@ -99,6 +99,7 @@ async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.Pendulum
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID)
+    entry_downsynced_qt = pyqtSignal(UUID, UUID)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
@@ -136,6 +137,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
+        self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
 
         self.rename_success.connect(self.on_rename_success)
         self.rename_error.connect(self.on_rename_error)
@@ -150,7 +152,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_unmounted.connect(self._on_workspace_unmounted)
 
         self.reset_timer = QTimer()
-        self.reset_timer.setInterval(500)
+        self.reset_timer.setInterval(1000)
         self.reset_timer.setSingleShot(True)
         self.reset_timer.timeout.connect(self.list_workspaces)
 
@@ -167,6 +169,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
+        self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
 
     def hideEvent(self, event):
         try:
@@ -174,6 +177,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
             self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
+            self.event_bus.disconnect("fs.entry.downsynced", self._on_entry_downsynced_trio)
         except ValueError:
             pass
 
@@ -454,6 +458,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def reset(self):
         if not self.reset_timer.isActive():
             self.reset_timer.start()
+            self.list_workspaces()
 
     def list_workspaces(self):
         self.jobs_ctx.submit_job(
@@ -481,6 +486,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         if workspace_id and not id:
             self.fs_updated_qt.emit(event, workspace_id)
+
+    def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):
+        self.entry_downsynced_qt.emit(workspace_id, id)
+
+    def _on_entry_downsynced_qt(self, workspace_id, id):
+        self.reset()
 
     def _on_fs_synced_qt(self, event, id):
         self.reset()

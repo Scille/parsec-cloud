@@ -51,7 +51,7 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
         classmethod(lambda *args, **kwargs: ("Workspace1")),
     )
 
-    async with aqtbot.wait_signals([w_w.create_success, w_w.list_success]):
+    async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
         aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
 
     assert w_w.layout_workspaces.count() == 1
@@ -81,7 +81,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
         classmethod(lambda *args, **kwargs: ("Workspace1")),
     )
 
-    async with aqtbot.wait_signals([w_w.create_success, w_w.list_success]):
+    async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
         aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
 
     assert w_w.layout_workspaces.count() == 1
