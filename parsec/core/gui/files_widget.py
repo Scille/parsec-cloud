@@ -300,7 +300,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.open_file(f[2])
 
     def open_file(self, file_name):
-        path = self.core.mountpoint_manager.get_path_in_mountpoint(
+        path = self.jobs_ctx.run_sync(
+            self.core.mountpoint_manager.get_path_in_mountpoint,
             self.workspace_fs.workspace_id,
             self.current_directory / file_name,
             self.workspace_fs.timestamp
