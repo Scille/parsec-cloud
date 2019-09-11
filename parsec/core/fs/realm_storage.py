@@ -97,7 +97,7 @@ class RealmStorage:
 
     # Manifest operations
 
-    def get_realm_checkpoint(self) -> int:
+    async def get_realm_checkpoint(self) -> int:
         """
         Raises: Nothing !
         """
@@ -106,7 +106,7 @@ class RealmStorage:
             rep = cursor.fetchone()
             return rep[0] if rep else 0
 
-    def update_realm_checkpoint(
+    async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
     ) -> None:
         """
@@ -125,7 +125,7 @@ class RealmStorage:
             )
             cursor.execute("END")
 
-    def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
+    async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         """
         Raises: Nothing !
         """
@@ -234,7 +234,7 @@ class RealmStorage:
         if not deleted and not in_cache:
             raise FSLocalMissError(entry_id)
 
-    def run_vacuum(self) -> None:
+    async def run_vacuum(self) -> None:
         pass
 
 

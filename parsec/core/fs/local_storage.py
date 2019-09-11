@@ -96,10 +96,10 @@ class LocalStorage:
 
     # Manifest interface
 
-    def get_realm_checkpoint(self) -> int:
+    async def get_realm_checkpoint(self) -> int:
         return self.persistent_storage.get_realm_checkpoint()
 
-    def update_realm_checkpoint(
+    async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
     ) -> None:
         """
@@ -107,7 +107,7 @@ class LocalStorage:
         """
         self.persistent_storage.update_realm_checkpoint(new_checkpoint, changed_vlobs)
 
-    def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
+    async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         return self.persistent_storage.get_need_sync_entries()
 
     def get_manifest(self, entry_id: EntryID) -> LocalManifest:
@@ -234,7 +234,7 @@ class LocalStorage:
 
     # Vacuum
 
-    def run_vacuum(self):
+    async def run_vacuum(self):
         self.persistent_storage.run_vacuum()
 
     # Timestamped workspace
