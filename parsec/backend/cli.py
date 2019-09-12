@@ -45,6 +45,16 @@ def init_cmd(db):
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
 @click.option("--db", default="MOCKED", help="Database configuration (default: mocked in memory)")
 @click.option(
+    "--min-connections",
+    default=5,
+    help="Minimal number of connections to the database" " if using PostgreSQL",
+)
+@click.option(
+    "--max-connections",
+    default=7,
+    help="Maximum number of connections to the database" " if using PostgreSQL",
+)
+@click.option(
     "--blockstore",
     "-b",
     default="MOCKED",
@@ -66,6 +76,8 @@ def run_cmd(
     host,
     port,
     db,
+    min_connections,
+    max_connections,
     blockstore,
     ssl_keyfile,
     ssl_certfile,
@@ -81,7 +93,12 @@ def run_cmd(
 
         try:
             config = config_factory(
-                blockstore_type=blockstore, db_url=db, debug=debug, environ=os.environ
+                blockstore_type=blockstore,
+                db_url=db,
+                min_connections=min_connections,
+                max_connections=max_connections,
+                debug=debug,
+                environ=os.environ,
             )
 
         except ValueError as exc:
