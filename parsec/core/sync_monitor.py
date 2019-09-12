@@ -94,7 +94,7 @@ class SyncContext:
 
     async def _refresh_checkpoint(self) -> bool:
         # 1) Fetch new checkpoint and changes
-        realm_checkpoint = self._get_local_storage().get_realm_checkpoint()
+        realm_checkpoint = await self._get_local_storage().get_realm_checkpoint()
         try:
             new_checkpoint, changes = await self._get_backend_cmds().vlob_poll_changes(
                 self.id, realm_checkpoint
@@ -117,10 +117,10 @@ class SyncContext:
             return False
 
         # 2) Store new checkpoint and changes
-        self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
+        await self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
 
         # 3) Compute local and remote changes that need to be synced
-        need_sync_local, need_sync_remote = self._get_local_storage().get_need_sync_entries()
+        need_sync_local, need_sync_remote = await self._get_local_storage().get_need_sync_entries()
         now = timestamp()
         # Ignore local changes in read only mode
         if not self.read_only:
@@ -219,7 +219,7 @@ class SyncContext:
                 # This is where we plug our vacuuming routine
                 # as it corresponds to a fresh synchronized state
                 if not self.local_changes:
-                    self._get_local_storage().run_vacuum()
+                    await self._get_local_storage().run_vacuum()
 
         # Re-compute due time
         if self.remote_changes:

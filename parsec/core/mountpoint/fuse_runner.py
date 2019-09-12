@@ -44,7 +44,7 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
     # here are not atomic (and the mount operation is not itself atomic anyway),
     # hence there is still edgecases where the mount can crash due to concurrent
     # changes on the mountpoint path
-    workspace_name = workspace_fs.workspace_name
+    workspace_name = workspace_fs.get_workspace_name()
     for tentative in count(1):
         if tentative == 1:
             dirname = workspace_name

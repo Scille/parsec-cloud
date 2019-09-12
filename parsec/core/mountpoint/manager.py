@@ -91,7 +91,7 @@ class MountpointManager:
                 f"Workspace `{workspace_id}` didn't exist at `{timestamp}`",
                 workspace_id,
                 timestamp,
-                current.workspace_name,
+                current.get_workspace_name(),
             ) from exc
 
     def get_path_in_mountpoint(

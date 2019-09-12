@@ -21,27 +21,28 @@ from tests.common import freeze_time, call_with_control
 
 
 class File:
-    def __init__(self, local_storage, entry_id):
-        self.entry_id = entry_id
+    def __init__(self, local_storage, manifest):
+        self.fresh_manifest = manifest
+        self.entry_id = manifest.id
         self.local_storage = local_storage
 
     def ensure_manifest(self, **kwargs):
-        manifest = self.local_storage.get_manifest(self.entry_id)
+        manifest = self.local_storage.local_manifest_cache[self.entry_id]
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
     def is_cache_ahead_of_persistance(self):
         return self.entry_id in self.local_storage.cache_ahead_of_persistance_ids
 
-    def get_manifest(self):
-        return self.local_storage.get_manifest(self.entry_id)
+    async def get_manifest(self):
+        return await self.local_storage.get_manifest(self.entry_id)
 
     async def set_manifest(self, manifest):
         async with self.local_storage.lock_manifest(self.entry_id):
-            self.local_storage.set_manifest(self.entry_id, manifest)
+            await self.local_storage.set_manifest(self.entry_id, manifest)
 
     def open(self):
-        return self.local_storage.create_file_descriptor(self.entry_id)
+        return self.local_storage.create_file_descriptor(self.fresh_manifest)
 
 
 @pytest.fixture
@@ -52,8 +53,8 @@ async def foo_txt(alice, alice_file_transactions):
     remote_v1 = placeholder.to_remote(author=alice.device_id, timestamp=now)
     manifest = LocalFileManifest.from_remote(remote_v1)
     async with local_storage.lock_entry_id(manifest.id):
-        local_storage.set_manifest(manifest.id, manifest)
-    return File(local_storage, manifest.id)
+        await local_storage.set_manifest(manifest.id, manifest)
+    return File(local_storage, manifest)
 
 
 @pytest.mark.trio
@@ -164,7 +165,7 @@ async def test_flush_file(alice_file_transactions, foo_txt):
 async def test_block_not_loaded_entry(alice_file_transactions, foo_txt):
     file_transactions = alice_file_transactions
 
-    foo_manifest = foo_txt.get_manifest()
+    foo_manifest = await foo_txt.get_manifest()
     chunk1_data = b"a" * 10
     chunk2_data = b"b" * 5
     chunk1 = Chunk.new(0, 10).evolve_as_block(chunk1_data)
@@ -177,8 +178,8 @@ async def test_block_not_loaded_entry(alice_file_transactions, foo_txt):
     with pytest.raises(FSRemoteBlockNotFound):
         await file_transactions.fd_read(fd, 14, 0)
 
-    file_transactions.local_storage.set_chunk(chunk1.id, chunk1_data)
-    file_transactions.local_storage.set_chunk(chunk2.id, chunk2_data)
+    await file_transactions.local_storage.set_chunk(chunk1.id, chunk1_data)
+    await file_transactions.local_storage.set_chunk(chunk2.id, chunk2_data)
 
     data = await file_transactions.fd_read(fd, 14, 0)
     assert data == chunk1_data + chunk2_data[:4]
@@ -192,7 +193,7 @@ async def test_load_block_from_remote(alice_file_transactions, foo_txt):
     workspace_id = file_transactions.remote_loader.workspace_id
     await file_transactions.remote_loader.create_realm(workspace_id)
 
-    foo_manifest = foo_txt.get_manifest()
+    foo_manifest = await foo_txt.get_manifest()
     chunk1_data = b"a" * 10
     chunk2_data = b"b" * 5
     chunk1 = Chunk.new(0, 10).evolve_as_block(chunk1_data)
@@ -203,8 +204,8 @@ async def test_load_block_from_remote(alice_file_transactions, foo_txt):
     fd = foo_txt.open()
     await file_transactions.remote_loader.upload_block(chunk1.access, chunk1_data)
     await file_transactions.remote_loader.upload_block(chunk2.access, chunk2_data)
-    file_transactions.local_storage.clear_clean_block(chunk1.access.id)
-    file_transactions.local_storage.clear_clean_block(chunk2.access.id)
+    await file_transactions.local_storage.clear_clean_block(chunk1.access.id)
+    await file_transactions.local_storage.clear_clean_block(chunk2.access.id)
 
     data = await file_transactions.fd_read(fd, 14, 0)
     assert data == chunk1_data + chunk2_data[:4]
@@ -216,20 +217,14 @@ size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir,
-    hypothesis_settings,
-    reset_testbed,
-    initialize_local_storage,
-    file_transactions_factory,
-    alice,
-    alice_backend_cmds,
+    tmpdir, hypothesis_settings, reset_testbed, file_transactions_factory, alice, alice_backend_cmds
 ):
     tentative = 0
 
     class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                with LocalStorage(
+                async with LocalStorage(
                     alice.device_id, key=alice.local_symkey, path=Path("/dummy")
                 ) as local_storage:
                     file_transactions = await file_transactions_factory(
@@ -252,12 +247,12 @@ def test_file_operations(
             self.file_transactions = self.transactions_controller.file_transactions
             self.local_storage = self.file_transactions.local_storage
 
-            manifest = LocalFileManifest.new_placeholder(parent=EntryID())
-            self.entry_id = manifest.id
+            self.fresh_manifest = LocalFileManifest.new_placeholder(parent=EntryID())
+            self.entry_id = self.fresh_manifest.id
             async with self.local_storage.lock_entry_id(self.entry_id):
-                self.local_storage.set_manifest(self.entry_id, manifest)
+                await self.local_storage.set_manifest(self.entry_id, self.fresh_manifest)
 
-            self.fd = self.local_storage.create_file_descriptor(self.entry_id)
+            self.fd = self.local_storage.create_file_descriptor(self.fresh_manifest)
             self.file_oracle_path = tmpdir / f"oracle-test-{tentative}.txt"
             self.file_oracle_fd = os.open(self.file_oracle_path, os.O_RDWR | os.O_CREAT)
 
@@ -288,7 +283,7 @@ def test_file_operations(
         @rule()
         async def reopen(self):
             await self.file_transactions.fd_close(self.fd)
-            self.fd = self.local_storage.create_file_descriptor(self.entry_id)
+            self.fd = self.local_storage.create_file_descriptor(self.fresh_manifest)
             os.close(self.file_oracle_fd)
             self.file_oracle_fd = os.open(self.file_oracle_path, os.O_RDWR)
 

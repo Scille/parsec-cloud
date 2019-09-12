@@ -177,7 +177,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
     job = await alice2_user_fs.workspace_start_reencryption(workspace)
 
     # WorkspaceFS doesn't have encryption revision until user messages are processed
-    assert aw.encryption_revision == 1
+    assert aw.get_encryption_revision() == 1
     # Data not in local cache cannot be accessed
     root_info = await aw.path_info("/")
     assert root_info == {
@@ -227,7 +227,7 @@ async def test_no_access_during_reencryption(running_backend, alice2_user_fs, wo
 
     # Update encryption_revision in user manifest and check access is ok
     await alice2_user_fs.process_last_messages()
-    assert aw.encryption_revision == 2
+    assert aw.get_encryption_revision() == 2
     file_info = await aw.path_info("/foo.txt")
     assert file_info == {
         "id": ANY,

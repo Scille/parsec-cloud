@@ -206,7 +206,7 @@ class RemoteLoader:
 
         # TODO: let encryption manager do the digest check ?
         assert HashDigest.from_data(block) == access.digest, access
-        self.local_storage.set_clean_block(access.id, block)
+        await self.local_storage.set_clean_block(access.id, block)
 
     async def upload_block(self, access: BlockAccess, data: bytes):
         """
@@ -253,8 +253,8 @@ class RemoteLoader:
             raise FSError(f"Cannot upload block: {exc}") from exc
 
         # Update local storage
-        self.local_storage.set_clean_block(access.id, data)
-        self.local_storage.clear_chunk(ChunkID(access.id), miss_ok=True)
+        await self.local_storage.set_clean_block(access.id, data)
+        await self.local_storage.clear_chunk(ChunkID(access.id), miss_ok=True)
 
     async def load_manifest(
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None

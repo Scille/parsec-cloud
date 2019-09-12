@@ -86,7 +86,8 @@ async def test_folder_create_delete(alice_entry_transactions, alice_sync_transac
     assert await entry_transactions.folder_delete(FsPath("/foo")) == foo_id
 
     # The directory is not synced
-    assert entry_transactions.local_storage.get_manifest(foo_id).need_sync
+    manifest = await entry_transactions.local_storage.get_manifest(foo_id)
+    assert manifest.need_sync
 
     # Create and sync a bar directory
     bar_id = await entry_transactions.folder_create(FsPath("/bar"))
@@ -95,7 +96,8 @@ async def test_folder_create_delete(alice_entry_transactions, alice_sync_transac
 
     # Remove the bar directory, the manifest is synced
     assert await entry_transactions.folder_delete(FsPath("/bar")) == bar_id
-    assert not entry_transactions.local_storage.get_manifest(bar_id).need_sync
+    manifest = await entry_transactions.local_storage.get_manifest(bar_id)
+    assert not manifest.need_sync
 
 
 @pytest.mark.trio
@@ -109,7 +111,8 @@ async def test_file_create_delete(alice_entry_transactions, alice_sync_transacti
     assert await entry_transactions.file_delete(FsPath("/foo")) == foo_id
 
     # The file is not synced
-    assert entry_transactions.local_storage.get_manifest(foo_id).need_sync
+    manifest = await entry_transactions.local_storage.get_manifest(foo_id)
+    assert manifest.need_sync
 
     # Create and sync a bar file
     bar_id, fd = await entry_transactions.file_create(FsPath("/bar"), open=False)
@@ -118,7 +121,8 @@ async def test_file_create_delete(alice_entry_transactions, alice_sync_transacti
 
     # Remove the bar file, the manifest is synced
     assert await entry_transactions.file_delete(FsPath("/bar")) == bar_id
-    assert not entry_transactions.local_storage.get_manifest(bar_id).need_sync
+    manifest = await entry_transactions.local_storage.get_manifest(bar_id)
+    assert not manifest.need_sync
 
 
 @pytest.mark.trio
@@ -173,15 +177,15 @@ async def test_access_not_loaded_entry(alice, bob, alice_entry_transactions):
     entry_transactions = alice_entry_transactions
 
     entry_id = entry_transactions.get_workspace_entry().id
-    manifest = entry_transactions.local_storage.get_manifest(entry_id)
+    manifest = await entry_transactions.local_storage.get_manifest(entry_id)
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
-        entry_transactions.local_storage.clear_manifest(entry_id)
+        await entry_transactions.local_storage.clear_manifest(entry_id)
 
     with pytest.raises(FSRemoteManifestNotFound):
         await entry_transactions.entry_info(FsPath("/"))
 
     async with entry_transactions.local_storage.lock_entry_id(entry_id):
-        entry_transactions.local_storage.set_manifest(entry_id, manifest)
+        await entry_transactions.local_storage.set_manifest(entry_id, manifest)
     entry_info = await entry_transactions.entry_info(FsPath("/"))
     assert entry_info == {
         "type": "folder",
@@ -242,7 +246,6 @@ def test_folder_operations(
     tmpdir,
     hypothesis_settings,
     reset_testbed,
-    initialize_local_storage,
     entry_transactions_factory,
     file_transactions_factory,
     alice,
@@ -259,7 +262,7 @@ def test_folder_operations(
 
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                with LocalStorage(
+                async with LocalStorage(
                     alice.device_id, key=alice.local_symkey, path=Path("/dummy")
                 ) as local_storage:
                     entry_transactions = await entry_transactions_factory(
@@ -391,14 +394,14 @@ def test_folder_operations(
             root_entry_id = self.entry_transactions.get_workspace_entry().id
             new_id_to_path = set()
 
-            def _recursive_build_id_to_path(entry_id, parent_id):
+            async def _recursive_build_id_to_path(entry_id, parent_id):
                 new_id_to_path.add((entry_id, parent_id))
-                manifest = local_storage.get_manifest(entry_id)
+                manifest = await local_storage.get_manifest(entry_id)
                 if is_folder_manifest(manifest):
                     for child_name, child_entry_id in manifest.children.items():
-                        _recursive_build_id_to_path(child_entry_id, entry_id)
+                        await _recursive_build_id_to_path(child_entry_id, entry_id)
 
-            _recursive_build_id_to_path(root_entry_id, None)
+            await _recursive_build_id_to_path(root_entry_id, None)
 
             added_items = new_id_to_path - self.last_step_id_to_path
             for added_id, added_parent in added_items:

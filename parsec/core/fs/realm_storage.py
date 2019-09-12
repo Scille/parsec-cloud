@@ -5,9 +5,10 @@ from typing import Dict, Tuple, Set, Callable
 from contextlib import contextmanager
 from structlog import get_logger
 from sqlite3 import connect as sqlite_connect
+from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, LocalDevice, LocalManifest
+from parsec.core.types import EntryID, LocalDevice, LocalManifest, LocalUserManifest
 
 
 logger = get_logger()
@@ -73,29 +74,30 @@ def _connect(dbpath: str):
 
 
 class RealmStorage:
-    def __init__(self, device: LocalDevice, open_cursor: Callable):
+    def __init__(self, device: LocalDevice, open_cursor: Callable, realm_id: EntryID):
         self.device = device
+        self.realm_id = realm_id
         self._open_cursor = open_cursor
         self._cache = {}
         self._cache_ahead_of_persistance_ids = set()
 
     @classmethod
-    @contextmanager
-    def factory(cls, device: LocalDevice, path: Path):
+    @asynccontextmanager
+    async def factory(cls, device: LocalDevice, path: Path, realm_id: EntryID):
         # Create directories if needed
         path.mkdir(parents=True, exist_ok=True)
 
         with _connect(str(path / "realmdb.sqlite")) as open_cursor:
             try:
-                storage = cls(device, open_cursor)
+                storage = cls(device, open_cursor, realm_id)
                 yield storage
 
             finally:
-                storage._flush_cache_ahead_of_persistance()
+                await storage._flush_cache_ahead_of_persistance()
 
     # Manifest operations
 
-    def get_realm_checkpoint(self) -> int:
+    async def get_realm_checkpoint(self) -> int:
         """
         Raises: Nothing !
         """
@@ -104,7 +106,7 @@ class RealmStorage:
             rep = cursor.fetchone()
             return rep[0] if rep else 0
 
-    def update_realm_checkpoint(
+    async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
     ) -> None:
         """
@@ -123,7 +125,7 @@ class RealmStorage:
             )
             cursor.execute("END")
 
-    def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
+    async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         """
         Raises: Nothing !
         """
@@ -140,7 +142,7 @@ class RealmStorage:
                     remote_changes.add(EntryID(manifest_id))
             return local_changes, remote_changes
 
-    def get_manifest(self, entry_id: EntryID) -> LocalManifest:
+    async def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """
         Raises:
             FSLocalMissError
@@ -161,7 +163,7 @@ class RealmStorage:
 
         return manifest
 
-    def set_manifest(
+    async def set_manifest(
         self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False
     ) -> None:
         """
@@ -170,13 +172,13 @@ class RealmStorage:
         assert isinstance(entry_id, EntryID)
 
         if not cache_only:
-            self._set_manifest_in_db(entry_id, manifest)
+            await self._set_manifest_in_db(entry_id, manifest)
 
         else:
             self._cache_ahead_of_persistance_ids.add(entry_id)
         self._cache[entry_id] = manifest
 
-    def _set_manifest_in_db(self, entry_id: EntryID, manifest: LocalManifest) -> None:
+    async def _set_manifest_in_db(self, entry_id: EntryID, manifest: LocalManifest) -> None:
         ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
         with self._open_cursor() as cursor:
             cursor.execute(
@@ -198,7 +200,7 @@ class RealmStorage:
                 ),
             )
 
-    def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
+    async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         """
         Raises: Nothing !
         """
@@ -206,18 +208,18 @@ class RealmStorage:
         self._check_lock_status(entry_id)
         if entry_id not in self._cache_ahead_of_persistance_ids:
             return
-        self._ensure_manifest_persistent(entry_id)
+        await self._ensure_manifest_persistent(entry_id)
 
-    def _flush_cache_ahead_of_persistance(self) -> None:
+    async def _flush_cache_ahead_of_persistance(self) -> None:
         for entry_id in self._cache_ahead_of_persistance_ids.copy():
-            self._ensure_manifest_persistent(entry_id)
+            await self._ensure_manifest_persistent(entry_id)
 
-    def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
+    async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self.local_manifest_cache[entry_id]
-        self._set_manifest_in_db(entry_id, manifest)
+        await self._set_manifest_in_db(entry_id, manifest)
         self._cache_ahead_of_persistance_ids.remove(entry_id)
 
-    def clear_manifest(self, entry_id: EntryID) -> None:
+    async def clear_manifest(self, entry_id: EntryID) -> None:
         """
         Raises:
             FSLocalMissError
@@ -232,5 +234,40 @@ class RealmStorage:
         if not deleted and not in_cache:
             raise FSLocalMissError(entry_id)
 
-    def run_vacuum(self) -> None:
+    async def run_vacuum(self) -> None:
         pass
+
+
+class UserStorage(RealmStorage):
+    @property
+    def user_manifest_id(self):
+        return self.realm_id
+
+    @classmethod
+    @asynccontextmanager
+    async def factory(cls, device: LocalDevice, path: Path, user_manifest_id: EntryID):
+        async with super().factory(device, path, user_manifest_id) as storage:
+
+            # Load the user manifest
+            try:
+                await storage.get_manifest(storage.user_manifest_id)
+            except FSLocalMissError:
+                pass
+            else:
+                assert storage.user_manifest_id in storage._cache
+
+            yield storage
+
+    def get_user_manifest(self):
+        try:
+            return self._cache[self.user_manifest_id]
+        except KeyError:
+            # In the unlikely event the user manifest is not present in
+            # local (e.g. device just created or during tests), we fall
+            # back on an empty manifest which is a good aproximation of
+            # the very first version of the manifest (field `created` is
+            # invalid, but it will be corrected by the merge during sync).
+            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
+
+    async def set_user_manifest(self, user_manifest):
+        await self.set_manifest(self.user_manifest_id, user_manifest)

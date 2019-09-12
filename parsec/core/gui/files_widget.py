@@ -197,14 +197,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def set_workspace_fs(self, wk_fs):
         self.current_directory = FsPath("/")
         self.workspace_fs = wk_fs
-        ws_entry = self.jobs_ctx.get_async_attr(self.workspace_fs, "get_workspace_entry")()
+        ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
         self.current_user_role = ws_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
         self.reset()
 
     def reset(self):
-        workspace_name = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_name")
+        workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
         self.label_current_workspace.setText(workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
@@ -300,7 +300,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.open_file(f[2])
 
     def open_file(self, file_name):
-        path = self.core.mountpoint_manager.get_path_in_mountpoint(
+        # The Qt thread should never hit the core directly.
+        # Synchronous calls can run directly in the job system
+        # as they won't block the Qt loop for long
+        path = self.jobs_ctx.run_sync(
+            self.core.mountpoint_manager.get_path_in_mountpoint,
             self.workspace_fs.workspace_id,
             self.current_directory / file_name,
             self.workspace_fs.timestamp
@@ -586,7 +590,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.entry_downsynced_qt.emit(workspace_id, id)
 
     def _on_entry_downsynced_qt(self, workspace_id, id):
-        ws_id = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_id")
+        ws_id = self.workspace_fs.workspace_id
         if ws_id != workspace_id:
             return
         if id == self.current_directory_uuid:

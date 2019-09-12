@@ -88,16 +88,16 @@ class FileTransactions:
 
     # Helper
 
-    def _read_chunk(self, chunk: Chunk) -> bytes:
-        data = self.local_storage.get_chunk(chunk.id)
+    async def _read_chunk(self, chunk: Chunk) -> bytes:
+        data = await self.local_storage.get_chunk(chunk.id)
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
-    def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
+    async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> None:
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
-        self.local_storage.set_chunk(chunk.id, data)
+        await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 
-    def _build_data(self, chunks: Tuple[Chunk]) -> Tuple[bytes, List[BlockID]]:
+    async def _build_data(self, chunks: Tuple[Chunk]) -> Tuple[bytes, List[BlockID]]:
         # Empty array
         if not chunks:
             return bytearray(), []
@@ -108,7 +108,7 @@ class FileTransactions:
         result = bytearray(stop - start)
         for chunk in chunks:
             try:
-                result[chunk.start - start : chunk.stop - start] = self._read_chunk(chunk)
+                result[chunk.start - start : chunk.stop - start] = await self._read_chunk(chunk)
             except FSLocalMissError:
                 assert chunk.access is not None
                 missing.append(chunk.access)
@@ -125,11 +125,11 @@ class FileTransactions:
         # corresponding to valid file descriptor is always available locally
 
         # Get the corresponding entry_id
-        manifest = self.local_storage.load_file_descriptor(fd)
+        manifest = await self.local_storage.load_file_descriptor(fd)
 
         # Lock the entry_id
         async with self.local_storage.lock_manifest(manifest.id):
-            yield self.local_storage.load_file_descriptor(fd)
+            yield await self.local_storage.load_file_descriptor(fd)
 
     # Atomic transactions
 
@@ -138,12 +138,12 @@ class FileTransactions:
         async with self._load_and_lock_file(fd) as manifest:
 
             # Force writing to disk
-            self.local_storage.ensure_manifest_persistent(manifest.id)
+            await self.local_storage.ensure_manifest_persistent(manifest.id)
 
             # Atomic change
-            self.local_storage.remove_file_descriptor(fd, manifest)
+            self.local_storage.remove_file_descriptor(fd)
 
-            # Clear fd
+            # Clear write count
             self._write_count.pop(fd, None)
 
     async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int) -> int:
@@ -160,18 +160,18 @@ class FileTransactions:
 
             # Writing
             for chunk, offset in write_operations:
-                self._write_count[fd] += self._write_chunk(chunk, content, offset)
+                self._write_count[fd] += await self._write_chunk(chunk, content, offset)
 
             # Atomic change
-            self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
+            await self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
 
             # Clean up
             for removed_id in removed_ids:
-                self.local_storage.clear_chunk(removed_id, miss_ok=True)
+                await self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
             # Reshaping
             if self._write_count[fd] >= manifest.blocksize:
-                self._manifest_reshape(manifest, cache_only=True)
+                await self._manifest_reshape(manifest, cache_only=True)
                 self._write_count.pop(fd, None)
 
         # Notify
@@ -183,7 +183,7 @@ class FileTransactions:
         async with self._load_and_lock_file(fd) as manifest:
 
             # Perform the resize operation
-            self._manifest_resize(manifest, length)
+            await self._manifest_resize(manifest, length)
 
         # Notify
         self._send_event("fs.entry.updated", id=manifest.id)
@@ -209,7 +209,7 @@ class FileTransactions:
 
                 # Prepare
                 chunks = prepare_read(manifest, size, offset)
-                data, missing = self._build_data(chunks)
+                data, missing = await self._build_data(chunks)
 
                 # Return the data
                 if not missing:
@@ -217,12 +217,12 @@ class FileTransactions:
 
     async def fd_flush(self, fd: FileDescriptor) -> None:
         async with self._load_and_lock_file(fd) as manifest:
-            self._manifest_reshape(manifest)
-            self.local_storage.ensure_manifest_persistent(manifest.id)
+            await self._manifest_reshape(manifest)
+            await self.local_storage.ensure_manifest_persistent(manifest.id)
 
     # Transaction helpers
 
-    def _manifest_resize(self, manifest: LocalFileManifest, length: int) -> None:
+    async def _manifest_resize(self, manifest: LocalFileManifest, length: int) -> None:
         """This internal helper does not perform any locking."""
         # No-op
         if manifest.size == length:
@@ -233,16 +233,16 @@ class FileTransactions:
 
         # Writing
         for chunk, offset in write_operations:
-            self._write_chunk(chunk, b"", offset)
+            await self._write_chunk(chunk, b"", offset)
 
         # Atomic change
-        self.local_storage.set_manifest(manifest.id, manifest)
+        await self.local_storage.set_manifest(manifest.id, manifest)
 
         # Clean up
         for removed_id in removed_ids:
-            self.local_storage.clear_chunk(removed_id, miss_ok=True)
+            await self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
-    def _manifest_reshape(
+    async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
     ) -> List[BlockID]:
         """This internal helper does not perform any locking."""
@@ -263,7 +263,7 @@ class FileTransactions:
         for block, (source, destination, cleanup) in operations.items():
 
             # Build data block
-            data, extra_missing = self._build_data(source)
+            data, extra_missing = await self._build_data(source)
 
             # Missing data
             if extra_missing:
@@ -273,7 +273,7 @@ class FileTransactions:
             # Write data if necessary
             new_chunk = destination.evolve_as_block(data)
             if source != (destination,):
-                self._write_chunk(new_chunk, data)
+                await self._write_chunk(new_chunk, data)
 
             # Update structures
             removed_ids |= cleanup
@@ -281,11 +281,11 @@ class FileTransactions:
 
         # Craft and set new manifest
         new_manifest = getter(result_dict)
-        self.local_storage.set_manifest(new_manifest.id, new_manifest, cache_only=cache_only)
+        await self.local_storage.set_manifest(new_manifest.id, new_manifest, cache_only=cache_only)
 
         # Perform cleanup
         for removed_id in removed_ids:
-            self.local_storage.clear_chunk(removed_id, miss_ok=True)
+            await self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
         # Return missing block ids
         return missing

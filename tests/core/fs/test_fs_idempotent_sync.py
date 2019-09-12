@@ -80,7 +80,7 @@ def test_fs_online_idempotent_sync(
             await self.workspace.sync()
             await self.user_fs.sync()
 
-            self.initial_fs_dump = self.workspace.dump()
+            self.initial_fs_dump = await self.workspace.dump()
             check_fs_dump(self.initial_fs_dump)
 
             return "/dummy"
@@ -148,7 +148,7 @@ def test_fs_online_idempotent_sync(
         @invariant()
         async def check_fs(self):
             try:
-                fs_dump = self.workspace.dump()
+                fs_dump = await self.workspace.dump()
             except AttributeError:
                 # FS not yet initialized
                 pass

@@ -54,7 +54,7 @@ async def logged_core_factory(
 
             path = config.data_base_dir / device.slug
             remote_devices_manager = RemoteDevicesManager(backend_cmds_pool, device.root_verify_key)
-            with UserFS(
+            async with UserFS(
                 device, path, backend_cmds_pool, remote_devices_manager, event_bus
             ) as user_fs:
 

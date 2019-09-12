@@ -25,8 +25,8 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 @pytest.mark.trio
 async def test_workspace_properties(alice_workspace):
-    assert alice_workspace.workspace_name == "w"
-    assert alice_workspace.encryption_revision == 1
+    assert alice_workspace.get_workspace_name() == "w"
+    assert alice_workspace.get_encryption_revision() == 1
 
 
 @pytest.mark.trio
@@ -379,8 +379,8 @@ async def test_rmtree(alice_workspace):
 async def test_dump(alice_workspace):
     baz_id = await alice_workspace.path_id("/foo/baz")
     async with alice_workspace.local_storage.lock_entry_id(baz_id):
-        alice_workspace.local_storage.clear_manifest(baz_id)
-    assert alice_workspace.dump() == {
+        await alice_workspace.local_storage.clear_manifest(baz_id)
+    assert await alice_workspace.dump() == {
         "base_version": 1,
         "children": {
             "foo": {
@@ -420,7 +420,7 @@ async def test_dump(alice_workspace):
 async def test_path_info_remote_loader_exceptions(monkeypatch, alice_workspace, alice):
     manifest = await alice_workspace.transactions._get_manifest_from_path(FsPath("/foo/bar"))
     async with alice_workspace.local_storage.lock_entry_id(manifest.id):
-        alice_workspace.local_storage.clear_manifest(manifest.id)
+        await alice_workspace.local_storage.clear_manifest(manifest.id)
 
     vanilla_file_manifest_deserialize = RemoteManifest._deserialize
 

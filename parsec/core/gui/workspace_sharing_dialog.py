@@ -106,7 +106,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.button_close.clicked.connect(self.on_close_requested)
         self.button_share.clicked.connect(self.on_share_clicked)
         self.button_apply.clicked.connect(self.on_update_permissions_clicked)
-        ws_entry = self.jobs_ctx.get_async_attr(self.workspace_fs, "get_workspace_entry")()
+        ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
         self.current_user_role = ws_entry.role
         current_index = _ROLES_TO_INDEX[self.current_user_role]
         for role, index in _ROLES_TO_INDEX.items():
@@ -172,7 +172,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             )
             self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
         except FSError as exc:
-            workspace_name = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_name")
+            workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
             show_error(
                 self,
                 _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),

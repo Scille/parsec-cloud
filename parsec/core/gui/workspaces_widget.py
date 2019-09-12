@@ -252,8 +252,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         pass
 
     def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped, count=None):
+
+        # The Qt thread should never hit the core directly.
+        # Synchronous calls can run directly in the job system
+        # as they won't block the Qt loop for long
         user_manifest = self.jobs_ctx.run_sync(self.core.user_fs.get_user_manifest)
-        workspace_name = self.jobs_ctx.get_async_attr(workspace_fs, "workspace_name")
+        workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
         button = WorkspaceButton(
             workspace_name,
             workspace_fs,
@@ -294,11 +298,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def open_workspace_file(self, workspace_fs, file_name):
         file_name = FsPath("/", file_name)
-        path = self.core.mountpoint_manager.get_path_in_mountpoint(
+
+        # The Qt thread should never hit the core directly.
+        # Synchronous calls can run directly in the job system
+        # as they won't block the Qt loop for long
+        path = self.jobs_ctx.run_sync(
+            self.core.mountpoint_manager.get_path_in_mountpoint,
             workspace_fs.workspace_id,
             file_name,
             workspace_fs.timestamp if isinstance(workspace_fs, WorkspaceFSTimestamped) else None,
         )
+
         desktop.open_file(str(path))
 
     def remount_workspace_ts(self, workspace_fs):
@@ -346,10 +356,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             )
             return
         else:
+            workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
             result = QuestionDialog.ask(
                 self,
                 _("ASK_WORKSPACE_DELETE_TITLE"),
-                _("ASK_WORKSPACE_DELETE_CONTENT_{}").format(workspace_fs.workspace_name),
+                _("ASK_WORKSPACE_DELETE_CONTENT_{}").format(workspace_name),
             )
             if not result:
                 return

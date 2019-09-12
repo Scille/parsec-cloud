@@ -168,19 +168,23 @@ class QtToTrioJobScheduler:
 
         return job
 
-    # TODO: needed by legacy widget
+    # This method is only here for legacy purposes.
+    # It shouldn't NOT be used as running an async job synchronously
+    # might block the Qt loop for too long and cause the application
+    # to freeze. TODO: remove it later
+
     def run(self, afn, *args):
         return self._portal.run(afn, *args)
 
-    # TODO: needed by legacy widget
+    # In contrast to the `run` method, it is acceptable to block
+    # the Qt loop while waiting for a synchronous job to finish
+    # as it shouldn't take too long (it might simply wait for
+    # a few scheduled trio task steps to finish). However,
+    # it shouln't be used too aggressively as it might still slow
+    # down the application.
+
     def run_sync(self, fn, *args):
         return self._portal.run_sync(fn, *args)
-
-    def get_async_attr(self, obj, attr_name):
-        async def _get_attr(obj, attr_name):
-            return getattr(obj, attr_name)
-
-        return self._portal.run(_get_attr, obj, attr_name)
 
 
 # TODO: Running the trio loop in a QThread shouldn't be needed

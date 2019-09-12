@@ -126,8 +126,8 @@ def test_fs_online_concurrent_user(
             await workspace1.sync()
             await self.user_fs1.sync()
 
-            fs_dump_1 = workspace1.dump()
-            fs_dump_2 = workspace2.dump()
+            fs_dump_1 = await workspace1.dump()
+            fs_dump_2 = await workspace2.dump()
             compare_fs_dumps(fs_dump_1, fs_dump_2)
 
     run_state_machine_as_test(FSOnlineConcurrentUser, settings=hypothesis_settings)

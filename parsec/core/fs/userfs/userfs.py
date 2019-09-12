@@ -2,10 +2,10 @@
 
 import trio
 from pathlib import Path
-from contextlib import ExitStack
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional, Union
 from structlog import get_logger
+from async_exit_stack import AsyncExitStack
 
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -49,11 +49,10 @@ from parsec.core.remote_devices_manager import (
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.realm_storage import RealmStorage
+from parsec.core.fs.realm_storage import UserStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
     FSError,
-    FSLocalMissError,
     FSWorkspaceNoAccess,
     FSWorkspaceNotFoundError,
     FSBackendOfflineError,
@@ -144,7 +143,7 @@ class UserFS:
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
-        self._exit_stack = ExitStack()
+        self._exit_stack = AsyncExitStack()
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
         self._workspace_storages = {}
@@ -169,12 +168,22 @@ class UserFS:
             None,
         )
 
-    def __enter__(self):
-        self.storage = self._exit_stack.enter_context(RealmStorage.factory(self.device, self.path))
+    async def __aenter__(self):
+        self.storage = await self._exit_stack.enter_async_context(
+            UserStorage.factory(self.device, self.path, self.user_manifest_id)
+        )
+
+        # Make sure all the workspaces are loaded
+        # In particular, we want to make sure that any workspace available through
+        # `userfs.get_user_manifest().workspaces` is also available through
+        # `userfs.get_workspace(workspace_id)`.
+        for workspace_entry in self.get_user_manifest().workspaces:
+            await self._load_workspace(workspace_entry.id)
+
         return self
 
-    def __exit__(self, *args):
-        self._exit_stack.close()
+    async def __aexit__(self, *args):
+        await self._exit_stack.aclose()
 
     @property
     def user_manifest_id(self) -> EntryID:
@@ -184,30 +193,27 @@ class UserFS:
         """
         Raises: Nothing !
         """
-        try:
-            return self.storage.get_manifest(self.user_manifest_id)
+        return self.storage.get_user_manifest()
 
-        except FSLocalMissError:
-            # In the unlikely event the user manifest is not present in
-            # local (e.g. device just created or during tests), we fall
-            # back on an empty manifest which is a good aproximation of
-            # the very first version of the manifest (field `created` is
-            # invalid, but it will be corrected by the merge during sync).
-            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
+    async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
 
-    def set_user_manifest(self, manifest: LocalUserManifest) -> None:
-        """
-        Raises: Nothing
-        """
-        self.storage.set_manifest(self.user_manifest_id, manifest)
+        # Make sure all the workspaces are loaded
+        # In particular, we want to make sure that any workspace available through
+        # `userfs.get_user_manifest().workspaces` is also available through
+        # `userfs.get_workspace(workspace_id)`. Note that the loading operation
+        # is idempotent, so workspaces do not get reloaded.
+        for workspace_entry in manifest.workspaces:
+            await self._load_workspace(workspace_entry.id)
 
-    def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
+        await self.storage.set_user_manifest(manifest)
+
+    async def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
         path = self.path / str(workspace_id)
         local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
-        self._exit_stack.enter_context(local_storage)
+        await self._exit_stack.enter_async_context(local_storage)
         return local_storage
 
-    def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
         # WorskpaeFS to load it each time it is needed
         def get_workspace_entry():
@@ -218,7 +224,7 @@ class UserFS:
             return workspace_entry
 
         # Instantiate the local storage
-        local_storage = self._instantiate_workspace_local_storage(workspace_id)
+        local_storage = await self._instantiate_workspace_local_storage(workspace_id)
 
         # Instantiate the workspace
         return WorkspaceFS(
@@ -237,14 +243,14 @@ class UserFS:
         """
         Raises: Nothing
         """
-        workspace = self._instantiate_workspace(workspace_id)
+        workspace = await self._instantiate_workspace(workspace_id)
 
         async with workspace.local_storage.lock_entry_id(workspace_id):
-            workspace.local_storage.set_manifest(workspace_id, manifest)
+            await workspace.local_storage.set_manifest(workspace_id, manifest)
 
         self._workspace_storages.setdefault(workspace_id, workspace)
 
-    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+    async def _load_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         """
         Raises:
             FSWorkspaceNotFoundError
@@ -254,13 +260,24 @@ class UserFS:
             return self._workspace_storages[workspace_id]
 
         # Instantiate the workpace
-        workspace = self._instantiate_workspace(workspace_id)
+        workspace = await self._instantiate_workspace(workspace_id)
+
+        # Set and return
+        return self._workspace_storages.setdefault(workspace_id, workspace)
+
+    def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+        # UserFS provides the guarantee that any workspace available through
+        # `userfs.get_user_manifest().workspaces` is also available in
+        # `self._workspace_storages`.
+        try:
+            workspace = self._workspace_storages[workspace_id]
+        except KeyError:
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
         # Sanity check to make sure workspace_id is valid
         workspace.get_workspace_entry()
 
-        # Set and return
-        return self._workspace_storages.setdefault(workspace_id, workspace)
+        return workspace
 
     async def workspace_create(self, name: str) -> EntryID:
         """
@@ -272,7 +289,7 @@ class UserFS:
             user_manifest = self.get_user_manifest()
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self._create_workspace(workspace_entry.id, workspace_manifest)
-            self.set_user_manifest(user_manifest)
+            await self.set_user_manifest(user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
             self.event_bus.send("fs.workspace.created", new_entry=workspace_entry)
 
@@ -293,7 +310,7 @@ class UserFS:
             updated_user_manifest = user_manifest.evolve_workspaces_and_mark_updated(
                 updated_workspace_entry
             )
-            self.set_user_manifest(updated_user_manifest)
+            await self.set_user_manifest(updated_user_manifest)
             self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
     async def _fetch_remote_user_manifest(self, version: int = None) -> UserManifest:
@@ -373,7 +390,7 @@ class UserFS:
                 # Sync already achieved by a concurrent operation
                 return
             merged_um = merge_local_user_manifests(diverged_um, target_um)
-            self.set_user_manifest(merged_um)
+            await self.set_user_manifest(merged_um)
             # In case we weren't online when the sharing message arrived,
             # we will learn about the change in the sharing only now.
             # Hence send the corresponding events !
@@ -500,7 +517,7 @@ class UserFS:
             # Final merge could have been achieved by a concurrent operation
             if to_sync_um.version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
-                self.set_user_manifest(merged_um)
+                await self.set_user_manifest(merged_um)
             self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
 
     async def _workspace_minimal_sync(self, workspace_entry: WorkspaceEntry):
@@ -656,7 +673,7 @@ class UserFS:
                     user_manifest = user_manifest.evolve_and_mark_updated(
                         last_processed_message=new_last_processed_message
                     )
-                    self.set_user_manifest(user_manifest)
+                    await self.set_user_manifest(user_manifest)
                     self.event_bus.send("fs.entry.updated", id=self.user_manifest_id)
 
         return errors
@@ -757,7 +774,7 @@ class UserFS:
                 )
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.set_user_manifest(user_manifest)
+            await self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
 
             if not already_existing_entry:
@@ -809,7 +826,7 @@ class UserFS:
                 return
 
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
-            self.set_user_manifest(user_manifest)
+            await self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
             self.event_bus.send(
                 "sharing.updated",

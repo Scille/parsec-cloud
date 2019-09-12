@@ -50,7 +50,7 @@ class EntryTransactions(FileTransactions):
 
     async def _get_manifest(self, entry_id: EntryID) -> LocalManifest:
         try:
-            return self.local_storage.get_manifest(entry_id)
+            return await self.local_storage.get_manifest(entry_id)
         except FSLocalMissError as exc:
             remote_manifest = await self.remote_loader.load_manifest(exc.id)
             return LocalManifest.from_remote(remote_manifest)
@@ -59,11 +59,11 @@ class EntryTransactions(FileTransactions):
     async def _load_and_lock_manifest(self, entry_id: EntryID):
         async with self.local_storage.lock_entry_id(entry_id):
             try:
-                local_manifest = self.local_storage.get_manifest(entry_id)
+                local_manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError as exc:
                 remote_manifest = await self.remote_loader.load_manifest(exc.id)
                 local_manifest = LocalManifest.from_remote(remote_manifest)
-                self.local_storage.set_manifest(entry_id, local_manifest)
+                await self.local_storage.set_manifest(entry_id, local_manifest)
             yield local_manifest
 
     async def _load_manifest(self, entry_id: EntryID) -> LocalManifest:
@@ -156,7 +156,7 @@ class EntryTransactions(FileTransactions):
         # Get first manifest
         try:
             current_id = entry_id
-            current_manifest = self.local_storage.get_manifest(current_id)
+            current_manifest = await self.local_storage.get_manifest(current_id)
         except FSLocalMissError:
             raise FSEntryNotFound(entry_id)
 
@@ -166,7 +166,7 @@ class EntryTransactions(FileTransactions):
 
             # Get the manifest
             try:
-                parent_manifest = self.local_storage.get_manifest(current_manifest.parent)
+                parent_manifest = await self.local_storage.get_manifest(current_manifest.parent)
             except FSLocalMissError:
                 raise FSEntryNotFound(entry_id)
 
@@ -293,7 +293,7 @@ class EntryTransactions(FileTransactions):
             )
 
             # Atomic change
-            self.local_storage.set_manifest(parent.id, new_parent)
+            await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)
@@ -324,7 +324,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
             # Atomic change
-            self.local_storage.set_manifest(parent.id, new_parent)
+            await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)
@@ -351,7 +351,7 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
             # Atomic change
-            self.local_storage.set_manifest(parent.id, new_parent)
+            await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)
@@ -377,8 +377,8 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child.id, child, check_lock_status=False)
-            self.local_storage.set_manifest(parent.id, new_parent)
+            await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
+            await self.local_storage.set_manifest(parent.id, new_parent)
 
         # Send events
         self._send_event("fs.entry.updated", id=parent.id)
@@ -405,9 +405,9 @@ class EntryTransactions(FileTransactions):
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
 
             # ~ Atomic change
-            self.local_storage.set_manifest(child.id, child, check_lock_status=False)
-            self.local_storage.set_manifest(parent.id, new_parent)
-            fd = self.local_storage.create_file_descriptor(child.id) if open else None
+            await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
+            await self.local_storage.set_manifest(parent.id, new_parent)
+            fd = self.local_storage.create_file_descriptor(child) if open else None
 
         # Send events
         self._send_event("fs.entry.updated", id=parent.id)
@@ -429,7 +429,7 @@ class EntryTransactions(FileTransactions):
                 raise from_errno(errno.EISDIR, str(path))
 
             # Return the entry id of the open file and the file descriptor
-            return manifest.id, self.local_storage.create_file_descriptor(manifest.id)
+            return manifest.id, self.local_storage.create_file_descriptor(manifest)
 
     async def file_resize(self, path: FsPath, length: int) -> EntryID:
         # Check write rights
@@ -443,7 +443,7 @@ class EntryTransactions(FileTransactions):
                 raise from_errno(errno.EISDIR, str(path))
 
             # Perform resize
-            self._manifest_resize(manifest, length)
+            await self._manifest_resize(manifest, length)
 
             # Return entry id
             return manifest.id

@@ -183,20 +183,20 @@ class SyncTransactions(EntryTransactions):
 
     # Public read-only helpers
 
-    def get_placeholder_children(
+    async def get_placeholder_children(
         self, remote_manifest: LocalFolderishManifests
     ) -> Iterator[EntryID]:
         # Check children placeholder
         for chield_entry_id in remote_manifest.children.values():
             try:
-                child_manifest = self.local_storage.get_manifest(chield_entry_id)
+                child_manifest = await self.local_storage.get_manifest(chield_entry_id)
             except FSLocalMissError:
                 continue
             if child_manifest.is_placeholder:
                 yield chield_entry_id
 
     async def get_minimal_remote_manifest(self, entry_id: EntryID) -> Optional[RemoteManifest]:
-        manifest = self.local_storage.get_manifest(entry_id)
+        manifest = await self.local_storage.get_manifest(entry_id)
         if not manifest.is_placeholder:
             return None
         return manifest.base.evolve(author=self.local_author, timestamp=pendulum_now(), version=1)
@@ -227,14 +227,14 @@ class SyncTransactions(EntryTransactions):
             if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():
 
                 # Try a quick reshape (without downloading any block)
-                missing = self._manifest_reshape(local_manifest)
+                missing = await self._manifest_reshape(local_manifest)
 
                 # Downloading block is necessary for this reshape
                 if missing:
                     raise FSReshapingRequiredError(entry_id)
 
                 # The manifest should be reshaped by now
-                local_manifest = self.local_storage.get_manifest(entry_id)
+                local_manifest = await self.local_storage.get_manifest(entry_id)
                 assert local_manifest.is_reshaped()
 
             # Merge manifests
@@ -251,7 +251,7 @@ class SyncTransactions(EntryTransactions):
 
             # Set the new base manifest
             if base_version != remote_version or new_local_manifest.need_sync:
-                self.local_storage.set_manifest(entry_id, new_local_manifest)
+                await self.local_storage.set_manifest(entry_id, new_local_manifest)
 
             # Send downsynced event
             if base_version != new_base_version and remote_author != self.local_author:
@@ -277,7 +277,7 @@ class SyncTransactions(EntryTransactions):
             async with self.local_storage.lock_manifest(entry_id) as manifest:
 
                 # Normalize
-                missing = self._manifest_reshape(manifest)
+                missing = await self._manifest_reshape(manifest)
 
             # Done
             if not missing:
@@ -309,9 +309,9 @@ class SyncTransactions(EntryTransactions):
                 for chunks in current_manifest.blocks:
                     new_chunks = []
                     for chunk in chunks:
-                        data = self.local_storage.get_chunk(chunk.id)
+                        data = await self.local_storage.get_chunk(chunk.id)
                         new_chunk = Chunk.new(chunk.start, chunk.stop)
-                        self.local_storage.set_chunk(new_chunk.id, data)
+                        await self.local_storage.set_chunk(new_chunk.id, data)
                         if len(chunks) == 1:
                             new_chunk = new_chunk.evolve_as_block(data)
                         new_chunks.append(chunk)
@@ -331,11 +331,11 @@ class SyncTransactions(EntryTransactions):
                 other_manifest = LocalManifest.from_remote(remote_manifest)
 
                 # Set manifests
-                self.local_storage.set_manifest(
+                await self.local_storage.set_manifest(
                     new_manifest.id, new_manifest, check_lock_status=False
                 )
-                self.local_storage.set_manifest(parent_id, new_parent_manifest)
-                self.local_storage.set_manifest(entry_id, other_manifest)
+                await self.local_storage.set_manifest(parent_id, new_parent_manifest)
+                await self.local_storage.set_manifest(entry_id, other_manifest)
 
                 self._send_event("fs.entry.updated", id=new_manifest.id)
                 self._send_event("fs.entry.updated", id=parent_id)

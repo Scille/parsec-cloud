@@ -92,14 +92,16 @@ class WorkspaceFS:
         )
 
     def __repr__(self):
-        return f"<{type(self).__name__}(id={self.workspace_id!r}, name={self.workspace_name!r})>"
+        try:
+            name = self.get_workspace_name()
+        except Exception:
+            name = "<could not retreive name>"
+        return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    @property
-    def workspace_name(self) -> str:
+    def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name
 
-    @property
-    def encryption_revision(self) -> int:
+    def get_encryption_revision(self) -> int:
         return self.get_workspace_entry().encryption_revision
 
     # Information
@@ -135,7 +137,7 @@ class WorkspaceFS:
             FSBackendOfflineError
         """
         try:
-            workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
             if workspace_manifest.is_placeholder:
                 return {self.device.user_id: WorkspaceRole.OWNER}
 
@@ -158,7 +160,7 @@ class WorkspaceFS:
         """
         wentry = self.get_workspace_entry()
         try:
-            workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
             if workspace_manifest.is_placeholder:
                 return ReencryptionNeed()
 
@@ -441,13 +443,13 @@ class WorkspaceFS:
     # Sync helpers
 
     async def _synchronize_placeholders(self, manifest: LocalFolderishManifests) -> None:
-        for child in self.transactions.get_placeholder_children(manifest):
+        async for child in self.transactions.get_placeholder_children(manifest):
             await self.minimal_sync(child)
 
     async def _upload_blocks(self, manifest: LocalFileManifest) -> None:
         for access in manifest.blocks:
             try:
-                data = self.local_storage.get_dirty_block(access.id)
+                data = await self.local_storage.get_dirty_block(access.id)
             except FSLocalMissError:
                 continue
             await self.remote_loader.upload_block(access, data)
@@ -529,7 +531,7 @@ class WorkspaceFS:
 
             # No new manifest to upload, the entry is synced!
             if new_remote_manifest is None:
-                return remote_manifest or self.local_storage.get_manifest(entry_id).base
+                return remote_manifest or (await self.local_storage.get_manifest(entry_id)).base
 
             # Synchronize placeholder children
             if is_folderish_manifest(new_remote_manifest):
@@ -555,7 +557,7 @@ class WorkspaceFS:
     async def _create_realm_if_needed(self):
         # Get workspace manifest
         try:
-            workspace_manifest = self.local_storage.get_manifest(self.workspace_id)
+            workspace_manifest = await self.local_storage.get_manifest(self.workspace_id)
 
         # Cannot be a placeholder if we know about it but don't have it in local
         except FSLocalMissError:
@@ -610,11 +612,11 @@ class WorkspaceFS:
 
     # Debugging helper
 
-    def dump(self):
-        def rec(entry_id):
+    async def dump(self):
+        async def rec(entry_id):
             result = {"id": entry_id}
             try:
-                manifest = self.local_storage.get_manifest(entry_id)
+                manifest = await self.local_storage.get_manifest(entry_id)
             except FSLocalMissError:
                 return result
 
@@ -625,7 +627,7 @@ class WorkspaceFS:
                 return result
 
             for key, value in children.items():
-                result["children"][key] = rec(value)
+                result["children"][key] = await rec(value)
             return result
 
-        return rec(self.workspace_id)
+        return await rec(self.workspace_id)
