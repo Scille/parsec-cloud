@@ -173,7 +173,10 @@ class UserFS:
             UserStorage.factory(self.device, self.path, self.user_manifest_id)
         )
 
-        # Load the current workspaces
+        # Make sure all the workspaces are loaded
+        # In particular, we want to make sure that any workspace available through
+        # `userfs.get_user_manifest().workspaces` is also available through
+        # `userfs.get_workspace(workspace_id)`.
         for workspace_entry in self.get_user_manifest().workspaces:
             await self._load_workspace(workspace_entry.id)
 
@@ -187,12 +190,21 @@ class UserFS:
         return self.device.user_manifest_id
 
     def get_user_manifest(self) -> LocalUserManifest:
+        """
+        Raises: Nothing !
+        """
         return self.storage.get_user_manifest()
 
     async def set_user_manifest(self, manifest: LocalUserManifest) -> None:
-        # Load the new workspaces
+
+        # Make sure all the workspaces are loaded
+        # In particular, we want to make sure that any workspace available through
+        # `userfs.get_user_manifest().workspaces` is also available through
+        # `userfs.get_workspace(workspace_id)`. Note that the loading operation
+        # is idempotent, so workspaces do not get reloaded.
         for workspace_entry in manifest.workspaces:
             await self._load_workspace(workspace_entry.id)
+
         await self.storage.set_user_manifest(manifest)
 
     async def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
@@ -254,6 +266,9 @@ class UserFS:
         return self._workspace_storages.setdefault(workspace_id, workspace)
 
     def get_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
+        # UserFS provides the guarantee that any workspace available through
+        # `userfs.get_user_manifest().workspaces` is also available in
+        # `self._workspace_storages`.
         try:
             workspace = self._workspace_storages[workspace_id]
         except KeyError:
