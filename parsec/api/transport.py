@@ -97,7 +97,7 @@ class Transport:
 
     @classmethod
     async def init_for_client(cls, stream, host):
-        ws = WSConnection(ConnectionType.CLIENT, host=host, resource="/")
+        ws = WSConnection(ConnectionType.CLIENT, host=host, resource="/ws")
         transport = cls(stream, ws)
 
         # Because this is a client websocket, wsproto has automatically queued up
