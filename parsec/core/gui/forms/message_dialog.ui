@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>435</width>
-    <height>408</height>
+    <height>454</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -43,6 +43,30 @@ color: rgb(0, 0, 0);
 QLabel
 {
 color: rgb(12, 65, 157);
+}
+
+QPushButton
+{
+color: white;
+background-color: rgb(38, 142, 212);
+border: 0;
+padding: 3px;
+font-size: 15px;
+font-weight: bold;
+height: 32px;
+padding-left: 20px;
+padding-right: 20px;
+}
+
+QPushButton:pressed
+{
+background-color: rgb(20, 122, 192);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(112, 112, 112);
+color: rgb(255, 255, 255);
 }</string>
   </property>
   <property name="modal">
@@ -271,7 +295,9 @@ border: 0;
          <widget class="ShadowedButton" name="button_continue">
           <property name="font">
            <font>
-            <pointsize>12</pointsize>
+            <pointsize>-1</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="text">
@@ -306,7 +332,9 @@ border: 0;
          <widget class="PointingHandButton" name="button_details">
           <property name="font">
            <font>
-            <underline>true</underline>
+            <pointsize>-1</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="text">
@@ -335,7 +363,9 @@ border: 0;
          <widget class="PointingHandButton" name="button_copy">
           <property name="font">
            <font>
-            <underline>true</underline>
+            <pointsize>-1</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="text">
