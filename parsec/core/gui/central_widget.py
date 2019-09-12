@@ -81,19 +81,20 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         effect.setYOffset(2)
         self.widget_notif.setGraphicsEffect(effect)
 
-        self.show_mount_widget()
+        self.mount_widget = MountWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.widget_central.layout().insertWidget(0, self.mount_widget)
+        self.mount_widget.widget_switched.connect(self.set_taskbar_buttons)
 
-    def disconnect_all(self):
-        self.event_bus.disconnect("backend.connection.ready", self._on_connection_changed)
-        self.event_bus.disconnect("backend.connection.lost", self._on_connection_changed)
-        self.event_bus.disconnect(
-            "backend.connection.incompatible_version", self._on_connection_changed
-        )
-        for e in self.NOTIFICATION_EVENTS:
-            self.event_bus.disconnect(e, self.handle_event)
-        item = self.widget_central.layout().itemAt(0)
-        if item:
-            item.widget().disconnect_all()
+        self.users_widget = UsersWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.widget_central.layout().insertWidget(0, self.users_widget)
+
+        self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.widget_central.layout().insertWidget(0, self.devices_widget)
+
+        self.settings_widget = SettingsWidget(self.core.config, self.event_bus, parent=self)
+        self.widget_central.layout().insertWidget(0, self.settings_widget)
+
+        self.show_mount_widget()
 
     def open_mountpoint(self, path):
         desktop.open_file(path)
@@ -175,40 +176,32 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def show_mount_widget(self):
         self.clear_widgets()
-        mount_widget = MountWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
-        self.widget_central.layout().insertWidget(0, mount_widget)
         self.menu.activate_files()
         self.label_title.setText(_("MENU_DOCUMENTS"))
-        self.set_taskbar_buttons(mount_widget.get_taskbar_buttons())
-        mount_widget.widget_switched.connect(self.set_taskbar_buttons)
-        mount_widget.show()
+        self.set_taskbar_buttons(self.mount_widget.get_taskbar_buttons())
+        self.mount_widget.show()
+        self.mount_widget.show_workspaces_widget()
 
     def show_users_widget(self):
         self.clear_widgets()
-        users_widget = UsersWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
-        self.widget_central.layout().insertWidget(0, users_widget)
         self.menu.activate_users()
         self.label_title.setText(_("MENU_USERS"))
-        self.set_taskbar_buttons(users_widget.get_taskbar_buttons())
-        users_widget.show()
+        self.set_taskbar_buttons(self.users_widget.get_taskbar_buttons())
+        self.users_widget.show()
 
     def show_devices_widget(self):
         self.clear_widgets()
-        devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
-        self.widget_central.layout().insertWidget(0, devices_widget)
         self.menu.activate_devices()
         self.label_title.setText(_("MENU_DEVICES"))
-        self.set_taskbar_buttons(devices_widget.get_taskbar_buttons())
-        devices_widget.show()
+        self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons())
+        self.devices_widget.show()
 
     def show_settings_widget(self):
         self.clear_widgets()
-        settings_widget = SettingsWidget(self.core.config, self.event_bus, parent=self)
-        self.widget_central.layout().insertWidget(0, settings_widget)
         self.menu.activate_settings()
         self.label_title.setText(_("MENU_SETTINGS"))
         self.set_taskbar_buttons([])
-        settings_widget.show()
+        self.settings_widget.show()
 
     def set_taskbar_buttons(self, buttons):
         while self.widget_taskbar.layout().count() != 0:
@@ -229,8 +222,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.widget_taskbar.setFixedSize(QSize(total_width + 44, 68))
 
     def clear_widgets(self):
-        item = self.widget_central.layout().takeAt(0)
-        if item:
-            item.widget().disconnect_all()
-            item.widget().hide()
-            item.widget().setParent(None)
+        self.users_widget.hide()
+        self.mount_widget.hide()
+        self.settings_widget.hide()
+        self.devices_widget.hide()

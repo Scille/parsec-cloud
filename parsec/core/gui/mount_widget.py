@@ -31,10 +31,6 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.widget_switched.emit(self.get_taskbar_buttons())
         self.show_workspaces_widget()
 
-    def disconnect_all(self):
-        self.files_widget.disconnect_all()
-        self.workspaces_widget.disconnect_all()
-
     def load_workspace(self, workspace_fs):
         self.show_files_widget(workspace_fs)
 

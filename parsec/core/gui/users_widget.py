@@ -142,9 +142,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.list_error.connect(self.on_list_error)
         self.reset()
 
-    def disconnect_all(self):
-        pass
-
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
 

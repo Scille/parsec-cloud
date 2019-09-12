@@ -255,6 +255,5 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def clear_widgets(self):
         item = self.widget_center.layout().takeAt(0)
         if item:
-            item.widget().disconnect_all()
             item.widget().hide()
             item.widget().setParent(None)

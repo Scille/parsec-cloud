@@ -16,9 +16,6 @@ from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationW
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.central_widget import CentralWidget
-from parsec.core.gui.users_widget import UsersWidget
-from parsec.core.gui.devices_widget import DevicesWidget
-from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.lang import switch_language
 
 
@@ -372,31 +369,19 @@ def test_get_bootstrap_organization_widget(self):
 @add_method(MainWindow)
 def test_get_users_widget(self):
     central_widget = self.test_get_central_widget()
-    item = central_widget.widget_central.layout().itemAt(0)
-    w = item.widget()
-    if not isinstance(w, UsersWidget):
-        return None
-    return w
+    return central_widget.users_widget
 
 
 @add_method(MainWindow)
 def test_get_devices_widget(self):
     central_widget = self.test_get_central_widget()
-    item = central_widget.widget_central.layout().itemAt(0)
-    w = item.widget()
-    if not isinstance(w, DevicesWidget):
-        return None
-    return w
+    return central_widget.devices_widget
 
 
 @add_method(MainWindow)
 def test_get_mount_widget(self):
     central_widget = self.test_get_central_widget()
-    item = central_widget.widget_central.layout().itemAt(0)
-    w = item.widget()
-    if not isinstance(w, MountWidget):
-        return None
-    return w
+    return central_widget.mount_widget
 
 
 @add_method(MainWindow)

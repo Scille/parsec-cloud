@@ -102,9 +102,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
         self.reset()
 
-    def disconnect_all(self):
-        pass
-
     def get_taskbar_buttons(self):
         return self.taskbar_buttons.copy()
 
