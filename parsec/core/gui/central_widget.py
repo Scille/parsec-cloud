@@ -20,8 +20,6 @@ from parsec.core.backend_connection.monitor import BackendState, current_backend
 
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
-        "backend.connection.lost",
-        "backend.connection.ready",
         "backend.connection.incompatible_version",
         "mountpoint.stopped",
         "sharing.updated",
@@ -100,11 +98,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         desktop.open_file(path)
 
     def handle_event(self, event, **kwargs):
-        if event == "backend.connection.lost":
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_LOST_CONNECTION"))
-        elif event == "backend.connection.ready":
-            self.new_notification.emit("INFO", _("NOTIF_INFO_CONNECTED"))
-        elif event == "backend.connection.incompatible_version":
+        if event == "backend.connection.incompatible_version":
             self.new_notification.emit("WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
         elif event == "mountpoint.stopped":
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
