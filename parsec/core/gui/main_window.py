@@ -231,6 +231,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     event.ignore()
                     return
             msg = _("TRAY_PARSEC_RUNNING")
+
+            # The Qt thread should never hit the core directly.
+            # Synchronous calls can run directly in the job system
+            # as they won't block the Qt loop for long
             self.jobs_ctx.run_sync(
                 partial(self.event_bus.send, "gui.systray.notif", title="Parsec", msg=msg)
             )
