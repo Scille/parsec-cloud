@@ -186,12 +186,6 @@ class QtToTrioJobScheduler:
     def run_sync(self, fn, *args):
         return self._portal.run_sync(fn, *args)
 
-    def get_async_attr(self, obj, attr_name):
-        async def _get_attr(obj, attr_name):
-            return getattr(obj, attr_name)
-
-        return self._portal.run(_get_attr, obj, attr_name)
-
 
 # TODO: Running the trio loop in a QThread shouldn't be needed
 # make sure it's the case, then remove this dead code
