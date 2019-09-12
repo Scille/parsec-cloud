@@ -25,8 +25,8 @@ async def alice_workspace(alice_user_fs, running_backend):
 
 @pytest.mark.trio
 async def test_workspace_properties(alice_workspace):
-    assert alice_workspace.workspace_name == "w"
-    assert alice_workspace.encryption_revision == 1
+    assert alice_workspace.get_workspace_name() == "w"
+    assert alice_workspace.get_encryption_revision() == 1
 
 
 @pytest.mark.trio

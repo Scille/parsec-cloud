@@ -172,7 +172,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             )
             self.add_participant(user, False, _index_to_role(self.combo_role.currentIndex()))
         except FSError as exc:
-            workspace_name = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_name")
+            workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
             show_error(
                 self,
                 _("ERR_WORKSPACE_CAN_NOT_SHARE_{}").format(workspace_name, user),

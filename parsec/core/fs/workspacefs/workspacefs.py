@@ -92,14 +92,16 @@ class WorkspaceFS:
         )
 
     def __repr__(self):
-        return f"<{type(self).__name__}(id={self.workspace_id!r}, name={self.workspace_name!r})>"
+        try:
+            name = self.get_workspace_name()
+        except Exception:
+            name = "<could not retreive name>"
+        return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
-    @property
-    def workspace_name(self) -> str:
+    def get_workspace_name(self) -> str:
         return self.get_workspace_entry().name
 
-    @property
-    def encryption_revision(self) -> int:
+    def get_encryption_revision(self) -> int:
         return self.get_workspace_entry().encryption_revision
 
     # Information

@@ -204,7 +204,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def reset(self):
-        workspace_name = self.jobs_ctx.get_async_attr(self.workspace_fs, "workspace_name")
+        workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
         self.label_current_workspace.setText(workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
