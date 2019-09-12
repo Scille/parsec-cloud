@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>435</width>
-    <height>343</height>
+    <height>408</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -70,7 +70,7 @@ color: rgb(12, 65, 157);
    <item>
     <widget class="QWidget" name="widget" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -83,24 +83,9 @@ background-color: rgb(255, 255, 255);
 }</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="sizeConstraint">
-       <enum>QLayout::SetMinimumSize</enum>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>10</number>
-      </property>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5"/>
+      </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
         <property name="spacing">
@@ -265,6 +250,51 @@ border: 0;
        </layout>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="ShadowedButton" name="button_continue">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>PushButton</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <property name="topMargin">
          <number>10</number>
@@ -334,7 +364,7 @@ border: 0;
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>200</height>
+            <height>150</height>
            </size>
           </property>
           <property name="frameShape">
@@ -377,6 +407,11 @@ border: 0;
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
+  <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
@@ -386,7 +421,7 @@ border: 0;
    <sender>button_close</sender>
    <signal>clicked()</signal>
    <receiver>MessageDialog</receiver>
-   <slot>close()</slot>
+   <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>283</x>
@@ -395,6 +430,22 @@ border: 0;
     <hint type="destinationlabel">
      <x>149</x>
      <y>69</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_continue</sender>
+   <signal>clicked()</signal>
+   <receiver>MessageDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>217</x>
+     <y>102</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>217</x>
+     <y>103</y>
     </hint>
    </hints>
   </connection>

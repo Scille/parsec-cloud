@@ -159,7 +159,7 @@ class MessageDialog(QDialog, Ui_MessageDialog):
             self.text_details.hide()
             self.button_copy.hide()
             message_size = self.label_message.sizeHint()
-            self.resize(435, message_size.height() * 2 + 85)
+            self.resize(435, message_size.height() * 2 + 100)
         else:
             self.text_details.show()
             self.button_copy.show()
@@ -173,6 +173,7 @@ def show_info(parent, text, exception=None):
         exception=exception,
         parent=parent,
     )
+    m.button_continue.setText(_("BUTTON_CONTINUE"))
     return m.exec_()
 
 
@@ -184,6 +185,7 @@ def show_warning(parent, text, exception=None):
         exception=exception,
         parent=parent,
     )
+    m.button_continue.setText(_("BUTTON_CLOSE"))
     return m.exec_()
 
 
@@ -195,6 +197,7 @@ def show_error(parent, text, exception=None):
         exception=exception,
         parent=parent,
     )
+    m.button_continue.setText(_("BUTTON_CLOSE"))
     return m.exec_()
 
 
