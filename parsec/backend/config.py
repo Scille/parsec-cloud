@@ -187,6 +187,8 @@ class BackendConfig:
     db_type: str = None
     # If False, deleted data are only marked for deletion
     db_drop_deleted_data: bool = False
+    min_connections: int = 5
+    max_connections: int = 7
 
     blockstore_config: BaseBlockStoreConfig = None
 
@@ -198,7 +200,12 @@ class BackendConfig:
 
 
 def config_factory(
-    db_url: str = "MOCKED", blockstore_type: str = "MOCKED", debug: bool = False, environ: dict = {}
+    db_url: str = "MOCKED",
+    blockstore_type: str = "MOCKED",
+    min_connections: int = 5,
+    max_connections: int = 7,
+    debug: bool = False,
+    environ: dict = {},
 ) -> BackendConfig:
     config = {"db_url": db_url, "debug": debug}
 

@@ -63,8 +63,10 @@ def retry_on_unique_violation(fn):
 
 # TODO: replace by a fonction
 class PGHandler:
-    def __init__(self, url: str, event_bus: EventBus):
+    def __init__(self, url: str, min_connections, max_connections, event_bus: EventBus):
         self.url = url
+        self.min_connections = min_connections
+        self.max_connections = max_connections
         self.event_bus = event_bus
         self.pool = None
         self.notification_conn = None
@@ -74,7 +76,9 @@ class PGHandler:
         self._task_status = await start_task(nursery, self._run_connections)
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
-        async with triopg.create_pool(self.url) as self.pool:
+        async with triopg.create_pool(
+            self.url, min_size=self.min_connections, max_size=self.max_connections
+        ) as self.pool:
             # This connection is dedicated to the notifications listening, so it
             # would only complicate stuff to include it into the connection pool
             async with triopg.connect(self.url) as self.notification_conn:
