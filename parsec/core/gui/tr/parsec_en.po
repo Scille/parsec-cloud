@@ -606,22 +606,11 @@ msgstr "Cannot share a workspace with yourself."
 msgid "WARN_WORKSPACE_ALREADY_SHARED_{}"
 msgstr "The workspace is already shared with \"{}\"."
 
-msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
-msgstr "Cannot share the workspace with \"{}\"."
-
 msgid "ASK_WORKSPACE_UNSHARE_TITLE"
 msgstr "Unshare the workspace"
 
 msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
 msgstr "Are you sure you want to stop sharing the workspace with \"{}\"?"
-
-msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
-msgstr ""
-"Roles could not be updated for the following users:\n"
-"{}"
-
-msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
-msgstr "Roles have been updated."
 
 msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
 msgstr "Forget the modifications"
@@ -630,6 +619,20 @@ msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
 msgstr ""
 "You have made some unsaved modifications. Are you sure you want to close this "
 "window and discard them?"
+
+msgid "ERR_WORKSPACE_CANNOT_SHARE_{}"
+msgstr "Cannot share the workspace \"{workspace}\" with \"{user}\"."
+
+msgid "ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}"
+msgstr "Cannot remove \"{user}\" from the workspace \"{workspace}\"."
+
+msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
+msgstr ""
+"Roles could not be updated for the following users:\n"
+"{}"
+
+msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
+msgstr "Roles have been updated."
 
 msgid "PARSEC_WINDOW_TITLE"
 msgstr ""
@@ -1006,3 +1009,6 @@ msgstr "Update"
 
 #~ msgid "ERR_REGISTER_USER_NOT_ENOUGH_PERMISSIONS"
 #~ msgstr "Only administrators can invite new users."
+
+#~ msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
+#~ msgstr "Cannot share the workspace with \"{}\"."
