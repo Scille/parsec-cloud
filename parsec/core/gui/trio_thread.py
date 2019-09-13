@@ -64,6 +64,9 @@ class QtToTrioJob:
         self.ret = None
         self.exc = None
 
+    def __str__(self):
+        return f"{self._fn.__name__}"
+
     def is_finished(self):
         return self._done.is_set()
 
@@ -200,8 +203,12 @@ class QtToTrioJobScheduler:
         try:
             self._portal.run(_submit_job)
 
+        except trio.BrokenResourceError as exc:
+            logger.info(f"The submitted job `{job}` won't run as the scheduler is stopped")
+            job.set_cancelled(exc)
+
         except trio.RunFinishedError as exc:
-            logger.info(f"The submitted job {job} won't run as the trio loop is not running")
+            logger.info(f"The submitted job `{job}` won't run as the trio loop is not running")
             job.set_cancelled(exc)
 
         return job
