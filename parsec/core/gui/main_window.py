@@ -135,7 +135,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def on_core_run_error(self):
         assert self.running_core_job.is_finished()
-        if self.running_core_job.status is not None:
+        if not self.running_core_job.is_cancelled():
             if "Device has been revoked" in str(self.running_core_job.exc):
                 show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=self.running_core_job.exc)
             else:
