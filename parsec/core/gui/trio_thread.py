@@ -181,6 +181,9 @@ class QtToTrioJobScheduler:
         except trio.RunFinishedError:
             pass
 
+    def is_stopped(self):
+        return self._stopped.is_set()
+
     def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
         # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
         assert not [x for x in args if isinstance(x, pyqtBoundSignal)]
@@ -209,6 +212,8 @@ class QtToTrioJobScheduler:
     # to freeze. TODO: remove it later
 
     def run(self, afn, *args):
+        if self.is_stopped():
+            raise RuntimeError("The job scheduler is stopped")
         return self._portal.run(afn, *args)
 
     # In contrast to the `run` method, it is acceptable to block
@@ -219,6 +224,8 @@ class QtToTrioJobScheduler:
     # down the application.
 
     def run_sync(self, fn, *args):
+        if self.is_stopped():
+            raise RuntimeError("The job scheduler is stopped")
         return self._portal.run_sync(fn, *args)
 
 

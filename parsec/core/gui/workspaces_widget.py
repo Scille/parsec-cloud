@@ -205,17 +205,22 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
         workspaces = job.ret
+
         if not workspaces:
             label = QLabel(_("LABEL_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_workspaces.addWidget(label)
-        else:
-            for count, (workspace_fs, ws_entry, users_roles, files, timestamped) in enumerate(
-                workspaces
-            ):
-                self.add_workspace(
-                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped, count=count
-                )
+            return
+
+        if self.jobs_ctx.is_stopped():
+            return
+
+        for count, (workspace_fs, ws_entry, users_roles, files, timestamped) in enumerate(
+            workspaces
+        ):
+            self.add_workspace(
+                workspace_fs, ws_entry, users_roles, files, timestamped=timestamped, count=count
+            )
 
     def on_list_error(self, job):
         while self.layout_workspaces.count() != 0:
