@@ -45,14 +45,14 @@ def init_cmd(db):
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
 @click.option("--db", default="MOCKED", help="Database configuration (default: mocked in memory)")
 @click.option(
-    "--min-connections",
+    "--db-min-connections",
     default=5,
-    help="Minimal number of connections to the database" " if using PostgreSQL",
+    help="Minimal number of connections to the database if using PostgreSQL",
 )
 @click.option(
-    "--max-connections",
+    "--db-max-connections",
     default=7,
-    help="Maximum number of connections to the database" " if using PostgreSQL",
+    help="Maximum number of connections to the database if using PostgreSQL",
 )
 @click.option(
     "--blockstore",

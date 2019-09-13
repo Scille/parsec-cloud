@@ -63,7 +63,7 @@ def retry_on_unique_violation(fn):
 
 # TODO: replace by a fonction
 class PGHandler:
-    def __init__(self, url: str, min_connections, max_connections, event_bus: EventBus):
+    def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
         self.url = url
         self.min_connections = min_connections
         self.max_connections = max_connections
