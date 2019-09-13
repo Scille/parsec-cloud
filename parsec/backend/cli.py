@@ -76,8 +76,8 @@ def run_cmd(
     host,
     port,
     db,
-    min_connections,
-    max_connections,
+    db_min_connections,
+    db_max_connections,
     blockstore,
     ssl_keyfile,
     ssl_certfile,
@@ -95,8 +95,8 @@ def run_cmd(
             config = config_factory(
                 blockstore_type=blockstore,
                 db_url=db,
-                min_connections=min_connections,
-                max_connections=max_connections,
+                db_min_connections=db_min_connections,
+                db_max_connections=db_max_connections,
                 debug=debug,
                 environ=os.environ,
             )

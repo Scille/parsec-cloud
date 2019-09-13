@@ -152,8 +152,8 @@ class BackendApp:
         else:
             self.dbh = PGHandler(
                 self.config.db_url,
-                self.config.min_connections,
-                self.config.max_connections,
+                self.config.db_min_connections,
+                self.config.db_max_connections,
                 self.event_bus,
             )
             self.user = PGUserComponent(self.dbh, self.event_bus)
