@@ -259,11 +259,7 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
 
         return await qt_thread_gateway.send_action(_create_main_window)
 
-    yield _gui_factory
-
-    # Close all open windows
-    for window in windows:
-        window.close()
+    return _gui_factory
 
 
 @pytest.fixture
