@@ -263,6 +263,7 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
         assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentWorkspace
 
 
+@pytest.mark.skip("Unconsistent results on appveyor")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
