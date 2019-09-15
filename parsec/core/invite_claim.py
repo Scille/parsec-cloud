@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
 from secrets import token_hex
 import pendulum
 
@@ -247,15 +248,15 @@ async def invite_and_create_device(
         device.organization_addr, device.device_id, device.signing_key, max_pool=1
     ) as cmds:
         try:
-            encrypted_claim = await cmds.device_invite(new_device_name)
 
-        except BackendNotAvailable as exc:
-            raise InviteClaimBackendOfflineError(str(exc)) from exc
+            try:
+                encrypted_claim = await cmds.device_invite(new_device_name)
 
-        except BackendConnectionError as exc:
-            raise InviteClaimError(f"Cannot invite device: {exc}") from exc
+            except BackendNotAvailable as exc:
+                raise InviteClaimBackendOfflineError(str(exc)) from exc
 
-        try:
+            except BackendConnectionError as exc:
+                raise InviteClaimError(f"Cannot invite device: {exc}") from exc
 
             try:
                 claim = DeviceClaimContent.decrypt_and_load_for(
@@ -296,10 +297,11 @@ async def invite_and_create_device(
         except:
             # Cancel the invitation to prevent the claiming peer from
             # waiting us until timeout
-            try:
-                await cmds.device_cancel_invitation(new_device_name)
-            except BackendConnectionError:
-                pass
+            with trio.CancelScope(shield=True):
+                try:
+                    await cmds.device_cancel_invitation(new_device_name)
+                except BackendConnectionError:
+                    pass
             raise
 
         try:
@@ -328,18 +330,18 @@ async def invite_and_create_user(
         device.organization_addr, device.device_id, device.signing_key, max_pool=1
     ) as cmds:
         try:
-            encrypted_claim = await cmds.user_invite(user_id)
 
-        except BackendCmdsTimeout as exc:
-            raise InviteClaimTimeoutError(str(exc)) from exc
+            try:
+                encrypted_claim = await cmds.user_invite(user_id)
 
-        except BackendNotAvailable as exc:
-            raise InviteClaimBackendOfflineError(str(exc)) from exc
+            except BackendCmdsTimeout as exc:
+                raise InviteClaimTimeoutError(str(exc)) from exc
 
-        except BackendConnectionError as exc:
-            raise InviteClaimError(f"Cannot invite user: {exc}") from exc
+            except BackendNotAvailable as exc:
+                raise InviteClaimBackendOfflineError(str(exc)) from exc
 
-        try:
+            except BackendConnectionError as exc:
+                raise InviteClaimError(f"Cannot invite user: {exc}") from exc
 
             try:
                 claim = UserClaimContent.decrypt_and_load_for(
@@ -381,10 +383,11 @@ async def invite_and_create_user(
         except:
             # Cancel the invitation to prevent the claiming peer from
             # waiting us until timeout
-            try:
-                await cmds.user_cancel_invitation(user_id)
-            except BackendConnectionError:
-                pass
+            with trio.CancelScope(shield=True):
+                try:
+                    await cmds.user_cancel_invitation(user_id)
+                except BackendConnectionError:
+                    pass
             raise
 
         try:

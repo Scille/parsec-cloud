@@ -410,3 +410,58 @@ async def test_user_invite_claim_invalid_token(running_backend, backend, alice):
     await _invite_and_claim(running_backend, _from_alice, _from_new_device)
     assert invite_exception_occured
     assert claim_exception_occured
+
+
+@pytest.mark.trio
+async def test_user_invite_claim_cancel_invitation(running_backend, backend, alice):
+    new_device_id = DeviceID("zack@pc1")
+    token = generate_invitation_token()
+
+    invite_and_claim_cancel_scope = None
+
+    async def _from_alice():
+        nonlocal invite_and_claim_cancel_scope
+        with trio.CancelScope() as invite_and_claim_cancel_scope:
+            await invite_and_create_user(alice, new_device_id.user_id, is_admin=False, token=token)
+
+    async def _cancel_invite_and_claim():
+        invite_and_claim_cancel_scope.cancel()
+
+    await _invite_and_claim(running_backend, _from_alice, _cancel_invite_and_claim)
+
+    # Now make sure the invitation cannot be used
+    with trio.fail_after(1):
+        with pytest.raises(InviteClaimError) as exc:
+            await claim_user(alice.organization_addr, new_device_id, token=token)
+    assert (
+        str(exc.value) == "Cannot retrieve invitation creator: User `zack` doesn't exist in backend"
+    )
+
+
+@pytest.mark.trio
+async def test_device_invite_claim_cancel_invitation(running_backend, backend, alice):
+    new_device_id = DeviceID(f"{alice.user_id}@NewDevice")
+    token = generate_invitation_token()
+
+    invite_and_claim_cancel_scope = None
+
+    async def _from_alice():
+        nonlocal invite_and_claim_cancel_scope
+        with trio.CancelScope() as invite_and_claim_cancel_scope:
+            await invite_and_create_device(alice, new_device_id.device_name, token=token)
+
+    async def _cancel_invite_and_claim():
+        invite_and_claim_cancel_scope.cancel()
+
+    await _invite_and_claim(
+        running_backend, _from_alice, _cancel_invite_and_claim, event_name="device.claimed"
+    )
+
+    # Now make sure the invitation cannot be used
+    with trio.fail_after(1):
+        with pytest.raises(InviteClaimError) as exc:
+            await claim_device(alice.organization_addr, new_device_id, token=token)
+    assert (
+        str(exc.value)
+        == "Cannot retrieve invitation creator: User `alice@NewDevice` doesn't exist in backend"
+    )
