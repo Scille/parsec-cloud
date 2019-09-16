@@ -10,7 +10,7 @@ __all__ = "organization_bootstrap_serializer"
 
 class OrganizationCreateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
-    expiration_date = fields.DateTime(allow_none=True)
+    expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
 class OrganizationCreateRepSchema(BaseRepSchema):
