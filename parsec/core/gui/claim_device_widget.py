@@ -64,7 +64,11 @@ async def _do_claim_device(
         raise JobResultError("backend-offline", info=str(exc)) from exc
 
     except InviteClaimError as exc:
-        raise JobResultError("refused-by-backend", info=str(exc)) from exc
+        print(exc)
+        if "Cannot retrieve invitation creator" in str(exc):
+            raise JobResultError("not_found", info=str(exc)) from exc
+        else:
+            raise JobResultError("refused-by-backend", info=str(exc)) from exc
 
     try:
         if use_pkcs11:
