@@ -239,27 +239,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="281"/>
+        <location filename="../forms/files_widget.ui" line="286"/>
         <source>LABEL_SEARCH_FILES</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="381"/>
+        <location filename="../forms/files_widget.ui" line="386"/>
         <source>LABEL_FILE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="386"/>
+        <location filename="../forms/files_widget.ui" line="391"/>
         <source>LABEL_FILE_CREATED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="391"/>
+        <location filename="../forms/files_widget.ui" line="396"/>
         <source>LABEL_FILE_UPDATED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="396"/>
+        <location filename="../forms/files_widget.ui" line="401"/>
         <source>LABEL_FILE_SIZE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -503,13 +503,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/message_dialog.ui" line="283"/>
+        <location filename="../forms/message_dialog.ui" line="341"/>
         <source>BUTTON_DETAILS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/message_dialog.ui" line="312"/>
+        <location filename="../forms/message_dialog.ui" line="372"/>
         <source>BUTTON_COPY_TO_CLIPBOARD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/message_dialog.ui" line="304"/>
+        <source>PushButton</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1015,22 +1020,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="79"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="94"/>
         <source>LABEL_SHARE_WITH</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="147"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="162"/>
         <source>BUTTON_SHARE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="321"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="339"/>
         <source>BUTTON_UPDATE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="371"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="389"/>
         <source>BUTTON_CLOSE</source>
         <translation type="unfinished"></translation>
     </message>

@@ -87,12 +87,14 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(self, jobs_ctx, config, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.claim_device_job = None
+        if url:
+            self.line_edit_url.setText(url)
         self.button_claim.clicked.connect(self.claim_clicked)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)

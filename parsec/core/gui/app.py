@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import signal
 from structlog import get_logger
 
@@ -10,16 +11,13 @@ from PyQt5.QtWidgets import QApplication
 from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
 
-
 try:
     from parsec.core.gui import lang
-    from parsec.core.gui.lang import translate as _
     from parsec.core.gui.new_version import CheckNewVersion
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
     from parsec.core.gui.trio_thread import run_trio_thread
-    from parsec.core.gui.custom_dialogs import show_error
-    from parsec.core.gui import desktop
+    from parsec.core.gui import daemon
     from parsec.core.gui import win_registry
 except ImportError as exc:
     raise ModuleNotFoundError(
@@ -39,7 +37,7 @@ def before_quit(systray):
     return _before_quit
 
 
-def run_gui(config: CoreConfig):
+def run_gui(config: CoreConfig, cmd=None, addr=None):
     logger.info("Starting UI")
 
     app = QApplication([])
@@ -52,9 +50,16 @@ def run_gui(config: CoreConfig):
 
     lang.switch_language(config)
 
-    if not config.gui_allow_multiple_instances and desktop.parsec_instances_count() > 1:
-        show_error(None, _("PARSEC_ALREADY_RUNNING"))
+    pid_file = os.path.join(config.config_dir, ".parsec.pid")
+    mi_status = daemon.get_main_instance_status(pid_file)
+    if mi_status.running:
+        if cmd and addr:
+            daemon.send_to_main_instance(mi_status.port, f"{cmd} {addr}")
+        else:
+            daemon.send_to_main_instance(mi_status.port, "new-window ")
         return
+    d = daemon.Daemon(pid_file)
+    d.start()
 
     event_bus = EventBus()
     with run_trio_thread() as jobs_ctx:
@@ -63,6 +68,7 @@ def run_gui(config: CoreConfig):
             jobs_ctx=jobs_ctx,
             event_bus=event_bus,
             config=config,
+            daemon=d,
             minimize_on_close=config.gui_tray_enabled and systray_available(),
         )
         if systray_available():

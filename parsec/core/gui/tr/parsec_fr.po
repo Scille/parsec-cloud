@@ -7,17 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-09-09 14:01+0200\n"
+"POT-Creation-Date: 2019-09-17 12:25+0200\n"
 "PO-Revision-Date: 2019-09-09 14:02+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-"X-Generator: Poedit 2.2.1\n"
 
 msgid "WORKSPACE_ROLE_READER"
 msgstr "Lecteur"
@@ -166,6 +165,9 @@ msgstr "L'appareil existe déjà."
 msgid "ERR_REGISTER_DEVICE_OFFLINE"
 msgstr "Impossible de contacter le serveur."
 
+msgid "ERR_REGISTER_WRONG_PARAMETERS"
+msgstr "L'utilisateur n'a pas fourni les informations correctes."
+
 msgid "ERR_REGISTER_DEVICE_TIMEOUT"
 msgstr "L'appareil a mis trop de temps à s'enregistrer."
 
@@ -193,6 +195,16 @@ msgstr "L'URL est invalide."
 msgid "ERR_BAD_USER_NAME"
 msgstr "Le nom d'utilisateur est invalide."
 
+msgid "ERR_BACKEND_REFUSED"
+msgstr ""
+"Le serveur a refusé votre requête. Toutes les informations sont-elles "
+"correctes ?"
+
+msgid "ERR_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
+"internet."
+
 msgid "ERR_CLAIM_USER_UNKNOWN"
 msgstr "Impossible d'enregistrer l'utilisateur."
 
@@ -205,23 +217,11 @@ msgstr "Voir les informations"
 msgid "DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Modifier le mot de passe"
 
-msgid "DEVICE_MENU_REVOKE"
-msgstr "Révoquer"
-
 msgid "DEVICE_CREATED_ON_{}"
 msgstr "Créé le {}"
 
 msgid "DEVICE_IS_REVOKED"
 msgstr "Cet appareil a été révoqué."
-
-msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
-msgstr "L'appareil \"{}\" a été révoqué avec succès."
-
-msgid "ASK_DEVICE_REVOKE_TITLE"
-msgstr "Révoquer un appareil"
-
-msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
 
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Impossible de renommer l'espace de travail."
@@ -258,10 +258,10 @@ msgstr "Un utilisateur a été retiré du partage de cet espace de travail."
 
 msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
 msgstr ""
-"Cet espace de travail doit être rechiffré pour assurer la sécurité de vos "
-"données.\n"
-"Cette opération prend du temps et empêchera temporairement la synchronisation "
-"de l'espace de travail.\n"
+"Cet espace de travail doit être rechiffré pour assurer la sécurité de vos"
+" données.\n"
+"Cette opération prend du temps et empêchera temporairement la "
+"synchronisation de l'espace de travail.\n"
 "\n"
 "Voulez-vous continuer ?"
 
@@ -333,13 +333,13 @@ msgstr "o"
 
 msgid "WORKSPACE_REENCRYPTION_WAIT"
 msgstr ""
-"Veuillez patienter pendant que nous récupérons les versions de cet espace de "
-"travail."
+"Veuillez patienter pendant que nous récupérons les versions de cet espace"
+" de travail."
 
 msgid "WORKSPACE_REENCRYPTION_INFO"
 msgstr ""
-"Vous pourrez voir le contenu de l'espace de travail à un moment précis, avec "
-"vos fichiers tels qu'ils apparaissaient à ce moment.\n"
+"Vous pourrez voir le contenu de l'espace de travail à un moment précis, "
+"avec vos fichiers tels qu'ils apparaissaient à ce moment.\n"
 "Pas d'inquiétude, vous ne perdrez pas vos fichiers actuels."
 
 msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
@@ -362,8 +362,8 @@ msgstr "Espaces de travail"
 
 msgid "STARTING_GUIDE_WORKSPACES_CONTENT"
 msgstr ""
-"Arrangez tous vos fichiers par espaces de travail, une interface claire pour un "
-"processus simple\n"
+"Arrangez tous vos fichiers par espaces de travail, une interface claire "
+"pour un processus simple\n"
 "et facile à utiliser."
 
 msgid "STARTING_GUIDE_WORKSPACES_SCREENSHOT"
@@ -398,7 +398,8 @@ msgstr "Gérez vos appareils"
 
 msgid "STARTING_GUIDE_DEVICES_CONTENT"
 msgstr ""
-"Gérez vos appareils de confiance. Ils sont la clé de la sécurité garantie de\n"
+"Gérez vos appareils de confiance. Ils sont la clé de la sécurité garantie"
+" de\n"
 "vos fichiers."
 
 msgid "STARTING_GUIDE_DEVICES_SCREENSHOT"
@@ -409,8 +410,8 @@ msgstr "Gérez vos utilisateurs"
 
 msgid "STARTING_GUIDE_USERS_CONTENT"
 msgstr ""
-"Et pour les administrateurs ? Vous pouvez gérer les utilisateurs et leurs "
-"permissions,\n"
+"Et pour les administrateurs ? Vous pouvez gérer les utilisateurs et leurs"
+" permissions,\n"
 "en ajouter, ou les révoquer."
 
 msgid "STARTING_GUIDE_USERS_SCREENSHOT"
@@ -421,7 +422,8 @@ msgstr "Même hors-ligne"
 
 msgid "STARTING_GUIDE_OFFLINE_CONTENT"
 msgstr ""
-"Pas de connexion ? Aucun problème. Vous pouvez accéder à tous vos fichiers.\n"
+"Pas de connexion ? Aucun problème. Vous pouvez accéder à tous vos "
+"fichiers.\n"
 "Les modifications seront sauvegardées localement et synchronisées "
 "automatiquement."
 
@@ -433,8 +435,8 @@ msgstr "À vous de jouer !"
 
 msgid "STARTING_GUIDE_YOUR_TURN_CONTENT"
 msgstr ""
-"Créez votre premier espace de travail, importez vos fichiers, partagez vos "
-"documents.\n"
+"Créez votre premier espace de travail, importez vos fichiers, partagez "
+"vos documents.\n"
 "\n"
 "La sécurité n'attend pas !"
 
@@ -479,16 +481,6 @@ msgstr ""
 "La version du serveur est différente de la version de l'application. "
 "L'application est-elle à jour ?"
 
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"Le serveur a refusé votre requête. Toutes les informations sont-elles "
-"correctes ?"
-
-msgid "ERR_BACKEND_OFFLINE"
-msgstr ""
-"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
-"internet."
-
 msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
 msgstr "Impossible de démarrer cette organisation."
 
@@ -501,8 +493,29 @@ msgstr "Information"
 msgid "WARN_DIALOG_TITLE"
 msgstr "Avertissement"
 
+msgid "BUTTON_CLOSE"
+msgstr "Fermer"
+
 msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
+
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr "Cet appareil a été révoqué."
+
+msgid "ERR_LOGIN_UNKNOWN"
+msgstr "Impossible de se connecter."
+
+msgid "ERR_LOGIN_AUTH_FAILED"
+msgstr "L'authentification a échoué."
+
+msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
+msgstr "Cette version de l'application est incompatible avec le serveur."
+
+msgid "ERR_LOGIN_UNKNOWN_USER"
+msgstr "L'utilisateur n'est pas enregistré sur le serveur."
+
+msgid "ERR_LOGIN_MOUNTPOINT"
+msgstr "Le point de montage est déjà utilisé."
 
 msgid "MENU_SHOW_WINDOW"
 msgstr "Ouvrir la fenêtre"
@@ -517,8 +530,8 @@ msgstr ""
 
 msgid "INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"
 msgstr ""
-"L'organisation et l'utilisateur ont été créés. Vous pouvez maintenant vous "
-"connecter."
+"L'organisation et l'utilisateur ont été créés. Vous pouvez maintenant "
+"vous connecter."
 
 msgid "INFO_USER_CREATED_SUCCESS_MONO_DEVICE"
 msgstr ""
@@ -540,20 +553,11 @@ msgstr "Impossible d'enregistrer cet appareil."
 msgid "INFO_DEVICE_REGISTERED"
 msgstr "L'appareil a été créé. Vous pouvez maintenant vous connecter."
 
-msgid "PARSEC_ALREADY_RUNNING"
-msgstr "Une instance de Parsec est en cours d'exécution."
-
 msgid "MENU_SETTINGS_GLOBAL"
 msgstr "Globale"
 
 msgid "SETTINGS_NEED_RESTART"
 msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
-
-msgid "NOTIF_WARN_LOST_CONNECTION"
-msgstr "La connection au serveur a été perdue."
-
-msgid "NOTIF_INFO_CONNECTED"
-msgstr "Connecté au serveur."
 
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "Cette version de l'application est incompatible avec le serveur."
@@ -594,9 +598,6 @@ msgstr "Appareils"
 msgid "MENU_SETTINGS"
 msgstr "Configuration"
 
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "L'utilisateur n'a pas fourni les informations correctes."
-
 msgid "ERR_REGISTER_USER_OFFLINE"
 msgstr "Impossible de contacter le serveur."
 
@@ -608,7 +609,8 @@ msgstr "Impossible d'enregistrer l'utilisateur."
 
 msgid "INFO_REGISTER_USER_SUCCESS"
 msgstr ""
-"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
+"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette "
+"fenêtre."
 
 msgid "WARN_REGISTER_USER_EMPTY"
 msgstr "Le nom d'utilisateur ne peut pas être vide."
@@ -624,19 +626,21 @@ msgstr "Retirer du partage"
 
 msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
 msgstr ""
-"Êtes-vous sûr de vouloir arrêter de partager l'espace de travail avec \"{}\" ?"
+"Êtes-vous sûr de vouloir arrêter de partager l'espace de travail avec "
+"\"{}\" ?"
 
 msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
 msgstr "Oublier les modifications"
 
 msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
 msgstr ""
-"Certaines modifications n'ont pas été sauvegardées. Êtes-vous sûr de vouloir "
-"fermer cette fenêtre et de les ignorer ?"
+"Certaines modifications n'ont pas été sauvegardées. Êtes-vous sûr de "
+"vouloir fermer cette fenêtre et de les ignorer ?"
 
 msgid "ERR_WORKSPACE_CANNOT_SHARE_{}"
 msgstr ""
-"Impossible de partager l'espace de travail \"{workspace}\" avec \"{user}\"."
+"Impossible de partager l'espace de travail \"{workspace}\" avec "
+"\"{user}\"."
 
 msgid "ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}"
 msgstr ""
@@ -653,34 +657,25 @@ msgstr "Les rôles ont été mis à jour."
 
 msgid "PARSEC_WINDOW_TITLE"
 msgstr ""
-"Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de "
-"données sensibles dans le cloud."
+"Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage "
+"de données sensibles dans le cloud."
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
 
 msgid "ASK_ERROR_REPORTING_CONTENT"
 msgstr ""
-"Autorisez-vous l'application à nous envoyer des données quand elle rencontre "
-"une erreur pour nous aider à améliorer votre expérience ?"
+"Autorisez-vous l'application à nous envoyer des données quand elle "
+"rencontre une erreur pour nous aider à améliorer votre expérience ?"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "Cet appareil a été révoqué."
+msgid "TAB_TITLE_LOG_IN"
+msgstr ""
 
-msgid "ERR_LOGIN_UNKNOWN"
-msgstr "Impossible de se connecter."
+msgid "ASK_CLOSE_TAB_TITLE"
+msgstr ""
 
-msgid "ERR_LOGIN_AUTH_FAILED"
-msgstr "L'authentification a échoué."
-
-msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
-msgstr "Cette version de l'application est incompatible avec le serveur."
-
-msgid "ERR_LOGIN_UNKNOWN_USER"
-msgstr "L'utilisateur n'est pas enregistré sur le serveur."
-
-msgid "ERR_LOGIN_MOUNTPOINT"
-msgstr "Le point de montage est déjà utilisé."
+msgid "ASK_CLOSE_TAB_CONTENT"
+msgstr ""
 
 msgid "ASK_QUIT_TITLE"
 msgstr "Fermer l'application"
@@ -725,8 +720,8 @@ msgstr "Démarrer l'organisation"
 
 msgid "LABEL_CLAIM_DEVICE_INSTRUCTIONS"
 msgstr ""
-"Pour enregistrer un nouvel appareil, créez-en un en utilisant un appareil "
-"existant et copiez ici les informations."
+"Pour enregistrer un nouvel appareil, créez-en un en utilisant un appareil"
+" existant et copiez ici les informations."
 
 msgid "LABEL_TOKEN"
 msgstr "Jeton"
@@ -736,8 +731,8 @@ msgstr "Enregistrer"
 
 msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
 msgstr ""
-"Pour enregistrer un nouvel utilisateur, créez-en un en utilisant un utilisateur "
-"existant et copiez ici les informations."
+"Pour enregistrer un nouvel utilisateur, créez-en un en utilisant un "
+"utilisateur existant et copiez ici les informations."
 
 msgid "LABEL_SEARCH_DEVICES"
 msgstr "Rechercher des appareils"
@@ -834,6 +829,9 @@ msgstr "Détails"
 msgid "BUTTON_COPY_TO_CLIPBOARD"
 msgstr "Copier dans le presse-papier"
 
+msgid "PushButton"
+msgstr ""
+
 msgid "SETTINGS_TITLE_PROXY"
 msgstr "Proxy"
 
@@ -920,13 +918,11 @@ msgstr "Enregistrer un nouvel appareil"
 
 msgid "LABEL_REGISTER_DEVICE_INSTRUCTIONS"
 msgstr ""
-"Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
+"Utilisez les informations suivantes pour enregistrer votre nouvel "
+"appareil :"
 
 msgid "BUTTON_REGISTER_DEVICE"
 msgstr "Enregistrer l'appareil"
-
-msgid "BUTTON_CLOSE"
-msgstr "Fermer"
 
 msgid "TITLE_REGISTER_NEW_USER"
 msgstr "Enregistrer un nouvel utilisateur"
@@ -939,7 +935,8 @@ msgstr "L'utilisateur est administrateur"
 
 msgid "LABEL_REGISTER_USER_INSTRUCTIONS"
 msgstr ""
-"Utilisez les informations suivantes pour enregistrer votre nouvel utilisateur :"
+"Utilisez les informations suivantes pour enregistrer votre nouvel "
+"utilisateur :"
 
 msgid "BUTTON_REGISTER_USER"
 msgstr "Enregistrer l'utilisateur"
@@ -1021,3 +1018,25 @@ msgstr "Mettre à jour"
 
 #~ msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
 #~ msgstr "Impossible de partage l'espace de travail avec \"{}\"."
+
+#~ msgid "DEVICE_MENU_REVOKE"
+#~ msgstr "Révoquer"
+
+#~ msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
+#~ msgstr "L'appareil \"{}\" a été révoqué avec succès."
+
+#~ msgid "ASK_DEVICE_REVOKE_TITLE"
+#~ msgstr "Révoquer un appareil"
+
+#~ msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
+#~ msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
+
+#~ msgid "PARSEC_ALREADY_RUNNING"
+#~ msgstr "Une instance de Parsec est en cours d'exécution."
+
+#~ msgid "NOTIF_WARN_LOST_CONNECTION"
+#~ msgstr "La connection au serveur a été perdue."
+
+#~ msgid "NOTIF_INFO_CONNECTED"
+#~ msgstr "Connecté au serveur."
+

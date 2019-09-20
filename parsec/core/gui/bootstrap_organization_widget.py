@@ -114,7 +114,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_error = pyqtSignal()
     organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
-    def __init__(self, jobs_ctx, config, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -123,6 +123,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_cancel.hide()
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
         self.button_cancel.clicked.connect(self.cancel_bootstrap)
+        if url:
+            self.line_edit_url.setText(url)
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)

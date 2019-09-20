@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-09-09 14:01+0200\n"
-"PO-Revision-Date: 2019-09-09 14:02+0200\n"
+"POT-Creation-Date: 2019-09-17 12:25+0200\n"
+"PO-Revision-Date: 2019-09-17 12:26+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -166,6 +166,9 @@ msgstr "The device already exists."
 msgid "ERR_REGISTER_DEVICE_OFFLINE"
 msgstr "Cannot reach the server."
 
+msgid "ERR_REGISTER_WRONG_PARAMETERS"
+msgstr "User did not provide the right information."
+
 msgid "ERR_REGISTER_DEVICE_TIMEOUT"
 msgstr "The device took too much time to register."
 
@@ -193,6 +196,13 @@ msgstr "URL is invalid."
 msgid "ERR_BAD_USER_NAME"
 msgstr "User name is invalid."
 
+msgid "ERR_BACKEND_REFUSED"
+msgstr ""
+"The server has refused your request. Are you sure all information are correct?"
+
+msgid "ERR_BACKEND_OFFLINE"
+msgstr "Cannot reach the server. Please check your internet connection."
+
 msgid "ERR_CLAIM_USER_UNKNOWN"
 msgstr "Cannot register the user."
 
@@ -205,23 +215,11 @@ msgstr "Show info"
 msgid "DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "DEVICE_MENU_REVOKE"
-msgstr "Revoke"
-
 msgid "DEVICE_CREATED_ON_{}"
 msgstr "Created on {}"
 
 msgid "DEVICE_IS_REVOKED"
 msgstr "This device has been revoked."
-
-msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
-msgstr "Device \"{}\" has been successfully revoked."
-
-msgid "ASK_DEVICE_REVOKE_TITLE"
-msgstr "Revoke a device"
-
-msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
-msgstr "Are you sure you want to revoke the device \"{}\"?"
 
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Cannot rename the workspace."
@@ -472,13 +470,6 @@ msgstr ""
 "The server version differs from the client version. Is your client is up-to-"
 "date?"
 
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"The server has refused your request. Are you sure all information are correct?"
-
-msgid "ERR_BACKEND_OFFLINE"
-msgstr "Cannot reach the server. Please check your internet connection."
-
 msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
 msgstr "Cannot bootstrap this organization."
 
@@ -491,8 +482,29 @@ msgstr "Information"
 msgid "WARN_DIALOG_TITLE"
 msgstr "Warning"
 
+msgid "BUTTON_CLOSE"
+msgstr "Close"
+
 msgid "ERR_DIALOG_TITLE"
 msgstr "Error"
+
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr "This device has been revoked."
+
+msgid "ERR_LOGIN_UNKNOWN"
+msgstr "Cannot login."
+
+msgid "ERR_LOGIN_AUTH_FAILED"
+msgstr "Authentication failed."
+
+msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
+msgstr "This version of the application is incompatible with the server."
+
+msgid "ERR_LOGIN_UNKNOWN_USER"
+msgstr "User is not registered on the server."
+
+msgid "ERR_LOGIN_MOUNTPOINT"
+msgstr "Mountpoint is already in use."
 
 msgid "MENU_SHOW_WINDOW"
 msgstr "Show window"
@@ -528,20 +540,11 @@ msgstr "Cannot claim this device."
 msgid "INFO_DEVICE_REGISTERED"
 msgstr "The device has been created. You can now log in."
 
-msgid "PARSEC_ALREADY_RUNNING"
-msgstr "Parsec is already running."
-
 msgid "MENU_SETTINGS_GLOBAL"
 msgstr "Global"
 
 msgid "SETTINGS_NEED_RESTART"
 msgstr "Modifications will take effect the next time you start the application."
-
-msgid "NOTIF_WARN_LOST_CONNECTION"
-msgstr "Connection to the server has been lost."
-
-msgid "NOTIF_INFO_CONNECTED"
-msgstr "Connected to the server."
 
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "This version of the application is incompatible with the server."
@@ -581,9 +584,6 @@ msgstr "Devices"
 
 msgid "MENU_SETTINGS"
 msgstr "Settings"
-
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "User did not provide the right information."
 
 msgid "ERR_REGISTER_USER_OFFLINE"
 msgstr "Cannot reach the server."
@@ -647,23 +647,16 @@ msgstr ""
 "Do you authorize Parsec to send us some data when it encounters an error to "
 "help us improve your experience?"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "This device has been revoked."
+msgid "TAB_TITLE_LOG_IN"
+msgstr "Log In"
 
-msgid "ERR_LOGIN_UNKNOWN"
-msgstr "Cannot login."
+msgid "ASK_CLOSE_TAB_TITLE"
+msgstr "Close the tab"
 
-msgid "ERR_LOGIN_AUTH_FAILED"
-msgstr "Authentication failed."
-
-msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
-msgstr "This version of the application is incompatible with the server."
-
-msgid "ERR_LOGIN_UNKNOWN_USER"
-msgstr "User is not registered on the server."
-
-msgid "ERR_LOGIN_MOUNTPOINT"
-msgstr "Mountpoint is already in use."
+msgid "ASK_CLOSE_TAB_CONTENT"
+msgstr ""
+"Are you sure you want to close this tab? You will be automatically "
+"disconnected."
 
 msgid "ASK_QUIT_TITLE"
 msgstr "Close the application"
@@ -815,6 +808,9 @@ msgstr "Details"
 msgid "BUTTON_COPY_TO_CLIPBOARD"
 msgstr "Copy to clipboard"
 
+msgid "PushButton"
+msgstr ""
+
 msgid "SETTINGS_TITLE_PROXY"
 msgstr "Proxy"
 
@@ -904,9 +900,6 @@ msgstr "Use the following information to set up your new device:"
 
 msgid "BUTTON_REGISTER_DEVICE"
 msgstr "Register the device"
-
-msgid "BUTTON_CLOSE"
-msgstr "Close"
 
 msgid "TITLE_REGISTER_NEW_USER"
 msgstr "Register a new user"
@@ -1012,3 +1005,24 @@ msgstr "Update"
 
 #~ msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
 #~ msgstr "Cannot share the workspace with \"{}\"."
+
+#~ msgid "DEVICE_MENU_REVOKE"
+#~ msgstr "Revoke"
+
+#~ msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
+#~ msgstr "Device \"{}\" has been successfully revoked."
+
+#~ msgid "ASK_DEVICE_REVOKE_TITLE"
+#~ msgstr "Revoke a device"
+
+#~ msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
+#~ msgstr "Are you sure you want to revoke the device \"{}\"?"
+
+#~ msgid "PARSEC_ALREADY_RUNNING"
+#~ msgstr "Parsec is already running."
+
+#~ msgid "NOTIF_WARN_LOST_CONNECTION"
+#~ msgstr "Connection to the server has been lost."
+
+#~ msgid "NOTIF_INFO_CONNECTED"
+#~ msgstr "Connected to the server."
