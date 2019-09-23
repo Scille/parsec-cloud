@@ -7,6 +7,7 @@ import trio
 from trio.testing import trio_test as vanilla_trio_test
 import queue
 import threading
+from concurrent import futures
 
 from parsec.event_bus import EventBus
 from parsec.core.gui.main_window import MainWindow
@@ -19,123 +20,119 @@ from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 
 
-_qt_thread_gateway = None
-
-
-# Must be an async fixture to be actually called after
-# `_qt_thread_gateway` has been configured
-@pytest.fixture
-async def qt_thread_gateway(trio_in_side_thread):
-    return _qt_thread_gateway
-
-
-class ThreadAsyncGateway:
+class ThreadedTrioTestRunner:
     def __init__(self):
+        self._thread = None
         self._portal = None
-        self._action_req_queue = queue.Queue(1)
-        self._lock = trio.Lock()
+        self._request_queue = queue.Queue()
+        self._test_result = futures.Future()
+        self._job_scheduler = QtToTrioJobScheduler()
 
-    def _send_action_req(self, type, action):
-        return self._action_req_queue.put_nowait((type, action))
+        # State events
+        self._stopping = None
+        self._started = threading.Event()
 
-    def _recv_action_req(self):
-        return self._action_req_queue.get()
+    def start_test_thread(self, fn, **kwargs):
+        async_target = partial(self._test_target, fn)
+        sync_target = partial(vanilla_trio_test(async_target), **kwargs)
+        self._thread = threading.Thread(target=sync_target)
+        self._thread.start()
+        self._started.wait()
 
-    def run_action_pump(self):
-        while True:
-            action, rep_callback = self._recv_action_req()
-            if action == "stop":
-                type, value = rep_callback
-                if type == "exc":
-                    raise value
-                else:
-                    return value
+    def process_requests_until_test_result(self):
+        self._process_requests()
+        return self._test_result.result()
 
+    def stop_test_thread(self):
+        # Set the stopping state event
+        self._portal.run_sync(self._stopping.set)
+        self._thread.join()
+
+    async def send_action(self, fn, *args, **kwargs):
+        reply_sender, reply_receiver = trio.open_memory_channel(1)
+
+        def reply_callback(future):
+            self._portal.run_sync(reply_sender.send_nowait, future)
+
+        request = partial(fn, *args, **kwargs)
+        self._request_queue.put_nowait((request, reply_callback))
+        reply = await reply_receiver.receive()
+        return reply.result()
+
+    def _process_requests(self):
+        for request, callback in iter(self._request_queue.get, None):
+            reply = futures.Future()
             try:
-                rep = action()
-                rep_callback("ret", rep)
-
+                result = request()
             except Exception as exc:
-                rep_callback("exc", exc)
-
-    async def stop_action_pump(self, type, value):
-        async with self._lock:
-            self._send_action_req("stop", (type, value))
-
-    async def send_action(self, action):
-        portal = trio.BlockingTrioPortal()
-        rep_sender, rep_receiver = trio.open_memory_channel(1)
-
-        def _rep_callback(type, value):
-            portal.run_sync(rep_sender.send_nowait, (type, value))
-
-        async with self._lock:
-            self._send_action_req(action, _rep_callback)
-            type, value = await rep_receiver.receive()
-            if type == "exc":
-                raise value
+                reply.set_exception(exc)
             else:
-                return value
+                reply.set_result(result)
+            callback(reply)
 
+    async def _run_with_job_scheduler(self, fn, **kwargs):
+        async with trio.open_nursery() as nursery:
+            await nursery.start(self._job_scheduler._start)
+            try:
+                return await fn(**kwargs)
+            finally:
+                await self._job_scheduler._stop()
 
-# TODO: Running the trio loop in a QThread shouldn't be needed
-# make sure it's the case, then remove this dead code
-# class TrioQThread(QThread):
-#     def __init__(self, fn, *args):
-#         super().__init__()
-#         self.fn = fn
-#         self.args = args
+    async def _test_target(self, fn, **kwargs):
+        # Initialize trio objects
+        self._lock = trio.Lock()
+        self._stopping = trio.Event()
+        self._portal = trio.BlockingTrioPortal()
 
-#     def run(self):
-#         self.fn(*self.args)
+        # Set the started state event
+        self._started.set()
+
+        # Run the test
+        try:
+            result = await self._run_with_job_scheduler(fn, **kwargs)
+        except BaseException as exc:
+            self._test_result.set_exception(exc)
+        else:
+            self._test_result.set_result(result)
+
+        # Indicate there will be no more requests
+        self._request_queue.put_nowait(None)
+
+        # Let the trio loop run until teardown
+        await self._stopping.wait()
 
 
 # Not an async fixture (and doesn't depend on an async fixture either)
 # this fixture will actually be executed *before* pytest-trio setup
 # the trio loop, giving us a chance to monkeypatch it !
 @pytest.fixture
-def trio_in_side_thread():
-    def _trio_test(fn):
-        @vanilla_trio_test
+def run_trio_test_in_thread():
+    runner = ThreadedTrioTestRunner()
+
+    def trio_test(fn):
         @wraps(fn)
-        async def inner_wrapper(**kwargs):
-            try:
-                ret = await fn(**kwargs)
+        def wrapper(**kwargs):
+            runner.start_test_thread(fn, **kwargs)
+            return runner.process_requests_until_test_result()
 
-            except BaseException as exc:
-                await _qt_thread_gateway.stop_action_pump("exc", exc)
-                raise
+        return wrapper
 
-            else:
-                await _qt_thread_gateway.stop_action_pump("value", ret)
+    with patch("pytest_trio.plugin.trio_test", new=trio_test):
 
-        @wraps(fn)
-        def outer_wrapper(**kwargs):
-            global _qt_thread_gateway
-            assert not _qt_thread_gateway
-            _qt_thread_gateway = ThreadAsyncGateway()
+        yield runner
 
-            thread = threading.Thread(target=partial(inner_wrapper, **kwargs))
-            thread.start()
-            # thread = TrioQThread(partial(inner_wrapper, **kwargs))
-            # thread.start()
-            try:
-                _qt_thread_gateway.run_action_pump()
-
-            finally:
-                # thread.wait()
-                thread.join()
-                _qt_thread_gateway = None
-
-        return outer_wrapper
-
-    with patch("pytest_trio.plugin.trio_test", new=_trio_test):
-        yield
+        # Wait for the last moment before stopping the thread
+        runner.stop_test_thread()
 
 
 @pytest.fixture
-async def aqtbot(qtbot, qt_thread_gateway):
-    return AsyncQtBot(qtbot, qt_thread_gateway)
+async def qt_thread_gateway(run_trio_test_in_thread):
+    return run_trio_test_in_thread
+
+
+@pytest.fixture
+async def aqtbot(qtbot, run_trio_test_in_thread):
+    return AsyncQtBot(qtbot, run_trio_test_in_thread)
 
 
 class CtxManagerAsyncWrapped:
@@ -230,19 +227,9 @@ def autoclose_dialog(monkeypatch):
 
 
 @pytest.fixture
-async def jobs_ctx():
-    async with trio.open_nursery() as nursery:
-        job_scheduler = QtToTrioJobScheduler()
-        await nursery.start(job_scheduler._start)
-        try:
-            yield job_scheduler
+def gui_factory(qtbot, qt_thread_gateway, core_config):
+    windows = []
 
-        finally:
-            await job_scheduler._stop()
-
-
-@pytest.fixture
-def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
     async def _gui_factory(event_bus=None, core_config=core_config):
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
@@ -262,9 +249,12 @@ def gui_factory(qtbot, qt_thread_gateway, jobs_ctx, core_config):
             # closing confirmation prompt
 
             switch_language(core_config, "en")
-            main_w = MainWindow(jobs_ctx, event_bus, core_config, minimize_on_close=True)
+            main_w = MainWindow(
+                qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
+            )
             qtbot.add_widget(main_w)
             main_w.showMaximized()
+            windows.append(main_w)
             return main_w
 
         return await qt_thread_gateway.send_action(_create_main_window)

@@ -18,7 +18,6 @@ def test_create():
 @pytest.mark.gui
 def test_create_from_string():
     c = StringToColor.from_string("String")
-    print(c.color)
     assert 0.0 <= c.hue <= 1.0
     assert 0.6 <= c.lightness <= 0.85
     assert 0.4 <= c.saturation <= 0.8
