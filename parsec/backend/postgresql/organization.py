@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
+
 from pendulum import Pendulum
 from triopg import UniqueViolationError
 from pypika import Parameter, functions as fn
@@ -81,7 +83,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self.user_component = user_component
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Pendulum = None
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:

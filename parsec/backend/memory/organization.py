@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
+
 from pendulum import Pendulum
 
 from parsec.api.protocol import OrganizationID
@@ -36,7 +38,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._organizations_invitations = {}
 
     async def create(
-        self, id: OrganizationID, bootstrap_token: str, expiration_date: Pendulum = None
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
     ) -> None:
         if id in self._organizations:
             raise OrganizationAlreadyExistsError()

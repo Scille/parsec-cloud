@@ -176,7 +176,9 @@ class BaseOrganizationComponent:
 
         return organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
-    async def create(self, id: OrganizationID, bootstrap_token: str, expiration_date: str) -> None:
+    async def create(
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum]
+    ) -> None:
         """
         Raises:
             OrganizationAlreadyExistsError
