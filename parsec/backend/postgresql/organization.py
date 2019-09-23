@@ -1,5 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
+
+from pendulum import Pendulum
 from triopg import UniqueViolationError
 from pypika import Parameter, functions as fn
 
@@ -32,14 +35,16 @@ from parsec.backend.postgresql.user_queries.create import _create_user
 
 _q_insert_organization = (
     Query.into(t_organization)
-    .columns("organization_id", "bootstrap_token")
-    .insert(Parameter("$1"), Parameter("$2"))
+    .columns("organization_id", "bootstrap_token", "expiration_date")
+    .insert(Parameter("$1"), Parameter("$2"), Parameter("$3"))
     .get_sql()
 )
 
 
 _q_get_organization = (
-    q_organization(Parameter("$1")).select("bootstrap_token", "root_verify_key").get_sql()
+    q_organization(Parameter("$1"))
+    .select("bootstrap_token", "root_verify_key", "expiration_date")
+    .get_sql()
 )
 
 
@@ -77,10 +82,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self.dbh = dbh
         self.user_component = user_component
 
-    async def create(self, id: OrganizationID, bootstrap_token: str) -> None:
+    async def create(
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
-                result = await conn.execute(_q_insert_organization, id, bootstrap_token)
+                result = await conn.execute(
+                    _q_insert_organization, id, bootstrap_token, expiration_date
+                )
             except UniqueViolationError:
                 raise OrganizationAlreadyExistsError()
 
@@ -98,7 +107,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             raise OrganizationNotFoundError()
 
         rvk = VerifyKey(data[1]) if data[1] else None
-        return Organization(organization_id=id, bootstrap_token=data[0], root_verify_key=rvk)
+        return Organization(
+            organization_id=id,
+            bootstrap_token=data[0],
+            root_verify_key=rvk,
+            expiration_date=data[2],
+        )
 
     async def bootstrap(
         self,
