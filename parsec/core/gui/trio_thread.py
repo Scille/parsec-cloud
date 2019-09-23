@@ -31,6 +31,10 @@ class JobResultError(Exception):
         self.params = kwargs
 
 
+class JobSchedulerNotAvailable(Exception):
+    pass
+
+
 class ThreadSafeQtSignal:
     def __init__(self, qobj, signal_name, *args_types):
         signal = getattr(qobj, signal_name)
@@ -184,8 +188,20 @@ class QtToTrioJobScheduler:
         except trio.RunFinishedError:
             pass
 
-    def is_stopped(self):
-        return self._stopped.is_set()
+    def _run_job(self, job, *args, sync=False):
+        try:
+            if sync:
+                return self._portal.run_sync(job, *args)
+            else:
+                return self._portal.run(job, *args)
+
+        except trio.BrokenResourceError:
+            logger.info(f"The submitted job `{job}` won't run as the scheduler is stopped")
+            raise JobSchedulerNotAvailable("The job scheduler is stopped")
+
+        except trio.RunFinishedError:
+            logger.info(f"The submitted job `{job}` won't run as the trio loop is not running")
+            raise JobSchedulerNotAvailable("The trio loop is not running")
 
     def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
         # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
@@ -201,14 +217,8 @@ class QtToTrioJobScheduler:
             await job._started.wait()
 
         try:
-            self._portal.run(_submit_job)
-
-        except trio.BrokenResourceError as exc:
-            logger.info(f"The submitted job `{job}` won't run as the scheduler is stopped")
-            job.set_cancelled(exc)
-
-        except trio.RunFinishedError as exc:
-            logger.info(f"The submitted job `{job}` won't run as the trio loop is not running")
+            self._run_job(_submit_job)
+        except JobSchedulerNotAvailable as exc:
             job.set_cancelled(exc)
 
         return job
@@ -219,9 +229,7 @@ class QtToTrioJobScheduler:
     # to freeze. TODO: remove it later
 
     def run(self, afn, *args):
-        if self.is_stopped():
-            raise RuntimeError("The job scheduler is stopped")
-        return self._portal.run(afn, *args)
+        return self._run_job(afn, *args)
 
     # In contrast to the `run` method, it is acceptable to block
     # the Qt loop while waiting for a synchronous job to finish
@@ -231,9 +239,7 @@ class QtToTrioJobScheduler:
     # down the application.
 
     def run_sync(self, fn, *args):
-        if self.is_stopped():
-            raise RuntimeError("The job scheduler is stopped")
-        return self._portal.run_sync(fn, *args)
+        return self._run_job(fn, *args, sync=True)
 
 
 # TODO: Running the trio loop in a QThread shouldn't be needed
