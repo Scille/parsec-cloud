@@ -2,7 +2,6 @@
 
 import attr
 import trio
-import trio_asyncio
 from pendulum import Pendulum
 
 from parsec.monitoring import TaskMonitoringInstrument
@@ -93,6 +92,9 @@ async def start_task(nursery, corofn, *args, name=None):
 
 def trio_run(async_fn, *args, use_asyncio=False):
     if use_asyncio:
+        # trio_asyncio is an optional dependency
+        import trio_asyncio
+
         return trio_asyncio.run(async_fn, *args)
     instruments = (TaskMonitoringInstrument(),)
     return trio.run(async_fn, *args, instruments=instruments)

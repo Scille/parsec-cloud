@@ -1,10 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import platform
 import trio
-from distutils.version import StrictVersion
-from urllib.parse import urlsplit
-import requests
+from urllib.request import urlopen, Request
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog
@@ -19,15 +18,24 @@ from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
 RELEASE_URL = "https://github.com/Scille/parsec-build/releases/latest"
 
 
-async def _do_check_new_version(url):
-    r = await trio.run_sync_in_worker_thread(requests.head, url)
-    s = urlsplit(r.headers["LOCATION"])
-    version = s.path.split("/")[-1:][0].split("-")[:1][0]
-    new_version = version.replace("v", "")
-    current_version = __version__.split("-")[0].replace("v", "")
+def _extract_version_tuple(raw):
+    match = re.match(r"^.*([0-9]+)\.([0-9]+)\.([0-9]+)", raw)
+    if match:
+        return tuple(int(x) for x in match.groups())
+    else:
+        return None
 
-    if StrictVersion(current_version) < StrictVersion(new_version):
-        return new_version
+
+async def _do_check_new_version(url):
+    # urlopen automatically follows redirections
+    resolved_url = await trio.run_sync_in_worker_thread(
+        lambda: urlopen(Request(url, method="HEAD")).geturl()
+    )
+
+    lastest_version = _extract_version_tuple(resolved_url)
+    current_version = _extract_version_tuple(__version__)
+    if lastest_version and current_version and current_version < lastest_version:
+        return lastest_version
     else:
         return None
 
