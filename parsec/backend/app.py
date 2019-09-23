@@ -255,7 +255,7 @@ class BackendApp:
                         result_req = handshake.build_rvk_mismatch_result_req()
 
                     elif (
-                        organization.expiration_date
+                        organization.expiration_date is not None
                         and organization.expiration_date < pendulum_now()
                     ):
                         result_req = handshake.build_organization_expired_result_req()
