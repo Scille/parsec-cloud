@@ -315,7 +315,7 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
-    packages=find_packages(),
+    packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
     setup_requires=[PYQT_DEP, BABEL_DEP, "wheel"],  # To generate resources bundle
     install_requires=requirements,
