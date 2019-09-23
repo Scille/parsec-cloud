@@ -97,13 +97,13 @@ class BaseOrganizationComponent:
         msg = organization_status_serializer.req_load(msg)
 
         try:
-            is_bootstrapped = await self.is_bootstrapped(msg["organization_id"])
+            organization = await self.get(msg["organization_id"])
 
         except OrganizationNotFoundError:
             return {"status": "not_found"}
 
         return organization_status_serializer.rep_dump(
-            {"is_bootstrapped": is_bootstrapped, "status": "ok"}
+            {"is_bootstrapped": organization.is_bootstrapped(), "status": "ok"}
         )
 
     @catch_protocol_errors
@@ -230,11 +230,3 @@ class BaseOrganizationComponent:
             OrganizationNotFoundError
         """
         raise NotImplementedError()
-
-    async def is_bootstrapped(self, id: OrganizationID) -> bool:
-        """
-        Raises:
-            OrganizationNotFoundError
-        """
-        organization = await self.get(id)
-        return organization.is_bootstrapped()
