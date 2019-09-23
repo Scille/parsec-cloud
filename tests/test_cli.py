@@ -279,3 +279,11 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
             f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
             env=ssl_conf.client_env,
         )
+
+        print("####### Status organization #######")
+        _run(
+            "core status_organization "
+            f"{org} --addr={admin_url} "
+            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
+            env=ssl_conf.client_env,
+        )

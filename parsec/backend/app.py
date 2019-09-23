@@ -215,6 +215,7 @@ class BackendApp:
         self.administration_cmds = {
             "organization_create": self.organization.api_organization_create,
             "organization_stats": self.organization.api_organization_stats,
+            "organization_status": self.organization.api_organization_status,
             "ping": self.ping.api_ping,
         }
         for fn in self.anonymous_cmds.values():

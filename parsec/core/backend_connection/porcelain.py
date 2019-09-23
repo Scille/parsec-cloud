@@ -136,6 +136,7 @@ class BackendAdministrationCmds:
 
     ping = _expose_cmds("ping")
     organization_create = _expose_cmds("organization_create")
+    organization_status = _expose_cmds("organization_status")
     organization_stats = _expose_cmds("organization_stats")
 
 

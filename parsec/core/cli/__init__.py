@@ -2,7 +2,7 @@
 
 import click
 
-from parsec.core.cli import list_devices
+from parsec.core.cli import list_devices, status_organization
 from parsec.core.cli import invite_user
 from parsec.core.cli import claim_user
 from parsec.core.cli import invite_device
@@ -34,4 +34,5 @@ core_cmd.add_command(invite_device.invite_device, "invite_device")
 core_cmd.add_command(claim_device.claim_device, "claim_device")
 core_cmd.add_command(create_organization.create_organization, "create_organization")
 core_cmd.add_command(stats_organization.stats_organization, "stats_organization")
+core_cmd.add_command(status_organization.status_organization, "status_organization")
 core_cmd.add_command(bootstrap_organization.bootstrap_organization, "bootstrap_organization")
