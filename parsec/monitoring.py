@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 def format_stack(coro):
     if hasattr(coro, "cr_code"):
         module = inspect.getmodule(coro.cr_code)
-        if module.__name__.startswith("trio."):
+        if module and module.__name__.startswith("trio."):
             return
     if hasattr(coro, "cr_frame"):
         yield from traceback.format_stack(coro.cr_frame)
