@@ -2,7 +2,6 @@
 
 import os
 import click
-from pendulum import Pendulum
 
 from parsec.utils import trio_run
 from parsec.api.protocol import OrganizationID
@@ -26,11 +25,9 @@ async def _create_organization(debug, name, backend_addr, administration_token, 
 @click.argument("name", required=True, type=OrganizationID)
 @click.option("--addr", "-B", required=True, type=BackendAddr)
 @click.option("--administration-token", "-T", required=True)
-@click.option("--expiration-date", "-E", default=None)
+@click.option("--expiration-date", "-E", default=None, type=click.DateTime())
 def create_organization(name, addr, administration_token, expiration_date):
     debug = "DEBUG" in os.environ
     configure_logging(log_level="DEBUG" if debug else "WARNING")
-    expiration_date = Pendulum.parse(expiration_date) if expiration_date else None
-
     with cli_exception_handler(debug):
         trio_run(_create_organization, debug, name, addr, administration_token, expiration_date)
