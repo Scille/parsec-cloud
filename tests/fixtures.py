@@ -69,9 +69,7 @@ def organization_factory(backend_addr):
         )
 
         root_signing_key = SigningKey.generate()
-        addr = bootstrap_addr.generate_organization_addr(
-            root_signing_key.verify_key, expiration_date
-        )
+        addr = bootstrap_addr.generate_organization_addr(root_signing_key.verify_key)
 
         return OrganizationFullData(bootstrap_addr, addr, root_signing_key)
 

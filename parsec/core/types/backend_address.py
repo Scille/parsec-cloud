@@ -157,13 +157,9 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     def bootstrap_token(self) -> str:
         return self._bootstrap_token
 
-    def generate_organization_addr(
-        self, root_verify_key: VerifyKey, expiration_date: Pendulum = None
-    ) -> BackendOrganizationAddr:
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
         scheme, netloc, _, _, fragment = urlsplit(self)
         query = "no_ssl=true" if not self.use_ssl else ""
-        if expiration_date:
-            query += f"&expiration_date={expiration_date}"
         backend_addr = urlunsplit((scheme, netloc, "", query, fragment))
         return BackendOrganizationAddr.build(backend_addr, self.organization_id, root_verify_key)
 
