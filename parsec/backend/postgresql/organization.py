@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from pendulum import Pendulum
 from triopg import UniqueViolationError
 from pypika import Parameter, functions as fn

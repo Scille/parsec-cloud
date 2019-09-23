@@ -1,4 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from pendulum import Pendulum
 
 from parsec.api.protocol import OrganizationID
