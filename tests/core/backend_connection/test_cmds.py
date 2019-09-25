@@ -6,7 +6,7 @@ import pendulum
 
 from parsec.api.protocol import ServerHandshake
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.api.transport import Transport, PingReceived, PongReceived
+from parsec.api.transport import Transport, Ping, Pong
 from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendHandshakeError,
@@ -124,7 +124,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
     async def next_ping_related_event():
         while True:
             transport, event = await transport_events_receiver.receive()
-            if isinstance(event, (PingReceived, PongReceived)):
+            if isinstance(event, (Ping, Pong)):
                 return (transport, event)
 
     # Highjack the backend api to control the wait time and the final
@@ -163,9 +163,9 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
             mock_clock.jump(2)
             with trio.fail_after(2):
                 backend_transport, event = await next_ping_related_event()
-                assert isinstance(event, PingReceived)
+                assert isinstance(event, Ping)
                 client_transport, event = await next_ping_related_event()
-                assert isinstance(event, PongReceived)
+                assert isinstance(event, Pong)
                 assert client_transport is not backend_transport
 
             # Wait for another ping, just to be sure...
@@ -173,10 +173,10 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
             mock_clock.jump(2)
             with trio.fail_after(1):
                 backend_transport2, event = await next_ping_related_event()
-                assert isinstance(event, PingReceived)
+                assert isinstance(event, Ping)
                 assert backend_transport is backend_transport2
                 client_transport2, event = await next_ping_related_event()
-                assert isinstance(event, PongReceived)
+                assert isinstance(event, Pong)
                 assert client_transport is client_transport2
 
             await backend_client_ctx.send_events_channel.send({"event": "pinged", "ping": "foo"})
