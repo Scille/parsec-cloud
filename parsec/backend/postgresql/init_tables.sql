@@ -11,7 +11,7 @@ CREATE TABLE organization (
     organization_id VARCHAR(32) UNIQUE NOT NULL,
     bootstrap_token TEXT NOT NULL,
     root_verify_key BYTEA,
-    expiration_date TIMESTAMP
+    expiration_date TIMESTAMPTZ
 );
 
 
