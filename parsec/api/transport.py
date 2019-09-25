@@ -4,16 +4,10 @@ from uuid import uuid4
 import trio
 from trio import BrokenResourceError
 from structlog import get_logger
+from wsproto import WSConnection, ConnectionType
+from wsproto.utilities import LocalProtocolError
 from wsproto.frame_protocol import CloseReason
-from wsproto.connection import WSConnection, ConnectionType
-from wsproto.events import (
-    ConnectionClosed,
-    ConnectionEstablished,
-    ConnectionRequested,
-    BytesReceived,
-    PingReceived,
-    PongReceived,
-)
+from wsproto.events import CloseConnection, AcceptConnection, Request, BytesMessage, Ping, Pong
 
 
 __all__ = ("TransportError", "Transport")
@@ -83,29 +77,30 @@ class Transport:
         if not in_data:
             # A receive of zero bytes indicates the TCP socket has been closed. We
             # need to pass None to wsproto to update its internal state.
-            self.ws.receive_bytes(None)
+            self.ws.receive_data(None)
         else:
-            self.ws.receive_bytes(in_data)
+            self.ws.receive_data(in_data)
 
-    async def _net_send(self):
-        out_data = self.ws.bytes_to_send()
+    async def _net_send(self, wsmsg):
         try:
-            await self.stream.send_all(out_data)
+            await self.stream.send_all(self.ws.send(wsmsg))
 
         except BrokenResourceError as exc:
             raise TransportError(*exc.args) from exc
 
     @classmethod
     async def init_for_client(cls, stream, host):
-        ws = WSConnection(ConnectionType.CLIENT, host=host, resource="/ws")
+        ws = WSConnection(ConnectionType.CLIENT)
         transport = cls(stream, ws)
 
-        # Because this is a client websocket, wsproto has automatically queued up
-        # a handshake, we need to send it and wait for a response.
-        await transport._net_send()
+        # Because this is a client WebSocket, we need to initiate the connection
+        # handshake by sending a Request event.
+        await transport._net_send(Request(host=host, target="/ws"))
+
+        # Get handshake answer
         event = await transport._next_ws_event()
 
-        if isinstance(event, ConnectionEstablished):
+        if isinstance(event, AcceptConnection):
             transport.logger.debug("WebSocket negotiation complete", ws_event=event)
 
         else:
@@ -125,10 +120,9 @@ class Transport:
         with trio.move_on_after(WEBSOCKET_HANDSHAKE_TIMEOUT):
             event = await transport._next_ws_event()
 
-        if isinstance(event, ConnectionRequested):
+        if isinstance(event, Request):
             transport.logger.debug("Accepting WebSocket upgrade")
-            transport.ws.accept(event)
-            await transport._net_send()
+            await transport._net_send(AcceptConnection())
             return transport
 
         transport.logger.warning("Unexpected event during WebSocket handshake", ws_event=event)
@@ -136,8 +130,13 @@ class Transport:
 
     async def aclose(self) -> None:
         try:
-            self.ws.close(code=CloseReason.NORMAL_CLOSURE)
-            await self._net_send()
+            try:
+                await self.stream.send_all(
+                    self.ws.send(CloseConnection(code=CloseReason.NORMAL_CLOSURE))
+                )
+            except LocalProtocolError:
+                # TODO: exception occurs when ws.state is already closed...
+                pass
             await self.stream.aclose()
 
         except (BrokenResourceError, TransportError):
@@ -148,8 +147,7 @@ class Transport:
         Raises:
             TransportError
         """
-        self.ws.send_data(msg)
-        await self._net_send()
+        await self._net_send(BytesMessage(data=msg))
 
     async def recv(self, keepalive: bool = False) -> bytes:
         """
@@ -163,31 +161,32 @@ class Transport:
                     event = await self._next_ws_event()
                 if cancel_scope.cancel_called:
                     self.logger.debug("Sending keep alive ping")
-                    self.ws.ping()
-                    await self._net_send()
+                    await self._net_send(Ping())
                     continue
             else:
                 event = await self._next_ws_event()
 
-            if isinstance(event, ConnectionClosed):
+            if isinstance(event, CloseConnection):
                 self.logger.debug("Connection closed", code=event.code, reason=event.reason)
+                try:
+                    await self._net_send(event.response())
+                except LocalProtocolError:
+                    # TODO: exception occurs when ws.state is already closed...
+                    pass
                 raise TransportClosedByPeer("Peer has closed connection")
 
-            elif isinstance(event, BytesReceived):
+            elif isinstance(event, BytesMessage):
                 # TODO: check that data doesn't go over MAX_BIN_LEN (1 MB)
                 # Msgpack will refuse to unpack it so we should fail early on if that happens
                 data += event.data
                 if event.message_finished:
                     return data
 
-            elif isinstance(event, PingReceived):
-                # wsproto handles ping events for you by placing a pong frame in
-                # the outgoing buffer. You should not call pong() unless you want to
-                # send an unsolicited pong frame.
+            elif isinstance(event, Ping):
                 self.logger.debug("Received ping and sending pong")
-                await self._net_send()
+                await self._net_send(event.response())
 
-            elif isinstance(event, PongReceived):
+            elif isinstance(event, Pong):
                 # Nothing to do \o/
                 self.logger.debug("Received pong")
 
