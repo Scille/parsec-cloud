@@ -5,7 +5,7 @@ import trio
 from trio import BrokenResourceError
 from structlog import get_logger
 from wsproto import WSConnection, ConnectionType
-from wsproto.utilities import LocalProtocolError
+from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 from wsproto.frame_protocol import CloseReason
 from wsproto.events import CloseConnection, AcceptConnection, Request, BytesMessage, Ping, Pong
 
@@ -64,7 +64,12 @@ class Transport:
 
             except StopIteration:
                 # Not enough data to form an event
-                await self._net_recv()
+                try:
+                    await self._net_recv()
+
+                except RemoteProtocolError as exc:
+                    raise TransportError(*exc.args) from exc
+
                 self._ws_events = self.ws.events()
 
     async def _net_recv(self):
@@ -86,6 +91,9 @@ class Transport:
             await self.stream.send_all(self.ws.send(wsmsg))
 
         except BrokenResourceError as exc:
+            raise TransportError(*exc.args) from exc
+
+        except RemoteProtocolError as exc:
             raise TransportError(*exc.args) from exc
 
     @classmethod
