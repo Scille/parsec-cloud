@@ -28,7 +28,6 @@ from parsec.core.types import (
     WorkspaceRole,
     LocalUserManifest,
 )
-from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.backend_connection import (
     BackendCmdsPool,
     BackendNotAvailable,
@@ -49,7 +48,7 @@ from parsec.core.remote_devices_manager import (
 
 from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.fs.realm_storage import UserStorage
+from parsec.core.fs.storage import UserStorage, WorkspaceStorage
 from parsec.core.fs.userfs.merging import merge_local_user_manifests, merge_workspace_entry
 from parsec.core.fs.exceptions import (
     FSError,
@@ -170,7 +169,7 @@ class UserFS:
 
     async def __aenter__(self):
         self.storage = await self._exit_stack.enter_async_context(
-            UserStorage.factory(self.device, self.path, self.user_manifest_id)
+            UserStorage.run(self.device, self.path, self.user_manifest_id)
         )
 
         # Make sure all the workspaces are loaded
@@ -207,11 +206,10 @@ class UserFS:
 
         await self.storage.set_user_manifest(manifest)
 
-    async def _instantiate_workspace_local_storage(self, workspace_id: EntryID) -> LocalStorage:
+    async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
         path = self.path / str(workspace_id)
-        local_storage = LocalStorage(self.device.device_id, self.device.local_symkey, path)
-        await self._exit_stack.enter_async_context(local_storage)
-        return local_storage
+        workspace_storage_context = WorkspaceStorage.run(self.device, path, workspace_id)
+        return await self._exit_stack.enter_async_context(workspace_storage_context)
 
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
@@ -224,7 +222,7 @@ class UserFS:
             return workspace_entry
 
         # Instantiate the local storage
-        local_storage = await self._instantiate_workspace_local_storage(workspace_id)
+        local_storage = await self._instantiate_workspace_storage(workspace_id)
 
         # Instantiate the workspace
         return WorkspaceFS(
