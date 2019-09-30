@@ -27,8 +27,8 @@ def test_fs_offline_restart_and_tree(user_fs_state_machine, oracle_fs_factory, a
             await self.reset_all()
             self.device = alice
             await self.restart_user_fs(self.device)
-            wid = await self.user_fs.workspace_create("w")
-            self.workspace = self.user_fs.get_workspace(wid)
+            self.wid = await self.user_fs.workspace_create("w")
+            self.workspace = self.user_fs.get_workspace(self.wid)
 
             self.oracle_fs = oracle_fs_factory()
             self.oracle_fs.create_workspace("/w")
@@ -37,6 +37,7 @@ def test_fs_offline_restart_and_tree(user_fs_state_machine, oracle_fs_factory, a
         @rule()
         async def restart(self):
             await self.restart_user_fs(self.device)
+            self.workspace = self.user_fs.get_workspace(self.wid)
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         async def create_file(self, parent, name):

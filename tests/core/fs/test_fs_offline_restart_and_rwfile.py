@@ -19,14 +19,15 @@ def test_fs_offline_restart_and_rwfile(user_fs_state_machine, alice):
             await self.reset_all()
             self.device = alice
             await self.restart_user_fs(self.device)
-            wid = await self.user_fs.workspace_create("w")
-            self.workspace = self.user_fs.get_workspace(wid)
+            self.wid = await self.user_fs.workspace_create("w")
+            self.workspace = self.user_fs.get_workspace(self.wid)
             await self.workspace.touch("/foo.txt")
             self.file_oracle = FileOracle()
 
         @rule()
         async def restart(self):
             await self.restart_user_fs(self.device)
+            self.workspace = self.user_fs.get_workspace(self.wid)
 
         @rule(
             size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
