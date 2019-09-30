@@ -10,24 +10,29 @@ from pendulum import Pendulum
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
-from parsec.crypto import SecretKey
-from parsec.api.protocol import DeviceID
 from parsec.core.types import (
     EntryID,
     BlockID,
     ChunkID,
+    LocalDevice,
     FileDescriptor,
     LocalManifest,
     LocalFileManifest,
 )
-from parsec.core.fs.persistent_storage import PersistentStorage
+
+from parsec.core.fs.storage.chunk_storage import ChunkStorage
+from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 
 logger = get_logger()
 
+# TODO: should be in config.py
+DEFAULT_CACHE_SIZE = 128 * 1024 * 1024
+CHUNK_VACUUM_THRESHOLD = 128 * 1024 * 1024
 
-class LocalStorage:
+
+class WorkspaceStorage:
     """Manage the access to the local storage.
 
     That includes:
@@ -36,10 +41,10 @@ class LocalStorage:
     - a lock mecanism to protect against race conditions
     """
 
-    persistent_storage_class = PersistentStorage
-
-    def __init__(self, device_id: DeviceID, key: SecretKey, path: Path, **kwargs):
-        self.device_id = device_id
+    def __init__(self, device: LocalDevice, path: Path, workspace_id: EntryID):
+        self.device = device
+        self.device_id = device.device_id
+        self.workpace_id = workspace_id
 
         # File descriptors
         self.open_fds: Dict[FileDescriptor, EntryID] = {}
@@ -50,28 +55,33 @@ class LocalStorage:
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
-        self.cache_ahead_of_persistance_ids = set()
-        self.local_manifest_cache = {}
-        self.persistent_storage = self.persistent_storage_class(key, path, **kwargs)
+        self.manifest_storage = None
+        self.block_storage = None
+        self.chunk_storage = None
+
+    @classmethod
+    @asynccontextmanager
+    async def run(cls, device: LocalDevice, path: Path, workspace_id: EntryID):
+        self = cls(device, path, workspace_id)
+        manifest_storage_path = path / "manifest_data.sqlite"
+        block_storage_path = path / "block_cache.sqlite"
+        chunk_storage_path = path / "chunk_data.sqlite"
+        kwargs = {"cache_size": DEFAULT_CACHE_SIZE, "vacuum_threshold": CHUNK_VACUUM_THRESHOLD}
+        async with ManifestStorage.run(
+            device, manifest_storage_path, workspace_id
+        ) as self.manifest_storage:
+            async with ChunkStorage.run(device, block_storage_path, **kwargs) as self.block_storage:
+                async with ChunkStorage.run(device, chunk_storage_path) as self.chunk_storage:
+                    yield self
+
+    # Helpers
 
     def _get_next_fd(self) -> FileDescriptor:
         self.fd_counter += 1
         return FileDescriptor(self.fd_counter)
 
-    async def __aenter__(self):
-        self.persistent_storage.__enter__()
-        return self
-
-    async def __aexit__(self, *args):
-        if self.locking_tasks:
-            raise RuntimeError("Cannot teardown while entries are still locked")
-        for entry_id in self.cache_ahead_of_persistance_ids.copy():
-            await self._ensure_manifest_persistent(entry_id)
-        self.persistent_storage.__exit__(*args)
-
     def clear_memory_cache(self):
-        self.local_manifest_cache.clear()
-        self.cache_ahead_of_persistance_ids.clear()
+        self.manifest_storage.clear_memory_cache()
 
     # Locking helpers
 
@@ -94,10 +104,10 @@ class LocalStorage:
         if task != hazmat.current_task():
             raise RuntimeError(f"Entry `{entry_id}` modified without beeing locked")
 
-    # Manifest interface
+    # Checkpoint interface
 
     async def get_realm_checkpoint(self) -> int:
-        return self.persistent_storage.get_realm_checkpoint()
+        return await self.manifest_storage.get_realm_checkpoint()
 
     async def update_realm_checkpoint(
         self, new_checkpoint: int, changed_vlobs: Dict[EntryID, int]
@@ -105,21 +115,16 @@ class LocalStorage:
         """
         Raises: Nothing !
         """
-        self.persistent_storage.update_realm_checkpoint(new_checkpoint, changed_vlobs)
+        await self.manifest_storage.update_realm_checkpoint(new_checkpoint, changed_vlobs)
 
     async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
-        return self.persistent_storage.get_need_sync_entries()
+        return await self.manifest_storage.get_need_sync_entries()
+
+    # Manifest interface
 
     async def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """Raises: FSLocalMissError"""
-        assert isinstance(entry_id, EntryID)
-        try:
-            return self.local_manifest_cache[entry_id]
-        except KeyError:
-            pass
-        manifest = self.persistent_storage.get_manifest(entry_id)
-        self.local_manifest_cache[entry_id] = manifest
-        return manifest
+        return await self.manifest_storage.get_manifest(entry_id)
 
     async def set_manifest(
         self,
@@ -128,74 +133,55 @@ class LocalStorage:
         cache_only: bool = False,
         check_lock_status=True,
     ) -> None:
-        assert isinstance(entry_id, EntryID)
         if check_lock_status:
             self._check_lock_status(entry_id)
-        if not cache_only:
-            self.persistent_storage.set_manifest(entry_id, manifest)
-        else:
-            self.cache_ahead_of_persistance_ids.add(entry_id)
-        self.local_manifest_cache[entry_id] = manifest
+        await self.manifest_storage.set_manifest(entry_id, manifest, cache_only=cache_only)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
-        assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
-        if entry_id not in self.cache_ahead_of_persistance_ids:
-            return
-        await self._ensure_manifest_persistent(entry_id)
-
-    async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
-        manifest = self.local_manifest_cache[entry_id]
-        self.persistent_storage.set_manifest(entry_id, manifest)
-        self.cache_ahead_of_persistance_ids.remove(entry_id)
+        await self.manifest_storage.ensure_manifest_persistent(entry_id)
 
     async def clear_manifest(self, entry_id: EntryID) -> None:
-        assert isinstance(entry_id, EntryID)
         self._check_lock_status(entry_id)
-        try:
-            self.persistent_storage.clear_manifest(entry_id)
-        except FSLocalMissError:
-            pass
-        self.local_manifest_cache.pop(entry_id, None)
-        self.cache_ahead_of_persistance_ids.discard(entry_id)
+        await self.manifest_storage.clear_manifest(entry_id)
 
-    # Clean block interface
+    # Block interface
 
     async def is_clean_block(self, block_id: BlockID):
         assert isinstance(block_id, BlockID)
-        return not self.persistent_storage.is_dirty_chunk(block_id)
+        return not await self.block_storage.is_chunk(ChunkID(block_id))
 
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
-        return self.persistent_storage.set_clean_block(block_id, block)
+        return await self.block_storage.set_chunk(ChunkID(block_id), block)
 
     async def clear_clean_block(self, block_id: BlockID) -> None:
         assert isinstance(block_id, BlockID)
         try:
-            self.persistent_storage.clear_clean_block(block_id)
+            await self.block_storage.clear_chunk(ChunkID(block_id))
         except FSLocalMissError:
             pass
 
     async def get_dirty_block(self, block_id: BlockID) -> bytes:
-        return self.persistent_storage.get_dirty_chunk(ChunkID(block_id))
+        return await self.chunk_storage.get_chunk(ChunkID(block_id))
 
     # Chunk interface
 
     async def get_chunk(self, chunk_id: ChunkID) -> bytes:
         assert isinstance(chunk_id, ChunkID)
         try:
-            return self.persistent_storage.get_dirty_chunk(chunk_id)
+            return await self.chunk_storage.get_chunk(chunk_id)
         except FSLocalMissError:
-            return self.persistent_storage.get_clean_block(chunk_id)
+            return await self.block_storage.get_chunk(chunk_id)
 
     async def set_chunk(self, chunk_id: ChunkID, block: bytes) -> None:
         assert isinstance(chunk_id, ChunkID)
-        return self.persistent_storage.set_dirty_chunk(chunk_id, block)
+        return await self.chunk_storage.set_chunk(chunk_id, block)
 
     async def clear_chunk(self, chunk_id: ChunkID, miss_ok: bool = False) -> None:
         assert isinstance(chunk_id, ChunkID)
         try:
-            self.persistent_storage.clear_dirty_chunk(chunk_id)
+            await self.chunk_storage.clear_chunk(chunk_id)
         except FSLocalMissError:
             if not miss_ok:
                 raise
@@ -226,15 +212,15 @@ class LocalStorage:
     # Vacuum
 
     async def run_vacuum(self):
-        self.persistent_storage.run_vacuum()
+        await self.chunk_storage.run_vacuum()
 
     # Timestamped workspace
 
     def to_timestamped(self, timestamp: Pendulum):
-        return LocalStorageTimestamped(self, timestamp)
+        return WorkspaceStorageTimestamped(self, timestamp)
 
 
-class LocalStorageTimestamped(LocalStorage):
+class WorkspaceStorageTimestamped(WorkspaceStorage):
     """Timestamped version to access a local storage as it was at a given timestamp
 
     That includes:
@@ -244,15 +230,20 @@ class LocalStorageTimestamped(LocalStorage):
     - the same lock mecanism to protect against race conditions, although it is useless there
     """
 
-    def __init__(self, local_storage: LocalStorage, timestamp: Pendulum):
-        super().__init__(local_storage.device_id, None, "")
-        self.persistent_storage = local_storage.persistent_storage
+    def __init__(self, workspace_storage: WorkspaceStorage, timestamp: Pendulum):
+        super().__init__(workspace_storage.device, "", workspace_storage.workpace_id)
+        self.chunk_storage = workspace_storage.chunk_storage
+        self.block_storage = workspace_storage.block_storage
+
+        self._cache = {}
+        self.timestamp = timestamp
 
         self.set_chunk = self._throw_permission_error
         self.clean_chunk = self._throw_permission_error
+        self.clear_manifest = self._throw_permission_error
 
     def _throw_permission_error(*args, **kwargs):
-        raise FSError("Not implemented : LocalStorage is timestamped")
+        raise FSError("Not implemented : WorkspaceStorage is timestamped")
 
     # Manifest interface
 
@@ -260,7 +251,7 @@ class LocalStorageTimestamped(LocalStorage):
         """Raises: FSLocalMissError"""
         assert isinstance(entry_id, EntryID)
         try:
-            return self.local_manifest_cache[entry_id]
+            return self._cache[entry_id]
         except KeyError:
             raise FSLocalMissError(entry_id)
 
@@ -271,12 +262,7 @@ class LocalStorageTimestamped(LocalStorage):
         if manifest.need_sync:
             return self._throw_permission_error()
         self._check_lock_status(entry_id)
-        self.local_manifest_cache[entry_id] = manifest
-
-    async def clear_manifest(self, entry_id: EntryID) -> None:
-        assert isinstance(entry_id, EntryID)
-        self._check_lock_status(entry_id)
-        self.local_manifest_cache.pop(entry_id, None)
+        self._cache[entry_id] = manifest
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         pass

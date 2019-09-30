@@ -1,107 +1,134 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from pathlib import Path
-from typing import Dict, Tuple, Set, Callable
-from contextlib import contextmanager
+from typing import Dict, Tuple, Set
 from structlog import get_logger
 from sqlite3 import connect as sqlite_connect
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, LocalDevice, LocalManifest, LocalUserManifest
+from parsec.core.types import EntryID, LocalDevice, LocalManifest
 
 
 logger = get_logger()
 
 
-def _init_db(cursor):
-    # Should only store the user manifest
-    cursor.execute(
-        """
-CREATE TABLE IF NOT EXISTS vlobs
-(
-    vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
-    base_version INTEGER NOT NULL,
-    remote_version INTEGER NOT NULL,
-    need_sync INTEGER NOT NULL,  -- Boolean
-    blob BLOB NOT NULL
-);
-"""
-    )
+class ManifestStorage:
+    """Persistent storage with cache for storing manifests.
 
-    # Singleton storing the checkpoint
-    cursor.execute(
-        """
-CREATE TABLE IF NOT EXISTS realm_checkpoint
-(
-    _id INTEGER PRIMARY KEY NOT NULL,
-    checkpoint INTEGER NOT NULL
-);
-"""
-    )
+    Also stores the checkpoint.
+    """
 
+    def __init__(self, device: LocalDevice, path: Path, realm_id: EntryID):
+        self.device = device
+        self.path = Path(path)
+        self.realm_id = realm_id
 
-@contextmanager
-def _connect(dbpath: str):
-    # Connect and initialize database
-    conn = sqlite_connect(dbpath)
+        self._cache = {}
+        self._cache_ahead_of_persistance_ids = set()
+        self._conn = None
 
-    # Tune database access
-    conn.isolation_level = None
-    conn.execute("pragma journal_mode=wal")
-    conn.execute("PRAGMA synchronous = OFF")
+    @classmethod
+    @asynccontextmanager
+    async def run(cls, *args, **kwargs):
+        self = cls(*args, **kwargs)
+        try:
+            await self._connect()
+            try:
+                yield self
+            finally:
+                await self._flush_cache_ahead_of_persistance()
+        finally:
+            await self._close()
 
-    @contextmanager
-    def _open_cursor():
-        cursor = conn.cursor()
+    # Life cycle
+
+    async def _create_connection(self):
+        # Create directories
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create sqlite connection
+        conn = sqlite_connect(str(self.path))
+
+        # Set fast auto-commit mode
+        conn.isolation_level = None
+        conn.execute("pragma journal_mode=wal")
+        conn.execute("PRAGMA synchronous = OFF")
+
+        # Return connection
+        return conn
+
+    async def _connect(self):
+        if self._conn is not None:
+            raise RuntimeError("Already connected")
+
+        # Connect and initialize database
+        self._conn = await self._create_connection()
+
+        # Initialize
+        await self._create_db()
+
+    async def _close(self):
+        # Idempotency
+        if self._conn is None:
+            return
+
+        # Auto-commit is used but do it once more just in case
+        self._conn.commit()
+        self._conn.close()
+        self._conn = None
+
+    def clear_memory_cache(self):
+        self._cache.clear()
+        self._cache_ahead_of_persistance_ids.clear()
+
+    # Cursor management
+
+    @asynccontextmanager
+    async def _open_cursor(self):
+        cursor = self._conn.cursor()
         # Automatic rollback on exception
-        with conn:
+        with self._conn:
             try:
                 yield cursor
             finally:
                 cursor.close()
 
-    try:
-        # Initialize db if needed
-        with _open_cursor() as cursor:
-            _init_db(cursor)
+    # Database initialization
 
-        yield _open_cursor
+    async def _create_db(self):
+        async with self._open_cursor() as cursor:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS vlobs
+                (
+                  vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
+                  base_version INTEGER NOT NULL,
+                  remote_version INTEGER NOT NULL,
+                  need_sync INTEGER NOT NULL,  -- Boolean
+                  blob BLOB NOT NULL
+                );
+                """
+            )
 
-    finally:
-        conn.commit()
-        conn.close()
+            # Singleton storing the checkpoint
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS realm_checkpoint
+                (
+                  _id INTEGER PRIMARY KEY NOT NULL,
+                  checkpoint INTEGER NOT NULL
+                );
+                """
+            )
 
-
-class RealmStorage:
-    def __init__(self, device: LocalDevice, open_cursor: Callable, realm_id: EntryID):
-        self.device = device
-        self.realm_id = realm_id
-        self._open_cursor = open_cursor
-        self._cache = {}
-        self._cache_ahead_of_persistance_ids = set()
-
-    @classmethod
-    @asynccontextmanager
-    async def factory(cls, device: LocalDevice, path: Path, realm_id: EntryID):
-        # Create directories if needed
-        path.mkdir(parents=True, exist_ok=True)
-
-        with _connect(str(path / "realmdb.sqlite")) as open_cursor:
-            try:
-                storage = cls(device, open_cursor, realm_id)
-                yield storage
-
-            finally:
-                await storage._flush_cache_ahead_of_persistance()
-
-    # Manifest operations
+    # Checkpoint operations
 
     async def get_realm_checkpoint(self) -> int:
         """
         Raises: Nothing !
         """
-        with self._open_cursor() as cursor:
+        async with self._open_cursor() as cursor:
             cursor.execute("SELECT checkpoint FROM realm_checkpoint WHERE _id = 0")
             rep = cursor.fetchone()
             return rep[0] if rep else 0
@@ -112,7 +139,7 @@ class RealmStorage:
         """
         Raises: Nothing !
         """
-        with self._open_cursor() as cursor:
+        async with self._open_cursor() as cursor:
             cursor.execute("BEGIN")
             cursor.executemany(
                 "UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?",
@@ -129,7 +156,7 @@ class RealmStorage:
         """
         Raises: Nothing !
         """
-        with self._open_cursor() as cursor:
+        async with self._open_cursor() as cursor:
             cursor.execute(
                 "SELECT vlob_id, need_sync FROM vlobs WHERE need_sync = 1 OR base_version != remote_version"
             )
@@ -142,6 +169,8 @@ class RealmStorage:
                     remote_changes.add(EntryID(manifest_id))
             return local_changes, remote_changes
 
+    # Manifest operations
+
     async def get_manifest(self, entry_id: EntryID) -> LocalManifest:
         """
         Raises:
@@ -152,7 +181,7 @@ class RealmStorage:
         except KeyError:
             pass
 
-        with self._open_cursor() as cursor:
+        async with self._open_cursor() as cursor:
             cursor.execute("SELECT blob FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             manifest_row = cursor.fetchone()
         if not manifest_row:
@@ -180,7 +209,7 @@ class RealmStorage:
 
     async def _set_manifest_in_db(self, entry_id: EntryID, manifest: LocalManifest) -> None:
         ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
-        with self._open_cursor() as cursor:
+        async with self._open_cursor() as cursor:
             cursor.execute(
                 """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                 VALUES (
@@ -205,7 +234,6 @@ class RealmStorage:
         Raises: Nothing !
         """
         assert isinstance(entry_id, EntryID)
-        self._check_lock_status(entry_id)
         if entry_id not in self._cache_ahead_of_persistance_ids:
             return
         await self._ensure_manifest_persistent(entry_id)
@@ -215,7 +243,7 @@ class RealmStorage:
             await self._ensure_manifest_persistent(entry_id)
 
     async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
-        manifest = self.local_manifest_cache[entry_id]
+        manifest = self._cache[entry_id]
         await self._set_manifest_in_db(entry_id, manifest)
         self._cache_ahead_of_persistance_ids.remove(entry_id)
 
@@ -227,47 +255,9 @@ class RealmStorage:
         in_cache = bool(self._cache.pop(entry_id, None))
         if in_cache:
             self._cache_ahead_of_persistance_ids.discard(entry_id)
-        with self._open_cursor() as cursor:
+        async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted and not in_cache:
             raise FSLocalMissError(entry_id)
-
-    async def run_vacuum(self) -> None:
-        pass
-
-
-class UserStorage(RealmStorage):
-    @property
-    def user_manifest_id(self):
-        return self.realm_id
-
-    @classmethod
-    @asynccontextmanager
-    async def factory(cls, device: LocalDevice, path: Path, user_manifest_id: EntryID):
-        async with super().factory(device, path, user_manifest_id) as storage:
-
-            # Load the user manifest
-            try:
-                await storage.get_manifest(storage.user_manifest_id)
-            except FSLocalMissError:
-                pass
-            else:
-                assert storage.user_manifest_id in storage._cache
-
-            yield storage
-
-    def get_user_manifest(self):
-        try:
-            return self._cache[self.user_manifest_id]
-        except KeyError:
-            # In the unlikely event the user manifest is not present in
-            # local (e.g. device just created or during tests), we fall
-            # back on an empty manifest which is a good aproximation of
-            # the very first version of the manifest (field `created` is
-            # invalid, but it will be corrected by the merge during sync).
-            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
-
-    async def set_user_manifest(self, user_manifest):
-        await self.set_manifest(self.user_manifest_id, user_manifest)
