@@ -27,12 +27,12 @@ class File:
         self.local_storage = local_storage
 
     def ensure_manifest(self, **kwargs):
-        manifest = self.local_storage.local_manifest_cache[self.entry_id]
+        manifest = self.local_storage.manifest_storage._cache[self.entry_id]
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
     def is_cache_ahead_of_persistance(self):
-        return self.entry_id in self.local_storage.cache_ahead_of_persistance_ids
+        return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_persistance_ids
 
     async def get_manifest(self):
         return await self.local_storage.get_manifest(self.entry_id)
