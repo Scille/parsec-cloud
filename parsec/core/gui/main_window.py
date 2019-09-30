@@ -8,11 +8,7 @@ from PyQt5.QtWidgets import QMainWindow
 
 from parsec import __version__ as PARSEC_VERSION
 
-from parsec.core.local_device import (
-    LocalDeviceError,
-    load_device_with_password,
-    load_device_with_pkcs11,
-)
+from parsec.core.local_device import LocalDeviceError, load_device_with_password
 from parsec.core.config import save_config
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
 from parsec.core.backend_connection import (
@@ -189,31 +185,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             logger.exception("Unhandled error during login")
             show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
 
-    def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
-        try:
-            device = load_device_with_pkcs11(
-                key_file, token_id=pkcs11_token, key_id=pkcs11_key, pin=pkcs11_pin
-            )
-            self.start_core(device)
-        except LocalDeviceError:
-            show_error(self, _("ERR_LOGIN_AUTH_FAILED"))
-
-        except BackendHandshakeAPIVersionError:
-            show_error(self, _("ERR_LOGIN_INCOMPATIBLE_VERSION"))
-
-        except BackendDeviceRevokedError:
-            show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"))
-
-        except BackendHandshakeError:
-            show_error(self, _("ERR_LOGIN_UNKNOWN_USER"))
-
-        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            show_error(self, _("ERR_LOGIN_MOUNTPOINT"))
-
-        except Exception as exc:
-            logger.exception("Unhandled error during login")
-            show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
-
     def close_app(self, force=False):
         self.need_close = True
         self.force_close = force
@@ -253,7 +224,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
         self.widget_center.layout().addWidget(login_widget)
         login_widget.login_with_password_clicked.connect(self.login_with_password)
-        login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
         login_widget.show()
 
     def clear_widgets(self):
