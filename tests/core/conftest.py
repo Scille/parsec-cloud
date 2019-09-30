@@ -7,7 +7,7 @@ from async_generator import asynccontextmanager
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS, FSLocalMissError
-from parsec.core.fs.realm_storage import RealmStorage
+from parsec.core.fs.storage import UserStorage
 
 from tests.common import freeze_time
 
@@ -36,7 +36,7 @@ def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
 @pytest.fixture()
 async def alice_local_storage(local_storage_path, initialize_userfs_storage, alice):
     path = local_storage_path(alice)
-    async with RealmStorage.factory(alice, path) as storage:
+    async with UserStorage.run(alice, path) as storage:
         await initialize_userfs_storage(alice, storage)
         yield storage
 
@@ -44,7 +44,7 @@ async def alice_local_storage(local_storage_path, initialize_userfs_storage, ali
 @pytest.fixture()
 async def alice2_local_storage(local_storage_path, initialize_userfs_storage, alice2):
     path = local_storage_path(alice2)
-    async with RealmStorage.factory(alice2, path) as storage:
+    async with UserStorage.run(alice2, path) as storage:
         await initialize_userfs_storage(alice2, storage)
         yield storage
 
@@ -52,7 +52,7 @@ async def alice2_local_storage(local_storage_path, initialize_userfs_storage, al
 @pytest.fixture()
 async def bob_local_storage(local_storage_path, initialize_userfs_storage, bob):
     path = local_storage_path(bob)
-    async with RealmStorage.factory(bob, path) as storage:
+    async with UserStorage.run(bob, path) as storage:
         await initialize_userfs_storage(bob, storage)
         yield storage
 
