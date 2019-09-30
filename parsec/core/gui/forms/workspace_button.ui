@@ -224,39 +224,26 @@ color: rgb(9, 66, 155);
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QToolButton" name="button_open_workspace">
+         <widget class="QLabel" name="label">
           <property name="minimumSize">
            <size>
-            <width>78</width>
-            <height>78</height>
+            <width>75</width>
+            <height>75</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>78</width>
-            <height>78</height>
+            <width>75</width>
+            <height>75</height>
            </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QToolButton#button_open_workspace:hover
-{
-border: 0;
-}</string>
           </property>
           <property name="text">
            <string/>
           </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/workspace.png</normaloff>:/icons/images/icons/workspace.png</iconset>
+          <property name="pixmap">
+           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/workspace.png</pixmap>
           </property>
-          <property name="iconSize">
-           <size>
-            <width>78</width>
-            <height>78</height>
-           </size>
-          </property>
-          <property name="autoRaise">
+          <property name="scaledContents">
            <bool>true</bool>
           </property>
          </widget>

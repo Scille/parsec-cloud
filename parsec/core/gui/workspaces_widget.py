@@ -290,7 +290,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.reencrypt_clicked.connect(self.reencrypt_workspace)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
-        button.file_clicked.connect(self.open_workspace_file)
         button.remount_ts_clicked.connect(self.remount_workspace_ts)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),
