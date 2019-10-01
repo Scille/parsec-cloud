@@ -45,6 +45,7 @@ async def _connect(
     device_id: Optional[DeviceID] = None,
     signing_key: Optional[SigningKey] = None,
     administration_token: Optional[str] = None,
+    keepalive: Optional[int] = None,
 ):
     """
     Raises:
@@ -95,6 +96,7 @@ async def _connect(
     try:
         transport = await Transport.init_for_client(stream, addr.hostname)
         transport.handshake = handshake
+        transport.keepalive = keepalive
 
     except TransportError as exc:
         logger.debug("Connection lost during transport creation", reason=exc)
@@ -155,7 +157,9 @@ async def _do_handshake(transport: Transport, handshake):
 
 
 @asynccontextmanager
-async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transport:
+async def anonymous_transport_factory(
+    addr: BackendOrganizationAddr, keepalive: Optional[int] = None
+) -> Transport:
     """
     Raises:
         BackendConnectionError
@@ -164,7 +168,7 @@ async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transpor
         BackendHandshakeError
         BackendDeviceRevokedError
     """
-    transport = await _connect(addr)
+    transport = await _connect(addr, keepalive=keepalive)
     transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
         yield transport
@@ -174,7 +178,9 @@ async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transpor
 
 
 @asynccontextmanager
-async def administration_transport_factory(addr: BackendAddr, token: str) -> Transport:
+async def administration_transport_factory(
+    addr: BackendAddr, token: str, keepalive: Optional[int] = None
+) -> Transport:
     """
     Raises:
         BackendConnectionError
@@ -183,7 +189,7 @@ async def administration_transport_factory(addr: BackendAddr, token: str) -> Tra
         BackendHandshakeError
         BackendDeviceRevokedError
     """
-    transport = await _connect(addr, administration_token=token)
+    transport = await _connect(addr, administration_token=token, keepalive=keepalive)
     transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
         yield transport
@@ -193,11 +199,11 @@ async def administration_transport_factory(addr: BackendAddr, token: str) -> Tra
 
 
 class AuthenticatedTransportPool:
-    def __init__(self, addr, device_id, signing_key, max_pool, keepalive_time):
+    def __init__(self, addr, device_id, signing_key, max_pool, keepalive):
         self.addr = addr
         self.device_id = device_id
         self.signing_key = signing_key
-        self.keepalive_time = keepalive_time
+        self.keepalive = keepalive
         self.transports = []
         self._closed = False
         self._lock = trio.Semaphore(max_pool)
@@ -226,8 +232,12 @@ class AuthenticatedTransportPool:
                 if self._closed:
                     raise trio.ClosedResourceError()
 
-                transport = await _connect(self.addr, self.device_id, self.signing_key)
-                transport.keepalive_time = self.keepalive_time
+                transport = await _connect(
+                    self.addr,
+                    device_id=self.device_id,
+                    signing_key=self.signing_key,
+                    keepalive=self.keepalive,
+                )
                 transport.logger = transport.logger.bind(device_id=self.device_id)
 
             try:
@@ -250,12 +260,12 @@ async def authenticated_transport_pool_factory(
     device_id: DeviceID,
     signing_key: SigningKey,
     max_pool: int = 4,
-    keepalive_time: int = 30,
+    keepalive: Optional[int] = None,
 ) -> AuthenticatedTransportPool:
     """
     Raises: nothing !
     """
-    pool = AuthenticatedTransportPool(addr, device_id, signing_key, max_pool, keepalive_time)
+    pool = AuthenticatedTransportPool(addr, device_id, signing_key, max_pool, keepalive)
     try:
         yield pool
 

@@ -30,7 +30,7 @@ from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 
 
 async def _do_claim_user(
-    config_dir,
+    config,
     use_pkcs11: bool,
     password: str,
     password_check: str,
@@ -58,7 +58,12 @@ async def _do_claim_user(
         raise JobResultError("bad-device_name") from exc
 
     try:
-        device = await core_claim_user(organization_addr, device_id, token)
+        device = await core_claim_user(
+            backend_addr=organization_addr,
+            new_device_id=device_id,
+            token=token,
+            keepalive=config.backend_connection_keepalive,
+        )
 
     except InviteClaimBackendOfflineError as exc:
         raise JobResultError("backend-offline", info=str(exc)) from exc
@@ -71,9 +76,9 @@ async def _do_claim_user(
 
     try:
         if use_pkcs11:
-            save_device_with_pkcs11(config_dir, device, pkcs11_token, pkcs11_key)
+            save_device_with_pkcs11(config.config_dir, device, pkcs11_token, pkcs11_key)
         else:
-            save_device_with_password(config_dir, device, password)
+            save_device_with_password(config.config_dir, device, password)
 
     except LocalDeviceAlreadyExistsError as exc:
         raise JobResultError("user-exists") from exc
@@ -206,7 +211,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             ThreadSafeQtSignal(self, "claim_success"),
             ThreadSafeQtSignal(self, "claim_error"),
             _do_claim_user,
-            config_dir=self.config.config_dir,
+            config=self.config,
             use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),

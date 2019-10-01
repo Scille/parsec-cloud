@@ -143,7 +143,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
 
     event = None
     async with backend_cmds_pool_factory(
-        alice.organization_addr, alice.device_id, alice.signing_key, keepalive_time=2
+        alice.organization_addr, alice.device_id, alice.signing_key, keepalive=2
     ) as cmds:
         mock_clock.rate = 1
         async with trio.open_nursery() as nursery:

@@ -12,7 +12,7 @@ from tests.common import create_shared_workspace
 @pytest.fixture
 async def running_backend_listen_events(running_backend, event_bus, alice):
     async with trio.open_nursery() as nursery:
-        await nursery.start(backend_listen_events, alice, event_bus)
+        await nursery.start(backend_listen_events, alice, event_bus, None)
         yield
         nursery.cancel_scope.cancel()
 
@@ -22,7 +22,7 @@ async def test_init_end_with_backend_online_status_event(running_backend, event_
     async with trio.open_nursery() as nursery:
 
         with event_bus.listen() as spy:
-            await nursery.start(backend_listen_events, alice, event_bus)
+            await nursery.start(backend_listen_events, alice, event_bus, None)
 
         spy.assert_event_occured("backend.online")
 
@@ -34,7 +34,7 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
     async with trio.open_nursery() as nursery:
 
         with event_bus.listen() as spy:
-            await nursery.start(backend_listen_events, alice, event_bus)
+            await nursery.start(backend_listen_events, alice, event_bus, None)
 
         spy.assert_event_occured("backend.offline")
 

@@ -18,7 +18,12 @@ async def _invite_device(config, device, new_device_name):
     click.echo(f"Invitation token: {token_display}")
 
     async with spinner("Waiting for invitation reply"):
-        await invite_and_create_device(device, new_device_name, token)
+        await invite_and_create_device(
+            device=device,
+            new_device_name=new_device_name,
+            token=token,
+            keepalive=config.backend_connection_keepalive,
+        )
 
     display_device = click.style(f"{device.device_name}@{new_device_name}", fg="yellow")
     click.echo(f"Device {display_device} is ready !")

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import uuid4
+from typing import Optional
 import trio
 from trio import BrokenResourceError
 from structlog import get_logger
@@ -32,10 +33,10 @@ class TransportClosedByPeer(TransportError):
 class Transport:
     RECEIVE_BYTES = 2 ** 20  # 1Mo
 
-    def __init__(self, stream, ws):
+    def __init__(self, stream, ws, keepalive: Optional[int] = None):
         self.stream = stream
         self.ws = ws
-        self.keepalive_time = 0
+        self.keepalive = keepalive
         self.conn_id = uuid4().hex
         self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
@@ -149,15 +150,15 @@ class Transport:
         """
         await self._net_send(BytesMessage(data=msg))
 
-    async def recv(self, keepalive: bool = False) -> bytes:
+    async def recv(self) -> bytes:
         """
         Raises:
             TransportError
         """
         data = bytearray()
         while True:
-            if keepalive:
-                with trio.move_on_after(self.keepalive_time) as cancel_scope:
+            if self.keepalive:
+                with trio.move_on_after(self.keepalive) as cancel_scope:
                     event = await self._next_ws_event()
                 if cancel_scope.cancel_called:
                     self.logger.debug("Sending keep alive ping")

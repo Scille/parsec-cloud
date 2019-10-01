@@ -49,7 +49,7 @@ async def logged_core_factory(
             device.device_id,
             device.signing_key,
             max_pool=config.backend_max_connections,
-            keepalive_time=config.backend_connection_keepalive,
+            keepalive=config.backend_connection_keepalive,
         ) as backend_cmds_pool:
 
             path = config.data_base_dir / device.slug
@@ -70,7 +70,12 @@ async def logged_core_factory(
                     # At startup monitors consider the backend connection is offline
                     # Hence `backend_listen_events` should be started after them
                     # to make sure it wont send a `backend.online` event too early
-                    await root_nursery.start(backend_listen_events, device, event_bus)
+                    await root_nursery.start(
+                        backend_listen_events,
+                        device,
+                        event_bus,
+                        config.backend_connection_keepalive,
+                    )
 
                     async with mountpoint_manager_factory(
                         user_fs,
