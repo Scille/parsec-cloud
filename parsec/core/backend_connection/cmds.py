@@ -59,7 +59,7 @@ from parsec.core.backend_connection.exceptions import (
 )
 
 
-async def _send_cmd(transport, serializer, keepalive=False, **req):
+async def _send_cmd(transport, serializer, **req):
     """
     Raises:
         BackendCmdsInvalidRequest
@@ -83,7 +83,7 @@ async def _send_cmd(transport, serializer, keepalive=False, **req):
 
     try:
         await transport.send(raw_req)
-        raw_rep = await transport.recv(keepalive)
+        raw_rep = await transport.recv()
 
     except TransportError as exc:
         transport.logger.info("Request failed (backend not available)", cmd=req["cmd"])
@@ -120,9 +120,7 @@ async def events_subscribe(transport: Transport,) -> None:
 
 
 async def events_listen(transport: Transport, wait: bool = True) -> dict:
-    rep = await _send_cmd(
-        transport, events_listen_serializer, keepalive=wait, cmd="events_listen", wait=wait
-    )
+    rep = await _send_cmd(transport, events_listen_serializer, cmd="events_listen", wait=wait)
     rep.pop("status")
     return rep
 

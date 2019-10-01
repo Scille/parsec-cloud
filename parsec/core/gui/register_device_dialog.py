@@ -20,14 +20,19 @@ from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 
 
-async def _do_registration(device, new_device_name, token):
+async def _do_registration(core, device, new_device_name, token):
     try:
         new_device_name = DeviceName(new_device_name)
     except ValueError as exc:
         raise JobResultError("registration-invite-bad-value") from exc
 
     try:
-        await core_invite_and_create_device(device, new_device_name, token)
+        await core_invite_and_create_device(
+            device=device,
+            new_device_name=new_device_name,
+            token=token,
+            keepalive=core.config.backend_connection_keepalive,
+        )
     except InviteClaimTimeoutError:
         raise JobResultError("registration-invite-timeout")
     except InviteClaimBackendOfflineError as exc:
@@ -164,6 +169,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             ThreadSafeQtSignal(self, "registration_success"),
             ThreadSafeQtSignal(self, "registration_error"),
             _do_registration,
+            core=self.core,
             device=self.core.device,
             new_device_name=self.line_edit_device_name.text(),
             token=token,
