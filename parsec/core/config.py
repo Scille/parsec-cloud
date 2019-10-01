@@ -53,7 +53,7 @@ class CoreConfig:
     mountpoint_base_dir: Path
 
     debug: bool = False
-    backend_connection_keepalive: int = 0
+    backend_connection_keepalive: Optional[int] = 29
     backend_max_connections: int = 4
 
     invitation_token_size: int = 8
@@ -84,7 +84,7 @@ def config_factory(
     cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     mountpoint_enabled: bool = False,
-    backend_connection_keepalive: int = 30,
+    backend_connection_keepalive: Optional[int] = 29,
     backend_max_connections: int = 4,
     telemetry_enabled: bool = True,
     debug: bool = False,
