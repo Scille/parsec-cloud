@@ -2,6 +2,13 @@
 History
 =======
 
+Parsec 1.0.2 (2019-10-01)
+-------------------------
+
+* Upgrade PyQt5 to 5.13.1 (#690)
+* Add keepalive pings on invite/claim requests (#693)
+
+
 Parsec 1.0.1 (2019-09-25)
 -------------------------
 
