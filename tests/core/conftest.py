@@ -24,11 +24,11 @@ def local_storage_path(tmpdir):
 def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
     async def _initialize_userfs_storage(device, storage):
         try:
-            await storage.get_manifest(device.user_manifest_id)
+            await storage.load_user_manifest()
         except FSLocalMissError:
             with freeze_time("2000-01-01"):
                 user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            await storage.set_manifest(device.user_manifest_id, user_manifest)
+            await storage.set_user_manifest(user_manifest)
 
     return _initialize_userfs_storage
 
