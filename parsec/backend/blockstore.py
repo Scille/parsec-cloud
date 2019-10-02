@@ -84,6 +84,9 @@ def blockstore_factory(
     elif config.type == "RAID5":
         from parsec.backend.raid5_blockstore import RAID5BlockStoreComponent
 
+        if len(config.blockstores) < 3:
+            raise ValueError(f"RAID5 block store needs at least 3 nodes")
+
         blocks = [blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores]
 
         return RAID5BlockStoreComponent(blocks)

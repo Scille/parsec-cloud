@@ -4,6 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.api.protocol import message_get_serializer
+from parsec.backend.config import PostgreSQLBlockStoreConfig
 
 from tests.backend.test_events import events_subscribe, events_listen, events_listen_nowait
 
@@ -59,9 +60,10 @@ async def test_message_from_bob_to_alice_multi_backends(
 ):
     d1 = Pendulum(2000, 1, 1)
     async with backend_factory(
-        config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
+        config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url}
     ) as backend_1, backend_factory(
-        populated=False, config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
+        populated=False,
+        config={"blockstore_config": PostgreSQLBlockStoreConfig(), "db_url": postgresql_url},
     ) as backend_2:
 
         async with backend_sock_factory(backend_1, alice) as alice_backend_sock:

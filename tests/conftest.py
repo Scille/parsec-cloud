@@ -31,7 +31,15 @@ from parsec.core.logged_core import logged_core_factory
 from parsec.core.fs.realm_storage import _connect as vanilla_realm_storage_connect
 from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.backend import BackendApp, config_factory as backend_config_factory
+from parsec.backend import BackendApp
+from parsec.backend.config import (
+    BackendConfig,
+    MockedBlockStoreConfig,
+    PostgreSQLBlockStoreConfig,
+    RAID0BlockStoreConfig,
+    RAID1BlockStoreConfig,
+    RAID5BlockStoreConfig,
+)
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
@@ -400,30 +408,24 @@ def backend_store(request):
 
 @pytest.fixture
 def blockstore(request, backend_store):
-    blockstore_config = {}
     # TODO: allow to test against swift ?
     if backend_store.startswith("postgresql://"):
-        blockstore_type = "POSTGRESQL"
+        config = PostgreSQLBlockStoreConfig()
     else:
-        blockstore_type = "MOCKED"
+        config = MockedBlockStoreConfig()
 
     # More or less a hack to be able to to configure this fixture from
     # the test function by adding tags to it
-    if request.node.get_closest_marker("raid1_blockstore"):
-        blockstore_config["RAID1_0_TYPE"] = blockstore_type
-        blockstore_config["RAID1_1_TYPE"] = "MOCKED"
-        blockstore_type = "RAID1"
     if request.node.get_closest_marker("raid0_blockstore"):
-        blockstore_config["RAID0_0_TYPE"] = blockstore_type
-        blockstore_config["RAID0_1_TYPE"] = "MOCKED"
-        blockstore_type = "RAID0"
+        config = RAID0BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
+    if request.node.get_closest_marker("raid1_blockstore"):
+        config = RAID1BlockStoreConfig(blockstores=[config, MockedBlockStoreConfig()])
     if request.node.get_closest_marker("raid5_blockstore"):
-        blockstore_config["RAID5_0_TYPE"] = blockstore_type
-        blockstore_config["RAID5_1_TYPE"] = "MOCKED"
-        blockstore_config["RAID5_2_TYPE"] = "MOCKED"
-        blockstore_type = "RAID5"
+        config = RAID5BlockStoreConfig(
+            blockstores=[config, MockedBlockStoreConfig(), MockedBlockStoreConfig()]
+        )
 
-    return blockstore_type, blockstore_config
+    return config
 
 
 @pytest.fixture
@@ -468,15 +470,20 @@ def backend_factory(
     # can end up in a dead lock if the asyncio loop is torndown before the
     # nursery fixture is done with calling the backend's postgresql stuff.
 
-    blockstore_type, blockstore_config = blockstore
-
     @asynccontextmanager
     async def _backend_factory(populated=True, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
-            config = backend_config_factory(
-                db_url=backend_store,
-                blockstore_type=blockstore_type,
-                environ={**blockstore_config, **config},
+            config = BackendConfig(
+                **{
+                    "administration_token": "s3cr3t",
+                    "db_drop_deleted_data": False,
+                    "db_min_connections": 1,
+                    "db_max_connections": 5,
+                    "debug": False,
+                    "db_url": backend_store,
+                    "blockstore_config": blockstore,
+                    **config,
+                }
             )
             if not event_bus:
                 event_bus = event_bus_factory()
