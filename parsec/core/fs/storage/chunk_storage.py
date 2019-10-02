@@ -11,18 +11,10 @@ from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
 
 
-class ChunkStorage:
-    def __init__(
-        self,
-        device: LocalDevice,
-        path: Path,
-        cache_size: Optional[int] = None,
-        vacuum_threshold: Optional[int] = None,
-    ):
+class BaseChunkStorage:
+    def __init__(self, device: LocalDevice, path: Path):
         self.local_symkey = device.local_symkey
         self.path = Path(path)
-        self.cache_size = cache_size
-        self.vacuum_threshold = vacuum_threshold
         self._conn = None
 
     @classmethod
@@ -34,12 +26,6 @@ class ChunkStorage:
             yield self
         finally:
             await self._close()
-
-    @property
-    def block_limit(self):
-        if self.cache_size is None:
-            return None
-        return self.cache_size // DEFAULT_BLOCK_SIZE
 
     # Life cycle
 
@@ -159,16 +145,6 @@ class ChunkStorage:
                 (chunk_id.bytes, len(ciphered), False, time(), ciphered),
             )
 
-        # No clean up required
-        if self.block_limit is None:
-            return
-
-        # Clean up if necessary
-        nb_blocks = await self.get_nb_blocks()
-        limit = nb_blocks - self.block_limit
-        if limit > 0:
-            await self.clear_old_blocks(limit=limit)
-
     async def clear_chunk(self, chunk_id: ChunkID):
         async with self._open_cursor() as cursor:
             cursor.execute("BEGIN")
@@ -180,7 +156,39 @@ class ChunkStorage:
         if not changes:
             raise FSLocalMissError(chunk_id)
 
+
+class ChunkStorage(BaseChunkStorage):
+    def __init__(self, device: LocalDevice, path: Path, vacuum_threshold: Optional[int] = None):
+        super().__init__(device, path)
+        self.vacuum_threshold = vacuum_threshold
+
+    # Vacuum
+
+    async def run_vacuum(self):
+        # No vacuum necessary
+        if self.vacuum_threshold is None:
+            return
+
+        if self.path.stat().st_size > self.vacuum_threshold:
+            self._conn.execute("VACUUM")
+
+            # The connection needs to be recreated
+            self._close(self.dirty_conn)
+            self._conn = await self._create_connection()
+
+
+class BlockStorage(BaseChunkStorage):
+    def __init__(self, device: LocalDevice, path: Path, cache_size: Optional[int] = None):
+        super().__init__(device, path)
+        self.cache_size = cache_size
+
     # Garbage collection
+
+    @property
+    def block_limit(self):
+        if self.cache_size is None:
+            return None
+        return self.cache_size // DEFAULT_BLOCK_SIZE
 
     async def clear_all_block(self):
         async with self._open_cursor() as cursor:
@@ -197,16 +205,18 @@ class ChunkStorage:
                 (limit,),
             )
 
-    # Vacuum
+    # Upgraded set method
 
-    async def run_vacuum(self):
-        # No vacuum necessary
-        if self.vacuum_threshold is None:
+    async def set_chunk(self, chunk_id: ChunkID, raw: bytes):
+        # Actual set operation
+        await super().set_chunk(chunk_id, raw)
+
+        # No clean up required
+        if self.block_limit is None:
             return
 
-        if self.path.stat().st_size > self.vacuum_threshold:
-            self._conn.execute("VACUUM")
-
-            # The connection needs to be recreated
-            self._close(self.dirty_conn)
-            self._conn = await self._create_connection()
+        # Clean up if necessary
+        nb_blocks = await self.get_nb_blocks()
+        limit = nb_blocks - self.block_limit
+        if limit > 0:
+            await self.clear_old_blocks(limit=limit)

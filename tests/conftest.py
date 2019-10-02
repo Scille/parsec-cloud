@@ -28,8 +28,9 @@ from parsec.api.transport import Transport
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
-from parsec.core.fs.storage import ChunkStorage, ManifestStorage
 from parsec.core.mountpoint.manager import get_mountpoint_runner
+from parsec.core.fs.storage import BlockStorage, ChunkStorage, ManifestStorage
+
 from parsec.backend import BackendApp
 from parsec.backend.config import (
     BackendConfig,
@@ -39,6 +40,7 @@ from parsec.backend.config import (
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
 )
+
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
@@ -374,10 +376,9 @@ def persistent_mockup(monkeypatch):
         storage_set.remove(storage)
         storage._conn = None
 
-    monkeypatch.setattr(ManifestStorage, "_create_connection", _create_connection)
-    monkeypatch.setattr(ChunkStorage, "_create_connection", _create_connection)
-    monkeypatch.setattr(ManifestStorage, "_close", _close)
-    monkeypatch.setattr(ChunkStorage, "_close", _close)
+    for storage_class in (ManifestStorage, ChunkStorage, BlockStorage):
+        monkeypatch.setattr(storage_class, "_create_connection", _create_connection)
+        monkeypatch.setattr(storage_class, "_close", _close)
 
     yield mockup_context
     mockup_context.clear()
