@@ -20,16 +20,20 @@ from parsec.core.types import (
     LocalFileManifest,
 )
 
-from parsec.core.fs.storage.chunk_storage import ChunkStorage
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
+from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 
 logger = get_logger()
 
 # TODO: should be in config.py
-DEFAULT_CACHE_SIZE = 128 * 1024 * 1024
-CHUNK_VACUUM_THRESHOLD = 128 * 1024 * 1024
+DEFAULT_BLOCK_CACHE_SIZE = 128 * 1024 * 1024
+DEFAULT_CHUNK_VACUUM_THRESHOLD = 128 * 1024 * 1024
+
+MANIFEST_STORAGE_NAME = "manifest_data.sqlite"
+CHUNK_STORAGE_NAME = "chunk_data.sqlite"
+BLOCK_STORAGE_NAME = "block_cache.sqlite"
 
 
 class WorkspaceStorage:
@@ -41,7 +45,16 @@ class WorkspaceStorage:
     - a lock mecanism to protect against race conditions
     """
 
-    def __init__(self, device: LocalDevice, path: Path, workspace_id: EntryID):
+    def __init__(
+        self,
+        device: LocalDevice,
+        path: Path,
+        workspace_id: EntryID,
+        manifest_storage: ManifestStorage,
+        block_storage: ChunkStorage,
+        chunk_storage: ChunkStorage,
+    ):
+        self.path = path
         self.device = device
         self.device_id = device.device_id
         self.workpace_id = workspace_id
@@ -55,24 +68,35 @@ class WorkspaceStorage:
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
-        self.manifest_storage = None
-        self.block_storage = None
-        self.chunk_storage = None
+        self.manifest_storage = manifest_storage
+        self.block_storage = block_storage
+        self.chunk_storage = chunk_storage
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, device: LocalDevice, path: Path, workspace_id: EntryID):
-        self = cls(device, path, workspace_id)
-        manifest_storage_path = path / "manifest_data.sqlite"
-        block_storage_path = path / "block_cache.sqlite"
-        chunk_storage_path = path / "chunk_data.sqlite"
-        kwargs = {"cache_size": DEFAULT_CACHE_SIZE, "vacuum_threshold": CHUNK_VACUUM_THRESHOLD}
-        async with ManifestStorage.run(
-            device, manifest_storage_path, workspace_id
-        ) as self.manifest_storage:
-            async with ChunkStorage.run(device, block_storage_path, **kwargs) as self.block_storage:
-                async with ChunkStorage.run(device, chunk_storage_path) as self.chunk_storage:
-                    yield self
+    async def run(
+        cls,
+        device: LocalDevice,
+        path: Path,
+        workspace_id: EntryID,
+        cache_size=DEFAULT_BLOCK_CACHE_SIZE,
+        vacuum_threshold=DEFAULT_CHUNK_VACUUM_THRESHOLD,
+    ):
+        manifest_storage_context = ManifestStorage.run(
+            device, path / MANIFEST_STORAGE_NAME, workspace_id
+        )
+        block_storage_context = BlockStorage.run(
+            device, path / BLOCK_STORAGE_NAME, cache_size=cache_size
+        )
+        chunk_storage_context = ChunkStorage.run(
+            device, path / CHUNK_STORAGE_NAME, vacuum_threshold=vacuum_threshold
+        )
+        async with manifest_storage_context as manifest_storage:
+            async with block_storage_context as block_storage:
+                async with chunk_storage_context as chunk_storage:
+                    yield cls(
+                        device, path, workspace_id, manifest_storage, block_storage, chunk_storage
+                    )
 
     # Helpers
 
@@ -231,9 +255,14 @@ class WorkspaceStorageTimestamped(WorkspaceStorage):
     """
 
     def __init__(self, workspace_storage: WorkspaceStorage, timestamp: Pendulum):
-        super().__init__(workspace_storage.device, "", workspace_storage.workpace_id)
-        self.chunk_storage = workspace_storage.chunk_storage
-        self.block_storage = workspace_storage.block_storage
+        super().__init__(
+            workspace_storage.device,
+            workspace_storage.path,
+            workspace_storage.workpace_id,
+            None,
+            workspace_storage.block_storage,
+            workspace_storage.chunk_storage,
+        )
 
         self._cache = {}
         self.timestamp = timestamp
