@@ -23,8 +23,7 @@ async def test_init_end_with_backend_online_status_event(running_backend, event_
 
         with event_bus.listen() as spy:
             await nursery.start(backend_listen_events, alice, event_bus, None)
-
-        spy.assert_event_occured("backend.online")
+            await spy.wait_with_timeout("backend.online")
 
         nursery.cancel_scope.cancel()
 
@@ -35,8 +34,7 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
 
         with event_bus.listen() as spy:
             await nursery.start(backend_listen_events, alice, event_bus, None)
-
-        spy.assert_event_occured("backend.offline")
+            await spy.wait_with_timeout("backend.offline")
 
         nursery.cancel_scope.cancel()
 
