@@ -424,6 +424,5 @@ async def test_storage_file_tree(alice, tmpdir, workspace_id):
         assert aws.manifest_storage.path == manifest_sqlite_db
         assert aws.chunk_storage.path == chunk_sqlite_db
         assert aws.block_storage.path == block_sqlite_db
-        pass
 
     assert set(path.iterdir()) == {manifest_sqlite_db, chunk_sqlite_db, block_sqlite_db}
