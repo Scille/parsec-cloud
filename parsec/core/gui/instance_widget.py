@@ -29,7 +29,7 @@ logger = get_logger()
 
 
 async def _do_run_core(config, device, event_bus, qt_on_ready):
-    async with logged_core_factory(config=config, device=device, event_bus=event_bus) as core:
+    async with logged_core_factory(config=config, device=device, event_bus=None) as core:
         if config.mountpoint_enabled:
             await core.mountpoint_manager.mount_all()
         # Create our own job scheduler allows us to cancel all pending
@@ -79,6 +79,10 @@ class InstanceWidget(QWidget):
         if self.core:
             return self.core.device
         return None
+
+    @property
+    def logged_in(self):
+        return self.running_core_job is not None
 
     def start_core(self, device):
         assert not self.running_core_job
@@ -191,7 +195,9 @@ class InstanceWidget(QWidget):
 
     def show_central_widget(self):
         self.clear_widgets()
-        central_widget = CentralWidget(self.core, self.core_jobs_ctx, self.event_bus, parent=self)
+        central_widget = CentralWidget(
+            self.core, self.core_jobs_ctx, self.core.event_bus, parent=self
+        )
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()

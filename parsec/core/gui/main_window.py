@@ -111,11 +111,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.close_tab(idx, force=True)
 
     def close_tab(self, index, force=False):
+        tab = self.tab_center.widget(index)
         if not force:
-            r = QuestionDialog.ask(self, _("ASK_CLOSE_TAB_TITLE"), _("ASK_CLOSE_TAB_CONTENT"))
+            if tab and tab.logged_in:
+                r = QuestionDialog.ask(
+                    self, _("ASK_CLOSE_TAB_TITLE"), _("ASK_CLOSE_TAB_CONTENT_LOGGED_IN")
+                )
+            else:
+                r = QuestionDialog.ask(self, _("ASK_CLOSE_TAB_TITLE"), _("ASK_CLOSE_TAB_CONTENT"))
             if not r:
                 return
-        tab = self.tab_center.widget(index)
         self.tab_center.removeTab(index)
         if not tab:
             return

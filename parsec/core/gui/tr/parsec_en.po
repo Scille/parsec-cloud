@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-09-17 12:25+0200\n"
-"PO-Revision-Date: 2019-09-17 12:26+0200\n"
+"POT-Creation-Date: 2019-10-03 14:17+0200\n"
+"PO-Revision-Date: 2019-10-03 14:17+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -650,13 +650,25 @@ msgstr ""
 msgid "TAB_TITLE_LOG_IN"
 msgstr "Log In"
 
+msgid "TAB_TITLE_BOOTSTRAP"
+msgstr ""
+
+msgid "TAB_TITLE_CLAIM_USER"
+msgstr ""
+
+msgid "TAB_TITLE_CLAIM_DEVICE"
+msgstr ""
+
 msgid "ASK_CLOSE_TAB_TITLE"
 msgstr "Close the tab"
 
-msgid "ASK_CLOSE_TAB_CONTENT"
+msgid "ASK_CLOSE_TAB_CONTENT_LOGGED_IN"
 msgstr ""
 "Are you sure you want to close this tab? You will be automatically "
 "disconnected."
+
+msgid "ASK_CLOSE_TAB_CONTENT"
+msgstr "Are you sure you want to close this tab?"
 
 msgid "ASK_QUIT_TITLE"
 msgstr "Close the application"
