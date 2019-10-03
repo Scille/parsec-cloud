@@ -185,34 +185,32 @@ async def test_serialize_non_empty_local_file_manifest(tmpdir, alice, workspace_
 
 
 @pytest.mark.trio
-async def test_realm_checkpoint(tmpdir, alice, workspace_id):
-    manifest = create_manifest(alice, LocalFileManifest)
-    async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
+async def test_realm_checkpoint(alice_workspace_storage):
+    aws = alice_workspace_storage
+    manifest = create_manifest(aws.device, LocalFileManifest)
 
-        assert await aws.get_realm_checkpoint() == 0
-        assert await aws.get_need_sync_entries() == (set(), set())
+    assert await aws.get_realm_checkpoint() == 0
+    assert await aws.get_need_sync_entries() == (set(), set())
 
-        await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID(): 33})
+    await aws.update_realm_checkpoint(11, {manifest.id: 22, EntryID(): 33})
 
-        assert await aws.get_realm_checkpoint() == 11
-        assert await aws.get_need_sync_entries() == (set(), set())
+    assert await aws.get_realm_checkpoint() == 11
+    assert await aws.get_need_sync_entries() == (set(), set())
 
-        await aws.set_manifest(manifest.id, manifest, check_lock_status=False)
+    await aws.set_manifest(manifest.id, manifest, check_lock_status=False)
 
-        assert await aws.get_realm_checkpoint() == 11
-        assert await aws.get_need_sync_entries() == (set([manifest.id]), set())
+    assert await aws.get_realm_checkpoint() == 11
+    assert await aws.get_need_sync_entries() == (set([manifest.id]), set())
 
-        await aws.set_manifest(
-            manifest.id, manifest.evolve(need_sync=False), check_lock_status=False
-        )
+    await aws.set_manifest(manifest.id, manifest.evolve(need_sync=False), check_lock_status=False)
 
-        assert await aws.get_realm_checkpoint() == 11
-        assert await aws.get_need_sync_entries() == (set(), set())
+    assert await aws.get_realm_checkpoint() == 11
+    assert await aws.get_need_sync_entries() == (set(), set())
 
-        await aws.update_realm_checkpoint(44, {manifest.id: 55, EntryID(): 66})
+    await aws.update_realm_checkpoint(44, {manifest.id: 55, EntryID(): 66})
 
-        assert await aws.get_realm_checkpoint() == 44
-        assert await aws.get_need_sync_entries() == (set(), set([manifest.id]))
+    assert await aws.get_realm_checkpoint() == 44
+    assert await aws.get_need_sync_entries() == (set(), set([manifest.id]))
 
 
 @pytest.mark.trio
