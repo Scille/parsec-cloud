@@ -2,7 +2,6 @@
 
 from time import time
 from pathlib import Path
-from typing import Optional
 from async_generator import asynccontextmanager
 from sqlite3 import connect as sqlite_connect
 
@@ -158,7 +157,7 @@ class BaseChunkStorage:
 
 
 class ChunkStorage(BaseChunkStorage):
-    def __init__(self, device: LocalDevice, path: Path, vacuum_threshold: Optional[int] = None):
+    def __init__(self, device: LocalDevice, path: Path, vacuum_threshold: int):
         super().__init__(device, path)
         self.vacuum_threshold = vacuum_threshold
 
@@ -178,7 +177,7 @@ class ChunkStorage(BaseChunkStorage):
 
 
 class BlockStorage(BaseChunkStorage):
-    def __init__(self, device: LocalDevice, path: Path, cache_size: Optional[int] = None):
+    def __init__(self, device: LocalDevice, path: Path, cache_size: int):
         super().__init__(device, path)
         self.cache_size = cache_size
 
@@ -186,11 +185,9 @@ class BlockStorage(BaseChunkStorage):
 
     @property
     def block_limit(self):
-        if self.cache_size is None:
-            return None
         return self.cache_size // DEFAULT_BLOCK_SIZE
 
-    async def clear_all_block(self):
+    async def clear_all_blocks(self):
         async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM chunks")
 
@@ -210,10 +207,6 @@ class BlockStorage(BaseChunkStorage):
     async def set_chunk(self, chunk_id: ChunkID, raw: bytes):
         # Actual set operation
         await super().set_chunk(chunk_id, raw)
-
-        # No clean up required
-        if self.block_limit is None:
-            return
 
         # Clean up if necessary
         nb_blocks = await self.get_nb_blocks()

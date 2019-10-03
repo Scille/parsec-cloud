@@ -171,10 +171,6 @@ class WorkspaceStorage:
 
     # Block interface
 
-    async def is_clean_block(self, block_id: BlockID):
-        assert isinstance(block_id, BlockID)
-        return not await self.block_storage.is_chunk(ChunkID(block_id))
-
     async def set_clean_block(self, block_id: BlockID, block: bytes) -> None:
         assert isinstance(block_id, BlockID)
         return await self.block_storage.set_chunk(ChunkID(block_id), block)
