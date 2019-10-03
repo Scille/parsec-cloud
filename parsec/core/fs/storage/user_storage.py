@@ -75,6 +75,7 @@ class UserStorage:
         return await self.manifest_storage.get_manifest(self.user_manifest_id)
 
     async def set_user_manifest(self, user_manifest: LocalUserManifest):
+        assert self.user_manifest_id == user_manifest.id
         await self.manifest_storage.set_manifest(self.user_manifest_id, user_manifest)
 
     # No vacuuming (used in sync monitor)
