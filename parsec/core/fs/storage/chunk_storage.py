@@ -103,6 +103,15 @@ class BaseChunkStorage:
             result, = cursor.fetchone()
             return result
 
+    def get_disk_usage(self):
+        disk_usage = 0
+        for suffix in (".sqlite", ".sqlite-wal", ".sqlite-shm"):
+            try:
+                disk_usage += self.path.with_suffix(suffix).stat().st_size
+            except OSError:
+                pass
+        return disk_usage
+
     # Generic chunk operations
 
     async def is_chunk(self, chunk_id: ChunkID):
@@ -164,15 +173,11 @@ class ChunkStorage(BaseChunkStorage):
     # Vacuum
 
     async def run_vacuum(self):
-        # No vacuum necessary
-        if self.vacuum_threshold is None:
-            return
-
-        if self.path.stat().st_size > self.vacuum_threshold:
+        if self.get_disk_usage() > self.vacuum_threshold:
             self._conn.execute("VACUUM")
 
             # The connection needs to be recreated
-            self._close(self.dirty_conn)
+            await self._close()
             self._conn = await self._create_connection()
 
 
