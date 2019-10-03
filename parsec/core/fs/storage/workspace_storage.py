@@ -57,7 +57,7 @@ class WorkspaceStorage:
         self.path = path
         self.device = device
         self.device_id = device.device_id
-        self.workpace_id = workspace_id
+        self.workspace_id = workspace_id
 
         # File descriptors
         self.open_fds: Dict[FileDescriptor, EntryID] = {}
@@ -258,7 +258,7 @@ class WorkspaceStorageTimestamped(WorkspaceStorage):
         super().__init__(
             workspace_storage.device,
             workspace_storage.path,
-            workspace_storage.workpace_id,
+            workspace_storage.workspace_id,
             None,
             workspace_storage.block_storage,
             workspace_storage.chunk_storage,
@@ -268,7 +268,7 @@ class WorkspaceStorageTimestamped(WorkspaceStorage):
         self.timestamp = timestamp
 
         self.set_chunk = self._throw_permission_error
-        self.clean_chunk = self._throw_permission_error
+        self.clear_chunk = self._throw_permission_error
         self.clear_manifest = self._throw_permission_error
 
     def _throw_permission_error(*args, **kwargs):
