@@ -6,6 +6,7 @@ import pendulum
 from collections import defaultdict
 from typing import Union, Optional, Tuple
 from async_generator import asynccontextmanager
+from pendulum import Pendulum
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
@@ -52,7 +53,7 @@ def organization_factory(backend_addr):
     organizations = set()
     count = 0
 
-    def _organization_factory(orgname=None):
+    def _organization_factory(orgname=None, expiration_date=None):
         nonlocal count
 
         if not orgname:
@@ -137,6 +138,12 @@ def otherorg(organization_factory):
 
 
 @pytest.fixture
+def expiredorg(organization_factory):
+    expired_org = organization_factory("ExpiredOrg", pendulum.datetime(2010, 1, 1))
+    return expired_org
+
+
+@pytest.fixture
 def otheralice(local_device_factory, otherorg):
     return local_device_factory("alice@dev1", otherorg, is_admin=True)
 
@@ -144,6 +151,18 @@ def otheralice(local_device_factory, otherorg):
 @pytest.fixture
 def alice(local_device_factory, initial_user_manifest_state):
     device = local_device_factory("alice@dev1", is_admin=True)
+    # Force alice user manifest v1 to be signed by user alice@dev1
+    # This is needed given backend_factory bind alice@dev1 then alice@dev2,
+    # hence user manifest v1 is stored in backend at a time when alice@dev2
+    # doesn't exists.
+    with freeze_time("2000-01-01"):
+        initial_user_manifest_state.force_user_manifest_v1_generation(device)
+    return device
+
+
+@pytest.fixture
+def expiredalice(local_device_factory, initial_user_manifest_state, expiredorg):
+    device = local_device_factory("alice@dev1", expiredorg, is_admin=True)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -399,9 +418,12 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
             org: OrganizationFullData,
             first_device: LocalDevice = None,
             initial_user_manifest_in_v0: bool = False,
+            expiration_date: Pendulum = None,
         ):
             bootstrap_token = f"<{org.organization_id}-bootstrap-token>"
-            await self.backend.organization.create(org.organization_id, bootstrap_token)
+            await self.backend.organization.create(
+                org.organization_id, bootstrap_token, expiration_date
+            )
             if first_device:
                 backend_user, backend_first_device = local_device_to_backend_user(first_device, org)
                 await self.backend.organization.bootstrap(

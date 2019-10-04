@@ -3,6 +3,7 @@
 from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
+from pendulum import Pendulum
 
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
@@ -15,6 +16,7 @@ from parsec.api.protocol import (
     ping_serializer,
     organization_create_serializer,
     organization_stats_serializer,
+    organization_status_serializer,
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
@@ -57,7 +59,7 @@ from parsec.core.backend_connection.exceptions import (
 )
 
 
-async def _send_cmd(transport, serializer, keepalive=False, **req):
+async def _send_cmd(transport, serializer, **req):
     """
     Raises:
         BackendCmdsInvalidRequest
@@ -81,7 +83,7 @@ async def _send_cmd(transport, serializer, keepalive=False, **req):
 
     try:
         await transport.send(raw_req)
-        raw_rep = await transport.recv(keepalive)
+        raw_rep = await transport.recv()
 
     except TransportError as exc:
         transport.logger.info("Request failed (backend not available)", cmd=req["cmd"])
@@ -118,9 +120,7 @@ async def events_subscribe(transport: Transport,) -> None:
 
 
 async def events_listen(transport: Transport, wait: bool = True) -> dict:
-    rep = await _send_cmd(
-        transport, events_listen_serializer, keepalive=wait, cmd="events_listen", wait=wait
-    )
+    rep = await _send_cmd(transport, events_listen_serializer, cmd="events_listen", wait=wait)
     rep.pop("status")
     return rep
 
@@ -438,12 +438,15 @@ async def device_create(
 # ping already defined in authenticated part
 
 
-async def organization_create(transport: Transport, organization_id: OrganizationID) -> str:
+async def organization_create(
+    transport: Transport, organization_id: OrganizationID, expiration_date: Pendulum = None
+) -> str:
     rep = await _send_cmd(
         transport,
         organization_create_serializer,
         cmd="organization_create",
         organization_id=organization_id,
+        expiration_date=expiration_date,
     )
     return rep["bootstrap_token"]
 
@@ -456,6 +459,16 @@ async def organization_stats(transport: Transport, organization_id: Organization
         organization_id=organization_id,
     )
     rep.pop("status")
+    return rep
+
+
+async def organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
+    rep = await _send_cmd(
+        transport,
+        organization_status_serializer,
+        cmd="organization_status",
+        organization_id=organization_id,
+    )
     return rep
 
 

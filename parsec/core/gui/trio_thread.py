@@ -13,10 +13,26 @@ from PyQt5.QtCore import pyqtBoundSignal, Q_ARG, QMetaObject, Qt
 logger = get_logger()
 
 
+def split_multi_error(exc):
+    def is_cancelled(exc):
+        return exc if isinstance(exc, trio.Cancelled) else None
+
+    def not_cancelled(exc):
+        return None if isinstance(exc, trio.Cancelled) else exc
+
+    cancelled_errors = trio.MultiError.filter(is_cancelled, exc)
+    other_exceptions = trio.MultiError.filter(not_cancelled, exc)
+    return cancelled_errors, other_exceptions
+
+
 class JobResultError(Exception):
     def __init__(self, status, **kwargs):
         self.status = status
         self.params = kwargs
+
+
+class JobSchedulerNotAvailable(Exception):
+    pass
 
 
 class ThreadSafeQtSignal:
@@ -52,50 +68,81 @@ class QtToTrioJob:
         self.ret = None
         self.exc = None
 
+    def __str__(self):
+        return f"{self._fn.__name__}"
+
     def is_finished(self):
         return self._done.is_set()
 
+    def is_cancelled(self):
+        return self.status == "cancelled"
+
+    def is_ok(self):
+        return self.status == "ok"
+
+    def is_errored(self):
+        return self.status == "ko"
+
+    def is_crashed(self):
+        return self.status == "crashed"
+
     async def _run_fn(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        try:
-            with trio.CancelScope() as self.cancel_scope:
-                task_status.started()
-                self._started.set()
+        with trio.CancelScope() as self.cancel_scope:
+            task_status.started()
+            self._started.set()
 
-                try:
-                    if iscoroutinefunction(self._fn):
-                        self.ret = await self._fn(*self._args, **self._kwargs)
-                    else:
-                        self.ret = self._fn(*self._args, **self._kwargs)
-                    self.status = "ok"
+            try:
+                if not iscoroutinefunction(self._fn):
+                    result = self._fn(*self._args, **self._kwargs)
+                else:
+                    result = await self._fn(*self._args, **self._kwargs)
+                self.set_result(result)
 
-                except JobResultError as exc:
-                    self.status = exc.status
-                    self.exc = exc
+            except Exception as exc:
+                self.set_exception(exc)
 
-                except trio.Cancelled as exc:
-                    self.status = "cancelled"
-                    self.exc = exc
-                    raise
+            except trio.Cancelled as exc:
+                self.set_cancelled(exc)
+                raise
 
-                except FSError as exc:
-                    self.status = "ko"
-                    self.exc = exc
+            except trio.MultiError as exc:
+                cancelled_errors, other_exceptions = split_multi_error(exc)
+                if other_exceptions:
+                    self.set_exception(other_exceptions)
+                else:
+                    self.set_cancelled(cancelled_errors)
+                if cancelled_errors:
+                    raise cancelled_errors
 
-                except Exception as exc:
-                    logger.exception("Uncatched error", exc_info=exc)
-                    self.status = "crashed"
-                    self.exc = JobResultError(
-                        "crashed", exc=exc, info=f"Unexpected error: {repr(exc)}"
-                    )
-                    self.exc.__traceback__ = exc.__traceback__
+    def set_result(self, result):
+        self.status = "ok"
+        self.ret = result
+        self._set_done()
 
-        finally:
-            self._done.set()
-            signal = self._qt_on_success if self.status == "ok" else self._qt_on_error
-            if signal.args_types:
-                signal.emit(self)
-            else:
-                signal.emit()
+    def set_cancelled(self, exc):
+        self.status = "cancelled"
+        self.exc = exc
+        self._set_done()
+
+    def set_exception(self, exc):
+        if isinstance(exc, JobResultError):
+            self.status = exc.status
+            self.exc = exc
+        elif isinstance(exc, FSError):
+            self.status = "ko"
+            self.exc = exc
+        else:
+            logger.exception("Uncatched error", exc_info=exc)
+            wrapped = JobResultError("crashed", exc=exc, info=f"Unexpected error: {repr(exc)}")
+            wrapped.__traceback__ = exc.__traceback__
+            self.status = wrapped.status
+            self.exc = wrapped
+        self._set_done()
+
+    def _set_done(self):
+        self._done.set()
+        signal = self._qt_on_success if self.is_ok() else self._qt_on_error
+        signal.emit(self) if signal.args_types else signal.emit()
 
     def cancel_and_join(self):
         assert self.cancel_scope
@@ -141,6 +188,21 @@ class QtToTrioJobScheduler:
         except trio.RunFinishedError:
             pass
 
+    def _run_job(self, job, *args, sync=False):
+        try:
+            if sync:
+                return self._portal.run_sync(job, *args)
+            else:
+                return self._portal.run(job, *args)
+
+        except trio.BrokenResourceError:
+            logger.info(f"The submitted job `{job}` won't run as the scheduler is stopped")
+            raise JobSchedulerNotAvailable("The job scheduler is stopped")
+
+        except trio.RunFinishedError:
+            logger.info(f"The submitted job `{job}` won't run as the trio loop is not running")
+            raise JobSchedulerNotAvailable("The trio loop is not running")
+
     def submit_job(self, qt_on_success, qt_on_error, fn, *args, **kwargs):
         # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
         assert not [x for x in args if isinstance(x, pyqtBoundSignal)]
@@ -155,16 +217,9 @@ class QtToTrioJobScheduler:
             await job._started.wait()
 
         try:
-            self._portal.run(_submit_job)
-
-        except trio.RunFinishedError as exc:
-            job.status = "cancelled"
-            job.exc = exc
-            job._done.set()
-            if job._qt_on_error.args_types:
-                job._qt_on_error.emit(job)
-            else:
-                job._qt_on_error.emit()
+            self._run_job(_submit_job)
+        except JobSchedulerNotAvailable as exc:
+            job.set_cancelled(exc)
 
         return job
 
@@ -174,7 +229,7 @@ class QtToTrioJobScheduler:
     # to freeze. TODO: remove it later
 
     def run(self, afn, *args):
-        return self._portal.run(afn, *args)
+        return self._run_job(afn, *args)
 
     # In contrast to the `run` method, it is acceptable to block
     # the Qt loop while waiting for a synchronous job to finish
@@ -184,7 +239,7 @@ class QtToTrioJobScheduler:
     # down the application.
 
     def run_sync(self, fn, *args):
-        return self._portal.run_sync(fn, *args)
+        return self._run_job(fn, *args, sync=True)
 
 
 # TODO: Running the trio loop in a QThread shouldn't be needed

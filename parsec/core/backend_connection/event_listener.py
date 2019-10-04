@@ -2,6 +2,7 @@
 
 import trio
 from structlog import get_logger
+from typing import Optional
 
 from parsec.event_bus import EventBus
 from parsec.api.transport import TransportError
@@ -23,9 +24,10 @@ logger = get_logger()
 
 
 class BackendEventsManager:
-    def __init__(self, device: LocalDevice, event_bus: EventBus):
+    def __init__(self, device: LocalDevice, event_bus: EventBus, keepalive: Optional[int]):
         self.device = device
         self.event_bus = event_bus
+        self.keepalive = keepalive
         self._backend_online = None
         self._backend_incompatible_version = None
 
@@ -48,26 +50,6 @@ class BackendEventsManager:
             self._backend_online = True
             self.event_bus.send("backend.online")
         self.event_bus.send("backend.listener.restarted")
-
-    async def run(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        closed_event = trio.Event()
-        try:
-            self.event_bus.send("backend.listener.started")
-            async with trio.open_nursery() as nursery:
-                # If backend is online, we want to wait before calling
-                # `task_status.started` until we are connected to the backend
-                # with events listener ready.
-                with self.event_bus.waiter_on_first("backend.online", "backend.offline") as waiter:
-
-                    async def _wait_first_backend_connection_outcome():
-                        await waiter.wait()
-                        task_status.started((nursery.cancel_scope, closed_event))
-
-                    nursery.start_soon(_wait_first_backend_connection_outcome)
-                    await self._event_listener_manager()
-
-        finally:
-            closed_event.set()
 
     async def _event_listener_manager(self):
         backend_connection_failures = 0
@@ -134,6 +116,7 @@ class BackendEventsManager:
             self.device.device_id,
             self.device.signing_key,
             max_pool=1,
+            keepalive=self.keepalive,
         ) as cmds:
             await cmds.events_subscribe()
 
@@ -189,7 +172,14 @@ class BackendEventsManager:
                 logger.warning("Backend sent unknown event", event_msg=rep)
 
 
-async def backend_listen_events(device, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def backend_listen_events(
+    device: LocalDevice,
+    event_bus: EventBus,
+    keepalive: Optional[int],
+    *,
+    task_status=trio.TASK_STATUS_IGNORED,
+):
     with event_bus.connection_context() as event_bus_ctx:
-        backend_events_manager = BackendEventsManager(device, event_bus_ctx)
-        await backend_events_manager.run(task_status=task_status)
+        backend_events_manager = BackendEventsManager(device, event_bus_ctx, keepalive)
+        task_status.started()
+        await backend_events_manager._event_listener_manager()

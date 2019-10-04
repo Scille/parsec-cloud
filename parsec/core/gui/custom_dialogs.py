@@ -144,7 +144,11 @@ class MessageDialog(QDialog, Ui_MessageDialog):
         else:
             import traceback
 
-            self.text_details.setPlainText(traceback.format_exc())
+            stack = traceback.format_tb(exception.__traceback__)
+            if not stack:
+                self.button_details.hide()
+            else:
+                self.text_details.setPlainText("\n".join(stack))
         self.button_details.clicked.connect(self.show_details)
         self.button_copy.clicked.connect(self.copy_to_clipboard)
         self.button_copy.hide()

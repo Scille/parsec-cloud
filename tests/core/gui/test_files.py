@@ -132,7 +132,6 @@ async def test_create_dir(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.table_files.item(1, 1).text() == "Dir1"
 
 
-@pytest.mark.skip("Segfaults for some reason")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_create_dir_already_exists(
@@ -168,7 +167,7 @@ async def test_create_dir_already_exists(
 
     assert w_f.table_files.rowCount() == 2
 
-    assert autoclose_dialog.dialogs == [("Error", "A folder with the same name already exists.")]
+    assert autoclose_dialog.dialogs == [("Error", "A folder with this name already exists.")]
 
 
 @pytest.mark.gui
@@ -264,7 +263,7 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
         assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentWorkspace
 
 
-@pytest.mark.skip("Segfaults occasionally")
+@pytest.mark.skip("Unconsistent results on appveyor")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
@@ -311,7 +310,6 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     assert item.text() == "NewName_2"
 
 
-@pytest.mark.skip("Segfaults occasionally")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_rename_dir_already_exists(
@@ -346,7 +344,7 @@ async def test_rename_dir_already_exists(
         w_f.table_files.rename_clicked.emit()
     assert w_f.table_files.item(1, 1).text() == "Dir1"
     assert w_f.table_files.rowCount() == 3
-    assert autoclose_dialog.dialogs == [("Error", "Can not rename the file.")]
+    assert autoclose_dialog.dialogs == [("Error", "Cannot rename the file.")]
 
 
 @pytest.mark.gui

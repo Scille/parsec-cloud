@@ -26,6 +26,10 @@ class HandshakeBadIdentity(HandshakeError):
     pass
 
 
+class HandshakeOrganizationExpired(HandshakeError):
+    pass
+
+
 class HandshakeRVKMismatch(HandshakeError):
     pass
 
@@ -212,6 +216,15 @@ class ServerHandshake:
             {"handshake": "result", "result": "bad_identity", "help": help}
         )
 
+    def build_organization_expired_result_req(self, help="Trial organization has expired") -> bytes:
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
+        self.state = "result"
+        return handshake_result_serializer.dumps(
+            {"handshake": "result", "result": "organization_expired", "help": help}
+        )
+
     def build_rvk_mismatch_result_req(self, help=None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
@@ -283,6 +296,9 @@ class BaseClientHandshake:
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity(data["help"])
+
+            if data["result"] == "organization_expired":
+                raise HandshakeOrganizationExpired(data["help"])
 
             elif data["result"] == "rvk_mismatch":
                 raise HandshakeRVKMismatch(data["help"])

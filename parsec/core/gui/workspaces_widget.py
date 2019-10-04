@@ -16,7 +16,12 @@ from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationWorkspaceFSTimestampedError,
 )
 
-from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
+from parsec.core.gui.trio_thread import (
+    JobResultError,
+    ThreadSafeQtSignal,
+    QtToTrioJob,
+    JobSchedulerNotAvailable,
+)
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, show_warning, TextInputDialog, QuestionDialog
 from parsec.core.gui.custom_widgets import TaskbarButton
@@ -205,17 +210,22 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
         workspaces = job.ret
+
         if not workspaces:
             label = QLabel(_("LABEL_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_workspaces.addWidget(label)
-        else:
-            for count, (workspace_fs, ws_entry, users_roles, files, timestamped) in enumerate(
-                workspaces
-            ):
+            return
+
+        for count, workspace in enumerate(workspaces):
+            workspace_fs, ws_entry, users_roles, files, timestamped = workspace
+
+            try:
                 self.add_workspace(
                     workspace_fs, ws_entry, users_roles, files, timestamped=timestamped, count=count
                 )
+            except JobSchedulerNotAvailable:
+                pass
 
     def on_list_error(self, job):
         while self.layout_workspaces.count() != 0:
@@ -280,7 +290,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.reencrypt_clicked.connect(self.reencrypt_workspace)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
-        button.file_clicked.connect(self.open_workspace_file)
         button.remount_ts_clicked.connect(self.remount_workspace_ts)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),

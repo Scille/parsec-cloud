@@ -1,17 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import find_packages, distutils, Command
+from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
-
-try:
-    from cx_Freeze import setup, Executable
-except ImportError:
-
-    def Executable(x, **kw):
-        return x
-
-    from setuptools import setup
 
 import itertools
 import glob
@@ -241,37 +232,6 @@ class build_py_with_pyqt_resource_bundle_generation(build_py):
         return super().run()
 
 
-def _extract_libs_cffi_backend():
-    try:
-        import nacl
-    except ImportError:
-        return []
-
-    import pathlib
-
-    cffi_backend_dir = pathlib.Path(nacl.__file__).parent / "../.libs_cffi_backend"
-    return [(lib.as_posix(), lib.name) for lib in cffi_backend_dir.glob("*")]
-
-
-build_exe_options = {
-    "packages": [
-        "asyncio",
-        "parsec.core.gui.ui",
-        "idna",
-        "sentry_sdk.integrations",
-        "trio._core",
-        "nacl._sodium",
-        "html.parser",
-        "pkg_resources._vendor",
-        "swiftclient",
-        "setuptools.msvc",
-        "unittest.mock",
-    ],
-    # nacl store it cffi shared lib in a very strange place...
-    "include_files": _extract_libs_cffi_backend(),
-}
-
-
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 
@@ -282,7 +242,7 @@ requirements = [
     "attrs==18.2.0",
     "click==7.0",
     "msgpack==0.6.0",
-    "wsproto==0.12.0",
+    "wsproto==0.15.0",
     # Can use marshmallow or the toasted flavour as you like ;-)
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",
@@ -319,7 +279,7 @@ test_requirements = [
 ]
 
 
-PYQT_DEP = "PyQt5==5.11.2"
+PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = ("Babel==2.6.0",)
 extra_requirements = {
     "pkcs11": ["python-pkcs11==0.5.0", "pycrypto==2.6.1"],
@@ -355,7 +315,7 @@ setup(
     author="Scille SAS",
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
-    packages=find_packages(),
+    packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
     setup_requires=[PYQT_DEP, BABEL_DEP, "wheel"],  # To generate resources bundle
     install_requires=requirements,
@@ -388,10 +348,6 @@ setup(
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],
     },
-    options={"build_exe": build_exe_options},
-    executables=[
-        Executable("parsec/parsec.py", targetName="parsec.exe", base="Win32GUI", icon="favicon.ico")
-    ],
     license="AGPLv3",
     zip_safe=False,
     keywords="parsec",

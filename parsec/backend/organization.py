@@ -5,6 +5,8 @@ import pendulum
 from typing import Optional
 from secrets import token_hex
 
+from pendulum import Pendulum
+
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey
 from parsec.api.protocol import (
@@ -12,6 +14,7 @@ from parsec.api.protocol import (
     organization_create_serializer,
     organization_bootstrap_serializer,
     organization_stats_serializer,
+    organization_status_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
 from parsec.backend.user import new_user_factory, User, Device
@@ -46,6 +49,7 @@ class OrganizationFirstUserCreationError(OrganizationError):
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: str
+    expiration_date: Optional[Pendulum] = None
     root_verify_key: Optional[VerifyKey] = None
 
     def is_bootstrapped(self):
@@ -71,14 +75,35 @@ class BaseOrganizationComponent:
         msg = organization_create_serializer.req_load(msg)
 
         bootstrap_token = token_hex(self.bootstrap_token_size)
+        expiration_date = msg.get("expiration_date", None)
         try:
-            await self.create(msg["organization_id"], bootstrap_token=bootstrap_token)
+            await self.create(
+                msg["organization_id"],
+                bootstrap_token=bootstrap_token,
+                expiration_date=expiration_date,
+            )
 
         except OrganizationAlreadyExistsError:
             return {"status": "already_exists"}
 
-        return organization_create_serializer.rep_dump(
-            {"bootstrap_token": bootstrap_token, "status": "ok"}
+        rep = {"bootstrap_token": bootstrap_token, "status": "ok"}
+        if expiration_date:
+            rep["expiration_date"] = expiration_date
+
+        return organization_create_serializer.rep_dump(rep)
+
+    @catch_protocol_errors
+    async def api_organization_status(self, client_ctx, msg):
+        msg = organization_status_serializer.req_load(msg)
+
+        try:
+            organization = await self.get(msg["organization_id"])
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_status_serializer.rep_dump(
+            {"is_bootstrapped": organization.is_bootstrapped(), "status": "ok"}
         )
 
     @catch_protocol_errors
@@ -166,7 +191,9 @@ class BaseOrganizationComponent:
 
         return organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
-    async def create(self, id: OrganizationID, bootstrap_token: str) -> None:
+    async def create(
+        self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum]
+    ) -> None:
         """
         Raises:
             OrganizationAlreadyExistsError

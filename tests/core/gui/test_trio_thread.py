@@ -4,7 +4,11 @@ import trio
 import threading
 from unittest.mock import MagicMock
 
-from parsec.core.gui.trio_thread import run_trio_thread, ThreadSafeQtSignal
+from parsec.core.gui.trio_thread import (
+    run_trio_thread,
+    ThreadSafeQtSignal,
+    JobSchedulerNotAvailable,
+)
 
 
 def test_on_trio_loop_closed(monkeypatch):
@@ -44,4 +48,4 @@ def test_on_trio_loop_closed(monkeypatch):
         on_success.emit.assert_not_called()
         on_error_j2.emit.assert_called_once()
         assert job2.status == "cancelled"
-        assert isinstance(job2.exc, trio.RunFinishedError)
+        assert isinstance(job2.exc, JobSchedulerNotAvailable)

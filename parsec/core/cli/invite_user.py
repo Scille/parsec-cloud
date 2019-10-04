@@ -18,7 +18,13 @@ async def _invite_user(config, device, invited_user_id, admin):
     click.echo(f"Invitation token: {token_display}")
 
     async with spinner("Waiting for invitation reply"):
-        invite_device_id = await invite_and_create_user(device, invited_user_id, token, admin)
+        invite_device_id = await invite_and_create_user(
+            device=device,
+            user_id=invited_user_id,
+            token=token,
+            is_admin=admin,
+            keepalive=config.backend_connection_keepalive,
+        )
 
     display_device = click.style(invite_device_id, fg="yellow")
     click.echo(f"Device {display_device} has been created")

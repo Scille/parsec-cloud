@@ -77,7 +77,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = tab.current_device
             self.set_tab_title(
                 tab, f"{device.organization_id}:{device.user_id}@{device.device_name}"
-            )
 
     def add_instance(self, cmd=None, url=None):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
