@@ -26,6 +26,7 @@ build_script:
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
+  - python misc/releaser.py check
   - pip install -U wheel
   - python setup.py bdist_wheel
   # TODO: insert a sarcastic comment about lacking wildcard support, powershell
