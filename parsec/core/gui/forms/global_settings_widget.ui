@@ -156,7 +156,7 @@ width: 20px;
    <item>
     <widget class="QScrollArea" name="scrollArea">
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(255, 255, 255);</string>
+      <string notr="true"/>
      </property>
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -181,6 +181,12 @@ width: 20px;
         <width>467</width>
         <height>487</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#scrollAreaWidgetContents
+{
+background-color: rgb(255, 255, 255);
+}</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="spacing">
@@ -470,6 +476,9 @@ width: 20px;
                   <bold>true</bold>
                  </font>
                 </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
                 <property name="text">
                  <string>BUTTON_CHECK_NEW_VERSION</string>
                 </property>
@@ -721,11 +730,7 @@ width: 20px;
         <enum>Qt::LeftToRight</enum>
        </property>
        <property name="styleSheet">
-        <string notr="true">#button_save
-{
-padding-top: 5px;
-padding-bottom: 5px;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>BUTTON_SAVE</string>

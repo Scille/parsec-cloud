@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-09-09 14:01+0200\n"
-"PO-Revision-Date: 2019-09-09 14:02+0200\n"
+"POT-Creation-Date: 2019-10-04 15:40+0200\n"
+"PO-Revision-Date: 2019-10-04 15:42+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -166,6 +166,9 @@ msgstr "L'appareil existe déjà."
 msgid "ERR_REGISTER_DEVICE_OFFLINE"
 msgstr "Impossible de contacter le serveur."
 
+msgid "ERR_REGISTER_WRONG_PARAMETERS"
+msgstr "L'utilisateur n'a pas fourni les informations correctes."
+
 msgid "ERR_REGISTER_DEVICE_TIMEOUT"
 msgstr "L'appareil a mis trop de temps à s'enregistrer."
 
@@ -193,6 +196,16 @@ msgstr "L'URL est invalide."
 msgid "ERR_BAD_USER_NAME"
 msgstr "Le nom d'utilisateur est invalide."
 
+msgid "ERR_BACKEND_REFUSED"
+msgstr ""
+"Le serveur a refusé votre requête. Toutes les informations sont-elles "
+"correctes ?"
+
+msgid "ERR_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
+"internet."
+
 msgid "ERR_CLAIM_USER_UNKNOWN"
 msgstr "Impossible d'enregistrer l'utilisateur."
 
@@ -205,23 +218,11 @@ msgstr "Voir les informations"
 msgid "DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Modifier le mot de passe"
 
-msgid "DEVICE_MENU_REVOKE"
-msgstr "Révoquer"
-
 msgid "DEVICE_CREATED_ON_{}"
 msgstr "Créé le {}"
 
 msgid "DEVICE_IS_REVOKED"
 msgstr "Cet appareil a été révoqué."
-
-msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
-msgstr "L'appareil \"{}\" a été révoqué avec succès."
-
-msgid "ASK_DEVICE_REVOKE_TITLE"
-msgstr "Révoquer un appareil"
-
-msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
 
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Impossible de renommer l'espace de travail."
@@ -330,6 +331,9 @@ msgstr "Ko"
 
 msgid "FILE_SIZE_B"
 msgstr "o"
+
+msgid "LABEL_NEW_VERSION_AVAILABLE_{}"
+msgstr "Une nouvelle version de Parsec ({}) est disponible."
 
 msgid "WORKSPACE_REENCRYPTION_WAIT"
 msgstr ""
@@ -479,16 +483,6 @@ msgstr ""
 "La version du serveur est différente de la version de l'application. "
 "L'application est-elle à jour ?"
 
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"Le serveur a refusé votre requête. Toutes les informations sont-elles "
-"correctes ?"
-
-msgid "ERR_BACKEND_OFFLINE"
-msgstr ""
-"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
-"internet."
-
 msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
 msgstr "Impossible de démarrer cette organisation."
 
@@ -500,6 +494,9 @@ msgstr "Information"
 
 msgid "WARN_DIALOG_TITLE"
 msgstr "Avertissement"
+
+msgid "BUTTON_CLOSE"
+msgstr "Fermer"
 
 msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
@@ -549,12 +546,6 @@ msgstr "Globale"
 msgid "SETTINGS_NEED_RESTART"
 msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
 
-msgid "NOTIF_WARN_LOST_CONNECTION"
-msgstr "La connection au serveur a été perdue."
-
-msgid "NOTIF_INFO_CONNECTED"
-msgstr "Connecté au serveur."
-
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "Cette version de l'application est incompatible avec le serveur."
 
@@ -593,9 +584,6 @@ msgstr "Appareils"
 
 msgid "MENU_SETTINGS"
 msgstr "Configuration"
-
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "L'utilisateur n'a pas fourni les informations correctes."
 
 msgid "ERR_REGISTER_USER_OFFLINE"
 msgstr "Impossible de contacter le serveur."
@@ -834,6 +822,9 @@ msgstr "Détails"
 msgid "BUTTON_COPY_TO_CLIPBOARD"
 msgstr "Copier dans le presse-papier"
 
+msgid "PushButton"
+msgstr ""
+
 msgid "SETTINGS_TITLE_PROXY"
 msgstr "Proxy"
 
@@ -882,17 +873,20 @@ msgstr "Divers"
 msgid "LABEL_SIM_CONNECTIONS"
 msgstr "Nombre de connections simultanées"
 
-msgid "LABEL_NEW_VERSION_AVAILABLE"
-msgstr "Une nouvelle version est disponible !"
-
 msgid "BUTTON_DOWNLOAD"
 msgstr "Télécharger"
 
-msgid "CHECK_NO_REMINDER"
-msgstr "Ne pas me le rappeler"
-
 msgid "BUTTON_IGNORE"
 msgstr "Ignorer"
+
+msgid "LABEL_CHECKING_NEW_VERSION"
+msgstr "Nous recherchons si une nouvelle version est disponible..."
+
+msgid "LABEL_NEW_VERSION_ERROR"
+msgstr "Impossible de vérifier si une nouvelle version est disponible."
+
+msgid "LABEL_VERSION_UPDATE_TO_DATE"
+msgstr "Votre version de Parsec est à jour."
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr "Notifications"
@@ -924,9 +918,6 @@ msgstr ""
 
 msgid "BUTTON_REGISTER_DEVICE"
 msgstr "Enregistrer l'appareil"
-
-msgid "BUTTON_CLOSE"
-msgstr "Fermer"
 
 msgid "TITLE_REGISTER_NEW_USER"
 msgstr "Enregistrer un nouvel utilisateur"
@@ -1021,3 +1012,27 @@ msgstr "Mettre à jour"
 
 #~ msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
 #~ msgstr "Impossible de partage l'espace de travail avec \"{}\"."
+
+#~ msgid "DEVICE_MENU_REVOKE"
+#~ msgstr "Révoquer"
+
+#~ msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
+#~ msgstr "L'appareil \"{}\" a été révoqué avec succès."
+
+#~ msgid "ASK_DEVICE_REVOKE_TITLE"
+#~ msgstr "Révoquer un appareil"
+
+#~ msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
+#~ msgstr "Êtes-vous sûr de vouloir révoquer l'appareil \"{}\" ?"
+
+#~ msgid "NOTIF_WARN_LOST_CONNECTION"
+#~ msgstr "La connection au serveur a été perdue."
+
+#~ msgid "NOTIF_INFO_CONNECTED"
+#~ msgstr "Connecté au serveur."
+
+#~ msgid "LABEL_NEW_VERSION_AVAILABLE"
+#~ msgstr "Une nouvelle version est disponible !"
+
+#~ msgid "CHECK_NO_REMINDER"
+#~ msgstr "Ne pas me le rappeler"

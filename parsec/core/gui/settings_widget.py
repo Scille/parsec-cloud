@@ -10,12 +10,12 @@ from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
 class SettingsWidget(QWidget, Ui_SettingsWidget):
-    def __init__(self, config, event_bus, *args, **kwargs):
+    def __init__(self, config, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.config = config
         self.event_bus = event_bus
-        self.global_settings = GlobalSettingsWidget(config, self.event_bus)
+        self.global_settings = GlobalSettingsWidget(config, jobs_ctx, self.event_bus)
         self.tab_settings.addTab(
             self.global_settings,
             QIcon(":/icons/images/icons/settings_on.png"),

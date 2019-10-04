@@ -89,7 +89,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
 
-        self.settings_widget = SettingsWidget(self.core.config, self.event_bus, parent=self)
+        self.settings_widget = SettingsWidget(
+            self.core.config, self.jobs_ctx, self.event_bus, parent=self
+        )
         self.widget_central.layout().insertWidget(0, self.settings_widget)
 
         self.show_mount_widget()

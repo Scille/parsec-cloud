@@ -113,7 +113,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_with_pkcs11_clicked.emit(key_file, pkcs11_pin, pkcs11_key, pkcs11_token)
 
     def show_settings(self):
-        settings_dialog = SettingsDialog(self.config, self.event_bus, parent=self)
+        settings_dialog = SettingsDialog(self.config, self.jobs_ctx, self.event_bus, parent=self)
         settings_dialog.exec_()
 
     def show_login_widget(self):

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-09-09 14:01+0200\n"
-"PO-Revision-Date: 2019-09-09 14:02+0200\n"
+"POT-Creation-Date: 2019-10-04 15:40+0200\n"
+"PO-Revision-Date: 2019-10-04 15:41+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -166,6 +166,9 @@ msgstr "The device already exists."
 msgid "ERR_REGISTER_DEVICE_OFFLINE"
 msgstr "Cannot reach the server."
 
+msgid "ERR_REGISTER_WRONG_PARAMETERS"
+msgstr "User did not provide the right information."
+
 msgid "ERR_REGISTER_DEVICE_TIMEOUT"
 msgstr "The device took too much time to register."
 
@@ -193,6 +196,13 @@ msgstr "URL is invalid."
 msgid "ERR_BAD_USER_NAME"
 msgstr "User name is invalid."
 
+msgid "ERR_BACKEND_REFUSED"
+msgstr ""
+"The server has refused your request. Are you sure all information are correct?"
+
+msgid "ERR_BACKEND_OFFLINE"
+msgstr "Cannot reach the server. Please check your internet connection."
+
 msgid "ERR_CLAIM_USER_UNKNOWN"
 msgstr "Cannot register the user."
 
@@ -205,23 +215,11 @@ msgstr "Show info"
 msgid "DEVICE_MENU_CHANGE_PASSWORD"
 msgstr "Change password"
 
-msgid "DEVICE_MENU_REVOKE"
-msgstr "Revoke"
-
 msgid "DEVICE_CREATED_ON_{}"
 msgstr "Created on {}"
 
 msgid "DEVICE_IS_REVOKED"
 msgstr "This device has been revoked."
-
-msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
-msgstr "Device \"{}\" has been successfully revoked."
-
-msgid "ASK_DEVICE_REVOKE_TITLE"
-msgstr "Revoke a device"
-
-msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
-msgstr "Are you sure you want to revoke the device \"{}\"?"
 
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Cannot rename the workspace."
@@ -329,6 +327,9 @@ msgstr "KB"
 
 msgid "FILE_SIZE_B"
 msgstr "B"
+
+msgid "LABEL_NEW_VERSION_AVAILABLE_{}"
+msgstr "A new version ({}) of Parsec is available!"
 
 msgid "WORKSPACE_REENCRYPTION_WAIT"
 msgstr "Please wait while we are retrieving versions of this workspace."
@@ -472,13 +473,6 @@ msgstr ""
 "The server version differs from the client version. Is your client is up-to-"
 "date?"
 
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"The server has refused your request. Are you sure all information are correct?"
-
-msgid "ERR_BACKEND_OFFLINE"
-msgstr "Cannot reach the server. Please check your internet connection."
-
 msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
 msgstr "Cannot bootstrap this organization."
 
@@ -490,6 +484,9 @@ msgstr "Information"
 
 msgid "WARN_DIALOG_TITLE"
 msgstr "Warning"
+
+msgid "BUTTON_CLOSE"
+msgstr "Close"
 
 msgid "ERR_DIALOG_TITLE"
 msgstr "Error"
@@ -537,12 +534,6 @@ msgstr "Global"
 msgid "SETTINGS_NEED_RESTART"
 msgstr "Modifications will take effect the next time you start the application."
 
-msgid "NOTIF_WARN_LOST_CONNECTION"
-msgstr "Connection to the server has been lost."
-
-msgid "NOTIF_INFO_CONNECTED"
-msgstr "Connected to the server."
-
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "This version of the application is incompatible with the server."
 
@@ -581,9 +572,6 @@ msgstr "Devices"
 
 msgid "MENU_SETTINGS"
 msgstr "Settings"
-
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "User did not provide the right information."
 
 msgid "ERR_REGISTER_USER_OFFLINE"
 msgstr "Cannot reach the server."
@@ -815,6 +803,9 @@ msgstr "Details"
 msgid "BUTTON_COPY_TO_CLIPBOARD"
 msgstr "Copy to clipboard"
 
+msgid "PushButton"
+msgstr ""
+
 msgid "SETTINGS_TITLE_PROXY"
 msgstr "Proxy"
 
@@ -863,17 +854,20 @@ msgstr "Miscellaneous"
 msgid "LABEL_SIM_CONNECTIONS"
 msgstr "Simultaneous connections"
 
-msgid "LABEL_NEW_VERSION_AVAILABLE"
-msgstr "A new version is available!"
-
 msgid "BUTTON_DOWNLOAD"
 msgstr "Download"
 
-msgid "CHECK_NO_REMINDER"
-msgstr "Don't remind me"
-
 msgid "BUTTON_IGNORE"
 msgstr "Ignore"
+
+msgid "LABEL_CHECKING_NEW_VERSION"
+msgstr "Checking if a new version is available..."
+
+msgid "LABEL_NEW_VERSION_ERROR"
+msgstr "Cannot check if a new version is available. Please check your network."
+
+msgid "LABEL_VERSION_UPDATE_TO_DATE"
+msgstr "Your Parsec is up-to-date."
 
 msgid "LABEL_NOTIFICATIONS"
 msgstr "Notifications"
@@ -904,9 +898,6 @@ msgstr "Use the following information to set up your new device:"
 
 msgid "BUTTON_REGISTER_DEVICE"
 msgstr "Register the device"
-
-msgid "BUTTON_CLOSE"
-msgstr "Close"
 
 msgid "TITLE_REGISTER_NEW_USER"
 msgstr "Register a new user"
@@ -1012,3 +1003,27 @@ msgstr "Update"
 
 #~ msgid "ERR_WORKSPACE_CAN_NOT_SHARE_{}"
 #~ msgstr "Cannot share the workspace with \"{}\"."
+
+#~ msgid "DEVICE_MENU_REVOKE"
+#~ msgstr "Revoke"
+
+#~ msgid "INFO_DEVICE_REVOKED_SUCCESS_{}"
+#~ msgstr "Device \"{}\" has been successfully revoked."
+
+#~ msgid "ASK_DEVICE_REVOKE_TITLE"
+#~ msgstr "Revoke a device"
+
+#~ msgid "ASK_DEVICE_REVOKE_CONTENT_{}"
+#~ msgstr "Are you sure you want to revoke the device \"{}\"?"
+
+#~ msgid "NOTIF_WARN_LOST_CONNECTION"
+#~ msgstr "Connection to the server has been lost."
+
+#~ msgid "NOTIF_INFO_CONNECTED"
+#~ msgstr "Connected to the server."
+
+#~ msgid "LABEL_NEW_VERSION_AVAILABLE"
+#~ msgstr "A new version is available!"
+
+#~ msgid "CHECK_NO_REMINDER"
+#~ msgstr "Don't remind me"

@@ -6,20 +6,22 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui import lang
+from parsec.core.gui.new_version import CheckNewVersion
 from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
 
 
 class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
     save_clicked = pyqtSignal()
 
-    def __init__(self, core_config, event_bus, *args, **kwargs):
+    def __init__(self, core_config, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.core_config = core_config
         self.event_bus = event_bus
+        self.jobs_ctx = jobs_ctx
         self.setupUi(self)
         if platform.system() != "Windows":
-            self.widget_version.hide()
             self.check_box_windows_left_panel.hide()
+            self.widget_version.hide()
         self.button_save.clicked.connect(self.save_clicked)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None
@@ -34,21 +36,11 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
         self.check_box_windows_left_panel.setChecked(self.core_config.gui_windows_left_panel)
         self.check_box_multiple_instances.setChecked(self.core_config.gui_allow_multiple_instances)
+        self.button_check_version.clicked.connect(self.check_version)
 
-        # self.button_check_version.clicked.connect(self.check_version)
-
-    # TODO: re-enable me asap !
-    # def check_version(self):
-    #     if new_version_available():
-    #         d = NewVersionDialog(parent=self)
-    #         d.exec_()
-    #     else:
-    #         show_info(
-    #             self,
-    #             QCoreApplication.translate(
-    #                 "GlobalSettings", "You have the most recent version of Parsec."
-    #             ),
-    #         )
+    def check_version(self):
+        d = CheckNewVersion(self.jobs_ctx, self.event_bus, self.core_config, parent=self)
+        d.exec_()
 
     def save(self):
         self.event_bus.send(
