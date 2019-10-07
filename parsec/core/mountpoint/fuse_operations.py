@@ -10,8 +10,12 @@ from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_e
 
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor
-from parsec.core.fs import FSBackendOfflineError
+from parsec.core.fs import (
+    FSError,
+    FSInvalidFileDescriptor,
+    FSBackendOfflineError,
+    FSWorkspaceNoAccess,
+)
 
 
 logger = get_logger()
@@ -43,12 +47,19 @@ def translate_error():
     except FSInvalidFileDescriptor as exc:
         raise FuseOSError(EBADF) from exc
 
+    except FSWorkspaceNoAccess as exc:
+        raise FuseOSError(EACCES) from exc
+
     except OSError as exc:
         raise FuseOSError(exc.errno) from exc
 
-    except Exception:
-        logger.exception("mountpoint.request.unhandled_crash")
-        raise FuseOSError(EIO)
+    except FSError as exc:
+        logger.exception("Unhandled FSError in fuse mountpoint")
+        raise FuseOSError(EIO) from exc
+
+    except Exception as exc:
+        logger.exception("Unhandled exception in fuse mountpoint")
+        raise FuseOSError(EIO) from exc
 
 
 class FuseOperations(LoggingMixIn, Operations):

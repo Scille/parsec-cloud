@@ -18,7 +18,12 @@ from winfspy.plumbing.winstuff import (
 )
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor, FSBackendOfflineError
+from parsec.core.fs import (
+    FSError,
+    FSInvalidFileDescriptor,
+    FSBackendOfflineError,
+    FSWorkspaceNoAccess,
+)
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
@@ -37,17 +42,24 @@ def translate_error():
     except FSInvalidFileDescriptor as exc:
         raise NTStatusError(NTSTATUS.STATUS_SOME_NOT_MAPPED) from exc
 
+    except FSWorkspaceNoAccess as exc:
+        raise NTStatusError(NTSTATUS.STATUS_ACCESS_DENIED) from exc
+
     except OSError as exc:
         raise NTStatusError(posix_to_ntstatus(exc.errno)) from exc
 
-    except (Cancelled, RunFinishedError):
+    except FSError as exc:
+        logger.exception("Unhandled FSError in winfsp mountpoint")
+        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
+
+    except (Cancelled, RunFinishedError) as exc:
         # WinFSP teardown operation doesn't make sure no concurrent operation
         # are running
-        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE)
+        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
-    except Exception:
-        logger.exception("mountpoint.request.unhandled_crash")
-        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR)
+    except Exception as exc:
+        logger.exception("Unhandled exception in winfsp mountpoint")
+        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
 
 def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):
