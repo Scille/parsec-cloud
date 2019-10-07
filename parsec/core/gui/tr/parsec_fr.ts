@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS><TS version="2.0">
 <context>
+    <name>AboutWidget</name>
+    <message>
+        <location filename="../forms/about_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="152"/>
+        <source>PARSEC_DEVELOPMENT_LABEL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="188"/>
+        <source>TITLE_LICENSE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="247"/>
+        <source>TITLE_CHANGELOG</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BootstrapOrganizationWidget</name>
     <message>
         <location filename="../forms/bootstrap_organization_widget.ui" line="14"/>
@@ -514,7 +537,7 @@
     </message>
     <message>
         <location filename="../forms/message_dialog.ui" line="304"/>
-        <source>PushButton</source>
+        <source>BUTTON_CONTINUE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

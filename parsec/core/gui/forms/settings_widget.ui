@@ -36,7 +36,6 @@ border: 1px solid rgb(30, 78, 162);
 QTabBar::tab
 {
 height: 32px;
-width: 100px;
 font-size: 14px;
 font-weight: bold;
 padding-left: 30px;
