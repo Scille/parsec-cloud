@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>435</width>
-    <height>454</height>
+    <height>483</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -301,7 +301,7 @@ border: 0;
            </font>
           </property>
           <property name="text">
-           <string>PushButton</string>
+           <string>BUTTON_CONTINUE</string>
           </property>
          </widget>
         </item>
@@ -433,12 +433,12 @@ border: 0;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PointingHandButton</class>
+   <class>ShadowedButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>PointingHandButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
