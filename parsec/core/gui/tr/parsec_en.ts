@@ -8,17 +8,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="152"/>
+        <location filename="../forms/about_widget.ui" line="153"/>
         <source>PARSEC_DEVELOPMENT_LABEL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="188"/>
+        <location filename="../forms/about_widget.ui" line="189"/>
         <source>TITLE_LICENSE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="247"/>
+        <location filename="../forms/about_widget.ui" line="248"/>
         <source>TITLE_CHANGELOG</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1094,6 +1094,11 @@
     <message>
         <location filename="../forms/workspaces_widget.ui" line="14"/>
         <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspaces_widget.ui" line="85"/>
+        <source>WORKSPACE_SEARCH</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
