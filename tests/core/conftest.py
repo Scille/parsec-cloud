@@ -145,7 +145,7 @@ def user_fs_factory(
         ) as cmds:
             path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            async with UserFS(device, path, cmds, rdm, event_bus) as user_fs:
+            async with UserFS.run(device, path, cmds, rdm, event_bus) as user_fs:
                 if initialize_user_storage:
                     await initialize_userfs_storage(device, user_fs.storage)
                 yield user_fs

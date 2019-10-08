@@ -5,7 +5,8 @@ from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional, Union
 from structlog import get_logger
-from async_exit_stack import AsyncExitStack
+
+from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.crypto import SecretKey
@@ -142,7 +143,7 @@ class UserFS:
 
         # Message processing is done in-order, hence it is pointless to do
         # it concurrently
-        self._exit_stack = AsyncExitStack()
+        self._workspace_storage_nursery = None
         self._process_messages_lock = trio.Lock()
         self._update_user_manifest_lock = trio.Lock()
         self._workspace_storages = {}
@@ -167,22 +168,29 @@ class UserFS:
             None,
         )
 
-    async def __aenter__(self):
-        self.storage = await self._exit_stack.enter_async_context(
-            UserStorage.run(self.device, self.path, self.user_manifest_id)
-        )
+    @classmethod
+    @asynccontextmanager
+    async def run(cls, *args, **kwargs):
+        self = cls(*args, **kwargs)
 
-        # Make sure all the workspaces are loaded
-        # In particular, we want to make sure that any workspace available through
-        # `userfs.get_user_manifest().workspaces` is also available through
-        # `userfs.get_workspace(workspace_id)`.
-        for workspace_entry in self.get_user_manifest().workspaces:
-            await self._load_workspace(workspace_entry.id)
+        # Run user storage
+        user_storage_context = UserStorage.run(self.device, self.path, self.user_manifest_id)
+        async with user_storage_context as self.storage:
 
-        return self
+            # Nursery for workspace storages
+            async with trio.open_nursery() as self._workspace_storage_nursery:
 
-    async def __aexit__(self, *args):
-        await self._exit_stack.aclose()
+                # Make sure all the workspaces are loaded
+                # In particular, we want to make sure that any workspace available through
+                # `userfs.get_user_manifest().workspaces` is also available through
+                # `userfs.get_workspace(workspace_id)`.
+                for workspace_entry in self.get_user_manifest().workspaces:
+                    await self._load_workspace(workspace_entry.id)
+
+                yield self
+
+                # Stop the workspace storages
+                self._workspace_storage_nursery.cancel_scope.cancel()
 
     @property
     def user_manifest_id(self) -> EntryID:
@@ -208,8 +216,14 @@ class UserFS:
 
     async def _instantiate_workspace_storage(self, workspace_id: EntryID) -> WorkspaceStorage:
         path = self.path / str(workspace_id)
-        workspace_storage_context = WorkspaceStorage.run(self.device, path, workspace_id)
-        return await self._exit_stack.enter_async_context(workspace_storage_context)
+
+        async def workspace_storage_task(task_status=trio.TASK_STATUS_IGNORED):
+            workspace_storage_context = WorkspaceStorage.run(self.device, path, workspace_id)
+            async with workspace_storage_context as workspace_storage:
+                task_status.started(workspace_storage)
+                await trio.sleep_forever()
+
+        return await self._workspace_storage_nursery.start(workspace_storage_task)
 
     async def _instantiate_workspace(self, workspace_id: EntryID) -> WorkspaceFS:
         # Workspace entry can change at any time, so we provide a way for
