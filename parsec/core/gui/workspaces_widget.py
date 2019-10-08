@@ -452,7 +452,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     widget.reencrypting = None
                 else:
                     widget.reencrypting = (total, done)
-                widget.reload_workspace_name()
+                widget.reload_workspace_name(widget.name)
                 break
 
     def create_workspace_clicked(self):

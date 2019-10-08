@@ -51,26 +51,6 @@ class BackendEventsManager:
             self.event_bus.send("backend.online")
         self.event_bus.send("backend.listener.restarted")
 
-    async def run(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        closed_event = trio.Event()
-        try:
-            self.event_bus.send("backend.listener.started")
-            async with trio.open_nursery() as nursery:
-                # If backend is online, we want to wait before calling
-                # `task_status.started` until we are connected to the backend
-                # with events listener ready.
-                with self.event_bus.waiter_on_first("backend.online", "backend.offline") as waiter:
-
-                    async def _wait_first_backend_connection_outcome():
-                        await waiter.wait()
-                        task_status.started((nursery.cancel_scope, closed_event))
-
-                    nursery.start_soon(_wait_first_backend_connection_outcome)
-                    await self._event_listener_manager()
-
-        finally:
-            closed_event.set()
-
     async def _event_listener_manager(self):
         backend_connection_failures = 0
         while True:
@@ -201,4 +181,5 @@ async def backend_listen_events(
 ):
     with event_bus.connection_context() as event_bus_ctx:
         backend_events_manager = BackendEventsManager(device, event_bus_ctx, keepalive)
-        await backend_events_manager.run(task_status=task_status)
+        task_status.started()
+        await backend_events_manager._event_listener_manager()

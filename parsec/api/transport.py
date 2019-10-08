@@ -6,7 +6,7 @@ import trio
 from trio import BrokenResourceError
 from structlog import get_logger
 from wsproto import WSConnection, ConnectionType
-from wsproto.utilities import LocalProtocolError
+from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 from wsproto.frame_protocol import CloseReason
 from wsproto.events import CloseConnection, AcceptConnection, Request, BytesMessage, Ping, Pong
 
@@ -59,14 +59,18 @@ class Transport:
         self._handshake = handshake
 
     async def _next_ws_event(self):
-        while True:
-            try:
-                return next(self._ws_events)
+        try:
+            while True:
+                try:
+                    return next(self._ws_events)
 
-            except StopIteration:
-                # Not enough data to form an event
-                await self._net_recv()
-                self._ws_events = self.ws.events()
+                except StopIteration:
+                    # Not enough data to form an event
+                    await self._net_recv()
+                    self._ws_events = self.ws.events()
+
+        except RemoteProtocolError as exc:
+            raise TransportError(f"Invalid WebSocket query: {exc}") from exc
 
     async def _net_recv(self):
         try:
@@ -87,6 +91,9 @@ class Transport:
             await self.stream.send_all(self.ws.send(wsmsg))
 
         except BrokenResourceError as exc:
+            raise TransportError(*exc.args) from exc
+
+        except RemoteProtocolError as exc:
             raise TransportError(*exc.args) from exc
 
     @classmethod
