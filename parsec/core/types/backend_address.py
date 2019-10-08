@@ -2,11 +2,9 @@
 
 from urllib.parse import urlsplit, urlunsplit, parse_qs
 
-from pendulum import Pendulum
-
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
-from parsec.api.protocol import OrganizationID
+from parsec.api.protocol import OrganizationID, UserID, DeviceID
 
 
 class BackendAddr(str):
@@ -68,7 +66,7 @@ class BackendAddr(str):
 
 
 class BackendOrganizationAddr(BackendAddr):
-    __slots__ = ("_root_verify_key", "_organization_id", "_expiration_date")
+    __slots__ = ("_root_verify_key", "_organization_id")
 
     @classmethod
     def build(
@@ -89,9 +87,6 @@ class BackendOrganizationAddr(BackendAddr):
             self._root_verify_key = import_root_verify_key(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `rvk` param value") from exc
-        expiration_date = params.pop("expiration_date", None)
-        if expiration_date:
-            self._expiration_date = expiration_date[0]
 
     def _parse_path(self, path):
         self._organization_id = OrganizationID(path[1:])
@@ -99,10 +94,6 @@ class BackendOrganizationAddr(BackendAddr):
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
-
-    @property
-    def expiration_date(self) -> Pendulum:
-        return self._expiration_date
 
     @property
     def root_verify_key(self) -> VerifyKey:
@@ -162,6 +153,70 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
         query = "no_ssl=true" if not self.use_ssl else ""
         backend_addr = urlunsplit((scheme, netloc, "", query, fragment))
         return BackendOrganizationAddr.build(backend_addr, self.organization_id, root_verify_key)
+
+
+class BackendOrganizationClaimUserAddr(BackendOrganizationAddr):
+    __slots__ = ("_user_id",)
+
+    @classmethod
+    def build(
+        cls, backend_addr: str, name: str, user_id: str, root_verify_key: VerifyKey
+    ) -> "BackendOrganizationAddr":
+        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
+        rvk = export_root_verify_key(root_verify_key)
+        query = (
+            f"{base_query}&rvk={rvk}&user_id={user_id}"
+            if base_query
+            else f"rvk={rvk}&user_id={user_id}"
+        )
+        name = f"{base_name}/{name}" if base_name else name
+        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
+
+    def _parse_and_consume_params(self, params):
+        super()._parse_and_consume_params(params)
+        value = params.pop("user_id", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `user_id` param")
+        try:
+            self._user_id = UserID(value[0])
+        except ValueError as exc:
+            raise ValueError("Invalid `user_id` param value") from exc
+
+    @property
+    def user_id(self) -> UserID:
+        return self._user_id
+
+
+class BackendOrganizationClaimDeviceAddr(BackendOrganizationAddr):
+    __slots__ = ("_device_id",)
+
+    @classmethod
+    def build(
+        cls, backend_addr: str, name: str, device_id: str, root_verify_key: VerifyKey
+    ) -> "BackendOrganizationAddr":
+        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
+        rvk = export_root_verify_key(root_verify_key)
+        query = (
+            f"{base_query}&rvk={rvk}&device_id={device_id}"
+            if base_query
+            else f"rvk={rvk}&device_id={device_id}"
+        )
+        name = f"{base_name}/{name}" if base_name else name
+        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
+
+    def _parse_and_consume_params(self, params):
+        super()._parse_and_consume_params(params)
+        value = params.pop("device_id", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `device_id` param")
+        try:
+            self._device_id = DeviceID(value[0])
+        except ValueError as exc:
+            raise ValueError("Invalid `device_id` param value") from exc
+
+    @property
+    def device_id(self) -> DeviceID:
+        return self._device_id
 
 
 BackendOrganizationAddrField = fields.str_based_field_factory(BackendOrganizationAddr)

@@ -10,6 +10,8 @@ from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
     BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationAddrField,
 )
 from parsec.core.types.local_device import LocalDevice
@@ -49,6 +51,8 @@ __all__ = (
     "BackendAddr",
     "BackendOrganizationAddr",
     "BackendOrganizationBootstrapAddr",
+    "BackendOrganizationClaimUserAddr",
+    "BackendOrganizationClaimDeviceAddr",
     "BackendOrganizationAddrField",
     # local_device
     "LocalDevice",
