@@ -3,96 +3,34 @@
 from pathlib import Path
 from typing import Dict, Tuple, Set
 from structlog import get_logger
-from sqlite3 import connect as sqlite_connect
-from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalManifest
-
+from parsec.core.fs.storage.base_storage import BaseStorage
 
 logger = get_logger()
 
 
-class ManifestStorage:
+class ManifestStorage(BaseStorage):
     """Persistent storage with cache for storing manifests.
 
     Also stores the checkpoint.
     """
 
     def __init__(self, device: LocalDevice, path: Path, realm_id: EntryID):
+        super().__init__(path)
         self.device = device
-        self.path = Path(path)
         self.realm_id = realm_id
 
         self._cache = {}
         self._cache_ahead_of_persistance_ids = set()
-        self._conn = None
 
-    @classmethod
-    @asynccontextmanager
-    async def run(cls, *args, **kwargs):
-        self = cls(*args, **kwargs)
-        try:
-            await self._connect()
-            try:
-                yield self
-            finally:
-                await self._flush_cache_ahead_of_persistance()
-        finally:
-            await self._close()
-
-    # Life cycle
-
-    async def _create_connection(self):
-        # Create directories
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Create sqlite connection
-        conn = sqlite_connect(str(self.path))
-
-        # Set fast auto-commit mode
-        conn.isolation_level = None
-        conn.execute("pragma journal_mode=wal")
-        conn.execute("PRAGMA synchronous = OFF")
-
-        # Return connection
-        return conn
-
-    async def _connect(self):
-        if self._conn is not None:
-            raise RuntimeError("Already connected")
-
-        # Connect and initialize database
-        self._conn = await self._create_connection()
-
-        # Initialize
-        await self._create_db()
-
-    async def _close(self):
-        # Idempotency
-        if self._conn is None:
-            return
-
-        # Auto-commit is used but do it once more just in case
-        self._conn.commit()
-        self._conn.close()
-        self._conn = None
+    async def _flush(self):
+        await self._flush_cache_ahead_of_persistance()
 
     def clear_memory_cache(self):
         self._cache.clear()
         self._cache_ahead_of_persistance_ids.clear()
-
-    # Cursor management
-
-    @asynccontextmanager
-    async def _open_cursor(self):
-        cursor = self._conn.cursor()
-        # Automatic rollback on exception
-        with self._conn:
-            try:
-                yield cursor
-            finally:
-                cursor.close()
 
     # Database initialization
 

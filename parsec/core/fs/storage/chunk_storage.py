@@ -2,78 +2,17 @@
 
 from time import time
 from pathlib import Path
-from async_generator import asynccontextmanager
-from sqlite3 import connect as sqlite_connect
 
 from parsec.core.types import ChunkID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
+from parsec.core.fs.storage.base_storage import BaseStorage
 
 
-class BaseChunkStorage:
+class BaseChunkStorage(BaseStorage):
     def __init__(self, device: LocalDevice, path: Path):
+        super().__init__(path)
         self.local_symkey = device.local_symkey
-        self.path = Path(path)
-        self._conn = None
-
-    @classmethod
-    @asynccontextmanager
-    async def run(cls, *args, **kwargs):
-        self = cls(*args, **kwargs)
-        try:
-            await self._connect()
-            yield self
-        finally:
-            await self._close()
-
-    # Life cycle
-
-    async def _create_connection(self):
-        # Create directories
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Create sqlite connection
-        conn = sqlite_connect(str(self.path))
-
-        # Set fast auto-commit mode
-        conn.isolation_level = None
-        conn.execute("pragma journal_mode=wal")
-        conn.execute("PRAGMA synchronous = OFF")
-
-        # Return connection
-        return conn
-
-    async def _connect(self):
-        if self._conn is not None:
-            raise RuntimeError("Already connected")
-
-        # Connect and initialize database
-        self._conn = await self._create_connection()
-
-        # Initialize
-        await self._create_db()
-
-    async def _close(self):
-        # Idempotency
-        if self._conn is None:
-            return
-
-        # Auto-commit is used but do it once more just in case
-        self._conn.commit()
-        self._conn.close()
-        self._conn = None
-
-    # Cursor management
-
-    @asynccontextmanager
-    async def _open_cursor(self):
-        cursor = self._conn.cursor()
-        # Automatic rollback on exception
-        with self._conn:
-            try:
-                yield cursor
-            finally:
-                cursor.close()
 
     # Database initialization
 
