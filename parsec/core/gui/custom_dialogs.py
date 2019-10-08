@@ -148,7 +148,11 @@ class MessageDialog(QDialog, Ui_MessageDialog):
             if not stack:
                 self.button_details.hide()
             else:
-                self.text_details.setPlainText("\n".join(stack))
+                except_text = "<b>{}</b><br /><br />{}".format(
+                    str(exception).replace("\n", "<br />"), "<br />".join(stack)
+                )
+                except_text = except_text.replace("\n", "<br />")
+                self.text_details.setHtml(except_text)
         self.button_details.clicked.connect(self.show_details)
         self.button_copy.clicked.connect(self.copy_to_clipboard)
         self.button_copy.hide()
