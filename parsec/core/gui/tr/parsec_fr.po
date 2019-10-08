@@ -1314,7 +1314,7 @@ msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
 msgstr "Les rôles ont été mis à jour."
 
 msgid "PARSEC_WINDOW_TITLE"
-msgstr "Parsec - Édition Communautaire - {} - Enclave souveraine pour le partage de données sensibles dans le cloud."
+msgstr Parsec - {}"
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
