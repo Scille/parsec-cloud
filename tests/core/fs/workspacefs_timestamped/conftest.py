@@ -11,6 +11,15 @@ day2 = pendulum.Pendulum(2000, 1, 2)
 day3 = pendulum.Pendulum(2000, 1, 3)
 day4 = pendulum.Pendulum(2000, 1, 4)
 day5 = pendulum.Pendulum(2000, 1, 5)
+day6 = pendulum.Pendulum(2000, 1, 6)
+day7 = pendulum.Pendulum(2000, 1, 7)
+day8 = pendulum.Pendulum(2000, 1, 8)
+day9 = pendulum.Pendulum(2000, 1, 9)
+day10 = pendulum.Pendulum(2000, 1, 10)
+day11 = pendulum.Pendulum(2000, 1, 11)
+day12 = pendulum.Pendulum(2000, 1, 12)
+day13 = pendulum.Pendulum(2000, 1, 13)
+day14 = pendulum.Pendulum(2000, 1, 14)
 
 
 @pytest.fixture
@@ -39,6 +48,38 @@ async def alice_workspace(alice_user_fs, running_backend):
         await workspace.write_bytes("/files/content", b"fghij")
         await workspace.sync()
 
+    with freeze_time(day6):
+        await workspace.rename("/files/content", "/files/renamed_content")
+        await workspace.sync()
+    with freeze_time(day7):
+        await workspace.rename("/files/renamed_content", "/files/renamed_again_content")
+        await workspace.sync()
+    with freeze_time(day8):
+        await workspace.touch("/files/renamed_content")
+        await workspace.write_bytes("/files/renamed_content", b"aaaaaa")
+        await workspace.sync()
+
+    with freeze_time(day9):
+        await workspace.rename("/files", "/moved_files")
+        await workspace.sync()
+    with freeze_time(day10):
+        await workspace.touch("/moved_files/content2")
+        await workspace.write_bytes("/moved_files/content2", b"bbbbb")
+        await workspace.sync()
+    with freeze_time(day11):
+        await workspace.rename("/moved_files", "/files")
+        await workspace.sync()
+
+    with freeze_time(day12):
+        await workspace.unlink("/files/renamed_content")
+        await workspace.sync()
+    with freeze_time(day13):
+        await workspace.touch("/files/renamed_content")
+        await workspace.sync()
+    with freeze_time(day14):
+        await workspace.touch("/files/renamed_content")
+        await workspace.write_bytes("/files/renamed_content", b"ccccc")
+        await workspace.sync()
     return workspace
 
 
