@@ -15,6 +15,11 @@ from parsec.serde import (
     SerdeError,
     MsgpackSerializer,
 )
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
+)
 
 
 logger = get_logger()
@@ -44,13 +49,28 @@ class ForegroundReqSchema(BaseSchema):
     cmd = fields.CheckedConstant("foreground", required=True)
 
 
+def _parse_new_instance_url(raw):
+    for type in (
+        BackendOrganizationBootstrapAddr,
+        BackendOrganizationClaimUserAddr,
+        BackendOrganizationClaimDeviceAddr,
+    ):
+        try:
+            return type(raw)
+        except ValueError:
+            pass
+    raise ValueError("Invalid URL format")
+
+
+class NewInstanceReqSchema(BaseSchema):
+    cmd = fields.CheckedConstant("new_instance", required=True)
+    url = fields.str_based_field_factory(_parse_new_instance_url)(allow_none=True)
+
+
 class CommandReqSchema(OneOfSchema):
     type_field = "cmd"
     type_field_remove = False
-
-    @property
-    def type_schemas(self):
-        return {"foreground": ForegroundReqSchema}
+    type_schemas = {"foreground": ForegroundReqSchema, "new_instance": NewInstanceReqSchema}
 
     def get_obj_type(self, obj):
         return obj["cmd"]
@@ -185,6 +205,8 @@ async def send_to_ipc_server(socket_file: Path, cmd, **kwargs):
         unpacker = Unpacker(exc_cls=IPCServerError)
         while True:
             raw = await stream.receive_some(1000)
+            if not raw:
+                raise IPCServerError(f"IPC server has closed the connection unexpectly")
             unpacker.feed(raw)
             raw_rep = next(unpacker, None)
             rep = cmd_rep_serializer.load(raw_rep)
