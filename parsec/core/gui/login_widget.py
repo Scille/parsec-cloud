@@ -1,9 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.local_device import list_available_devices
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
+)
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
@@ -130,7 +136,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_bootstrap_instead.show()
         login_widget.show()
 
-    def show_bootstrap_widget(self, url=None):
+    def show_bootstrap_widget(self, url: Optional[BackendOrganizationBootstrapAddr] = None):
         self.clear_widgets()
 
         bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config, url)
@@ -145,7 +151,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         bootstrap_organization.show()
 
-    def show_claim_user_widget(self, url=None):
+    def show_claim_user_widget(self, url: Optional[BackendOrganizationClaimUserAddr] = None):
         self.clear_widgets()
 
         claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config, url)
@@ -161,7 +167,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_bootstrap_instead.show()
         claim_user_widget.show()
 
-    def show_claim_device_widget(self, url=None):
+    def show_claim_device_widget(self, url: Optional[BackendOrganizationClaimDeviceAddr] = None):
         self.clear_widgets()
 
         claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config, url)

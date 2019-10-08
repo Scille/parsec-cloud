@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
@@ -9,7 +10,7 @@ from parsec.core.local_device import (
     save_device_with_password,
     save_device_with_pkcs11,
 )
-from parsec.core.types import BackendOrganizationAddr
+from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimUserAddr
 from parsec.core.invite_claim import (
     claim_user as core_claim_user,
     InviteClaimError,
@@ -91,7 +92,14 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(self, jobs_ctx, config, url=None, *args, **kwargs):
+    def __init__(
+        self,
+        jobs_ctx,
+        config,
+        url: Optional[BackendOrganizationClaimUserAddr] = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -99,6 +107,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_user_job = None
         if url:
             self.line_edit_url.setText(url)
+            self.line_edit_login.setText(url.user_id)
         self.button_claim.clicked.connect(self.claim_clicked)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)

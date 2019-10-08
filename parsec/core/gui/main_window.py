@@ -1,13 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Union
 from functools import partial
 from structlog import get_logger
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow
 
 from parsec import __version__ as PARSEC_VERSION
 
 from parsec.core.config import save_config
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
+)
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui import telemetry
@@ -20,9 +26,10 @@ logger = get_logger()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(
-        self, jobs_ctx, event_bus, config, daemon=None, minimize_on_close: bool = False, **kwargs
-    ):
+    foreground_needed = pyqtSignal()
+    new_instance_needed = pyqtSignal(object)
+
+    def __init__(self, jobs_ctx, event_bus, config, minimize_on_close: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
 
@@ -34,11 +41,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.need_close = False
         self.event_bus.connect("gui.config.changed", self.on_config_updated)
         self.setWindowTitle(_("PARSEC_WINDOW_TITLE").format(PARSEC_VERSION))
+        self.foreground_needed.connect(self._on_foreground_needed)
+        self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
-        self.daemon = daemon
-        if daemon:
-            self.daemon.new_instance_required.connect(self.add_instance)
         self.add_instance()
+
+    def _on_foreground_needed(self):
+        self.show_top()
+
+    def _on_new_instance_needed(self, url):
+        self.add_instance(url)
 
     def on_config_updated(self, event, **kwargs):
         self.config = self.config.evolve(**kwargs)
@@ -77,32 +89,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = tab.current_device
             self.set_tab_title(
                 tab, f"{device.organization_id}:{device.user_id}@{device.device_name}"
+            )
 
-    def add_instance(self, cmd=None, url=None):
+    def add_instance(
+        self,
+        url: Union[
+            None,
+            BackendOrganizationBootstrapAddr,
+            BackendOrganizationClaimUserAddr,
+            BackendOrganizationClaimDeviceAddr,
+        ] = None,
+    ):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
         self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
         self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
         if self.tab_center.count() > 1:
             self.tab_center.setTabsClosable(True)
-        if not cmd or cmd == "new-window":
-            tab.show_login_widget("log-in")
-            self.set_tab_title(tab, _("TAB_TITLE_LOG_IN"))
-        elif cmd == "bootstrap":
-            tab.show_login_widget("bootstrap-org", url=url)
+
+        if isinstance(url, BackendOrganizationBootstrapAddr):
+            tab.show_login_widget(show_meth="show_bootstrap_widget", url=url)
             self.set_tab_title(tab, _("TAB_TITLE_BOOTSTRAP"))
-        elif cmd == "claim-user":
-            tab.show_login_widget("claim-user", url=url)
+
+        elif isinstance(url, BackendOrganizationClaimUserAddr):
+            tab.show_login_widget(show_meth="show_claim_user_widget", url=url)
             self.set_tab_title(tab, _("TAB_TITLE_CLAIM_USER"))
-        elif cmd == "claim-device":
-            tab.show_login_widget("claim-device", url=url)
+
+        elif isinstance(url, BackendOrganizationClaimDeviceAddr):
+            tab.show_login_widget(show_meth="show_claim_device_widget", url=url)
             self.set_tab_title(tab, _("TAB_TITLE_CLAIM_DEVICE"))
+
+        else:
+            # Fallback to just create the default login windows
+            tab.show_login_widget()
+            self.set_tab_title(tab, _("TAB_TITLE_LOG_IN"))
+
         self.show_top()
 
     def close_app(self, force=False):
         self.need_close = True
         self.force_close = force
-        self.daemon.clean_up()
         self.close()
 
     def close_all_tabs(self):
@@ -112,7 +138,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def close_tab(self, index, force=False):
         tab = self.tab_center.widget(index)
         if not force:
-            if tab and tab.logged_in:
+            if tab and tab.is_logged_in:
                 r = QuestionDialog.ask(
                     self, _("ASK_CLOSE_TAB_TITLE"), _("ASK_CLOSE_TAB_CONTENT_LOGGED_IN")
                 )

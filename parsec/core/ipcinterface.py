@@ -150,8 +150,8 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
                 for cmd in unpacker:
                     cmd = cmd_req_serializer.load(cmd)
                     rep = await cmd_handler(cmd)
-                    logger.info("Command processed", cmd=cmd, rep=rep)
                     raw_rep = cmd_rep_serializer.dumps(rep)
+                    logger.info("Command processed", cmd=cmd["cmd"], rep_status=rep["status"])
                     await stream.send_all(raw_rep)
 
         except trio.BrokenResourceError:

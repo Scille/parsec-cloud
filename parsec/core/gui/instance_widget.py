@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import trio
 
 from structlog import get_logger
@@ -81,7 +83,7 @@ class InstanceWidget(QWidget):
         return None
 
     @property
-    def logged_in(self):
+    def is_logged_in(self):
         return self.running_core_job is not None
 
     def start_core(self, device):
@@ -202,18 +204,13 @@ class InstanceWidget(QWidget):
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
 
-    def show_login_widget(self, widget=None, url=None):
+    def show_login_widget(self, show_meth="show_login_widget", **kwargs):
         self.clear_widgets()
         login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
         self.layout().addWidget(login_widget)
-        if not widget or widget == "log-in":
-            login_widget.show_login_widget()
-        elif widget == "bootstrap-org":
-            login_widget.show_bootstrap_widget(url)
-        elif widget == "claim-user":
-            login_widget.show_claim_user_widget(url)
-        elif widget == "claim-device":
-            login_widget.show_claim_device_widget()
+
+        getattr(login_widget, show_meth)(**kwargs)
+
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
         login_widget.show()

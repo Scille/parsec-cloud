@@ -9,7 +9,6 @@ from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, generate_not_available_cmd
 from parsec.core import logged_core_factory
 from parsec.core.cli.utils import core_config_and_device_options, core_config_options
-from parsec.core.types import BackendOrganizationBootstrapAddr
 
 try:
     from parsec.core.gui import run_gui as _run_gui
@@ -20,17 +19,14 @@ except ImportError as exc:
 else:
 
     @click.command(short_help="run parsec GUI")
-    @click.option(
-        "--cmd", type=click.Choice(["bootstrap", "claim-user", "claim-device"]), required=False
-    )
-    @click.option("--addr", "-B", type=BackendOrganizationBootstrapAddr, required=False)
+    @click.argument("url", required=False)
     @core_config_options
-    def run_gui(config, cmd=None, addr=None, **kwargs):
+    def run_gui(config, url, **kwargs):
         """
         Run parsec GUI
         """
         config = config.evolve(mountpoint_enabled=True)
-        _run_gui(config, cmd, addr)
+        _run_gui(config, url=url)
 
 
 async def _run_mountpoint(config, device, timestamp: Pendulum = None):
