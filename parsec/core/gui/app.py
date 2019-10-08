@@ -50,7 +50,7 @@ def run_gui(config: CoreConfig):
     f = QFont("Arial")
     app.setFont(f)
 
-    lang.switch_language(config)
+    lang_key = lang.switch_language(config)
 
     if not config.gui_allow_multiple_instances and desktop.parsec_instances_count() > 1:
         show_error(None, _("PARSEC_ALREADY_RUNNING"))
@@ -91,5 +91,7 @@ def run_gui(config: CoreConfig):
         timer = QTimer()
         timer.start(400)
         timer.timeout.connect(lambda: None)
+        if lang_key:
+            event_bus.send("gui.config.changed", gui_language=lang_key)
 
         return app.exec_()
