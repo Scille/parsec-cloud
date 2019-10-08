@@ -140,7 +140,6 @@ class ManifestStorage:
         Raises: Nothing !
         """
         async with self._open_cursor() as cursor:
-            cursor.execute("BEGIN")
             cursor.executemany(
                 "UPDATE vlobs SET remote_version = ? WHERE vlob_id = ?",
                 ((version, entry_id.bytes) for entry_id, version in changed_vlobs.items()),
@@ -150,7 +149,6 @@ class ManifestStorage:
                 VALUES (0, ?)""",
                 (new_checkpoint,),
             )
-            cursor.execute("END")
 
     async def get_need_sync_entries(self) -> Tuple[Set[EntryID], Set[EntryID]]:
         """

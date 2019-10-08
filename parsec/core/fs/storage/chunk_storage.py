@@ -122,7 +122,6 @@ class BaseChunkStorage:
 
     async def get_chunk(self, chunk_id: ChunkID):
         async with self._open_cursor() as cursor:
-            cursor.execute("BEGIN")
             cursor.execute(
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
@@ -136,7 +135,6 @@ class BaseChunkStorage:
 
             cursor.execute("""SELECT data FROM chunks WHERE chunk_id = ?""", (chunk_id.bytes,))
             ciphered, = cursor.fetchone()
-            cursor.execute("END")
 
         return self.local_symkey.decrypt(ciphered)
 
@@ -155,11 +153,9 @@ class BaseChunkStorage:
 
     async def clear_chunk(self, chunk_id: ChunkID):
         async with self._open_cursor() as cursor:
-            cursor.execute("BEGIN")
             cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
-            cursor.execute("END")
 
         if not changes:
             raise FSLocalMissError(chunk_id)
