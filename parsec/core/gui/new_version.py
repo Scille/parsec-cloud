@@ -6,13 +6,15 @@ import trio
 from urllib.request import urlopen, Request
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QWidget
 
 from parsec import __version__
-from parsec.core.config import save_config
 from parsec.core.gui import desktop
 from parsec.core.gui.trio_thread import ThreadSafeQtSignal
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.new_version_dialog import Ui_NewVersionDialog
+from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
+from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 
 
 RELEASE_URL = "https://github.com/Scille/parsec-build/releases/latest"
@@ -40,15 +42,51 @@ async def _do_check_new_version(url):
         return None
 
 
-async def _do_disable_check(event_bus):
-    event_bus.send("gui.config.changed", gui_check_version_at_startup=False)
+class NewVersionInfo(QWidget, Ui_NewVersionInfo):
+    close_clicked = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setupUi(self)
+        self.button_close.clicked.connect(self.close_clicked.emit)
+        self.show_waiting()
+
+    def show_error(self):
+        self.label_waiting.hide()
+        self.label_error.show()
+        self.label_up_to_date.hide()
+
+    def show_up_to_date(self):
+        self.label_waiting.hide()
+        self.label_error.hide()
+        self.label_up_to_date.show()
+
+    def show_waiting(self):
+        self.label_waiting.show()
+        self.label_error.hide()
+        self.label_up_to_date.hide()
+
+
+class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
+    download_clicked = pyqtSignal()
+    close_clicked = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setupUi(self)
+        self.button_download.clicked.connect(self.download_clicked.emit)
+        self.button_ignore.clicked.connect(self.close_clicked.emit)
+
+    def set_version(self, version):
+        if version:
+            self.label.setText(
+                _("LABEL_NEW_VERSION_AVAILABLE_{}").format(".".join([str(_) for _ in version]))
+            )
 
 
 class CheckNewVersion(QDialog, Ui_NewVersionDialog):
     check_new_version_success = pyqtSignal()
     check_new_version_error = pyqtSignal()
-    disable_check_success = pyqtSignal()
-    disable_check_error = pyqtSignal()
 
     def __init__(self, jobs_ctx, event_bus, config, **kwargs):
         super().__init__(**kwargs)
@@ -57,49 +95,67 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         if platform.system() != "Windows":
             return
 
+        self.widget_info = NewVersionInfo(parent=self)
+        self.widget_available = NewVersionAvailable(parent=self)
+        self.widget_available.hide()
+        self.layout.addWidget(self.widget_info)
+        self.layout.addWidget(self.widget_available)
+
+        self.widget_info.close_clicked.connect(self.ignore)
+        self.widget_available.close_clicked.connect(self.ignore)
+        self.widget_available.download_clicked.connect(self.download)
+
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
 
         self.check_new_version_success.connect(self.on_check_new_version_success)
+        self.check_new_version_error.connect(self.on_check_new_version_error)
 
-        self.check_new_version_job = jobs_ctx.submit_job(
+        self.version_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "check_new_version_success"),
             ThreadSafeQtSignal(self, "check_new_version_error"),
             _do_check_new_version,
             url=self.config.gui_check_version_url,
         )
-        self.disable_check_job = None
-
-        self.button_download.clicked.connect(self.download)
-        self.button_ignore.clicked.connect(self.ignore)
         self.setWindowFlags(Qt.SplashScreen)
 
     def on_check_new_version_success(self):
-        assert self.check_new_version_job.is_finished()
-        assert self.check_new_version_job.status == "ok"
-        new_version = self.check_new_version_job.ret
+        assert self.version_job.is_finished()
+        assert self.version_job.status == "ok"
+        new_version = self.version_job.ret
+        self.version_job = None
         if new_version:
-            self.exec_()
+            self.widget_available.show()
+            self.widget_info.hide()
+            self.widget_available.set_version(new_version)
+            if not self.isVisible():
+                self.exec_()
+        else:
+            if not self.isVisible():
+                self.ignore()
+            self.widget_available.hide()
+            self.widget_info.show()
+            self.widget_info.show_up_to_date()
+
+    def on_check_new_version_error(self):
+        assert self.version_job.is_finished()
+        assert self.version_job.status != "ok"
+        self.version_job = None
+        if not self.isVisible():
+            self.ignore()
+        self.widget_available.hide()
+        self.widget_info.show()
+        self.widget_info.show_error()
 
     def download(self):
         desktop.open_url(self.config.gui_check_version_url)
         self.accept()
 
     def ignore(self):
-        if self.check_box_no_reminder.isChecked():
-            # TODO
-            # self.disable_check_job = self.jobs_ctx.submit_job(
-            #     self.disable_check_success,
-            #     self.disable_check_error,
-            #     _do_disable_check,
-            # )
-            self.config = self.config.evolve(gui_check_version_at_startup=False)
-            save_config(self.config)
         self.reject()
 
     def closeEvent(self, event):
-        self.check_new_version_job.cancel_and_join()
-        if self.disable_check_job:
-            self.disable_check_job.cancel_and_join()
+        if self.version_job:
+            self.version_job.cancel_and_join()
         event.accept()

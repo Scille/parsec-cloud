@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS><TS version="2.0">
 <context>
+    <name>AboutWidget</name>
+    <message>
+        <location filename="../forms/about_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="153"/>
+        <source>PARSEC_DEVELOPMENT_LABEL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="189"/>
+        <source>TITLE_LICENSE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="248"/>
+        <source>TITLE_CHANGELOG</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BootstrapOrganizationWidget</name>
     <message>
         <location filename="../forms/bootstrap_organization_widget.ui" line="14"/>
@@ -272,73 +295,68 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="126"/>
+        <location filename="../forms/global_settings_widget.ui" line="250"/>
         <source>SETTINGS_TITLE_BEHAVIOR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="140"/>
+        <location filename="../forms/global_settings_widget.ui" line="264"/>
         <source>CHECK_MINIMIZE_IN_TRAY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="218"/>
+        <location filename="../forms/global_settings_widget.ui" line="335"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="234"/>
+        <location filename="../forms/global_settings_widget.ui" line="351"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="316"/>
+        <location filename="../forms/global_settings_widget.ui" line="433"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="332"/>
+        <location filename="../forms/global_settings_widget.ui" line="449"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="354"/>
+        <location filename="../forms/global_settings_widget.ui" line="476"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="430"/>
+        <location filename="../forms/global_settings_widget.ui" line="552"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="444"/>
+        <location filename="../forms/global_settings_widget.ui" line="566"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="505"/>
+        <location filename="../forms/global_settings_widget.ui" line="627"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="519"/>
+        <location filename="../forms/global_settings_widget.ui" line="641"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="609"/>
+        <location filename="../forms/global_settings_widget.ui" line="729"/>
         <source>BUTTON_SAVE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="154"/>
+        <location filename="../forms/global_settings_widget.ui" line="271"/>
         <source>CHECK_WINDOWS_MOUNTPOINT</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/global_settings_widget.ui" line="147"/>
-        <source>CHECK_ALLOW_MULTIPLE_INSTANCES</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -514,7 +532,7 @@
     </message>
     <message>
         <location filename="../forms/message_dialog.ui" line="304"/>
-        <source>PushButton</source>
+        <source>BUTTON_CONTINUE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -630,30 +648,56 @@
     </message>
 </context>
 <context>
-    <name>NewVersionDialog</name>
+    <name>NewVersionAvailable</name>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="14"/>
-        <source>Dialog</source>
+        <location filename="../forms/new_version_available.ui" line="14"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="97"/>
-        <source>LABEL_NEW_VERSION_AVAILABLE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/new_version_dialog.ui" line="139"/>
+        <location filename="../forms/new_version_available.ui" line="85"/>
         <source>BUTTON_DOWNLOAD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="188"/>
-        <source>CHECK_NO_REMINDER</source>
+        <location filename="../forms/new_version_available.ui" line="151"/>
+        <source>BUTTON_IGNORE</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NewVersionDialog</name>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="26"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NewVersionInfo</name>
+    <message>
+        <location filename="../forms/new_version_info.ui" line="14"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_version_dialog.ui" line="212"/>
-        <source>BUTTON_IGNORE</source>
+        <location filename="../forms/new_version_info.ui" line="43"/>
+        <source>LABEL_CHECKING_NEW_VERSION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_info.ui" line="58"/>
+        <source>LABEL_NEW_VERSION_ERROR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_info.ui" line="73"/>
+        <source>LABEL_VERSION_UPDATE_TO_DATE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_info.ui" line="123"/>
+        <source>BUTTON_CLOSE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -767,6 +811,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../forms/register_device_dialog.ui" line="270"/>
+        <source>BUTTON_COPY_TO_CLIPBOARD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../forms/register_device_dialog.ui" line="337"/>
         <source>BUTTON_REGISTER_DEVICE</source>
         <translation type="unfinished"></translation>
@@ -779,11 +828,6 @@
     <message>
         <location filename="../forms/register_device_dialog.ui" line="406"/>
         <source>BUTTON_CLOSE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/register_device_dialog.ui" line="270"/>
-        <source>BUTTON_COPY_TO_CLIPBOARD</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -825,6 +869,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../forms/register_user_dialog.ui" line="272"/>
+        <source>BUTTON_COPY_TO_CLIPBOARD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../forms/register_user_dialog.ui" line="342"/>
         <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
@@ -837,11 +886,6 @@
     <message>
         <location filename="../forms/register_user_dialog.ui" line="411"/>
         <source>BUTTON_CLOSE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/register_user_dialog.ui" line="272"/>
-        <source>BUTTON_COPY_TO_CLIPBOARD</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -876,7 +920,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_dialog.ui" line="202"/>
+        <location filename="../forms/settings_dialog.ui" line="196"/>
         <source>BUTTON_CLOSE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -982,33 +1026,33 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="283"/>
+        <location filename="../forms/workspace_button.ui" line="270"/>
         <source>LABEL_WORKSPACE_EMPTY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="456"/>
+        <location filename="../forms/workspace_button.ui" line="443"/>
         <source>LABEL_RENAME_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="522"/>
+        <location filename="../forms/workspace_button.ui" line="509"/>
         <source>LABEL_SHARE_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="636"/>
+        <location filename="../forms/workspace_button.ui" line="572"/>
+        <source>LABEL_MOUNT_TIMESTAMP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_button.ui" line="623"/>
         <source>LABEL_ENCRYPT_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="699"/>
+        <location filename="../forms/workspace_button.ui" line="686"/>
         <source>LABEL_DELETE_WORKSPACE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/workspace_button.ui" line="585"/>
-        <source>LABEL_MOUNT_TIMESTAMP</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1045,6 +1089,11 @@
     <message>
         <location filename="../forms/workspaces_widget.ui" line="14"/>
         <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspaces_widget.ui" line="85"/>
+        <source>WORKSPACE_SEARCH</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

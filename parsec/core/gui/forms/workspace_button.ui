@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>350</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>300</width>
-    <height>300</height>
+    <width>350</width>
+    <height>307</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>400</width>
-    <height>327</height>
+    <width>350</width>
+    <height>307</height>
    </size>
   </property>
   <property name="font">
@@ -84,16 +84,16 @@ color: rgb(9, 66, 155);
        <number>10</number>
       </property>
       <property name="leftMargin">
-       <number>20</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>20</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>20</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
-       <number>20</number>
+       <number>10</number>
       </property>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">

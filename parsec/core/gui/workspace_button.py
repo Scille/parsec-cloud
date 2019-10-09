@@ -2,7 +2,7 @@
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QCursor
 
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.types import EntryID
@@ -45,6 +45,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.is_shared = is_shared
         self.is_creator = is_creator
         self.reencrypting = None
+        self.setCursor(QCursor(Qt.PointingHandCursor))
         files = files or []
 
         if not len(files):

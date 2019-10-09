@@ -87,7 +87,7 @@ def run_gui(config: CoreConfig, url=None):
     f = QFont("Arial")
     app.setFont(f)
 
-    lang.switch_language(config)
+    lang_key = lang.switch_language(config)
 
     event_bus = EventBus()
     with run_trio_thread() as jobs_ctx:
@@ -148,5 +148,7 @@ def run_gui(config: CoreConfig, url=None):
         timer = QTimer()
         timer.start(400)
         timer.timeout.connect(lambda: None)
+        if lang_key:
+            event_bus.send("gui.config.changed", gui_language=lang_key)
 
         return app.exec_()
