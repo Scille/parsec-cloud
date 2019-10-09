@@ -36,7 +36,7 @@ async def _claim_device(config, backend_addr, token, new_device_id, password, pk
 @core_config_options
 @click.argument("device", type=DeviceID, required=True)
 @click.option("--token", required=True)
-@click.option("--addr", "-B", required=True, type=BackendOrganizationAddr)
+@click.option("--addr", "-B", required=True, type=BackendOrganizationAddr.from_url)
 @click.password_option()
 @click.option("--pkcs11", is_flag=True)
 def claim_device(config, addr, device, token, password, pkcs11, **kwargs):

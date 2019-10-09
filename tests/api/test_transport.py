@@ -84,7 +84,9 @@ async def test_big_buffer_bench(backend_addr):
 
     async def _boot_client():
         nonlocal client_transport
-        client_transport = await Transport.init_for_client(client_stream, backend_addr)
+        client_transport = await Transport.init_for_client(
+            client_stream, host=backend_addr.hostname
+        )
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(_boot_client)

@@ -17,13 +17,13 @@ async def _create_organization(debug, name, backend_addr, administration_token, 
             bootstrap_token = await cmds.organization_create(name, expiration_date)
 
     organization_addr = BackendOrganizationBootstrapAddr.build(backend_addr, name, bootstrap_token)
-    organization_addr_display = click.style(organization_addr, fg="yellow")
+    organization_addr_display = click.style(organization_addr.to_url(), fg="yellow")
     click.echo(f"Bootstrap organization url: {organization_addr_display}")
 
 
 @click.command(short_help="create new organization")
 @click.argument("name", required=True, type=OrganizationID)
-@click.option("--addr", "-B", required=True, type=BackendAddr)
+@click.option("--addr", "-B", required=True, type=BackendAddr.from_url)
 @click.option("--administration-token", "-T", required=True)
 @click.option("--expiration-date", "-E", default=None, type=click.DateTime())
 def create_organization(name, addr, administration_token, expiration_date):

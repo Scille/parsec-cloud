@@ -312,7 +312,7 @@ def test_get_login_widget(self):
 def test_get_login_login_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, LoginLoginWidget):
@@ -324,7 +324,7 @@ def test_get_login_login_widget(self):
 def test_get_claim_user_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, ClaimUserWidget):
@@ -336,7 +336,7 @@ def test_get_claim_user_widget(self):
 def test_get_claim_device_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, ClaimDeviceWidget):
@@ -348,7 +348,7 @@ def test_get_claim_device_widget(self):
 def test_get_bootstrap_organization_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, BootstrapOrganizationWidget):

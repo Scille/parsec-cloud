@@ -97,7 +97,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self,
         jobs_ctx,
         config,
-        url: Optional[BackendOrganizationClaimDeviceAddr] = None,
+        addr: Optional[BackendOrganizationClaimDeviceAddr] = None,
         *args,
         **kwargs,
     ):
@@ -106,10 +106,6 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.claim_device_job = None
-        if url:
-            self.line_edit_url.setText(url)
-            self.line_edit_login.setText(url.device_id.user_id)
-            self.line_edit_device.setText(url.device_id.device_name)
         self.button_claim.clicked.connect(self.claim_clicked)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
@@ -122,17 +118,26 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.claim_error.connect(self.on_claim_error)
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
+        self.line_edit_url.setValidator(validators.BackendOrganizationClaimDeviceAddrValidator())
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_DEVICE_REGISTRATION"))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
         self.check_box_use_pkcs11.hide()
-        self.line_edit_device.setText(get_default_device())
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
+
+        if addr:
+            self.line_edit_url.setText(addr.to_url())
+            self.line_edit_login.setText(addr.device_id.user_id)
+            self.line_edit_device.setText(addr.device_id.device_name)
+            if addr.token:
+                self.line_edit_token.setText(addr.token)
+        else:
+            self.line_edit_device.setText(get_default_device())
+
         self.check_infos()
 
     def on_claim_error(self):

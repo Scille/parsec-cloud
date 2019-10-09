@@ -1,95 +1,173 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from urllib.parse import urlsplit, urlunsplit, parse_qs
+from typing import Tuple, Optional
+from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus
+from marshmallow import ValidationError
 
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
 
 
-class BackendAddr(str):
-    __slots__ = ("_split", "_use_ssl")
+PARSEC_SCHEME = "parsec"
 
-    def __init__(self, raw: str):
-        if not isinstance(raw, str):
-            raise ValueError("Invalid backend address.")
 
-        self._split = urlsplit(raw)
-        self._parse_path(self._split.path)
-        if self._split.query:
-            params = parse_qs(self._split.query, keep_blank_values=True, strict_parsing=True)
+class BackendAddr:
+    """
+    Represent the URL to reach a backend
+    (e.g. ``parsec://parsec.example.com/``)
+    """
+
+    __slots__ = ("_hostname", "_port", "_use_ssl")
+
+    def __eq__(self, other):
+        if isinstance(other, BackendAddr):
+            return self.to_url() == other.to_url()
+        else:
+            return False
+
+    def __init__(self, hostname: str, port: Optional[int] = None, use_ssl=True):
+        assert not hostname.startswith("parsec://")
+        self._hostname = hostname
+        self._port, _ = self._parse_port(port, use_ssl)
+        self._use_ssl = use_ssl
+
+    @staticmethod
+    def _parse_port(port, use_ssl) -> Tuple[int, Optional[int]]:
+        """Returns port to use and port to add in netloc if needed"""
+        default_port = 443 if use_ssl else 80
+        if port not in (None, default_port):
+            return port, port
+        else:
+            return default_port, None
+
+    def __str__(self):
+        return self.to_url()
+
+    def __repr__(self):
+        return f"{type(self).__name__}(url={self.to_url()})"
+
+    @classmethod
+    def from_url(cls, url: str):
+        split = urlsplit(url)
+
+        if split.scheme != PARSEC_SCHEME:
+            raise ValueError(f"Must start with `{PARSEC_SCHEME}://`")
+
+        if split.query:
+            params = parse_qs(split.query, keep_blank_values=True, strict_parsing=True)
         else:
             params = {}
-        self._parse_and_consume_params(params)
+
+        kwargs = {
+            **cls._from_url_parse_and_consume_params(params),
+            **cls._from_url_parse_path(split.path),
+        }
+
         if params:
             raise ValueError(f"Unknown params: {','.join(params)}")
 
-        if self._split.scheme != "parsec":
-            raise ValueError("Backend addr must start with `parsec://`")
+        return cls(hostname=split.hostname, port=split.port, **kwargs)
 
-    def _parse_path(self, path):
+    @classmethod
+    def _from_url_parse_path(cls, path):
         if path not in ("", "/"):
-            raise ValueError("Backend addr cannot have path")
+            raise ValueError("Cannot have path")
+        return {}
 
-    def _parse_and_consume_params(self, params):
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
         value = params.pop("no_ssl", ("false",))
         if len(value) != 1:
             raise ValueError("Multiple values for param `no_ssl`")
         value = value[0].lower()
         # param is no_ssl, but we store use_ssl (so invert the values)
         if value == "false":
-            self._use_ssl = True
+            return {"use_ssl": True}
         elif value == "true":
-            self._use_ssl = False
+            return {"use_ssl": False}
         else:
             raise ValueError("Invalid `no_ssl` param value (must be true or false)")
+
+    def to_url(self):
+        _, custom_port = self._parse_port(self._port, self._use_ssl)
+        if custom_port:
+            netloc = f"{self._hostname}:{custom_port}"
+        else:
+            netloc = self.hostname
+        query = "&".join(f"{k}={v}" for k, v in self._to_url_get_params().items())
+        return urlunsplit((PARSEC_SCHEME, netloc, self._to_url_get_path(), query, None))
+
+    def _to_url_get_path(self):
+        return ""
+
+    def _to_url_get_params(self):
+        params = {}
+        if not self._use_ssl:
+            params["no_ssl"] = "true"
+        return params
+
+    @property
+    def hostname(self):
+        return self._hostname
+
+    @property
+    def port(self):
+        return self._port
 
     @property
     def use_ssl(self):
         return self._use_ssl
 
-    @property
-    def scheme(self):
-        return self._split.scheme
-
-    @property
-    def hostname(self):
-        return self._split.hostname
-
-    @property
-    def port(self):
-        port = self._split.port
-        if port:
-            return port
-        else:
-            return 443 if self._use_ssl else 80
-
 
 class BackendOrganizationAddr(BackendAddr):
+    """
+    Represent the URL to access an organization within a backend
+    (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+    """
+
     __slots__ = ("_root_verify_key", "_organization_id")
 
-    @classmethod
-    def build(
-        cls, backend_addr: str, name: str, root_verify_key: VerifyKey
-    ) -> "BackendOrganizationAddr":
-        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
-        rvk = export_root_verify_key(root_verify_key)
-        query = f"{base_query}&rvk={rvk}" if base_query else f"rvk={rvk}"
-        name = f"{base_name}/{name}" if base_name else name
-        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
+    def __init__(self, organization_id: OrganizationID, root_verify_key: VerifyKey, **kwargs):
+        super().__init__(**kwargs)
+        self._organization_id = organization_id
+        self._root_verify_key = root_verify_key
 
-    def _parse_and_consume_params(self, params):
-        super()._parse_and_consume_params(params)
+    @classmethod
+    def _from_url_parse_path(cls, path):
+        return {"organization_id": OrganizationID(path[1:])}
+
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
+
         value = params.pop("rvk", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `rvk` param")
         try:
-            self._root_verify_key = import_root_verify_key(value[0])
+            kwargs["root_verify_key"] = import_root_verify_key(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `rvk` param value") from exc
 
-    def _parse_path(self, path):
-        self._organization_id = OrganizationID(path[1:])
+        return kwargs
+
+    def _to_url_get_path(self):
+        return str(self.organization_id)
+
+    def _to_url_get_params(self):
+        return {**super()._to_url_get_params(), "rvk": export_root_verify_key(self.root_verify_key)}
+
+    @classmethod
+    def build(
+        cls, backend_addr: BackendAddr, organization_id: OrganizationID, root_verify_key: VerifyKey
+    ) -> "BackendOrganizationAddr":
+        return cls(
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
+            organization_id=organization_id,
+            root_verify_key=root_verify_key,
+        )
 
     @property
     def organization_id(self) -> OrganizationID:
@@ -100,123 +178,239 @@ class BackendOrganizationAddr(BackendAddr):
         return self._root_verify_key
 
 
-class BackendOrganizationBootstrapAddr(BackendAddr):
-    __slots__ = ("_bootstrap_token", "_organization_id")
+class BackendActionAddr(BackendAddr):
+    __slots__ = ()
+
+    @staticmethod
+    def from_url(url: str):
+        for type in (
+            BackendOrganizationBootstrapAddr,
+            BackendOrganizationClaimUserAddr,
+            BackendOrganizationClaimDeviceAddr,
+        ):
+            try:
+                return BackendAddr.from_url.__func__(type, url)
+            except ValueError:
+                pass
+        raise ValueError("Invalid URL format")
+
+
+class BackendOrganizationBootstrapAddr(BackendActionAddr):
+    """
+    Represent the URL to bootstrap an organization within a backend
+    (e.g. ``parsec://parsec.example.com/my_org?bootstrap-token=1234ABCD``)
+    """
+
+    __slots__ = ("_organization_id", "_token")
+
+    def __init__(self, organization_id: OrganizationID, token: str, **kwargs):
+        super().__init__(**kwargs)
+        self._organization_id = organization_id
+        self._token = token
+
+    @classmethod
+    def _from_url_parse_path(cls, path):
+        return {"organization_id": OrganizationID(path[1:])}
+
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
+
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "bootstrap_organization":
+            raise ValueError("Expected `action=bootstrap_organization` value")
+
+        value = params.pop("token", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `token` param")
+        try:
+            kwargs["token"] = unquote_plus(value[0])
+        except ValueError:
+            raise ValueError("Invalid `token` param value")
+
+        return kwargs
+
+    def _to_url_get_path(self):
+        return str(self.organization_id)
+
+    def _to_url_get_params(self):
+        return {
+            **super()._to_url_get_params(),
+            "action": "bootstrap_organization",
+            "token": quote_plus(self._token),
+        }
 
     @classmethod
     def build(
-        cls, backend_addr: str, name: str, bootstrap_token: str
-    ) -> "BackendOrganizationBootstrapAddr":
-        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
-        query = (
-            f"{base_query}&bootstrap-token={bootstrap_token}"
-            if base_query
-            else f"bootstrap-token={bootstrap_token}"
+        cls, backend_addr: BackendAddr, organization_id: OrganizationID, token: str
+    ) -> "BackendOrganizationAddr":
+        return cls(
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
+            organization_id=organization_id,
+            token=token,
         )
-        name = f"{base_name}/{name}" if base_name else name
-        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
 
-    def __init__(self, raw: str):
-        super().__init__(raw)
-
-        self._organization_id = OrganizationID(self._split.path[1:])
-
-        query = parse_qs(self._split.query)
-        try:
-            self._bootstrap_token = query["bootstrap-token"][0]
-
-        except (KeyError, IndexError) as exc:
-            raise ValueError(
-                "Backend domain address must contains a `bootstrap-token` param."
-            ) from exc
-
-    def _parse_and_consume_params(self, params):
-        super()._parse_and_consume_params(params)
-        value = params.pop("bootstrap-token", ())
-        if len(value) != 1:
-            raise ValueError("Missing mandatory `bootstrap-token` param")
-        self._bootstrap_token = value[0]
-
-    def _parse_path(self, path):
-        self._organization_id = OrganizationID(path[1:])
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
+        return BackendOrganizationAddr.build(
+            backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
+        )
 
     @property
     def organization_id(self) -> OrganizationID:
         return self._organization_id
 
     @property
-    def bootstrap_token(self) -> str:
-        return self._bootstrap_token
-
-    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
-        scheme, netloc, _, _, fragment = urlsplit(self)
-        query = "no_ssl=true" if not self.use_ssl else ""
-        backend_addr = urlunsplit((scheme, netloc, "", query, fragment))
-        return BackendOrganizationAddr.build(backend_addr, self.organization_id, root_verify_key)
+    def token(self) -> str:
+        return self._token
 
 
-class BackendOrganizationClaimUserAddr(BackendOrganizationAddr):
-    __slots__ = ("_user_id",)
+class BackendOrganizationClaimUserAddr(BackendActionAddr, BackendOrganizationAddr):
+    __slots__ = ("_user_id", "_token")
+
+    def __init__(self, user_id: UserID, token: Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        self._user_id = user_id
+        self._token = token
 
     @classmethod
-    def build(
-        cls, backend_addr: str, name: str, user_id: str, root_verify_key: VerifyKey
-    ) -> "BackendOrganizationAddr":
-        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
-        rvk = export_root_verify_key(root_verify_key)
-        query = (
-            f"{base_query}&rvk={rvk}&user_id={user_id}"
-            if base_query
-            else f"rvk={rvk}&user_id={user_id}"
-        )
-        name = f"{base_name}/{name}" if base_name else name
-        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
 
-    def _parse_and_consume_params(self, params):
-        super()._parse_and_consume_params(params)
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "claim_user":
+            raise ValueError("Expected `action=claim_user` value")
+
         value = params.pop("user_id", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `user_id` param")
         try:
-            self._user_id = UserID(value[0])
+            kwargs["user_id"] = UserID(unquote_plus(value[0]))
         except ValueError as exc:
             raise ValueError("Invalid `user_id` param value") from exc
+
+        value = params.pop("token", ())
+        if len(value) > 0:
+            try:
+                kwargs["token"] = unquote_plus(value[0])
+            except ValueError:
+                raise ValueError("Invalid `token` param value")
+
+        return kwargs
+
+    def _to_url_get_params(self):
+        kwargs = super()._to_url_get_params()
+        if self._token:
+            kwargs["token"] = self._token
+        return {**kwargs, "action": "claim_user", "user_id": quote_plus(str(self._user_id))}
+
+    @classmethod
+    def build(
+        cls,
+        organization_addr: BackendOrganizationAddr,
+        user_id: UserID,
+        token: Optional[str] = None,
+    ) -> "BackendOrganizationClaimUserAddr":
+        return cls(
+            hostname=organization_addr.hostname,
+            port=organization_addr.port,
+            use_ssl=organization_addr.use_ssl,
+            organization_id=organization_addr.organization_id,
+            root_verify_key=organization_addr.root_verify_key,
+            user_id=user_id,
+            token=token,
+        )
 
     @property
     def user_id(self) -> UserID:
         return self._user_id
 
+    @property
+    def token(self) -> str:
+        return self._token
 
-class BackendOrganizationClaimDeviceAddr(BackendOrganizationAddr):
-    __slots__ = ("_device_id",)
+
+class BackendOrganizationClaimDeviceAddr(BackendActionAddr, BackendOrganizationAddr):
+    __slots__ = ("_device_id", "_token")
+
+    def __init__(self, device_id: DeviceID, token: Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        self._device_id = device_id
+        self._token = token
 
     @classmethod
-    def build(
-        cls, backend_addr: str, name: str, device_id: str, root_verify_key: VerifyKey
-    ) -> "BackendOrganizationAddr":
-        scheme, netloc, base_name, base_query, fragment = urlsplit(backend_addr)
-        rvk = export_root_verify_key(root_verify_key)
-        query = (
-            f"{base_query}&rvk={rvk}&device_id={device_id}"
-            if base_query
-            else f"rvk={rvk}&device_id={device_id}"
-        )
-        name = f"{base_name}/{name}" if base_name else name
-        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
 
-    def _parse_and_consume_params(self, params):
-        super()._parse_and_consume_params(params)
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "claim_device":
+            raise ValueError("Expected `action=claim_device` value")
+
         value = params.pop("device_id", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `device_id` param")
         try:
-            self._device_id = DeviceID(value[0])
+            kwargs["device_id"] = DeviceID(unquote_plus(value[0]))
         except ValueError as exc:
             raise ValueError("Invalid `device_id` param value") from exc
+
+        value = params.pop("token", ())
+        if len(value) > 0:
+            try:
+                kwargs["token"] = unquote_plus(value[0])
+            except ValueError:
+                raise ValueError("Invalid `token` param value")
+
+        return kwargs
+
+    def _to_url_get_params(self):
+        kwargs = super()._to_url_get_params()
+        if self._token:
+            kwargs["token"] = self._token
+        return {**kwargs, "action": "claim_device", "device_id": quote_plus(self._device_id)}
+
+    @classmethod
+    def build(
+        cls,
+        organization_addr: BackendOrganizationAddr,
+        device_id: DeviceID,
+        token: Optional[str] = None,
+    ) -> "BackendOrganizationClaimDeviceAddr":
+        return cls(
+            hostname=organization_addr.hostname,
+            port=organization_addr.port,
+            use_ssl=organization_addr.use_ssl,
+            organization_id=organization_addr.organization_id,
+            root_verify_key=organization_addr.root_verify_key,
+            device_id=device_id,
+            token=token,
+        )
 
     @property
     def device_id(self) -> DeviceID:
         return self._device_id
 
+    @property
+    def token(self) -> Optional[str]:
+        return self._token
 
-BackendOrganizationAddrField = fields.str_based_field_factory(BackendOrganizationAddr)
+
+class BackendOrganizationAddrField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return BackendOrganizationAddr.from_url(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return value.to_url()

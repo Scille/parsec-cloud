@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Union
+from typing import Optional
 from functools import partial
 from structlog import get_logger
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
@@ -10,6 +10,7 @@ from parsec import __version__ as PARSEC_VERSION
 
 from parsec.core.config import save_config
 from parsec.core.types import (
+    BackendActionAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationClaimUserAddr,
     BackendOrganizationClaimDeviceAddr,
@@ -49,8 +50,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_foreground_needed(self):
         self.show_top()
 
-    def _on_new_instance_needed(self, url):
-        self.add_instance(url)
+    def _on_new_instance_needed(self, action_addr):
+        self.add_instance(action_addr)
+        self.show_top()
 
     def on_config_updated(self, event, **kwargs):
         self.config = self.config.evolve(**kwargs)
@@ -94,15 +96,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 tab, f"{device.organization_id}:{device.user_id}@{device.device_name}"
             )
 
-    def add_instance(
-        self,
-        url: Union[
-            None,
-            BackendOrganizationBootstrapAddr,
-            BackendOrganizationClaimUserAddr,
-            BackendOrganizationClaimDeviceAddr,
-        ] = None,
-    ):
+    def add_instance(self, action_addr: Optional[BackendActionAddr] = None):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
         self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
@@ -110,24 +104,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.tab_center.count() > 1:
             self.tab_center.setTabsClosable(True)
 
-        if isinstance(url, BackendOrganizationBootstrapAddr):
-            tab.show_login_widget(show_meth="show_bootstrap_widget", url=url)
+        if isinstance(action_addr, BackendOrganizationBootstrapAddr):
+            tab.show_login_widget(show_meth="show_bootstrap_widget", addr=action_addr)
             self.set_tab_title(tab, _("TAB_TITLE_BOOTSTRAP"))
 
-        elif isinstance(url, BackendOrganizationClaimUserAddr):
-            tab.show_login_widget(show_meth="show_claim_user_widget", url=url)
+        elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
+            tab.show_login_widget(show_meth="show_claim_user_widget", addr=action_addr)
             self.set_tab_title(tab, _("TAB_TITLE_CLAIM_USER"))
 
-        elif isinstance(url, BackendOrganizationClaimDeviceAddr):
-            tab.show_login_widget(show_meth="show_claim_device_widget", url=url)
+        elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
+            tab.show_login_widget(show_meth="show_claim_device_widget", addr=action_addr)
             self.set_tab_title(tab, _("TAB_TITLE_CLAIM_DEVICE"))
 
         else:
             # Fallback to just create the default login windows
             tab.show_login_widget()
             self.set_tab_title(tab, _("TAB_TITLE_LOG_IN"))
-
-        self.show_top()
 
     def close_app(self, force=False):
         self.need_close = True

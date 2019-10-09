@@ -15,7 +15,7 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.protocol import UserID, DeviceID, RealmRole
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, RealmRole
 from parsec.api.data import UserManifest
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
@@ -37,7 +37,7 @@ class OrganizationFullData:
 
     @property
     def bootstrap_token(self):
-        return self.bootstrap_addr.bootstrap_token
+        return self.bootstrap_addr.token
 
     @property
     def root_verify_key(self):
@@ -61,11 +61,12 @@ def organization_factory(backend_addr):
             orgname = f"Org{count}"
 
         assert orgname not in organizations
-        organizations.add(orgname)
+        organization_id = OrganizationID(orgname)
+        organizations.add(organization_id)
 
         bootstrap_token = f"<{orgname}-bootstrap-token>"
         bootstrap_addr = BackendOrganizationBootstrapAddr.build(
-            backend_addr, orgname, bootstrap_token
+            backend_addr, organization_id=organization_id, token=bootstrap_token
         )
 
         root_signing_key = SigningKey.generate()

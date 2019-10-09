@@ -122,6 +122,8 @@ def run_gui(config: CoreConfig, url=None):
             # Another instance of Parsec already started, nothing more to do
             return
 
+        win.show_top()
+
         if systray_available():
             systray = Systray(parent=win)
             systray.on_close.connect(win.close_app)

@@ -12,7 +12,7 @@ from parsec.core.cli.utils import core_config_and_device_options
 async def _invite_device(config, device, new_device_name):
     token = generate_invitation_token()
 
-    organization_addr_display = click.style(device.organization_addr, fg="yellow")
+    organization_addr_display = click.style(device.organization_addr.to_url(), fg="yellow")
     token_display = click.style(token, fg="yellow")
     click.echo(f"Backend url: {organization_addr_display}")
     click.echo(f"Invitation token: {token_display}")

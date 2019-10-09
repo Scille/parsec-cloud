@@ -41,7 +41,7 @@ async def _do_bootstrap_organization(
     password_check: str,
     user_id: str,
     device_name: str,
-    bootstrap_addr: str,
+    bootstrap_url: str,
     pkcs11_token: int,
     pkcs11_key: int,
 ):
@@ -52,7 +52,7 @@ async def _do_bootstrap_organization(
             raise JobResultError("password-size")
 
     try:
-        bootstrap_addr = BackendOrganizationBootstrapAddr(bootstrap_addr)
+        bootstrap_addr = BackendOrganizationBootstrapAddr.from_url(bootstrap_url)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -88,7 +88,7 @@ async def _do_bootstrap_organization(
         async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
                 bootstrap_addr.organization_id,
-                bootstrap_addr.bootstrap_token,
+                bootstrap_addr.token,
                 root_verify_key,
                 user_certificate,
                 device_certificate,
@@ -114,7 +114,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_error = pyqtSignal()
     organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
-    def __init__(self, jobs_ctx, config, url=None, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, addr=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -123,8 +123,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_cancel.hide()
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
         self.button_cancel.clicked.connect(self.cancel_bootstrap)
-        if url:
-            self.line_edit_url.setText(url)
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
@@ -144,6 +142,10 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.button_cancel.hide()
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
+
+        if addr:
+            self.line_edit_url.setText(addr.to_url())
+
         self.check_infos()
 
     def on_bootstrap_error(self):
@@ -204,7 +206,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             password_check=self.line_edit_password_check.text(),
             user_id=self.line_edit_login.text(),
             device_name=self.line_edit_device.text(),
-            bootstrap_addr=self.line_edit_url.text(),
+            bootstrap_url=self.line_edit_url.text(),
             pkcs11_token=int(self.combo_pkcs11_token.currentText()),
             pkcs11_key=int(self.combo_pkcs11_key.currentText()),
         )

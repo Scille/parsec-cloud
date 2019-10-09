@@ -96,7 +96,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self,
         jobs_ctx,
         config,
-        url: Optional[BackendOrganizationClaimUserAddr] = None,
+        addr: Optional[BackendOrganizationClaimUserAddr] = None,
         *args,
         **kwargs,
     ):
@@ -105,9 +105,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.claim_user_job = None
-        if url:
-            self.line_edit_url.setText(url)
-            self.line_edit_login.setText(url.user_id)
         self.button_claim.clicked.connect(self.claim_clicked)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
@@ -120,7 +117,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_error.connect(self.on_claim_error)
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
+        self.line_edit_url.setValidator(validators.BackendOrganizationClaimUserAddrValidator())
 
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_USER_REGISTRATION"))
@@ -128,11 +125,18 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_dialog.hide()
 
         self.check_box_use_pkcs11.hide()
-        self.line_edit_device.setText(get_default_device())
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
+
+        if addr:
+            self.line_edit_url.setText(addr.to_url())
+            self.line_edit_login.setText(addr.user_id)
+            if addr.token:
+                self.line_edit_token.setText(addr.token)
+        self.line_edit_device.setText(get_default_device())
+
         self.check_infos()
 
     def on_claim_error(self):

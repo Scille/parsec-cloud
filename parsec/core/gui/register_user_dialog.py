@@ -11,7 +11,7 @@ from parsec.core.invite_claim import (
     generate_invitation_token as core_generate_invitation_token,
     invite_and_create_user as core_invite_and_create_user,
 )
-from parsec.core.types import BackendOrganizationAddr
+from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimUserAddr
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
@@ -161,12 +161,18 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             show_warning(self, _("WARN_REGISTER_USER_EMPTY"))
             return
 
+        new_user_id = UserID(self.line_edit_username.text())
         token = core_generate_invitation_token()
-        self.line_edit_user.setText(self.line_edit_username.text())
+        addr = BackendOrganizationClaimUserAddr.build(
+            self.core.device.organization_addr, user_id=new_user_id
+        )
+
+        token = core_generate_invitation_token()
+        self.line_edit_user.setText(new_user_id)
         self.line_edit_user.setCursorPosition(0)
         self.line_edit_token.setText(token)
         self.line_edit_token.setCursorPosition(0)
-        self.line_edit_url.setText(self.core.device.organization_addr)
+        self.line_edit_url.setText(addr.to_url())
         self.line_edit_url.setCursorPosition(0)
         self.button_cancel.setFocus()
         self.widget_registration.show()
@@ -176,7 +182,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             _do_registration,
             core=self.core,
             device=self.core.device,
-            new_user_id=self.line_edit_username.text(),
+            new_user_id=new_user_id,
             token=token,
             is_admin=self.checkbox_is_admin.isChecked(),
         )

@@ -94,7 +94,7 @@ async def _connect(
         stream = _upgrade_stream_to_ssl(stream, addr.hostname)
 
     try:
-        transport = await Transport.init_for_client(stream, addr.hostname)
+        transport = await Transport.init_for_client(stream, host=addr.hostname)
         transport.handshake = handshake
         transport.keepalive = keepalive
 

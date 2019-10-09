@@ -17,11 +17,7 @@ from parsec.serde import (
     SerdeError,
     MsgpackSerializer,
 )
-from parsec.core.types import (
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationClaimUserAddr,
-    BackendOrganizationClaimDeviceAddr,
-)
+from parsec.core.types import BackendActionAddr
 
 
 logger = get_logger()
@@ -51,22 +47,9 @@ class ForegroundReqSchema(BaseSchema):
     cmd = fields.CheckedConstant("foreground", required=True)
 
 
-def _parse_new_instance_url(raw):
-    for type in (
-        BackendOrganizationBootstrapAddr,
-        BackendOrganizationClaimUserAddr,
-        BackendOrganizationClaimDeviceAddr,
-    ):
-        try:
-            return type(raw)
-        except ValueError:
-            pass
-    raise ValueError("Invalid URL format")
-
-
 class NewInstanceReqSchema(BaseSchema):
     cmd = fields.CheckedConstant("new_instance", required=True)
-    url = fields.str_based_field_factory(_parse_new_instance_url)(allow_none=True)
+    url = fields.str_based_field_factory(BackendActionAddr.from_url)(allow_none=True)
 
 
 class CommandReqSchema(OneOfSchema):

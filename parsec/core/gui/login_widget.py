@@ -136,10 +136,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_bootstrap_instead.show()
         login_widget.show()
 
-    def show_bootstrap_widget(self, url: Optional[BackendOrganizationBootstrapAddr] = None):
+    def show_bootstrap_widget(self, addr: Optional[BackendOrganizationBootstrapAddr] = None):
         self.clear_widgets()
 
-        bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config, url)
+        bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, bootstrap_organization)
         bootstrap_organization.organization_bootstrapped.connect(self.organization_bootstrapped)
         self.button_bootstrap_instead.hide()
@@ -151,10 +151,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         bootstrap_organization.show()
 
-    def show_claim_user_widget(self, url: Optional[BackendOrganizationClaimUserAddr] = None):
+    def show_claim_user_widget(self, addr: Optional[BackendOrganizationClaimUserAddr] = None):
         self.clear_widgets()
 
-        claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config, url)
+        claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_user_widget)
         claim_user_widget.user_claimed.connect(self.user_claimed)
 
@@ -167,10 +167,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_bootstrap_instead.show()
         claim_user_widget.show()
 
-    def show_claim_device_widget(self, url: Optional[BackendOrganizationClaimDeviceAddr] = None):
+    def show_claim_device_widget(self, addr: Optional[BackendOrganizationClaimDeviceAddr] = None):
         self.clear_widgets()
 
-        claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config, url)
+        claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_device_widget)
         claim_device_widget.device_claimed.connect(self.show_login_widget)
 
