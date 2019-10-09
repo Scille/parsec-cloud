@@ -231,13 +231,41 @@ class EntryTransactions(FileTransactions):
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
         """
+        # Each key is an entry_id, each value is a new dict with version as key and value as tuple(
+        #     updated_timestamp, last_known_timestamp, manifest
+        # )
+        manifest_cache = {}
 
         async def _load_manifest_or_cached(entry_id: EntryID, version=None, timestamp=None):
-            # TODO : temp cache
-            remote_manifest = await self.remote_loader.load_manifest(
+            try:
+                if version:
+                    return manifest_cache[entry_id][version][2]
+                if timestamp:
+                    return max(
+                        (t for t in manifest_cache[entry_id].values() if t[0] < timestamp < t[1]),
+                        key=lambda t: t[0],
+                    )[2]
+            except (ValueError, KeyError):
+                pass
+            manifest = await self.remote_loader.load_manifest(
                 entry_id, version=version, timestamp=timestamp
             )
-            return remote_manifest
+            if manifest.id not in manifest_cache:
+                manifest_cache[manifest.id] = {}
+            if manifest.version not in manifest_cache[manifest.id]:
+                manifest_cache[manifest.id][manifest.version] = (
+                    manifest.updated,
+                    timestamp if timestamp else manifest.updated,
+                    manifest,
+                )
+            elif timestamp:
+                if timestamp > manifest_cache[manifest.id][manifest.version][1]:
+                    manifest_cache[manifest.id][manifest.version] = (
+                        manifest.updated,
+                        timestamp,
+                        manifest,
+                    )
+            return manifest
 
         async def _get_past_path(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
 
