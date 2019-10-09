@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>521</width>
-    <height>590</height>
+    <height>582</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -178,8 +178,8 @@ width: 20px;
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>467</width>
-        <height>487</height>
+        <width>481</width>
+        <height>468</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -256,13 +256,6 @@ width: 20px;
              <widget class="QCheckBox" name="check_box_tray">
               <property name="text">
                <string>CHECK_MINIMIZE_IN_TRAY</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="check_box_multiple_instances">
-              <property name="text">
-               <string>CHECK_ALLOW_MULTIPLE_INSTANCES</string>
               </property>
              </widget>
             </item>

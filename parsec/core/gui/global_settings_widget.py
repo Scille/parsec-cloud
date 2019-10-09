@@ -33,7 +33,6 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
         self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
         self.check_box_windows_left_panel.setChecked(self.core_config.gui_windows_left_panel)
-        self.check_box_multiple_instances.setChecked(self.core_config.gui_allow_multiple_instances)
 
         # self.button_check_version.clicked.connect(self.check_version)
 
@@ -59,5 +58,4 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
             gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
             gui_workspace_color=self.check_box_workspace_color.isChecked(),
             gui_windows_left_panel=self.check_box_windows_left_panel.isChecked(),
-            gui_allow_multiple_instances=self.check_box_multiple_instances.isChecked(),
         )
