@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-09 10:27+0200\n"
+"POT-Creation-Date: 2019-10-09 10:29+0200\n"
 "PO-Revision-Date: 2019-10-08 15:45+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
@@ -1807,3 +1807,4 @@ msgstr "Mettre à jour"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
+
