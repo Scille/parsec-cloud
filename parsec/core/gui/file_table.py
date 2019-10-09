@@ -49,6 +49,7 @@ class FileTable(QTableWidget):
     delete_clicked = pyqtSignal()
     rename_clicked = pyqtSignal()
     open_clicked = pyqtSignal()
+    show_history_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,6 +116,8 @@ class FileTable(QTableWidget):
         menu = QMenu(self)
         action = menu.addAction(_("FILE_MENU_OPEN"))
         action.triggered.connect(self.open_clicked.emit)
+        action = menu.addAction(_("Show history"))
+        action.triggered.connect(self.show_history_clicked.emit)
         if self.current_user_role != WorkspaceRole.READER:
             action = menu.addAction(_("FILE_MENU_RENAME"))
             action.triggered.connect(self.rename_clicked.emit)

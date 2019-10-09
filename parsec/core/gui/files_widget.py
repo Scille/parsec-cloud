@@ -15,7 +15,7 @@ from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
 from parsec.core.gui.custom_dialogs import QuestionDialog, show_error, show_warning, TextInputDialog
 from parsec.core.gui.custom_widgets import TaskbarButton
-
+from parsec.core.gui.file_history_dialog import FileHistoryDialog
 from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
@@ -160,6 +160,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.delete_clicked.connect(self.delete_files)
         self.table_files.open_clicked.connect(self.open_files)
         self.table_files.files_dropped.connect(self.on_files_dropped)
+        self.table_files.show_history_clicked.connect(self.show_history)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.rename_success.connect(self._on_rename_success)
@@ -208,6 +209,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.label_current_workspace.setText(workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
+
+    def show_history(self):
+        import datetime
+
+        files = self.table_files.selected_files()
+        if len(files) > 1:
+            show_warning(self, _("Can only see the history one file at a time."))
+            return
+        fd = FileHistoryDialog(
+            "Osef.txt", datetime.datetime.utcnow(), datetime.datetime.utcnow(), [1, 2, 3, 4, 5, 6]
+        )
+        fd.exec_()
 
     def rename_files(self):
         files = self.table_files.selected_files()
