@@ -75,6 +75,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_owner.hide()
             for i in range(5, 9):
                 getattr(self, f"line_{i}").hide()
+        else:
+            self.button_delete.hide()
+            self.line_5.hide()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
