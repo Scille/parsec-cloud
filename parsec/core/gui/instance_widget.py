@@ -31,15 +31,18 @@ logger = get_logger()
 
 
 async def _do_run_core(config, device, event_bus, qt_on_ready):
-    async with logged_core_factory(config=config, device=device, event_bus=None) as core:
-        if config.mountpoint_enabled:
-            await core.mountpoint_manager.mount_all()
-        # Create our own job scheduler allows us to cancel all pending
-        # jobs depending on us when we logout
-        core_jobs_ctx = QtToTrioJobScheduler()
-        async with trio.open_nursery() as nursery:
-            await nursery.start(core_jobs_ctx._start)
-            qt_on_ready.emit(core, core_jobs_ctx)
+    # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
+    # TODO: replace this by a proper generic MultiError handling
+    with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
+        async with logged_core_factory(config=config, device=device, event_bus=None) as core:
+            if config.mountpoint_enabled:
+                await core.mountpoint_manager.mount_all()
+            # Create our own job scheduler allows us to cancel all pending
+            # jobs depending on us when we logout
+            core_jobs_ctx = QtToTrioJobScheduler()
+            async with trio.open_nursery() as nursery:
+                await nursery.start(core_jobs_ctx._start)
+                qt_on_ready.emit(core, core_jobs_ctx)
 
 
 class InstanceWidget(QWidget):
