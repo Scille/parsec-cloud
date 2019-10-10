@@ -416,9 +416,9 @@ async def test_garbage_collection(tmpdir, alice, workspace_id):
 @pytest.mark.trio
 async def test_storage_file_tree(alice, tmpdir, workspace_id):
     path = Path(tmpdir)
-    manifest_sqlite_db = path / "manifest_data.sqlite"
-    chunk_sqlite_db = path / "chunk_data.sqlite"
-    block_sqlite_db = path / "block_cache.sqlite"
+    manifest_sqlite_db = path / "manifest_data-v1.sqlite"
+    chunk_sqlite_db = path / "chunk_data-v1.sqlite"
+    block_sqlite_db = path / "block_cache-v1.sqlite"
 
     async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
         assert aws.manifest_storage.path == manifest_sqlite_db

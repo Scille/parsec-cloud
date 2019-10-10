@@ -5,10 +5,10 @@ from typing import Dict, Set, Tuple
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
 
-USER_STORAGE_NAME = "user_data.sqlite"
+from parsec.core.fs.storage.version import USER_STORAGE_NAME
+from parsec.core.fs.storage.manifest_storage import ManifestStorage
 
 
 class UserStorage:

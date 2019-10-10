@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from pathlib import Path
+
 import pytest
 
 from parsec.core.fs.storage import UserStorage
@@ -67,3 +69,14 @@ async def test_realm_checkpoint(alice_user_storage, user_manifest):
 async def test_vacuum(alice_user_storage):
     # Should be no-op
     await alice_user_storage.run_vacuum()
+
+
+@pytest.mark.trio
+async def test_storage_file_tree(tmpdir, alice, user_manifest):
+    path = Path(tmpdir)
+    manifest_sqlite_db = path / "user_data-v1.sqlite"
+
+    async with UserStorage.run(alice, tmpdir, user_manifest.id) as aus:
+        assert aus.manifest_storage.path == manifest_sqlite_db
+
+    assert set(path.iterdir()) == {manifest_sqlite_db}

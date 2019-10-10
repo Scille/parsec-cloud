@@ -2,10 +2,10 @@
 
 from pathlib import Path
 from collections import defaultdict
-import trio
-from trio import hazmat
 from typing import Dict, Tuple, Set
 
+import trio
+from trio import hazmat
 from pendulum import Pendulum
 from structlog import get_logger
 from async_generator import asynccontextmanager
@@ -19,10 +19,15 @@ from parsec.core.types import (
     LocalManifest,
     LocalFileManifest,
 )
+from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
-from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
+from parsec.core.fs.storage.version import (
+    MANIFEST_STORAGE_NAME,
+    CHUNK_STORAGE_NAME,
+    BLOCK_STORAGE_NAME,
+)
 
 
 logger = get_logger()
@@ -30,10 +35,6 @@ logger = get_logger()
 # TODO: should be in config.py
 DEFAULT_BLOCK_CACHE_SIZE = 128 * 1024 * 1024
 DEFAULT_CHUNK_VACUUM_THRESHOLD = 128 * 1024 * 1024
-
-MANIFEST_STORAGE_NAME = "manifest_data.sqlite"
-CHUNK_STORAGE_NAME = "chunk_data.sqlite"
-BLOCK_STORAGE_NAME = "block_cache.sqlite"
 
 
 class WorkspaceStorage:
