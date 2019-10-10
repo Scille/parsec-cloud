@@ -463,7 +463,11 @@ class WorkspaceFS:
                     return manifest_cache[entry_id][version][2]
                 if timestamp:
                     return max(
-                        (t for t in manifest_cache[entry_id].values() if t[0] < timestamp < t[1]),
+                        (
+                            t
+                            for t in manifest_cache[entry_id].values()
+                            if t[1] and t[0] < timestamp <= t[1]
+                        ),
                         key=lambda t: t[0],
                     )[2]
             except (ValueError, KeyError):
@@ -476,11 +480,14 @@ class WorkspaceFS:
             if manifest.version not in manifest_cache[manifest.id]:
                 manifest_cache[manifest.id][manifest.version] = (
                     manifest.updated,
-                    timestamp if timestamp else manifest.updated,
+                    timestamp if timestamp else None,
                     manifest,
                 )
             elif timestamp:
-                if timestamp > manifest_cache[manifest.id][manifest.version][1]:
+                if (
+                    manifest_cache[manifest.id][manifest.version][1] is None
+                    or timestamp > manifest_cache[manifest.id][manifest.version][1]
+                ):
                     manifest_cache[manifest.id][manifest.version] = (
                         manifest.updated,
                         timestamp,
