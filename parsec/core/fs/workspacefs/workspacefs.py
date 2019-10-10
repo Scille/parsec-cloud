@@ -609,7 +609,7 @@ class WorkspaceFS:
                 )
 
         return_tree = {}
-        root_manifest = await self.transactions._get_manifest_from_path(FsPath("/"))
+        root_manifest = await self.transactions._get_manifest(self.workspace_id)
         async with trio.open_nursery() as nursery:
             nursery.start_soon(
                 _populate_tree_list_versions,
