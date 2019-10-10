@@ -53,20 +53,20 @@ async def alice_workspace_t1(alice_workspace):
 
 
 @pytest.fixture
-async def alice_workspace_t2(alice_workspace):
-    return await alice_workspace.to_timestamped(day2)
+async def alice_workspace_t2(alice_workspace_t1):
+    return await alice_workspace_t1.to_timestamped(day2)
 
 
 @pytest.fixture
-async def alice_workspace_t3(alice_workspace):
-    return await alice_workspace.to_timestamped(day3)
+async def alice_workspace_t3(alice_workspace_t2):
+    return await alice_workspace_t2.to_timestamped(day3)
 
 
 @pytest.fixture
-async def alice_workspace_t4(alice_workspace):
-    return await alice_workspace.to_timestamped(day4)
+async def alice_workspace_t4(alice_workspace_t3):
+    return await alice_workspace_t3.to_timestamped(day4)
 
 
 @pytest.fixture
-async def alice_workspace_t5(alice_workspace):
-    return await alice_workspace.to_timestamped(day5)
+async def alice_workspace_t5(alice_workspace_t4):
+    return await alice_workspace_t4.to_timestamped(day5)
