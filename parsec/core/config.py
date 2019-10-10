@@ -71,7 +71,6 @@ class CoreConfig:
     gui_check_version_url: str = "https://github.com/Scille/parsec-build/releases/latest"
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
-    gui_windows_left_panel: bool = True
     gui_allow_multiple_instances: bool = False
 
     def evolve(self, **kwargs):
@@ -94,9 +93,9 @@ def config_factory(
     gui_first_launch: bool = True,
     gui_check_version_at_startup: bool = True,
     gui_workspace_color: bool = False,
-    gui_windows_left_panel: bool = True,
     gui_allow_multiple_instances: bool = False,
     environ: dict = {},
+    **_,
 ) -> CoreConfig:
     return CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
@@ -115,7 +114,6 @@ def config_factory(
         gui_first_launch=gui_first_launch,
         gui_check_version_at_startup=gui_check_version_at_startup,
         gui_workspace_color=gui_workspace_color,
-        gui_windows_left_panel=gui_windows_left_panel,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
     )
 
@@ -177,7 +175,6 @@ def save_config(config: CoreConfig):
                 "gui_first_launch": config.gui_first_launch,
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
                 "gui_workspace_color": config.gui_workspace_color,
-                "gui_windows_left_panel": config.gui_windows_left_panel,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,
             },
             indent=True,
