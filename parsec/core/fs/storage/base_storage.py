@@ -43,7 +43,7 @@ class BaseStorage:
 
         # Set WAL mode
         conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=OFF")
+        conn.execute("PRAGMA synchronous=NORMAL")
 
         # Return connection
         return conn
