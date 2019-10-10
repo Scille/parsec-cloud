@@ -6,7 +6,6 @@ from pendulum import Pendulum
 
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.workspacefs import WorkspaceFS
 from parsec.core.fs.utils import is_file_manifest, is_workspace_manifest
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFoundBadVersion,
@@ -16,7 +15,7 @@ from parsec.core.fs.exceptions import (
 
 
 async def list_versions(
-    workspacefs: WorkspaceFS, path: FsPath
+    workspacefs, path: FsPath
 ) -> Dict[Tuple[EntryID, int, Pendulum, Pendulum], Tuple[DeviceID, FsPath, FsPath]]:
     """
     Raises:
