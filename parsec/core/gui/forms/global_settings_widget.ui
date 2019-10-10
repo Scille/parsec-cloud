@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>521</width>
-    <height>590</height>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -178,8 +178,8 @@ width: 20px;
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>467</width>
-        <height>487</height>
+        <width>481</width>
+        <height>469</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -269,13 +269,6 @@ background-color: rgb(255, 255, 255);
              <widget class="QCheckBox" name="check_box_multiple_instances">
               <property name="text">
                <string>CHECK_ALLOW_MULTIPLE_INSTANCES</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="check_box_windows_left_panel">
-              <property name="text">
-               <string>CHECK_WINDOWS_MOUNTPOINT</string>
               </property>
              </widget>
             </item>

@@ -237,7 +237,6 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
             gui_check_version_at_startup=False,
             gui_first_launch=False,
             mountpoint_enabled=False,
-            gui_windows_left_panel=False,
             gui_language="en",
         )
         event_bus = event_bus or EventBus()
