@@ -1081,6 +1081,9 @@ msgstr ""
 msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
 msgstr "Can not retrieve versions of this workspace."
 
+msgid "ERR_LIST_VERSIONS_ACCESS"
+msgstr "Can not retrieve versions list."
+
 msgid "STARTING_GUIDE_WELCOME_TITLE"
 msgstr "Welcome!"
 
@@ -1477,6 +1480,24 @@ msgstr "Updated"
 
 msgid "LABEL_FILE_SIZE"
 msgstr "Size"
+
+msgid "LABEL_FILE_EARLY"
+msgstr "Early"
+
+msgid "LABEL_FILE_LATE"
+msgstr "Late"
+
+msgid "LABEL_FILE_USER_ID"
+msgstr "User"
+
+msgid "LABEL_FILE_DEVICE_ID"
+msgstr "Device"
+
+msgid "LABEL_FILE_SOURCE"
+msgstr "Source"
+
+msgid "LABEL_FILE_DESTINATION"
+msgstr "Destination"
 
 msgid "SETTINGS_TITLE_BEHAVIOR"
 msgstr "Behavior"

@@ -1081,6 +1081,9 @@ msgstr ""
 msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
 msgstr "Impossible de récupérer les versions de cet espace de travail."
 
+msgid "ERR_LIST_VERSIONS_ACCESS"
+msgstr "Impossible de récupérer la liste des versions."
+
 msgid "STARTING_GUIDE_WELCOME_TITLE"
 msgstr "Bienvenue !"
 
@@ -1488,6 +1491,24 @@ msgstr "Mis à jour le"
 
 msgid "LABEL_FILE_SIZE"
 msgstr "Taille"
+
+msgid "LABEL_FILE_EARLY"
+msgstr "Apparition"
+
+msgid "LABEL_FILE_LATE"
+msgstr "Disparition"
+
+msgid "LABEL_FILE_USER_ID"
+msgstr "Utilisateur"
+
+msgid "LABEL_FILE_DEVICE_ID"
+msgstr "Device"
+
+msgid "LABEL_FILE_SOURCE"
+msgstr "Source"
+
+msgid "LABEL_FILE_DESTINATION"
+msgstr "Destination"
 
 msgid "SETTINGS_TITLE_BEHAVIOR"
 msgstr "Comportement"
