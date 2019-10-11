@@ -1,36 +1,52 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QDialog, QWidget, QListWidgetItem
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import QDialog
 
+from parsec.core.gui.lang import translate as _
+from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.ui.file_history_dialog import Ui_FileHistoryDialog
-from parsec.core.gui.ui.file_history_widget import Ui_FileHistoryWidget
 
 
-class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):
-    def __init__(self, date_time, user, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setupUi(self)
-        self.label_datetime.setText(date_time.isoformat())
-        self.label_user.setText(user)
+async def _do_workspace_version(workspace_fs, path):
+    return await workspace_fs.versions(path)
 
 
 class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
-    def __init__(self, file_name, created_on, updated_on, history, *args, **kwargs):
+    get_versions_success = pyqtSignal()
+    get_versions_error = pyqtSignal()
+
+    def __init__(self, jobs_ctx, workspace_fs, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.jobs_ctx = jobs_ctx
+        self.path = path
         self.setWindowFlags(Qt.SplashScreen)
-        self.label_file_name.setText(file_name)
-        self.label_created_on.setText(created_on.isoformat())
-        self.label_updated_on.setText(updated_on.isoformat())
-        for h in history:
-            self.add_history()
+        self.label_file_name.setText(path.name)
+        self.get_versions_success.connect(self.add_history)
+        self.get_versions_error.connect(self.show_error)
+        self.versions_job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "get_versions_success"),
+            ThreadSafeQtSignal(self, "get_versions_error"),
+            _do_workspace_version,
+            workspace_fs=workspace_fs,
+            path=path,
+        )
+        # TODO : cancellable
 
     def add_history(self):
-        import datetime
+        versions_dict = self.versions_job.ret
+        if not versions_dict:
+            return  # TODO : something something before
+        for k, v in versions_dict.items():
+            print(k, v)  # TODO : delete :()
+            self.versions_table.addItem(
+                k[0], k[1], self.path.name, v[0][2], v[0][0], v[0][3], k[2], k[3], v[1], v[2]
+            )
 
-        item = QListWidgetItem()
-        w = FileHistoryWidget(datetime.datetime.utcnow(), "Max")
-        item.setSizeHint(w.size())
-        self.history_list.addItem(item)
-        self.history_list.setItemWidget(item, w)
+    def show_error(self):
+        if self.versions_job and self.versions_job.status != "cancelled":
+            show_error(self, _("ERR_LIST_VERSIONS_ACCESS"), exception=self.versions_job.exc)
+        self.versions_job = None
+        self.reject()
