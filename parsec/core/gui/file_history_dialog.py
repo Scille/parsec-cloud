@@ -40,7 +40,6 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         if not versions_dict:
             return  # TODO : something something before
         for k, v in versions_dict.items():
-            print(k, v)  # TODO : delete :()
             self.versions_table.addItem(
                 k[0], k[1], self.path.name, v[0][2], v[0][0], v[0][3], k[2], k[3], v[1], v[2]
             )
