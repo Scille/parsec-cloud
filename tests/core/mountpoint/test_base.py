@@ -253,9 +253,9 @@ def test_manifest_not_available(mountpoint_service):
     with pytest.raises(OSError) as exc:
         (x_path / "foo.txt").stat()
     if os.name == "nt":
-        assert str(exc.value).startswith("[WinError 1231] The network location cannot be reached.")
+        assert exc.value.winerror == 1232  # STATUS_HOST_UNREACHABLE
     else:
-        assert exc.value.args == (100, "Network is down")
+        assert exc.value.errno == 113  # errno.EHOSTUNREACH
 
 
 @pytest.mark.trio

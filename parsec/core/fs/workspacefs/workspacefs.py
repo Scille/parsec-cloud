@@ -2,7 +2,6 @@
 
 import attr
 import trio
-import errno
 from collections import defaultdict
 from typing import Union, Iterator, Dict, Tuple
 from pendulum import Pendulum
@@ -32,6 +31,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoAccess,
     FSWorkspaceTimestampedTooEarly,
     FSLocalMissError,
+    FSInvalidArgumentError,
 )
 
 AnyPath = Union[FsPath, str]
@@ -110,7 +110,6 @@ class WorkspaceFS:
     async def path_info(self, path: AnyPath) -> dict:
         """
         Raises:
-            OSError
             FSError
         """
         return await self.transactions.entry_info(FsPath(path))
@@ -118,7 +117,6 @@ class WorkspaceFS:
     async def path_id(self, path: AnyPath) -> EntryID:
         """
         Raises:
-            OSError
             FSError
         """
         info = await self.transactions.entry_info(FsPath(path))
@@ -217,7 +215,6 @@ class WorkspaceFS:
     async def exists(self, path: AnyPath) -> bool:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -230,7 +227,6 @@ class WorkspaceFS:
     async def is_dir(self, path: AnyPath) -> bool:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -240,7 +236,6 @@ class WorkspaceFS:
     async def is_file(self, path: AnyPath) -> bool:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -250,7 +245,6 @@ class WorkspaceFS:
     async def iterdir(self, path: AnyPath) -> Iterator[FsPath]:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -263,7 +257,6 @@ class WorkspaceFS:
     async def listdir(self, path: AnyPath) -> Iterator[FsPath]:
         """
         Raises:
-            OSError
             FSError
         """
         return [child async for child in self.iterdir(path)]
@@ -271,7 +264,6 @@ class WorkspaceFS:
     async def rename(self, source: AnyPath, destination: AnyPath, overwrite: bool = True) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         source = FsPath(source)
@@ -281,7 +273,6 @@ class WorkspaceFS:
     async def mkdir(self, path: AnyPath, parents: bool = False, exist_ok: bool = False) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -299,7 +290,6 @@ class WorkspaceFS:
     async def rmdir(self, path: AnyPath) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -308,7 +298,6 @@ class WorkspaceFS:
     async def touch(self, path: AnyPath, exist_ok: bool = True) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -321,7 +310,6 @@ class WorkspaceFS:
     async def unlink(self, path: AnyPath) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -330,7 +318,6 @@ class WorkspaceFS:
     async def truncate(self, path: AnyPath, length: int) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -339,7 +326,6 @@ class WorkspaceFS:
     async def read_bytes(self, path: AnyPath, size: int = -1, offset: int = 0) -> bytes:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -352,7 +338,6 @@ class WorkspaceFS:
     async def write_bytes(self, path: AnyPath, data: bytes, offset: int = 0) -> int:
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -367,15 +352,14 @@ class WorkspaceFS:
     async def move(self, source: AnyPath, destination: AnyPath):
         """
         Raises:
-            OSError
             FSError
         """
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
         if _destinsrc(source, destination):
-            raise OSError(
-                errno.EINVAL, f"Cannot move a directory {source} into itself {destination}"
+            raise FSInvalidArgumentError(
+                f"Cannot move a directory {source} into itself {destination}"
             )
         try:
             if await self.is_dir(destination):
@@ -419,7 +403,6 @@ class WorkspaceFS:
     ):
         """
         Raises:
-            OSError
             FSError
         """
         await self.touch(target_path, exist_ok=exist_ok)
@@ -434,7 +417,6 @@ class WorkspaceFS:
     async def rmtree(self, path: AnyPath):
         """
         Raises:
-            OSError
             FSError
         """
         path = FsPath(path)
@@ -576,7 +558,6 @@ class WorkspaceFS:
     ):
         """
         Raises:
-            OSError
             FSError
         """
         # Make sure the corresponding realm exists
@@ -610,7 +591,6 @@ class WorkspaceFS:
     async def sync(self, *, remote_changed: bool = True) -> None:
         """
         Raises:
-            OSError
             FSError
         """
         await self.sync_by_id(self.workspace_id, remote_changed=remote_changed, recursive=True)

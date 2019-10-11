@@ -10,20 +10,10 @@ from winfspy import (
     FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
 )
-from winfspy.plumbing.winstuff import (
-    dt_to_filetime,
-    NTSTATUS,
-    posix_to_ntstatus,
-    SecurityDescriptor,
-)
+from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.core.types import FsPath
-from parsec.core.fs import (
-    FSError,
-    FSInvalidFileDescriptor,
-    FSBackendOfflineError,
-    FSWorkspaceNoAccess,
-)
+from parsec.core.fs import FSError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
@@ -36,21 +26,14 @@ def translate_error():
     try:
         yield
 
-    except FSBackendOfflineError as exc:
-        raise NTStatusError(NTSTATUS.STATUS_NETWORK_UNREACHABLE) from exc
-
-    except FSInvalidFileDescriptor as exc:
-        raise NTStatusError(NTSTATUS.STATUS_SOME_NOT_MAPPED) from exc
-
-    except FSWorkspaceNoAccess as exc:
-        raise NTStatusError(NTSTATUS.STATUS_ACCESS_DENIED) from exc
-
-    except OSError as exc:
-        raise NTStatusError(posix_to_ntstatus(exc.errno)) from exc
-
     except FSError as exc:
-        logger.exception("Unhandled FSError in winfsp mountpoint")
-        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
+
+        if exc.ntstatus:
+            raise NTStatusError(exc.ntstatus) from exc
+
+        else:
+            logger.exception("Internal FSError in winfsp mountpoint")
+            raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
     except (Cancelled, RunFinishedError) as exc:
         # WinFSP teardown operation doesn't make sure no concurrent operation
