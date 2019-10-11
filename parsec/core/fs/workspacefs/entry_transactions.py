@@ -39,6 +39,10 @@ class EntryTransactions(FileTransactions):
 
     # Right management helper
 
+    def _check_read_rights(self, path: FsPath):
+        if self.get_workspace_entry().role is None:
+            raise from_errno(errno.EACCES, str(path))
+
     def _check_write_rights(self, path: FsPath):
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
             raise from_errno(errno.EACCES, str(path))
@@ -189,6 +193,8 @@ class EntryTransactions(FileTransactions):
     # Transactions
 
     async def entry_info(self, path: FsPath) -> dict:
+        # Check read rights
+        self._check_read_rights(path)
 
         # Fetch data
         manifest = await self._get_manifest_from_path(path)
@@ -403,9 +409,11 @@ class EntryTransactions(FileTransactions):
         return child.id, fd
 
     async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
-        # Check write rights
+        # Check read and write rights
         if "w" in mode:
             self._check_write_rights(path)
+        else:
+            self._check_read_rights(path)
 
         # Lock path in read mode
         async with self._lock_manifest_from_path(path) as manifest:
