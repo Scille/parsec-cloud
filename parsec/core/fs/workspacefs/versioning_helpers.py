@@ -6,7 +6,7 @@ from pendulum import Pendulum
 
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs.utils import is_file_manifest, is_workspace_manifest
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFoundBadVersion,
     FSLocalMissError,
@@ -16,7 +16,10 @@ from parsec.core.fs.exceptions import (
 
 async def list_versions(
     workspacefs, path: FsPath
-) -> Dict[Tuple[EntryID, int, Pendulum, Pendulum], Tuple[DeviceID, FsPath, FsPath]]:
+) -> Dict[
+    Tuple[EntryID, int, Pendulum, Pendulum],
+    Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
+]:
     """
     Raises:
         FSError
@@ -123,7 +126,17 @@ async def list_versions(
         if early > late:
             return
         manifest = await _load_manifest_or_cached(entry_id, version=version_number)
-        data = [(manifest.author, manifest.updated), None, None, None]
+        data = [
+            (
+                manifest.author,
+                manifest.updated,
+                is_folder_manifest(manifest),
+                None if not is_file_manifest(manifest) else manifest.size,
+            ),
+            None,
+            None,
+            None,
+        ]
 
         if len(target.parts) == path_level + 1:
 
