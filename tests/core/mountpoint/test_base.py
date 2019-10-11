@@ -17,6 +17,8 @@ from parsec.core.mountpoint import (
 from parsec.core import logged_core_factory
 from parsec.core.types import FsPath
 
+from tests.common import create_shared_workspace
+
 
 @pytest.mark.trio
 async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
@@ -316,3 +318,93 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
         caplog.assert_occured(
             "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
         )
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_mountpoint_with_no_read_access(
+    base_mountpoint, alice_user_fs, alice2_user_fs, bob_user_fs, event_bus, running_backend
+):
+    # Bob creates and share two files with Alice
+    wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
+    workspace = bob_user_fs.get_workspace(wid)
+    await workspace.touch("/foo.txt")
+    await workspace.touch("/bar.txt")
+    await workspace.sync()
+
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+        # Mount Bob workspace on Alice's side
+        await mountpoint_manager.mount_workspace(wid)
+        foo_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/foo.txt"))
+        bar_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+
+        # A trio path is required here, otherwise we risk a messy deadlock!
+        foo_txt = trio.Path(foo_txt)
+        bar_txt = trio.Path(bar_txt)
+
+        # The bar file is properly shared
+        assert await bar_txt.exists()
+
+        # Bob removes Alice from her workspace
+        await bob_user_fs.workspace_share(wid, alice_user_fs.device.user_id, None)
+
+        # Let Alice process the info
+        await alice_user_fs.process_last_messages()
+        await alice2_user_fs.process_last_messages()
+
+        # Alice no longer has access to the foo file
+        with pytest.raises(PermissionError):
+            await foo_txt.exists()
+
+        # Nor the bar file, even if cached
+        with pytest.raises(PermissionError):
+            # For some reason, bar_txt.exists() does not trigger a new getattr call
+            # to fuse operations (probably because the result is still cached from
+            # the last call). Instead, let's try to read the file.
+            await bar_txt.read_bytes()
+
+    # Try again with Alice first device
+
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+        # Mount alice workspace on bob's side once again
+        await mountpoint_manager.mount_workspace(wid)
+        foo_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/foo.txt"))
+        bar_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+
+        # A trio path is required here, otherwise we risk a messy deadlock!
+        foo_txt = trio.Path(foo_txt)
+        bar_txt = trio.Path(bar_txt)
+
+        # Still no access to foo
+        with pytest.raises(PermissionError):
+            await foo_txt.exists()
+
+        # Nor the bar file, even if cached
+        with pytest.raises(PermissionError):
+            await bar_txt.exists()
+
+    # Try again with Alice second device
+
+    async with mountpoint_manager_factory(
+        alice2_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+        # Mount alice workspace on bob's side once again
+        await mountpoint_manager.mount_workspace(wid)
+        foo_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/foo.txt"))
+        bar_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+
+        # A trio path is required here, otherwise we risk a messy deadlock!
+        foo_txt = trio.Path(foo_txt)
+        bar_txt = trio.Path(bar_txt)
+
+        # Still no access to foo
+        with pytest.raises(PermissionError):
+            await foo_txt.exists()
+
+        # And no access to bar either
+        with pytest.raises(PermissionError):
+            await bar_txt.exists()
