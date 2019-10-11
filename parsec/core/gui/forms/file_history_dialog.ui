@@ -17,6 +17,85 @@
    <string notr="true">QDialog#FileHistoryDialog
 {
 background-color: rgb(255, 255, 255);
+}
+
+QScrollBar:vertical
+{
+background: rgb(255, 255, 255);
+}
+
+QScrollBar::handle:vertical
+{
+background: rgb(46, 46, 46);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+border: none;
+background: none;
+}
+
+QToolTip
+{
+background-color: rgb(46, 146, 208);
+border: 1px solid rgb(12, 65, 157);
+color: rgb(255, 255, 255);
+}
+
+QTableWidget#table_files
+{
+border: 1px solid rgb(46, 46, 46);
+}
+
+QHeaderView::section
+{
+padding-left: 15px;
+border: 0;
+background-color: rgb(46, 46, 46);
+color: white;
+font-size: 16px;
+font-weight: bold;
+height: 32px;
+text-align: left;
+}
+
+QHeaderView
+{
+background-color: rgb(46, 46, 46);
+}
+
+QTableWidget::item
+{
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
+border: 0px;
+padding: 15px;
+}
+
+QTableWidget::item:selected
+{
+background-color: rgb(206, 225, 239);
+color: rgb(0, 0, 0);
+}
+
+QHeaderView::down-arrow
+{
+image: url(&quot;:/icons/images/icons/sort_down_arrow.png&quot;);
+subcontrol-position: center right;
+subcontrol-origin: padding;
+padding-right: 32px;
+width: 16px;
+height: 16px;
+}
+
+QHeaderView::up-arrow
+{
+image: url(&quot;:/icons/images/icons/sort_up_arrow.png&quot;);
+subcontrol-position: center right;
+subcontrol-origin: padding;
+padding-right: 32px;
+width: 16px;
+height: 16px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
