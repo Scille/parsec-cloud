@@ -38,7 +38,7 @@ async def _do_claim_device(
     token: str,
     user_id: str,
     device_name: str,
-    organization_addr: str,
+    organization_url: str,
     pkcs11_token: int,
     pkcs11_key: int,
 ):
@@ -49,7 +49,7 @@ async def _do_claim_device(
             raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationAddr(organization_addr)
+        organization_addr = BackendOrganizationAddr.from_url(organization_url)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -235,7 +235,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             token=self.line_edit_token.text(),
             user_id=self.line_edit_login.text(),
             device_name=self.line_edit_device.text(),
-            organization_addr=self.line_edit_url.text(),
+            organization_url=self.line_edit_url.text(),
             pkcs11_token=int(self.combo_pkcs11_token.currentText()),
             pkcs11_key=int(self.combo_pkcs11_key.currentText()),
         )
