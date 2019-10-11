@@ -156,6 +156,6 @@ class VersionsTable(QTableWidget):
         _config_data(2, format_datetime(late_timestamp))
         _config_data(3, creator.user_id)
         _config_data(4, creator.device_name)
-        _config_data(5, get_filesize(size))
+        _config_data(5, get_filesize(size) if size is not None else "")
         _config_data(6, source_path)
         _config_data(7, destination_path)
