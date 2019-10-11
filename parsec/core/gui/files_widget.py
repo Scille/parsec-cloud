@@ -211,15 +211,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.sortItems(0)
 
     def show_history(self):
-        import datetime
-
         files = self.table_files.selected_files()
         if len(files) > 1:
             show_warning(self, _("Can only see the history one file at a time."))
             return
-        fd = FileHistoryDialog(
-            "Osef.txt", datetime.datetime.utcnow(), datetime.datetime.utcnow(), [1, 2, 3, 4, 5, 6]
-        )
+        selected_path = self.current_directory / files[0].name
+        fd = FileHistoryDialog(self.jobs_ctx, self.workspace_fs, selected_path)
         fd.exec_()
 
     def rename_files(self):
