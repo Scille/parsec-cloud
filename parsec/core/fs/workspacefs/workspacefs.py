@@ -32,6 +32,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceTimestampedTooEarly,
     FSLocalMissError,
     FSInvalidArgumentError,
+    FSNotADirectoryError,
 )
 
 AnyPath = Union[FsPath, str]
@@ -250,7 +251,7 @@ class WorkspaceFS:
         path = FsPath(path)
         info = await self.transactions.entry_info(path)
         if "children" not in info:
-            raise NotADirectoryError(str(path))
+            raise FSNotADirectoryError(filename=str(path))
         for child in info["children"]:
             yield path / child
 

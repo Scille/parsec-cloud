@@ -128,7 +128,7 @@ class QtToTrioJob:
         if isinstance(exc, JobResultError):
             self.status = exc.status
             self.exc = exc
-        elif isinstance(exc, (FSError, OSError)):
+        elif isinstance(exc, FSError):
             self.status = "ko"
             self.exc = exc
         else:

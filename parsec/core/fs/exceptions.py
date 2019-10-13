@@ -35,6 +35,10 @@ class FSError(OSError):
         super().__init__(self.ERRNO, self.message, filename, self.WINERROR, filename2)
 
     def __str__(self):
+        if self.filename2:
+            return f"{self.message}: {self.filename} -> {self.filename2}"
+        if self.filename:
+            return f"{self.message}: {self.filename}"
         return self.message
 
 

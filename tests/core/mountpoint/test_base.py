@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+import errno
 from uuid import uuid4
 
 import trio
@@ -15,7 +16,7 @@ from parsec.core.mountpoint import (
     MountpointNotMounted,
 )
 from parsec.core import logged_core_factory
-from parsec.core.types import FsPath
+from parsec.core.types import FsPath, WorkspaceRole
 
 from tests.common import create_shared_workspace
 
@@ -253,9 +254,11 @@ def test_manifest_not_available(mountpoint_service):
     with pytest.raises(OSError) as exc:
         (x_path / "foo.txt").stat()
     if os.name == "nt":
-        assert exc.value.winerror == 1232  # STATUS_HOST_UNREACHABLE
+        # This winerror code corresponds to ntstatus.STATUS_HOST_UNREACHABLE
+        ERROR_HOST_UNREACHABLE = 1232
+        assert exc.value.winerror == ERROR_HOST_UNREACHABLE
     else:
-        assert exc.value.errno == 113  # errno.EHOSTUNREACH
+        assert exc.value.errno == errno.EHOSTUNREACH
 
 
 @pytest.mark.trio
@@ -322,9 +325,19 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-async def test_mountpoint_with_no_read_access(
-    base_mountpoint, alice_user_fs, alice2_user_fs, bob_user_fs, event_bus, running_backend
+@pytest.mark.parametrize("revoking", ["read", "write"])
+async def test_mountpoint_revoke_access(
+    base_mountpoint,
+    alice_user_fs,
+    alice2_user_fs,
+    bob_user_fs,
+    event_bus,
+    running_backend,
+    revoking,
 ):
+    # Parametrization
+    new_role = None if revoking == "read" else WorkspaceRole.READER
+
     # Bob creates and share two files with Alice
     wid = await create_shared_workspace("w", bob_user_fs, alice_user_fs, alice2_user_fs)
     workspace = bob_user_fs.get_workspace(wid)
@@ -332,38 +345,76 @@ async def test_mountpoint_with_no_read_access(
     await workspace.touch("/bar.txt")
     await workspace.sync()
 
+    def get_root_path(mountpoint_manager):
+        root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
+        # A trio path is required here, otherwise we risk a messy deadlock!
+        return trio.Path(root_path)
+
+    async def assert_cannot_read(mountpoint_manager, root_is_cached=False):
+        root_path = get_root_path(mountpoint_manager)
+        foo_path = root_path / "foo.txt"
+        bar_path = root_path / "bar.txt"
+        # For some reason, root_path.stat() does not trigger a new getattr call
+        # to fuse operations if there has been a prior recent call to stat.
+        if not root_is_cached:
+            with pytest.raises(PermissionError):
+                await root_path.stat()
+        with pytest.raises(PermissionError):
+            await foo_path.exists()
+        with pytest.raises(PermissionError):
+            await foo_path.read_bytes()
+        with pytest.raises(PermissionError):
+            await bar_path.exists()
+        with pytest.raises(PermissionError):
+            await bar_path.read_bytes()
+
+    async def assert_cannot_write(mountpoint_manager):
+        root_path = get_root_path(mountpoint_manager)
+        foo_path = root_path / "foo.txt"
+        bar_path = root_path / "bar.txt"
+        with pytest.raises(PermissionError):
+            await (root_path / "new_file.txt").touch()
+        with pytest.raises(PermissionError):
+            await (root_path / "new_directory").mkdir()
+        with pytest.raises(PermissionError):
+            await foo_path.write_bytes(b"foo contents")
+        with pytest.raises(PermissionError):
+            await foo_path.unlink()
+        with pytest.raises(PermissionError):
+            await bar_path.write_bytes(b"bar contents")
+        with pytest.raises(PermissionError):
+            await bar_path.unlink()
+
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
         # Mount Bob workspace on Alice's side
         await mountpoint_manager.mount_workspace(wid)
-        foo_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/foo.txt"))
-        bar_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+        root_path = get_root_path(mountpoint_manager)
 
-        # A trio path is required here, otherwise we risk a messy deadlock!
-        foo_txt = trio.Path(foo_txt)
-        bar_txt = trio.Path(bar_txt)
+        # Alice can read
+        await (root_path / "bar.txt").read_bytes()
 
-        # The bar file is properly shared
-        assert await bar_txt.exists()
+        # Alice can write
+        await (root_path / "bar.txt").write_bytes(b"test")
 
-        # Bob removes Alice from her workspace
-        await bob_user_fs.workspace_share(wid, alice_user_fs.device.user_id, None)
+        # Bob revokes Alice's read or write rights from her workspace
+        await bob_user_fs.workspace_share(wid, alice_user_fs.device.user_id, new_role)
 
         # Let Alice process the info
         await alice_user_fs.process_last_messages()
         await alice2_user_fs.process_last_messages()
 
-        # Alice no longer has access to the foo file
-        with pytest.raises(PermissionError):
-            await foo_txt.exists()
+        # Alice still has read access
+        if new_role is WorkspaceRole.READER:
+            await (root_path / "bar.txt").read_bytes()
 
-        # Nor the bar file, even if cached
-        with pytest.raises(PermissionError):
-            # For some reason, bar_txt.exists() does not trigger a new getattr call
-            # to fuse operations (probably because the result is still cached from
-            # the last call). Instead, let's try to read the file.
-            await bar_txt.read_bytes()
+        # Alice no longer has read access
+        else:
+            await assert_cannot_read(mountpoint_manager, root_is_cached=True)
+
+        # Alice no longer has write access
+        await assert_cannot_write(mountpoint_manager)
 
     # Try again with Alice first device
 
@@ -372,20 +423,18 @@ async def test_mountpoint_with_no_read_access(
     ) as mountpoint_manager:
         # Mount alice workspace on bob's side once again
         await mountpoint_manager.mount_workspace(wid)
-        foo_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/foo.txt"))
-        bar_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+        root_path = get_root_path(mountpoint_manager)
 
-        # A trio path is required here, otherwise we risk a messy deadlock!
-        foo_txt = trio.Path(foo_txt)
-        bar_txt = trio.Path(bar_txt)
+        # Alice still has read access
+        if new_role is WorkspaceRole.READER:
+            await (root_path / "bar.txt").read_bytes()
 
-        # Still no access to foo
-        with pytest.raises(PermissionError):
-            await foo_txt.exists()
+        # Alice no longer has read access
+        else:
+            await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
-        # Nor the bar file, even if cached
-        with pytest.raises(PermissionError):
-            await bar_txt.exists()
+        # Alice no longer has write access
+        await assert_cannot_write(mountpoint_manager)
 
     # Try again with Alice second device
 
@@ -394,17 +443,15 @@ async def test_mountpoint_with_no_read_access(
     ) as mountpoint_manager:
         # Mount alice workspace on bob's side once again
         await mountpoint_manager.mount_workspace(wid)
-        foo_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/foo.txt"))
-        bar_txt = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+        root_path = get_root_path(mountpoint_manager)
 
-        # A trio path is required here, otherwise we risk a messy deadlock!
-        foo_txt = trio.Path(foo_txt)
-        bar_txt = trio.Path(bar_txt)
+        # Alice still has read access
+        if new_role is WorkspaceRole.READER:
+            await (root_path / "bar.txt").read_bytes()
 
-        # Still no access to foo
-        with pytest.raises(PermissionError):
-            await foo_txt.exists()
+        # Alice no longer has read access
+        else:
+            await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
-        # And no access to bar either
-        with pytest.raises(PermissionError):
-            await bar_txt.exists()
+        # Alice no longer has write access
+        await assert_cannot_write(mountpoint_manager)
