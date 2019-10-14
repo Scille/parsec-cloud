@@ -251,6 +251,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def can_delete(self, file_context, file_name: str) -> None:
         with translate_error():
+            self.fs_access.check_write_rights(file_context.path)
             stat = self.fs_access.entry_info(file_context.path)
             if stat["type"] == "file":
                 return
@@ -301,7 +302,9 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def cleanup(self, file_context, file_name, flags) -> None:
         # FspCleanupDelete
-        file_context.deleted = flags & 1
+        if flags & 1:
+            self.fs_access.check_write_rights(file_context.path)
+            file_context.deleted = True
 
     def overwrite(
         self, file_context, file_attributes, replace_file_attributes: bool, allocation_size: int
