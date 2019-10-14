@@ -10,9 +10,7 @@ from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.lang import format_datetime
 from parsec.core.gui.file_items import (
-    FileTableItem,
     CustomTableItem,
-    FolderTableItem,
     FileType,
     NAME_DATA_INDEX,
     TYPE_DATA_INDEX,
@@ -41,13 +39,14 @@ class VersionsTable(QTableWidget):
 
         h_header.setSectionResizeMode(0, QHeaderView.Fixed)
         h_header.setSectionResizeMode(1, QHeaderView.Stretch)
-        h_header.setSectionResizeMode(2, QHeaderView.Fixed)
-        h_header.setSectionResizeMode(3, QHeaderView.Fixed)
-        h_header.setSectionResizeMode(4, QHeaderView.Fixed)
+        h_header.setSectionResizeMode(2, QHeaderView.Stretch)
+        h_header.setSectionResizeMode(3, QHeaderView.Stretch)
+        h_header.setSectionResizeMode(4, QHeaderView.Stretch)
 
-        self.setColumnWidth(0, 60)
+        self.setColumnWidth(0, 300)
+        self.setColumnWidth(1, 200)
         self.setColumnWidth(2, 200)
-        self.setColumnWidth(3, 200)
+        self.setColumnWidth(3, 100)
         self.setColumnWidth(4, 100)
 
         v_header = self.verticalHeader()
@@ -147,15 +146,9 @@ class VersionsTable(QTableWidget):
 
         row_id = self.rowCount()
         self.insertRow(row_id)
-        # TODO : STOP SHOWING SYNC ICON?
-        item = FolderTableItem(True) if is_folder else FileTableItem(True, item_name)
-        item.setData(UUID_DATA_INDEX, entry_id)
-        self.setItem(row_id, 0, item)
 
-        _config_data(1, format_datetime(early_timestamp))
-        _config_data(2, format_datetime(late_timestamp))
-        _config_data(3, creator.user_id)
-        _config_data(4, creator.device_name)
-        _config_data(5, get_filesize(size) if size is not None else "")
-        _config_data(6, source_path)
-        _config_data(7, destination_path)
+        _config_data(0, format_datetime(early_timestamp))
+        _config_data(1, creator)
+        _config_data(2, get_filesize(size) if size is not None else "")
+        _config_data(3, source_path)
+        _config_data(4, destination_path)

@@ -1492,17 +1492,11 @@ msgstr "Mis à jour le"
 msgid "LABEL_FILE_SIZE"
 msgstr "Taille"
 
-msgid "LABEL_FILE_EARLY"
-msgstr "Apparition"
-
-msgid "LABEL_FILE_LATE"
-msgstr "Disparition"
+msgid "LABEL_FILE_TIMESTAMP"
+msgstr "Horodatage"
 
 msgid "LABEL_FILE_USER_ID"
 msgstr "Utilisateur"
-
-msgid "LABEL_FILE_DEVICE_ID"
-msgstr "Device"
 
 msgid "LABEL_FILE_SOURCE"
 msgstr "Source"

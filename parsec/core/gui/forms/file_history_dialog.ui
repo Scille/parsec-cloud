@@ -277,7 +277,7 @@ background-color: rgb(220, 220, 220);
            <bool>false</bool>
           </property>
           <property name="columnCount">
-           <number>8</number>
+           <number>5</number>
           </property>
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>false</bool>
@@ -290,27 +290,12 @@ background-color: rgb(220, 220, 220);
           </attribute>
           <column>
            <property name="text">
-            <string/>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>LABEL_FILE_EARLY</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>LABEL_FILE_LATE</string>
+            <string>LABEL_FILE_TIMESTAMP</string>
            </property>
           </column>
           <column>
            <property name="text">
             <string>LABEL_FILE_USER_ID</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>LABEL_FILE_DEVICE_ID</string>
            </property>
           </column>
           <column>
