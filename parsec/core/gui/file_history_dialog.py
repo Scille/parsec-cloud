@@ -41,7 +41,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
             return  # TODO : something something before
         for k, v in versions_dict.items():
             self.versions_table.addItem(
-                k[0], k[1], self.path.name, v[0][2], v[0][0], v[0][3], k[2], k[3], v[1], v[2]
+                k[0], k[1], self.path, v[0][2], v[0][0], v[0][3], k[2], k[3], v[1], v[2]
             )
 
     def show_error(self):

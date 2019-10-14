@@ -9,16 +9,19 @@ from PyQt5.QtWidgets import QTableWidget, QHeaderView
 from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.lang import format_datetime
-from parsec.core.gui.file_items import (
-    CustomTableItem,
-    FileType,
-    NAME_DATA_INDEX,
-    TYPE_DATA_INDEX,
-    UUID_DATA_INDEX,
-)
+from parsec.core.gui.file_items import CustomTableItem, FileType
 from parsec.core.gui.file_size import get_filesize
 
 from parsec.core.gui.file_table import ItemDelegate
+
+
+NAME_DATA_INDEX = Qt.UserRole
+TYPE_DATA_INDEX = Qt.UserRole + 1
+EARLY_TIMESTAMP_DATA_INDEX = Qt.UserRole + 2
+LATE_TIMESTAMP_DATA_INDEX = Qt.UserRole + 3
+SOURCE_PATH_DATA_INDEX = Qt.UserRole + 4
+DESTINATION_PATH_DATA_INDEX = Qt.UserRole + 5
+ACTUAL_PATH_DATA_INDEX = Qt.UserRole + 6
 
 
 class VersionsTable(QTableWidget):
@@ -66,26 +69,32 @@ class VersionsTable(QTableWidget):
             for row in range(r.topRow(), r.bottomRow() + 1):
                 item = self.item(row, 1)
                 files.append(
-                    SelectedFile(
-                        row,
-                        item.data(TYPE_DATA_INDEX),
-                        item.data(NAME_DATA_INDEX),
-                        item.data(UUID_DATA_INDEX),
-                    )
+                    SelectedFile(row, item.data(TYPE_DATA_INDEX), item.data(NAME_DATA_INDEX))
                 )
         return files
 
-    def has_file(self, uuid):
-        return any(
-            uuid == self.item(row, 1).data(UUID_DATA_INDEX) for row in range(self.rowCount())
-        )
-
     def item_double_clicked(self, row, column):
-        name_item = self.item(row, 1)
-        type_item = self.item(row, 0)
-        file_type = type_item.data(TYPE_DATA_INDEX)
+        target_path = self.item(row, 0).data(ACTUAL_PATH_DATA_INDEX)
+        target_timestamp = self.item(row, 0).data(EARLY_TIMESTAMP_DATA_INDEX)
+        if column == 3:  # source clicked
+            source_path = self.item(row, 0).data(SOURCE_PATH_DATA_INDEX)
+            if source_path is not None:
+                target_path = source_path
+                target_timestamp = (
+                    self.item(row, 0).data(EARLY_TIMESTAMP_DATA_INDEX).add(microseconds=-1)
+                )
+        elif column == 4:  # destination clicked
+            destination_path = self.item(row, 0).data(DESTINATION_PATH_DATA_INDEX)
+            if destination_path is not None:
+                target_path = destination_path
+                target_timestamp = self.item(row, 0).data(LATE_TIMESTAMP_DATA_INDEX)
+        file_type = self.item(row, 0).data(TYPE_DATA_INDEX)
         try:
-            self.item_activated.emit(file_type, name_item.data(NAME_DATA_INDEX))
+            # TODO : actually go.
+            print("target path = " + str(target_path))
+            print("timestamp = " + str(target_timestamp))
+            print("filetype = " + str(file_type))
+            # self.item_activated.emit(file_type, name_item.data(NAME_DATA_INDEX))
         except AttributeError:
             # This can happen when updating the list: double click event gets processed after
             # the item has been removed.
@@ -111,21 +120,25 @@ class VersionsTable(QTableWidget):
         self.previous_selection = selected
 
     def _config_item_data(
-        self, name, name_data_index, type_data_index, uuid_data_index, row_id, col_id
+        self, name, actual_path, type_data, early, late, source, destination, row_id, col_id
     ):
         name = "" if name is None else str(name)
         item = CustomTableItem(name)
         item.setToolTip("\n".join(name[i : i + 64] for i in range(0, len(name), 64)))
-        item.setData(NAME_DATA_INDEX, name_data_index)
-        item.setData(TYPE_DATA_INDEX, type_data_index)
-        item.setData(UUID_DATA_INDEX, uuid_data_index)
+        item.setData(NAME_DATA_INDEX, name)
+        item.setData(TYPE_DATA_INDEX, type_data)
+        item.setData(EARLY_TIMESTAMP_DATA_INDEX, early)
+        item.setData(LATE_TIMESTAMP_DATA_INDEX, late)
+        item.setData(SOURCE_PATH_DATA_INDEX, source)
+        item.setData(DESTINATION_PATH_DATA_INDEX, destination)
+        item.setData(ACTUAL_PATH_DATA_INDEX, actual_path)
         self.setItem(row_id, col_id, item)
 
     def addItem(
         self,
         entry_id,
         version,
-        item_name,
+        actual_path,
         is_folder,
         creator,
         size,
@@ -137,9 +150,12 @@ class VersionsTable(QTableWidget):
         def _config_data(col_id, name):
             self._config_item_data(
                 name,
-                name,
+                actual_path,
                 FileType.Folder if is_folder else FileType.File,
-                entry_id,
+                early_timestamp,
+                late_timestamp,
+                source_path,
+                destination_path,
                 row_id,
                 col_id,
             )
