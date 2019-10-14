@@ -49,7 +49,7 @@ async def _do_claim_user(
             raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationAddr.form_url(organization_url)
+        organization_addr = BackendOrganizationAddr.from_url(organization_url)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 

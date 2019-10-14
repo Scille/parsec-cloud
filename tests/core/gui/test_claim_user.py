@@ -39,7 +39,7 @@ async def _gui_ready_for_claim(aqtbot, gui, invitation):
     await aqtbot.key_clicks(claim_w.line_edit_login, invitation.get("user_id", ""))
     await aqtbot.key_clicks(claim_w.line_edit_device, invitation.get("device_name", ""))
     await aqtbot.key_clicks(claim_w.line_edit_token, invitation.get("token", ""))
-    await aqtbot.key_clicks(claim_w.line_edit_url, invitation.get("addr", ""))
+    await aqtbot.key_clicks(claim_w.line_edit_url, str(invitation.get("addr", "")))
     await aqtbot.key_clicks(claim_w.line_edit_password, invitation.get("password", ""))
     await aqtbot.key_clicks(claim_w.line_edit_password_check, invitation.get("password", ""))
 

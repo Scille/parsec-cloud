@@ -16,6 +16,7 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     llw = gui.test_get_login_login_widget()
+    tabw = gui.test_get_tab()
 
     assert lw is not None
     assert llw is not None
@@ -28,7 +29,7 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
 
     await aqtbot.key_clicks(llw.line_edit_password, password)
 
-    async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
 
     lw = gui.test_get_login_widget()

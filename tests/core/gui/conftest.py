@@ -287,8 +287,15 @@ def add_method(cls):
 
 
 @add_method(MainWindow)
+def test_get_tab(self):
+    w = self.tab_center.currentWidget()
+    return w
+
+
+@add_method(MainWindow)
 def test_get_main_widget(self):
-    item = self.widget_center.layout().itemAt(0)
+    tabw = self.test_get_tab()
+    item = tabw.layout().itemAt(0)
     return item.widget()
 
 
@@ -324,10 +331,15 @@ def test_get_login_login_widget(self):
 def test_get_claim_user_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
+        print("Failed login_widget")
         return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
+    if not w:
+        print("Failed widget")
+        return None
     if not isinstance(w, ClaimUserWidget):
+        print("Not good type", type(w))
         return None
     return w
 
