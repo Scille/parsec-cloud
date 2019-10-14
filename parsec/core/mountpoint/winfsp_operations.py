@@ -291,3 +291,9 @@ class WinFSPOperations(BaseFileSystemOperations):
     def cleanup(self, file_context, file_name, flags) -> None:
         # FspCleanupDelete
         file_context.deleted = flags & 1
+
+    def overwrite(
+        self, file_context, file_attributes, replace_file_attributes: bool, allocation_size: int
+    ) -> None:
+        with translate_error():
+            self.fs_access.fd_resize(file_context.fd, 0)
