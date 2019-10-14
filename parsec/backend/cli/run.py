@@ -132,7 +132,7 @@ class DevOption(click.Option):
         return value, args
 
 
-@click.command(short_help="run the server")
+@click.command(short_help="run the server", context_settings={"max_content_width": 400})
 @click.option(
     "--host",
     "-H",
@@ -154,7 +154,11 @@ class DevOption(click.Option):
     "--db",
     required=True,
     envvar="PARSEC_DB",
-    help="Database configuration (mocked in memory, or postgresql uri)",
+    help="""Database configuration.
+Allowed values:
+-`MOCKED`: Mocked in memory
+-`postgresql://<...>`: Use PostgreSQL database
+""",
 )
 @click.option(
     "--db-drop-deleted-data",
@@ -186,12 +190,13 @@ class DevOption(click.Option):
     envvar="PARSEC_BLOCKSTORE",
     help="""Blockstore configuration.
 Allowed values:
-- `MOCKED`: Mocked in memory
-- `POSTGRESQL`: Use the database specified in the `--db` param
-- `s3:<endpoint_url>:<region>:<bucket>:<key>:<secret>`: Use S3 storage
-- `swift:<authurl>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
+-`MOCKED`: Mocked in memory
+-`POSTGRESQL`: Use the database specified in the `--db` param
+-`s3:<endpoint_url>:<region>:<bucket>:<key>:<secret>`: Use S3 storage
+-`swift:<authurl>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
 On top of that, multiple blockstore configurations can be provided to form a
-RAID0/1/5 cluster. Each configuration must be provided with the form
+RAID0/1/5 cluster.
+Each configuration must be provided with the form
 `<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, <node> a
 integer and <config> the MOCKED/POSTGRESQL/S3/SWIFT config.
 """,
