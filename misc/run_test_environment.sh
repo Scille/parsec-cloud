@@ -30,7 +30,8 @@ Configure your test environment with the following variables:
     export XDG_CONFIG_HOME=$XDG_CONFIG_HOME
 """
 
-pkill -f "parsec backend run -b MOCKED -P $PORT"
-parsec backend run -b MOCKED -P $PORT &
+ADMIN_TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+pkill -f "parsec backend run -b MOCKED --db MOCKED -P $PORT --administration-token *"
+parsec backend run -b MOCKED --db MOCKED -P $PORT --administration-token $ADMIN_TOKEN &
 sleep 1
-python3 misc/initialize_test_organization.py -B "parsec://localhost:$PORT?no_ssl=true" $@
+python3 misc/initialize_test_organization.py -B "parsec://localhost:$PORT?no_ssl=true" -T $ADMIN_TOKEN $@
