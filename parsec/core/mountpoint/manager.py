@@ -137,6 +137,8 @@ class MountpointManager:
     async def mount_all(self, timestamp: Pendulum = None):
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
+            if workspace_entry.role is None:
+                continue
             try:
                 await self.mount_workspace(workspace_entry.id, timestamp=timestamp)
             except MountpointAlreadyMounted:

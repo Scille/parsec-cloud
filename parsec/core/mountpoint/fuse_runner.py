@@ -160,11 +160,14 @@ async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_
     while True:
         await trio.sleep(0.01)
         try:
-            if (await trio_mountpoint_path.stat()).st_dev != initial_st_dev:
-                break
-
+            stat = await trio_mountpoint_path.stat()
         except FileNotFoundError:
-            pass
+            continue
+        # Looks like a revoked workspace has been mounted
+        except PermissionError:
+            break
+        if stat.st_dev != initial_st_dev:
+            break
 
 
 async def _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped):

@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
-import errno
 from typing import Tuple
 from async_generator import asynccontextmanager
 
@@ -17,31 +15,41 @@ from parsec.core.types import (
 
 
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.exceptions import FSEntryNotFound, FSLocalMissError
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
     is_workspace_manifest,
     is_folderish_manifest,
 )
+from parsec.core.fs.exceptions import (
+    FSPermissionError,
+    FSNotADirectoryError,
+    FSFileNotFoundError,
+    FSCrossDeviceError,
+    FSFileExistsError,
+    FSIsADirectoryError,
+    FSDirectoryNotEmptyError,
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
+    FSEntryNotFound,
+    FSLocalMissError,
+)
 
 
 WRITE_RIGHT_ROLES = (WorkspaceRole.OWNER, WorkspaceRole.MANAGER, WorkspaceRole.CONTRIBUTOR)
-
-
-def from_errno(errno, message=None, filename=None, filename2=None):
-    if message is None:
-        message = os.strerror(errno)
-    return OSError(errno, message, filename, None, filename2)
 
 
 class EntryTransactions(FileTransactions):
 
     # Right management helper
 
-    def _check_write_rights(self, path: FsPath):
+    def check_read_rights(self, path: FsPath):
+        if self.get_workspace_entry().role is None:
+            raise FSWorkspaceNoReadAccess(filename=path)
+
+    def check_write_rights(self, path: FsPath):
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
-            raise from_errno(errno.EACCES, str(path))
+            raise FSWorkspaceNoWriteAccess(filename=path)
 
     # Look-up helpers
 
@@ -77,11 +85,11 @@ class EntryTransactions(FileTransactions):
         for name in path.parts[1:]:
             manifest = await self._load_manifest(entry_id)
             if is_file_manifest(manifest):
-                raise from_errno(errno.ENOTDIR, filename=str(path))
+                raise FSNotADirectoryError(filename=path)
             try:
                 entry_id = manifest.children[name]
             except (AttributeError, KeyError):
-                raise from_errno(errno.ENOENT, filename=str(path))
+                raise FSFileNotFoundError(filename=path)
 
         # Lock entry
         async with self._load_and_lock_manifest(entry_id) as manifest:
@@ -115,7 +123,7 @@ class EntryTransactions(FileTransactions):
 
         # Source is root
         if path.is_root():
-            raise from_errno(errno.EACCES, filename=str(path))
+            raise FSPermissionError(filename=str(path))
 
         # Loop over attempts
         while True:
@@ -125,7 +133,7 @@ class EntryTransactions(FileTransactions):
 
                 # Parent is not a directory
                 if not is_folderish_manifest(parent):
-                    raise from_errno(errno.ENOTDIR, filename=str(path.parent))
+                    raise FSNotADirectoryError(filename=path.parent)
 
                 # Child doesn't exist
                 if path.name not in parent.children:
@@ -189,6 +197,8 @@ class EntryTransactions(FileTransactions):
     # Transactions
 
     async def entry_info(self, path: FsPath) -> dict:
+        # Check read rights
+        self.check_read_rights(path)
 
         # Fetch data
         manifest = await self._get_manifest_from_path(path)
@@ -217,19 +227,19 @@ class EntryTransactions(FileTransactions):
         self, source: FsPath, destination: FsPath, overwrite: bool = True
     ) -> EntryID:
         # Check write rights
-        self._check_write_rights(source)
+        self.check_write_rights(source)
 
         # Source is root
         if source.is_root():
-            raise from_errno(errno.EACCES, filename=str(source))
+            raise FSPermissionError(filename=source)
 
         # Destination is root
         if destination.is_root():
-            raise from_errno(errno.EACCES, filename=str(destination))
+            raise FSPermissionError(filename=destination)
 
         # Cross-directory renaming is not supported
         if source.parent != destination.parent:
-            raise from_errno(errno.EXDEV, filename=str(source), filename2=str(destination))
+            raise FSCrossDeviceError(filename=source, filename2=destination)
 
         # Pre-fetch the source if necessary
         if overwrite:
@@ -240,7 +250,7 @@ class EntryTransactions(FileTransactions):
 
             # Source does not exist
             if source.name not in parent.children:
-                raise from_errno(errno.ENOENT, filename=str(source))
+                raise FSFileNotFoundError(filename=source)
             source_entry_id = parent.children[source.name]
 
             # Source and destination are the same
@@ -249,7 +259,7 @@ class EntryTransactions(FileTransactions):
 
             # Destination already exists
             if not overwrite and child is not None:
-                raise from_errno(errno.EEXIST, filename=str(destination))
+                raise FSFileExistsError(filename=destination)
 
             # Overwrite logic
             if overwrite and child is not None:
@@ -260,18 +270,18 @@ class EntryTransactions(FileTransactions):
 
                     # Destination is a folder
                     if is_folder_manifest(child):
-                        raise from_errno(errno.EISDIR, str(destination))
+                        raise FSIsADirectoryError(filename=destination)
 
                 # Overwrite a folder
                 if is_folder_manifest(source_manifest):
 
                     # Destination is not a folder
                     if is_file_manifest(child):
-                        raise from_errno(errno.ENOTDIR, str(destination))
+                        raise FSNotADirectoryError(filename=destination)
 
                     # Destination is not empty
                     if child.children:
-                        raise from_errno(errno.ENOTEMPTY, str(destination))
+                        raise FSDirectoryNotEmptyError(filename=destination)
 
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated(
@@ -289,22 +299,22 @@ class EntryTransactions(FileTransactions):
 
     async def folder_delete(self, path: FsPath) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        self.check_write_rights(path)
 
         # Fetch and lock
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
 
             # Entry doesn't exist
             if child is None:
-                raise from_errno(errno.ENOENT, filename=str(path))
+                raise FSFileNotFoundError(filename=path)
 
             # Not a directory
             if not is_folderish_manifest(child):
-                raise from_errno(errno.ENOTDIR, str(path))
+                raise FSNotADirectoryError(filename=path)
 
             # Directory not empty
             if child.children:
-                raise from_errno(errno.ENOTEMPTY, str(path))
+                raise FSDirectoryNotEmptyError(filename=path)
 
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
@@ -320,18 +330,18 @@ class EntryTransactions(FileTransactions):
 
     async def file_delete(self, path: FsPath) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        self.check_write_rights(path)
 
         # Fetch and lock
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
 
             # Entry doesn't exist
             if child is None:
-                raise from_errno(errno.ENOENT, filename=str(path))
+                raise FSFileNotFoundError(filename=path)
 
             # Not a file
             if not is_file_manifest(child):
-                raise from_errno(errno.EISDIR, str(path))
+                raise FSIsADirectoryError(filename=path)
 
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
@@ -347,14 +357,14 @@ class EntryTransactions(FileTransactions):
 
     async def folder_create(self, path: FsPath) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        self.check_write_rights(path)
 
         # Lock parent and child
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
 
             # Destination already exists
             if child is not None:
-                raise from_errno(errno.EEXIST, filename=str(path))
+                raise FSFileExistsError(filename=path)
 
             # Create folder
             child = LocalFolderManifest.new_placeholder(parent=parent.id)
@@ -375,14 +385,14 @@ class EntryTransactions(FileTransactions):
 
     async def file_create(self, path: FsPath, open=True) -> Tuple[EntryID, FileDescriptor]:
         # Check write rights
-        self._check_write_rights(path)
+        self.check_write_rights(path)
 
         # Lock parent in write mode
         async with self._lock_parent_manifest_from_path(path) as (parent, child):
 
             # Destination already exists
             if child is not None:
-                raise from_errno(errno.EEXIST, filename=str(path))
+                raise FSFileExistsError(filename=path)
 
             # Create file
             child = LocalFileManifest.new_placeholder(parent=parent.id)
@@ -403,30 +413,32 @@ class EntryTransactions(FileTransactions):
         return child.id, fd
 
     async def file_open(self, path: FsPath, mode="rw") -> Tuple[EntryID, FileDescriptor]:
-        # Check write rights
+        # Check read and write rights
         if "w" in mode:
-            self._check_write_rights(path)
+            self.check_write_rights(path)
+        else:
+            self.check_read_rights(path)
 
         # Lock path in read mode
         async with self._lock_manifest_from_path(path) as manifest:
 
             # Not a file
             if not is_file_manifest(manifest):
-                raise from_errno(errno.EISDIR, str(path))
+                raise FSIsADirectoryError(filename=path)
 
             # Return the entry id of the open file and the file descriptor
             return manifest.id, self.local_storage.create_file_descriptor(manifest)
 
     async def file_resize(self, path: FsPath, length: int) -> EntryID:
         # Check write rights
-        self._check_write_rights(path)
+        self.check_write_rights(path)
 
         # Lock manifest
         async with self._lock_manifest_from_path(path) as manifest:
 
             # Not a file
             if not is_file_manifest(manifest):
-                raise from_errno(errno.EISDIR, str(path))
+                raise FSIsADirectoryError(filename=path)
 
             # Perform resize
             await self._manifest_resize(manifest, length)
