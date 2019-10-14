@@ -18,7 +18,10 @@ from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
 logger = get_logger()
-MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}
+
+# Taken from https://docs.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
+FILE_READ_DATA = 1 << 0
+FILE_WRITE_DATA = 1 << 1
 
 
 @contextmanager
@@ -177,7 +180,15 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def open(self, file_name, create_options, granted_access):
         file_name = FsPath(file_name)
-        mode = MODES[granted_access % 4]
+        granted_access = granted_access & (FILE_READ_DATA | FILE_WRITE_DATA)
+        if granted_access == FILE_READ_DATA:
+            mode = "r"
+        elif granted_access == FILE_WRITE_DATA:
+            mode = "w"
+        elif granted_access == FILE_READ_DATA | FILE_WRITE_DATA:
+            mode = "rw"
+        else:
+            mode = "r"
         # `granted_access` is already handle by winfsp
         with translate_error():
             try:
