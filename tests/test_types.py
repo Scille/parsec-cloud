@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocol import DeviceID, UserID, OrganizationID
+from parsec.api.protocol import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.crypto import SigningKey, PrivateKey, SecretKey, export_root_verify_key
 from parsec.core.types import (
     BackendAddr,
@@ -13,16 +13,45 @@ from parsec.core.types import (
 )
 
 
-def test_device_id():
-    device_id = DeviceID("user_id@device_name")
-    assert device_id == "user_id@device_name"
-    assert device_id.user_id == "user_id"
-    assert device_id.device_name == "device_name"
+@pytest.mark.parametrize("raw", ["foo42", "FOO", "f", "f-o-o", "f_o_o", "x" * 32, "三国"])
+def test_organization_id_user_id_and_device_name(raw):
+    organization_id = OrganizationID(raw)
+    assert organization_id == raw
+
+    user_id = UserID(raw)
+    assert user_id == raw
+
+    device_name = DeviceName(raw)
+    assert device_name == raw
 
 
-def test_user_id():
-    user_id = UserID("user_id")
-    assert user_id == "user_id"
+@pytest.mark.parametrize("raw", ["x" * 33, "F~o", "f o"])
+def test_bad_organization_id_user_id_and_device_name(raw):
+    with pytest.raises(ValueError):
+        OrganizationID(raw)
+    with pytest.raises(ValueError):
+        UserID(raw)
+    with pytest.raises(ValueError):
+        DeviceName(raw)
+
+
+@pytest.mark.parametrize(
+    "raw", ["ali-c_e@d-e_v", "ALICE@DEV", "a@x", "a" * 32 + "@" + "b" * 32, "关羽@三国"]
+)
+def test_device_id(raw):
+    user_id, device_name = raw.split("@")
+    device_id = DeviceID(raw)
+    assert device_id == raw
+    assert device_id.user_id == user_id
+    assert device_id.device_name == device_name
+
+
+@pytest.mark.parametrize(
+    "raw", ["a", "a" * 33 + "@" + "x" * 32, "a" * 32 + "@" + "x" * 33, "a@@x", "a@1@x"]
+)
+def test_bad_device_id(raw):
+    with pytest.raises(ValueError):
+        DeviceID(raw)
 
 
 @pytest.mark.parametrize(

@@ -8,7 +8,7 @@ from typing import Union, Iterator, Dict, Tuple
 from pendulum import Pendulum
 
 from parsec.api.data import Manifest as RemoteManifest
-from parsec.api.protocol import UserID
+from parsec.api.protocol import UserID, DeviceID
 from parsec.core.types import (
     FsPath,
     EntryID,
@@ -20,6 +20,7 @@ from parsec.core.types import (
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
+from parsec.core.fs.workspacefs.versioning_helpers import list_versions
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -189,14 +190,18 @@ class WorkspaceFS:
 
     # Timestamped version
 
-    async def list_versions(self, path: AnyPath = "/"):
+    async def versions(
+        self, path: AnyPath = "/"
+    ) -> Dict[Tuple[EntryID, int, Pendulum, Pendulum], Tuple[DeviceID, FsPath, FsPath]]:
         """
         Raises:
-            OSError
             FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
         """
         path = FsPath(path)
-        return await self.transactions.entry_versions(path)
+        return await list_versions(self, path)
 
     async def to_timestamped(self, timestamp: Pendulum):
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
