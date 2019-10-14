@@ -464,6 +464,9 @@ class WorkspaceFS:
         Raises:
             FSError
         """
+        # Make sure the corresponding realm exists
+        await self._create_realm_if_needed()
+
         # Get a minimal manifest to upload
         try:
             remote_manifest = await self.transactions.get_minimal_remote_manifest(entry_id)
@@ -474,9 +477,6 @@ class WorkspaceFS:
         # No miminal manifest to upload, the entry is not a placeholder
         if remote_manifest is None:
             return
-
-        # Make sure the corresponding realm exists
-        await self._create_realm_if_needed()
 
         # Upload the miminal manifest
         try:
