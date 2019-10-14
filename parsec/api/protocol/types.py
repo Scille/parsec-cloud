@@ -7,7 +7,7 @@ from parsec.serde import fields
 
 class OrganizationID(str):
     __slots__ = ()
-    regex = re.compile(r"^\w{1,32}$")
+    regex = re.compile(r"^[\w\-]{1,32}$")
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
@@ -19,7 +19,7 @@ class OrganizationID(str):
 
 class UserID(str):
     __slots__ = ()
-    regex = re.compile(r"^\w{1,32}$")
+    regex = re.compile(r"^[\w\-]{1,32}$")
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
@@ -31,7 +31,7 @@ class UserID(str):
 
 class DeviceName(str):
     __slots__ = ()
-    regex = re.compile(r"^\w{1,32}$")
+    regex = re.compile(r"^[\w\-]{1,32}$")
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
@@ -43,7 +43,7 @@ class DeviceName(str):
 
 class DeviceID(str):
     __slots__ = ()
-    regex = re.compile(r"^\w{1,32}@\w{1,32}$")
+    regex = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
