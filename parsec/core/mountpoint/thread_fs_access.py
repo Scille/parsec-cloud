@@ -6,6 +6,14 @@ class ThreadFSAccess:
         self.workspace_fs = workspace_fs
         self._portal = portal
 
+    # Rights check
+
+    def check_read_rights(self, path):
+        return self._portal.run(self.workspace_fs.transactions.check_read_rights, path)
+
+    def check_write_rights(self, path):
+        return self._portal.run(self.workspace_fs.transactions.check_write_rights, path)
+
     # Entry transactions
 
     def entry_info(self, path):

@@ -335,7 +335,7 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
 
     with pytest.raises(FSSharingNotAllowedError) as exc:
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
-    assert exc.value.args == ("Must be Owner or Manager on the workspace is mandatory to share it",)
+    assert exc.value.message == "Must be Owner or Manager on the workspace is mandatory to share it"
 
 
 @pytest.mark.trio

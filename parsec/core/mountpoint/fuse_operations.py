@@ -1,17 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+import errno
 from typing import Optional
 from structlog import get_logger
 from contextlib import contextmanager
-from errno import ENETDOWN, EBADF, ENOTDIR, EIO, EACCES
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor
-from parsec.core.fs import FSBackendOfflineError
+from parsec.core.fs import FSError
 
 
 logger = get_logger()
@@ -37,18 +36,18 @@ def translate_error():
     try:
         yield
 
-    except FSBackendOfflineError as exc:
-        raise FuseOSError(ENETDOWN) from exc
+    except FSError as exc:
 
-    except FSInvalidFileDescriptor as exc:
-        raise FuseOSError(EBADF) from exc
+        if exc.errno:
+            raise FuseOSError(exc.errno) from exc
 
-    except OSError as exc:
-        raise FuseOSError(exc.errno) from exc
+        else:
+            logger.exception("Internal FSError in fuse mountpoint")
+            raise FuseOSError(errno.EIO) from exc
 
-    except Exception:
-        logger.exception("mountpoint.request.unhandled_crash")
-        raise FuseOSError(EIO)
+    except Exception as exc:
+        logger.exception("Unhandled exception in fuse mountpoint")
+        raise FuseOSError(errno.EIO) from exc
 
 
 class FuseOperations(LoggingMixIn, Operations):
@@ -104,13 +103,13 @@ class FuseOperations(LoggingMixIn, Operations):
             stat = self.fs_access.entry_info(path)
 
         if stat["type"] == "file":
-            raise FuseOSError(ENOTDIR)
+            raise FuseOSError(errno.ENOTDIR)
 
         return [".", ".."] + list(stat["children"])
 
     def create(self, path: FsPath, mode: int):
         if is_banned(path.name):
-            raise FuseOSError(EACCES)
+            raise FuseOSError(errno.EACCES)
         with translate_error():
             _, fd = self.fs_access.file_create(path, open=True)
             return fd
@@ -149,7 +148,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def mkdir(self, path: FsPath, mode: int):
         if is_banned(path.name):
-            raise FuseOSError(EACCES)
+            raise FuseOSError(errno.EACCES)
         with translate_error():
             self.fs_access.folder_create(path)
         return 0

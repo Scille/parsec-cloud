@@ -10,20 +10,18 @@ from winfspy import (
     FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
 )
-from winfspy.plumbing.winstuff import (
-    dt_to_filetime,
-    NTSTATUS,
-    posix_to_ntstatus,
-    SecurityDescriptor,
-)
+from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSInvalidFileDescriptor, FSBackendOfflineError
+from parsec.core.fs import FSError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
 logger = get_logger()
-MODES = {0: "r", 1: "r", 2: "rw", 3: "rw"}
+
+# Taken from https://docs.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
+FILE_READ_DATA = 1 << 0
+FILE_WRITE_DATA = 1 << 1
 
 
 @contextmanager
@@ -31,23 +29,23 @@ def translate_error():
     try:
         yield
 
-    except FSBackendOfflineError as exc:
-        raise NTStatusError(NTSTATUS.STATUS_NETWORK_UNREACHABLE) from exc
+    except FSError as exc:
 
-    except FSInvalidFileDescriptor as exc:
-        raise NTStatusError(NTSTATUS.STATUS_SOME_NOT_MAPPED) from exc
+        if exc.ntstatus:
+            raise NTStatusError(exc.ntstatus) from exc
 
-    except OSError as exc:
-        raise NTStatusError(posix_to_ntstatus(exc.errno)) from exc
+        else:
+            logger.exception("Internal FSError in winfsp mountpoint")
+            raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
-    except (Cancelled, RunFinishedError):
+    except (Cancelled, RunFinishedError) as exc:
         # WinFSP teardown operation doesn't make sure no concurrent operation
         # are running
-        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE)
+        raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
-    except Exception:
-        logger.exception("mountpoint.request.unhandled_crash")
-        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR)
+    except Exception as exc:
+        logger.exception("Unhandled exception in winfsp mountpoint")
+        raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
 
 def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):
@@ -182,7 +180,15 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def open(self, file_name, create_options, granted_access):
         file_name = FsPath(file_name)
-        mode = MODES[granted_access % 4]
+        granted_access = granted_access & (FILE_READ_DATA | FILE_WRITE_DATA)
+        if granted_access == FILE_READ_DATA:
+            mode = "r"
+        elif granted_access == FILE_WRITE_DATA:
+            mode = "w"
+        elif granted_access == FILE_READ_DATA | FILE_WRITE_DATA:
+            mode = "rw"
+        else:
+            mode = "r"
         # `granted_access` is already handle by winfsp
         with translate_error():
             try:
@@ -245,6 +251,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def can_delete(self, file_context, file_name: str) -> None:
         with translate_error():
+            self.fs_access.check_write_rights(file_context.path)
             stat = self.fs_access.entry_info(file_context.path)
             if stat["type"] == "file":
                 return
@@ -295,4 +302,12 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     def cleanup(self, file_context, file_name, flags) -> None:
         # FspCleanupDelete
-        file_context.deleted = flags & 1
+        if flags & 1:
+            self.fs_access.check_write_rights(file_context.path)
+            file_context.deleted = True
+
+    def overwrite(
+        self, file_context, file_attributes, replace_file_attributes: bool, allocation_size: int
+    ) -> None:
+        with translate_error():
+            self.fs_access.fd_resize(file_context.fd, 0)
