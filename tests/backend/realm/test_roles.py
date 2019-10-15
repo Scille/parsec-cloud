@@ -86,6 +86,20 @@ async def test_update_roles_bad_user(backend, alice, mallory, alice_backend_sock
 
 
 @pytest.mark.trio
+async def test_update_roles_revoked_user(backend, alice, bob, alice_backend_sock, realm):
+    await backend.user.revoke_user(
+        organization_id=alice.organization_id,
+        user_id=bob.user_id,
+        revoked_user_certificate=b"dummy",
+        revoked_user_certifier=alice.device_id,
+    )
+    rep = await _realm_generate_certif_and_update_roles_or_fail(
+        alice_backend_sock, alice, realm, bob.user_id, RealmRole.MANAGER
+    )
+    assert rep == {"status": "not_found", "reason": "User `bob` has been revoked"}
+
+
+@pytest.mark.trio
 async def test_update_roles_cannot_modify_self(backend, alice, alice_backend_sock, realm):
     rep = await _realm_generate_certif_and_update_roles_or_fail(
         alice_backend_sock, alice, realm, alice.user_id, RealmRole.MANAGER

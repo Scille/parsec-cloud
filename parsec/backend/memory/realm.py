@@ -135,9 +135,12 @@ class MemoryRealmComponent(BaseRealmComponent):
         assert new_role.granted_by.user_id != new_role.user_id
 
         try:
-            self._user_component._get_user(organization_id, new_role.user_id)
+            user = self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:
             raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+
+        if user.revoked_on and user.revoked_on <= pendulum.now():
+            raise RealmNotFoundError(f"User `{new_role.user_id}` has been revoked")
 
         realm = self._get_realm(organization_id, new_role.realm_id)
 
