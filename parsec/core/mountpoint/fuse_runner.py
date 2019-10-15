@@ -76,7 +76,8 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_fs) ->
 
 async def _teardown_mountpoint(mountpoint_path):
     try:
-        await trio.Path(mountpoint_path).rmdir()
+        with trio.CancelScope(shield=True):
+            await trio.Path(mountpoint_path).rmdir()
     except OSError:
         pass
 

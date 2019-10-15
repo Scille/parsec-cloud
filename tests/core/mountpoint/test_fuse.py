@@ -61,6 +61,9 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
 
         assert not await bar_txt.exists()
 
+    # Mountpoint path should be removed on umounting
+    assert not await trio.Path(mountpoint_path).exists()
+
 
 @pytest.mark.linux
 @pytest.mark.trio
@@ -85,6 +88,28 @@ async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_user_fs):
             assert exc.value.args == (
                 f"Fuse has crashed on {mountpoint_path}: Unknown error code: Tough luck...",
             )
+
+    # Mountpoint path should be removed on umounting
+    assert not await trio.Path(mountpoint_path).exists()
+
+
+@pytest.mark.linux
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_unmount_due_to_cancelled_scope(base_mountpoint, alice, alice_user_fs, event_bus):
+    mountpoint_path = base_mountpoint / "w"
+    wid = await alice_user_fs.workspace_create("w")
+
+    with trio.CancelScope() as cancel_scope:
+        async with mountpoint_manager_factory(
+            alice_user_fs, event_bus, base_mountpoint
+        ) as mountpoint_manager:
+
+            await mountpoint_manager.mount_workspace(wid)
+            cancel_scope.cancel()
+
+    # Mountpoint path should be removed on umounting
+    assert not await trio.Path(mountpoint_path).exists()
 
 
 @pytest.mark.linux
