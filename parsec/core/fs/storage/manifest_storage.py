@@ -1,32 +1,46 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pathlib import Path
 from typing import Dict, Tuple, Set
 from structlog import get_logger
+from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalManifest
-from parsec.core.fs.storage.base_storage import BaseStorage
+from parsec.core.fs.storage import BaseStorage
 
 logger = get_logger()
 
 
-class ManifestStorage(BaseStorage):
+class ManifestStorage:
     """Persistent storage with cache for storing manifests.
 
     Also stores the checkpoint.
     """
 
-    def __init__(self, device: LocalDevice, path: Path, realm_id: EntryID):
-        super().__init__(path)
+    def __init__(self, device: LocalDevice, storage: BaseStorage, realm_id: EntryID):
         self.device = device
         self.realm_id = realm_id
+        self.storage = storage
 
         self._cache = {}
         self._cache_ahead_of_persistance_ids = set()
 
-    async def _flush(self):
-        await self._flush_cache_ahead_of_persistance()
+    @property
+    def path(self):
+        return self.storage.path
+
+    @classmethod
+    @asynccontextmanager
+    async def run(cls, *args, **kwargs):
+        self = cls(*args, **kwargs)
+        await self._create_db()
+        try:
+            yield self
+        finally:
+            await self._flush_cache_ahead_of_persistance()
+
+    def _open_cursor(self):
+        return self.storage.open_cursor(commit=True)
 
     def clear_memory_cache(self):
         self._cache.clear()

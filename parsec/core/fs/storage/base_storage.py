@@ -9,13 +9,10 @@ from sqlite3 import connect as sqlite_connect
 class BaseStorage:
     """Base class for managing an sqlite3 connection."""
 
-    def __init__(self, path):
-        self._path = path
+    def __init__(self, path, vacuum_threshold=None):
         self._conn = None
-
-    @property
-    def path(self):
-        return Path(self._path)
+        self.path = Path(path)
+        self.vacuum_threshold = vacuum_threshold
 
     @classmethod
     @asynccontextmanager
@@ -23,12 +20,7 @@ class BaseStorage:
         self = cls(*args, **kwargs)
         try:
             await self._connect()
-
-            try:
-                yield self
-            finally:
-                await self._flush()
-
+            yield self
         finally:
             await self._close()
 
@@ -55,9 +47,6 @@ class BaseStorage:
         # Connect and initialize database
         self._conn = await self._create_connection()
 
-        # Initialize
-        await self._create_db()
-
     async def _close(self):
         # Idempotency
         if self._conn is None:
@@ -68,19 +57,12 @@ class BaseStorage:
         self._conn.close()
         self._conn = None
 
-    async def _create_db(self):
-        raise NotImplementedError
-
-    async def _flush(self):
-        pass
-
     # Cursor management
 
     @asynccontextmanager
-    async def _open_cursor(self):
-
-        # Commit (or rollback) the transaction when finished
-        with self._conn:
+    async def open_cursor(self, commit=True):
+        # Manage transaction
+        try:
 
             # Get a cursor
             cursor = self._conn.cursor()
@@ -92,3 +74,43 @@ class BaseStorage:
             # Close cursor
             finally:
                 cursor.close()
+
+        # Commit the transaction when finished
+        finally:
+            if commit:
+                self._conn.commit()
+
+    async def commit(self):
+        self._conn.commit()
+
+    # Vacuum
+
+    def get_disk_usage(self):
+        disk_usage = 0
+        for suffix in (".sqlite", ".sqlite-wal", ".sqlite-shm"):
+            try:
+                disk_usage += self.path.with_suffix(suffix).stat().st_size
+            except OSError:
+                pass
+        return disk_usage
+
+    async def run_vacuum(self):
+        # Vacuum disabled
+        if self.vacuum_threshold is None:
+            return
+
+        # Flush to disk
+        self._conn.commit()
+
+        # No reason to vacuum yet
+        if self.get_disk_usage() < self.vacuum_threshold:
+            return
+
+        # Run vacuum
+        self._conn.execute("VACUUM")
+
+        # The connection needs to be recreated
+        try:
+            await self._close()
+        finally:
+            self._conn = await self._create_connection()

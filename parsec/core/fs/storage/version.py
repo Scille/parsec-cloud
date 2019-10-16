@@ -3,6 +3,5 @@
 
 STORAGE_REVISION = 1
 USER_STORAGE_NAME = f"user_data-v{STORAGE_REVISION}.sqlite"
-MANIFEST_STORAGE_NAME = f"manifest_data-v{STORAGE_REVISION}.sqlite"
-CHUNK_STORAGE_NAME = f"chunk_data-v{STORAGE_REVISION}.sqlite"
-BLOCK_STORAGE_NAME = f"block_cache-v{STORAGE_REVISION}.sqlite"
+WORKSPACE_DATA_STORAGE_NAME = f"workspace_data-v{STORAGE_REVISION}.sqlite"
+WORKSPACE_CACHE_STORAGE_NAME = f"workspace_cache-v{STORAGE_REVISION}.sqlite"

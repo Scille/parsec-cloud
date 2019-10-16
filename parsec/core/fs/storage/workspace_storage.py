@@ -21,13 +21,10 @@ from parsec.core.types import (
 )
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
+from parsec.core.fs.storage.base_storage import BaseStorage
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
-from parsec.core.fs.storage.version import (
-    MANIFEST_STORAGE_NAME,
-    CHUNK_STORAGE_NAME,
-    BLOCK_STORAGE_NAME,
-)
+from parsec.core.fs.storage.version import WORKSPACE_DATA_STORAGE_NAME, WORKSPACE_CACHE_STORAGE_NAME
 
 
 logger = get_logger()
@@ -51,6 +48,8 @@ class WorkspaceStorage:
         device: LocalDevice,
         path: Path,
         workspace_id: EntryID,
+        data_storage: BaseStorage,
+        cache_storage: BaseStorage,
         manifest_storage: ManifestStorage,
         block_storage: ChunkStorage,
         chunk_storage: ChunkStorage,
@@ -69,6 +68,8 @@ class WorkspaceStorage:
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
+        self.data_storage = data_storage
+        self.cache_storage = cache_storage
         self.manifest_storage = manifest_storage
         self.block_storage = block_storage
         self.chunk_storage = chunk_storage
@@ -83,21 +84,41 @@ class WorkspaceStorage:
         cache_size=DEFAULT_BLOCK_CACHE_SIZE,
         vacuum_threshold=DEFAULT_CHUNK_VACUUM_THRESHOLD,
     ):
-        manifest_storage_context = ManifestStorage.run(
-            device, path / MANIFEST_STORAGE_NAME, workspace_id
-        )
-        block_storage_context = BlockStorage.run(
-            device, path / BLOCK_STORAGE_NAME, cache_size=cache_size
-        )
-        chunk_storage_context = ChunkStorage.run(
-            device, path / CHUNK_STORAGE_NAME, vacuum_threshold=vacuum_threshold
-        )
-        async with manifest_storage_context as manifest_storage:
-            async with block_storage_context as block_storage:
-                async with chunk_storage_context as chunk_storage:
-                    yield cls(
-                        device, path, workspace_id, manifest_storage, block_storage, chunk_storage
-                    )
+        data_path = path / WORKSPACE_DATA_STORAGE_NAME
+        cache_path = path / WORKSPACE_CACHE_STORAGE_NAME
+
+        # Local cache storage service
+        async with BaseStorage.run(cache_path) as cache_storage:
+
+            # Local data storage service
+            async with BaseStorage.run(
+                data_path, vacuum_threshold=vacuum_threshold
+            ) as data_storage:
+
+                # Block storage service
+                async with BlockStorage.run(
+                    device, cache_storage, cache_size=cache_size
+                ) as block_storage:
+
+                    # Manifest storage service
+                    async with ManifestStorage.run(
+                        device, data_storage, workspace_id
+                    ) as manifest_storage:
+
+                        # Chunk storage service
+                        async with ChunkStorage.run(device, data_storage) as chunk_storage:
+
+                            # Instanciate workspace storage
+                            yield cls(
+                                device,
+                                path,
+                                workspace_id,
+                                cache_storage=cache_storage,
+                                data_storage=data_storage,
+                                manifest_storage=manifest_storage,
+                                block_storage=block_storage,
+                                chunk_storage=chunk_storage,
+                            )
 
     # Helpers
 
@@ -233,7 +254,8 @@ class WorkspaceStorage:
     # Vacuum
 
     async def run_vacuum(self):
-        await self.chunk_storage.run_vacuum()
+        # Only the data storage needs to get vacuuumed
+        await self.data_storage.run_vacuum()
 
     # Timestamped workspace
 
@@ -256,9 +278,11 @@ class WorkspaceStorageTimestamped(WorkspaceStorage):
             workspace_storage.device,
             workspace_storage.path,
             workspace_storage.workspace_id,
-            None,
-            workspace_storage.block_storage,
-            workspace_storage.chunk_storage,
+            cache_storage=None,
+            data_storage=None,
+            manifest_storage=None,
+            block_storage=workspace_storage.block_storage,
+            chunk_storage=workspace_storage.chunk_storage,
         )
 
         self._cache = {}

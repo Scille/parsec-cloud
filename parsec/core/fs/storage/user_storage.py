@@ -8,6 +8,7 @@ from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
 
 from parsec.core.fs.storage.version import USER_STORAGE_NAME
+from parsec.core.fs.storage.base_storage import BaseStorage
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 
 
@@ -26,21 +27,25 @@ class UserStorage:
     @classmethod
     @asynccontextmanager
     async def run(cls, device: LocalDevice, path: Path, user_manifest_id: EntryID):
-        manifest_storage_context = ManifestStorage.run(
-            device, path / USER_STORAGE_NAME, user_manifest_id
-        )
-        async with manifest_storage_context as manifest_storage:
-            self = cls(device, path, user_manifest_id, manifest_storage)
 
-            # Load the user manifest
-            try:
-                await self.load_user_manifest()
-            except FSLocalMissError:
-                pass
-            else:
-                assert self.user_manifest_id in self.manifest_storage._cache
+        # Local storage service
+        async with BaseStorage.run(path / USER_STORAGE_NAME) as storage:
 
-            yield self
+            # Manifest storage service
+            async with ManifestStorage.run(device, storage, user_manifest_id) as manifest_storage:
+
+                # Instanciate the user storage
+                self = cls(device, path, user_manifest_id, manifest_storage)
+
+                # Load the user manifest
+                try:
+                    await self.load_user_manifest()
+                except FSLocalMissError:
+                    pass
+                else:
+                    assert self.user_manifest_id in self.manifest_storage._cache
+
+                yield self
 
     # Checkpoint interface
 

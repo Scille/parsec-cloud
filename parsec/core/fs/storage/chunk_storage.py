@@ -1,18 +1,37 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from time import time
-from pathlib import Path
+from async_generator import asynccontextmanager
 
 from parsec.core.types import ChunkID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
-from parsec.core.fs.storage.base_storage import BaseStorage
+from parsec.core.fs.storage import BaseStorage
 
 
-class BaseChunkStorage(BaseStorage):
-    def __init__(self, device: LocalDevice, path: Path):
-        super().__init__(path)
+class ChunkStorage:
+    """Interface to access the local chunks of data."""
+
+    def __init__(self, device: LocalDevice, storage: BaseStorage):
         self.local_symkey = device.local_symkey
+        self.storage = storage
+
+    @property
+    def path(self):
+        return self.storage.path
+
+    @classmethod
+    @asynccontextmanager
+    async def run(cls, *args, **kwargs):
+        self = cls(*args, **kwargs)
+        await self._create_db()
+        try:
+            yield self
+        finally:
+            await self.storage.commit()
+
+    def _open_cursor(self):
+        return self.storage.open_cursor(commit=False)
 
     # Database initialization
 
@@ -41,15 +60,6 @@ class BaseChunkStorage(BaseStorage):
             cursor.execute("SELECT COALESCE(SUM(size), 0) FROM chunks")
             result, = cursor.fetchone()
             return result
-
-    def get_disk_usage(self):
-        disk_usage = 0
-        for suffix in (".sqlite", ".sqlite-wal", ".sqlite-shm"):
-            try:
-                disk_usage += self.path.with_suffix(suffix).stat().st_size
-            except OSError:
-                pass
-        return disk_usage
 
     # Generic chunk operations
 
@@ -100,26 +110,15 @@ class BaseChunkStorage(BaseStorage):
             raise FSLocalMissError(chunk_id)
 
 
-class ChunkStorage(BaseChunkStorage):
-    def __init__(self, device: LocalDevice, path: Path, vacuum_threshold: int):
-        super().__init__(device, path)
-        self.vacuum_threshold = vacuum_threshold
+class BlockStorage(ChunkStorage):
+    """Interface for caching the data blocks."""
 
-    # Vacuum
-
-    async def run_vacuum(self):
-        if self.get_disk_usage() > self.vacuum_threshold:
-            self._conn.execute("VACUUM")
-
-            # The connection needs to be recreated
-            await self._close()
-            self._conn = await self._create_connection()
-
-
-class BlockStorage(BaseChunkStorage):
-    def __init__(self, device: LocalDevice, path: Path, cache_size: int):
-        super().__init__(device, path)
+    def __init__(self, device: LocalDevice, storage: BaseStorage, cache_size: int):
+        super().__init__(device, storage)
         self.cache_size = cache_size
+
+    def _open_cursor(self):
+        return self.storage.open_cursor(commit=True)
 
     # Garbage collection
 
