@@ -64,9 +64,6 @@ class BackendAddr:
             **cls._from_url_parse_path(split.path),
         }
 
-        if params:
-            raise ValueError(f"Unknown params: {','.join(params)}")
-
         return cls(hostname=split.hostname, port=split.port, **kwargs)
 
     @classmethod
@@ -183,18 +180,23 @@ class BackendOrganizationAddr(OrganizationParamsFixture, BackendAddr):
 class BackendActionAddr(BackendAddr):
     __slots__ = ()
 
-    @staticmethod
-    def from_url(url: str):
-        for type in (
-            BackendOrganizationBootstrapAddr,
-            BackendOrganizationClaimUserAddr,
-            BackendOrganizationClaimDeviceAddr,
-        ):
-            try:
-                return BackendAddr.from_url.__func__(type, url)
-            except ValueError:
-                pass
-        raise ValueError("Invalid URL format")
+    @classmethod
+    def from_url(cls, url: str):
+        if cls is not BackendActionAddr:
+            return BackendAddr.from_url.__func__(cls, url)
+
+        else:
+            for type in (
+                BackendOrganizationBootstrapAddr,
+                BackendOrganizationClaimUserAddr,
+                BackendOrganizationClaimDeviceAddr,
+            ):
+                try:
+                    return BackendAddr.from_url.__func__(type, url)
+                except ValueError:
+                    pass
+
+            raise ValueError("Invalid URL format")
 
 
 class BackendOrganizationBootstrapAddr(BackendActionAddr):
@@ -231,6 +233,8 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
             kwargs["token"] = unquote_plus(value[0])
         except ValueError:
             raise ValueError("Invalid `token` param value")
+        if not kwargs["token"]:
+            raise ValueError("Empty value in `token` param")
 
         return kwargs
 

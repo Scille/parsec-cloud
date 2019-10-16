@@ -61,8 +61,9 @@ def test_bad_device_id(raw):
         ("parsec://foo?no_ssl=false", {"port": 443, "ssl": True}),
         ("parsec://foo?no_ssl=true", {"port": 80, "ssl": False}),
         ("parsec://foo:42", {"port": 42, "ssl": True}),
+        ("parsec://foo:42?dummy=", {"port": 42, "ssl": True}),
         ("parsec://foo:42?no_ssl=true", {"port": 42, "ssl": False}),
-        ("parsec://foo:42?no_ssl=false", {"port": 42, "ssl": True}),
+        ("parsec://foo:42?no_ssl=false&dummy=foo", {"port": 42, "ssl": True}),
     ],
 )
 def test_backend_addr_good(url, expected):
@@ -73,23 +74,46 @@ def test_backend_addr_good(url, expected):
 
 
 @pytest.mark.parametrize(
-    "url",
+    "url,exc_msg",
     [
-        "",
-        "foo",
-        "xx://foo:42",  # bad scheme
-        "parsec://foo:42/dummy",  # path not allowed
-        "parsec://foo:42?dummy",  # unknown param
-        "parsec://foo:42?dummy=foo",  # unknown param
-        "parsec://foo:42?no_ssl=true&dummy=foo",  # unknown param
-        "parsec://foo:42?no_ssl",  # missing value for param
-        "parsec://foo:42?no_ssl=",  # bad value for param
-        "parsec://foo:42?no_ssl=nop",  # bad value for param
+        ("", "Must start with `parsec://`"),
+        ("foo", "Must start with `parsec://`"),
+        (
+            # bad scheme
+            "xx://foo:42",
+            "Must start with `parsec://`",
+        ),
+        (
+            # path not allowed
+            "parsec://foo:42/dummy",
+            "Cannot have path",
+        ),
+        (
+            # bad parsing in unknown param
+            "parsec://foo:42?dummy",
+            "bad query field: 'dummy'",
+        ),
+        (
+            # bad parsing in valid param
+            "parsec://foo:42?no_ssl",
+            "bad query field: 'no_ssl'",
+        ),
+        (
+            # missing value for param
+            "parsec://foo:42?no_ssl=",
+            "Invalid `no_ssl` param value (must be true or false)",
+        ),
+        (
+            # bad value for param
+            "parsec://foo:42?no_ssl=nop",
+            "Invalid `no_ssl` param value (must be true or false)",
+        ),
     ],
 )
-def test_backend_addr_bad_value(url):
-    with pytest.raises(ValueError):
+def test_backend_addr_bad_value(url, exc_msg):
+    with pytest.raises(ValueError) as exc:
         BackendAddr.from_url(url)
+    assert str(exc.value) == exc_msg
 
 
 @pytest.fixture(scope="session")
@@ -109,8 +133,10 @@ def exported_verify_key(verify_key):
         ("parsec://foo?no_ssl=false", {"port": 443, "ssl": True}),
         ("parsec://foo?no_ssl=true", {"port": 80, "ssl": False}),
         ("parsec://foo:42", {"port": 42, "ssl": True}),
+        ("parsec://foo:42?dummy=", {"port": 42, "ssl": True}),
         ("parsec://foo:42?no_ssl=true", {"port": 42, "ssl": False}),
         ("parsec://foo:42?no_ssl=false", {"port": 42, "ssl": True}),
+        ("parsec://foo:42?no_ssl=false&dummy=foo", {"port": 42, "ssl": True}),
     ],
 )
 def test_backend_organization_addr_good(base_url, expected, verify_key):
@@ -130,26 +156,62 @@ def test_backend_organization_addr_good(base_url, expected, verify_key):
 
 
 @pytest.mark.parametrize(
-    "url",
+    "url,exc_msg",
     [
-        "",
-        "foo",
-        "xx://foo:42/org?rvk=<rvk>",  # bad scheme
-        "parsec://foo:42/org?rvk=<rvk>&dummy",  # unknown param
-        "parsec://foo:42/org?rvk=<rvk>&dummy=foo",  # unknown param
-        "parsec://foo:42/org",  # missing mandatory rvk param
-        "parsec://foo:42/org?rvk=",  # missing value for param
-        "parsec://foo:42/org?rvk=nop",  # bad value for param
-        "parsec://foo:42?rvk=<rvk>",  # missing org name
-        "parsec://foo:42/?rvk=<rvk>",  # missing org name
-        "parsec://foo:42/bad/org?rvk=<rvk>",  # bad org name
-        "parsec://foo:42/~org?rvk=<rvk>",  # bad org name
+        ("", "Must start with `parsec://`"),
+        ("foo", "Must start with `parsec://`"),
+        (
+            # bad scheme
+            "xx://foo:42/org?rvk=<rvk>",
+            "Must start with `parsec://`",
+        ),
+        (
+            # bad parsing in unknown param
+            "parsec://foo:42/org?rvk=<rvk>&dummy",
+            "bad query field: 'dummy'",
+        ),
+        (
+            # missing mandatory rvk param
+            "parsec://foo:42/org",
+            "Missing mandatory `rvk` param",
+        ),
+        (
+            # missing value for param
+            "parsec://foo:42/org?rvk=",
+            "Invalid `rvk` param value",
+        ),
+        (
+            # bad value for param
+            "parsec://foo:42/org?rvk=nop",
+            "Invalid `rvk` param value",
+        ),
+        (
+            # missing org name
+            "parsec://foo:42?rvk=<rvk>",
+            "Invalid organization ID",
+        ),
+        (
+            # missing org name
+            "parsec://foo:42/?rvk=<rvk>",
+            "Invalid organization ID",
+        ),
+        (
+            # bad org name
+            "parsec://foo:42/bad/org?rvk=<rvk>",
+            "Invalid organization ID",
+        ),
+        (
+            # bad org name
+            "parsec://foo:42/~org?rvk=<rvk>",
+            "Invalid organization ID",
+        ),
     ],
 )
-def test_backend_organization_addr_bad_value(url, exported_verify_key):
+def test_backend_organization_addr_bad_value(url, exc_msg, exported_verify_key):
     url = url.replace("<rvk>", exported_verify_key)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc:
         BackendOrganizationAddr.from_url(url)
+    assert str(exc.value) == exc_msg
 
 
 @pytest.mark.parametrize(
@@ -159,7 +221,9 @@ def test_backend_organization_addr_bad_value(url, exported_verify_key):
         ("parsec://foo?no_ssl=false", {"port": 443, "ssl": True}),
         ("parsec://foo?no_ssl=true", {"port": 80, "ssl": False}),
         ("parsec://foo:42", {"port": 42, "ssl": True}),
+        ("parsec://foo:42?dummy=foo", {"port": 42, "ssl": True}),
         ("parsec://foo:42?no_ssl=true", {"port": 42, "ssl": False}),
+        ("parsec://foo:42?no_ssl=true&dummy=", {"port": 42, "ssl": False}),
         ("parsec://foo:42?no_ssl=false", {"port": 42, "ssl": True}),
     ],
 )
@@ -186,24 +250,66 @@ def test_backend_organization_bootstrap_addr_good(base_url, expected, verify_key
 
 
 @pytest.mark.parametrize(
-    "url",
+    "url,exc_msg",
     [
-        "",
-        "foo",
-        "xx://foo:42/org?token=123",  # bad scheme
-        "parsec://foo:42/org?token=123&dummy",  # unknown param
-        "parsec://foo:42/org?token=123&dummy=foo",  # unknown param
-        "parsec://foo:42/org?",  # missing mandatory token param
-        "parsec://foo:42/org?token=",  # missing value for param
-        "parsec://foo:42?token=123",  # missing org name
-        "parsec://foo:42/?token=123",  # missing org name
-        "parsec://foo:42/bad/org?token=123",  # bad org name
-        "parsec://foo:42/~org?token=123",  # bad org name
+        ("", "Must start with `parsec://`"),
+        ("foo", "Must start with `parsec://`"),
+        (
+            # bad scheme
+            "xx://foo:42/org?action=bootstrap_organization&token=123",
+            "Must start with `parsec://`",
+        ),
+        (
+            # bad parsing in unknown param
+            "parsec://foo:42/org?action=bootstrap_organization&token=123&dummy",
+            "bad query field: 'dummy'",
+        ),
+        (
+            # missing action param
+            "parsec://foo:42/org?token=123",
+            "Missing mandatory `action` param",
+        ),
+        (
+            # bad action param
+            "parsec://foo:42/org?action=dummy&token=123",
+            "Expected `action=bootstrap_organization` value",
+        ),
+        (
+            # missing mandatory token param
+            "parsec://foo:42/org?action=bootstrap_organization&",
+            "bad query field: ''",
+        ),
+        (
+            # missing value for param
+            "parsec://foo:42/org?action=bootstrap_organization&token=",
+            "Empty value in `token` param",
+        ),
+        (
+            # missing org name
+            "parsec://foo:42?action=bootstrap_organization&token=123",
+            "Invalid organization ID",
+        ),
+        (
+            # missing org name
+            "parsec://foo:42/?action=bootstrap_organization&token=123",
+            "Invalid organization ID",
+        ),
+        (
+            # bad org name
+            "parsec://foo:42/bad/org?action=bootstrap_organization&token=123",
+            "Invalid organization ID",
+        ),
+        (
+            # bad org name
+            "parsec://foo:42/~org?action=bootstrap_organization&token=123",
+            "Invalid organization ID",
+        ),
     ],
 )
-def test_backend_organization_bootstrap_addr_bad_value(url):
-    with pytest.raises(ValueError):
+def test_backend_organization_bootstrap_addr_bad_value(url, exc_msg):
+    with pytest.raises(ValueError) as exc:
         BackendOrganizationBootstrapAddr.from_url(url)
+    assert str(exc.value) == exc_msg
 
 
 @pytest.fixture(scope="session")
@@ -234,18 +340,40 @@ def test_backend_organization_claim_user_addr_good(organization_addr, user_id, t
 
 
 @pytest.mark.parametrize(
-    "url",
+    "url,exc_msg",
     [
-        "parsec://foo:42/org?action=claim_user&user_id=alice&token=123&rvk=<rvk>&dummy",  # unknown param
-        "parsec://foo:42/org?action=claim_user&user_id=alice&token=123&rvk=<rvk>&dummy=foo",  # unknown param
-        "parsec://foo:42/org?action=claim_user&token=123&rvk=<rvk>",  # missing mandatory user_id param
-        "parsec://foo:42/org?action=claim_user&user_id=&token=123&rvk=<rvk>",  # bad user_id param
-        "parsec://foo:42/org?action=claim_user&user_id=~Foo&token=123&rvk=<rvk>",  # bad user_id param
+        (
+            # bad parsing in unknown param
+            "parsec://foo:42/org?action=claim_user&user_id=alice&token=123&rvk=<rvk>&dummy",
+            "bad query field: 'dummy'",
+        ),
+        (
+            # missing mandatory user_id param
+            "parsec://foo:42/org?action=claim_user&token=123&rvk=<rvk>",
+            "Missing mandatory `user_id` param",
+        ),
+        (
+            # bad user_id param
+            "parsec://foo:42/org?action=claim_user&user_id=&token=123&rvk=<rvk>",
+            "Invalid `user_id` param value",
+        ),
+        (
+            # bad user_id param
+            "parsec://foo:42/org?action=claim_user&user_id=~Foo&token=123&rvk=<rvk>",
+            "Invalid `user_id` param value",
+        ),
+        (
+            # bad rvk param
+            "parsec://foo:42/org?action=claim_user&user_id=alice&token=123&rvk=dummy",
+            "Invalid `rvk` param value",
+        ),
     ],
 )
-def test_backend_organization_claim_user_addr_bad_value(url):
-    with pytest.raises(ValueError):
+def test_backend_organization_claim_user_addr_bad_value(url, exc_msg, exported_verify_key):
+    url = url.replace("<rvk>", exported_verify_key)
+    with pytest.raises(ValueError) as exc:
         BackendOrganizationClaimUserAddr.from_url(url)
+    assert str(exc.value) == exc_msg
 
 
 @pytest.mark.parametrize(
@@ -271,20 +399,45 @@ def test_backend_organization_claim_device_addr_good(organization_addr, device_i
 
 
 @pytest.mark.parametrize(
-    "url",
+    "url,exc_msg",
     [
-        "parsec://foo:42/org?action=claim_device&device_id=alice%40dev&token=123&rvk=<rvk>&dummy",  # unknown param
-        "parsec://foo:42/org?action=claim_device&device_id=alice%40dev&token=123&rvk=<rvk>&dummy=foo",  # unknown param
-        "parsec://foo:42/org?action=claim_device&token=123&rvk=<rvk>",  # missing mandatory device_id param
-        "parsec://foo:42/org?action=claim_device&device_id=&token=123&rvk=<rvk>",  # bad device_id param
-        "parsec://foo:42/org?action=claim_device&device_id=~Foo%40dev&token=123&rvk=<rvk>",  # bad device_id param
-        "parsec://foo:42/org?action=claim_device&device_id=Foo%40dev&token=123&rvk=<rvk>",  # bad device_id param
-        "parsec://foo:42/org?action=claim_device&device_id=alice&token=123&rvk=<rvk>",  # bad device_id param
+        (
+            # bad parsing in unknown param
+            "parsec://foo:42/org?action=claim_device&device_id=alice%40dev&token=123&rvk=<rvk>&dummy",
+            "bad query field: 'dummy'",
+        ),
+        (
+            # missing mandatory device_id param
+            "parsec://foo:42/org?action=claim_device&token=123&rvk=<rvk>",
+            "Missing mandatory `device_id` param",
+        ),
+        (
+            # bad device_id param
+            "parsec://foo:42/org?action=claim_device&device_id=&token=123&rvk=<rvk>",
+            "Invalid `device_id` param value",
+        ),
+        (
+            # bad device_id param
+            "parsec://foo:42/org?action=claim_device&device_id=~Foo%40dev&token=123&rvk=<rvk>",
+            "Invalid `device_id` param value",
+        ),
+        (
+            # bad device_id param
+            "parsec://foo:42/org?action=claim_device&device_id=alice&token=123&rvk=<rvk>",
+            "Invalid `device_id` param value",
+        ),
+        (
+            # bad rvk param
+            "parsec://foo:42/org?action=claim_device&device_id=alice%40dev&token=123&rvk=dummy",
+            "Invalid `rvk` param value",
+        ),
     ],
 )
-def test_backend_organization_claim_device_addr_bad_value(url):
-    with pytest.raises(ValueError):
+def test_backend_organization_claim_device_addr_bad_value(url, exc_msg, exported_verify_key):
+    url = url.replace("<rvk>", exported_verify_key)
+    with pytest.raises(ValueError) as exc:
         BackendOrganizationClaimDeviceAddr.from_url(url)
+    assert str(exc.value) == exc_msg
 
 
 @pytest.mark.parametrize("key_type", (SigningKey, PrivateKey, SecretKey))
