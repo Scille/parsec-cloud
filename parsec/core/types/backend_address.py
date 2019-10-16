@@ -120,12 +120,7 @@ class BackendAddr:
         return self._use_ssl
 
 
-class BackendOrganizationAddr(BackendAddr):
-    """
-    Represent the URL to access an organization within a backend
-    (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
-    """
-
+class OrganizationParamsFixture(BackendAddr):
     __slots__ = ("_root_verify_key", "_organization_id")
 
     def __init__(self, organization_id: OrganizationID, root_verify_key: VerifyKey, **kwargs):
@@ -157,6 +152,21 @@ class BackendOrganizationAddr(BackendAddr):
     def _to_url_get_params(self):
         return {**super()._to_url_get_params(), "rvk": export_root_verify_key(self.root_verify_key)}
 
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self._root_verify_key
+
+
+class BackendOrganizationAddr(OrganizationParamsFixture, BackendAddr):
+    """
+    Represent the URL to access an organization within a backend
+    (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+    """
+
     @classmethod
     def build(
         cls, backend_addr: BackendAddr, organization_id: OrganizationID, root_verify_key: VerifyKey
@@ -168,14 +178,6 @@ class BackendOrganizationAddr(BackendAddr):
             organization_id=organization_id,
             root_verify_key=root_verify_key,
         )
-
-    @property
-    def organization_id(self) -> OrganizationID:
-        return self._organization_id
-
-    @property
-    def root_verify_key(self) -> VerifyKey:
-        return self._root_verify_key
 
 
 class BackendActionAddr(BackendAddr):
@@ -264,11 +266,11 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         return self._organization_id
 
     @property
-    def token(self) -> str:
+    def token(self) -> Optional[str]:
         return self._token
 
 
-class BackendOrganizationClaimUserAddr(BackendActionAddr, BackendOrganizationAddr):
+class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionAddr):
     __slots__ = ("_user_id", "_token")
 
     def __init__(self, user_id: UserID, token: Optional[str] = None, **kwargs):
@@ -326,16 +328,23 @@ class BackendOrganizationClaimUserAddr(BackendActionAddr, BackendOrganizationAdd
             token=token,
         )
 
+    def to_organization_addr(self):
+        return BackendOrganizationAddr.build(
+            backend_addr=self,
+            organization_id=self.organization_id,
+            root_verify_key=self.root_verify_key,
+        )
+
     @property
     def user_id(self) -> UserID:
         return self._user_id
 
     @property
-    def token(self) -> str:
+    def token(self) -> Optional[str]:
         return self._token
 
 
-class BackendOrganizationClaimDeviceAddr(BackendActionAddr, BackendOrganizationAddr):
+class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActionAddr):
     __slots__ = ("_device_id", "_token")
 
     def __init__(self, device_id: DeviceID, token: Optional[str] = None, **kwargs):
@@ -391,6 +400,13 @@ class BackendOrganizationClaimDeviceAddr(BackendActionAddr, BackendOrganizationA
             root_verify_key=organization_addr.root_verify_key,
             device_id=device_id,
             token=token,
+        )
+
+    def to_organization_addr(self):
+        return BackendOrganizationAddr.build(
+            backend_addr=self,
+            organization_id=self.organization_id,
+            root_verify_key=self.root_verify_key,
         )
 
     @property
