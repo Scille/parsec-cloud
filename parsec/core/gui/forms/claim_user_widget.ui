@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>632</width>
-    <height>484</height>
+    <height>488</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -435,6 +435,12 @@ color: rgb(255, 255, 255);
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <property name="spacing">
             <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
            </property>
            <item>
             <spacer name="horizontalSpacer">
