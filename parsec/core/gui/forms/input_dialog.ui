@@ -20,12 +20,7 @@
    <string>Dialog</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QPushButton:pressed
-{
-border: 0;
-}
-
-QLabel
+   <string notr="true">QLabel
 {
 color: rgb(12, 65, 157);
 }</string>

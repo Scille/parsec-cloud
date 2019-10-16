@@ -191,7 +191,10 @@ class WorkspaceFS:
 
     async def versions(
         self, path: AnyPath = "/"
-    ) -> Dict[Tuple[EntryID, int, Pendulum, Pendulum], Tuple[DeviceID, FsPath, FsPath]]:
+    ) -> Dict[
+        Tuple[EntryID, int, Pendulum, Pendulum],
+        Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
+    ]:
         """
         Raises:
             FSError

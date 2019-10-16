@@ -255,6 +255,49 @@
     </message>
 </context>
 <context>
+    <name>FileHistoryDialog</name>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="192"/>
+        <source>LABEL_HISTORY_TITLE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="309"/>
+        <source>LABEL_FILE_TIMESTAMP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="314"/>
+        <source>LABEL_FILE_USER_ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="319"/>
+        <source>LABEL_FILE_SIZE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="324"/>
+        <source>LABEL_FILE_SOURCE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="329"/>
+        <source>LABEL_FILE_DESTINATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="360"/>
+        <source>BUTTON_CLOSE</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FilesWidget</name>
     <message>
         <location filename="../forms/files_widget.ui" line="20"/>
@@ -305,58 +348,53 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="342"/>
+        <location filename="../forms/global_settings_widget.ui" line="335"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="358"/>
+        <location filename="../forms/global_settings_widget.ui" line="351"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="440"/>
+        <location filename="../forms/global_settings_widget.ui" line="433"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="456"/>
+        <location filename="../forms/global_settings_widget.ui" line="449"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="483"/>
+        <location filename="../forms/global_settings_widget.ui" line="476"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="559"/>
+        <location filename="../forms/global_settings_widget.ui" line="552"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="573"/>
+        <location filename="../forms/global_settings_widget.ui" line="566"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="634"/>
+        <location filename="../forms/global_settings_widget.ui" line="627"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="648"/>
+        <location filename="../forms/global_settings_widget.ui" line="641"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="736"/>
+        <location filename="../forms/global_settings_widget.ui" line="729"/>
         <source>BUTTON_SAVE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/global_settings_widget.ui" line="278"/>
-        <source>CHECK_WINDOWS_MOUNTPOINT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -373,7 +411,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/input_dialog.ui" line="254"/>
+        <location filename="../forms/input_dialog.ui" line="249"/>
         <source>BUTTON_OK</source>
         <translation type="unfinished"></translation>
     </message>
