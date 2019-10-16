@@ -66,7 +66,7 @@ async def _do_bootstrap_organization(
     organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
 
     try:
-        device = generate_new_device(device_id, organization_addr, True)
+        device = generate_new_device(device_id, organization_addr, is_admin=True)
         save_device_with_password(config_dir, device, password)
 
     except LocalDeviceAlreadyExistsError as exc:

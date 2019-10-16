@@ -49,7 +49,7 @@ async def _do_claim_user(
             raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationClaimUserAddr.from_url(organization_url)
+        action_addr = BackendOrganizationClaimUserAddr.from_url(organization_url)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -60,7 +60,7 @@ async def _do_claim_user(
 
     try:
         device = await core_claim_user(
-            backend_addr=organization_addr,
+            organization_addr=action_addr.to_organization_addr(),
             new_device_id=device_id,
             token=token,
             keepalive=config.backend_connection_keepalive,
