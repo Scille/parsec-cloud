@@ -4,13 +4,16 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
+from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import invite_and_create_device
 
 
 @pytest.fixture
 async def alice_invite(running_backend, backend, alice):
     invitation = {
-        "addr": alice.organization_addr,
+        "addr": BackendOrganizationClaimDeviceAddr.build(
+            alice.organization_addr, alice.device_id, "123456"
+        ),
         "token": "123456",
         "user_id": alice.user_id,
         "device_name": "pc1",

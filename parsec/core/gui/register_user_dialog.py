@@ -161,11 +161,20 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             show_warning(self, _("WARN_REGISTER_USER_EMPTY"))
             return
 
-        new_user_id = UserID(self.line_edit_username.text())
+        try:
+            new_user_id = UserID(self.line_edit_username.text())
+        except ValueError as exc:
+            show_error(self, _("ERR_BAD_USER_NAME"), exception=exc)
+            return
+
         token = core_generate_invitation_token()
-        addr = BackendOrganizationClaimUserAddr.build(
-            self.core.device.organization_addr, user_id=new_user_id
-        )
+        try:
+            addr = BackendOrganizationClaimUserAddr.build(
+                self.core.device.organization_addr, user_id=new_user_id
+            )
+        except ValueError as exc:
+            show_error(self, _("ERR_REGISTER_WRONG_PARAMETERS"), exception=exc)
+            return
 
         token = core_generate_invitation_token()
         self.line_edit_user.setText(new_user_id)

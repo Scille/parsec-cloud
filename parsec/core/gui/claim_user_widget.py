@@ -10,7 +10,7 @@ from parsec.core.local_device import (
     save_device_with_password,
     save_device_with_pkcs11,
 )
-from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimUserAddr
+from parsec.core.types import BackendOrganizationClaimUserAddr
 from parsec.core.invite_claim import (
     claim_user as core_claim_user,
     InviteClaimError,
@@ -49,7 +49,7 @@ async def _do_claim_user(
             raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationAddr.from_url(organization_url)
+        organization_addr = BackendOrganizationClaimUserAddr.from_url(organization_url)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 

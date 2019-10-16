@@ -141,7 +141,7 @@ class InstanceWidget(QWidget):
 
     def on_logged_out(self):
         self.state_changed.emit(self, "login")
-        self.show_login_widget()
+        self.show_login_widget(show_meth="show_login_widget")
 
     def on_logged_in(self):
         self.state_changed.emit(self, "connected")
@@ -207,12 +207,13 @@ class InstanceWidget(QWidget):
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
 
-    def show_login_widget(self, show_meth="show_login_widget", **kwargs):
+    def show_login_widget(self, show_meth=None, **kwargs):
         self.clear_widgets()
         login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
         self.layout().addWidget(login_widget)
 
-        getattr(login_widget, show_meth)(**kwargs)
+        if show_meth:
+            getattr(login_widget, show_meth)(**kwargs)
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)

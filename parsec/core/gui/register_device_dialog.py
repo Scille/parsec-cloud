@@ -156,11 +156,21 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             show_warning(self, _("WARN_REGISTER_DEVICE_EMPTY"))
             return
 
-        new_device_id = DeviceID(f"{self.core.device.user_id}@{self.line_edit_device_name.text()}")
+        try:
+            new_device_id = DeviceID(
+                f"{self.core.device.user_id}@{self.line_edit_device_name.text()}"
+            )
+        except ValueError as exc:
+            show_error(self, _("ERR_BAD_DEVICE_NAME"), exception=exc)
+            return
         token = core_generate_invitation_token()
-        addr = BackendOrganizationClaimDeviceAddr.build(
-            self.core.device.organization_addr, device_id=new_device_id
-        )
+        try:
+            addr = BackendOrganizationClaimDeviceAddr.build(
+                self.core.device.organization_addr, device_id=new_device_id
+            )
+        except ValueError as exc:
+            show_error(self, _("ERR_REGISTER_WRONG_PARAMETERS"), exception=exc)
+            return
 
         self.line_edit_device.setText(new_device_id.device_name)
         self.line_edit_device.setCursorPosition(0)

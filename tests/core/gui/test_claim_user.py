@@ -4,13 +4,16 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
+from parsec.core.types import BackendOrganizationClaimUserAddr
 from parsec.core.invite_claim import invite_and_create_user
 
 
 @pytest.fixture
 async def alice_invite(running_backend, backend, alice):
     invitation = {
-        "addr": alice.organization_addr,
+        "addr": BackendOrganizationClaimUserAddr.build(
+            alice.organization_addr, alice.user_id, "123456"
+        ),
         "token": "123456",
         "user_id": "Zack",
         "device_name": "pc1",
@@ -52,6 +55,7 @@ async def test_claim_user(aqtbot, gui, autoclose_dialog, alice_invite):
 
     assert claim_w is not None
 
+    autoclose_dialog.dialogs = []
     async with aqtbot.wait_signal(claim_w.user_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [

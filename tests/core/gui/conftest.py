@@ -330,15 +330,10 @@ def test_get_login_login_widget(self):
 def test_get_claim_user_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        print("Failed login_widget")
         return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
-    if not w:
-        print("Failed widget")
-        return None
     if not isinstance(w, ClaimUserWidget):
-        print("Not good type", type(w))
         return None
     return w
 

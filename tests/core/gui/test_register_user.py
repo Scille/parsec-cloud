@@ -124,8 +124,7 @@ async def test_register_user_modal_invalid_user_id(
             assert not modal.line_edit_token.text()
             assert not modal.line_edit_url.text()
             aqtbot.qtbot.keyClicks(modal.line_edit_username, "new_user" * 5)
-            with aqtbot.qtbot.waitSignal(modal.registration_error):
-                aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
+            aqtbot.qtbot.mouseClick(modal.button_register, QtCore.Qt.LeftButton)
 
     await qt_thread_gateway.send_action(run_dialog)
     assert autoclose_dialog.dialogs == [("Error", "User name is invalid.")]

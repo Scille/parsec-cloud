@@ -10,7 +10,7 @@ from parsec.core.local_device import (
     save_device_with_password,
     save_device_with_pkcs11,
 )
-from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimDeviceAddr
+from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import (
     claim_device as core_claim_device,
     InviteClaimError,
@@ -49,7 +49,7 @@ async def _do_claim_device(
             raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationAddr.from_url(organization_url)
+        organization_addr = BackendOrganizationClaimDeviceAddr.from_url(organization_url)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -70,7 +70,6 @@ async def _do_claim_device(
         raise JobResultError("backend-offline", info=str(exc)) from exc
 
     except InviteClaimError as exc:
-        print(exc)
         if "Cannot retrieve invitation creator" in str(exc):
             raise JobResultError("not_found", info=str(exc)) from exc
         else:
