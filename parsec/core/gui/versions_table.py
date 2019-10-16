@@ -1,17 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from collections import namedtuple
-
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidget, QHeaderView
-
-from parsec.core.types import WorkspaceRole
 
 from parsec.core.gui.lang import format_datetime
 from parsec.core.gui.file_items import CustomTableItem, FileType
 from parsec.core.gui.file_size import get_filesize
-
 from parsec.core.gui.file_table import ItemDelegate
 
 
@@ -25,17 +19,8 @@ ACTUAL_PATH_DATA_INDEX = Qt.UserRole + 6
 
 
 class VersionsTable(QTableWidget):
-    file_moved = pyqtSignal(str, str)
-    item_activated = pyqtSignal(FileType, str)
-    files_dropped = pyqtSignal(list, str)
-    delete_clicked = pyqtSignal()
-    rename_clicked = pyqtSignal()
-    open_clicked = pyqtSignal()
-    show_history_clicked = pyqtSignal()
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.previous_selection = []
         self.setColumnCount(5)
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -56,22 +41,6 @@ class VersionsTable(QTableWidget):
         v_header.setSectionResizeMode(QHeaderView.Fixed)
         v_header.setDefaultSectionSize(48)
         self.setItemDelegate(ItemDelegate())
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.itemSelectionChanged.connect(self.change_selection)
-        self.cellDoubleClicked.connect(self.item_double_clicked)
-        self.current_user_role = WorkspaceRole.OWNER
-
-    def selected_files(self):
-        SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
-
-        files = []
-        for r in self.selectedRanges():
-            for row in range(r.topRow(), r.bottomRow() + 1):
-                item = self.item(row, 1)
-                files.append(
-                    SelectedFile(row, item.data(TYPE_DATA_INDEX), item.data(NAME_DATA_INDEX))
-                )
-        return files
 
     def item_double_clicked(self, row, column):
         target_path = self.item(row, 0).data(ACTUAL_PATH_DATA_INDEX)
@@ -103,21 +72,6 @@ class VersionsTable(QTableWidget):
     def clear(self):
         self.clearContents()
         self.setRowCount(0)
-        self.previous_selection = []
-
-    def change_selection(self):
-        selected = self.selectedItems()
-        for item in self.previous_selection:
-            if item.column() == 0:
-                file_type = item.data(TYPE_DATA_INDEX)
-                if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
-                    item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
-        for item in selected:
-            if item.column() == 0:
-                file_type = item.data(TYPE_DATA_INDEX)
-                if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
-                    item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
-        self.previous_selection = selected
 
     def _config_item_data(
         self, name, actual_path, type_data, early, late, source, destination, row_id, col_id
@@ -134,7 +88,7 @@ class VersionsTable(QTableWidget):
         item.setData(ACTUAL_PATH_DATA_INDEX, actual_path)
         self.setItem(row_id, col_id, item)
 
-    def addItem(
+    def add_item(
         self,
         entry_id,
         version,

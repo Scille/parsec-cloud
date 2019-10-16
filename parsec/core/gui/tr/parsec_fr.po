@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-08 15:44+0200\n"
-"PO-Revision-Date: 2019-10-08 15:45+0200\n"
+"POT-Creation-Date: 2019-10-16 09:30+0200\n"
+"PO-Revision-Date: 2019-10-16 09:31+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -30,6 +30,9 @@ msgstr "Gérant"
 
 msgid "WORKSPACE_ROLE_OWNER"
 msgstr "Propriétaire"
+
+msgid "ERR_FILE_HISTORY_MONO"
+msgstr "Vous ne pouvez observer l'historique que d'un fichier à la fois."
 
 msgid "ASK_FILE_RENAME_TITLE"
 msgstr "Renommer le fichier"
@@ -1081,9 +1084,6 @@ msgstr ""
 msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
 msgstr "Impossible de récupérer les versions de cet espace de travail."
 
-msgid "ERR_LIST_VERSIONS_ACCESS"
-msgstr "Impossible de récupérer la liste des versions."
-
 msgid "STARTING_GUIDE_WELCOME_TITLE"
 msgstr "Bienvenue !"
 
@@ -1192,6 +1192,9 @@ msgstr "Commencer"
 msgid "FILE_MENU_OPEN"
 msgstr "Ouvrir"
 
+msgid "FILE_MENU_HISTORY"
+msgstr "Voir l'historique"
+
 msgid "FILE_MENU_RENAME"
 msgstr "Renommer"
 
@@ -1271,6 +1274,9 @@ msgstr "Impossible d'enregistrer cet appareil."
 
 msgid "INFO_DEVICE_REGISTERED"
 msgstr "L'appareil a été créé. Vous pouvez maintenant vous connecter."
+
+msgid "ERR_LIST_VERSIONS_ACCESS"
+msgstr "Impossible de récupérer la liste des versions."
 
 msgid "PARSEC_ALREADY_RUNNING"
 msgstr "Une instance de Parsec est en cours d'exécution."
@@ -1477,6 +1483,24 @@ msgstr ""
 msgid "LABEL_SEARCH_DEVICES"
 msgstr "Rechercher des appareils"
 
+msgid "LABEL_HISTORY_TITLE"
+msgstr "Historique du fichier"
+
+msgid "LABEL_FILE_TIMESTAMP"
+msgstr "Horodatage"
+
+msgid "LABEL_FILE_USER_ID"
+msgstr "Utilisateur"
+
+msgid "LABEL_FILE_SIZE"
+msgstr "Taille"
+
+msgid "LABEL_FILE_SOURCE"
+msgstr "Source"
+
+msgid "LABEL_FILE_DESTINATION"
+msgstr "Destination"
+
 msgid "LABEL_SEARCH_FILES"
 msgstr "Rechercher des fichiers ou dossiers"
 
@@ -1488,21 +1512,6 @@ msgstr "Créé le"
 
 msgid "LABEL_FILE_UPDATED"
 msgstr "Mis à jour le"
-
-msgid "LABEL_FILE_SIZE"
-msgstr "Taille"
-
-msgid "LABEL_FILE_TIMESTAMP"
-msgstr "Horodatage"
-
-msgid "LABEL_FILE_USER_ID"
-msgstr "Utilisateur"
-
-msgid "LABEL_FILE_SOURCE"
-msgstr "Source"
-
-msgid "LABEL_FILE_DESTINATION"
-msgstr "Destination"
 
 msgid "SETTINGS_TITLE_BEHAVIOR"
 msgstr "Comportement"
@@ -1539,11 +1548,6 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "BUTTON_SAVE"
 msgstr "Sauvegarder"
-
-msgid "CHECK_WINDOWS_MOUNTPOINT"
-msgstr ""
-"Afficher le point de montage dans le panneau gauche de l'explorateur de "
-"fichiers Windows."
 
 msgid "CHECK_ALLOW_MULTIPLE_INSTANCES"
 msgstr "Autoriser plusieurs instances de Parsec à s'exécuter simultanément"
@@ -1756,3 +1760,8 @@ msgstr "Mettre à jour"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
+
+#~ msgid "CHECK_WINDOWS_MOUNTPOINT"
+#~ msgstr ""
+#~ "Afficher le point de montage dans le panneau gauche de l'explorateur de "
+#~ "fichiers Windows."

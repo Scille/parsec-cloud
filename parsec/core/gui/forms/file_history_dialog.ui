@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>499</height>
+    <width>891</width>
+    <height>518</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,9 +19,44 @@
 background-color: rgb(255, 255, 255);
 }
 
+QWidget#widget
+{
+border: 2px solid rgb(12, 65, 157);
+background-color: rgb(255, 255, 255);
+}
+
+QPushButton
+{
+color: white;
+background-color: rgb(38, 142, 212);
+border: 0;
+padding: 3px;
+font-size: 15px;
+font-weight: bold;
+height: 32px;
+padding-left: 20px;
+padding-right: 20px;
+}
+
+QPushButton:pressed
+{
+background-color: rgb(20, 122, 192);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(112, 112, 112);
+color: rgb(255, 255, 255);
+}
+
 QScrollBar:vertical
 {
 background: rgb(255, 255, 255);
+}
+
+QTableWidget#versions_table
+{
+border: 1px solid rgb(46, 46, 46);
 }
 
 QScrollBar::handle:vertical
@@ -114,98 +149,79 @@ height: 16px;
    <item>
     <widget class="QWidget" name="widget" native="true">
      <property name="styleSheet">
-      <string notr="true">QWidget#widget
-{
-border: 2px solid rgb(12, 65, 157);
-background-color: rgb(255, 255, 255);
-}
-
-QLineEdit
-{
-border: 1px solid rgb(46, 46, 46);
-padding-left: 10px;
-color: rgb(0, 0, 0);
-}
-
-QLineEdit:disabled
-{
-background-color: rgb(200, 200, 200);
-}
-
-QComboBox
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: white;
-color: black;
-padding-left: 5px;
-}
-
-QComboBox:disabled
-{
-background-color: rgb(220, 220, 220);
-}
-
-QComboBox::drop-down
-{
-border: 0px;
-background-color: rgb(255, 255, 255);
-}
-
-QComboBox::down-arrow
-{
-image: url(:/icons/images/icons/down-arrow.png);
-width: 16px;
-height: 16px;
-padding-right: 5px;
-}
-
-QComboBox::drop-down:disabled
-{
-background-color: rgb(220, 220, 220);
-}</string>
+      <string notr="true"/>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="leftMargin">
-       <number>2</number>
+       <number>15</number>
       </property>
       <property name="topMargin">
        <number>15</number>
       </property>
       <property name="rightMargin">
-       <number>2</number>
+       <number>15</number>
       </property>
       <property name="bottomMargin">
        <number>15</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_file_name">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="spacing">
+         <number>10</number>
+        </property>
         <property name="leftMargin">
-         <number>15</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
-         <number>15</number>
+         <number>0</number>
         </property>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>LABEL_HISTORY_TITLE</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_file_name">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="topMargin">
-         <number>10</number>
+         <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>10</number>
+         <number>0</number>
         </property>
         <item>
          <widget class="VersionsTable" name="versions_table">
@@ -247,10 +263,10 @@ background-color: rgb(220, 220, 220);
            <enum>QAbstractItemView::NoDragDrop</enum>
           </property>
           <property name="defaultDropAction">
-           <enum>Qt::MoveAction</enum>
+           <enum>Qt::IgnoreAction</enum>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
+           <enum>QAbstractItemView::NoSelection</enum>
           </property>
           <property name="selectionBehavior">
            <enum>QAbstractItemView::SelectRows</enum>
@@ -339,53 +355,9 @@ background-color: rgb(220, 220, 220);
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_close">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton#button_close
-{
-background-color: rgb(45, 144, 209);
-border: 1px solid rgb(46, 46, 46);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-}
-
-QPushButton#button_close:disabled
-{
-border: 1px solid rgb(46, 46, 46);
-background-color: rgb(112, 122, 153);
-color: rgb(255, 255, 255);
-}</string>
-          </property>
+         <widget class="ShadowedButton" name="button_close">
           <property name="text">
-           <string>Close</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/cancel_white.png</normaloff>:/icons/images/icons/cancel_white.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
+           <string>BUTTON_CLOSE</string>
           </property>
          </widget>
         </item>
@@ -411,30 +383,16 @@ color: rgb(255, 255, 255);
  </widget>
  <customwidgets>
   <customwidget>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
    <class>VersionsTable</class>
    <extends>QTableWidget</extends>
    <header>parsec.core.gui.versions_table</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
- <connections>
-  <connection>
-   <sender>button_close</sender>
-   <signal>clicked()</signal>
-   <receiver>FileHistoryDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>295</x>
-     <y>248</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>295</x>
-     <y>249</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <resources/>
+ <connections/>
 </ui>

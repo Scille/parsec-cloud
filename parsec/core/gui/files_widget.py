@@ -213,7 +213,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def show_history(self):
         files = self.table_files.selected_files()
         if len(files) > 1:
-            show_warning(self, _("Can only see the history one file at a time."))
+            show_warning(self, _("ERR_FILE_HISTORY_MONO"))
             return
         selected_path = self.current_directory / files[0].name
         fd = FileHistoryDialog(self.jobs_ctx, self.workspace_fs, selected_path)

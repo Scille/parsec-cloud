@@ -23,9 +23,10 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.jobs_ctx = jobs_ctx
         self.path = path
         self.setWindowFlags(Qt.SplashScreen)
-        self.label_file_name.setText(path.name)
+        self.label_file_name.setText(f'"{path.name}"')
         self.get_versions_success.connect(self.add_history)
         self.get_versions_error.connect(self.show_error)
+        self.button_close.clicked.connect(self.close_dialog)
         self.versions_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "get_versions_success"),
             ThreadSafeQtSignal(self, "get_versions_error"),
@@ -33,19 +34,36 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
             workspace_fs=workspace_fs,
             path=path,
         )
-        # TODO : cancellable
 
     def add_history(self):
         versions_dict = self.versions_job.ret
+        self.versions_job = None
         if not versions_dict:
             return  # TODO : something something before
         for k, v in versions_dict.items():
-            self.versions_table.addItem(
-                k[0], k[1], self.path, v[0][2], v[0][0], v[0][3], k[2], k[3], v[1], v[2]
+            self.versions_table.add_item(
+                entry_id=k[0],
+                version=k[1],
+                actual_path=self.path,
+                is_folder=v[0][2],
+                creator=v[0][0],
+                size=v[0][3],
+                early_timestamp=k[2],
+                late_timestamp=k[3],
+                source_path=v[1],
+                destination_path=v[2],
             )
 
     def show_error(self):
+        if self.versions_job:
+            print(self.versions_job.status)
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("ERR_LIST_VERSIONS_ACCESS"), exception=self.versions_job.exc)
         self.versions_job = None
         self.reject()
+
+    def close_dialog(self):
+        if self.versions_job:
+            self.versions_job.cancel_and_join()
+        else:
+            self.reject()
