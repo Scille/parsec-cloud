@@ -8,7 +8,7 @@ from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalUserManifest
 
 from parsec.core.fs.storage.version import USER_STORAGE_NAME
-from parsec.core.fs.storage.base_storage import BaseStorage
+from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 
 
@@ -28,11 +28,11 @@ class UserStorage:
     @asynccontextmanager
     async def run(cls, device: LocalDevice, path: Path, user_manifest_id: EntryID):
 
-        # Local storage service
-        async with BaseStorage.run(path / USER_STORAGE_NAME) as storage:
+        # Local database service
+        async with LocalDatabase.run(path / USER_STORAGE_NAME) as localdb:
 
             # Manifest storage service
-            async with ManifestStorage.run(device, storage, user_manifest_id) as manifest_storage:
+            async with ManifestStorage.run(device, localdb, user_manifest_id) as manifest_storage:
 
                 # Instanciate the user storage
                 self = cls(device, path, user_manifest_id, manifest_storage)

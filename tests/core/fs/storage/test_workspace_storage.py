@@ -355,13 +355,13 @@ async def test_timestamped_storage(alice_workspace_storage):
 async def test_internal_connections(tmpdir, alice, workspace_id):
     async with WorkspaceStorage.run(alice, tmpdir, workspace_id) as aws:
         with pytest.raises(RuntimeError):
-            await aws.data_storage._connect()
+            await aws.data_localdb._connect()
         with pytest.raises(RuntimeError):
-            await aws.cache_storage._connect()
+            await aws.cache_localdb._connect()
 
     # Idempotency
-    await aws.data_storage._close()
-    await aws.cache_storage._close()
+    await aws.data_localdb._close()
+    await aws.cache_localdb._close()
 
 
 @pytest.mark.trio
@@ -374,25 +374,25 @@ async def test_vacuum(tmpdir, alice, workspace_id):
 
         # Make sure the storage is empty
         data = b"\x00" * data_size
-        assert aws.data_storage.get_disk_usage() < data_size
+        assert aws.data_localdb.get_disk_usage() < data_size
 
         # Set and commit a chunk of 1MB
         await aws.set_chunk(chunk.id, data)
-        await aws.data_storage.commit()
-        assert aws.data_storage.get_disk_usage() > data_size
+        await aws.data_localdb.commit()
+        assert aws.data_localdb.get_disk_usage() > data_size
 
         # Run the vacuum
         await aws.run_vacuum()
-        assert aws.data_storage.get_disk_usage() > data_size
+        assert aws.data_localdb.get_disk_usage() > data_size
 
         # Clear the chunk 1MB
         await aws.clear_chunk(chunk.id)
-        await aws.data_storage.commit()
-        assert aws.data_storage.get_disk_usage() > data_size
+        await aws.data_localdb.commit()
+        assert aws.data_localdb.get_disk_usage() > data_size
 
         # Run the vacuum
         await aws.run_vacuum()
-        assert aws.data_storage.get_disk_usage() < data_size
+        assert aws.data_localdb.get_disk_usage() < data_size
 
         # Make sure vacuum can run even if a transaction has started
         await aws.set_chunk(chunk.id, data)
@@ -401,10 +401,10 @@ async def test_vacuum(tmpdir, alice, workspace_id):
         await aws.run_vacuum()
 
         # Vacuuming the cache storage is no-op
-        await aws.cache_storage.run_vacuum()
+        await aws.cache_localdb.run_vacuum()
 
     # Make sure disk usage can be called on a closed storage
-    assert aws.data_storage.get_disk_usage() < data_size
+    assert aws.data_localdb.get_disk_usage() < data_size
 
 
 @pytest.mark.trio

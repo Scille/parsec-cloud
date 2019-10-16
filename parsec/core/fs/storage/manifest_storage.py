@@ -6,7 +6,7 @@ from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import EntryID, LocalDevice, LocalManifest
-from parsec.core.fs.storage import BaseStorage
+from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
 
@@ -17,17 +17,17 @@ class ManifestStorage:
     Also stores the checkpoint.
     """
 
-    def __init__(self, device: LocalDevice, storage: BaseStorage, realm_id: EntryID):
+    def __init__(self, device: LocalDevice, localdb: LocalDatabase, realm_id: EntryID):
         self.device = device
+        self.localdb = localdb
         self.realm_id = realm_id
-        self.storage = storage
 
         self._cache = {}
         self._cache_ahead_of_persistance_ids = set()
 
     @property
     def path(self):
-        return self.storage.path
+        return self.localdb.path
 
     @classmethod
     @asynccontextmanager
@@ -40,7 +40,7 @@ class ManifestStorage:
             await self._flush_cache_ahead_of_persistance()
 
     def _open_cursor(self):
-        return self.storage.open_cursor(commit=True)
+        return self.localdb.open_cursor(commit=True)
 
     def clear_memory_cache(self):
         self._cache.clear()

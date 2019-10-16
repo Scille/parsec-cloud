@@ -6,19 +6,19 @@ from async_generator import asynccontextmanager
 from parsec.core.types import ChunkID
 from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import LocalDevice, DEFAULT_BLOCK_SIZE
-from parsec.core.fs.storage import BaseStorage
+from parsec.core.fs.storage.local_database import LocalDatabase
 
 
 class ChunkStorage:
     """Interface to access the local chunks of data."""
 
-    def __init__(self, device: LocalDevice, storage: BaseStorage):
+    def __init__(self, device: LocalDevice, localdb: LocalDatabase):
         self.local_symkey = device.local_symkey
-        self.storage = storage
+        self.localdb = localdb
 
     @property
     def path(self):
-        return self.storage.path
+        return self.localdb.path
 
     @classmethod
     @asynccontextmanager
@@ -28,10 +28,10 @@ class ChunkStorage:
         try:
             yield self
         finally:
-            await self.storage.commit()
+            await self.localdb.commit()
 
     def _open_cursor(self):
-        return self.storage.open_cursor(commit=False)
+        return self.localdb.open_cursor(commit=False)
 
     # Database initialization
 
@@ -113,12 +113,12 @@ class ChunkStorage:
 class BlockStorage(ChunkStorage):
     """Interface for caching the data blocks."""
 
-    def __init__(self, device: LocalDevice, storage: BaseStorage, cache_size: int):
-        super().__init__(device, storage)
+    def __init__(self, device: LocalDevice, localdb: LocalDatabase, cache_size: int):
+        super().__init__(device, localdb)
         self.cache_size = cache_size
 
     def _open_cursor(self):
-        return self.storage.open_cursor(commit=True)
+        return self.localdb.open_cursor(commit=True)
 
     # Garbage collection
 

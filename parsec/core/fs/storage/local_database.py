@@ -6,7 +6,7 @@ from async_generator import asynccontextmanager
 from sqlite3 import connect as sqlite_connect
 
 
-class BaseStorage:
+class LocalDatabase:
     """Base class for managing an sqlite3 connection."""
 
     def __init__(self, path, vacuum_threshold=None):

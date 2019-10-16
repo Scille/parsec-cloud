@@ -21,7 +21,7 @@ from parsec.core.types import (
 )
 from parsec.core.fs.exceptions import FSError, FSLocalMissError, FSInvalidFileDescriptor
 
-from parsec.core.fs.storage.base_storage import BaseStorage
+from parsec.core.fs.storage.local_database import LocalDatabase
 from parsec.core.fs.storage.manifest_storage import ManifestStorage
 from parsec.core.fs.storage.chunk_storage import ChunkStorage, BlockStorage
 from parsec.core.fs.storage.version import WORKSPACE_DATA_STORAGE_NAME, WORKSPACE_CACHE_STORAGE_NAME
@@ -48,11 +48,11 @@ class WorkspaceStorage:
         device: LocalDevice,
         path: Path,
         workspace_id: EntryID,
-        data_storage: BaseStorage,
-        cache_storage: BaseStorage,
-        manifest_storage: ManifestStorage,
+        data_localdb: LocalDatabase,
+        cache_localdb: LocalDatabase,
         block_storage: ChunkStorage,
         chunk_storage: ChunkStorage,
+        manifest_storage: ManifestStorage,
     ):
         self.path = path
         self.device = device
@@ -68,8 +68,8 @@ class WorkspaceStorage:
         self.entry_locks = defaultdict(trio.Lock)
 
         # Manifest and block storage
-        self.data_storage = data_storage
-        self.cache_storage = cache_storage
+        self.data_localdb = data_localdb
+        self.cache_localdb = cache_localdb
         self.manifest_storage = manifest_storage
         self.block_storage = block_storage
         self.chunk_storage = chunk_storage
@@ -88,36 +88,36 @@ class WorkspaceStorage:
         cache_path = path / WORKSPACE_CACHE_STORAGE_NAME
 
         # Local cache storage service
-        async with BaseStorage.run(cache_path) as cache_storage:
+        async with LocalDatabase.run(cache_path) as cache_localdb:
 
             # Local data storage service
-            async with BaseStorage.run(
+            async with LocalDatabase.run(
                 data_path, vacuum_threshold=vacuum_threshold
-            ) as data_storage:
+            ) as data_localdb:
 
                 # Block storage service
                 async with BlockStorage.run(
-                    device, cache_storage, cache_size=cache_size
+                    device, cache_localdb, cache_size=cache_size
                 ) as block_storage:
 
                     # Manifest storage service
                     async with ManifestStorage.run(
-                        device, data_storage, workspace_id
+                        device, data_localdb, workspace_id
                     ) as manifest_storage:
 
                         # Chunk storage service
-                        async with ChunkStorage.run(device, data_storage) as chunk_storage:
+                        async with ChunkStorage.run(device, data_localdb) as chunk_storage:
 
                             # Instanciate workspace storage
                             yield cls(
                                 device,
                                 path,
                                 workspace_id,
-                                cache_storage=cache_storage,
-                                data_storage=data_storage,
-                                manifest_storage=manifest_storage,
+                                data_localdb=data_localdb,
+                                cache_localdb=cache_localdb,
                                 block_storage=block_storage,
                                 chunk_storage=chunk_storage,
+                                manifest_storage=manifest_storage,
                             )
 
     # Helpers
@@ -255,7 +255,7 @@ class WorkspaceStorage:
 
     async def run_vacuum(self):
         # Only the data storage needs to get vacuuumed
-        await self.data_storage.run_vacuum()
+        await self.data_localdb.run_vacuum()
 
     # Timestamped workspace
 
@@ -278,8 +278,8 @@ class WorkspaceStorageTimestamped(WorkspaceStorage):
             workspace_storage.device,
             workspace_storage.path,
             workspace_storage.workspace_id,
-            cache_storage=None,
-            data_storage=None,
+            data_localdb=None,
+            cache_localdb=None,
             manifest_storage=None,
             block_storage=workspace_storage.block_storage,
             chunk_storage=workspace_storage.chunk_storage,
