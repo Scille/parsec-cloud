@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>602</width>
-    <height>373</height>
+    <height>280</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -134,7 +134,7 @@ image: url(:/icons/images/icons/checked.png)
        <property name="sizeHint" stdset="0">
         <size>
          <width>0</width>
-         <height>30</height>
+         <height>10</height>
         </size>
        </property>
       </spacer>
@@ -195,16 +195,16 @@ background-color: rgb(21, 84, 169);
             <number>0</number>
            </property>
            <property name="leftMargin">
-            <number>10</number>
+            <number>0</number>
            </property>
            <property name="topMargin">
-            <number>10</number>
+            <number>5</number>
            </property>
            <property name="rightMargin">
-            <number>10</number>
+            <number>0</number>
            </property>
            <property name="bottomMargin">
-            <number>10</number>
+            <number>5</number>
            </property>
            <item>
             <widget class="QLabel" name="label">
@@ -273,13 +273,13 @@ text-decoration: underline;
             <number>20</number>
            </property>
            <property name="topMargin">
-            <number>20</number>
+            <number>10</number>
            </property>
            <property name="rightMargin">
             <number>20</number>
            </property>
            <property name="bottomMargin">
-            <number>20</number>
+            <number>10</number>
            </property>
            <item>
             <layout class="QVBoxLayout" name="layout">
@@ -290,7 +290,7 @@ text-decoration: underline;
               <number>0</number>
              </property>
              <property name="topMargin">
-              <number>0</number>
+              <number>10</number>
              </property>
              <property name="rightMargin">
               <number>0</number>
@@ -301,126 +301,133 @@ text-decoration: underline;
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="button_register_user_instead">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <property name="spacing">
+              <number>0</number>
              </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>BUTTON_REGISTER_NEW_USER</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
-             </property>
-             <property name="flat">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_register_device_instead">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>BUTTON_REGISTER_NEW_DEVICE</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
-             </property>
-             <property name="flat">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_login_instead">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>BUTTON_LOG_IN</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
-             </property>
-             <property name="flat">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_bootstrap_instead">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="text">
-              <string>BUTTON_BOOTSTRAP_ORG</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_settings">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="text">
-              <string>BUTTON_SETTINGS</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/menu_settings.png</normaloff>:/icons/images/icons/menu_settings.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>20</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="flat">
-              <bool>true</bool>
-             </property>
-            </widget>
+             <item>
+              <widget class="QPushButton" name="button_register_user_instead">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="styleSheet">
+                <string notr="true"/>
+               </property>
+               <property name="text">
+                <string>BUTTON_REGISTER_NEW_USER</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../rc/resources.qrc">
+                 <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="button_register_device_instead">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="styleSheet">
+                <string notr="true"/>
+               </property>
+               <property name="text">
+                <string>BUTTON_REGISTER_NEW_DEVICE</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../rc/resources.qrc">
+                 <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="button_login_instead">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="styleSheet">
+                <string notr="true"/>
+               </property>
+               <property name="text">
+                <string>BUTTON_LOG_IN</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../rc/resources.qrc">
+                 <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="button_bootstrap_instead">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="text">
+                <string>BUTTON_BOOTSTRAP_ORG</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../rc/resources.qrc">
+                 <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="button_settings">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="text">
+                <string>BUTTON_SETTINGS</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../rc/resources.qrc">
+                 <normaloff>:/icons/images/icons/menu_settings.png</normaloff>:/icons/images/icons/menu_settings.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </widget>
@@ -439,7 +446,7 @@ text-decoration: underline;
        <property name="sizeHint" stdset="0">
         <size>
          <width>0</width>
-         <height>30</height>
+         <height>10</height>
         </size>
        </property>
       </spacer>

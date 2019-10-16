@@ -2,7 +2,7 @@
 
 import pendulum
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.crypto import SigningKey
@@ -36,20 +36,16 @@ from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganiz
 
 async def _do_bootstrap_organization(
     config_dir,
-    use_pkcs11: bool,
     password: str,
     password_check: str,
     user_id: str,
     device_name: str,
     bootstrap_addr: str,
-    pkcs11_token: int,
-    pkcs11_key: int,
 ):
-    if not use_pkcs11:
-        if password != password_check:
-            raise JobResultError("password-mismatch")
-        if len(password) < 8:
-            raise JobResultError("password-size")
+    if password != password_check:
+        raise JobResultError("password-mismatch")
+    if len(password) < 8:
+        raise JobResultError("password-size")
 
     try:
         bootstrap_addr = BackendOrganizationBootstrapAddr(bootstrap_addr)
@@ -135,12 +131,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.bootstrap_success.connect(self.on_bootstrap_success)
         self.bootstrap_error.connect(self.on_bootstrap_error)
 
-        self.check_box_use_pkcs11.hide()
         self.line_edit_device.setText(get_default_device())
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.addItem("0")
         self.button_cancel.hide()
-        self.widget_pkcs11.hide()
         self.label_password_strength.hide()
         self.check_infos()
 
@@ -197,14 +189,11 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             ThreadSafeQtSignal(self, "bootstrap_error"),
             _do_bootstrap_organization,
             config_dir=self.config.config_dir,
-            use_pkcs11=(self.check_box_use_pkcs11.checkState() == Qt.Checked),
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
             user_id=self.line_edit_login.text(),
             device_name=self.line_edit_device.text(),
             bootstrap_addr=self.line_edit_url.text(),
-            pkcs11_token=int(self.combo_pkcs11_token.currentText()),
-            pkcs11_key=int(self.combo_pkcs11_key.currentText()),
         )
         self.check_infos()
 
