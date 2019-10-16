@@ -26,7 +26,7 @@ from parsec.core.gui.ui.claim_device_widget import Ui_ClaimDeviceWidget
 
 
 async def _do_claim_device(
-    config_dir,
+    config,
     password: str,
     password_check: str,
     token: str,
@@ -50,21 +50,24 @@ async def _do_claim_device(
         raise JobResultError("bad-device_name") from exc
 
     try:
-        device = await core_claim_device(organization_addr, device_id, token)
+        device = await core_claim_device(
+            backend_addr=organization_addr,
+            new_device_id=device_id,
+            token=token,
+            keepalive=config.backend_connection_keepalive,
+        )
 
     except InviteClaimBackendOfflineError as exc:
         raise JobResultError("backend-offline", info=str(exc)) from exc
 
     except InviteClaimError as exc:
-        print(exc)
         if "Cannot retrieve invitation creator" in str(exc):
             raise JobResultError("not_found", info=str(exc)) from exc
         else:
             raise JobResultError("refused-by-backend", info=str(exc)) from exc
 
     try:
-        save_device_with_password(config_dir, device, password)
-
+        save_device_with_password(config.config_dir, device, password)
     except LocalDeviceAlreadyExistsError as exc:
         raise JobResultError("device-exists") from exc
 
@@ -191,7 +194,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             ThreadSafeQtSignal(self, "claim_success"),
             ThreadSafeQtSignal(self, "claim_error"),
             _do_claim_device,
-            config_dir=self.config.config_dir,
+            config=self.config,
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
             token=self.line_edit_token.text(),

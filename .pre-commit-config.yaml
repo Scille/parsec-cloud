@@ -19,3 +19,18 @@ repos:
       args:
         - "--fix=lf"
     - id: trailing-whitespace
+-   repo: local
+    hooks:
+    - id: releaser
+      name: releaser
+      entry: python ./misc/releaser.py check
+      language: python
+      language_version: python3
+      pass_filenames: false
+      require_serial: true
+    - id: license_headers
+      name: license_headers
+      entry: python ./misc/license_headers.py add
+      language: python
+      language_version: python3
+      types: [python]

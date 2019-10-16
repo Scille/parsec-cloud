@@ -15,7 +15,6 @@ from click.testing import CliRunner
 
 import parsec
 from parsec.cli import cli
-from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 
 
 CWD = Path(__file__).parent.parent
@@ -186,10 +185,16 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
     alice2 = alice2.device_id
     bob1 = bob.device_id
     password = "P@ssw0rd."
+    administration_token = "9e57754ddfe62f7f8780edc0"
 
     print("######## START BACKEND #########")
     with _running(
-        f"backend run --port={unused_tcp_port} {ssl_conf.backend_opts}",
+        (
+            f"backend run --db=MOCKED --blockstore=MOCKED"
+            f" --administration-token={administration_token}"
+            f" --port={unused_tcp_port}"
+            f" {ssl_conf.backend_opts}"
+        ),
         wait_for="Starting Parsec Backend",
     ):
 
@@ -201,7 +206,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         p = _run(
             "core create_organization "
             f"{org} --addr={admin_url} "
-            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
+            f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
         url = re.search(
@@ -276,7 +281,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         _run(
             "core stats_organization "
             f"{org} --addr={admin_url} "
-            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
+            f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
 
@@ -284,6 +289,6 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         _run(
             "core status_organization "
             f"{org} --addr={admin_url} "
-            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}",
+            f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )

@@ -2,7 +2,7 @@
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QCursor
 
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 from parsec.core.types import EntryID
@@ -19,7 +19,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     reencrypt_clicked = pyqtSignal(EntryID, bool, bool)
     delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
-    file_clicked = pyqtSignal(WorkspaceFS, str)
     remount_ts_clicked = pyqtSignal(WorkspaceFS)
 
     def __init__(
@@ -46,6 +45,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.is_shared = is_shared
         self.is_creator = is_creator
         self.reencrypting = None
+        self.setCursor(QCursor(Qt.PointingHandCursor))
         files = files or []
 
         if not len(files):
@@ -56,7 +56,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 if i > 4:
                     break
                 label = getattr(self, "line_edit_file{}".format(i))
-                label.clicked.connect(self.open_clicked_file)
+                label.clicked.connect(self._on_file_clicked)
                 label.setText(f)
                 label.setCursorPosition(0)
             self.widget_files.show()
@@ -75,6 +75,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_owner.hide()
             for i in range(5, 9):
                 getattr(self, f"line_{i}").hide()
+        else:
+            self.button_delete.hide()
+            self.line_5.hide()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
@@ -86,7 +89,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_reencrypt.clicked.connect(self.button_reencrypt_clicked)
         self.button_delete.clicked.connect(self.button_delete_clicked)
         self.button_rename.clicked.connect(self.button_rename_clicked)
-        self.button_open_workspace.clicked.connect(self.button_open_workspace_clicked)
         self.button_remount_ts.clicked.connect(self.button_remount_ts_clicked)
         if not self.is_creator:
             self.label_owner.hide()
@@ -94,11 +96,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
 
-    def button_open_workspace_clicked(self):
-        self.open_clicked_file("/")
-
-    def open_clicked_file(self, file_name):
-        self.file_clicked.emit(self.workspace_fs, file_name)
+    def _on_file_clicked(self, _):
+        self.clicked.emit(self.workspace_fs)
 
     def button_share_clicked(self):
         self.share_clicked.emit(self.workspace_fs)

@@ -2,6 +2,7 @@
 
 import trio
 from secrets import token_hex
+from typing import Optional
 import pendulum
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
@@ -68,7 +69,10 @@ def generate_invitation_token():
 
 
 async def claim_user(
-    backend_addr: BackendOrganizationAddr, new_device_id: DeviceID, token: str
+    backend_addr: BackendOrganizationAddr,
+    new_device_id: DeviceID,
+    token: str,
+    keepalive: Optional[int] = None,
 ) -> LocalDevice:
     """
     Raises:
@@ -81,7 +85,7 @@ async def claim_user(
     new_device = generate_new_device(new_device_id, backend_addr)
 
     try:
-        async with backend_anonymous_cmds_factory(backend_addr) as cmds:
+        async with backend_anonymous_cmds_factory(backend_addr, keepalive=keepalive) as cmds:
             # 1) Retrieve invitation creator
             try:
                 invitation_creator_user, invitation_creator_device = await get_user_invitation_creator(
@@ -146,7 +150,10 @@ async def claim_user(
 
 
 async def claim_device(
-    backend_addr: BackendOrganizationAddr, new_device_id: DeviceID, token: str
+    backend_addr: BackendOrganizationAddr,
+    new_device_id: DeviceID,
+    token: str,
+    keepalive: Optional[int] = None,
 ) -> LocalDevice:
     """
     Raises:
@@ -160,7 +167,7 @@ async def claim_device(
     answer_private_key = PrivateKey.generate()
 
     try:
-        async with backend_anonymous_cmds_factory(backend_addr) as cmds:
+        async with backend_anonymous_cmds_factory(backend_addr, keepalive=keepalive) as cmds:
             # 1) Retrieve invitation creator
             try:
                 invitation_creator_user, invitation_creator_device = await get_device_invitation_creator(
@@ -233,7 +240,7 @@ async def claim_device(
 
 
 async def invite_and_create_device(
-    device: LocalDevice, new_device_name: DeviceName, token: str
+    device: LocalDevice, new_device_name: DeviceName, token: str, keepalive: Optional[int] = None
 ) -> None:
     """
     Raises:
@@ -245,7 +252,11 @@ async def invite_and_create_device(
         InviteClaimInvalidTokenError
     """
     async with backend_cmds_pool_factory(
-        device.organization_addr, device.device_id, device.signing_key, max_pool=1
+        device.organization_addr,
+        device.device_id,
+        device.signing_key,
+        max_pool=1,
+        keepalive=keepalive,
     ) as cmds:
         try:
 
@@ -315,7 +326,11 @@ async def invite_and_create_device(
 
 
 async def invite_and_create_user(
-    device: LocalDevice, user_id: UserID, token: str, is_admin: bool
+    device: LocalDevice,
+    user_id: UserID,
+    token: str,
+    is_admin: bool,
+    keepalive: Optional[int] = None,
 ) -> DeviceID:
     """
     Raises:
@@ -327,7 +342,11 @@ async def invite_and_create_user(
         InviteClaimInvalidTokenError
     """
     async with backend_cmds_pool_factory(
-        device.organization_addr, device.device_id, device.signing_key, max_pool=1
+        device.organization_addr,
+        device.device_id,
+        device.signing_key,
+        max_pool=1,
+        keepalive=keepalive,
     ) as cmds:
         try:
 

@@ -96,7 +96,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_with_password_clicked.emit(key_file, password)
 
     def show_settings(self):
-        settings_dialog = SettingsDialog(self.config, self.event_bus, parent=self)
+        settings_dialog = SettingsDialog(self.config, self.jobs_ctx, self.event_bus, parent=self)
         settings_dialog.exec_()
 
     def show_login_widget(self):

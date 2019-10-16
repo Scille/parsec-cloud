@@ -38,7 +38,13 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
             raise JobResultError("registration-invite-already-exists")
 
     try:
-        await core_invite_and_create_user(device, new_user_id, token, is_admin)
+        await core_invite_and_create_user(
+            device=device,
+            user_id=new_user_id,
+            token=token,
+            is_admin=is_admin,
+            keepalive=core.config.backend_connection_keepalive,
+        )
     except InviteClaimTimeoutError:
         raise JobResultError("registration-invite-timeout")
     except InviteClaimBackendOfflineError as exc:

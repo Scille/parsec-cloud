@@ -1,0 +1,1 @@
+Fix long wait on GUI login with poor connection to the backend

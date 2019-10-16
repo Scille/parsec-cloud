@@ -64,7 +64,7 @@ def switch_language(core_config, lang_key=None):
     rc_file = QFile(f":/translations/translations/parsec_{lang_key}.mo")
     if not rc_file.open(QIODevice.ReadOnly):
         logger.warning(f"Unable to read the translations for language '{lang_key}'")
-        return False
+        return None
 
     try:
         data_stream = QDataStream(rc_file)
@@ -76,7 +76,7 @@ def switch_language(core_config, lang_key=None):
         _current_translator.install()
     except OSError:
         logger.warning(f"Unable to load the translations for language '{lang_key}'")
-        return False
+        return None
     finally:
         rc_file.close()
-    return True
+    return lang_key

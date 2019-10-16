@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -146,19 +147,21 @@ async def backend_cmds_pool_factory(
     device_id: DeviceID,
     signing_key: SigningKey,
     max_pool: int = 4,
-    keepalive_time: int = 30,
+    keepalive: Optional[int] = None,
 ) -> BackendCmdsPool:
     """
     Raises: nothing !
     """
     async with authenticated_transport_pool_factory(
-        addr, device_id, signing_key, max_pool, keepalive_time
+        addr, device_id, signing_key, max_pool, keepalive
     ) as transport_pool:
         yield BackendCmdsPool(addr, transport_pool)
 
 
 @asynccontextmanager
-async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> BackendAnonymousCmds:
+async def backend_anonymous_cmds_factory(
+    addr: BackendOrganizationAddr, keepalive: Optional[int] = None
+) -> BackendAnonymousCmds:
     """
     Raises:
         BackendConnectionError
@@ -167,7 +170,7 @@ async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> Backe
         BackendDeviceRevokedError
     """
     try:
-        async with anonymous_transport_factory(addr) as transport:
+        async with anonymous_transport_factory(addr, keepalive) as transport:
             yield BackendAnonymousCmds(addr, transport)
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc
@@ -175,7 +178,7 @@ async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> Backe
 
 @asynccontextmanager
 async def backend_administration_cmds_factory(
-    addr: BackendAddr, token: str
+    addr: BackendAddr, token: str, keepalive: Optional[int] = None
 ) -> BackendAdministrationCmds:
     """
     Raises:
@@ -185,7 +188,7 @@ async def backend_administration_cmds_factory(
         BackendDeviceRevokedError
     """
     try:
-        async with administration_transport_factory(addr, token) as transport:
+        async with administration_transport_factory(addr, token, keepalive) as transport:
             yield BackendAdministrationCmds(addr, transport)
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc

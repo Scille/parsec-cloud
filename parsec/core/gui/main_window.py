@@ -82,6 +82,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_starting_guide(self):
         s = StartingGuideDialog(parent=self)
+        x = (self.width() - s.width()) / 2
+        y = (self.height() - s.height()) / 2
+        s.move(x, y)
         s.exec_()
 
     def showMaximized(self):

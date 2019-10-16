@@ -59,6 +59,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.menu.organization = self.core.device.organization_addr.organization_id
         self.menu.username = self.core.device.user_id
         self.menu.device = self.core.device.device_name
+        self.menu.organization_url = str(self.core.device.organization_addr)
 
         self.new_notification.connect(self.on_new_notification)
         self.menu.files_clicked.connect(self.show_mount_widget)
@@ -89,7 +90,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
 
-        self.settings_widget = SettingsWidget(self.core.config, self.event_bus, parent=self)
+        self.settings_widget = SettingsWidget(
+            self.core.config, self.jobs_ctx, self.event_bus, parent=self
+        )
         self.widget_central.layout().insertWidget(0, self.settings_widget)
 
         self.show_mount_widget()

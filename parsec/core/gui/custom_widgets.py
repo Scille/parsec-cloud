@@ -18,16 +18,6 @@ class FileLineEdit(QLineEdit):
             text = text[:30] + "..."
         super().setText(text)
 
-    def enterEvent(self, _):
-        f = self.font()
-        f.setUnderline(True)
-        self.setFont(f)
-
-    def leaveEvent(self, _):
-        f = self.font()
-        f.setUnderline(False)
-        self.setFont(f)
-
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.full_text)

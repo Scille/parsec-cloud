@@ -28,7 +28,9 @@ from parsec.core.invite_claim import (
     InviteClaimError,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
-from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
+
+
+DEFAULT_ADMINISTRATION_TOKEN = "s3cr3t"
 
 
 async def retry_claim(corofn, *args, retries=10, tick=0.1):

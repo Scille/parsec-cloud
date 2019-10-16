@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>521</width>
-    <height>590</height>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,6 +17,124 @@
    <string notr="true">QWidget#GlobalSettingsWidget
 {
 background-color: rgb(255, 255, 255);
+}
+
+QPushButton
+{
+color: white;
+background-color: rgb(38, 142, 212);
+border: 0;
+padding: 3px;
+font-size: 15px;
+font-weight: bold;
+height: 32px;
+padding-left: 20px;
+padding-right: 20px;
+}
+
+QPushButton:pressed
+{
+background-color: rgb(20, 122, 192);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(112, 112, 112);
+color: rgb(255, 255, 255);
+}
+
+QLineEdit
+{
+border: 1px solid rgb(46, 46, 46);
+padding-left: 10px;
+height: 32px;
+}
+
+QLineEdit[readOnly=&quot;true&quot;]
+{
+background-color: rgb(230, 230, 230);
+}
+
+QLineEdit:!enabled
+{
+border: 1px solid rgb(180, 180, 180);
+}
+
+QCheckBox::indicator
+{
+width: 15px;
+height: 15px;
+background-color: rgb(255, 255, 255);
+border: 2px solid rgb(46, 46, 46);
+color: black;
+}
+
+QCheckBox::indicator:checked
+{
+image: url(:/icons/images/icons/checked.png)
+}
+
+QComboBox
+{
+border: 1px solid rgb(46, 46, 46);
+background-color: white;
+color: black;
+padding-left: 5px;
+height: 32px;
+}
+
+QComboBox::drop-down
+{
+border: 0px;
+}
+
+QComboBox::down-arrow
+{
+image: url(:/icons/images/icons/down-arrow.png);
+width: 16px;
+height: 16px;
+padding-right: 5px;
+}
+
+QComboBox:disabled
+{
+background-color: rgb(220, 220, 220);
+}
+
+
+QScrollBar:vertical
+{
+background: rgb(255, 255, 255);
+}
+
+QScrollBar::handle:vertical
+{
+background: rgb(12, 65, 157);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+border: none;
+background: none;
+}
+
+QSpinBox
+{
+border: 1px solid rgb(46, 46, 46);
+padding-right: 10px;
+height: 16px;
+}
+
+QSpinBox::up-button
+{
+border-image: url(:/icons/images/icons/sort_up_arrow.png);
+width: 20px;
+}
+
+QSpinBox::down-button
+{
+border-image: url(:/icons/images/icons/sort_down_arrow.png);
+width: 20px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -38,7 +156,7 @@ background-color: rgb(255, 255, 255);
    <item>
     <widget class="QScrollArea" name="scrollArea">
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(255, 255, 255);</string>
+      <string notr="true"/>
      </property>
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -60,9 +178,15 @@ background-color: rgb(255, 255, 255);
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>467</width>
-        <height>511</height>
+        <width>481</width>
+        <height>469</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">#scrollAreaWidgetContents
+{
+background-color: rgb(255, 255, 255);
+}</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="spacing">
@@ -145,13 +269,6 @@ background-color: rgb(255, 255, 255);
              <widget class="QCheckBox" name="check_box_multiple_instances">
               <property name="text">
                <string>CHECK_ALLOW_MULTIPLE_INSTANCES</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="check_box_windows_left_panel">
-              <property name="text">
-               <string>CHECK_WINDOWS_MOUNTPOINT</string>
               </property>
              </widget>
             </item>
@@ -347,8 +464,13 @@ background-color: rgb(255, 255, 255);
                 </property>
                 <property name="font">
                  <font>
-                  <pointsize>12</pointsize>
+                  <pointsize>-1</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
                  </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string>BUTTON_CHECK_NEW_VERSION</string>
@@ -592,18 +714,16 @@ background-color: rgb(255, 255, 255);
        </property>
        <property name="font">
         <font>
-         <pointsize>12</pointsize>
+         <pointsize>-1</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
         </font>
        </property>
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
        </property>
        <property name="styleSheet">
-        <string notr="true">#button_save
-{
-padding-top: 5px;
-padding-bottom: 5px;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>BUTTON_SAVE</string>

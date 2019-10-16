@@ -2,6 +2,7 @@
 
 import signal
 from structlog import get_logger
+import os
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QFont
@@ -20,7 +21,6 @@ try:
     from parsec.core.gui.trio_thread import run_trio_thread
     from parsec.core.gui.custom_dialogs import show_error
     from parsec.core.gui import desktop
-    from parsec.core.gui import win_registry
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
@@ -42,6 +42,8 @@ def before_quit(systray):
 def run_gui(config: CoreConfig):
     logger.info("Starting UI")
 
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+
     app = QApplication([])
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
@@ -50,7 +52,7 @@ def run_gui(config: CoreConfig):
     f = QFont("Arial")
     app.setFont(f)
 
-    lang.switch_language(config)
+    lang_key = lang.switch_language(config)
 
     if not config.gui_allow_multiple_instances and desktop.parsec_instances_count() > 1:
         show_error(None, _("PARSEC_ALREADY_RUNNING"))
@@ -76,11 +78,6 @@ def run_gui(config: CoreConfig):
 
         win.showMaximized()
 
-        if config.gui_windows_left_panel:
-            win_registry.add_nav_link(config.mountpoint_base_dir)
-        else:
-            win_registry.remove_nav_link()
-
         def kill_window(*args):
             win.close_app(force=True)
             QApplication.quit()
@@ -91,5 +88,7 @@ def run_gui(config: CoreConfig):
         timer = QTimer()
         timer.start(400)
         timer.timeout.connect(lambda: None)
+        if lang_key:
+            event_bus.send("gui.config.changed", gui_language=lang_key)
 
         return app.exec_()

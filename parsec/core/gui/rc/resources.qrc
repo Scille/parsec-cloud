@@ -105,6 +105,7 @@
         <file>images/icons/devices.png</file>
         <file>images/icons/documents.png</file>
         <file>images/icons/folder-up_selected.png</file>
+        <file>images/icons/go-back_workspace.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

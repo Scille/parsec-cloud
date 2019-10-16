@@ -144,6 +144,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
 
+        self.line_edit_search.textChanged.connect(self.on_workspace_filter)
+
         self.rename_success.connect(self.on_rename_success)
         self.rename_error.connect(self.on_rename_error)
         self.create_success.connect(self.on_create_success)
@@ -185,6 +187,17 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.event_bus.disconnect("fs.entry.downsynced", self._on_entry_downsynced_trio)
         except ValueError:
             pass
+
+    def on_workspace_filter(self, pattern):
+        pattern = pattern.lower()
+        for i in range(self.layout_workspaces.count()):
+            item = self.layout_workspaces.itemAt(i)
+            if item:
+                w = item.widget()
+                if pattern and pattern not in w.name.lower():
+                    w.hide()
+                else:
+                    w.show()
 
     def load_workspace(self, workspace_fs):
         self.load_workspace_clicked.emit(workspace_fs)
@@ -290,7 +303,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.reencrypt_clicked.connect(self.reencrypt_workspace)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
-        button.file_clicked.connect(self.open_workspace_file)
         button.remount_ts_clicked.connect(self.remount_workspace_ts)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),
@@ -453,7 +465,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     widget.reencrypting = None
                 else:
                     widget.reencrypting = (total, done)
-                widget.reload_workspace_name()
+                widget.reload_workspace_name(widget.name)
                 break
 
     def create_workspace_clicked(self):

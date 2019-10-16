@@ -14,7 +14,12 @@ from parsec.core.invite_claim import claim_device as actual_claim_device
 
 async def _claim_device(config, backend_addr, token, new_device_id, password, pkcs11):
     async with spinner("Waiting for referee to reply"):
-        device = await actual_claim_device(backend_addr, new_device_id, token)
+        device = await actual_claim_device(
+            backend_addr=backend_addr,
+            new_device_id=new_device_id,
+            token=token,
+            keepalive=config.backend_connection_keepalive,
+        )
 
     device_display = click.style(new_device_id, fg="yellow")
     with operation(f"Saving locally {device_display}"):

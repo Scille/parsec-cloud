@@ -52,6 +52,14 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_devices.setChecked(False)
 
     @property
+    def organization_url(self):
+        return self.label_organization.toolTip()
+
+    @organization_url.setter
+    def organization_url(self, val):
+        self.label_organization.setToolTip(val)
+
+    @property
     def organization(self):
         return self.label_organization.text()
 

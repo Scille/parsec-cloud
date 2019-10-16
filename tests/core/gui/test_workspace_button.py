@@ -112,18 +112,6 @@ async def test_workspace_button_files(qtbot, workspace_fs):
     assert w.line_edit_file3.text() == "Dir1"
     assert w.line_edit_file4.text() == ""
 
-    with qtbot.waitSignal(w.file_clicked, timeout=500) as blocker:
-        qtbot.mouseClick(w.line_edit_file1, QtCore.Qt.LeftButton)
-    assert blocker.args == [workspace_fs, "File1.txt"]
-
-    with qtbot.waitSignal(w.file_clicked, timeout=500) as blocker:
-        qtbot.mouseClick(w.line_edit_file2, QtCore.Qt.LeftButton)
-    assert blocker.args == [workspace_fs, "File2.txt"]
-
-    with qtbot.waitSignal(w.file_clicked, timeout=500) as blocker:
-        qtbot.mouseClick(w.line_edit_file3, QtCore.Qt.LeftButton)
-    assert blocker.args == [workspace_fs, "Dir1"]
-
 
 @pytest.mark.gui
 @pytest.mark.trio

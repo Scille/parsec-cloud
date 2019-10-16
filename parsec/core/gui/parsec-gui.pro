@@ -39,6 +39,9 @@ FORMS += forms/main_window.ui \
          forms/claim_dialog.ui \
          forms/new_version_dialog.ui \
          forms/ts_ws_dialog.ui \
-    forms/password_change_dialog.ui
+    forms/password_change_dialog.ui \
+    forms/new_version_info.ui \
+    forms/new_version_available.ui \
+    forms/about_widget.ui
 
 RESOURCES += rc/resources.qrc
