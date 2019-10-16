@@ -18,7 +18,7 @@ before_script:
 - sudo modprobe fuse
 script:
 - set -e  # stop build as soon as a command fails
-- python ./misc/releaser.py check
+- if [[ $TRAVIS_EVENT_TYPE != "push" ]] ; then python ./misc/releaser.py check ; fi
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
 - flake8 setup.py parsec tests
