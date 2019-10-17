@@ -352,7 +352,7 @@ def persistent_mockup(monkeypatch):
 
         def get(self, path):
             if path not in self.connections:
-                self.connections[path] = sqlite3.connect(":memory:")
+                self.connections[path] = sqlite3.connect(":memory:", check_same_thread=False)
             return self.connections[path]
 
         def clear(self):
@@ -376,6 +376,10 @@ def persistent_mockup(monkeypatch):
         storage_set.remove(storage)
         storage._conn = None
 
+    async def _run_in_thread(fn, *args):
+        return fn(*args)
+
+    monkeypatch.setattr(LocalDatabase, "_run_in_thread", _run_in_thread)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
 
