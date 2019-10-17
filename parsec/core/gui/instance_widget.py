@@ -8,10 +8,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
 from parsec.core import logged_core_factory
-from parsec.core.local_device import (
-    LocalDeviceError,
-    load_device_with_password,
-)
+from parsec.core.local_device import LocalDeviceError, load_device_with_password
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
 from parsec.core.backend_connection import (
     BackendHandshakeError,
