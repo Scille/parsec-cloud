@@ -31,57 +31,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="52"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="64"/>
         <source>LABEL_BOOTSTRAP_ORG_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="129"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="141"/>
         <source>LABEL_USER_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="166"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="178"/>
         <source>LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="203"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="215"/>
         <source>LABEL_URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="258"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="270"/>
         <source>LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="301"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="313"/>
         <source>LABEL_PASSWORD_CHECK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="397"/>
-        <source>LABEL_PKCS_TOKEN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="434"/>
-        <source>LABEL_PKCS_KEY</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="469"/>
-        <source>CHECK_PKCS_AUTH</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="505"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="402"/>
         <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="520"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="417"/>
         <source>BUTTON_BOOTSTRAP_ORG</source>
         <translation type="unfinished"></translation>
     </message>
@@ -102,57 +87,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="49"/>
+        <location filename="../forms/claim_device_widget.ui" line="61"/>
         <source>LABEL_CLAIM_DEVICE_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="105"/>
+        <location filename="../forms/claim_device_widget.ui" line="117"/>
         <source>LABEL_USER_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="145"/>
+        <location filename="../forms/claim_device_widget.ui" line="157"/>
         <source>LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="185"/>
+        <location filename="../forms/claim_device_widget.ui" line="197"/>
         <source>LABEL_TOKEN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="222"/>
+        <location filename="../forms/claim_device_widget.ui" line="234"/>
         <source>LABEL_URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="280"/>
+        <location filename="../forms/claim_device_widget.ui" line="292"/>
         <source>LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="329"/>
+        <location filename="../forms/claim_device_widget.ui" line="341"/>
         <source>LABEL_PASSWORD_CHECK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="428"/>
-        <source>LABEL_PKCS_TOKEN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="471"/>
-        <source>LABEL_PKCS_KEY</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="512"/>
-        <source>CHECK_PKCS_AUTH</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="554"/>
+        <location filename="../forms/claim_device_widget.ui" line="433"/>
         <source>BUTTON_CLAIM</source>
         <translation type="unfinished"></translation>
     </message>
@@ -178,57 +148,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="55"/>
+        <location filename="../forms/claim_user_widget.ui" line="67"/>
         <source>LABEL_CLAIM_USER_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="138"/>
+        <location filename="../forms/claim_user_widget.ui" line="150"/>
         <source>LABEL_USER_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="178"/>
+        <location filename="../forms/claim_user_widget.ui" line="190"/>
         <source>LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="218"/>
+        <location filename="../forms/claim_user_widget.ui" line="230"/>
         <source>LABEL_TOKEN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="255"/>
+        <location filename="../forms/claim_user_widget.ui" line="267"/>
         <source>LABEL_URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="313"/>
+        <location filename="../forms/claim_user_widget.ui" line="325"/>
         <source>LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="362"/>
+        <location filename="../forms/claim_user_widget.ui" line="374"/>
         <source>LABEL_PASSWORD_CHECK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="464"/>
-        <source>LABEL_PKCS_TOKEN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_user_widget.ui" line="507"/>
-        <source>LABEL_PKCS_KEY</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_user_widget.ui" line="548"/>
-        <source>CHECK_PKCS_AUTH</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_user_widget.ui" line="590"/>
+        <location filename="../forms/claim_user_widget.ui" line="472"/>
         <source>BUTTON_CLAIM</source>
         <translation type="unfinished"></translation>
     </message>
@@ -251,6 +206,49 @@
     <message>
         <location filename="../forms/devices_widget.ui" line="68"/>
         <source>LABEL_SEARCH_DEVICES</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FileHistoryDialog</name>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="192"/>
+        <source>LABEL_HISTORY_TITLE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="309"/>
+        <source>LABEL_FILE_TIMESTAMP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="314"/>
+        <source>LABEL_FILE_USER_ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="319"/>
+        <source>LABEL_FILE_SIZE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="324"/>
+        <source>LABEL_FILE_SOURCE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="329"/>
+        <source>LABEL_FILE_DESTINATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="360"/>
+        <source>BUTTON_CLOSE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -363,7 +361,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/input_dialog.ui" line="254"/>
+        <location filename="../forms/input_dialog.ui" line="249"/>
         <source>BUTTON_OK</source>
         <translation type="unfinished"></translation>
     </message>
@@ -404,27 +402,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="256"/>
-        <source>LABEL_PKCS_PIN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_login_widget.ui" line="299"/>
-        <source>LABEL_PKCS_TOKEN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_login_widget.ui" line="336"/>
-        <source>LABEL_PKCS_KEY</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_login_widget.ui" line="374"/>
-        <source>CHECK_PKCS_AUTH</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_login_widget.ui" line="425"/>
+        <location filename="../forms/login_login_widget.ui" line="264"/>
         <source>BUTTON_LOG_IN</source>
         <translation type="unfinished"></translation>
     </message>
@@ -437,27 +415,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="317"/>
+        <location filename="../forms/login_widget.ui" line="322"/>
         <source>BUTTON_REGISTER_NEW_USER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="342"/>
+        <location filename="../forms/login_widget.ui" line="347"/>
         <source>BUTTON_REGISTER_NEW_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="367"/>
+        <location filename="../forms/login_widget.ui" line="372"/>
         <source>BUTTON_LOG_IN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="389"/>
+        <location filename="../forms/login_widget.ui" line="394"/>
         <source>BUTTON_BOOTSTRAP_ORG</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="408"/>
+        <location filename="../forms/login_widget.ui" line="413"/>
         <source>BUTTON_SETTINGS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -516,6 +494,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../forms/message_dialog.ui" line="304"/>
+        <source>BUTTON_CONTINUE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../forms/message_dialog.ui" line="341"/>
         <source>BUTTON_DETAILS</source>
         <translation type="unfinished"></translation>
@@ -523,11 +506,6 @@
     <message>
         <location filename="../forms/message_dialog.ui" line="372"/>
         <source>BUTTON_COPY_TO_CLIPBOARD</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/message_dialog.ui" line="304"/>
-        <source>BUTTON_CONTINUE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

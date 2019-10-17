@@ -12,9 +12,9 @@ from parsec.core.gui.ui.ts_ws_dialog import Ui_TsWsDialog
 
 
 async def _do_workspace_get_creation_timestamp(workspace_fs):
-    versions_dict = await workspace_fs.list_versions()
+    versions_dict = await workspace_fs.versions()
     # Add 1 second as we want a timestamp safe to ask for a manifest to the backend
-    return versions_dict[min(versions_dict)][0].add(seconds=1)
+    return min(versions_dict, key=lambda v: v[2])[2].add(seconds=1)
 
 
 class TsWsDialog(QDialog, Ui_TsWsDialog):

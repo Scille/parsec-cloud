@@ -11,7 +11,6 @@ from parsec.core import logged_core_factory
 from parsec.core.local_device import (
     LocalDeviceError,
     load_device_with_password,
-    load_device_with_pkcs11,
 )
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
 from parsec.core.backend_connection import (
@@ -176,31 +175,6 @@ class InstanceWidget(QWidget):
             logger.exception("Unhandled error during login")
             show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
 
-    def login_with_pkcs11(self, key_file, pkcs11_pin, pkcs11_key, pkcs11_token):
-        try:
-            device = load_device_with_pkcs11(
-                key_file, token_id=pkcs11_token, key_id=pkcs11_key, pin=pkcs11_pin
-            )
-            self.start_core(device)
-        except LocalDeviceError:
-            show_error(self, _("ERR_LOGIN_AUTH_FAILED"))
-
-        except BackendHandshakeAPIVersionError:
-            show_error(self, _("ERR_LOGIN_INCOMPATIBLE_VERSION"))
-
-        except BackendDeviceRevokedError:
-            show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"))
-
-        except BackendHandshakeError:
-            show_error(self, _("ERR_LOGIN_UNKNOWN_USER"))
-
-        except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash):
-            show_error(self, _("ERR_LOGIN_MOUNTPOINT"))
-
-        except Exception as exc:
-            logger.exception("Unhandled error during login")
-            show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
-
     def show_central_widget(self):
         self.clear_widgets()
         central_widget = CentralWidget(
@@ -219,7 +193,6 @@ class InstanceWidget(QWidget):
             getattr(login_widget, show_meth)(**kwargs)
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
-        login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
         login_widget.state_changed.connect(self.on_login_state_changed)
         login_widget.show()
 

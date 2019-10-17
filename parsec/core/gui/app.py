@@ -4,6 +4,7 @@ import trio
 import signal
 from structlog import get_logger
 from queue import Queue
+import os
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QFont
@@ -77,6 +78,8 @@ async def _start_ipc_server(config, main_window, url, result_queue):
 
 def run_gui(config: CoreConfig, url=None):
     logger.info("Starting UI")
+
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
     app = QApplication([])
     app.setOrganizationName("Scille")

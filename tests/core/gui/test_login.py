@@ -24,9 +24,6 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     # Available device is automatically selected for login
     assert llw.combo_login.currentText() == f"{alice.organization_id}:{alice.device_id}"
 
-    # Auth by password by default
-    assert llw.check_box_use_pkcs11.checkState() == QtCore.Qt.Unchecked
-
     await aqtbot.key_clicks(llw.line_edit_password, password)
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):

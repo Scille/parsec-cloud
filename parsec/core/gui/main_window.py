@@ -122,7 +122,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             # Fallback to just create the default login windows
             tab.show_login_widget()
-            self.set_tab_title(tab, _("TAB_TITLE_LOG_IN"))
 
     def close_app(self, force=False):
         self.need_close = True
