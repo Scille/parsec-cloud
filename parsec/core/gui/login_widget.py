@@ -65,6 +65,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(object, str)
     login_with_pkcs11_clicked = pyqtSignal(object, str, int, int)
+    state_changed = pyqtSignal(str)
 
     def __init__(self, jobs_ctx, event_bus, config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -135,6 +136,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
         login_widget.show()
+        self.state_changed.emit("login")
 
     def show_bootstrap_widget(self, addr: Optional[BackendOrganizationBootstrapAddr] = None):
         self.clear_widgets()
@@ -150,6 +152,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_user_instead.show()
         self.button_register_device_instead.show()
         bootstrap_organization.show()
+        self.state_changed.emit("bootstrap")
 
     def show_claim_user_widget(self, addr: Optional[BackendOrganizationClaimUserAddr] = None):
         self.clear_widgets()
@@ -166,6 +169,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
         claim_user_widget.show()
+        self.state_changed.emit("claim_user")
 
     def show_claim_device_widget(self, addr: Optional[BackendOrganizationClaimDeviceAddr] = None):
         self.clear_widgets()
@@ -182,6 +186,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.hide()
         self.button_bootstrap_instead.show()
         claim_device_widget.show()
+        self.state_changed.emit("claim_device")
 
     def clear_widgets(self):
         item = self.layout.takeAt(0)

@@ -150,6 +150,9 @@ class InstanceWidget(QWidget):
     def logout(self):
         self.stop_core()
 
+    def on_login_state_changed(self, state):
+        self.state_changed.emit(self, state)
+
     def login_with_password(self, key_file, password):
         try:
             device = load_device_with_password(key_file, password)
@@ -217,6 +220,7 @@ class InstanceWidget(QWidget):
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
+        login_widget.state_changed.connect(self.on_login_state_changed)
         login_widget.show()
 
     def clear_widgets(self):

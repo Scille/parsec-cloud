@@ -90,6 +90,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_tab_state_changed(self, tab, state):
         if state == "login":
             self.set_tab_title(tab, _("TAB_TITLE_LOG_IN"))
+        elif state == "bootstrap":
+            self.set_tab_title(tab, _("TAB_TITLE_BOOTSTRAP"))
+        elif state == "claim_user":
+            self.set_tab_title(tab, _("TAB_TITLE_CLAIM_USER"))
+        elif state == "claim_device":
+            self.set_tab_title(tab, _("TAB_TITLE_CLAIM_DEVICE"))
         elif state == "connected":
             device = tab.current_device
             self.set_tab_title(
@@ -106,15 +112,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             tab.show_login_widget(show_meth="show_bootstrap_widget", addr=action_addr)
-            self.set_tab_title(tab, _("TAB_TITLE_BOOTSTRAP"))
 
         elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
             tab.show_login_widget(show_meth="show_claim_user_widget", addr=action_addr)
-            self.set_tab_title(tab, _("TAB_TITLE_CLAIM_USER"))
 
         elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
             tab.show_login_widget(show_meth="show_claim_device_widget", addr=action_addr)
-            self.set_tab_title(tab, _("TAB_TITLE_CLAIM_DEVICE"))
 
         else:
             # Fallback to just create the default login windows

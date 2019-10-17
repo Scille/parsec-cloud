@@ -305,58 +305,53 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="335"/>
+        <location filename="../forms/global_settings_widget.ui" line="328"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="351"/>
+        <location filename="../forms/global_settings_widget.ui" line="344"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="433"/>
+        <location filename="../forms/global_settings_widget.ui" line="426"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="449"/>
+        <location filename="../forms/global_settings_widget.ui" line="442"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="476"/>
+        <location filename="../forms/global_settings_widget.ui" line="469"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="552"/>
+        <location filename="../forms/global_settings_widget.ui" line="545"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="566"/>
+        <location filename="../forms/global_settings_widget.ui" line="559"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="627"/>
+        <location filename="../forms/global_settings_widget.ui" line="620"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="641"/>
+        <location filename="../forms/global_settings_widget.ui" line="634"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="729"/>
+        <location filename="../forms/global_settings_widget.ui" line="722"/>
         <source>BUTTON_SAVE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/global_settings_widget.ui" line="271"/>
-        <source>CHECK_WINDOWS_MOUNTPOINT</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
