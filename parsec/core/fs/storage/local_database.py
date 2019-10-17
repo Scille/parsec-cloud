@@ -71,24 +71,20 @@ class LocalDatabase:
 
     @asynccontextmanager
     async def open_cursor(self, commit=True):
-        # Manage transaction
+        # Get a cursor
+        cursor = self._conn.cursor()
         try:
 
-            # Get a cursor
-            cursor = self._conn.cursor()
-            try:
+            # Execute SQL commands
+            yield cursor
 
-                # Execute SQL commands
-                yield cursor
-
-            # Close cursor
-            finally:
-                cursor.close()
-
-        # Commit the transaction when finished
-        finally:
+            # Commit the transaction when finished
             if commit:
                 self._conn.commit()
+
+        # Close cursor
+        finally:
+            cursor.close()
 
     async def commit(self):
         self._conn.commit()

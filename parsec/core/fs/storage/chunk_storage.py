@@ -53,7 +53,7 @@ class ChunkStorage:
                     (chunk_id BLOB PRIMARY KEY NOT NULL, -- UUID
                      size INTEGER NOT NULL,
                      offline INTEGER NOT NULL,  -- Boolean
-                     accessed_on INTEGER, -- Timestamp
+                     accessed_on REAL, -- Timestamp
                      data BLOB NOT NULL
                 );"""
             )
@@ -164,6 +164,9 @@ class BlockStorage(ChunkStorage):
 
         # Clean up if necessary
         nb_blocks = await self.get_nb_blocks()
-        limit = nb_blocks - self.block_limit
-        if limit > 0:
+        extra_blocks = nb_blocks - self.block_limit
+        if extra_blocks > 0:
+
+            # Remove the extra block plus 10 % of the cache size, i.e 26 blocks
+            limit = extra_blocks + self.block_limit // 10
             await self.clear_old_blocks(limit=limit)
