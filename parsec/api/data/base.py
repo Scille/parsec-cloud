@@ -36,7 +36,7 @@ class BaseSignedDataSchema(BaseSchema):
 class DataMeta(type):
 
     BASE_SCHEMA_CLS = BaseSchema
-    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, cmp=False)
+    CLS_ATTR_COOKING = attr.s(slots=True, frozen=True, auto_attribs=True, kw_only=True, eq=False)
 
     def __new__(cls, name, bases, nmspc):
 
