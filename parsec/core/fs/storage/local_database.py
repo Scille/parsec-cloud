@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import trio
+
 from async_generator import asynccontextmanager
 from sqlite3 import connect as sqlite_connect
 
@@ -22,7 +24,8 @@ class LocalDatabase:
             await self._connect()
             yield self
         finally:
-            await self._close()
+            with trio.CancelScope(shield=True):
+                await self._close()
 
     # Life cycle
 

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
 from typing import Dict, Tuple, Set
 from structlog import get_logger
 from async_generator import asynccontextmanager
@@ -37,7 +38,8 @@ class ManifestStorage:
         try:
             yield self
         finally:
-            await self._flush_cache_ahead_of_persistance()
+            with trio.CancelScope(shield=True):
+                await self._flush_cache_ahead_of_persistance()
 
     def _open_cursor(self):
         return self.localdb.open_cursor(commit=True)

@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from time import time
+import time
+
+import trio
 from async_generator import asynccontextmanager
 
 from parsec.core.types import ChunkID
@@ -28,7 +30,8 @@ class ChunkStorage:
         try:
             yield self
         finally:
-            await self.localdb.commit()
+            with trio.CancelScope(shield=True):
+                await self.localdb.commit()
 
     def _open_cursor(self):
         return self.localdb.open_cursor(commit=False)
@@ -75,7 +78,7 @@ class ChunkStorage:
                 """
                 UPDATE chunks SET accessed_on = ? WHERE chunk_id = ?;
                 """,
-                (time(), chunk_id.bytes),
+                (time.time(), chunk_id.bytes),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
@@ -97,7 +100,7 @@ class ChunkStorage:
                 """INSERT OR REPLACE INTO
                 chunks (chunk_id, size, offline, accessed_on, data)
                 VALUES (?, ?, ?, ?, ?)""",
-                (chunk_id.bytes, len(ciphered), False, time(), ciphered),
+                (chunk_id.bytes, len(ciphered), False, time.time(), ciphered),
             )
 
     async def clear_chunk(self, chunk_id: ChunkID):
