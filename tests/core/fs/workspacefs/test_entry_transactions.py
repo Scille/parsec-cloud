@@ -18,9 +18,9 @@ from hypothesis_trio.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import FsPath
+from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.utils import is_folder_manifest
-from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 
 from tests.common import freeze_time, call_with_control
@@ -262,9 +262,7 @@ def test_folder_operations(
 
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with LocalStorage(
-                    alice.device_id, key=alice.local_symkey, path=Path("/dummy")
-                ) as local_storage:
+                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
                     entry_transactions = await entry_transactions_factory(
                         self.device, alice_backend_cmds, local_storage=local_storage
                     )

@@ -7,7 +7,7 @@ from async_generator import asynccontextmanager
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS, FSLocalMissError
-from parsec.core.fs.realm_storage import RealmStorage
+from parsec.core.fs.storage import UserStorage
 
 from tests.common import freeze_time
 
@@ -24,11 +24,11 @@ def local_storage_path(tmpdir):
 def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
     async def _initialize_userfs_storage(device, storage):
         try:
-            await storage.get_manifest(device.user_manifest_id)
+            await storage.load_user_manifest()
         except FSLocalMissError:
             with freeze_time("2000-01-01"):
                 user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            await storage.set_manifest(device.user_manifest_id, user_manifest)
+            await storage.set_user_manifest(user_manifest)
 
     return _initialize_userfs_storage
 
@@ -36,7 +36,7 @@ def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
 @pytest.fixture()
 async def alice_local_storage(local_storage_path, initialize_userfs_storage, alice):
     path = local_storage_path(alice)
-    async with RealmStorage.factory(alice, path) as storage:
+    async with UserStorage.run(alice, path) as storage:
         await initialize_userfs_storage(alice, storage)
         yield storage
 
@@ -44,7 +44,7 @@ async def alice_local_storage(local_storage_path, initialize_userfs_storage, ali
 @pytest.fixture()
 async def alice2_local_storage(local_storage_path, initialize_userfs_storage, alice2):
     path = local_storage_path(alice2)
-    async with RealmStorage.factory(alice2, path) as storage:
+    async with UserStorage.run(alice2, path) as storage:
         await initialize_userfs_storage(alice2, storage)
         yield storage
 
@@ -52,7 +52,7 @@ async def alice2_local_storage(local_storage_path, initialize_userfs_storage, al
 @pytest.fixture()
 async def bob_local_storage(local_storage_path, initialize_userfs_storage, bob):
     path = local_storage_path(bob)
-    async with RealmStorage.factory(bob, path) as storage:
+    async with UserStorage.run(bob, path) as storage:
         await initialize_userfs_storage(bob, storage)
         yield storage
 
@@ -145,7 +145,7 @@ def user_fs_factory(
         ) as cmds:
             path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
-            async with UserFS(device, path, cmds, rdm, event_bus) as user_fs:
+            async with UserFS.run(device, path, cmds, rdm, event_bus) as user_fs:
                 if initialize_user_storage:
                     await initialize_userfs_storage(device, user_fs.storage)
                 yield user_fs

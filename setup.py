@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages, distutils, Command
@@ -239,7 +241,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "attrs==18.2.0",
+    "attrs==19.2.0",
     "click==7.0",
     "msgpack==0.6.0",
     "wsproto==0.15.0",

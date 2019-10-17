@@ -6,12 +6,12 @@ from pendulum import Pendulum
 
 from hypothesis_trio.stateful import run_state_machine_as_test, TrioAsyncioRuleBasedStateMachine
 
-from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.workspacefs.entry_transactions import EntryTransactions
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.remote_loader import RemoteLoader
-from parsec.core.types import LocalWorkspaceManifest, WorkspaceEntry
+from parsec.core.types import LocalWorkspaceManifest, WorkspaceEntry, EntryID
 
 from tests.common import call_with_control
 
@@ -63,9 +63,7 @@ def file_transactions_factory(event_bus, remote_devices_manager_factory, transac
 
 @pytest.fixture
 async def alice_transaction_local_storage(alice, persistent_mockup):
-    async with LocalStorage(
-        alice.device_id, key=alice.local_symkey, path=Path("/dummy")
-    ) as storage:
+    async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as storage:
         yield storage
 
 

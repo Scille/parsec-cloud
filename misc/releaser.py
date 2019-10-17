@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-
+import sys
 import argparse
 import pathlib
 from datetime import date
@@ -45,20 +45,23 @@ def parse_version(raw):
         )
 
 
-def run_git(cmd):
+def run_git(cmd, verbose=False):
     cmd = f"git {cmd}"
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     if proc.returncode != 0:
         raise RuntimeError(
             f"Error while running `{cmd}`: returned {proc.returncode}\n"
             f"stdout:\n{proc.stdout.decode()}\n"
-            f"stderr:\n{proc.stderr.decode()}\n"
+            f"stdout:\n{proc.stdout.decode()}\n"
         )
+    stderr = proc.stderr.decode()
+    if verbose and stderr:
+        print(f"[Stderr stream from `{cmd}`]\n{stderr}[End stderr stream]", file=sys.stderr)
     return proc.stdout.decode()
 
 
-def get_version_from_repo_describe_tag():
-    return parse_version(run_git("describe --tag"))
+def get_version_from_repo_describe_tag(verbose=False):
+    return parse_version(run_git("describe --tag --debug", verbose=verbose))
 
 
 def get_version_from_code():
@@ -201,20 +204,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Handle release & related checks")
     parser.add_argument("command", choices=("build", "check"))
     parser.add_argument("version", type=parse_version, nargs="?")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
     try:
         if args.command == "build":
             if not args.version:
                 raise SystemExit("version is required build command")
-            current_version = get_version_from_repo_describe_tag()
+            current_version = get_version_from_repo_describe_tag(args.verbose)
             check_non_release(current_version)
             build_release(args.version)
 
         else:
 
             if args.version is None:
-                version = get_version_from_repo_describe_tag()
+                version = get_version_from_repo_describe_tag(args.verbose)
             else:
                 version = args.version
 

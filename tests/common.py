@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import sqlite3
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
 from contextlib import ExitStack, contextmanager
@@ -12,7 +11,6 @@ import pendulum
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import UserFS
-from parsec.core.fs.persistent_storage import PersistentStorage
 from parsec.api.transport import Transport, TransportError
 
 
@@ -23,81 +21,6 @@ def addr_with_device_subdomain(addr, device_id):
     """
     device_specific_hostname = f"{device_id.user_id}.{device_id.device_name}.{addr.hostname}"
     return type(addr)(addr.replace(addr.hostname, device_specific_hostname, 1))
-
-
-class InMemoryPersistentStorageMockupContext:
-    def __init__(self):
-        self._conns = {}
-
-    def get(self, path):
-        try:
-            return self._conns[path], False
-        except KeyError:
-            dirty_conn = sqlite3.connect(":memory:")
-            clean_conn = sqlite3.connect(":memory:")
-            self._conns[path] = (dirty_conn, clean_conn)
-            return (dirty_conn, clean_conn), True
-
-    def clear(self):
-        for dirty_conn, clean_conn in self._conns.values():
-            try:
-                dirty_conn.close()
-                clean_conn.close()
-            except sqlite3.ProgrammingError:
-                # Connections will raise error if they were opened from another
-                # thread. This only occurs for a couple of tests so no big deal.
-                pass
-        self._conns.clear()
-
-
-class InMemoryPersistentStorage(PersistentStorage):
-    """An in-memory version of the local database.
-
-    It doesn't perform any access to the file system
-    and has very permissive life cycle.
-    """
-
-    # Mockup
-
-    _mockup_context = None
-
-    @classmethod
-    @contextmanager
-    def mockup_context(cls):
-        try:
-            cls._mockup_context = InMemoryPersistentStorageMockupContext()
-            yield cls._mockup_context
-        finally:
-            # Force databases close to leaking memory until garbage collector kicks in
-            cls._mockup_context.clear()
-            cls._mockup_context = None
-
-    # Init
-
-    def __init__(self, key, path, **kwargs):
-        super().__init__(key, path, **kwargs)
-
-        if self._mockup_context is None:
-            raise RuntimeError(
-                "Cannot use the in-memory persistent storage outside of its mockup context."
-                " Try adding the persistent_mockup fixture to your test."
-            )
-
-        (self.dirty_conn, self.clean_conn), need_create_db = self._mockup_context.get(path)
-
-        if need_create_db:
-            self.create_db()
-
-    # Disable life cycle
-
-    def connect(self):
-        pass
-
-    def close(self):
-        pass
-
-    def run_vacuum(self):
-        pass
 
 
 @contextmanager
