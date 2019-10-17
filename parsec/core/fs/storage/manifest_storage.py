@@ -42,6 +42,8 @@ class ManifestStorage:
                 await self._flush_cache_ahead_of_persistance()
 
     def _open_cursor(self):
+        # We want the manifest to be written to the disk as soon as possible
+        # (unless they are purposely kept out of the local database)
         return self.localdb.open_cursor(commit=True)
 
     def clear_memory_cache(self):

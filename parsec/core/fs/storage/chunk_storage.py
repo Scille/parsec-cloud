@@ -34,6 +34,14 @@ class ChunkStorage:
                 await self.localdb.commit()
 
     def _open_cursor(self):
+        # There is no point in commiting dirty chunks:
+        # they are referenced by a manifest that will get commited
+        # soon after them. This greatly improves the performance of
+        # writing file using the mountpoint as the OS will typically
+        # writes data as blocks of 4K. The manifest being kept in
+        # memory during the writing, this means that the data and
+        # metadata is typically not flushed to the disk until an
+        # an acutal flush operation is performed.
         return self.localdb.open_cursor(commit=False)
 
     # Database initialization
@@ -121,6 +129,10 @@ class BlockStorage(ChunkStorage):
         self.cache_size = cache_size
 
     def _open_cursor(self):
+        # It doesn't matter for blocks to be commited as soon as they're added
+        # since they exists in the remote storage anyway. But it's simply more
+        # convenient to perform the commit right away as does't cost much (at
+        # least compare to the downloading of the block).
         return self.localdb.open_cursor(commit=True)
 
     # Garbage collection

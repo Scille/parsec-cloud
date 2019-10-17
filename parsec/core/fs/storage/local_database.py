@@ -36,7 +36,14 @@ class LocalDatabase:
         # Create sqlite connection
         conn = sqlite_connect(str(self.path))
 
-        # Set WAL mode
+        # The default isolation level ("") lets python manage the transaction
+        # so we can periodically commit the pending changes.
+        assert conn.isolation_level == ""
+
+        # The combination of WAL journal mode and NORMAL synchronous mode
+        # is a great combination: it allows for fast commits (~10 us compare
+        # to 15 ms the default mode) but still protects the database against
+        # corruption in the case of OS crash or power failure.
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
 
