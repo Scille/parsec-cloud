@@ -112,16 +112,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             tab.show_login_widget(show_meth="show_bootstrap_widget", addr=action_addr)
+            self.on_tab_state_changed(tab, "bootstrap")
 
         elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
             tab.show_login_widget(show_meth="show_claim_user_widget", addr=action_addr)
+            self.on_tab_state_changed(tab, "claim_user")
 
         elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
             tab.show_login_widget(show_meth="show_claim_device_widget", addr=action_addr)
+            self.on_tab_state_changed(tab, "claim_device")
 
         else:
             # Fallback to just create the default login windows
             tab.show_login_widget()
+            self.on_tab_state_changed(tab, "login")
 
     def close_app(self, force=False):
         self.need_close = True

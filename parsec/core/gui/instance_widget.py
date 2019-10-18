@@ -49,6 +49,8 @@ class InstanceWidget(QWidget):
     logged_out = pyqtSignal()
     state_changed = pyqtSignal(QWidget, str)
 
+    devices_connected = []
+
     def __init__(self, jobs_ctx, event_bus, config, **kwargs):
         super().__init__(**kwargs)
         self.jobs_ctx = jobs_ctx
@@ -109,6 +111,7 @@ class InstanceWidget(QWidget):
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             ),
         )
+        InstanceWidget.devices_connected.append(self.core.device)
         self.logged_in.emit()
 
     def on_core_run_error(self):
@@ -126,6 +129,7 @@ class InstanceWidget(QWidget):
 
     def on_core_run_done(self):
         assert self.running_core_job.is_finished()
+        InstanceWidget.devices_connected.remove(self.core.device)
         self.running_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -152,7 +156,10 @@ class InstanceWidget(QWidget):
     def login_with_password(self, key_file, password):
         try:
             device = load_device_with_password(key_file, password)
-            self.start_core(device)
+            if device in InstanceWidget.devices_connected:
+                show_error(self, _("ERR_LOGIN_ALREADY_CONNECTED"))
+            else:
+                self.start_core(device)
         except LocalDeviceError as exc:
             show_error(self, _("ERR_LOGIN_AUTH_FAILED"), exception=exc)
 
@@ -185,12 +192,12 @@ class InstanceWidget(QWidget):
         self.clear_widgets()
         login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
         self.layout().addWidget(login_widget)
+        login_widget.state_changed.connect(self.on_login_state_changed)
 
         if show_meth:
             getattr(login_widget, show_meth)(**kwargs)
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
-        login_widget.state_changed.connect(self.on_login_state_changed)
         login_widget.show()
 
     def clear_widgets(self):
