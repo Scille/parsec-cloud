@@ -85,24 +85,17 @@ class Storage(dict):
         return new_manifest
 
     def reshape(self, manifest: LocalFileManifest) -> LocalFileManifest:
-        result_dict = {}
-        removed_ids = set()
-        getter, operations = prepare_reshape(manifest)
 
-        for block, (source, destination, cleanup) in operations.items():
+        for source, destination, update, cleanup in prepare_reshape(manifest):
             data = self.build_data(source)
             new_chunk = destination.evolve_as_block(data)
-            removed_ids |= cleanup
             if source != (destination,):
                 self.write_chunk(new_chunk, data)
-            result_dict[block] = new_chunk
+            manifest = update(manifest, new_chunk)
+            for removed_id in cleanup:
+                self.clear_chunk_data(removed_id)
 
-        new_manifest = getter(result_dict)
-
-        for removed_id in removed_ids:
-            self.clear_chunk_data(removed_id)
-
-        return new_manifest
+        return manifest
 
 
 def test_complete_scenario():

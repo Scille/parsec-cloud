@@ -247,20 +247,11 @@ class FileTransactions:
     ) -> List[BlockID]:
         """This internal helper does not perform any locking."""
 
-        # Prepare
-        getter, operations = prepare_reshape(manifest)
-
-        # No-op
-        if not operations:
-            return []
-
         # Prepare data structures
         missing = []
-        result_dict = {}
-        removed_ids = set()
 
         # Perform operations
-        for block, (source, destination, cleanup) in operations.items():
+        for source, destination, update, cleanup in prepare_reshape(manifest):
 
             # Build data block
             data, extra_missing = await self._build_data(source)
@@ -275,17 +266,13 @@ class FileTransactions:
             if source != (destination,):
                 await self._write_chunk(new_chunk, data)
 
-            # Update structures
-            removed_ids |= cleanup
-            result_dict[block] = new_chunk
+            # Craft and set new manifest
+            manifest = update(manifest, new_chunk)
+            await self.local_storage.set_manifest(manifest.id, manifest, cache_only=cache_only)
 
-        # Craft and set new manifest
-        new_manifest = getter(result_dict)
-        await self.local_storage.set_manifest(new_manifest.id, new_manifest, cache_only=cache_only)
-
-        # Perform cleanup
-        for removed_id in removed_ids:
-            await self.local_storage.clear_chunk(removed_id, miss_ok=True)
+            # Perform cleanup
+            for removed_id in cleanup:
+                await self.local_storage.clear_chunk(removed_id, miss_ok=True)
 
         # Return missing block ids
         return missing
