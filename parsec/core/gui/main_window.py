@@ -18,7 +18,7 @@ from parsec.core.types import (
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui import telemetry
-from parsec.core.gui.custom_dialogs import QuestionDialog
+from parsec.core.gui.custom_dialogs import QuestionDialog, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -45,13 +45,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
-        self.add_instance()
 
     def _on_foreground_needed(self):
         self.show_top()
 
-    def _on_new_instance_needed(self, action_addr):
-        self.add_instance(action_addr)
+    def _on_new_instance_needed(self, start_arg):
+        self.add_instance(start_arg)
         self.show_top()
 
     def on_config_updated(self, event, **kwargs):
@@ -102,13 +101,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 tab, f"{device.organization_id}:{device.user_id}@{device.device_name}"
             )
 
-    def add_instance(self, action_addr: Optional[BackendActionAddr] = None):
+    def add_instance(self, start_arg: Optional[str] = None):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
         self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
         self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
         if self.tab_center.count() > 1:
             self.tab_center.setTabsClosable(True)
+
+        action_addr = None
+        if start_arg:
+            try:
+                action_addr = BackendActionAddr.from_url(start_arg)
+            except ValueError as exc:
+                show_error(self, _("ERR_BAD_URL"), exception=exc)
 
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
             tab.show_login_widget(show_meth="show_bootstrap_widget", addr=action_addr)
