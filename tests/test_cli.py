@@ -225,17 +225,17 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
             "core invite_user "
             f"--config-dir={config_dir} --device={alice1_slug} "
             f"--password={password} {bob1.user_id}",
-            wait_for="Invitation token:",
+            wait_for="token:",
             env=ssl_conf.client_env,
         ) as p:
             stdout = p.live_stdout.read()
-            url = re.search(r"^Backend url: (.*)$", stdout, re.MULTILINE).group(1)
-            token = re.search(r"^Invitation token: (.*)$", stdout, re.MULTILINE).group(1)
+            url = re.search(r"^url: (.*)$", stdout, re.MULTILINE).group(1)
+            token = re.search(r"^token: (.*)$", stdout, re.MULTILINE).group(1)
 
             _run(
                 "core claim_user "
                 f"--config-dir={config_dir} --addr={url} --token={token} "
-                f"--password={password} {bob1}",
+                f"--password={password} {bob1.device_name}",
                 env=ssl_conf.client_env,
             )
 
@@ -244,17 +244,17 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
             "core invite_device "
             f"--config-dir={config_dir} --device={alice1_slug} --password={password}"
             f" {alice2.device_name}",
-            wait_for="Invitation token:",
+            wait_for="token:",
             env=ssl_conf.client_env,
         ) as p:
             stdout = p.live_stdout.read()
-            url = re.search(r"^Backend url: (.*)$", stdout, re.MULTILINE).group(1)
-            token = re.search(r"^Invitation token: (.*)$", stdout, re.MULTILINE).group(1)
+            url = re.search(r"^url: (.*)$", stdout, re.MULTILINE).group(1)
+            token = re.search(r"^token: (.*)$", stdout, re.MULTILINE).group(1)
 
             _run(
                 "core claim_device "
                 f"--config-dir={config_dir} --addr={url} --token={token} "
-                f"--password={password} {alice2}",
+                f"--password={password}",
                 env=ssl_conf.client_env,
             )
 

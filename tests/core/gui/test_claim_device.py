@@ -4,13 +4,16 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
+from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import invite_and_create_device
 
 
 @pytest.fixture
 async def alice_invite(running_backend, backend, alice):
     invitation = {
-        "addr": alice.organization_addr,
+        "addr": BackendOrganizationClaimDeviceAddr.build(
+            alice.organization_addr, alice.device_id, "123456"
+        ),
         "token": "123456",
         "user_id": alice.user_id,
         "device_name": "pc1",
@@ -48,7 +51,7 @@ async def _gui_ready_for_claim(aqtbot, gui, invitation):
         await aqtbot.key_press(claim_w.line_edit_device, QtCore.Qt.Key_Backspace)
     await aqtbot.key_clicks(claim_w.line_edit_device, invitation.get("device_name", ""))
     await aqtbot.key_clicks(claim_w.line_edit_token, invitation.get("token", ""))
-    await aqtbot.key_clicks(claim_w.line_edit_url, invitation.get("addr", ""))
+    await aqtbot.key_clicks(claim_w.line_edit_url, str(invitation.get("addr", "")))
     await aqtbot.key_clicks(claim_w.line_edit_password, invitation.get("password", ""))
     await aqtbot.key_clicks(claim_w.line_edit_password_check, invitation.get("password", ""))
 

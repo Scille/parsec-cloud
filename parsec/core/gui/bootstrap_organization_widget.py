@@ -48,7 +48,7 @@ async def _do_bootstrap_organization(
         raise JobResultError("password-size")
 
     try:
-        bootstrap_addr = BackendOrganizationBootstrapAddr(bootstrap_addr)
+        bootstrap_addr = BackendOrganizationBootstrapAddr.from_url(bootstrap_addr)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -62,7 +62,7 @@ async def _do_bootstrap_organization(
     organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
 
     try:
-        device = generate_new_device(device_id, organization_addr, True)
+        device = generate_new_device(device_id, organization_addr, is_admin=True)
         save_device_with_password(config_dir, device, password)
 
     except LocalDeviceAlreadyExistsError as exc:
@@ -84,7 +84,7 @@ async def _do_bootstrap_organization(
         async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
                 bootstrap_addr.organization_id,
-                bootstrap_addr.bootstrap_token,
+                bootstrap_addr.token,
                 root_verify_key,
                 user_certificate,
                 device_certificate,
@@ -110,7 +110,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_error = pyqtSignal()
     organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
-    def __init__(self, jobs_ctx, config, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, addr=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -134,6 +134,10 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.line_edit_device.setText(get_default_device())
         self.button_cancel.hide()
         self.label_password_strength.hide()
+
+        if addr:
+            self.line_edit_url.setText(addr.to_url())
+
         self.check_infos()
 
     def on_bootstrap_error(self):

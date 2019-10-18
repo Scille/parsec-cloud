@@ -1,9 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.local_device import list_available_devices
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
+)
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
@@ -45,6 +51,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(object, str)
+    state_changed = pyqtSignal(str)
 
     def __init__(self, jobs_ctx, event_bus, config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -111,11 +118,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
         login_widget.show()
+        self.state_changed.emit("login")
 
-    def show_bootstrap_widget(self):
+    def show_bootstrap_widget(self, addr: Optional[BackendOrganizationBootstrapAddr] = None):
         self.clear_widgets()
 
-        bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config)
+        bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, bootstrap_organization)
         bootstrap_organization.organization_bootstrapped.connect(self.organization_bootstrapped)
         self.button_bootstrap_instead.hide()
@@ -126,11 +134,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_user_instead.show()
         self.button_register_device_instead.show()
         bootstrap_organization.show()
+        self.state_changed.emit("bootstrap")
 
-    def show_claim_user_widget(self):
+    def show_claim_user_widget(self, addr: Optional[BackendOrganizationClaimUserAddr] = None):
         self.clear_widgets()
 
-        claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config)
+        claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_user_widget)
         claim_user_widget.user_claimed.connect(self.user_claimed)
 
@@ -142,11 +151,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
         claim_user_widget.show()
+        self.state_changed.emit("claim_user")
 
-    def show_claim_device_widget(self):
+    def show_claim_device_widget(self, addr: Optional[BackendOrganizationClaimDeviceAddr] = None):
         self.clear_widgets()
 
-        claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config)
+        claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_device_widget)
         claim_device_widget.device_claimed.connect(self.show_login_widget)
 
@@ -158,6 +168,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.hide()
         self.button_bootstrap_instead.show()
         claim_device_widget.show()
+        self.state_changed.emit("claim_device")
 
     def clear_widgets(self):
         item = self.layout.takeAt(0)

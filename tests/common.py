@@ -20,7 +20,7 @@ def addr_with_device_subdomain(addr, device_id):
     so tcp_stream_spy can put some offline and leave others online
     """
     device_specific_hostname = f"{device_id.user_id}.{device_id.device_name}.{addr.hostname}"
-    return type(addr)(addr.replace(addr.hostname, device_specific_hostname, 1))
+    return type(addr).from_url(addr.to_url().replace(addr.hostname, device_specific_hostname, 1))
 
 
 @contextmanager

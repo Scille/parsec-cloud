@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
 import signal
 from structlog import get_logger
+from queue import Queue
 import os
 
 from PyQt5.QtCore import QTimer
@@ -10,17 +12,19 @@ from PyQt5.QtWidgets import QApplication
 
 from parsec.core.config import CoreConfig
 from parsec.event_bus import EventBus
-
+from parsec.core.ipcinterface import (
+    run_ipc_server,
+    send_to_ipc_server,
+    IPCServerAlreadyRunning,
+    IPCServerNotRunning,
+)
 
 try:
     from parsec.core.gui import lang
-    from parsec.core.gui.lang import translate as _
     from parsec.core.gui.new_version import CheckNewVersion
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
-    from parsec.core.gui.trio_thread import run_trio_thread
-    from parsec.core.gui.custom_dialogs import show_error
-    from parsec.core.gui import desktop
+    from parsec.core.gui.trio_thread import ThreadSafeQtSignal, run_trio_thread
 except ImportError as exc:
     raise ModuleNotFoundError(
         """PyQt forms haven't been generated.
@@ -39,7 +43,40 @@ def before_quit(systray):
     return _before_quit
 
 
-def run_gui(config: CoreConfig):
+async def _start_ipc_server(config, main_window, url, result_queue):
+    new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
+    foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
+
+    async def cmd_handler(cmd):
+        if cmd["cmd"] == "foreground":
+            foreground_needed_qt.emit()
+        elif cmd["cmd"] == "new_instance":
+            new_instance_needed_qt.emit(cmd.get("url"))
+        return {"status": "ok"}
+
+    while True:
+        try:
+            async with run_ipc_server(
+                cmd_handler, config.ipc_socket_file, win32_mutex_name=config.ipc_win32_mutex_name
+            ):
+                result_queue.put("started")
+                await trio.sleep_forever()
+
+        except IPCServerAlreadyRunning:
+            # Parsec is already started, give it our work then
+            try:
+                try:
+                    await send_to_ipc_server(config.ipc_socket_file, "new_instance", url=url)
+                finally:
+                    result_queue.put("already_running")
+                return
+
+            except IPCServerNotRunning:
+                # IPC server has closed, retry to create our own
+                continue
+
+
+def run_gui(config: CoreConfig, url=None):
     logger.info("Starting UI")
 
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
@@ -54,19 +91,41 @@ def run_gui(config: CoreConfig):
 
     lang_key = lang.switch_language(config)
 
-    if not config.gui_allow_multiple_instances and desktop.parsec_instances_count() > 1:
-        show_error(None, _("PARSEC_ALREADY_RUNNING"))
-        return
-
     event_bus = EventBus()
     with run_trio_thread() as jobs_ctx:
-        systray = None
         win = MainWindow(
             jobs_ctx=jobs_ctx,
             event_bus=event_bus,
             config=config,
             minimize_on_close=config.gui_tray_enabled and systray_available(),
         )
+
+        result_queue = Queue(maxsize=1)
+
+        class ThreadSafeNoQtSignal(ThreadSafeQtSignal):
+            def __init__(self):
+                self.qobj = None
+                self.signal_name = ""
+                self.args_types = ()
+
+            def emit(self, *args):
+                pass
+
+        jobs_ctx.submit_job(
+            ThreadSafeNoQtSignal(),
+            ThreadSafeNoQtSignal(),
+            _start_ipc_server,
+            config,
+            win,
+            url,
+            result_queue,
+        )
+        if result_queue.get() == "already_running":
+            # Another instance of Parsec already started, nothing more to do
+            return
+
+        win.show_top()
+
         if systray_available():
             systray = Systray(parent=win)
             systray.on_close.connect(win.close_app)

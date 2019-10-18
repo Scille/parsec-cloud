@@ -3,7 +3,13 @@
 from PyQt5.QtGui import QValidator, QIntValidator
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceName, DeviceID
-from parsec.core.types import BackendAddr, BackendOrganizationAddr, BackendOrganizationBootstrapAddr
+from parsec.core.types import (
+    BackendAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
+)
 
 
 class NetworkPortValidator(QIntValidator):
@@ -27,7 +33,7 @@ class BackendAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendAddr(string)
+            BackendAddr.from_url(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             if pos > 3:
@@ -40,7 +46,7 @@ class BackendOrganizationAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendOrganizationAddr(string)
+            BackendOrganizationAddr.from_url(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos
@@ -51,7 +57,29 @@ class BackendOrganizationBootstrapAddrValidator(QValidator):
         try:
             if len(string) == 0:
                 return QValidator.Intermediate, string, pos
-            BackendOrganizationBootstrapAddr(string)
+            BackendOrganizationBootstrapAddr.from_url(string)
+            return QValidator.Acceptable, string, pos
+        except ValueError:
+            return QValidator.Intermediate, string, pos
+
+
+class BackendOrganizationClaimUserAddrValidator(QValidator):
+    def validate(self, string, pos):
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            BackendOrganizationClaimUserAddr.from_url(string)
+            return QValidator.Acceptable, string, pos
+        except ValueError:
+            return QValidator.Intermediate, string, pos
+
+
+class BackendOrganizationClaimDeviceAddrValidator(QValidator):
+    def validate(self, string, pos):
+        try:
+            if len(string) == 0:
+                return QValidator.Intermediate, string, pos
+            BackendOrganizationClaimDeviceAddr.from_url(string)
             return QValidator.Acceptable, string, pos
         except ValueError:
             return QValidator.Intermediate, string, pos

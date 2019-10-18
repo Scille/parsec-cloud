@@ -13,12 +13,13 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice, 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     llw = gui.test_get_login_login_widget()
+    tabw = gui.test_get_tab()
 
     assert llw is not None
 
     await aqtbot.key_clicks(llw.line_edit_password, "P@ssw0rd")
 
-    async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()

@@ -20,7 +20,7 @@ async def _status_organization(name, backend_addr, administration_token):
 
 @click.command(short_help="stats new organization")
 @click.argument("name", required=True, type=OrganizationID)
-@click.option("--addr", "-B", required=True, type=BackendAddr)
+@click.option("--addr", "-B", required=True, type=BackendAddr.from_url)
 @click.option("--administration-token", "-T", required=True)
 def status_organization(name, addr, administration_token):
     debug = "DEBUG" in os.environ

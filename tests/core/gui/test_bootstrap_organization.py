@@ -34,7 +34,7 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
     await aqtbot.key_clicks(bootstrap_w.line_edit_login, user_id)
     await aqtbot.key_clicks(bootstrap_w.line_edit_password, password)
     await aqtbot.key_clicks(bootstrap_w.line_edit_password_check, password)
-    await aqtbot.key_clicks(bootstrap_w.line_edit_url, organization_addr)
+    await aqtbot.key_clicks(bootstrap_w.line_edit_url, str(organization_addr))
     await aqtbot.key_clicks(bootstrap_w.line_edit_device, device_name)
 
 

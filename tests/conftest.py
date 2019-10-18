@@ -307,12 +307,12 @@ def server_factory(tcp_stream_spy):
     count = 0
 
     @asynccontextmanager
-    async def _server_factory(entry_point, url=None, ssl=False):
+    async def _server_factory(entry_point, addr=None):
         nonlocal count
         count += 1
 
-        if not url:
-            url = f"parsec://server-{count}.localhost:9999?no_ssl=true"
+        if not addr:
+            addr = BackendAddr(hostname=f"server-{count}.localhost", port=9999, use_ssl=False)
 
         async with trio.open_nursery() as nursery:
 
@@ -321,9 +321,9 @@ def server_factory(tcp_stream_spy):
                 nursery.start_soon(entry_point, left)
                 return right
 
-            tcp_stream_spy.push_hook(url, connection_factory)
+            tcp_stream_spy.push_hook(addr, connection_factory)
             try:
-                yield AppServer(entry_point, url, connection_factory)
+                yield AppServer(entry_point, addr, connection_factory)
                 nursery.cancel_scope.cancel()
 
             finally:
@@ -331,7 +331,7 @@ def server_factory(tcp_stream_spy):
                 # the nursery. Otherwise another coroutine trying to connect would
                 # end up with a `RuntimeError('Nursery is closed to new arrivals',)`
                 # given `connection_factory` make use of the now-closed nursery.
-                tcp_stream_spy.pop_hook(url)
+                tcp_stream_spy.pop_hook(addr)
 
     return _server_factory
 
@@ -340,7 +340,7 @@ def server_factory(tcp_stream_spy):
 def backend_addr(tcp_stream_spy):
     # Depending on tcp_stream_spy fixture prevent from doing real connection
     # attempt (which can be long to resolve) when backend is not running
-    return BackendAddr("parsec://example.com:9999?no_ssl=true")
+    return BackendAddr(hostname="example.com", port=9999, use_ssl=False)
 
 
 @pytest.fixture
@@ -562,7 +562,7 @@ def backend_sock_factory(server_factory, coolorg):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = await Transport.init_for_client(stream, server.addr)
+            transport = await Transport.init_for_client(stream, server.addr.hostname)
             transport = FreezeTestOnTransportError(transport)
 
             if auth_as:
