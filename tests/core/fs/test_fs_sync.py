@@ -79,7 +79,8 @@ async def test_new_workspace(running_backend, alice, alice_user_fs, alice2_user_
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["file", "folder"])
 async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     with freeze_time("2000-01-02"):
         if type == "file":
@@ -136,7 +137,8 @@ async def test_new_empty_entry(type, running_backend, alice_user_fs, alice2_user
 
 @pytest.mark.trio
 async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
 
@@ -180,7 +182,8 @@ async def test_simple_sync(running_backend, alice_user_fs, alice2_user_fs):
 
 @pytest.mark.trio
 async def test_fs_recursive_sync(running_backend, alice_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
 
     # 1) Create data
@@ -224,7 +227,8 @@ async def test_fs_recursive_sync(running_backend, alice_user_fs):
 
 @pytest.mark.trio
 async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
 
@@ -285,7 +289,8 @@ async def test_cross_sync(running_backend, alice_user_fs, alice2_user_fs):
 
 @pytest.mark.trio
 async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
 
@@ -309,7 +314,8 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_user_fs, alic
 
 @pytest.mark.trio
 async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
 
@@ -442,7 +448,8 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_user_f
 @pytest.mark.trio
 @pytest.mark.skip  # TODO: rewrite this test
 async def test_create_already_existing_file_vlob(running_backend, alice_user_fs, alice2_user_fs):
-    wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
     workspace = alice_user_fs.get_workspace(wid)
     workspace2 = alice2_user_fs.get_workspace(wid)
 

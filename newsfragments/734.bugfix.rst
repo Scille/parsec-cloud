@@ -1,0 +1,1 @@
+Add missing check in core to enforce consistency of timestamps between a manifest and it author's role certificate
