@@ -17,21 +17,40 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
     get_versions_success = pyqtSignal()
     get_versions_error = pyqtSignal()
 
-    def __init__(self, jobs_ctx, workspace_fs, path, *args, **kwargs):
+    def __init__(
+        self,
+        jobs_ctx,
+        workspace_fs,
+        path,
+        reload_timestamped_signal,
+        update_version_list,
+        close_version_list,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
-        self.path = path
+        self.versions_table.set_reload_timestamped_signal(reload_timestamped_signal)
+        update_version_list.connect(self.reset_dialog)
+        close_version_list.connect(self.close_dialog)
         self.setWindowFlags(Qt.SplashScreen)
-        self.label_file_name.setText(f'"{path.name}"')
         self.get_versions_success.connect(self.add_history)
         self.get_versions_error.connect(self.show_error)
         self.button_close.clicked.connect(self.close_dialog)
+        self.workspace_fs = workspace_fs
+        self.reset_dialog(workspace_fs, path)
+
+    def reset_dialog(self, workspace_fs, path):
+        self.label_file_name.setText(f'"{path.name}"')
+        self.workspace_fs = workspace_fs
+        self.path = path
+        self.versions_table.clear()
         self.versions_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "get_versions_success"),
             ThreadSafeQtSignal(self, "get_versions_error"),
             _do_workspace_version,
-            workspace_fs=workspace_fs,
+            workspace_fs=self.workspace_fs,
             path=path,
         )
 
@@ -39,7 +58,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         versions_dict = self.versions_job.ret
         self.versions_job = None
         if not versions_dict:
-            return  # TODO : something something before
+            return  # TODO : error before?
         for k, v in versions_dict.items():
             self.versions_table.add_item(
                 entry_id=k[0],
@@ -55,8 +74,6 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
             )
 
     def show_error(self):
-        if self.versions_job:
-            print(self.versions_job.status)
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("ERR_LIST_VERSIONS_ACCESS"), exception=self.versions_job.exc)
         self.versions_job = None

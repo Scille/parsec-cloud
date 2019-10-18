@@ -3,12 +3,13 @@
 import pathlib
 from uuid import UUID
 import trio
+from pendulum import Pendulum
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
 from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
-from parsec.core.fs import WorkspaceFSTimestamped
+from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
@@ -115,6 +116,12 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     import_progress = pyqtSignal(int)
 
+    reload_timestamped_requested = pyqtSignal(Pendulum, FsPath, FileType, bool, bool, bool)
+    reload_timestamped_success = pyqtSignal(QtToTrioJob)
+    reload_timestamped_error = pyqtSignal(QtToTrioJob)
+    update_version_list = pyqtSignal(WorkspaceFS, FsPath)
+    close_version_list = pyqtSignal()
+
     def __init__(self, core, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -174,6 +181,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.import_success.connect(self._on_import_success)
         self.import_error.connect(self._on_import_error)
 
+        self.reload_timestamped_requested.connect(self._on_reload_timestamped_requested)
+        self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
+        self.reload_timestamped_error.connect(self._on_reload_timestamped_error)
+
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
 
@@ -216,7 +227,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_warning(self, _("ERR_FILE_HISTORY_MONO"))
             return
         selected_path = self.current_directory / files[0].name
-        fd = FileHistoryDialog(self.jobs_ctx, self.workspace_fs, selected_path)
+        fd = FileHistoryDialog(
+            self.jobs_ctx,
+            self.workspace_fs,
+            selected_path,
+            self.reload_timestamped_requested,
+            self.update_version_list,
+            self.close_version_list,
+        )
         fd.exec_()
 
     def rename_files(self):
@@ -313,7 +331,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
         # as they won't block the Qt loop for long
-        path = self.jobs_ctx.run_sync(
+        path = self.jobs_ctx.run(
             self.core.mountpoint_manager.get_path_in_mountpoint,
             self.workspace_fs.workspace_id,
             self.current_directory / file_name,
@@ -346,6 +364,31 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reload(self):
         self.load(self.current_directory)
+
+    async def _do_reload_timestamped(
+        self, timestamp, path, file_type, open_after_load, close_after_load, reload_after_remount
+    ):
+        await self.core.mountpoint_manager.remount_workspace_new_timestamp(
+            self.workspace_fs.workspace_id,
+            self.workspace_fs.timestamp
+            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
+            else None,
+            timestamp,
+        )
+        self.workspace_fs = await self.workspace_fs.to_timestamped(
+            timestamp
+        )  # TODO : GOT IT DIRECTLY?
+        if path is not None:
+            self.current_directory = path.parent if file_type == FileType.File else path
+        # TODO : Select element if possible?
+        if close_after_load:
+            self.close_version_list.emit()
+        if reload_after_remount:
+            self.update_version_list.emit(self.workspace_fs, path)
+        return (
+            await _do_folder_stat(workspace_fs=self.workspace_fs, path=self.current_directory),
+            path if open_after_load else None,
+        )
 
     def load(self, directory):
         self.jobs_ctx.submit_job(
@@ -653,3 +696,27 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.taskbar_updated.emit()
             else:
                 self.taskbar_updated.emit()
+
+    def _on_reload_timestamped_requested(
+        self, timestamp, path, file_type, open_after_load, close_after_remount, reload_after_remount
+    ):
+        self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, "reload_timestamped_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "reload_timestamped_error", QtToTrioJob),
+            self._do_reload_timestamped,
+            timestamp=timestamp,
+            path=path,
+            file_type=file_type,
+            open_after_load=open_after_load,
+            close_after_load=close_after_remount,
+            reload_after_remount=reload_after_remount,
+        )
+
+    def _on_reload_timestamped_success(self, job):
+        if job.ret[1]:
+            self.open_file(job.ret[1])
+        job.ret = job.ret[0]
+        self._on_folder_stat_success(job)
+
+    def _on_reload_timestamped_error(self, job):
+        raise job.exc

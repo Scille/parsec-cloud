@@ -41,6 +41,10 @@ class VersionsTable(QTableWidget):
         v_header.setSectionResizeMode(QHeaderView.Fixed)
         v_header.setDefaultSectionSize(48)
         self.setItemDelegate(ItemDelegate())
+        self.cellDoubleClicked.connect(self.item_double_clicked)
+
+    def set_reload_timestamped_signal(self, signal):
+        self.reload_timestamped_signal = signal
 
     def item_double_clicked(self, row, column):
         target_path = self.item(row, 0).data(ACTUAL_PATH_DATA_INDEX)
@@ -58,16 +62,9 @@ class VersionsTable(QTableWidget):
                 target_path = destination_path
                 target_timestamp = self.item(row, 0).data(LATE_TIMESTAMP_DATA_INDEX)
         file_type = self.item(row, 0).data(TYPE_DATA_INDEX)
-        try:
-            # TODO : actually go.
-            print("target path = " + str(target_path))
-            print("timestamp = " + str(target_timestamp))
-            print("filetype = " + str(file_type))
-            # self.item_activated.emit(file_type, name_item.data(NAME_DATA_INDEX))
-        except AttributeError:
-            # This can happen when updating the list: double click event gets processed after
-            # the item has been removed.
-            pass
+        self.reload_timestamped_signal.emit(
+            target_timestamp, target_path, file_type, column < 3, False, column >= 3
+        )
 
     def clear(self):
         self.clearContents()

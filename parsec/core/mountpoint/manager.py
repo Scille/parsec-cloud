@@ -94,13 +94,13 @@ class MountpointManager:
                 current.get_workspace_name(),
             ) from exc
 
-    def get_path_in_mountpoint(
+    async def get_path_in_mountpoint(
         self, workspace_id: EntryID, path: FsPath, timestamp: Pendulum = None
     ) -> PurePath:
         if timestamp is None:
             self._get_workspace(workspace_id)
         else:
-            self._get_workspace_timestamped(workspace_id, timestamp)
+            await self._get_workspace_timestamped(workspace_id, timestamp)
         try:
             runner_task = self._mountpoint_tasks[(workspace_id, timestamp)]
             return runner_task.value / path.relative_to(path.root)
@@ -133,6 +133,36 @@ class MountpointManager:
 
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
         del self._mountpoint_tasks[(workspace_id, timestamp)]
+
+    async def remount_workspace_new_timestamp(
+        self, workspace_id: EntryID, original_timestamp: Pendulum, target_timestamp: Pendulum
+    ) -> PurePath:
+        # TODO : use different workspaces for temp mount
+        if original_timestamp == target_timestamp:
+            return
+        if original_timestamp is None:
+            workspace = self._get_workspace(workspace_id)
+        else:
+            workspace = await self._get_workspace_timestamped(workspace_id, original_timestamp)
+        if (workspace_id, target_timestamp) in self._mountpoint_tasks:
+            workspace = self._get_workspace(workspace_id, target_timestamp)
+
+        curried_runner = partial(
+            self._runner,
+            await workspace.to_timestamped(target_timestamp),
+            self.base_mountpoint_path,
+            config=self.config,
+            event_bus=self.event_bus,
+        )
+        runner_task = await start_task(self._nursery, curried_runner)
+        self._mountpoint_tasks[(workspace_id, target_timestamp)] = runner_task
+        if original_timestamp is not None:
+            if (workspace_id, original_timestamp) not in self._mountpoint_tasks:
+                raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
+
+            await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
+            del self._mountpoint_tasks[(workspace_id, original_timestamp)]
+        return runner_task.value
 
     async def mount_all(self, timestamp: Pendulum = None):
         user_manifest = self.user_fs.get_user_manifest()

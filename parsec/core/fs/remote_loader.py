@@ -564,11 +564,15 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def load_manifest(
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
     ) -> RemoteManifest:
-        if timestamp is not None and timestamp != self.timestamp:
-            raise FSError(
-                f"Cannot load a manifest at a different timestamp through a timestamped remote loader"
-            )
-        return await super().load_manifest(entry_id, version=version, timestamp=self.timestamp)
+        return await super().load_manifest(
+            entry_id,
+            version=version,
+            timestamp=None
+            if version is not None
+            else self.timestamp
+            if timestamp is None
+            else timestamp,
+        )
 
     async def upload_manifest(self, *e, **ke):
         raise FSError(f"Cannot upload manifest through a timestamped remote loader")

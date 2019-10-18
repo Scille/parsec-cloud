@@ -28,8 +28,9 @@ async def list_versions(
         FSRemoteManifestNotFound
     """
     # Each key is an entry_id, each value is a new dict with version as key and value as tuple(
-    #     updated_timestamp, last_known_timestamp, manifest
+    #     earliest_known_timestamp, last_known_timestamp, manifest
     # )
+    # Could be optimized if we could use manifest.updated
     manifest_cache = {}
 
     async def _load_manifest_or_cached(entry_id: EntryID, version=None, timestamp=None):
@@ -37,15 +38,14 @@ async def list_versions(
             if version:
                 return manifest_cache[entry_id][version][2]
             if timestamp:
-                return max(
+                return next(
                     (
-                        t
+                        t[2]
                         for t in manifest_cache[entry_id].values()
-                        if t[1] and t[0] < timestamp <= t[1]
-                    ),
-                    key=lambda t: t[0],
-                )[2]
-        except (ValueError, KeyError):
+                        if t[0] and t[1] and t[0] <= timestamp <= t[1]
+                    )
+                )
+        except (KeyError, StopIteration):
             pass
         manifest = await workspacefs.remote_loader.load_manifest(
             entry_id, version=version, timestamp=timestamp
@@ -53,19 +53,24 @@ async def list_versions(
         if manifest.id not in manifest_cache:
             manifest_cache[manifest.id] = {}
         if manifest.version not in manifest_cache[manifest.id]:
-            manifest_cache[manifest.id][manifest.version] = (
-                manifest.updated,
-                timestamp if timestamp else None,
-                manifest,
-            )
+            manifest_cache[manifest.id][manifest.version] = (timestamp, timestamp, manifest)
         elif timestamp:
             if (
                 manifest_cache[manifest.id][manifest.version][1] is None
                 or timestamp > manifest_cache[manifest.id][manifest.version][1]
             ):
                 manifest_cache[manifest.id][manifest.version] = (
-                    manifest.updated,
+                    manifest_cache[manifest.id][manifest.version][0],
                     timestamp,
+                    manifest,
+                )
+            if (
+                manifest_cache[manifest.id][manifest.version][0] is None
+                or timestamp < manifest_cache[manifest.id][manifest.version][0]
+            ):
+                manifest_cache[manifest.id][manifest.version] = (
+                    timestamp,
+                    manifest_cache[manifest.id][manifest.version][1],
                     manifest,
                 )
         return manifest
