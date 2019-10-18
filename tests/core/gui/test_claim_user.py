@@ -97,3 +97,28 @@ async def test_claim_user_unknown_error(monkeypatch, aqtbot, gui, autoclose_dial
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [("Error", "Cannot register the user.")]
     # TODO: Make sure a log is emitted
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_user_with_start_arg(event_bus, core_config, gui_factory):
+    start_arg = "parsec://parsec.example.com/my_org?action=claim_user&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD&user_id=John"
+
+    gui = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=start_arg)
+
+    claim_w = gui.test_get_claim_user_widget()
+    assert claim_w
+
+    assert claim_w.line_edit_url.text() == start_arg
+    assert claim_w.line_edit_login.text() == "John"
+    assert claim_w.line_edit_token.text() == "1234ABCD"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_user_with_bad_start_arg(event_bus, core_config, gui_factory, autoclose_dialog):
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD&user_id=John"
+
+    await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
+
+    assert autoclose_dialog.dialogs == [("Error", "URL is invalid.")]

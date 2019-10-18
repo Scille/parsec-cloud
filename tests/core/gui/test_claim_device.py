@@ -98,3 +98,34 @@ async def test_claim_device_unknown_error(monkeypatch, aqtbot, gui, autoclose_di
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [("Error", "Cannot claim this device.")]
     # TODO: Make sure a log is emitted
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_with_start_arg(event_bus, core_config, gui_factory):
+    start_arg = "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD"
+
+    gui = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=start_arg)
+
+    claim_w = gui.test_get_claim_device_widget()
+    assert claim_w
+
+    assert claim_w.line_edit_url.text() == start_arg
+    assert claim_w.line_edit_login.text() == "John"
+    assert claim_w.line_edit_device.text() == "pc"
+    assert claim_w.line_edit_token.text() == "1234ABCD"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_claim_device_with_bad_start_arg(
+    event_bus, core_config, gui_factory, autoclose_dialog
+):
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&device_id=John%40pc&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss&token=1234ABCD"
+
+    gui = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
+
+    claim_w = gui.test_get_claim_device_widget()
+    assert not claim_w
+
+    assert autoclose_dialog.dialogs == [("Error", "URL is invalid.")]

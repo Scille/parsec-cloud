@@ -90,3 +90,30 @@ async def test_bootstrap_organization_unknown_error(
         await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [("Error", "Cannot bootstrap this organization.")]
     # TODO: Make a log is emitted
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_bootstrap_organization_with_start_arg(event_bus, core_config, gui_factory):
+    start_arg = "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
+
+    gui = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=start_arg)
+
+    bootstrap_w = gui.test_get_bootstrap_organization_widget()
+    assert bootstrap_w
+
+    assert bootstrap_w.line_edit_url.text() == start_arg
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_bootstrap_organization_with_bad_start_arg(
+    event_bus, core_config, gui_factory, autoclose_dialog
+):
+    bad_start_arg = "parsec://parsec.example.com/my_org?action=dummy&token=1234ABCD"
+
+    gui = await gui_factory(event_bus=event_bus, core_config=core_config, start_arg=bad_start_arg)
+
+    bootstrap_w = gui.test_get_bootstrap_organization_widget()
+    assert not bootstrap_w
+    assert autoclose_dialog.dialogs == [("Error", "URL is invalid.")]

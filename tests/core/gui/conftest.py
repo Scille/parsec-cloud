@@ -230,7 +230,7 @@ def autoclose_dialog(monkeypatch):
 def gui_factory(qtbot, qt_thread_gateway, core_config):
     windows = []
 
-    async def _gui_factory(event_bus=None, core_config=core_config):
+    async def _gui_factory(event_bus=None, core_config=core_config, start_arg=None):
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
         core_config = core_config.evolve(
@@ -251,6 +251,8 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
             main_w = MainWindow(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )
+            main_w.add_instance(start_arg)
+            main_w.show_top()
             qtbot.add_widget(main_w)
             main_w.showMaximized()
             windows.append(main_w)

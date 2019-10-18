@@ -17,7 +17,6 @@ from parsec.serde import (
     SerdeError,
     MsgpackSerializer,
 )
-from parsec.core.types import BackendActionAddr
 
 
 logger = get_logger()
@@ -49,7 +48,7 @@ class ForegroundReqSchema(BaseSchema):
 
 class NewInstanceReqSchema(BaseSchema):
     cmd = fields.CheckedConstant("new_instance", required=True)
-    url = fields.str_based_field_factory(BackendActionAddr.from_url)(allow_none=True)
+    start_arg = fields.String(allow_none=True)
 
 
 class CommandReqSchema(OneOfSchema):

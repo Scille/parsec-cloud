@@ -92,7 +92,7 @@ class BackendAddr:
             netloc = f"{self._hostname}:{custom_port}"
         else:
             netloc = self.hostname
-        query = "&".join(f"{k}={v}" for k, v in self._to_url_get_params().items())
+        query = "&".join(f"{k}={v}" for k, v in sorted(self._to_url_get_params().items()))
         return urlunsplit((PARSEC_SCHEME, netloc, self._to_url_get_path(), query, None))
 
     def _to_url_get_path(self):
@@ -202,7 +202,7 @@ class BackendActionAddr(BackendAddr):
 class BackendOrganizationBootstrapAddr(BackendActionAddr):
     """
     Represent the URL to bootstrap an organization within a backend
-    (e.g. ``parsec://parsec.example.com/my_org?bootstrap-token=1234ABCD``)
+    (e.g. ``parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
     """
 
     __slots__ = ("_organization_id", "_token")
@@ -275,6 +275,11 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
 
 
 class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionAddr):
+    """
+    Represent the URL to bootstrap claim a user
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss``)
+    """
+
     __slots__ = ("_user_id", "_token")
 
     def __init__(self, user_id: UserID, token: Optional[str] = None, **kwargs):
@@ -349,6 +354,11 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
 
 
 class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActionAddr):
+    """
+    Represent the URL to bootstrap claim a device
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss``)
+    """
+
     __slots__ = ("_device_id", "_token")
 
     def __init__(self, device_id: DeviceID, token: Optional[str] = None, **kwargs):

@@ -43,7 +43,7 @@ def before_quit(systray):
     return _before_quit
 
 
-async def _start_ipc_server(config, main_window, url, result_queue):
+async def _start_ipc_server(config, main_window, start_arg, result_queue):
     new_instance_needed_qt = ThreadSafeQtSignal(main_window, "new_instance_needed", object)
     foreground_needed_qt = ThreadSafeQtSignal(main_window, "foreground_needed")
 
@@ -51,7 +51,7 @@ async def _start_ipc_server(config, main_window, url, result_queue):
         if cmd["cmd"] == "foreground":
             foreground_needed_qt.emit()
         elif cmd["cmd"] == "new_instance":
-            new_instance_needed_qt.emit(cmd.get("url"))
+            new_instance_needed_qt.emit(cmd.get("start_arg"))
         return {"status": "ok"}
 
     while True:
@@ -66,7 +66,9 @@ async def _start_ipc_server(config, main_window, url, result_queue):
             # Parsec is already started, give it our work then
             try:
                 try:
-                    await send_to_ipc_server(config.ipc_socket_file, "new_instance", url=url)
+                    await send_to_ipc_server(
+                        config.ipc_socket_file, "new_instance", start_arg=start_arg
+                    )
                 finally:
                     result_queue.put("already_running")
                 return
@@ -76,7 +78,7 @@ async def _start_ipc_server(config, main_window, url, result_queue):
                 continue
 
 
-def run_gui(config: CoreConfig, url=None):
+def run_gui(config: CoreConfig, start_arg: str = None):
     logger.info("Starting UI")
 
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
@@ -117,13 +119,14 @@ def run_gui(config: CoreConfig, url=None):
             _start_ipc_server,
             config,
             win,
-            url,
+            start_arg,
             result_queue,
         )
         if result_queue.get() == "already_running":
             # Another instance of Parsec already started, nothing more to do
             return
 
+        win.add_instance(start_arg)
         win.show_top()
 
         if systray_available():
