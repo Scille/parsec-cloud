@@ -116,8 +116,10 @@ async def query_update_roles(
     if not user_id:
         raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
 
-    if user_revoked_on and user_revoked_on <= pendulum_now():
-        raise RealmNotFoundError(f"User `{new_role.user_id}` has been revoked")
+    if user_revoked_on and user_revoked_on <= pendulum_now() and new_role.role is not None:
+        raise RealmAccessError(
+            f"User `{new_role.user_id}` has been revoked, can only remove it role"
+        )
 
     author_role = STR_TO_REALM_ROLE.get(author_role)
     existing_user_role = STR_TO_REALM_ROLE.get(existing_user_role)
