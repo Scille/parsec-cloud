@@ -32,7 +32,7 @@ class File:
             assert getattr(manifest, k) == v
 
     def is_cache_ahead_of_persistance(self):
-        return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_persistance_ids
+        return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_localdb
 
     async def get_manifest(self):
         return await self.local_storage.get_manifest(self.entry_id)

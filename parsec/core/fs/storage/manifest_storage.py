@@ -1,12 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-from typing import Dict, Tuple, Set
 from structlog import get_logger
+from typing import Dict, Tuple, Set, Optional
 from async_generator import asynccontextmanager
 
 from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.types import EntryID, LocalDevice, LocalManifest
+from parsec.core.types import EntryID, ChunkID, LocalDevice, LocalManifest
 from parsec.core.fs.storage.local_database import LocalDatabase
 
 logger = get_logger()
@@ -24,7 +24,7 @@ class ManifestStorage:
         self.realm_id = realm_id
 
         self._cache = {}
-        self._cache_ahead_of_persistance_ids = set()
+        self._cache_ahead_of_localdb = {}
 
     @property
     def path(self):
@@ -48,7 +48,7 @@ class ManifestStorage:
 
     def clear_memory_cache(self):
         self._cache.clear()
-        self._cache_ahead_of_persistance_ids.clear()
+        self._cache_ahead_of_localdb.clear()
 
     # Database initialization
 
@@ -153,15 +153,15 @@ class ManifestStorage:
         Raises: Nothing !
         """
         assert isinstance(entry_id, EntryID)
+        self._cache[entry_id] = manifest
+        self._cache_ahead_of_localdb.setdefault(entry_id, set())
 
         if not cache_only:
-            await self._set_manifest_in_db(entry_id, manifest)
+            await self._ensure_manifest_persistent(entry_id)
 
-        else:
-            self._cache_ahead_of_persistance_ids.add(entry_id)
-        self._cache[entry_id] = manifest
-
-    async def _set_manifest_in_db(self, entry_id: EntryID, manifest: LocalManifest) -> None:
+    async def _set_manifest_in_db(
+        self, entry_id: EntryID, manifest: LocalManifest, chunk_ids: Optional[Set[ChunkID]] = None
+    ) -> None:
         ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
         async with self._open_cursor() as cursor:
             cursor.execute(
@@ -183,35 +183,52 @@ class ManifestStorage:
                 ),
             )
 
+            # No cleanup necessary
+            if not chunk_ids:
+                return
+
+            # Clean all the pending chunks
+            for chunk_id in chunk_ids:
+                cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         """
         Raises: Nothing !
         """
         assert isinstance(entry_id, EntryID)
-        if entry_id not in self._cache_ahead_of_persistance_ids:
+        if entry_id not in self._cache_ahead_of_localdb:
             return
         await self._ensure_manifest_persistent(entry_id)
 
     async def _flush_cache_ahead_of_persistance(self) -> None:
-        for entry_id in self._cache_ahead_of_persistance_ids.copy():
+        for entry_id in self._cache_ahead_of_localdb.copy():
             await self._ensure_manifest_persistent(entry_id)
 
     async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         manifest = self._cache[entry_id]
-        await self._set_manifest_in_db(entry_id, manifest)
-        self._cache_ahead_of_persistance_ids.remove(entry_id)
+        chunk_ids = self._cache_ahead_of_localdb[entry_id]
+        await self._set_manifest_in_db(entry_id, manifest, chunk_ids)
+        self._cache_ahead_of_localdb.pop(entry_id)
 
     async def clear_manifest(self, entry_id: EntryID) -> None:
         """
         Raises:
             FSLocalMissError
         """
+        if entry_id in self._cache_ahead_of_localdb:
+            await self._ensure_manifest_persistent(entry_id)
         in_cache = bool(self._cache.pop(entry_id, None))
-        if in_cache:
-            self._cache_ahead_of_persistance_ids.discard(entry_id)
         async with self._open_cursor() as cursor:
             cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
         if not deleted and not in_cache:
             raise FSLocalMissError(entry_id)
+
+    # Chunk clearing logic
+
+    def postpone_clear_chunks(self, chunk_ids: Set[ChunkID], postpone: EntryID) -> bool:
+        if postpone not in self._cache_ahead_of_localdb:
+            return False
+        self._cache_ahead_of_localdb[postpone] |= chunk_ids
+        return True

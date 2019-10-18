@@ -166,8 +166,7 @@ class FileTransactions:
             await self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
 
             # Clean up
-            for removed_id in removed_ids:
-                await self.local_storage.clear_chunk(removed_id, miss_ok=True)
+            await self.local_storage.clear_chunks(removed_ids, postpone=manifest.id)
 
             # Reshaping
             if self._write_count[fd] >= manifest.blocksize:
@@ -239,8 +238,7 @@ class FileTransactions:
         await self.local_storage.set_manifest(manifest.id, manifest)
 
         # Clean up
-        for removed_id in removed_ids:
-            await self.local_storage.clear_chunk(removed_id, miss_ok=True)
+        await self.local_storage.clear_chunks(removed_ids)
 
     async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
@@ -271,8 +269,7 @@ class FileTransactions:
             await self.local_storage.set_manifest(manifest.id, manifest, cache_only=cache_only)
 
             # Perform cleanup
-            for removed_id in cleanup:
-                await self.local_storage.clear_chunk(removed_id, miss_ok=True)
+            await self.local_storage.clear_chunks(cleanup, postpone=manifest.id)
 
         # Return missing block ids
         return missing

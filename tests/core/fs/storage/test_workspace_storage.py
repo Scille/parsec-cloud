@@ -126,6 +126,58 @@ async def test_cache_set_get(tmpdir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("cache_only", (False, True))
+@pytest.mark.parametrize("postpone", (False, True))
+async def test_clear_chunks(alice_workspace_storage, cache_only, postpone):
+    aws = alice_workspace_storage
+    manifest = create_manifest(aws.device, LocalFileManifest)
+    data1 = b"abc"
+    chunk1 = Chunk.new(0, 3)
+    data2 = b"def"
+    chunk2 = Chunk.new(3, 6)
+    manifest = manifest.evolve(blocks=((chunk1, chunk2),), size=6)
+
+    async with aws.lock_entry_id(manifest.id):
+        # Set chunks and manifests
+        await aws.set_chunk(chunk1.id, data1)
+        await aws.set_chunk(chunk2.id, data2)
+        await aws.set_manifest(manifest.id, manifest)
+
+        # Set a new version of the manifest without the chunks
+        new_manifest = manifest.evolve(blocks=())
+        await aws.set_manifest(manifest.id, new_manifest, cache_only=cache_only)
+
+        # Postpone the clearing of the chunks
+        if postpone:
+            await aws.clear_chunks({chunk1.id, chunk2.id}, postpone=manifest.id)
+
+        # Do not postpone the clearing of the chunks
+        else:
+            await aws.clear_chunks({chunk1.id, chunk2.id})
+
+        # The chunks are still accessible
+        if postpone and cache_only:
+            await aws.get_chunk(chunk1.id) == b"abc"
+            await aws.get_chunk(chunk2.id) == b"def"
+
+        # The chunks are gone
+        else:
+            with pytest.raises(FSLocalMissError):
+                await aws.get_chunk(chunk1.id)
+            with pytest.raises(FSLocalMissError):
+                await aws.get_chunk(chunk2.id)
+
+        # Now flush the manifest
+        await aws.ensure_manifest_persistent(manifest.id)
+
+        # The chunks are gone
+        with pytest.raises(FSLocalMissError):
+            await aws.get_chunk(chunk1.id)
+        with pytest.raises(FSLocalMissError):
+            await aws.get_chunk(chunk2.id)
+
+
+@pytest.mark.trio
 async def test_cache_flushed_on_exit(tmpdir, alice, workspace_id):
     manifest = create_manifest(alice)
 

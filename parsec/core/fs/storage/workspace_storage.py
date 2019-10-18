@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from collections import defaultdict
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple, Set, Optional
 
 import trio
 from trio import hazmat
@@ -227,6 +227,20 @@ class WorkspaceStorage:
         except FSLocalMissError:
             if not miss_ok:
                 raise
+
+    async def clear_chunks(
+        self, chunk_ids: Set[ChunkID], postpone: Optional[EntryID] = None
+    ) -> None:
+        # Postponing the clearing as the corresponding manifest is still in cache
+        if postpone and self.manifest_storage.postpone_clear_chunks(chunk_ids, postpone):
+            return
+
+        # Actual clearing of the chunk
+        for chunk_id in chunk_ids:
+            await self.clear_chunk(chunk_id, miss_ok=True)
+
+        # Commit the clean up
+        await self.data_localdb.commit()
 
     # File management interface
 
