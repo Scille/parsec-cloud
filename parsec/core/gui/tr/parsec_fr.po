@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-18 10:03+0200\n"
-"PO-Revision-Date: 2019-10-18 10:03+0200\n"
+"POT-Creation-Date: 2019-10-18 11:15+0200\n"
+"PO-Revision-Date: 2019-10-18 11:16+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1266,6 +1266,12 @@ msgstr "Ouvrir la fenêtre"
 msgid "MENU_EXIT"
 msgstr "Quitter"
 
+msgid "BUTTON_LOG_IN"
+msgstr "Se connecter"
+
+msgid "BUTTON_LOGGING_IN"
+msgstr "En cours de connexion..."
+
 msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
 msgstr ""
 "L'organisation et l'utilisateur ont été créés.\n"
@@ -1571,9 +1577,6 @@ msgstr "En cours d'import"
 
 msgid "LABEL_IDENTIFIER"
 msgstr "Identifiant"
-
-msgid "BUTTON_LOG_IN"
-msgstr "Se connecter"
 
 msgid "BUTTON_REGISTER_NEW_USER"
 msgstr "Enregistrer un nouvel utilisateur"

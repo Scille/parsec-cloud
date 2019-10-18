@@ -48,6 +48,7 @@ class InstanceWidget(QWidget):
     logged_in = pyqtSignal()
     logged_out = pyqtSignal()
     state_changed = pyqtSignal(QWidget, str)
+    login_failed = pyqtSignal()
 
     devices_connected = []
 
@@ -154,30 +155,42 @@ class InstanceWidget(QWidget):
         self.state_changed.emit(self, state)
 
     def login_with_password(self, key_file, password):
+        message = None
+        exception = None
         try:
             device = load_device_with_password(key_file, password)
             if device in InstanceWidget.devices_connected:
-                show_error(self, _("ERR_LOGIN_ALREADY_CONNECTED"))
+                message = _("ERR_LOGIN_ALREADY_CONNECTED")
             else:
                 self.start_core(device)
         except LocalDeviceError as exc:
-            show_error(self, _("ERR_LOGIN_AUTH_FAILED"), exception=exc)
+            message = _("ERR_LOGIN_AUTH_FAILED")
+            exception = exc
 
         except BackendHandshakeAPIVersionError as exc:
-            show_error(self, _("ERR_LOGIN_INCOMPATIBLE_VERSION"), exception=exc)
+            message = _("ERR_LOGIN_INCOMPATIBLE_VERSION")
+            exception = exc
 
         except BackendDeviceRevokedError as exc:
-            show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=exc)
+            message = _("ERR_LOGIN_DEVICE_REVOKED")
+            exception = exc
 
         except BackendHandshakeError as exc:
-            show_error(self, _("ERR_LOGIN_UNKNOWN_USER"), exception=exc)
+            message = _("ERR_LOGIN_UNKNOWN_USER")
+            exception = exc
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
-            show_error(self, _("ERR_LOGIN_MOUNTPOINT"), exception=exc)
+            message = _("ERR_LOGIN_MOUNTPOINT")
+            exception = exc
 
         except Exception as exc:
+            message = _("ERR_LOGIN_UNKNOWN")
+            exception = exc
             logger.exception("Unhandled error during login")
-            show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=exc)
+        finally:
+            if message:
+                show_error(self, message, exception=exception)
+                self.login_failed.emit()
 
     def show_central_widget(self):
         self.clear_widgets()
@@ -190,7 +203,9 @@ class InstanceWidget(QWidget):
 
     def show_login_widget(self, show_meth=None, **kwargs):
         self.clear_widgets()
-        login_widget = LoginWidget(self.jobs_ctx, self.event_bus, self.config, parent=self)
+        login_widget = LoginWidget(
+            self.jobs_ctx, self.event_bus, self.config, self.login_failed, parent=self
+        )
         self.layout().addWidget(login_widget)
         login_widget.state_changed.connect(self.on_login_state_changed)
 

@@ -23,9 +23,10 @@ from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
     login_with_password_clicked = pyqtSignal(object, str)
 
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, login_failed_sig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        login_failed_sig.connect(self.on_login_failed)
         self.config = config
         self.button_login.clicked.connect(self.emit_login)
         devices = list_available_devices(self.config.config_dir)
@@ -39,13 +40,19 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             self.combo_login.setCurrentText(last_device)
         self.line_edit_password.setFocus()
 
+    def on_login_failed(self):
+        self.button_login.setEnabled(True)
+        self.button_login.setText(_("BUTTON_LOG_IN"))
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return:
             self.emit_login()
         event.accept()
 
     def emit_login(self):
-        *_, key_file = self.devices[self.combo_login.currentText()]
+        *args, key_file = self.devices[self.combo_login.currentText()]
+        self.button_login.setDisabled(True)
+        self.button_login.setText(_("BUTTON_LOGGING_IN"))
         self.login_with_password_clicked.emit(key_file, self.line_edit_password.text())
 
 
@@ -53,12 +60,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(object, str)
     state_changed = pyqtSignal(str)
 
-    def __init__(self, jobs_ctx, event_bus, config, *args, **kwargs):
+    def __init__(self, jobs_ctx, event_bus, config, login_failed_sig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
+        self.login_failed_sig = login_failed_sig
 
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_register_user_instead.clicked.connect(self.show_claim_user_widget)
@@ -109,7 +117,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def show_login_widget(self):
         self.clear_widgets()
 
-        login_widget = LoginLoginWidget(self.config)
+        login_widget = LoginLoginWidget(self.config, self.login_failed_sig)
         self.layout.insertWidget(0, login_widget)
         login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
 
