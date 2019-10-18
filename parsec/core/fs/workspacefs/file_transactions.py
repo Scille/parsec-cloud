@@ -266,10 +266,14 @@ class FileTransactions:
 
             # Craft and set new manifest
             manifest = update(manifest, new_chunk)
-            await self.local_storage.set_manifest(manifest.id, manifest, cache_only=cache_only)
+            await self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
 
             # Perform cleanup
             await self.local_storage.clear_chunks(cleanup, postpone=manifest.id)
+
+        # Flush if necessary
+        if not cache_only:
+            await self.local_storage.ensure_manifest_persistent(manifest.id)
 
         # Return missing block ids
         return missing
