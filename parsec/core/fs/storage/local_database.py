@@ -3,10 +3,36 @@
 import functools
 from pathlib import Path
 from inspect import isasyncgenfunction
+from concurrent.futures import ThreadPoolExecutor
 
 import trio
+import outcome
 from async_generator import asynccontextmanager
 from sqlite3 import connect as sqlite_connect
+
+
+@asynccontextmanager
+async def thread_pool_runner(max_workers=None):
+    """A trio-managed thread pool"""
+    portal = trio.BlockingTrioPortal()
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    async def run_in_thread(fn, *args):
+        send_channel, receive_channel = trio.open_memory_channel(1)
+
+        def target():
+            result = outcome.capture(fn, *args)
+            portal.run_sync(send_channel.send_nowait, result)
+
+        executor.submit(target)
+        result = await receive_channel.receive()
+        return result.unwrap()
+
+    try:
+        yield run_in_thread
+    finally:
+        with trio.CancelScope(shield=True):
+            await trio.run_sync_in_worker_thread(executor.shutdown)
 
 
 def protect_with_lock(fn):
@@ -36,6 +62,7 @@ class LocalDatabase:
     def __init__(self, path, vacuum_threshold=None):
         self._conn = None
         self._lock = trio.Lock()
+        self._run_in_thread = None
 
         self.path = Path(path)
         self.vacuum_threshold = vacuum_threshold
@@ -44,15 +71,13 @@ class LocalDatabase:
     @asynccontextmanager
     async def run(cls, *args, **kwargs):
         self = cls(*args, **kwargs)
-        try:
-            await self._connect()
-            yield self
-        finally:
-            with trio.CancelScope(shield=True):
-                await self._close()
-
-    async def _run_in_thread(self, fn, *args):
-        return await trio.run_sync_in_worker_thread(fn, *args)
+        async with thread_pool_runner(max_workers=1) as self._run_in_thread:
+            try:
+                await self._connect()
+                yield self
+            finally:
+                with trio.CancelScope(shield=True):
+                    await self._close()
 
     # Life cycle
 

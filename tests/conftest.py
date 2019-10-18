@@ -29,7 +29,7 @@ from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.core.fs.storage import LocalDatabase
+from parsec.core.fs.storage import LocalDatabase, local_database
 
 from parsec.backend import BackendApp
 from parsec.backend.config import (
@@ -376,10 +376,16 @@ def persistent_mockup(monkeypatch):
         storage_set.remove(storage)
         storage._conn = None
 
-    async def _run_in_thread(fn, *args):
-        return fn(*args)
+    @asynccontextmanager
+    async def thread_pool_runner(max_workers):
+        assert max_workers == 1
 
-    monkeypatch.setattr(LocalDatabase, "_run_in_thread", _run_in_thread)
+        async def run_in_thread(fn, *args):
+            return fn(*args)
+
+        yield run_in_thread
+
+    monkeypatch.setattr(local_database, "thread_pool_runner", thread_pool_runner)
     monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
     monkeypatch.setattr(LocalDatabase, "_close", _close)
 
