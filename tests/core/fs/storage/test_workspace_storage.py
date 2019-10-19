@@ -127,8 +127,8 @@ async def test_cache_set_get(tmpdir, alice, workspace_id):
 
 @pytest.mark.trio
 @pytest.mark.parametrize("cache_only", (False, True))
-@pytest.mark.parametrize("postpone", (False, True))
-async def test_clear_chunks(alice_workspace_storage, cache_only, postpone):
+@pytest.mark.parametrize("clear_manifest", (False, True))
+async def test_chunk_cleanup(alice_workspace_storage, cache_only, clear_manifest):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
     data1 = b"abc"
@@ -144,19 +144,12 @@ async def test_clear_chunks(alice_workspace_storage, cache_only, postpone):
         await aws.set_manifest(manifest.id, manifest)
 
         # Set a new version of the manifest without the chunks
+        cleanup = {chunk1.id, chunk2.id}
         new_manifest = manifest.evolve(blocks=())
-        await aws.set_manifest(manifest.id, new_manifest, cache_only=cache_only)
-
-        # Postpone the clearing of the chunks
-        if postpone:
-            await aws.clear_chunks({chunk1.id, chunk2.id}, postpone=manifest.id)
-
-        # Do not postpone the clearing of the chunks
-        else:
-            await aws.clear_chunks({chunk1.id, chunk2.id})
+        await aws.set_manifest(manifest.id, new_manifest, cache_only=cache_only, cleanup=cleanup)
 
         # The chunks are still accessible
-        if postpone and cache_only:
+        if cache_only:
             await aws.get_chunk(chunk1.id) == b"abc"
             await aws.get_chunk(chunk2.id) == b"def"
 
@@ -168,13 +161,19 @@ async def test_clear_chunks(alice_workspace_storage, cache_only, postpone):
                 await aws.get_chunk(chunk2.id)
 
         # Now flush the manifest
-        await aws.ensure_manifest_persistent(manifest.id)
+        if clear_manifest:
+            await aws.clear_manifest(manifest.id)
+        else:
+            await aws.ensure_manifest_persistent(manifest.id)
 
         # The chunks are gone
         with pytest.raises(FSLocalMissError):
             await aws.get_chunk(chunk1.id)
         with pytest.raises(FSLocalMissError):
             await aws.get_chunk(chunk2.id)
+
+        # Idempotency
+        await aws.manifest_storage._ensure_manifest_persistent(manifest.id)
 
 
 @pytest.mark.trio

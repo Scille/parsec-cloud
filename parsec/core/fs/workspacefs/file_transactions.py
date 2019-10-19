@@ -163,10 +163,9 @@ class FileTransactions:
                 self._write_count[fd] += await self._write_chunk(chunk, content, offset)
 
             # Atomic change
-            await self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
-
-            # Clean up
-            await self.local_storage.clear_chunks(removed_ids, postpone=manifest.id)
+            await self.local_storage.set_manifest(
+                manifest.id, manifest, cache_only=True, cleanup=removed_ids
+            )
 
             # Reshaping
             if self._write_count[fd] >= manifest.blocksize:
@@ -235,10 +234,7 @@ class FileTransactions:
             await self._write_chunk(chunk, b"", offset)
 
         # Atomic change
-        await self.local_storage.set_manifest(manifest.id, manifest)
-
-        # Clean up
-        await self.local_storage.clear_chunks(removed_ids)
+        await self.local_storage.set_manifest(manifest.id, manifest, cleanup=removed_ids)
 
     async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
@@ -249,7 +245,7 @@ class FileTransactions:
         missing = []
 
         # Perform operations
-        for source, destination, update, cleanup in prepare_reshape(manifest):
+        for source, destination, update, removed_ids in prepare_reshape(manifest):
 
             # Build data block
             data, extra_missing = await self._build_data(source)
@@ -266,10 +262,9 @@ class FileTransactions:
 
             # Craft and set new manifest
             manifest = update(manifest, new_chunk)
-            await self.local_storage.set_manifest(manifest.id, manifest, cache_only=True)
-
-            # Perform cleanup
-            await self.local_storage.clear_chunks(cleanup, postpone=manifest.id)
+            await self.local_storage.set_manifest(
+                manifest.id, manifest, cache_only=True, cleanup=removed_ids
+            )
 
         # Flush if necessary
         if not cache_only:

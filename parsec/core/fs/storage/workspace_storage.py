@@ -177,11 +177,14 @@ class WorkspaceStorage:
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool = False,
-        check_lock_status=True,
+        check_lock_status: bool = True,
+        cleanup: Optional[Set[ChunkID]] = None,
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
-        await self.manifest_storage.set_manifest(entry_id, manifest, cache_only=cache_only)
+        await self.manifest_storage.set_manifest(
+            entry_id, manifest, cache_only=cache_only, cleanup=cleanup
+        )
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         self._check_lock_status(entry_id)
@@ -227,20 +230,6 @@ class WorkspaceStorage:
         except FSLocalMissError:
             if not miss_ok:
                 raise
-
-    async def clear_chunks(
-        self, chunk_ids: Set[ChunkID], postpone: Optional[EntryID] = None
-    ) -> None:
-        # Postponing the clearing as the corresponding manifest is still in cache
-        if postpone and self.manifest_storage.postpone_clear_chunks(chunk_ids, postpone):
-            return
-
-        # Actual clearing of the chunk
-        for chunk_id in chunk_ids:
-            await self.clear_chunk(chunk_id, miss_ok=True)
-
-        # Commit the clean up
-        await self.data_localdb.commit()
 
     # File management interface
 

@@ -130,40 +130,73 @@ class ManifestStorage:
         Raises:
             FSLocalMissError
         """
+        # Look in cache first
         try:
             return self._cache[entry_id]
         except KeyError:
             pass
 
+        # Look into the database
         async with self._open_cursor() as cursor:
             cursor.execute("SELECT blob FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             manifest_row = cursor.fetchone()
+
+        # Not found
         if not manifest_row:
             raise FSLocalMissError(entry_id)
 
-        manifest = LocalManifest.decrypt_and_load(manifest_row[0], key=self.device.local_symkey)
-        self._cache[entry_id] = manifest
+        # Safely fill the cache
+        if entry_id not in self._cache:
+            self._cache[entry_id] = LocalManifest.decrypt_and_load(
+                manifest_row[0], key=self.device.local_symkey
+            )
 
-        return manifest
+        # Always return the cached value
+        return self._cache[entry_id]
 
     async def set_manifest(
-        self, entry_id: EntryID, manifest: LocalManifest, cache_only: bool = False
+        self,
+        entry_id: EntryID,
+        manifest: LocalManifest,
+        cache_only: bool = False,
+        cleanup: Optional[Set[ChunkID]] = None,
     ) -> None:
         """
         Raises: Nothing !
         """
         assert isinstance(entry_id, EntryID)
+
+        # Set the cache first
         self._cache[entry_id] = manifest
         self._cache_ahead_of_localdb.setdefault(entry_id, set())
 
-        if not cache_only:
-            await self._ensure_manifest_persistent(entry_id)
+        # Cleanup
+        if cleanup:
+            self._cache_ahead_of_localdb[entry_id] |= cleanup
 
-    async def _set_manifest_in_db(
-        self, entry_id: EntryID, manifest: LocalManifest, chunk_ids: Optional[Set[ChunkID]] = None
-    ) -> None:
-        ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
+        # Tag the entry as ahead of localdb
+        if cache_only:
+            return
+
+        # Flush the cached value to the localdb
+        await self._ensure_manifest_persistent(entry_id)
+
+    async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
+
+        # Get cursor
         async with self._open_cursor() as cursor:
+
+            # Flushing is not necessary
+            if entry_id not in self._cache_ahead_of_localdb:
+                return
+
+            # Safely get the manifest
+            manifest = self._cache[entry_id]
+
+            # Dump and decrypt the manifest
+            ciphered = manifest.dump_and_encrypt(self.device.local_symkey)
+
+            # Insert into the local database
             cursor.execute(
                 """INSERT OR REPLACE INTO vlobs (vlob_id, blob, need_sync, base_version, remote_version)
                 VALUES (
@@ -183,52 +216,52 @@ class ManifestStorage:
                 ),
             )
 
-            # No cleanup necessary
-            if not chunk_ids:
-                return
-
             # Clean all the pending chunks
-            for chunk_id in chunk_ids:
+            for chunk_id in self._cache_ahead_of_localdb[entry_id]:
                 cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+
+            # Safely tag entry as up-to-date
+            self._cache_ahead_of_localdb.pop(entry_id)
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:
         """
         Raises: Nothing !
         """
         assert isinstance(entry_id, EntryID)
-        if entry_id not in self._cache_ahead_of_localdb:
-            return
-        await self._ensure_manifest_persistent(entry_id)
-
-    async def _flush_cache_ahead_of_persistance(self) -> None:
-        for entry_id in self._cache_ahead_of_localdb.copy():
+        # Flush if necessary
+        if entry_id in self._cache_ahead_of_localdb:
             await self._ensure_manifest_persistent(entry_id)
 
-    async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
-        manifest = self._cache[entry_id]
-        chunk_ids = self._cache_ahead_of_localdb[entry_id]
-        await self._set_manifest_in_db(entry_id, manifest, chunk_ids)
-        self._cache_ahead_of_localdb.pop(entry_id)
+    async def _flush_cache_ahead_of_persistance(self) -> None:
+        # Flush until the all the cache is gone
+        while self._cache_ahead_of_localdb:
+            entry_id = next(iter(self._cache_ahead_of_localdb))
+            await self._ensure_manifest_persistent(entry_id)
 
     async def clear_manifest(self, entry_id: EntryID) -> None:
         """
+        This method isn't used at the moment.
+
         Raises:
             FSLocalMissError
         """
-        if entry_id in self._cache_ahead_of_localdb:
-            await self._ensure_manifest_persistent(entry_id)
-        in_cache = bool(self._cache.pop(entry_id, None))
+
         async with self._open_cursor() as cursor:
+
+            # Safely remove from cache
+            in_cache = bool(self._cache.pop(entry_id, None))
+
+            # Remove from local database
             cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (entry_id.bytes,))
             cursor.execute("SELECT changes()")
             deleted, = cursor.fetchone()
+
+            # Clean all the pending chunks
+            # TODO: should also add the content of the popped manifest
+            pending_chunk_ids = self._cache_ahead_of_localdb.pop(entry_id, ())
+            for chunk_id in pending_chunk_ids:
+                cursor.execute("DELETE FROM chunks WHERE chunk_id = ?", (chunk_id.bytes,))
+
+        # Raise a miss if the entry wasn't found
         if not deleted and not in_cache:
             raise FSLocalMissError(entry_id)
-
-    # Chunk clearing logic
-
-    def postpone_clear_chunks(self, chunk_ids: Set[ChunkID], postpone: EntryID) -> bool:
-        if postpone not in self._cache_ahead_of_localdb:
-            return False
-        self._cache_ahead_of_localdb[postpone] |= chunk_ids
-        return True
