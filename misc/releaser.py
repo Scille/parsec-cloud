@@ -131,7 +131,7 @@ def build_release(version):
         issue_id, type, _ = fragment.name.split(".")
         issue_txt = f"{fragment.read_text()} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
         wrapped_issue_txt = textwrap.fill(
-            issue_txt, width=80, break_long_words=False, initial_indent="- ", subsequent_indent="  "
+            issue_txt, width=80, break_long_words=False, initial_indent="* ", subsequent_indent="  "
         )
         issues_per_type[type].append(wrapped_issue_txt)
 
@@ -155,7 +155,8 @@ def build_release(version):
     run_git(f"add {HISTORY_FILE.absolute()} {VERSION_FILE.absolute()}")
     fragments_pathes = [str(x.absolute()) for x in newsfragments]
     run_git(f"rm {' '.join(fragments_pathes)}")
-    run_git(f"commit -m '{commit_msg}'")
+    # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
+    run_git(f"commit -m '{commit_msg}' --no-verify")
     print(f"Create tag {version.full}")
     run_git(f"tag {version.full}")
 
@@ -164,7 +165,8 @@ def build_release(version):
     print(f"Create commit `{commit_msg}`")
     replace_code_version(version.short + "+dev")
     run_git(f"add {VERSION_FILE.absolute()}")
-    run_git(f"commit -m '{commit_msg}'")
+    # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
+    run_git(f"commit -m '{commit_msg}' --no-verify")
 
 
 def check_release(version):
