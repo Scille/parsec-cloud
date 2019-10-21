@@ -1,1 +1,0 @@
-Fix pure HTTP query handling in backend
