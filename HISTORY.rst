@@ -6,6 +6,17 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.1.1 (2019-10-21)
+-------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix argument parsing in backend cli commands (``PARSEC_CMD_ARGS`` env var, db
+  param and S3 entry point default value) (`#749
+  <https://github.com/Scille/parsec-cloud/issues/749>`__)
+
+
 Parsec 1.1.0 (2019-10-21)
 -------------------------
 
