@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-from typing import List
+from typing import List, Optional
 
 
 class BaseBlockStoreConfig:
@@ -33,7 +33,7 @@ class RAID5BlockStoreConfig(BaseBlockStoreConfig):
 class S3BlockStoreConfig(BaseBlockStoreConfig):
     type = "S3"
 
-    s3_endpoint_url: str
+    s3_endpoint_url: Optional[str]
     s3_region: str
     s3_bucket: str
     s3_key: str

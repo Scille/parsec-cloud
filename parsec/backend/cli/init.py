@@ -10,6 +10,7 @@ from parsec.backend.postgresql import init_db
 def _validate_postgres_db_url(ctx, param, value):
     if not (value.startswith("postgresql://") or value.startswith("postgres://")):
         raise click.BadParameter("Must start with `postgresql://` or `postgres://`")
+    return value
 
 
 @click.command(short_help="init the database")
