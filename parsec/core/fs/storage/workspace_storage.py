@@ -126,8 +126,8 @@ class WorkspaceStorage:
         self.fd_counter += 1
         return FileDescriptor(self.fd_counter)
 
-    def clear_memory_cache(self):
-        self.manifest_storage.clear_memory_cache()
+    async def clear_memory_cache(self, flush=True):
+        await self.manifest_storage.clear_memory_cache(flush=flush)
 
     # Locking helpers
 

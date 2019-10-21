@@ -194,16 +194,29 @@ async def test_clear_cache(alice_workspace_storage):
     manifest1 = create_manifest(aws.device)
     manifest2 = create_manifest(aws.device)
 
+    # Set manifest 1 and manifest 2, cache only
     async with aws.lock_entry_id(manifest1.id):
         await aws.set_manifest(manifest1.id, manifest1)
     async with aws.lock_entry_id(manifest2.id):
         await aws.set_manifest(manifest2.id, manifest2, cache_only=True)
 
-        aws.clear_memory_cache()
+    # Clear without flushing
+    await aws.clear_memory_cache(flush=False)
 
-        assert await aws.get_manifest(manifest1.id) == manifest1
-        with pytest.raises(FSLocalMissError):
-            await aws.get_manifest(manifest2.id)
+    # Manifest 1 is present but manifest 2 got lost
+    assert await aws.get_manifest(manifest1.id) == manifest1
+    with pytest.raises(FSLocalMissError):
+        await aws.get_manifest(manifest2.id)
+
+    # Set manifest 2, cache only
+    async with aws.lock_entry_id(manifest2.id):
+        await aws.set_manifest(manifest2.id, manifest2, cache_only=True)
+
+    # Clear with flushing
+    await aws.clear_memory_cache()
+
+    # Manifest 2 is present
+    assert await aws.get_manifest(manifest2.id) == manifest2
 
 
 @pytest.mark.parametrize("type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest])

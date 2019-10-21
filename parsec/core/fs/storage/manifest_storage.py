@@ -46,9 +46,11 @@ class ManifestStorage:
         # (unless they are purposely kept out of the local database)
         return self.localdb.open_cursor(commit=True)
 
-    def clear_memory_cache(self):
-        self._cache.clear()
+    async def clear_memory_cache(self, flush=True):
+        if flush:
+            await self._flush_cache_ahead_of_persistance()
         self._cache_ahead_of_localdb.clear()
+        self._cache.clear()
 
     # Database initialization
 
