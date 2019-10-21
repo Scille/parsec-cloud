@@ -126,6 +126,59 @@ async def test_cache_set_get(tmpdir, alice, workspace_id):
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("cache_only", (False, True))
+@pytest.mark.parametrize("clear_manifest", (False, True))
+async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifest):
+    aws = alice_workspace_storage
+    manifest = create_manifest(aws.device, LocalFileManifest)
+    data1 = b"abc"
+    chunk1 = Chunk.new(0, 3)
+    data2 = b"def"
+    chunk2 = Chunk.new(3, 6)
+    manifest = manifest.evolve(blocks=((chunk1, chunk2),), size=6)
+
+    async with aws.lock_entry_id(manifest.id):
+        # Set chunks and manifests
+        await aws.set_chunk(chunk1.id, data1)
+        await aws.set_chunk(chunk2.id, data2)
+        await aws.set_manifest(manifest.id, manifest)
+
+        # Set a new version of the manifest without the chunks
+        removed_ids = {chunk1.id, chunk2.id}
+        new_manifest = manifest.evolve(blocks=())
+        await aws.set_manifest(
+            manifest.id, new_manifest, cache_only=cache_only, removed_ids=removed_ids
+        )
+
+        # The chunks are still accessible
+        if cache_only:
+            await aws.get_chunk(chunk1.id) == b"abc"
+            await aws.get_chunk(chunk2.id) == b"def"
+
+        # The chunks are gone
+        else:
+            with pytest.raises(FSLocalMissError):
+                await aws.get_chunk(chunk1.id)
+            with pytest.raises(FSLocalMissError):
+                await aws.get_chunk(chunk2.id)
+
+        # Now flush the manifest
+        if clear_manifest:
+            await aws.clear_manifest(manifest.id)
+        else:
+            await aws.ensure_manifest_persistent(manifest.id)
+
+        # The chunks are gone
+        with pytest.raises(FSLocalMissError):
+            await aws.get_chunk(chunk1.id)
+        with pytest.raises(FSLocalMissError):
+            await aws.get_chunk(chunk2.id)
+
+        # Idempotency
+        await aws.manifest_storage._ensure_manifest_persistent(manifest.id)
+
+
+@pytest.mark.trio
 async def test_cache_flushed_on_exit(tmpdir, alice, workspace_id):
     manifest = create_manifest(alice)
 
@@ -143,16 +196,29 @@ async def test_clear_cache(alice_workspace_storage):
     manifest1 = create_manifest(aws.device)
     manifest2 = create_manifest(aws.device)
 
+    # Set manifest 1 and manifest 2, cache only
     async with aws.lock_entry_id(manifest1.id):
         await aws.set_manifest(manifest1.id, manifest1)
     async with aws.lock_entry_id(manifest2.id):
         await aws.set_manifest(manifest2.id, manifest2, cache_only=True)
 
-        aws.clear_memory_cache()
+    # Clear without flushing
+    await aws.clear_memory_cache(flush=False)
 
-        assert await aws.get_manifest(manifest1.id) == manifest1
-        with pytest.raises(FSLocalMissError):
-            await aws.get_manifest(manifest2.id)
+    # Manifest 1 is present but manifest 2 got lost
+    assert await aws.get_manifest(manifest1.id) == manifest1
+    with pytest.raises(FSLocalMissError):
+        await aws.get_manifest(manifest2.id)
+
+    # Set manifest 2, cache only
+    async with aws.lock_entry_id(manifest2.id):
+        await aws.set_manifest(manifest2.id, manifest2, cache_only=True)
+
+    # Clear with flushing
+    await aws.clear_memory_cache()
+
+    # Manifest 2 is present
+    assert await aws.get_manifest(manifest2.id) == manifest2
 
 
 @pytest.mark.parametrize("type", [LocalWorkspaceManifest, LocalFolderManifest, LocalFileManifest])

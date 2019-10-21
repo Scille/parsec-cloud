@@ -161,7 +161,7 @@ async def test_reloading_v0_user_manifest(
             wid = await user_fs.workspace_create("foo")
             workspace = user_fs.get_workspace(wid)
 
-    local_storage.clear_memory_cache()
+    await local_storage.clear_memory_cache()
 
     # Reload version 0 manifest
     async with user_fs_factory(alice, local_storage) as user_fs:
@@ -180,7 +180,7 @@ async def test_reloading_v0_user_manifest(
             "children": ["foo"],
         }
 
-    local_storage.clear_memory_cache()
+    await local_storage.clear_memory_cache()
 
     # Syncronize version 0 manifest
     async with user_fs_factory(alice, local_storage) as user_fs:

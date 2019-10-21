@@ -3,7 +3,8 @@
 # Imports
 
 import bisect
-from typing import Tuple, List, Set, Iterator, Callable, Dict
+from functools import partial
+from typing import Tuple, List, Set, Iterator, Callable
 
 from parsec.core.types import BlockID, LocalFileManifest, Chunk
 
@@ -219,10 +220,15 @@ def prepare_resize(
 
 def prepare_reshape(
     manifest: LocalFileManifest
-) -> Tuple[Callable, Dict[int, Tuple[Chunks, Chunk, Set[BlockID]]]]:
+) -> Iterator[Tuple[Chunks, Chunk, Callable, Set[BlockID]]]:
 
-    # Prepare
-    operations = {}
+    # Update manifest
+    def update_manifest(
+        block: int, manifest: LocalFileManifest, new_chunk: Chunk
+    ) -> LocalFileManifest:
+        blocks = list(manifest.blocks)
+        blocks[block] = (new_chunk,)
+        return manifest.evolve(blocks=tuple(blocks))
 
     # Loop over blocks
     for block, chunks in enumerate(manifest.blocks):
@@ -231,23 +237,20 @@ def prepare_reshape(
         if len(chunks) == 1 and chunks[0].is_block:
             continue
 
+        # Update callback
+        block_update = partial(update_manifest, block)
+
         # Already a pseudo-block
         if len(chunks) == 1 and chunks[0].is_pseudo_block:
-            operations[block] = (chunks, chunks[0], set())
+            yield (chunks, chunks[0], block_update, set())
             continue
 
-        # Write new block
+        # Prepare new block
         start, stop = chunks[0].start, chunks[-1].stop
         new_chunk = Chunk.new(start, stop)
 
-        # Update structures
+        # Cleanup
         removed_ids = chunk_id_set(chunks)
-        operations[block] = (chunks, new_chunk, removed_ids)
 
-    def build_manifest(result_dict: Dict[int, Chunk]) -> LocalFileManifest:
-        blocks = list(manifest.blocks)
-        for block, new_chunk in result_dict.items():
-            blocks[block] = (new_chunk,)
-        return manifest.evolve(blocks=tuple(blocks))
-
-    return build_manifest, operations
+        # Yield operations
+        yield (chunks, new_chunk, block_update, removed_ids)
