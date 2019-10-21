@@ -41,7 +41,7 @@ def _parse_blockstore_param(value):
                     "Invalid S3 config, must be `s3:<endpoint_url>:<region>:<bucket>:<key>:<secret>`"
                 )
             return S3BlockStoreConfig(
-                s3_endpoint_url=endpoint_url,
+                s3_endpoint_url=endpoint_url or None,
                 s3_region=region,
                 s3_bucket=bucket,
                 s3_key=key,
