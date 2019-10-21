@@ -4,7 +4,7 @@ import attr
 import trio
 from collections import defaultdict
 from typing import Union, Iterator, Dict, Tuple
-from pendulum import Pendulum
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import Manifest as RemoteManifest
 from parsec.api.protocol import UserID, DeviceID
@@ -531,6 +531,9 @@ class WorkspaceFS:
             # Upload blocks
             if is_file_manifest(new_remote_manifest):
                 await self._upload_blocks(new_remote_manifest)
+
+            # Restamp the remote manifest
+            new_remote_manifest = new_remote_manifest.evolve(timestamp=pendulum_now())
 
             # Upload the new manifest containing the latest changes
             try:
