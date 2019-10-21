@@ -73,6 +73,9 @@ class CoreConfig:
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
 
+    ipc_socket_file: Path = None
+    ipc_win32_mutex_name: str = "parsec-cloud"
+
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
@@ -97,9 +100,10 @@ def config_factory(
     environ: dict = {},
     **_,
 ) -> CoreConfig:
+    data_base_dir = data_base_dir or get_default_data_base_dir(environ)
     return CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
-        data_base_dir=data_base_dir or get_default_data_base_dir(environ),
+        data_base_dir=data_base_dir,
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
         mountpoint_enabled=mountpoint_enabled,
@@ -115,6 +119,8 @@ def config_factory(
         gui_check_version_at_startup=gui_check_version_at_startup,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
+        ipc_socket_file=data_base_dir / "parsec-cloud.lock",
+        ipc_win32_mutex_name="parsec-cloud",
     )
 
 

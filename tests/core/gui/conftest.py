@@ -230,7 +230,7 @@ def autoclose_dialog(monkeypatch):
 def gui_factory(qtbot, qt_thread_gateway, core_config):
     windows = []
 
-    async def _gui_factory(event_bus=None, core_config=core_config):
+    async def _gui_factory(event_bus=None, core_config=core_config, start_arg=None):
         # First start popup blocks the test
         # Check version and mountpoint are useless for most tests
         core_config = core_config.evolve(
@@ -251,6 +251,8 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
             main_w = MainWindow(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )
+            main_w.add_instance(start_arg)
+            main_w.show_top()
             qtbot.add_widget(main_w)
             main_w.showMaximized()
             windows.append(main_w)
@@ -286,8 +288,15 @@ def add_method(cls):
 
 
 @add_method(MainWindow)
+def test_get_tab(self):
+    w = self.tab_center.currentWidget()
+    return w
+
+
+@add_method(MainWindow)
 def test_get_main_widget(self):
-    item = self.widget_center.layout().itemAt(0)
+    tabw = self.test_get_tab()
+    item = tabw.layout().itemAt(0)
     return item.widget()
 
 
@@ -311,7 +320,7 @@ def test_get_login_widget(self):
 def test_get_login_login_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, LoginLoginWidget):
@@ -323,7 +332,7 @@ def test_get_login_login_widget(self):
 def test_get_claim_user_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, ClaimUserWidget):
@@ -335,7 +344,7 @@ def test_get_claim_user_widget(self):
 def test_get_claim_device_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, ClaimDeviceWidget):
@@ -347,7 +356,7 @@ def test_get_claim_device_widget(self):
 def test_get_bootstrap_organization_widget(self):
     login_w = self.test_get_login_widget()
     if not login_w:
-        return
+        return None
     item = login_w.layout.itemAt(0)
     w = item.widget()
     if not isinstance(w, BootstrapOrganizationWidget):

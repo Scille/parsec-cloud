@@ -3,8 +3,8 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QPoint
 from PyQt5.QtWidgets import QDialog, QToolTip
 
-from parsec.api.protocol import DeviceName
-from parsec.core.types import BackendOrganizationAddr
+from parsec.api.protocol import DeviceID, DeviceName
+from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import (
     InviteClaimTimeoutError,
     InviteClaimBackendOfflineError,
@@ -156,12 +156,27 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             show_warning(self, _("WARN_REGISTER_DEVICE_EMPTY"))
             return
 
+        try:
+            new_device_id = DeviceID(
+                f"{self.core.device.user_id}@{self.line_edit_device_name.text()}"
+            )
+        except ValueError as exc:
+            show_error(self, _("ERR_BAD_DEVICE_NAME"), exception=exc)
+            return
         token = core_generate_invitation_token()
-        self.line_edit_device.setText(self.line_edit_device_name.text())
+        try:
+            addr = BackendOrganizationClaimDeviceAddr.build(
+                self.core.device.organization_addr, device_id=new_device_id
+            )
+        except ValueError as exc:
+            show_error(self, _("ERR_REGISTER_WRONG_PARAMETERS"), exception=exc)
+            return
+
+        self.line_edit_device.setText(new_device_id.device_name)
         self.line_edit_device.setCursorPosition(0)
         self.line_edit_token.setText(token)
         self.line_edit_token.setCursorPosition(0)
-        self.line_edit_url.setText(self.core.device.organization_addr)
+        self.line_edit_url.setText(addr.to_url())
         self.line_edit_url.setCursorPosition(0)
         self.button_cancel.setFocus()
         self.widget_registration.show()
@@ -171,7 +186,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             _do_registration,
             core=self.core,
             device=self.core.device,
-            new_device_name=self.line_edit_device_name.text(),
+            new_device_name=new_device_id.device_name,
             token=token,
         )
         self.button_cancel.show()

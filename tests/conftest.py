@@ -28,9 +28,9 @@ from parsec.api.transport import Transport
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
-from parsec.core.fs.realm_storage import _connect as vanilla_realm_storage_connect
-from parsec.core.fs.local_storage import LocalStorage
 from parsec.core.mountpoint.manager import get_mountpoint_runner
+from parsec.core.fs.storage import LocalDatabase
+
 from parsec.backend import BackendApp
 from parsec.backend.config import (
     BackendConfig,
@@ -41,15 +41,11 @@ from parsec.backend.config import (
     RAID5BlockStoreConfig,
 )
 
+
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import (
-    freeze_time,
-    FreezeTestOnTransportError,
-    InMemoryPersistentStorage,
-    addr_with_device_subdomain,
-)
+from tests.common import freeze_time, FreezeTestOnTransportError, addr_with_device_subdomain
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -311,12 +307,12 @@ def server_factory(tcp_stream_spy):
     count = 0
 
     @asynccontextmanager
-    async def _server_factory(entry_point, url=None, ssl=False):
+    async def _server_factory(entry_point, addr=None):
         nonlocal count
         count += 1
 
-        if not url:
-            url = f"parsec://server-{count}.localhost:9999?no_ssl=true"
+        if not addr:
+            addr = BackendAddr(hostname=f"server-{count}.localhost", port=9999, use_ssl=False)
 
         async with trio.open_nursery() as nursery:
 
@@ -325,9 +321,9 @@ def server_factory(tcp_stream_spy):
                 nursery.start_soon(entry_point, left)
                 return right
 
-            tcp_stream_spy.push_hook(url, connection_factory)
+            tcp_stream_spy.push_hook(addr, connection_factory)
             try:
-                yield AppServer(entry_point, url, connection_factory)
+                yield AppServer(entry_point, addr, connection_factory)
                 nursery.cancel_scope.cancel()
 
             finally:
@@ -335,7 +331,7 @@ def server_factory(tcp_stream_spy):
                 # the nursery. Otherwise another coroutine trying to connect would
                 # end up with a `RuntimeError('Nursery is closed to new arrivals',)`
                 # given `connection_factory` make use of the now-closed nursery.
-                tcp_stream_spy.pop_hook(url)
+                tcp_stream_spy.pop_hook(addr)
 
     return _server_factory
 
@@ -344,43 +340,48 @@ def server_factory(tcp_stream_spy):
 def backend_addr(tcp_stream_spy):
     # Depending on tcp_stream_spy fixture prevent from doing real connection
     # attempt (which can be long to resolve) when backend is not running
-    return BackendAddr("parsec://example.com:9999?no_ssl=true")
+    return BackendAddr(hostname="example.com", port=9999, use_ssl=False)
 
 
 @pytest.fixture
 def persistent_mockup(monkeypatch):
-    realm_connect_cache = {}
-    with contextlib.ExitStack() as realm_connect_stack, InMemoryPersistentStorage.mockup_context() as ctx:
-        monkeypatch.setattr(LocalStorage, "persistent_storage_class", InMemoryPersistentStorage)
+    @attr.s
+    class MockupContext:
 
-        @contextlib.contextmanager
-        def _mocked_realm_storage_connect(dbpath: str):
-            try:
-                open_cursor = realm_connect_cache[dbpath]
-            except KeyError:
-                open_cursor = realm_connect_stack.enter_context(
-                    vanilla_realm_storage_connect(":memory:")
-                )
-                realm_connect_cache[dbpath] = open_cursor
-            yield open_cursor
+        connections = attr.ib(factory=dict)
 
-        monkeypatch.setattr("parsec.core.fs.realm_storage._connect", _mocked_realm_storage_connect)
+        def get(self, path):
+            if path not in self.connections:
+                self.connections[path] = sqlite3.connect(":memory:")
+            return self.connections[path]
 
-        vanilla_clear = ctx.clear
+        def clear(self):
+            for connection in self.connections.values():
+                try:
+                    connection.close()
+                except sqlite3.ProgrammingError:
+                    # Connections will raise error if they were opened from another
+                    # thread. This only occurs for a couple of tests so no big deal.
+                    pass
+            self.connections.clear()
 
-        def _mocked_clear():
-            try:
-                realm_connect_stack.pop_all().close()
-            except sqlite3.ProgrammingError:
-                # Connections will raise error if they were opened from another
-                # thread. This only occurs for a couple of tests so no big deal.
-                pass
-            realm_connect_cache.clear()
-            vanilla_clear()
+    mockup_context = MockupContext()
+    storage_set = set()
 
-        ctx.clear = _mocked_clear
+    async def _create_connection(storage):
+        storage_set.add(storage)
+        return mockup_context.get(storage.path)
 
-        yield ctx
+    async def _close(storage):
+        storage_set.remove(storage)
+        storage._conn = None
+
+    monkeypatch.setattr(LocalDatabase, "_create_connection", _create_connection)
+    monkeypatch.setattr(LocalDatabase, "_close", _close)
+
+    yield mockup_context
+    mockup_context.clear()
+    assert not storage_set
 
 
 @pytest.fixture
@@ -561,7 +562,7 @@ def backend_sock_factory(server_factory, coolorg):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = await Transport.init_for_client(stream, server.addr)
+            transport = await Transport.init_for_client(stream, server.addr.hostname)
             transport = FreezeTestOnTransportError(transport)
 
             if auth_as:

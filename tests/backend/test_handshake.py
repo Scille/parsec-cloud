@@ -42,7 +42,7 @@ def mock_api_versions(monkeypatch):
 async def test_anonymous_handshake_invalid_format(backend, server_factory):
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         await transport.recv()  # Get challenge
         req = {
@@ -68,7 +68,7 @@ async def test_authenticated_handshake_good(backend, server_factory, alice, mock
 
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -86,7 +86,7 @@ async def test_administration_handshake_good(backend, server_factory, mock_api_v
     ch = AdministrationClientHandshake(backend.config.administration_token)
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -104,7 +104,7 @@ async def test_admin_handshake_bad_token(backend, server_factory):
     ch = AdministrationClientHandshake("dummy token")
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -126,7 +126,7 @@ async def test_handshake_bad_rvk(backend, server_factory, coolorg, alice, othero
         )
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -146,7 +146,7 @@ async def test_anonymous_handshake_good(
     ch = AnonymousClientHandshake(coolorg.organization_id, to_check_rvk)
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -164,7 +164,7 @@ async def test_anonymous_handshake_bad_rvk(backend, server_factory, coolorg, oth
     ch = AnonymousClientHandshake(coolorg.organization_id, otherorg.root_verify_key)
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -190,7 +190,7 @@ async def test_anonymous_handshake_unknown_organization(
 
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -209,7 +209,7 @@ async def test_anonymous_handshake_expired_organization(backend, server_factory,
 
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -227,7 +227,7 @@ async def test_authenticated_handshake_unknown_device(backend, server_factory, m
     )
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
@@ -248,7 +248,7 @@ async def test_authenticated_handshake_bad_versions(
 
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await Transport.init_for_client(stream, server.addr)
+        transport = await Transport.init_for_client(stream, server.addr.hostname)
 
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)

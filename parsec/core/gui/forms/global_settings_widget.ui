@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>521</width>
-    <height>583</height>
+    <height>562</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -179,7 +179,7 @@ width: 20px;
         <x>0</x>
         <y>0</y>
         <width>481</width>
-        <height>469</height>
+        <height>448</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -262,13 +262,6 @@ background-color: rgb(255, 255, 255);
              <widget class="QCheckBox" name="check_box_tray">
               <property name="text">
                <string>CHECK_MINIMIZE_IN_TRAY</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="check_box_multiple_instances">
-              <property name="text">
-               <string>CHECK_ALLOW_MULTIPLE_INSTANCES</string>
               </property>
              </widget>
             </item>

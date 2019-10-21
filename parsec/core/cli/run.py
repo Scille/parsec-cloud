@@ -19,13 +19,15 @@ except ImportError as exc:
 else:
 
     @click.command(short_help="run parsec GUI")
+    # Let the GUI handle the parsing of the url to display dialog on error
+    @click.argument("url", required=False)
     @core_config_options
-    def run_gui(config, **kwargs):
+    def run_gui(config, url, **kwargs):
         """
         Run parsec GUI
         """
         config = config.evolve(mountpoint_enabled=True)
-        _run_gui(config)
+        _run_gui(config, start_arg=url)
 
 
 async def _run_mountpoint(config, device, timestamp: Pendulum = None):

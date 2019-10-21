@@ -69,7 +69,7 @@ def generate_invitation_token():
 
 
 async def claim_user(
-    backend_addr: BackendOrganizationAddr,
+    organization_addr: BackendOrganizationAddr,
     new_device_id: DeviceID,
     token: str,
     keepalive: Optional[int] = None,
@@ -82,10 +82,10 @@ async def claim_user(
         InviteClaimPackingError
         InviteClaimCryptoError
     """
-    new_device = generate_new_device(new_device_id, backend_addr)
+    new_device = generate_new_device(new_device_id, organization_addr)
 
     try:
-        async with backend_anonymous_cmds_factory(backend_addr, keepalive=keepalive) as cmds:
+        async with backend_anonymous_cmds_factory(organization_addr, keepalive=keepalive) as cmds:
             # 1) Retrieve invitation creator
             try:
                 invitation_creator_user, invitation_creator_device = await get_user_invitation_creator(
@@ -150,7 +150,7 @@ async def claim_user(
 
 
 async def claim_device(
-    backend_addr: BackendOrganizationAddr,
+    organization_addr: BackendOrganizationAddr,
     new_device_id: DeviceID,
     token: str,
     keepalive: Optional[int] = None,
@@ -167,11 +167,11 @@ async def claim_device(
     answer_private_key = PrivateKey.generate()
 
     try:
-        async with backend_anonymous_cmds_factory(backend_addr, keepalive=keepalive) as cmds:
+        async with backend_anonymous_cmds_factory(organization_addr, keepalive=keepalive) as cmds:
             # 1) Retrieve invitation creator
             try:
                 invitation_creator_user, invitation_creator_device = await get_device_invitation_creator(
-                    cmds, backend_addr.root_verify_key, new_device_id
+                    cmds, organization_addr.root_verify_key, new_device_id
                 )
 
             except RemoteDevicesManagerBackendOfflineError as exc:
@@ -228,7 +228,7 @@ async def claim_device(
         raise InviteClaimBackendOfflineError(str(exc)) from exc
 
     return LocalDevice(
-        organization_addr=backend_addr,
+        organization_addr=organization_addr,
         device_id=new_device_id,
         signing_key=device_signing_key,
         private_key=answer.private_key,

@@ -1,9 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.local_device import list_available_devices
+from parsec.core.types import (
+    BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
+)
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
@@ -17,9 +23,10 @@ from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
     login_with_password_clicked = pyqtSignal(object, str)
 
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, login_failed_sig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        login_failed_sig.connect(self.on_login_failed)
         self.config = config
         self.button_login.clicked.connect(self.emit_login)
         devices = list_available_devices(self.config.config_dir)
@@ -33,25 +40,33 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             self.combo_login.setCurrentText(last_device)
         self.line_edit_password.setFocus()
 
+    def on_login_failed(self):
+        self.button_login.setEnabled(True)
+        self.button_login.setText(_("BUTTON_LOG_IN"))
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return:
             self.emit_login()
         event.accept()
 
     def emit_login(self):
-        *_, key_file = self.devices[self.combo_login.currentText()]
+        *args, key_file = self.devices[self.combo_login.currentText()]
+        self.button_login.setDisabled(True)
+        self.button_login.setText(_("BUTTON_LOGGING_IN"))
         self.login_with_password_clicked.emit(key_file, self.line_edit_password.text())
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(object, str)
+    state_changed = pyqtSignal(str)
 
-    def __init__(self, jobs_ctx, event_bus, config, *args, **kwargs):
+    def __init__(self, jobs_ctx, event_bus, config, login_failed_sig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.config = config
+        self.login_failed_sig = login_failed_sig
 
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_register_user_instead.clicked.connect(self.show_claim_user_widget)
@@ -102,7 +117,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def show_login_widget(self):
         self.clear_widgets()
 
-        login_widget = LoginLoginWidget(self.config)
+        login_widget = LoginLoginWidget(self.config, self.login_failed_sig)
         self.layout.insertWidget(0, login_widget)
         login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
 
@@ -111,11 +126,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
         login_widget.show()
+        self.state_changed.emit("login")
 
-    def show_bootstrap_widget(self):
+    def show_bootstrap_widget(self, addr: Optional[BackendOrganizationBootstrapAddr] = None):
         self.clear_widgets()
 
-        bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config)
+        bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, bootstrap_organization)
         bootstrap_organization.organization_bootstrapped.connect(self.organization_bootstrapped)
         self.button_bootstrap_instead.hide()
@@ -126,11 +142,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_user_instead.show()
         self.button_register_device_instead.show()
         bootstrap_organization.show()
+        self.state_changed.emit("bootstrap")
 
-    def show_claim_user_widget(self):
+    def show_claim_user_widget(self, addr: Optional[BackendOrganizationClaimUserAddr] = None):
         self.clear_widgets()
 
-        claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config)
+        claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_user_widget)
         claim_user_widget.user_claimed.connect(self.user_claimed)
 
@@ -142,11 +159,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.show()
         self.button_bootstrap_instead.show()
         claim_user_widget.show()
+        self.state_changed.emit("claim_user")
 
-    def show_claim_device_widget(self):
+    def show_claim_device_widget(self, addr: Optional[BackendOrganizationClaimDeviceAddr] = None):
         self.clear_widgets()
 
-        claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config)
+        claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_device_widget)
         claim_device_widget.device_claimed.connect(self.show_login_widget)
 
@@ -158,6 +176,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.hide()
         self.button_bootstrap_instead.show()
         claim_device_widget.show()
+        self.state_changed.emit("claim_device")
 
     def clear_widgets(self):
         item = self.layout.takeAt(0)

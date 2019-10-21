@@ -166,6 +166,38 @@ QSpinBox::down-button
 {
 border-image: url(:/icons/images/icons/sort_down_arrow.png);
 width: 20px;
+}
+
+QTabWidget::pane
+{
+border: 1px solid rgb(30, 78, 162);
+}
+
+QTabBar::tab
+{
+height: 32px;
+font-size: 14px;
+font-weight: bold;
+padding-left: 15px;
+padding-right: 15px;
+border-top: 1px solid rgb(30, 78, 162);
+border-left: 1px solid rgb(30, 78, 162);
+border-right: 1px solid rgb(30, 78, 162);
+}
+
+QTabBar::tab:selected
+{
+color: rgb(12, 65, 159);
+}
+
+QTabBar::tab:!selected
+{
+color: rgb(123, 132, 163);
+}
+
+QTabBar::close-button
+{
+image: url(:/icons/images/icons/cancel.png);
 }</string>
   </property>
   <property name="documentMode">
@@ -194,6 +226,28 @@ width: 20px;
     <property name="bottomMargin">
      <number>0</number>
     </property>
+    <item>
+     <widget class="QTabWidget" name="tab_center">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
+      <property name="tabBarAutoHide">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>

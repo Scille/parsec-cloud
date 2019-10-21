@@ -14,12 +14,13 @@ async def logged_gui(aqtbot, gui_factory, running_backend, autoclose_dialog, cor
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
     llw = gui.test_get_login_login_widget()
+    tabw = gui.test_get_tab()
 
     assert llw is not None
 
     await aqtbot.key_clicks(llw.line_edit_password, "P@ssw0rd")
 
-    async with aqtbot.wait_signals([lw.login_with_password_clicked, gui.logged_in]):
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()
@@ -117,13 +118,15 @@ async def test_change_password_success(
     autoclose_dialog.reset()
 
     central_widget = logged_gui.test_get_central_widget()
+    tabw = logged_gui.test_get_tab()
     assert central_widget is not None
 
-    async with aqtbot.wait_signal(logged_gui.logged_out):
+    async with aqtbot.wait_signal(tabw.logged_out):
         await aqtbot.mouse_click(central_widget.menu.button_logout, QtCore.Qt.LeftButton)
 
     lw = logged_gui.test_get_login_widget()
     llw = logged_gui.test_get_login_login_widget()
+    tabw = logged_gui.test_get_tab()
 
     assert llw is not None
 
@@ -135,5 +138,5 @@ async def test_change_password_success(
     assert autoclose_dialog.dialogs == [("Error", "Authentication failed.")]
     await aqtbot.key_clicks(llw.line_edit_password, "2")
 
-    async with aqtbot.wait_signals([lw.login_with_password_clicked, logged_gui.logged_in]):
+    async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
         await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)

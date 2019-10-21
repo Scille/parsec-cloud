@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import DeviceID
+from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
-from parsec.core.types import BackendOrganizationAddr
 from parsec.core.invite_claim import (
     claim_device as core_claim_device,
     InviteClaimError,
@@ -40,7 +41,7 @@ async def _do_claim_device(
         raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationAddr(organization_addr)
+        action_addr = BackendOrganizationClaimDeviceAddr.from_url(organization_addr)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -51,7 +52,7 @@ async def _do_claim_device(
 
     try:
         device = await core_claim_device(
-            backend_addr=organization_addr,
+            organization_addr=action_addr.to_organization_addr(),
             new_device_id=device_id,
             token=token,
             keepalive=config.backend_connection_keepalive,
@@ -79,7 +80,14 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(self, jobs_ctx, config, *args, **kwargs):
+    def __init__(
+        self,
+        jobs_ctx,
+        config,
+        addr: Optional[BackendOrganizationClaimDeviceAddr] = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -97,13 +105,23 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.claim_error.connect(self.on_claim_error)
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
+        self.line_edit_url.setValidator(validators.BackendOrganizationClaimDeviceAddrValidator())
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_DEVICE_REGISTRATION"))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
         self.line_edit_device.setText(get_default_device())
         self.label_password_strength.hide()
+
+        if addr:
+            self.line_edit_url.setText(addr.to_url())
+            self.line_edit_login.setText(addr.device_id.user_id)
+            self.line_edit_device.setText(addr.device_id.device_name)
+            if addr.token:
+                self.line_edit_token.setText(addr.token)
+        else:
+            self.line_edit_device.setText(get_default_device())
+
         self.check_infos()
 
     def on_claim_error(self):

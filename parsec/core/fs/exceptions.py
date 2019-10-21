@@ -104,6 +104,9 @@ class FSInternalError(FSError):
     def __init__(self, *args):
         super(Exception, self).__init__(*args)
 
+    def __str__(self):
+        return super(Exception, self).__str__()
+
 
 # Protocol errors
 

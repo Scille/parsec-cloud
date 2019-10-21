@@ -1,11 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.core.types import BackendOrganizationClaimUserAddr
 from parsec.core.local_device import LocalDeviceAlreadyExistsError, save_device_with_password
-from parsec.core.types import BackendOrganizationAddr
 from parsec.core.invite_claim import (
     claim_user as core_claim_user,
     InviteClaimError,
@@ -40,7 +41,7 @@ async def _do_claim_user(
         raise JobResultError("password-size")
 
     try:
-        organization_addr = BackendOrganizationAddr(organization_addr)
+        action_addr = BackendOrganizationClaimUserAddr.from_url(organization_addr)
     except ValueError as exc:
         raise JobResultError("bad-url") from exc
 
@@ -51,7 +52,7 @@ async def _do_claim_user(
 
     try:
         device = await core_claim_user(
-            backend_addr=organization_addr,
+            organization_addr=action_addr.to_organization_addr(),
             new_device_id=device_id,
             token=token,
             keepalive=config.backend_connection_keepalive,
@@ -80,7 +81,14 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(self, jobs_ctx, config, *args, **kwargs):
+    def __init__(
+        self,
+        jobs_ctx,
+        config,
+        addr: Optional[BackendOrganizationClaimUserAddr] = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
@@ -98,7 +106,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_error.connect(self.on_claim_error)
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
+        self.line_edit_url.setValidator(validators.BackendOrganizationClaimUserAddrValidator())
 
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_USER_REGISTRATION"))
@@ -107,6 +115,14 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
         self.line_edit_device.setText(get_default_device())
         self.label_password_strength.hide()
+
+        if addr:
+            self.line_edit_url.setText(addr.to_url())
+            self.line_edit_login.setText(addr.user_id)
+            if addr.token:
+                self.line_edit_token.setText(addr.token)
+        self.line_edit_device.setText(get_default_device())
+
         self.check_infos()
 
     def on_claim_error(self):

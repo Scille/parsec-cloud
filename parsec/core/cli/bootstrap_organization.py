@@ -46,19 +46,19 @@ async def _bootstrap_organization(
         async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
                 organization_bootstrap_addr.organization_id,
-                organization_bootstrap_addr.bootstrap_token,
+                organization_bootstrap_addr.token,
                 root_verify_key,
                 user_certificate,
                 device_certificate,
             )
 
-    organization_addr_display = click.style(organization_addr, fg="yellow")
+    organization_addr_display = click.style(organization_addr.to_url(), fg="yellow")
     click.echo(f"Organization url: {organization_addr_display}")
 
 
 @click.command(short_help="configure new organization")
 @click.argument("device", type=DeviceID, required=True)
-@click.option("--addr", "-B", type=BackendOrganizationBootstrapAddr, required=True)
+@click.option("--addr", "-B", type=BackendOrganizationBootstrapAddr.from_url, required=True)
 @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
 @click.option("--force", is_flag=True)
 @click.password_option()

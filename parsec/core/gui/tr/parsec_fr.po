@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-16 09:30+0200\n"
-"PO-Revision-Date: 2019-10-16 09:31+0200\n"
+"POT-Creation-Date: 2019-10-18 11:15+0200\n"
+"PO-Revision-Date: 2019-10-18 11:16+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1239,11 +1239,38 @@ msgstr "Fermer"
 msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
 
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr "Cet appareil a été révoqué."
+
+msgid "ERR_LOGIN_UNKNOWN"
+msgstr "Impossible de se connecter."
+
+msgid "ERR_LOGIN_ALREADY_CONNECTED"
+msgstr "Cet appareil est déjà connecté."
+
+msgid "ERR_LOGIN_AUTH_FAILED"
+msgstr "L'authentification a échoué."
+
+msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
+msgstr "Cette version de l'application est incompatible avec le serveur."
+
+msgid "ERR_LOGIN_UNKNOWN_USER"
+msgstr "L'utilisateur n'est pas enregistré sur le serveur."
+
+msgid "ERR_LOGIN_MOUNTPOINT"
+msgstr "Le point de montage est déjà utilisé."
+
 msgid "MENU_SHOW_WINDOW"
 msgstr "Ouvrir la fenêtre"
 
 msgid "MENU_EXIT"
 msgstr "Quitter"
+
+msgid "BUTTON_LOG_IN"
+msgstr "Se connecter"
+
+msgid "BUTTON_LOGGING_IN"
+msgstr "En cours de connexion..."
 
 msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
 msgstr ""
@@ -1277,9 +1304,6 @@ msgstr "L'appareil a été créé. Vous pouvez maintenant vous connecter."
 
 msgid "ERR_LIST_VERSIONS_ACCESS"
 msgstr "Impossible de récupérer la liste des versions."
-
-msgid "PARSEC_ALREADY_RUNNING"
-msgstr "Une instance de Parsec est en cours d'exécution."
 
 msgid "MENU_SETTINGS_GLOBAL"
 msgstr "Globale"
@@ -1384,7 +1408,7 @@ msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
 msgstr "Les rôles ont été mis à jour."
 
 msgid "PARSEC_WINDOW_TITLE"
-msgstr "arsec - {}"
+msgstr "Parsec - {}"
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
@@ -1394,23 +1418,28 @@ msgstr ""
 "Autorisez-vous l'application à nous envoyer des données quand elle rencontre "
 "une erreur pour nous aider à améliorer votre expérience ?"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "Cet appareil a été révoqué."
+msgid "TAB_TITLE_LOG_IN"
+msgstr "Se connecter"
 
-msgid "ERR_LOGIN_UNKNOWN"
-msgstr "Impossible de se connecter."
+msgid "TAB_TITLE_BOOTSTRAP"
+msgstr "Démarrer une organisation"
 
-msgid "ERR_LOGIN_AUTH_FAILED"
-msgstr "L'authentification a échoué."
+msgid "TAB_TITLE_CLAIM_USER"
+msgstr "Créer un utilisateur"
 
-msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
-msgstr "Cette version de l'application est incompatible avec le serveur."
+msgid "TAB_TITLE_CLAIM_DEVICE"
+msgstr "Créer un appareil"
 
-msgid "ERR_LOGIN_UNKNOWN_USER"
-msgstr "L'utilisateur n'est pas enregistré sur le serveur."
+msgid "ASK_CLOSE_TAB_TITLE"
+msgstr "Fermer l'onglet"
 
-msgid "ERR_LOGIN_MOUNTPOINT"
-msgstr "Le point de montage est déjà utilisé."
+msgid "ASK_CLOSE_TAB_CONTENT_LOGGED_IN"
+msgstr ""
+"Êtes-vous sûr de vouloir fermer cet onglet ? Vous serez automatiquement "
+"déconnecté."
+
+msgid "ASK_CLOSE_TAB_CONTENT"
+msgstr "Êtes-vous sûr de vouloir fermer cet onglet ?"
 
 msgid "ASK_QUIT_TITLE"
 msgstr "Fermer l'application"
@@ -1434,7 +1463,7 @@ msgstr "Changelog"
 
 msgid "LABEL_BOOTSTRAP_ORG_INSTRUCTIONS"
 msgstr ""
-"Pour démarrer une organisation, créez la sur le site and collez ici les "
+"Pour démarrer une organisation, créez la sur le site et collez ici les "
 "informations."
 
 msgid "LABEL_DEVICE_NAME"
@@ -1448,15 +1477,6 @@ msgstr "Mot de passe"
 
 msgid "LABEL_PASSWORD_CHECK"
 msgstr "Vérification du mot de passe"
-
-msgid "LABEL_PKCS_TOKEN"
-msgstr "Jeton PKCS#11"
-
-msgid "LABEL_PKCS_KEY"
-msgstr "Clé PKCS#11"
-
-msgid "CHECK_PKCS_AUTH"
-msgstr "S'authentifier avec PKCS#11"
 
 msgid "BUTTON_CANCEL"
 msgstr "Annuler"
@@ -1549,9 +1569,6 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 msgid "BUTTON_SAVE"
 msgstr "Sauvegarder"
 
-msgid "CHECK_ALLOW_MULTIPLE_INSTANCES"
-msgstr "Autoriser plusieurs instances de Parsec à s'exécuter simultanément"
-
 msgid "BUTTON_OK"
 msgstr "OK"
 
@@ -1560,12 +1577,6 @@ msgstr "En cours d'import"
 
 msgid "LABEL_IDENTIFIER"
 msgstr "Identifiant"
-
-msgid "LABEL_PKCS_PIN"
-msgstr "PIN PKCS#11"
-
-msgid "BUTTON_LOG_IN"
-msgstr "Se connecter"
 
 msgid "BUTTON_REGISTER_NEW_USER"
 msgstr "Enregistrer un nouvel utilisateur"
@@ -1737,14 +1748,14 @@ msgstr "Renommer l'espace de travail."
 msgid "LABEL_SHARE_WORKSPACE"
 msgstr "Partager l'espace de travail."
 
+msgid "LABEL_MOUNT_TIMESTAMP"
+msgstr "Voir l'espace de travail à un moment précis dans le temps."
+
 msgid "LABEL_ENCRYPT_WORKSPACE"
 msgstr "Re-chiffrer l'espace de travail."
 
 msgid "LABEL_DELETE_WORKSPACE"
 msgstr "Supprimer l'espace de travail."
-
-msgid "LABEL_MOUNT_TIMESTAMP"
-msgstr "Voir l'espace de travail à un moment précis dans le temps."
 
 msgid "TITLE_WORKSPACE_SHARING"
 msgstr "Partage de l'espace de travail"
@@ -1760,8 +1771,3 @@ msgstr "Mettre à jour"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
-
-#~ msgid "CHECK_WINDOWS_MOUNTPOINT"
-#~ msgstr ""
-#~ "Afficher le point de montage dans le panneau gauche de l'explorateur de "
-#~ "fichiers Windows."

@@ -53,6 +53,24 @@ class RemoteLoader:
         self.backend_cmds = backend_cmds
         self.remote_device_manager = remote_device_manager
         self.local_storage = local_storage
+        self._realm_role_certificates_cache = None
+        self._realm_role_certificates_cache_timestamp = None
+
+    async def _get_user_realm_role_at(self, user_id: UserID, timestamp: Pendulum):
+        if (
+            not self._realm_role_certificates_cache
+            or self._realm_role_certificates_cache_timestamp <= timestamp
+        ):
+            cache_timestamp = pendulum_now()
+            self._realm_role_certificates_cache, _ = await self._load_realm_role_certificates()
+            # Set the cache timestamp in two times to avoid invalid value in case of exception
+            self._realm_role_certificates_cache_timestamp = cache_timestamp
+
+        for certif in reversed(self._realm_role_certificates_cache):
+            if certif.user_id == user_id and certif.timestamp <= timestamp:
+                return certif.role
+        else:
+            return None
 
     async def _load_realm_role_certificates(self, realm_id: Optional[EntryID] = None):
         try:
@@ -325,13 +343,26 @@ class RemoteLoader:
                 expected_author=expected_author,
                 expected_timestamp=expected_timestamp,
                 expected_version=expected_version,
-                expected_id=entry_id
-                # TODO: check parent as well ?
+                expected_id=entry_id,
             )
         except DataError as exc:
             raise FSError(f"Cannot decrypt vlob: {exc}") from exc
 
-        # TODO: also store access id in remote_manifest and check it here
+        # Finally make sure author was allowed to create this manifest
+        role_at_timestamp = await self._get_user_realm_role_at(
+            expected_author.user_id, expected_timestamp
+        )
+        if role_at_timestamp is None:
+            raise FSError(
+                f"Manifest was created at {expected_timestamp} by `{expected_author}` "
+                "which had no right to access the workspace at that time"
+            )
+        elif role_at_timestamp == RealmRole.READER:
+            raise FSError(
+                f"Manifest was created at {expected_timestamp} by `{expected_author}` "
+                "which had write right on the workspace at that time"
+            )
+
         return remote_manifest
 
     async def list_versions(self, entry_id: EntryID) -> Dict[int, Tuple[Pendulum, DeviceID]]:
@@ -556,6 +587,8 @@ class RemoteLoaderTimestamped(RemoteLoader):
         self.backend_cmds = remote_loader.backend_cmds
         self.remote_device_manager = remote_loader.remote_device_manager
         self.local_storage = remote_loader.local_storage.to_timestamped(timestamp)
+        self._realm_role_certificates_cache = None
+        self._realm_role_certificates_cache_timestamp = None
         self.timestamp = timestamp
 
     async def upload_block(self, *e, **ke):

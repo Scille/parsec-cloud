@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-16 09:30+0200\n"
-"PO-Revision-Date: 2019-10-16 09:31+0200\n"
+"POT-Creation-Date: 2019-10-18 11:15+0200\n"
+"PO-Revision-Date: 2019-10-18 11:15+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1235,11 +1235,38 @@ msgstr "Close"
 msgid "ERR_DIALOG_TITLE"
 msgstr "Error"
 
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr "This device has been revoked."
+
+msgid "ERR_LOGIN_UNKNOWN"
+msgstr "Cannot login."
+
+msgid "ERR_LOGIN_ALREADY_CONNECTED"
+msgstr "This device is already connected."
+
+msgid "ERR_LOGIN_AUTH_FAILED"
+msgstr "Authentication failed."
+
+msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
+msgstr "This version of the application is incompatible with the server."
+
+msgid "ERR_LOGIN_UNKNOWN_USER"
+msgstr "User is not registered on the server."
+
+msgid "ERR_LOGIN_MOUNTPOINT"
+msgstr "Mountpoint is already in use."
+
 msgid "MENU_SHOW_WINDOW"
 msgstr "Show window"
 
 msgid "MENU_EXIT"
 msgstr "Exit"
+
+msgid "BUTTON_LOG_IN"
+msgstr "Log In"
+
+msgid "BUTTON_LOGGING_IN"
+msgstr "Logging in..."
 
 msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
 msgstr ""
@@ -1271,9 +1298,6 @@ msgstr "The device has been created. You can now log in."
 
 msgid "ERR_LIST_VERSIONS_ACCESS"
 msgstr "Can not retrieve versions list."
-
-msgid "PARSEC_ALREADY_RUNNING"
-msgstr "Parsec is already running."
 
 msgid "MENU_SETTINGS_GLOBAL"
 msgstr "Global"
@@ -1383,23 +1407,28 @@ msgstr ""
 "Do you authorize Parsec to send us some data when it encounters an error to "
 "help us improve your experience?"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "This device has been revoked."
+msgid "TAB_TITLE_LOG_IN"
+msgstr "Log In"
 
-msgid "ERR_LOGIN_UNKNOWN"
-msgstr "Cannot login."
+msgid "TAB_TITLE_BOOTSTRAP"
+msgstr "Bootstrap organization"
 
-msgid "ERR_LOGIN_AUTH_FAILED"
-msgstr "Authentication failed."
+msgid "TAB_TITLE_CLAIM_USER"
+msgstr "Claim user"
 
-msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
-msgstr "This version of the application is incompatible with the server."
+msgid "TAB_TITLE_CLAIM_DEVICE"
+msgstr "Claim device"
 
-msgid "ERR_LOGIN_UNKNOWN_USER"
-msgstr "User is not registered on the server."
+msgid "ASK_CLOSE_TAB_TITLE"
+msgstr "Close the tab"
 
-msgid "ERR_LOGIN_MOUNTPOINT"
-msgstr "Mountpoint is already in use."
+msgid "ASK_CLOSE_TAB_CONTENT_LOGGED_IN"
+msgstr ""
+"Are you sure you want to close this tab? You will be automatically "
+"disconnected."
+
+msgid "ASK_CLOSE_TAB_CONTENT"
+msgstr "Are you sure you want to close this tab?"
 
 msgid "ASK_QUIT_TITLE"
 msgstr "Close the application"
@@ -1437,15 +1466,6 @@ msgstr "Password"
 
 msgid "LABEL_PASSWORD_CHECK"
 msgstr "Password check"
-
-msgid "LABEL_PKCS_TOKEN"
-msgstr "PKCS#11 Token"
-
-msgid "LABEL_PKCS_KEY"
-msgstr "PKCS#11 Key"
-
-msgid "CHECK_PKCS_AUTH"
-msgstr "Authenticate with PKCS#11"
 
 msgid "BUTTON_CANCEL"
 msgstr "Cancel"
@@ -1538,9 +1558,6 @@ msgstr "Use colors for workspaces"
 msgid "BUTTON_SAVE"
 msgstr "Save"
 
-msgid "CHECK_ALLOW_MULTIPLE_INSTANCES"
-msgstr "Allow multiple instances of Parsec to run at the same time"
-
 msgid "BUTTON_OK"
 msgstr "OK"
 
@@ -1549,12 +1566,6 @@ msgstr "Importing"
 
 msgid "LABEL_IDENTIFIER"
 msgstr "Identifier"
-
-msgid "LABEL_PKCS_PIN"
-msgstr "PKCS#11 PIN"
-
-msgid "BUTTON_LOG_IN"
-msgstr "Log In"
 
 msgid "BUTTON_REGISTER_NEW_USER"
 msgstr "Register a new user"
@@ -1724,14 +1735,14 @@ msgstr "Rename the workspace."
 msgid "LABEL_SHARE_WORKSPACE"
 msgstr "Share the workspace."
 
+msgid "LABEL_MOUNT_TIMESTAMP"
+msgstr "See the workspace as it was at a specific date."
+
 msgid "LABEL_ENCRYPT_WORKSPACE"
 msgstr "Re-encrypt the workspace."
 
 msgid "LABEL_DELETE_WORKSPACE"
 msgstr "Delete the workspace."
-
-msgid "LABEL_MOUNT_TIMESTAMP"
-msgstr "See the workspace as it was at a specific date."
 
 msgid "TITLE_WORKSPACE_SHARING"
 msgstr "Workspace sharing"
@@ -1747,6 +1758,3 @@ msgstr "Update"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Search a workspace"
-
-#~ msgid "CHECK_WINDOWS_MOUNTPOINT"
-#~ msgstr "Show the mountpoint in Windows Explorer left panel."

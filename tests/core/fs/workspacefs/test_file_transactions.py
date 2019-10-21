@@ -13,7 +13,7 @@ from hypothesis_trio.stateful import (
 from hypothesis import strategies as st
 
 from parsec.core.types import EntryID, LocalFileManifest, Chunk
-from parsec.core.fs.local_storage import LocalStorage
+from parsec.core.fs.storage import WorkspaceStorage
 from parsec.core.fs.workspacefs.file_transactions import FSInvalidFileDescriptor
 from parsec.core.fs.exceptions import FSRemoteBlockNotFound
 
@@ -27,12 +27,12 @@ class File:
         self.local_storage = local_storage
 
     def ensure_manifest(self, **kwargs):
-        manifest = self.local_storage.local_manifest_cache[self.entry_id]
+        manifest = self.local_storage.manifest_storage._cache[self.entry_id]
         for k, v in kwargs.items():
             assert getattr(manifest, k) == v
 
     def is_cache_ahead_of_persistance(self):
-        return self.entry_id in self.local_storage.cache_ahead_of_persistance_ids
+        return self.entry_id in self.local_storage.manifest_storage._cache_ahead_of_persistance_ids
 
     async def get_manifest(self):
         return await self.local_storage.get_manifest(self.entry_id)
@@ -224,9 +224,7 @@ def test_file_operations(
     class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
         async def start_transactions(self):
             async def _transactions_controlled_cb(started_cb):
-                async with LocalStorage(
-                    alice.device_id, key=alice.local_symkey, path=Path("/dummy")
-                ) as local_storage:
+                async with WorkspaceStorage.run(alice, Path("/dummy"), EntryID()) as local_storage:
                     file_transactions = await file_transactions_factory(
                         self.device, alice_backend_cmds, local_storage=local_storage
                     )

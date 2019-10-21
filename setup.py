@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages, distutils, Command
@@ -239,7 +241,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "attrs==18.2.0",
+    "attrs==19.2.0",
     "click==7.0",
     "msgpack==0.6.0",
     "wsproto==0.15.0",
@@ -288,6 +290,7 @@ extra_requirements = {
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
         'winfspy==0.4.2;platform_system=="Windows"',
+        'pywin32==225;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],

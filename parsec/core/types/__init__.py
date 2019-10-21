@@ -9,7 +9,10 @@ from parsec.core.types.base import FsPath
 from parsec.core.types.backend_address import (
     BackendAddr,
     BackendOrganizationAddr,
+    BackendActionAddr,
     BackendOrganizationBootstrapAddr,
+    BackendOrganizationClaimUserAddr,
+    BackendOrganizationClaimDeviceAddr,
     BackendOrganizationAddrField,
 )
 from parsec.core.types.local_device import LocalDevice
@@ -48,7 +51,10 @@ __all__ = (
     # Backend address
     "BackendAddr",
     "BackendOrganizationAddr",
+    "BackendActionAddr",
     "BackendOrganizationBootstrapAddr",
+    "BackendOrganizationClaimUserAddr",
+    "BackendOrganizationClaimDeviceAddr",
     "BackendOrganizationAddrField",
     # local_device
     "LocalDevice",

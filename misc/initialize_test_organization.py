@@ -1,4 +1,6 @@
 #! /usr/bin/env python3
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 
 import os
 import trio
@@ -44,28 +46,37 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
 
 
 @click.command()
-@click.option("-B", "--backend-address", default="parsec://localhost:6777?no_ssl=true")
-@click.option("-O", "--organization-id", default="corp")
-@click.option("-a", "--alice-device-id", default="alice@laptop")
-@click.option("-b", "--bob-device-id", default="bob@laptop")
-@click.option("-o", "--other-device-name", default="pc")
-@click.option("-x", "--alice-workspace", default="alice_workspace")
-@click.option("-y", "--bob-workspace", default="bob_workspace")
-@click.option("-P", "--password", default="test")
-@click.option("-T", "--administration-token", default=DEFAULT_ADMINISTRATION_TOKEN)
-@click.option("--force/--no-force", default=False)
+@click.option(
+    "-B",
+    "--backend-address",
+    show_default=True,
+    type=BackendAddr.from_url,
+    default="parsec://localhost:6777?no_ssl=true",
+)
+@click.option("-O", "--organization-id", show_default=True, type=OrganizationID, default="corp")
+@click.option("-a", "--alice-device-id", show_default=True, type=DeviceID, default="alice@laptop")
+@click.option("-b", "--bob-device-id", show_default=True, type=DeviceID, default="bob@laptop")
+@click.option("-o", "--other-device-name", show_default=True, default="pc")
+@click.option("-x", "--alice-workspace", show_default=True, default="alice_workspace")
+@click.option("-y", "--bob-workspace", show_default=True, default="bob_workspace")
+@click.option("-P", "--password", show_default=True, default="test")
+@click.option(
+    "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
+)
+@click.option("--force/--no-force", show_default=True, default=False)
 def main(**kwargs):
     """Initialize a test origanization for parsec from a clean environment.
 
     You might want to create a test environment beforehand with the
     following commands:
 
+        \b
         TMP=`mktemp -d`
         export XDG_CACHE_HOME="$TMP/cache"
         export XDG_DATA_HOME="$TMP/share"
         export XDG_CONFIG_HOME="$TMP/config"
         mkdir $XDG_CACHE_HOME $XDG_DATA_HOME $XDG_CONFIG_HOME
-        parsec backend run -b MOCKED -P 6888 &
+        parsec backend run --dev -P 6888 &
 
     And use `-B parsec://localhost:6888?no_ssl=true` as a backend adress.
 
@@ -92,10 +103,6 @@ async def _amain(
     configure_logging("WARNING")
 
     config_dir = get_default_config_dir(os.environ)
-    organization_id = OrganizationID(organization_id)
-    backend_address = BackendAddr(backend_address)
-    alice_device_id = DeviceID(alice_device_id)
-    bob_device_id = DeviceID(bob_device_id)
     alice_slugid = f"{organization_id}:{alice_device_id}"
     bob_slugid = f"{organization_id}:{bob_device_id}"
 
@@ -137,7 +144,7 @@ async def _amain(
 
         await cmds.organization_bootstrap(
             organization_bootstrap_addr.organization_id,
-            organization_bootstrap_addr.bootstrap_token,
+            organization_bootstrap_addr.token,
             root_verify_key,
             user_certificate,
             device_certificate,
@@ -153,7 +160,7 @@ async def _amain(
     # Register a new device for Alice
 
     token = generate_invitation_token()
-    other_alice_device_id = DeviceID("@".join((alice_device.user_id, other_device_name)))
+    other_alice_device_id = DeviceID(f"{alice_device.user_id}@{other_device_name}")
     other_alice_slugid = f"{organization_id}:{other_alice_device_id}"
 
     async def invite_task():

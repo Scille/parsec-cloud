@@ -4,11 +4,13 @@ from contextlib import contextmanager
 from unittest.mock import patch
 import inspect
 import trio
-from urllib.parse import urlparse
+
+from parsec.core.types import BackendAddr
 
 
 def addr_to_netloc(addr):
-    return urlparse(addr).netloc
+    assert isinstance(addr, BackendAddr)
+    return f"{addr.hostname}:{addr.port}"
 
 
 class OpenTCPStreamMockWrapper:
