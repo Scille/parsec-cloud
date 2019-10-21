@@ -77,7 +77,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 getattr(self, f"line_{i}").hide()
         else:
             self.button_delete.hide()
-            self.line_5.hide()
+            self.line_6.hide()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
@@ -132,11 +132,38 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self._reencryption_needs = val
         if self.reencryption_needs and self.reencryption_needs.need_reencryption:
             self.button_reencrypt.show()
-            self.line_6.show()
+            self.label_reencrypt.hide()
             self.button_reencrypt.setToolTip(_("TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"))
+            self.line_5.show()
         else:
             self.button_reencrypt.hide()
+            self.label_reencrypt.hide()
             self.line_6.hide()
+            self.line_5.hide()
+
+    @property
+    def reencrypting(self):
+        return self._reencrypting
+
+    @reencrypting.setter
+    def reencrypting(self, val):
+        def _start_reencrypting():
+            self.button_reencrypt.hide()
+            self.label_reencrypt.show()
+            self.line_5.show()
+
+        def _stop_reencrypting():
+            self.button_reencrypt.hide()
+            self.label_reencrypt.hide()
+            self.line_5.hide()
+
+        self._reencrypting = val
+        if self._reencrypting:
+            _start_reencrypting()
+            total, done = self._reencrypting
+            self.label_reencrypt.setText(str(int(done / total * 100)) + "%")
+        else:
+            _stop_reencrypting()
 
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name
@@ -155,10 +182,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             display += _("WORKSPACE_NAME_TIMESTAMPED_{}").format(
                 format_datetime(self.workspace_fs.timestamp)
             )
-
-        if self.reencrypting:
-            total, done = self.reencrypting
-            display += _("WORKSPACE_NAME_REENCRYPTION_{}").format(int(done / total * 100))
 
         self.label_workspace.setText(display)
         self.label_workspace.setToolTip(workspace_name)

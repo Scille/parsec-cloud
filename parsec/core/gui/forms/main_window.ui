@@ -14,7 +14,7 @@
    <string>PARSEC_WINDOW_TITLE</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../rc/resources.qrc">
+   <iconset>
     <normaloff>:/icons/images/icons/parsec.png</normaloff>:/icons/images/icons/parsec.png</iconset>
   </property>
   <property name="autoFillBackground">
@@ -173,6 +173,11 @@ QTabWidget::pane
 border: 1px solid rgb(30, 78, 162);
 }
 
+QTabWidget#tab_center
+{
+border: none;
+}
+
 QTabBar::tab
 {
 height: 32px;
@@ -251,8 +256,6 @@ image: url(:/icons/images/icons/cancel.png);
    </layout>
   </widget>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

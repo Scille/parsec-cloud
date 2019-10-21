@@ -31,28 +31,17 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#WorkspaceButton{background-color: #FFFFFF;}</string>
-  </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="spacing">
-    <number>6</number>
-   </property>
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
-    <number>0</number>
-   </property>
-   <item>
-    <widget class="QWidget" name="widget" native="true">
-     <property name="styleSheet">
-      <string notr="true">QWidget#widget
+   <string notr="true">QWidget#WorkspaceButton
+{
+background-color: #FFFFFF;
+}
+
+QLabel#label_reencrypt
+{
+color: rgb(12, 65, 157);
+}
+
+QWidget#widget
 {
 border: 2px solid rgb(47, 145, 208);
 }
@@ -78,6 +67,27 @@ Line
 {
 color: rgb(9, 66, 155);
 }</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="styleSheet">
+      <string notr="true"/>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
@@ -168,7 +178,7 @@ color: rgb(9, 66, 155);
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/owner.png</pixmap>
+           <pixmap>:/icons/images/icons/owner.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -196,7 +206,7 @@ color: rgb(9, 66, 155);
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/share_info.png</pixmap>
+           <pixmap>:/icons/images/icons/share_info.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -241,7 +251,7 @@ color: rgb(9, 66, 155);
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/workspace.png</pixmap>
+           <pixmap>:/icons/images/icons/workspace.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -407,7 +417,7 @@ color: rgb(9, 66, 155);
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <property name="spacing">
-             <number>0</number>
+             <number>5</number>
             </property>
             <property name="topMargin">
              <number>10</number>
@@ -452,7 +462,7 @@ border: 0;
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="../rc/resources.qrc">
+               <iconset>
                 <normaloff>:/icons/images/icons/edit_blue.png</normaloff>:/icons/images/icons/edit_blue.png</iconset>
               </property>
               <property name="iconSize">
@@ -521,7 +531,7 @@ border: 0;
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="../rc/resources.qrc">
+               <iconset>
                 <normaloff>:/icons/images/icons/share_workspace.png</normaloff>:/icons/images/icons/share_workspace.png</iconset>
               </property>
               <property name="iconSize">
@@ -575,7 +585,7 @@ border: 0;
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="../rc/resources.qrc">
+               <iconset>
                 <normaloff>:/icons/images/icons/go-back_workspace.png</normaloff>:/icons/images/icons/go-back_workspace.png</iconset>
               </property>
               <property name="iconSize">
@@ -635,7 +645,7 @@ border: 0;
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="../rc/resources.qrc">
+               <iconset>
                 <normaloff>:/icons/images/icons/warning.png</normaloff>:/icons/images/icons/warning.png</iconset>
               </property>
               <property name="iconSize">
@@ -646,6 +656,31 @@ border: 0;
               </property>
               <property name="flat">
                <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_reencrypt">
+              <property name="minimumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>LABEL_REENCRYPTION_PROGRESS</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string/>
               </property>
              </widget>
             </item>
@@ -698,7 +733,7 @@ border: 0;
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="../rc/resources.qrc">
+               <iconset>
                 <normaloff>:/icons/images/icons/garbage_workspace.png</normaloff>:/icons/images/icons/garbage_workspace.png</iconset>
               </property>
               <property name="iconSize">
@@ -735,8 +770,6 @@ border: 0;
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

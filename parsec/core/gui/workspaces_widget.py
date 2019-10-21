@@ -109,8 +109,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
     load_workspace_clicked = pyqtSignal(WorkspaceFS)
-    workspace_reencryption_success = pyqtSignal()
-    workspace_reencryption_error = pyqtSignal()
+    workspace_reencryption_success = pyqtSignal(QtToTrioJob)
+    workspace_reencryption_error = pyqtSignal(QtToTrioJob)
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
     workspace_mounted = pyqtSignal(QtToTrioJob)
     workspace_unmounted = pyqtSignal(QtToTrioJob)
@@ -157,6 +157,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_progress.connect(self._on_workspace_reencryption_progress)
         self.workspace_mounted.connect(self._on_workspace_mounted)
         self.workspace_unmounted.connect(self._on_workspace_unmounted)
+        self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
+        self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
 
         self.reset_timer = QTimer()
         self.reset_timer.setInterval(1000)
@@ -413,12 +415,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.core.user_fs, workspace_fs, self.core, self.jobs_ctx, parent=self
         )
         d.exec_()
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "reencryption_needs_error", QtToTrioJob),
-            _get_reencryption_needs,
-            workspace_fs=workspace_fs,
-        )
+        self.reset()
 
     def reencrypt_workspace(self, workspace_id, user_revoked, role_revoked):
         if workspace_id in self.reencrypting or (not user_revoked and not role_revoked):
@@ -436,26 +433,32 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
 
         async def _reencrypt(on_progress, workspace_id):
-            self.reencrypting.add(workspace_id)
-            try:
-                job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
-                while True:
-                    total, done = await job.do_one_batch(size=1)
-                    on_progress.emit(workspace_id, total, done)
-                    if total == done:
-                        break
-            finally:
-                self.reencrypting.remove(workspace_id)
+            job = await self.core.user_fs.workspace_start_reencryption(workspace_id)
+            while True:
+                total, done = await job.do_one_batch(size=1)
+                on_progress.emit(workspace_id, total, done)
+                if total == done:
+                    break
+            return workspace_id
 
+        self.reencrypting.add(workspace_id)
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "workspace_reencryption_success"),
-            ThreadSafeQtSignal(self, "workspace_reencryption_error"),
+            ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
             _reencrypt,
             on_progress=ThreadSafeQtSignal(
                 self, "workspace_reencryption_progress", EntryID, int, int
             ),
             workspace_id=workspace_id,
         )
+
+    def _on_workspace_reencryption_success(self, job):
+        workspace_id = job.ret
+        self.reencrypting.remove(workspace_id)
+
+    def _on_workspace_reencryption_error(self, job):
+        workspace_id = job.ret
+        self.reencrypting.remove(workspace_id)
 
     def _on_workspace_reencryption_progress(self, workspace_id, total, done):
         for idx in range(self.layout_workspaces.count()):
@@ -465,7 +468,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     widget.reencrypting = None
                 else:
                     widget.reencrypting = (total, done)
-                widget.reload_workspace_name(widget.name)
                 break
 
     def create_workspace_clicked(self):

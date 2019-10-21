@@ -121,10 +121,10 @@ background-color: rgb(255, 255, 255);
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <property name="topMargin">
-            <number>0</number>
+            <number>5</number>
            </property>
            <property name="bottomMargin">
-            <number>0</number>
+            <number>5</number>
            </property>
            <item>
             <spacer name="horizontalSpacer_2">
@@ -153,18 +153,15 @@ background-color: rgb(255, 255, 255);
               </font>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
               <string>BUTTON_SHARE</string>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
             </widget>
@@ -252,7 +249,7 @@ font-weight: bold;
               <x>0</x>
               <y>0</y>
               <width>548</width>
-              <height>295</height>
+              <height>287</height>
              </rect>
             </property>
             <property name="styleSheet">
