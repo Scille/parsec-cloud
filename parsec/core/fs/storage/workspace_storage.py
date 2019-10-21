@@ -178,12 +178,12 @@ class WorkspaceStorage:
         manifest: LocalManifest,
         cache_only: bool = False,
         check_lock_status: bool = True,
-        cleanup: Optional[Set[ChunkID]] = None,
+        removed_ids: Optional[Set[ChunkID]] = None,
     ) -> None:
         if check_lock_status:
             self._check_lock_status(entry_id)
         await self.manifest_storage.set_manifest(
-            entry_id, manifest, cache_only=cache_only, cleanup=cleanup
+            entry_id, manifest, cache_only=cache_only, removed_ids=removed_ids
         )
 
     async def ensure_manifest_persistent(self, entry_id: EntryID) -> None:

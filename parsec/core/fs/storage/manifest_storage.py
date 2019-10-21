@@ -161,7 +161,7 @@ class ManifestStorage:
         entry_id: EntryID,
         manifest: LocalManifest,
         cache_only: bool = False,
-        cleanup: Optional[Set[ChunkID]] = None,
+        removed_ids: Optional[Set[ChunkID]] = None,
     ) -> None:
         """
         Raises: Nothing !
@@ -170,18 +170,17 @@ class ManifestStorage:
 
         # Set the cache first
         self._cache[entry_id] = manifest
+
+        # Tag the entry as ahead of localdb
         self._cache_ahead_of_localdb.setdefault(entry_id, set())
 
         # Cleanup
-        if cleanup:
-            self._cache_ahead_of_localdb[entry_id] |= cleanup
-
-        # Tag the entry as ahead of localdb
-        if cache_only:
-            return
+        if removed_ids:
+            self._cache_ahead_of_localdb[entry_id] |= removed_ids
 
         # Flush the cached value to the localdb
-        await self._ensure_manifest_persistent(entry_id)
+        if not cache_only:
+            await self._ensure_manifest_persistent(entry_id)
 
     async def _ensure_manifest_persistent(self, entry_id: EntryID) -> None:
 

@@ -128,7 +128,7 @@ async def test_cache_set_get(tmpdir, alice, workspace_id):
 @pytest.mark.trio
 @pytest.mark.parametrize("cache_only", (False, True))
 @pytest.mark.parametrize("clear_manifest", (False, True))
-async def test_chunk_cleanup(alice_workspace_storage, cache_only, clear_manifest):
+async def test_chunk_clearing(alice_workspace_storage, cache_only, clear_manifest):
     aws = alice_workspace_storage
     manifest = create_manifest(aws.device, LocalFileManifest)
     data1 = b"abc"
@@ -144,9 +144,11 @@ async def test_chunk_cleanup(alice_workspace_storage, cache_only, clear_manifest
         await aws.set_manifest(manifest.id, manifest)
 
         # Set a new version of the manifest without the chunks
-        cleanup = {chunk1.id, chunk2.id}
+        removed_ids = {chunk1.id, chunk2.id}
         new_manifest = manifest.evolve(blocks=())
-        await aws.set_manifest(manifest.id, new_manifest, cache_only=cache_only, cleanup=cleanup)
+        await aws.set_manifest(
+            manifest.id, new_manifest, cache_only=cache_only, removed_ids=removed_ids
+        )
 
         # The chunks are still accessible
         if cache_only:

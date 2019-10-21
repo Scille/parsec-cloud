@@ -164,7 +164,7 @@ class FileTransactions:
 
             # Atomic change
             await self.local_storage.set_manifest(
-                manifest.id, manifest, cache_only=True, cleanup=removed_ids
+                manifest.id, manifest, cache_only=True, removed_ids=removed_ids
             )
 
             # Reshaping
@@ -234,7 +234,7 @@ class FileTransactions:
             await self._write_chunk(chunk, b"", offset)
 
         # Atomic change
-        await self.local_storage.set_manifest(manifest.id, manifest, cleanup=removed_ids)
+        await self.local_storage.set_manifest(manifest.id, manifest, removed_ids=removed_ids)
 
     async def _manifest_reshape(
         self, manifest: LocalFileManifest, cache_only: bool = False
@@ -260,10 +260,12 @@ class FileTransactions:
             if source != (destination,):
                 await self._write_chunk(new_chunk, data)
 
-            # Craft and set new manifest
+            # Craft the new manifest
             manifest = update(manifest, new_chunk)
+
+            # Set the new manifest, acting as a checkpoint
             await self.local_storage.set_manifest(
-                manifest.id, manifest, cache_only=True, cleanup=removed_ids
+                manifest.id, manifest, cache_only=True, removed_ids=removed_ids
             )
 
         # Flush if necessary
