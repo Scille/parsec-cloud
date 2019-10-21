@@ -23,7 +23,16 @@ class ManifestStorage:
         self.localdb = localdb
         self.realm_id = realm_id
 
+        # This cache contains all the manifests that have been set or accessed
+        # since the last call to `clear_memory_cache`
         self._cache = {}
+
+        # This dictionnary keeps track of all the entry ids of the manifests
+        # that have been added to the cache but still needs to be written to
+        # the localdb. The corresponding value is a set with the ids of all
+        # the chunks that needs to be removed from the localdb after the
+        # manifest is written. Note: this set might be empty but the manifest
+        # still requires to be flushed.
         self._cache_ahead_of_localdb = {}
 
     @property
@@ -239,10 +248,11 @@ class ManifestStorage:
             entry_id = next(iter(self._cache_ahead_of_localdb))
             await self._ensure_manifest_persistent(entry_id)
 
+    # This method is not used in the code base but it is still tested
+    # as it might come handy in a cleanup routine later
+
     async def clear_manifest(self, entry_id: EntryID) -> None:
         """
-        This method isn't used at the moment.
-
         Raises:
             FSLocalMissError
         """
