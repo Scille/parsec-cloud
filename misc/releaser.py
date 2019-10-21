@@ -124,8 +124,8 @@ def build_release(version):
         history_body = history_txt
 
     newsfragments = collect_newsfragments()
-    new_entry = f"Parsec {version.short} ({date.today().isoformat()})"
-    new_entry += "\n" + len(new_entry) * "-" + "\n\n"
+    new_entry_title = f"Parsec {version.short} ({date.today().isoformat()})"
+    new_entry = f"\n\n{new_entry_title}\n{len(new_entry_title) * '-'}\n"
     issues_per_type = defaultdict(list)
     for fragment in newsfragments:
         issue_id, type, _ = fragment.name.split(".")
@@ -136,15 +136,14 @@ def build_release(version):
         issues_per_type[type].append(wrapped_issue_txt)
 
     if not issues_per_type:
-        new_entry += "No significant changes.\n\n\n"
+        new_entry += "\nNo significant changes.\n"
     else:
         for fragment_type, fragment_title in FRAGMENT_TYPES.items():
             if fragment_type not in issues_per_type:
                 continue
-            new_entry += fragment_title + "\n" + len(fragment_title) * "~" + "\n\n"
+            new_entry += f"\n{fragment_title}\n{len(fragment_title) * '~'}\n\n"
             new_entry += "\n".join(issues_per_type[fragment_type])
-            new_entry += "\n\n"
-        new_entry += "\n"
+            new_entry += "\n"
 
     updated_history_txt = f"{history_header}{new_entry}{history_body}".strip() + "\n"
     HISTORY_FILE.write_text(updated_history_txt)
