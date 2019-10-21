@@ -6,6 +6,41 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.1.0 (2019-10-21)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Add support for IPC communication in GUI to have a single instance running.
+  Also add tab support & handle parsec:// url as start argument.  (`#684
+  <https://github.com/Scille/parsec-cloud/issues/684>`__)
+* Rework backend cli argument and environ variable handling  (`#701
+  <https://github.com/Scille/parsec-cloud/issues/701>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix pure HTTP query handling in backend (`#699
+  <https://github.com/Scille/parsec-cloud/issues/699>`__)
+* Fix long wait on GUI login with poor connection to the backend (`#706
+  <https://github.com/Scille/parsec-cloud/issues/706>`__)
+* Add missing check in core to enforce consistency of timestamps between a
+  manifest and it author's role certificate (`#734
+  <https://github.com/Scille/parsec-cloud/issues/734>`__)
+* Fix fonts scaling on wayland (`#735 <https://github.com/Scille/parsec-
+  cloud/issues/735>`__)
+* Fix bug causing workspace mountpoint directory not being removed on
+  application shutdown (`#737 <https://github.com/Scille/parsec-
+  cloud/issues/737>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Allow dash character (i.e. ``-``) in OrganizationID, UserID & DeviceName
+  (`#728 <https://github.com/Scille/parsec-cloud/issues/728>`__)
+
+
 Parsec 1.0.2 (2019-10-01)
 -------------------------
 

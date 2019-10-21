@@ -1,2 +1,0 @@
-Add support for IPC communication in GUI to have a single instance running.
-Also add tab support & handle parsec:// url as start argument.
