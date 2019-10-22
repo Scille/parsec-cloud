@@ -278,7 +278,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
     ) as mountpoint_manager:
         await mountpoint_manager.mount_workspace(wid)
 
-        bar_path = await mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
+        bar_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
 
         assert isinstance(bar_path, PurePath)
         expected = base_mountpoint / f"mounted_wksp" / "bar.txt"
@@ -286,7 +286,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
         assert await trio.Path(bar_path).exists()
 
         with pytest.raises(MountpointNotMounted):
-            await mountpoint_manager.get_path_in_mountpoint(wid2, FsPath("/foo.txt"))
+            mountpoint_manager.get_path_in_mountpoint(wid2, FsPath("/foo.txt"))
 
 
 @pytest.mark.mountpoint
@@ -346,7 +346,7 @@ async def test_mountpoint_revoke_access(
     await workspace.sync()
 
     async def get_root_path(mountpoint_manager):
-        root_path = await mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
+        root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
         # A trio path is required here, otherwise we risk a messy deadlock!
         return trio.Path(root_path)
 

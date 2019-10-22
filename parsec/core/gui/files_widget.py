@@ -331,7 +331,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
         # as they won't block the Qt loop for long
-        path = self.jobs_ctx.run(
+        path = self.jobs_ctx.run_sync(
             self.core.mountpoint_manager.get_path_in_mountpoint,
             self.workspace_fs.workspace_id,
             self.current_directory / file_name,
