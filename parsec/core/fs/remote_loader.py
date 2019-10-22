@@ -597,6 +597,18 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def load_manifest(
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
     ) -> RemoteManifest:
+        """
+        Allows to have manifests at all timestamps as it is needed by the versions method of either
+        a WorkspaceFS or a WorkspaceFSTimestamped
+
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+            FSBadEncryptionRevision
+            FSWorkspaceNoAccess
+        """
         return await super().load_manifest(
             entry_id,
             version=version,
