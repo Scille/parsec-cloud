@@ -135,6 +135,10 @@ class MountpointManager:
     async def remount_workspace_new_timestamp(
         self, workspace_id: EntryID, original_timestamp: Pendulum, target_timestamp: Pendulum
     ) -> PurePath:
+        """
+        Mount the workspace at target_timestamp, and unmount the workspace at the original
+        timestamp if it is not None. If both timestamps are equals, do nothing.
+        """
         # TODO : use different workspaces for temp mount
         if original_timestamp == target_timestamp:
             try:
