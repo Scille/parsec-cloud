@@ -345,13 +345,13 @@ async def test_mountpoint_revoke_access(
     await workspace.touch("/bar.txt")
     await workspace.sync()
 
-    async def get_root_path(mountpoint_manager):
+    def get_root_path(mountpoint_manager):
         root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/"))
         # A trio path is required here, otherwise we risk a messy deadlock!
         return trio.Path(root_path)
 
     async def assert_cannot_read(mountpoint_manager, root_is_cached=False):
-        root_path = await get_root_path(mountpoint_manager)
+        root_path = get_root_path(mountpoint_manager)
         foo_path = root_path / "foo.txt"
         bar_path = root_path / "bar.txt"
         # For some reason, root_path.stat() does not trigger a new getattr call
@@ -369,7 +369,7 @@ async def test_mountpoint_revoke_access(
             await bar_path.read_bytes()
 
     async def assert_cannot_write(mountpoint_manager):
-        root_path = await get_root_path(mountpoint_manager)
+        root_path = get_root_path(mountpoint_manager)
         foo_path = root_path / "foo.txt"
         bar_path = root_path / "bar.txt"
         with pytest.raises(PermissionError):
@@ -390,7 +390,7 @@ async def test_mountpoint_revoke_access(
     ) as mountpoint_manager:
         # Mount Bob workspace on Alice's side
         await mountpoint_manager.mount_workspace(wid)
-        root_path = await get_root_path(mountpoint_manager)
+        root_path = get_root_path(mountpoint_manager)
 
         # Alice can read
         await (root_path / "bar.txt").read_bytes()
@@ -423,7 +423,7 @@ async def test_mountpoint_revoke_access(
     ) as mountpoint_manager:
         # Mount alice workspace on bob's side once again
         await mountpoint_manager.mount_workspace(wid)
-        root_path = await get_root_path(mountpoint_manager)
+        root_path = get_root_path(mountpoint_manager)
 
         # Alice still has read access
         if new_role is WorkspaceRole.READER:
@@ -443,7 +443,7 @@ async def test_mountpoint_revoke_access(
     ) as mountpoint_manager:
         # Mount alice workspace on bob's side once again
         await mountpoint_manager.mount_workspace(wid)
-        root_path = await get_root_path(mountpoint_manager)
+        root_path = get_root_path(mountpoint_manager)
 
         # Alice still has read access
         if new_role is WorkspaceRole.READER:
