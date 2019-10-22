@@ -126,9 +126,6 @@ def run_gui(config: CoreConfig, start_arg: str = None):
             # Another instance of Parsec already started, nothing more to do
             return
 
-        win.add_instance(start_arg)
-        win.show_top()
-
         if systray_available():
             systray = Systray(parent=win)
             systray.on_close.connect(win.close_app)
@@ -139,6 +136,8 @@ def run_gui(config: CoreConfig, start_arg: str = None):
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
         win.showMaximized()
+        win.show_top()
+        win.add_instance(start_arg)
 
         def kill_window(*args):
             win.close_app(force=True)
