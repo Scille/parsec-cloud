@@ -75,22 +75,22 @@ DEFAULT_WIN32_MUTEX_NAME = "parsec-cloud"
 @contextmanager
 def _install_win32_mutex(mutex_name: str):
 
-    import win32event
-    import win32api
-    import winerror
+    from parsec.win32 import CreateMutex, CloseHandle, GetLastError, ERROR_ALREADY_EXISTS
 
-    mutex = win32event.CreateMutex(None, False, mutex_name)
-    status = win32api.GetLastError()
-    if status == winerror.ERROR_ALREADY_EXISTS:
+    try:
+        mutex = CreateMutex(None, False, mutex_name)
+    except WindowsError as exc:
+        raise IPCServerError(f"Cannot create mutex `{mutex_name}`: {exc}") from exc
+    status = GetLastError()
+    if status == ERROR_ALREADY_EXISTS:
+        CloseHandle(mutex)
         raise IPCServerAlreadyRunning(f"Mutex `{mutex_name}` already exists")
-    elif not winerror.SUCCEEDED(status):
-        raise IPCServerError(f"Cannot create mutex `{mutex_name}`: error {status}")
 
     try:
         yield
 
     finally:
-        win32api.CloseHandle(mutex)
+        CloseHandle(mutex)
 
 
 @contextmanager
