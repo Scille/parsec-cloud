@@ -137,7 +137,19 @@ class MountpointManager:
     ) -> PurePath:
         # TODO : use different workspaces for temp mount
         if original_timestamp == target_timestamp:
-            return
+            try:
+                return self._mountpoint_tasks[(workspace_id, target_timestamp)].value
+            except KeyError:
+                pass
+            try:
+                self.user_fs.get_workspace(workspace_id)
+                raise MountpointNotMounted(
+                    f"Workspace `{workspace_id}` not mounted at timestamped `{target_timestamp}`"
+                )
+            except FSWorkspaceNotFoundError as exc:
+                raise MountpointConfigurationError(
+                    f"Workspace `{workspace_id}` doesn't exist"
+                ) from exc
         if original_timestamp is None:
             workspace = self._get_workspace(workspace_id)
         else:
