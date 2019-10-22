@@ -63,7 +63,12 @@ class VersionsTable(QTableWidget):
                 target_timestamp = self.item(row, 0).data(LATE_TIMESTAMP_DATA_INDEX)
         file_type = self.item(row, 0).data(TYPE_DATA_INDEX)
         self.reload_timestamped_signal.emit(
-            target_timestamp, target_path, file_type, column < 3, False, column >= 3
+            target_timestamp,
+            target_path,
+            file_type,
+            column < 3 and file_type is not FileType.Folder,
+            False,
+            column >= 3,
         )
 
     def clear(self):
