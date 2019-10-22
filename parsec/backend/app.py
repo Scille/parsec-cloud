@@ -3,9 +3,11 @@
 import trio
 import attr
 from structlog import get_logger
+from logging import DEBUG as LOG_LEVEL_DEBUG
 from pendulum import now as pendulum_now
 
 from parsec.event_bus import EventBus
+from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
 from parsec.api.protocol import (
     packb,
@@ -232,6 +234,7 @@ class BackendApp:
 
     async def _do_handshake(self, transport):
         context = None
+        error_infos = None
         try:
             handshake = transport.handshake = ServerHandshake()
             challenge_req = handshake.build_challenge_req()
@@ -248,21 +251,45 @@ class BackendApp:
                     organization = await self.organization.get(organization_id)
                     user, device = await self.user.get_user_with_device(organization_id, device_id)
 
-                except (OrganizationNotFoundError, UserNotFoundError, KeyError):
+                except (OrganizationNotFoundError, UserNotFoundError, KeyError) as exc:
                     result_req = handshake.build_bad_identity_result_req()
+                    error_infos = {
+                        "reason": str(exc),
+                        "handshake_type": "authenticated",
+                        "organization_id": organization_id,
+                        "device_id": device_id,
+                    }
 
                 else:
                     if organization.root_verify_key != expected_rvk:
                         result_req = handshake.build_rvk_mismatch_result_req()
+                        error_infos = {
+                            "reason": "Bad root verify key",
+                            "handshake_type": "authenticated",
+                            "organization_id": organization_id,
+                            "device_id": device_id,
+                        }
 
                     elif (
                         organization.expiration_date is not None
                         and organization.expiration_date < pendulum_now()
                     ):
                         result_req = handshake.build_organization_expired_result_req()
+                        error_infos = {
+                            "reason": "Expired organization",
+                            "handshake_type": "authenticated",
+                            "organization_id": organization_id,
+                            "device_id": device_id,
+                        }
 
                     elif user.revoked_on and user.revoked_on <= pendulum_now():
                         result_req = handshake.build_revoked_device_result_req()
+                        error_infos = {
+                            "reason": "Revoked device",
+                            "handshake_type": "authenticated",
+                            "organization_id": organization_id,
+                            "device_id": device_id,
+                        }
 
                     else:
                         context = LoggedClientContext(
@@ -283,36 +310,54 @@ class BackendApp:
 
                 except OrganizationNotFoundError:
                     result_req = handshake.build_bad_identity_result_req()
+                    error_infos = {
+                        "reason": "Bad organization",
+                        "handshake_type": "anonymous",
+                        "organization_id": organization_id,
+                    }
 
                 else:
                     if expected_rvk and organization.root_verify_key != expected_rvk:
                         result_req = handshake.build_rvk_mismatch_result_req()
+                        error_infos = {
+                            "reason": "Bad root verify key",
+                            "handshake_type": "anonymous",
+                            "organization_id": organization_id,
+                        }
 
                     else:
                         context = AnonymousClientContext(transport, organization_id)
                         result_req = handshake.build_result_req()
 
-            else:  # admin
-                context = AdministrationClientContext(transport)
+            elif handshake.answer_type == "administration":
                 if handshake.answer_data["token"] == self.config.administration_token:
+                    context = AdministrationClientContext(transport)
                     result_req = handshake.build_result_req()
                 else:
                     result_req = handshake.build_bad_administration_token_result_req()
+                    error_infos = {"reason": "Bad token", "handshake_type": "administration"}
+
+            else:
+                assert False
 
         except ProtocolError as exc:
             result_req = handshake.build_bad_protocol_result_req(str(exc))
+            error_infos = {"reason": str(exc), "handshake_type": handshake.answer_type}
 
         await transport.send(result_req)
-        return context
+        return context, error_infos
 
     async def handle_client(self, stream):
+        selected_logger = logger
+
         try:
             transport = await Transport.init_for_server(stream)
 
-        except TransportClosedByPeer:
+        except TransportClosedByPeer as exc:
+            selected_logger.info("Connection dropped: client has left", reason=str(exc))
             return
 
-        except TransportError:
+        except TransportError as exc:
             # A crash during transport setup could mean the client tried to
             # access us from a web browser (hence sending http request).
 
@@ -334,47 +379,48 @@ class BackendApp:
                 # Stream is really dead, nothing else to do...
                 pass
 
+            selected_logger.info("Connection dropped: websocket error", reason=str(exc))
             return
 
-        transport.logger.info("Client joined")
-
+        selected_logger = transport.logger
         try:
-            transport.logger.debug("start handshake")
-            client_ctx = await self._do_handshake(transport)
+            client_ctx, error_infos = await self._do_handshake(transport)
             if not client_ctx:
                 # Invalid handshake
-                logger.debug("bad handshake")
+                await stream.aclose()
+                selected_logger.info("Connection dropped: bad handshake", **error_infos)
                 return
 
-            client_ctx.logger.debug("handshake done")
+            selected_logger = client_ctx.logger
+            selected_logger.info("Connection established")
 
             if hasattr(client_ctx, "event_bus_ctx"):
                 with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
-
                     await self._handle_client_loop(transport, client_ctx)
 
             else:
                 await self._handle_client_loop(transport, client_ctx)
 
-        except TransportClosedByPeer:
-            transport.logger.info("Client has left")
+        except TransportClosedByPeer as exc:
+            selected_logger.info("Connection dropped: client has left", reason=str(exc))
             return
 
-        except (TransportError, MessageSerializationError):
-            transport.logger.info("Close client connection due to invalid data")
+        except (TransportError, MessageSerializationError) as exc:
             rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
             try:
                 await transport.send(packb(rep))
             except TransportError:
                 pass
             await transport.aclose()
+            selected_logger.info("Connection dropped: invalid data", reason=str(exc))
+            return
 
     async def _handle_client_loop(self, transport, client_ctx):
-        transport.logger.info("Client handshake done")
         while True:
             raw_req = await transport.recv()
             req = unpackb(raw_req)
-            client_ctx.logger.debug("req", req=_filter_binary_fields(req))
+            if get_log_level() <= LOG_LEVEL_DEBUG:
+                client_ctx.logger.debug("Request", req=_filter_binary_fields(req))
             try:
                 cmd = req.get("cmd", "<missing>")
                 if not isinstance(cmd, str):
@@ -390,11 +436,9 @@ class BackendApp:
                     cmd_func = self.anonymous_cmds[cmd]
 
             except KeyError:
-                client_ctx.logger.info("Invalid request", bad_cmd=cmd)
                 rep = {"status": "unknown_command", "reason": "Unknown command"}
 
             else:
-                client_ctx.logger.info("Request", cmd=cmd)
                 try:
                     rep = await cmd_func(client_ctx, req)
 
@@ -408,6 +452,9 @@ class BackendApp:
                 except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}
 
-            client_ctx.logger.debug("rep", rep=_filter_binary_fields(rep))
+            if get_log_level() <= LOG_LEVEL_DEBUG:
+                client_ctx.logger.debug("Response", rep=_filter_binary_fields(req))
+            else:
+                client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
             await transport.send(raw_rep)
