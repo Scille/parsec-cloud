@@ -6,6 +6,19 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.1.2 (2019-10-22)
+-------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Small GUI improvements on white border around main tab and url
+  error message display
+* Remove dependency on pywin32 under Windows which cause packaging issue on
+  previous version (`#750 <https://github.com/Scille/parsec-
+  cloud/issues/750>`__)
+
+
 Parsec 1.1.1 (2019-10-21)
 -------------------------
 
