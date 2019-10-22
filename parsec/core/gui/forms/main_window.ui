@@ -10,6 +10,11 @@
     <height>512</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>PARSEC_WINDOW_TITLE</string>
   </property>
@@ -132,7 +137,6 @@ QComboBox:disabled
 background-color: rgb(220, 220, 220);
 }
 
-
 QScrollBar:vertical
 {
 background: rgb(255, 255, 255);
@@ -170,7 +174,7 @@ width: 20px;
 
 QTabWidget::pane
 {
-border: 1px solid rgb(30, 78, 162);
+border: none;
 }
 
 QTabWidget#tab_center
