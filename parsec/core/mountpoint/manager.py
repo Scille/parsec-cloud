@@ -89,6 +89,18 @@ class MountpointManager:
                     f"Workspace `{workspace_id}` doesn't exist"
                 ) from exc
 
+    async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
+        curried_runner = partial(
+            self._runner,
+            workspace_fs,
+            self.base_mountpoint_path,
+            config=self.config,
+            event_bus=self.event_bus,
+        )
+        runner_task = await start_task(self._nursery, curried_runner)
+        self._mountpoint_tasks[(workspace_fs.workspace_id, timestamp)] = runner_task
+        return runner_task
+
     def get_path_in_mountpoint(
         self, workspace_id: EntryID, path: FsPath, timestamp: Pendulum = None
     ) -> PurePath:
@@ -114,15 +126,7 @@ class MountpointManager:
         if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
 
-        curried_runner = partial(
-            self._runner,
-            workspace,
-            self.base_mountpoint_path,
-            config=self.config,
-            event_bus=self.event_bus,
-        )
-        runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[(workspace_id, timestamp)] = runner_task
+        runner_task = await self._mount_workspace_helper(workspace)
         return runner_task.value
 
     async def unmount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None):
@@ -172,15 +176,7 @@ class MountpointManager:
             ) from exc
         self._timestamped_workspacefs[(workspace_id, target_timestamp)] = new_workspace
 
-        curried_runner = partial(
-            self._runner,
-            new_workspace,
-            self.base_mountpoint_path,
-            config=self.config,
-            event_bus=self.event_bus,
-        )
-        runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[(workspace_id, target_timestamp)] = runner_task
+        runner_task = await self._mount_workspace_helper(new_workspace, target_timestamp)
         if original_timestamp is not None:
             if (workspace_id, original_timestamp) not in self._mountpoint_tasks:
                 raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
