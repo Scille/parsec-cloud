@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-18 11:15+0200\n"
-"PO-Revision-Date: 2019-10-18 11:15+0200\n"
+"POT-Creation-Date: 2019-10-22 11:04+0200\n"
+"PO-Revision-Date: 2019-10-22 11:04+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -892,9 +892,6 @@ msgstr "shared with others"
 msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
 msgstr "- at {}"
 
-msgid "WORKSPACE_NAME_REENCRYPTION_{}"
-msgstr "- Reencrypting ({}%)"
-
 msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
 msgstr "Copied to clipboard."
 
@@ -1744,6 +1741,9 @@ msgstr "Re-encrypt the workspace."
 msgid "LABEL_DELETE_WORKSPACE"
 msgstr "Delete the workspace."
 
+msgid "LABEL_REENCRYPTION_PROGRESS"
+msgstr "This workspace is being reencrypted."
+
 msgid "TITLE_WORKSPACE_SHARING"
 msgstr "Workspace sharing"
 
@@ -1758,3 +1758,6 @@ msgstr "Update"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Search a workspace"
+
+#~ msgid "WORKSPACE_NAME_REENCRYPTION_{}"
+#~ msgstr "- Reencrypting ({}%)"

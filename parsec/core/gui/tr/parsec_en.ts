@@ -443,7 +443,7 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../forms/main_window.ui" line="14"/>
+        <location filename="../forms/main_window.ui" line="19"/>
         <source>PARSEC_WINDOW_TITLE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -989,43 +989,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="165"/>
+        <location filename="../forms/workspace_button.ui" line="175"/>
         <source>LABEL_WORKSPACE_OWNER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="193"/>
+        <location filename="../forms/workspace_button.ui" line="203"/>
         <source>LABEL_WORKSPACE_SHARED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="270"/>
+        <location filename="../forms/workspace_button.ui" line="280"/>
         <source>LABEL_WORKSPACE_EMPTY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="443"/>
+        <location filename="../forms/workspace_button.ui" line="453"/>
         <source>LABEL_RENAME_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="509"/>
+        <location filename="../forms/workspace_button.ui" line="519"/>
         <source>LABEL_SHARE_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="572"/>
+        <location filename="../forms/workspace_button.ui" line="582"/>
         <source>LABEL_MOUNT_TIMESTAMP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="623"/>
+        <location filename="../forms/workspace_button.ui" line="633"/>
         <source>LABEL_ENCRYPT_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="686"/>
+        <location filename="../forms/workspace_button.ui" line="721"/>
         <source>LABEL_DELETE_WORKSPACE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_button.ui" line="677"/>
+        <source>LABEL_REENCRYPTION_PROGRESS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1042,17 +1047,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="162"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="159"/>
         <source>BUTTON_SHARE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="339"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="336"/>
         <source>BUTTON_UPDATE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="389"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="386"/>
         <source>BUTTON_CLOSE</source>
         <translation type="unfinished"></translation>
     </message>

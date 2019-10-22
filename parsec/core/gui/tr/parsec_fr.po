@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-18 11:15+0200\n"
-"PO-Revision-Date: 2019-10-18 11:16+0200\n"
+"POT-Creation-Date: 2019-10-22 11:04+0200\n"
+"PO-Revision-Date: 2019-10-22 11:04+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -886,9 +886,6 @@ msgstr "partagé"
 msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
 msgstr "- à {}"
 
-msgid "WORKSPACE_NAME_REENCRYPTION_{}"
-msgstr "- rechiffrement ({}%)"
-
 msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
 msgstr "Copié dans le presse-papier."
 
@@ -1757,6 +1754,9 @@ msgstr "Re-chiffrer l'espace de travail."
 msgid "LABEL_DELETE_WORKSPACE"
 msgstr "Supprimer l'espace de travail."
 
+msgid "LABEL_REENCRYPTION_PROGRESS"
+msgstr "En cours de rechiffrement..."
+
 msgid "TITLE_WORKSPACE_SHARING"
 msgstr "Partage de l'espace de travail"
 
@@ -1771,3 +1771,6 @@ msgstr "Mettre à jour"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
+
+#~ msgid "WORKSPACE_NAME_REENCRYPTION_{}"
+#~ msgstr "- rechiffrement ({}%)"
