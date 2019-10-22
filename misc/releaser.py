@@ -95,7 +95,7 @@ def collect_newsfragments():
     return fragments
 
 
-def build_release(version):
+def build_release(version, stage_pause):
     if version.extra:
         raise ReleaseError(f"Invalid release version: `{version.full}`")
     print(f"Build release {version.short}")
@@ -151,18 +151,25 @@ def build_release(version):
     # Make git commit
     commit_msg = f"Bump version {old_version.full} -> {version.full}"
     print(f"Create commit `{commit_msg}`")
+    if stage_pause:
+        input("Pausing, press enter when ready")
     run_git(f"add {HISTORY_FILE.absolute()} {VERSION_FILE.absolute()}")
     if newsfragments:
         fragments_pathes = [str(x.absolute()) for x in newsfragments]
         run_git(f"rm {' '.join(fragments_pathes)}")
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git(f"commit -m '{commit_msg}' --no-verify")
+
     print(f"Create tag {version.full}")
+    if stage_pause:
+        input("Pausing, press enter when ready")
     run_git(f"tag {version.full}")
 
     # Update __version__ with dev suffix
     commit_msg = f"Bump version {version.full} -> {version.full}+dev"
     print(f"Create commit `{commit_msg}`")
+    if stage_pause:
+        input("Pausing, press enter when ready")
     replace_code_version(version.short + "+dev")
     run_git(f"add {VERSION_FILE.absolute()}")
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
@@ -207,6 +214,7 @@ if __name__ == "__main__":
     parser.add_argument("command", choices=("build", "check"))
     parser.add_argument("version", type=parse_version, nargs="?")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-P", "--stage-pause", action="store_true")
     args = parser.parse_args()
 
     try:
@@ -215,7 +223,7 @@ if __name__ == "__main__":
                 raise SystemExit("version is required build command")
             current_version = get_version_from_repo_describe_tag(args.verbose)
             check_non_release(current_version)
-            build_release(args.version)
+            build_release(args.version, args.stage_pause)
 
         else:
 
