@@ -152,8 +152,9 @@ def build_release(version):
     commit_msg = f"Bump version {old_version.full} -> {version.full}"
     print(f"Create commit `{commit_msg}`")
     run_git(f"add {HISTORY_FILE.absolute()} {VERSION_FILE.absolute()}")
-    fragments_pathes = [str(x.absolute()) for x in newsfragments]
-    run_git(f"rm {' '.join(fragments_pathes)}")
+    if newsfragments:
+        fragments_pathes = [str(x.absolute()) for x in newsfragments]
+        run_git(f"rm {' '.join(fragments_pathes)}")
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
     run_git(f"commit -m '{commit_msg}' --no-verify")
     print(f"Create tag {version.full}")
