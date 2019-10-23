@@ -1,11 +1,69 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import inspect
+import functools
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 import trio
-
+import outcome
 from async_generator import asynccontextmanager
 from sqlite3 import connect as sqlite_connect
+
+
+@asynccontextmanager
+async def thread_pool_runner(max_workers=None):
+    """A trio-managed thread pool.
+
+    This should be removed if trio decides to add support for thread pools:
+    https://github.com/python-trio/trio/blob/c5497c5ac4/trio/_threads.py#L32-L128
+    """
+    portal = trio.BlockingTrioPortal()
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    async def run_in_thread(fn, *args):
+        send_channel, receive_channel = trio.open_memory_channel(1)
+
+        def target():
+            result = outcome.capture(fn, *args)
+            portal.run_sync(send_channel.send_nowait, result)
+
+        executor.submit(target)
+        result = await receive_channel.receive()
+        return result.unwrap()
+
+    # The thread pool executor cannot be used as a sync context here, as it would
+    # block the trio loop. Instead, we shut the executor down in a worker thread.
+    try:
+        yield run_in_thread
+    finally:
+        with trio.CancelScope(shield=True):
+            await trio.run_sync_in_worker_thread(executor.shutdown)
+
+
+def protect_with_lock(fn):
+    """Use as a decorator to protect an async method with `self._lock`.
+
+    Also works with async gen method so it can be used for `open_cursor`.
+    """
+
+    if inspect.isasyncgenfunction(fn):
+
+        @functools.wraps(fn)
+        async def wrapper(self, *args, **kwargs):
+            async with self._lock:
+                async for item in fn.__get__(self)(*args, **kwargs):
+                    yield item
+
+    else:
+        assert inspect.iscoroutinefunction(fn)
+
+        @functools.wraps(fn)
+        async def wrapper(self, *args, **kwargs):
+            async with self._lock:
+                return await fn.__get__(self)(*args, **kwargs)
+
+    return wrapper
 
 
 class LocalDatabase:
@@ -13,19 +71,33 @@ class LocalDatabase:
 
     def __init__(self, path, vacuum_threshold=None):
         self._conn = None
+        self._lock = trio.Lock()
+        self._run_in_thread = None
+
         self.path = Path(path)
         self.vacuum_threshold = vacuum_threshold
 
     @classmethod
     @asynccontextmanager
     async def run(cls, *args, **kwargs):
+        # Instanciate the local database
         self = cls(*args, **kwargs)
-        try:
-            await self._connect()
-            yield self
-        finally:
-            with trio.CancelScope(shield=True):
-                await self._close()
+
+        # Run a pool with single worker thread
+        # (although the lock already protects against concurrent access to the pool)
+        async with thread_pool_runner(max_workers=1) as self._run_in_thread:
+
+            # Create the connection to the sqlite database
+            try:
+                await self._connect()
+
+                # Yield the instance
+                yield self
+
+            # Safely flush and close the connection
+            finally:
+                with trio.CancelScope(shield=True):
+                    await self._close()
 
     # Life cycle
 
@@ -34,7 +106,7 @@ class LocalDatabase:
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
         # Create sqlite connection
-        conn = sqlite_connect(str(self.path))
+        conn = sqlite_connect(str(self.path), check_same_thread=False)
 
         # The default isolation level ("") lets python manage the transaction
         # so we can periodically commit the pending changes.
@@ -50,6 +122,7 @@ class LocalDatabase:
         # Return connection
         return conn
 
+    @protect_with_lock
     async def _connect(self):
         if self._conn is not None:
             raise RuntimeError("Already connected")
@@ -57,19 +130,21 @@ class LocalDatabase:
         # Connect and initialize database
         self._conn = await self._create_connection()
 
+    @protect_with_lock
     async def _close(self):
         # Idempotency
         if self._conn is None:
             return
 
         # Commit and close
-        self._conn.commit()
+        await self._run_in_thread(self._conn.commit)
         self._conn.close()
         self._conn = None
 
     # Cursor management
 
     @asynccontextmanager
+    @protect_with_lock
     async def open_cursor(self, commit=True):
         # Get a cursor
         cursor = self._conn.cursor()
@@ -79,15 +154,16 @@ class LocalDatabase:
             yield cursor
 
             # Commit the transaction when finished
-            if commit:
-                self._conn.commit()
+            if commit and self._conn.in_transaction:
+                await self._run_in_thread(self._conn.commit)
 
         # Close cursor
         finally:
             cursor.close()
 
+    @protect_with_lock
     async def commit(self):
-        self._conn.commit()
+        await self._run_in_thread(self._conn.commit)
 
     # Vacuum
 
@@ -100,23 +176,24 @@ class LocalDatabase:
                 pass
         return disk_usage
 
+    @protect_with_lock
     async def run_vacuum(self):
         # Vacuum disabled
         if self.vacuum_threshold is None:
             return
 
         # Flush to disk
-        self._conn.commit()
+        await self._run_in_thread(self._conn.commit)
 
         # No reason to vacuum yet
         if self.get_disk_usage() < self.vacuum_threshold:
             return
 
         # Run vacuum
-        self._conn.execute("VACUUM")
+        await self._run_in_thread(self._conn.execute, "VACUUM")
 
         # The connection needs to be recreated
         try:
-            await self._close()
+            self._conn.close()
         finally:
             self._conn = await self._create_connection()

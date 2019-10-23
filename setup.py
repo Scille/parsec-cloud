@@ -260,6 +260,7 @@ requirements = [
     "colorama==0.4.0",  # structlog colored output
     "PyPika==0.29.0",
     "async_exit_stack==1.0.1",
+    "outcome==1.0.0",
 ]
 
 
