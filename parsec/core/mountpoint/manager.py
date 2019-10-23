@@ -12,6 +12,7 @@ from async_generator import asynccontextmanager
 
 from parsec.utils import start_task
 from parsec.core.types import FsPath, EntryID
+from parsec.core.fs.workspacefs import WorkspaceFSTimestamped
 from parsec.core.fs.exceptions import FSWorkspaceNotFoundError, FSWorkspaceTimestampedTooEarly
 from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationError,
@@ -77,7 +78,7 @@ class MountpointManager:
 
     def _get_workspace_timestamped(self, workspace_id: EntryID, timestamp: Pendulum):
         try:
-            return self._timestamped_workspacefs[(workspace_id, timestamp)]
+            return self._timestamped_workspacefs[workspace_id][timestamp]
         except KeyError:
             try:
                 self.user_fs.get_workspace(workspace_id)
@@ -88,6 +89,34 @@ class MountpointManager:
                 raise MountpointConfigurationError(
                     f"Workspace `{workspace_id}` doesn't exist"
                 ) from exc
+
+    async def _load_workspace_timestamped(
+        self, workspace_id: EntryID, timestamp: Pendulum
+    ) -> WorkspaceFSTimestamped:
+        try:
+            return self._timestamped_workspacefs[workspace_id][timestamp]
+        except KeyError:
+            pass
+        try:
+            # Get a random WorkspaceFSTimestamped if possible, as all WorkspaceFSTimestamped from
+            # the same WorkspaceFS will share the same cache when implemented
+            source_workspace = next(v for v in self._timestamped_workspacefs[workspace_id].values())
+        except (StopIteration, KeyError):  # No WorkspaceFSTimestamped found for this workspace_id
+            source_workspace = self._get_workspace(workspace_id)
+        try:
+            new_workspace = await source_workspace.to_timestamped(timestamp)
+        except FSWorkspaceTimestampedTooEarly as exc:
+            raise MountpointConfigurationWorkspaceFSTimestampedError(
+                f"Workspace `{workspace_id}` didn't exist at `{timestamp}`",
+                workspace_id,
+                timestamp,
+                source_workspace.get_workspace_name(),
+            ) from exc
+        try:
+            self._timestamped_workspacefs[workspace_id][timestamp] = new_workspace
+        except KeyError:
+            self._timestamped_workspacefs[workspace_id] = {timestamp: new_workspace}
+        return new_workspace
 
     async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
         curried_runner = partial(
@@ -149,32 +178,7 @@ class MountpointManager:
                 return self._mountpoint_tasks[(workspace_id, target_timestamp)].value
             except KeyError:
                 pass
-            try:
-                self.user_fs.get_workspace(workspace_id)
-                raise MountpointNotMounted(
-                    f"Workspace `{workspace_id}` not mounted at timestamped `{target_timestamp}`"
-                )
-            except FSWorkspaceNotFoundError as exc:
-                raise MountpointConfigurationError(
-                    f"Workspace `{workspace_id}` doesn't exist"
-                ) from exc
-        if original_timestamp is None:
-            workspace = self._get_workspace(workspace_id)
-        else:
-            try:
-                workspace = self._get_workspace_timestamped(workspace_id, original_timestamp)
-            except MountpointNotMounted:
-                workspace = self._get_workspace(workspace_id)
-        try:
-            new_workspace = await workspace.to_timestamped(target_timestamp)
-        except FSWorkspaceTimestampedTooEarly as exc:
-            raise MountpointConfigurationWorkspaceFSTimestampedError(
-                f"Workspace `{workspace_id}` didn't exist at `{target_timestamp}`",
-                workspace_id,
-                target_timestamp,
-                workspace.get_workspace_name(),
-            ) from exc
-        self._timestamped_workspacefs[(workspace_id, target_timestamp)] = new_workspace
+        new_workspace = await self._load_workspace_timestamped(workspace_id, target_timestamp)
 
         runner_task = await self._mount_workspace_helper(new_workspace, target_timestamp)
         if original_timestamp is not None:
