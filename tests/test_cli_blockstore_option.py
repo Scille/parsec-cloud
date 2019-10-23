@@ -34,6 +34,17 @@ def test_parse_s3():
     )
 
 
+def test_parse_s3_with_default_endpoint():
+    config = _parse_blockstore_params(["s3::region1:bucketA:key123:S3cr3t"])
+    assert config == S3BlockStoreConfig(
+        s3_endpoint_url=None,
+        s3_region="region1",
+        s3_bucket="bucketA",
+        s3_key="key123",
+        s3_secret="S3cr3t",
+    )
+
+
 def test_parse_swift():
     config = _parse_blockstore_params(["swift:swift.example.com:tenant2:containerB:user123:S3cr3t"])
     assert config == SWIFTBlockStoreConfig(
