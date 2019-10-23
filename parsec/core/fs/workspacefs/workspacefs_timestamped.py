@@ -10,7 +10,10 @@ from parsec.core.fs.workspacefs.workspacefs import WorkspaceFS
 class WorkspaceFSTimestamped(WorkspaceFS):
     def __init__(self, workspacefs: WorkspaceFS, timestamp: pendulum.Pendulum):
         self.workspace_id = workspacefs.workspace_id
-        self.get_workspace_entry = self.timestamp_get_entry(workspacefs.get_workspace_entry)
+        if isinstance(workspacefs, WorkspaceFSTimestamped):
+            self.get_workspace_entry = workspacefs.get_workspace_entry
+        else:
+            self.get_workspace_entry = self.timestamp_get_entry(workspacefs.get_workspace_entry)
         self.device = workspacefs.device
         self.local_storage = workspacefs.local_storage.to_timestamped(timestamp)
         self.backend_cmds = workspacefs.backend_cmds
