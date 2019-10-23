@@ -1,8 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import inspect
 import functools
 from pathlib import Path
-from inspect import isasyncgenfunction
 from concurrent.futures import ThreadPoolExecutor
 
 import trio
@@ -13,7 +13,11 @@ from sqlite3 import connect as sqlite_connect
 
 @asynccontextmanager
 async def thread_pool_runner(max_workers=None):
-    """A trio-managed thread pool"""
+    """A trio-managed thread pool.
+
+    This should be removed if trio decides to add support for thread pools:
+    https://github.com/python-trio/trio/blob/c5497c5ac4/trio/_threads.py#L32-L128
+    """
     portal = trio.BlockingTrioPortal()
     executor = ThreadPoolExecutor(max_workers=max_workers)
 
@@ -28,6 +32,8 @@ async def thread_pool_runner(max_workers=None):
         result = await receive_channel.receive()
         return result.unwrap()
 
+    # The thread pool executor cannot be used as a sync context here, as it would
+    # block the trio loop. Instead, we shut the executor down in a worker thread.
     try:
         yield run_in_thread
     finally:
@@ -36,9 +42,12 @@ async def thread_pool_runner(max_workers=None):
 
 
 def protect_with_lock(fn):
-    """Use as a decorator to protect an async method with `self._lock`"""
+    """Use as a decorator to protect an async method with `self._lock`.
 
-    if isasyncgenfunction(fn):
+    Also works with async gen method so it can be used for `open_cursor`.
+    """
+
+    if inspect.isasyncgenfunction(fn):
 
         @functools.wraps(fn)
         async def wrapper(self, *args, **kwargs):
@@ -47,6 +56,7 @@ def protect_with_lock(fn):
                     yield item
 
     else:
+        assert inspect.iscoroutinefunction(fn)
 
         @functools.wraps(fn)
         async def wrapper(self, *args, **kwargs):
@@ -70,11 +80,21 @@ class LocalDatabase:
     @classmethod
     @asynccontextmanager
     async def run(cls, *args, **kwargs):
+        # Instanciate the local database
         self = cls(*args, **kwargs)
+
+        # Run a pool with single worker thread
+        # (although the lock already protects against concurrent access to the pool)
         async with thread_pool_runner(max_workers=1) as self._run_in_thread:
+
+            # Create the connection to the sqlite database
             try:
                 await self._connect()
+
+                # Yield the instance
                 yield self
+
+            # Safely flush and close the connection
             finally:
                 with trio.CancelScope(shield=True):
                     await self._close()
