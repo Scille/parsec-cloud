@@ -145,16 +145,13 @@ class MountpointManager:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
 
     async def mount_workspace(self, workspace_id: EntryID, timestamp: Pendulum = None) -> PurePath:
-        if timestamp is None:
-            workspace = self._get_workspace(workspace_id)
-        else:
-            try:
-                workspace = self._get_workspace_timestamped(workspace_id, timestamp)
-            except MountpointNotMounted:
-                return await self.remount_workspace_new_timestamp(workspace_id, None, timestamp)
         if (workspace_id, timestamp) in self._mountpoint_tasks:
             raise MountpointAlreadyMounted(f"Workspace `{workspace_id}` already mounted.")
 
+        if timestamp is not None:
+            return await self.remount_workspace_new_timestamp(workspace_id, None, timestamp)
+
+        workspace = self._get_workspace(workspace_id)
         runner_task = await self._mount_workspace_helper(workspace)
         return runner_task.value
 
