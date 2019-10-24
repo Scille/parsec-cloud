@@ -327,8 +327,8 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
         await workspace.mkdir("/bar")
         barid = await workspace.path_id("/bar")
 
-    await workspace.sync()
-    await workspace2.sync()
+        await workspace.sync()
+        await workspace2.sync()
 
     # 2) Make both fs diverged
 
@@ -401,6 +401,23 @@ async def test_concurrent_update(running_backend, alice_user_fs, alice2_user_fs)
     assert bar_children == bar_expected
 
     # TODO: add more tests for file conflicts
+
+
+@pytest.mark.trio
+async def test_update_invalid_timestamp(running_backend, alice_user_fs, alice2_user_fs):
+    with freeze_time("2000-01-01"):
+        wid = await create_shared_workspace("w", alice_user_fs, alice2_user_fs)
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch("/foo.txt")
+    with freeze_time("2000-01-01"):
+        await workspace.sync()
+    await workspace.write_bytes("/foo.txt", b"ok")
+    with freeze_time("2000-01-03"):
+        await workspace.sync()
+    await workspace.write_bytes("/foo.txt", b"ko")
+    with freeze_time("2000-01-02"):
+        with pytest.raises(FSBackendOfflineError):
+            await workspace.sync()
 
 
 @pytest.mark.trio

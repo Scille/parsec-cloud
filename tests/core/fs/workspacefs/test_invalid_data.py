@@ -4,17 +4,20 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.fs import FSError
+from parsec.core.types import WorkspaceRole
 
 from tests.common import freeze_time
 
 
 @pytest.fixture
-async def testbed(running_backend, alice_user_fs, alice):
+async def testbed(running_backend, alice_user_fs, alice, bob):
     with freeze_time("2000-01-01"):
         wid = await alice_user_fs.workspace_create("w1")
         workspace = alice_user_fs.get_workspace(wid)
         await workspace.sync()
         local_manifest = await workspace.local_storage.get_manifest(wid)
+    with freeze_time("2000-01-03"):
+        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
     class TestBed:
         def __init__(self):
@@ -55,12 +58,12 @@ async def testbed(running_backend, alice_user_fs, alice):
             # This should trigger FSError
             with pytest.raises(FSError) as exc:
                 await workspace.sync()
-            str(exc.value) == exc_msg
+            assert str(exc.value) == exc_msg
 
             # Also test timestamped workspace
             with pytest.raises(FSError) as exc:
                 await workspace.to_timestamped(options["backend_timestamp"])
-            str(exc.value) == exc_msg
+            assert str(exc.value) == exc_msg
 
     return TestBed()
 
@@ -103,10 +106,11 @@ async def test_invalid_timestamp(testbed, alice, alice2):
 
 @pytest.mark.trio
 async def test_no_user_certif(testbed, alice, bob):
-    bad_timestamp = Pendulum(1999, 12, 31)
-
     # Data created before workspace manifest access
-    exc_msg = "Manifest was created at 1999-12-31T00:00:00+00:00 by `alice@dev1` which had no right to access the workspace at that time"
+    exc_msg = "Manifest was created at 2000-01-02T00:00:00+00:00 by `bob@dev1` which had no right to access the workspace at that time"
     await testbed.run(
-        backend_timestamp=bad_timestamp, signed_timestamp=bad_timestamp, exc_msg=exc_msg
+        backend_author=bob.device_id,
+        signed_author=bob.device_id,
+        author_signkey=bob.signing_key,
+        exc_msg=exc_msg,
     )

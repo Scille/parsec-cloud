@@ -14,6 +14,7 @@ from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
     VlobVersionError,
+    VlobTimestampError,
     VlobNotFoundError,
     VlobAlreadyExistsError,
     VlobEncryptionRevisionError,
@@ -272,10 +273,11 @@ class MemoryVlobComponent(BaseVlobComponent):
             organization_id, vlob.realm_id, author.user_id, encryption_revision
         )
 
-        if version - 1 == vlob.current_version:
-            vlob.data.append((blob, author, timestamp))
-        else:
+        if version - 1 != vlob.current_version:
             raise VlobVersionError()
+        if timestamp < vlob.data[vlob.current_version - 1][2]:
+            raise VlobTimestampError(timestamp, vlob.data[vlob.current_version - 1][2])
+        vlob.data.append((blob, author, timestamp))
 
         self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
 

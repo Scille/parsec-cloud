@@ -72,6 +72,10 @@ class BackendCmdsBadVersion(BackendCmdsBadResponse):
     status = "bad_version"
 
 
+class BackendCmdsBadTimestamp(BackendCmdsBadResponse):
+    status = "bad_timestamp"
+
+
 class BackendCmdsNotFound(BackendCmdsBadResponse):
     status = "not_found"
 

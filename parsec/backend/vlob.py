@@ -31,6 +31,10 @@ class VlobVersionError(VlobError):
     pass
 
 
+class VlobTimestampError(VlobError):
+    pass
+
+
 class VlobNotFoundError(VlobError):
     pass
 
@@ -99,6 +103,9 @@ class BaseVlobComponent:
         except VlobVersionError:
             return vlob_read_serializer.rep_dump({"status": "bad_version"})
 
+        except VlobTimestampError:
+            return vlob_read_serializer.rep_dump({"status": "bad_timestamp"})
+
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
 
@@ -134,6 +141,9 @@ class BaseVlobComponent:
 
         except VlobVersionError:
             return vlob_update_serializer.rep_dump({"status": "bad_version"})
+
+        except VlobTimestampError:
+            return vlob_update_serializer.rep_dump({"status": "bad_timestamp"})
 
         except VlobEncryptionRevisionError:
             return vlob_create_serializer.rep_dump({"status": "bad_encryption_revision"})
@@ -326,6 +336,7 @@ class BaseVlobComponent:
         Raises:
             VlobAccessError
             VlobVersionError
+            VlobTimestampError
             VlobNotFoundError
             VlobEncryptionRevisionError: if encryption_revision mismatch
             VlobInMaintenanceError
