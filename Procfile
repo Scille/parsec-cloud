@@ -1,1 +1,0 @@
-web: parsec backend run

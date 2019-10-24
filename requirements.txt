@@ -1,2 +1,0 @@
-# Helps heroku app
--e .[backend]
