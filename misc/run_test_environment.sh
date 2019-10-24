@@ -30,7 +30,8 @@ Configure your test environment with the following variables:
     export XDG_CONFIG_HOME=$XDG_CONFIG_HOME
 """
 
-ADMIN_TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+#ADMIN_TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+ADMIN_TOKEN=V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ
 pkill -f "parsec backend run -b MOCKED --db MOCKED -P $PORT --administration-token *"
 parsec backend run -b MOCKED --db MOCKED -P $PORT --administration-token $ADMIN_TOKEN &
 sleep 1
