@@ -6,7 +6,7 @@ from structlog import get_logger
 from queue import Queue
 import os
 
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
 
@@ -87,6 +87,10 @@ def run_gui(config: CoreConfig, start_arg: str = None):
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
+
+    # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
+    app.setAttribute(Qt.AA_EnableHighDpiScaling)
+    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
     f = QFont("Arial")
     app.setFont(f)
