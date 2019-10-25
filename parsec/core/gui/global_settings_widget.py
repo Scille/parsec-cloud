@@ -6,6 +6,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui import lang
+from parsec.core.gui import desktop
 from parsec.core.gui.new_version import CheckNewVersion
 from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
 
@@ -30,10 +31,14 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
                 current = lg
         if current:
             self.combo_languages.setCurrentText(current)
+        self.label_user_guide.clicked.connect(self.open_user_guide)
         self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
         self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
         self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
         self.button_check_version.clicked.connect(self.check_version)
+
+    def open_user_guide(self):
+        desktop.open_url("https://www.google.com")
 
     def check_version(self):
         d = CheckNewVersion(self.jobs_ctx, self.event_bus, self.core_config, parent=self)

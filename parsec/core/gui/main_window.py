@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from typing import Optional
-from functools import partial
 from structlog import get_logger
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow
@@ -29,6 +28,7 @@ logger = get_logger()
 class MainWindow(QMainWindow, Ui_MainWindow):
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
+    systray_notification = pyqtSignal(str, str)
 
     def __init__(self, jobs_ctx, event_bus, config, minimize_on_close: bool = False, **kwargs):
         super().__init__(**kwargs)
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().showMaximized()
         QCoreApplication.processEvents()
         if self.config.gui_first_launch:
-            self.show_starting_guide()
+            # self.show_starting_guide()
             r = QuestionDialog.ask(
                 self, _("ASK_ERROR_REPORTING_TITLE"), _("ASK_ERROR_REPORTING_CONTENT")
             )
@@ -164,20 +164,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.minimize_on_close and not self.need_close:
             self.hide()
             event.ignore()
-
+            self.systray_notification.emit("Parsec", _("TRAY_PARSEC_RUNNING"))
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
                 result = QuestionDialog.ask(self, _("ASK_QUIT_TITLE"), _("ASK_QUIT_CONTENT"))
                 if not result:
                     event.ignore()
                     return
-            msg = _("TRAY_PARSEC_RUNNING")
 
-            # The Qt thread should never hit the core directly.
-            # Synchronous calls can run directly in the job system
-            # as they won't block the Qt loop for long
-            self.jobs_ctx.run_sync(
-                partial(self.event_bus.send, "gui.systray.notif", title="Parsec", msg=msg)
-            )
             self.close_all_tabs()
             event.accept()
