@@ -132,6 +132,7 @@ def run_gui(config: CoreConfig, start_arg: str = None):
 
         if systray_available():
             systray = Systray(parent=win)
+            win.systray_notification.connect(systray.on_systray_notification)
             systray.on_close.connect(win.close_app)
             systray.on_show.connect(win.show_top)
             app.aboutToQuit.connect(before_quit(systray))
