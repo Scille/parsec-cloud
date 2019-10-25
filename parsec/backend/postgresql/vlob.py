@@ -367,7 +367,8 @@ WHERE
 
             query = """
 SELECT
-    version
+    version,
+    created_on,
 FROM vlob_atom
 WHERE
     organization = ({})
@@ -384,7 +385,7 @@ ORDER BY version DESC LIMIT 1
             elif previous["version"] != version - 1:
                 raise VlobVersionError()
 
-            elif previous["timestamp"] > timestamp:
+            elif previous["created_on"] > timestamp:
                 raise VlobTimestampError()
 
             query = """
