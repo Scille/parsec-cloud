@@ -1,7 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import os
+import trio
 import pytest
+from pathlib import Path
+
+from parsec.core.mountpoint.manager import mountpoint_manager_factory
+
+from tests.common import create_shared_workspace
 
 
 @pytest.mark.mountpoint
@@ -54,3 +60,63 @@ def test_empty_read_then_reopen(tmpdir, mountpoint_service):
     expected_data = os.read(oracle_fd, size)
     data = os.read(fd, size)
     assert data == expected_data
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_remote_error_event(
+    tmpdir, monkeypatch, running_backend, alice_user_fs, bob_user_fs, monitor
+):
+    wid = await create_shared_workspace("w1", bob_user_fs, alice_user_fs)
+
+    base_mountpoint = Path(tmpdir / "alice_mountpoint")
+    async with mountpoint_manager_factory(
+        alice_user_fs, alice_user_fs.event_bus, base_mountpoint, debug=False
+    ) as mountpoint_manager:
+
+        await mountpoint_manager.mount_workspace(wid)
+
+        # Create shared data
+        bob_w = bob_user_fs.get_workspace(wid)
+        await bob_w.touch("/foo.txt")
+        await bob_w.write_bytes("/foo.txt", b"hello")
+        await bob_w.sync()
+        alice_w = alice_user_fs.get_workspace(wid)
+        await alice_w.sync()
+        # Force manifest cache
+        await alice_w.path_id("/")
+        await alice_w.path_id("/foo.txt")
+
+        trio_w = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, Path("/")))
+
+        # Switch the mountpoint in maintenance...
+        await bob_user_fs.workspace_start_reencryption(wid)
+
+        def _testbed():
+            # ...accessing workspace data in the backend should endup in remote error
+            with alice_user_fs.event_bus.listen() as spy:
+                fd = os.open(str(trio_w / "foo.txt"), os.O_RDONLY)
+                with pytest.raises(OSError):
+                    os.read(fd, 10)
+            spy.assert_event_occured("mountpoint.remote_error")
+
+            # But should still be able to do local stuff though without remote errors
+            with alice_user_fs.event_bus.listen() as spy:
+                os.open(str(trio_w / "bar.txt"), os.O_RDWR | os.O_CREAT)
+            assert os.listdir(str(trio_w)) == ["bar.txt", "foo.txt"]
+            assert "mountpoint.remote_error" not in [e.event for e in spy.events]
+
+            # Finally test unhandled error
+            def _crash(*args, **kwargs):
+                raise RuntimeError("D'Oh !")
+
+            monkeypatch.setattr(
+                "parsec.core.fs.workspacefs.entry_transactions.EntryTransactions.folder_create",
+                _crash,
+            )
+            with alice_user_fs.event_bus.listen() as spy:
+                with pytest.raises(OSError):
+                    os.mkdir(str(trio_w / "dummy"))
+            spy.assert_event_occured("mountpoint.unhandled_error")
+
+        await trio.run_sync_in_worker_thread(_testbed)

@@ -10,7 +10,7 @@ from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_e
 
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSError
+from parsec.core.fs import FSOperationLocalError, FSOperationRemoteError
 
 
 logger = get_logger()
@@ -32,27 +32,27 @@ def is_banned(name):
 
 
 @contextmanager
-def translate_error():
+def translate_error(event_bus):
     try:
         yield
 
-    except FSError as exc:
+    except FSOperationLocalError as exc:
+        raise FuseOSError(exc.errno) from exc
 
-        if exc.errno:
-            raise FuseOSError(exc.errno) from exc
-
-        else:
-            logger.exception("Internal FSError in fuse mountpoint")
-            raise FuseOSError(errno.EIO) from exc
+    except FSOperationRemoteError as exc:
+        event_bus.send("mountpoint.remote_error", exc=exc)
+        raise FuseOSError(exc.errno) from exc
 
     except Exception as exc:
         logger.exception("Unhandled exception in fuse mountpoint")
+        event_bus.send("mountpoint.unhandled_error", exc=exc)
         raise FuseOSError(errno.EIO) from exc
 
 
 class FuseOperations(LoggingMixIn, Operations):
-    def __init__(self, fs_access):
+    def __init__(self, event_bus, fs_access):
         super().__init__()
+        self.event_bus = event_bus
         self.fs_access = fs_access
         self.fds = {}
         self._need_exit = False
@@ -72,7 +72,7 @@ class FuseOperations(LoggingMixIn, Operations):
         if self._need_exit:
             fuse_exit()
 
-        with translate_error():
+        with translate_error(self.event_bus):
             stat = self.fs_access.entry_info(path)
 
         fuse_stat = {}
@@ -99,7 +99,7 @@ class FuseOperations(LoggingMixIn, Operations):
         return fuse_stat
 
     def readdir(self, path: FsPath, fh: int):
-        with translate_error():
+        with translate_error(self.event_bus):
             stat = self.fs_access.entry_info(path)
 
         if stat["type"] == "file":
@@ -110,67 +110,67 @@ class FuseOperations(LoggingMixIn, Operations):
     def create(self, path: FsPath, mode: int):
         if is_banned(path.name):
             raise FuseOSError(errno.EACCES)
-        with translate_error():
+        with translate_error(self.event_bus):
             _, fd = self.fs_access.file_create(path, open=True)
             return fd
 
     def open(self, path: FsPath, flags: int = 0):
         # Filter file status and file creation flags
         mode = MODES[flags % 4]
-        with translate_error():
+        with translate_error(self.event_bus):
             _, fd = self.fs_access.file_open(path, mode=mode)
             return fd
 
     def release(self, path: FsPath, fh: int):
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.fd_close(fh)
 
     def read(self, path: FsPath, size: int, offset: int, fh: int):
-        with translate_error():
+        with translate_error(self.event_bus):
             ret = self.fs_access.fd_read(fh, size, offset)
             # Fuse wants bytes but fd_read returns a bytearray
             return bytes(ret)
 
     def write(self, path: FsPath, data: bytes, offset: int, fh: int):
-        with translate_error():
+        with translate_error(self.event_bus):
             return self.fs_access.fd_write(fh, data, offset)
 
     def truncate(self, path: FsPath, length: int, fh: Optional[int] = None):
-        with translate_error():
+        with translate_error(self.event_bus):
             if fh:
                 self.fs_access.fd_resize(fh, length)
             else:
                 self.fs_access.file_resize(path, length)
 
     def unlink(self, path: FsPath):
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.file_delete(path)
 
     def mkdir(self, path: FsPath, mode: int):
         if is_banned(path.name):
             raise FuseOSError(errno.EACCES)
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.folder_create(path)
         return 0
 
     def rmdir(self, path: FsPath):
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.folder_delete(path)
         return 0
 
     def rename(self, path: FsPath, destination: str):
         destination = FsPath(destination)
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.entry_rename(path, destination, overwrite=True)
         return 0
 
     def flush(self, path: FsPath, fh: int):
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.fd_flush(fh)
         return 0
 
     def fsync(self, path: FsPath, datasync, fh: int):
-        with translate_error():
+        with translate_error(self.event_bus):
             self.fs_access.fd_flush(fh)
         return 0
 
