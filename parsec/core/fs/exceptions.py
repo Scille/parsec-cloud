@@ -42,60 +42,44 @@ class FSError(OSError):
         return self.message
 
 
-# Base errors
+class FSWorkspaceNotFoundError(FSError):
+    pass
 
 
-class FSPermissionError(FSError, PermissionError):
+class FSWorkspaceTimestampedTooEarly(FSError):
+    pass
+
+
+class FSOperationError(FSError):
+    pass
+
+
+class FSOperationLocalError(FSOperationError):
+
+    """
+    Used to represent "normal" error (e.g. opening a non-existing file,
+    removing a non-empty folder etc.)
+    """
+
+    pass
+
+
+class FSOperationRemoteError(FSError):
+    """
+    Used to represent error in the underlaying layers (e.g. data inconsistency,
+    data access refused by the backend etc.)
+    """
+
     ERRNO = errno.EACCES
     NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
-class FSNotADirectoryError(FSError, NotADirectoryError):
-    ERRNO = errno.ENOTDIR
-    NTSTATUS = ntstatus.STATUS_NOT_A_DIRECTORY
-
-
-class FSFileNotFoundError(FSError, FileNotFoundError):
-    ERRNO = errno.ENOENT
-    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
-
-
-class FSCrossDeviceError(FSError):
-    ERRNO = errno.EXDEV
-    NTSTATUS = ntstatus.STATUS_NOT_SAME_DEVICE
-
-
-class FSFileExistsError(FSError, FileExistsError):
-    ERRNO = errno.EEXIST
-    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_COLLISION
-
-
-class FSIsADirectoryError(FSError, IsADirectoryError):
-    ERRNO = errno.EISDIR
-    NTSTATUS = ntstatus.STATUS_FILE_IS_A_DIRECTORY
-
-
-class FSDirectoryNotEmptyError(FSError):
-    ERRNO = errno.ENOTEMPTY
-    NTSTATUS = ntstatus.STATUS_DIRECTORY_NOT_EMPTY
-
-
-class FSInvalidFileDescriptor(FSError):
-    ERRNO = errno.EBADF
-    NTSTATUS = ntstatus.STATUS_INVALID_HANDLE
-
-
-class FSNetworkError(FSError):
-    ERRNO = errno.EHOSTUNREACH
-    NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
-
-
-class FSInvalidArgumentError(FSError):
-    ERRNO = errno.EINVAL
-    NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
-
-
 class FSInternalError(FSError):
+    """
+    Errors used internally by the fs module, should not be visible !
+    """
+
+    # TODO: internal exceptions types should not be public !
     def __init__(self, *args):
         super(Exception, self).__init__(*args)
 
@@ -103,21 +87,63 @@ class FSInternalError(FSError):
         return super(Exception, self).__str__()
 
 
-# Protocol errors
+# Operation local errors
 
 
-class FSValidationError(FSInternalError):
-    pass
+class FSPermissionError(FSOperationLocalError, PermissionError):
+    ERRNO = errno.EACCES
+    NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
-class FSPackingError(FSInternalError):
-    pass
+class FSNotADirectoryError(FSOperationLocalError, NotADirectoryError):
+    ERRNO = errno.ENOTDIR
+    NTSTATUS = ntstatus.STATUS_NOT_A_DIRECTORY
 
 
-# Remote errors
+class FSFileNotFoundError(FSOperationLocalError, FileNotFoundError):
+    ERRNO = errno.ENOENT
+    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
 
 
-class FSRemoteManifestNotFound(FSInternalError):
+class FSCrossDeviceError(FSOperationLocalError):
+    ERRNO = errno.EXDEV
+    NTSTATUS = ntstatus.STATUS_NOT_SAME_DEVICE
+
+
+class FSFileExistsError(FSOperationLocalError, FileExistsError):
+    ERRNO = errno.EEXIST
+    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_COLLISION
+
+
+class FSIsADirectoryError(FSOperationLocalError, IsADirectoryError):
+    ERRNO = errno.EISDIR
+    NTSTATUS = ntstatus.STATUS_FILE_IS_A_DIRECTORY
+
+
+class FSDirectoryNotEmptyError(FSOperationLocalError):
+    ERRNO = errno.ENOTEMPTY
+    NTSTATUS = ntstatus.STATUS_DIRECTORY_NOT_EMPTY
+
+
+class FSInvalidFileDescriptor(FSOperationLocalError):
+    ERRNO = errno.EBADF
+    NTSTATUS = ntstatus.STATUS_INVALID_HANDLE
+
+
+class FSInvalidArgumentError(FSOperationLocalError):
+    ERRNO = errno.EINVAL
+    NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
+
+
+# Operation remote errors
+
+
+class FSBackendOfflineError(FSOperationRemoteError):
+    ERRNO = errno.EHOSTUNREACH
+    NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
+
+
+class FSRemoteManifestNotFound(FSOperationRemoteError):
     pass
 
 
@@ -129,46 +155,23 @@ class FSRemoteManifestNotFoundBadTimestamp(FSRemoteManifestNotFound):
     pass
 
 
-class FSRemoteBlockNotFound(FSInternalError):
+class FSRemoteBlockNotFound(FSOperationRemoteError):
     pass
 
 
-class FSRemoteSyncError(FSInternalError):
+class FSRemoteSyncError(FSOperationRemoteError):
     pass
 
 
-class FSBadEncryptionRevision(FSInternalError):
+class FSBadEncryptionRevision(FSOperationRemoteError):
     pass
 
 
-# Local miss errors
-
-
-class FSLocalMissError(FSInternalError):
-    def __init__(self, id: EntryID):
-        super().__init__(id)
-        self.id = id
-
-
-class FSWorkspaceNotFoundError(FSLocalMissError):
+class FSSharingNotAllowedError(FSOperationRemoteError):
     pass
 
 
-# Connection errors
-
-
-class FSBackendOfflineError(FSNetworkError):
-    pass
-
-
-# Rights errors
-
-
-class FSSharingNotAllowedError(FSPermissionError):
-    pass
-
-
-class FSWorkspaceNoAccess(FSPermissionError):
+class FSWorkspaceNoAccess(FSOperationRemoteError, PermissionError):
     pass
 
 
@@ -180,22 +183,21 @@ class FSWorkspaceNoWriteAccess(FSWorkspaceNoAccess):
     pass
 
 
-# Maintenance errors
-
-
-class FSWorkspaceNotInMaintenance(FSInternalError):
+class FSWorkspaceNotInMaintenance(FSOperationRemoteError):
     pass
 
 
-class FSWorkspaceInMaintenance(FSPermissionError):
+class FSWorkspaceInMaintenance(FSOperationRemoteError):
     pass
 
 
-class FSMaintenanceNotAllowedError(FSPermissionError):
-    pass
+# Internal errors
 
 
-# Workspace internal errors
+class FSLocalMissError(FSInternalError):
+    def __init__(self, id: EntryID):
+        super().__init__(id)
+        self.id = id
 
 
 class FSFileConflictError(FSInternalError):
@@ -207,11 +209,4 @@ class FSReshapingRequiredError(FSInternalError):
 
 
 class FSNoSynchronizationRequired(FSInternalError):
-    pass
-
-
-# Timestamping errors
-
-
-class FSWorkspaceTimestampedTooEarly(FSInternalError):
     pass

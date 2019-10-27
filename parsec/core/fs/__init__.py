@@ -3,8 +3,9 @@
 from parsec.core.fs.userfs import UserFS
 from parsec.core.fs.exceptions import (
     FSError,
-    FSValidationError,
-    FSPackingError,
+    FSOperationError,
+    FSOperationLocalError,
+    FSOperationRemoteError,
     FSWorkspaceNoAccess,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
@@ -25,8 +26,9 @@ from parsec.core.fs.workspacefs import WorkspaceFS, WorkspaceFSTimestamped
 __all__ = (
     "UserFS",
     "FSError",
-    "FSValidationError",
-    "FSPackingError",
+    "FSOperationError",
+    "FSOperationLocalError",
+    "FSOperationRemoteError",
     "FSWorkspaceNoAccess",
     "FSWorkspaceNoReadAccess",
     "FSWorkspaceNoWriteAccess",
