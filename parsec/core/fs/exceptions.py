@@ -90,11 +90,6 @@ class FSNetworkError(FSError):
     NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
 
 
-class FSEntryNotFound(FSError):
-    ERRNO = errno.ENOENT
-    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
-
-
 class FSInvalidArgumentError(FSError):
     ERRNO = errno.EINVAL
     NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
