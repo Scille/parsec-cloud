@@ -16,12 +16,19 @@ from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
 from parsec.core.backend_connection.monitor import BackendState, current_backend_connection_state
+from parsec.core.fs import (
+    FSWorkspaceNoReadAccess,
+    FSWorkspaceNoWriteAccess,
+    FSWorkspaceInMaintenance,
+)
 
 
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
         "backend.connection.incompatible_version",
         "mountpoint.stopped",
+        "mountpoint.remote_error",
+        "mountpoint.unhandled_error",
         "sharing.updated",
         "fs.entry.file_update_conflicted",
     ]
@@ -106,6 +113,28 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.new_notification.emit("WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
         elif event == "mountpoint.stopped":
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
+        elif event == "mountpoint.remote_error":
+            # TODO: find a way to provide the involved path
+            # path = kwargs["path"]
+            path = "<unknow_path>"
+            exc = kwargs["exc"]
+            if isinstance(exc, FSWorkspaceNoReadAccess):
+                msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(path)
+            elif isinstance(exc, FSWorkspaceNoWriteAccess):
+                msg = _("NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}").format(path)
+            elif isinstance(exc, FSWorkspaceInMaintenance):
+                msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(path)
+            else:
+                msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
+            self.new_notification.emit("WARNING", msg)
+        elif event == "mountpoint.unhandled_error":
+            # TODO: find a way to provide the involved path
+            # path = kwargs["path"]
+            path = "<unknow_path>"
+            exc = kwargs["exc"]
+            self.new_notification.emit(
+                "ERROR", _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}").format(path, str(exc))
+            )
         elif event == "sharing.updated":
             new_entry = kwargs["new_entry"]
             previous_entry = kwargs["previous_entry"]
