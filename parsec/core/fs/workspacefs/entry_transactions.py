@@ -15,12 +15,7 @@ from parsec.core.types import (
 
 
 from parsec.core.fs.workspacefs.file_transactions import FileTransactions
-from parsec.core.fs.utils import (
-    is_file_manifest,
-    is_folder_manifest,
-    is_workspace_manifest,
-    is_folderish_manifest,
-)
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSPermissionError,
     FSNotADirectoryError,
@@ -31,7 +26,6 @@ from parsec.core.fs.exceptions import (
     FSDirectoryNotEmptyError,
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
-    FSEntryNotFound,
     FSLocalMissError,
 )
 
@@ -153,46 +147,6 @@ class EntryTransactions(FileTransactions):
 
             # Release the lock and download the child manifest
             await self._load_manifest(entry_id)
-
-    # Reverse lookup logic
-
-    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
-
-        # Get first manifest
-        try:
-            current_id = entry_id
-            current_manifest = await self.local_storage.get_manifest(current_id)
-        except FSLocalMissError:
-            raise FSEntryNotFound(entry_id)
-
-        # Loop over parts
-        parts = []
-        while not is_workspace_manifest(current_manifest):
-
-            # Get the manifest
-            try:
-                parent_manifest = await self.local_storage.get_manifest(current_manifest.parent)
-            except FSLocalMissError:
-                raise FSEntryNotFound(entry_id)
-
-            # Find the child name
-            try:
-                name = next(
-                    name
-                    for name, child_id in parent_manifest.children.items()
-                    if child_id == current_id
-                )
-            except StopIteration:
-                raise FSEntryNotFound(entry_id)
-            else:
-                parts.append(name)
-
-            # Continue until root is found
-            current_id = current_manifest.parent
-            current_manifest = parent_manifest
-
-        # Return the path
-        return FsPath("/" + "/".join(reversed(parts)))
 
     # Transactions
 

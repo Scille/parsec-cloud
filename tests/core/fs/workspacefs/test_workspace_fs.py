@@ -7,7 +7,6 @@ from unittest.mock import ANY
 from parsec.api.protocol import DeviceID, RealmRole
 from parsec.api.data import Manifest as RemoteManifest
 from parsec.core.types import FsPath, EntryID
-from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.exceptions import FSError
 
 
@@ -66,33 +65,6 @@ async def test_path_info(alice_workspace):
         "type": "file",
         "updated": ANY,
     }
-
-
-@pytest.mark.trio
-async def test_get_entry_path(alice_workspace):
-    paths = ["/", "/foo", "/foo/bar", "/foo/baz"]
-    for path in paths:
-        entry_id = await alice_workspace.path_id(path)
-        assert await alice_workspace.get_entry_path(entry_id) == FsPath(path)
-
-    with pytest.raises(FSEntryNotFound):
-        await alice_workspace.get_entry_path(EntryID())
-
-    # Remove an open file
-    path = "/foo/bar"
-    bar_id, bar_fd = await alice_workspace.transactions.file_open(FsPath(path))
-    await alice_workspace.unlink(path)
-
-    # Get entry path of a removed entry
-    with pytest.raises(FSEntryNotFound):
-        await alice_workspace.get_entry_path(bar_id)
-
-    # Remove parent and try again
-    await alice_workspace.rmtree("/foo")
-    with pytest.raises(FSEntryNotFound):
-        await alice_workspace.get_entry_path(bar_id)
-
-    await alice_workspace.transactions.fd_close(bar_fd)
 
 
 @pytest.mark.trio
