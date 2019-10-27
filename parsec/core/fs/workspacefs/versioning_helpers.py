@@ -7,11 +7,11 @@ from pendulum import Pendulum
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
-from parsec.core.fs.exceptions import (
-    FSRemoteManifestNotFoundBadVersion,
-    FSLocalMissError,
-    FSEntryNotFound,
-)
+from parsec.core.fs.exceptions import FSRemoteManifestNotFoundBadVersion, FSLocalMissError
+
+
+class EntryNotFound(Exception):
+    pass
 
 
 async def list_versions(
@@ -84,7 +84,7 @@ async def list_versions(
                 current_id, version=version, timestamp=timestamp
             )
         except FSLocalMissError:
-            raise FSEntryNotFound(entry_id)
+            raise EntryNotFound(entry_id)
 
         # Loop over parts
         parts = []
@@ -96,7 +96,7 @@ async def list_versions(
                     current_manifest.parent, version=version, timestamp=timestamp
                 )
             except FSLocalMissError:
-                raise FSEntryNotFound(entry_id)
+                raise EntryNotFound(entry_id)
 
             # Find the child name
             try:
@@ -106,7 +106,7 @@ async def list_versions(
                     if child_id == current_id
                 )
             except StopIteration:
-                raise FSEntryNotFound(entry_id)
+                raise EntryNotFound(entry_id)
             else:
                 parts.append(name)
 
@@ -148,7 +148,7 @@ async def list_versions(
             async def _populate_path_w_index(data, index, entry_id, timestamp):
                 try:
                     data[index] = await _get_past_path(entry_id, timestamp=timestamp)
-                except (FSRemoteManifestNotFoundBadVersion, FSEntryNotFound):
+                except (FSRemoteManifestNotFoundBadVersion, EntryNotFound):
                     pass
 
             # TODO : Use future manifest source field to follow files and directories
