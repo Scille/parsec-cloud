@@ -368,7 +368,7 @@ WHERE
             query = """
 SELECT
     version,
-    created_on,
+    created_on
 FROM vlob_atom
 WHERE
     organization = ({})
