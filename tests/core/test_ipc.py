@@ -65,7 +65,8 @@ else:
 @pytest.mark.skipif(os.name == "nt", reason="POSIX only")
 async def test_posix_file_lock(tmpdir):
     file1 = Path(tmpdir / "1.lock")
-    file2 = Path(tmpdir / "2.lock")
+    # Also check having missing folders in the path is not an issue
+    file2 = Path(tmpdir / "missing_parent/missing_child/2.lock")
 
     # Test multiple time to make sure we can re-acquire the mutex once released
     for i in range(2):
