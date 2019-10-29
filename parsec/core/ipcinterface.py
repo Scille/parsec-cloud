@@ -99,12 +99,16 @@ def _install_posix_file_lock(socket_file: Path):
     import fcntl
 
     try:
+        socket_file.parent.mkdir(parents=True, exist_ok=True)
         with open(socket_file, "a") as fd:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                raise IPCServerAlreadyRunning(f"Cannot lock file `{socket_file}`: {exc}") from exc
             yield
             # Lock is released on file descriptor closing
     except OSError as exc:
-        raise IPCServerAlreadyRunning(f"Cannot lock file `{socket_file}`: {exc}") from exc
+        raise IPCServerError(f"Cannot create lock file `{socket_file}`: {exc}") from exc
 
 
 @asynccontextmanager
@@ -178,7 +182,7 @@ async def send_to_ipc_server(socket_file: Path, cmd, **kwargs):
     try:
         socket_port = int(socket_file.read_text().strip())
 
-    except ValueError as exc:
+    except (ValueError, OSError) as exc:
         raise IPCServerNotRunning("Invalid IPC socket file") from exc
 
     try:
