@@ -101,7 +101,7 @@ def config_factory(
     **_,
 ) -> CoreConfig:
     data_base_dir = data_base_dir or get_default_data_base_dir(environ)
-    return CoreConfig(
+    core_config = CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
         data_base_dir=data_base_dir,
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
@@ -122,6 +122,14 @@ def config_factory(
         ipc_socket_file=data_base_dir / "parsec-cloud.lock",
         ipc_win32_mutex_name="parsec-cloud",
     )
+
+    # Make sure the directories exist on the system
+    core_config.config_dir.mkdir(parents=True, exist_ok=True)
+    core_config.data_base_dir.mkdir(parents=True, exist_ok=True)
+    core_config.cache_base_dir.mkdir(parents=True, exist_ok=True)
+    core_config.mountpoint_base_dir.mkdir(parents=True, exist_ok=True)
+
+    return core_config
 
 
 def load_config(config_dir: Path, **extra_config) -> CoreConfig:
