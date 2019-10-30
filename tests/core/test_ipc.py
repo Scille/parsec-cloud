@@ -108,7 +108,8 @@ else:
 
 @pytest.mark.trio
 async def test_ipc_server(tmpdir, monkeypatch):
-    file1 = Path(tmpdir / "1.lock")
+    # The dummy directory should be automatically created when the server starts
+    file1 = Path(tmpdir / "dummy" / "1.lock")
     mut1 = uuid4().hex
 
     async def _cmd_handler(cmd):
