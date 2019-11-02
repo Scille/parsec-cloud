@@ -1,0 +1,2 @@
+Fix crash in ipc server when socket file path contains missing folder
+(only on windows).
