@@ -1,0 +1,2 @@
+Fix rights checking in winfsp operations. This issue used to cause a cffi
+crash on windows when some operations were performed on the file system.
