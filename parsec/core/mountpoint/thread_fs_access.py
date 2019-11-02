@@ -9,10 +9,10 @@ class ThreadFSAccess:
     # Rights check
 
     def check_read_rights(self, path):
-        return self._portal.run(self.workspace_fs.transactions.check_read_rights, path)
+        return self._portal.run_sync(self.workspace_fs.transactions.check_read_rights, path)
 
     def check_write_rights(self, path):
-        return self._portal.run(self.workspace_fs.transactions.check_write_rights, path)
+        return self._portal.run_sync(self.workspace_fs.transactions.check_write_rights, path)
 
     # Entry transactions
 

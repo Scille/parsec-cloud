@@ -343,6 +343,7 @@ async def test_mountpoint_revoke_access(
     workspace = bob_user_fs.get_workspace(wid)
     await workspace.touch("/foo.txt")
     await workspace.touch("/bar.txt")
+    await workspace.touch("/to_delete.txt")
     await workspace.sync()
 
     def get_root_path(mountpoint_manager):
@@ -397,6 +398,10 @@ async def test_mountpoint_revoke_access(
 
         # Alice can write
         await (root_path / "bar.txt").write_bytes(b"test")
+
+        # Alice can delete
+        await (root_path / "to_delete.txt").unlink()
+        assert not await (root_path / "to_delete.txt").exists()
 
         # Bob revokes Alice's read or write rights from her workspace
         await bob_user_fs.workspace_share(wid, alice_user_fs.device.user_id, new_role)
