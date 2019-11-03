@@ -229,10 +229,7 @@ class ServerHandshake:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
-        help = help or (
-            "Root verify key for organization `{self.organization_id}` "
-            "differs between client and server"
-        )
+        help = help or ("Root verify key for organization differs between client and server")
 
         self.state = "result"
         return handshake_result_serializer.dumps(
