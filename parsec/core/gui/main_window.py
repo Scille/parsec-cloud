@@ -80,26 +80,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.show()
         self.raise_()
 
-    def set_tab_title(self, tab, title):
+    def on_tab_state_changed(self, tab, state):
         idx = self.tab_center.indexOf(tab)
         if idx == -1:
             return
-        self.tab_center.setTabText(idx, title)
-
-    def on_tab_state_changed(self, tab, state):
         if state == "login":
-            self.set_tab_title(tab, _("TAB_TITLE_LOG_IN"))
+            self.tab_center.setTabToolTip(idx, _("TAB_TITLE_LOG_IN"))
+            self.tab_center.setTabText(idx, _("TAB_TITLE_LOG_IN"))
         elif state == "bootstrap":
-            self.set_tab_title(tab, _("TAB_TITLE_BOOTSTRAP"))
+            self.tab_center.setTabToolTip(idx, _("TAB_TITLE_BOOTSTRAP"))
+            self.tab_center.setTabText(idx, _("TAB_TITLE_BOOTSTRAP"))
         elif state == "claim_user":
-            self.set_tab_title(tab, _("TAB_TITLE_CLAIM_USER"))
+            self.tab_center.setTabToolTip(idx, _("TAB_TITLE_CLAIM_USER"))
+            self.tab_center.setTabText(idx, _("TAB_TITLE_CLAIM_USER"))
         elif state == "claim_device":
-            self.set_tab_title(tab, _("TAB_TITLE_CLAIM_DEVICE"))
+            self.tab_center.setTabToolTip(idx, _("TAB_TITLE_CLAIM_DEVICE"))
+            self.tab_center.setTabText(idx, _("TAB_TITLE_CLAIM_DEVICE"))
         elif state == "connected":
             device = tab.current_device
-            self.set_tab_title(
-                tab, f"{device.organization_id}:{device.user_id}@{device.device_name}"
-            )
+            tab_name = f"{device.organization_id}:{device.user_id}@{device.device_name}"
+            self.tab_center.setTabToolTip(idx, tab_name)
+            if len(tab_name) > 15:
+                tab_name = f"{tab_name[:12]}..."
+            self.tab_center.setTabText(idx, tab_name)
 
     def add_instance(self, start_arg: Optional[str] = None):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)

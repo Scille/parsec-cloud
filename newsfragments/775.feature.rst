@@ -1,0 +1,1 @@
+Limit a tab title to a few characters and add a tooltip to tabs
