@@ -166,6 +166,9 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
                 partial(trio.serve_tcp, _client_handler, 0, host="127.0.0.1")
             )
             port = listeners[0].socket.getsockname()[1]
+
+            # Make sure the path exists and write the socket file
+            socket_file.parent.mkdir(parents=True, exist_ok=True)
             socket_file.write_text(str(port))
 
             logger.info("IPC server ready", port=port)
