@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-22 11:04+0200\n"
-"PO-Revision-Date: 2019-10-22 11:04+0200\n"
+"POT-Creation-Date: 2019-11-04 12:22+0100\n"
+"PO-Revision-Date: 2019-11-04 13:38+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -30,6 +30,18 @@ msgstr "Manager"
 
 msgid "WORKSPACE_ROLE_OWNER"
 msgstr "Owner"
+
+msgid "BUTTON_TASKBAR_BACK"
+msgstr "Go back to the list of workspaces."
+
+msgid "BUTTON_TASKBAR_IMPORT_FOLDER"
+msgstr "Import a entire folder."
+
+msgid "BUTTON_TASKBAR_IMPORT_FILES"
+msgstr "Import files."
+
+msgid "BUTTON_TASKBAR_CREATE_FOLDER"
+msgstr "Create a new folder."
 
 msgid "ERR_FILE_HISTORY_MONO"
 msgstr "You can only see one file history at a time."
@@ -959,6 +971,12 @@ msgstr "Created on {}"
 msgid "DEVICE_IS_REVOKED"
 msgstr "This device has been revoked."
 
+msgid "BUTTON_TASKBAR_ADD_DEVICE"
+msgstr "Create a new device."
+
+msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
+msgstr "Create a new workspace."
+
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Cannot rename the workspace."
 
@@ -1029,6 +1047,9 @@ msgstr "Administrator"
 
 msgid "USER_IS_REVOKED"
 msgstr "This user has been revoked."
+
+msgid "BUTTON_TASKBAR_ADD_USER"
+msgstr "Create a new user."
 
 msgid "INFO_USER_REVOKED_SUCCESS_{}"
 msgstr "User \"{}\" has been successfully revoked."
@@ -1305,6 +1326,9 @@ msgstr "About Parsec"
 msgid "SETTINGS_NEED_RESTART"
 msgstr "Modifications will take effect the next time you start the application."
 
+msgid "BUTTON_TASKBAR_NOTIFICATION"
+msgstr "Show notifications."
+
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "This version of the application is incompatible with the server."
 
@@ -1427,14 +1451,14 @@ msgstr ""
 msgid "ASK_CLOSE_TAB_CONTENT"
 msgstr "Are you sure you want to close this tab?"
 
+msgid "TRAY_PARSEC_RUNNING"
+msgstr "Parsec is still running."
+
 msgid "ASK_QUIT_TITLE"
 msgstr "Close the application"
 
 msgid "ASK_QUIT_CONTENT"
 msgstr "Are you sure you want to close the application?"
-
-msgid "TRAY_PARSEC_RUNNING"
-msgstr "Parsec is still running."
 
 msgid "PARSEC_DEVELOPMENT_LABEL"
 msgstr ""
@@ -1554,6 +1578,12 @@ msgstr "Use colors for workspaces"
 
 msgid "BUTTON_SAVE"
 msgstr "Save"
+
+msgid "SETTINGS_TITLE_HELP"
+msgstr "Help"
+
+msgid "LABEL_USER_GUIDE_LINK"
+msgstr "Starting guide"
 
 msgid "BUTTON_OK"
 msgstr "OK"

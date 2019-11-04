@@ -240,6 +240,9 @@ background-color: rgb(255, 255, 255);
               <property name="text">
                <string>LABEL_USER_GUIDE_LINK</string>
               </property>
+              <property name="textFormat">
+               <enum>Qt::RichText</enum>
+              </property>
              </widget>
             </item>
            </layout>
@@ -678,13 +681,13 @@ background-color: rgb(255, 255, 255);
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
-   <extends>QPushButton</extends>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>ClickableLabel</class>
-   <extends>QLabel</extends>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

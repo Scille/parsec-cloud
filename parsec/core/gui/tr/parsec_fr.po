@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-10-22 11:04+0200\n"
-"PO-Revision-Date: 2019-10-22 11:04+0200\n"
+"POT-Creation-Date: 2019-11-04 12:22+0100\n"
+"PO-Revision-Date: 2019-11-04 13:38+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -30,6 +30,18 @@ msgstr "Gérant"
 
 msgid "WORKSPACE_ROLE_OWNER"
 msgstr "Propriétaire"
+
+msgid "BUTTON_TASKBAR_BACK"
+msgstr "Retour à la liste des espaces de travail."
+
+msgid "BUTTON_TASKBAR_IMPORT_FOLDER"
+msgstr "Importer un répertoire."
+
+msgid "BUTTON_TASKBAR_IMPORT_FILES"
+msgstr "Importer des fichiers."
+
+msgid "BUTTON_TASKBAR_CREATE_FOLDER"
+msgstr "Créer un nouveau répertoire."
 
 msgid "ERR_FILE_HISTORY_MONO"
 msgstr "Vous ne pouvez observer l'historique que d'un fichier à la fois."
@@ -956,6 +968,12 @@ msgstr "Créé le {}"
 msgid "DEVICE_IS_REVOKED"
 msgstr "Cet appareil a été révoqué."
 
+msgid "BUTTON_TASKBAR_ADD_DEVICE"
+msgstr "Créer un nouvel appareil."
+
+msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
+msgstr "Créer un nouvel espace de travail."
+
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Impossible de renommer l'espace de travail."
 
@@ -1027,6 +1045,9 @@ msgstr "Administrateur"
 
 msgid "USER_IS_REVOKED"
 msgstr "Cet utilisateur a été révoqué."
+
+msgid "BUTTON_TASKBAR_ADD_USER"
+msgstr "Créer un nouvel utilisateur."
 
 msgid "INFO_USER_REVOKED_SUCCESS_{}"
 msgstr "L'utilisateur \"{}\" a été révoqué avec succès."
@@ -1311,6 +1332,9 @@ msgstr "À propos de Parsec"
 msgid "SETTINGS_NEED_RESTART"
 msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
 
+msgid "BUTTON_TASKBAR_NOTIFICATION"
+msgstr "Afficher les notifications."
+
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "Cette version de l'application est incompatible avec le serveur."
 
@@ -1438,14 +1462,14 @@ msgstr ""
 msgid "ASK_CLOSE_TAB_CONTENT"
 msgstr "Êtes-vous sûr de vouloir fermer cet onglet ?"
 
+msgid "TRAY_PARSEC_RUNNING"
+msgstr "Parsec est toujours ouvert."
+
 msgid "ASK_QUIT_TITLE"
 msgstr "Fermer l'application"
 
 msgid "ASK_QUIT_CONTENT"
 msgstr "Êtes-vous sûr de vouloir quitter l'application ?"
-
-msgid "TRAY_PARSEC_RUNNING"
-msgstr "Parsec est toujours ouvert."
 
 msgid "PARSEC_DEVELOPMENT_LABEL"
 msgstr ""
@@ -1565,6 +1589,12 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "BUTTON_SAVE"
 msgstr "Sauvegarder"
+
+msgid "SETTINGS_TITLE_HELP"
+msgstr "Aide"
+
+msgid "LABEL_USER_GUIDE_LINK"
+msgstr "Guide de démarrage"
 
 msgid "BUTTON_OK"
 msgstr "OK"

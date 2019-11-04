@@ -131,6 +131,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if core.device.is_admin:
             button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
             button_add_user.clicked.connect(self.register_user)
+            button_add_user.setToolTip(_("BUTTON_TASKBAR_ADD_USER"))
             self.taskbar_buttons.append(button_add_user)
         self.filter_timer = QTimer()
         self.filter_timer.setInterval(300)

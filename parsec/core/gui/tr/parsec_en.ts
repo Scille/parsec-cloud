@@ -293,63 +293,73 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="250"/>
+        <location filename="../forms/global_settings_widget.ui" line="280"/>
         <source>SETTINGS_TITLE_BEHAVIOR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="264"/>
+        <location filename="../forms/global_settings_widget.ui" line="294"/>
         <source>CHECK_MINIMIZE_IN_TRAY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="328"/>
+        <location filename="../forms/global_settings_widget.ui" line="333"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="344"/>
+        <location filename="../forms/global_settings_widget.ui" line="349"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="426"/>
+        <location filename="../forms/global_settings_widget.ui" line="406"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="442"/>
+        <location filename="../forms/global_settings_widget.ui" line="422"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="469"/>
+        <location filename="../forms/global_settings_widget.ui" line="449"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="545"/>
+        <location filename="../forms/global_settings_widget.ui" line="500"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="559"/>
+        <location filename="../forms/global_settings_widget.ui" line="514"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="620"/>
+        <location filename="../forms/global_settings_widget.ui" line="550"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="634"/>
+        <location filename="../forms/global_settings_widget.ui" line="564"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="722"/>
+        <location filename="../forms/global_settings_widget.ui" line="652"/>
         <source>BUTTON_SAVE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="222"/>
+        <source>SETTINGS_TITLE_HELP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="241"/>
+        <source>LABEL_USER_GUIDE_LINK</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

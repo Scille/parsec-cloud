@@ -140,16 +140,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         self.button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
         self.button_back.clicked.connect(self.back_clicked)
+        self.button_back.setToolTip(_("BUTTON_TASKBAR_BACK"))
         self.button_import_folder = TaskbarButton(
             icon_path=":/icons/images/icons/upload_folder_off.png"
         )
         self.button_import_folder.clicked.connect(self.import_folder_clicked)
+        self.button_import_folder.setToolTip(_("BUTTON_TASKBAR_IMPORT_FOLDER"))
         self.button_import_files = TaskbarButton(
             icon_path=":/icons/images/icons/upload_file_off.png"
         )
         self.button_import_files.clicked.connect(self.import_files_clicked)
+        self.button_import_files.setToolTip(_("BUTTON_TASKBAR_IMPORT_FILES"))
         self.button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
+        self.button_create_folder.setToolTip(_("BUTTON_TASKBAR_CREATE_FOLDER"))
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = FsPath("/")
         self.current_directory_uuid = None

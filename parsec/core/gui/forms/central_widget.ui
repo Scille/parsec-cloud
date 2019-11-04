@@ -13,9 +13,6 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true"/>
-  </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
     <number>0</number>
@@ -39,9 +36,6 @@
        <width>0</width>
        <height>0</height>
       </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_8">
       <property name="spacing">
@@ -187,9 +181,6 @@
                  <font>
                   <pointsize>13</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
                 </property>
                 <property name="text">
                  <string/>

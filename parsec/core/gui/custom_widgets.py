@@ -31,7 +31,11 @@ class TaskbarButton(QPushButton):
         self.setFixedSize(64, 64)
         self.setIcon(QIcon(icon_path))
         self.setIconSize(QSize(50, 50))
-        self.setStyleSheet("background-color: rgb(12, 65, 157); border: 0;")
+        self.setStyleSheet(
+            "QPushButton{background-color: rgb(12, 65, 157); border: 0;}\n"
+            "QToolTip{background-color: rgb(46, 146, 208);"
+            "border: 1px solid rgb(12, 65, 157);color: rgb(255, 255, 255);}"
+        )
 
 
 class NotificationTaskbarButton(TaskbarButton):

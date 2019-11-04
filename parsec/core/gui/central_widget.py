@@ -42,6 +42,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.widget_menu.layout().addWidget(self.menu)
         self.notification_center = NotificationCenterWidget(parent=self)
         self.button_notif = NotificationTaskbarButton()
+        self.button_notif.setToolTip(_("BUTTON_TASKBAR_NOTIFICATION"))
         self.widget_notif.layout().addWidget(self.notification_center)
         self.notification_center.hide()
 
