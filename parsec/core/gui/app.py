@@ -83,14 +83,14 @@ def run_gui(config: CoreConfig, start_arg: str = None):
 
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
+    # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
     app = QApplication([])
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
-
-    # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
-    app.setAttribute(Qt.AA_EnableHighDpiScaling)
-    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
     f = QFont("Arial")
     app.setFont(f)
