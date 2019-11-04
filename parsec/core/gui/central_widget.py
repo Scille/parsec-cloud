@@ -114,10 +114,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         elif event == "mountpoint.stopped":
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == "mountpoint.remote_error":
-            # TODO: find a way to provide the involved path
-            # path = kwargs["path"]
-            path = "<unknow_path>"
             exc = kwargs["exc"]
+            path = kwargs["path"]
             if isinstance(exc, FSWorkspaceNoReadAccess):
                 msg = _("NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}").format(path)
             elif isinstance(exc, FSWorkspaceNoWriteAccess):
@@ -128,12 +126,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
             self.new_notification.emit("WARNING", msg)
         elif event == "mountpoint.unhandled_error":
-            # TODO: find a way to provide the involved path
-            # path = kwargs["path"]
-            path = "<unknow_path>"
             exc = kwargs["exc"]
+            path = kwargs["path"]
+            operation = kwargs["operation"]
             self.new_notification.emit(
-                "ERROR", _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}").format(path, str(exc))
+                "ERROR",
+                _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
+                    operation, path, str(exc)
+                ),
             )
         elif event == "sharing.updated":
             new_entry = kwargs["new_entry"]

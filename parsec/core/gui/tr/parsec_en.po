@@ -1347,8 +1347,8 @@ msgstr "Workspace \"{}\" no longer shared with you."
 msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr "Conflict while syncing the file \"{}\"."
 
-msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}"
-msgstr "Unexpected error while accessing \"{}\" from the server: {}."
+msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
+msgstr "Unexpected error while performing \"{}\" operation on \"{}\": {}."
 
 msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
 msgstr "Cannot access \"{}\" from the server: {}."

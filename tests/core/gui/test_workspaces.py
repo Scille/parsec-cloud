@@ -109,17 +109,24 @@ async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui
         c_w.event_bus.send(
             "mountpoint.remote_error",
             exc=FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access"),
+            path="/foo",
+            operation="open",
         )
     msg_widget = c_w.notification_center.widget_layout.layout().itemAt(0).widget()
     assert (
         msg_widget.message
-        == 'Cannot access "<unknow_path>" from the server given you lost read access to the workspace.'
+        == 'Cannot access "/foo" from the server given you lost read access to the workspace.'
     )
 
     async with aqtbot.wait_signal(c_w.new_notification):
-        c_w.event_bus.send("mountpoint.unhandled_error", exc=RuntimeError("D'Oh !"))
+        c_w.event_bus.send(
+            "mountpoint.unhandled_error",
+            exc=RuntimeError("D'Oh !"),
+            path="/bar",
+            operation="unlink",
+        )
     msg_widget = c_w.notification_center.widget_layout.layout().itemAt(0).widget()
     assert (
         msg_widget.message
-        == 'Unexpected error while accessing "<unknow_path>" from the server: D\'Oh !.'
+        == 'Unexpected error while performing "unlink" operation on "/bar": D\'Oh !.'
     )

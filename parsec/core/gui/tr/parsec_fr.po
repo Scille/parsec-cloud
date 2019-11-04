@@ -1353,8 +1353,8 @@ msgstr "L'espace de travail \"{}\" n'est plus partagé avec vous."
 msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr "Conflit lors de la synchronisation du fichier \"{}\"."
 
-msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}"
-msgstr "Une erreur inattendue est arrivée en tentant d'accéder à \"{}\" depuis le serveur: {}."
+msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
+msgstr "Une erreur inattendue est arrivée pendant l'opération \"{}\" sur le chemin \"{}\": {}."
 
 msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
 msgstr "Impossible d'accéder à \"{}\" depuis le serveur: {}."
