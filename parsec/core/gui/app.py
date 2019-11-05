@@ -142,7 +142,7 @@ def run_gui(config: CoreConfig, start_arg: str = None):
 
         win.showMaximized()
         win.show_top()
-        win.add_instance(start_arg)
+        win.new_instance_needed.emit(start_arg)
 
         def kill_window(*args):
             win.close_app(force=True)
