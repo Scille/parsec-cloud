@@ -20,7 +20,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#SharingWidget
+   <string notr="true">#SharingWidget:!disabled
 {
 background-color: rgb(255, 255, 255);
 }

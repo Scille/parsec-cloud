@@ -293,62 +293,62 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="280"/>
+        <location filename="../forms/global_settings_widget.ui" line="283"/>
         <source>SETTINGS_TITLE_BEHAVIOR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="294"/>
+        <location filename="../forms/global_settings_widget.ui" line="297"/>
         <source>CHECK_MINIMIZE_IN_TRAY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="333"/>
+        <location filename="../forms/global_settings_widget.ui" line="336"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="349"/>
+        <location filename="../forms/global_settings_widget.ui" line="352"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="406"/>
+        <location filename="../forms/global_settings_widget.ui" line="409"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="422"/>
+        <location filename="../forms/global_settings_widget.ui" line="425"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="449"/>
+        <location filename="../forms/global_settings_widget.ui" line="452"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="500"/>
+        <location filename="../forms/global_settings_widget.ui" line="503"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="514"/>
+        <location filename="../forms/global_settings_widget.ui" line="517"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="550"/>
+        <location filename="../forms/global_settings_widget.ui" line="553"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="564"/>
+        <location filename="../forms/global_settings_widget.ui" line="567"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="652"/>
+        <location filename="../forms/global_settings_widget.ui" line="655"/>
         <source>BUTTON_SAVE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1062,13 +1062,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="336"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="360"/>
         <source>BUTTON_UPDATE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="386"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="410"/>
         <source>BUTTON_CLOSE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="300"/>
+        <source>CHECK_SHOW_REVOKED</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

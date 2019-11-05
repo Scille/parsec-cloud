@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-11-04 12:22+0100\n"
-"PO-Revision-Date: 2019-11-04 13:38+0100\n"
+"POT-Creation-Date: 2019-11-05 16:30+0100\n"
+"PO-Revision-Date: 2019-11-05 16:43+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1431,6 +1431,15 @@ msgstr "Les rôles ont été mis à jour."
 msgid "PARSEC_WINDOW_TITLE"
 msgstr "Parsec - {}"
 
+msgid "BUTTON_ADD_INSTANCE"
+msgstr ""
+
+msgid "ASK_ADD_TAB_TITLE"
+msgstr ""
+
+msgid "ASK_ADD_TAB_CONTENT"
+msgstr ""
+
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
 
@@ -1798,6 +1807,9 @@ msgstr "Partager"
 
 msgid "BUTTON_UPDATE"
 msgstr "Mettre à jour"
+
+msgid "CHECK_SHOW_REVOKED"
+msgstr "Afficher les utilisateurs révoqués"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
