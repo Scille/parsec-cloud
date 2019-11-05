@@ -218,9 +218,35 @@ async def list_versions(
             root_manifest.created,
             Pendulum.now(),
         )
-    return {
+    versions_list = {
         item[0]: item[1]
         for item in sorted(
             list(return_tree.items()), key=lambda item: (item[0][3], item[0][0], item[0][1])
         )
     }
+    # Remove duplicates from father updated and empty manifests set before parents for consistency
+    previous = None
+    deletables = []
+    for item in versions_list.items():
+        if previous is not None:
+            # If same entry_id and version
+            if previous[0][0] == item[0][0] and previous[0][1] == item[0][1]:
+                if previous[0][3] == item[0][2]:  # Same timestamp, only parent directory updated
+                    # Update source FsPath for current entry
+                    versions_list[item[0]] = (item[1][0], previous[1][1], item[1][2])
+                    # Will delete previous entry. Can't do it while iterating
+                    deletables += [previous[0]]
+            # If same entry_id, previous version is 0 bytes
+            if (
+                previous[0][0] == item[0][0]  # Same entry_id
+                and previous[0][1] == item[0][1] - 1  # Current is previous next version
+                and previous[0][1] == 1  # Previous is initial version
+                and previous[0][3] == item[0][2]  # Previous and current are continuous in time
+                and previous[0][3] < previous[0][2].add(seconds=30)  # Check 30 seconds time frame
+                and not previous[1][1]  # Check previous has no source path
+            ):
+                deletables += [previous[0]]
+        previous = item
+    for deletable in deletables:
+        del versions_list[deletable]
+    return versions_list
