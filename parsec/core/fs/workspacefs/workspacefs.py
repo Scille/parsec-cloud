@@ -190,7 +190,7 @@ class WorkspaceFS:
     # Timestamped version
 
     async def versions(
-        self, path: AnyPath = "/"
+        self, path: AnyPath = "/", remove_supposed_mock=True
     ) -> Dict[
         Tuple[EntryID, int, Pendulum, Pendulum],
         Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
@@ -203,7 +203,7 @@ class WorkspaceFS:
             FSRemoteManifestNotFound
         """
         path = FsPath(path)
-        return await list_versions(self, path)
+        return await list_versions(self, path, remove_supposed_mock)
 
     async def to_timestamped(self, timestamp: Pendulum):
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)

@@ -15,7 +15,7 @@ from parsec.core.fs.exceptions import (
 
 
 async def list_versions(
-    workspacefs, path: FsPath
+    workspacefs, path: FsPath, remove_supposed_mock=True
 ) -> Dict[
     Tuple[EntryID, int, Pendulum, Pendulum],
     Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
@@ -27,8 +27,11 @@ async def list_versions(
         FSWorkspaceInMaintenance
         FSRemoteManifestNotFound
     """
-    # Each key is an entry_id, each value is a new dict with version as key and value as tuple(
-    #     earliest_known_timestamp, last_known_timestamp, manifest
+    # Each key is a tuple (entry_id, version_number, first_known_timestamp, last_known_timestamp)
+    # Each value is a tuple (
+    #     (creator_device_id, manifest.updated, is_folder, size),
+    #     source_path_if_found,
+    #     destination_path_if_found,
     # )
     # Could be optimized if we could use manifest.updated
     manifest_cache = {}
@@ -218,35 +221,45 @@ async def list_versions(
             root_manifest.created,
             Pendulum.now(),
         )
-    versions_list = {
-        item[0]: item[1]
+    versions_list = [
+        (item[0], item[1])
         for item in sorted(
             list(return_tree.items()), key=lambda item: (item[0][3], item[0][0], item[0][1])
         )
-    }
+    ]
     # Remove duplicates from father updated and empty manifests set before parents for consistency
     previous = None
-    deletables = []
-    for item in versions_list.items():
+    new_list = []
+    for item in versions_list:
         if previous is not None:
             # If same entry_id and version
             if previous[0][0] == item[0][0] and previous[0][1] == item[0][1]:
                 if previous[0][3] == item[0][2]:  # Same timestamp, only parent directory updated
                     # Update source FsPath for current entry
-                    versions_list[item[0]] = (item[1][0], previous[1][1], item[1][2])
-                    # Will delete previous entry. Can't do it while iterating
-                    deletables += [previous[0]]
-            # If same entry_id, previous version is 0 bytes
+                    previous = (
+                        (item[0][0], item[0][1], previous[0][2], item[0][3]),
+                        (item[1][0], previous[1][1], item[1][2]),
+                    )
+                    continue
+            # If option is set, same entry_id, previous version is 0 bytes
             if (
-                previous[0][0] == item[0][0]  # Same entry_id
+                remove_supposed_mock  # If function argument is set to True (it is by default)
+                and previous[0][0] == item[0][0]  # Same entry_id
                 and previous[0][1] == item[0][1] - 1  # Current is previous next version
                 and previous[0][1] == 1  # Previous is initial version
+                and previous[1][0][3] == 0  # Previous is empty, is a file (would be None for dir)
+                and previous[1][0][2] == item[1][0][2]  # Previous and item are of the same type
                 and previous[0][3] == item[0][2]  # Previous and current are continuous in time
                 and previous[0][3] < previous[0][2].add(seconds=30)  # Check 30 seconds time frame
                 and not previous[1][1]  # Check previous has no source path
             ):
-                deletables += [previous[0]]
+                previous = (
+                    (item[0][0], item[0][1], previous[0][2], item[0][3]),
+                    (item[1][0], previous[1][1], item[1][2]),
+                )
+                continue
+            new_list += [previous]
         previous = item
-    for deletable in deletables:
-        del versions_list[deletable]
-    return versions_list
+    if previous:
+        new_list += [previous]
+    return {k: v for k, v in new_list}
