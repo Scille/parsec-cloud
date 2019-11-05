@@ -1808,6 +1808,9 @@ msgstr "Share"
 msgid "BUTTON_UPDATE"
 msgstr "Update"
 
+msgid "CHECK_SHOW_REVOKED"
+msgstr "Show revoked users"
+
 msgid "WORKSPACE_SEARCH"
 msgstr "Search a workspace"
 

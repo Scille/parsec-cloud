@@ -1886,6 +1886,9 @@ msgstr "Partager"
 msgid "BUTTON_UPDATE"
 msgstr "Mettre à jour"
 
+msgid "CHECK_SHOW_REVOKED"
+msgstr "Afficher les utilisateurs révoqués"
+
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
 
