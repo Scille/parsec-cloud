@@ -1,4 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+"""
+Define all the FSError classes, using the following hierarchy:
+
+    FSError
+    +-- FSMiscError
+    +-- FSInternalError
+    +-- FSOperationError
+        +-- FSLocalOperationError
+        +-- FSRemoteOperationError
+"""
 
 import os
 import errno
@@ -10,6 +20,32 @@ from parsec.core.fs.utils import ntstatus
 
 
 class FSError(OSError):
+    """
+    Base class for all fs exceptions
+    """
+
+    pass
+
+
+class FSMiscError(FSError):
+    """
+    Base class for exceptions exposed by the fs module that are not related to an operation
+    """
+
+
+class FSInternalError(FSError):
+    """
+    Base class for exceptions that are not meant to propagate out of the fs module
+    """
+
+    pass
+
+
+class FSOperationError(FSError):
+    """
+    Base class for the exceptions that may be raised during the execution of an operation
+    """
+
     ERRNO = None
     WINERROR = None
     NTSTATUS = None
@@ -42,29 +78,17 @@ class FSError(OSError):
         return self.message
 
 
-class FSWorkspaceNotFoundError(FSError):
-    pass
-
-
-class FSWorkspaceTimestampedTooEarly(FSError):
-    pass
-
-
-class FSOperationError(FSError):
-    pass
-
-
 class FSLocalOperationError(FSOperationError):
-
     """
     Used to represent "normal" error (e.g. opening a non-existing file,
     removing a non-empty folder etc.)
     """
 
-    pass
+    ERRNO = errno.EINVAL
+    NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
 
 
-class FSRemoteOperationError(FSError):
+class FSRemoteOperationError(FSOperationError):
     """
     Used to represent error in the underlaying layers (e.g. data inconsistency,
     data access refused by the backend etc.)
@@ -74,20 +98,39 @@ class FSRemoteOperationError(FSError):
     NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
-class FSInternalError(FSError):
-    """
-    Errors used internally by the fs module, should not be visible !
-    """
-
-    # TODO: internal exceptions types should not be public !
-    def __init__(self, *args):
-        super(Exception, self).__init__(*args)
-
-    def __str__(self):
-        return super(Exception, self).__str__()
+# Misc errors
 
 
-# Operation local errors
+class FSWorkspaceNotFoundError(FSMiscError):
+    pass
+
+
+class FSWorkspaceTimestampedTooEarly(FSMiscError):
+    pass
+
+
+# Internal errors
+
+
+class FSLocalMissError(FSInternalError):
+    def __init__(self, id: EntryID):
+        super().__init__(id)
+        self.id = id
+
+
+class FSFileConflictError(FSInternalError):
+    pass
+
+
+class FSReshapingRequiredError(FSInternalError):
+    pass
+
+
+class FSNoSynchronizationRequired(FSInternalError):
+    pass
+
+
+# Local operation errors
 
 
 class FSPermissionError(FSLocalOperationError, PermissionError):
@@ -135,7 +178,7 @@ class FSInvalidArgumentError(FSLocalOperationError):
     NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
 
 
-# Operation remote errors
+# Remote operation errors
 
 
 class FSBackendOfflineError(FSRemoteOperationError):
@@ -188,25 +231,4 @@ class FSWorkspaceNotInMaintenance(FSRemoteOperationError):
 
 
 class FSWorkspaceInMaintenance(FSRemoteOperationError):
-    pass
-
-
-# Internal errors
-
-
-class FSLocalMissError(FSInternalError):
-    def __init__(self, id: EntryID):
-        super().__init__(id)
-        self.id = id
-
-
-class FSFileConflictError(FSInternalError):
-    pass
-
-
-class FSReshapingRequiredError(FSInternalError):
-    pass
-
-
-class FSNoSynchronizationRequired(FSInternalError):
     pass
