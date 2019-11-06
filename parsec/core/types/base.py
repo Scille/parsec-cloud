@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pathlib import PurePosixPath
+from typing import Tuple
 
 from parsec.serde import BaseSchema, MsgpackSerializer
-from parsec.api.data import BaseData
+from parsec.api.data import BaseData, EntryName
 
 
 __all__ = ("BaseLocalData", "FsPath")
@@ -16,37 +16,66 @@ class BaseLocalData(BaseData):
     SERIALIZER_CLS = MsgpackSerializer
 
 
-class FsPath(PurePosixPath):
-    @classmethod
-    def _from_parts(cls, args, init=True):
-        self = object.__new__(cls)
-        args = [x.replace("\\", "/") if isinstance(x, str) else x for x in args]
+class FsPath:
+    __slots__ = ("_parts",)
+    """
+    Represent an absolute path to access a resource in the FS.
 
-        drv, root, parts = PurePosixPath._parse_args(args)
-        if not root:
-            raise ValueError("Path must be absolute")
+    FsPath must be initialized with a str representing an absolute path (i.e.
+    with a leading slash). If it countains `.` and/or `..` parts the path will
+    be resolved.
+    """
 
-        if drv:
-            raise ValueError("Path must be Posix style")
+    def __init__(self, raw):
+        if isinstance(raw, FsPath):
+            parts = raw.parts
+        elif isinstance(raw, (list, tuple)):
+            assert all(isinstance(x, EntryName) for x in raw)
+            parts = raw
+        else:
+            raw = raw.replace("\\", "/")  # TODO: remove me and do this in WinFSP
+            parts = []
+            if not raw.startswith("/"):
+                raise ValueError("Path must be absolute")
 
-        # Posix style root can be `/` or `//` (yeah, this is silly...)
-        root = parts[0] = "/"
-        self._drv = drv
-        self._root = root
-        self._parts = parts
-        if init:
-            self._init()
-        return self
+            for raw_part in raw.split("/"):
+                if raw_part in (".", ""):
+                    continue
+                elif raw_part == "..":
+                    if parts:
+                        parts.pop()
+                    continue
+                else:
+                    parts.append(EntryName(raw_part))
 
-    def is_root(self):
-        return self.parent == self
+        self._parts = tuple(parts)
 
-    def walk_from_path(self):
-        parent = None
-        curr = self
-        while curr != parent:
-            yield curr
-            parent, curr = curr, curr.parent
+    def __str__(self):
+        return "/" + "/".join(self._parts)
 
-    def walk_to_path(self):
-        return reversed(list(self.walk_from_path()))
+    def __repr__(self):
+        return f"{type(self).__name__}({str(self)!r})"
+
+    def __truediv__(self, entry):
+        return type(self)([*self._parts, EntryName(entry)])
+
+    def __eq__(self, other):
+        if isinstance(other, FsPath):
+            return self._parts == other.parts
+        else:
+            return NotImplemented
+
+    @property
+    def name(self) -> EntryName:
+        return self._parts[-1]
+
+    @property
+    def parent(self) -> "FsPath":
+        return type(self)(self._parts[:-1])
+
+    def is_root(self) -> bool:
+        return not self._parts
+
+    @property
+    def parts(self) -> Tuple[EntryName, ...]:
+        return self._parts

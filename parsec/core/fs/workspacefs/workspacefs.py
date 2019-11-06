@@ -38,14 +38,6 @@ from parsec.core.fs.exceptions import (
 AnyPath = Union[FsPath, str]
 
 
-def _destinsrc(src: AnyPath, dst: AnyPath):
-    try:
-        dst.relative_to(src)
-        return True
-    except ValueError:
-        return False
-
-
 @attr.s(frozen=True)
 class ReencryptionNeed:
     user_revoked: Tuple[UserID] = attr.ib(factory=tuple)
@@ -351,13 +343,14 @@ class WorkspaceFS:
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
-        if _destinsrc(source, destination):
+
+        if source.parts == destination.parts[: len(source.parts)]:
             raise FSInvalidArgumentError(
                 f"Cannot move a directory {source} into itself {destination}"
             )
         try:
             if await self.is_dir(destination):
-                real_destination = destination.joinpath(source.name)
+                real_destination = destination / source.name
                 if await self.exists(real_destination):
                     raise FileExistsError
         # At this point, real_destination is the target either representing :
@@ -386,7 +379,7 @@ class WorkspaceFS:
         source_files = await self.listdir(source_path)
         await self.mkdir(target_path)
         for source_file in source_files:
-            target_file = target_path.joinpath(source_file.name)
+            target_file = target_path / source_file.name
             if await self.is_dir(source_file):
                 await self.copytree(source_file, target_file)
             elif await self.is_file(source_file):

@@ -139,7 +139,7 @@ class MountpointManager:
             self._get_workspace_timestamped(workspace_id, timestamp)
         try:
             runner_task = self._mountpoint_tasks[(workspace_id, timestamp)]
-            return runner_task.value / path.relative_to(path.root)
+            return runner_task.value / "/".join(path.parts)
 
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")

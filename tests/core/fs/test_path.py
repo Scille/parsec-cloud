@@ -7,7 +7,8 @@ from parsec.core.types import FsPath
 
 
 @pytest.mark.parametrize(
-    "path,is_root", [("/", True), ("//", True), ("/foo", False), ("/foo/bar", False)]
+    "path,is_root",
+    [("/", True), ("//", True), ("/foo", False), ("/foo/bar", False), ("/你/😀", False)],
 )
 def test_root(path, is_root):
     obj = FsPath(path)
@@ -76,3 +77,19 @@ def test_stringify(path):
 def test_absolute(path):
     with pytest.raises(ValueError):
         FsPath(path)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/./foo/bar",
+        "//foo///bar/",
+        "/spam/../foo/bar",
+        "/foo/../../../foo/bar",
+        "/./foo/./././bar/.",
+        "/../foo//./spam////../bar",
+    ],
+)
+def test_dot_collapse(path):
+    obj = FsPath(path)
+    assert str(obj) == "/foo/bar"
