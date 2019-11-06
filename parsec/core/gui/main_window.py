@@ -50,7 +50,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_add_instance.clicked.connect(self._on_add_instance_clicked)
         self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
         self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.tab_center.setCornerWidget(self.button_add_instance, Qt.TopLeftCorner)
         self.button_add_instance.hide()
 
     def _on_add_instance_clicked(self):
@@ -121,8 +120,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def toggle_add_instance_button(self):
         idx = self._get_login_tab_index()
         if idx == -1:
+            self.tab_center.setCornerWidget(self.button_add_instance, Qt.TopLeftCorner)
             self.button_add_instance.show()
         else:
+            self.tab_center.setCornerWidget(None, Qt.TopLeftCorner)
             self.button_add_instance.hide()
 
     def _get_login_tab_index(self):
