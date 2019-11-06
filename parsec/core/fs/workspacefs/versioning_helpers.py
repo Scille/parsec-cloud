@@ -253,10 +253,7 @@ async def list_versions(
                 and previous[0][3] < previous[0][2].add(seconds=30)  # Check 30 seconds time frame
                 and not previous[1][1]  # Check previous has no source path
             ):
-                previous = (
-                    (item[0][0], item[0][1], previous[0][2], item[0][3]),
-                    (item[1][0], previous[1][1], item[1][2]),
-                )
+                previous = item
                 continue
             new_list += [previous]
         previous = item
