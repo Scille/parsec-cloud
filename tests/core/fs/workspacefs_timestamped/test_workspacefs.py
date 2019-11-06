@@ -123,11 +123,7 @@ async def test_versions_non_existing_file_remove_mocked(alice_workspace, alice):
     await _test_versions_non_existing_file(alice_workspace, alice, versions)
 
 
-@pytest.mark.trio
-async def test_versions_existing_directory_no_remove_mocked(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/files"), remove_supposed_mock=False)
-    versions_list = list(versions.items())
-
+async def _test_versions_existing_directory(alice_workspace, alice, versions_list):
     assert len(versions_list) == 8
 
     assert versions_list[0][0][1:] == (1, Pendulum(2000, 1, 4), Pendulum(2000, 1, 4))
@@ -162,47 +158,20 @@ async def test_versions_existing_directory_no_remove_mocked(alice_workspace, ali
     assert versions_list[7][0][1:3] == (8, Pendulum(2000, 1, 13))
     assert Pendulum.now().add(hours=-1) < versions_list[7][0][3] < Pendulum.now()
     assert versions_list[7][1] == ((alice.device_id, Pendulum(2000, 1, 13), True, None), None, None)
+
+
+@pytest.mark.trio
+async def test_versions_existing_directory_no_remove_mocked(alice_workspace, alice):
+    versions = await alice_workspace.versions(FsPath("/files"), remove_supposed_mock=False)
+    versions_list = list(versions.items())
+    await _test_versions_existing_directory(alice_workspace, alice, versions_list)
 
 
 @pytest.mark.trio
 async def test_versions_existing_directory(alice_workspace, alice):
     versions = await alice_workspace.versions(FsPath("/files"))
     versions_list = list(versions.items())
-
-    assert len(versions_list) == 8
-
-    assert versions_list[0][0][1:] == (1, Pendulum(2000, 1, 4), Pendulum(2000, 1, 4))
-    assert versions_list[0][1] == ((alice.device_id, Pendulum(2000, 1, 4), True, None), None, None)
-
-    assert versions_list[1][0][1:] == (2, Pendulum(2000, 1, 4), Pendulum(2000, 1, 6))
-    assert versions_list[1][1] == ((alice.device_id, Pendulum(2000, 1, 4), True, None), None, None)
-
-    assert versions_list[2][0][1:] == (3, Pendulum(2000, 1, 6), Pendulum(2000, 1, 7))
-    assert versions_list[2][1] == ((alice.device_id, Pendulum(2000, 1, 6), True, None), None, None)
-
-    assert versions_list[3][0][1:] == (4, Pendulum(2000, 1, 7), Pendulum(2000, 1, 8))
-    assert versions_list[3][1] == ((alice.device_id, Pendulum(2000, 1, 7), True, None), None, None)
-
-    assert versions_list[4][0][1:] == (5, Pendulum(2000, 1, 8), Pendulum(2000, 1, 9))
-    assert versions_list[4][1] == (
-        (alice.device_id, Pendulum(2000, 1, 8), True, None),
-        None,
-        FsPath("/moved_files"),
-    )
-
-    assert versions_list[5][0][1:] == (6, Pendulum(2000, 1, 11), Pendulum(2000, 1, 12))
-    assert versions_list[5][1] == (
-        (alice.device_id, Pendulum(2000, 1, 10), True, None),
-        FsPath("/moved_files"),
-        None,
-    )
-
-    assert versions_list[6][0][1:] == (7, Pendulum(2000, 1, 12), Pendulum(2000, 1, 13))
-    assert versions_list[6][1] == ((alice.device_id, Pendulum(2000, 1, 12), True, None), None, None)
-
-    assert versions_list[7][0][1:3] == (8, Pendulum(2000, 1, 13))
-    assert Pendulum.now().add(hours=-1) < versions_list[7][0][3] < Pendulum.now()
-    assert versions_list[7][1] == ((alice.device_id, Pendulum(2000, 1, 13), True, None), None, None)
+    await _test_versions_existing_directory(alice_workspace, alice, versions_list)
 
 
 @pytest.mark.trio
