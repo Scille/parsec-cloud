@@ -369,21 +369,30 @@ async def test_mountpoint_revoke_access(
         with pytest.raises(PermissionError):
             await bar_path.read_bytes()
 
-    async def assert_cannot_write(mountpoint_manager):
+    async def assert_cannot_write(mountpoint_manager, new_role):
+        expected_error, expected_errno = PermissionError, errno.EACCES
+        # On linux, errno.EROFS is not translated to a PermissionError
+        if new_role is WorkspaceRole.READER and os.name != "nt":
+            expected_error, expected_errno = OSError, errno.EROFS
         root_path = get_root_path(mountpoint_manager)
         foo_path = root_path / "foo.txt"
         bar_path = root_path / "bar.txt"
-        with pytest.raises(PermissionError):
+        with pytest.raises(expected_error) as ctx:
             await (root_path / "new_file.txt").touch()
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await (root_path / "new_directory").mkdir()
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await foo_path.write_bytes(b"foo contents")
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await foo_path.unlink()
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await bar_path.write_bytes(b"bar contents")
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await bar_path.unlink()
 
     async with mountpoint_manager_factory(
@@ -419,7 +428,7 @@ async def test_mountpoint_revoke_access(
             await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
         # Alice no longer has write access
-        await assert_cannot_write(mountpoint_manager)
+        await assert_cannot_write(mountpoint_manager, new_role)
 
     # Try again with Alice first device
 
@@ -439,7 +448,7 @@ async def test_mountpoint_revoke_access(
             await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
         # Alice no longer has write access
-        await assert_cannot_write(mountpoint_manager)
+        await assert_cannot_write(mountpoint_manager, new_role)
 
     # Try again with Alice second device
 
@@ -459,4 +468,4 @@ async def test_mountpoint_revoke_access(
             await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
         # Alice no longer has write access
-        await assert_cannot_write(mountpoint_manager)
+        await assert_cannot_write(mountpoint_manager, new_role)
