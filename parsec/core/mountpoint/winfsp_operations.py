@@ -14,7 +14,7 @@ from winfspy import (
 from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, SecurityDescriptor
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSOperationLocalError, FSOperationRemoteError
+from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 
 
@@ -33,10 +33,10 @@ def translate_error(event_bus, operation, path):
     except NTStatusError:
         raise
 
-    except FSOperationLocalError as exc:
+    except FSLocalOperationError as exc:
         raise NTStatusError(exc.ntstatus) from exc
 
-    except FSOperationRemoteError as exc:
+    except FSRemoteOperationError as exc:
         event_bus.send("mountpoint.remote_error", exc=exc, operation=operation, path=path)
         raise NTStatusError(exc.ntstatus) from exc
 

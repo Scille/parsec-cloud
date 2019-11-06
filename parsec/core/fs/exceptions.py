@@ -54,7 +54,7 @@ class FSOperationError(FSError):
     pass
 
 
-class FSOperationLocalError(FSOperationError):
+class FSLocalOperationError(FSOperationError):
 
     """
     Used to represent "normal" error (e.g. opening a non-existing file,
@@ -64,7 +64,7 @@ class FSOperationLocalError(FSOperationError):
     pass
 
 
-class FSOperationRemoteError(FSError):
+class FSRemoteOperationError(FSError):
     """
     Used to represent error in the underlaying layers (e.g. data inconsistency,
     data access refused by the backend etc.)
@@ -90,47 +90,47 @@ class FSInternalError(FSError):
 # Operation local errors
 
 
-class FSPermissionError(FSOperationLocalError, PermissionError):
+class FSPermissionError(FSLocalOperationError, PermissionError):
     ERRNO = errno.EACCES
     NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
-class FSNotADirectoryError(FSOperationLocalError, NotADirectoryError):
+class FSNotADirectoryError(FSLocalOperationError, NotADirectoryError):
     ERRNO = errno.ENOTDIR
     NTSTATUS = ntstatus.STATUS_NOT_A_DIRECTORY
 
 
-class FSFileNotFoundError(FSOperationLocalError, FileNotFoundError):
+class FSFileNotFoundError(FSLocalOperationError, FileNotFoundError):
     ERRNO = errno.ENOENT
     NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
 
 
-class FSCrossDeviceError(FSOperationLocalError):
+class FSCrossDeviceError(FSLocalOperationError):
     ERRNO = errno.EXDEV
     NTSTATUS = ntstatus.STATUS_NOT_SAME_DEVICE
 
 
-class FSFileExistsError(FSOperationLocalError, FileExistsError):
+class FSFileExistsError(FSLocalOperationError, FileExistsError):
     ERRNO = errno.EEXIST
     NTSTATUS = ntstatus.STATUS_OBJECT_NAME_COLLISION
 
 
-class FSIsADirectoryError(FSOperationLocalError, IsADirectoryError):
+class FSIsADirectoryError(FSLocalOperationError, IsADirectoryError):
     ERRNO = errno.EISDIR
     NTSTATUS = ntstatus.STATUS_FILE_IS_A_DIRECTORY
 
 
-class FSDirectoryNotEmptyError(FSOperationLocalError):
+class FSDirectoryNotEmptyError(FSLocalOperationError):
     ERRNO = errno.ENOTEMPTY
     NTSTATUS = ntstatus.STATUS_DIRECTORY_NOT_EMPTY
 
 
-class FSInvalidFileDescriptor(FSOperationLocalError):
+class FSInvalidFileDescriptor(FSLocalOperationError):
     ERRNO = errno.EBADF
     NTSTATUS = ntstatus.STATUS_INVALID_HANDLE
 
 
-class FSInvalidArgumentError(FSOperationLocalError):
+class FSInvalidArgumentError(FSLocalOperationError):
     ERRNO = errno.EINVAL
     NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
 
@@ -138,12 +138,12 @@ class FSInvalidArgumentError(FSOperationLocalError):
 # Operation remote errors
 
 
-class FSBackendOfflineError(FSOperationRemoteError):
+class FSBackendOfflineError(FSRemoteOperationError):
     ERRNO = errno.EHOSTUNREACH
     NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
 
 
-class FSRemoteManifestNotFound(FSOperationRemoteError):
+class FSRemoteManifestNotFound(FSRemoteOperationError):
     pass
 
 
@@ -155,23 +155,23 @@ class FSRemoteManifestNotFoundBadTimestamp(FSRemoteManifestNotFound):
     pass
 
 
-class FSRemoteBlockNotFound(FSOperationRemoteError):
+class FSRemoteBlockNotFound(FSRemoteOperationError):
     pass
 
 
-class FSRemoteSyncError(FSOperationRemoteError):
+class FSRemoteSyncError(FSRemoteOperationError):
     pass
 
 
-class FSBadEncryptionRevision(FSOperationRemoteError):
+class FSBadEncryptionRevision(FSRemoteOperationError):
     pass
 
 
-class FSSharingNotAllowedError(FSOperationRemoteError):
+class FSSharingNotAllowedError(FSRemoteOperationError):
     pass
 
 
-class FSWorkspaceNoAccess(FSOperationRemoteError, PermissionError):
+class FSWorkspaceNoAccess(FSRemoteOperationError, PermissionError):
     pass
 
 
@@ -183,11 +183,11 @@ class FSWorkspaceNoWriteAccess(FSWorkspaceNoAccess):
     pass
 
 
-class FSWorkspaceNotInMaintenance(FSOperationRemoteError):
+class FSWorkspaceNotInMaintenance(FSRemoteOperationError):
     pass
 
 
-class FSWorkspaceInMaintenance(FSOperationRemoteError):
+class FSWorkspaceInMaintenance(FSRemoteOperationError):
     pass
 
 

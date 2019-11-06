@@ -10,7 +10,7 @@ from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_e
 
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSOperationLocalError, FSOperationRemoteError
+from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
 
 
 logger = get_logger()
@@ -39,10 +39,10 @@ def translate_error(event_bus, operation, path):
     except FuseOSError:
         raise
 
-    except FSOperationLocalError as exc:
+    except FSLocalOperationError as exc:
         raise FuseOSError(exc.errno) from exc
 
-    except FSOperationRemoteError as exc:
+    except FSRemoteOperationError as exc:
         event_bus.send("mountpoint.remote_error", exc=exc, operation=operation, path=path)
         raise FuseOSError(exc.errno) from exc
 
