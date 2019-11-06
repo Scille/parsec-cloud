@@ -138,6 +138,11 @@ class FSPermissionError(FSLocalOperationError, PermissionError):
     NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
+class FSReadOnlyError(FSLocalOperationError, PermissionError):
+    ERRNO = errno.EROFS
+    NTSTATUS = ntstatus.STATUS_MEDIA_WRITE_PROTECTED
+
+
 class FSNotADirectoryError(FSLocalOperationError, NotADirectoryError):
     ERRNO = errno.ENOTDIR
     NTSTATUS = ntstatus.STATUS_NOT_A_DIRECTORY

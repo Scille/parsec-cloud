@@ -18,14 +18,13 @@ from parsec.core.fs.workspacefs.file_transactions import FileTransactions
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSPermissionError,
+    FSReadOnlyError,
     FSNotADirectoryError,
     FSFileNotFoundError,
     FSCrossDeviceError,
     FSFileExistsError,
     FSIsADirectoryError,
     FSDirectoryNotEmptyError,
-    FSWorkspaceNoReadAccess,
-    FSWorkspaceNoWriteAccess,
     FSLocalMissError,
 )
 
@@ -39,11 +38,12 @@ class EntryTransactions(FileTransactions):
 
     def check_read_rights(self, path: FsPath):
         if self.get_workspace_entry().role is None:
-            raise FSWorkspaceNoReadAccess(filename=path)
+            raise FSPermissionError(filename=path)
 
     def check_write_rights(self, path: FsPath):
+        self.check_read_rights(path)
         if self.get_workspace_entry().role not in WRITE_RIGHT_ROLES:
-            raise FSWorkspaceNoWriteAccess(filename=path)
+            raise FSReadOnlyError(filename=path)
 
     # Look-up helpers
 
