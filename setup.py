@@ -285,10 +285,6 @@ test_requirements = [
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = ("Babel==2.6.0",)
 extra_requirements = {
-    "pkcs11": [
-        'python-pkcs11==0.5.0;platform_system=="Linux"',
-        'pycrypto==2.6.1;platform_system=="Linux"',
-    ],
     "core": [
         PYQT_DEP,
         BABEL_DEP,
