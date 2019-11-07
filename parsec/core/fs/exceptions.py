@@ -1,4 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+"""
+Define all the FSError classes, using the following hierarchy:
+
+    FSInternalError (Exception)
+    FSError (Exception)
+    +-- FSMiscError
+    +-- FSOperationError (OSError)
+        +-- FSLocalOperationError
+        +-- FSRemoteOperationError
+
+"""
 
 import os
 import errno
@@ -6,10 +17,36 @@ from parsec.core.types import EntryID
 from parsec.core.fs.utils import ntstatus
 
 
-# Base class for all file system errors
+# Base classes for all file system errors
 
 
-class FSError(OSError):
+class FSInternalError(Exception):
+    """
+    Base class for exceptions that are not meant to propagate out of the fs module
+    """
+
+    pass
+
+
+class FSError(Exception):
+    """
+    Base class for all fs exceptions
+    """
+
+    pass
+
+
+class FSMiscError(FSError):
+    """
+    Base class for exceptions exposed by the fs module that are not related to an operation
+    """
+
+
+class FSOperationError(OSError, FSError):
+    """
+    Base class for the exceptions that may be raised during the execution of an operation
+    """
+
     ERRNO = None
     WINERROR = None
     NTSTATUS = None
@@ -42,165 +79,44 @@ class FSError(OSError):
         return self.message
 
 
-# Base errors
+class FSLocalOperationError(FSOperationError):
+    """
+    Used to represent "normal" error (e.g. opening a non-existing file,
+    removing a non-empty folder etc.)
+    """
 
-
-class FSPermissionError(FSError, PermissionError):
-    ERRNO = errno.EACCES
-    NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
-
-
-class FSNotADirectoryError(FSError, NotADirectoryError):
-    ERRNO = errno.ENOTDIR
-    NTSTATUS = ntstatus.STATUS_NOT_A_DIRECTORY
-
-
-class FSFileNotFoundError(FSError, FileNotFoundError):
-    ERRNO = errno.ENOENT
-    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
-
-
-class FSCrossDeviceError(FSError):
-    ERRNO = errno.EXDEV
-    NTSTATUS = ntstatus.STATUS_NOT_SAME_DEVICE
-
-
-class FSFileExistsError(FSError, FileExistsError):
-    ERRNO = errno.EEXIST
-    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_COLLISION
-
-
-class FSIsADirectoryError(FSError, IsADirectoryError):
-    ERRNO = errno.EISDIR
-    NTSTATUS = ntstatus.STATUS_FILE_IS_A_DIRECTORY
-
-
-class FSDirectoryNotEmptyError(FSError):
-    ERRNO = errno.ENOTEMPTY
-    NTSTATUS = ntstatus.STATUS_DIRECTORY_NOT_EMPTY
-
-
-class FSInvalidFileDescriptor(FSError):
-    ERRNO = errno.EBADF
-    NTSTATUS = ntstatus.STATUS_INVALID_HANDLE
-
-
-class FSNetworkError(FSError):
-    ERRNO = errno.EHOSTUNREACH
-    NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
-
-
-class FSEntryNotFound(FSError):
-    ERRNO = errno.ENOENT
-    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
-
-
-class FSInvalidArgumentError(FSError):
     ERRNO = errno.EINVAL
     NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
 
 
-class FSInternalError(FSError):
-    def __init__(self, *args):
-        super(Exception, self).__init__(*args)
+class FSRemoteOperationError(FSOperationError):
+    """
+    Used to represent error in the underlaying layers (e.g. data inconsistency,
+    data access refused by the backend etc.)
+    """
 
-    def __str__(self):
-        return super(Exception, self).__str__()
+    ERRNO = errno.EACCES
+    NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
-# Protocol errors
+# Misc errors
 
 
-class FSValidationError(FSInternalError):
+class FSWorkspaceNotFoundError(FSMiscError):
     pass
 
 
-class FSPackingError(FSInternalError):
+class FSWorkspaceTimestampedTooEarly(FSMiscError):
     pass
 
 
-# Remote errors
-
-
-class FSRemoteManifestNotFound(FSInternalError):
-    pass
-
-
-class FSRemoteManifestNotFoundBadVersion(FSRemoteManifestNotFound):
-    pass
-
-
-class FSRemoteManifestNotFoundBadTimestamp(FSRemoteManifestNotFound):
-    pass
-
-
-class FSRemoteBlockNotFound(FSInternalError):
-    pass
-
-
-class FSRemoteSyncError(FSInternalError):
-    pass
-
-
-class FSBadEncryptionRevision(FSInternalError):
-    pass
-
-
-# Local miss errors
+# Internal errors
 
 
 class FSLocalMissError(FSInternalError):
     def __init__(self, id: EntryID):
         super().__init__(id)
         self.id = id
-
-
-class FSWorkspaceNotFoundError(FSLocalMissError):
-    pass
-
-
-# Connection errors
-
-
-class FSBackendOfflineError(FSNetworkError):
-    pass
-
-
-# Rights errors
-
-
-class FSSharingNotAllowedError(FSPermissionError):
-    pass
-
-
-class FSWorkspaceNoAccess(FSPermissionError):
-    pass
-
-
-class FSWorkspaceNoReadAccess(FSWorkspaceNoAccess):
-    pass
-
-
-class FSWorkspaceNoWriteAccess(FSWorkspaceNoAccess):
-    pass
-
-
-# Maintenance errors
-
-
-class FSWorkspaceNotInMaintenance(FSInternalError):
-    pass
-
-
-class FSWorkspaceInMaintenance(FSPermissionError):
-    pass
-
-
-class FSMaintenanceNotAllowedError(FSPermissionError):
-    pass
-
-
-# Workspace internal errors
 
 
 class FSFileConflictError(FSInternalError):
@@ -215,8 +131,115 @@ class FSNoSynchronizationRequired(FSInternalError):
     pass
 
 
-# Timestamping errors
+# Local operation errors
 
 
-class FSWorkspaceTimestampedTooEarly(FSInternalError):
+class FSPermissionError(FSLocalOperationError, PermissionError):
+    ERRNO = errno.EACCES
+    NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
+
+
+class FSNoAccessError(FSPermissionError):
+    ERRNO = errno.EACCES
+    NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
+
+
+class FSReadOnlyError(FSPermissionError):
+    ERRNO = errno.EROFS
+    NTSTATUS = ntstatus.STATUS_MEDIA_WRITE_PROTECTED
+
+
+class FSNotADirectoryError(FSLocalOperationError, NotADirectoryError):
+    ERRNO = errno.ENOTDIR
+    NTSTATUS = ntstatus.STATUS_NOT_A_DIRECTORY
+
+
+class FSFileNotFoundError(FSLocalOperationError, FileNotFoundError):
+    ERRNO = errno.ENOENT
+    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_NOT_FOUND
+
+
+class FSCrossDeviceError(FSLocalOperationError):
+    ERRNO = errno.EXDEV
+    NTSTATUS = ntstatus.STATUS_NOT_SAME_DEVICE
+
+
+class FSFileExistsError(FSLocalOperationError, FileExistsError):
+    ERRNO = errno.EEXIST
+    NTSTATUS = ntstatus.STATUS_OBJECT_NAME_COLLISION
+
+
+class FSIsADirectoryError(FSLocalOperationError, IsADirectoryError):
+    ERRNO = errno.EISDIR
+    NTSTATUS = ntstatus.STATUS_FILE_IS_A_DIRECTORY
+
+
+class FSDirectoryNotEmptyError(FSLocalOperationError):
+    ERRNO = errno.ENOTEMPTY
+    NTSTATUS = ntstatus.STATUS_DIRECTORY_NOT_EMPTY
+
+
+class FSInvalidFileDescriptor(FSLocalOperationError):
+    ERRNO = errno.EBADF
+    NTSTATUS = ntstatus.STATUS_INVALID_HANDLE
+
+
+class FSInvalidArgumentError(FSLocalOperationError):
+    ERRNO = errno.EINVAL
+    NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
+
+
+# Remote operation errors
+
+
+class FSBackendOfflineError(FSRemoteOperationError):
+    ERRNO = errno.EHOSTUNREACH
+    NTSTATUS = ntstatus.STATUS_HOST_UNREACHABLE
+
+
+class FSRemoteManifestNotFound(FSRemoteOperationError):
+    pass
+
+
+class FSRemoteManifestNotFoundBadVersion(FSRemoteManifestNotFound):
+    pass
+
+
+class FSRemoteManifestNotFoundBadTimestamp(FSRemoteManifestNotFound):
+    pass
+
+
+class FSRemoteBlockNotFound(FSRemoteOperationError):
+    pass
+
+
+class FSRemoteSyncError(FSRemoteOperationError):
+    pass
+
+
+class FSBadEncryptionRevision(FSRemoteOperationError):
+    pass
+
+
+class FSSharingNotAllowedError(FSRemoteOperationError):
+    pass
+
+
+class FSWorkspaceNoAccess(FSRemoteOperationError, PermissionError):
+    pass
+
+
+class FSWorkspaceNoReadAccess(FSWorkspaceNoAccess):
+    pass
+
+
+class FSWorkspaceNoWriteAccess(FSWorkspaceNoAccess):
+    pass
+
+
+class FSWorkspaceNotInMaintenance(FSRemoteOperationError):
+    pass
+
+
+class FSWorkspaceInMaintenance(FSRemoteOperationError):
     pass

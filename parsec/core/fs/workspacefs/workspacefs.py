@@ -123,13 +123,6 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return info["id"]
 
-    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
-        """
-        Raises:
-           FSEntryNotFound
-        """
-        return await self.transactions.get_entry_path(entry_id)
-
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
         Raises:

@@ -4,6 +4,7 @@ import pytest
 from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
+from parsec.core.fs import FSWorkspaceNoReadAccess
 
 
 @pytest.fixture
@@ -97,3 +98,35 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     async with aqtbot.wait_signal(w_w.rename_success):
         aqtbot.qtbot.mouseClick(wk_button.button_rename, QtCore.Qt.LeftButton)
     assert wk_button.name == "Workspace1_Renamed"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui):
+    c_w = logged_gui.test_get_central_widget()
+
+    async with aqtbot.wait_signal(c_w.new_notification):
+        c_w.event_bus.send(
+            "mountpoint.remote_error",
+            exc=FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access"),
+            path="/foo",
+            operation="open",
+        )
+    msg_widget = c_w.notification_center.widget_layout.layout().itemAt(0).widget()
+    assert (
+        msg_widget.message
+        == 'Cannot access "/foo" from the server given you lost read access to the workspace.'
+    )
+
+    async with aqtbot.wait_signal(c_w.new_notification):
+        c_w.event_bus.send(
+            "mountpoint.unhandled_error",
+            exc=RuntimeError("D'Oh !"),
+            path="/bar",
+            operation="unlink",
+        )
+    msg_widget = c_w.notification_center.widget_layout.layout().itemAt(0).widget()
+    assert (
+        msg_widget.message
+        == 'Unexpected error while performing "unlink" operation on "/bar": D\'Oh !.'
+    )

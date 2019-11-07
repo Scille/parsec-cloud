@@ -7,7 +7,7 @@ from parsec.core.types import FsPath, EntryID, Chunk, LocalFolderManifest, Local
 
 from parsec.core.fs.workspacefs.sync_transactions import merge_manifests
 from parsec.core.fs.workspacefs.sync_transactions import merge_folder_children
-from parsec.core.fs import FSFileConflictError
+from parsec.core.fs.exceptions import FSFileConflictError
 
 
 def test_merge_folder_children():
