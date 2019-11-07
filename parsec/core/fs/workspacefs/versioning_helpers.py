@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-from typing import Dict, Tuple
+from typing import Dict, NamedTuple
 from pendulum import Pendulum
 
 from parsec.api.protocol import DeviceID
@@ -14,12 +14,32 @@ from parsec.core.fs.exceptions import (
 )
 
 
+SYNC_GUESSED_TIME_FRAME = 30
+
+
+class TimeLimitedEntry(NamedTuple):
+    id: EntryID
+    version: int
+    early: Pendulum
+    late: Pendulum
+
+
+class ManifestData(NamedTuple):
+    device_id: DeviceID
+    updated: Pendulum
+    is_dir: bool
+    size: int
+
+
+class ManifestDataAndPaths(NamedTuple):
+    data: ManifestData
+    source: FsPath
+    destination: FsPath
+
+
 async def list_versions(
-    workspacefs, path: FsPath, remove_supposed_mock=True
-) -> Dict[
-    Tuple[EntryID, int, Pendulum, Pendulum],
-    Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
-]:
+    workspacefs, path: FsPath, remove_supposed_minimal_sync: bool = True
+) -> Dict[TimeLimitedEntry, ManifestDataAndPaths]:
     """
     Raises:
         FSError
@@ -27,12 +47,6 @@ async def list_versions(
         FSWorkspaceInMaintenance
         FSRemoteManifestNotFound
     """
-    # Each key is a tuple (entry_id, version_number, first_known_timestamp, last_known_timestamp)
-    # Each value is a tuple (
-    #     (creator_device_id, manifest.updated, is_folder, size),
-    #     source_path_if_found,
-    #     destination_path_if_found,
-    # )
     # Could be optimized if we could use manifest.updated
     manifest_cache = {}
 
@@ -135,15 +149,15 @@ async def list_versions(
             return
         manifest = await _load_manifest_or_cached(entry_id, version=version_number)
         data = [
-            (
+            ManifestData(
                 manifest.author,
                 manifest.updated,
                 is_folder_manifest(manifest),
                 None if not is_file_manifest(manifest) else manifest.size,
             ),
-            None,
-            None,
-            None,
+            None,  # Source path
+            None,  # Destination path
+            None,  # Current path
         ]
 
         if len(target.parts) == path_level + 1:
@@ -161,10 +175,12 @@ async def list_versions(
                 )
                 child_nursery.start_soon(_populate_path_w_index, data, 2, entry_id, late)
                 child_nursery.start_soon(_populate_path_w_index, data, 3, entry_id, early)
-            tree[(manifest.id, manifest.version, early, late)] = (
-                data[0],
-                data[1] if data[1] != data[3] else None,
-                data[2] if data[2] != data[3] else None,
+            tree[
+                TimeLimitedEntry(manifest.id, manifest.version, early, late)
+            ] = ManifestDataAndPaths(
+                data=data[0],
+                source=data[1] if data[1] != data[3] else None,
+                destination=data[2] if data[2] != data[3] else None,
             )
         else:
             if not is_file_manifest(manifest):
@@ -224,39 +240,41 @@ async def list_versions(
     versions_list = [
         (item[0], item[1])
         for item in sorted(
-            list(return_tree.items()), key=lambda item: (item[0][3], item[0][0], item[0][1])
+            list(return_tree.items()), key=lambda item: (item[0].late, item[0].id, item[0].version)
         )
     ]
-    # Remove duplicates from father updated and empty manifests set before parents for consistency
     previous = None
     new_list = []
+    # Merge duplicates with overlapping time frames as it can be caused by an update of a parent
+    # dir, also, if option is set, remove what can be guessed as empty manifests set before parent
+    # during sync
     for item in versions_list:
         if previous is not None:
             # If same entry_id and version
-            if previous[0][0] == item[0][0] and previous[0][1] == item[0][1]:
+            if previous[0].id == item[0].id and previous[0].version == item[0].version:
                 if previous[0][3] == item[0][2]:  # Same timestamp, only parent directory updated
                     # Update source FsPath for current entry
                     previous = (
-                        (item[0][0], item[0][1], previous[0][2], item[0][3]),
-                        (item[1][0], previous[1][1], item[1][2]),
+                        TimeLimitedEntry(item[0].id, item[0].version, previous[0][2], item[0][3]),
+                        ManifestDataAndPaths(item[1].data, previous[1].source, item[1].destination),
                     )
                     continue
             # If option is set, same entry_id, previous version is 0 bytes
             if (
-                remove_supposed_mock  # If function argument is set to True (it is by default)
-                and previous[0][0] == item[0][0]  # Same entry_id
-                and previous[0][1] == item[0][1] - 1  # Current is previous next version
-                and previous[0][1] == 1  # Previous is initial version
-                and previous[1][0][3] == 0  # Previous is empty, is a file (would be None for dir)
-                and previous[1][0][2] == item[1][0][2]  # Previous and item are of the same type
-                and previous[0][3] == item[0][2]  # Previous and current are continuous in time
-                and previous[0][3] < previous[0][2].add(seconds=30)  # Check 30 seconds time frame
-                and not previous[1][1]  # Check previous has no source path
+                remove_supposed_minimal_sync
+                and previous[0].id == item[0].id
+                and previous[0].version == item[0].version - 1
+                and previous[0].version == 1
+                and previous[1].data.size == 0  # Empty file (would be None for dir)
+                and previous[1].data.is_dir == item[1].data.is_dir
+                and previous[0].late == item[0].early
+                and previous[0].late < previous[0].early.add(seconds=SYNC_GUESSED_TIME_FRAME)
+                and not previous[1].source
             ):
                 previous = item
                 continue
-            new_list += [previous]
+            new_list.append(previous)
         previous = item
     if previous:
-        new_list += [previous]
+        new_list.append(previous)
     return {k: v for k, v in new_list}

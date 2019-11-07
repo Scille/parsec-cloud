@@ -7,9 +7,9 @@ from parsec.core.types import FsPath
 
 
 @pytest.mark.trio
-async def test_versions_existing_file_no_remove_mocked(alice_workspace, alice):
+async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, alice):
     versions = await alice_workspace.versions(
-        FsPath("/files/renamed_content"), remove_supposed_mock=False
+        FsPath("/files/renamed_content"), remove_supposed_minimal_sync=False
     )
     versions_list = list(versions.items())
 
@@ -54,7 +54,7 @@ async def test_versions_existing_file_no_remove_mocked(alice_workspace, alice):
 
 
 @pytest.mark.trio
-async def test_versions_existing_file_remove_mocked(alice_workspace, alice):
+async def test_versions_existing_file_remove_minimal_synced(alice_workspace, alice):
     versions = await alice_workspace.versions(FsPath("/files/renamed_content"))
     versions_list = list(versions.items())
 
@@ -110,15 +110,15 @@ async def _test_versions_non_existing_file(alice_workspace, alice, versions):
 
 
 @pytest.mark.trio
-async def test_versions_non_existing_file_no_remove_mocked(alice_workspace, alice):
+async def test_versions_non_existing_file_no_remove_minimal_synced(alice_workspace, alice):
     versions = await alice_workspace.versions(
-        FsPath("/moved_files/renamed_content"), remove_supposed_mock=False
+        FsPath("/moved_files/renamed_content"), remove_supposed_minimal_sync=False
     )
     await _test_versions_non_existing_file(alice_workspace, alice, versions)
 
 
 @pytest.mark.trio
-async def test_versions_non_existing_file_remove_mocked(alice_workspace, alice):
+async def test_versions_non_existing_file_remove_minimal_synced(alice_workspace, alice):
     versions = await alice_workspace.versions(FsPath("/moved_files/renamed_content"))
     await _test_versions_non_existing_file(alice_workspace, alice, versions)
 
@@ -161,8 +161,8 @@ async def _test_versions_existing_directory(alice_workspace, alice, versions_lis
 
 
 @pytest.mark.trio
-async def test_versions_existing_directory_no_remove_mocked(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/files"), remove_supposed_mock=False)
+async def test_versions_existing_directory_no_remove_minimal_synced(alice_workspace, alice):
+    versions = await alice_workspace.versions(FsPath("/files"), remove_supposed_minimal_sync=False)
     versions_list = list(versions.items())
     await _test_versions_existing_directory(alice_workspace, alice, versions_list)
 
