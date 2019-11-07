@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSLocalMissError
+from parsec.core.fs.exceptions import FSLocalMissError
 
 
 @pytest.mark.trio

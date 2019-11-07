@@ -6,7 +6,8 @@ import pytest
 from pendulum import now
 
 from parsec.core.fs.storage import WorkspaceStorage
-from parsec.core.fs import FSError, FSLocalMissError, FSInvalidFileDescriptor
+from parsec.core.fs import FSError, FSInvalidFileDescriptor
+from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.types import (
     DEFAULT_BLOCK_SIZE,
     LocalUserManifest,
