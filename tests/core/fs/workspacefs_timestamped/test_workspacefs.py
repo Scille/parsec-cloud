@@ -97,7 +97,15 @@ async def test_versions_existing_file_remove_minimal_synced(alice_workspace, ali
     assert versions_list[4][1] == ((alice.device_id, Pendulum(2000, 1, 14), False, 5), None, None)
 
 
-async def _test_versions_non_existing_file(alice_workspace, alice, versions):
+@pytest.mark.trio
+@pytest.mark.parametrize("remove_supposed_minimal_sync", (False, True))
+async def test_versions_non_existing_file_remove_minimal_synced(
+    alice_workspace, alice, remove_supposed_minimal_sync
+):
+    versions = await alice_workspace.versions(
+        FsPath("/moved_files/renamed_content"),
+        remove_supposed_minimal_sync=remove_supposed_minimal_sync,
+    )
     versions_list = list(versions.items())
     assert len(versions_list) == 1
 
@@ -107,20 +115,6 @@ async def _test_versions_non_existing_file(alice_workspace, alice, versions):
         FsPath("/files/renamed_content"),
         FsPath("/files/renamed_content"),
     )
-
-
-@pytest.mark.trio
-async def test_versions_non_existing_file_no_remove_minimal_synced(alice_workspace, alice):
-    versions = await alice_workspace.versions(
-        FsPath("/moved_files/renamed_content"), remove_supposed_minimal_sync=False
-    )
-    await _test_versions_non_existing_file(alice_workspace, alice, versions)
-
-
-@pytest.mark.trio
-async def test_versions_non_existing_file_remove_minimal_synced(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/moved_files/renamed_content"))
-    await _test_versions_non_existing_file(alice_workspace, alice, versions)
 
 
 @pytest.mark.trio
