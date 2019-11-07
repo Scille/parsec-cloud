@@ -2,12 +2,13 @@
 """
 Define all the FSError classes, using the following hierarchy:
 
-    FSError
+    FSInternalError (Exception)
+    FSError (Exception)
     +-- FSMiscError
-    +-- FSInternalError
-    +-- FSOperationError
+    +-- FSOperationError (OSError)
         +-- FSLocalOperationError
         +-- FSRemoteOperationError
+
 """
 
 import os
@@ -16,10 +17,18 @@ from parsec.core.types import EntryID
 from parsec.core.fs.utils import ntstatus
 
 
-# Base class for all file system errors
+# Base classes for all file system errors
 
 
-class FSError(OSError):
+class FSInternalError(Exception):
+    """
+    Base class for exceptions that are not meant to propagate out of the fs module
+    """
+
+    pass
+
+
+class FSError(Exception):
     """
     Base class for all fs exceptions
     """
@@ -33,15 +42,7 @@ class FSMiscError(FSError):
     """
 
 
-class FSInternalError(FSError):
-    """
-    Base class for exceptions that are not meant to propagate out of the fs module
-    """
-
-    pass
-
-
-class FSOperationError(FSError):
+class FSOperationError(OSError, FSError):
     """
     Base class for the exceptions that may be raised during the execution of an operation
     """
