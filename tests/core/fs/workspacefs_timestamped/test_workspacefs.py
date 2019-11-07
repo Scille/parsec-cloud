@@ -123,7 +123,14 @@ async def test_versions_non_existing_file_remove_minimal_synced(alice_workspace,
     await _test_versions_non_existing_file(alice_workspace, alice, versions)
 
 
-async def _test_versions_existing_directory(alice_workspace, alice, versions_list):
+@pytest.mark.trio
+@pytest.mark.parametrize("remove_supposed_minimal_sync", (False, True))
+async def test_versions_existing_directory(alice_workspace, alice, remove_supposed_minimal_sync):
+    versions = await alice_workspace.versions(
+        FsPath("/files"), remove_supposed_minimal_sync=remove_supposed_minimal_sync
+    )
+    versions_list = list(versions.items())
+
     assert len(versions_list) == 8
 
     assert versions_list[0][0][1:] == (1, Pendulum(2000, 1, 4), Pendulum(2000, 1, 4))
@@ -158,20 +165,6 @@ async def _test_versions_existing_directory(alice_workspace, alice, versions_lis
     assert versions_list[7][0][1:3] == (8, Pendulum(2000, 1, 13))
     assert Pendulum.now().add(hours=-1) < versions_list[7][0][3] < Pendulum.now()
     assert versions_list[7][1] == ((alice.device_id, Pendulum(2000, 1, 13), True, None), None, None)
-
-
-@pytest.mark.trio
-async def test_versions_existing_directory_no_remove_minimal_synced(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/files"), remove_supposed_minimal_sync=False)
-    versions_list = list(versions.items())
-    await _test_versions_existing_directory(alice_workspace, alice, versions_list)
-
-
-@pytest.mark.trio
-async def test_versions_existing_directory(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/files"))
-    versions_list = list(versions.items())
-    await _test_versions_existing_directory(alice_workspace, alice, versions_list)
 
 
 @pytest.mark.trio
