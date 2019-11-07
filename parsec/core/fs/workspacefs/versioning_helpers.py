@@ -17,11 +17,20 @@ from parsec.core.fs.exceptions import (
 SYNC_GUESSED_TIME_FRAME = 30
 
 
-class TimeLimitedEntry(NamedTuple):
+class TimestampBoundedEntry(NamedTuple):
     id: EntryID
     version: int
     early: Pendulum
     late: Pendulum
+
+
+class TimestampBoundedData(NamedTuple):
+    device_id: DeviceID
+    updated: Pendulum
+    is_dir: bool
+    size: int
+    source: FsPath
+    destination: FsPath
 
 
 class ManifestData(NamedTuple):
@@ -39,7 +48,7 @@ class ManifestDataAndPaths(NamedTuple):
 
 async def list_versions(
     workspacefs, path: FsPath, remove_supposed_minimal_sync: bool = True
-) -> Dict[TimeLimitedEntry, ManifestDataAndPaths]:
+) -> Dict[TimestampBoundedEntry, TimestampBoundedData]:
     """
     Raises:
         FSError
@@ -176,7 +185,7 @@ async def list_versions(
                 child_nursery.start_soon(_populate_path_w_index, data, 2, entry_id, late)
                 child_nursery.start_soon(_populate_path_w_index, data, 3, entry_id, early)
             tree[
-                TimeLimitedEntry(manifest.id, manifest.version, early, late)
+                TimestampBoundedEntry(manifest.id, manifest.version, early, late)
             ] = ManifestDataAndPaths(
                 data=data[0],
                 source=data[1] if data[1] != data[3] else None,
@@ -255,7 +264,9 @@ async def list_versions(
                 if previous[0][3] == item[0][2]:  # Same timestamp, only parent directory updated
                     # Update source FsPath for current entry
                     previous = (
-                        TimeLimitedEntry(item[0].id, item[0].version, previous[0][2], item[0][3]),
+                        TimestampBoundedEntry(
+                            item[0].id, item[0].version, previous[0][2], item[0][3]
+                        ),
                         ManifestDataAndPaths(item[1].data, previous[1].source, item[1].destination),
                     )
                     continue
@@ -277,4 +288,4 @@ async def list_versions(
         previous = item
     if previous:
         new_list.append(previous)
-    return {k: v for k, v in new_list}
+    return {k: TimestampBoundedData(*v.data, v.source, v.destination) for k, v in new_list}

@@ -59,16 +59,16 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.versions_job = None
         for k, v in versions_dict.items():
             self.versions_table.add_item(
-                entry_id=k[0],
-                version=k[1],
+                entry_id=k.id,
+                version=k.version,
                 actual_path=self.path,
-                is_folder=v[0][2],
-                creator=v[0][0],
-                size=v[0][3],
-                early_timestamp=k[2],
-                late_timestamp=k[3],
-                source_path=v[1],
-                destination_path=v[2],
+                is_folder=v.is_dir,
+                creator=v.device_id,
+                size=v.size,
+                early_timestamp=k.early,
+                late_timestamp=k.late,
+                source_path=v.source,
+                destination_path=v.destination,
             )
 
     def show_error(self):
