@@ -138,7 +138,12 @@ class FSPermissionError(FSLocalOperationError, PermissionError):
     NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
 
 
-class FSReadOnlyError(FSLocalOperationError, PermissionError):
+class FSNoAccessError(FSPermissionError):
+    ERRNO = errno.EACCES
+    NTSTATUS = ntstatus.STATUS_ACCESS_DENIED
+
+
+class FSReadOnlyError(FSPermissionError):
     ERRNO = errno.EROFS
     NTSTATUS = ntstatus.STATUS_MEDIA_WRITE_PROTECTED
 
