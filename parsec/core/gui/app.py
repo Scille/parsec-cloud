@@ -4,7 +4,6 @@ import trio
 import signal
 from structlog import get_logger
 from queue import Queue
-import os
 
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont
@@ -81,7 +80,8 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
 def run_gui(config: CoreConfig, start_arg: str = None):
     logger.info("Starting UI")
 
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    #    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    #    os.environ["QT_SCALE_FACTOR"] = "1"
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
