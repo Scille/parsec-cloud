@@ -49,36 +49,36 @@ async def alice_workspace(alice_user_fs, running_backend):
         await workspace.sync()
 
     with freeze_time(day6):
-        await workspace.rename("/files/content", "/files/renamed_content")
+        await workspace.rename("/files/content", "/files/renamed")
         await workspace.sync()
     with freeze_time(day7):
-        await workspace.rename("/files/renamed_content", "/files/renamed_again_content")
+        await workspace.rename("/files/renamed", "/files/renamed_again")
         await workspace.sync()
     with freeze_time(day8):
-        await workspace.touch("/files/renamed_content")
-        await workspace.write_bytes("/files/renamed_content", b"aaaaaa")
+        await workspace.touch("/files/renamed")
+        await workspace.write_bytes("/files/renamed", b"aaaaaa")
         await workspace.sync()
 
     with freeze_time(day9):
-        await workspace.rename("/files", "/moved_files")
+        await workspace.rename("/files", "/moved")
         await workspace.sync()
     with freeze_time(day10):
-        await workspace.touch("/moved_files/content2")
-        await workspace.write_bytes("/moved_files/content2", b"bbbbb")
+        await workspace.touch("/moved/content2")
+        await workspace.write_bytes("/moved/content2", b"bbbbb")
         await workspace.sync()
     with freeze_time(day11):
-        await workspace.rename("/moved_files", "/files")
+        await workspace.rename("/moved", "/files")
         await workspace.sync()
 
     with freeze_time(day12):
-        await workspace.unlink("/files/renamed_content")
+        await workspace.unlink("/files/renamed")
         await workspace.sync()
     with freeze_time(day13):
-        await workspace.touch("/files/renamed_content")
+        await workspace.touch("/files/renamed")
         await workspace.sync()
     with freeze_time(day14):
-        await workspace.touch("/files/renamed_content")
-        await workspace.write_bytes("/files/renamed_content", b"ccccc")
+        await workspace.touch("/files/renamed")
+        await workspace.write_bytes("/files/renamed", b"ccccc")
         await workspace.sync()
     return workspace
 

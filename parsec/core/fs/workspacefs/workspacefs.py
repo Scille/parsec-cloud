@@ -3,11 +3,11 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, Iterator, Dict, Tuple
+from typing import Union, Iterator, Dict, List, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import Manifest as RemoteManifest
-from parsec.api.protocol import UserID, DeviceID
+from parsec.api.protocol import UserID
 from parsec.core.types import (
     FsPath,
     EntryID,
@@ -19,7 +19,7 @@ from parsec.core.types import (
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.fs.workspacefs.versioning_helpers import list_versions
+from parsec.core.fs.workspacefs.versioning_helpers import list_versions, TimestampBoundedData
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -183,11 +183,8 @@ class WorkspaceFS:
     # Timestamped version
 
     async def versions(
-        self, path: AnyPath = "/"
-    ) -> Dict[
-        Tuple[EntryID, int, Pendulum, Pendulum],
-        Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
-    ]:
+        self, path: AnyPath = "/", skip_minimal_sync: bool = True
+    ) -> List[TimestampBoundedData]:
         """
         Raises:
             FSError
@@ -196,7 +193,7 @@ class WorkspaceFS:
             FSRemoteManifestNotFound
         """
         path = FsPath(path)
-        return await list_versions(self, path)
+        return await list_versions(self, path, skip_minimal_sync)
 
     async def to_timestamped(self, timestamp: Pendulum):
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)

@@ -118,8 +118,7 @@ class VersionsTable(QTableWidget):
 
         row_id = self.rowCount()
         self.insertRow(row_id)
-
-        _config_data(0, format_datetime(early_timestamp))
+        _config_data(0, format_datetime(early_timestamp, seconds=True))
         _config_data(1, creator)
         _config_data(2, get_filesize(size) if size is not None else "")
         _config_data(3, source_path)

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-from typing import Dict, Tuple
+from typing import List, NamedTuple
 from pendulum import Pendulum
 
 from parsec.api.protocol import DeviceID
@@ -14,12 +14,45 @@ class EntryNotFound(Exception):
     pass
 
 
+SYNC_GUESSED_TIME_FRAME = 30
+
+
+class TimestampBoundedData(NamedTuple):
+    id: EntryID
+    version: int
+    early: Pendulum
+    late: Pendulum
+    creator: DeviceID
+    updated: Pendulum
+    is_folder: bool
+    size: int
+    source: FsPath
+    destination: FsPath
+
+
+class TimestampBoundedEntry(NamedTuple):
+    id: EntryID
+    version: int
+    early: Pendulum
+    late: Pendulum
+
+
+class ManifestData(NamedTuple):
+    creator: DeviceID
+    updated: Pendulum
+    is_folder: bool
+    size: int
+
+
+class ManifestDataAndPaths(NamedTuple):
+    data: ManifestData
+    source: FsPath
+    destination: FsPath
+
+
 async def list_versions(
-    workspacefs, path: FsPath
-) -> Dict[
-    Tuple[EntryID, int, Pendulum, Pendulum],
-    Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
-]:
+    workspacefs, path: FsPath, skip_minimal_sync: bool = True
+) -> List[TimestampBoundedData]:
     """
     Raises:
         FSError
@@ -27,11 +60,9 @@ async def list_versions(
         FSWorkspaceInMaintenance
         FSRemoteManifestNotFound
     """
-    # Each key is an entry_id, each value is a new dict with version as key and value as tuple(
-    #     earliest_known_timestamp, last_known_timestamp, manifest
-    # )
     # Could be optimized if we could use manifest.updated
     manifest_cache = {}
+    versions_list_cache = {}
 
     async def _load_manifest_or_cached(entry_id: EntryID, version=None, timestamp=None):
         try:
@@ -74,6 +105,12 @@ async def list_versions(
                     manifest,
                 )
         return manifest
+
+    async def _list_versions(entry_id: EntryID):
+        if entry_id in versions_list_cache:
+            return versions_list_cache[entry_id]
+        versions_list_cache[entry_id] = await workspacefs.remote_loader.list_versions(entry_id)
+        return versions_list_cache[entry_id]
 
     async def _get_past_path(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
 
@@ -132,15 +169,15 @@ async def list_versions(
             return
         manifest = await _load_manifest_or_cached(entry_id, version=version_number)
         data = [
-            (
+            ManifestData(
                 manifest.author,
                 manifest.updated,
                 is_folder_manifest(manifest),
                 None if not is_file_manifest(manifest) else manifest.size,
             ),
-            None,
-            None,
-            None,
+            None,  # Source path
+            None,  # Destination path
+            None,  # Current path
         ]
 
         if len(target.parts) == path_level + 1:
@@ -158,10 +195,12 @@ async def list_versions(
                 )
                 child_nursery.start_soon(_populate_path_w_index, data, 2, entry_id, late)
                 child_nursery.start_soon(_populate_path_w_index, data, 3, entry_id, early)
-            tree[(manifest.id, manifest.version, early, late)] = (
-                data[0],
-                data[1] if data[1] != data[3] else None,
-                data[2] if data[2] != data[3] else None,
+            tree[
+                TimestampBoundedEntry(manifest.id, manifest.version, early, late)
+            ] = ManifestDataAndPaths(
+                data=data[0],
+                source=data[1] if data[1] != data[3] else None,
+                destination=data[2] if data[2] != data[3] else None,
             )
         else:
             if not is_file_manifest(manifest):
@@ -189,7 +228,7 @@ async def list_versions(
         late: Pendulum,
     ):
         # TODO : Check if directory, melt the same entries through different parent
-        versions = await workspacefs.remote_loader.list_versions(entry_id)
+        versions = await _list_versions(entry_id)
         for version, (timestamp, creator) in versions.items():
             next_version = min((v for v in versions if v > version), default=None)
             nursery.start_soon(
@@ -218,9 +257,54 @@ async def list_versions(
             root_manifest.created,
             Pendulum.now(),
         )
-    return {
-        item[0]: item[1]
+    versions_list = [
+        TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
         for item in sorted(
-            list(return_tree.items()), key=lambda item: (item[0][3], item[0][0], item[0][1])
+            list(return_tree.items()), key=lambda item: (item[0].late, item[0].id, item[0].version)
         )
-    }
+    ]
+    previous = None
+    new_list = []
+    # Merge duplicates with overlapping time frames as it can be caused by an update of a parent
+    # dir, also, if option is set, remove what can be guessed as empty manifests set before parent
+    # during sync
+    for item in versions_list:
+        if previous is not None:
+            # If same entry_id and version
+            if previous.id == item.id and previous.version == item.version:
+                if previous.late == item.early:  # Same timestamp, only parent directory updated
+                    # Update source FsPath for current entry
+                    previous = TimestampBoundedData(
+                        item.id,
+                        item.version,
+                        previous.early,
+                        item.late,
+                        item.creator,
+                        item.updated,
+                        item.is_folder,
+                        item.size,
+                        previous.source,
+                        item.destination,
+                    )
+                    continue
+            # If option is set, same entry_id, previous version is 0 bytes
+            if (
+                skip_minimal_sync
+                and previous.id == item.id
+                and previous.version == item.version - 1
+                and previous.version == 1
+                and previous.size == 0  # Empty file (would be None for dir)
+                and previous.is_folder == item.is_folder
+                and previous.late == item.early
+                and previous.late < previous.early.add(seconds=SYNC_GUESSED_TIME_FRAME)
+                and not previous.source
+            ):
+                previous = item
+                continue
+            new_list.append(
+                TimestampBoundedData(*previous[:8], previous.source, previous.destination)
+            )
+        previous = item
+    if previous:
+        new_list.append(TimestampBoundedData(*previous[:8], previous.source, previous.destination))
+    return new_list
