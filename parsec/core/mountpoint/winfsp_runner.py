@@ -9,7 +9,7 @@ from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
 
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
-from parsec.core.mountpoint.winfsp_operations import WinFSPOperations
+from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 
 
@@ -67,7 +67,7 @@ async def winfsp_mountpoint_runner(
         MountpointDriverCrash
     """
     device = workspace_fs.device
-    workspace_name = workspace_fs.get_workspace_name()
+    workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
     portal = trio.BlockingTrioPortal()
     fs_access = ThreadFSAccess(portal, workspace_fs)
 

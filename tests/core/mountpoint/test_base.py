@@ -469,3 +469,26 @@ async def test_mountpoint_revoke_access(
 
         # Alice no longer has write access
         await assert_cannot_write(mountpoint_manager, new_role)
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_bus):
+    weird_name = "ÉŸ奇怪😀🐍"
+
+    wid = await alice_user_fs.workspace_create(weird_name)
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch(f"/{weird_name}")
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+        await mountpoint_manager.mount_workspace(wid)
+
+        root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
+        items = [x.name for x in await trio.Path(root_path).iterdir()]
+        assert items == [weird_name]
+
+        item_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/{weird_name}"))
+        assert await trio.Path(item_path).exists()
