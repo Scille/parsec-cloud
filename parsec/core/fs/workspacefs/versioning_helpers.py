@@ -58,6 +58,7 @@ async def list_versions(
     """
     # Could be optimized if we could use manifest.updated
     manifest_cache = {}
+    versions_list_cache = {}
 
     async def _load_manifest_or_cached(entry_id: EntryID, version=None, timestamp=None):
         try:
@@ -100,6 +101,12 @@ async def list_versions(
                     manifest,
                 )
         return manifest
+
+    async def _list_versions(entry_id: EntryID):
+        if entry_id in versions_list_cache:
+            return versions_list_cache[entry_id]
+        versions_list_cache[entry_id] = await workspacefs.remote_loader.list_versions(entry_id)
+        return versions_list_cache[entry_id]
 
     async def _get_past_path(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
 
@@ -217,7 +224,7 @@ async def list_versions(
         late: Pendulum,
     ):
         # TODO : Check if directory, melt the same entries through different parent
-        versions = await workspacefs.remote_loader.list_versions(entry_id)
+        versions = await _list_versions(entry_id)
         for version, (timestamp, creator) in versions.items():
             next_version = min((v for v in versions if v > version), default=None)
             nursery.start_soon(
