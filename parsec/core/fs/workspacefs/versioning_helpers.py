@@ -258,7 +258,7 @@ async def list_versions(
             Pendulum.now(),
         )
     versions_list = [
-        (item[0], item[1])
+        TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
         for item in sorted(
             list(return_tree.items()), key=lambda item: (item[0].late, item[0].id, item[0].version)
         )
@@ -271,40 +271,40 @@ async def list_versions(
     for item in versions_list:
         if previous is not None:
             # If same entry_id and version
-            if previous[0].id == item[0].id and previous[0].version == item[0].version:
-                if previous[0][3] == item[0][2]:  # Same timestamp, only parent directory updated
+            if previous.id == item.id and previous.version == item.version:
+                if previous.late == item.early:  # Same timestamp, only parent directory updated
                     # Update source FsPath for current entry
-                    previous = (
-                        TimestampBoundedEntry(
-                            item[0].id, item[0].version, previous[0][2], item[0][3]
-                        ),
-                        ManifestDataAndPaths(item[1].data, previous[1].source, item[1].destination),
+                    previous = TimestampBoundedData(
+                        item.id,
+                        item.version,
+                        previous.early,
+                        item.late,
+                        item.creator,
+                        item.updated,
+                        item.is_folder,
+                        item.size,
+                        previous.source,
+                        item.destination,
                     )
                     continue
             # If option is set, same entry_id, previous version is 0 bytes
             if (
                 skip_minimal_sync
-                and previous[0].id == item[0].id
-                and previous[0].version == item[0].version - 1
-                and previous[0].version == 1
-                and previous[1].data.size == 0  # Empty file (would be None for dir)
-                and previous[1].data.is_folder == item[1].data.is_folder
-                and previous[0].late == item[0].early
-                and previous[0].late < previous[0].early.add(seconds=SYNC_GUESSED_TIME_FRAME)
-                and not previous[1].source
+                and previous.id == item.id
+                and previous.version == item.version - 1
+                and previous.version == 1
+                and previous.size == 0  # Empty file (would be None for dir)
+                and previous.is_folder == item.is_folder
+                and previous.late == item.early
+                and previous.late < previous.early.add(seconds=SYNC_GUESSED_TIME_FRAME)
+                and not previous.source
             ):
                 previous = item
                 continue
             new_list.append(
-                TimestampBoundedData(
-                    *previous[0], *previous[1].data, previous[1].source, previous[1].destination
-                )
+                TimestampBoundedData(*previous[:8], previous.source, previous.destination)
             )
         previous = item
     if previous:
-        new_list.append(
-            TimestampBoundedData(
-                *previous[0], *previous[1].data, previous[1].source, previous[1].destination
-            )
-        )
+        new_list.append(TimestampBoundedData(*previous[:8], previous.source, previous.destination))
     return new_list
