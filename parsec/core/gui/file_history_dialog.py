@@ -55,18 +55,19 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         )
 
     def add_history(self):
-        versions_dict = self.versions_job.ret
+        versions_list = self.versions_job.ret
         self.versions_job = None
-        for k, v in versions_dict.items():
+        print(type(versions_list[0].early))
+        for v in versions_list:
             self.versions_table.add_item(
-                entry_id=k.id,
-                version=k.version,
+                entry_id=v.id,
+                version=v.version,
                 actual_path=self.path,
-                is_folder=v.is_dir,
-                creator=v.device_id,
+                is_folder=v.is_folder,
+                creator=v.creator,
                 size=v.size,
-                early_timestamp=k.early,
-                late_timestamp=k.late,
+                early_timestamp=v.early,
+                late_timestamp=v.late,
                 source_path=v.source,
                 destination_path=v.destination,
             )

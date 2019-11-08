@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-from typing import Dict, NamedTuple
+from typing import List, NamedTuple
 from pendulum import Pendulum
 
 from parsec.api.protocol import DeviceID
@@ -17,6 +17,19 @@ from parsec.core.fs.exceptions import (
 SYNC_GUESSED_TIME_FRAME = 30
 
 
+class TimestampBoundedData(NamedTuple):
+    id: EntryID
+    version: int
+    early: Pendulum
+    late: Pendulum
+    creator: DeviceID
+    updated: Pendulum
+    is_folder: bool
+    size: int
+    source: FsPath
+    destination: FsPath
+
+
 class TimestampBoundedEntry(NamedTuple):
     id: EntryID
     version: int
@@ -24,19 +37,10 @@ class TimestampBoundedEntry(NamedTuple):
     late: Pendulum
 
 
-class TimestampBoundedData(NamedTuple):
-    device_id: DeviceID
-    updated: Pendulum
-    is_dir: bool
-    size: int
-    source: FsPath
-    destination: FsPath
-
-
 class ManifestData(NamedTuple):
-    device_id: DeviceID
+    creator: DeviceID
     updated: Pendulum
-    is_dir: bool
+    is_folder: bool
     size: int
 
 
@@ -47,8 +51,8 @@ class ManifestDataAndPaths(NamedTuple):
 
 
 async def list_versions(
-    workspacefs, path: FsPath, remove_supposed_minimal_sync: bool = True
-) -> Dict[TimestampBoundedEntry, TimestampBoundedData]:
+    workspacefs, path: FsPath, skip_minimal_sync: bool = True
+) -> List[TimestampBoundedData]:
     """
     Raises:
         FSError
@@ -279,20 +283,28 @@ async def list_versions(
                     continue
             # If option is set, same entry_id, previous version is 0 bytes
             if (
-                remove_supposed_minimal_sync
+                skip_minimal_sync
                 and previous[0].id == item[0].id
                 and previous[0].version == item[0].version - 1
                 and previous[0].version == 1
                 and previous[1].data.size == 0  # Empty file (would be None for dir)
-                and previous[1].data.is_dir == item[1].data.is_dir
+                and previous[1].data.is_folder == item[1].data.is_folder
                 and previous[0].late == item[0].early
                 and previous[0].late < previous[0].early.add(seconds=SYNC_GUESSED_TIME_FRAME)
                 and not previous[1].source
             ):
                 previous = item
                 continue
-            new_list.append(previous)
+            new_list.append(
+                TimestampBoundedData(
+                    *previous[0], *previous[1].data, previous[1].source, previous[1].destination
+                )
+            )
         previous = item
     if previous:
-        new_list.append(previous)
-    return {k: TimestampBoundedData(*v.data, v.source, v.destination) for k, v in new_list}
+        new_list.append(
+            TimestampBoundedData(
+                *previous[0], *previous[1].data, previous[1].source, previous[1].destination
+            )
+        )
+    return new_list

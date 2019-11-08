@@ -19,8 +19,10 @@ _current_locale_language = None
 logger = get_logger()
 
 
-def format_datetime(dt, full=False):
+def format_datetime(dt, full=False, seconds=False):
     fmt = "L LT"
+    if seconds:
+        fmt = "L LTS"
     if full:
         fmt = "LLLL"
     return dt.in_tz(pendulum.local_timezone()).format(
