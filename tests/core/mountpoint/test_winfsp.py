@@ -50,7 +50,7 @@ def test_close_trio_loop_during_fs_access(mountpoint_service, monkeypatch):
     def _wait_and_stop_mountpoint():
         mountpoint_needed_stop.wait()
         try:
-            mountpoint_service.stop()
+            mountpoint_service.stop(reset_testbed=False)
         finally:
             mountpoint_stopped.set()
 

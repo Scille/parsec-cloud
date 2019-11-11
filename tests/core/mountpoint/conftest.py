@@ -18,11 +18,13 @@ def base_mountpoint(tmpdir):
 
 @pytest.fixture
 @pytest.mark.mountpoint
-def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
+def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
     """
+
+    do_reset_testbed = reset_testbed
 
     class MountpointService:
         def __init__(self, base_mountpoint):
@@ -56,11 +58,13 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
 
             self._portal.run(_start)
 
-        def stop(self):
+        def stop(self, reset_testbed=True):
             async def _stop():
                 if self._started.is_set():
                     self._need_stop.set()
                     await self._stopped.wait()
+                    if reset_testbed:
+                        await do_reset_testbed()
 
             self._portal.run(_stop)
 
@@ -76,7 +80,7 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
         def teardown(self):
             if not self._portal:
                 return
-            self.stop()
+            self.stop(reset_testbed=False)
             self._portal.run(self._teardown)
             self._thread.join()
 
