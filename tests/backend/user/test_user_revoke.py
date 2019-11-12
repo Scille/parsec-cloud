@@ -5,7 +5,8 @@ import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.api.protocol import user_revoke_serializer, HandshakeRevokedDevice
+from parsec.api.protocol import user_revoke_serializer, HandshakeRevokedDevice, packb
+from parsec.api.transport import TransportError
 
 from tests.common import freeze_time
 
@@ -31,6 +32,15 @@ async def user_revoke(sock, **kwargs):
     raw_rep = await sock.recv()
     rep = user_revoke_serializer.rep_loads(raw_rep)
     return rep
+
+@pytest.mark.trio
+async def test_backend_close_on_user_revoke(backend, alice_backend_sock, backend_sock_factory, bob, bob_revocation_from_alice):
+    async with backend_sock_factory(backend, bob, freeze_on_transport_error=False) as bob_backend_sock:
+        rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice)
+        assert rep["status"] == "ok"
+        # bob cannot send new command
+        with pytest.raises(TransportError):
+            await bob_backend_sock.send(packb({"cmd": "ping", "ping": "foo"}))
 
 
 @pytest.mark.trio
