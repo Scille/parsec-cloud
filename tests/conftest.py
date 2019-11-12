@@ -569,11 +569,12 @@ async def running_backend(server_factory, backend_addr, backend, running_backend
 @pytest.fixture
 def backend_sock_factory(server_factory, coolorg):
     @asynccontextmanager
-    async def _backend_sock_factory(backend, auth_as):
+    async def _backend_sock_factory(backend, auth_as, freeze_on_transport_error=True):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
             transport = await Transport.init_for_client(stream, server.addr.hostname)
-            transport = FreezeTestOnTransportError(transport)
+            if freeze_on_transport_error:
+                transport = FreezeTestOnTransportError(transport)
 
             if auth_as:
                 # Handshake
