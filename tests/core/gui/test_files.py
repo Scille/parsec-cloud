@@ -58,7 +58,7 @@ async def logged_gui(
     async with aqtbot.wait_signals(
         [wk_widget.create_success, wk_widget.list_success], timeout=2000
     ):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert wk_widget.layout_workspaces.count() == 1
     wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
@@ -86,7 +86,7 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
             classmethod(lambda *args, **kwargs: (dir_name)),
         )
         async with aqtbot.wait_signal(w_f.folder_create_success):
-            aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+            await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
         pass
@@ -156,7 +156,7 @@ async def test_create_dir_already_exists(
         classmethod(lambda *args, **kwargs: ("Dir1")),
     )
     async with aqtbot.wait_signal(w_f.folder_create_success):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
     async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000):
         pass
 
@@ -164,7 +164,7 @@ async def test_create_dir_already_exists(
     assert w_f.table_files.item(1, 1).text() == "Dir1"
 
     async with aqtbot.wait_signal(w_f.folder_create_error):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert w_f.table_files.rowCount() == 2
 
