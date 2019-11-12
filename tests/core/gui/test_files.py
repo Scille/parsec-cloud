@@ -19,7 +19,7 @@ def temp_dir(tmpdir):
     pathlib.Path(tmpdir / "dir1/dir11" / "file.txt").write_text("Content file111")
     pathlib.Path(tmpdir / "dir2" / "file2.txt").write_text("Content file2")
 
-    return tmpdir
+    return pathlib.Path(tmpdir)
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ async def logged_gui(
     async with aqtbot.wait_signals(
         [wk_widget.create_success, wk_widget.list_success], timeout=2000
     ):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert wk_widget.layout_workspaces.count() == 1
     wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
@@ -86,7 +86,7 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
             classmethod(lambda *args, **kwargs: (dir_name)),
         )
         async with aqtbot.wait_signal(w_f.folder_create_success):
-            aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+            await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
         pass
@@ -156,7 +156,7 @@ async def test_create_dir_already_exists(
         classmethod(lambda *args, **kwargs: ("Dir1")),
     )
     async with aqtbot.wait_signal(w_f.folder_create_success):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
     async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000):
         pass
 
@@ -164,7 +164,7 @@ async def test_create_dir_already_exists(
     assert w_f.table_files.item(1, 1).text() == "Dir1"
 
     async with aqtbot.wait_signal(w_f.folder_create_error):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert w_f.table_files.rowCount() == 2
 
@@ -226,7 +226,6 @@ async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.isVisible() is False
 
 
-@pytest.mark.skip("Unconsistent results on appveyor")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
@@ -242,29 +241,44 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.table_files.rowCount() == 4
 
     # Delete one directory first
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
+
+    # Wait until the file widget is refreshed by the timer
+    while w_f.update_timer.isActive():
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
     assert w_f.table_files.rowCount() == 3
 
     # Then delete two
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 2, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 2, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
+
+    # Wait until the file widget is refreshed by the timer
+    while w_f.update_timer.isActive():
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
     assert w_f.table_files.rowCount() == 1
     for i in range(5):
         assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentWorkspace
 
 
-@pytest.mark.skip("Unconsistent results on appveyor")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
@@ -279,7 +293,9 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
 
     assert w_f.table_files.rowCount() == 4
     # Select Dir1
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
@@ -288,13 +304,21 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     # Rename Dir1 to Abcd
     async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
         w_f.table_files.rename_clicked.emit()
+
+    # Wait until the file widget is refreshed by the timer
+    while w_f.update_timer.isActive():
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
     assert w_f.table_files.rowCount() == 4
     item = w_f.table_files.item(1, 1)
     assert item.data(NAME_DATA_INDEX) == "Abcd"
     assert item.text() == "Abcd"
 
     # Select Dir2 and Dir3
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
@@ -302,6 +326,12 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
         w_f.table_files.rename_clicked.emit()
+
+    # Wait until the file widget is refreshed by the timer
+    while w_f.update_timer.isActive():
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
     assert w_f.table_files.rowCount() == 4
     item = w_f.table_files.item(2, 1)
     assert item.data(NAME_DATA_INDEX) == "NewName_1"
@@ -335,7 +365,9 @@ async def test_rename_dir_already_exists(
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
 
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
@@ -368,16 +400,20 @@ async def test_import_files(
     )
 
     async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=3000
+        [w_f.button_import_files.clicked, w_f.import_success], timeout=3000
     ):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 3:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
 
     assert w_f.table_files.rowCount() == 3
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
     assert w_f.table_files.item(2, 1).text() == "file02.txt"
 
 
-@pytest.mark.skip("Can not monkeypatch getExistingDirectory")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_dir(
@@ -392,14 +428,14 @@ async def test_import_dir(
 
     monkeypatch.setattr(
         "PyQt5.QtWidgets.QFileDialog.getExistingDirectory",
-        classmethod(lambda *args, **kwargs: (temp_dir,)),
+        classmethod(lambda *args, **kwargs: temp_dir),
     )
 
     async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=3000
+        [w_f.button_import_folder.clicked, w_f.import_success, w_f.folder_stat_success],
+        timeout=3000,
     ):
-        await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(w_f.button_import_folder, QtCore.Qt.LeftButton)
 
-    assert w_f.table_files.rowCount() == 3
-    assert w_f.table_files.item(1, 1).text() == "dir1"
-    assert w_f.table_files.item(2, 1).text() == "dir2"
+    assert w_f.table_files.rowCount() == 2
+    assert w_f.table_files.item(1, 1).text() == temp_dir.name

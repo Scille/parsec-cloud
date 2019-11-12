@@ -54,7 +54,7 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
     )
 
     async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert w_w.layout_workspaces.count() == 1
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -84,7 +84,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     )
 
     async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
-        aqtbot.qtbot.mouseClick(add_button, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert w_w.layout_workspaces.count() == 1
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
@@ -96,7 +96,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     )
 
     async with aqtbot.wait_signal(w_w.rename_success):
-        aqtbot.qtbot.mouseClick(wk_button.button_rename, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
     assert wk_button.name == "Workspace1_Renamed"
 
 
