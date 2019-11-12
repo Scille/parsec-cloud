@@ -117,5 +117,8 @@ async def winfsp_mountpoint_runner(
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
 
     finally:
-        fs.stop()
+        # Must run in thread given this call will wait for any winfsp operation
+        # to finish so blocking the trio loop can produce a dead lock...
+        with trio.CancelScope(shield=True):
+            await trio.run_sync_in_worker_thread(fs.stop)
         event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)
