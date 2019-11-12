@@ -162,6 +162,7 @@ class AsyncQtBot:
     def __init__(self, qtbot, qt_thread_gateway):
         self.qtbot = qtbot
         self.qt_thread_gateway = qt_thread_gateway
+        self.run = self.qt_thread_gateway.send_action
 
         def _autowrap(fnname):
             async def wrapper(*args, **kwargs):

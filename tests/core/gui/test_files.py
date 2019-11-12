@@ -241,7 +241,9 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.table_files.rowCount() == 4
 
     # Delete one directory first
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
@@ -257,7 +259,9 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.table_files.rowCount() == 3
 
     # Then delete two
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 2, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 2, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
@@ -289,7 +293,9 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
 
     assert w_f.table_files.rowCount() == 4
     # Select Dir1
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
@@ -310,7 +316,9 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     assert item.text() == "Abcd"
 
     # Select Dir2 and Dir3
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
@@ -357,7 +365,9 @@ async def test_rename_dir_already_exists(
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
 
-    w_f.table_files.setRangeSelected(QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True)
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
