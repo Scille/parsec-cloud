@@ -383,37 +383,47 @@ class BackendApp:
             return
 
         selected_logger = transport.logger
-        try:
-            client_ctx, error_infos = await self._do_handshake(transport)
-            if not client_ctx:
-                # Invalid handshake
-                await stream.aclose()
-                selected_logger.info("Connection dropped: bad handshake", **error_infos)
-                return
+        with trio.open_cancel_scope() as cancel_scope:
+            def _on_revoked(
+                event,
+                organization_id,
+                user_id
+                ):
+                if organization_id == client_ctx.organization_id and user_id == client_ctx.user_id:
+                    cancel_scope.cancel()
+                    return
+            try:
+                client_ctx, error_infos = await self._do_handshake(transport)
+                if not client_ctx:
+                    # Invalid handshake
+                    await stream.aclose()
+                    selected_logger.info("Connection dropped: bad handshake", **error_infos)
+                    return
 
-            selected_logger = client_ctx.logger
-            selected_logger.info("Connection established")
+                selected_logger = client_ctx.logger
+                selected_logger.info("Connection established")
 
-            if hasattr(client_ctx, "event_bus_ctx"):
-                with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
+                if hasattr(client_ctx, "event_bus_ctx"):
+                    with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
+                        client_ctx.event_bus_ctx.connect("user.revoked", _on_revoked)
+                        await self._handle_client_loop(transport, client_ctx)
+                else:
                     await self._handle_client_loop(transport, client_ctx)
 
-            else:
-                await self._handle_client_loop(transport, client_ctx)
+            except TransportClosedByPeer as exc:
+                selected_logger.info("Connection dropped: client has left", reason=str(exc))
+                return
 
-        except TransportClosedByPeer as exc:
-            selected_logger.info("Connection dropped: client has left", reason=str(exc))
-            return
-
-        except (TransportError, MessageSerializationError) as exc:
-            rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
-            try:
-                await transport.send(packb(rep))
-            except TransportError:
-                pass
-            await transport.aclose()
-            selected_logger.info("Connection dropped: invalid data", reason=str(exc))
-            return
+            except (TransportError, MessageSerializationError) as exc:
+                rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
+                try:
+                    await transport.send(packb(rep))
+                except TransportError:
+                    pass
+                await transport.aclose()
+                selected_logger.info("Connection dropped: invalid data", reason=str(exc))
+                return
+        await transport.aclose()
 
     async def _handle_client_loop(self, transport, client_ctx):
         while True:
