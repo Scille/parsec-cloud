@@ -368,9 +368,14 @@ async def test_import_files(
     )
 
     async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=3000
+        [w_f.button_import_files.clicked, w_f.import_success], timeout=3000
     ):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 3:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
 
     assert w_f.table_files.rowCount() == 3
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
