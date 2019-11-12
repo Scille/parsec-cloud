@@ -2,7 +2,6 @@
 
 import re
 import functools
-from pathlib import PureWindowsPath
 from contextlib import contextmanager
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
@@ -118,7 +117,7 @@ def translate_error(event_bus, operation, path):
         raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
     except Exception as exc:
-        logger.exception("Unhandled exception in winfsp mountpoint")
+        logger.exception("Unhandled exception in winfsp mountpoint", operation=operation, path=path)
         event_bus.send("mountpoint.unhandled_error", exc=exc, operation=operation, path=path)
         raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
@@ -151,8 +150,8 @@ def stat_to_winfsp_attributes(stat):
 
     if stat["type"] == "folder":
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY
-        attributes["allocation_size"] = round_to_block_size(1)
-        attributes["file_size"] = round_to_block_size(1)
+        attributes["allocation_size"] = 0
+        attributes["file_size"] = 0
 
     else:
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_NORMAL
@@ -168,7 +167,7 @@ class OpenedFolder:
         self.deleted = False
 
     def is_root(self):
-        return len(PureWindowsPath(self.path).parts) == 1
+        return self.path.is_root()
 
 
 class OpenedFile:
