@@ -19,7 +19,7 @@ def temp_dir(tmpdir):
     pathlib.Path(tmpdir / "dir1/dir11" / "file.txt").write_text("Content file111")
     pathlib.Path(tmpdir / "dir2" / "file2.txt").write_text("Content file2")
 
-    return tmpdir
+    return pathlib.Path(tmpdir)
 
 
 @pytest.fixture
@@ -382,7 +382,6 @@ async def test_import_files(
     assert w_f.table_files.item(2, 1).text() == "file02.txt"
 
 
-@pytest.mark.skip("Can not monkeypatch getExistingDirectory")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_import_dir(
@@ -397,14 +396,14 @@ async def test_import_dir(
 
     monkeypatch.setattr(
         "PyQt5.QtWidgets.QFileDialog.getExistingDirectory",
-        classmethod(lambda *args, **kwargs: (temp_dir,)),
+        classmethod(lambda *args, **kwargs: temp_dir),
     )
 
     async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success, w_f.folder_stat_success], timeout=3000
+        [w_f.button_import_folder.clicked, w_f.import_success, w_f.folder_stat_success],
+        timeout=3000,
     ):
-        await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(w_f.button_import_folder, QtCore.Qt.LeftButton)
 
-    assert w_f.table_files.rowCount() == 3
-    assert w_f.table_files.item(1, 1).text() == "dir1"
-    assert w_f.table_files.item(2, 1).text() == "dir2"
+    assert w_f.table_files.rowCount() == 2
+    assert w_f.table_files.item(1, 1).text() == temp_dir.name
