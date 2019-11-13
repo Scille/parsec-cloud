@@ -384,14 +384,12 @@ class BackendApp:
 
         selected_logger = transport.logger
         with trio.open_cancel_scope() as cancel_scope:
-            def _on_revoked(
-                event,
-                organization_id,
-                user_id
-                ):
+
+            def _on_revoked(event, organization_id, user_id):
                 if organization_id == client_ctx.organization_id and user_id == client_ctx.user_id:
                     cancel_scope.cancel()
                     return
+
             try:
                 client_ctx, error_infos = await self._do_handshake(transport)
                 if not client_ctx:
