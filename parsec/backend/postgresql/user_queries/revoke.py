@@ -5,6 +5,7 @@ import pendulum
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
+from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query
 from parsec.backend.postgresql.tables import (
     q_user,
@@ -62,3 +63,10 @@ async def query_revoke_user(
 
         else:
             raise UserError(f"Update error: {result}")
+    else:
+        await send_signal(
+            conn,
+            "user.revoked",
+            organization_id=organization_id,
+            user_id=user_id
+        )
