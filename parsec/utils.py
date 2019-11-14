@@ -5,7 +5,9 @@ import trio
 from pendulum import Pendulum
 
 from parsec.monitoring import TaskMonitoringInstrument
+from parsec.service_nursery import open_service_nursery
 
+__all__ = ["timestamps_in_the_ballpark", "start_task", "trio_run", "open_service_nursery"]
 
 TIMESTAMP_MAX_DT = 30 * 60
 
