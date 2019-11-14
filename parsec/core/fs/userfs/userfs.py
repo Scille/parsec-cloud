@@ -178,7 +178,7 @@ class UserFS:
         async with user_storage_context as self.storage:
 
             # Nursery for workspace storages
-            async with trio.open_nursery() as self._workspace_storage_nursery:
+            async with trio.open_service_nursery() as self._workspace_storage_nursery:
 
                 # Make sure all the workspaces are loaded
                 # In particular, we want to make sure that any workspace available through

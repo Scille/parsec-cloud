@@ -77,7 +77,7 @@ async def test_concurrency_sends(running_backend, alice):
         alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
 
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             for x in range(CONCURRENCY):
                 nursery.start_soon(sender, cmds, str(x))
 

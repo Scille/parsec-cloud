@@ -22,7 +22,7 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 pass
 
         value = None
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             for blockstore in self.blockstores:
                 nursery.start_soon(_single_blockstore_read, nursery, blockstore)
 
@@ -43,6 +43,6 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                 # Only solution to solve this is to ignore AlreadyExistsError.
                 pass
 
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             for blockstore in self.blockstores:
                 nursery.start_soon(_single_blockstore_create, blockstore)

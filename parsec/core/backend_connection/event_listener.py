@@ -58,7 +58,7 @@ class BackendEventsManager:
 
                 try:
 
-                    async with trio.open_nursery() as nursery:
+                    async with trio.open_service_nursery() as nursery:
                         logger.info("Try to connect to backend...")
                         await nursery.start(self._event_pump)
                         backend_connection_failures = 0

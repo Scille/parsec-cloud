@@ -21,11 +21,11 @@ async def serve_tcp_testbed(unused_tcp_port):
             await server_fn(transport)
 
         async def _store_handlers(*, task_status=trio.TASK_STATUS_IGNORED):
-            async with trio.open_nursery() as handler_nursery:
+            async with trio.open_service_nursery() as handler_nursery:
                 task_status.started(handler_nursery)
                 await trio.sleep_forever()
 
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             handler_nursery = await nursery.start(_store_handlers)
             await nursery.start(
                 partial(
@@ -88,7 +88,7 @@ async def test_big_buffer_bench(backend_addr):
             client_stream, host=backend_addr.hostname
         )
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         nursery.start_soon(_boot_client)
         nursery.start_soon(_boot_server)
 
