@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
@@ -12,9 +11,7 @@ from parsec.core.invite_claim import (
     InviteClaimError,
     InviteClaimBackendOfflineError,
 )
-from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_dialogs import show_error, show_info
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
@@ -31,9 +28,8 @@ async def _do_claim_device(
     password: str,
     password_check: str,
     token: str,
-    user_id: str,
-    device_name: str,
-    organization_addr: str,
+    device_id: DeviceID,
+    organization_addr: BackendOrganizationClaimDeviceAddr,
 ):
     if password != password_check:
         raise JobResultError("password-mismatch")
@@ -41,18 +37,8 @@ async def _do_claim_device(
         raise JobResultError("password-size")
 
     try:
-        action_addr = BackendOrganizationClaimDeviceAddr.from_url(organization_addr)
-    except ValueError as exc:
-        raise JobResultError("bad-url") from exc
-
-    try:
-        device_id = DeviceID(f"{user_id}@{device_name}")
-    except ValueError as exc:
-        raise JobResultError("bad-device_name") from exc
-
-    try:
         device = await core_claim_device(
-            organization_addr=action_addr.to_organization_addr(),
+            organization_addr=organization_addr.to_organization_addr(),
             new_device_id=device_id,
             token=token,
             keepalive=config.backend_connection_keepalive,
@@ -80,47 +66,35 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(
-        self,
-        jobs_ctx,
-        config,
-        addr: Optional[BackendOrganizationClaimDeviceAddr] = None,
-        *args,
-        **kwargs,
-    ):
+    def __init__(self, jobs_ctx, config, addr: BackendOrganizationClaimDeviceAddr, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
+        self.addr = addr
+        self.label_instructions.setText(
+            _("LABEL_CLAIM_DEVICE_INSTRUCTIONS").format(
+                device=self.addr.device_id,
+                url=self.addr.to_url(),
+                organization=self.addr.organization_id,
+            )
+        )
         self.claim_device_job = None
         self.button_claim.clicked.connect(self.claim_clicked)
-        self.line_edit_login.textChanged.connect(self.check_infos)
-        self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
-        self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.check_infos)
         self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.claim_success.connect(self.on_claim_success)
         self.claim_error.connect(self.on_claim_error)
-        self.line_edit_login.setValidator(validators.UserIDValidator())
-        self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationClaimDeviceAddrValidator())
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_DEVICE_REGISTRATION"))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
-        self.line_edit_device.setText(get_default_device())
         self.label_password_strength.hide()
 
-        if addr:
-            self.line_edit_url.setText(addr.to_url())
-            self.line_edit_login.setText(addr.device_id.user_id)
-            self.line_edit_device.setText(addr.device_id.device_name)
-            if addr.token:
-                self.line_edit_token.setText(addr.token)
-        else:
-            self.line_edit_device.setText(get_default_device())
+        if addr.token:
+            self.line_edit_token.setText(addr.token)
 
         self.check_infos()
 
@@ -187,10 +161,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             self.claim_dialog.hide()
 
         if (
-            len(self.line_edit_login.text())
-            and len(self.line_edit_token.text())
-            and len(self.line_edit_device.text())
-            and len(self.line_edit_url.text())
+            len(self.line_edit_token.text())
             and not self.claim_device_job
             and len(self.line_edit_password.text())
             and get_password_strength(self.line_edit_password.text()) > 0
@@ -216,8 +187,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
             token=self.line_edit_token.text(),
-            user_id=self.line_edit_login.text(),
-            device_name=self.line_edit_device.text(),
-            organization_addr=self.line_edit_url.text(),
+            device_id=self.addr.device_id,
+            organization_addr=self.addr,
         )
         self.check_infos()

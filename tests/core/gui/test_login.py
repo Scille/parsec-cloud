@@ -38,10 +38,22 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_bootstrap_org_missing_fields(aqtbot, gui_factory, autoclose_dialog, core_config):
+async def test_bootstrap_org_missing_fields(
+    aqtbot, gui_factory, autoclose_dialog, core_config, monkeypatch
+):
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    await aqtbot.mouse_click(lw.button_bootstrap_instead, QtCore.Qt.LeftButton)
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        classmethod(
+            lambda *args, **kwargs: (
+                "parsec://host/org?action=bootstrap_organization&no_ssl=true&token=2eead2c011e4ad9878ffc5854a38b395ecd22279b86994f804bdfc7cad81ed66"
+            )
+        ),
+    )
+
+    await aqtbot.mouse_click(lw.button_enter_url, QtCore.Qt.LeftButton)
     bw = gui.test_get_bootstrap_organization_widget()
     assert bw is not None
 
@@ -51,9 +63,6 @@ async def test_bootstrap_org_missing_fields(aqtbot, gui_factory, autoclose_dialo
     assert bw.button_bootstrap.isEnabled() is False
 
     await aqtbot.key_clicks(bw.line_edit_device, "device")
-    assert bw.button_bootstrap.isEnabled() is False
-
-    await aqtbot.key_clicks(bw.line_edit_url, "ws://localhost:5000")
     assert bw.button_bootstrap.isEnabled() is False
 
     await aqtbot.key_clicks(bw.line_edit_password, "passwor")
@@ -71,22 +80,28 @@ async def test_bootstrap_org_missing_fields(aqtbot, gui_factory, autoclose_dialo
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_claim_user_missing_fields(aqtbot, gui_factory, autoclose_dialog, core_config):
+async def test_claim_user_missing_fields(
+    aqtbot, gui_factory, autoclose_dialog, core_config, monkeypatch
+):
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    await aqtbot.mouse_click(lw.button_register_user_instead, QtCore.Qt.LeftButton)
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        classmethod(
+            lambda *args, **kwargs: (
+                "parsec://host/org?action=claim_user&no_ssl=true&rvk=CMT42NY7MVLO746AI6XOU4PWJDFWYHHEPYWOAVDJKSAP6QN6FYPAssss&user_id=test"
+            )
+        ),
+    )
+
+    await aqtbot.mouse_click(lw.button_enter_url, QtCore.Qt.LeftButton)
     ruw = gui.test_get_claim_user_widget()
     assert ruw is not None
 
     assert ruw.button_claim.isEnabled() is False
 
-    await aqtbot.key_clicks(ruw.line_edit_login, "login")
-    assert ruw.button_claim.isEnabled() is False
-
     await aqtbot.key_clicks(ruw.line_edit_device, "device")
-    assert ruw.button_claim.isEnabled() is False
-
-    await aqtbot.key_clicks(ruw.line_edit_url, "ws://localhost:5000")
     assert ruw.button_claim.isEnabled() is False
 
     await aqtbot.key_clicks(ruw.line_edit_token, "token")
@@ -107,22 +122,25 @@ async def test_claim_user_missing_fields(aqtbot, gui_factory, autoclose_dialog, 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_claim_device_missing_fields(aqtbot, gui_factory, autoclose_dialog, core_config):
+async def test_claim_device_missing_fields(
+    aqtbot, gui_factory, autoclose_dialog, core_config, monkeypatch
+):
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    await aqtbot.mouse_click(lw.button_register_device_instead, QtCore.Qt.LeftButton)
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        classmethod(
+            lambda *args, **kwargs: (
+                "parsec://host/org?action=claim_device&device_id=test@test&no_ssl=true&rvk=CMT42NY7MVLO746AI6XOU4PWJDFWYHHEPYWOAVDJKSAP6QN6FYPAssss"
+            )
+        ),
+    )
+
+    await aqtbot.mouse_click(lw.button_enter_url, QtCore.Qt.LeftButton)
     rdw = gui.test_get_claim_device_widget()
     assert rdw is not None
 
-    assert rdw.button_claim.isEnabled() is False
-
-    await aqtbot.key_clicks(rdw.line_edit_login, "login")
-    assert rdw.button_claim.isEnabled() is False
-
-    await aqtbot.key_clicks(rdw.line_edit_device, "device")
-    assert rdw.button_claim.isEnabled() is False
-
-    await aqtbot.key_clicks(rdw.line_edit_url, "ws://localhost:5000")
     assert rdw.button_claim.isEnabled() is False
 
     await aqtbot.key_clicks(rdw.line_edit_token, "token")

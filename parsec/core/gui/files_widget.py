@@ -562,6 +562,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def _on_delete_error(self, job):
+        if not getattr(job.exc, "params", None):
+            return
         if job.exc.params.get("multi"):
             show_error(self, _("ERR_DELETE_MULTI_FILE"), exception=job.exc)
         else:

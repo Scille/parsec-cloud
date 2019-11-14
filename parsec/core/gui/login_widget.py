@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.local_device import list_available_devices
 from parsec.core.types import (
+    BackendActionAddr,
     BackendOrganizationBootstrapAddr,
     BackendOrganizationClaimUserAddr,
     BackendOrganizationClaimDeviceAddr,
@@ -15,7 +15,7 @@ from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.settings_dialog import SettingsDialog
-from parsec.core.gui.custom_dialogs import show_info
+from parsec.core.gui.custom_dialogs import show_info, TextInputDialog, show_error
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
@@ -69,15 +69,34 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_failed_sig = login_failed_sig
 
         self.button_login_instead.clicked.connect(self.show_login_widget)
-        self.button_register_user_instead.clicked.connect(self.show_claim_user_widget)
-        self.button_register_device_instead.clicked.connect(self.show_claim_device_widget)
-        self.button_bootstrap_instead.clicked.connect(self.show_bootstrap_widget)
+        self.button_enter_url.clicked.connect(self.enter_url)
         self.button_settings.clicked.connect(self.show_settings)
 
         self.event_bus.connect("gui.config.changed", self.on_config_updated)
 
-        if len(list_available_devices(self.config.config_dir)) == 0:
-            self.show_claim_user_widget()
+        self.show_login_widget()
+
+    def enter_url(self):
+        url = TextInputDialog.get_text(
+            self,
+            _("LABEL_ENTER_URL_TITLE"),
+            _("LABEL_ENTER_URL_MESSAGE"),
+            "parsec://host:port?arguments",
+        )
+        if not url:
+            return
+        try:
+            action_addr = BackendActionAddr.from_url(url)
+        except ValueError as exc:
+            show_error(self, _("ERR_BAD_URL"), exception=exc)
+            return
+
+        if isinstance(action_addr, BackendOrganizationBootstrapAddr):
+            self.show_bootstrap_widget(addr=action_addr)
+        elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
+            self.show_claim_user_widget(addr=action_addr)
+        elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
+            self.show_claim_device_widget(addr=action_addr)
         else:
             self.show_login_widget()
 
@@ -122,59 +141,38 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
 
         self.button_login_instead.hide()
-        self.button_register_user_instead.show()
-        self.button_register_device_instead.show()
-        self.button_bootstrap_instead.show()
         login_widget.show()
         self.state_changed.emit("login")
 
-    def show_bootstrap_widget(self, addr: Optional[BackendOrganizationBootstrapAddr] = None):
+    def show_bootstrap_widget(self, addr: BackendOrganizationBootstrapAddr):
         self.clear_widgets()
 
         bootstrap_organization = BootstrapOrganizationWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, bootstrap_organization)
         bootstrap_organization.organization_bootstrapped.connect(self.organization_bootstrapped)
-        self.button_bootstrap_instead.hide()
-        if len(list_available_devices(self.config.config_dir)) == 0:
-            self.button_login_instead.hide()
-        else:
-            self.button_login_instead.show()
-        self.button_register_user_instead.show()
-        self.button_register_device_instead.show()
+        self.button_login_instead.show()
         bootstrap_organization.show()
         self.state_changed.emit("bootstrap")
 
-    def show_claim_user_widget(self, addr: Optional[BackendOrganizationClaimUserAddr] = None):
+    def show_claim_user_widget(self, addr: BackendOrganizationClaimUserAddr):
         self.clear_widgets()
 
         claim_user_widget = ClaimUserWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_user_widget)
         claim_user_widget.user_claimed.connect(self.user_claimed)
 
-        if len(list_available_devices(self.config.config_dir)) == 0:
-            self.button_login_instead.hide()
-        else:
-            self.button_login_instead.show()
-        self.button_register_user_instead.hide()
-        self.button_register_device_instead.show()
-        self.button_bootstrap_instead.show()
+        self.button_login_instead.show()
         claim_user_widget.show()
         self.state_changed.emit("claim_user")
 
-    def show_claim_device_widget(self, addr: Optional[BackendOrganizationClaimDeviceAddr] = None):
+    def show_claim_device_widget(self, addr: BackendOrganizationClaimDeviceAddr):
         self.clear_widgets()
 
         claim_device_widget = ClaimDeviceWidget(self.jobs_ctx, self.config, addr=addr)
         self.layout.insertWidget(0, claim_device_widget)
         claim_device_widget.device_claimed.connect(self.show_login_widget)
 
-        if len(list_available_devices(self.config.config_dir)) == 0:
-            self.button_login_instead.hide()
-        else:
-            self.button_login_instead.show()
-        self.button_register_user_instead.show()
-        self.button_register_device_instead.hide()
-        self.button_bootstrap_instead.show()
+        self.button_login_instead.show()
         claim_device_widget.show()
         self.state_changed.emit("claim_device")
 

@@ -6,7 +6,7 @@ from PyQt5 import QtCore
 from parsec.core.types import BackendOrganizationBootstrapAddr
 
 
-async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
+async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch):
     org_id = "NewOrg"
     org_token = "123456"
     user_id = "Zack"
@@ -26,7 +26,11 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
     bootstrap_w = gui.test_get_bootstrap_organization_widget()
     assert bootstrap_w is None
 
-    await aqtbot.mouse_click(login_w.button_bootstrap_instead, QtCore.Qt.LeftButton)
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        classmethod(lambda *args, **kwargs: (organization_addr.to_url())),
+    )
+    await aqtbot.mouse_click(login_w.button_enter_url, QtCore.Qt.LeftButton)
 
     bootstrap_w = gui.test_get_bootstrap_organization_widget()
     assert bootstrap_w is not None
@@ -34,14 +38,13 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend):
     await aqtbot.key_clicks(bootstrap_w.line_edit_login, user_id)
     await aqtbot.key_clicks(bootstrap_w.line_edit_password, password)
     await aqtbot.key_clicks(bootstrap_w.line_edit_password_check, password)
-    await aqtbot.key_clicks(bootstrap_w.line_edit_url, str(organization_addr))
     await aqtbot.key_clicks(bootstrap_w.line_edit_device, device_name)
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_dialog):
-    await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
+async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_dialog, monkeypatch):
+    await _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch)
 
     bootstrap_w = gui.test_get_bootstrap_organization_widget()
     async with aqtbot.wait_signal(bootstrap_w.organization_bootstrapped):
@@ -57,9 +60,9 @@ async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_di
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_bootstrap_organization_backend_offline(
-    aqtbot, running_backend, gui, autoclose_dialog
+    aqtbot, running_backend, gui, autoclose_dialog, monkeypatch
 ):
-    await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
+    await _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch)
 
     with running_backend.offline():
         bootstrap_w = gui.test_get_bootstrap_organization_widget()
@@ -76,7 +79,7 @@ async def test_bootstrap_organization_backend_offline(
 async def test_bootstrap_organization_unknown_error(
     monkeypatch, aqtbot, running_backend, gui, autoclose_dialog
 ):
-    await _gui_ready_for_bootstrap(aqtbot, gui, running_backend)
+    await _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch)
     bootstrap_w = gui.test_get_bootstrap_organization_widget()
 
     def _broken(*args, **kwargs):
@@ -101,8 +104,6 @@ async def test_bootstrap_organization_with_start_arg(event_bus, core_config, gui
 
     bootstrap_w = gui.test_get_bootstrap_organization_widget()
     assert bootstrap_w
-
-    assert bootstrap_w.line_edit_url.text() == start_arg
 
 
 @pytest.mark.gui
