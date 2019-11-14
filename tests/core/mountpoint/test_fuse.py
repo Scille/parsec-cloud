@@ -166,7 +166,7 @@ async def test_mountpoint_path_already_in_use_concurrent_with_mountpoint(
             task_status.started()
             await trio.sleep_forever()
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         await nursery.start(_mount_alice2_w_mountpoint)
 
         # Here instead of checking the path can be used as a mountpoint, we

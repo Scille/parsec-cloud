@@ -74,7 +74,7 @@ class TaskStatus:
     async def wrap_task(cls, corofn, *args, task_status=trio.TASK_STATUS_IGNORED):
         status = cls()
         try:
-            async with trio.open_nursery() as nursery:
+            async with trio.open_service_nursery() as nursery:
                 status._set_cancel_scope(nursery.cancel_scope)
                 value = await nursery.start(corofn, *args)
                 status._set_started_value(value)

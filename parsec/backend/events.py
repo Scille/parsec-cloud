@@ -115,7 +115,7 @@ class EventsComponent:
                 await client_ctx.transport.recv()
                 cancel_scope.cancel()
 
-            async with trio.open_nursery() as nursery:
+            async with trio.open_service_nursery() as nursery:
                 nursery.start_soon(_get_event, nursery.cancel_scope)
                 nursery.start_soon(_keep_transport_breathing, nursery.cancel_scope)
 

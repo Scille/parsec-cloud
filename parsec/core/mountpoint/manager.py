@@ -221,7 +221,7 @@ async def mountpoint_manager_factory(
         if not runner:
             raise RuntimeError("Mountpoint support not available.")
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )

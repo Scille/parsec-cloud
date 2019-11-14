@@ -242,7 +242,7 @@ async def test_fuzz_core(request, running_backend, alice_core):
     wid = await alice_core.user_fs.workspace_create("w")
     workspace = alice_core.user_fs.get_workspace(wid)
     try:
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             fs_state = FSState()
             for i in range(FUZZ_PARALLELISM):
                 nursery.start_soon(fuzzer, i, alice_core, workspace, fs_state)

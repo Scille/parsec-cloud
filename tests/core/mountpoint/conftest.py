@@ -99,7 +99,7 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
                         task_status.started((user_fs, mountpoint_manager))
                         await trio.sleep_forever()
 
-            async with trio.open_nursery() as self._nursery:
+            async with trio.open_service_nursery() as self._nursery:
                 self._ready.set()
                 while True:
                     await self._need_start.wait()

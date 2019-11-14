@@ -36,7 +36,7 @@ async def _do_run_core(config, device, event_bus, qt_on_ready):
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout
             core_jobs_ctx = QtToTrioJobScheduler()
-            async with trio.open_nursery() as nursery:
+            async with trio.open_service_nursery() as nursery:
                 await nursery.start(core_jobs_ctx._start)
                 qt_on_ready.emit(core, core_jobs_ctx)
 

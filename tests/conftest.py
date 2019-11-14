@@ -314,7 +314,7 @@ def server_factory(tcp_stream_spy):
         if not addr:
             addr = BackendAddr(hostname=f"server-{count}.localhost", port=9999, use_ssl=False)
 
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
 
             def connection_factory(*args, **kwargs):
                 right, left = trio.testing.memory_stream_pair()
@@ -483,7 +483,7 @@ def backend_factory(
 
     @asynccontextmanager
     async def _backend_factory(populated=True, config={}, event_bus=None):
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             config = BackendConfig(
                 **{
                     "administration_token": "s3cr3t",

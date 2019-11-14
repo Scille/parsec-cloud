@@ -59,7 +59,7 @@ async def monitor_backend_connection(event_bus, *, task_status=trio.TASK_STATUS_
 
         task_status.started()
         while True:
-            async with trio.open_nursery() as nursery:
+            async with trio.open_service_nursery() as nursery:
                 nursery.start_soon(wait_incompatible_version)
                 nursery.start_soon(wait_offline, nursery)
                 nursery.start_soon(wait_connect)

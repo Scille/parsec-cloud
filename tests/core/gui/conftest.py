@@ -71,7 +71,7 @@ class ThreadedTrioTestRunner:
             callback(reply)
 
     async def _run_with_job_scheduler(self, fn, **kwargs):
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             await nursery.start(self._job_scheduler._start)
             try:
                 return await fn(**kwargs)

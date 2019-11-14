@@ -20,7 +20,7 @@ async def job(fail=0, task_status=trio.TASK_STATUS_IGNORED):
 
 @pytest.mark.trio
 async def test_start_task_and_join(autojump_clock):
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         status = await start_task(nursery, job)
         success = status.value
         assert success == set()
@@ -32,7 +32,7 @@ async def test_start_task_and_join(autojump_clock):
 
 @pytest.mark.trio
 async def test_start_task_cancel_and_join(autojump_clock):
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         status = await start_task(nursery, job)
         success = status.value
         assert success == set()
@@ -45,7 +45,7 @@ async def test_start_task_cancel_and_join(autojump_clock):
 
 @pytest.mark.trio
 async def test_start_task_with_exception_before_started(autojump_clock):
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         with pytest.raises(RuntimeError):
             await start_task(nursery, job, -1)
 
@@ -53,7 +53,7 @@ async def test_start_task_with_exception_before_started(autojump_clock):
 @pytest.mark.trio
 async def test_start_task_with_exception_after_started(autojump_clock):
     with pytest.raises(RuntimeError):
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             status = await start_task(nursery, job, +1)
             success = status.value
             assert success == set()

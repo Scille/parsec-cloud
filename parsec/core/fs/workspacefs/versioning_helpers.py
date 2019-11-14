@@ -189,7 +189,7 @@ async def list_versions(
                     pass
 
             # TODO : Use future manifest source field to follow files and directories
-            async with trio.open_nursery() as child_nursery:
+            async with trio.open_service_nursery() as child_nursery:
                 child_nursery.start_soon(
                     _populate_path_w_index, data, 1, entry_id, early.add(microseconds=-1)
                 )
@@ -246,7 +246,7 @@ async def list_versions(
 
     return_tree = {}
     root_manifest = await workspacefs.transactions._get_manifest(workspacefs.workspace_id)
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         nursery.start_soon(
             _populate_tree_list_versions,
             nursery,

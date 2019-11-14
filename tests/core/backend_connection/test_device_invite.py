@@ -79,7 +79,7 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             )
 
     with running_backend.backend.event_bus.listen() as spy:
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
             await spy.wait_with_timeout("event.connected", {"event_name": "device.claimed"})
             nursery.start_soon(_alice_nd_claim)

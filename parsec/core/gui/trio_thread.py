@@ -165,7 +165,7 @@ class QtToTrioJobScheduler:
         self._portal = trio.BlockingTrioPortal()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(1)
         try:
-            async with trio.open_nursery() as nursery, recv_job_channel:
+            async with trio.open_service_nursery() as nursery, recv_job_channel:
                 self._cancel_scope = nursery.cancel_scope
                 self.started.set()
                 task_status.started()
