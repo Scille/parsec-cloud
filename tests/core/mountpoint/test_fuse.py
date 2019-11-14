@@ -52,11 +52,11 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
             await mountpoint_manager.mount_workspace(wid)
             command = f"fusermount -u {mountpoint_path}".split()
 
-            returncode = await trio.Process(command).wait()
+            completed_process = await trio.run_process(command)
             with trio.fail_after(1):
                 # fusermount might fail for some reasons
-                while returncode:
-                    returncode = await trio.Process(command).wait()
+                while completed_process.returncode:
+                    completed_process = await trio.run_process(command)
                 await spy.wait("mountpoint.stopped", {"mountpoint": mountpoint_path})
 
         assert not await bar_txt.exists()

@@ -5,20 +5,15 @@ This `open_service_nursery` implementation is taken from @oremanj gist:
 https://gist.github.com/oremanj/8c137d7b1f820d441fbd32fb584e06fd
 """
 
-import abc
 import weakref
 import collections
 from functools import partial
-from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional, Generic, TypeVar
+from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
 
 import attr
 import trio
+from trio_typing import TaskStatus, Nursery
 from async_generator import asynccontextmanager
-from trio._core._run import Nursery
-
-
-class TaskStatus(Generic[TypeVar("_T")], metaclass=abc.ABCMeta):
-    pass
 
 
 @attr.s(cmp=False)
