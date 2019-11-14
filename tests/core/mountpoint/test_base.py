@@ -503,14 +503,18 @@ async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_b
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
+
         await mountpoint_manager.mount_workspace(wid)
 
-        root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
-        items = [x.name for x in await trio.Path(root_path).iterdir()]
-        assert items == [weird_name]
+        def _do():
+            root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
+            items = [x.name for x in Path(root_path).iterdir()]
+            assert items == [weird_name]
 
-        item_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/{weird_name}"))
-        assert await trio.Path(item_path).exists()
+            item_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/{weird_name}"))
+            assert Path(item_path).exists()
+
+        await trio.run_sync_in_worker_thread(_do)
 
 
 @pytest.mark.mountpoint
