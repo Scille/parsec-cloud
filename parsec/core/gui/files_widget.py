@@ -113,6 +113,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     folder_create_error = pyqtSignal(QtToTrioJob)
     import_success = pyqtSignal(QtToTrioJob)
     import_error = pyqtSignal(QtToTrioJob)
+    operation_success = pyqtSignal(QtToTrioJob)
 
     import_progress = pyqtSignal(int)
 
@@ -157,6 +158,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = FsPath("/")
         self.current_directory_uuid = None
+        self.files_stats = None
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
@@ -184,6 +186,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.folder_create_error.connect(self._on_folder_create_error)
         self.import_success.connect(self._on_import_success)
         self.import_error.connect(self._on_import_error)
+        self.operation_success.connect(self._on_operation_success)
 
         self.reload_timestamped_requested.connect(self._on_reload_timestamped_requested)
         self.reload_timestamped_success.connect(self._on_reload_timestamped_success)
@@ -219,10 +222,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.current_user_role = self.current_user_role
         self.reset()
 
-    def reset(self):
+    def reset(self, following=None):
         workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
         self.label_current_workspace.setText(workspace_name)
-        self.load(self.current_directory)
+        self.load(self.current_directory, following=following)
         self.table_files.sortItems(0)
 
     def show_history(self):
@@ -254,7 +257,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if not new_name:
                 return
             self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "operation_success", QtToTrioJob),
                 ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
                 _do_rename,
                 workspace_fs=self.workspace_fs,
@@ -277,7 +280,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 return
 
             self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "rename_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "operation_success", QtToTrioJob),
                 ThreadSafeQtSignal(self, "rename_error", QtToTrioJob),
                 _do_rename,
                 workspace_fs=self.workspace_fs,
@@ -309,7 +312,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not result:
             return
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "operation_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "delete_error", QtToTrioJob),
             _do_delete,
             workspace_fs=self.workspace_fs,
@@ -366,8 +369,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.button_create_folder,
             ]
 
-    def reload(self):
-        self.load(self.current_directory)
+    def reload(self, following=None):
+        self.load(self.current_directory, following=following)
 
     async def _do_reload_timestamped(
         self, timestamp, path, file_type, open_after_load, close_after_load, reload_after_remount
@@ -394,14 +397,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             path if open_after_load else None,
         )
 
-    def load(self, directory):
-        self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
-            ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
+    def load(self, directory, following=None):
+        job = self.jobs_ctx.submit_job(
+            ThreadSafeQtSignal(self, f"folder_stat_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, f"folder_stat_error", QtToTrioJob),
             _do_folder_stat,
             workspace_fs=self.workspace_fs,
             path=directory,
         )
+        job.following = following
 
     def import_all(self, files, total_size):
         assert not self.import_job
@@ -411,7 +415,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog.show()
 
         self.import_job = self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "import_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "operation_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "import_error", QtToTrioJob),
             _do_import,
             workspace_fs=self.workspace_fs,
@@ -537,7 +541,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
         self.jobs_ctx.submit_job(
-            ThreadSafeQtSignal(self, "folder_create_success", QtToTrioJob),
+            ThreadSafeQtSignal(self, "operation_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_create_error", QtToTrioJob),
             _do_folder_create,
             workspace_fs=self.workspace_fs,
@@ -550,7 +554,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.delete_item(row)()
 
     def _on_rename_success(self, job):
-        self.reset()
+        pass
 
     def _on_rename_error(self, job):
         if job.exc.params.get("multi"):
@@ -559,7 +563,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("ERR_RENAME_FILE"), exception=job.exc)
 
     def _on_delete_success(self, job):
-        self.reset()
+        pass
 
     def _on_delete_error(self, job):
         if job.exc.params.get("multi"):
@@ -569,8 +573,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_folder_stat_success(self, job):
         self.current_directory, self.current_directory_uuid, files_stats = job.ret
-        str_dir = str(self.current_directory)
+        # Idempotent set
+        if self.files_stats != files_stats:
+            self._set_files(files_stats)
+            self.files_stats = files_stats
+        # Emit related signal
+        if job.following is not None:
+            operation = job.following._fn.__name__.replace("_do_", "")
+            signal = getattr(self, f"{operation}_success")
+            signal.emit(job.following)
 
+    def _set_files(self, files_stats):
+        str_dir = str(self.current_directory)
         self.table_files.clear()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
@@ -599,7 +613,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.filter_files(self.line_edit_search.text())
 
     def _on_folder_stat_error(self, job):
-        pass
+        # Emit related signal
+        if job.following is not None:
+            operation = job.following._fn.__name__.replace("_do_", "")
+            signal = getattr(self, f"{operation}_success")
+            signal.emit(job.following)
 
     def _on_folder_create_success(self, job):
         pass
@@ -724,3 +742,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_reload_timestamped_error(self, job):
         raise job.exc
+
+    def _on_operation_success(self, job):
+        self.reload(following=job)

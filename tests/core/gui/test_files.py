@@ -248,13 +248,8 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
-    async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
+    async with aqtbot.wait_signal(w_f.delete_success):
         w_f.table_files.delete_clicked.emit()
-
-    # Wait until the file widget is refreshed by the timer
-    while w_f.update_timer.isActive():
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
 
     assert w_f.table_files.rowCount() == 3
 
@@ -266,13 +261,8 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
-    async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
+    async with aqtbot.wait_signal(w_f.delete_success):
         w_f.table_files.delete_clicked.emit()
-
-    # Wait until the file widget is refreshed by the timer
-    while w_f.update_timer.isActive():
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
 
     assert w_f.table_files.rowCount() == 1
     for i in range(5):
@@ -302,13 +292,8 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
         classmethod(lambda *args, **kwargs: ("Abcd")),
     )
     # Rename Dir1 to Abcd
-    async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
+    async with aqtbot.wait_signal(w_f.rename_success):
         w_f.table_files.rename_clicked.emit()
-
-    # Wait until the file widget is refreshed by the timer
-    while w_f.update_timer.isActive():
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
 
     assert w_f.table_files.rowCount() == 4
     item = w_f.table_files.item(1, 1)
@@ -324,13 +309,8 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
         classmethod(lambda *args, **kwargs: ("NewName")),
     )
-    async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
+    async with aqtbot.wait_signal(w_f.rename_success):
         w_f.table_files.rename_clicked.emit()
-
-    # Wait until the file widget is refreshed by the timer
-    while w_f.update_timer.isActive():
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
 
     assert w_f.table_files.rowCount() == 4
     item = w_f.table_files.item(2, 1)
@@ -399,15 +379,8 @@ async def test_import_files(
         ),
     )
 
-    async with aqtbot.wait_signals(
-        [w_f.button_import_files.clicked, w_f.import_success], timeout=3000
-    ):
+    async with aqtbot.wait_signal(w_f.import_success, timeout=3000):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
-
-    # Wait until the file widget is refreshed
-    while w_f.table_files.rowCount() < 3:
-        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
-            pass
 
     assert w_f.table_files.rowCount() == 3
     assert w_f.table_files.item(1, 1).text() == "file01.txt"
@@ -431,10 +404,7 @@ async def test_import_dir(
         classmethod(lambda *args, **kwargs: temp_dir),
     )
 
-    async with aqtbot.wait_signals(
-        [w_f.button_import_folder.clicked, w_f.import_success, w_f.folder_stat_success],
-        timeout=3000,
-    ):
+    async with aqtbot.wait_signal(w_f.import_success, timeout=3000):
         await aqtbot.mouse_click(w_f.button_import_folder, QtCore.Qt.LeftButton)
 
     assert w_f.table_files.rowCount() == 2

@@ -67,6 +67,7 @@ class QtToTrioJob:
         self.status = None
         self.ret = None
         self.exc = None
+        self.following = None
 
     def __str__(self):
         return f"{self._fn.__name__}"
