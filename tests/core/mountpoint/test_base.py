@@ -472,6 +472,7 @@ async def test_mountpoint_revoke_access(
 
 
 @pytest.mark.mountpoint
+@pytest.mark.skipif(os.name == "nt", reason="TODO: crash with WinFSP :'(")
 def test_stat_mountpoint(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
         workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
