@@ -408,13 +408,14 @@ class BackendApp:
 
                         client_ctx.event_bus_ctx.connect("user.revoked", _on_revoked)
                         await self._handle_client_loop(transport, client_ctx)
-                    await transport.aclose()
+
             else:
                 await self._handle_client_loop(transport, client_ctx)
 
+            await transport.aclose()
+
         except TransportClosedByPeer as exc:
             selected_logger.info("Connection dropped: client has left", reason=str(exc))
-            return
 
         except (TransportError, MessageSerializationError) as exc:
             rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
@@ -424,7 +425,6 @@ class BackendApp:
                 pass
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
-            return
 
     async def _handle_client_loop(self, transport, client_ctx):
         while True:
