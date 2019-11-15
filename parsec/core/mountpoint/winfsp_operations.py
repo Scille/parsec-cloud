@@ -27,7 +27,16 @@ FILE_WRITE_DATA = 1 << 1
 
 # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
 # tl;dr: https://twitter.com/foone/status/1058676834940776450
-_WIN32_RES_CHARS = ("<", ">", ":", '"', "\\", "|", "?", "*")  # Ignore `\`
+_WIN32_RES_CHARS = tuple(chr(x) for x in range(1, 32)) + (
+    "<",
+    ">",
+    ":",
+    '"',
+    "\\",
+    "|",
+    "?",
+    "*",
+)  # Ignore `\`
 _WIN32_RES_NAMES = (
     "CON",
     "PRN",
@@ -55,17 +64,19 @@ _WIN32_RES_NAMES = (
 
 
 def winify_entry_name(name: str) -> str:
-    name_parts = name.split(".", 1)
-    prefix = name_parts[0]
+    logger.warning("winify_entry_name:", name=repr(name))
+    prefix, *suffixes = name.split(".", 1)
     if prefix in _WIN32_RES_NAMES:
-        name = f"{prefix[:-1]}{'~%02x' % ord(prefix[-1])}{'.'.join(name_parts[1:])}"
+        full_suffix = f".{'.'.join(suffixes)}" if suffixes else ""
+        name = f"{prefix[:-1]}~{ord(prefix[-1]):02x}{full_suffix}"
 
     else:
         for reserved in _WIN32_RES_CHARS:
-            name = name.replace(reserved, "~%02x" % ord(reserved))
+            name = name.replace(reserved, f"~{ord(reserved):02x}")
 
     if name[-1] in (".", " "):
-        name = name[:-1] + "~%02x" % ord(name[-1])
+        name = f"{name[:-1]}~{ord(name[-1]):02x}"
+    logger.warning("winified_entry_name==>", name=repr(name))
 
     return name
 
@@ -76,15 +87,34 @@ def unwinify_entry_name(name: str) -> str:
         return name
 
     else:
-        parts = re.split(r"(~[0-9A-Fa-f]{2})", name)
+        logger.warning("unwinify_entry_name:", name=name)
+        *to_convert_parts, last_part = re.split(r"(~[0-9A-Fa-f]{2})", name)
+        logger.warning("xxx:", to_convert_parts=to_convert_parts, last_part=last_part)
         converted_parts = []
-        for txt, escape in parts[:-1]:
-            converted_chr = chr(int(escape[1:], 16))
-            if converted_chr in ("/", "\x00"):
-                raise ValueError("Invalid escaped value")
-            converted_parts.append(converted_chr)
-        converted_parts.append(parts[-1])
+        is_escape = False
+        for part in to_convert_parts:
+            logger.warning("txt, escape:", part=part)
+            if is_escape:
+                converted_chr = chr(int(part[1:], 16))
+                if converted_chr in ("/", "\x00"):
+                    raise ValueError("Invalid escaped value")
+                converted_parts.append(converted_chr)
+
+            else:
+                converted_parts.append(part)
+
+            is_escape = not is_escape
+
+        converted_parts.append(last_part)
         return "".join(converted_parts)
+
+        # for txt, escape in parts[:-1]:
+        #     converted_chr = chr(int(escape[1:], 16))
+        #     if converted_chr in ("/", "\x00"):
+        #         raise ValueError("Invalid escaped value")
+        #     converted_parts.append(converted_chr)
+        # converted_parts.append(parts[-1])
+        # return "".join(converted_parts)
 
 
 def _winpath_to_parsec(path: str) -> FsPath:

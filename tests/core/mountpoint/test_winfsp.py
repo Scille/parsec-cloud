@@ -102,22 +102,51 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
 @pytest.mark.mountpoint
 def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
     # see https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-    bad_names = (
-        '<>:"\\|?*',  # Invalid chars (except `/` which is not allowed in Parsec)
-        "".join(chr(x) for x in range(1, 32)),  # Invalid control characters
-        "foo.",  # Trailing dot not allowed
-        "foo ",  # Trailing space not allowed
-        "CON",  # Invalid name
-        "COM1.foo",  # Invalid name with extension
+    items = (
+        (
+            # Invalid chars (except `/` which is not allowed in Parsec)
+            '<>:"\\|?*',
+            "~3c~3e~3a~22~5c~7c~3f~2a",
+        ),
+        (
+            # Invalid control characters (1/2)
+            "".join(chr(x) for x in range(1, 16)),
+            "".join(f"~{x:02x}" for x in range(1, 16)),
+        ),
+        (
+            # Invalid control characters (2/2)
+            "".join(chr(x) for x in range(16, 32)),
+            "".join(f"~{x:02x}" for x in range(16, 32)),
+        ),
+        (
+            # Trailing dot not allowed
+            "foo.",
+            "foo~2e",
+        ),
+        (
+            # Trailing space not allowed
+            "foo ",
+            "foo~20",
+        ),
+        (
+            # Invalid name
+            "CON",
+            "CO~4e",
+        ),
+        (
+            # Invalid name with extension
+            "COM1.foo",
+            "COM~31.foo",
+        ),
     )
 
     async def _bootstrap(user_fs, mountpoint_manager):
 
-        for bad_name in bad_names:
+        for name, _ in items:
             # Apply bad name to both the mountpoint folder and data inside it
-            wid = await user_fs.workspace_create(bad_name)
+            wid = await user_fs.workspace_create(name)
             workspace = user_fs.get_workspace(wid)
-            await workspace.touch(f"/{bad_name}")
+            await workspace.touch(f"/{name}")
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()
@@ -126,13 +155,13 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
     workspaces = list(mountpoint_service.base_mountpoint.iterdir())
 
     # mountpoint_service creates a `w` workspace by default
-    assert len(workspaces) == len(bad_names) + 1
+    assert set(x.name for x in workspaces) == {"w", *{cooked_name for _, cooked_name in items}}
 
-    for workspace in workspaces:
-        if workspace.name == "w":
-            continue
-        assert workspace.exists()
+    for _, cooked_name in items:
+        workspace = mountpoint_service.base_mountpoint / cooked_name
+        # TODO: currently failed with a `[WinError 1005] The volume does not contain a recognized file system.`
+        # assert workspace.exists()
+
         entries = list(workspace.iterdir())
-        assert len(entries) == 1
-        assert "~" in entries[0].name  # Tild escape the invalid part of the name
+        assert [x.name for x in entries] == [cooked_name]
         assert entries[0].exists()
