@@ -28,24 +28,45 @@ def test_rename_to_another_drive(mountpoint_service):
 
 @pytest.mark.win32
 @pytest.mark.mountpoint
-def test_close_trio_loop_during_fs_access(mountpoint_service, monkeypatch):
+def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
     mountpoint_needed_stop = threading.Event()
+    mountpoint_winfsp_stop = threading.Event()
     mountpoint_stopped = threading.Event()
 
     from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+    from winfspy import FileSystem
+
+    # Monkeypatch to trigger mountpoint teardown during an operation
 
     vanilla_entry_info = ThreadFSAccess.entry_info
 
     def _entry_info_maybe_stop_loop(self, path):
         if str(path) == "/stop_loop":
             mountpoint_needed_stop.set()
-            mountpoint_stopped.wait()
+            # WinFSP's stop waits for the current operations (so including this
+            # function !) to finish before returning.
+            # Given this is the behavior we are testing here, make sure we
+            # have actually reach this point before going further.
+            mountpoint_winfsp_stop.wait()
         return vanilla_entry_info(self, path)
 
     monkeypatch.setattr(
         "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.entry_info",
         _entry_info_maybe_stop_loop,
     )
+
+    # Monkeypatch WinFSP's stop to know when we are about to wait for the
+    # current operations to finish
+
+    vanilla_file_system_stop = FileSystem.stop
+
+    def _patched_file_system_stop(self):
+        mountpoint_winfsp_stop.set()
+        return vanilla_file_system_stop(self)
+
+    monkeypatch.setattr("winfspy.FileSystem.stop", _patched_file_system_stop)
+
+    # Spawn a thread responsible for the mountpoint teardown when needed
 
     def _wait_and_stop_mountpoint():
         mountpoint_needed_stop.wait()
@@ -57,6 +78,9 @@ def test_close_trio_loop_during_fs_access(mountpoint_service, monkeypatch):
     thread = threading.Thread(target=_wait_and_stop_mountpoint)
     thread.setName("MountpointService")
     thread.start()
+
+    # All boilerplates are set, let's do the actual test !
+
     try:
 
         mountpoint_service.start()
