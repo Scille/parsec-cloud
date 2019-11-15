@@ -81,9 +81,7 @@ class PathElement:
         return self.parsec_root / Path(*tail)
 
     def __truediv__(self, path):
-        return PathElement(
-            os.path.join(self.absolute_path, path), self.parsec_root, self.oracle_root
-        )
+        return PathElement(f"{self.absolute_path}/{path}", self.parsec_root, self.oracle_root)
 
 
 @pytest.mark.slow

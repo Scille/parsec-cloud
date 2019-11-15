@@ -53,8 +53,7 @@ def test_fs_online_user(user_fs_state_machine, oracle_fs_with_sync_factory, alic
 
         @rule(target=Workspaces, name=st_entry_name)
         async def create_workspace(self, name):
-            path = os.path.join("/", name)
-            self.oracle_fs.create_workspace(path)
+            self.oracle_fs.create_workspace(f"/{name}")
             wid = await self.user_fs.workspace_create(name)
             self.workspace = self.user_fs.get_workspace(wid)
             await self.user_fs.sync()

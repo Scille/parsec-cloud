@@ -69,7 +69,7 @@ def test_fs_online_tree_and_sync(user_fs_state_machine, oracle_fs_with_sync_fact
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         async def create_file(self, parent, name):
-            path = os.path.join(parent, name)
+            path = f"{parent}/{name}"
             expected_status = self.oracle_fs.create_file(path)
             if expected_status == "ok":
                 await self.workspace.touch(path=get_path(path), exist_ok=False)
@@ -80,7 +80,7 @@ def test_fs_online_tree_and_sync(user_fs_state_machine, oracle_fs_with_sync_fact
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
         async def create_folder(self, parent, name):
-            path = os.path.join(parent, name)
+            path = f"{parent}/{name}"
             expected_status = self.oracle_fs.create_folder(path)
             if expected_status == "ok":
                 await self.workspace.mkdir(path=get_path(path), exist_ok=False)
@@ -111,7 +111,7 @@ def test_fs_online_tree_and_sync(user_fs_state_machine, oracle_fs_with_sync_fact
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         async def move_file(self, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
+            dst = f"{dst_parent}/{dst_name}"
             expected_status = self.oracle_fs.move(src, dst)
             if expected_status == "ok":
                 await self.workspace.rename(get_path(src), get_path(dst))
@@ -122,7 +122,7 @@ def test_fs_online_tree_and_sync(user_fs_state_machine, oracle_fs_with_sync_fact
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
         async def move_folder(self, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
+            dst = f"{dst_parent}/{dst_name}"
             expected_status = self.oracle_fs.move(src, dst)
             if expected_status == "ok":
                 await self.workspace.rename(get_path(src), get_path(dst))

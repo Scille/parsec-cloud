@@ -33,7 +33,6 @@ class FsPath:
             assert all(isinstance(x, EntryName) for x in raw)
             parts = raw
         else:
-            raw = raw.replace("\\", "/")  # TODO: remove me and do this in WinFSP
             parts = []
             if not raw.startswith("/"):
                 raise ValueError("Path must be absolute")
