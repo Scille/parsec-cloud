@@ -179,8 +179,7 @@ async def list_versions(
             None,  # Destination path
             None,  # Current path
         ]
-
-        if len(target.parts) == path_level + 1:
+        if len(target.parts) == path_level:
 
             async def _populate_path_w_index(data, index, entry_id, timestamp):
                 try:
@@ -205,7 +204,7 @@ async def list_versions(
         else:
             if not is_file_manifest(manifest):
                 for child_name, child_id in manifest.children.items():
-                    if child_name == target.parts[path_level + 1]:
+                    if child_name == target.parts[path_level]:
                         return await _populate_tree_list_versions(
                             nursery,
                             target,

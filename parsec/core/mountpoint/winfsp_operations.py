@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 import functools
-from pathlib import PureWindowsPath
 from contextlib import contextmanager
 from trio import Cancelled, RunFinishedError
 from structlog import get_logger
@@ -25,6 +25,107 @@ FILE_READ_DATA = 1 << 0
 FILE_WRITE_DATA = 1 << 1
 
 
+# https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+# tl;dr: https://twitter.com/foone/status/1058676834940776450
+_WIN32_RES_CHARS = tuple(chr(x) for x in range(1, 32)) + (
+    "<",
+    ">",
+    ":",
+    '"',
+    "\\",
+    "|",
+    "?",
+    "*",
+)  # Ignore `\`
+_WIN32_RES_NAMES = (
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9",
+)
+
+
+def winify_entry_name(name: str) -> str:
+    logger.warning("winify_entry_name:", name=repr(name))
+    prefix, *suffixes = name.split(".", 1)
+    if prefix in _WIN32_RES_NAMES:
+        full_suffix = f".{'.'.join(suffixes)}" if suffixes else ""
+        name = f"{prefix[:-1]}~{ord(prefix[-1]):02x}{full_suffix}"
+
+    else:
+        for reserved in _WIN32_RES_CHARS:
+            name = name.replace(reserved, f"~{ord(reserved):02x}")
+
+    if name[-1] in (".", " "):
+        name = f"{name[:-1]}~{ord(name[-1]):02x}"
+    logger.warning("winified_entry_name==>", name=repr(name))
+
+    return name
+
+
+def unwinify_entry_name(name: str) -> str:
+    # Given / is not allowed, no need to check if path already contains it
+    if "~" not in name:
+        return name
+
+    else:
+        logger.warning("unwinify_entry_name:", name=name)
+        *to_convert_parts, last_part = re.split(r"(~[0-9A-Fa-f]{2})", name)
+        logger.warning("xxx:", to_convert_parts=to_convert_parts, last_part=last_part)
+        converted_parts = []
+        is_escape = False
+        for part in to_convert_parts:
+            logger.warning("txt, escape:", part=part)
+            if is_escape:
+                converted_chr = chr(int(part[1:], 16))
+                if converted_chr in ("/", "\x00"):
+                    raise ValueError("Invalid escaped value")
+                converted_parts.append(converted_chr)
+
+            else:
+                converted_parts.append(part)
+
+            is_escape = not is_escape
+
+        converted_parts.append(last_part)
+        return "".join(converted_parts)
+
+        # for txt, escape in parts[:-1]:
+        #     converted_chr = chr(int(escape[1:], 16))
+        #     if converted_chr in ("/", "\x00"):
+        #         raise ValueError("Invalid escaped value")
+        #     converted_parts.append(converted_chr)
+        # converted_parts.append(parts[-1])
+        # return "".join(converted_parts)
+
+
+def _winpath_to_parsec(path: str) -> FsPath:
+    # Given / is not allowed, no need to check if path already contains it
+    return FsPath(unwinify_entry_name(path.replace("\\", "/")))
+
+
+def _parsec_to_winpath(path: FsPath) -> str:
+    return "\\" + "\\".join(winify_entry_name(entry) for entry in path.parts)
+
+
 @contextmanager
 def translate_error(event_bus, operation, path):
     try:
@@ -46,7 +147,7 @@ def translate_error(event_bus, operation, path):
         raise NTStatusError(NTSTATUS.STATUS_NO_SUCH_DEVICE) from exc
 
     except Exception as exc:
-        logger.exception("Unhandled exception in winfsp mountpoint")
+        logger.exception("Unhandled exception in winfsp mountpoint", operation=operation, path=path)
         event_bus.send("mountpoint.unhandled_error", exc=exc, operation=operation, path=path)
         raise NTStatusError(NTSTATUS.STATUS_INTERNAL_ERROR) from exc
 
@@ -79,8 +180,8 @@ def stat_to_winfsp_attributes(stat):
 
     if stat["type"] == "folder":
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY
-        attributes["allocation_size"] = round_to_block_size(1)
-        attributes["file_size"] = round_to_block_size(1)
+        attributes["allocation_size"] = 0
+        attributes["file_size"] = 0
 
     else:
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_NORMAL
@@ -96,7 +197,7 @@ class OpenedFolder:
         self.deleted = False
 
     def is_root(self):
-        return len(PureWindowsPath(self.path).parts) == 1
+        return self.path.is_root()
 
 
 class OpenedFile:
@@ -112,7 +213,7 @@ def handle_error(func):
 
     @functools.wraps(func)
     def wrapper(self, arg, *args, **kwargs):
-        path = arg.path if isinstance(arg, (OpenedFile, OpenedFolder)) else FsPath(arg)
+        path = arg.path if isinstance(arg, (OpenedFile, OpenedFolder)) else _winpath_to_parsec(arg)
         with translate_error(self.event_bus, operation, path):
             return func.__get__(self)(arg, *args, **kwargs)
 
@@ -150,7 +251,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def get_security_by_name(self, file_name):
-        file_name = FsPath(file_name)
+        file_name = _winpath_to_parsec(file_name)
         stat = self.fs_access.entry_info(file_name)
         return (
             stat_to_file_attributes(stat),
@@ -171,7 +272,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         # `granted_access` is already handle by winfsp
         # `allocation_size` useless for us
         # `security_descriptor` is not supported yet
-        file_name = FsPath(file_name)
+        file_name = _winpath_to_parsec(file_name)
 
         if create_options & CREATE_FILE_CREATE_OPTIONS.FILE_DIRECTORY_FILE:
             self.fs_access.folder_create(file_name)
@@ -192,13 +293,13 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def rename(self, file_context, file_name, new_file_name, replace_if_exists):
-        file_name = FsPath(file_name)
-        new_file_name = FsPath(new_file_name)
+        file_name = _winpath_to_parsec(file_name)
+        new_file_name = _winpath_to_parsec(new_file_name)
         self.fs_access.entry_rename(file_name, new_file_name, overwrite=False)
 
     @handle_error
     def open(self, file_name, create_options, granted_access):
-        file_name = FsPath(file_name)
+        file_name = _winpath_to_parsec(file_name)
         granted_access = granted_access & (FILE_READ_DATA | FILE_WRITE_DATA)
         if granted_access == FILE_READ_DATA:
             mode = "r"
@@ -289,7 +390,12 @@ class WinFSPOperations(BaseFileSystemOperations):
             if marker is not None and child_name < marker:
                 continue
             child_stat = self.fs_access.entry_info(file_context.path / child_name)
-            entries.append({"file_name": child_name, **stat_to_winfsp_attributes(child_stat)})
+            entries.append(
+                {
+                    "file_name": winify_entry_name(child_name),
+                    **stat_to_winfsp_attributes(child_stat),
+                }
+            )
 
         if not file_context.path.is_root():
             entries.append({"file_name": ".."})

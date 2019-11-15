@@ -5,6 +5,7 @@ import trio
 import pytest
 from pathlib import Path
 
+from parsec.core.types import FsPath
 from parsec.core.mountpoint.manager import mountpoint_manager_factory
 
 from tests.common import create_shared_workspace
@@ -87,7 +88,7 @@ async def test_remote_error_event(
         await alice_w.path_id("/")
         await alice_w.path_id("/foo.txt")
 
-        trio_w = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, Path("/")))
+        trio_w = trio.Path(mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/")))
 
         # Switch the mountpoint in maintenance...
         await bob_user_fs.workspace_start_reencryption(wid)

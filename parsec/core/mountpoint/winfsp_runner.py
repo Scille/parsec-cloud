@@ -9,7 +9,7 @@ from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
 
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
-from parsec.core.mountpoint.winfsp_operations import WinFSPOperations
+from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 
 
@@ -67,7 +67,7 @@ async def winfsp_mountpoint_runner(
         MountpointDriverCrash
     """
     device = workspace_fs.device
-    workspace_name = workspace_fs.get_workspace_name()
+    workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
     portal = trio.BlockingTrioPortal()
     fs_access = ThreadFSAccess(portal, workspace_fs)
 
@@ -117,5 +117,8 @@ async def winfsp_mountpoint_runner(
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
 
     finally:
-        fs.stop()
+        # Must run in thread given this call will wait for any winfsp operation
+        # to finish so blocking the trio loop can produce a dead lock...
+        with trio.CancelScope(shield=True):
+            await trio.run_sync_in_worker_thread(fs.stop)
         event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)

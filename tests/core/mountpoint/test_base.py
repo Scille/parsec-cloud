@@ -469,3 +469,64 @@ async def test_mountpoint_revoke_access(
 
         # Alice no longer has write access
         await assert_cannot_write(mountpoint_manager, new_role)
+
+
+@pytest.mark.mountpoint
+@pytest.mark.skipif(os.name == "nt", reason="TODO: crash with WinFSP :'(")
+def test_stat_mountpoint(mountpoint_service):
+    async def _bootstrap(user_fs, mountpoint_manager):
+        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        await workspace.touch("/foo.txt")
+
+    mountpoint_service.start()
+    mountpoint_service.execute(_bootstrap)
+    wpath = mountpoint_service.get_default_workspace_mountpoint()
+
+    assert os.listdir(str(mountpoint_service.base_mountpoint)) == [
+        mountpoint_service.default_workspace_name
+    ]
+    # Just make sure stats don't lead to a crash
+    assert os.stat(str(mountpoint_service.base_mountpoint))
+    assert os.stat(str(wpath))
+    assert os.stat(str(wpath / "foo.txt"))
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_bus):
+    weird_name = "ÉŸ奇怪😀🔫🐍"
+
+    wid = await alice_user_fs.workspace_create(weird_name)
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch(f"/{weird_name}")
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+
+        await mountpoint_manager.mount_workspace(wid)
+
+        def _do():
+            root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
+            items = [x.name for x in Path(root_path).iterdir()]
+            assert items == [weird_name]
+
+            item_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/{weird_name}"))
+            assert Path(item_path).exists()
+
+        await trio.run_sync_in_worker_thread(_do)
+
+
+@pytest.mark.mountpoint
+def test_nested_rw_access(mountpoint_service):
+    mountpoint_service.start()
+    wpath = mountpoint_service.get_default_workspace_mountpoint()
+    fpath = wpath / "foo.txt"
+
+    with open(str(fpath), "ab") as f:
+        f.write(b"whatever")
+        f.flush()
+        with open(str(fpath), "rb") as fin:
+            data = fin.read()
+            assert data == b"whatever"
