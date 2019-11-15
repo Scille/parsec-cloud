@@ -57,10 +57,13 @@ async def test_user_revoke_ok(backend, backend_sock_factory, adam_backend_sock, 
         author=adam.device_id, timestamp=now, user_id=alice.user_id
     ).dump_and_sign(adam.signing_key)
 
-    # Revoke Alice
-    with freeze_time(now):
-        rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
-    assert rep == {"status": "ok"}
+    with backend.event_bus.listen() as spy:
+        with freeze_time(now):
+            rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(
+            "user.revoked", {"organization_id": alice.organization_id, "user_id": alice.user_id}
+        )
 
     # Alice cannot connect from now on...
     with pytest.raises(HandshakeRevokedDevice):
