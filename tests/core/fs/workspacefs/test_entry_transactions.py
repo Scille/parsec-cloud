@@ -237,12 +237,14 @@ class PathElement:
         return FsPath(self.absolute_path)
 
     def __truediv__(self, path):
-        return PathElement(f"{self.absolute_path}/{path}", self.oracle_root)
+        assert isinstance(path, str) and path[0] != "/"
+        absolute_path = f"/{path}" if self.absolute_path == "/" else f"{self.absolute_path}/{path}"
+        return PathElement(absolute_path, self.oracle_root)
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
-def test_folder_operations(
+def test_entry_transactions(
     tmpdir,
     hypothesis_settings,
     reset_testbed,
@@ -256,7 +258,7 @@ def test_folder_operations(
     # The point is not to find breaking filenames here, so keep it simple
     st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
-    class FileOperationsStateMachine(TrioAsyncioRuleBasedStateMachine):
+    class EntryTransactionsStateMachine(TrioAsyncioRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
@@ -411,4 +413,4 @@ def test_folder_operations(
 
             self.last_step_id_to_path = new_id_to_path
 
-    run_state_machine_as_test(FileOperationsStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(EntryTransactionsStateMachine, settings=hypothesis_settings)
