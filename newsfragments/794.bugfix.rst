@@ -1,2 +1,0 @@
-Fix len check in ``OrganizationID``/``UserID``/``DeviceName``/``DeviceID``
-when containing multibytes unicode characters.

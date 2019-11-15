@@ -1,1 +1,0 @@
-Backend now checks if timestamp is not inferior of existant on vlob update, if it is, sends an error to client which temporarily goes offline to avoid the handling of this event in a retry loop.

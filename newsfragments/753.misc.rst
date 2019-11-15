@@ -1,1 +1,0 @@
-Improve logging output on backend server

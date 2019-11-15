@@ -1,1 +1,0 @@
-Removed duplicates and supposed minimal sync when listing versions of a path
