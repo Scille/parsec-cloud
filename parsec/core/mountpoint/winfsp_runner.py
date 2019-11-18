@@ -68,8 +68,8 @@ async def winfsp_mountpoint_runner(
     """
     device = workspace_fs.device
     workspace_name = winify_entry_name(workspace_fs.get_workspace_name())
-    portal = trio.BlockingTrioPortal()
-    fs_access = ThreadFSAccess(portal, workspace_fs)
+    trio_token = trio.hazmat.current_trio_token()
+    fs_access = ThreadFSAccess(trio_token, workspace_fs)
 
     mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_name)
 

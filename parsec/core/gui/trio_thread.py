@@ -50,8 +50,8 @@ class ThreadSafeQtSignal:
 
 
 class QtToTrioJob:
-    def __init__(self, portal, fn, args, kwargs, qt_on_success, qt_on_error):
-        self._portal = portal
+    def __init__(self, trio_token, fn, args, kwargs, qt_on_success, qt_on_error):
+        self._trio_token = trio_token
         assert isinstance(qt_on_success, ThreadSafeQtSignal)
         assert qt_on_success.args_types in ((), (QtToTrioJob,))
         self._qt_on_success = qt_on_success
@@ -147,7 +147,7 @@ class QtToTrioJob:
     def cancel_and_join(self):
         assert self.cancel_scope
         try:
-            self._portal.run_sync(self.cancel_scope.cancel)
+            trio.from_thread.run_sync(self.cancel_scope.cancel, trio_token=self._trio_token)
         except trio.RunFinishedError:
             pass
         self._done.wait()
@@ -155,14 +155,14 @@ class QtToTrioJob:
 
 class QtToTrioJobScheduler:
     def __init__(self):
-        self._portal = None
+        self._trio_token = None
         self._cancel_scope = None
         self.started = threading.Event()
         self._stopped = trio.Event()
 
     async def _start(self, *, task_status=trio.TASK_STATUS_IGNORED):
         assert not self.started.is_set()
-        self._portal = trio.BlockingTrioPortal()
+        self._trio_token = trio.hazmat.current_trio_token()
         self._send_job_channel, recv_job_channel = trio.open_memory_channel(1)
         try:
             async with trio.open_service_nursery() as nursery, recv_job_channel:
@@ -184,16 +184,16 @@ class QtToTrioJobScheduler:
 
     def stop(self):
         try:
-            self._portal.run(self._stop)
+            trio.from_thread.run(self._stop, trio_token=self._trio_token)
         except trio.RunFinishedError:
             pass
 
     def _run_job(self, job, *args, sync=False):
         try:
             if sync:
-                return self._portal.run_sync(job, *args)
+                return trio.from_thread.run_sync(job, *args, trio_token=self._trio_token)
             else:
-                return self._portal.run(job, *args)
+                return trio.from_thread.run(job, *args, trio_token=self._trio_token)
 
         except trio.BrokenResourceError:
             logger.info(f"The submitted job `{job}` won't run as the scheduler is stopped")
@@ -207,7 +207,7 @@ class QtToTrioJobScheduler:
         # Fool-proof sanity check, signals must be wrapped in `ThreadSafeQtSignal`
         assert not [x for x in args if isinstance(x, pyqtBoundSignal)]
         assert not [v for v in kwargs.values() if isinstance(v, pyqtBoundSignal)]
-        job = QtToTrioJob(self._portal, fn, args, kwargs, qt_on_success, qt_on_error)
+        job = QtToTrioJob(self._trio_token, fn, args, kwargs, qt_on_success, qt_on_error)
 
         async def _submit_job():
             # While inside this async function we are blocking the Qt thread
@@ -242,25 +242,12 @@ class QtToTrioJobScheduler:
         return self._run_job(fn, *args, sync=True)
 
 
-# TODO: Running the trio loop in a QThread shouldn't be needed
-# make sure it's the case, then remove this dead code
-# class QtToTrioJobSchedulerThread(QThread):
-#     def __init__(self, job_scheduler):
-#         super().__init__()
-#         self.job_scheduler = job_scheduler
-
-#     def run(self):
-#         trio_run(self.job_scheduler._start)
-
-
 @contextmanager
 def run_trio_thread():
     job_scheduler = QtToTrioJobScheduler()
     thread = threading.Thread(target=trio_run, args=[job_scheduler._start])
     thread.setName("TrioLoop")
     thread.start()
-    # thread = QtToTrioJobSchedulerThread(job_scheduler)
-    # thread.start()
     job_scheduler.started.wait()
 
     try:
@@ -269,4 +256,3 @@ def run_trio_thread():
     finally:
         job_scheduler.stop()
         thread.join()
-        # thread.wait()
