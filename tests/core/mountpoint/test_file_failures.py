@@ -120,4 +120,4 @@ async def test_remote_error_event(
                     os.mkdir(str(trio_w / "dummy"))
             spy.assert_event_occured("mountpoint.unhandled_error")
 
-        await trio.run_sync_in_worker_thread(_testbed)
+        await trio.to_thread.run_sync(_testbed)

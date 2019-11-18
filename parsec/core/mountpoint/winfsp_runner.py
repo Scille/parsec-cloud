@@ -120,5 +120,5 @@ async def winfsp_mountpoint_runner(
         # Must run in thread given this call will wait for any winfsp operation
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):
-            await trio.run_sync_in_worker_thread(fs.stop)
+            await trio.to_thread.run_sync(fs.stop)
         event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)

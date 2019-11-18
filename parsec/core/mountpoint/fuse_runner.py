@@ -141,7 +141,7 @@ async def fuse_mountpoint_runner(
             # restore the signals to their previous state once the fuse instance is started.
             with _reset_signals():
                 nursery.start_soon(
-                    lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
+                    lambda: trio.to_thread.run_sync(_run_fuse_thread, cancellable=True)
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
@@ -185,5 +185,5 @@ async def _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stoppe
             await trio.Path(mountpoint_path / "__shutdown_fuse__").exists()
         except OSError:
             pass
-        await trio.run_sync_in_worker_thread(fuse_thread_stopped.wait)
+        await trio.to_thread.run_sync(fuse_thread_stopped.wait)
         logger.info("Fuse thread stopped", mountpoint=mountpoint_path)

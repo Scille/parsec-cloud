@@ -165,7 +165,7 @@ async def test_mount_and_explore_workspace(
 
             # Note given python fs api is blocking, we must run it inside a thread
             # to avoid blocking the trio loop and ending up in a deadlock
-            await trio.run_sync_in_worker_thread(inspect_mountpoint)
+            await trio.to_thread.run_sync(inspect_mountpoint)
 
             if manual_unmount:
                 await mountpoint_manager.unmount_workspace(wid)
@@ -510,7 +510,7 @@ async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_b
         root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
 
         # Work around trio issue #1308 (https://github.com/python-trio/trio/issues/1308)
-        items = await trio.run_sync_in_worker_thread(
+        items = await trio.to_thread.run_sync(
             lambda: [path.name for path in Path(root_path).iterdir()]
         )
         assert items == [weird_name]

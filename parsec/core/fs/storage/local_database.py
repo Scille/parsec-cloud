@@ -38,7 +38,7 @@ async def thread_pool_runner(max_workers=None):
         yield run_in_thread
     finally:
         with trio.CancelScope(shield=True):
-            await trio.run_sync_in_worker_thread(executor.shutdown)
+            await trio.to_thread.run_sync(executor.shutdown)
 
 
 def protect_with_lock(fn):
