@@ -8,6 +8,8 @@ from parsec.core.local_device import save_device_with_password
 
 from parsec.core.gui.file_items import FileType, NAME_DATA_INDEX, TYPE_DATA_INDEX
 
+from tests.core.fs.workspacefs.conftest import create_inconsistent_workspace
+
 
 @pytest.fixture
 def temp_dir(tmpdir):
@@ -224,6 +226,54 @@ async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
         w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
     assert wk_w.isVisible() is True
     assert w_f.isVisible() is False
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_show_inconsistent_dir(
+    aqtbot, running_backend, logged_gui, monkeypatch, alice_user_fs, alice2_user_fs
+):
+    alice2_workspace = await create_inconsistent_workspace(alice2_user_fs)
+    await alice2_user_fs.sync()
+    await alice_user_fs.sync()
+    alice_workspace = alice_user_fs.get_workspace(alice2_workspace.workspace_id)
+    await alice_workspace.sync()
+
+    w_f = logged_gui.test_get_files_widget()
+    # Navigate to workspaces list
+    wk_w = logged_gui.test_get_workspaces_widget()
+    async with aqtbot.wait_signal(wk_w.list_success):
+        w_f.table_files.item_activated.emit(FileType.ParentWorkspace, "Parent Workspace")
+    assert wk_w.isVisible() is True
+    assert w_f.isVisible() is False
+
+    assert wk_w.layout_workspaces.count() == 2
+    wk_button = wk_w.layout_workspaces.itemAt(1).widget()
+    assert wk_button.name == "w"
+
+    async with aqtbot.wait_signal(wk_w.load_workspace_clicked):
+        await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
+
+    assert w_f is not None
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        pass
+    assert w_f.table_files.rowCount() == 2
+    assert w_f.label_current_workspace.text() == "w"
+    assert w_f.line_edit_current_directory.text() == "/"
+    assert w_f.label_role.text() == "Owner"
+
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "rep")
+    assert w_f.table_files.rowCount() == 3
+    assert w_f.label_current_workspace.text() == "w"
+    assert w_f.line_edit_current_directory.text() == "/rep"
+    assert w_f.label_role.text() == "Owner"
+    for i in range(5):
+        assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentFolder
+        assert w_f.table_files.item(1, i).data(TYPE_DATA_INDEX) == FileType.File
+        assert w_f.table_files.item(2, i).data(TYPE_DATA_INDEX) == FileType.Inconsistency
+    assert w_f.table_files.item(1, 1).text() == "foo.txt"
+    assert w_f.table_files.item(2, 1).text() == "newfail.txt"
 
 
 @pytest.mark.gui

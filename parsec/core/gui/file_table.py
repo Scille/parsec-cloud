@@ -5,7 +5,7 @@ import pendulum
 import pathlib
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import (
     QTableWidget,
     QHeaderView,
@@ -22,6 +22,7 @@ from parsec.core.gui.file_items import (
     FileTableItem,
     CustomTableItem,
     FolderTableItem,
+    InconsistencyTableItem,
     FileType,
     NAME_DATA_INDEX,
     TYPE_DATA_INDEX,
@@ -261,6 +262,42 @@ class FileTable(QTableWidget):
         item.setData(NAME_DATA_INDEX, file_size)
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)
+        self.setItem(row_idx, 4, item)
+
+    def add_inconsistency(self, file_name, uuid):
+        inconsistency_color = QColor(255, 144, 155)
+        row_idx = self.rowCount()
+        self.insertRow(row_idx)
+        item = InconsistencyTableItem(False)
+        item.setData(NAME_DATA_INDEX, 1)
+        item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
+        item.setData(UUID_DATA_INDEX, uuid)
+        item.setBackground(inconsistency_color)
+        self.setItem(row_idx, 0, item)
+        item = CustomTableItem(file_name)
+        item.setToolTip("\n".join(file_name[i : i + 64] for i in range(0, len(file_name), 64)))
+        item.setData(NAME_DATA_INDEX, file_name)
+        item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
+        item.setData(UUID_DATA_INDEX, uuid)
+        item.setBackground(inconsistency_color)
+        self.setItem(row_idx, 1, item)
+        item = CustomTableItem()
+        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
+        item.setBackground(inconsistency_color)
+        item.setData(UUID_DATA_INDEX, uuid)
+        self.setItem(row_idx, 2, item)
+        item = CustomTableItem()
+        item.setData(NAME_DATA_INDEX, pendulum.datetime(1970, 1, 1))
+        item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
+        item.setData(UUID_DATA_INDEX, uuid)
+        item.setBackground(inconsistency_color)
+        self.setItem(row_idx, 3, item)
+        item = CustomTableItem(-1)
+        item.setData(NAME_DATA_INDEX, -1)
+        item.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
+        item.setData(UUID_DATA_INDEX, uuid)
+        item.setBackground(inconsistency_color)
         self.setItem(row_idx, 4, item)
 
     def dragEnterEvent(self, event):
