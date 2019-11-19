@@ -74,6 +74,53 @@ class CacheEntry(NamedTuple):
     manifest: RemoteManifest
 
 
+class ManifestCache:
+    def __init__(self, remote_loader):
+        self._manifest_cache = {}
+        self._remote_loader = remote_loader
+
+    async def load(self, entry_id: EntryID, version=None, timestamp=None):
+        try:
+            if version:
+                return self._manifest_cache[entry_id][version].manifest
+            if timestamp:
+                return next(
+                    (
+                        t.manifest
+                        for t in self._manifest_cache[entry_id].values()
+                        if t.early and t.late and t.early <= timestamp <= t.late
+                    )
+                )
+            return
+        except (KeyError, StopIteration):
+            pass
+        manifest = await self._remote_loader.load_manifest(
+            entry_id, version=version, timestamp=timestamp
+        )
+        if manifest.id not in self._manifest_cache:
+            self._manifest_cache[manifest.id] = {}
+        if manifest.version not in self._manifest_cache[manifest.id]:
+            self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                timestamp, timestamp, manifest
+            )
+        elif timestamp:
+            if (
+                self._manifest_cache[manifest.id][manifest.version].late is None
+                or timestamp > self._manifest_cache[manifest.id][manifest.version].late
+            ):
+                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                    self._manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
+                )
+            if (
+                self._manifest_cache[manifest.id][manifest.version].early is None
+                or timestamp < self._manifest_cache[manifest.id][manifest.version].early
+            ):
+                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                    timestamp, self._manifest_cache[manifest.id][manifest.version].late, manifest
+                )
+        return manifest
+
+
 async def list_versions(
     workspacefs, path: FsPath, skip_minimal_sync: bool = True
 ) -> List[TimestampBoundedData]:
@@ -84,48 +131,8 @@ async def list_versions(
         FSWorkspaceInMaintenance
         FSRemoteManifestNotFound
     """
-    manifest_cache = {}
+    manifest_cache = ManifestCache(workspacefs.remote_loader)
     versions_list_cache = {}
-
-    async def _load_manifest_or_cached(entry_id: EntryID, version=None, timestamp=None):
-        try:
-            if version:
-                return manifest_cache[entry_id][version][2]
-            if timestamp:
-                return next(
-                    (
-                        t.manifest
-                        for t in manifest_cache[entry_id].values()
-                        if t.early and t.late and t.early <= timestamp <= t.late
-                    )
-                )
-        except (KeyError, StopIteration):
-            pass
-        manifest = await workspacefs.remote_loader.load_manifest(
-            entry_id, version=version, timestamp=timestamp
-        )
-        if manifest.id not in manifest_cache:
-            manifest_cache[manifest.id] = {}
-        if manifest.version not in manifest_cache[manifest.id]:
-            manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                timestamp, timestamp, manifest
-            )
-        elif timestamp:
-            if (
-                manifest_cache[manifest.id][manifest.version].late is None
-                or timestamp > manifest_cache[manifest.id][manifest.version].late
-            ):
-                manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
-                )
-            if (
-                manifest_cache[manifest.id][manifest.version].early is None
-                or timestamp < manifest_cache[manifest.id][manifest.version].early
-            ):
-                manifest_cache[manifest.id][manifest.version] = CacheEntry(
-                    timestamp, manifest_cache[manifest.id][manifest.version].late, manifest
-                )
-        return manifest
 
     async def _list_versions(entry_id: EntryID):
         if entry_id in versions_list_cache:
@@ -137,7 +144,7 @@ async def list_versions(
         # Get first manifest
         try:
             current_id = entry_id
-            current_manifest = await _load_manifest_or_cached(
+            current_manifest = await manifest_cache.load(
                 current_id, version=version, timestamp=timestamp
             )
         except FSLocalMissError:
@@ -149,7 +156,7 @@ async def list_versions(
 
             # Get the manifest
             try:
-                parent_manifest = await _load_manifest_or_cached(
+                parent_manifest = await manifest_cache.load(
                     current_manifest.parent, version=version, timestamp=timestamp
                 )
             except FSLocalMissError:
@@ -193,7 +200,7 @@ async def list_versions(
     ):
         if early > late:
             return
-        manifest = await _load_manifest_or_cached(entry_id, version=version_number)
+        manifest = await manifest_cache.load(entry_id, version=version_number)
         data = ManifestDataAndMutablePaths(
             ManifestData(
                 manifest.author,
