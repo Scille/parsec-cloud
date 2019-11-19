@@ -75,6 +75,11 @@ class CacheEntry(NamedTuple):
 
 
 class ManifestCache:
+    """
+    Caches manifest through their version number, and the timeframe for which they could be
+    obtained.
+    """
+
     def __init__(self, remote_loader):
         self._manifest_cache = {}
         self._remote_loader = remote_loader
@@ -121,6 +126,22 @@ class ManifestCache:
         return manifest
 
 
+class VersionsListCache:
+    """
+    Caches results of the remote_loader.list_versions calls (working on EntryIDs).
+    """
+
+    def __init__(self, remote_loader):
+        self._versions_list_cache = {}
+        self._remote_loader = remote_loader
+
+    async def load(self, entry_id: EntryID):
+        if entry_id in self._versions_list_cache:
+            return self._versions_list_cache[entry_id]
+        self._versions_list_cache[entry_id] = await self._remote_loader.list_versions(entry_id)
+        return self._versions_list_cache[entry_id]
+
+
 async def list_versions(
     workspacefs, path: FsPath, skip_minimal_sync: bool = True
 ) -> List[TimestampBoundedData]:
@@ -132,13 +153,7 @@ async def list_versions(
         FSRemoteManifestNotFound
     """
     manifest_cache = ManifestCache(workspacefs.remote_loader)
-    versions_list_cache = {}
-
-    async def _list_versions(entry_id: EntryID):
-        if entry_id in versions_list_cache:
-            return versions_list_cache[entry_id]
-        versions_list_cache[entry_id] = await workspacefs.remote_loader.list_versions(entry_id)
-        return versions_list_cache[entry_id]
+    versions_list_cache = VersionsListCache(workspacefs.remote_loader)
 
     async def _get_path_at_timestamp(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
         # Get first manifest
@@ -260,7 +275,7 @@ async def list_versions(
         late: Pendulum,
     ):
         # TODO : Check if directory, melt the same entries through different parent
-        versions = await _list_versions(entry_id)
+        versions = await versions_list_cache.load(entry_id)
         for version, (timestamp, creator) in versions.items():
             next_version = min((v for v in versions if v > version), default=None)
             nursery.start_soon(
