@@ -251,7 +251,6 @@ requirements = [
     "pendulum==1.3.1",
     "PyNaCl==1.2.1",
     "trio==0.13.0",
-    "trio_typing==0.3.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
