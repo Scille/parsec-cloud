@@ -107,15 +107,15 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
                 self._ready.set()
                 while True:
                     await self._need_start.wait()
-                    self._need_stop.clear()
-                    self._stopped.clear()
+                    self._need_stop = trio.Event()
+                    self._stopped = trio.Event()
 
                     self._task = await start_task(self._nursery, _mountpoint_controlled_cb)
                     self._started.set()
 
                     await self._need_stop.wait()
-                    self._need_start.clear()
-                    self._started.clear()
+                    self._need_start = trio.Event()
+                    self._started = trio.Event()
                     await self._task.cancel_and_join()
                     self._stopped.set()
 
