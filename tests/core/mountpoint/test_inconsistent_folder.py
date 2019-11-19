@@ -38,7 +38,7 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
         mountpoint_path = await alice_mountpoint_manager.mount_workspace(workspace.workspace_id)
         assert mountpoint_path == (base_mountpoint / "w").absolute()
         await trio.run_sync_in_worker_thread(
-            _os_tests, mountpoint_path, errno.EIO, "Input/output error"
+            _os_tests, mountpoint_path, errno.EACCES, "Permission denied"
         )
 
 
