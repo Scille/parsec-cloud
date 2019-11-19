@@ -12,7 +12,6 @@ from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
 
 import attr
 import trio
-from trio_typing import TaskStatus, Nursery
 from async_generator import asynccontextmanager
 
 
@@ -125,7 +124,7 @@ def _get_coroutine_or_flag_problem(
 
 
 @asynccontextmanager
-async def open_service_nursery() -> AsyncIterator[Nursery]:
+async def open_service_nursery() -> AsyncIterator:
     """Provides a nursery augmented with a cancellation ordering constraint.
     If an entire service nursery becomes cancelled, either due to an
     exception raised by some task in the nursery or due to the
@@ -164,7 +163,7 @@ async def open_service_nursery() -> AsyncIterator[Nursery]:
         async def start(
             async_fn: Callable[..., Awaitable[Any]], *args: Any, name: Optional[str] = None
         ) -> Any:
-            async def wrap_child(*, task_status: TaskStatus[Any]) -> None:
+            async def wrap_child(*, task_status) -> None:
                 # For start(), the child doesn't get shielded until it
                 # calls task_status.started().
                 shield_scope = child_task_scopes.open_child(shield=False)
