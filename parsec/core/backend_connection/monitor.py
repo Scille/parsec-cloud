@@ -30,8 +30,8 @@ async def monitor_backend_connection(event_bus, *, task_status=trio.TASK_STATUS_
         if connection_states[event_bus] != BackendState.INCOMPATIBLE_VERSION:
             event_bus.send("backend.connection.lost")
             connection_states[event_bus] = BackendState.LOST
-        for e in events.values():
-            e.clear()
+        for name in events:
+            events[name] = trio.Event()
         nursery.cancel_scope.cancel()
 
     async def wait_incompatible_version():

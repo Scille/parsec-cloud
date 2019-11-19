@@ -397,7 +397,7 @@ class BackendApp:
 
             if hasattr(client_ctx, "event_bus_ctx"):
                 with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
-                    with trio.open_cancel_scope() as cancel_scope:
+                    with trio.CancelScope() as cancel_scope:
 
                         def _on_revoked(event, organization_id, user_id):
                             if (

@@ -23,7 +23,7 @@ from parsec.core.gui.lang import switch_language
 class ThreadedTrioTestRunner:
     def __init__(self):
         self._thread = None
-        self._portal = None
+        self._trio_token = None
         self._request_queue = queue.Queue()
         self._test_result = futures.Future()
         self._job_scheduler = QtToTrioJobScheduler()
@@ -45,14 +45,14 @@ class ThreadedTrioTestRunner:
 
     def stop_test_thread(self):
         # Set the stopping state event
-        self._portal.run_sync(self._stopping.set)
+        trio.from_thread.run_sync(self._stopping.set, trio_token=self._trio_token)
         self._thread.join()
 
     async def send_action(self, fn, *args, **kwargs):
         reply_sender, reply_receiver = trio.open_memory_channel(1)
 
         def reply_callback(future):
-            self._portal.run_sync(reply_sender.send_nowait, future)
+            trio.from_thread.run_sync(reply_sender.send_nowait, future, trio_token=self._trio_token)
 
         request = partial(fn, *args, **kwargs)
         self._request_queue.put_nowait((request, reply_callback))
@@ -82,7 +82,7 @@ class ThreadedTrioTestRunner:
         # Initialize trio objects
         self._lock = trio.Lock()
         self._stopping = trio.Event()
-        self._portal = trio.BlockingTrioPortal()
+        self._trio_token = trio.hazmat.current_trio_token()
 
         # Set the started state event
         self._started.set()
