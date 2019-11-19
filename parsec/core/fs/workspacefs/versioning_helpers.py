@@ -51,6 +51,19 @@ class ManifestDataAndPaths(NamedTuple):
     destination: FsPath
 
 
+class ManifestDataAndMutablePaths:
+    """
+    Contains a manifest and his known current, previous and next paths.
+    Unlike ManifestDataAndPaths, attributes are mutable.
+    """
+
+    def __init__(self, manifest, source_path=None, destination_path=None, current_path=None):
+        self.manifest = manifest
+        self.source = source_path
+        self.destination = destination_path
+        self.current = current_path
+
+
 class CacheEntry(NamedTuple):
     """
     Contains a manifest and the earliest and last timestamp for which its version has been returned
@@ -71,7 +84,6 @@ async def list_versions(
         FSWorkspaceInMaintenance
         FSRemoteManifestNotFound
     """
-    # Could be optimized if we could use manifest.updated
     manifest_cache = {}
     versions_list_cache = {}
 
@@ -121,8 +133,7 @@ async def list_versions(
         versions_list_cache[entry_id] = await workspacefs.remote_loader.list_versions(entry_id)
         return versions_list_cache[entry_id]
 
-    async def _get_past_path(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
-
+    async def _get_path_at_timestamp(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
         # Get first manifest
         try:
             current_id = entry_id
@@ -163,6 +174,12 @@ async def list_versions(
         # Return the path
         return FsPath("/" + "/".join(reversed(parts)))
 
+    async def _try_get_path_at_timestamp(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
+        try:
+            return await _get_path_at_timestamp(entry_id, version, timestamp)
+        except (FSRemoteManifestNotFoundBadVersion, EntryNotFound):
+            return None
+
     async def _populate_tree_load(
         nursery,
         target: FsPath,
@@ -177,38 +194,38 @@ async def list_versions(
         if early > late:
             return
         manifest = await _load_manifest_or_cached(entry_id, version=version_number)
-        data = [
+        data = ManifestDataAndMutablePaths(
             ManifestData(
                 manifest.author,
                 manifest.updated,
                 is_folder_manifest(manifest),
                 None if not is_file_manifest(manifest) else manifest.size,
-            ),
-            None,  # Source path
-            None,  # Destination path
-            None,  # Current path
-        ]
+            )
+        )
         if len(target.parts) == path_level:
 
-            async def _populate_path_w_index(data, index, entry_id, timestamp):
-                try:
-                    data[index] = await _get_past_path(entry_id, timestamp=timestamp)
-                except (FSRemoteManifestNotFoundBadVersion, EntryNotFound):
-                    pass
+            async def _populate_source_path(data, entry_id, timestamp):
+                data.source = await _try_get_path_at_timestamp(entry_id, timestamp=timestamp)
+
+            async def _populate_destination_path(data, entry_id, timestamp):
+                data.destination = await _try_get_path_at_timestamp(entry_id, timestamp=timestamp)
+
+            async def _populate_current_path(data, entry_id, timestamp):
+                data.current = await _try_get_path_at_timestamp(entry_id, timestamp=timestamp)
 
             # TODO : Use future manifest source field to follow files and directories
             async with trio.open_service_nursery() as child_nursery:
                 child_nursery.start_soon(
-                    _populate_path_w_index, data, 1, entry_id, early.add(microseconds=-1)
+                    _populate_source_path, data, entry_id, early.add(microseconds=-1)
                 )
-                child_nursery.start_soon(_populate_path_w_index, data, 2, entry_id, late)
-                child_nursery.start_soon(_populate_path_w_index, data, 3, entry_id, early)
+                child_nursery.start_soon(_populate_destination_path, data, entry_id, late)
+                child_nursery.start_soon(_populate_current_path, data, entry_id, early)
             tree[
                 TimestampBoundedEntry(manifest.id, manifest.version, early, late)
             ] = ManifestDataAndPaths(
-                data=data[0],
-                source=data[1] if data[1] != data[3] else None,
-                destination=data[2] if data[2] != data[3] else None,
+                data=data.manifest,
+                source=data.source if data.source != data.current else None,
+                destination=data.destination if data.destination != data.current else None,
             )
         else:
             if not is_file_manifest(manifest):
