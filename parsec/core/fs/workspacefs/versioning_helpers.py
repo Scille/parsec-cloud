@@ -4,6 +4,7 @@ import trio
 from typing import List, NamedTuple
 from pendulum import Pendulum
 
+from parsec.api.data import Manifest as RemoteManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
@@ -50,6 +51,16 @@ class ManifestDataAndPaths(NamedTuple):
     destination: FsPath
 
 
+class CacheEntry(NamedTuple):
+    """
+    Contains a manifest and the earliest and last timestamp for which its version has been returned
+    """
+
+    early: Pendulum
+    late: Pendulum
+    manifest: RemoteManifest
+
+
 async def list_versions(
     workspacefs, path: FsPath, skip_minimal_sync: bool = True
 ) -> List[TimestampBoundedData]:
@@ -71,9 +82,9 @@ async def list_versions(
             if timestamp:
                 return next(
                     (
-                        t[2]
+                        t.manifest
                         for t in manifest_cache[entry_id].values()
-                        if t[0] and t[1] and t[0] <= timestamp <= t[1]
+                        if t.early and t.late and t.early <= timestamp <= t.late
                     )
                 )
         except (KeyError, StopIteration):
@@ -84,25 +95,23 @@ async def list_versions(
         if manifest.id not in manifest_cache:
             manifest_cache[manifest.id] = {}
         if manifest.version not in manifest_cache[manifest.id]:
-            manifest_cache[manifest.id][manifest.version] = (timestamp, timestamp, manifest)
+            manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                timestamp, timestamp, manifest
+            )
         elif timestamp:
             if (
-                manifest_cache[manifest.id][manifest.version][1] is None
-                or timestamp > manifest_cache[manifest.id][manifest.version][1]
+                manifest_cache[manifest.id][manifest.version].late is None
+                or timestamp > manifest_cache[manifest.id][manifest.version].late
             ):
-                manifest_cache[manifest.id][manifest.version] = (
-                    manifest_cache[manifest.id][manifest.version][0],
-                    timestamp,
-                    manifest,
+                manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                    manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
                 )
             if (
-                manifest_cache[manifest.id][manifest.version][0] is None
-                or timestamp < manifest_cache[manifest.id][manifest.version][0]
+                manifest_cache[manifest.id][manifest.version].early is None
+                or timestamp < manifest_cache[manifest.id][manifest.version].early
             ):
-                manifest_cache[manifest.id][manifest.version] = (
-                    timestamp,
-                    manifest_cache[manifest.id][manifest.version][1],
-                    manifest,
+                manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                    timestamp, manifest_cache[manifest.id][manifest.version].late, manifest
                 )
         return manifest
 
@@ -300,10 +309,8 @@ async def list_versions(
             ):
                 previous = item
                 continue
-            new_list.append(
-                TimestampBoundedData(*previous[:8], previous.source, previous.destination)
-            )
+            new_list.append(previous)
         previous = item
     if previous:
-        new_list.append(TimestampBoundedData(*previous[:8], previous.source, previous.destination))
+        new_list.append(previous)
     return new_list
