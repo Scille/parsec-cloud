@@ -6,6 +6,13 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.2.1 (2019-11-20)
+-------------------------
+
+* Add view to Display changelog history in the GUI (`#788
+  <https://github.com/Scille/parsec-cloud/issues/788>`__)
+
+
 Parsec 1.2.0 (2019-11-15)
 -------------------------
 
