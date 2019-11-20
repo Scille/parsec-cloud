@@ -75,6 +75,31 @@ class GeneratePyQtResourcesBundle(Command):
             print("PyQt5 not installed, skipping `parsec.core.gui._resources_rc` generation.")
 
 
+class GenerateChangelog(Command):
+    description = "Convert HISTORY.rst to HTML"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import docutils.core
+
+        self.announce(
+            "Converting HISTORY.rst to parsec/core/gui/rc/misc/history.html",
+            level=distutils.log.INFO,
+        )
+        docutils.core.publish_file(
+            source_path="HISTORY.rst",
+            destination_path="parsec/core/gui/rc/misc/history.html",
+            writer_name="html",
+        )
+
+
 class GeneratePyQtForms(Command):
     description = "Generates `parsec.core.ui.*` forms module"
 
@@ -224,6 +249,7 @@ class build_py_with_pyqt(build_py):
     def run(self):
         self.run_command("generate_pyqt_forms")
         self.run_command("compile_translations")
+        self.run_command("generate_changelog")
         self.run_command("generate_pyqt_resources_bundle")
         return super().run()
 
@@ -284,6 +310,7 @@ test_requirements = [
 
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = ("Babel==2.6.0",)
+DOCUTILS_DEP = "docutils==0.14"
 extra_requirements = {
     "core": [
         PYQT_DEP,
@@ -319,11 +346,12 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[PYQT_DEP, BABEL_DEP, "wheel"],  # To generate resources bundle
+    setup_requires=[PYQT_DEP, BABEL_DEP, "wheel", DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
         "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
+        "generate_changelog": GenerateChangelog,
         "generate_pyqt_forms": GeneratePyQtForms,
         "extract_translations": ExtractTranslations,
         "compile_translations": CompileTranslations,
