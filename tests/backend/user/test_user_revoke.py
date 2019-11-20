@@ -41,11 +41,15 @@ async def test_backend_close_on_user_revoke(
     async with backend_sock_factory(
         backend, bob, freeze_on_transport_error=False
     ) as bob_backend_sock:
-        rep = await user_revoke(
-            alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice
-        )
-        assert rep["status"] == "ok"
-        # bob cannot send new command
+        with backend.event_bus.listen() as spy:
+            rep = await user_revoke(
+                alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice
+            )
+            assert rep == {"status": "ok"}
+            await spy.wait_with_timeout(
+                "user.revoked", {"organization_id": bob.organization_id, "user_id": bob.user_id}
+            )
+        # Bob cannot send new command
         with pytest.raises(TransportError):
             await bob_backend_sock.send(packb({"cmd": "ping", "ping": "foo"}))
 
