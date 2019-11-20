@@ -10,7 +10,8 @@ import pendulum
 
 from parsec.core.types import WorkspaceRole
 from parsec.core.logged_core import LoggedCore
-from parsec.core.fs import UserFS
+from parsec.core.fs import UserFS, WorkspaceFS
+from parsec.core.types import FsPath, EntryID
 from parsec.api.transport import Transport, TransportError
 
 
@@ -214,3 +215,23 @@ def compare_fs_dumps(entry_1, entry_2):
         for key, child_for_entry_1 in entry_1["children"].items():
             child_for_entry_2 = entry_2["children"][key]
             compare_fs_dumps(child_for_entry_1, child_for_entry_2)
+
+
+async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
+    await workspace.mkdir(dir)
+    await workspace.touch(dir / "foo.txt")
+    rep_info = await workspace.transactions.entry_info(dir)
+    rep_manifest = await workspace.local_storage.get_manifest(rep_info["id"])
+    children = rep_manifest.children
+    children["newfail.txt"] = EntryID("b9295787-d9aa-6cbd-be27-1ff83ac72fa6")
+    rep_manifest.evolve(children=children)
+    async with workspace.local_storage.lock_manifest(rep_info["id"]):
+        await workspace.local_storage.set_manifest(rep_info["id"], rep_manifest)
+    await workspace.sync()
+
+
+async def create_inconsistent_workspace(user_fs: UserFS, name="w") -> WorkspaceFS:
+    wid = await user_fs.workspace_create(name)
+    workspace = user_fs.get_workspace(wid)
+    await make_workspace_dir_inconsistent(workspace, FsPath("/rep"))
+    return workspace

@@ -8,7 +8,7 @@ from parsec.core.local_device import save_device_with_password
 
 from parsec.core.gui.file_items import FileType, NAME_DATA_INDEX, TYPE_DATA_INDEX
 
-from tests.core.fs.workspacefs.conftest import create_inconsistent_workspace
+from tests.common import create_inconsistent_workspace
 
 
 @pytest.fixture
