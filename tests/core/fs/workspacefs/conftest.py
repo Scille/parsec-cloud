@@ -19,8 +19,8 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
     await workspace.sync()
 
 
-async def create_inconsistent_workspace(user_fs: UserFS) -> WorkspaceFS:
-    wid = await user_fs.workspace_create("w")
+async def create_inconsistent_workspace(user_fs: UserFS, name="w") -> WorkspaceFS:
+    wid = await user_fs.workspace_create(name)
     workspace = user_fs.get_workspace(wid)
     await make_workspace_dir_inconsistent(workspace, FsPath("/rep"))
     return workspace
