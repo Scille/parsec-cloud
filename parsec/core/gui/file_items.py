@@ -18,6 +18,7 @@ class FileType(IntEnum):
     ParentFolder = 2
     Folder = 3
     File = 4
+    Inconsistency = 5
 
 
 class CustomTableItem(QTableWidgetItem):
@@ -120,3 +121,10 @@ class FolderTableItem(IconTableItem):
         super().__init__(is_synced, ":/icons/images/icons/folder.png", "", *args, **kwargs)
         self.setData(NAME_DATA_INDEX, 0)
         self.setData(TYPE_DATA_INDEX, FileType.Folder)
+
+
+class InconsistencyTableItem(IconTableItem):
+    def __init__(self, is_synced, *args, **kwargs):
+        super().__init__(is_synced, ":/icons/images/icons/warning.png", "", *args, **kwargs)
+        self.setData(NAME_DATA_INDEX, 0)
+        self.setData(TYPE_DATA_INDEX, FileType.Inconsistency)
