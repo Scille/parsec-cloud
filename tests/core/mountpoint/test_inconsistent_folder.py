@@ -10,6 +10,7 @@ from parsec.core.mountpoint import mountpoint_manager_factory
 from tests.core.fs.workspacefs.conftest import create_inconsistent_workspace
 
 # This winerror code corresponds to ntstatus.STATUS_HOST_UNREACHABLE
+WINDOWS_ERROR_PERMISSION_DENIED = 5
 WINDOWS_ERROR_HOST_UNREACHABLE = 1232
 
 
@@ -43,7 +44,7 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
         await trio.to_thread.run_sync(
             _os_tests,
             mountpoint_path,
-            errno.EIO if os.name == "nt" else errno.EACCES,
+            WINDOWS_ERROR_PERMISSION_DENIED if os.name == "nt" else errno.EACCES,
             "Permission denied",
         )
 
