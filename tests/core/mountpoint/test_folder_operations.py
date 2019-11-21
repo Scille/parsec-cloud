@@ -22,9 +22,12 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 class expect_raises:
-    def __init__(self, expected_exc, fallback_exc=None):
-        self.expected_exc = expected_exc
-        self.fallback_exc = fallback_exc
+    def __init__(self, *expected_excs):
+        try:
+            self.expected_exc, *self.fallback_excs = expected_excs
+        except ValueError:
+            self.expected_exc = None
+            self.fallback_excs = ()
 
     def __enter__(self):
         __tracebackhide__ = True
@@ -37,16 +40,31 @@ class expect_raises:
             return False
 
         if not exc_type:
-            raise AssertionError(f"DID NOT RAISED {self.expected_exc!r}")
+            if not self.fallback_excs:
+                raise AssertionError(f"DID NOT RAISED {self.expected_exc!r}")
 
-        if self.fallback_exc:
-            allowed = (type(self.expected_exc), type(self.fallback_exc))
+            else:
+                raise AssertionError(
+                    f"DID NOT RAISED {self.expected_exc!r}"
+                    f" OR {' OR '.join(exc) for exc in self.fallback_excs}"
+                )
+
+        if self.fallback_excs:
+            allowed = (type(self.expected_exc), *map(type, self.fallback_excs))
         else:
             allowed = type(self.expected_exc)
+
         if not isinstance(exc_value, allowed):
-            raise AssertionError(
-                f"RAISED {exc_value!r} BUT EXPECTED {self.expected_exc!r}"
-            ) from exc_value
+            if not self.fallback_excs:
+                raise AssertionError(
+                    f"RAISED {exc_value!r} BUT EXPECTED {self.expected_exc!r}"
+                ) from exc_value
+
+            else:
+                raise AssertionError(
+                    f"RAISED {exc_value!r} BUT EXPECTED {self.expected_exc!r}"
+                    f" OR {' OR '.join(exc) for exc in self.fallback_excs}"
+                ) from exc_value
 
         return True
 
@@ -79,6 +97,27 @@ class PathElement:
         assert isinstance(path, str) and path[0] != "/"
         absolute_path = f"/{path}" if self.absolute_path == "/" else f"{self.absolute_path}/{path}"
         return PathElement(absolute_path, self.parsec_root, self.oracle_root)
+
+
+def translate_exception_into_compatible_ones(exc, is_touch_operation=False):
+    if os.name != "nt":
+        return (exc,)
+
+    fallback_exc = None
+
+    if is_touch_operation:
+        # WinFSP raises `OSError(22, 'Invalid argument')` instead
+        # of `FileNotFoundError(2, 'No such file or directory')`
+        if isinstance(exc, FileNotFoundError):
+            fallback_exc = OSError(22, "Invalid argument")
+
+    else:
+        # WinFSP raises `NotADirectoryError(20, 'The directory name is invalid')`
+        # instead of `FileNotFoundError(2, 'The system cannot find the path specified')`
+        if isinstance(exc, FileNotFoundError):
+            fallback_exc = NotADirectoryError(20, "The directory name is invalid")
+
+    return (exc, fallback_exc) if fallback_exc else (exc,)
 
 
 @pytest.mark.slow
@@ -121,18 +160,15 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
         def touch(self, parent, name):
             path = parent / name
 
-            expected_exc = None
-            fallback_exc = None
+            expected_excs = ()
             try:
                 path.to_oracle().touch(exist_ok=False)
             except OSError as exc:
-                expected_exc = exc
-                # WinFSP raises `OSError(22, 'Invalid argument')` instead
-                # of `FileNotFoundError(2, 'No such file or directory')`
-                if os.name == "nt" and isinstance(exc, FileNotFoundError):
-                    fallback_exc = OSError(22, "Invalid argument")
+                expected_excs = translate_exception_into_compatible_ones(
+                    exc, is_touch_operation=True
+                )
 
-            with expect_raises(expected_exc, fallback_exc):
+            with expect_raises(*expected_excs):
                 path.to_parsec().touch(exist_ok=False)
 
             return path
@@ -141,65 +177,60 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
         def mkdir(self, parent, name):
             path = parent / name
 
-            expected_exc = None
-            fallback_exc = None
+            expected_excs = ()
             try:
                 path.to_oracle().mkdir(exist_ok=False)
             except OSError as exc:
-                expected_exc = exc
-                # WinFSP raises `NotADirectoryError(20, 'The directory name is invalid')`
-                # instead of `FileNotFoundError(2, 'The system cannot find the path specified')`
-                if os.name == "nt" and isinstance(exc, FileNotFoundError):
-                    fallback_exc = NotADirectoryError(20, "The directory name is invalid")
+                expected_excs = translate_exception_into_compatible_ones(exc)
 
-            with expect_raises(expected_exc, fallback_exc):
+            with expect_raises(*expected_excs):
                 path.to_parsec().mkdir(exist_ok=False)
 
             return path
 
         @rule(path=Files)
         def unlink(self, path):
-            expected_exc = None
+            expected_excs = ()
             try:
                 path.to_oracle().unlink()
             except OSError as exc:
-                expected_exc = exc
+                expected_excs = translate_exception_into_compatible_ones(exc)
 
-            with expect_raises(expected_exc):
+            with expect_raises(*expected_excs):
                 path.to_parsec().unlink()
 
         @rule(path=Files, length=st.integers(min_value=0, max_value=16))
         def resize(self, path, length):
-            expected_exc = None
+            expected_excs = ()
             try:
                 os.truncate(path.to_oracle(), length)
             except OSError as exc:
-                expected_exc = exc
+                expected_excs = translate_exception_into_compatible_ones(exc)
 
-            with expect_raises(expected_exc):
+            with expect_raises(*expected_excs):
                 os.truncate(path.to_parsec(), length)
 
         @rule(path=NonRootFolder)
         def rmdir(self, path):
-            expected_exc = None
+            expected_excs = ()
             try:
                 path.to_oracle().rmdir()
             except OSError as exc:
-                expected_exc = exc
+                expected_excs = translate_exception_into_compatible_ones(exc)
 
-            with expect_raises(expected_exc):
+            with expect_raises(*expected_excs):
                 path.to_parsec().rmdir()
 
         def _move(self, src, dst_parent, dst_name):
             dst = dst_parent / dst_name
 
-            expected_exc = None
+            expected_excs = ()
             try:
                 oracle_rename(src.to_oracle(), dst.to_oracle())
             except OSError as exc:
-                expected_exc = exc
+                expected_excs = translate_exception_into_compatible_ones(exc)
 
-            with expect_raises(expected_exc):
+            with expect_raises(*expected_excs):
                 src.to_parsec().rename(str(dst.to_parsec()))
 
             return dst
@@ -214,16 +245,16 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
         @rule(path=Folders)
         def iterdir(self, path):
-            expected_exc = None
+            expected_excs = ()
             try:
                 expected_children = {x.name for x in path.to_oracle().iterdir()}
             except OSError as exc:
-                expected_exc = exc
+                expected_excs = translate_exception_into_compatible_ones(exc)
 
-            with expect_raises(expected_exc):
+            with expect_raises(*expected_excs):
                 children = {x.name for x in path.to_parsec().iterdir()}
 
-            if not expected_exc:
+            if not expected_excs:
                 assert children == expected_children
 
     run_state_machine_as_test(FolderOperationsStateMachine, settings=hypothesis_settings)
