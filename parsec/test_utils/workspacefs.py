@@ -1,9 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.fs.userfs import UserFS
-from parsec.core.fs.workspacefs import WorkspaceFS
-from parsec.core.types import FsPath
-from parsec.core.types import EntryID
+from parsec.core.fs import UserFS, WorkspaceFS
+from parsec.core.types import FsPath, EntryID
 
 
 async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
