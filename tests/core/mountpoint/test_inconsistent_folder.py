@@ -6,8 +6,7 @@ import pytest
 import trio
 
 from parsec.core.mountpoint import mountpoint_manager_factory
-
-from tests.common import create_inconsistent_workspace
+from parsec.test_utils import create_inconsistent_workspace
 
 # This winerror code corresponds to ntstatus.STATUS_HOST_UNREACHABLE
 WINDOWS_ERROR_HOST_UNREACHABLE = 1232
