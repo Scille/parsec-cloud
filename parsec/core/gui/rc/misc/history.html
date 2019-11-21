@@ -364,9 +364,53 @@ ul.auto-toc {
 <h1 class="title">History</h1>
 
 <!-- towncrier release notes start -->
+<div class="section" id="parsec-1-2-1-2019-11-20">
+<h1>Parsec 1.2.1 (2019-11-20)</h1>
+<ul class="simple">
+<li>Add view to Display changelog history in the GUI (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/788">#788</a>)</li>
+</ul>
+</div>
+<div class="section" id="parsec-1-2-0-2019-11-15">
+<h1>Parsec 1.2.0 (2019-11-15)</h1>
+<div class="section" id="features">
+<h2>Features</h2>
+<ul class="simple">
+<li>Backend now checks if timestamp is not inferior of existant on vlob update, if
+it is, sends an error to client which temporarily goes offline to avoid the
+handling of this event in a retry loop.  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/758">#758</a>)</li>
+<li>Add notification in GUI when an operation in the mountpoint failed in an
+unexpected manner. (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/759">#759</a>)</li>
+<li>Limit a tab title to a few characters and add a tooltip to tabs  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/775">#775</a>)</li>
+<li>Add tooltips to taskbar buttons  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/776">#776</a>)</li>
+<li>Removed duplicates and supposed minimal sync when listing versions of a path
+(<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/784">#784</a>)</li>
+</ul>
+</div>
+<div class="section" id="bugfixes">
+<h2>Bugfixes</h2>
+<ul class="simple">
+<li>Fix crash on Linux when the ipc server lock file is located in a non existant
+directory (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/760">#760</a>)</li>
+<li>Fix crash in ipc server when socket file path contains missing folder (only on
+windows).  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/765">#765</a>)</li>
+<li>Fix rights checking in winfsp operations. This issue used to cause a cffi
+crash on windows when some operations were performed on the file system.
+(<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/770">#770</a>)</li>
+<li>Fix len check in <tt class="docutils literal">OrganizationID</tt>/<tt class="docutils literal">UserID</tt>/<tt class="docutils literal">DeviceName</tt>/<tt class="docutils literal">DeviceID</tt>
+when containing multibytes unicode characters. (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/794">#794</a>)</li>
+<li>Improve support of unicode in the mountpoint on Windows. (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/799">#799</a>)</li>
+</ul>
+</div>
+<div class="section" id="miscellaneous-internal-changes">
+<h2>Miscellaneous internal changes</h2>
+<ul class="simple">
+<li>Improve logging output on backend server  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/753">#753</a>)</li>
+</ul>
+</div>
+</div>
 <div class="section" id="parsec-1-1-2-2019-10-22">
 <h1>Parsec 1.1.2 (2019-10-22)</h1>
-<div class="section" id="miscellaneous-internal-changes">
+<div class="section" id="id1">
 <h2>Miscellaneous internal changes</h2>
 <ul class="simple">
 <li>Small GUI improvements on white border around main tab and url
@@ -378,7 +422,7 @@ previous version (<a class="reference external" href="https://github.com/Scille/
 </div>
 <div class="section" id="parsec-1-1-1-2019-10-21">
 <h1>Parsec 1.1.1 (2019-10-21)</h1>
-<div class="section" id="bugfixes">
+<div class="section" id="id2">
 <h2>Bugfixes</h2>
 <ul class="simple">
 <li>Fix argument parsing in backend cli commands (<tt class="docutils literal">PARSEC_CMD_ARGS</tt> env var, db
@@ -388,7 +432,7 @@ param and S3 entry point default value) (<a class="reference external" href="htt
 </div>
 <div class="section" id="parsec-1-1-0-2019-10-21">
 <h1>Parsec 1.1.0 (2019-10-21)</h1>
-<div class="section" id="features">
+<div class="section" id="id3">
 <h2>Features</h2>
 <ul class="simple">
 <li>Add support for IPC communication in GUI to have a single instance running.
@@ -396,7 +440,7 @@ Also add tab support &amp; handle parsec:// url as start argument.  (<a class="r
 <li>Rework backend cli argument and environ variable handling  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/701">#701</a>)</li>
 </ul>
 </div>
-<div class="section" id="id1">
+<div class="section" id="id4">
 <h2>Bugfixes</h2>
 <ul class="simple">
 <li>Fix pure HTTP query handling in backend (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/699">#699</a>)</li>
@@ -408,7 +452,7 @@ manifest and it author's role certificate (<a class="reference external" href="h
 application shutdown (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/737">#737</a>)</li>
 </ul>
 </div>
-<div class="section" id="id2">
+<div class="section" id="id5">
 <h2>Miscellaneous internal changes</h2>
 <ul class="simple">
 <li>Allow dash character (i.e. <tt class="docutils literal">-</tt>) in OrganizationID, UserID &amp; DeviceName
