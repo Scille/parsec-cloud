@@ -24,7 +24,10 @@ async def test_inconsistent_folder_no_network(base_mountpoint, running_backend, 
         assert mountpoint_path == (base_mountpoint / "w").absolute()
         with running_backend.offline():
             await trio.to_thread.run_sync(
-                _os_tests, mountpoint_path, errno.EHOSTUNREACH, "No route to host"
+                _os_tests,
+                mountpoint_path,
+                WINDOWS_ERROR_HOST_UNREACHABLE if os.name == "nt" else errno.EHOSTUNREACH,
+                "No route to host",
             )
 
 
