@@ -1,0 +1,1 @@
+Fixed config not saved when updating from the settings tab when logged in
