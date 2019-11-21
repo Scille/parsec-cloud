@@ -28,7 +28,6 @@ async def test_inconsistent_folder_no_network(base_mountpoint, running_backend, 
                 _os_tests,
                 mountpoint_path,
                 WINDOWS_ERROR_HOST_UNREACHABLE if os.name == "nt" else errno.EHOSTUNREACH,
-                "No route to host",
             )
 
 
@@ -45,11 +44,10 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
             _os_tests,
             mountpoint_path,
             WINDOWS_ERROR_PERMISSION_DENIED if os.name == "nt" else errno.EACCES,
-            "Permission denied",
         )
 
 
-def _os_tests(mountpoint_path, error_code, error_str):
+def _os_tests(mountpoint_path, error_code):
     assert ((mountpoint_path / "rep").stat()).st_nlink == 1 if os.name == "nt" else 2
     os.listdir(mountpoint_path)
 
@@ -72,4 +70,3 @@ def _os_tests(mountpoint_path, error_code, error_str):
             [os.stat(entry) for entry in entries]
         assert exc.value.errno == error_code
         assert exc.value.filename[-16:] == "/rep/newfail.txt"
-        assert exc.value.strerror == error_str
