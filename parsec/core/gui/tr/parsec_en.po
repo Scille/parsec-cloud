@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-11-13 09:48+0100\n"
-"PO-Revision-Date: 2019-11-13 09:49+0100\n"
+"POT-Creation-Date: 2019-11-21 08:53+0100\n"
+"PO-Revision-Date: 2019-11-21 08:54+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1451,6 +1451,15 @@ msgstr "Roles have been updated."
 
 msgid "PARSEC_WINDOW_TITLE"
 msgstr "Parsec - {}"
+
+msgid "BUTTON_ADD_INSTANCE"
+msgstr "Add an instance"
+
+msgid "ASK_ADD_TAB_TITLE"
+msgstr "Open a new instance"
+
+msgid "ASK_ADD_TAB_CONTENT"
+msgstr "Do you want to open a new tab?"
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"
