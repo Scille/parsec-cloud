@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-from secrets import token_hex
+import secrets
 from typing import Optional
 import pendulum
 
@@ -64,8 +64,9 @@ class InviteClaimInvalidTokenError(InviteClaimError):
     pass
 
 
-def generate_invitation_token():
-    return token_hex(8)
+def generate_invitation_token(length=6):
+    """Generate a random token of 6 digits"""
+    return str(secrets.randbelow(10 ** length)).rjust(length, "0")
 
 
 async def claim_user(
