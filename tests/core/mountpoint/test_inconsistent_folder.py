@@ -6,8 +6,8 @@ import pytest
 import trio
 
 from parsec.core.mountpoint import mountpoint_manager_factory
+from parsec.test_utils import create_inconsistent_workspace
 
-from tests.core.fs.workspacefs.conftest import create_inconsistent_workspace
 
 # winerror codes corresponding to ntstatus errors
 WINDOWS_ERROR_PERMISSION_DENIED = 5  # ntstatus.ERROR_ACCESS_DENIED
@@ -25,9 +25,7 @@ async def test_inconsistent_folder_no_network(base_mountpoint, running_backend, 
         assert mountpoint_path == (base_mountpoint / "w").absolute()
         with running_backend.offline():
             await trio.to_thread.run_sync(
-                _os_tests,
-                mountpoint_path,
-                WINDOWS_ERROR_HOST_UNREACHABLE if os.name == "nt" else errno.EHOSTUNREACH,
+                _os_tests, mountpoint_path, errno.EHOSTUNREACH, WINDOWS_ERROR_HOST_UNREACHABLE
             )
 
 
@@ -41,13 +39,11 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
         mountpoint_path = await alice_mountpoint_manager.mount_workspace(workspace.workspace_id)
         assert mountpoint_path == (base_mountpoint / "w").absolute()
         await trio.to_thread.run_sync(
-            _os_tests,
-            mountpoint_path,
-            WINDOWS_ERROR_PERMISSION_DENIED if os.name == "nt" else errno.EACCES,
+            _os_tests, mountpoint_path, errno.EACCES, WINDOWS_ERROR_PERMISSION_DENIED
         )
 
 
-def _os_tests(mountpoint_path, error_code):
+def _os_tests(mountpoint_path, error_code, winerror):
 
     # Check stat of inconsistent dir counts one file on Windows, 2 on Linux
     assert ((mountpoint_path / "rep").stat()).st_nlink == 1 if os.name == "nt" else 2
@@ -59,7 +55,7 @@ def _os_tests(mountpoint_path, error_code):
     if os.name == "nt":
         with pytest.raises(OSError) as exc:
             os.listdir(mountpoint_path / "rep")
-        assert exc.value.winerror == error_code
+        assert exc.value.winerror == winerror
         assert exc.value.filename[-3:] == "rep"
     else:
         assert os.listdir(mountpoint_path / "rep") == ["foo.txt", "newfail.txt"]
@@ -69,7 +65,7 @@ def _os_tests(mountpoint_path, error_code):
     if os.name == "nt":
         with pytest.raises(OSError) as exc:
             [dir_entry for dir_entry in os.scandir(mountpoint_path / "rep")]
-        assert exc.value.winerror == error_code
+        assert exc.value.winerror == winerror
         assert exc.value.filename[-3:] == "rep"
     else:
         entries = [dir_entry for dir_entry in os.scandir(mountpoint_path / "rep")]
