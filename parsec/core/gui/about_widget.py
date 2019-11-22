@@ -18,7 +18,7 @@ class AboutWidget(QWidget, Ui_AboutWidget):
         self.setupUi(self)
         self.text_license.setHtml(_("PARSEC_LICENSE_CONTENT"))
 
-        rc_file = QFile(":/misc/misc/history.html")
+        rc_file = QFile(":/generated_misc/generated_misc/history.html")
         if not rc_file.open(QIODevice.ReadOnly):
             logger.warning("Unable to read the changelog")
         else:
