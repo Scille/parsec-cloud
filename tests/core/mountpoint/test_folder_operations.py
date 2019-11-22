@@ -73,21 +73,15 @@ class PathElement:
         return self.oracle_root / self.absolute_path[1:]
 
     def to_parsec(self):
-        root, workspace, *tail = Path(self.absolute_path).parts
-
-        # Do not allow to go outside the inital workspace
-        assert str(self.parsec_root).endswith(workspace)
-
-        return self.parsec_root / Path(*tail)
+        return self.parsec_root / self.absolute_path[1:]
 
     def __truediv__(self, path):
-        return PathElement(
-            os.path.join(self.absolute_path, path), self.parsec_root, self.oracle_root
-        )
+        assert isinstance(path, str) and path[0] != "/"
+        absolute_path = f"/{path}" if self.absolute_path == "/" else f"{self.absolute_path}/{path}"
+        return PathElement(absolute_path, self.parsec_root, self.oracle_root)
 
 
 @pytest.mark.slow
-@pytest.mark.linux  # TODO: investigate while this fails on windows
 @pytest.mark.mountpoint
 def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
@@ -116,7 +110,7 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
             return PathElement(
                 f"/{mountpoint_service.default_workspace_name}",
-                mountpoint_service.get_default_workspace_mountpoint(),
+                mountpoint_service.base_mountpoint,
                 oracle_root,
             )
 

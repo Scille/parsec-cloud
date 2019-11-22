@@ -10,7 +10,7 @@ async def test_waiter_on(event_bus):
         await trio.sleep(0)
         event_bus.send("foo", id=id)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
 
         with event_bus.waiter_on("foo") as waiter:
             nursery.start_soon(_trigger, 1)
@@ -37,7 +37,7 @@ async def test_waiter_on_filter(event_bus):
         event_bus.send("foo", id=1)
         event_bus.send("foo", id=42)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
 
         with event_bus.waiter_on("foo", filter=lambda event, id: id == 42) as waiter:
             nursery.start_soon(_triggers)
@@ -51,7 +51,7 @@ async def test_waiter_on_first(event_bus):
         await trio.sleep(0)
         event_bus.send(event, id=id)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
 
         with event_bus.waiter_on_first("foo", "bar") as waiter:
             nursery.start_soon(_trigger, "foo", 1)
@@ -78,7 +78,7 @@ async def test_waiter_on_first_filter(event_bus):
         event_bus.send("foo", id=1)
         event_bus.send("bar", id=42)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
 
         with event_bus.waiter_on_first("foo", "bar", filter=lambda event, id: id == 42) as waiter:
             nursery.start_soon(_triggers)

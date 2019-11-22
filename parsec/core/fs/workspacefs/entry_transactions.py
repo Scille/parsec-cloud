@@ -73,11 +73,10 @@ class EntryTransactions(FileTransactions):
     @asynccontextmanager
     async def _lock_manifest_from_path(self, path: FsPath) -> LocalManifest:
         # Root entry_id and manifest
-        assert path.parts[0] == "/"
         entry_id = self.workspace_id
 
         # Follow the path
-        for name in path.parts[1:]:
+        for name in path.parts:
             manifest = await self._load_manifest(entry_id)
             if is_file_manifest(manifest):
                 raise FSNotADirectoryError(filename=path)

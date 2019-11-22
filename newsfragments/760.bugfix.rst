@@ -1,1 +1,0 @@
-Fix crash on Linux when the ipc server lock file is located in a non existant directory

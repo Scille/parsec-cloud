@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
@@ -86,7 +85,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(target=Files, fs=FSs, parent=Folders, name=st_entry_name)
         async def create_file(self, fs, parent, name):
-            path = os.path.join(parent, name)
+            path = f"{parent}/{name}"
             workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.touch(path=path)
@@ -96,7 +95,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(target=Folders, fs=FSs, parent=Folders, name=st_entry_name)
         async def create_folder(self, fs, parent, name):
-            path = os.path.join(parent, name)
+            path = f"{parent}/{name}"
             workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.mkdir(path=path)
@@ -132,7 +131,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(target=Files, fs=FSs, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         async def move_file(self, fs, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
+            dst = f"{dst_parent}/{dst_name}"
             workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.move(src, dst)
@@ -142,7 +141,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule(target=Folders, fs=FSs, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
         async def move_folder(self, fs, src, dst_parent, dst_name):
-            dst = os.path.join(dst_parent, dst_name)
+            dst = f"{dst_parent}/{dst_name}"
             workspace = fs.get_workspace(self.wid)
             try:
                 await workspace.move(src, dst)

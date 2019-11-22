@@ -72,8 +72,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_enter_url.clicked.connect(self.enter_url)
         self.button_settings.clicked.connect(self.show_settings)
 
-        self.event_bus.connect("gui.config.changed", self.on_config_updated)
-
         self.show_login_widget()
 
     def enter_url(self):
@@ -97,14 +95,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.show_claim_user_widget(addr=action_addr)
         elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
             self.show_claim_device_widget(addr=action_addr)
+        if len(list_available_devices(self.config.config_dir)) == 0:
+            self.show_claim_user_widget()
         else:
             self.show_login_widget()
 
     def disconnect_all(self):
-        self.event_bus.disconnect("gui.config.changed", self.on_config_updated)
-
-    def on_config_updated(self, event, **kwargs):
-        self.config = self.config.evolve(**kwargs)
+        pass
 
     def organization_bootstrapped(self, organization, device, password):
         devices = list_available_devices(self.config.config_dir)

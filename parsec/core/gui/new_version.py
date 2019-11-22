@@ -30,7 +30,7 @@ def _extract_version_tuple(raw):
 
 async def _do_check_new_version(url):
     # urlopen automatically follows redirections
-    resolved_url = await trio.run_sync_in_worker_thread(
+    resolved_url = await trio.to_thread.run_sync(
         lambda: urlopen(Request(url, method="HEAD")).geturl()
     )
 

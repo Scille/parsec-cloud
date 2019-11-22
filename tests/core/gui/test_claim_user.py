@@ -21,7 +21,7 @@ async def alice_invite(running_backend, backend, alice):
     async def _invite():
         await invite_and_create_user(alice, invitation["user_id"], invitation["token"], True)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         with backend.event_bus.listen() as spy:
             nursery.start_soon(_invite)
             await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})

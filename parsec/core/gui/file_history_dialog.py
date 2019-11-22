@@ -57,7 +57,6 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
     def add_history(self):
         versions_list = self.versions_job.ret
         self.versions_job = None
-        print(type(versions_list[0].early))
         for v in versions_list:
             self.versions_table.add_item(
                 entry_id=v.id,

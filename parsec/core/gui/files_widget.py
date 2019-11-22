@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QFileDialog, QWidget
 
 from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
@@ -55,7 +56,10 @@ async def _do_folder_stat(workspace_fs, path):
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
     for child in dir_stat["children"]:
-        child_stat = await workspace_fs.path_info(path / child)
+        try:
+            child_stat = await workspace_fs.path_info(path / child)
+        except FSRemoteManifestNotFound as exc:
+            child_stat = {"type": "inconsistency", "id": exc.args[0]}
         stats[child] = child_stat
     return path, dir_stat["id"], stats
 
@@ -584,7 +588,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.line_edit_current_directory.setText(str_dir)
         self.line_edit_current_directory.setCursorPosition(0)
         for path, stats in files_stats.items():
-            if stats["type"] == "folder":
+            if stats["type"] == "inconsistency":
+                self.table_files.add_inconsistency(str(path), stats["id"])
+            elif stats["type"] == "folder":
                 self.table_files.add_folder(str(path), stats["id"], not stats["need_sync"])
             else:
                 self.table_files.add_file(

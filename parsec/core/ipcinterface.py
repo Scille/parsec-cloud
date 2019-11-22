@@ -161,7 +161,7 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
             logger.error("Unexpected crash", exc_info=exc)
 
     try:
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             listeners = await nursery.start(
                 partial(trio.serve_tcp, _client_handler, 0, host="127.0.0.1")
             )

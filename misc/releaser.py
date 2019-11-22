@@ -61,7 +61,7 @@ def run_git(cmd, verbose=False):
 
 
 def get_version_from_repo_describe_tag(verbose=False):
-    return parse_version(run_git("describe --tag --debug", verbose=verbose))
+    return parse_version(run_git("describe --tag --debug --first-parent", verbose=verbose))
 
 
 def get_version_from_code():

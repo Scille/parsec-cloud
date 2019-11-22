@@ -59,7 +59,7 @@ async def test_user_invite_then_claim_ok(
                 await cmds.user_claim(mallory.user_id, encrypted_claim)
 
     with running_backend.backend.event_bus.listen() as spy:
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             nursery.start_soon(_alice_invite)
             await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
             nursery.start_soon(_mallory_claim)

@@ -367,7 +367,7 @@ async def _monitor_sync_online(user_fs, event_bus):
         while True:
             with trio.move_on_at(min(wait_times)):
                 await early_wakeup.wait()
-                early_wakeup.clear()
+                early_wakeup = trio.Event()
             wait_times.clear()
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():

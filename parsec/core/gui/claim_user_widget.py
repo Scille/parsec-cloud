@@ -104,7 +104,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
 
-        self.line_edit_device.setText(get_default_device())
         self.label_password_strength.hide()
 
         if addr.token:

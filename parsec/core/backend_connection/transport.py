@@ -271,6 +271,6 @@ async def authenticated_transport_pool_factory(
 
     finally:
         pool._closed = True
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             for transport in pool.transports:
                 nursery.start_soon(transport.aclose)

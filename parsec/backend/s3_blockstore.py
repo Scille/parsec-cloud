@@ -48,13 +48,13 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
     async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         slug = f"{organization_id}/{id}"
         try:
-            await trio.run_sync_in_worker_thread(
+            await trio.to_thread.run_sync(
                 partial(self._s3.head_object, Bucket=self._s3_bucket, Key=slug)
             )
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
                 try:
-                    await trio.run_sync_in_worker_thread(
+                    await trio.to_thread.run_sync(
                         partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
                     )
                 except (S3ClientError, S3EndpointConnectionError) as exc:

@@ -29,7 +29,8 @@ async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_I
         backend_online_event.set()
 
     def _on_backend_offline(event):
-        backend_online_event.clear()
+        nonlocal backend_online_event
+        backend_online_event = trio.Event()
         if process_message_cancel_scope:
             process_message_cancel_scope.cancel()
 
@@ -62,11 +63,11 @@ async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_I
 
                     while True:
                         await msg_arrived.wait()
-                        msg_arrived.clear()
+                        msg_arrived = trio.Event()
                         await freeze_messages_monitor_mockpoint()
                         await _process_last_messages()
 
             except FSBackendOfflineError:
-                backend_online_event.clear()
+                backend_online_event = trio.Event()
                 process_message_cancel_scope = None
-                msg_arrived.clear()
+                msg_arrived = trio.Event()

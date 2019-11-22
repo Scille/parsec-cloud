@@ -20,7 +20,7 @@ from parsec.core.backend_connection import backend_cmds_pool_factory
 
 async def _invite_and_claim(running_backend, invite_func, claim_func, event_name="user.claimed"):
     with trio.fail_after(1):
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             with running_backend.backend.event_bus.listen() as spy:
                 nursery.start_soon(invite_func)
                 await spy.wait("event.connected", {"event_name": event_name})

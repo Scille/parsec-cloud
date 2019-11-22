@@ -5,7 +5,8 @@ import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.api.protocol import user_revoke_serializer, HandshakeRevokedDevice
+from parsec.api.protocol import user_revoke_serializer, HandshakeRevokedDevice, packb
+from parsec.api.transport import TransportError
 
 from tests.common import freeze_time
 
@@ -34,16 +35,39 @@ async def user_revoke(sock, **kwargs):
 
 
 @pytest.mark.trio
+async def test_backend_close_on_user_revoke(
+    backend, alice_backend_sock, backend_sock_factory, bob, bob_revocation_from_alice
+):
+    async with backend_sock_factory(
+        backend, bob, freeze_on_transport_error=False
+    ) as bob_backend_sock:
+        with backend.event_bus.listen() as spy:
+            rep = await user_revoke(
+                alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice
+            )
+            assert rep == {"status": "ok"}
+            await spy.wait_with_timeout(
+                "user.revoked", {"organization_id": bob.organization_id, "user_id": bob.user_id}
+            )
+        # Bob cannot send new command
+        with pytest.raises(TransportError):
+            await bob_backend_sock.send(packb({"cmd": "ping", "ping": "foo"}))
+
+
+@pytest.mark.trio
 async def test_user_revoke_ok(backend, backend_sock_factory, adam_backend_sock, alice, adam):
     now = pendulum.Pendulum(2000, 10, 11)
     alice_revocation = RevokedUserCertificateContent(
         author=adam.device_id, timestamp=now, user_id=alice.user_id
     ).dump_and_sign(adam.signing_key)
 
-    # Revoke Alice
-    with freeze_time(now):
-        rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
-    assert rep == {"status": "ok"}
+    with backend.event_bus.listen() as spy:
+        with freeze_time(now):
+            rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
+        assert rep == {"status": "ok"}
+        await spy.wait_with_timeout(
+            "user.revoked", {"organization_id": alice.organization_id, "user_id": alice.user_id}
+        )
 
     # Alice cannot connect from now on...
     with pytest.raises(HandshakeRevokedDevice):

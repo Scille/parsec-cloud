@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.14: http://docutils.sourceforge.net/" />
+<title>History</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7952 2016-07-26 18:15:59Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+.subscript {
+  vertical-align: sub;
+  font-size: smaller }
+
+.superscript {
+  vertical-align: super;
+  font-size: smaller }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left, table.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right, table.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+.align-top    {
+  vertical-align: top }
+
+.align-middle {
+  vertical-align: middle }
+
+.align-bottom {
+  vertical-align: bottom }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="history">
+<h1 class="title">History</h1>
+
+<!-- towncrier release notes start -->
+<div class="section" id="parsec-1-2-1-2019-11-20">
+<h1>Parsec 1.2.1 (2019-11-20)</h1>
+<ul class="simple">
+<li>Add view to Display changelog history in the GUI (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/788">#788</a>)</li>
+</ul>
+</div>
+<div class="section" id="parsec-1-2-0-2019-11-15">
+<h1>Parsec 1.2.0 (2019-11-15)</h1>
+<div class="section" id="features">
+<h2>Features</h2>
+<ul class="simple">
+<li>Backend now checks if timestamp is not inferior of existant on vlob update, if
+it is, sends an error to client which temporarily goes offline to avoid the
+handling of this event in a retry loop.  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/758">#758</a>)</li>
+<li>Add notification in GUI when an operation in the mountpoint failed in an
+unexpected manner. (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/759">#759</a>)</li>
+<li>Limit a tab title to a few characters and add a tooltip to tabs  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/775">#775</a>)</li>
+<li>Add tooltips to taskbar buttons  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/776">#776</a>)</li>
+<li>Removed duplicates and supposed minimal sync when listing versions of a path
+(<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/784">#784</a>)</li>
+</ul>
+</div>
+<div class="section" id="bugfixes">
+<h2>Bugfixes</h2>
+<ul class="simple">
+<li>Fix crash on Linux when the ipc server lock file is located in a non existant
+directory (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/760">#760</a>)</li>
+<li>Fix crash in ipc server when socket file path contains missing folder (only on
+windows).  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/765">#765</a>)</li>
+<li>Fix rights checking in winfsp operations. This issue used to cause a cffi
+crash on windows when some operations were performed on the file system.
+(<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/770">#770</a>)</li>
+<li>Fix len check in <tt class="docutils literal">OrganizationID</tt>/<tt class="docutils literal">UserID</tt>/<tt class="docutils literal">DeviceName</tt>/<tt class="docutils literal">DeviceID</tt>
+when containing multibytes unicode characters. (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/794">#794</a>)</li>
+<li>Improve support of unicode in the mountpoint on Windows. (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/799">#799</a>)</li>
+</ul>
+</div>
+<div class="section" id="miscellaneous-internal-changes">
+<h2>Miscellaneous internal changes</h2>
+<ul class="simple">
+<li>Improve logging output on backend server  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/753">#753</a>)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="parsec-1-1-2-2019-10-22">
+<h1>Parsec 1.1.2 (2019-10-22)</h1>
+<div class="section" id="id1">
+<h2>Miscellaneous internal changes</h2>
+<ul class="simple">
+<li>Small GUI improvements on white border around main tab and url
+error message display</li>
+<li>Remove dependency on pywin32 under Windows which cause packaging issue on
+previous version (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/750">#750</a>)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="parsec-1-1-1-2019-10-21">
+<h1>Parsec 1.1.1 (2019-10-21)</h1>
+<div class="section" id="id2">
+<h2>Bugfixes</h2>
+<ul class="simple">
+<li>Fix argument parsing in backend cli commands (<tt class="docutils literal">PARSEC_CMD_ARGS</tt> env var, db
+param and S3 entry point default value) (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/749">#749</a>)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="parsec-1-1-0-2019-10-21">
+<h1>Parsec 1.1.0 (2019-10-21)</h1>
+<div class="section" id="id3">
+<h2>Features</h2>
+<ul class="simple">
+<li>Add support for IPC communication in GUI to have a single instance running.
+Also add tab support &amp; handle parsec:// url as start argument.  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/684">#684</a>)</li>
+<li>Rework backend cli argument and environ variable handling  (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/701">#701</a>)</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>Bugfixes</h2>
+<ul class="simple">
+<li>Fix pure HTTP query handling in backend (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/699">#699</a>)</li>
+<li>Fix long wait on GUI login with poor connection to the backend (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/706">#706</a>)</li>
+<li>Add missing check in core to enforce consistency of timestamps between a
+manifest and it author's role certificate (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/734">#734</a>)</li>
+<li>Fix fonts scaling on wayland (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/735">#735</a>)</li>
+<li>Fix bug causing workspace mountpoint directory not being removed on
+application shutdown (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/737">#737</a>)</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h2>Miscellaneous internal changes</h2>
+<ul class="simple">
+<li>Allow dash character (i.e. <tt class="docutils literal">-</tt>) in OrganizationID, UserID &amp; DeviceName
+(<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/728">#728</a>)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="parsec-1-0-2-2019-10-01">
+<h1>Parsec 1.0.2 (2019-10-01)</h1>
+<ul class="simple">
+<li>Upgrade PyQt5 to 5.13.1 (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/690">#690</a>)</li>
+<li>Add keepalive pings on invite/claim requests (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/693">#693</a>)</li>
+</ul>
+</div>
+<div class="section" id="parsec-1-0-1-2019-09-25">
+<h1>Parsec 1.0.1 (2019-09-25)</h1>
+<ul class="simple">
+<li>Upgrade wsproto to 0.15.0 to improve websocket compatibility (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/686">#686</a>)</li>
+<li>Replace CXFreeze by a custom script to generate win32 builds (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/685">#685</a>)</li>
+<li>Add organization status command in cli (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/683">#683</a>)</li>
+<li>User/device invitation get cancelled on server side when the user use the
+cancel button (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/682">#682</a>)</li>
+<li>Add organization expiration date support in backend (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/680">#680</a>)</li>
+<li>Client connection to Backend specify a <cite>/ws</cite> resource endpoint (<a class="reference external" href="https://github.com/Scille/parsec-cloud/issues/678">#678</a>)</li>
+</ul>
+</div>
+<div class="section" id="parsec-1-0-0-2019-09-10">
+<h1>Parsec 1.0.0 (2019-09-10)</h1>
+<ul class="simple">
+<li>First stable release</li>
+</ul>
+</div>
+</div>
+</body>
+</html>
