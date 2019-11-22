@@ -137,7 +137,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.taskbar_buttons = []
 
-        button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
+        button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/tray_icons/plus.svg")
         button_add_workspace.clicked.connect(self.create_workspace_clicked)
         button_add_workspace.setToolTip(_("BUTTON_TASKBAR_ADD_WORKSPACE"))
 

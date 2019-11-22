@@ -32,7 +32,7 @@ class TaskbarButton(QPushButton):
         self.setIcon(QIcon(icon_path))
         self.setIconSize(QSize(50, 50))
         self.setStyleSheet(
-            "QPushButton{background-color: rgb(12, 65, 157); border: 0;}\n"
+            "QPushButton{background-color: rgba(0, 0, 0, 0); border: 0;}\n"
             "QToolTip{background-color: rgb(46, 146, 208);"
             "border: 1px solid rgb(12, 65, 157);color: rgb(255, 255, 255);}"
         )
@@ -40,7 +40,9 @@ class TaskbarButton(QPushButton):
 
 class NotificationTaskbarButton(TaskbarButton):
     def __init__(self, *args, **kwargs):
-        super().__init__(icon_path=":/icons/images/icons/notification_off.png", *args, **kwargs)
+        super().__init__(
+            icon_path=":/icons/images/icons/tray_icons/bell-solid.svg", *args, **kwargs
+        )
         self.notif_count = 0
 
     def inc_notif_count(self):
@@ -52,10 +54,10 @@ class NotificationTaskbarButton(TaskbarButton):
     def setChecked(self, val):
         super().setChecked(val)
         if val:
-            self.setIcon(QIcon(":/icons/images/icons/notification_on.png"))
+            self.setIcon(QIcon(":/icons/images/icons/tray_icons/bell-regular.svg"))
             self.setIconSize(QSize(50, 50))
         else:
-            self.setIcon(QIcon(":/icons/images/icons/notification_off.png"))
+            self.setIcon(QIcon(":/icons/images/icons/tray_icons/bell-solid.svg"))
             self.setIconSize(QSize(50, 50))
 
     def paintEvent(self, event):
