@@ -3,7 +3,7 @@
 from typing import Optional
 from structlog import get_logger
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QApplication
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -108,7 +108,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
         self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
-        self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
+
         if self.tab_center.count() > 1:
             self.tab_center.setTabsClosable(True)
 
@@ -135,6 +135,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Fallback to just create the default login windows
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
+
+        if not QApplication.activeModalWidget():
+            self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
 
     def close_app(self, force=False):
         self.need_close = True
