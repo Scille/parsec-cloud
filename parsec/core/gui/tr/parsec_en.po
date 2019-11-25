@@ -977,6 +977,12 @@ msgstr "Create a new device."
 msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
 msgstr "Create a new workspace."
 
+msgid "ERR_WORKSPACE_INVALID_NAME"
+msgstr "Invalid workspace name."
+
+msgid "ERR_WORKSPACE_CREATE"
+msgstr "Cannot create the workspace."
+
 msgid "ERR_WORKSPACE_RENAME"
 msgstr "Cannot rename the workspace."
 
