@@ -95,8 +95,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.show_claim_user_widget(addr=action_addr)
         elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
             self.show_claim_device_widget(addr=action_addr)
-        if len(list_available_devices(self.config.config_dir)) == 0:
-            self.show_claim_user_widget()
         else:
             self.show_login_widget()
 
