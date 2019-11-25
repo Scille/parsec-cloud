@@ -93,8 +93,9 @@ async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui, 
 
 @pytest.mark.gui
 @pytest.mark.trio
+@pytest.mark.parametrize("online", (True, False))
 async def test_revoke_user(
-    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, alice
+    aqtbot, running_backend, autoclose_dialog, monkeypatch, logged_gui, alice, online
 ):
     u_w = logged_gui.test_get_users_widget()
     assert u_w is not None
@@ -110,12 +111,22 @@ async def test_revoke_user(
         "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
 
-    async with aqtbot.wait_signal(u_w.revoke_success):
-        bob_w.revoke_clicked.emit(bob_w)
-    assert autoclose_dialog.dialogs == [
-        ("Information", 'User "bob" has been successfully revoked.')
-    ]
-    assert bob_w.is_revoked is True
+    if online:
+        async with aqtbot.wait_signal(u_w.revoke_success):
+            bob_w.revoke_clicked.emit(bob_w)
+        assert autoclose_dialog.dialogs == [
+            ("Information", 'User "bob" has been successfully revoked.')
+        ]
+        assert bob_w.is_revoked is True
+
+    else:
+        with running_backend.offline():
+            async with aqtbot.wait_signal(u_w.revoke_error):
+                bob_w.revoke_clicked.emit(bob_w)
+            assert autoclose_dialog.dialogs == [
+                ("Information", 'User "bob" has been successfully revoked.')
+            ]
+            assert bob_w.is_revoked is True
 
 
 @pytest.mark.gui

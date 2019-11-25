@@ -7,7 +7,15 @@ from PyQt5.QtGui import QPixmap
 
 from parsec.api.protocol import UserID
 from parsec.api.data import RevokedUserCertificateContent
-from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
+from parsec.core.remote_devices_manager import (
+    RemoteDevicesManagerError,
+    RemoteDevicesManagerBackendOfflineError,
+)
+from parsec.core.backend_connection import (
+    BackendConnectionError,
+    BackendNotAvailable,
+    BackendCmdsBadResponse,
+)
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
@@ -99,18 +107,31 @@ async def _do_revoke_user(core, user_name, button):
         return button
     except BackendCmdsBadResponse as exc:
         raise JobResultError(exc.status) from exc
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
 
 
 async def _do_list_users(core):
     try:
-        ret = []
         users = await core.user_fs.backend_cmds.user_find()
+    except BackendCmdsBadResponse as exc:
+        raise JobResultError(exc.status) from exc
+    except BackendNotAvailable as exc:
+        raise JobResultError("offline") from exc
+    except BackendConnectionError as exc:
+        raise JobResultError("error") from exc
+    try:
+        ret = []
         for user in users:
             user_info, user_revoked_info = await core.remote_devices_manager.get_user(user)
             ret.append((user_info, user_revoked_info))
         return ret
-    except BackendNotAvailable as exc:
+    except RemoteDevicesManagerBackendOfflineError as exc:
         raise JobResultError("offline") from exc
+    except RemoteDevicesManagerError as exc:
+        raise JobResultError("error") from exc
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
@@ -194,10 +215,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             errmsg = _("ERR_USER_REVOKED_ALREADY")
         elif status == "not_found":
             errmsg = _("ERR_USER_REVOKED_NOT_FOUND")
-        elif status == "not_allowed" or status == "invalid_certification":
+        elif status == "not_allowed":
             errmsg = _("ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS")
-        elif status == "error":
-            errmsg = _("ERR_USER_REVOKED_UNKNOWN")
+        elif status == "offline":
+            errmsg = _("ERR_BACKEND_OFFLINE")
+        else:
+            errmsg = _("ERR_USER_REVOKED_UNKNOWN_ERROR_{}").format(job.exc)
         show_error(self, errmsg, exception=job.exc)
 
     def revoke_user(self, user_button):
@@ -236,7 +259,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             )
 
     def on_list_error(self, job):
-        pass
+        status = job.status
+        if status == "offline":
+            return
+        else:
+            errmsg = _("ERR_USER_LIST_UNKNOWN_ERROR_{}").format(job.exc)
+        show_error(self, errmsg, exception=job.exc)
 
     def reset(self):
         self.jobs_ctx.submit_job(

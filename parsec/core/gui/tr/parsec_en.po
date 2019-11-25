@@ -1067,8 +1067,11 @@ msgstr "This user does not exists."
 msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
 msgstr "You don't have the permissions required to revoke this user."
 
-msgid "ERR_USER_REVOKED_UNKNOWN"
-msgstr "Cannot revoke this user."
+msgid "ERR_USER_REVOKED_UNKNOWN_ERROR_{}"
+msgstr "Cannot revoke this user ({})."
+
+msgid "ERR_USER_LIST_UNKNOWN_ERROR_{}"
+msgstr "Cannot retrieve the list of users ({})."
 
 msgid "ASK_USER_REVOKE_TITLE"
 msgstr "Revoke a user"
