@@ -39,7 +39,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
         slug = f"{organization_id}/{id}"
         try:
-            headers, obj = await trio.run_sync_in_worker_thread(
+            headers, obj = await trio.to_thread.run_sync(
                 self.swift_client.get_object, self._container, slug
             )
 
@@ -55,13 +55,13 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         slug = f"{organization_id}/{id}"
         try:
-            _, obj = await trio.run_sync_in_worker_thread(
+            _, obj = await trio.to_thread.run_sync(
                 self.swift_client.get_object, self._container, slug
             )
 
         except ClientException as exc:
             if exc.http_status == 404:
-                await trio.run_sync_in_worker_thread(
+                await trio.to_thread.run_sync(
                     partial(self.swift_client.put_object, self._container, slug, block)
                 )
             else:

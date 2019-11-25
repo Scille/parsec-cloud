@@ -8,6 +8,7 @@ from setuptools.command.build_py import build_py
 
 import itertools
 import glob
+import os
 
 
 # Awesome hack to load `__version__`
@@ -73,6 +74,32 @@ class GeneratePyQtResourcesBundle(Command):
             )
         except ImportError:
             print("PyQt5 not installed, skipping `parsec.core.gui._resources_rc` generation.")
+
+
+class GenerateChangelog(Command):
+    description = "Convert HISTORY.rst to HTML"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import docutils.core
+
+        destination_folder = "parsec/core/gui/rc/generated_misc"
+        self.announce(
+            f"Converting HISTORY.rst to {destination_folder}/history.html", level=distutils.log.INFO
+        )
+        os.makedirs(destination_folder, exist_ok=True)
+        docutils.core.publish_file(
+            source_path="HISTORY.rst",
+            destination_path=f"{destination_folder}/history.html",
+            writer_name="html",
+        )
 
 
 class GeneratePyQtForms(Command):
@@ -224,6 +251,7 @@ class build_py_with_pyqt(build_py):
     def run(self):
         self.run_command("generate_pyqt_forms")
         self.run_command("compile_translations")
+        self.run_command("generate_changelog")
         self.run_command("generate_pyqt_resources_bundle")
         return super().run()
 
@@ -250,7 +278,7 @@ requirements = [
     "toastedmarshmallow==0.2.6",
     "pendulum==1.3.1",
     "PyNaCl==1.2.1",
-    "trio==0.11.0",
+    "trio==0.13.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
@@ -284,13 +312,13 @@ test_requirements = [
 
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = ("Babel==2.6.0",)
+DOCUTILS_DEP = "docutils==0.14"
 extra_requirements = {
-    "pkcs11": ["python-pkcs11==0.5.0", "pycrypto==2.6.1"],
     "core": [
         PYQT_DEP,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.4.2;platform_system=="Windows"',
+        'winfspy==0.5.0;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
@@ -320,11 +348,12 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[PYQT_DEP, BABEL_DEP, "wheel"],  # To generate resources bundle
+    setup_requires=[PYQT_DEP, BABEL_DEP, "wheel", DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
         "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
+        "generate_changelog": GenerateChangelog,
         "generate_pyqt_forms": GeneratePyQtForms,
         "extract_translations": ExtractTranslations,
         "compile_translations": CompileTranslations,

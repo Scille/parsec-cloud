@@ -53,7 +53,7 @@ async def spinner(txt, sep=" ", scheme="dots", color="magenta"):
             _render_line(result)
             click.echo()
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         _render_line(frames[0])
         nursery.start_soon(_update_spinner)
 

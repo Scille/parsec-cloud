@@ -128,40 +128,37 @@ async def run_ipc_server(
 @asynccontextmanager
 async def _run_tcp_server(socket_file: Path, cmd_handler):
     async def _client_handler(stream):
-        unpacker = Unpacker()
 
+        # General exception handling
         try:
 
-            while True:
-                raw = await stream.receive_some(1000)
-                unpacker.feed(raw)
-                for cmd in unpacker:
-                    cmd = cmd_req_serializer.load(cmd)
-                    rep = await cmd_handler(cmd)
-                    raw_rep = cmd_rep_serializer.dumps(rep)
-                    logger.info("Command processed", cmd=cmd["cmd"], rep_status=rep["status"])
-                    await stream.send_all(raw_rep)
+            # Stream handling
+            try:
+
+                unpacker = Unpacker()
+                async for raw in stream:
+                    unpacker.feed(raw)
+                    for cmd in unpacker:
+                        cmd = cmd_req_serializer.load(cmd)
+                        rep = await cmd_handler(cmd)
+                        raw_rep = cmd_rep_serializer.dumps(rep)
+                        logger.info("Command processed", cmd=cmd["cmd"], rep_status=rep["status"])
+                        await stream.send_all(raw_rep)
+
+            except SerdeError as exc:
+                await stream.send_all(packb({"status": "invalid_format", "reason": str(exc)}))
+
+            finally:
+                await stream.aclose()
 
         except trio.BrokenResourceError:
-            # Peer has closed the connection
-            pass
-
-        except SerdeError as exc:
-            try:
-                await stream.send_all(packb({"status": "invalid_format", "reason": str(exc)}))
-                await stream.aclose()
-            except trio.BrokenResourceError:
-                pass
+            pass  # Peer has closed the connection while we were sending a response
 
         except Exception as exc:
-            try:
-                await stream.aclose()
-            except trio.BrokenResourceError:
-                pass
             logger.error("Unexpected crash", exc_info=exc)
 
     try:
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             listeners = await nursery.start(
                 partial(trio.serve_tcp, _client_handler, 0, host="127.0.0.1")
             )

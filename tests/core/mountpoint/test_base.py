@@ -165,7 +165,7 @@ async def test_mount_and_explore_workspace(
 
             # Note given python fs api is blocking, we must run it inside a thread
             # to avoid blocking the trio loop and ending up in a deadlock
-            await trio.run_sync_in_worker_thread(inspect_mountpoint)
+            await trio.to_thread.run_sync(inspect_mountpoint)
 
             if manual_unmount:
                 await mountpoint_manager.unmount_workspace(wid)
@@ -369,21 +369,30 @@ async def test_mountpoint_revoke_access(
         with pytest.raises(PermissionError):
             await bar_path.read_bytes()
 
-    async def assert_cannot_write(mountpoint_manager):
+    async def assert_cannot_write(mountpoint_manager, new_role):
+        expected_error, expected_errno = PermissionError, errno.EACCES
+        # On linux, errno.EROFS is not translated to a PermissionError
+        if new_role is WorkspaceRole.READER and os.name != "nt":
+            expected_error, expected_errno = OSError, errno.EROFS
         root_path = get_root_path(mountpoint_manager)
         foo_path = root_path / "foo.txt"
         bar_path = root_path / "bar.txt"
-        with pytest.raises(PermissionError):
+        with pytest.raises(expected_error) as ctx:
             await (root_path / "new_file.txt").touch()
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await (root_path / "new_directory").mkdir()
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await foo_path.write_bytes(b"foo contents")
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await foo_path.unlink()
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await bar_path.write_bytes(b"bar contents")
-        with pytest.raises(PermissionError):
+        assert ctx.value.errno == expected_errno
+        with pytest.raises(expected_error) as ctx:
             await bar_path.unlink()
 
     async with mountpoint_manager_factory(
@@ -419,7 +428,7 @@ async def test_mountpoint_revoke_access(
             await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
         # Alice no longer has write access
-        await assert_cannot_write(mountpoint_manager)
+        await assert_cannot_write(mountpoint_manager, new_role)
 
     # Try again with Alice first device
 
@@ -439,7 +448,7 @@ async def test_mountpoint_revoke_access(
             await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
         # Alice no longer has write access
-        await assert_cannot_write(mountpoint_manager)
+        await assert_cannot_write(mountpoint_manager, new_role)
 
     # Try again with Alice second device
 
@@ -459,4 +468,66 @@ async def test_mountpoint_revoke_access(
             await assert_cannot_read(mountpoint_manager, root_is_cached=True)
 
         # Alice no longer has write access
-        await assert_cannot_write(mountpoint_manager)
+        await assert_cannot_write(mountpoint_manager, new_role)
+
+
+@pytest.mark.mountpoint
+@pytest.mark.skipif(os.name == "nt", reason="TODO: crash with WinFSP :'(")
+def test_stat_mountpoint(mountpoint_service):
+    async def _bootstrap(user_fs, mountpoint_manager):
+        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        await workspace.touch("/foo.txt")
+
+    mountpoint_service.start()
+    mountpoint_service.execute(_bootstrap)
+    wpath = mountpoint_service.get_default_workspace_mountpoint()
+
+    assert os.listdir(str(mountpoint_service.base_mountpoint)) == [
+        mountpoint_service.default_workspace_name
+    ]
+    # Just make sure stats don't lead to a crash
+    assert os.stat(str(mountpoint_service.base_mountpoint))
+    assert os.stat(str(wpath))
+    assert os.stat(str(wpath / "foo.txt"))
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_bus):
+    weird_name = "ÉŸ奇怪😀🔫🐍"
+
+    wid = await alice_user_fs.workspace_create(weird_name)
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.touch(f"/{weird_name}")
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+
+        await mountpoint_manager.mount_workspace(wid)
+
+        root_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/"))
+
+        # Work around trio issue #1308 (https://github.com/python-trio/trio/issues/1308)
+        items = await trio.to_thread.run_sync(
+            lambda: [path.name for path in Path(root_path).iterdir()]
+        )
+        assert items == [weird_name]
+
+        item_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(f"/{weird_name}"))
+        assert await trio.Path(item_path).exists()
+
+
+@pytest.mark.mountpoint
+def test_nested_rw_access(mountpoint_service):
+    mountpoint_service.start()
+    wpath = mountpoint_service.get_default_workspace_mountpoint()
+    fpath = wpath / "foo.txt"
+
+    with open(str(fpath), "ab") as f:
+        f.write(b"whatever")
+        f.flush()
+        with open(str(fpath), "rb") as fin:
+            data = fin.read()
+            assert data == b"whatever"

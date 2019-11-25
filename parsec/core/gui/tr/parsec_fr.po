@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-11-05 16:30+0100\n"
-"PO-Revision-Date: 2019-11-05 16:43+0100\n"
+"POT-Creation-Date: 2019-11-21 08:53+0100\n"
+"PO-Revision-Date: 2019-11-21 08:54+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1353,6 +1353,21 @@ msgstr "L'espace de travail \"{}\" n'est plus partagé avec vous."
 msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr "Conflit lors de la synchronisation du fichier \"{}\"."
 
+msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
+msgstr "Une erreur inattendue est arrivée pendant l'opération \"{}\" sur le chemin \"{}\": {}."
+
+msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
+msgstr "Impossible d'accéder à \"{}\" depuis le serveur: {}."
+
+msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
+msgstr "Impossible d'accéder à \"{}\" depuis le serveur car vous avez perdu vos accès en lecture sur l'espace de travail."
+
+msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
+msgstr "Impossible de synchroniser \"{}\" avec le serveur car vous avez perdu vos accès en écriture sur l'espace du travail."
+
+msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
+msgstr "Impossible d'accéder à \"{}\" depuis le serveur car l'espace de travail est actuellement en maintenance."
+
 msgid "BACKEND_STATE_CONNECTED"
 msgstr "Connecté"
 
@@ -1432,13 +1447,13 @@ msgid "PARSEC_WINDOW_TITLE"
 msgstr "Parsec - {}"
 
 msgid "BUTTON_ADD_INSTANCE"
-msgstr ""
+msgstr "Ajouter une instance"
 
 msgid "ASK_ADD_TAB_TITLE"
-msgstr ""
+msgstr "Nouvelle instance"
 
 msgid "ASK_ADD_TAB_CONTENT"
-msgstr ""
+msgstr "Voulez-vous ouvrir un nouvel onglet ?"
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"

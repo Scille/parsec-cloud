@@ -70,6 +70,16 @@ class MountpointManager:
         self._mountpoint_tasks = {}
         self._timestamped_workspacefs = {}
 
+        if os.name == "nt":
+            from parsec.core.mountpoint.winfsp_operations import winify_entry_name
+
+            self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
+                winify_entry_name(x) for x in parts
+            )
+
+        else:
+            self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(parts)
+
     def _get_workspace(self, workspace_id: EntryID):
         try:
             return self.user_fs.get_workspace(workspace_id)
@@ -139,7 +149,7 @@ class MountpointManager:
             self._get_workspace_timestamped(workspace_id, timestamp)
         try:
             runner_task = self._mountpoint_tasks[(workspace_id, timestamp)]
-            return runner_task.value / path.relative_to(path.root)
+            return self._build_mountpoint_path(runner_task.value, path.parts)
 
         except KeyError:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` is not mounted")
@@ -221,7 +231,7 @@ async def mountpoint_manager_factory(
         if not runner:
             raise RuntimeError("Mountpoint support not available.")
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )

@@ -5,12 +5,16 @@ import re
 from parsec.serde import fields
 
 
+def _bytes_size(txt: str) -> int:
+    return len(txt.encode("utf8"))
+
+
 class OrganizationID(str):
     __slots__ = ()
     regex = re.compile(r"^[\w\-]{1,32}$")
 
     def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
+        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid organization ID")
 
     def __repr__(self):
@@ -22,7 +26,7 @@ class UserID(str):
     regex = re.compile(r"^[\w\-]{1,32}$")
 
     def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
+        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid user name")
 
     def __repr__(self):
@@ -34,7 +38,7 @@ class DeviceName(str):
     regex = re.compile(r"^[\w\-]{1,32}$")
 
     def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
+        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 32:
             raise ValueError("Invalid device name")
 
     def __repr__(self):
@@ -46,7 +50,7 @@ class DeviceID(str):
     regex = re.compile(r"^[\w\-]{1,32}@[\w\-]{1,32}$")
 
     def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
+        if not isinstance(raw, str) or not self.regex.match(raw) or _bytes_size(raw) > 65:
             raise ValueError("Invalid device ID")
 
     def __repr__(self):

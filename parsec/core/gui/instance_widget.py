@@ -36,7 +36,7 @@ async def _do_run_core(config, device, event_bus, qt_on_ready):
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout
             core_jobs_ctx = QtToTrioJobScheduler()
-            async with trio.open_nursery() as nursery:
+            async with trio.open_service_nursery() as nursery:
                 await nursery.start(core_jobs_ctx._start)
                 qt_on_ready.emit(core, core_jobs_ctx)
 
@@ -88,6 +88,9 @@ class InstanceWidget(QWidget):
     def is_logged_in(self):
         return self.running_core_job is not None
 
+    def on_core_config_updated(self, event, **kwargs):
+        self.event_bus.send("gui.config.changed", **kwargs)
+
     def start_core(self, device):
         assert not self.running_core_job
         assert not self.core
@@ -106,6 +109,7 @@ class InstanceWidget(QWidget):
     def on_run_core_ready(self, core, core_jobs_ctx):
         self.core = core
         self.core_jobs_ctx = core_jobs_ctx
+        self.core.event_bus.connect("gui.config.changed", self.on_core_config_updated)
         self.event_bus.send(
             "gui.config.changed",
             gui_last_device="{}:{}".format(
@@ -117,6 +121,8 @@ class InstanceWidget(QWidget):
 
     def on_core_run_error(self):
         assert self.running_core_job.is_finished()
+        if self.core:
+            self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
         if self.running_core_job.status is not None:
             if "Device has been revoked" in str(self.running_core_job.exc):
                 show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=self.running_core_job.exc)
@@ -131,6 +137,8 @@ class InstanceWidget(QWidget):
     def on_core_run_done(self):
         assert self.running_core_job.is_finished()
         InstanceWidget.devices_connected.remove(self.core.device)
+        if self.core:
+            self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
         self.running_core_job = None
         self.core_jobs_ctx = None
         self.core = None

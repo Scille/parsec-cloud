@@ -106,11 +106,12 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
         self.line_edit_url.setValidator(validators.BackendOrganizationClaimDeviceAddrValidator())
+
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_DEVICE_REGISTRATION"))
         self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
         self.claim_dialog.hide()
-        self.line_edit_device.setText(get_default_device())
+
         self.label_password_strength.hide()
 
         if addr:

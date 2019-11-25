@@ -13,6 +13,8 @@ from PyQt5.QtWidgets import (
     QListView,
 )
 
+import trio
+
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 
@@ -62,11 +64,11 @@ class TextInputDialog(QDialog, Ui_InputDialog):
 
 # TODO: If this ever gets used again, it needs to transition to the new job system
 class UserInputDialog(QDialog, Ui_InputDialog):
-    def __init__(self, portal, core, title, message, exclude=None, *args, **kwargs):
+    def __init__(self, trio_token, core, title, message, exclude=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
-        self.portal = portal
+        self._trio_token = trio_token
         self.label_title.setText(title)
         self.label_message.setText(message)
         self.line_edit_text.setPlaceholderText(_("LABEL_USER_NAME"))
@@ -87,7 +89,11 @@ class UserInputDialog(QDialog, Ui_InputDialog):
     def show_auto_complete(self):
         self.timer.stop()
         if len(self.line_edit_text.text()):
-            users = self.portal.run(self.core.backend_cmds.user_find, self.line_edit_text.text())
+            users = trio.from_thread.run(
+                self.core.backend_cmds.user_find,
+                self.line_edit_text.text(),
+                trio_token=self._trio_token,
+            )
             if self.exclude:
                 users = [u for u in users if u not in self.exclude]
             completer = QCompleter(users)
@@ -101,9 +107,14 @@ class UserInputDialog(QDialog, Ui_InputDialog):
         return self.line_edit_text.text()
 
 
-def get_user_name(parent, portal, core, title, message, exclude=None):
+def get_user_name(parent, trio_token, core, title, message, exclude=None):
     m = UserInputDialog(
-        core=core, portal=portal, title=title, message=message, exclude=exclude, parent=parent
+        core=core,
+        trio_token=trio_token,
+        title=title,
+        message=message,
+        exclude=exclude,
+        parent=parent,
     )
     status = m.exec_()
     if status == QDialog.Accepted:

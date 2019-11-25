@@ -299,7 +299,7 @@ def run_cmd(
                 await stream.aclose()
 
         async def _run_backend():
-            async with trio.open_nursery() as nursery:
+            async with trio.open_service_nursery() as nursery:
                 await backend.init(nursery)
 
                 try:

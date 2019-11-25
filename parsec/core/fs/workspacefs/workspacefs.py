@@ -3,11 +3,11 @@
 import attr
 import trio
 from collections import defaultdict
-from typing import Union, Iterator, Dict, Tuple
+from typing import Union, Iterator, Dict, List, Tuple
 from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.data import Manifest as RemoteManifest
-from parsec.api.protocol import UserID, DeviceID
+from parsec.api.protocol import UserID
 from parsec.core.types import (
     FsPath,
     EntryID,
@@ -19,7 +19,7 @@ from parsec.core.types import (
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
-from parsec.core.fs.workspacefs.versioning_helpers import list_versions
+from parsec.core.fs.workspacefs.versioning_helpers import list_versions, TimestampBoundedData
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
 from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
@@ -36,14 +36,6 @@ from parsec.core.fs.exceptions import (
 )
 
 AnyPath = Union[FsPath, str]
-
-
-def _destinsrc(src: AnyPath, dst: AnyPath):
-    try:
-        dst.relative_to(src)
-        return True
-    except ValueError:
-        return False
 
 
 @attr.s(frozen=True)
@@ -123,13 +115,6 @@ class WorkspaceFS:
         info = await self.transactions.entry_info(FsPath(path))
         return info["id"]
 
-    async def get_entry_path(self, entry_id: EntryID) -> FsPath:
-        """
-        Raises:
-           FSEntryNotFound
-        """
-        return await self.transactions.get_entry_path(entry_id)
-
     async def get_user_roles(self) -> Dict[UserID, WorkspaceRole]:
         """
         Raises:
@@ -190,11 +175,8 @@ class WorkspaceFS:
     # Timestamped version
 
     async def versions(
-        self, path: AnyPath = "/"
-    ) -> Dict[
-        Tuple[EntryID, int, Pendulum, Pendulum],
-        Tuple[Tuple[DeviceID, Pendulum, bool, int], FsPath, FsPath],
-    ]:
+        self, path: AnyPath = "/", skip_minimal_sync: bool = True
+    ) -> List[TimestampBoundedData]:
         """
         Raises:
             FSError
@@ -203,7 +185,7 @@ class WorkspaceFS:
             FSRemoteManifestNotFound
         """
         path = FsPath(path)
-        return await list_versions(self, path)
+        return await list_versions(self, path, skip_minimal_sync)
 
     async def to_timestamped(self, timestamp: Pendulum):
         workspace = workspacefs.WorkspaceFSTimestamped(self, timestamp)
@@ -361,13 +343,14 @@ class WorkspaceFS:
         source = FsPath(source)
         destination = FsPath(destination)
         real_destination = destination
-        if _destinsrc(source, destination):
+
+        if source.parts == destination.parts[: len(source.parts)]:
             raise FSInvalidArgumentError(
                 f"Cannot move a directory {source} into itself {destination}"
             )
         try:
             if await self.is_dir(destination):
-                real_destination = destination.joinpath(source.name)
+                real_destination = destination / source.name
                 if await self.exists(real_destination):
                     raise FileExistsError
         # At this point, real_destination is the target either representing :
@@ -396,7 +379,7 @@ class WorkspaceFS:
         source_files = await self.listdir(source_path)
         await self.mkdir(target_path)
         for source_file in source_files:
-            target_file = target_path.joinpath(source_file.name)
+            target_file = target_path / source_file.name
             if await self.is_dir(source_file):
                 await self.copytree(source_file, target_file)
             elif await self.is_file(source_file):

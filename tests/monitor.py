@@ -11,8 +11,8 @@ import telnetlib
 import argparse
 import logging
 
+import trio
 from trio.abc import Instrument
-from trio._threads import BlockingTrioPortal
 from trio.hazmat import current_statistics
 
 
@@ -73,14 +73,14 @@ def render_task_tree(task=None):
 class Monitor(Instrument):
     def __init__(self, host=MONITOR_HOST, port=MONITOR_PORT):
         self.address = (host, port)
-        self._portal = None
+        self._trio_token = None
         self._tasks = {}
         self._closing = None
         self._ui_thread = None
 
     def before_run(self):
         LOGGER.info("Starting Trio monitor at %s:%d", *self.address)
-        self._portal = BlockingTrioPortal()
+        self._trio_token = trio.hazmat.current_trio_token()
         self._ui_thread = threading.Thread(target=self.server, args=(), daemon=True)
         self._closing = threading.Event()
         self._ui_thread.start()
@@ -232,7 +232,7 @@ class Monitor(Instrument):
         async def get_current_statistics():
             return current_statistics()
 
-        stats = self._portal.run(get_current_statistics)
+        stats = trio.from_thread.run(get_current_statistics, trio_token=self._trio_token)
         sout.write(
             """tasks_living: {s.tasks_living}
 tasks_runnable: {s.tasks_runnable}
@@ -309,15 +309,6 @@ io_statistics:
         # by cancel_scope, this could also allow us to monitor the remaining
         # time (and task depending on it) in such object.
         sout.write("Not supported yet...")
-
-    # task = self._tasks.get(taskid)
-    # if task:
-    #     sout.write('Cancelling task %d\n' % taskid)
-
-    #     async def _cancel_task():
-    #         await taskid
-
-    #     self._portal.run(_cancel_task)
 
     def command_parents(self, sout, taskid):
         task = self._tasks.get(taskid)

@@ -33,4 +33,5 @@ ParSec
 Secure cloud framework
 
 * Free software: AGPL v3
+* Wiki: https://github.com/Scille/parsec-cloud/wiki/Parsec-overview
 * Documentation: https://parsec-cloud.readthedocs.org.

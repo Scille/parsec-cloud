@@ -4,7 +4,6 @@ import trio
 import signal
 from structlog import get_logger
 from queue import Queue
-import os
 
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont
@@ -66,9 +65,12 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
             # Parsec is already started, give it our work then
             try:
                 try:
-                    await send_to_ipc_server(
-                        config.ipc_socket_file, "new_instance", start_arg=start_arg
-                    )
+                    if start_arg:
+                        await send_to_ipc_server(
+                            config.ipc_socket_file, "new_instance", start_arg=start_arg
+                        )
+                    else:
+                        await send_to_ipc_server(config.ipc_socket_file, "foreground")
                 finally:
                     result_queue.put("already_running")
                 return
@@ -81,7 +83,8 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
 def run_gui(config: CoreConfig, start_arg: str = None):
     logger.info("Starting UI")
 
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    #    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+    #    os.environ["QT_SCALE_FACTOR"] = "1"
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -142,7 +145,7 @@ def run_gui(config: CoreConfig, start_arg: str = None):
 
         win.showMaximized()
         win.show_top()
-        win.add_instance(start_arg)
+        win.new_instance_needed.emit(start_arg)
 
         def kill_window(*args):
             win.close_app(force=True)

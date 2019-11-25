@@ -18,11 +18,13 @@ def base_mountpoint(tmpdir):
 
 @pytest.fixture
 @pytest.mark.mountpoint
-def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
+def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
     """
+
+    do_reset_testbed = reset_testbed
 
     class MountpointService:
         def __init__(self, base_mountpoint):
@@ -30,7 +32,7 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
             # Provide a default workspace given we cannot create it through FUSE
             self.default_workspace_name = "w"
             self._task = None
-            self._portal = None
+            self._trio_token = None
             self._need_stop = trio.Event()
             self._stopped = trio.Event()
             self._need_start = trio.Event()
@@ -39,9 +41,9 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
 
         def execute(self, cb):
             if iscoroutinefunction(cb):
-                self._portal.run(cb, *self._task.value)
+                trio.from_thread.run(cb, *self._task.value, trio_token=self._trio_token)
             else:
-                self._portal.run_sync(cb, *self._task.value)
+                trio.from_thread.run_sync(cb, *self._task.value, trio_token=self._trio_token)
 
         def get_default_workspace_mountpoint(self):
             return self.get_workspace_mountpoint(self.default_workspace_name)
@@ -54,15 +56,17 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
                 self._need_start.set()
                 await self._started.wait()
 
-            self._portal.run(_start)
+            trio.from_thread.run(_start, trio_token=self._trio_token)
 
-        def stop(self):
+        def stop(self, reset_testbed=True):
             async def _stop():
                 if self._started.is_set():
                     self._need_stop.set()
                     await self._stopped.wait()
+                    if reset_testbed:
+                        await do_reset_testbed()
 
-            self._portal.run(_stop)
+            trio.from_thread.run(_stop, trio_token=self._trio_token)
 
         def init(self):
             self._thread = threading.Thread(target=trio.run, args=(self._service,))
@@ -74,14 +78,14 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
             self._nursery.cancel_scope.cancel()
 
         def teardown(self):
-            if not self._portal:
+            if self._trio_token is None:
                 return
-            self.stop()
-            self._portal.run(self._teardown)
+            self.stop(reset_testbed=False)
+            trio.from_thread.run(self._teardown, trio_token=self._trio_token)
             self._thread.join()
 
         async def _service(self):
-            self._portal = trio.BlockingTrioPortal()
+            self._trio_token = trio.hazmat.current_trio_token()
 
             async def _mountpoint_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
                 async with user_fs_factory(alice) as user_fs:
@@ -99,19 +103,19 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory):
                         task_status.started((user_fs, mountpoint_manager))
                         await trio.sleep_forever()
 
-            async with trio.open_nursery() as self._nursery:
+            async with trio.open_service_nursery() as self._nursery:
                 self._ready.set()
                 while True:
                     await self._need_start.wait()
-                    self._need_stop.clear()
-                    self._stopped.clear()
+                    self._need_stop = trio.Event()
+                    self._stopped = trio.Event()
 
                     self._task = await start_task(self._nursery, _mountpoint_controlled_cb)
                     self._started.set()
 
                     await self._need_stop.wait()
-                    self._need_start.clear()
-                    self._started.clear()
+                    self._need_start = trio.Event()
+                    self._started = trio.Event()
                     await self._task.cancel_and_join()
                     self._stopped.set()
 

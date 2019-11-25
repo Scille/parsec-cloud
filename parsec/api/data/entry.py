@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import re
 from uuid import UUID, uuid4
 
 from parsec.serde import fields
+
 
 __all__ = ("EntryID", "EntryIDField", "EntryName", "EntryNameField")
 
@@ -26,11 +26,21 @@ EntryIDField = fields.uuid_based_field_factory(EntryID)
 
 class EntryName(str):
     __slots__ = ()
-    # TODO: This regex is a bit too loose...
-    regex = re.compile(r"^[^/]{1,256}$")
 
     def __init__(self, raw):
-        if not isinstance(raw, str) or not self.regex.match(raw):
+
+        # Stick to UNIX filesystem philosophy:
+        # - no `.` or `..` name
+        # - no `/` or null byte in the name
+        # - max 255 bytes long name
+        if (
+            not isinstance(raw, str)
+            or not 0 < len(raw.encode("utf8")) < 256
+            or raw == "."
+            or raw == ".."
+            or "/" in raw
+            or "\x00" in raw
+        ):
             raise ValueError("Invalid entry name")
 
 

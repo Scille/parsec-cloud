@@ -60,7 +60,7 @@ async def _test_keepalive(mock_clock, monkeypatch, cmds_factory):
         # to do with websocket level ping !), so the client will end up sending
         # websocket pings to keep the connection alive while waiting for the
         # never-comming answer
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             nursery.start_soon(cmds.ping, "Wathever")
 
             # Now advance time until ping is requested

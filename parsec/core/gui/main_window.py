@@ -2,8 +2,9 @@
 
 from typing import Optional
 from structlog import get_logger
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QPushButton
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -45,6 +46,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
+        self.button_add_instance = QPushButton(QIcon(":/icons/images/icons/plus_on.png"), "")
+        self.button_add_instance.clicked.connect(self._on_add_instance_clicked)
+        self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
+        self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.button_add_instance.hide()
+
+    def _on_add_instance_clicked(self):
+        r = QuestionDialog.ask(self, _("ASK_ADD_TAB_TITLE"), _("ASK_ADD_TAB_CONTENT"))
+        if not r:
+            return
+        self.add_instance()
 
     def _on_foreground_needed(self):
         self.show_top()
@@ -103,15 +115,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if len(tab_name) > 15:
                 tab_name = f"{tab_name[:12]}..."
             self.tab_center.setTabText(idx, tab_name)
+        self.toggle_add_instance_button()
+
+    def toggle_add_instance_button(self):
+        idx = self._get_login_tab_index()
+        if idx == -1:
+            self.tab_center.setCornerWidget(self.button_add_instance, Qt.TopLeftCorner)
+            self.button_add_instance.show()
+        else:
+            self.tab_center.setCornerWidget(None, Qt.TopLeftCorner)
+            self.button_add_instance.hide()
+
+    def _get_login_tab_index(self):
+        for idx in range(self.tab_center.count()):
+            if self.tab_center.tabText(idx) == _("TAB_TITLE_LOG_IN"):
+                return idx
+        return -1
 
     def add_instance(self, start_arg: Optional[str] = None):
-        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
-        self.tab_center.addTab(tab, "")
-        tab.state_changed.connect(self.on_tab_state_changed)
-        self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
-        if self.tab_center.count() > 1:
-            self.tab_center.setTabsClosable(True)
-
         action_addr = None
         if start_arg:
             try:
@@ -119,20 +140,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except ValueError as exc:
                 show_error(self, _("ERR_BAD_URL"), exception=exc)
 
+        if not action_addr:
+            idx = self._get_login_tab_index()
+            if idx != -1:
+                # There's already a login tab, just put it in front
+                self.tab_center.setCurrentIndex(idx)
+                return
+
+        action = None
+        method = None
         if isinstance(action_addr, BackendOrganizationBootstrapAddr):
-            tab.show_login_widget(show_meth="show_bootstrap_widget", addr=action_addr)
-            self.on_tab_state_changed(tab, "bootstrap")
-
+            action = "bootstrap"
+            method = "show_bootstrap_widget"
         elif isinstance(action_addr, BackendOrganizationClaimUserAddr):
-            tab.show_login_widget(show_meth="show_claim_user_widget", addr=action_addr)
-            self.on_tab_state_changed(tab, "claim_user")
-
+            action = "claim_user"
+            method = "show_claim_user_widget"
         elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
-            tab.show_login_widget(show_meth="show_claim_device_widget", addr=action_addr)
-            self.on_tab_state_changed(tab, "claim_device")
+            action = "claim_device"
+            method = "show_claim_device_widget"
 
+        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
+        self.tab_center.addTab(tab, "")
+        tab.state_changed.connect(self.on_tab_state_changed)
+        self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
+        if self.tab_center.count() > 1:
+            self.tab_center.setTabsClosable(True)
         else:
-            # Fallback to just create the default login windows
+            self.tab_center.setTabsClosable(False)
+
+        if action:
+            tab.show_login_widget(show_meth=method, addr=action_addr)
+            self.on_tab_state_changed(tab, action)
+        else:
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
 
@@ -148,11 +187,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def close_tab(self, index, force=False):
         tab = self.tab_center.widget(index)
         if not force:
+            r = True
             if tab and tab.is_logged_in:
                 r = QuestionDialog.ask(
                     self, _("ASK_CLOSE_TAB_TITLE"), _("ASK_CLOSE_TAB_CONTENT_LOGGED_IN")
                 )
-            else:
+            elif self.tab_center.tabText(index) != _("TAB_TITLE_LOG_IN"):
                 r = QuestionDialog.ask(self, _("ASK_CLOSE_TAB_TITLE"), _("ASK_CLOSE_TAB_CONTENT"))
             if not r:
                 return
@@ -162,6 +202,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab.logout()
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
+        self.toggle_add_instance_button()
 
     def closeEvent(self, event):
         if self.minimize_on_close and not self.need_close:

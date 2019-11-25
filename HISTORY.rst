@@ -6,6 +6,56 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.2.1 (2019-11-20)
+-------------------------
+
+* Add view to Display changelog history in the GUI (`#788
+  <https://github.com/Scille/parsec-cloud/issues/788>`__)
+
+
+Parsec 1.2.0 (2019-11-15)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Backend now checks if timestamp is not inferior of existant on vlob update, if
+  it is, sends an error to client which temporarily goes offline to avoid the
+  handling of this event in a retry loop.  (`#758
+  <https://github.com/Scille/parsec-cloud/issues/758>`__)
+* Add notification in GUI when an operation in the mountpoint failed in an
+  unexpected manner. (`#759 <https://github.com/Scille/parsec-
+  cloud/issues/759>`__)
+* Limit a tab title to a few characters and add a tooltip to tabs  (`#775
+  <https://github.com/Scille/parsec-cloud/issues/775>`__)
+* Add tooltips to taskbar buttons  (`#776 <https://github.com/Scille/parsec-
+  cloud/issues/776>`__)
+* Removed duplicates and supposed minimal sync when listing versions of a path
+  (`#784 <https://github.com/Scille/parsec-cloud/issues/784>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix crash on Linux when the ipc server lock file is located in a non existant
+  directory (`#760 <https://github.com/Scille/parsec-cloud/issues/760>`__)
+* Fix crash in ipc server when socket file path contains missing folder (only on
+  windows).  (`#765 <https://github.com/Scille/parsec-cloud/issues/765>`__)
+* Fix rights checking in winfsp operations. This issue used to cause a cffi
+  crash on windows when some operations were performed on the file system.
+  (`#770 <https://github.com/Scille/parsec-cloud/issues/770>`__)
+* Fix len check in ``OrganizationID``/``UserID``/``DeviceName``/``DeviceID``
+  when containing multibytes unicode characters. (`#794
+  <https://github.com/Scille/parsec-cloud/issues/794>`__)
+* Improve support of unicode in the mountpoint on Windows. (`#799
+  <https://github.com/Scille/parsec-cloud/issues/799>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Improve logging output on backend server  (`#753
+  <https://github.com/Scille/parsec-cloud/issues/753>`__)
+
+
 Parsec 1.1.2 (2019-10-22)
 -------------------------
 

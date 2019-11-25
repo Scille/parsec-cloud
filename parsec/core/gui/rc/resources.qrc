@@ -131,4 +131,7 @@
         <file>images/screenshots/offline_fr.png</file>
         <file>images/screenshots/your_turn.png</file>
     </qresource>
+    <qresource prefix="/generated_misc">
+        <file>generated_misc/history.html</file>
+    </qresource>
 </RCC>

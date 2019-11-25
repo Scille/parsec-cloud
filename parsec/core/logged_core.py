@@ -42,7 +42,7 @@ async def logged_core_factory(
     event_bus = event_bus or EventBus()
 
     # Plenty of nested scopes to order components init/teardown
-    async with trio.open_nursery() as root_nursery:
+    async with trio.open_service_nursery() as root_nursery:
 
         async with backend_cmds_pool_factory(
             device.organization_addr,
@@ -58,7 +58,7 @@ async def logged_core_factory(
                 device, path, backend_cmds_pool, remote_devices_manager, event_bus
             ) as user_fs:
 
-                async with trio.open_nursery() as monitor_nursery:
+                async with trio.open_service_nursery() as monitor_nursery:
                     # Finally start monitors
 
                     # Monitor connection must be first given it will watch on

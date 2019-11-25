@@ -88,7 +88,7 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
         client_answered = True
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
 
         async def connection_factory(*args, **kwargs):
             client_stream, server_stream = trio.testing.memory_stream_pair()
@@ -146,7 +146,7 @@ async def test_events_listen_wait_has_watchdog(monkeypatch, mock_clock, running_
         alice.organization_addr, alice.device_id, alice.signing_key, keepalive=2
     ) as cmds:
         mock_clock.rate = 1
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
 
             async def _cmd():
                 nonlocal event

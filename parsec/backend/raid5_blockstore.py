@@ -88,7 +88,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     # Try to fetch the checksum to rebuild the current missing chunk...
                     nursery.start_soon(_partial_blockstore_read, nursery, len(self.blockstores) - 1)
 
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             # Don't fetch the checksum by default
             for blockstore_index in range(len(self.blockstores) - 1):
                 nursery.start_soon(_partial_blockstore_read, nursery, blockstore_index)
@@ -154,7 +154,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
                     # Early exit
                     nursery.cancel_scope.cancel()
 
-        async with trio.open_nursery() as nursery:
+        async with trio.open_service_nursery() as nursery:
             for i, chunk_or_checksum in enumerate([*chunks, checksum_chunk]):
                 nursery.start_soon(_subblockstore_create, nursery, i, chunk_or_checksum)
 

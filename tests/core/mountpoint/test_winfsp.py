@@ -28,18 +28,26 @@ def test_rename_to_another_drive(mountpoint_service):
 
 @pytest.mark.win32
 @pytest.mark.mountpoint
-def test_close_trio_loop_during_fs_access(mountpoint_service, monkeypatch):
+def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
     mountpoint_needed_stop = threading.Event()
+    mountpoint_winfsp_stop = threading.Event()
     mountpoint_stopped = threading.Event()
 
     from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+    from winfspy import FileSystem
+
+    # Monkeypatch to trigger mountpoint teardown during an operation
 
     vanilla_entry_info = ThreadFSAccess.entry_info
 
     def _entry_info_maybe_stop_loop(self, path):
         if str(path) == "/stop_loop":
             mountpoint_needed_stop.set()
-            mountpoint_stopped.wait()
+            # WinFSP's stop waits for the current operations (so including this
+            # function !) to finish before returning.
+            # Given this is the behavior we are testing here, make sure we
+            # have actually reach this point before going further.
+            mountpoint_winfsp_stop.wait()
         return vanilla_entry_info(self, path)
 
     monkeypatch.setattr(
@@ -47,16 +55,32 @@ def test_close_trio_loop_during_fs_access(mountpoint_service, monkeypatch):
         _entry_info_maybe_stop_loop,
     )
 
+    # Monkeypatch WinFSP's stop to know when we are about to wait for the
+    # current operations to finish
+
+    vanilla_file_system_stop = FileSystem.stop
+
+    def _patched_file_system_stop(self):
+        mountpoint_winfsp_stop.set()
+        return vanilla_file_system_stop(self)
+
+    monkeypatch.setattr("winfspy.FileSystem.stop", _patched_file_system_stop)
+
+    # Spawn a thread responsible for the mountpoint teardown when needed
+
     def _wait_and_stop_mountpoint():
         mountpoint_needed_stop.wait()
         try:
-            mountpoint_service.stop()
+            mountpoint_service.stop(reset_testbed=False)
         finally:
             mountpoint_stopped.set()
 
     thread = threading.Thread(target=_wait_and_stop_mountpoint)
     thread.setName("MountpointService")
     thread.start()
+
+    # All boilerplates are set, let's do the actual test !
+
     try:
 
         mountpoint_service.start()
@@ -72,3 +96,72 @@ def test_close_trio_loop_during_fs_access(mountpoint_service, monkeypatch):
         mountpoint_needed_stop.set()
         mountpoint_stopped.wait()
         thread.join()
+
+
+@pytest.mark.win32
+@pytest.mark.mountpoint
+def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
+    # see https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+    items = (
+        (
+            # Invalid chars (except `/` which is not allowed in Parsec)
+            '<>:"\\|?*',
+            "~3c~3e~3a~22~5c~7c~3f~2a",
+        ),
+        (
+            # Invalid control characters (1/2)
+            "".join(chr(x) for x in range(1, 16)),
+            "".join(f"~{x:02x}" for x in range(1, 16)),
+        ),
+        (
+            # Invalid control characters (2/2)
+            "".join(chr(x) for x in range(16, 32)),
+            "".join(f"~{x:02x}" for x in range(16, 32)),
+        ),
+        (
+            # Trailing dot not allowed
+            "foo.",
+            "foo~2e",
+        ),
+        (
+            # Trailing space not allowed
+            "foo ",
+            "foo~20",
+        ),
+        (
+            # Invalid name
+            "CON",
+            "CO~4e",
+        ),
+        (
+            # Invalid name with extension
+            "COM1.foo",
+            "COM~31.foo",
+        ),
+    )
+
+    async def _bootstrap(user_fs, mountpoint_manager):
+
+        for name, _ in items:
+            # Apply bad name to both the mountpoint folder and data inside it
+            wid = await user_fs.workspace_create(name)
+            workspace = user_fs.get_workspace(wid)
+            await workspace.touch(f"/{name}")
+        await mountpoint_manager.mount_all()
+
+    mountpoint_service.start()
+    mountpoint_service.execute(_bootstrap)
+
+    workspaces = list(mountpoint_service.base_mountpoint.iterdir())
+
+    # mountpoint_service creates a `w` workspace by default
+    assert set(x.name for x in workspaces) == {"w", *{cooked_name for _, cooked_name in items}}
+
+    for _, cooked_name in items:
+        workspace = mountpoint_service.base_mountpoint / cooked_name
+        # TODO: currently failed with a `[WinError 1005] The volume does not contain a recognized file system.`
+        # assert workspace.exists()
+
+        entries = list(workspace.iterdir())
+        assert [x.name for x in entries] == [cooked_name]
+        assert entries[0].exists()

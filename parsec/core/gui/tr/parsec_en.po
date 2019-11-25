@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-11-05 16:30+0100\n"
-"PO-Revision-Date: 2019-11-05 16:43+0100\n"
+"POT-Creation-Date: 2019-11-21 08:53+0100\n"
+"PO-Revision-Date: 2019-11-21 08:54+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1347,6 +1347,21 @@ msgstr "Workspace \"{}\" no longer shared with you."
 msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
 msgstr "Conflict while syncing the file \"{}\"."
 
+msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
+msgstr "Unexpected error while performing \"{}\" operation on \"{}\": {}."
+
+msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
+msgstr "Cannot access \"{}\" from the server: {}."
+
+msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
+msgstr "Cannot access \"{}\" from the server given you lost read access to the workspace."
+
+msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
+msgstr "Cannot sync \"{}\" with the server given you lost write access to the workspace."
+
+msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
+msgstr "Cannot access \"{}\" from the server given the workspace is currently under maintenance."
+
 msgid "BACKEND_STATE_CONNECTED"
 msgstr "Connected"
 
@@ -1421,13 +1436,13 @@ msgid "PARSEC_WINDOW_TITLE"
 msgstr "Parsec - {}"
 
 msgid "BUTTON_ADD_INSTANCE"
-msgstr ""
+msgstr "Add an instance"
 
 msgid "ASK_ADD_TAB_TITLE"
-msgstr ""
+msgstr "Open a new instance"
 
 msgid "ASK_ADD_TAB_CONTENT"
-msgstr ""
+msgstr "Do you want to open a new tab?"
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"

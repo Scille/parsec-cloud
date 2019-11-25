@@ -6,7 +6,8 @@ from async_generator import asynccontextmanager
 
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
-from parsec.core.fs import UserFS, FSLocalMissError
+from parsec.core.fs import UserFS
+from parsec.core.fs.exceptions import FSLocalMissError
 from parsec.core.fs.storage import UserStorage
 
 from tests.common import freeze_time

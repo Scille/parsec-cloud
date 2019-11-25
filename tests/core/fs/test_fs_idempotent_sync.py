@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import pytest
 from string import ascii_lowercase
 from hypothesis import strategies as st
@@ -95,7 +94,7 @@ def test_fs_online_idempotent_sync(
 
         @rule(target=BadPath, type=st_entry_type, bad_parent=BadPath, name=st_entry_name)
         async def try_to_create_bad_path(self, type, bad_parent, name):
-            path = os.path.join(bad_parent, name)
+            path = f"{bad_parent}/{name}"
             with pytest.raises(FileNotFoundError):
                 if type == "file":
                     await self.workspace.touch(path)
