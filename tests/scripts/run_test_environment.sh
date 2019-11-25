@@ -2,7 +2,7 @@
 : '
 Create a temporary environment and initialize a test setup for parsec.
 
-Run `misc/run_test_environment.sh --help` for more information.
+Run `tests/scripts/run_test_environment.sh --help` for more information.
 '
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
