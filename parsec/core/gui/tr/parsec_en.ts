@@ -31,11 +31,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="64"/>
-        <source>LABEL_BOOTSTRAP_ORG_INSTRUCTIONS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/bootstrap_organization_widget.ui" line="141"/>
         <source>LABEL_USER_NAME</source>
         <translation type="unfinished"></translation>
@@ -46,27 +41,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="215"/>
-        <source>LABEL_URL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="270"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="233"/>
         <source>LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="313"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="276"/>
         <source>LABEL_PASSWORD_CHECK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="402"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="365"/>
         <source>BUTTON_CANCEL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/bootstrap_organization_widget.ui" line="417"/>
+        <location filename="../forms/bootstrap_organization_widget.ui" line="380"/>
         <source>BUTTON_BOOTSTRAP_ORG</source>
         <translation type="unfinished"></translation>
     </message>
@@ -87,42 +77,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="61"/>
-        <source>LABEL_CLAIM_DEVICE_INSTRUCTIONS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/claim_device_widget.ui" line="117"/>
-        <source>LABEL_USER_NAME</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="157"/>
-        <source>LABEL_DEVICE_NAME</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="197"/>
         <source>LABEL_TOKEN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="234"/>
-        <source>LABEL_URL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="292"/>
+        <location filename="../forms/claim_device_widget.ui" line="175"/>
         <source>LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="341"/>
+        <location filename="../forms/claim_device_widget.ui" line="224"/>
         <source>LABEL_PASSWORD_CHECK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="433"/>
+        <location filename="../forms/claim_device_widget.ui" line="316"/>
         <source>BUTTON_CLAIM</source>
         <translation type="unfinished"></translation>
     </message>
@@ -148,42 +118,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="67"/>
-        <source>LABEL_CLAIM_USER_INSTRUCTIONS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/claim_user_widget.ui" line="150"/>
-        <source>LABEL_USER_NAME</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_user_widget.ui" line="190"/>
         <source>LABEL_DEVICE_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="230"/>
+        <location filename="../forms/claim_user_widget.ui" line="190"/>
         <source>LABEL_TOKEN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="267"/>
-        <source>LABEL_URL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_user_widget.ui" line="325"/>
+        <location filename="../forms/claim_user_widget.ui" line="248"/>
         <source>LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="374"/>
+        <location filename="../forms/claim_user_widget.ui" line="297"/>
         <source>LABEL_PASSWORD_CHECK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="472"/>
+        <location filename="../forms/claim_user_widget.ui" line="395"/>
         <source>BUTTON_CLAIM</source>
         <translation type="unfinished"></translation>
     </message>
@@ -425,28 +380,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="322"/>
-        <source>BUTTON_REGISTER_NEW_USER</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="347"/>
-        <source>BUTTON_REGISTER_NEW_DEVICE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="372"/>
+        <location filename="../forms/login_widget.ui" line="315"/>
         <source>BUTTON_LOG_IN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="394"/>
-        <source>BUTTON_BOOTSTRAP_ORG</source>
+        <location filename="../forms/login_widget.ui" line="359"/>
+        <source>BUTTON_SETTINGS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="413"/>
-        <source>BUTTON_SETTINGS</source>
+        <location filename="../forms/login_widget.ui" line="337"/>
+        <source>BUTTON_ENTER_URL</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

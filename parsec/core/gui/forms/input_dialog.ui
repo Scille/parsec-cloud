@@ -173,6 +173,9 @@ border: 0;
           <property name="text">
            <string/>
           </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
@@ -231,7 +234,7 @@ padding-left: 10px;</string>
          <widget class="ShadowedButton" name="button_ok">
           <property name="minimumSize">
            <size>
-            <width>0</width>
+            <width>64</width>
             <height>32</height>
            </size>
           </property>
@@ -265,12 +268,12 @@ padding-left: 10px;</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>PointingHandButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>PointingHandButton</class>
+   <class>ShadowedButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
