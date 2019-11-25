@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 """
@@ -8,10 +8,13 @@ Run `tests/scripts/run_test_environment.sh --help` for more information.
 """
 
 import os
+import re
 import tempfile
+import subprocess
 
 import trio
 import click
+import psutil
 
 from parsec.utils import trio_run
 from parsec.core.types import BackendAddr
@@ -28,26 +31,31 @@ DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
 async def new_environment(source_file=None):
     export_lines = []
     tempdir = tempfile.mkdtemp()
-    env = {
-        "XDG_CACHE_HOME": f"{tempdir}/cache",
-        "XDG_DATA_HOME": f"{tempdir}/share",
-        "XDG_CONFIG_HOME": f"{tempdir}/config",
-    }
+    if os.name == "nt":
+        export = "set"
+        env = {"APPDATA": tempdir}
+    else:
+        export = "export"
+        env = {
+            "XDG_CACHE_HOME": f"{tempdir}/cache",
+            "XDG_DATA_HOME": f"{tempdir}/share",
+            "XDG_CONFIG_HOME": f"{tempdir}/config",
+        }
     for key, value in env.items():
-        await trio.Path(value).mkdir()
+        await trio.Path(value).mkdir(exist_ok=True)
         os.environ[key] = value
-        export_lines.append(f"export {key}={value}")
+        export_lines.append(f"{export} {key}={value}")
 
     if source_file is None:
         click.echo(
-            """
+            """\
 [Warning] This script has not been sourced.
 Please configure your environment with the following commands:
 """
         )
     else:
         click.echo(
-            """
+            """\
 Your environment will be configured with the following commands:
 """
         )
@@ -59,12 +67,14 @@ Your environment will be configured with the following commands:
     if source_file is None:
         return
 
-    async with await trio.open_file(source_file, "w") as f:
+    async with await trio.open_file(source_file, "a") as f:
         for line in export_lines:
             await f.write(line + "\n")
 
 
 async def configure_mime_types():
+    if os.name == "nt":
+        return
     XDG_DATA_HOME = os.environ["XDG_DATA_HOME"]
     desktop_file = trio.Path(f"{XDG_DATA_HOME}/applications/parsec.desktop")
     await desktop_file.parent.mkdir(exist_ok=True, parents=True)
@@ -84,19 +94,50 @@ MimeType=x-scheme-handler/parsec;
     await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
 
 
-async def restart_local_backend(administration_token):
-    first_half = "python3 -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
-    second_half = f"-P {DEFAULT_BACKEND_PORT} --administration-token {administration_token}"
-    command = first_half + second_half
-    await trio.run_process(["pkill", "-f", first_half], check=False)
-    await trio.open_process(command.split())
-    await trio.sleep(1)
-    url = f"parsec://localhost:{DEFAULT_BACKEND_PORT}?no_ssl=true"
+async def restart_local_backend(administration_token, backend_port):
+    pattern = f"parsec.* backend.* run.* -P {backend_port}"
+    command = (
+        f"python -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"-P {backend_port} --administration-token {administration_token}"
+    )
+
+    # Trio does not support subprocess in windows yet
+
+    def _windows_target():
+        for proc in psutil.process_iter():
+            if "python" in proc.name():
+                arguments = " ".join(proc.cmdline())
+                if re.search(pattern, arguments):
+                    proc.kill()
+        backend_process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        for data in backend_process.stdout:
+            print(data.decode(), end="")
+            break
+        backend_process.stdout.close()
+
+    # Windows restart
+    if os.name == "nt" or True:
+        await trio.to_thread.run_sync(_windows_target)
+
+    # Linux restart
+    else:
+
+        await trio.run_process(["pkill", "-f", pattern], check=False)
+        backend_process = await trio.open_process(command.split(), stdout=subprocess.PIPE)
+        async with backend_process.stdout:
+            async for data in backend_process.stdout:
+                print(data.decode(), end="")
+                break
+
+    # Make sure the backend is actually started
+    await trio.sleep(0.2)
+    url = f"parsec://localhost:{backend_port}?no_ssl=true"
     return BackendAddr.from_url(url)
 
 
 @click.command()
 @click.option("-B", "--backend-address", type=BackendAddr.from_url)
+@click.option("-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT)
 @click.option("-O", "--organization-id", show_default=True, type=OrganizationID, default="corp")
 @click.option("-a", "--alice-device-id", show_default=True, type=DeviceID, default="alice@laptop")
 @click.option("-b", "--bob-device-id", show_default=True, type=DeviceID, default="bob@laptop")
@@ -108,7 +149,7 @@ async def restart_local_backend(administration_token):
     "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
 )
 @click.option("--force/--no-force", show_default=True, default=False)
-@click.option("-e", "--empty")
+@click.option("-e", "--empty", is_flag=True)
 @click.option("--source-file", hidden=True)
 def main(**kwargs):
     """Create a temporary environment and initialize a test setup for parsec.
@@ -155,6 +196,7 @@ def main(**kwargs):
 
 async def amain(
     backend_address,
+    backend_port,
     organization_id,
     alice_device_id,
     bob_device_id,
@@ -168,6 +210,7 @@ async def amain(
     source_file,
 ):
     # Set up the temporary environment
+    click.echo()
     await new_environment(source_file)
 
     # Configure MIME types locally
@@ -179,7 +222,18 @@ async def amain(
 
     # Start a local backend
     if backend_address is None:
-        backend_address = await restart_local_backend(administration_token)
+        backend_address = await restart_local_backend(administration_token, backend_port)
+        click.echo(
+            f"""\
+A fresh backend server is now running: {backend_address}
+"""
+        )
+    else:
+        click.echo(
+            f"""\
+Using existing backend: {backend_address}
+"""
+        )
 
     # Initialize the test organization
     alice_slugid, other_alice_slugid, bob_slugid = await initialize_test_organization(
@@ -197,7 +251,7 @@ async def amain(
 
     # Report
     click.echo(
-        f"""
+        f"""\
 Mount alice and bob drives using:
 
     $ parsec core run -P {password} -D {alice_slugid}
