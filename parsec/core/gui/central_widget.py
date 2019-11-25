@@ -35,7 +35,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     connection_state_changed = pyqtSignal(int)
     logout_requested = pyqtSignal()
-    new_notification = pyqtSignal(str, str)
+    new_notification = pyqtSignal(str, str, str)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -110,9 +110,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.incompatible_version":
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
+            self.new_notification.emit(event, "WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
         elif event == "mountpoint.stopped":
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
+            self.new_notification.emit(event, "WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == "mountpoint.remote_error":
             exc = kwargs["exc"]
             path = kwargs["path"]
@@ -124,12 +124,13 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(path)
             else:
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
-            self.new_notification.emit("WARNING", msg)
+            self.new_notification.emit(event, "WARNING", msg)
         elif event == "mountpoint.unhandled_error":
             exc = kwargs["exc"]
             path = kwargs["path"]
             operation = kwargs["operation"]
             self.new_notification.emit(
+                event,
                 "ERROR",
                 _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
                     operation, path, str(exc)
@@ -142,19 +143,19 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             previous_role = getattr(previous_entry, "role", None)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
+                    event, "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
                 )
             elif new_role is not None and previous_role is not None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
+                    event, "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
                 )
             elif new_role is None and previous_role is not None:
                 self.new_notification.emit(
-                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
+                    event, "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
                 )
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(
-                "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
+                event, "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )
 
     def close_notification_center(self):
@@ -187,7 +188,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
 
-    def on_new_notification(self, notif_type, msg):
+    def on_new_notification(self, event, notif_type, msg):
         self.notification_center.add_notification(notif_type, msg)
         if self.notification_center.isHidden():
             self.button_notif.inc_notif_count()

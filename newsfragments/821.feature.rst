@@ -1,0 +1,1 @@
+Tab color changes when an instance receives a notification
