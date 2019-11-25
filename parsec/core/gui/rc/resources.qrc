@@ -78,12 +78,18 @@
         <file>images/icons/left_menu/storage.svg</file>
         <file>images/icons/left_menu/devices.svg</file>
         <file>images/icons/left_menu/users.svg</file>
-        <file>images/icons/tray_icons/back.svg</file>
-        <file>images/icons/tray_icons/bell-regular.svg</file>
-        <file>images/icons/tray_icons/bell-solid.svg</file>
-        <file>images/icons/tray_icons/file.svg</file>
-        <file>images/icons/tray_icons/folder.svg</file>
-        <file>images/icons/tray_icons/plus.svg</file>
+        <file>images/icons/tray_icons/back-default.svg</file>
+        <file>images/icons/tray_icons/back-hover.svg</file>
+        <file>images/icons/tray_icons/bell-regular-default.svg</file>
+        <file>images/icons/tray_icons/bell-regular-hover.svg</file>
+        <file>images/icons/tray_icons/bell-solid-default.svg</file>
+        <file>images/icons/tray_icons/bell-solid-hover.svg</file>
+        <file>images/icons/tray_icons/file-default.svg</file>
+        <file>images/icons/tray_icons/file-hover.svg</file>
+        <file>images/icons/tray_icons/folder-default.svg</file>
+        <file>images/icons/tray_icons/folder-hover.svg</file>
+        <file>images/icons/tray_icons/plus-default.svg</file>
+        <file>images/icons/tray_icons/plus-hover.svg</file>
         <file>images/icons/file_icons/file_archive.png</file>
         <file>images/icons/file_icons/file_avi.png</file>
         <file>images/icons/file_icons/file_css.png</file>
