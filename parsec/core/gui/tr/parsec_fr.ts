@@ -1062,13 +1062,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="336"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="360"/>
         <source>BUTTON_UPDATE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="386"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="410"/>
         <source>BUTTON_CLOSE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="300"/>
+        <source>CHECK_SHOW_REVOKED</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
