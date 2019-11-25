@@ -65,9 +65,12 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
             # Parsec is already started, give it our work then
             try:
                 try:
-                    await send_to_ipc_server(
-                        config.ipc_socket_file, "new_instance", start_arg=start_arg
-                    )
+                    if start_arg:
+                        await send_to_ipc_server(
+                            config.ipc_socket_file, "new_instance", start_arg=start_arg
+                        )
+                    else:
+                        await send_to_ipc_server(config.ipc_socket_file, "foreground")
                 finally:
                     result_queue.put("already_running")
                 return
@@ -142,7 +145,7 @@ def run_gui(config: CoreConfig, start_arg: str = None):
 
         win.showMaximized()
         win.show_top()
-        win.add_instance(start_arg)
+        win.new_instance_needed.emit(start_arg)
 
         def kill_window(*args):
             win.close_app(force=True)
