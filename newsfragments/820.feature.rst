@@ -1,0 +1,1 @@
+Prevent tab change if a modal is open

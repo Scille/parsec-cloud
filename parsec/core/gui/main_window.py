@@ -2,9 +2,10 @@
 
 from typing import Optional
 from structlog import get_logger
+
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -174,6 +175,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
+
+        if not QApplication.activeModalWidget():
+            self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
 
     def close_app(self, force=False):
         self.need_close = True
