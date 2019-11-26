@@ -32,13 +32,17 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         if current:
             self.combo_languages.setCurrentText(current)
         self.label_user_guide.clicked.connect(self.open_user_guide)
+        self.label_send_feedback.clicked.connect(self.open_feedback_link)
         self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
         self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
         self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
         self.button_check_version.clicked.connect(self.check_version)
 
+    def open_feedback_link(self):
+        desktop.open_url("https://parsec.cloud")
+
     def open_user_guide(self):
-        desktop.open_url("https://www.google.com")
+        desktop.open_url("https://parsec.cloud")
 
     def check_version(self):
         d = CheckNewVersion(self.jobs_ctx, self.event_bus, self.core_config, parent=self)

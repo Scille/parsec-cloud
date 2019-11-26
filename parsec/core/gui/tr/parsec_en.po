@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-11-21 08:53+0100\n"
-"PO-Revision-Date: 2019-11-21 08:54+0100\n"
+"POT-Creation-Date: 2019-11-26 11:30+0100\n"
+"PO-Revision-Date: 2019-11-26 11:31+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -865,9 +865,6 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "PARSEC_CHANGELOG_CONTENT"
-msgstr ""
-
 msgid "ASK_FILE_EXISTS_REPLACE"
 msgstr "A file with the name \"{}\" already exists. Do you want to replace it?"
 
@@ -1606,6 +1603,9 @@ msgstr "Help"
 
 msgid "LABEL_USER_GUIDE_LINK"
 msgstr "Starting guide"
+
+msgid "LABEL_FEEDBACK_LINK"
+msgstr "Send feedback"
 
 msgid "BUTTON_OK"
 msgstr "OK"

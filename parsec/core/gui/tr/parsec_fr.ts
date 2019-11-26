@@ -248,62 +248,62 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="283"/>
+        <location filename="../forms/global_settings_widget.ui" line="305"/>
         <source>SETTINGS_TITLE_BEHAVIOR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="297"/>
+        <location filename="../forms/global_settings_widget.ui" line="319"/>
         <source>CHECK_MINIMIZE_IN_TRAY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="336"/>
+        <location filename="../forms/global_settings_widget.ui" line="358"/>
         <source>SETTINGS_TITLE_LOCALIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="352"/>
+        <location filename="../forms/global_settings_widget.ui" line="374"/>
         <source>LABEL_LANGUAGE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="409"/>
+        <location filename="../forms/global_settings_widget.ui" line="431"/>
         <source>SETTINGS_TITLE_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="425"/>
+        <location filename="../forms/global_settings_widget.ui" line="447"/>
         <source>CHECK_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="452"/>
+        <location filename="../forms/global_settings_widget.ui" line="474"/>
         <source>BUTTON_CHECK_NEW_VERSION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="503"/>
+        <location filename="../forms/global_settings_widget.ui" line="525"/>
         <source>SETTINGS_TITLE_ERROR_REPORTING</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="517"/>
+        <location filename="../forms/global_settings_widget.ui" line="539"/>
         <source>CHECK_SEND_CRASH_INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="553"/>
+        <location filename="../forms/global_settings_widget.ui" line="575"/>
         <source>SETTINGS_TITLE_INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="567"/>
+        <location filename="../forms/global_settings_widget.ui" line="589"/>
         <source>CHECK_USE_WORKSPACE_COLORS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="655"/>
+        <location filename="../forms/global_settings_widget.ui" line="677"/>
         <source>BUTTON_SAVE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -317,6 +317,11 @@
         <source>LABEL_USER_GUIDE_LINK</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="266"/>
+        <source>LABEL_FEEDBACK_LINK</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InputDialog</name>
@@ -326,7 +331,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/input_dialog.ui" line="249"/>
+        <location filename="../forms/input_dialog.ui" line="252"/>
         <source>BUTTON_OK</source>
         <translation type="unfinished"></translation>
     </message>

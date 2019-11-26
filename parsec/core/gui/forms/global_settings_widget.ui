@@ -251,6 +251,28 @@ background-color: rgb(255, 255, 255);
         </widget>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <property name="leftMargin">
+          <number>20</number>
+         </property>
+         <item>
+          <widget class="ClickableLabel" name="label_send_feedback">
+           <property name="font">
+            <font>
+             <underline>true</underline>
+            </font>
+           </property>
+           <property name="text">
+            <string>LABEL_FEEDBACK_LINK</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::RichText</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QWidget" name="widget_3" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_9">
           <property name="spacing">
@@ -681,13 +703,13 @@ background-color: rgb(255, 255, 255);
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ClickableLabel</class>
-   <extends>QLabel</extends>
+   <class>ShadowedButton</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>ShadowedButton</class>
-   <extends>QPushButton</extends>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
