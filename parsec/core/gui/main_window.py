@@ -4,7 +4,7 @@ from typing import Optional
 from structlog import get_logger
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
-from PyQt5.QtGui import 
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication
 
 from parsec import __version__ as PARSEC_VERSION
