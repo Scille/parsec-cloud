@@ -12,7 +12,7 @@ from parsec.core.invite_claim import invite_and_create_device
 async def alice_invite(running_backend, backend, alice):
     invitation = {
         "addr": BackendOrganizationClaimDeviceAddr.build(
-            alice.organization_addr, alice.device_id, "123456"
+            alice.organization_addr, f"{alice.user_id}@pc1", "123456"
         ),
         "token": "123456",
         "user_id": alice.user_id,
@@ -33,33 +33,31 @@ async def alice_invite(running_backend, backend, alice):
             nursery.cancel_scope.cancel()
 
 
-async def _gui_ready_for_claim(aqtbot, gui, invitation):
+async def _gui_ready_for_claim(aqtbot, gui, invitation, monkeypatch):
     login_w = gui.test_get_login_widget()
     claim_w = gui.test_get_claim_device_widget()
     assert login_w is not None
     assert claim_w is None
 
-    await aqtbot.mouse_click(login_w.button_register_device_instead, QtCore.Qt.LeftButton)
+    print(invitation["addr"].to_url())
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        classmethod(lambda *args, **kwargs: (invitation["addr"].to_url())),
+    )
+
+    await aqtbot.mouse_click(login_w.button_enter_url, QtCore.Qt.LeftButton)
+
     claim_w = gui.test_get_claim_device_widget()
     assert claim_w is not None
 
-    await aqtbot.key_clicks(claim_w.line_edit_login, invitation.get("user_id", ""))
-    # Device name defaults to machine name
-    default_device_name = claim_w.line_edit_device.text()
-    assert default_device_name
-    for _ in range(len(default_device_name)):
-        await aqtbot.key_press(claim_w.line_edit_device, QtCore.Qt.Key_Backspace)
-    await aqtbot.key_clicks(claim_w.line_edit_device, invitation.get("device_name", ""))
-    await aqtbot.key_clicks(claim_w.line_edit_token, invitation.get("token", ""))
-    await aqtbot.key_clicks(claim_w.line_edit_url, str(invitation.get("addr", "")))
     await aqtbot.key_clicks(claim_w.line_edit_password, invitation.get("password", ""))
     await aqtbot.key_clicks(claim_w.line_edit_password_check, invitation.get("password", ""))
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_claim_device(aqtbot, gui, autoclose_dialog, alice_invite):
-    await _gui_ready_for_claim(aqtbot, gui, alice_invite)
+async def test_claim_device(aqtbot, gui, autoclose_dialog, alice_invite, monkeypatch):
+    await _gui_ready_for_claim(aqtbot, gui, alice_invite, monkeypatch)
     claim_w = gui.test_get_claim_device_widget()
     async with aqtbot.wait_signal(claim_w.device_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
@@ -70,8 +68,10 @@ async def test_claim_device(aqtbot, gui, autoclose_dialog, alice_invite):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_claim_device_offline(aqtbot, gui, autoclose_dialog, running_backend, alice_invite):
-    await _gui_ready_for_claim(aqtbot, gui, alice_invite)
+async def test_claim_device_offline(
+    aqtbot, gui, autoclose_dialog, running_backend, alice_invite, monkeypatch
+):
+    await _gui_ready_for_claim(aqtbot, gui, alice_invite, monkeypatch)
     claim_w = gui.test_get_claim_device_widget()
 
     with running_backend.offline():
@@ -86,7 +86,7 @@ async def test_claim_device_offline(aqtbot, gui, autoclose_dialog, running_backe
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_claim_device_unknown_error(monkeypatch, aqtbot, gui, autoclose_dialog, alice_invite):
-    await _gui_ready_for_claim(aqtbot, gui, alice_invite)
+    await _gui_ready_for_claim(aqtbot, gui, alice_invite, monkeypatch)
     claim_w = gui.test_get_claim_device_widget()
 
     async def _broken(*args, **kwargs):
@@ -110,9 +110,6 @@ async def test_claim_device_with_start_arg(event_bus, core_config, gui_factory):
     claim_w = gui.test_get_claim_device_widget()
     assert claim_w
 
-    assert claim_w.line_edit_url.text() == start_arg
-    assert claim_w.line_edit_login.text() == "John"
-    assert claim_w.line_edit_device.text() == "pc"
     assert claim_w.line_edit_token.text() == "1234ABCD"
 
 

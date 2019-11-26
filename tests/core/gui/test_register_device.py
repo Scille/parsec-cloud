@@ -2,6 +2,7 @@
 
 import pytest
 from PyQt5 import QtCore
+from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from unittest.mock import patch
 
@@ -55,21 +56,17 @@ async def test_register_device_modal_ok(
     d_w = logged_gui.test_get_devices_widget()
     assert d_w is not None
 
-    def _claim_device(user_id, device_name, token, addr, password):
+    def _claim_device(token, addr, password):
         l_w = gui.test_get_login_widget()
 
         assert l_w is not None
-        l_w.show_claim_device_widget()
+        l_w.show_claim_device_widget(BackendOrganizationClaimDeviceAddr.from_url(addr))
 
         claim_w = gui.test_get_claim_device_widget()
 
         assert claim_w is not None
 
-        aqtbot.qtbot.keyClicks(claim_w.line_edit_login, user_id)
-        claim_w.line_edit_device.setText("")
-        aqtbot.qtbot.keyClicks(claim_w.line_edit_device, device_name)
         aqtbot.qtbot.keyClicks(claim_w.line_edit_token, token)
-        aqtbot.qtbot.keyClicks(claim_w.line_edit_url, str(addr))
         aqtbot.qtbot.keyClicks(claim_w.line_edit_password, password)
         aqtbot.qtbot.keyClicks(claim_w.line_edit_password_check, password)
         aqtbot.qtbot.mouseClick(claim_w.button_claim, QtCore.Qt.LeftButton)
@@ -85,13 +82,7 @@ async def test_register_device_modal_ok(
         assert modal.line_edit_device_name.text() == "new_device"
         assert modal.line_edit_token.text()
         with aqtbot.qtbot.waitSignal(modal.device_registered):
-            _claim_device(
-                "alice",
-                modal.line_edit_device_name.text(),
-                modal.line_edit_token.text(),
-                modal.line_edit_url.text(),
-                "P@ssw0rd!",
-            )
+            _claim_device(modal.line_edit_token.text(), modal.line_edit_url.text(), "P@ssw0rd!")
         assert (
             "Information",
             "The device has been registered. You may now close this window.",

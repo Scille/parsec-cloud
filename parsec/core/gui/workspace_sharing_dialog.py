@@ -30,8 +30,13 @@ def _index_to_role(index):
     return None
 
 
-async def _do_get_participants(workspace_fs):
-    return await workspace_fs.get_user_roles()
+async def _do_get_participants(core, workspace_fs):
+    ret = {}
+    participants = await workspace_fs.get_user_roles()
+    for user, role in participants.items():
+        user_info, revoked_info = await core.remote_devices_manager.get_user(user)
+        ret[user] = (role, revoked_info)
+    return ret
 
 
 async def _do_user_find(core, text):
@@ -71,7 +76,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
     delete_clicked = pyqtSignal(UserID)
     role_changed = pyqtSignal()
 
-    def __init__(self, user, is_current_user, current_user_role, role, *args, **kwargs):
+    def __init__(self, user, is_current_user, current_user_role, role, is_revoked, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.ROLES_TRANSLATIONS = {
@@ -83,12 +88,19 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.role = role
         self.current_user_role = current_user_role
         self.is_current_user = is_current_user
+        self.is_revoked = is_revoked
         self.user = user
         if self.role == WorkspaceRole.OWNER:
             self.label_name.setText(f"<b>{self.user}</b>")
         else:
             self.label_name.setText(self.user)
 
+        if self.is_revoked:
+            self.setDisabled(True)
+            font = self.label_name.font()
+            font.setStrikeOut(True)
+            self.label_name.setFont(font)
+            self.setToolTip(_("USER_IS_REVOKED"))
         if self.is_current_user:
             self.setDisabled(True)
         if (
@@ -168,6 +180,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.get_participants_error.connect(self._on_get_participants_error)
         self.user_find_success.connect(self._on_user_find_success)
         self.user_find_error.connect(self._on_user_find_error)
+        self.check_show_revoked.toggled.connect(self._on_show_revoked)
 
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
         self.current_user_role = ws_entry.role
@@ -189,6 +202,12 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.widget_add.hide()
             self.button_apply.hide()
         self.reset()
+
+    def _on_show_revoked(self, visible):
+        for i in range(self.scroll_content.layout().count()):
+            w = self.scroll_content.layout().itemAt(i).widget()
+            if w and w.is_revoked:
+                w.setVisible(visible)
 
     def text_changed(self, text):
         # In order to avoid a segfault by making to many requests,
@@ -234,16 +253,19 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             role=_index_to_role(self.combo_role.currentIndex()),
         )
 
-    def add_participant(self, user, is_current_user, role):
+    def add_participant(self, user, is_current_user, role, is_revoked):
         w = SharingWidget(
             user=user,
             is_current_user=is_current_user,
             current_user_role=self.current_user_role,
             role=role,
+            is_revoked=is_revoked,
             parent=self,
         )
         w.role_changed.connect(self.on_role_changed)
         self.scroll_content.layout().insertWidget(0, w)
+        if not self.check_show_revoked.isChecked() and w.is_revoked:
+            w.hide()
         w.delete_clicked.connect(self.on_remove_user_clicked)
 
     def on_role_changed(self):
@@ -313,7 +335,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
     def _on_share_success(self, job):
         workspace_name, user, role = job.ret
-        self.add_participant(user, False, role)
+        self.add_participant(user, False, role, is_revoked=False)
 
     def _on_share_error(self, job):
         exc = job.exc
@@ -332,10 +354,8 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         exc = job.exc
         show_error(
             self,
-            _(
-                "ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}".format(
-                    workspace=exc.params.get("workspace_name"), user=exc.params.get("user")
-                )
+            _("ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}").format(
+                workspace=exc.params.get("workspace_name"), user=exc.params.get("user")
             ),
         )
 
@@ -361,8 +381,10 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             self.scroll_content.layout().removeItem(item)
             w.setParent(None)
         QCoreApplication.processEvents()
-        for user, role in participants.items():
-            self.add_participant(user, user == self.core.device.user_id, role)
+        for user, (role, revoked_info) in participants.items():
+            self.add_participant(
+                user, user == self.core.device.user_id, role, is_revoked=revoked_info is not None
+            )
         self.line_edit_share.setText("")
         self.button_share.setDisabled(True)
         self.button_apply.setDisabled(True)
@@ -390,5 +412,6 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             ThreadSafeQtSignal(self, "get_participants_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "get_participants_error", QtToTrioJob),
             _do_get_participants,
+            core=self.core,
             workspace_fs=self.workspace_fs,
         )

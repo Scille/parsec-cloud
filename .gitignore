@@ -68,6 +68,9 @@ parsec/core/gui/_resources_rc.py
 # PyQt's forms, automatically generated
 parsec/core/gui/ui/*.py
 
+# History html file, automatically generated
+parsec/core/gui/rc/generated_misc/
+
 # Temporary files
 *~
 *#

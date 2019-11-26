@@ -17,7 +17,6 @@
         <file>images/icons/share.png</file>
         <file>images/icons/desk.png</file>
         <file>images/icons/file_selected.png</file>
-        <file>images/icons/folder.png</file>
         <file>images/icons/folder_selected.png</file>
         <file>images/icons/garbage.png</file>
         <file>images/icons/garbage_selected.png</file>
@@ -55,33 +54,6 @@
         <file>images/icons/cloud_offline.png</file>
         <file>images/icons/cloud_online.png</file>
         <file>images/icons/copy_to_clipboard.png</file>
-        <file>images/icons/file_archive.png</file>
-        <file>images/icons/file_avi.png</file>
-        <file>images/icons/file_css.png</file>
-        <file>images/icons/file_csv.png</file>
-        <file>images/icons/file_dbf.png</file>
-        <file>images/icons/file_doc.png</file>
-        <file>images/icons/file_dwg.png</file>
-        <file>images/icons/file_exe.png</file>
-        <file>images/icons/file_fla.png</file>
-        <file>images/icons/file_html.png</file>
-        <file>images/icons/file_iso.png</file>
-        <file>images/icons/file_jpg.png</file>
-        <file>images/icons/file_js.png</file>
-        <file>images/icons/file_json.png</file>
-        <file>images/icons/file_mp3.png</file>
-        <file>images/icons/file_mp4.png</file>
-        <file>images/icons/file_pdf.png</file>
-        <file>images/icons/file_png.png</file>
-        <file>images/icons/file_ppt.png</file>
-        <file>images/icons/file_psd.png</file>
-        <file>images/icons/file_rtf.png</file>
-        <file>images/icons/file_svg.png</file>
-        <file>images/icons/file_txt.png</file>
-        <file>images/icons/file_unknown.png</file>
-        <file>images/icons/file_xls.png</file>
-        <file>images/icons/file_xml.png</file>
-        <file>images/icons/file_zip.png</file>
         <file>images/icons/error.png</file>
         <file>images/icons/info.png</file>
         <file>images/icons/warning.png</file>
@@ -89,7 +61,6 @@
         <file>images/icons/notification_on.png</file>
         <file>images/icons/plus_off.png</file>
         <file>images/icons/plus_on.png</file>
-        <file>images/icons/return_off.png</file>
         <file>images/icons/return_on.png</file>
         <file>images/icons/upload_file_off.png</file>
         <file>images/icons/upload_file_on.png</file>
@@ -97,16 +68,56 @@
         <file>images/icons/upload_folder_on.png</file>
         <file>images/icons/avatar.png</file>
         <file>images/icons/exit.png</file>
-        <file>images/icons/gear.png</file>
-        <file>images/icons/group.png</file>
+        <file>images/icons/left_menu/settings.svg</file>
         <file>images/icons/owner2.png</file>
         <file>images/icons/user2.png</file>
         <file>images/icons/personal-computer.png</file>
-        <file>images/icons/devices.png</file>
-        <file>images/icons/documents.png</file>
         <file>images/icons/folder-up_selected.png</file>
         <file>images/icons/cancel.png</file>
         <file>images/icons/go-back_workspace.png</file>
+        <file>images/icons/left_menu/storage.svg</file>
+        <file>images/icons/left_menu/devices.svg</file>
+        <file>images/icons/left_menu/users.svg</file>
+        <file>images/icons/tray_icons/back-default.svg</file>
+        <file>images/icons/tray_icons/back-hover.svg</file>
+        <file>images/icons/tray_icons/bell-regular-default.svg</file>
+        <file>images/icons/tray_icons/bell-regular-hover.svg</file>
+        <file>images/icons/tray_icons/bell-solid-default.svg</file>
+        <file>images/icons/tray_icons/bell-solid-hover.svg</file>
+        <file>images/icons/tray_icons/file-default.svg</file>
+        <file>images/icons/tray_icons/file-hover.svg</file>
+        <file>images/icons/tray_icons/folder-default.svg</file>
+        <file>images/icons/tray_icons/folder-hover.svg</file>
+        <file>images/icons/tray_icons/plus-default.svg</file>
+        <file>images/icons/tray_icons/plus-hover.svg</file>
+        <file>images/icons/file_icons/file_archive.png</file>
+        <file>images/icons/file_icons/file_avi.png</file>
+        <file>images/icons/file_icons/file_css.png</file>
+        <file>images/icons/file_icons/file_csv.png</file>
+        <file>images/icons/file_icons/file_dbf.png</file>
+        <file>images/icons/file_icons/file_doc.png</file>
+        <file>images/icons/file_icons/file_dwg.png</file>
+        <file>images/icons/file_icons/file_exe.png</file>
+        <file>images/icons/file_icons/file_fla.png</file>
+        <file>images/icons/file_icons/file_html.png</file>
+        <file>images/icons/file_icons/file_iso.png</file>
+        <file>images/icons/file_icons/file_jpg.png</file>
+        <file>images/icons/file_icons/file_js.png</file>
+        <file>images/icons/file_icons/file_json.png</file>
+        <file>images/icons/file_icons/file_mp3.png</file>
+        <file>images/icons/file_icons/file_mp4.png</file>
+        <file>images/icons/file_icons/file_pdf.png</file>
+        <file>images/icons/file_icons/file_png.png</file>
+        <file>images/icons/file_icons/file_ppt.png</file>
+        <file>images/icons/file_icons/file_psd.png</file>
+        <file>images/icons/file_icons/file_rtf.png</file>
+        <file>images/icons/file_icons/file_svg.png</file>
+        <file>images/icons/file_icons/file_txt.png</file>
+        <file>images/icons/file_icons/file_unknown.png</file>
+        <file>images/icons/file_icons/file_xls.png</file>
+        <file>images/icons/file_icons/file_xml.png</file>
+        <file>images/icons/file_icons/file_zip.png</file>
+        <file>images/icons/file_icons/folder.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
@@ -131,7 +142,7 @@
         <file>images/screenshots/offline_fr.png</file>
         <file>images/screenshots/your_turn.png</file>
     </qresource>
-    <qresource prefix="/misc">
-        <file>misc/history.html</file>
+    <qresource prefix="/generated_misc">
+        <file>generated_misc/history.html</file>
     </qresource>
 </RCC>

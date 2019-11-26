@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Optional
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
@@ -33,17 +32,12 @@ async def _do_claim_user(
     token: str,
     user_id: str,
     device_name: str,
-    organization_addr: str,
+    organization_addr: BackendOrganizationClaimUserAddr,
 ):
     if password != password_check:
         raise JobResultError("password-mismatch")
     if len(password) < 8:
         raise JobResultError("password-size")
-
-    try:
-        action_addr = BackendOrganizationClaimUserAddr.from_url(organization_addr)
-    except ValueError as exc:
-        raise JobResultError("bad-url") from exc
 
     try:
         device_id = DeviceID(f"{user_id}@{device_name}")
@@ -52,7 +46,7 @@ async def _do_claim_user(
 
     try:
         device = await core_claim_user(
-            organization_addr=action_addr.to_organization_addr(),
+            organization_addr=organization_addr.to_organization_addr(),
             new_device_id=device_id,
             token=token,
             keepalive=config.backend_connection_keepalive,
@@ -81,32 +75,29 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     claim_success = pyqtSignal()
     claim_error = pyqtSignal()
 
-    def __init__(
-        self,
-        jobs_ctx,
-        config,
-        addr: Optional[BackendOrganizationClaimUserAddr] = None,
-        *args,
-        **kwargs,
-    ):
+    def __init__(self, jobs_ctx, config, addr: BackendOrganizationClaimUserAddr, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.claim_user_job = None
+        self.addr = addr
+        self.label_instructions.setText(
+            _("LABEL_CLAIM_USER_INSTRUCTIONS").format(
+                user=self.addr.user_id,
+                url=self.addr.to_url(),
+                organization=self.addr.organization_id,
+            )
+        )
         self.button_claim.clicked.connect(self.claim_clicked)
-        self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
-        self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.line_edit_password.textChanged.connect(self.check_infos)
         self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.claim_success.connect(self.on_claim_success)
         self.claim_error.connect(self.on_claim_error)
-        self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationClaimUserAddrValidator())
 
         self.claim_dialog = ClaimDialog(parent=self)
         self.claim_dialog.setText(_("LABEL_USER_REGISTRATION"))
@@ -115,11 +106,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
         self.label_password_strength.hide()
 
-        if addr:
-            self.line_edit_url.setText(addr.to_url())
-            self.line_edit_login.setText(addr.user_id)
-            if addr.token:
-                self.line_edit_token.setText(addr.token)
+        if addr.token:
+            self.line_edit_token.setText(addr.token)
         self.line_edit_device.setText(get_default_device())
 
         self.check_infos()
@@ -186,10 +174,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             self.claim_dialog.hide()
 
         if (
-            len(self.line_edit_login.text())
-            and len(self.line_edit_token.text())
+            len(self.line_edit_token.text())
             and len(self.line_edit_device.text())
-            and len(self.line_edit_url.text())
             and not self.claim_user_job
             and len(self.line_edit_password.text())
             and get_password_strength(self.line_edit_password.text()) > 0
@@ -215,8 +201,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             password=self.line_edit_password.text(),
             password_check=self.line_edit_password_check.text(),
             token=self.line_edit_token.text(),
-            user_id=self.line_edit_login.text(),
+            user_id=str(self.addr.user_id),
             device_name=self.line_edit_device.text(),
-            organization_addr=self.line_edit_url.text(),
+            organization_addr=self.addr,
         )
         self.check_infos()

@@ -8,6 +8,7 @@ from setuptools.command.build_py import build_py
 
 import itertools
 import glob
+import os
 
 
 # Awesome hack to load `__version__`
@@ -89,13 +90,14 @@ class GenerateChangelog(Command):
     def run(self):
         import docutils.core
 
+        destination_folder = "parsec/core/gui/rc/generated_misc"
         self.announce(
-            "Converting HISTORY.rst to parsec/core/gui/rc/misc/history.html",
-            level=distutils.log.INFO,
+            f"Converting HISTORY.rst to {destination_folder}/history.html", level=distutils.log.INFO
         )
+        os.makedirs(destination_folder, exist_ok=True)
         docutils.core.publish_file(
             source_path="HISTORY.rst",
-            destination_path="parsec/core/gui/rc/misc/history.html",
+            destination_path=f"{destination_folder}/history.html",
             writer_name="html",
         )
 

@@ -61,7 +61,8 @@ def run_git(cmd, verbose=False):
 
 
 def get_version_from_repo_describe_tag(verbose=False):
-    return parse_version(run_git("describe --tag --debug --first-parent", verbose=verbose))
+    # Note we only search for annotated tags
+    return parse_version(run_git("describe --debug", verbose=verbose))
 
 
 def get_version_from_code():
@@ -163,7 +164,7 @@ def build_release(version, stage_pause):
     print(f"Create tag {version.full}")
     if stage_pause:
         input("Pausing, press enter when ready")
-    run_git(f"tag {version.full}")
+    run_git(f"tag {version.full} -m 'Release version {version.full}' -a -s")
 
     # Update __version__ with dev suffix
     commit_msg = f"Bump version {version.full} -> {version.full}+dev"
@@ -193,6 +194,14 @@ def check_release(version):
         raise ReleaseError(
             f"newsfragments still contains fragments files ({', '.join(fragments_names)})"
         )
+
+    # Check tag exist and is an annotated&signed one
+    show_info = run_git(f"show --quiet {version.full}")
+    tag_type = show_info.split(" ", 1)[0]
+    if tag_type != "tag":
+        raise ReleaseError(f"{version.full} is not an annotated tag (type: {tag_type})")
+    if "BEGIN PGP SIGNATURE" not in show_info:
+        raise ReleaseError(f"{version.full} is not signed")
 
 
 def check_non_release(version):

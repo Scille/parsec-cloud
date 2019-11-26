@@ -129,7 +129,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.users = []
         self.taskbar_buttons = []
         if core.device.is_admin:
-            button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
+            button_add_user = TaskbarButton(
+                icon_path=":/icons/images/icons/tray_icons/plus-$STATE.svg"
+            )
             button_add_user.clicked.connect(self.register_user)
             button_add_user.setToolTip(_("BUTTON_TASKBAR_ADD_USER"))
             self.taskbar_buttons.append(button_add_user)

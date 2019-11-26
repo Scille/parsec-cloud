@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>578</width>
-    <height>529</height>
+    <height>516</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -249,7 +249,7 @@ font-weight: bold;
               <x>0</x>
               <y>0</y>
               <width>548</width>
-              <height>287</height>
+              <height>239</height>
              </rect>
             </property>
             <property name="styleSheet">
@@ -291,6 +291,30 @@ border: 1px solid rgb(46, 46, 46);
          </item>
         </layout>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QCheckBox" name="check_show_revoked">
+          <property name="text">
+           <string>CHECK_SHOW_REVOKED</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5">

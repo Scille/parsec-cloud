@@ -40,17 +40,12 @@ async def _do_bootstrap_organization(
     password_check: str,
     user_id: str,
     device_name: str,
-    bootstrap_addr: str,
+    bootstrap_addr: BackendOrganizationBootstrapAddr,
 ):
     if password != password_check:
         raise JobResultError("password-mismatch")
     if len(password) < 8:
         raise JobResultError("password-size")
-
-    try:
-        bootstrap_addr = BackendOrganizationBootstrapAddr.from_url(bootstrap_addr)
-    except ValueError as exc:
-        raise JobResultError("bad-url") from exc
 
     try:
         device_id = DeviceID(f"{user_id}@{device_name}")
@@ -110,11 +105,17 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_error = pyqtSignal()
     organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
-    def __init__(self, jobs_ctx, config, addr=None, *args, **kwargs):
+    def __init__(self, jobs_ctx, config, addr: BackendOrganizationBootstrapAddr, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.jobs_ctx = jobs_ctx
         self.config = config
+        self.addr = addr
+        self.label_instructions.setText(
+            _("LABEL_BOOTSTRAP_INSTRUCTIONS").format(
+                url=self.addr.to_url(), organization=self.addr.organization_id
+            )
+        )
         self.bootstrap_job = None
         self.button_cancel.hide()
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
@@ -122,21 +123,16 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
-        self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.check_infos)
         self.line_edit_password_check.textChanged.connect(self.check_infos)
         self.line_edit_login.setValidator(validators.UserIDValidator())
         self.line_edit_device.setValidator(validators.DeviceNameValidator())
-        self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
         self.bootstrap_success.connect(self.on_bootstrap_success)
         self.bootstrap_error.connect(self.on_bootstrap_error)
 
         self.line_edit_device.setText(get_default_device())
         self.button_cancel.hide()
         self.label_password_strength.hide()
-
-        if addr:
-            self.line_edit_url.setText(addr.to_url())
 
         self.check_infos()
 
@@ -197,7 +193,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             password_check=self.line_edit_password_check.text(),
             user_id=self.line_edit_login.text(),
             device_name=self.line_edit_device.text(),
-            bootstrap_addr=self.line_edit_url.text(),
+            bootstrap_addr=self.addr,
         )
         self.check_infos()
 
@@ -216,7 +212,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         if (
             len(self.line_edit_login.text())
             and len(self.line_edit_device.text())
-            and len(self.line_edit_url.text())
             and not self.bootstrap_job
             and len(self.line_edit_password.text())
             and get_password_strength(self.line_edit_password.text()) > 0

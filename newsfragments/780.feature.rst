@@ -1,0 +1,1 @@
+Hide revoked users in workspace sharing dialog

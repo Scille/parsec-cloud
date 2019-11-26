@@ -142,20 +142,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             WorkspaceRole.OWNER: _("WORKSPACE_ROLE_OWNER"),
         }
 
-        self.button_back = TaskbarButton(icon_path=":/icons/images/icons/return_off.png")
+        self.button_back = TaskbarButton(
+            icon_path=":/icons/images/icons/tray_icons/back-$STATE.svg"
+        )
         self.button_back.clicked.connect(self.back_clicked)
         self.button_back.setToolTip(_("BUTTON_TASKBAR_BACK"))
         self.button_import_folder = TaskbarButton(
-            icon_path=":/icons/images/icons/upload_folder_off.png"
+            icon_path=":/icons/images/icons/tray_icons/folder-$STATE.svg"
         )
         self.button_import_folder.clicked.connect(self.import_folder_clicked)
         self.button_import_folder.setToolTip(_("BUTTON_TASKBAR_IMPORT_FOLDER"))
         self.button_import_files = TaskbarButton(
-            icon_path=":/icons/images/icons/upload_file_off.png"
+            icon_path=":/icons/images/icons/tray_icons/file-$STATE.svg"
         )
         self.button_import_files.clicked.connect(self.import_files_clicked)
         self.button_import_files.setToolTip(_("BUTTON_TASKBAR_IMPORT_FILES"))
-        self.button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
+        self.button_create_folder = TaskbarButton(
+            icon_path=":/icons/images/icons/tray_icons/plus-$STATE.svg"
+        )
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.button_create_folder.setToolTip(_("BUTTON_TASKBAR_CREATE_FOLDER"))
         self.line_edit_search.textChanged.connect(self.filter_files)
@@ -566,6 +570,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.reset()
 
     def _on_delete_error(self, job):
+        if not getattr(job.exc, "params", None):
+            return
         if job.exc.params.get("multi"):
             show_error(self, _("ERR_DELETE_MULTI_FILE"), exception=job.exc)
         else:

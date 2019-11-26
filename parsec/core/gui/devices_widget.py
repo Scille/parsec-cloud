@@ -91,7 +91,9 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.event_bus = event_bus
         self.devices = []
         self.taskbar_buttons = []
-        button_add_device = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
+        button_add_device = TaskbarButton(
+            icon_path=":/icons/images/icons/tray_icons/plus-$STATE.svg"
+        )
         button_add_device.clicked.connect(self.register_new_device)
         button_add_device.setToolTip(_("BUTTON_TASKBAR_ADD_DEVICE"))
         self.taskbar_buttons.append(button_add_device)

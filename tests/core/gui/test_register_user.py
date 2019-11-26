@@ -2,6 +2,7 @@
 
 import pytest
 from PyQt5 import QtCore
+from parsec.core.types import BackendOrganizationClaimUserAddr
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from unittest.mock import patch
 
@@ -64,20 +65,18 @@ async def test_register_user_modal_ok(
     u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
 
-    def _claim_user(user_id, device_name, token, addr, password):
+    def _claim_user(device_name, token, addr, password):
         l_w = gui.test_get_login_widget()
 
         assert l_w is not None
-        l_w.show_claim_user_widget()
+        l_w.show_claim_user_widget(BackendOrganizationClaimUserAddr.from_url(addr))
 
         claim_w = gui.test_get_claim_user_widget()
 
         assert claim_w is not None
 
-        aqtbot.qtbot.keyClicks(claim_w.line_edit_login, user_id)
         aqtbot.qtbot.keyClicks(claim_w.line_edit_device, device_name)
         aqtbot.qtbot.keyClicks(claim_w.line_edit_token, token)
-        aqtbot.qtbot.keyClicks(claim_w.line_edit_url, str(addr))
         aqtbot.qtbot.keyClicks(claim_w.line_edit_password, password)
         aqtbot.qtbot.keyClicks(claim_w.line_edit_password_check, password)
         aqtbot.qtbot.mouseClick(claim_w.button_claim, QtCore.Qt.LeftButton)
@@ -94,11 +93,7 @@ async def test_register_user_modal_ok(
         assert modal.line_edit_token.text()
         with aqtbot.qtbot.waitSignal(modal.user_registered):
             _claim_user(
-                modal.line_edit_username.text(),
-                "laptop",
-                modal.line_edit_token.text(),
-                modal.line_edit_url.text(),
-                "P@ssw0rd!",
+                "laptop", modal.line_edit_token.text(), modal.line_edit_url.text(), "P@ssw0rd!"
             )
         assert (
             "Information",
