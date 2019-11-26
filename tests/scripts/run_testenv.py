@@ -4,7 +4,7 @@
 """
 Create a temporary environment and initialize a test setup for parsec.
 
-Run `tests/scripts/run_test_environment.sh --help` for more information.
+Run `tests/scripts/run_testenv.sh --help` for more information.
 """
 
 
@@ -167,7 +167,7 @@ def main(**kwargs):
     variables so the upcoming parsec commands point to the test environment:
 
         \b
-        $ source tests/scripts/run_test_environment.sh
+        $ source tests/scripts/run_testenv.sh
 
     This scripts create two users, alice and bob who both own two devices,
     laptop and pc. They each have their workspace, respectively
@@ -177,13 +177,13 @@ def main(**kwargs):
     test environment:
 
         \b
-        $ source tests/scripts/run_test_environment.sh --empty
+        $ source tests/scripts/run_testenv.sh --empty
 
     This can be used to perform a user or device enrollment on the same machine.
     For instance, consider the following scenario:
 
         \b
-        $ source tests/scripts/run_test_environment.sh
+        $ source tests/scripts/run_testenv.sh
         $ parsec core gui
         # Connect as bob@laptop and register a new device called pc
         # Copy the URL
@@ -191,7 +191,7 @@ def main(**kwargs):
     Then, in a second terminal:
 
         \b
-        $ source tests/scripts/run_test_environment.sh --empty
+        $ source tests/scripts/run_testenv.sh --empty
         $ xdg-open "<paste the URL here>"  # Or
         $ firefox --no-remote "<paste the URL here>"
         # A second instance of parsec pops-up

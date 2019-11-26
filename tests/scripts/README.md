@@ -2,13 +2,13 @@ Test scripts
 ============
 
 This directory contains all the scripts used for the manual testing of the application.
-It has a single entry point called `run_test_environment` that prepares a test environment
+It has a single entry point called `run_testenv` that prepares a test environment
 in the current shell:
 
     # On linux
-    $ source tests/scripts/run_test_environment.sh
+    $ source tests/scripts/run_testenv.sh
 	# On windows
-	$ ./tests/scripts/run_test_environment.bat
+	$ ./tests/scripts/run_testenv.bat
 
 
 The requirements for running this script is a python virtualenv with a full installation
@@ -17,10 +17,10 @@ of parsec:
     $ pip install -e .[all]
 
 
-Default behavior for `run_test_environment`
+Default behavior for `run_testenv`
 -------------------------------------------
 
-The `run_test_environment` script starts by creating a temporary directory dedicated
+The `run_testenv` script starts by creating a temporary directory dedicated
 to this test session. The environment variables are then set accordingly.
 - On linux: `XDG_CACHE_HOME`, `XDG_DATA_HOME` and `XDG_CONFIG_HOME`
 - On windows: `APPDATA`
@@ -58,13 +58,13 @@ Check that the test organization has been properly created using parsec GUI:
     $ parsec core gui
 
 
-Parameterize `run_test_environment`
+Parameterize `run_testenv`
 ------------------------------------
 
 The script can be customized with many options. The full list is available through
 the `--help` option:
 
-	$ source tests/scripts/run_test_environment.sh --help
+	$ source tests/scripts/run_testenv.sh --help
     [...]
 	Options
 		-B, --backend-address FROM_URL
@@ -99,7 +99,7 @@ using the `run_test_environement` script and two terminals.
 
 In a first terminal, run the following commands:
 
-	$ source tests/scripts/run_test_environment.sh
+	$ source tests/scripts/run_testenv.sh
 	$ parsec core gui
     # Connect as bob@laptop and register a new device called pc
     # Copy the URL
@@ -107,7 +107,7 @@ In a first terminal, run the following commands:
 
 Then, in a second terminal:
 
-	$ source tests/scripts/run_test_environment.sh --empty
+	$ source tests/scripts/run_testenv.sh --empty
 	$ xdg-open "<paste the URL here>"  # Or
 	$ firefox --no-remote "<paste the URL here>"
     # A second instance of parsec pops-up
