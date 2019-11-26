@@ -4,7 +4,7 @@ from typing import Optional
 from structlog import get_logger
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication
 
 from parsec import __version__ as PARSEC_VERSION
@@ -32,6 +32,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     new_instance_needed = pyqtSignal(object)
     systray_notification = pyqtSignal(str, str)
 
+    TAB_NOTIFICATION_COLOR = QColor(46, 146, 208)
+    TAB_NOT_SELECTED_COLOR = QColor(123, 132, 163)
+    TAB_SELECTED_COLOR = QColor(12, 65, 159)
+
     def __init__(self, jobs_ctx, event_bus, config, minimize_on_close: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.setupUi(self)
@@ -52,12 +56,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
         self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.button_add_instance.hide()
+        self.tab_center.currentChanged.connect(self.on_current_tab_changed)
 
     def _on_add_instance_clicked(self):
         r = QuestionDialog.ask(self, _("ASK_ADD_TAB_TITLE"), _("ASK_ADD_TAB_CONTENT"))
         if not r:
             return
         self.add_instance()
+
+    def on_current_tab_changed(self, index):
+        for i in range(self.tab_center.tabBar().count()):
+            if i != index:
+                if self.tab_center.tabBar().tabTextColor(i) != MainWindow.TAB_NOTIFICATION_COLOR:
+                    self.tab_center.tabBar().setTabTextColor(i, MainWindow.TAB_NOT_SELECTED_COLOR)
+            else:
+                self.tab_center.tabBar().setTabTextColor(i, MainWindow.TAB_SELECTED_COLOR)
 
     def _on_foreground_needed(self):
         self.show_top()
@@ -126,6 +139,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.tab_center.setCornerWidget(None, Qt.TopLeftCorner)
             self.button_add_instance.hide()
+
+    def on_tab_notification(self, widget, event):
+        idx = self.tab_center.indexOf(widget)
+        if idx == -1 or idx == self.tab_center.currentIndex():
+            return
+        if event in ["sharing.updated"]:
+            self.tab_center.tabBar().setTabTextColor(idx, MainWindow.TAB_NOTIFICATION_COLOR)
 
     def _get_login_tab_index(self):
         for idx in range(self.tab_center.count()):
