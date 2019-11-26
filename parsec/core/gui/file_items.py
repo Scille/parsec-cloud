@@ -112,13 +112,17 @@ class FileTableItem(IconTableItem):
     def __init__(self, is_synced, file_name, *args, **kwargs):
         ext = pathlib.Path(file_name).suffix
         icon = self.EXTENSIONS.get(ext, "file_unknown")
-        super().__init__(is_synced, ":/icons/images/icons/{}.png".format(icon), "", *args, **kwargs)
+        super().__init__(
+            is_synced, ":/icons/images/icons/file_icons/{}.png".format(icon), "", *args, **kwargs
+        )
         self.setData(TYPE_DATA_INDEX, FileType.File)
 
 
 class FolderTableItem(IconTableItem):
     def __init__(self, is_synced, *args, **kwargs):
-        super().__init__(is_synced, ":/icons/images/icons/folder.png", "", *args, **kwargs)
+        super().__init__(
+            is_synced, ":/icons/images/icons/file_icons/folder.png", "", *args, **kwargs
+        )
         self.setData(NAME_DATA_INDEX, 0)
         self.setData(TYPE_DATA_INDEX, FileType.Folder)
 

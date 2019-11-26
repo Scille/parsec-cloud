@@ -26,21 +26,40 @@ class FileLineEdit(QLineEdit):
 class TaskbarButton(QPushButton):
     def __init__(self, icon_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.state_string = "default"
+        self.installEventFilter
         self.setMinimumSize(64, 64)
         self.setMaximumSize(64, 64)
         self.setFixedSize(64, 64)
-        self.setIcon(QIcon(icon_path))
+        self.setIconPath(icon_path)
         self.setIconSize(QSize(50, 50))
         self.setStyleSheet(
-            "QPushButton{background-color: rgb(12, 65, 157); border: 0;}\n"
+            "QPushButton{background-color: rgba(0, 0, 0, 0); border: 0;}\n"
             "QToolTip{background-color: rgb(46, 146, 208);"
             "border: 1px solid rgb(12, 65, 157);color: rgb(255, 255, 255);}"
         )
 
+    def enterEvent(self, event):
+        self.state_string = "hover"
+        self.reloadIcon()
+
+    def leaveEvent(self, event):
+        self.state_string = "default"
+        self.reloadIcon()
+
+    def setIconPath(self, path):
+        self.icon_path = path
+        self.reloadIcon()
+
+    def reloadIcon(self):
+        self.setIcon(QIcon(self.icon_path.replace("$STATE", self.state_string)))
+
 
 class NotificationTaskbarButton(TaskbarButton):
     def __init__(self, *args, **kwargs):
-        super().__init__(icon_path=":/icons/images/icons/notification_off.png", *args, **kwargs)
+        super().__init__(
+            icon_path=":/icons/images/icons/tray_icons/bell-solid-$STATE.svg", *args, **kwargs
+        )
         self.notif_count = 0
 
     def inc_notif_count(self):
@@ -52,10 +71,10 @@ class NotificationTaskbarButton(TaskbarButton):
     def setChecked(self, val):
         super().setChecked(val)
         if val:
-            self.setIcon(QIcon(":/icons/images/icons/notification_on.png"))
+            self.setIconPath(":/icons/images/icons/tray_icons/bell-regular-$STATE.svg")
             self.setIconSize(QSize(50, 50))
         else:
-            self.setIcon(QIcon(":/icons/images/icons/notification_off.png"))
+            self.setIconPath(":/icons/images/icons/tray_icons/bell-solid-$STATE.svg")
             self.setIconSize(QSize(50, 50))
 
     def paintEvent(self, event):
