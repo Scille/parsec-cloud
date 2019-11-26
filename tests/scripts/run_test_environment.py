@@ -7,6 +7,12 @@ Create a temporary environment and initialize a test setup for parsec.
 Run `tests/scripts/run_test_environment.sh --help` for more information.
 """
 
+
+import pkg_resources
+
+# Make sure parsec is fully installed (core, backend, dev)
+pkg_resources.require("parsec-cloud[all]")
+
 import os
 import re
 import tempfile
