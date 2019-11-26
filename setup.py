@@ -299,7 +299,6 @@ test_requirements = [
     "pytest-trio==0.5.2",
     "pytest-qt==3.2.2",
     "pluggy==0.9.0",  # see https://github.com/pytest-dev/pytest/issues/3753
-    "tox",
     "wheel",
     "Sphinx",
     "flake8==3.7.7",
