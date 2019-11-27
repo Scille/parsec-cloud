@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+import os
 import threading
 
 
@@ -165,3 +166,32 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
         entries = list(workspace.iterdir())
         assert [x.name for x in entries] == [cooked_name]
         assert entries[0].exists()
+
+
+@pytest.mark.win32
+@pytest.mark.mountpoint
+def test_iterdir_with_marker(mountpoint_service):
+    expected_entries_names = []
+
+    async def _bootstrap(user_fs, mountpoint_manager):
+        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        for i in range(150):
+            if i < 50:
+                # File name < `..` (`..` is always the first item in our implementation)
+                path = f"/.-{i}"
+            else:
+                path = f"/{i}"
+            if i % 2:
+                await workspace.touch(path)
+            else:
+                await workspace.mkdir(path)
+            expected_entries_names.append(path[1:])
+
+    mountpoint_service.start()
+    mountpoint_service.execute(_bootstrap)
+    expected_entries_names = sorted(expected_entries_names)
+
+    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
+    # Note `os.listdir()` ignores `.` and `..` entries
+    entries_names = os.listdir(mountpoint)
+    assert entries_names == expected_entries_names
