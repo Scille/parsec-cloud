@@ -33,7 +33,8 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice, 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
+@pytest.mark.parametrize("invalid_name", (False, True))
+async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch, invalid_name):
     w_w = logged_gui.test_get_workspaces_widget()
 
     assert w_w is not None
@@ -48,22 +49,34 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
     add_button = c_w.widget_taskbar.layout().itemAt(0).widget()
     assert add_button is not None
 
+    workspace_name = ".." if invalid_name else "Workspace1"
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
-        classmethod(lambda *args, **kwargs: ("Workspace1")),
+        classmethod(lambda *args, **kwargs: workspace_name),
     )
 
-    async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
-        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
+    if invalid_name:
+        async with aqtbot.wait_signals([w_w.create_error, w_w.list_success], timeout=2000):
+            await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
-    assert w_w.layout_workspaces.count() == 1
-    wk_button = w_w.layout_workspaces.itemAt(0).widget()
-    assert wk_button.name == "Workspace1"
+        assert w_w.layout_workspaces.count() == 1
+        assert (
+            w_w.layout_workspaces.itemAt(0).widget().text() == "No workspace has been created yet."
+        )
+
+    else:
+        async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
+            await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
+
+        assert w_w.layout_workspaces.count() == 1
+        wk_button = w_w.layout_workspaces.itemAt(0).widget()
+        assert wk_button.name == "Workspace1"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch):
+@pytest.mark.parametrize("invalid_name", (False, True))
+async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch, invalid_name):
     w_w = logged_gui.test_get_workspaces_widget()
 
     assert w_w is not None
@@ -90,14 +103,21 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     wk_button = w_w.layout_workspaces.itemAt(0).widget()
     assert wk_button.name == "Workspace1"
 
+    workspace_name = ".." if invalid_name else "Workspace1_Renamed"
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
-        classmethod(lambda *args, **kwargs: ("Workspace1_Renamed")),
+        classmethod(lambda *args, **kwargs: workspace_name),
     )
 
-    async with aqtbot.wait_signal(w_w.rename_success):
-        await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
-    assert wk_button.name == "Workspace1_Renamed"
+    if invalid_name:
+        async with aqtbot.wait_signal(w_w.rename_error):
+            await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
+        assert wk_button.name == "Workspace1"
+
+    else:
+        async with aqtbot.wait_signal(w_w.rename_success):
+            await aqtbot.mouse_click(wk_button.button_rename, QtCore.Qt.LeftButton)
+        assert wk_button.name == "Workspace1_Renamed"
 
 
 @pytest.mark.gui

@@ -23,6 +23,7 @@ from parsec.api.data import (
 from parsec.api.protocol import UserID, DeviceID, MaintenanceType
 from parsec.core.types import (
     EntryID,
+    EntryName,
     LocalDevice,
     LocalWorkspaceManifest,
     WorkspaceEntry,
@@ -63,6 +64,8 @@ from parsec.core.fs.exceptions import (
 
 
 logger = get_logger()
+
+AnyEntryName = Union[EntryName, str]
 
 
 class ReencryptionJob:
@@ -291,10 +294,11 @@ class UserFS:
 
         return workspace
 
-    async def workspace_create(self, name: str) -> EntryID:
+    async def workspace_create(self, name: AnyEntryName) -> EntryID:
         """
         Raises: Nothing !
         """
+        name = EntryName(name)
         workspace_entry = WorkspaceEntry.new(name)
         workspace_manifest = LocalWorkspaceManifest.new_placeholder(id=workspace_entry.id)
         async with self._update_user_manifest_lock:
@@ -307,11 +311,12 @@ class UserFS:
 
         return workspace_entry.id
 
-    async def workspace_rename(self, workspace_id: EntryID, new_name: str) -> None:
+    async def workspace_rename(self, workspace_id: EntryID, new_name: AnyEntryName) -> None:
         """
         Raises:
             FSWorkspaceNotFoundError
         """
+        new_name = EntryName(new_name)
         async with self._update_user_manifest_lock:
             user_manifest = self.get_user_manifest()
             workspace_entry = user_manifest.get_workspace_entry(workspace_id)

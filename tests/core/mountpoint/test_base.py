@@ -35,7 +35,7 @@ async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
 async def test_mountpoint_disabled(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
-    wid = await alice_user_fs.workspace_create("/w")
+    wid = await alice_user_fs.workspace_create("w")
 
     monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
     async with mountpoint_manager_factory(

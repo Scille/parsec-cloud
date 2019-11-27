@@ -97,3 +97,16 @@ async def test_invalid_timestamp(testbed, alice, alice2):
         str(exc.value)
         == "Invalid user manifest: Invalid timestamp: expected `2000-01-03T00:00:00+00:00`, got `2000-01-02T00:00:00+00:00`"
     )
+
+
+@pytest.mark.trio
+async def test_create_workspace_bad_name(alice_user_fs):
+    with pytest.raises(ValueError):
+        await alice_user_fs.workspace_create("..")
+
+
+@pytest.mark.trio
+async def test_rename_workspace_bad_name(alice_user_fs):
+    wid = await alice_user_fs.workspace_create("w")
+    with pytest.raises(ValueError):
+        await alice_user_fs.workspace_rename(wid, "..")
