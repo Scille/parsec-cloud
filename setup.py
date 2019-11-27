@@ -301,6 +301,7 @@ test_requirements = [
     "pluggy==0.9.0",  # see https://github.com/pytest-dev/pytest/issues/3753
     "wheel",
     "Sphinx",
+    "sphinx-rtd-theme",
     "flake8==3.7.7",
     "hypothesis==4.55.1",
     "hypothesis-trio==0.4.0",

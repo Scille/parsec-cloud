@@ -197,8 +197,8 @@ Allowed values:
 On top of that, multiple blockstore configurations can be provided to form a
 RAID0/1/5 cluster.
 Each configuration must be provided with the form
-`<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, <node> a
-integer and <config> the MOCKED/POSTGRESQL/S3/SWIFT config.
+`<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
+integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
 """,
 )
 @click.option(
@@ -223,7 +223,7 @@ integer and <config> the MOCKED/POSTGRESQL/S3/SWIFT config.
     "--log-level",
     "-l",
     default="WARNING",
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
+    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
     envvar="PARSEC_LOG_LEVEL",
 )
 @click.option(
@@ -238,7 +238,7 @@ integer and <config> the MOCKED/POSTGRESQL/S3/SWIFT config.
     cls=DevOption,
     is_flag=True,
     is_eager=True,
-    help="Equivalent to `--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t",
+    help="Equivalent to `--debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t`",
 )
 def run_cmd(
     host,

@@ -32,7 +32,7 @@ import parsec
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', "sphinx_rtd_theme"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -47,8 +47,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'ParSec'
-copyright = u'2016, Scille SAS'
+project = 'Parsec'
+copyright = '2016-2020, Scille SAS'
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -101,17 +101,30 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------
 
+# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+import sphinx_rtd_theme
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
+# Add any paths that contain custom themes here, relative to this directory.
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+if on_rtd:
+    using_rtd_theme = True
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
-
-# Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+html_theme_options = {
+    # 'typekit_id': 'hiw1hhg',
+    # 'analytics_id': '',
+    # 'sticky_navigation': True  # Set to False to disable the sticky nav while scrolling.
+    'logo_only': True,  # if we have a html_logo below, this shows /only/ the logo with no title text
+    'collapse_navigation': False,  # Collapse navigation (False makes it tree-like)
+    # 'display_version': True,  # Display the docs version
+    # 'navigation_depth': 4,  # Depth of the headers shown in the navigation bar
+}
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -121,9 +134,18 @@ html_theme = 'default'
 # html_title.
 #html_short_title = None
 
+# VCS options: https://docs.readthedocs.io/en/latest/vcs.html#github
+html_context = {
+    "display_github": True, # Integrate GitHub
+    "github_user": "Parsec", # Username
+    "github_repo": "parsec-cloud", # Repo name
+    "github_version": "master", # Version
+    "conf_py_path": "/", # Path in the checkout to the docs root
+}
+
 # The name of an image file (relative to this directory) to place at the
 # top of the sidebar.
-#html_logo = None
+html_logo = 'parsec_doc_logo.png'
 
 # The name of an image file (within the static path) to use as favicon
 # of the docs.  This file should be a Windows icon file (.ico) being
@@ -201,8 +223,8 @@ latex_elements = {
 # [howto/manual]).
 latex_documents = [
     ('index', 'parsec.tex',
-     u'ParSec Documentation',
-     u'Emmanuel Leblond', 'manual'),
+     'Parsec Documentation',
+     'Emmanuel Leblond', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -232,8 +254,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'parsec',
-     u'ParSec Documentation',
-     [u'Scille SAS'], 1)
+     'Parsec Documentation',
+     ['Scille SAS'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -247,8 +269,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'parsec',
-     u'ParSec Documentation',
-     u'Scille SAS',
+     'Parsec Documentation',
+     'Scille SAS',
      'parsec',
      'Secure cloud framework.',
      'Miscellaneous'),
