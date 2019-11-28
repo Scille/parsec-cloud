@@ -6,6 +6,44 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.3.0 (2019-11-28)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Add a button to manually add a new tab Do not open a new tab when launching
+  the app without any parameters (`#774 <https://github.com/Scille/parsec-
+  cloud/issues/774>`__)
+* Allow only one Log-In tab (`#777 <https://github.com/Scille/parsec-
+  cloud/issues/777>`__)
+* Hide revoked users in workspace sharing dialog (`#780
+  <https://github.com/Scille/parsec-cloud/issues/780>`__)
+* Prevent tab change if a modal is open (`#820
+  <https://github.com/Scille/parsec-cloud/issues/820>`__)
+* Tab color changes when an instance receives a notification (`#821
+  <https://github.com/Scille/parsec-cloud/issues/821>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Now handles inconsistent directories accessed from the GUI, tested mountpoint
+  behaviour (`#782 <https://github.com/Scille/parsec-cloud/issues/782>`__)
+* Fix infinite loop in IPC server (`#813 <https://github.com/Scille/parsec-
+  cloud/issues/813>`__)
+* Fix config not saved when updating from the settings tab when logged in.
+  (`#815 <https://github.com/Scille/parsec-cloud/issues/815>`__)
+* Fix duplication and infinite loading in view on directories containing many
+  entries under Windows. (`#835 <https://github.com/Scille/parsec-
+  cloud/issues/835>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Change the invitation token format to 6 random digits.  (`#819
+  <https://github.com/Scille/parsec-cloud/issues/819>`__)
+
+
 Parsec 1.2.1 (2019-11-20)
 -------------------------
 

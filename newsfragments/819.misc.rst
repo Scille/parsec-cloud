@@ -1,1 +1,0 @@
-Change the invitation token format to 6 random digits.

@@ -1,2 +1,0 @@
-fix duplication and infinite loading in view on directories containing
-many entries under Windows.

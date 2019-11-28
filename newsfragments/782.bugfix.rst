@@ -1,1 +1,0 @@
-Now handles inconsistent directories accessed from the GUI, tested mountpoint behaviour.

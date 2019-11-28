@@ -1,2 +1,0 @@
-Add a button to manually add a new tab
-Do not open a new tab when launching the app without any parameters
