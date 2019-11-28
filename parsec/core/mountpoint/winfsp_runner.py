@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+import unicodedata
 from zlib import adler32
 from pathlib import PurePath
 from structlog import get_logger
@@ -76,7 +77,13 @@ async def winfsp_mountpoint_runner(
     if config.get("debug", False):
         enable_debug_log()
 
-    volume_label = f"{device.user_id}-{workspace_name}"[:31]
+    # Volume label is limited to 32 WCHAR characters, so force the label to
+    # ascii to easily enforce the size.
+    volume_label = (
+        unicodedata.normalize("NFKD", f"{device.user_id}-{workspace_name}")
+        .encode("ascii", "ignore")[:32]
+        .decode("ascii")
+    )
     volume_serial_number = _generate_volume_serial_number(device, workspace_fs.workspace_id)
     operations = WinFSPOperations(event_bus, volume_label, fs_access)
     # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa

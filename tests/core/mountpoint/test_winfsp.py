@@ -170,6 +170,33 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
 
 @pytest.mark.win32
 @pytest.mark.mountpoint
+def test_mount_workspace_with_too_long_name(mountpoint_service):
+    # WinFSP volume_label (with no trailing '\0') is stored on 32 WCHAR
+    too_long = "x" * 33
+    # Smiley takes 4 bytes (2 WCHAR) once encoded in UTF-16
+    too_long_once_encoded = "x" + "😀" * 16
+
+    async def _bootstrap(user_fs, mountpoint_manager):
+        wid = await user_fs.workspace_create(too_long)
+        workspace = user_fs.get_workspace(wid)
+        await workspace.touch(f"/foo.txt")
+
+        wid = await user_fs.workspace_create(too_long_once_encoded)
+        workspace = user_fs.get_workspace(wid)
+        await workspace.touch(f"/foo.txt")
+
+        await mountpoint_manager.mount_all()
+
+    mountpoint_service.start()
+    mountpoint_service.execute(_bootstrap)
+
+    # TODO: should be doing a `workspace.exists()` instead
+    assert (mountpoint_service.base_mountpoint / too_long / "foo.txt").exists()
+    assert (mountpoint_service.base_mountpoint / too_long_once_encoded / "foo.txt").exists()
+
+
+@pytest.mark.win32
+@pytest.mark.mountpoint
 def test_iterdir_with_marker(mountpoint_service):
     expected_entries_names = []
 
