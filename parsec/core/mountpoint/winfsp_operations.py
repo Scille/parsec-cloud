@@ -371,23 +371,30 @@ class WinFSPOperations(BaseFileSystemOperations):
         if stat["type"] == "file":
             raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
 
-        entries = []
+        # Given `..` is always the first item, if a marker is provided
+        # it could be `..` (hence we must skip `..`) or something else (hence
+        # the marker is after `..`). In all case we skip `..`.
+        items = [] if marker is not None else [{"file_name": ".."}]
 
-        for child_name in stat["children"]:
-            if marker is not None and child_name < marker:
-                continue
+        # Note we *do not* rely on alphabetically sorting to compare the
+        # marker given `..` is always the first element event if we could
+        # have children name before it (`.-foo` for instance)
+        iter_children_names = iter(stat["children"])
+        if marker is not None:
+            for child_name in iter_children_names:
+                if child_name == marker:
+                    break
+        # All remaining children are located after the marker
+        for child_name in iter_children_names:
             child_stat = self.fs_access.entry_info(file_context.path / child_name)
-            entries.append(
+            items.append(
                 {
                     "file_name": winify_entry_name(child_name),
                     **stat_to_winfsp_attributes(child_stat),
                 }
             )
 
-        if not file_context.path.is_root():
-            entries.append({"file_name": ".."})
-
-        return entries
+        return items
 
     @handle_error
     def read(self, file_context, offset, length):
