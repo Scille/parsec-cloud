@@ -86,7 +86,7 @@ async def test_start_bad_per_participant_message(
         {alice.user_id: b"ok", adam.user_id: b"bad"},
     ]:
         rep = await realm_start_reencryption_maintenance(
-            alice_backend_sock, realm, 2, pendulum_now(), {}, check_rep=False
+            alice_backend_sock, realm, 2, pendulum_now(), msg, check_rep=False
         )
         assert rep == {
             "status": "participants_mismatch",
