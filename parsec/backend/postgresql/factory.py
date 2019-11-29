@@ -21,18 +21,18 @@ from parsec.backend.postgresql.block import PGBlockComponent
 async def components_factory(config: BackendConfig, event_bus: EventBus):
     dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
 
+    organization = PGOrganizationComponent(dbh)
     user = PGUserComponent(dbh, event_bus)
-    organization = PGOrganizationComponent(dbh, user)
     message = PGMessageComponent(dbh)
     realm = PGRealmComponent(dbh)
     vlob = PGVlobComponent(dbh)
     ping = PGPingComponent(dbh)
     blockstore = blockstore_factory(config.blockstore_config, postgresql_dbh=dbh)
     block = PGBlockComponent(dbh, blockstore, vlob)
-    events = EventsComponent(event_bus, realm)
+    events = EventsComponent(realm)
 
     async with trio.open_nursery() as nursery:
-        dbh.init(nursery)
+        await dbh.init(nursery)
         try:
             yield {
                 "user": user,
@@ -47,4 +47,4 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
             }
 
         finally:
-            dbh.teardown()
+            await dbh.teardown()

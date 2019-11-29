@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import trio
+import math
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.backend.config import BackendConfig
-from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
+from parsec.backend.events import EventsComponent
 from parsec.backend.memory.organization import MemoryOrganizationComponent
 from parsec.backend.memory.ping import MemoryPingComponent
 from parsec.backend.memory.user import MemoryUserComponent
@@ -17,29 +19,44 @@ from parsec.backend.memory.block import MemoryBlockComponent
 
 @asynccontextmanager
 async def components_factory(config: BackendConfig, event_bus: EventBus):
-    user = MemoryUserComponent(event_bus)
-    message = MemoryMessageComponent(event_bus)
-    realm = MemoryRealmComponent(event_bus, user, message)
-    vlob = MemoryVlobComponent(event_bus, realm)
-    realm._register_maintenance_reencryption_hooks(
-        vlob._maintenance_reencryption_start_hook, vlob._maintenance_reencryption_is_finished_hook
-    )
-    ping = MemoryPingComponent(event_bus)
-    blockstore = blockstore_factory(config.blockstore_config)
-    block = MemoryBlockComponent(blockstore, realm)
-    organization = MemoryOrganizationComponent(
-        user_component=user, vlob_component=vlob, block_component=block
-    )
-    events = EventsComponent(event_bus, realm)
+    (send_events_channel, receive_events_channel) = trio.open_memory_channel(math.inf)
 
-    yield {
+    async def _send_event(event: str, **kwargs):
+        await send_events_channel.send((event, kwargs))
+
+    async def _dispatch_event():
+        async for event, kwargs in receive_events_channel:
+            await trio.sleep(0)
+            event_bus.send(event, **kwargs)
+
+    organization = MemoryOrganizationComponent()
+    user = MemoryUserComponent(_send_event, event_bus)
+    message = MemoryMessageComponent(_send_event)
+    realm = MemoryRealmComponent(_send_event)
+    vlob = MemoryVlobComponent(_send_event)
+    ping = MemoryPingComponent(_send_event)
+    block = MemoryBlockComponent()
+    blockstore = blockstore_factory(config.blockstore_config)
+    events = EventsComponent(realm)
+
+    components = {
+        "events": events,
+        "organization": organization,
         "user": user,
         "message": message,
         "realm": realm,
         "vlob": vlob,
         "ping": ping,
-        "blockstore": blockstore,
         "block": block,
-        "organization": organization,
-        "events": events,
+        "blockstore": blockstore,
     }
+    for component in (organization, user, message, realm, vlob, ping, block):
+        component.register_components(**components)
+
+    async with trio.open_nursery() as nursery:
+        nursery.start_soon(_dispatch_event)
+        try:
+            yield components
+
+        finally:
+            nursery.cancel_scope.cancel()

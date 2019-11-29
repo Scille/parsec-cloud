@@ -16,6 +16,7 @@ __all__ = [
     "MemoryMessageComponent",
     "MemoryRealmComponent",
     "MemoryVlobComponent",
+    "MemoryEventsComponent",
     "MemoryBlockComponent",
     "MemoryBlockStoreComponent",
     "components_factory",

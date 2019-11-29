@@ -6,7 +6,6 @@ from typing import Tuple, Dict
 from collections import defaultdict
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.backend.user import (
     BaseUserComponent,
     User,
@@ -30,9 +29,13 @@ class OrganizationStore:
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self, event_bus: EventBus):
-        self.event_bus = event_bus
+    def __init__(self, send_event, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._send_event = send_event
         self._organizations = defaultdict(OrganizationStore)
+
+    def register_components(self, **other_components):
+        pass
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device
@@ -44,7 +47,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         org._users[user.user_id] = user
         org._devices[first_device.user_id][first_device.device_name] = first_device
-        self.event_bus.send(
+        await self._send_event(
             "user.created",
             organization_id=organization_id,
             user_id=user.user_id,
@@ -66,7 +69,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
 
         user_devices[device.device_name] = device
-        self.event_bus.send(
+        await self._send_event(
             "device.created",
             organization_id=organization_id,
             device_id=device.device_id,
@@ -238,7 +241,7 @@ class MemoryUserComponent(BaseUserComponent):
         self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
     ) -> UserInvitation:
         invitation = await self.get_user_invitation(organization_id, user_id)
-        self.event_bus.send(
+        await self._send_event(
             "user.claimed",
             organization_id=organization_id,
             user_id=invitation.user_id,
@@ -252,7 +255,7 @@ class MemoryUserComponent(BaseUserComponent):
         org = self._organizations[organization_id]
 
         if org._invitations.pop(user_id, None):
-            self.event_bus.send(
+            await self._send_event(
                 "user.invitation.cancelled", organization_id=organization_id, user_id=user_id
             )
 
@@ -286,7 +289,7 @@ class MemoryUserComponent(BaseUserComponent):
         self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
     ) -> UserInvitation:
         invitation = await self.get_device_invitation(organization_id, device_id)
-        self.event_bus.send(
+        await self._send_event(
             "device.claimed",
             organization_id=organization_id,
             device_id=invitation.device_id,
@@ -300,7 +303,7 @@ class MemoryUserComponent(BaseUserComponent):
         org = self._organizations[organization_id]
 
         if org._invitations.pop(device_id, None):
-            self.event_bus.send(
+            await self._send_event(
                 "device.invitation.cancelled", organization_id=organization_id, device_id=device_id
             )
 
@@ -329,4 +332,4 @@ class MemoryUserComponent(BaseUserComponent):
             revoked_user_certifier=revoked_user_certifier,
         )
 
-        self.event_bus.send("user.revoked", organization_id=organization_id, user_id=user_id)
+        await self._send_event("user.revoked", organization_id=organization_id, user_id=user_id)

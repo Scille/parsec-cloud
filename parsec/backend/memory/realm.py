@@ -7,7 +7,6 @@ from typing import List, Dict, Optional
 
 from parsec.api.protocol import RealmRole
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.backend.realm import (
     MaintenanceType,
     RealmGrantedRole,
@@ -23,8 +22,9 @@ from parsec.backend.realm import (
     RealmInMaintenanceError,
     RealmNotInMaintenanceError,
 )
-from parsec.backend.memory.user import MemoryUserComponent, UserNotFoundError
-from parsec.backend.memory.message import MemoryMessageComponent
+from parsec.backend.user import BaseUserComponent, UserNotFoundError
+from parsec.backend.message import BaseMessageComponent
+from parsec.backend.memory.vlob import MemoryVlobComponent
 
 
 @attr.s
@@ -45,23 +45,24 @@ class Realm:
 
 
 class MemoryRealmComponent(BaseRealmComponent):
-    def __init__(
-        self,
-        event_bus: EventBus,
-        user_component: MemoryUserComponent,
-        message_component: MemoryMessageComponent,
-    ):
-        self.event_bus = event_bus
-        self._user_component = user_component
-        self._message_component = message_component
+    def __init__(self, send_event):
+        self._send_event = send_event
+        self._user_component = None
+        self._message_component = None
+        self._vlob_component = None
         self._realms = {}
-        self._maintenance_reencryption_start_hook = None
         self._maintenance_reencryption_is_finished_hook = None
 
-    # Semi-private methods to avoid recursive dependencies with vlob component
-    def _register_maintenance_reencryption_hooks(self, start, is_finished):
-        self._maintenance_reencryption_start_hook = start
-        self._maintenance_reencryption_is_finished_hook = is_finished
+    def register_components(
+        self,
+        user: BaseUserComponent,
+        message: BaseMessageComponent,
+        vlob: MemoryVlobComponent,
+        **other_components,
+    ):
+        self._user_component = user
+        self._message_component = message
+        self._vlob_component = vlob
 
     def _get_realm(self, organization_id, realm_id):
         try:
@@ -79,7 +80,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if key not in self._realms:
             self._realms[key] = Realm(granted_roles=[self_granted_role])
 
-            self.event_bus.send(
+            await self._send_event(
                 "realm.roles_updated",
                 organization_id=organization_id,
                 author=self_granted_role.granted_by,
@@ -161,7 +162,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         realm.granted_roles.append(new_role)
 
-        self.event_bus.send(
+        await self._send_event(
             "realm.roles_updated",
             organization_id=organization_id,
             author=new_role.granted_by,
@@ -212,14 +213,13 @@ class MemoryRealmComponent(BaseRealmComponent):
             maintenance_started_by=author,
             encryption_revision=encryption_revision,
         )
-        if self._maintenance_reencryption_start_hook:
-            self._maintenance_reencryption_start_hook(
-                organization_id, realm_id, encryption_revision
-            )
+        self._vlob_component._maintenance_reencryption_start_hook(
+            organization_id, realm_id, encryption_revision
+        )
 
         # Should first send maintenance event, then message to each participant
 
-        self.event_bus.send(
+        await self._send_event(
             "realm.maintenance_started",
             organization_id=organization_id,
             author=author,
@@ -244,11 +244,8 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
         if encryption_revision != realm.status.encryption_revision:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
-        if (
-            self._maintenance_reencryption_is_finished_hook
-            and not self._maintenance_reencryption_is_finished_hook(
-                organization_id, realm_id, encryption_revision
-            )
+        if not self._vlob_component._maintenance_reencryption_is_finished_hook(
+            organization_id, realm_id, encryption_revision
         ):
             raise RealmMaintenanceError("Reencryption operations are not over")
 
@@ -259,7 +256,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             encryption_revision=encryption_revision,
         )
 
-        self.event_bus.send(
+        await self._send_event(
             "realm.maintenance_finished",
             organization_id=organization_id,
             author=author,

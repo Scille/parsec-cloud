@@ -2,16 +2,14 @@
 
 import trio
 
-from parsec.event_bus import EventBus
 from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer
 from parsec.backend.utils import catch_protocol_errors
 from parsec.backend.realm import BaseRealmComponent
 
 
 class EventsComponent:
-    def __init__(self, event_bus: EventBus, realm_component: BaseRealmComponent):
-        self.event_bus = event_bus
-        self.realm_component = realm_component
+    def __init__(self, realm_component: BaseRealmComponent):
+        self._realm_component = realm_component
 
     @catch_protocol_errors
     async def api_events_subscribe(self, client_ctx, msg):
@@ -84,7 +82,7 @@ class EventsComponent:
         client_ctx.event_bus_ctx.connect("realm.roles_updated", _on_roles_updated)
 
         # Finally populate the list of realm we should listen on
-        realms_for_user = await self.realm_component.get_realms_for_user(
+        realms_for_user = await self._realm_component.get_realms_for_user(
             client_ctx.organization_id, client_ctx.user_id
         )
         client_ctx.realms = set(realms_for_user.keys())

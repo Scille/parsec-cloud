@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 import trio
 import attr
 from structlog import get_logger
@@ -19,6 +20,7 @@ from parsec.api.protocol import (
     ServerHandshake,
 )
 from parsec.backend.utils import check_anonymous_api_allowed
+from parsec.backend.config import BackendConfig
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 from parsec.backend.user import UserNotFoundError
@@ -111,7 +113,7 @@ def _filter_binary_fields(data):
 
 
 @asynccontextmanager
-async def backend_app_factory(config, event_bus=None):
+async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBus] = None):
     event_bus = event_bus or EventBus()
 
     if config.db_url == "MOCKED":

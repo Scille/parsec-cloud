@@ -23,12 +23,16 @@ class BlockMeta:
 
 
 class MemoryBlockComponent(BaseBlockComponent):
-    def __init__(
-        self, blockstore_component: BaseBlockStoreComponent, realm_component: BaseRealmComponent
-    ):
+    def __init__(self):
         self._blockmetas = {}
-        self._blockstore_component = blockstore_component
-        self._realm_component = realm_component
+        self._blockstore_component = None
+        self._realm_component = None
+
+    def register_components(
+        self, blockstore: BaseBlockStoreComponent, realm: BaseRealmComponent, **other_components
+    ):
+        self._blockstore_component = blockstore
+        self._realm_component = realm
 
     def _check_realm_read_access(self, organization_id, realm_id, user_id):
         can_read_roles = (

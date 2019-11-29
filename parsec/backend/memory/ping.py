@@ -1,14 +1,18 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.event_bus import EventBus
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.backend.ping import BasePingComponent
 
 
 class MemoryPingComponent(BasePingComponent):
-    def __init__(self, event_bus: EventBus):
-        self.event_bus = event_bus
+    def __init__(self, send_event):
+        self._send_event = send_event
+
+    def register_components(self, **other_components):
+        pass
 
     async def ping(self, organization_id: OrganizationID, author: DeviceID, ping: str) -> None:
         if author:
-            self.event_bus.send("pinged", organization_id=organization_id, author=author, ping=ping)
+            await self._send_event(
+                "pinged", organization_id=organization_id, author=author, ping=ping
+            )
