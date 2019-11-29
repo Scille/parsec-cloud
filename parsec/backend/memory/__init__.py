@@ -1,13 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from .organization import MemoryOrganizationComponent
-from .ping import MemoryPingComponent
-from .user import MemoryUserComponent
-from .message import MemoryMessageComponent
-from .realm import MemoryRealmComponent
-from .vlob import MemoryVlobComponent
-from .block import MemoryBlockComponent, MemoryBlockStoreComponent
-
+from parsec.backend.memory.organization import MemoryOrganizationComponent
+from parsec.backend.memory.ping import MemoryPingComponent
+from parsec.backend.memory.user import MemoryUserComponent
+from parsec.backend.memory.message import MemoryMessageComponent
+from parsec.backend.memory.realm import MemoryRealmComponent
+from parsec.backend.memory.vlob import MemoryVlobComponent
+from parsec.backend.memory.block import MemoryBlockComponent, MemoryBlockStoreComponent
+from parsec.backend.memory.factory import components_factory
 
 __all__ = [
     "MemoryOrganizationComponent",
@@ -18,4 +18,5 @@ __all__ = [
     "MemoryVlobComponent",
     "MemoryBlockComponent",
     "MemoryBlockStoreComponent",
+    "components_factory",
 ]
