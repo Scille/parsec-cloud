@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+import trio
 import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
@@ -49,6 +50,9 @@ async def test_backend_close_on_user_revoke(
             await spy.wait_with_timeout(
                 "user.revoked", {"organization_id": bob.organization_id, "user_id": bob.user_id}
             )
+            # `user.revoked` event schedules connection cancellation, so wait
+            # for things to settle down to make sure the cancellation is done
+            await trio.testing.wait_all_tasks_blocked()
         # Bob cannot send new command
         with pytest.raises(TransportError):
             await bob_backend_sock.send(packb({"cmd": "ping", "ping": "foo"}))
