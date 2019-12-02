@@ -210,9 +210,6 @@ def handle_error(func):
 class WinFSPOperations(BaseFileSystemOperations):
     def __init__(self, event_bus, volume_label, fs_access):
         super().__init__()
-        if len(volume_label) > 31:
-            raise ValueError("`volume_label` must be 31 characters long max")
-
         # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
         self._security_descriptor = SecurityDescriptor(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
