@@ -1,16 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import attr
 import trio
 from typing import List, NamedTuple
 from pendulum import Pendulum
 
+from parsec.api.data import Manifest as RemoteManifest
 from parsec.api.protocol import DeviceID
 from parsec.core.types import FsPath, EntryID
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_workspace_manifest
-from parsec.core.fs.exceptions import FSRemoteManifestNotFoundBadVersion, FSLocalMissError
+from parsec.core.fs.exceptions import FSRemoteManifestNotFound
 
 
 class EntryNotFound(Exception):
+    pass
+
+
+class ManifestCacheNotFound(Exception):
     pass
 
 
@@ -50,6 +56,191 @@ class ManifestDataAndPaths(NamedTuple):
     destination: FsPath
 
 
+@attr.s
+class ManifestDataAndMutablePaths:
+    """
+    Contains a manifest and his known current, previous and next paths.
+    Unlike ManifestDataAndPaths, attributes are mutable.
+    """
+
+    manifest: ManifestData = attr.ib()
+    source_path: FsPath = attr.ib(default=None)
+    destination_path: FsPath = attr.ib(default=None)
+    current_path: FsPath = attr.ib(default=None)
+
+
+class CacheEntry(NamedTuple):
+    """
+    Contains a manifest and the earliest and last timestamp for which its version has been returned
+    """
+
+    early: Pendulum
+    late: Pendulum
+    manifest: RemoteManifest
+
+
+class ManifestCache:
+    """
+    Caches manifest through their version number, and the timeframe for which they could be
+    obtained.
+    """
+
+    def __init__(self, remote_loader):
+        self._manifest_cache = {}
+        self._remote_loader = remote_loader
+
+    def get(self, entry_id: EntryID, version=None, timestamp=None) -> RemoteManifest:
+        """
+        Tries to find specified manifest in cache, raises ManifestCacheNotFound otherwise
+
+        Raises:
+            ManifestCacheNotFound
+        """
+        if version:
+            try:
+                return self._manifest_cache[entry_id][version].manifest
+            except KeyError:
+                raise ManifestCacheNotFound
+        if timestamp:
+            try:
+                return next(
+                    t.manifest
+                    for t in self._manifest_cache[entry_id].values()
+                    if t.early and t.late and t.early <= timestamp <= t.late
+                )
+            except (KeyError, StopIteration):
+                raise ManifestCacheNotFound
+
+    def update(self, manifest: RemoteManifest, entry_id: EntryID, version=None, timestamp=None):
+        """
+        Updates manifest cache, increasing timeframe for a specified version if possible
+
+        Raises:
+            ManifestCacheNotFound
+        """
+        if manifest.id not in self._manifest_cache:
+            self._manifest_cache[manifest.id] = {}
+        if manifest.version not in self._manifest_cache[manifest.id]:
+            self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                timestamp, timestamp, manifest
+            )
+        elif timestamp:
+            if (
+                self._manifest_cache[manifest.id][manifest.version].late is None
+                or timestamp > self._manifest_cache[manifest.id][manifest.version].late
+            ):
+                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                    self._manifest_cache[manifest.id][manifest.version].early, timestamp, manifest
+                )
+            if (
+                self._manifest_cache[manifest.id][manifest.version].early is None
+                or timestamp < self._manifest_cache[manifest.id][manifest.version].early
+            ):
+                self._manifest_cache[manifest.id][manifest.version] = CacheEntry(
+                    timestamp, self._manifest_cache[manifest.id][manifest.version].late, manifest
+                )
+
+    async def load(self, entry_id: EntryID, version=None, timestamp=None):
+        """
+        Tries to find specified manifest in cache, tries to download it otherwise and updates cache
+
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+            FSBadEncryptionRevision
+            FSWorkspaceNoAccess
+        """
+        try:
+            return self.get(entry_id, version=version, timestamp=timestamp)
+        except ManifestCacheNotFound:
+            pass
+        manifest = await self._remote_loader.load_manifest(
+            entry_id, version=version, timestamp=timestamp
+        )
+        self.update(manifest, entry_id, version=version, timestamp=timestamp)
+        return manifest
+
+
+class VersionsListCache:
+    """
+    Caches results of the remote_loader.list_versions calls (working on EntryIDs).
+
+    Caches thoses in the instance of this class. No garbage collection is done for now, as this
+    class is only instanciated during _get_path_at_timestamp execution.
+    """
+
+    def __init__(self, remote_loader):
+        self._versions_list_cache = {}
+        self._remote_loader = remote_loader
+
+    async def load(self, entry_id: EntryID):
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+        """
+        if entry_id in self._versions_list_cache:
+            return self._versions_list_cache[entry_id]
+        self._versions_list_cache[entry_id] = await self._remote_loader.list_versions(entry_id)
+        return self._versions_list_cache[entry_id]
+
+
+async def _get_path_at_timestamp(
+    manifest_cache: ManifestCache, entry_id: EntryID, timestamp: Pendulum
+) -> FsPath:
+    """
+    Find a path for an entry_id at a specific timestamp.
+
+    If the path is broken, will raise an EntryNotFound exception. All the other exceptions are
+    thrown by the ManifestCache.
+
+    Raises:
+        FSError
+        FSBackendOfflineError
+        FSWorkspaceInMaintenance
+        FSBadEncryptionRevision
+        FSWorkspaceNoAccess
+        EntryNotFound
+    """
+    # Get first manifest
+    try:
+        current_id = entry_id
+        current_manifest = await manifest_cache.load(current_id, timestamp=timestamp)
+    except FSRemoteManifestNotFound:
+        raise EntryNotFound(entry_id)
+
+    # Loop over parts
+    parts = []
+    while not is_workspace_manifest(current_manifest):
+
+        # Get the manifest
+        try:
+            parent_manifest = await manifest_cache.load(
+                current_manifest.parent, timestamp=timestamp
+            )
+        except FSRemoteManifestNotFound:
+            raise EntryNotFound(entry_id)
+
+        # Find the child name
+        for name, child_id in parent_manifest.children.items():
+            if child_id == current_id:
+                parts.append(name)
+                break
+        else:
+            raise EntryNotFound(entry_id)
+
+        # Continue until root is found
+        current_id = current_manifest.parent
+        current_manifest = parent_manifest
+
+    # Return the path
+    return FsPath("/" + "/".join(reversed(parts)))
+
+
 async def list_versions(
     workspacefs, path: FsPath, skip_minimal_sync: bool = True
 ) -> List[TimestampBoundedData]:
@@ -60,99 +251,14 @@ async def list_versions(
         FSWorkspaceInMaintenance
         FSRemoteManifestNotFound
     """
-    # Could be optimized if we could use manifest.updated
-    manifest_cache = {}
-    versions_list_cache = {}
+    manifest_cache = ManifestCache(workspacefs.remote_loader)
+    versions_list_cache = VersionsListCache(workspacefs.remote_loader)
 
-    async def _load_manifest_or_cached(entry_id: EntryID, version=None, timestamp=None):
+    async def _try_get_path_at_timestamp(entry_id: EntryID, timestamp: Pendulum) -> FsPath:
         try:
-            if version:
-                return manifest_cache[entry_id][version][2]
-            if timestamp:
-                return next(
-                    (
-                        t[2]
-                        for t in manifest_cache[entry_id].values()
-                        if t[0] and t[1] and t[0] <= timestamp <= t[1]
-                    )
-                )
-        except (KeyError, StopIteration):
-            pass
-        manifest = await workspacefs.remote_loader.load_manifest(
-            entry_id, version=version, timestamp=timestamp
-        )
-        if manifest.id not in manifest_cache:
-            manifest_cache[manifest.id] = {}
-        if manifest.version not in manifest_cache[manifest.id]:
-            manifest_cache[manifest.id][manifest.version] = (timestamp, timestamp, manifest)
-        elif timestamp:
-            if (
-                manifest_cache[manifest.id][manifest.version][1] is None
-                or timestamp > manifest_cache[manifest.id][manifest.version][1]
-            ):
-                manifest_cache[manifest.id][manifest.version] = (
-                    manifest_cache[manifest.id][manifest.version][0],
-                    timestamp,
-                    manifest,
-                )
-            if (
-                manifest_cache[manifest.id][manifest.version][0] is None
-                or timestamp < manifest_cache[manifest.id][manifest.version][0]
-            ):
-                manifest_cache[manifest.id][manifest.version] = (
-                    timestamp,
-                    manifest_cache[manifest.id][manifest.version][1],
-                    manifest,
-                )
-        return manifest
-
-    async def _list_versions(entry_id: EntryID):
-        if entry_id in versions_list_cache:
-            return versions_list_cache[entry_id]
-        versions_list_cache[entry_id] = await workspacefs.remote_loader.list_versions(entry_id)
-        return versions_list_cache[entry_id]
-
-    async def _get_past_path(entry_id: EntryID, version=None, timestamp=None) -> FsPath:
-
-        # Get first manifest
-        try:
-            current_id = entry_id
-            current_manifest = await _load_manifest_or_cached(
-                current_id, version=version, timestamp=timestamp
-            )
-        except FSLocalMissError:
-            raise EntryNotFound(entry_id)
-
-        # Loop over parts
-        parts = []
-        while not is_workspace_manifest(current_manifest):
-
-            # Get the manifest
-            try:
-                parent_manifest = await _load_manifest_or_cached(
-                    current_manifest.parent, version=version, timestamp=timestamp
-                )
-            except FSLocalMissError:
-                raise EntryNotFound(entry_id)
-
-            # Find the child name
-            try:
-                name = next(
-                    name
-                    for name, child_id in parent_manifest.children.items()
-                    if child_id == current_id
-                )
-            except StopIteration:
-                raise EntryNotFound(entry_id)
-            else:
-                parts.append(name)
-
-            # Continue until root is found
-            current_id = current_manifest.parent
-            current_manifest = parent_manifest
-
-        # Return the path
-        return FsPath("/" + "/".join(reversed(parts)))
+            return await _get_path_at_timestamp(manifest_cache, entry_id, timestamp)
+        except EntryNotFound:
+            return None
 
     async def _populate_tree_load(
         nursery,
@@ -167,39 +273,41 @@ async def list_versions(
     ):
         if early > late:
             return
-        manifest = await _load_manifest_or_cached(entry_id, version=version_number)
-        data = [
+        manifest = await manifest_cache.load(entry_id, version=version_number)
+        data = ManifestDataAndMutablePaths(
             ManifestData(
                 manifest.author,
                 manifest.updated,
                 is_folder_manifest(manifest),
                 None if not is_file_manifest(manifest) else manifest.size,
-            ),
-            None,  # Source path
-            None,  # Destination path
-            None,  # Current path
-        ]
+            )
+        )
         if len(target.parts) == path_level:
 
-            async def _populate_path_w_index(data, index, entry_id, timestamp):
-                try:
-                    data[index] = await _get_past_path(entry_id, timestamp=timestamp)
-                except (FSRemoteManifestNotFoundBadVersion, EntryNotFound):
-                    pass
+            async def _populate_source_path(data, entry_id, timestamp):
+                data.source_path = await _try_get_path_at_timestamp(entry_id, timestamp)
+
+            async def _populate_destination_path(data, entry_id, timestamp):
+                data.destination_path = await _try_get_path_at_timestamp(entry_id, timestamp)
+
+            async def _populate_current_path(data, entry_id, timestamp):
+                data.current_path = await _try_get_path_at_timestamp(entry_id, timestamp)
 
             # TODO : Use future manifest source field to follow files and directories
             async with trio.open_service_nursery() as child_nursery:
                 child_nursery.start_soon(
-                    _populate_path_w_index, data, 1, entry_id, early.add(microseconds=-1)
+                    _populate_source_path, data, entry_id, early.add(microseconds=-1)
                 )
-                child_nursery.start_soon(_populate_path_w_index, data, 2, entry_id, late)
-                child_nursery.start_soon(_populate_path_w_index, data, 3, entry_id, early)
+                child_nursery.start_soon(_populate_destination_path, data, entry_id, late)
+                child_nursery.start_soon(_populate_current_path, data, entry_id, early)
             tree[
                 TimestampBoundedEntry(manifest.id, manifest.version, early, late)
             ] = ManifestDataAndPaths(
-                data=data[0],
-                source=data[1] if data[1] != data[3] else None,
-                destination=data[2] if data[2] != data[3] else None,
+                data=data.manifest,
+                source=data.source_path if data.source_path != data.current_path else None,
+                destination=data.destination_path
+                if data.destination_path != data.current_path
+                else None,
             )
         else:
             if not is_file_manifest(manifest):
@@ -227,7 +335,7 @@ async def list_versions(
         late: Pendulum,
     ):
         # TODO : Check if directory, melt the same entries through different parent
-        versions = await _list_versions(entry_id)
+        versions = await versions_list_cache.load(entry_id)
         for version, (timestamp, creator) in versions.items():
             next_version = min((v for v in versions if v > version), default=None)
             nursery.start_soon(
@@ -300,10 +408,8 @@ async def list_versions(
             ):
                 previous = item
                 continue
-            new_list.append(
-                TimestampBoundedData(*previous[:8], previous.source, previous.destination)
-            )
+            new_list.append(previous)
         previous = item
     if previous:
-        new_list.append(TimestampBoundedData(*previous[:8], previous.source, previous.destination))
+        new_list.append(previous)
     return new_list
