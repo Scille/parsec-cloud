@@ -227,7 +227,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         result = QuestionDialog.ask(
             self,
             _("ASK_USER_REVOKE_TITLE"),
-            _("ASK_USER_REVOKE_CONTENT").format(user_button.user_name),
+            _("ASK_USER_REVOKE_CONTENT_{}").format(user_button.user_name),
         )
         if not result:
             return

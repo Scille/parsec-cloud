@@ -1084,8 +1084,8 @@ msgstr "Impossible de retrouver la liste des utilisateurs."
 msgid "ASK_USER_REVOKE_TITLE"
 msgstr "Révoquer un utilisateur"
 
-msgid "ASK_USER_REVOKE_CONTENT"
-msgstr "Êtes-vous sûr de vouloir révoquer"
+msgid "ASK_USER_REVOKE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
 
 msgid "FILE_SIZE_TB"
 msgstr "To"
