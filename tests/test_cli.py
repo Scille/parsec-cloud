@@ -133,6 +133,7 @@ def _running(cmd, wait_for=None, env={}):
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_init_backend(postgresql_url, unused_tcp_port):
     _run(f"backend init --db {postgresql_url}")
+    administration_token = "9e57754ddfe62f7f8780edc0"
 
     # Already initialized db is ok
     p = _run(f"backend init --db {postgresql_url}")
@@ -140,7 +141,9 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 
     # Test backend can run
     with _running(
-        f"backend run --blockstore=POSTGRESQL --db={postgresql_url} --port={unused_tcp_port}",
+        f"backend run --blockstore=POSTGRESQL"
+        f" --db={postgresql_url} --port={unused_tcp_port}"
+        f" --administration-token={administration_token}",
         wait_for="Starting Parsec Backend",
     ):
         pass
