@@ -8,18 +8,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="153"/>
+        <location filename="../forms/about_widget.ui" line="168"/>
         <source>PARSEC_DEVELOPMENT_LABEL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="189"/>
+        <location filename="../forms/about_widget.ui" line="204"/>
         <source>TITLE_LICENSE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="248"/>
+        <location filename="../forms/about_widget.ui" line="263"/>
         <source>TITLE_CHANGELOG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="153"/>
+        <source>PARSEC_VERSION_LABEL_{}</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

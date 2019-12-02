@@ -117,7 +117,7 @@ background: none;
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec.png</pixmap>
+        <pixmap>:/logos/images/logos/parsec.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -141,6 +141,21 @@ background: none;
       </spacer>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_version">
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>PARSEC_VERSION_LABEL_{}</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QLabel" name="label_2">
@@ -171,7 +186,7 @@ background: none;
         <x>0</x>
         <y>0</y>
         <width>619</width>
-        <height>241</height>
+        <height>260</height>
        </rect>
       </property>
       <property name="font">
@@ -241,7 +256,7 @@ p, li { white-space: pre-wrap; }
         <x>0</x>
         <y>0</y>
         <width>619</width>
-        <height>241</height>
+        <height>260</height>
        </rect>
       </property>
       <attribute name="label">
@@ -295,8 +310,6 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

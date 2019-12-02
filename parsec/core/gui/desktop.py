@@ -45,32 +45,3 @@ def parsec_instances_count():
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return inst_count
-
-
-def add_parsec_protocol_handler():
-    with open("/home/max/.local/share/applications/parsec.desktop", "w") as fd:
-        fd.write("[Desktop Entry]\n")
-        fd.write("Version=1.0\n")
-        fd.write("Type=Application\n")
-        fd.write("Name=Parsec\n")
-        fd.write("Comment=Sovereign Enclave for sharing sensitive data on the cloud\n")
-        fd.write("TryExec=snap run parsec\n")
-        fd.write("Exec=snap run parsec %F\n")
-        fd.write("MimeType=applicatioon/x-parsec;\n")
-        fd.write("Actions=Bootstrap;ClaimUser;ClaimDevice\n\n")
-
-        fd.write("[Desktop Action Bootstrap]\n")
-        fd.write("Exec=snap run parsec --cmd boostrap\n")
-        fd.write("Name=Bootstrap an organisation\n\n")
-
-        fd.write("[Desktop Action ClaimUser]\n")
-        fd.write("Exec=snap run parsec --cmd claim-user\n")
-        fd.write("Name=Claim a user\n\n")
-
-        fd.write("[Desktop Action ClaimDevice]\n")
-        fd.write("Exec=snap run parsec --cmd claim-device\n")
-        fd.write("Name=Claim a device\n")
-
-
-if __name__ == "__main__":
-    add_parsec_protocol_handler()

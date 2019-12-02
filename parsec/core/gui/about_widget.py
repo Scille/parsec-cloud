@@ -5,6 +5,8 @@ from PyQt5.QtCore import QFile, QIODevice
 
 from structlog import get_logger
 
+from parsec import __version__
+
 from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.about_widget import Ui_AboutWidget
@@ -16,6 +18,7 @@ class AboutWidget(QWidget, Ui_AboutWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.label_version.setText(_("PARSEC_VERSION_LABEL_{}").format(version=__version__))
         self.text_license.setHtml(_("PARSEC_LICENSE_CONTENT"))
 
         rc_file = QFile(":/generated_misc/generated_misc/history.html")
