@@ -220,7 +220,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         elif status == "offline":
             errmsg = _("ERR_BACKEND_OFFLINE")
         else:
-            errmsg = _("ERR_USER_REVOKED_UNKNOWN_ERROR_{}").format(job.exc)
+            errmsg = _("ERR_USER_REVOKED_UNKNOWN_ERROR")
         show_error(self, errmsg, exception=job.exc)
 
     def revoke_user(self, user_button):
@@ -263,7 +263,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if status == "offline":
             return
         else:
-            errmsg = _("ERR_USER_LIST_UNKNOWN_ERROR_{}").format(job.exc)
+            errmsg = _("ERR_USER_LIST_UNKNOWN_ERROR")
         show_error(self, errmsg, exception=job.exc)
 
     def reset(self):
