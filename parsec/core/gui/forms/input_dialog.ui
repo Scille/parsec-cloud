@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>362</width>
-    <height>185</height>
+    <height>221</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -124,7 +124,7 @@ border: 0;
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../rc/resources.qrc">
+           <iconset>
             <normaloff>:/icons/images/icons/menu_cancel.png</normaloff>:/icons/images/icons/menu_cancel.png</iconset>
           </property>
           <property name="iconSize">
@@ -278,9 +278,7 @@ padding-left: 10px;</string>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>button_close</sender>
