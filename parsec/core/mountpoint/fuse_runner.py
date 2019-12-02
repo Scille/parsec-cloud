@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import sys
 import trio
 import errno
 import ctypes
@@ -109,6 +110,14 @@ async def fuse_mountpoint_runner(
 
         async with trio.open_service_nursery() as nursery:
 
+            # Let fusepy decode the paths using the current file system encoding
+            # Note that this does not prevent the user from using a certain encoding
+            # in the context of the parsec app and another encoding in the context of
+            # an application accessing the mountpoint. In this case, an encoding error
+            # might be raised while fuspy tries to decode the path. If that happends,
+            # fuspy will log the error and simply return EINVAL, which is acceptable.
+            encoding = sys.getfilesystemencoding()
+
             def _run_fuse_thread():
                 logger.info("Starting fuse thread...", mountpoint=mountpoint_path)
                 try:
@@ -118,6 +127,7 @@ async def fuse_mountpoint_runner(
                         str(mountpoint_path.absolute()),
                         foreground=True,
                         auto_unmount=True,
+                        encoding=encoding,
                         **config,
                     )
 

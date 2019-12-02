@@ -310,14 +310,13 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
     with pytest.raises(OSError) as exc:
         (mountpoint / "crash_me").stat()
 
+    assert exc.value.errno == errno.EINVAL
     if os.name == "nt":
-        assert exc.value.args == (22, "An internal error occurred")
         caplog.assert_occured(
             "[exception] Unhandled exception in winfsp mountpoint [parsec.core.mountpoint.winfsp_operations]"
         )
 
     else:
-        assert exc.value.args == (5, "Input/output error")
         caplog.assert_occured(
             "[exception] Unhandled exception in fuse mountpoint [parsec.core.mountpoint.fuse_operations]"
         )

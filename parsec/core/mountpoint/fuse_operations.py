@@ -49,7 +49,8 @@ def translate_error(event_bus, operation, path):
     except Exception as exc:
         logger.exception("Unhandled exception in fuse mountpoint")
         event_bus.send("mountpoint.unhandled_error", exc=exc, operation=operation, path=path)
-        raise FuseOSError(errno.EIO) from exc
+        # Use EINVAL as fallback error code, since this is what fusepy does.
+        raise FuseOSError(errno.EINVAL) from exc
 
 
 class FuseOperations(LoggingMixIn, Operations):
