@@ -10,7 +10,7 @@ from collections import defaultdict
 from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler
 from parsec.logging import configure_logging, configure_sentry_logging
-from parsec.backend import BackendApp
+from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
     MockedBlockStoreConfig,
@@ -275,8 +275,6 @@ def run_cmd(
             debug=debug,
         )
 
-        backend = BackendApp(config)
-
         if ssl_certfile or ssl_keyfile:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
@@ -286,27 +284,22 @@ def run_cmd(
         else:
             ssl_context = None
 
-        async def _serve_client(stream):
-            if ssl_context:
-                stream = trio.SSLStream(stream, ssl_context, server_side=True)
-
-            try:
-                await backend.handle_client(stream)
-
-            except Exception as exc:
-                # If we are here, something unexpected happened...
-                logger.error("Unexpected crash", exc_info=exc)
-                await stream.aclose()
-
         async def _run_backend():
-            async with trio.open_service_nursery() as nursery:
-                await backend.init(nursery)
+            async with backend_app_factory(config=config) as backend:
 
-                try:
-                    await trio.serve_tcp(_serve_client, port, host=host)
+                async def _serve_client(stream):
+                    if ssl_context:
+                        stream = trio.SSLStream(stream, ssl_context, server_side=True)
 
-                finally:
-                    await backend.teardown()
+                    try:
+                        await backend.handle_client(stream)
+
+                    except Exception as exc:
+                        # If we are here, something unexpected happened...
+                        logger.error("Unexpected crash", exc_info=exc)
+                        await stream.aclose()
+
+                await trio.serve_tcp(_serve_client, port, host=host)
 
         print(
             f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, "

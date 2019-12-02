@@ -7,9 +7,8 @@ from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 
 from parsec.api.protocol import DeviceID, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.api.protocol import RealmRole
-from parsec.backend.memory.realm import MemoryRealmComponent, RealmNotFoundError
+from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -96,11 +95,14 @@ class Changes:
 
 
 class MemoryVlobComponent(BaseVlobComponent):
-    def __init__(self, event_bus: EventBus, realm_component: MemoryRealmComponent):
-        self.event_bus = event_bus
-        self._realm_component = realm_component
+    def __init__(self, send_event):
+        self._send_event = send_event
+        self._realm_component = None
         self._vlobs = {}
         self._per_realm_changes = defaultdict(Changes)
+
+    def register_components(self, realm: BaseRealmComponent, **other_components):
+        self._realm_component = realm
 
     def _maintenance_reencryption_start_hook(self, organization_id, realm_id, encryption_revision):
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -190,11 +192,11 @@ class MemoryVlobComponent(BaseVlobComponent):
             expected_maintenance=True,
         )
 
-    def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
+    async def _update_changes(self, organization_id, author, realm_id, src_id, src_version=1):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
-        self.event_bus.send(
+        await self._send_event(
             "realm.vlobs_updated",
             organization_id=organization_id,
             author=author,
@@ -224,7 +226,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)])
 
-        self._update_changes(organization_id, author, realm_id, vlob_id)
+        await self._update_changes(organization_id, author, realm_id, vlob_id)
 
     async def read(
         self,
@@ -279,7 +281,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobTimestampError(timestamp, vlob.data[vlob.current_version - 1][2])
         vlob.data.append((blob, author, timestamp))
 
-        self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
+        await self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
 
     async def group_check(
         self, organization_id: OrganizationID, author: DeviceID, to_check: List[dict]

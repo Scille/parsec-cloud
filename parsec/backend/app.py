@@ -1,10 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from typing import Optional
 import trio
 import attr
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from pendulum import now as pendulum_now
+from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
@@ -17,28 +19,10 @@ from parsec.api.protocol import (
     InvalidMessageError,
     ServerHandshake,
 )
-from parsec.backend.events import EventsComponent
 from parsec.backend.utils import check_anonymous_api_allowed
-from parsec.backend.blockstore import blockstore_factory
-from parsec.backend.memory import (
-    MemoryPingComponent,
-    MemoryOrganizationComponent,
-    MemoryUserComponent,
-    MemoryMessageComponent,
-    MemoryRealmComponent,
-    MemoryVlobComponent,
-    MemoryBlockComponent,
-)
-from parsec.backend.postgresql import (
-    PGHandler,
-    PGOrganizationComponent,
-    PGPingComponent,
-    PGUserComponent,
-    PGMessageComponent,
-    PGRealmComponent,
-    PGVlobComponent,
-    PGBlockComponent,
-)
+from parsec.backend.config import BackendConfig
+from parsec.backend.memory import components_factory as mocked_components_factory
+from parsec.backend.postgresql import components_factory as postgresql_components_factory
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.organization import OrganizationNotFoundError
 
@@ -128,48 +112,57 @@ def _filter_binary_fields(data):
     return {k: v if not isinstance(v, bytes) else b"[...]" for k, v in data.items()}
 
 
+@asynccontextmanager
+async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBus] = None):
+    event_bus = event_bus or EventBus()
+
+    if config.db_url == "MOCKED":
+        components_factory = mocked_components_factory
+    else:
+        components_factory = postgresql_components_factory
+
+    async with components_factory(config=config, event_bus=event_bus) as components:
+        yield BackendApp(
+            config=config,
+            event_bus=event_bus,
+            user=components["user"],
+            organization=components["organization"],
+            message=components["message"],
+            realm=components["realm"],
+            vlob=components["vlob"],
+            ping=components["ping"],
+            blockstore=components["blockstore"],
+            block=components["block"],
+            events=components["events"],
+        )
+
+
 class BackendApp:
-    def __init__(self, config, event_bus=None):
-        self.event_bus = event_bus or EventBus()
+    def __init__(
+        self,
+        config,
+        event_bus,
+        user,
+        organization,
+        message,
+        realm,
+        vlob,
+        ping,
+        blockstore,
+        block,
+        events,
+    ):
         self.config = config
-        self.nursery = None
-        self.dbh = None
-
-        if self.config.db_url == "MOCKED":
-            self.user = MemoryUserComponent(self.event_bus)
-            self.message = MemoryMessageComponent(self.event_bus)
-            self.realm = MemoryRealmComponent(self.event_bus, self.user, self.message)
-            self.vlob = MemoryVlobComponent(self.event_bus, self.realm)
-            self.realm._register_maintenance_reencryption_hooks(
-                self.vlob._maintenance_reencryption_start_hook,
-                self.vlob._maintenance_reencryption_is_finished_hook,
-            )
-            self.ping = MemoryPingComponent(self.event_bus)
-            self.blockstore = blockstore_factory(self.config.blockstore_config)
-            self.block = MemoryBlockComponent(self.blockstore, self.realm)
-            self.organization = MemoryOrganizationComponent(
-                user_component=self.user, vlob_component=self.vlob, block_component=self.block
-            )
-
-        else:
-            self.dbh = PGHandler(
-                self.config.db_url,
-                self.config.db_min_connections,
-                self.config.db_max_connections,
-                self.event_bus,
-            )
-            self.user = PGUserComponent(self.dbh, self.event_bus)
-            self.organization = PGOrganizationComponent(self.dbh, self.user)
-            self.message = PGMessageComponent(self.dbh)
-            self.realm = PGRealmComponent(self.dbh)
-            self.vlob = PGVlobComponent(self.dbh)
-            self.ping = PGPingComponent(self.dbh)
-            self.blockstore = blockstore_factory(
-                self.config.blockstore_config, postgresql_dbh=self.dbh
-            )
-            self.block = PGBlockComponent(self.dbh, self.blockstore, self.vlob)
-
-        self.events = EventsComponent(self.event_bus, self.realm)
+        self.event_bus = event_bus
+        self.user = user
+        self.organization = organization
+        self.message = message
+        self.realm = realm
+        self.vlob = vlob
+        self.ping = ping
+        self.blockstore = blockstore
+        self.block = block
+        self.events = events
 
         self.logged_cmds = {
             "events_subscribe": self.events.api_events_subscribe,
@@ -222,15 +215,6 @@ class BackendApp:
         }
         for fn in self.anonymous_cmds.values():
             check_anonymous_api_allowed(fn)
-
-    async def init(self, nursery):
-        self.nursery = nursery
-        if self.dbh:
-            await self.dbh.init(nursery)
-
-    async def teardown(self):
-        if self.dbh:
-            await self.dbh.teardown()
 
     async def _do_handshake(self, transport):
         context = None

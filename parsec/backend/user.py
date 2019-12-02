@@ -7,6 +7,7 @@ import pendulum
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey, PublicKey
+from parsec.event_bus import EventBus
 from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
@@ -165,6 +166,9 @@ class DeviceInvitation:
 
 
 class BaseUserComponent:
+    def __init__(self, event_bus: EventBus):
+        self._event_bus = event_bus
+
     #### Access user API ####
 
     @catch_protocol_errors
@@ -237,7 +241,7 @@ class BaseUserComponent:
         def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
             return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
-        with self.event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
+        with self._event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
 
             try:
                 await self.create_user_invitation(client_ctx.organization_id, invitation)
@@ -322,7 +326,7 @@ class BaseUserComponent:
                     (event, user_id, first_device_id, user_certificate, first_device_certificate)
                 )
 
-        with self.event_bus.connect_in_context(
+        with self._event_bus.connect_in_context(
             ("user.created", _on_organization_events),
             ("user.invitation.cancelled", _on_organization_events),
         ):
@@ -512,7 +516,9 @@ class BaseUserComponent:
         def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
             return organization_id == client_ctx.organization_id and device_id == invited_device_id
 
-        with self.event_bus.waiter_on("device.claimed", filter=_filter_on_device_claimed) as waiter:
+        with self._event_bus.waiter_on(
+            "device.claimed", filter=_filter_on_device_claimed
+        ) as waiter:
 
             try:
                 await self.create_device_invitation(client_ctx.organization_id, invitation)
@@ -590,7 +596,7 @@ class BaseUserComponent:
             if organization_id == client_ctx.organization_id:
                 send_channel.send_nowait((event, device_id, device_certificate, encrypted_answer))
 
-        with self.event_bus.connect_in_context(
+        with self._event_bus.connect_in_context(
             ("device.created", _on_organization_events),
             ("device.invitation.cancelled", _on_organization_events),
         ):

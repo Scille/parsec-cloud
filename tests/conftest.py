@@ -31,7 +31,7 @@ from parsec.core.logged_core import logged_core_factory
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.core.fs.storage import LocalDatabase, local_database
 
-from parsec.backend import BackendApp
+from parsec.backend import backend_app_factory
 from parsec.backend.config import (
     BackendConfig,
     MockedBlockStoreConfig,
@@ -483,45 +483,36 @@ def backend_factory(
 
     @asynccontextmanager
     async def _backend_factory(populated=True, config={}, event_bus=None):
-        async with trio.open_service_nursery() as nursery:
-            config = BackendConfig(
-                **{
-                    "administration_token": "s3cr3t",
-                    "db_drop_deleted_data": False,
-                    "db_min_connections": 1,
-                    "db_max_connections": 5,
-                    "debug": False,
-                    "db_url": backend_store,
-                    "blockstore_config": blockstore,
-                    **config,
-                }
-            )
-            if not event_bus:
-                event_bus = event_bus_factory()
-            backend = BackendApp(config, event_bus=event_bus)
-            # TODO: backend connection to postgresql will timeout if we use a trio
-            # mock clock with autothreshold. We should detect this and do something here...
-            await backend.init(nursery)
+        config = BackendConfig(
+            **{
+                "administration_token": "s3cr3t",
+                "db_drop_deleted_data": False,
+                "db_min_connections": 1,
+                "db_max_connections": 5,
+                "debug": False,
+                "db_url": backend_store,
+                "blockstore_config": blockstore,
+                **config,
+            }
+        )
+        if not event_bus:
+            event_bus = event_bus_factory()
+        # TODO: backend connection to postgresql will timeout if we use a trio
+        # mock clock with autothreshold. We should detect this and do something here...
+        async with backend_app_factory(config, event_bus=event_bus) as backend:
+            if populated:
+                with freeze_time("2000-01-01"):
+                    binder = backend_data_binder_factory(backend)
+                    await binder.bind_organization(coolorg, alice)
+                    await binder.bind_organization(
+                        expiredorg, expiredalice, expiration_date=pendulum.now()
+                    )
+                    await binder.bind_organization(otherorg, otheralice)
+                    await binder.bind_device(alice2)
+                    await binder.bind_device(adam)
+                    await binder.bind_device(bob)
 
-            try:
-                if populated:
-                    with freeze_time("2000-01-01"):
-                        binder = backend_data_binder_factory(backend)
-                        await binder.bind_organization(coolorg, alice)
-                        await binder.bind_organization(
-                            expiredorg, expiredalice, expiration_date=pendulum.now()
-                        )
-                        await binder.bind_organization(otherorg, otheralice)
-                        await binder.bind_device(alice2)
-                        await binder.bind_device(adam)
-                        await binder.bind_device(bob)
-
-                yield backend
-            finally:
-                await backend.teardown()
-                # Don't do `nursery.cancel_scope.cancel()` given `backend.teardown()`
-                # should have stopped all our coroutines (i.e. if the nursery is
-                # hanging, something on top of us should be fixed...)
+            yield backend
 
     return _backend_factory
 

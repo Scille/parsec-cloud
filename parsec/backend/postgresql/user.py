@@ -4,7 +4,6 @@ import pendulum
 from typing import Tuple, List
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.backend.user import (
     BaseUserComponent,
     User,
@@ -36,9 +35,9 @@ from parsec.backend.postgresql.user_queries import (
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, dbh: PGHandler, event_bus: EventBus):
+    def __init__(self, dbh: PGHandler, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.dbh = dbh
-        self.event_bus = event_bus
 
     async def create_user(
         self, organization_id: OrganizationID, user: User, first_device: Device

@@ -5,14 +5,16 @@ from collections import defaultdict
 from pendulum import Pendulum
 
 from parsec.api.protocol import UserID, DeviceID, OrganizationID
-from parsec.event_bus import EventBus
 from parsec.backend.message import BaseMessageComponent
 
 
 class MemoryMessageComponent(BaseMessageComponent):
-    def __init__(self, event_bus: EventBus):
-        self.event_bus = event_bus
+    def __init__(self, send_event):
+        self._send_event = send_event
         self._organizations = defaultdict(lambda: defaultdict(list))
+
+    def register_components(self, **other_components):
+        pass
 
     async def send(
         self,
@@ -25,7 +27,7 @@ class MemoryMessageComponent(BaseMessageComponent):
         messages = self._organizations[organization_id]
         messages[recipient].append((sender, timestamp, body))
         index = len(messages[recipient])
-        self.event_bus.send(
+        await self._send_event(
             "message.received",
             organization_id=organization_id,
             author=sender,

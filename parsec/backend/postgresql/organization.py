@@ -8,7 +8,7 @@ from pypika import Parameter, functions as fn
 
 from parsec.api.protocol import OrganizationID
 from parsec.crypto import VerifyKey
-from parsec.backend.user import BaseUserComponent, UserError, User, Device
+from parsec.backend.user import UserError, User, Device
 from parsec.backend.organization import (
     BaseOrganizationComponent,
     OrganizationStats,
@@ -77,10 +77,9 @@ _q_get_stats = Query.select(
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
-    def __init__(self, dbh: PGHandler, user_component: BaseUserComponent, **kwargs):
+    def __init__(self, dbh: PGHandler, **kwargs):
         super().__init__(**kwargs)
         self.dbh = dbh
-        self.user_component = user_component
 
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
