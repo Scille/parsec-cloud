@@ -22,9 +22,8 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 class expect_raises:
-    def __init__(self, expected_exc, fallback_exc=None):
+    def __init__(self, expected_exc):
         self.expected_exc = expected_exc
-        self.fallback_exc = fallback_exc
 
     def __enter__(self):
         __tracebackhide__ = True
@@ -39,10 +38,14 @@ class expect_raises:
         if not exc_type:
             raise AssertionError(f"DID NOT RAISED {self.expected_exc!r}")
 
-        if self.fallback_exc:
-            allowed = (type(self.expected_exc), type(self.fallback_exc))
+        # WinFSP error handling is not stricly similar to the real
+        # Windows file system; so we often endup with the wrong exception
+        # (e.g. `NotADirectoryError` when we expect `FileNotFoundError`)
+        if os.name == "nt":
+            allowed = OSError
         else:
             allowed = type(self.expected_exc)
+
         if not isinstance(exc_value, allowed):
             raise AssertionError(
                 f"RAISED {exc_value!r} BUT EXPECTED {self.expected_exc!r}"
@@ -122,17 +125,12 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
             path = parent / name
 
             expected_exc = None
-            fallback_exc = None
             try:
                 path.to_oracle().touch(exist_ok=False)
             except OSError as exc:
                 expected_exc = exc
-                # WinFSP raises `OSError(22, 'Invalid argument')` instead
-                # of `FileNotFoundError(2, 'No such file or directory')`
-                if os.name == "nt" and isinstance(exc, FileNotFoundError):
-                    fallback_exc = OSError(22, "Invalid argument")
 
-            with expect_raises(expected_exc, fallback_exc):
+            with expect_raises(expected_exc):
                 path.to_parsec().touch(exist_ok=False)
 
             return path
@@ -142,17 +140,12 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
             path = parent / name
 
             expected_exc = None
-            fallback_exc = None
             try:
                 path.to_oracle().mkdir(exist_ok=False)
             except OSError as exc:
                 expected_exc = exc
-                # WinFSP raises `NotADirectoryError(20, 'The directory name is invalid')`
-                # instead of `FileNotFoundError(2, 'The system cannot find the path specified')`
-                if os.name == "nt" and isinstance(exc, FileNotFoundError):
-                    fallback_exc = NotADirectoryError(20, "The directory name is invalid")
 
-            with expect_raises(expected_exc, fallback_exc):
+            with expect_raises(expected_exc):
                 path.to_parsec().mkdir(exist_ok=False)
 
             return path
