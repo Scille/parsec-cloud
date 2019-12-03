@@ -2,14 +2,15 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor
-from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QPushButton, QLabel, QGraphicsDropShadowEffect
 
 
-class FileLineEdit(QLineEdit):
+class FileLabel(QLabel):
     clicked = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
         self.full_text = ""
 
     def setText(self, text):
@@ -17,10 +18,6 @@ class FileLineEdit(QLineEdit):
         if len(text) > 30:
             text = text[:30] + "..."
         super().setText(text)
-
-    def mousePressEvent(self, event):
-        if event.button() & Qt.LeftButton:
-            self.clicked.emit(self.full_text)
 
 
 class TaskbarButton(QPushButton):

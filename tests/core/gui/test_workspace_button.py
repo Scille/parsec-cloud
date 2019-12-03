@@ -107,10 +107,10 @@ async def test_workspace_button_files(qtbot, workspace_fs):
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
     assert w.label_workspace.text() == "Workspace (shared with others)"
-    assert w.line_edit_file1.text() == "File1.txt"
-    assert w.line_edit_file2.text() == "File2.txt"
-    assert w.line_edit_file3.text() == "Dir1"
-    assert w.line_edit_file4.text() == ""
+    assert w.label_file1.text() == "File1.txt"
+    assert w.label_file2.text() == "File2.txt"
+    assert w.label_file3.text() == "Dir1"
+    assert w.label_file4.text() == ""
 
 
 @pytest.mark.gui

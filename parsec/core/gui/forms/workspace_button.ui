@@ -30,13 +30,35 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="accessibleDescription">
+   <string/>
+  </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#WorkspaceButton
+   <string notr="true">#WorkspaceButton
 {
 background-color: #FFFFFF;
-}
-
-QLabel#label_reencrypt
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="styleSheet">
+      <string notr="true">QLabel#label_reencrypt
 {
 color: rgb(12, 65, 157);
 }
@@ -67,27 +89,6 @@ Line
 {
 color: rgb(9, 66, 155);
 }</string>
-  </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="spacing">
-    <number>6</number>
-   </property>
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
-    <number>0</number>
-   </property>
-   <item>
-    <widget class="QWidget" name="widget" native="true">
-     <property name="styleSheet">
-      <string notr="true"/>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
@@ -300,18 +301,15 @@ color: rgb(9, 66, 155);
               <number>0</number>
              </property>
              <item>
-              <widget class="FileLineEdit" name="line_edit_file1">
-               <property name="font">
-                <font>
-                 <pointsize>11</pointsize>
-                 <underline>false</underline>
-                </font>
+              <widget class="FileLabel" name="label_file1">
+               <property name="text">
+                <string/>
                </property>
-               <property name="styleSheet">
-                <string notr="true"/>
+               <property name="textFormat">
+                <enum>Qt::PlainText</enum>
                </property>
-               <property name="readOnly">
-                <bool>true</bool>
+               <property name="textInteractionFlags">
+                <set>Qt::NoTextInteraction</set>
                </property>
               </widget>
              </item>
@@ -332,18 +330,15 @@ color: rgb(9, 66, 155);
               </widget>
              </item>
              <item>
-              <widget class="FileLineEdit" name="line_edit_file2">
-               <property name="font">
-                <font>
-                 <pointsize>11</pointsize>
-                 <underline>false</underline>
-                </font>
+              <widget class="FileLabel" name="label_file2">
+               <property name="text">
+                <string/>
                </property>
-               <property name="styleSheet">
-                <string notr="true"/>
+               <property name="textFormat">
+                <enum>Qt::PlainText</enum>
                </property>
-               <property name="readOnly">
-                <bool>true</bool>
+               <property name="textInteractionFlags">
+                <set>Qt::NoTextInteraction</set>
                </property>
               </widget>
              </item>
@@ -364,18 +359,15 @@ color: rgb(9, 66, 155);
               </widget>
              </item>
              <item>
-              <widget class="FileLineEdit" name="line_edit_file3">
-               <property name="font">
-                <font>
-                 <pointsize>11</pointsize>
-                 <underline>false</underline>
-                </font>
+              <widget class="FileLabel" name="label_file3">
+               <property name="text">
+                <string/>
                </property>
-               <property name="styleSheet">
-                <string notr="true"/>
+               <property name="textFormat">
+                <enum>Qt::PlainText</enum>
                </property>
-               <property name="readOnly">
-                <bool>true</bool>
+               <property name="textInteractionFlags">
+                <set>Qt::NoTextInteraction</set>
                </property>
               </widget>
              </item>
@@ -396,18 +388,15 @@ color: rgb(9, 66, 155);
               </widget>
              </item>
              <item>
-              <widget class="FileLineEdit" name="line_edit_file4">
-               <property name="font">
-                <font>
-                 <pointsize>11</pointsize>
-                 <underline>false</underline>
-                </font>
+              <widget class="FileLabel" name="label_file4">
+               <property name="text">
+                <string/>
                </property>
-               <property name="styleSheet">
-                <string notr="true"/>
+               <property name="textFormat">
+                <enum>Qt::PlainText</enum>
                </property>
-               <property name="readOnly">
-                <bool>true</bool>
+               <property name="textInteractionFlags">
+                <set>Qt::NoTextInteraction</set>
                </property>
               </widget>
              </item>
@@ -765,8 +754,8 @@ border: 0;
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>FileLineEdit</class>
-   <extends>QLineEdit</extends>
+   <class>FileLabel</class>
+   <extends>QLabel</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

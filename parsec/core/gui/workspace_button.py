@@ -55,16 +55,16 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             for i, f in enumerate(files, 1):
                 if i > 4:
                     break
-                label = getattr(self, "line_edit_file{}".format(i))
-                label.clicked.connect(self._on_file_clicked)
+                label = getattr(self, "label_file{}".format(i))
                 label.setText(f)
-                label.setCursorPosition(0)
             self.widget_files.show()
             self.label_empty.hide()
 
         if enable_workspace_color:
             c = StringToColor.from_string(str(self.workspace_fs.workspace_id))
-            self.setStyleSheet("background-color: {};".format(c.hex()))
+            s = "background-color: {};".format(c.hex())
+            self.setStyleSheet(s)
+            self.widget_files.setStyleSheet(s)
 
         if self.timestamped:
             self.button_reencrypt.hide()
@@ -95,9 +95,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
-
-    def _on_file_clicked(self, _):
-        self.clicked.emit(self.workspace_fs)
 
     def button_share_clicked(self):
         self.share_clicked.emit(self.workspace_fs)

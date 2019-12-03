@@ -1,0 +1,1 @@
+Fix colored workspace button display
