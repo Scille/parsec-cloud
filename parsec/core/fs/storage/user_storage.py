@@ -39,13 +39,10 @@ class UserStorage:
                 # Instanciate the user storage
                 self = cls(device, path, device.user_manifest_id, manifest_storage)
 
-                # Load the user manifest
-                try:
-                    await self.load_user_manifest()
-                except FSLocalMissError:
-                    pass
-                else:
-                    assert self.user_manifest_id in self.manifest_storage._cache
+                # Populate the cache with the user manifest to be able to
+                # access it synchronously at all time
+                await self._load_user_manifest()
+                assert self.user_manifest_id in self.manifest_storage._cache
 
                 yield self
 
@@ -68,18 +65,22 @@ class UserStorage:
     # User manifest
 
     def get_user_manifest(self):
+        """
+        Raises nothing, user manifest is guaranteed to be always available
+        """
+        return self.manifest_storage._cache[self.user_manifest_id]
+
+    async def _load_user_manifest(self) -> LocalUserManifest:
         try:
-            return self.manifest_storage._cache[self.user_manifest_id]
-        except KeyError:
+            await self.manifest_storage.get_manifest(self.user_manifest_id)
+        except FSLocalMissError:
             # In the unlikely event the user manifest is not present in
             # local (e.g. device just created or during tests), we fall
             # back on an empty manifest which is a good aproximation of
             # the very first version of the manifest (field `created` is
             # invalid, but it will be corrected by the merge during sync).
-            return LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
-
-    async def load_user_manifest(self) -> LocalUserManifest:
-        return await self.manifest_storage.get_manifest(self.user_manifest_id)
+            manifest = LocalUserManifest.new_placeholder(id=self.device.user_manifest_id)
+            await self.manifest_storage.set_manifest(self.user_manifest_id, manifest)
 
     async def set_user_manifest(self, user_manifest: LocalUserManifest):
         assert self.user_manifest_id == user_manifest.id

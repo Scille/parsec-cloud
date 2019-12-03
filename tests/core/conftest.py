@@ -7,8 +7,6 @@ from async_generator import asynccontextmanager
 from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS
-from parsec.core.fs.exceptions import FSLocalMissError
-from parsec.core.fs.storage import UserStorage
 
 from tests.common import freeze_time
 
@@ -23,39 +21,15 @@ def local_storage_path(tmpdir):
 
 @pytest.fixture
 def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
-    async def _initialize_userfs_storage(device, storage):
-        try:
-            await storage.load_user_manifest()
-        except FSLocalMissError:
+    async def _initialize_userfs_storage(storage):
+        if storage.get_user_manifest().base_version == 0:
             with freeze_time("2000-01-01"):
-                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
+                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
+                    storage.device
+                )
             await storage.set_user_manifest(user_manifest)
 
     return _initialize_userfs_storage
-
-
-@pytest.fixture()
-async def alice_local_storage(local_storage_path, initialize_userfs_storage, alice):
-    path = local_storage_path(alice)
-    async with UserStorage.run(alice, path) as storage:
-        await initialize_userfs_storage(alice, storage)
-        yield storage
-
-
-@pytest.fixture()
-async def alice2_local_storage(local_storage_path, initialize_userfs_storage, alice2):
-    path = local_storage_path(alice2)
-    async with UserStorage.run(alice2, path) as storage:
-        await initialize_userfs_storage(alice2, storage)
-        yield storage
-
-
-@pytest.fixture()
-async def bob_local_storage(local_storage_path, initialize_userfs_storage, bob):
-    path = local_storage_path(bob)
-    async with UserStorage.run(bob, path) as storage:
-        await initialize_userfs_storage(bob, storage)
-        yield storage
 
 
 @pytest.fixture
@@ -139,7 +113,7 @@ def user_fs_factory(
     local_storage_path, event_bus_factory, persistent_mockup, initialize_userfs_storage
 ):
     @asynccontextmanager
-    async def _user_fs_factory(device, event_bus=None, initialize_user_storage=True):
+    async def _user_fs_factory(device, event_bus=None, initialize_in_v0: bool = False):
         event_bus = event_bus or event_bus_factory()
         async with backend_cmds_pool_factory(
             device.organization_addr, device.device_id, device.signing_key
@@ -147,8 +121,8 @@ def user_fs_factory(
             path = local_storage_path(device)
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             async with UserFS.run(device, path, cmds, rdm, event_bus) as user_fs:
-                if initialize_user_storage:
-                    await initialize_userfs_storage(device, user_fs.storage)
+                if not initialize_in_v0:
+                    await initialize_userfs_storage(user_fs.storage)
                 yield user_fs
 
     return _user_fs_factory
