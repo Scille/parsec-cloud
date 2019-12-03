@@ -334,8 +334,8 @@ async def _monitor_sync_online(user_fs, event_bus):
             return await ctx.tick()
         except FSBackendOfflineError:
             raise
-        except Exception as exc:
-            logger.error("Sync monitor has crashed", workspace_id=ctx.id, exc_info=exc)
+        except Exception:
+            logger.exception("Sync monitor has crashed", workspace_id=ctx.id)
             # Reset sync context which is now in an undefined state
             ctxs.discard(ctx.id)
             ctx = ctxs.get(ctx.id)

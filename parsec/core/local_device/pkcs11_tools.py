@@ -105,8 +105,9 @@ def get_public_keys(session):
                 {Attribute.CLASS: ObjectClass.PUBLIC_KEY, Attribute.KEY_TYPE: KeyType.RSA}
             )
         )
-    except Exception as e:
-        logger.exception("public keys", exc_info=e)
+    except Exception:
+        logger.exception("public keys")
+        return []
     return public_keys
 
 
@@ -117,8 +118,9 @@ def get_private_keys(session):
                 {Attribute.CLASS: ObjectClass.PRIVATE_KEY, Attribute.KEY_TYPE: KeyType.RSA}
             )
         )
-    except Exception as e:
-        logger.exception("private keys", exc_info=e)
+    except Exception:
+        logger.exception("private keys")
+        return []
     return priv_keys
 
 

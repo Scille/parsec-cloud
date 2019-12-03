@@ -101,8 +101,8 @@ def _remove_nav_link():
 def remove_nav_link():
     try:
         _remove_nav_link()
-    except OSError as exc:
-        logger.error("Error while removing navbar registry values: {}".format(str(exc)))
+    except OSError:
+        logger.exception("Error while removing navbar registry values")
 
 
 def _add_nav_link(mountpoint):
@@ -179,5 +179,5 @@ def _add_nav_link(mountpoint):
 def add_nav_link(mountpoint):
     try:
         _add_nav_link(mountpoint)
-    except OSError as exc:
-        logger.error("Error while adding navbar registry values: {}".format(str(exc)))
+    except OSError:
+        logger.exception("Error while adding navbar registry values")

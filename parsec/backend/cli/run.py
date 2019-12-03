@@ -294,9 +294,9 @@ def run_cmd(
                     try:
                         await backend.handle_client(stream)
 
-                    except Exception as exc:
+                    except Exception:
                         # If we are here, something unexpected happened...
-                        logger.error("Unexpected crash", exc_info=exc)
+                        logger.exception("Unexpected crash")
                         await stream.aclose()
 
                 await trio.serve_tcp(_serve_client, port, host=host)

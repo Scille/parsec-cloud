@@ -154,8 +154,8 @@ async def _run_tcp_server(socket_file: Path, cmd_handler):
         except trio.BrokenResourceError:
             pass  # Peer has closed the connection while we were sending a response
 
-        except Exception as exc:
-            logger.error("Unexpected crash", exc_info=exc)
+        except Exception:
+            logger.exception("Unexpected crash")
 
     try:
         async with trio.open_service_nursery() as nursery:
