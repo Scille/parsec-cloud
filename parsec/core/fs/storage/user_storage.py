@@ -26,16 +26,18 @@ class UserStorage:
 
     @classmethod
     @asynccontextmanager
-    async def run(cls, device: LocalDevice, path: Path, user_manifest_id: EntryID):
+    async def run(cls, device: LocalDevice, path: Path):
 
         # Local database service
         async with LocalDatabase.run(path / USER_STORAGE_NAME) as localdb:
 
             # Manifest storage service
-            async with ManifestStorage.run(device, localdb, user_manifest_id) as manifest_storage:
+            async with ManifestStorage.run(
+                device, localdb, device.user_manifest_id
+            ) as manifest_storage:
 
                 # Instanciate the user storage
-                self = cls(device, path, user_manifest_id, manifest_storage)
+                self = cls(device, path, device.user_manifest_id, manifest_storage)
 
                 # Load the user manifest
                 try:

@@ -9,13 +9,13 @@ from parsec.core.types import LocalUserManifest, EntryID
 
 
 @pytest.fixture
-def user_manifest():
-    return LocalUserManifest.new_placeholder()
+def user_manifest(alice):
+    return LocalUserManifest.new_placeholder(id=alice.user_manifest_id)
 
 
 @pytest.fixture
-async def alice_user_storage(tmpdir, alice, user_manifest):
-    async with UserStorage.run(alice, tmpdir, user_manifest.id) as aus:
+async def alice_user_storage(tmpdir, alice):
+    async with UserStorage.run(alice, tmpdir) as aus:
         yield aus
 
 
@@ -26,13 +26,13 @@ async def test_initialization(alice_user_storage, user_manifest):
 
     await aus.set_user_manifest(user_manifest)
     assert aus.get_user_manifest() == user_manifest
-    async with UserStorage.run(aus.device, aus.path, user_manifest.id) as aus2:
+    async with UserStorage.run(aus.device, aus.path) as aus2:
         assert aus2.get_user_manifest() == user_manifest
 
     new_user_manifest = user_manifest.evolve(need_sync=False)
     await aus.set_user_manifest(new_user_manifest)
     assert aus.get_user_manifest() == new_user_manifest
-    async with UserStorage.run(aus.device, aus.path, user_manifest.id) as aus2:
+    async with UserStorage.run(aus.device, aus.path) as aus2:
         assert aus2.get_user_manifest() == new_user_manifest
 
 
@@ -72,11 +72,11 @@ async def test_vacuum(alice_user_storage):
 
 
 @pytest.mark.trio
-async def test_storage_file_tree(tmpdir, alice, user_manifest):
+async def test_storage_file_tree(tmpdir, alice):
     path = Path(tmpdir)
     manifest_sqlite_db = path / "user_data-v1.sqlite"
 
-    async with UserStorage.run(alice, tmpdir, user_manifest.id) as aus:
+    async with UserStorage.run(alice, tmpdir) as aus:
         assert aus.manifest_storage.path == manifest_sqlite_db
 
     assert set(path.iterdir()) == {manifest_sqlite_db}

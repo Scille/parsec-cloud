@@ -177,8 +177,7 @@ class UserFS:
         self = cls(*args, **kwargs)
 
         # Run user storage
-        user_storage_context = UserStorage.run(self.device, self.path, self.user_manifest_id)
-        async with user_storage_context as self.storage:
+        async with UserStorage.run(self.device, self.path) as self.storage:
 
             # Nursery for workspace storages
             async with trio.open_service_nursery() as self._workspace_storage_nursery:
