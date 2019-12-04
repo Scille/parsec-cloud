@@ -9,14 +9,12 @@ from parsec.api.transport import TransportError
 from parsec.core.types import LocalDevice, EntryID
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
+    BackendConnectionError,
     BackendIncompatibleVersion,
     BackendNotAvailableRVKMismatch,
-    BackendHandshakeError,
     BackendHandshakeAPIVersionError,
     BackendHandshakeRVKMismatchError,
     BackendDeviceRevokedError,
-    BackendCmdsInvalidResponse,
-    BackendCmdsBadResponse,
 )
 from parsec.core.backend_connection.porcelain import backend_cmds_pool_factory
 
@@ -30,9 +28,10 @@ class BackendEventsManager:
         self.device = device
         self.event_bus = event_bus
         self.keepalive = keepalive
-        self._backend_online = None
-        self._backend_incompatible_version = None
-        self._backend_rvk_mismatch = None
+        self._backend_incompatible_version = False
+        self._backend_rvk_mismatch = False
+        self._backend_user_revoked = False
+        self._backend_connection_failures = 0
 
     def _event_pump_incompatible_version(self):
         if self._backend_incompatible_version is not True:
@@ -48,49 +47,34 @@ class BackendEventsManager:
         # Send "rvk_mismatch" before "offline" so it can be read correctly
         self._event_pump_lost()
 
+    def _event_pump_user_revoked(self):
+        if self._backend_user_revoked is not True:
+            self._backend_user_revoked = True
+            self.event_bus.send("backend.user_revoked")
+        # Send "user_revoked" before "offline" so it can be read correctly
+        self._event_pump_lost()
+
     def _event_pump_lost(self):
-        if self._backend_online is not False:
-            self._backend_online = False
+        self._backend_connection_failures += 1
+        # Only send the offline even when we have just lost the connection
+        if self._backend_connection_failures == 1:
             self.event_bus.send("backend.offline")
 
     def _event_pump_ready(self):
-        if self._backend_incompatible_version is True:
-            self._backend_incompatible_version = False
-        if self._backend_online is not True:
-            self._backend_online = True
-            self.event_bus.send("backend.online")
-        self.event_bus.send("backend.listener.restarted")
+        self._backend_incompatible_version = False
+        self._backend_rvk_mismatch = False
+        self._backend_user_revoked = False
+        self._backend_connection_failures = 0
+        self.event_bus.send("backend.online")
+        # Given the backend won't notify us for messages that arrived while
+        # we were offline, we must actively check this ourself.
+        self.event_bus.send("backend.message.polling_needed")
 
     async def _event_listener_manager(self):
-        backend_connection_failures = 0
         while True:
             try:
-
-                try:
-
-                    async with trio.open_service_nursery() as nursery:
-                        logger.info("Try to connect to backend...")
-                        await nursery.start(self._event_pump)
-                        backend_connection_failures = 0
-                        logger.info("Backend online")
-                        self._event_pump_ready()
-                        await trio.sleep_forever()
-
-                except trio.MultiError as exc:
-                    # MultiError can contains:
-                    # - only Cancelled exceptions (most likely case), this
-                    #   is taken care of by trio so we can safely reraise it
-                    # - a regular exception and multiple Cancelled, in such
-                    #  case we only reraise the regular exception to have
-                    #  lower exception handlers deal with it
-                    # - multiple regular exceptions... this case is unlikely and
-                    #  not well handled so far: we just let the MultiError pop
-                    #  up (which is likely to cause issue with upper layers...)
-                    # TODO: better multi-regular-exception handling !!!
-                    filtered_exc = trio.MultiError.filter(
-                        lambda x: None if isinstance(x, trio.Cancelled) else x, exc
-                    )
-                    raise filtered_exc if filtered_exc else exc
+                logger.info("Try to connect to backend...")
+                await self._event_pump()
 
             except (BackendHandshakeRVKMismatchError, BackendNotAvailableRVKMismatch) as exc:
                 # No need to retry, given these keys wont change...
@@ -101,32 +85,32 @@ class BackendEventsManager:
             except (BackendHandshakeAPIVersionError, BackendIncompatibleVersion) as exc:
                 # No need to retry, client should update or wait for backend update first
                 self._event_pump_incompatible_version()
-                logger.info(f"Cannot connect to backend : incompatible version {str(exc)}")
+                logger.info("Cannot connect to backend: incompatible version", exc_info=exc)
+                return
+
+            except BackendDeviceRevokedError as exc:
+                # No need to retry, backend no longer wants to talk to us :'(
+                self._event_pump_user_revoked()
+                logger.info("Cannot connect to backend: user revoked", exc_info=exc)
                 return
 
             except (TransportError, BackendNotAvailable) as exc:
                 # In case of connection failure, wait a bit and restart
                 self._event_pump_lost()
-                cooldown_time = 2 ** backend_connection_failures
-                backend_connection_failures += 1
+                cooldown_time = 2 ** self._backend_connection_failures
                 if cooldown_time > MAX_COOLDOWN:
                     cooldown_time = MAX_COOLDOWN
                 logger.info("Backend offline", reason=exc, cooldown_time=cooldown_time)
                 await trio.sleep(cooldown_time)
 
-            except (BackendCmdsInvalidResponse, BackendCmdsBadResponse):
-                # Backend is drunk, what can we do about it ?
+            except BackendConnectionError:
+                # Unexpected error from the backend, don't retry to avoid flooding
+                # with error logs (retry will be done at next login anyway)
                 self._event_pump_lost()
-                logger.exception("Invalid response sent by backend, restarting connection in 1s...")
-                await trio.sleep(1)
-
-            except (BackendHandshakeError, BackendDeviceRevokedError):
-                # No need to retry given backend don't want to talk to us...
-                self._event_pump_lost()
-                logger.exception("Cannot connect to the backend")
+                logger.exception("Invalid response sent by backend")
                 return
 
-    async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
+    async def _event_pump(self):
         async with backend_cmds_pool_factory(
             self.device.organization_addr,
             self.device.device_id,
@@ -135,12 +119,8 @@ class BackendEventsManager:
             keepalive=self.keepalive,
         ) as cmds:
             await cmds.events_subscribe()
-
-            # Given the backend won't notify us for messages that arrived while
-            # we were offline, we must actively check this ourself.
-            self.event_bus.send("backend.message.polling_needed")
-
-            task_status.started()
+            self._event_pump_ready()
+            logger.info("Backend online")
             await self._event_pump_do(cmds)
 
     async def _event_pump_do(self, cmds):
