@@ -140,8 +140,8 @@ class InstanceWidget(QWidget):
 
     def on_core_run_done(self):
         assert self.running_core_job.is_finished()
-        InstanceWidget.devices_connected.remove(self.core.device)
         if self.core:
+            InstanceWidget.devices_connected.remove(self.core.device)
             self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
         self.running_core_job = None
         self.core_jobs_ctx = None
