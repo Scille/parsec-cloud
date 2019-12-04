@@ -42,7 +42,10 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.reset_dialog(workspace_fs, path)
 
     def reset_dialog(self, workspace_fs, path):
-        self.label_file_name.setText(f'"{path.name}"')
+        file_name = path.name
+        if len(file_name) > 64:
+            file_name = file_name[:64] + "..."
+        self.label_file_name.setText(f'"{file_name}"')
         self.workspace_fs = workspace_fs
         self.path = path
         self.versions_table.clear()
