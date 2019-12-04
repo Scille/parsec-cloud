@@ -1350,6 +1350,9 @@ msgstr "Show notifications."
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "This version of the application is incompatible with the server."
 
+msgid "NOTIF_WARN_RVK_MISMATCH"
+msgstr "Connection impossible. The Root Verifier Key differs between client and server."
+
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Mountpoint has been lost."
 

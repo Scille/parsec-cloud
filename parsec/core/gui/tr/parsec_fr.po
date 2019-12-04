@@ -1370,6 +1370,11 @@ msgstr "Afficher les notifications."
 msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "Cette version de l'application est incompatible avec le serveur."
 
+msgid "NOTIF_WARN_RVK_MISMATCH"
+msgstr ""
+"Connexion avec le backend impossible. "
+"La Root Verify Key diffère entre le client et le serveur."
+
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Le point de montage a été perdu."
 

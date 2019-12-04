@@ -10,8 +10,10 @@ from parsec.core.types import LocalDevice, EntryID
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendIncompatibleVersion,
+    BackendNotAvailableRVKMismatch,
     BackendHandshakeError,
     BackendHandshakeAPIVersionError,
+    BackendHandshakeRVKMismatchError,
     BackendDeviceRevokedError,
     BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
@@ -30,12 +32,20 @@ class BackendEventsManager:
         self.keepalive = keepalive
         self._backend_online = None
         self._backend_incompatible_version = None
+        self._backend_rvk_mismatch = None
 
     def _event_pump_incompatible_version(self):
         if self._backend_incompatible_version is not True:
             self._backend_incompatible_version = True
             self.event_bus.send("backend.incompatible_version")
         # Send "incompatible_version" before "offline" so it can be read correctly
+        self._event_pump_lost()
+
+    def _event_pump_rvk_mismatch(self):
+        if self._backend_rvk_mismatch is not True:
+            self._backend_rvk_mismatch = True
+            self.event_bus.send("backend.rvk_mismatch")
+        # Send "rvk_mismatch" before "offline" so it can be read correctly
         self._event_pump_lost()
 
     def _event_pump_lost(self):
@@ -81,6 +91,12 @@ class BackendEventsManager:
                         lambda x: None if isinstance(x, trio.Cancelled) else x, exc
                     )
                     raise filtered_exc if filtered_exc else exc
+
+            except (BackendHandshakeRVKMismatchError, BackendNotAvailableRVKMismatch) as exc:
+                # No need to retry, given these keys wont change...
+                self._event_pump_rvk_mismatch()
+                logger.info(f"Cannot connect to backend : RVK mismatch {str(exc)}")
+                return
 
             except (BackendHandshakeAPIVersionError, BackendIncompatibleVersion) as exc:
                 # No need to retry, client should update or wait for backend update first

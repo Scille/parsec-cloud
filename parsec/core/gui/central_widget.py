@@ -26,6 +26,7 @@ from parsec.core.fs import (
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
         "backend.connection.incompatible_version",
+        "backend.connection.rvk_mismatch",
         "mountpoint.stopped",
         "mountpoint.remote_error",
         "mountpoint.unhandled_error",
@@ -111,6 +112,8 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.incompatible_version":
             self.new_notification.emit(event, "WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
+        if event == "backend.connection.rvk_mismatch":
+            self.new_notification.emit(event, "ERROR", _("NOTIF_WARN_RVK_MISMATCH"))
         elif event == "mountpoint.stopped":
             self.new_notification.emit(event, "WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == "mountpoint.remote_error":

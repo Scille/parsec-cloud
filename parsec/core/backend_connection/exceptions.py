@@ -13,11 +13,19 @@ class BackendIncompatibleVersion(BackendNotAvailable):
     pass
 
 
+class BackendNotAvailableRVKMismatch(BackendNotAvailable):
+    pass
+
+
 class BackendHandshakeError(BackendConnectionError):
     pass
 
 
 class BackendHandshakeAPIVersionError(BackendHandshakeError):
+    pass
+
+
+class BackendHandshakeRVKMismatchError(BackendHandshakeError):
     pass
 
 

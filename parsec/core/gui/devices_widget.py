@@ -4,7 +4,6 @@ from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.password_change_dialog import PasswordChangeDialog
@@ -13,6 +12,7 @@ from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
+from parsec.core.remote_devices_manager import RemoteDevicesManagerBackendOfflineError
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
@@ -74,8 +74,14 @@ async def _do_list_devices(core):
             current_device.user_id
         )
         return devices
-    except BackendNotAvailable as exc:
+    except RemoteDevicesManagerBackendOfflineError as exc:
         raise JobResultError("offline") from exc
+    # TODO : handle all errors from the remote_devices_manager and notify GUI
+    # Raises:
+    #     RemoteDevicesManagerError
+    #     RemoteDevicesManagerBackendOfflineError
+    #     RemoteDevicesManagerNotFoundError
+    #     RemoteDevicesManagerInvalidTrustchainError
 
 
 class DevicesWidget(QWidget, Ui_DevicesWidget):
