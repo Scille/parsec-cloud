@@ -1,0 +1,2 @@
+Fix bug when the workspaces doesn't show up on new device creation until
+the user manifest is actually modified.
