@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     ProtocolError,
     HandshakeRevokedDevice,
     HandshakeAPIVersionError,
+    HandshakeRVKMismatch,
     AnonymousClientHandshake,
     AuthenticatedClientHandshake,
     AdministrationClientHandshake,
@@ -23,8 +24,10 @@ from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,
     BackendIncompatibleVersion,
+    BackendNotAvailableRVKMismatch,
     BackendHandshakeError,
     BackendHandshakeAPIVersionError,
+    BackendHandshakeRVKMismatchError,
     BackendDeviceRevokedError,
 )
 
@@ -105,6 +108,13 @@ async def _connect(
     try:
         await _do_handshake(transport, handshake)
 
+    except BackendHandshakeRVKMismatchError as exc:
+        logger.debug(
+            "RVK Mismatch error",
+            reason=f"Root Verify Key differ between client and server {str(exc)}",
+        )
+        raise BackendNotAvailableRVKMismatch(exc) from exc
+
     except BackendHandshakeAPIVersionError as exc:
         logger.debug("Incompatible API version", reason=f"Server API version {str(exc)}")
         raise BackendIncompatibleVersion(exc) from exc
@@ -150,6 +160,10 @@ async def _do_handshake(transport: Transport, handshake):
     except HandshakeRevokedDevice as exc:
         transport.logger.warning("Handshake failed", reason=exc)
         raise BackendDeviceRevokedError(exc) from exc
+
+    except HandshakeRVKMismatch as exc:
+        transport.logger.warning("Handshake failed", reason=exc)
+        raise BackendHandshakeRVKMismatchError(exc) from exc
 
     except ProtocolError as exc:
         transport.logger.warning("Handshake failed", reason=exc)
