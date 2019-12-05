@@ -39,7 +39,7 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.button_check_version.clicked.connect(self.check_version)
 
     def open_feedback_link(self):
-        desktop.open_url("https://parsec.cloud")
+        desktop.open_url("https://my.parsec.cloud/feedback")
 
     def open_user_guide(self):
         desktop.open_url("https://parsec.cloud")
