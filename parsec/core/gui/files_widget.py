@@ -710,7 +710,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_import_error(self):
         assert self.loading_dialog
-        if self.import_job.exc.status == "cancelled":
+        if hasattr(self.import_job.exc, "status") and self.import_job.exc.status == "cancelled":
             self.jobs_ctx.submit_job(
                 ThreadSafeQtSignal(self, "delete_success", QtToTrioJob),
                 ThreadSafeQtSignal(self, "delete_error", QtToTrioJob),
