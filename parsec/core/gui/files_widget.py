@@ -809,7 +809,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_reload_timestamped_success(self, job):
         if job.ret[1]:
-            self.open_file(job.ret[1])
+            self.open_file(job.ret[1].name)
         job.ret = job.ret[0]
         self._on_folder_stat_success(job)
 
