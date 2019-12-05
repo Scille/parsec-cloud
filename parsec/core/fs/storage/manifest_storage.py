@@ -123,15 +123,17 @@ class ManifestStorage:
         """
         async with self._open_cursor() as cursor:
             cursor.execute(
-                "SELECT vlob_id, need_sync FROM vlobs WHERE need_sync = 1 OR base_version != remote_version"
+                "SELECT vlob_id, need_sync, base_version, remote_version "
+                "FROM vlobs WHERE need_sync = 1 OR base_version != remote_version"
             )
             local_changes = set()
             remote_changes = set()
-            for manifest_id, need_sync in cursor.fetchall():
+            for manifest_id, need_sync, bv, rv in cursor.fetchall():
+                manifest_id = EntryID(manifest_id)
                 if need_sync:
-                    local_changes.add(EntryID(manifest_id))
-                else:
-                    remote_changes.add(EntryID(manifest_id))
+                    local_changes.add(manifest_id)
+                if bv != rv:
+                    remote_changes.add(manifest_id)
             return local_changes, remote_changes
 
     # Manifest operations

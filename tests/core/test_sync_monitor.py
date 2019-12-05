@@ -180,13 +180,16 @@ async def test_reconnect_but_offline(mock_clock, running_backend, alice_core):
             )
             spy.clear()
 
+            # TODO: waiting for "backend.offline" shouldn't be needed in theory
+            # but monitor event handling seems buggy...
+            await spy.wait_with_timeout("backend.offline", timeout=60)
             # Lure monitors into thinking the backend is back online ;-)
-            alice_core.event_bus.send("backend.online")
+            alice_core.event_bus.send("backend.connection.bootstrapping")
+
             await spy.wait_multiple_with_timeout(
                 ["sync_monitor.reconnection_sync.started", "sync_monitor.disconnected"],
                 timeout=60,  # autojump, so not *really* 60s
             )
-            alice_core.event_bus.send("backend.offline")
             spy.clear()
 
         # Backend is really back online this time

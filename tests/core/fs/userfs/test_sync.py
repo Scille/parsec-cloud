@@ -229,14 +229,14 @@ async def test_modify_user_manifest_placeholder(
     device = local_device_factory()
     await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device, initialize_user_storage=False) as user_fs:
+    async with user_fs_factory(device, initialize_in_v0=True) as user_fs:
+        um_v0 = user_fs.get_user_manifest()
         with freeze_time("2000-01-02"):
             wid = await user_fs.workspace_create("w1")
         um = user_fs.get_user_manifest()
 
-        expected_um = LocalUserManifest.new_placeholder(
-            id=device.user_manifest_id, now=Pendulum(2000, 1, 2)
-        ).evolve(
+        expected_um = um_v0.evolve(
+            updated=Pendulum(2000, 1, 2),
             workspaces=(
                 WorkspaceEntry(
                     name="w1",
@@ -247,12 +247,12 @@ async def test_modify_user_manifest_placeholder(
                     role_cached_on=Pendulum(2000, 1, 2),
                     role=WorkspaceRole.OWNER,
                 ),
-            )
+            ),
         )
         assert um == expected_um
 
     # Make sure we can fetch back data from the database on user_fs restart
-    async with user_fs_factory(device, initialize_user_storage=False) as user_fs2:
+    async with user_fs_factory(device, initialize_in_v0=True) as user_fs2:
         um2 = user_fs2.get_user_manifest()
         assert um2 == expected_um
 
@@ -265,23 +265,20 @@ async def test_sync_placeholder(
     device = local_device_factory()
     await backend_data_binder.bind_device(device, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device, initialize_user_storage=False) as user_fs:
-        with freeze_time("2000-01-01"):
-            # User manifest should be lazily created on each access
-            um = user_fs.get_user_manifest()
+    async with user_fs_factory(device, initialize_in_v0=True) as user_fs:
+        um_v0 = user_fs.get_user_manifest()
 
         expected_um = LocalUserManifest.new_placeholder(
-            id=device.user_manifest_id, now=Pendulum(2000, 1, 1)
+            id=device.user_manifest_id, now=um_v0.created
         )
-        assert um == expected_um
+        assert um_v0 == expected_um
 
         if with_workspace:
             with freeze_time("2000-01-02"):
                 wid = await user_fs.workspace_create("w1")
             um = user_fs.get_user_manifest()
-            expected_um = LocalUserManifest.new_placeholder(
-                id=device.user_manifest_id, now=Pendulum(2000, 1, 2)
-            ).evolve(
+            expected_um = um_v0.evolve(
+                updated=Pendulum(2000, 1, 2),
                 workspaces=(
                     WorkspaceEntry(
                         name="w1",
@@ -292,7 +289,7 @@ async def test_sync_placeholder(
                         role_cached_on=Pendulum(2000, 1, 2),
                         role=WorkspaceRole.OWNER,
                     ),
-                )
+                ),
             )
             assert um == expected_um
 
@@ -304,15 +301,15 @@ async def test_sync_placeholder(
             timestamp=Pendulum(2000, 1, 2),
             id=device.user_manifest_id,
             version=1,
-            created=Pendulum(2000, 1, 2),
-            updated=Pendulum(2000, 1, 2),
+            created=expected_um.created,
+            updated=expected_um.updated,
             last_processed_message=0,
             workspaces=expected_um.workspaces,
         )
         expected_um = LocalUserManifest(
             base=expected_base_um,
             need_sync=False,
-            updated=Pendulum(2000, 1, 2),
+            updated=expected_um.updated,
             last_processed_message=0,
             workspaces=expected_base_um.workspaces,
         )
@@ -330,9 +327,13 @@ async def test_concurrent_sync_placeholder(
     device2 = local_device_factory("a@2")
     await backend_data_binder.bind_device(device2, initial_user_manifest_in_v0=True)
 
-    async with user_fs_factory(device1, initialize_user_storage=False) as user_fs1, user_fs_factory(
-        device2, initialize_user_storage=False
+    async with user_fs_factory(device1, initialize_in_v0=True) as user_fs1, user_fs_factory(
+        device2, initialize_in_v0=True
     ) as user_fs2:
+        # fs2's created value is different and will be overwritten when
+        # merging synced manifest from fs1
+        um_created_v0_fs1 = user_fs1.get_user_manifest().created
+
         with freeze_time("2000-01-01"):
             w1id = await user_fs1.workspace_create("w1")
         if dev2_has_changes:
@@ -355,7 +356,7 @@ async def test_concurrent_sync_placeholder(
                 id=device2.user_manifest_id,
                 timestamp=Pendulum(2000, 1, 4),
                 version=2,
-                created=Pendulum(2000, 1, 1),
+                created=um_created_v0_fs1,
                 updated=Pendulum(2000, 1, 2),
                 last_processed_message=0,
                 workspaces=(
@@ -393,7 +394,7 @@ async def test_concurrent_sync_placeholder(
                 timestamp=Pendulum(2000, 1, 3),
                 id=device1.user_manifest_id,
                 version=1,
-                created=Pendulum(2000, 1, 1),
+                created=um_created_v0_fs1,
                 updated=Pendulum(2000, 1, 1),
                 last_processed_message=0,
                 workspaces=(

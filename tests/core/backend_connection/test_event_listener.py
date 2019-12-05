@@ -56,7 +56,7 @@ async def test_backend_switch_offline(
         # Backend event manager waits before retrying to connect
         mock_clock.jump(5.0)
 
-        await spy.wait_multiple_with_timeout(["backend.online", "backend.listener.restarted"])
+        await spy.wait_with_timeout("backend.online")
 
     # Make sure event system still works as expected
 
