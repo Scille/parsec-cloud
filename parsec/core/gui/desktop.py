@@ -17,7 +17,7 @@ def open_url(url):
 
 
 def open_feedback_link():
-    open_url("https://my-parsec-cloud-prod.herokuapp.com/feedback")
+    open_url("https://my.parsec.cloud/feedback")
 
 
 def open_user_guide():
