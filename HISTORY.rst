@@ -6,6 +6,29 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.4.0 (2019-12-06)
+-------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix error handling of list&revoke user in GUI. (`#834
+  <https://github.com/Scille/parsec-cloud/issues/834>`__)
+* Fix mount error on Windows when workspace name is too long (`#838
+  <https://github.com/Scille/parsec-cloud/issues/838>`__)
+* Fix colored workspace button display  (`#851
+  <https://github.com/Scille/parsec-cloud/issues/851>`__)
+* Fix bug when the workspaces doesn't show up on new device creation until the
+  user manifest is actually modified. (`#854 <https://github.com/Scille/parsec-
+  cloud/issues/854>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Provide fusepy with the file system encoding. Also use EINVAL as fallback
+  error code.  (`#827 <https://github.com/Scille/parsec-cloud/issues/827>`__)
+
+
 Parsec 1.3.0 (2019-11-28)
 -------------------------
 

@@ -1,1 +1,0 @@
-Provide fusepy with the file system encoding. Also use EINVAL as fallback error code.
