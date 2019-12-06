@@ -8,8 +8,6 @@ from parsec.core.local_device.utils import (
     load_device_with_password,
     save_device_with_password,
     change_device_password,
-    load_device_with_pkcs11,
-    save_device_with_pkcs11,
 )
 from parsec.core.local_device.exceptions import (
     LocalDeviceError,
@@ -29,8 +27,6 @@ __all__ = (
     "load_device_with_password",
     "save_device_with_password",
     "change_device_password",
-    "load_device_with_pkcs11",
-    "save_device_with_pkcs11",
     "LocalDeviceError",
     "LocalDeviceCryptoError",
     "LocalDeviceNotFoundError",
