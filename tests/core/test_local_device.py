@@ -2,7 +2,6 @@
 
 import pytest
 from pathlib import Path
-from unittest.mock import patch
 
 from parsec.core.local_device import (
     get_key_file,
@@ -10,14 +9,11 @@ from parsec.core.local_device import (
     load_device_with_password,
     save_device_with_password,
     change_device_password,
-    load_device_with_pkcs11,
-    save_device_with_pkcs11,
     LocalDeviceCryptoError,
     LocalDeviceNotFoundError,
     LocalDeviceAlreadyExistsError,
     LocalDevicePackingError,
 )
-from parsec.core.local_device.pkcs11_tools import NoKeysFound, DevicePKCS11Error
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -38,7 +34,7 @@ def test_list_no_devices(path_exists, config_dir):
     assert not devices
 
 
-def test_list_devices(mocked_pkcs11, organization_factory, local_device_factory, config_dir):
+def test_list_devices(organization_factory, local_device_factory, config_dir):
     org1 = organization_factory("org1")
     org2 = organization_factory("org2")
 
@@ -54,8 +50,7 @@ def test_list_devices(mocked_pkcs11, organization_factory, local_device_factory,
         save_device_with_password(config_dir, device, "S3Cr37")
 
     for device in [o2d11, o2d12, o2d21]:
-        _, token_id, key_id = mocked_pkcs11
-        save_device_with_pkcs11(config_dir, device, token_id, key_id)
+        save_device_with_password(config_dir, device, "secret")
 
     # Also add dummy stuff that should be ignored
     (config_dir / "bad1").touch()
@@ -70,9 +65,9 @@ def test_list_devices(mocked_pkcs11, organization_factory, local_device_factory,
         (o1d11.organization_id, o1d11.device_id, "password", get_key_file(config_dir, o1d11)),
         (o1d12.organization_id, o1d12.device_id, "password", get_key_file(config_dir, o1d12)),
         (o1d21.organization_id, o1d21.device_id, "password", get_key_file(config_dir, o1d21)),
-        (o2d11.organization_id, o2d11.device_id, "pkcs11", get_key_file(config_dir, o2d11)),
-        (o2d12.organization_id, o2d12.device_id, "pkcs11", get_key_file(config_dir, o2d12)),
-        (o2d21.organization_id, o2d21.device_id, "pkcs11", get_key_file(config_dir, o2d21)),
+        (o2d11.organization_id, o2d11.device_id, "password", get_key_file(config_dir, o2d11)),
+        (o2d12.organization_id, o2d12.device_id, "password", get_key_file(config_dir, o2d12)),
+        (o2d21.organization_id, o2d21.device_id, "password", get_key_file(config_dir, o2d21)),
     }
 
 
@@ -143,52 +138,3 @@ def test_change_password(config_dir, alice):
 
     with pytest.raises(LocalDeviceCryptoError):
         load_device_with_password(key_file, old_password)
-
-
-@pytest.fixture
-def mocked_pkcs11():
-    PIN = "123456"
-    TOKEN_ID = 1
-    KEY_ID = 2
-
-    def encrypt_data_mock(token_id, key_id, input_data):
-        if token_id != TOKEN_ID or key_id != KEY_ID:
-            raise NoKeysFound()
-        return b"ENC:" + input_data
-
-    def decrypt_data_mock(pin, token_id, key_id, input_data):
-        if token_id != TOKEN_ID or key_id != KEY_ID:
-            raise NoKeysFound()
-        if pin != PIN:
-            raise DevicePKCS11Error()
-        return input_data[4:]
-
-    with patch("parsec.core.local_device.pkcs11_cipher.encrypt_data", new=encrypt_data_mock), patch(
-        "parsec.core.local_device.pkcs11_cipher.decrypt_data", new=decrypt_data_mock
-    ), patch("parsec.core.local_device.pkcs11_cipher.get_LIB"):
-        yield (PIN, TOKEN_ID, KEY_ID)
-
-
-def test_pkcs11_save_and_load(mocked_pkcs11, config_dir, alice, bob):
-    pin, token_id, key_id = mocked_pkcs11
-
-    save_device_with_pkcs11(config_dir, alice, token_id, key_id)
-
-    key_file = get_key_file(config_dir, alice)
-    alice_reloaded = load_device_with_pkcs11(key_file, token_id, key_id, pin)
-    assert alice_reloaded == alice
-
-    with pytest.raises(LocalDeviceCryptoError):
-        save_device_with_pkcs11(config_dir, bob, 42, key_id)
-
-    with pytest.raises(LocalDeviceCryptoError):
-        save_device_with_pkcs11(config_dir, bob, token_id, 42)
-
-    with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_pkcs11(key_file, token_id, key_id, "foo")
-
-    with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_pkcs11(key_file, 42, key_id, pin)
-
-    with pytest.raises(LocalDeviceCryptoError):
-        load_device_with_pkcs11(key_file, token_id, 42, pin)

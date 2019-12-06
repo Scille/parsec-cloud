@@ -21,7 +21,6 @@ from parsec.core.local_device.cipher import (
     PasswordDeviceEncryptor,
     PasswordDeviceDecryptor,
 )
-from parsec.core.local_device.pkcs11_cipher import PKCS11DeviceEncryptor, PKCS11DeviceDecryptor
 
 
 def generate_new_device(
@@ -81,7 +80,6 @@ def get_cipher_info(key_file: Path) -> str:
         LocalDeviceNotFoundError
         LocalDeviceCryptoError
     """
-    from .pkcs11_cipher import PKCS11DeviceDecryptor
     from .cipher import PasswordDeviceDecryptor
 
     try:
@@ -89,10 +87,7 @@ def get_cipher_info(key_file: Path) -> str:
     except OSError:
         raise LocalDeviceNotFoundError(f"Config file {key_file} is missing")
 
-    for decryptor_cls, cipher in (
-        (PKCS11DeviceDecryptor, "pkcs11"),
-        (PasswordDeviceDecryptor, "password"),
-    ):
+    for decryptor_cls, cipher in ((PasswordDeviceDecryptor, "password"),):
         if decryptor_cls.can_decrypt(ciphertext):
             return cipher
 
@@ -138,32 +133,6 @@ def change_device_password(key_file: Path, old_password: str, new_password: str)
 
     device = _load_device(key_file, decryptor)
     _save_device(key_file, device, encryptor, force=True)
-
-
-def load_device_with_pkcs11(key_file: Path, token_id: int, key_id: int, pin: str) -> LocalDevice:
-    """
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-    decryptor = PKCS11DeviceDecryptor(token_id, key_id, pin)
-    return _load_device(key_file, decryptor)
-
-
-def save_device_with_pkcs11(
-    config_dir: Path, device: LocalDevice, token_id: int, key_id: int
-) -> None:
-    """
-        LocalDeviceError
-        LocalDeviceNotFoundError
-        LocalDeviceCryptoError
-        LocalDeviceValidationError
-        LocalDevicePackingError
-    """
-    encryptor = PKCS11DeviceEncryptor(token_id, key_id)
-    key_file = get_key_file(config_dir, device)
-    _save_device(key_file, device, encryptor)
 
 
 def _load_device(key_file: Path, decryptor: BaseLocalDeviceDecryptor) -> LocalDevice:

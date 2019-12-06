@@ -131,7 +131,7 @@ class InstanceWidget(QWidget):
             if "Device has been revoked" in str(self.running_core_job.exc):
                 show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=self.running_core_job.exc)
             else:
-                logger.error("Unhandled error", exc_info=self.running_core_job.exc)
+                logger.exception("Unhandled error", exc_info=self.running_core_job.exc)
                 show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=self.running_core_job.exc)
         self.running_core_job = None
         self.core_jobs_ctx = None

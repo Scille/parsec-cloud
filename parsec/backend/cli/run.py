@@ -294,18 +294,18 @@ def run_cmd(
                     try:
                         await backend.handle_client(stream)
 
-                    except Exception as exc:
+                    except Exception:
                         # If we are here, something unexpected happened...
-                        logger.error("Unexpected crash", exc_info=exc)
+                        logger.exception("Unexpected crash")
                         await stream.aclose()
 
                 await trio.serve_tcp(_serve_client, port, host=host)
 
-        print(
+        click.echo(
             f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, "
             f"blockstore={config.blockstore_config.type})"
         )
         try:
             trio_run(_run_backend, use_asyncio=True)
         except KeyboardInterrupt:
-            print("bye ;-)")
+            click.echo("bye ;-)")

@@ -11,7 +11,6 @@ from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import (
     list_available_devices,
     load_device_with_password,
-    load_device_with_pkcs11,
     LocalDeviceError,
 )
 
@@ -62,13 +61,10 @@ def core_config_and_device_options(fn):
     @core_config_options
     @click.option("--device", "-D", type=_unslug, required=True)
     @click.option("--password", "-P")
-    @click.option("--pkcs11", is_flag=True)
     @wraps(fn)
     def wrapper(**kwargs):
         config = kwargs["config"]
         password = kwargs["password"]
-        if password and kwargs["pkcs11"]:
-            raise SystemExit("`--password` and `--pkcs11` options are exclusive")
 
         organization_id, device_id, slugname = kwargs["device"]
         devices = [
@@ -85,22 +81,12 @@ def core_config_and_device_options(fn):
             _, _, cipher, key_file = devices[0]
 
         try:
-            if kwargs["pkcs11"]:
-                if cipher != "pkcs11":
-                    raise SystemExit(f"Device {slugname} is ciphered with {cipher}.")
+            if cipher != "password":
+                raise SystemExit(f"Device {slugname} is ciphered with {cipher}.")
 
-                token_id = click.prompt("PCKS11 token id", type=int)
-                key_id = click.prompt("PCKS11 key id", type=int)
-                pin = click.prompt("PCKS11 pin", hide_input=True)
-                device = load_device_with_pkcs11(key_file, token_id, key_id, pin)
-
-            else:
-                if cipher != "password":
-                    raise SystemExit(f"Device {slugname} is ciphered with {cipher}.")
-
-                if password is None:
-                    password = click.prompt("password", hide_input=True)
-                device = load_device_with_password(key_file, password)
+            if password is None:
+                password = click.prompt("password", hide_input=True)
+            device = load_device_with_password(key_file, password)
 
         except LocalDeviceError as exc:
             raise SystemExit(f"Cannot load device {slugname}: {exc}")
