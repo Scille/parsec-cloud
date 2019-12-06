@@ -52,6 +52,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._vlob_component = None
         self._realms = {}
         self._maintenance_reencryption_is_finished_hook = None
+        self._maintenance_garbage_collection_start_hook = None
+        self._maintenance_garbage_collection_is_finished_hook = None
 
     def register_components(
         self,
@@ -63,6 +65,10 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._user_component = user
         self._message_component = message
         self._vlob_component = vlob
+
+    def _register_maintenance_garbage_collection_hooks(self, start, is_finished):
+        self._maintenance_garbage_collection_start_hook = start
+        self._maintenance_garbage_collection_is_finished_hook = is_finished
 
     def _get_realm(self, organization_id, realm_id):
         try:
@@ -180,6 +186,107 @@ class MemoryRealmComponent(BaseRealmComponent):
                 recipient_message,
             )
 
+    def _check_maintenance_starting_access(self, realm, realm_id, author):
+        if realm.roles.get(author.user_id) != RealmRole.OWNER:
+            raise RealmAccessError()
+        if realm.status.in_maintenance:
+            raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
+
+    async def _list_not_revoked_users(self, realm, organization_id):
+        now = pendulum.now()
+        not_revoked_users = set()
+        for user_id in realm.roles.keys():
+            user = await self._user_component.get_user(organization_id, user_id)
+            if not user.revoked_on or user.revoked_on > now:
+                not_revoked_users.add(user_id)
+        else:
+            return not_revoked_users
+
+    async def _send_maintenance_starting_messages(
+        self,
+        organization_id,
+        author,
+        realm_id,
+        encryption_revision,
+        timestamp,
+        per_participant_message,
+    ):
+        # Should first send maintenance event, then message to each participant
+        self.event_bus.send(
+            "realm.maintenance_started",
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            encryption_revision=encryption_revision,
+        )
+
+        for recipient, msg in per_participant_message.items():
+            await self._message_component.send(organization_id, author, recipient, timestamp, msg)
+
+    def _check_per_participant_message_recipients(self, recipients_id, not_revoked_roles):
+        if recipients_id ^ not_revoked_roles:
+            raise RealmParticipantsMismatchError(
+                "Realm participants and message recipients mismatch"
+            )
+
+    async def start_garbage_collection_maintenance(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        per_participant_message: Dict[UserID, bytes],
+        timestamp: pendulum.Pendulum,
+    ) -> None:
+        realm = self._get_realm(organization_id, realm_id)
+        self._check_maintenance_starting_access(realm, realm_id, author)
+        not_revoked_users = await self._list_not_revoked_users(realm, organization_id)
+        self._check_per_participant_message_recipients(
+            per_participant_message.keys(), not_revoked_users
+        )
+
+        realm.status = RealmStatus(
+            maintenance_type=MaintenanceType.GARBAGE_COLLECTION,
+            maintenance_started_on=timestamp,
+            maintenance_started_by=author,
+            encryption_revision=realm.status.encryption_revision,
+        )
+        if self._maintenance_garbage_collection_start_hook:
+            self._maintenance_garbage_collection_start_hook(organization_id, realm_id)
+        await self._send_maintenance_starting_messages(
+            organization_id,
+            author,
+            realm_id,
+            realm.status.encryption_revision,
+            timestamp,
+            per_participant_message,
+        )
+
+
+    async def finish_garbage_collection_maintenance(
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    ) -> None:
+        realm = self._get_realm(organization_id, realm_id)
+        if realm.roles.get(author.user_id) != RealmRole.OWNER:
+            raise RealmAccessError()
+        if not realm.status.in_maintenance:
+            raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+
+        if (
+            self._maintenance_garbage_collection_is_finished_hook
+            and not self._maintenance_garbage_collection_is_finished_hook(organization_id, realm_id)
+        ):
+            raise RealmMaintenanceError("Garbage collection operations are not over")
+
+        realm.status = RealmStatus(
+            maintenance_type=None,
+            maintenance_started_on=None,
+            maintenance_started_by=None,
+            encryption_revision=realm.status.encryption_revision,
+        )
+        self.event_bus.send(
+            "realm.maintenance_finished",
+
+
     async def start_reencryption_maintenance(
         self,
         organization_id: OrganizationID,
@@ -190,22 +297,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         timestamp: pendulum.Pendulum,
     ) -> None:
         realm = self._get_realm(organization_id, realm_id)
-        if realm.roles.get(author.user_id) != RealmRole.OWNER:
-            raise RealmAccessError()
-        if realm.status.in_maintenance:
-            raise RealmInMaintenanceError(f"Realm `{realm_id}` alrealy in maintenance")
+        self._check_maintenance_starting_access(realm, realm_id, author)
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
-        now = pendulum.now()
-        not_revoked_roles = set()
-        for user_id in realm.roles.keys():
-            user = await self._user_component.get_user(organization_id, user_id)
-            if not user.revoked_on or user.revoked_on > now:
-                not_revoked_roles.add(user_id)
-        if per_participant_message.keys() ^ not_revoked_roles:
-            raise RealmParticipantsMismatchError(
-                "Realm participants and message recipients mismatch"
-            )
+        not_revoked_users = await self._list_not_revoked_users(realm, organization_id)
+        self._check_per_participant_message_recipients(
+            per_participant_message.keys(), not_revoked_users
+        )
 
         realm.status = RealmStatus(
             maintenance_type=MaintenanceType.REENCRYPTION,
@@ -213,22 +311,20 @@ class MemoryRealmComponent(BaseRealmComponent):
             maintenance_started_by=author,
             encryption_revision=encryption_revision,
         )
-        self._vlob_component._maintenance_reencryption_start_hook(
-            organization_id, realm_id, encryption_revision
+
+        if self._maintenance_reencryption_start_hook:
+            self._maintenance_reencryption_start_hook(
+                organization_id, realm_id, encryption_revision
+            )
+
+        await self._send_maintenance_starting_messages(
+            organization_id,
+            author,
+            realm_id,
+            encryption_revision,
+            timestamp,
+            per_participant_message,
         )
-
-        # Should first send maintenance event, then message to each participant
-
-        await self._send_event(
-            "realm.maintenance_started",
-            organization_id=organization_id,
-            author=author,
-            realm_id=realm_id,
-            encryption_revision=encryption_revision,
-        )
-
-        for recipient, msg in per_participant_message.items():
-            await self._message_component.send(organization_id, author, recipient, timestamp, msg)
 
     async def finish_reencryption_maintenance(
         self,
