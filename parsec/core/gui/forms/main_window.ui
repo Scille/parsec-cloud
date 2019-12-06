@@ -19,7 +19,7 @@
    <string>PARSEC_WINDOW_TITLE</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../rc/resources.qrc">
+   <iconset>
     <normaloff>:/icons/images/icons/parsec.png</normaloff>:/icons/images/icons/parsec.png</iconset>
   </property>
   <property name="autoFillBackground">
@@ -40,6 +40,11 @@ QMenu::item
 {
 background-color: rgb(255, 255, 255);
 color: rgb(0, 0, 0);
+}
+
+QMenu::item::disabled
+{
+color: rgb(120, 120, 120);
 }
 
 QMenu::item:selected
@@ -247,8 +252,6 @@ image: url(:/icons/images/icons/cancel.png);
    </layout>
   </widget>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -73,9 +73,9 @@ background-color: rgb(46, 46, 46);
 QTableWidget::item
 {
 background-color: rgb(255, 255, 255);
-color: rgb(0, 0, 0);
 border: 0px;
 padding: 15px;
+color: rgb(0, 0, 0);
 }
 
 QTableWidget::item:selected
@@ -198,7 +198,7 @@ height: 16px;
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
+           <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -417,8 +417,6 @@ color: rgb(46, 46, 46);</string>
    <header>parsec.core.gui.file_table</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

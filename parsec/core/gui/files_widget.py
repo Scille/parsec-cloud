@@ -4,6 +4,8 @@ import pathlib
 from uuid import UUID
 import trio
 from pendulum import Pendulum
+from enum import IntEnum
+from structlog import get_logger
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
@@ -22,6 +24,9 @@ from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.types import DEFAULT_BLOCK_SIZE
+
+
+logger = get_logger()
 
 
 class CancelException(Exception):
@@ -98,6 +103,16 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
             raise JobResultError("cancelled", last_file=dst) from exc
 
 
+class Clipboard:
+    class Status(IntEnum):
+        Copied = 1
+        Cut = 2
+
+    def __init__(self, files, status):
+        self.files = files
+        self.status = status
+
+
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID)
@@ -134,6 +149,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus = event_bus
         self.workspace_fs = None
         self.import_job = None
+        self.clipboard = None
 
         self.ROLES_TEXTS = {
             WorkspaceRole.READER: _("WORKSPACE_ROLE_READER"),
@@ -180,6 +196,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.open_clicked.connect(self.open_files)
         self.table_files.files_dropped.connect(self.on_files_dropped)
         self.table_files.show_history_clicked.connect(self.show_history)
+        self.table_files.paste_clicked.connect(self.on_paste_clicked)
+        self.table_files.copy_clicked.connect(self.on_copy_clicked)
+        self.table_files.cut_clicked.connect(self.on_cut_clicked)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.rename_success.connect(self._on_rename_success)
@@ -225,6 +244,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_user_role = ws_entry.role
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
+        self.clipboard = None
         self.reset()
 
     def reset(self):
@@ -232,6 +252,60 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.label_current_workspace.setText(workspace_name)
         self.load(self.current_directory)
         self.table_files.sortItems(0)
+
+    def on_copy_clicked(self):
+        files = self.table_files.selected_files()
+        files_to_copy = []
+        for f in files:
+            if f.type != FileType.Folder and f.type != FileType.File:
+                continue
+            files_to_copy.append((self.current_directory / f.name, f.type))
+        self.clipboard = Clipboard(files_to_copy, Clipboard.Status.Copied)
+
+    def on_cut_clicked(self):
+        files = self.table_files.selected_files()
+        files_to_cut = []
+        for f in files:
+            if f.type != FileType.Folder and f.type != FileType.File:
+                continue
+            files_to_cut.append((self.current_directory / f.name, f.type))
+        self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
+
+    def on_paste_clicked(self):
+        if not self.clipboard:
+            return
+        for f in self.clipboard.files:
+            src = f[0]
+            src_type = f[1]
+            file_name = src.name
+            base_name = pathlib.Path(src.name)
+            # In order to be able to rename the file if a file of the same name already exists
+            # we need the name without extensions.
+            # .stem only removes the first extension, so we loop over it.
+            while str(base_name) != base_name.stem:
+                base_name = pathlib.Path(base_name.stem)
+            count = 2
+            base_name = str(base_name)
+            while True:
+                try:
+                    dst = self.current_directory / file_name
+                    if self.clipboard.status == Clipboard.Status.Cut:
+                        self.jobs_ctx.run(self.workspace_fs.move, src, dst)
+                    else:
+                        if src_type == FileType.Folder:
+                            self.jobs_ctx.run(self.workspace_fs.copytree, src, dst)
+                        else:
+                            self.jobs_ctx.run(self.workspace_fs.copyfile, src, dst)
+                    break
+                except FileExistsError:
+                    file_name = "{} ({}){}".format(
+                        base_name, count, "".join(pathlib.Path(src.name).suffixes)
+                    )
+                    count += 1
+                except Exception as exc:
+                    logger.exception("Unhandled error while cut/copy file", exc_info=exc)
+                    break
+        self.clipboard = None
 
     def show_history(self):
         files = self.table_files.selected_files()
