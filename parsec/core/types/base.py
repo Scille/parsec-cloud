@@ -17,7 +17,7 @@ class BaseLocalData(BaseData):
 
 
 class FsPath:
-    __slots__ = ("_parts",)
+    __slots__ = ("_parts", "_hash")
     """
     Represent an absolute path to access a resource in the FS.
 
@@ -63,6 +63,13 @@ class FsPath:
             return self._parts == other.parts
         else:
             return NotImplemented
+
+    def __hash__(self):
+        try:
+            return self._hash
+        except AttributeError:
+            self._hash = hash(tuple(self._parts))
+            return self._hash
 
     @property
     def name(self) -> EntryName:

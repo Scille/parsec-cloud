@@ -80,6 +80,7 @@ class FileTransactions:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
         self._write_count = defaultdict(int)
+        self._rename_attemps = {}
 
     # Event helper
 

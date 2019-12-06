@@ -144,6 +144,7 @@ class FolderManifest(VerifyParentMixin, Manifest):
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
+        source = EntryIDField(required=True, allow_none=True)
         children = fields.FrozenMap(
             EntryNameField(validate=validate.Length(min=1, max=256)),
             EntryIDField(required=True),
@@ -160,6 +161,7 @@ class FolderManifest(VerifyParentMixin, Manifest):
     version: int
     created: Pendulum
     updated: Pendulum
+    source: Optional[EntryID]
     children: FrozenDict[EntryName, EntryID]
 
 
@@ -172,6 +174,7 @@ class FileManifest(VerifyParentMixin, Manifest):
         version = fields.Integer(required=True, validate=validate.Range(min=0))
         created = fields.DateTime(required=True)
         updated = fields.DateTime(required=True)
+        source = EntryIDField(required=True, allow_none=True)
         size = fields.Integer(required=True, validate=validate.Range(min=0))
         blocksize = fields.Integer(required=True, validate=validate.Range(min=8))
         blocks = fields.FrozenList(fields.Nested(BlockAccess.SCHEMA_CLS), required=True)
@@ -186,6 +189,7 @@ class FileManifest(VerifyParentMixin, Manifest):
     version: int
     created: Pendulum
     updated: Pendulum
+    source: Optional[EntryID]
     size: int
     blocksize: int
     blocks: Tuple[BlockAccess]

@@ -231,6 +231,10 @@ class LocalManifest(BaseLocalData):
         data.setdefault("need_sync", True)
         return self.evolve(**data)
 
+    def evolve_base(self, **data) -> "LocalManifest":
+        assert self.base_version == 0
+        return self.evolve(base=self.base.evolve(**data))
+
     # Remote methods
 
     @classmethod
@@ -291,7 +295,12 @@ class LocalFileManifest(LocalManifest):
 
     @classmethod
     def new_placeholder(
-        cls, parent: EntryID, id: EntryID = None, now: Pendulum = None, blocksize=DEFAULT_BLOCK_SIZE
+        cls,
+        parent: EntryID,
+        id: EntryID = None,
+        now: Pendulum = None,
+        source: EntryID = None,
+        blocksize=DEFAULT_BLOCK_SIZE,
     ):
         now = now or pendulum_now()
         blocks = ()
@@ -304,6 +313,7 @@ class LocalFileManifest(LocalManifest):
                 version=0,
                 created=now,
                 updated=now,
+                source=source,
                 blocksize=blocksize,
                 size=0,
                 blocks=blocks,
@@ -320,6 +330,10 @@ class LocalFileManifest(LocalManifest):
     @property
     def parent(self):
         return self.base.parent
+
+    @property
+    def source(self):
+        return self.base.source
 
     # Helper methods
 
@@ -381,6 +395,7 @@ class LocalFileManifest(LocalManifest):
             version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
+            source=self.source,
             size=self.size,
             blocksize=self.blocksize,
             blocks=blocks,
@@ -411,7 +426,9 @@ class LocalFolderManifest(LocalManifest):
     children: FrozenDict[EntryName, EntryID]
 
     @classmethod
-    def new_placeholder(cls, parent: EntryID, id: EntryID = None, now: Pendulum = None):
+    def new_placeholder(
+        cls, parent: EntryID, id: EntryID = None, now: Pendulum = None, source: EntryID = None
+    ):
         now = now or pendulum_now()
         children = FrozenDict()
         return cls(
@@ -423,6 +440,7 @@ class LocalFolderManifest(LocalManifest):
                 version=0,
                 created=now,
                 updated=now,
+                source=source,
                 children=children,
             ),
             need_sync=True,
@@ -435,6 +453,10 @@ class LocalFolderManifest(LocalManifest):
     @property
     def parent(self):
         return self.base.parent
+
+    @property
+    def source(self):
+        return self.base.source
 
     # Evolve methods
 
@@ -463,6 +485,7 @@ class LocalFolderManifest(LocalManifest):
             version=self.base_version + 1,
             created=self.created,
             updated=self.updated,
+            source=self.source,
             children=self.children,
         )
 

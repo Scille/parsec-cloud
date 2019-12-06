@@ -193,6 +193,13 @@ class EntryTransactions(FileTransactions):
 
         # Cross-directory renaming is not supported
         if source.parent != destination.parent:
+
+            # Register the attempt
+            source_manifest = await self._get_manifest_from_path(source)
+            if source_manifest.base_version > 0:
+                self._rename_attemps[destination] = source_manifest.id
+
+            # Notify the system that it needs to perform a copy-then-delete operation
             raise FSCrossDeviceError(filename=source, filename2=destination)
 
         # Pre-fetch the source if necessary
@@ -244,6 +251,13 @@ class EntryTransactions(FileTransactions):
 
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
+
+        # Set source
+        if overwrite and child is not None:
+            async with self._load_and_lock_manifest(source_entry_id) as source_manifest:
+                if source_manifest.base_version == 0 and child.base_version > 0:
+                    source_manifest = source_manifest.evolve_base(source=child.id)
+                    await self.local_storage.set_manifest(source_entry_id, source_manifest)
 
         # Send event
         self._send_event("fs.entry.updated", id=parent.id)
@@ -320,8 +334,11 @@ class EntryTransactions(FileTransactions):
             if child is not None:
                 raise FSFileExistsError(filename=path)
 
+            # Get the source if it exists
+            source = self._rename_attemps.pop(path, None)
+
             # Create folder
-            child = LocalFolderManifest.new_placeholder(parent=parent.id)
+            child = LocalFolderManifest.new_placeholder(parent=parent.id, source=source)
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
@@ -348,8 +365,11 @@ class EntryTransactions(FileTransactions):
             if child is not None:
                 raise FSFileExistsError(filename=path)
 
+            # Get the source if it exists
+            source = self._rename_attemps.pop(path, None)
+
             # Create file
-            child = LocalFileManifest.new_placeholder(parent=parent.id)
+            child = LocalFileManifest.new_placeholder(parent=parent.id, source=source)
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})

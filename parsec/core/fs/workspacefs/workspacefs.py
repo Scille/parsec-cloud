@@ -360,8 +360,10 @@ class WorkspaceFS:
             pass
 
         # Rename if possible
-        if source.parent == real_destination.parent:
+        try:
             return await self.rename(source, real_destination)
+        except OSError:
+            pass
 
         # Copy directory
         if await self.is_dir(source):
