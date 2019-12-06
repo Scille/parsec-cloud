@@ -954,47 +954,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="175"/>
+        <location filename="../forms/workspace_button.ui" line="176"/>
         <source>LABEL_WORKSPACE_OWNER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="203"/>
+        <location filename="../forms/workspace_button.ui" line="204"/>
         <source>LABEL_WORKSPACE_SHARED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="280"/>
+        <location filename="../forms/workspace_button.ui" line="281"/>
         <source>LABEL_WORKSPACE_EMPTY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="453"/>
+        <location filename="../forms/workspace_button.ui" line="442"/>
         <source>LABEL_RENAME_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="519"/>
+        <location filename="../forms/workspace_button.ui" line="508"/>
         <source>LABEL_SHARE_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="582"/>
+        <location filename="../forms/workspace_button.ui" line="571"/>
         <source>LABEL_MOUNT_TIMESTAMP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="633"/>
+        <location filename="../forms/workspace_button.ui" line="622"/>
         <source>LABEL_ENCRYPT_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="721"/>
+        <location filename="../forms/workspace_button.ui" line="710"/>
         <source>LABEL_DELETE_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="677"/>
+        <location filename="../forms/workspace_button.ui" line="666"/>
         <source>LABEL_REENCRYPTION_PROGRESS</source>
         <translation type="unfinished"></translation>
     </message>

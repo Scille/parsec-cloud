@@ -19,6 +19,7 @@ from parsec.core.types import (
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui import telemetry
+from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import QuestionDialog, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
@@ -56,7 +57,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
         self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.button_add_instance.hide()
+        self.button_send_feedback = QPushButton(_("LABEL_FEEDBACK_LINK"))
+        self.button_send_feedback.clicked.connect(self._on_send_feedback_clicked)
+        self.button_send_feedback.setStyleSheet("border: 0;")
+        self.tab_center.setCornerWidget(self.button_send_feedback, Qt.TopRightCorner)
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
+
+    def _on_send_feedback_clicked(self):
+        desktop.open_feedback_link()
 
     def _on_add_instance_clicked(self):
         r = QuestionDialog.ask(self, _("ASK_ADD_TAB_TITLE"), _("ASK_ADD_TAB_CONTENT"))

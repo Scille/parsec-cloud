@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-12-02 09:39+0100\n"
-"PO-Revision-Date: 2019-12-02 11:18+0100\n"
+"POT-Creation-Date: 2019-12-06 12:12+0100\n"
+"PO-Revision-Date: 2019-12-06 12:13+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1078,14 +1078,14 @@ msgstr "Vous n'avez pas les permissions de révoquer cet utilisateur."
 msgid "ERR_USER_REVOKED_UNKNOWN_ERROR"
 msgstr "Impossible de révoquer cet utilisateur."
 
-msgid "ERR_USER_LIST_UNKNOWN_ERROR"
-msgstr "Impossible de retrouver la liste des utilisateurs."
-
 msgid "ASK_USER_REVOKE_TITLE"
 msgstr "Révoquer un utilisateur"
 
 msgid "ASK_USER_REVOKE_CONTENT_{}"
 msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
+
+msgid "ERR_USER_LIST_UNKNOWN_ERROR"
+msgstr "Impossible de retrouver la liste des utilisateurs."
 
 msgid "FILE_SIZE_TB"
 msgstr "To"
@@ -1375,8 +1375,8 @@ msgstr "Cette version de l'application est incompatible avec le serveur."
 
 msgid "NOTIF_WARN_RVK_MISMATCH"
 msgstr ""
-"Connexion avec le backend impossible. "
-"La Root Verify Key diffère entre le client et le serveur."
+"Connexion avec le backend impossible. La Root Verify Key diffère entre le "
+"client et le serveur."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Le point de montage a été perdu."
@@ -1496,6 +1496,9 @@ msgstr "Parsec - {}"
 
 msgid "BUTTON_ADD_INSTANCE"
 msgstr "Ajouter une instance"
+
+msgid "LABEL_FEEDBACK_LINK"
+msgstr "Donner votre avis"
 
 msgid "ASK_ADD_TAB_TITLE"
 msgstr "Nouvelle instance"
@@ -1647,9 +1650,6 @@ msgstr "Aide"
 
 msgid "LABEL_USER_GUIDE_LINK"
 msgstr "Guide de démarrage"
-
-msgid "LABEL_FEEDBACK_LINK"
-msgstr "Donner votre avis"
 
 msgid "BUTTON_OK"
 msgstr "OK"

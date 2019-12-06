@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-12-02 09:39+0100\n"
-"PO-Revision-Date: 2019-12-02 11:18+0100\n"
+"POT-Creation-Date: 2019-12-06 12:12+0100\n"
+"PO-Revision-Date: 2019-12-06 12:14+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1070,14 +1070,14 @@ msgstr "You don't have the permissions required to revoke this user."
 msgid "ERR_USER_REVOKED_UNKNOWN_ERROR"
 msgstr "Cannot revoke this user."
 
-msgid "ERR_USER_LIST_UNKNOWN_ERROR"
-msgstr "Cannot retrieve the list of users."
-
 msgid "ASK_USER_REVOKE_TITLE"
 msgstr "Revoke a user"
 
 msgid "ASK_USER_REVOKE_CONTENT_{}"
 msgstr "Are you sure you want to revoke user \"{}\"?"
+
+msgid "ERR_USER_LIST_UNKNOWN_ERROR"
+msgstr "Cannot retrieve the list of users."
 
 msgid "FILE_SIZE_TB"
 msgstr "TB"
@@ -1354,7 +1354,8 @@ msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "This version of the application is incompatible with the server."
 
 msgid "NOTIF_WARN_RVK_MISMATCH"
-msgstr "Connection impossible. The Root Verifier Key differs between client and server."
+msgstr ""
+"Connection impossible. The Root Verifier Key differs between client and server."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Mountpoint has been lost."
@@ -1466,6 +1467,9 @@ msgstr "Parsec - {}"
 
 msgid "BUTTON_ADD_INSTANCE"
 msgstr "Add an instance"
+
+msgid "LABEL_FEEDBACK_LINK"
+msgstr "Send us feedback"
 
 msgid "ASK_ADD_TAB_TITLE"
 msgstr "Open a new instance"
@@ -1616,9 +1620,6 @@ msgstr "Help"
 
 msgid "LABEL_USER_GUIDE_LINK"
 msgstr "Starting guide"
-
-msgid "LABEL_FEEDBACK_LINK"
-msgstr "Send feedback"
 
 msgid "BUTTON_OK"
 msgstr "OK"

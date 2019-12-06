@@ -16,6 +16,14 @@ def open_url(url):
     QDesktopServices.openUrl(QUrl(url))
 
 
+def open_feedback_link():
+    open_url("https://my-parsec-cloud-prod.herokuapp.com/feedback")
+
+
+def open_user_guide():
+    open_url("https://parsec.cloud")
+
+
 def get_default_device():
     device = QSysInfo.machineHostName()
     if device.lower() == "localhost":
