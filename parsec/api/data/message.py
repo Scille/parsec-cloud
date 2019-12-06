@@ -18,6 +18,7 @@ class MessageContent(BaseAPISignedData):
             return {
                 "sharing.granted": SharingGrantedMessageContent.SCHEMA_CLS,
                 "sharing.reencrypted": SharingReencryptedMessageContent.SCHEMA_CLS,
+                "sharing.garbage_collected": SharingGarbageCollectedMessageContent.SCHEMA_CLS,
                 "sharing.revoked": SharingRevokedMessageContent.SCHEMA_CLS,
                 "ping": PingMessageContent.SCHEMA_CLS,
             }
@@ -73,6 +74,19 @@ class SharingRevokedMessageContent(MessageContent):
         def make_obj(self, data):
             data.pop("type")
             return SharingRevokedMessageContent(**data)
+
+    id: EntryID
+
+
+class SharingGarbageCollectedMessageContent(MessageContent):
+    class SCHEMA_CLS(BaseSignedDataSchema):
+        type = fields.CheckedConstant("sharing.garbage_collected", required=True)
+        id = EntryIDField(required=True)
+
+        @post_load
+        def make_obj(self, data):
+            data.pop("type")
+            return SharingGarbageCollectedMessageContent(**data)
 
     id: EntryID
 

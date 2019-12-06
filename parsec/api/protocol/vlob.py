@@ -13,6 +13,8 @@ __all__ = (
     "vlob_list_versions_serializer",
     "vlob_maintenance_get_reencryption_batch_serializer",
     "vlob_maintenance_save_reencryption_batch_serializer",
+    "vlob_maintenance_save_garbage_collection_vlob_serializer",
+    "vlob_maintenance_get_garbage_collection_vlob_serializer",
 )
 
 
@@ -45,6 +47,7 @@ class VlobReadReqSchema(BaseReqSchema):
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
     timestamp = fields.DateTime(allow_none=True, missing=None)
+    to_quarantine = fields.DateTime(allow_none=True, missing=None)
 
 
 class VlobReadRepSchema(BaseRepSchema):
@@ -52,6 +55,7 @@ class VlobReadRepSchema(BaseRepSchema):
     blob = fields.Bytes(required=True)
     author = DeviceIDField(required=True)
     timestamp = fields.DateTime(required=True)
+    to_quarantine = fields.DateTime(allow_none=True, required=True)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
@@ -138,4 +142,45 @@ class VlobMaintenanceSaveReencryptionBatchRepSchema(BaseRepSchema):
 
 vlob_maintenance_save_reencryption_batch_serializer = CmdSerializer(
     VlobMaintenanceSaveReencryptionBatchReqSchema, VlobMaintenanceSaveReencryptionBatchRepSchema
+)
+
+
+class VlobMaintenanceSaveGarbageCollectionVlobReqSchema(BaseReqSchema):
+    realm_id = fields.UUID(required=True)
+    vlob_id = fields.UUID(required=True)
+    versions_to_erase = fields.List(fields.Integer(required=True))
+
+
+class VlobMaintenanceSaveGarbageCollectionVlobRepSchema(BaseRepSchema):
+    total = fields.Integer(required=True)
+    done = fields.Integer(required=True)
+
+
+vlob_maintenance_save_garbage_collection_vlob_serializer = CmdSerializer(
+    VlobMaintenanceSaveGarbageCollectionVlobReqSchema,
+    VlobMaintenanceSaveGarbageCollectionVlobRepSchema,
+)
+
+
+class VlobMaintenanceGetGarbageCollectionVlobReqSchema(BaseReqSchema):
+    realm_id = fields.UUID(required=True)
+
+
+class VlobMaintenanceGetGarbageCollectionVlobRepSchema(BaseRepSchema):
+    vlob = fields.Tuple(
+        fields.UUID(required=True),
+        fields.List(
+            fields.Tuple(
+                fields.Integer(required=True, validate=validate.Range(min=0)),
+                fields.DateTime(required=True),
+            ),
+            required=True,
+        ),
+        required=True,
+    )
+
+
+vlob_maintenance_get_garbage_collection_vlob_serializer = CmdSerializer(
+    VlobMaintenanceGetGarbageCollectionVlobReqSchema,
+    VlobMaintenanceGetGarbageCollectionVlobRepSchema,
 )
