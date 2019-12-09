@@ -68,6 +68,27 @@ class ManifestDataAndMutablePaths:
     destination_path: FsPath = attr.ib(default=None)
     current_path: FsPath = attr.ib(default=None)
 
+    async def try_get_path_at_timestamp(
+        self, manifest_cache, entry_id: EntryID, timestamp: Pendulum
+    ) -> FsPath:
+        try:
+            return await _get_path_at_timestamp(manifest_cache, entry_id, timestamp)
+        except EntryNotFound:
+            return None  # Just ignore when path is inconsistent
+
+    async def populate_source_path(self, manifest_cache, entry_id, timestamp):
+        self.source_path = await self.try_get_path_at_timestamp(manifest_cache, entry_id, timestamp)
+
+    async def populate_destination_path(self, manifest_cache, entry_id, timestamp):
+        self.destination_path = await self.try_get_path_at_timestamp(
+            manifest_cache, entry_id, timestamp
+        )
+
+    async def populate_current_path(self, manifest_cache, entry_id, timestamp):
+        self.current_path = await self.try_get_path_at_timestamp(
+            manifest_cache, entry_id, timestamp
+        )
+
 
 class CacheEntry(NamedTuple):
     """
@@ -168,7 +189,7 @@ class VersionsListCache:
     Caches results of the remote_loader.list_versions calls (working on EntryIDs).
 
     Caches thoses in the instance of this class. No garbage collection is done for now, as this
-    class is only instanciated during _get_path_at_timestamp execution.
+    class is only instanciated during the list_versions execution.
     """
 
     def __init__(self, remote_loader):
@@ -254,12 +275,6 @@ async def list_versions(
     manifest_cache = ManifestCache(workspacefs.remote_loader)
     versions_list_cache = VersionsListCache(workspacefs.remote_loader)
 
-    async def _try_get_path_at_timestamp(entry_id: EntryID, timestamp: Pendulum) -> FsPath:
-        try:
-            return await _get_path_at_timestamp(manifest_cache, entry_id, timestamp)
-        except EntryNotFound:
-            return None
-
     async def _populate_tree_load(
         nursery,
         target: FsPath,
@@ -284,22 +299,17 @@ async def list_versions(
         )
         if len(target.parts) == path_level:
 
-            async def _populate_source_path(data, entry_id, timestamp):
-                data.source_path = await _try_get_path_at_timestamp(entry_id, timestamp)
-
-            async def _populate_destination_path(data, entry_id, timestamp):
-                data.destination_path = await _try_get_path_at_timestamp(entry_id, timestamp)
-
-            async def _populate_current_path(data, entry_id, timestamp):
-                data.current_path = await _try_get_path_at_timestamp(entry_id, timestamp)
-
             # TODO : Use future manifest source field to follow files and directories
             async with trio.open_service_nursery() as child_nursery:
                 child_nursery.start_soon(
-                    _populate_source_path, data, entry_id, early.add(microseconds=-1)
+                    data.populate_source_path, manifest_cache, entry_id, early.add(microseconds=-1)
                 )
-                child_nursery.start_soon(_populate_destination_path, data, entry_id, late)
-                child_nursery.start_soon(_populate_current_path, data, entry_id, early)
+                child_nursery.start_soon(
+                    data.populate_destination_path, manifest_cache, entry_id, late
+                )
+                child_nursery.start_soon(
+                    data.populate_current_path, manifest_cache, entry_id, early
+                )
             tree[
                 TimestampBoundedEntry(manifest.id, manifest.version, early, late)
             ] = ManifestDataAndPaths(
