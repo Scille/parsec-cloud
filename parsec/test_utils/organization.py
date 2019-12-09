@@ -1,20 +1,17 @@
-#! /usr/bin/env python3
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 
 import os
-import trio
 import itertools
 
-import click
+import trio
 import pendulum
 
-from parsec.utils import trio_run
 from parsec.crypto import SigningKey
 from parsec.logging import configure_logging
 from parsec.core import logged_core_factory
-from parsec.api.protocol import OrganizationID, DeviceID
-from parsec.core.types import WorkspaceRole, BackendAddr, BackendOrganizationBootstrapAddr
+from parsec.api.protocol import DeviceID
+from parsec.core.types import WorkspaceRole, BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
     backend_administration_cmds_factory,
@@ -32,9 +29,6 @@ from parsec.core.invite_claim import (
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 
 
-DEFAULT_ADMINISTRATION_TOKEN = "s3cr3t"
-
-
 async def retry_claim(corofn, *args, retries=10, tick=0.1):
     for i in itertools.count():
         try:
@@ -45,49 +39,7 @@ async def retry_claim(corofn, *args, retries=10, tick=0.1):
             await trio.sleep(tick)
 
 
-@click.command()
-@click.option(
-    "-B",
-    "--backend-address",
-    show_default=True,
-    type=BackendAddr.from_url,
-    default="parsec://localhost:6777?no_ssl=true",
-)
-@click.option("-O", "--organization-id", show_default=True, type=OrganizationID, default="corp")
-@click.option("-a", "--alice-device-id", show_default=True, type=DeviceID, default="alice@laptop")
-@click.option("-b", "--bob-device-id", show_default=True, type=DeviceID, default="bob@laptop")
-@click.option("-o", "--other-device-name", show_default=True, default="pc")
-@click.option("-x", "--alice-workspace", show_default=True, default="alice_workspace")
-@click.option("-y", "--bob-workspace", show_default=True, default="bob_workspace")
-@click.option("-P", "--password", show_default=True, default="test")
-@click.option(
-    "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
-)
-@click.option("--force/--no-force", show_default=True, default=False)
-def main(**kwargs):
-    """Initialize a test origanization for parsec from a clean environment.
-
-    You might want to create a test environment beforehand with the
-    following commands:
-
-        \b
-        TMP=`mktemp -d`
-        export XDG_CACHE_HOME="$TMP/cache"
-        export XDG_DATA_HOME="$TMP/share"
-        export XDG_CONFIG_HOME="$TMP/config"
-        mkdir $XDG_CACHE_HOME $XDG_DATA_HOME $XDG_CONFIG_HOME
-        parsec backend run --dev -P 6888 &
-
-    And use `-B parsec://localhost:6888?no_ssl=true` as a backend adress.
-
-    This scripts create two users, alice and bob who both own two devices,
-    laptop and pc. They each have their workspace, respectively
-    alice_workspace and bob_workspace, that their sharing with each other.
-    """
-    trio_run(lambda: _amain(**kwargs))
-
-
-async def _amain(
+async def initialize_test_organization(
     backend_address,
     organization_id,
     alice_device_id,
@@ -219,18 +171,4 @@ async def _amain(
             await core.user_fs.process_last_messages()
             await core.user_fs.sync()
 
-    # Print out
-
-    click.echo(
-        f"""
-Mount alice and bob drives using:
-
-    $ parsec core run -P {password} -D {alice_slugid}
-    $ parsec core run -P {password} -D {other_alice_slugid}
-    $ parsec core run -P {password} -D {bob_slugid}
-"""
-    )
-
-
-if __name__ == "__main__":
-    main()
+    return alice_slugid, other_alice_slugid, bob_slugid

@@ -5,5 +5,10 @@ from parsec.test_utils.workspacefs import (
     create_inconsistent_workspace,
 )
 
+from parsec.test_utils.organization import initialize_test_organization
 
-__all__ = ("make_workspace_dir_inconsistent", "create_inconsistent_workspace")
+__all__ = (
+    "make_workspace_dir_inconsistent",
+    "create_inconsistent_workspace",
+    "initialize_test_organization",
+)

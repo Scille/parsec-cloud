@@ -8,8 +8,5 @@ black --line-length=100 \
   parsec \
   tests \
   setup.py \
-  misc/initialize_test_organization.py \
   misc/license_headers.py \
-  misc/debug_workspace.py \
-  misc/bench_mountpoint.py \
   $@
