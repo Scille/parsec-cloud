@@ -17,6 +17,7 @@ from parsec.api.data import (
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
+    SharingGarbageCollectedMessageContent,
     PingMessageContent,
     UserManifest,
 )
@@ -63,6 +64,61 @@ logger = get_logger()
 AnyEntryName = Union[EntryName, str]
 
 
+def _handle_maintenance_job_exception(exc, kind, workspace_id):
+    if exc.status in ("not_in_maintenance", "bad_encryption_revision"):
+        raise FSWorkspaceNotInMaintenance(f"{kind.capitalize()} job already finished") from exc
+
+    if exc.status == "not_allowed":
+        raise FSWorkspaceNoAccess(
+            f"Not allowed to do {kind} maintenance on workspace {workspace_id}: {exc}"
+        ) from exc
+
+    raise FSError(f"Cannot do {kind} maintenance on workspace {workspace_id}: {exc}") from exc
+
+
+class GarbageCollectionJob:
+    def __init__(self, backend_cmds, workspace_entry):
+        self.backend_cmds = backend_cmds
+        self.workspace_entry = workspace_entry
+
+    async def do_one_vlob(self, minimum_limit=5):
+        workspace_id = self.workspace_entry.id
+        try:
+            vlob_id, data = await self.backend_cmds.vlob_maintenance_get_garbage_collection_vlob(
+                workspace_id
+            )
+
+            versions_to_erase = []
+            if len(data) > minimum_limit:
+                versions_to_keep = {}
+                for version, datetime in sorted(
+                    data[1:], key=lambda d: d[1] and d[0], reverse=True
+                ):
+                    if datetime > pendulum_now().add(months=-1):
+                        key = datetime.day
+                    elif datetime > pendulum_now().add(months=-6):
+                        key = f"{datetime.week_of_month}_{datetime.month}"
+                    else:
+                        key = f"{datetime.month}_{datetime.year}"
+                    if versions_to_keep.get(key):
+                        versions_to_erase.append(version)
+                    else:
+                        versions_to_keep[key] = version
+
+            total, done = await self.backend_cmds.vlob_maintenance_save_garbage_collection_vlob(
+                workspace_id, vlob_id, versions_to_erase
+            )
+            if total == done:
+                await self.backend_cmds.realm_finish_garbage_collection_maintenance(workspace_id)
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            _handle_maintenance_job_exception(exc, "garbage_collection", workspace_id)
+        else:
+            return total, done
+
+
 class ReencryptionJob:
     def __init__(self, backend_cmds, new_workspace_entry, old_workspace_entry):
         self.backend_cmds = backend_cmds
@@ -86,24 +142,17 @@ class ReencryptionJob:
             rep = await self.backend_cmds.vlob_maintenance_get_reencryption_batch(
                 workspace_id, new_encryption_revision, size
             )
-            if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
-                raise FSWorkspaceNotInMaintenance(f"Reencryption job already finished: {rep}")
-            elif rep["status"] == "not_allowed":
-                raise FSWorkspaceNoAccess(
-                    f"Not allowed to do reencryption maintenance on workspace {workspace_id}: {rep}"
-                )
-            elif rep["status"] != "ok":
-                raise FSError(
-                    f"Cannot do reencryption maintenance on workspace {workspace_id}: {rep}"
-                )
-
             donebatch = []
-            for item in rep["batch"]:
-                cleartext = self.old_workspace_entry.key.decrypt(item["blob"])
+            versions = {}
+            for vlob_id, version, blob in batch:
+                cleartext = self.old_workspace_entry.key.decrypt(blob)
+                try:
+                    versions[vlob_id].append(version)
+                except KeyError:
+                    versions[vlob_id] = [version]
                 newciphered = self.new_workspace_entry.key.encrypt(cleartext)
-                donebatch.append((item["vlob_id"], item["version"], newciphered))
-
-            rep = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
+                donebatch.append((vlob_id, version, newciphered))
+            total, done = await self.backend_cmds.vlob_maintenance_save_reencryption_batch(
                 workspace_id, new_encryption_revision, donebatch
             )
             if rep["status"] in ("not_in_maintenance", "bad_encryption_revision"):
@@ -139,9 +188,7 @@ class ReencryptionJob:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except BackendConnectionError as exc:
-            raise FSError(
-                f"Cannot do reencryption maintenance on workspace {workspace_id}: {exc}"
-            ) from exc
+            _handle_maintenance_job_exception(exc, "reencryption", workspace_id)
 
         return total, done
 
@@ -357,7 +404,8 @@ class UserFS:
         try:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
-            rep = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
+            args = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
+            expected_author, expected_timestamp, expected_version, blob, _ = args
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
@@ -867,6 +915,7 @@ class UserFS:
             user_manifest = user_manifest.evolve_workspaces_and_mark_updated(workspace_entry)
             await self.set_user_manifest(user_manifest)
             self.event_bus.send("userfs.updated")
+
             self.event_bus.send(
                 "sharing.updated",
                 new_entry=workspace_entry,
@@ -899,6 +948,34 @@ class UserFS:
 
         return users
 
+    def _dump_sign_and_encrypt_to_users(self, users, msg):
+        """
+        Raises:
+            FSError
+        """
+        per_user_ciphered_msgs = {}
+        for user in users:
+            try:
+                ciphered = msg.dump_sign_and_encrypt_for(
+                    author_signkey=self.device.signing_key, recipient_pubkey=user.public_key
+                )
+                per_user_ciphered_msgs[user.user_id] = ciphered
+            except DataError as exc:
+                raise FSError(
+                    f"Cannot create reencryption message for `{user.user_id}`: {exc}"
+                ) from exc
+        return per_user_ciphered_msgs
+
+    def _generate_garbage_collection_messages(self, workspace_entry, users, now: Pendulum):
+        """
+        Raises:
+            FSError
+        """
+        msg = SharingGarbageCollectedMessageContent(
+            author=self.device.device_id, timestamp=now, id=workspace_entry.id
+        )
+        return self._dump_sign_and_encrypt_to_users(users, msg)
+
     def _generate_reencryption_messages(self, new_workspace_entry, users, now: Pendulum):
         """
         Raises:
@@ -913,20 +990,7 @@ class UserFS:
             encrypted_on=new_workspace_entry.encrypted_on,
             key=new_workspace_entry.key,
         )
-
-        per_user_ciphered_msgs = {}
-        for user in users:
-            try:
-                ciphered = msg.dump_sign_and_encrypt_for(
-                    author_signkey=self.device.signing_key, recipient_pubkey=user.public_key
-                )
-                per_user_ciphered_msgs[user.user_id] = ciphered
-            except DataError as exc:
-                raise FSError(
-                    f"Cannot create reencryption message for `{user.user_id}`: {exc}"
-                ) from exc
-
-        return per_user_ciphered_msgs
+        return self._dump_sign_and_encrypt_to_users(users, msg)
 
     async def _send_start_reencryption_cmd(
         self, workspace_id, encryption_revision, timestamp, per_user_ciphered_msgs
@@ -950,20 +1014,64 @@ class UserFS:
         except BackendConnectionError as exc:
             raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {exc}") from exc
 
-        if rep["status"] == "participants_mismatch":
-            # Catched by caller
-            return False
-        elif rep["status"] == "in_maintenance":
-            raise FSWorkspaceInMaintenance(
-                f"Workspace {workspace_id} already in maintenance: {rep}"
+    async def _send_start_garbage_collection_cmd(
+        self, workspace_id, timestamp, per_user_ciphered_msgs
+    ):
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceNoAccess
+            BackendCmdsParticipantsMismatchError
+        """
+        try:
+            await self.backend_cmds.realm_start_garbage_collection_maintenance(
+                workspace_id, timestamp, per_user_ciphered_msgs
             )
-        elif rep["status"] == "not_allowed":
-            raise FSWorkspaceNoAccess(
-                f"Not allowed to start maintenance on workspace {workspace_id}: {rep}"
+        except BackendCmdsParticipantsMismatchError:
+            raise
+
+        except BackendNotAvailable as exc:
+            raise FSBackendOfflineError(str(exc)) from exc
+
+        except BackendConnectionError as exc:
+            if exc.status == "in_maintenance":
+                raise FSWorkspaceInMaintenance(f"Workspace {workspace_id} already in maintenance")
+
+            if exc.status == "not_allowed":
+                raise FSWorkspaceNoAccess(
+                    f"Not allowed to start maintenance on workspace {workspace_id}: {exc}"
+                ) from exc
+
+            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {exc}") from exc
+
+    async def workspace_start_garbage_collection(self, workspace_id: EntryID) -> ReencryptionJob:
+        """
+        Raises:
+            FSError
+            FSWorkspaceNotFoundError
+        """
+        user_manifest = self.get_user_manifest()
+        workspace_entry = user_manifest.get_workspace_entry(workspace_id)
+        if not workspace_entry:
+            raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
+
+        now = pendulum_now()
+        while True:
+            participants = await self._retreive_participants(workspace_entry.id)
+            garbage_collection_msgs = self._generate_garbage_collection_messages(
+                workspace_entry, participants, now
             )
-        elif rep["status"] != "ok":
-            raise FSError(f"Cannot start maintenance on workspace {workspace_id}: {rep}")
-        return True
+
+            try:
+                await self._send_start_garbage_collection_cmd(
+                    workspace_entry.id, now, garbage_collection_msgs
+                )
+            except BackendCmdsParticipantsMismatchError:
+                continue
+            else:
+                break
+        return GarbageCollectionJob(self.backend_cmds, workspace_entry)
 
     async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
         """
