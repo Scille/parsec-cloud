@@ -169,7 +169,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._vlobs = {}
         self._per_realm_changes = defaultdict(Changes)
 
-
     def register_components(self, realm: BaseRealmComponent, **other_components):
         self._realm_component = realm
 
@@ -330,7 +329,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobAlreadyExistsError()
 
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp, None)])
-        self._update_changes(organization_id, author, realm_id, vlob_id)
+        await self._update_changes(organization_id, author, realm_id, vlob_id)
 
     async def read(
         self,
