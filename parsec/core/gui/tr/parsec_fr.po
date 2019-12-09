@@ -1383,9 +1383,10 @@ msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
 msgstr "Cette version de l'application est incompatible avec le serveur."
 
 msgid "NOTIF_WARN_RVK_MISMATCH"
-msgstr ""
-"Connexion avec le backend impossible. La Root Verify Key diffère entre le "
-"client et le serveur."
+msgstr "Connexion impossible. La Root Verify Key diffère entre le client et le serveur."
+
+msgid "NOTIF_WARN_DEVICE_REVOKED"
+msgstr "Connection impossible. Vous avez été révoqué du serveur."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Le point de montage a été perdu."
@@ -1433,6 +1434,12 @@ msgstr "Déconnecté"
 
 msgid "BACKEND_STATE_INCOMPATIBLE_VERSION"
 msgstr "Version incompatible"
+
+msgid "BACKEND_STATE_RVK_MISMATCH"
+msgstr "La root verify key est différente du serveur"
+
+msgid "BACKEND_STATE_DEVICE_REVOKED"
+msgstr "Vous avez été révoqué par le serveur"
 
 msgid "MENU_DOCUMENTS"
 msgstr "Documents"
