@@ -89,6 +89,15 @@ class ManifestDataAndMutablePaths:
             manifest_cache, entry_id, timestamp
         )
 
+    async def populate_paths(self, manifest_cache, entry_id, earlier, early, late):
+        # TODO : Use future manifest source field to follow files and directories
+        async with trio.open_service_nursery() as child_nursery:
+            child_nursery.start_soon(
+                self.populate_source_path, manifest_cache, entry_id, early.add(microseconds=-1)
+            )
+            child_nursery.start_soon(self.populate_destination_path, manifest_cache, entry_id, late)
+            child_nursery.start_soon(self.populate_current_path, manifest_cache, entry_id, early)
+
 
 class CacheEntry(NamedTuple):
     """
@@ -298,18 +307,9 @@ async def list_versions(
             )
         )
         if len(target.parts) == path_level:
-
-            # TODO : Use future manifest source field to follow files and directories
-            async with trio.open_service_nursery() as child_nursery:
-                child_nursery.start_soon(
-                    data.populate_source_path, manifest_cache, entry_id, early.add(microseconds=-1)
-                )
-                child_nursery.start_soon(
-                    data.populate_destination_path, manifest_cache, entry_id, late
-                )
-                child_nursery.start_soon(
-                    data.populate_current_path, manifest_cache, entry_id, early
-                )
+            await data.populate_paths(
+                manifest_cache, entry_id, early.add(microseconds=-1), early, late
+            )
             tree[
                 TimestampBoundedEntry(manifest.id, manifest.version, early, late)
             ] = ManifestDataAndPaths(
