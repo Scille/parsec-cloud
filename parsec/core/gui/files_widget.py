@@ -103,6 +103,27 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
             raise JobResultError("cancelled", last_file=dst) from exc
 
 
+async def _do_remount_timestamped(
+    mountpoint_manager,
+    workspace_fs,
+    timestamp,
+    path,
+    file_type,
+    open_after_load,
+    close_after_load,
+    reload_after_remount,
+):
+    await mountpoint_manager.remount_workspace_new_timestamp(
+        workspace_fs.workspace_id,
+        workspace_fs.timestamp if isinstance(workspace_fs, WorkspaceFSTimestamped) else None,
+        timestamp,
+    )
+    # TODO : get it directly from mountpoint_manager if API evolves
+    workspace_fs = await workspace_fs.to_timestamped(timestamp)
+    await workspace_fs.path_info(path)  # Checks path is valid when remounted
+    return (workspace_fs, path, file_type, open_after_load, close_after_load, reload_after_remount)
+
+
 class Clipboard:
     class Status(IntEnum):
         Copied = 1
@@ -237,8 +258,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         except ValueError:
             pass
 
-    def set_workspace_fs(self, wk_fs):
-        self.current_directory = FsPath("/")
+    def set_workspace_fs(self, wk_fs, current_directory=FsPath("/")):
+        self.current_directory = current_directory
         self.workspace_fs = wk_fs
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
         self.current_user_role = ws_entry.role
@@ -455,31 +476,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reload(self):
         self.load(self.current_directory)
-
-    async def _do_reload_timestamped(
-        self, timestamp, path, file_type, open_after_load, close_after_load, reload_after_remount
-    ):
-        await self.core.mountpoint_manager.remount_workspace_new_timestamp(
-            self.workspace_fs.workspace_id,
-            self.workspace_fs.timestamp
-            if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
-            else None,
-            timestamp,
-        )
-        self.workspace_fs = await self.workspace_fs.to_timestamped(
-            timestamp
-        )  # TODO : GOT IT DIRECTLY?
-        if path is not None:
-            self.current_directory = path.parent if file_type == FileType.File else path
-        # TODO : Select element if possible?
-        if close_after_load:
-            self.close_version_list.emit()
-        if reload_after_remount:
-            self.update_version_list.emit(self.workspace_fs, path)
-        return (
-            await _do_folder_stat(workspace_fs=self.workspace_fs, path=self.current_directory),
-            path if open_after_load else None,
-        )
 
     def load(self, directory):
         self.jobs_ctx.submit_job(
@@ -798,9 +794,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "reload_timestamped_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "reload_timestamped_error", QtToTrioJob),
-            self._do_reload_timestamped,
+            _do_remount_timestamped,
+            mountpoint_manager=self.core.mountpoint_manager,
+            workspace_fs=self.workspace_fs,
             timestamp=timestamp,
-            path=path,
+            path=path if path is not None else self.current_directory,
             file_type=file_type,
             open_after_load=open_after_load,
             close_after_load=close_after_remount,
@@ -808,10 +806,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
 
     def _on_reload_timestamped_success(self, job):
-        if job.ret[1]:
-            self.open_file(job.ret[1].name)
-        job.ret = job.ret[0]
-        self._on_folder_stat_success(job)
+        (
+            workspace_fs,
+            path,
+            file_type,
+            open_after_load,
+            close_after_load,
+            reload_after_remount,
+        ) = job.ret
+        self.set_workspace_fs(workspace_fs, path.parent if file_type == FileType.File else path)
+        # TODO : Select element if possible?
+        if close_after_load:
+            self.close_version_list.emit()
+        if reload_after_remount:
+            self.update_version_list.emit(self.workspace_fs, path)
+        if open_after_load:
+            self.open_file(job.path.name)
 
     def _on_reload_timestamped_error(self, job):
         raise job.exc
