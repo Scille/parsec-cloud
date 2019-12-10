@@ -815,6 +815,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             reload_after_remount,
         ) = job.ret
         self.set_workspace_fs(workspace_fs, path.parent if file_type == FileType.File else path)
+        self.parent().widget_switched.emit(self.get_taskbar_buttons())
         # TODO : Select element if possible?
         if close_after_load:
             self.close_version_list.emit()
