@@ -72,7 +72,7 @@ class ManifestDataAndMutablePaths:
         self, manifest_cache, entry_id: EntryID, timestamp: Pendulum
     ) -> FsPath:
         try:
-            return await _get_path_at_timestamp(manifest_cache, entry_id, timestamp)
+            return await manifest_cache.get_path_at_timestamp(entry_id, timestamp)
         except EntryNotFound:
             return None  # Just ignore when path is inconsistent
 
@@ -192,6 +192,53 @@ class ManifestCache:
         self.update(manifest, entry_id, version=version, timestamp=timestamp)
         return manifest
 
+    async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: Pendulum) -> FsPath:
+        """
+        Find a path for an entry_id at a specific timestamp.
+
+        If the path is broken, will raise an EntryNotFound exception. All the other exceptions are
+        thrown by the ManifestCache.
+
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSBadEncryptionRevision
+            FSWorkspaceNoAccess
+            EntryNotFound
+        """
+        # Get first manifest
+        try:
+            current_id = entry_id
+            current_manifest = await self.load(current_id, timestamp=timestamp)
+        except FSRemoteManifestNotFound:
+            raise EntryNotFound(entry_id)
+
+        # Loop over parts
+        parts = []
+        while not is_workspace_manifest(current_manifest):
+
+            # Get the manifest
+            try:
+                parent_manifest = await self.load(current_manifest.parent, timestamp=timestamp)
+            except FSRemoteManifestNotFound:
+                raise EntryNotFound(entry_id)
+
+            # Find the child name
+            for name, child_id in parent_manifest.children.items():
+                if child_id == current_id:
+                    parts.append(name)
+                    break
+            else:
+                raise EntryNotFound(entry_id)
+
+            # Continue until root is found
+            current_id = current_manifest.parent
+            current_manifest = parent_manifest
+
+        # Return the path
+        return FsPath("/" + "/".join(reversed(parts)))
+
 
 class VersionsListCache:
     """
@@ -217,58 +264,6 @@ class VersionsListCache:
             return self._versions_list_cache[entry_id]
         self._versions_list_cache[entry_id] = await self._remote_loader.list_versions(entry_id)
         return self._versions_list_cache[entry_id]
-
-
-async def _get_path_at_timestamp(
-    manifest_cache: ManifestCache, entry_id: EntryID, timestamp: Pendulum
-) -> FsPath:
-    """
-    Find a path for an entry_id at a specific timestamp.
-
-    If the path is broken, will raise an EntryNotFound exception. All the other exceptions are
-    thrown by the ManifestCache.
-
-    Raises:
-        FSError
-        FSBackendOfflineError
-        FSWorkspaceInMaintenance
-        FSBadEncryptionRevision
-        FSWorkspaceNoAccess
-        EntryNotFound
-    """
-    # Get first manifest
-    try:
-        current_id = entry_id
-        current_manifest = await manifest_cache.load(current_id, timestamp=timestamp)
-    except FSRemoteManifestNotFound:
-        raise EntryNotFound(entry_id)
-
-    # Loop over parts
-    parts = []
-    while not is_workspace_manifest(current_manifest):
-
-        # Get the manifest
-        try:
-            parent_manifest = await manifest_cache.load(
-                current_manifest.parent, timestamp=timestamp
-            )
-        except FSRemoteManifestNotFound:
-            raise EntryNotFound(entry_id)
-
-        # Find the child name
-        for name, child_id in parent_manifest.children.items():
-            if child_id == current_id:
-                parts.append(name)
-                break
-        else:
-            raise EntryNotFound(entry_id)
-
-        # Continue until root is found
-        current_id = current_manifest.parent
-        current_manifest = parent_manifest
-
-    # Return the path
-    return FsPath("/" + "/".join(reversed(parts)))
 
 
 async def list_versions(
