@@ -305,7 +305,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 except Exception as exc:
                     logger.exception("Unhandled error while cut/copy file", exc_info=exc)
                     break
-        self.clipboard = None
+        if self.clipboard.status == Clipboard.Status.Cut:
+            self.clipboard = None
+        self.reset()
 
     def show_history(self):
         files = self.table_files.selected_files()
