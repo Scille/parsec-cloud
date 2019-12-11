@@ -256,7 +256,7 @@ class BackendApp:
 
                     elif (
                         organization.expiration_date is not None
-                        and organization.expiration_date < pendulum_now()
+                        and organization.expiration_date <= pendulum_now()
                     ):
                         result_req = handshake.build_organization_expired_result_req()
                         error_infos = {
@@ -305,6 +305,17 @@ class BackendApp:
                         result_req = handshake.build_rvk_mismatch_result_req()
                         error_infos = {
                             "reason": "Bad root verify key",
+                            "handshake_type": "anonymous",
+                            "organization_id": organization_id,
+                        }
+
+                    elif (
+                        organization.expiration_date is not None
+                        and organization.expiration_date <= pendulum_now()
+                    ):
+                        result_req = handshake.build_organization_expired_result_req()
+                        error_infos = {
+                            "reason": "Expired organization",
                             "handshake_type": "anonymous",
                             "organization_id": organization_id,
                         }

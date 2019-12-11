@@ -11,6 +11,8 @@ from parsec.api.protocol import (
     organization_bootstrap_serializer,
 )
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
+
+from tests.common import freeze_time
 from tests.backend.test_events import ping
 from tests.fixtures import local_device_to_backend_user
 
@@ -119,39 +121,52 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
     # 1) Create organization, note this means `neworg.bootstrap_token`
     # will contain an invalid token
 
-    expiration_date = pendulum.now().add(days=1)
+    with freeze_time("2000-01-01"):
 
-    rep = await organization_create(
-        administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
-    )
-    assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
-    bootstrap_token = rep["bootstrap_token"]
-
-    # 2) Bootstrap organization
-
-    # Use an existing user name to make sure they didn't mix together
-    newalice = local_device_factory("alice@dev1", neworg)
-    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
-
-    async with backend_sock_factory(backend, neworg.organization_id) as sock:
-        rep = await organization_bootstrap(
-            sock,
-            bootstrap_token,
-            backend_newalice.user_certificate,
-            backend_newalice_first_device.device_certificate,
-            neworg.root_verify_key,
+        expiration_date = pendulum.Pendulum(2000, 1, 2)
+        rep = await organization_create(
+            administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
         )
-    assert rep == {"status": "ok"}
+        assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
+        bootstrap_token = rep["bootstrap_token"]
 
-    # 3) Now our new device can connect the backend
+        # 2) Bootstrap organization
 
-    async with backend_sock_factory(backend, newalice) as sock:
-        await ping(sock)
+        # Use an existing user name to make sure they didn't mix together
+        newalice = local_device_factory("alice@dev1", neworg)
+        backend_newalice, backend_newalice_first_device = local_device_to_backend_user(
+            newalice, neworg
+        )
 
-    # 4) Make sure alice from the other organization is still working
+        async with backend_sock_factory(backend, neworg.organization_id) as sock:
+            rep = await organization_bootstrap(
+                sock,
+                bootstrap_token,
+                backend_newalice.user_certificate,
+                backend_newalice_first_device.device_certificate,
+                neworg.root_verify_key,
+            )
+        assert rep == {"status": "ok"}
 
-    async with backend_sock_factory(backend, alice) as sock:
-        await ping(sock)
+        # 3) Now our new device can connect the backend
+
+        async with backend_sock_factory(backend, newalice) as sock:
+            await ping(sock)
+
+        # 4) Make sure alice from the other organization is still working
+
+        async with backend_sock_factory(backend, alice) as sock:
+            await ping(sock)
+
+    # 5) Now advance after the expiration
+    with freeze_time("2000-01-02"):
+        # Both anonymous and authenticated connections are refused
+        with pytest.raises(HandshakeOrganizationExpired):
+            async with backend_sock_factory(backend, newalice):
+                pass
+        with pytest.raises(HandshakeOrganizationExpired):
+            async with backend_sock_factory(backend, neworg.organization_id):
+                pass
 
 
 @pytest.mark.trio
@@ -174,28 +189,11 @@ async def test_organization_expired_create_and_bootstrap(
         administration_backend_sock, neworg.organization_id, expiration_date=expiration_date
     )
     assert rep == {"status": "ok", "bootstrap_token": ANY, "expiration_date": expiration_date}
-    bootstrap_token = rep["bootstrap_token"]
 
-    # 2) Bootstrap organization
-
-    # Use an existing user name to make sure they didn't mix together
-    newalice = local_device_factory("alice@dev1", neworg)
-    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
-
-    async with backend_sock_factory(backend, neworg.organization_id) as sock:
-        rep = await organization_bootstrap(
-            sock,
-            bootstrap_token,
-            backend_newalice.user_certificate,
-            backend_newalice_first_device.device_certificate,
-            neworg.root_verify_key,
-        )
-    assert rep == {"status": "ok"}
-
-    # 3) Now our new device can't connect to the backend since it has expired
+    # 2) Bootstrap is not possible
 
     with pytest.raises(HandshakeOrganizationExpired):
-        async with backend_sock_factory(backend, newalice):
+        async with backend_sock_factory(backend, neworg.organization_id):
             pass
 
 
