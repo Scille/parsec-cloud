@@ -105,7 +105,7 @@ def config_factory(
         config_dir=config_dir or get_default_config_dir(environ),
         data_base_dir=data_base_dir,
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
-        mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
+        mountpoint_base_dir=get_default_mountpoint_base_dir(environ),
         mountpoint_enabled=mountpoint_enabled,
         backend_connection_keepalive=backend_connection_keepalive,
         backend_max_connections=backend_max_connections,
@@ -158,11 +158,6 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
-    try:
-        data_conf["mountpoint_base_dir"] = Path(data_conf["mountpoint_base_dir"])
-    except (KeyError, ValueError):
-        pass
-
     return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
@@ -180,7 +175,6 @@ def save_config(config: CoreConfig):
             {
                 "data_base_dir": str(config.data_base_dir),
                 "cache_base_dir": str(config.cache_base_dir),
-                "mountpoint_base_dir": str(config.mountpoint_base_dir),
                 "telemetry_enabled": config.telemetry_enabled,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "gui_last_device": config.gui_last_device,
