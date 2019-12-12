@@ -113,7 +113,7 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         ):
             self.setDisabled(True)
         if self.current_user_role == WorkspaceRole.OWNER and self.role == WorkspaceRole.OWNER:
-            self.setDisabled(True)
+            self.setDisabled(False)
 
         if not self.isEnabled():
             for role, index in _ROLES_TO_INDEX.items():
