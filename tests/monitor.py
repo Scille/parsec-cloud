@@ -257,8 +257,8 @@ io_statistics:
         )
 
     def command_ps(self, sout):
-        headers = ("Task", "State", "Task")
-        widths = (15, 12, 50)
+        headers = ("Id", "State", "Shielded", "Task")
+        widths = (5, 10, 10, 50)
         for h, w in zip(headers, widths):
             sout.write("%-*s " % (w, h))
         sout.write("\n")
@@ -266,13 +266,15 @@ io_statistics:
         sout.write("\n")
         for task in sorted(self._tasks.values(), key=lambda t: t._monitor_short_id):
             sout.write(
-                "%-*d %-*s %-*s\n"
+                "%-*d %-*s %-*s %-*s\n"
                 % (
                     widths[0],
                     task._monitor_short_id,
                     widths[1],
                     task._monitor_state,
                     widths[2],
+                    "yes" if task._cancel_status._scope.shield else "",
+                    widths[3],
                     task.name,
                 )
             )
@@ -283,10 +285,11 @@ io_statistics:
             root_task = root_task.parent_nursery.parent_task
 
         def _format_task(task):
-            return "%s (id=%s, status=%s)" % (
+            return "%s (id=%s, %s%s)" % (
                 task.name,
                 task._monitor_short_id,
                 task._monitor_state,
+                ", shielded" if task._cancel_status._scope.shield else "",
             )
 
         task_tree = render_task_tree(root_task, _format_task)
