@@ -266,20 +266,16 @@ class VersionsListCache:
         return self._versions_list_cache[entry_id]
 
 
-async def list_versions(
-    workspacefs, path: FsPath, skip_minimal_sync: bool = True
-) -> List[TimestampBoundedData]:
-    """
-    Raises:
-        FSError
-        FSBackendOfflineError
-        FSWorkspaceInMaintenance
-        FSRemoteManifestNotFound
-    """
-    manifest_cache = ManifestCache(workspacefs.remote_loader)
-    versions_list_cache = VersionsListCache(workspacefs.remote_loader)
+class VersionLister:
+    def __init__(self, workspace_fs, manifest_cache=None, versions_list_cache=None):
+        self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
+        self.versions_list_cache = versions_list_cache or VersionsListCache(
+            workspace_fs.remote_loader
+        )
+        self.workspace_fs = workspace_fs
 
     async def _populate_tree_load(
+        self,
         nursery,
         target: FsPath,
         path_level: int,
@@ -292,7 +288,7 @@ async def list_versions(
     ):
         if early > late:
             return
-        manifest = await manifest_cache.load(entry_id, version=version_number)
+        manifest = await self.manifest_cache.load(entry_id, version=version_number)
         data = ManifestDataAndMutablePaths(
             ManifestData(
                 manifest.author,
@@ -303,7 +299,7 @@ async def list_versions(
         )
         if len(target.parts) == path_level:
             await data.populate_paths(
-                manifest_cache, entry_id, early.add(microseconds=-1), early, late
+                self.manifest_cache, entry_id, early.add(microseconds=-1), early, late
             )
             tree[
                 TimestampBoundedEntry(manifest.id, manifest.version, early, late)
@@ -318,7 +314,7 @@ async def list_versions(
             if not is_file_manifest(manifest):
                 for child_name, child_id in manifest.children.items():
                     if child_name == target.parts[path_level]:
-                        return await _populate_tree_list_versions(
+                        return await self._populate_tree_list_versions(
                             nursery,
                             target,
                             path_level + 1,
@@ -331,6 +327,7 @@ async def list_versions(
                 pass  # TODO : Broken path. What to do?
 
     async def _populate_tree_list_versions(
+        self,
         nursery,
         target: FsPath,
         path_level: int,
@@ -340,11 +337,11 @@ async def list_versions(
         late: Pendulum,
     ):
         # TODO : Check if directory, melt the same entries through different parent
-        versions = await versions_list_cache.load(entry_id)
+        versions = await self.versions_list_cache.load(entry_id)
         for version, (timestamp, creator) in versions.items():
             next_version = min((v for v in versions if v > version), default=None)
             nursery.start_soon(
-                _populate_tree_load,
+                self._populate_tree_load,
                 nursery,
                 target,
                 path_level,
@@ -356,65 +353,83 @@ async def list_versions(
                 next_version,
             )
 
-    return_tree = {}
-    root_manifest = await workspacefs.transactions._get_manifest(workspacefs.workspace_id)
-    async with trio.open_service_nursery() as nursery:
-        nursery.start_soon(
-            _populate_tree_list_versions,
-            nursery,
-            path,
-            0,
-            return_tree,
-            root_manifest.id,
-            root_manifest.created,
-            Pendulum.now(),
-        )
-    versions_list = [
-        TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
-        for item in sorted(
-            list(return_tree.items()), key=lambda item: (item[0].late, item[0].id, item[0].version)
-        )
-    ]
-    previous = None
-    new_list = []
-    # Merge duplicates with overlapping time frames as it can be caused by an update of a parent
-    # dir, also, if option is set, remove what can be guessed as empty manifests set before parent
-    # during sync
-    for item in versions_list:
-        if previous is not None:
-            # If same entry_id and version
-            if previous.id == item.id and previous.version == item.version:
-                if previous.late == item.early:  # Same timestamp, only parent directory updated
-                    # Update source FsPath for current entry
-                    previous = TimestampBoundedData(
-                        item.id,
-                        item.version,
-                        previous.early,
-                        item.late,
-                        item.creator,
-                        item.updated,
-                        item.is_folder,
-                        item.size,
-                        previous.source,
-                        item.destination,
-                    )
+    def sanitize_list(self, versions_list, skip_minimal_sync):
+        previous = None
+        new_list = []
+        # Merge duplicates with overlapping time frames as it can be caused by an update of a
+        # parent dir, also, if option is set, remove what can be guessed as empty manifests set
+        # before parent during sync
+        for item in versions_list:
+            if previous is not None:
+                # If same entry_id and version
+                if previous.id == item.id and previous.version == item.version:
+                    # If same timestamp, only parent directory updated
+                    if previous.late == item.early:
+                        # Update source FsPath for current entry
+                        previous = TimestampBoundedData(
+                            item.id,
+                            item.version,
+                            previous.early,
+                            item.late,
+                            item.creator,
+                            item.updated,
+                            item.is_folder,
+                            item.size,
+                            previous.source,
+                            item.destination,
+                        )
+                        continue
+                # If option is set, same entry_id, previous version is 0 bytes
+                if (
+                    skip_minimal_sync
+                    and previous.id == item.id
+                    and previous.version == item.version - 1
+                    and previous.version == 1
+                    and previous.size == 0  # Empty file (would be None for dir)
+                    and previous.is_folder == item.is_folder
+                    and previous.late == item.early
+                    and previous.late < previous.early.add(seconds=SYNC_GUESSED_TIME_FRAME)
+                    and not previous.source
+                ):
+                    previous = item
                     continue
-            # If option is set, same entry_id, previous version is 0 bytes
-            if (
-                skip_minimal_sync
-                and previous.id == item.id
-                and previous.version == item.version - 1
-                and previous.version == 1
-                and previous.size == 0  # Empty file (would be None for dir)
-                and previous.is_folder == item.is_folder
-                and previous.late == item.early
-                and previous.late < previous.early.add(seconds=SYNC_GUESSED_TIME_FRAME)
-                and not previous.source
-            ):
-                previous = item
-                continue
+                new_list.append(previous)
+            previous = item
+        if previous:
             new_list.append(previous)
-        previous = item
-    if previous:
-        new_list.append(previous)
-    return new_list
+        return new_list
+
+    async def list(
+        self, path: FsPath, skip_minimal_sync: bool = True
+    ) -> List[TimestampBoundedData]:
+        """
+        Raises:
+            FSError
+            FSBackendOfflineError
+            FSWorkspaceInMaintenance
+            FSRemoteManifestNotFound
+        """
+        print(skip_minimal_sync)
+        return_tree = {}
+        root_manifest = await self.workspace_fs.transactions._get_manifest(
+            self.workspace_fs.workspace_id
+        )
+        async with trio.open_service_nursery() as nursery:
+            nursery.start_soon(
+                self._populate_tree_list_versions,
+                nursery,
+                path,
+                0,
+                return_tree,
+                root_manifest.id,
+                root_manifest.created,
+                Pendulum.now(),
+            )
+        versions_list = [
+            TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
+            for item in sorted(
+                list(return_tree.items()),
+                key=lambda item: (item[0].late, item[0].id, item[0].version),
+            )
+        ]
+        return self.sanitize_list(versions_list, skip_minimal_sync)

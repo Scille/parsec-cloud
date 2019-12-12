@@ -10,7 +10,8 @@ from parsec.core.gui.ui.file_history_dialog import Ui_FileHistoryDialog
 
 
 async def _do_workspace_version(workspace_fs, path):
-    return await workspace_fs.versions(path)
+    version_lister = workspace_fs.get_version_lister()
+    return await version_lister.list(path)
 
 
 class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):

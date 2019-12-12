@@ -12,7 +12,8 @@ def _day(d):
 
 @pytest.mark.trio
 async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/files/renamed"), skip_minimal_sync=False)
+    version_lister = alice_workspace.get_version_lister()
+    versions = await version_lister.list(FsPath("/files/renamed"), skip_minimal_sync=False)
 
     assert len(versions) == 6
 
@@ -78,7 +79,8 @@ async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, 
 
 @pytest.mark.trio
 async def test_versions_existing_file_remove_minimal_synced(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/files/renamed"))
+    version_lister = alice_workspace.get_version_lister()
+    versions = await version_lister.list(FsPath("/files/renamed"))
 
     assert len(versions) == 5
 
@@ -144,7 +146,8 @@ async def test_versions_existing_file_remove_minimal_synced(alice_workspace, ali
 async def test_versions_non_existing_file_remove_minimal_synced(
     alice_workspace, alice, skip_minimal_sync
 ):
-    versions = await alice_workspace.versions(
+    version_lister = alice_workspace.get_version_lister()
+    versions = await version_lister.list(
         FsPath("/moved/renamed"), skip_minimal_sync=skip_minimal_sync
     )
     assert len(versions) == 1
@@ -165,7 +168,8 @@ async def test_versions_non_existing_file_remove_minimal_synced(
 @pytest.mark.trio
 @pytest.mark.parametrize("skip_minimal_sync", (False, True))
 async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_sync):
-    versions = await alice_workspace.versions(FsPath("/files"), skip_minimal_sync=skip_minimal_sync)
+    version_lister = alice_workspace.get_version_lister()
+    versions = await version_lister.list(FsPath("/files"), skip_minimal_sync=skip_minimal_sync)
     assert len(versions) == 8
     assert versions[0][1:] == (
         1,
@@ -251,7 +255,8 @@ async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_
 
 @pytest.mark.trio
 async def test_version_non_existing_directory(alice_workspace, alice):
-    versions = await alice_workspace.versions(FsPath("/moved"))
+    version_lister = alice_workspace.get_version_lister()
+    versions = await version_lister.list(FsPath("/moved"))
     assert len(versions) == 2
     assert versions[0][1:] == (
         5,
