@@ -251,13 +251,18 @@ def postgresql_url(request):
 
 
 @pytest.fixture
-async def asyncio_loop():
-    # When a ^C happens, trio send a Cancelled exception to each running
-    # coroutine. We must protect this one to avoid deadlock if it is cancelled
-    # before another coroutine that uses trio-asyncio.
-    with trio.CancelScope(shield=True):
-        async with trio_asyncio.open_loop() as loop:
-            yield loop
+async def asyncio_loop(request):
+    # asyncio loop is only needed for triopg
+    if not request.config.getoption("--postgresql"):
+        yield None
+
+    else:
+        # When a ^C happens, trio send a Cancelled exception to each running
+        # coroutine. We must protect this one to avoid deadlock if it is cancelled
+        # before another coroutine that uses trio-asyncio.
+        with trio.CancelScope(shield=True):
+            async with trio_asyncio.open_loop() as loop:
+                yield loop
 
 
 @pytest.fixture(scope="session")
