@@ -27,6 +27,7 @@ from parsec.core.gui.file_items import (
     NAME_DATA_INDEX,
     TYPE_DATA_INDEX,
     UUID_DATA_INDEX,
+    COPY_STATUS_DATA_INDEX,
 )
 from parsec.core.gui.file_size import get_filesize
 
@@ -40,6 +41,8 @@ class ItemDelegate(QStyledItemDelegate):
         # individually, we don't want that, so we remove the focus
         if option.state & QStyle.State_HasFocus:
             view_option.state &= ~QStyle.State_HasFocus
+        if index.data(COPY_STATUS_DATA_INDEX):
+            view_option.font.setItalic(True)
         super().paint(painter, view_option, index)
 
 
@@ -82,6 +85,12 @@ class FileTable(QTableWidget):
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.current_user_role = WorkspaceRole.OWNER
+
+    def set_rows_cut(self, rows):
+        for row in range(self.rowCount()):
+            for col in range(5):
+                item = self.item(row, col)
+                item.setData(COPY_STATUS_DATA_INDEX, row in rows)
 
     def keyReleaseEvent(self, event):
         if event.matches(QKeySequence.Copy):

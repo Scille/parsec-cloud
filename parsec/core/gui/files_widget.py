@@ -265,10 +265,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def on_cut_clicked(self):
         files = self.table_files.selected_files()
         files_to_cut = []
+        rows = []
         for f in files:
             if f.type != FileType.Folder and f.type != FileType.File:
                 continue
+            rows.append(f.row)
             files_to_cut.append((self.current_directory / f.name, f.type))
+        self.table_files.set_rows_cut(rows)
         self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
 
     def on_paste_clicked(self):
