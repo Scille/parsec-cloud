@@ -1236,6 +1236,15 @@ msgstr "Renommer"
 msgid "FILE_MENU_DELETE"
 msgstr "Supprimer"
 
+msgid "FILE_MENU_COPY"
+msgstr "Copy"
+
+msgid "FILE_MENU_CUT"
+msgstr "Cut"
+
+msgid "FILE_MENU_PASTE"
+msgstr "Paste"
+
 msgid "FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"
 

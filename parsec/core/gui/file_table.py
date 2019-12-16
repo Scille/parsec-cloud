@@ -5,7 +5,7 @@ import pendulum
 import pathlib
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon, QColor
+from PyQt5.QtGui import QIcon, QColor, QKeySequence
 from PyQt5.QtWidgets import (
     QTableWidget,
     QHeaderView,
@@ -51,6 +51,9 @@ class FileTable(QTableWidget):
     rename_clicked = pyqtSignal()
     open_clicked = pyqtSignal()
     show_history_clicked = pyqtSignal()
+    paste_clicked = pyqtSignal()
+    cut_clicked = pyqtSignal()
+    copy_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -80,6 +83,14 @@ class FileTable(QTableWidget):
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.current_user_role = WorkspaceRole.OWNER
 
+    def keyReleaseEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_clicked.emit()
+        elif event.matches(QKeySequence.Cut):
+            self.cut_clicked.emit()
+        elif event.matches(QKeySequence.Paste):
+            self.paste_clicked.emit()
+
     def selected_files(self):
         SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
 
@@ -105,25 +116,25 @@ class FileTable(QTableWidget):
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
 
-        row = self.currentRow()
-        item = self.item(row, 0)
-        if (
-            not item
-            or item.data(TYPE_DATA_INDEX) == FileType.ParentFolder
-            or item.data(TYPE_DATA_INDEX) == FileType.ParentWorkspace
-        ):
-            return
-
+        selected = self.selected_files()
         menu = QMenu(self)
-        action = menu.addAction(_("FILE_MENU_OPEN"))
-        action.triggered.connect(self.open_clicked.emit)
-        action = menu.addAction(_("FILE_MENU_HISTORY"))
-        action.triggered.connect(self.show_history_clicked.emit)
-        if self.current_user_role != WorkspaceRole.READER:
-            action = menu.addAction(_("FILE_MENU_RENAME"))
-            action.triggered.connect(self.rename_clicked.emit)
-            action = menu.addAction(_("FILE_MENU_DELETE"))
-            action.triggered.connect(self.delete_clicked.emit)
+
+        if len(selected):
+            action = menu.addAction(_("FILE_MENU_OPEN"))
+            action.triggered.connect(self.open_clicked.emit)
+            action = menu.addAction(_("FILE_MENU_HISTORY"))
+            action.triggered.connect(self.show_history_clicked.emit)
+            if self.current_user_role != WorkspaceRole.READER:
+                action = menu.addAction(_("FILE_MENU_RENAME"))
+                action.triggered.connect(self.rename_clicked.emit)
+                action = menu.addAction(_("FILE_MENU_DELETE"))
+                action.triggered.connect(self.delete_clicked.emit)
+            action = menu.addAction(_("FILE_MENU_COPY"))
+            action.triggered.connect(self.copy_clicked.emit)
+            action = menu.addAction(_("FILE_MENU_CUT"))
+            action.triggered.connect(self.cut_clicked.emit)
+        action = menu.addAction(_("FILE_MENU_PASTE"))
+        action.triggered.connect(self.paste_clicked.emit)
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):
@@ -311,7 +322,10 @@ class FileTable(QTableWidget):
                 event.ignore()
                 return
             target_row = self.indexAt(event.pos()).row()
-            file_type = self.item(target_row, 0).data(TYPE_DATA_INDEX)
+            item = self.item(target_row, 0)
+            if not item:
+                return
+            file_type = item.data(TYPE_DATA_INDEX)
             if file_type == FileType.ParentFolder or file_type == FileType.Folder:
                 event.accept()
             else:

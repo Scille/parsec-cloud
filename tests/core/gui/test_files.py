@@ -72,6 +72,52 @@ async def logged_gui(
     yield gui
 
 
+@pytest.fixture
+async def logged_gui_with_files(aqtbot, logged_gui, running_backend, monkeypatch, temp_dir):
+    w_f = logged_gui.test_get_files_widget()
+
+    assert w_f is not None
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        pass
+    assert w_f.table_files.rowCount() == 1
+
+    monkeypatch.setattr(
+        "PyQt5.QtWidgets.QFileDialog.getOpenFileNames",
+        classmethod(
+            lambda *args, **kwargs: ([temp_dir / "file01.txt", temp_dir / "file02.txt"], True)
+        ),
+    )
+
+    async with aqtbot.wait_signals(
+        [w_f.button_import_files.clicked, w_f.import_success], timeout=3000
+    ):
+        await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
+
+    central_widget = logged_gui.test_get_central_widget()
+    assert central_widget is not None
+    add_button = central_widget.widget_taskbar.layout().itemAt(3).widget()
+    assert add_button is not None
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        classmethod(lambda *args, **kwargs: ("dir1")),
+    )
+    async with aqtbot.wait_signal(w_f.folder_create_success):
+        await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 4:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
+    assert w_f.table_files.rowCount() == 4
+    assert w_f.table_files.item(1, 1).text() == "dir1"
+    assert w_f.table_files.item(2, 1).text() == "file01.txt"
+    assert w_f.table_files.item(3, 1).text() == "file02.txt"
+
+    yield logged_gui
+
+
 async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
     central_widget = logged_gui.test_get_central_widget()
     assert central_widget is not None
@@ -489,3 +535,191 @@ async def test_import_dir(
 
     assert w_f.table_files.rowCount() == 2
     assert w_f.table_files.item(1, 1).text() == temp_dir.name
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_cut_files(
+    aqtbot, running_backend, logged_gui_with_files, monkeypatch, autoclose_dialog, temp_dir
+):
+    w_f = logged_gui_with_files.test_get_files_widget()
+
+    assert w_f is not None
+
+    assert w_f.table_files.rowCount() == 4
+
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
+    )
+
+    async with aqtbot.wait_signal(w_f.table_files.cut_clicked):
+        await aqtbot.key_click(w_f.table_files, "X", modifier=QtCore.Qt.ControlModifier)
+
+    assert w_f.clipboard is not None
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    assert w_f.table_files.rowCount() == 1
+
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 3:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
+    assert w_f.table_files.rowCount() == 3
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_copy_files(
+    aqtbot, running_backend, logged_gui_with_files, monkeypatch, autoclose_dialog, temp_dir
+):
+    w_f = logged_gui_with_files.test_get_files_widget()
+
+    assert w_f is not None
+
+    assert w_f.table_files.rowCount() == 4
+
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
+    )
+
+    async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
+        await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
+
+    assert w_f.clipboard is not None
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    assert w_f.table_files.rowCount() == 1
+
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 3:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
+    assert w_f.table_files.rowCount() == 3
+    assert w_f.table_files.item(1, 1).text() == "file01.txt"
+    assert w_f.table_files.item(2, 1).text() == "file02.txt"
+
+    # Moving back
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 4:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+
+    assert w_f.table_files.rowCount() == 4
+    assert w_f.table_files.item(1, 1).text() == "dir1"
+    assert w_f.table_files.item(2, 1).text() == "file01.txt"
+    assert w_f.table_files.item(3, 1).text() == "file02.txt"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_copy_files_same_name(
+    aqtbot, running_backend, logged_gui_with_files, monkeypatch, autoclose_dialog, temp_dir
+):
+    w_f = logged_gui_with_files.test_get_files_widget()
+
+    assert w_f is not None
+
+    assert w_f.table_files.rowCount() == 4
+
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(2, 0, 3, 0), True
+    )
+
+    async with aqtbot.wait_signal(w_f.table_files.copy_clicked):
+        await aqtbot.key_click(w_f.table_files, "C", modifier=QtCore.Qt.ControlModifier)
+
+    assert w_f.clipboard is not None
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    assert w_f.table_files.rowCount() == 1
+
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 3:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+    assert w_f.table_files.rowCount() == 3
+
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 5:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+    assert w_f.table_files.rowCount() == 5
+
+    assert w_f.table_files.rowCount() == 5
+    assert w_f.table_files.item(1, 1).text() == "file01 (2).txt"
+    assert w_f.table_files.item(2, 1).text() == "file01.txt"
+    assert w_f.table_files.item(3, 1).text() == "file02 (2).txt"
+    assert w_f.table_files.item(4, 1).text() == "file02.txt"
+
+
+@pytest.mark.gui
+@pytest.mark.trio
+async def test_cut_dir_in_itself(
+    aqtbot, running_backend, logged_gui_with_files, monkeypatch, autoclose_dialog, temp_dir
+):
+    w_f = logged_gui_with_files.test_get_files_widget()
+
+    assert w_f is not None
+
+    assert w_f.table_files.rowCount() == 4
+
+    await aqtbot.run(
+        w_f.table_files.setRangeSelected, QtWidgets.QTableWidgetSelectionRange(1, 0, 1, 0), True
+    )
+
+    async with aqtbot.wait_signal(w_f.table_files.cut_clicked):
+        await aqtbot.key_click(w_f.table_files, "X", modifier=QtCore.Qt.ControlModifier)
+
+    assert w_f.clipboard is not None
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    assert w_f.table_files.rowCount() == 1
+
+    async with aqtbot.wait_signal(w_f.table_files.paste_clicked):
+        await aqtbot.key_click(w_f.table_files, "V", modifier=QtCore.Qt.ControlModifier)
+
+    # Moving back
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.ParentFolder, "Parent Folder")
+
+    # Wait until the file widget is refreshed
+    while w_f.table_files.rowCount() < 4:
+        async with aqtbot.wait_signal(w_f.folder_stat_success, timeout=3000):
+            pass
+    assert w_f.table_files.rowCount() == 4
+
+    assert w_f.table_files.item(1, 1).text() == "dir1"
+    assert w_f.table_files.item(2, 1).text() == "file01.txt"
+    assert w_f.table_files.item(3, 1).text() == "file02.txt"
+
+    # Moving to sub directory
+    async with aqtbot.wait_signal(w_f.folder_stat_success):
+        w_f.table_files.item_activated.emit(FileType.Folder, "dir1")
+    assert w_f.table_files.rowCount() == 1

@@ -1220,6 +1220,15 @@ msgstr "Rename"
 msgid "FILE_MENU_DELETE"
 msgstr "Delete"
 
+msgid "FILE_MENU_COPY"
+msgstr "Copier"
+
+msgid "FILE_MENU_CUT"
+msgstr "Couper"
+
+msgid "FILE_MENU_PASTE"
+msgstr "Coller"
+
 msgid "FILE_TREE_PARENT_FOLDER"
 msgstr "Parent Folder"
 
