@@ -302,7 +302,7 @@ test_requirements = [
     "wheel",
     "Sphinx",
     "flake8==3.7.7",
-    "hypothesis==4.5.5",
+    "hypothesis==4.55.1",
     "hypothesis-trio==0.4.0",
     "trustme==0.5.2",
     "black==19.3b0",  # Pin black to avoid flaky style check
