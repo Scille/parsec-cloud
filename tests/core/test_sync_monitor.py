@@ -3,6 +3,8 @@
 import pytest
 from unittest.mock import ANY
 
+from parsec.core.backend_connection import BackendConnStatus
+
 
 @pytest.mark.trio
 async def test_autosync_on_modification(mock_clock, running_backend, alice_core, alice2_user_fs):
@@ -154,8 +156,9 @@ async def test_reconnect_with_remote_changes(
 
     with alice_core.event_bus.listen() as spy:
         # Now alice should sync back the changes
-        await spy.wait_multiple_with_timeout(
-            [("sync_monitor.reconnection_sync.started"), ("sync_monitor.reconnection_sync.done")],
+        await spy.wait_with_timeout(
+            "backend.connection.changed",
+            {"status": BackendConnStatus.READY},
             timeout=60,  # autojump, so not *really* 60s
         )
         await spy.wait_multiple_with_timeout(
@@ -164,37 +167,5 @@ async def test_reconnect_with_remote_changes(
                 ("fs.entry.downsynced", {"workspace_id": wid, "id": bar_id}),
             ],
             in_order=False,
-            timeout=60,  # autojump, so not *really* 60s
-        )
-
-
-@pytest.mark.trio
-async def test_reconnect_but_offline(mock_clock, running_backend, alice_core):
-    mock_clock.rate = 1
-    mock_clock.autojump_threshold = 0.1
-
-    with alice_core.event_bus.listen() as spy:
-        with running_backend.offline():
-            await spy.wait_with_timeout(
-                "sync_monitor.disconnected", timeout=60  # autojump, so not *really* 60s
-            )
-            spy.clear()
-
-            # TODO: waiting for "backend.offline" shouldn't be needed in theory
-            # but monitor event handling seems buggy...
-            await spy.wait_with_timeout("backend.offline", timeout=60)
-            # Lure monitors into thinking the backend is back online ;-)
-            alice_core.event_bus.send("backend.connection.bootstrapping")
-
-            await spy.wait_multiple_with_timeout(
-                ["sync_monitor.reconnection_sync.started", "sync_monitor.disconnected"],
-                timeout=60,  # autojump, so not *really* 60s
-            )
-            spy.clear()
-
-        # Backend is really back online this time
-
-        await spy.wait_multiple_with_timeout(
-            [("sync_monitor.reconnection_sync.started"), ("sync_monitor.reconnection_sync.done")],
             timeout=60,  # autojump, so not *really* 60s
         )

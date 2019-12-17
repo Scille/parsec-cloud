@@ -125,12 +125,13 @@ async def test_create_workspace_same_name(alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_sync_offline(alice_user_fs, alice):
+async def test_sync_offline(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
         await alice_user_fs.workspace_create("w1")
 
     with pytest.raises(FSBackendOfflineError):
-        await alice_user_fs.sync()
+        with running_backend.offline():
+            await alice_user_fs.sync()
 
 
 @pytest.mark.trio

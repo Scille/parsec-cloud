@@ -16,12 +16,12 @@ from parsec.api.data import (
 )
 from parsec.api.protocol import UserID, DeviceName, DeviceID
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
+
 from parsec.core.backend_connection import (
-    BackendCmdsTimeout,
+    backend_authenticated_cmds_factory,
+    backend_anonymous_cmds_factory,
     BackendConnectionError,
     BackendNotAvailable,
-    backend_cmds_pool_factory,
-    backend_anonymous_cmds_factory,
 )
 from parsec.core.local_device import generate_new_device
 from parsec.core.remote_devices_manager import (
@@ -30,6 +30,9 @@ from parsec.core.remote_devices_manager import (
     get_user_invitation_creator,
     get_device_invitation_creator,
 )
+
+
+CANCEL_INVITATION_MAX_WAIT = 3
 
 
 # TODO: wrap exceptions from lower layers
@@ -112,28 +115,21 @@ async def claim_user(
                 raise InviteClaimError(f"Cannot generate user claim message: {exc}") from exc
 
             # 3) Send claim
-            try:
-                user_certificate, device_certificate = await cmds.user_claim(
-                    new_device_id.user_id, encrypted_claim
-                )
-
-            except BackendNotAvailable as exc:
-                raise InviteClaimBackendOfflineError(str(exc)) from exc
-
-            except BackendConnectionError as exc:
-                raise InviteClaimError(f"Cannot claim user: {exc}") from exc
+            rep = await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+            if rep["status"] != "ok":
+                raise InviteClaimError(f"Cannot claim user: {rep}")
 
             # 4) Verify user&device certificates and check admin status
             try:
                 user = UserCertificateContent.verify_and_load(
-                    user_certificate,
+                    rep["user_certificate"],
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
                     expected_user=new_device_id.user_id,
                 )
 
                 DeviceCertificateContent.verify_and_load(
-                    device_certificate,
+                    rep["device_certificate"],
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
                     expected_device=new_device_id,
@@ -146,6 +142,9 @@ async def claim_user(
 
     except BackendNotAvailable as exc:
         raise InviteClaimBackendOfflineError(str(exc)) from exc
+
+    except BackendConnectionError as exc:
+        raise InviteClaimError(f"Cannot claim user: {exc}") from exc
 
     return new_device
 
@@ -194,21 +193,14 @@ async def claim_device(
                 raise InviteClaimError(f"Cannot generate device claim message: {exc}") from exc
 
             # 3) Send claim
-            try:
-                device_certificate, encrypted_answer = await cmds.device_claim(
-                    new_device_id, encrypted_claim
-                )
-
-            except BackendNotAvailable as exc:
-                raise InviteClaimBackendOfflineError(str(exc)) from exc
-
-            except BackendConnectionError as exc:
-                raise InviteClaimError(f"Cannot claim device: {exc}") from exc
+            rep = await cmds.device_claim(new_device_id, encrypted_claim)
+            if rep["status"] != "ok":
+                raise InviteClaimError(f"Claim request error: {rep}")
 
             # 4) Verify device certificate
             try:
                 DeviceCertificateContent.verify_and_load(
-                    device_certificate,
+                    rep["device_certificate"],
                     author_verify_key=invitation_creator_device.verify_key,
                     expected_author=invitation_creator_device.device_id,
                     expected_device=new_device_id,
@@ -219,7 +211,7 @@ async def claim_device(
 
             try:
                 answer = DeviceClaimAnswerContent.decrypt_and_load_for(
-                    encrypted_answer, recipient_privkey=answer_private_key
+                    rep["encrypted_answer"], recipient_privkey=answer_private_key
                 )
 
             except DataError as exc:
@@ -227,6 +219,9 @@ async def claim_device(
 
     except BackendNotAvailable as exc:
         raise InviteClaimBackendOfflineError(str(exc)) from exc
+
+    except BackendConnectionError as exc:
+        raise InviteClaimError(f"Cannot claim device: {exc}") from exc
 
     return LocalDevice(
         organization_addr=organization_addr,
@@ -252,78 +247,76 @@ async def invite_and_create_device(
         InviteClaimCryptoError
         InviteClaimInvalidTokenError
     """
-    async with backend_cmds_pool_factory(
-        device.organization_addr,
-        device.device_id,
-        device.signing_key,
-        max_pool=1,
-        keepalive=keepalive,
-    ) as cmds:
-        try:
-
+    try:
+        async with backend_authenticated_cmds_factory(
+            device.organization_addr, device.device_id, device.signing_key, keepalive=keepalive
+        ) as cmds:
             try:
-                encrypted_claim = await cmds.device_invite(new_device_name)
 
-            except BackendNotAvailable as exc:
-                raise InviteClaimBackendOfflineError(str(exc)) from exc
+                rep = await cmds.device_invite(new_device_name)
+                if rep["status"] != "ok":
+                    raise InviteClaimError(f"Cannot invite device: {rep}")
 
-            except BackendConnectionError as exc:
-                raise InviteClaimError(f"Cannot invite device: {exc}") from exc
-
-            try:
-                claim = DeviceClaimContent.decrypt_and_load_for(
-                    encrypted_claim, recipient_privkey=device.private_key
-                )
-
-            except DataError as exc:
-                raise InviteClaimCryptoError(f"Cannot decrypt device claim info: {exc}") from exc
-
-            if claim.token != token:
-                raise InviteClaimInvalidTokenError(
-                    f"Invalid claim token provided by peer: `{claim.token}`"
-                    f" (was expecting `{token}`)"
-                )
-
-            try:
-                now = pendulum.now()
-                device_certificate = DeviceCertificateContent(
-                    author=device.device_id,
-                    timestamp=now,
-                    device_id=claim.device_id,
-                    verify_key=claim.verify_key,
-                ).dump_and_sign(device.signing_key)
-
-            except DataError as exc:
-                raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
-
-            try:
-                encrypted_answer = DeviceClaimAnswerContent(
-                    private_key=device.private_key,
-                    user_manifest_id=device.user_manifest_id,
-                    user_manifest_key=device.user_manifest_key,
-                ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
-
-            except DataError as exc:
-                raise InviteClaimError(f"Cannot generate user claim answer message: {exc}") from exc
-
-        except:
-            # Cancel the invitation to prevent the claiming peer from
-            # waiting us until timeout
-            with trio.CancelScope(shield=True):
                 try:
-                    await cmds.device_cancel_invitation(new_device_name)
-                except BackendConnectionError:
-                    pass
-            raise
+                    claim = DeviceClaimContent.decrypt_and_load_for(
+                        rep["encrypted_claim"], recipient_privkey=device.private_key
+                    )
 
-        try:
-            await cmds.device_create(device_certificate, encrypted_answer)
+                except DataError as exc:
+                    raise InviteClaimCryptoError(
+                        f"Cannot decrypt device claim info: {exc}"
+                    ) from exc
 
-        except BackendNotAvailable as exc:
-            raise InviteClaimBackendOfflineError(str(exc)) from exc
+                if claim.token != token:
+                    raise InviteClaimInvalidTokenError(
+                        f"Invalid claim token provided by peer: `{claim.token}`"
+                        f" (was expecting `{token}`)"
+                    )
 
-        except BackendConnectionError as exc:
-            raise InviteClaimError(f"Cannot create device: {exc}") from exc
+                try:
+                    now = pendulum.now()
+                    device_certificate = DeviceCertificateContent(
+                        author=device.device_id,
+                        timestamp=now,
+                        device_id=claim.device_id,
+                        verify_key=claim.verify_key,
+                    ).dump_and_sign(device.signing_key)
+
+                except DataError as exc:
+                    raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
+
+                try:
+                    encrypted_answer = DeviceClaimAnswerContent(
+                        private_key=device.private_key,
+                        user_manifest_id=device.user_manifest_id,
+                        user_manifest_key=device.user_manifest_key,
+                    ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
+
+                except DataError as exc:
+                    raise InviteClaimError(
+                        f"Cannot generate user claim answer message: {exc}"
+                    ) from exc
+
+            except:
+                # Cancel the invitation to prevent the claiming peer from
+                # waiting us until timeout.
+                deadline = trio.current_time() + CANCEL_INVITATION_MAX_WAIT
+                with trio.CancelScope(shield=True, deadline=deadline):
+                    try:
+                        await cmds.device_cancel_invitation(new_device_name)
+                    except BackendConnectionError:
+                        pass
+                raise
+
+            rep = await cmds.device_create(device_certificate, encrypted_answer)
+            if rep["status"] != "ok":
+                raise InviteClaimError(f"Cannot create device: {rep}")
+
+    except BackendNotAvailable as exc:
+        raise InviteClaimBackendOfflineError(str(exc)) from exc
+
+    except BackendConnectionError as exc:
+        raise InviteClaimError(f"Cannot create device: {exc}") from exc
 
 
 async def invite_and_create_user(
@@ -342,81 +335,73 @@ async def invite_and_create_user(
         InviteClaimCryptoError
         InviteClaimInvalidTokenError
     """
-    async with backend_cmds_pool_factory(
-        device.organization_addr,
-        device.device_id,
-        device.signing_key,
-        max_pool=1,
-        keepalive=keepalive,
-    ) as cmds:
-        try:
-
+    try:
+        async with backend_authenticated_cmds_factory(
+            device.organization_addr, device.device_id, device.signing_key, keepalive=keepalive
+        ) as cmds:
             try:
-                encrypted_claim = await cmds.user_invite(user_id)
+                rep = await cmds.user_invite(user_id)
+                if rep["status"] == "timeout":
+                    raise InviteClaimTimeoutError()
+                elif rep["status"] != "ok":
+                    raise InviteClaimError(f"Cannot invite user: {rep}")
 
-            except BackendCmdsTimeout as exc:
-                raise InviteClaimTimeoutError(str(exc)) from exc
-
-            except BackendNotAvailable as exc:
-                raise InviteClaimBackendOfflineError(str(exc)) from exc
-
-            except BackendConnectionError as exc:
-                raise InviteClaimError(f"Cannot invite user: {exc}") from exc
-
-            try:
-                claim = UserClaimContent.decrypt_and_load_for(
-                    encrypted_claim, recipient_privkey=device.private_key
-                )
-
-            except DataError as exc:
-                raise InviteClaimCryptoError(f"Cannot decrypt user claim info: {exc}") from exc
-
-            if claim.token != token:
-                raise InviteClaimInvalidTokenError(
-                    f"Invalid claim token provided by peer: `{claim.token}`"
-                    f" (was expecting `{token}`)"
-                )
-
-            device_id = claim.device_id
-            now = pendulum.now()
-            try:
-
-                user_certificate = UserCertificateContent(
-                    author=device.device_id,
-                    timestamp=now,
-                    user_id=device_id.user_id,
-                    public_key=claim.public_key,
-                    is_admin=is_admin,
-                ).dump_and_sign(device.signing_key)
-                device_certificate = DeviceCertificateContent(
-                    author=device.device_id,
-                    timestamp=now,
-                    device_id=device_id,
-                    verify_key=claim.verify_key,
-                ).dump_and_sign(device.signing_key)
-
-            except DataError as exc:
-                raise InviteClaimError(
-                    f"Cannot generate user&first device certificates: {exc}"
-                ) from exc
-
-        except:
-            # Cancel the invitation to prevent the claiming peer from
-            # waiting us until timeout
-            with trio.CancelScope(shield=True):
                 try:
-                    await cmds.user_cancel_invitation(user_id)
-                except BackendConnectionError:
-                    pass
-            raise
+                    claim = UserClaimContent.decrypt_and_load_for(
+                        rep["encrypted_claim"], recipient_privkey=device.private_key
+                    )
 
-        try:
-            await cmds.user_create(user_certificate, device_certificate)
+                except DataError as exc:
+                    raise InviteClaimCryptoError(f"Cannot decrypt user claim info: {exc}") from exc
 
-        except BackendNotAvailable as exc:
-            raise InviteClaimBackendOfflineError(str(exc)) from exc
+                if claim.token != token:
+                    raise InviteClaimInvalidTokenError(
+                        f"Invalid claim token provided by peer: `{claim.token}`"
+                        f" (was expecting `{token}`)"
+                    )
 
-        except BackendConnectionError as exc:
-            raise InviteClaimError(f"Cannot create user: {exc}") from exc
+                device_id = claim.device_id
+                now = pendulum.now()
+                try:
+
+                    user_certificate = UserCertificateContent(
+                        author=device.device_id,
+                        timestamp=now,
+                        user_id=device_id.user_id,
+                        public_key=claim.public_key,
+                        is_admin=is_admin,
+                    ).dump_and_sign(device.signing_key)
+                    device_certificate = DeviceCertificateContent(
+                        author=device.device_id,
+                        timestamp=now,
+                        device_id=device_id,
+                        verify_key=claim.verify_key,
+                    ).dump_and_sign(device.signing_key)
+
+                except DataError as exc:
+                    raise InviteClaimError(
+                        f"Cannot generate user&first device certificates: {exc}"
+                    ) from exc
+
+            except:
+                # Cancel the invitation to prevent the claiming peer from
+                # waiting us until timeout
+                deadline = trio.current_time() + CANCEL_INVITATION_MAX_WAIT
+                with trio.CancelScope(shield=True, deadline=deadline):
+                    try:
+                        await cmds.user_cancel_invitation(user_id)
+                    except BackendConnectionError:
+                        pass
+                raise
+
+            rep = await cmds.user_create(user_certificate, device_certificate)
+            if rep["status"] != "ok":
+                raise InviteClaimError(f"Cannot create user: {rep}")
+
+    except BackendNotAvailable as exc:
+        raise InviteClaimBackendOfflineError(str(exc)) from exc
+
+    except BackendConnectionError as exc:
+        raise InviteClaimError(f"Cannot create user: {exc}") from exc
 
     return device_id

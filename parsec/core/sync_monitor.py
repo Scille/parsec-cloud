@@ -13,13 +13,7 @@ from parsec.core.fs import (
     FSWorkspaceNoWriteAccess,
     FSWorkspaceInMaintenance,
 )
-from parsec.core.backend_connection import (
-    BackendNotAvailable,
-    BackendCmdsNotFound,
-    BackendCmdsInMaintenance,
-    BackendCmdsNotAllowed,
-    BackendConnectionError,
-)
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 
 
 logger = get_logger()
@@ -96,25 +90,27 @@ class SyncContext:
         # 1) Fetch new checkpoint and changes
         realm_checkpoint = await self._get_local_storage().get_realm_checkpoint()
         try:
-            new_checkpoint, changes = await self._get_backend_cmds().vlob_poll_changes(
-                self.id, realm_checkpoint
-            )
+            rep = await self._get_backend_cmds().vlob_poll_changes(self.id, realm_checkpoint)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendCmdsNotFound:
-            # Workspace not yet synchronized with backend
-            new_checkpoint = 0
-            changes = {}
-
-        except (BackendCmdsInMaintenance, BackendCmdsNotAllowed):
-            return False
 
         # Another backend error
         except BackendConnectionError as exc:
             logger.warning("Unexpected backend response during sync bootstrap", exc_info=exc)
             return False
+
+        if rep["status"] == "not_found":
+            # Workspace not yet synchronized with backend
+            new_checkpoint = 0
+            changes = {}
+        if rep["status"] in ("in_maintenance", "not_allowed"):
+            return False
+        elif rep["status"] != "ok":
+            return False
+        else:
+            new_checkpoint = rep["current_checkpoint"]
+            changes = rep["changes"]
 
         # 2) Store new checkpoint and changes
         await self._get_local_storage().update_realm_checkpoint(new_checkpoint, changes)
@@ -301,7 +297,7 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def _monitor_sync_online(user_fs, event_bus):
+async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
 
@@ -351,9 +347,7 @@ async def _monitor_sync_online(user_fs, event_bus):
         ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
         ("sharing.updated", _on_sharing_updated),
     ):
-
         wait_times = []
-        event_bus.send("sync_monitor.reconnection_sync.started")
         wait_times.append(await ctxs.get(user_fs.user_manifest_id).tick())
         user_manifest = user_fs.get_user_manifest()
         for entry in user_manifest.workspaces:
@@ -361,9 +355,8 @@ async def _monitor_sync_online(user_fs, event_bus):
                 ctx = ctxs.get(entry.id)
                 if ctx:
                     wait_times.append(await _ctx_tick(ctx))
-        event_bus.send("sync_monitor.reconnection_sync.done")
 
-        event_bus.send("sync_monitor.ready")
+        task_status.started()
         while True:
             with trio.move_on_at(min(wait_times)):
                 await early_wakeup.wait()
@@ -372,33 +365,3 @@ async def _monitor_sync_online(user_fs, event_bus):
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
                 wait_times.append(await _ctx_tick(ctx))
-
-
-async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
-    cancel_scope = None
-
-    def _on_backend_conn_lost(event):
-        if cancel_scope:
-            cancel_scope.cancel()
-
-    with event_bus.waiter_on(
-        "backend.connection.bootstrapping"
-    ) as backend_conn_bootstrapping_event, event_bus.connect_in_context(
-        ("backend.connection.lost", _on_backend_conn_lost)
-    ):
-
-        task_status.started()
-
-        while True:
-            await backend_conn_bootstrapping_event.wait()
-            backend_conn_bootstrapping_event.clear()
-
-            try:
-                with trio.CancelScope() as cancel_scope:
-                    await _monitor_sync_online(user_fs, event_bus)
-
-            except FSBackendOfflineError:
-                pass
-
-            finally:
-                event_bus.send("sync_monitor.disconnected")

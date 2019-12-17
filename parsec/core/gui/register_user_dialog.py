@@ -12,6 +12,7 @@ from parsec.core.invite_claim import (
     invite_and_create_user as core_invite_and_create_user,
 )
 from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimUserAddr
+
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
 from parsec.core.gui import validators
@@ -28,12 +29,16 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
         raise JobResultError("registration-invite-bad-value") from exc
 
     try:
-        users = await core.user_fs.backend_cmds.user_find(new_user_id)
+        rep = await core.user_fs.backend_cmds.user_find(new_user_id)
     except BackendNotAvailable as exc:
         raise JobResultError("registration-invite-offline") from exc
     except BackendConnectionError as exc:
         raise JobResultError("registration-invite-error", info=str(exc)) from exc
-    for u in users:
+
+    if rep["status"] != "ok":
+        raise JobResultError("registration-invite-error", info=str(rep))
+
+    for u in rep["users"]:
         if u == new_user_id:
             raise JobResultError("registration-invite-already-exists")
 

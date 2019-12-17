@@ -28,6 +28,7 @@ from parsec.api.transport import Transport
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
+from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.core.fs.storage import LocalDatabase, local_database
 
@@ -664,7 +665,9 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
                 # Henc we risk concurrency issues if the connection to backend
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
-                    await spy.wait_with_timeout("backend.connection.ready")
+                    await spy.wait_with_timeout(
+                        "backend.connection.changed", {"status": BackendConnStatus.READY}
+                    )
 
                 yield core
 

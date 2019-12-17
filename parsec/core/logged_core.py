@@ -1,19 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
 import attr
 from typing import Optional
 from structlog import get_logger
+from functools import partial
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
-from parsec.core.backend_connection import (
-    backend_cmds_pool_factory,
-    backend_listen_events,
-    monitor_backend_connection,
-)
+from parsec.core.backend_connection import BackendAuthenticatedConn
 from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.messages_monitor import monitor_messages
@@ -31,8 +27,12 @@ class LoggedCore:
     event_bus = attr.ib()
     remote_devices_manager = attr.ib()
     mountpoint_manager = attr.ib()
-    backend_cmds = attr.ib()
+    backend_conn = attr.ib()
     user_fs = attr.ib()
+
+    @property
+    def backend_cmds(self):
+        return self.backend_conn.cmds
 
 
 @asynccontextmanager
@@ -41,57 +41,37 @@ async def logged_core_factory(
 ):
     event_bus = event_bus or EventBus()
 
-    # Plenty of nested scopes to order components init/teardown
-    async with trio.open_service_nursery() as root_nursery:
+    backend_conn = BackendAuthenticatedConn(
+        addr=device.organization_addr,
+        device_id=device.device_id,
+        signing_key=device.signing_key,
+        event_bus=event_bus,
+        max_cooldown=config.backend_max_cooldown,
+        max_pool=config.backend_max_connections,
+        keepalive=config.backend_connection_keepalive,
+    )
 
-        async with backend_cmds_pool_factory(
-            device.organization_addr,
-            device.device_id,
-            device.signing_key,
-            max_pool=config.backend_max_connections,
-            keepalive=config.backend_connection_keepalive,
-        ) as backend_cmds_pool:
+    path = config.data_base_dir / device.slug
+    remote_devices_manager = RemoteDevicesManager(backend_conn.cmds, device.root_verify_key)
+    async with UserFS.run(
+        device, path, backend_conn.cmds, remote_devices_manager, event_bus
+    ) as user_fs:
 
-            path = config.data_base_dir / device.slug
-            remote_devices_manager = RemoteDevicesManager(backend_cmds_pool, device.root_verify_key)
-            async with UserFS.run(
-                device, path, backend_cmds_pool, remote_devices_manager, event_bus
-            ) as user_fs:
+        backend_conn.register_monitor(partial(monitor_messages, user_fs, event_bus))
+        backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
 
-                async with trio.open_service_nursery() as monitor_nursery:
-                    # Finally start monitors
+        async with backend_conn.run():
 
-                    # Monitor connection must be first given it will watch on
-                    # other monitors' events
-                    await monitor_nursery.start(monitor_backend_connection, event_bus)
-                    await monitor_nursery.start(monitor_messages, user_fs, event_bus)
-                    await monitor_nursery.start(monitor_sync, user_fs, event_bus)
+            async with mountpoint_manager_factory(
+                user_fs, event_bus, config.mountpoint_base_dir, enabled=config.mountpoint_enabled
+            ) as mountpoint_manager:
 
-                    # At startup monitors consider the backend connection is offline
-                    # Hence `backend_listen_events` should be started after them
-                    # to make sure it wont send a `backend.online` event too early
-                    await root_nursery.start(
-                        backend_listen_events,
-                        device,
-                        event_bus,
-                        config.backend_connection_keepalive,
-                    )
-
-                    async with mountpoint_manager_factory(
-                        user_fs,
-                        event_bus,
-                        config.mountpoint_base_dir,
-                        enabled=config.mountpoint_enabled,
-                    ) as mountpoint_manager:
-
-                        yield LoggedCore(
-                            config=config,
-                            device=device,
-                            event_bus=event_bus,
-                            remote_devices_manager=remote_devices_manager,
-                            mountpoint_manager=mountpoint_manager,
-                            backend_cmds=backend_cmds_pool,
-                            user_fs=user_fs,
-                        )
-                    monitor_nursery.cancel_scope.cancel()
-        root_nursery.cancel_scope.cancel()
+                yield LoggedCore(
+                    config=config,
+                    device=device,
+                    event_bus=event_bus,
+                    remote_devices_manager=remote_devices_manager,
+                    mountpoint_manager=mountpoint_manager,
+                    backend_conn=backend_conn,
+                    user_fs=user_fs,
+                )

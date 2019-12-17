@@ -11,11 +11,8 @@ from parsec.core.remote_devices_manager import (
     RemoteDevicesManagerError,
     RemoteDevicesManagerBackendOfflineError,
 )
-from parsec.core.backend_connection import (
-    BackendConnectionError,
-    BackendNotAvailable,
-    BackendCmdsBadResponse,
-)
+
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
@@ -103,10 +100,10 @@ async def _do_revoke_user(core, user_name, button):
         revoked_device_certificate = RevokedUserCertificateContent(
             author=core.device.device_id, timestamp=now, user_id=UserID(user_name)
         ).dump_and_sign(core.device.signing_key)
-        await core.user_fs.backend_cmds.user_revoke(revoked_device_certificate)
+        rep = await core.user_fs.backend_cmds.user_revoke(revoked_device_certificate)
+        if rep["status"] != "ok":
+            raise JobResultError(rep["status"])
         return button
-    except BackendCmdsBadResponse as exc:
-        raise JobResultError(exc.status) from exc
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
@@ -115,16 +112,16 @@ async def _do_revoke_user(core, user_name, button):
 
 async def _do_list_users(core):
     try:
-        users = await core.user_fs.backend_cmds.user_find()
-    except BackendCmdsBadResponse as exc:
-        raise JobResultError(exc.status) from exc
+        rep = await core.user_fs.backend_cmds.user_find()
+        if rep["status"] != "ok":
+            raise JobResultError(rep["status"])
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
     except BackendConnectionError as exc:
         raise JobResultError("error") from exc
     try:
         ret = []
-        for user in users:
+        for user in rep["users"]:
             user_info, user_revoked_info = await core.remote_devices_manager.get_user(user)
             ret.append((user_info, user_revoked_info))
         return ret

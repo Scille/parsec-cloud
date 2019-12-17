@@ -10,11 +10,10 @@ from parsec.api.data import (
     RevokedUserCertificateContent,
 )
 from parsec.core.backend_connection import (
-    BackendCmdsPool,
+    BackendAuthenticatedCmds,
     BackendAnonymousCmds,
     BackendConnectionError,
     BackendNotAvailable,
-    BackendCmdsNotFound,
 )
 from parsec.core.trustchain import TrustchainContext, TrustchainError
 
@@ -54,7 +53,7 @@ class RemoteDevicesManager:
 
     def __init__(
         self,
-        backend_cmds: BackendCmdsPool,
+        backend_cmds: BackendAuthenticatedCmds,
         root_verify_key: VerifyKey,
         cache_validity: int = DEFAULT_CACHE_VALIDITY,
     ):
@@ -134,31 +133,27 @@ class RemoteDevicesManager:
             RemoteDevicesManagerInvalidTrustchainError
         """
         try:
-            uv_user, uv_revoked_user, uv_devices, trustchain = await self._backend_cmds.user_get(
-                user_id
-            )
-
+            rep = await self._backend_cmds.user_get(user_id)
         except BackendNotAvailable as exc:
             raise RemoteDevicesManagerBackendOfflineError(
                 f"User `{user_id}` is not in local cache and we are offline."
             ) from exc
-
-        except BackendCmdsNotFound as exc:
-            raise RemoteDevicesManagerNotFoundError(
-                f"User `{user_id}` doesn't exist in backend"
-            ) from exc
-
         except BackendConnectionError as exc:
             raise RemoteDevicesManagerError(
                 f"Failed to fetch user `{user_id}` from the backend: {exc}"
             ) from exc
 
+        if rep["status"] == "not_found":
+            raise RemoteDevicesManagerNotFoundError(f"User `{user_id}` doesn't exist in backend")
+        elif rep["status"] != "ok":
+            raise RemoteDevicesManagerError(f"Cannot fetch user {user_id}: `{rep['status']}`")
+
         try:
             return self._trustchain_ctx.load_user_and_devices(
-                trustchain=trustchain,
-                user_certif=uv_user,
-                revoked_user_certif=uv_revoked_user,
-                devices_certifs=uv_devices,
+                trustchain=rep["trustchain"],
+                user_certif=rep["user_certificate"],
+                revoked_user_certif=rep["revoked_user_certificate"],
+                devices_certifs=rep["device_certificates"],
                 expected_user_id=user_id,
             )
         except TrustchainError as exc:
@@ -178,30 +173,28 @@ async def get_device_invitation_creator(
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
-        user_certificate, device_certificate, trustchain = await backend_cmds.device_get_invitation_creator(
-            new_device_id
-        )
-
+        rep = await backend_cmds.device_get_invitation_creator(new_device_id)
     except BackendNotAvailable as exc:
         raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
-
-    except BackendCmdsNotFound as exc:
-        raise RemoteDevicesManagerNotFoundError(
-            f"User `{new_device_id}` doesn't exist in backend"
-        ) from exc
-
     except BackendConnectionError as exc:
         raise RemoteDevicesManagerError(
             "Failed to fetch invitation creator for device "
             f"`{new_device_id}` from the backend: {exc}"
         ) from exc
 
+    if rep["status"] == "not_found":
+        raise RemoteDevicesManagerNotFoundError(f"User `{new_device_id}` doesn't exist in backend")
+    elif rep["status"] != "ok":
+        raise RemoteDevicesManagerError(
+            f"Cannot fetch invitation creator for device `{new_device_id}`: `{rep['status']}`"
+        )
+
     try:
         ctx = TrustchainContext(root_verify_key, DEFAULT_CACHE_VALIDITY)
         user, _, (device,) = ctx.load_user_and_devices(
-            trustchain=trustchain,
-            user_certif=user_certificate,
-            devices_certifs=(device_certificate,),
+            trustchain=rep["trustchain"],
+            user_certif=rep["user_certificate"],
+            devices_certifs=(rep["device_certificate"],),
         )
     except TrustchainError as exc:
         raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
@@ -220,30 +213,28 @@ async def get_user_invitation_creator(
         RemoteDevicesManagerInvalidTrustchainError
     """
     try:
-        user_certificate, device_certificate, trustchain = await backend_cmds.user_get_invitation_creator(
-            new_user_id
-        )
-
+        rep = await backend_cmds.user_get_invitation_creator(new_user_id)
     except BackendNotAvailable as exc:
         raise RemoteDevicesManagerBackendOfflineError(*exc.args) from exc
-
-    except BackendCmdsNotFound as exc:
-        raise RemoteDevicesManagerNotFoundError(
-            f"User `{new_user_id}` doesn't exist in backend"
-        ) from exc
-
     except BackendConnectionError as exc:
         raise RemoteDevicesManagerError(
             "Failed to fetch invitation creator for user "
             f"`{new_user_id}` from the backend: {exc}"
         ) from exc
 
+    if rep["status"] == "not_found":
+        raise RemoteDevicesManagerNotFoundError(f"User `{new_user_id}` doesn't exist in backend")
+    elif rep["status"] != "ok":
+        raise RemoteDevicesManagerError(
+            f"Cannot fetch invitation creator for device `{new_user_id}`: `{rep['status']}`"
+        )
+
     try:
         ctx = TrustchainContext(root_verify_key, DEFAULT_CACHE_VALIDITY)
         user, _, (device,) = ctx.load_user_and_devices(
-            trustchain=trustchain,
-            user_certif=user_certificate,
-            devices_certifs=(device_certificate,),
+            trustchain=rep["trustchain"],
+            user_certif=rep["user_certificate"],
+            devices_certifs=(rep["device_certificate"],),
         )
     except TrustchainError as exc:
         raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc

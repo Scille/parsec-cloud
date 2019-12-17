@@ -10,11 +10,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from parsec.core import logged_core_factory
 from parsec.core.local_device import LocalDeviceError, load_device_with_password
 from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
-from parsec.core.backend_connection import (
-    BackendHandshakeError,
-    BackendHandshakeAPIVersionError,
-    BackendDeviceRevokedError,
-)
 
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.custom_dialogs import show_error
@@ -177,18 +172,6 @@ class InstanceWidget(QWidget):
                 self.start_core(device)
         except LocalDeviceError as exc:
             message = _("ERR_LOGIN_AUTH_FAILED")
-            exception = exc
-
-        except BackendHandshakeAPIVersionError as exc:
-            message = _("ERR_LOGIN_INCOMPATIBLE_VERSION")
-            exception = exc
-
-        except BackendDeviceRevokedError as exc:
-            message = _("ERR_LOGIN_DEVICE_REVOKED")
-            exception = exc
-
-        except BackendHandshakeError as exc:
-            message = _("ERR_LOGIN_UNKNOWN_USER")
             exception = exc
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:

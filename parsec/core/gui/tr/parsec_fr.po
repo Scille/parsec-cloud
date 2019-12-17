@@ -1288,9 +1288,6 @@ msgstr "Fermer"
 msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "Cet appareil a été révoqué."
-
 msgid "ERR_LOGIN_UNKNOWN"
 msgstr "Impossible de se connecter."
 
@@ -1299,12 +1296,6 @@ msgstr "Cet appareil est déjà connecté."
 
 msgid "ERR_LOGIN_AUTH_FAILED"
 msgstr "L'authentification a échoué."
-
-msgid "ERR_LOGIN_INCOMPATIBLE_VERSION"
-msgstr "Cette version de l'application est incompatible avec le serveur."
-
-msgid "ERR_LOGIN_UNKNOWN_USER"
-msgstr "L'utilisateur n'est pas enregistré sur le serveur."
 
 msgid "ERR_LOGIN_MOUNTPOINT"
 msgstr "Le point de montage est déjà utilisé."
@@ -1379,14 +1370,11 @@ msgstr "La nouvelle configuration sera effective au redémarrage de l'applicatio
 msgid "BUTTON_TASKBAR_NOTIFICATION"
 msgstr "Afficher les notifications."
 
-msgid "NOTIF_WARN_INCOMPATIBLE_VERSION"
-msgstr "Cette version de l'application est incompatible avec le serveur."
+msgid "NOTIF_WARN_CONNECTION_REFUSED"
+msgstr "Le serveur a rejeté notre tentative de connexion."
 
-msgid "NOTIF_WARN_RVK_MISMATCH"
-msgstr "Connexion impossible. La Root Verify Key diffère entre le client et le serveur."
-
-msgid "NOTIF_WARN_DEVICE_REVOKED"
-msgstr "Connection impossible. Vous avez été révoqué du serveur."
+msgid "NOTIF_WARN_CONNECTION_CRASHED"
+msgstr "Une erreur inattendue est arrivée pendant notre tentative de connexion au serveur."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Le point de montage a été perdu."
@@ -1432,14 +1420,11 @@ msgstr "Connecté"
 msgid "BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "BACKEND_STATE_INCOMPATIBLE_VERSION"
-msgstr "Version incompatible"
+msgid "BACKEND_STATE_REFUSED"
+msgstr "Connexion refusée par le serveur"
 
-msgid "BACKEND_STATE_RVK_MISMATCH"
-msgstr "La root verify key est différente du serveur"
-
-msgid "BACKEND_STATE_DEVICE_REVOKED"
-msgstr "Vous avez été révoqué par le serveur"
+msgid "BACKEND_STATE_CRASHED"
+msgstr "Connexion indisponible à cause d'une erreur interne :'("
 
 msgid "MENU_DOCUMENTS"
 msgstr "Documents"

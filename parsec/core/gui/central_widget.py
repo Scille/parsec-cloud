@@ -176,26 +176,20 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
 
-        elif status == BackendConnStatus.INCOMPATIBLE_VERSION:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_INCOMPATIBLE_VERSION"))
+        elif status == BackendConnStatus.REFUSED:
+            # TODO: provide better message for each possible refused reason
+            self.menu.label_connection_text.setText(_("BACKEND_STATE_REFUSED"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
+            self.new_notification.emit("WARNING", _("NOTIF_WARN_CONNECTION_REFUSED"))
 
-        elif status == BackendConnStatus.RVK_MISMATCH:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_RVK_MISMATCH"))
+        elif status == BackendConnStatus.CRASHED:
+            self.menu.label_connection_text.setText(_("BACKEND_STATE_CRASHED"))
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
-            self.new_notification.emit("ERROR", _("NOTIF_WARN_RVK_MISMATCH"))
-
-        elif status == BackendConnStatus.DEVICE_REVOKED:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_DEVICE_REVOKED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_offline.png")
-            )
-            self.new_notification.emit("ERROR", _("NOTIF_WARN_DEVICE_REVOKED"))
+            self.new_notification.emit("ERROR", _("NOTIF_WARN_CONNECTION_CRASHED"))
 
     def on_new_notification(self, notif_type, msg):
         self.notification_center.add_notification(notif_type, msg)
