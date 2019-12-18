@@ -2,7 +2,7 @@
 
 import attr
 import trio
-from typing import List, NamedTuple
+from typing import List, Tuple, NamedTuple
 from pendulum import Pendulum
 
 from parsec.api.data import Manifest as RemoteManifest
@@ -17,6 +17,10 @@ class EntryNotFound(Exception):
 
 
 class ManifestCacheNotFound(Exception):
+    pass
+
+
+class ManifestCacheDownloadLimitReached(Exception):
     pass
 
 
@@ -170,9 +174,15 @@ class ManifestCache:
                     timestamp, self._manifest_cache[manifest.id][manifest.version].late, manifest
                 )
 
-    async def load(self, entry_id: EntryID, version=None, timestamp=None):
+    async def load(
+        self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
+    ) -> Tuple[RemoteManifest, bool]:
         """
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache
+
+        Returns:
+            A tuple containing the manifest that has been downloaded or gotten from then cache, and
+            a boolean indicating if downloading it was required
 
         Raises:
             FSError
@@ -183,14 +193,14 @@ class ManifestCache:
             FSWorkspaceNoAccess
         """
         try:
-            return self.get(entry_id, version=version, timestamp=timestamp)
+            return (self.get(entry_id, version=version, timestamp=timestamp), False)
         except ManifestCacheNotFound:
             pass
         manifest = await self._remote_loader.load_manifest(
             entry_id, version=version, timestamp=timestamp
         )
         self.update(manifest, entry_id, version=version, timestamp=timestamp)
-        return manifest
+        return (manifest, True)
 
     async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: Pendulum) -> FsPath:
         """
@@ -210,7 +220,7 @@ class ManifestCache:
         # Get first manifest
         try:
             current_id = entry_id
-            current_manifest = await self.load(current_id, timestamp=timestamp)
+            current_manifest, _ = await self.load(current_id, timestamp=timestamp)
         except FSRemoteManifestNotFound:
             raise EntryNotFound(entry_id)
 
@@ -220,7 +230,7 @@ class ManifestCache:
 
             # Get the manifest
             try:
-                parent_manifest = await self.load(current_manifest.parent, timestamp=timestamp)
+                parent_manifest, _ = await self.load(current_manifest.parent, timestamp=timestamp)
             except FSRemoteManifestNotFound:
                 raise EntryNotFound(entry_id)
 
@@ -238,6 +248,38 @@ class ManifestCache:
 
         # Return the path
         return FsPath("/" + "/".join(reversed(parts)))
+
+
+class ManifestCacheCounter:
+    """
+    Exposes a ManifestCache but simplifies the count of backend calls
+
+    The number of downloads allowed is unlimited if limit is None or 0
+
+    Raises:
+        ManifestCacheDownloadLimitReached
+    """
+
+    def __init__(self, manifest_cache: ManifestCache, limit: int):
+        self._manifest_cache = manifest_cache
+        self.counter = 0
+        self.limit = limit
+
+    async def load(
+        self, entry_id: EntryID, version=None, timestamp=None
+    ) -> Tuple[RemoteManifest, bool]:
+        if self.limit and self.limit == self.counter:
+            raise ManifestCacheDownloadLimitReached
+        manifest, was_downloaded = await self._manifest_cache.load(entry_id, version, timestamp)
+        if was_downloaded:
+            self.counter += 1
+        return manifest
+
+    async def get_path_at_timestamp(self, entry_id: EntryID, timestamp: Pendulum) -> FsPath:
+        """
+        Simpler not to count manifest used for pathfinding as they are probably already cached
+        """
+        return await self._manifest_cache.get_path_at_timestamp(entry_id, timestamp)
 
 
 class VersionsListCache:
@@ -266,92 +308,64 @@ class VersionsListCache:
         return self._versions_list_cache[entry_id]
 
 
+class VersionListerTask:
+    """
+    Defines a task that has to be done in the future, including callback and args
+    """
+
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+
+class VersionListerTaskList:
+    """
+    Enables prioritization of tasks, as it is better to be able to configure it that way
+    """
+
+    # TODO : use min stack for minimal, use nursery for coroutines
+    def __init__(self, manifest_cache, versions_list_cache):
+        self.tasks = {}
+        self.manifest_cache = manifest_cache
+        self.versions_list_cache = versions_list_cache
+        # self.nursery = nursery
+
+    def add(self, timestamp: Pendulum, task: VersionListerTask):
+        if timestamp in self.tasks:
+            self.tasks[timestamp].append(task)
+        else:
+            self.tasks[timestamp] = [task]
+
+    def min(self):
+        return min(self.tasks.keys())
+
+    def is_empty(self):
+        return self.tasks == {}
+
+    async def execute_one(self):
+        min = self.min()
+        task = self.tasks[min].pop()
+        if len(self.tasks[min]) == 0:
+            del self.tasks[min]
+        await task.callback(self, *task.args, **task.kwargs)
+
+    async def execute(self, number: int = 1):
+        for i in range(number):
+            await self.execute_one()
+
+
 class VersionLister:
-    def __init__(self, workspace_fs, manifest_cache=None, versions_list_cache=None):
-        self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
+    def __init__(
+        self, workspace_fs, manifest_cache=None, versions_list_cache=None, download_limit=0
+    ):
+        self.manifest_cache = ManifestCacheCounter(
+            manifest_cache or ManifestCache(workspace_fs.remote_loader), download_limit
+        )
         self.versions_list_cache = versions_list_cache or VersionsListCache(
             workspace_fs.remote_loader
         )
         self.workspace_fs = workspace_fs
-
-    async def _populate_tree_load(
-        self,
-        nursery,
-        target: FsPath,
-        path_level: int,
-        tree: dict,
-        entry_id: EntryID,
-        early: Pendulum,
-        late: Pendulum,
-        version_number: int,
-        next_version_number: int,
-    ):
-        if early > late:
-            return
-        manifest = await self.manifest_cache.load(entry_id, version=version_number)
-        data = ManifestDataAndMutablePaths(
-            ManifestData(
-                manifest.author,
-                manifest.updated,
-                is_folder_manifest(manifest),
-                None if not is_file_manifest(manifest) else manifest.size,
-            )
-        )
-        if len(target.parts) == path_level:
-            await data.populate_paths(
-                self.manifest_cache, entry_id, early.add(microseconds=-1), early, late
-            )
-            tree[
-                TimestampBoundedEntry(manifest.id, manifest.version, early, late)
-            ] = ManifestDataAndPaths(
-                data=data.manifest,
-                source=data.source_path if data.source_path != data.current_path else None,
-                destination=data.destination_path
-                if data.destination_path != data.current_path
-                else None,
-            )
-        else:
-            if not is_file_manifest(manifest):
-                for child_name, child_id in manifest.children.items():
-                    if child_name == target.parts[path_level]:
-                        return await self._populate_tree_list_versions(
-                            nursery,
-                            target,
-                            path_level + 1,
-                            tree,
-                            child_id,
-                            early if early > manifest.updated else manifest.updated,
-                            late,
-                        )
-            else:
-                pass  # TODO : Broken path. What to do?
-
-    async def _populate_tree_list_versions(
-        self,
-        nursery,
-        target: FsPath,
-        path_level: int,
-        tree: dict,
-        entry_id: EntryID,
-        early: Pendulum,
-        late: Pendulum,
-    ):
-        # TODO : Check if directory, melt the same entries through different parent
-        versions = await self.versions_list_cache.load(entry_id)
-        for version, (timestamp, creator) in versions.items():
-            next_version = min((v for v in versions if v > version), default=None)
-            nursery.start_soon(
-                self._populate_tree_load,
-                nursery,
-                target,
-                path_level,
-                tree,
-                entry_id,
-                max(early, timestamp),
-                late if next_version not in versions else min(late, versions[next_version][0]),
-                version,
-                next_version,
-            )
 
     def sanitize_list(self, versions_list, skip_minimal_sync):
         previous = None
@@ -400,31 +414,46 @@ class VersionLister:
         return new_list
 
     async def list(
-        self, path: FsPath, skip_minimal_sync: bool = True
-    ) -> List[TimestampBoundedData]:
+        self,
+        path: FsPath,
+        skip_minimal_sync: bool = True,
+        starting_timestamp: Pendulum = None,
+        ending_timestamp: Pendulum = None,
+        max_manifest_queries: int = None,
+    ) -> Tuple[List[TimestampBoundedData], bool]:
         """
+        Returns:
+            A tuple containing a list of TimestampBoundedData and a bool indicating wether the
+            download limit has been reached
         Raises:
             FSError
             FSBackendOfflineError
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
         """
-        print(skip_minimal_sync)
         return_tree = {}
         root_manifest = await self.workspace_fs.transactions._get_manifest(
             self.workspace_fs.workspace_id
         )
-        async with trio.open_service_nursery() as nursery:
-            nursery.start_soon(
-                self._populate_tree_list_versions,
-                nursery,
-                path,
-                0,
-                return_tree,
-                root_manifest.id,
-                root_manifest.created,
-                Pendulum.now(),
+        download_limit_reached = False
+        try:
+            task_list = VersionListerTaskList(self.manifest_cache, self.versions_list_cache)
+            task_list.add(
+                starting_timestamp or root_manifest.created,
+                VersionListerTask(
+                    _populate_tree_list_versions,
+                    path,
+                    0,
+                    return_tree,
+                    root_manifest.id,
+                    starting_timestamp or root_manifest.created,
+                    ending_timestamp or Pendulum.now(),
+                ),
             )
+            while not task_list.is_empty():
+                await task_list.execute_one()
+        except ManifestCacheDownloadLimitReached:  # TODO : what is limit?..
+            download_limit_reached = True
         versions_list = [
             TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
             for item in sorted(
@@ -432,4 +461,85 @@ class VersionLister:
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
         ]
-        return self.sanitize_list(versions_list, skip_minimal_sync)
+        return (self.sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
+
+
+async def _populate_tree_load(
+    task_list,
+    target: FsPath,
+    path_level: int,
+    tree: dict,
+    entry_id: EntryID,
+    early: Pendulum,
+    late: Pendulum,
+    version_number: int,
+    next_version_number: int,
+):
+    if early > late:
+        return
+    manifest = await task_list.manifest_cache.load(entry_id, version=version_number)
+    data = ManifestDataAndMutablePaths(
+        ManifestData(
+            manifest.author,
+            manifest.updated,
+            is_folder_manifest(manifest),
+            None if not is_file_manifest(manifest) else manifest.size,
+        )
+    )
+    if len(target.parts) == path_level:
+        await data.populate_paths(
+            task_list.manifest_cache, entry_id, early.add(microseconds=-1), early, late
+        )
+        tree[
+            TimestampBoundedEntry(manifest.id, manifest.version, early, late)
+        ] = ManifestDataAndPaths(
+            data=data.manifest,
+            source=data.source_path if data.source_path != data.current_path else None,
+            destination=data.destination_path
+            if data.destination_path != data.current_path
+            else None,
+        )
+    else:
+        if not is_file_manifest(manifest):
+            for child_name, child_id in manifest.children.items():
+                if child_name == target.parts[path_level]:
+                    return await _populate_tree_list_versions(
+                        task_list,
+                        target,
+                        path_level + 1,
+                        tree,
+                        child_id,
+                        early if early > manifest.updated else manifest.updated,
+                        late,
+                    )
+        else:
+            pass  # TODO : Broken path. What to do?
+
+
+async def _populate_tree_list_versions(
+    task_list,
+    target: FsPath,
+    path_level: int,
+    tree: dict,
+    entry_id: EntryID,
+    early: Pendulum,
+    late: Pendulum,
+):
+    # TODO : Check if directory, melt the same entries through different parent
+    versions = await task_list.versions_list_cache.load(entry_id)
+    for version, (timestamp, creator) in versions.items():
+        next_version = min((v for v in versions if v > version), default=None)
+        task_list.add(
+            max(early, timestamp),
+            VersionListerTask(
+                _populate_tree_load,
+                target,
+                path_level,
+                tree,
+                entry_id,
+                max(early, timestamp),
+                late if next_version not in versions else min(late, versions[next_version][0]),
+                version,
+                next_version,
+            ),
+        )

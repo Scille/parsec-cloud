@@ -11,7 +11,8 @@ from parsec.core.gui.ui.file_history_dialog import Ui_FileHistoryDialog
 
 async def _do_workspace_version(workspace_fs, path):
     version_lister = workspace_fs.get_version_lister()
-    return await version_lister.list(path)
+    return (await version_lister.list(path, max_manifest_queries=200))[0]  # TODO : better
+    # TODO : check no exception raised, create tests...
 
 
 class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
