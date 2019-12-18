@@ -34,10 +34,19 @@ from parsec.backend.postgresql.user_queries.create import _create_user
 
 
 _q_insert_organization = (
-    Query.into(t_organization)
-    .columns("organization_id", "bootstrap_token", "expiration_date")
-    .insert(Parameter("$1"), Parameter("$2"), Parameter("$3"))
-    .get_sql()
+    (
+        Query.into(t_organization)
+        .columns("organization_id", "bootstrap_token", "expiration_date")
+        .insert(Parameter("$1"), Parameter("$2"), Parameter("$3"))
+        .get_sql()
+    )
+    + """
+ON CONFLICT (organization_id) DO
+    UPDATE SET
+        bootstrap_token = EXCLUDED.bootstrap_token,
+        expiration_date = EXCLUDED.expiration_date
+    WHERE organization.root_verify_key is NULL
+"""
 )
 
 
@@ -93,7 +102,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 raise OrganizationAlreadyExistsError()
 
             if result != "INSERT 0 1":
-                raise OrganizationError(f"Insertion error: {result}")
+                raise OrganizationAlreadyExistsError()
 
     async def get(self, id: OrganizationID) -> Organization:
         async with self.dbh.pool.acquire() as conn:
