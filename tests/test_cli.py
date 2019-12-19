@@ -149,7 +149,7 @@ def test_init_backend(postgresql_url, unused_tcp_port):
         pass
 
 
-@pytest.fixture(params=(False, True))
+@pytest.fixture(params=(False, True), ids=("no_ssl", "ssl"))
 def ssl_conf(request):
     @attr.s
     class SSLConf:
