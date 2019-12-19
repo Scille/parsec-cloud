@@ -217,6 +217,9 @@ height: 16px;
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <property name="topMargin">
          <number>0</number>
         </property>
@@ -329,6 +332,13 @@ height: 16px;
             <string>LABEL_FILE_DESTINATION</string>
            </property>
           </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_load_more_entries">
+          <property name="text">
+           <string>BUTTON_LOAD_MORE_ENTRIES</string>
+          </property>
          </widget>
         </item>
        </layout>

@@ -9,9 +9,8 @@ from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.ui.file_history_dialog import Ui_FileHistoryDialog
 
 
-async def _do_workspace_version(workspace_fs, path):
-    version_lister = workspace_fs.get_version_lister()
-    return (await version_lister.list(path, max_manifest_queries=200))[0]  # TODO : better
+async def _do_workspace_version(version_lister, path):
+    return await version_lister.list(path, max_manifest_queries=200)
     # TODO : check no exception raised, create tests...
 
 
@@ -40,10 +39,16 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.get_versions_success.connect(self.add_history)
         self.get_versions_error.connect(self.show_error)
         self.button_close.clicked.connect(self.close_dialog)
+        self.button_load_more_entries.clicked.connect(self.reset_dialog)
         self.workspace_fs = workspace_fs
-        self.reset_dialog(workspace_fs, path)
+        self.version_lister = workspace_fs.get_version_lister()
+        self.loading_in_progress = False
+        self.reset_dialog(workspace_fs, self.version_lister, path)
 
-    def reset_dialog(self, workspace_fs, path):
+    def reset_dialog(self, workspace_fs, version_lister, path):
+        if self.loading_in_progress:
+            return
+        self.loading_in_progress = True
         file_name = path.name
         if len(file_name) > 64:
             file_name = file_name[:64] + "..."
@@ -55,12 +60,14 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
             ThreadSafeQtSignal(self, "get_versions_success"),
             ThreadSafeQtSignal(self, "get_versions_error"),
             _do_workspace_version,
-            workspace_fs=self.workspace_fs,
+            version_lister=self.version_lister,
             path=path,
         )
 
     def add_history(self):
-        versions_list = self.versions_job.ret
+        versions_list, download_limit_reached = self.versions_job.ret
+        if download_limit_reached:
+            self.button_load_more_entries.setVisible(False)
         self.versions_job = None
         for v in versions_list:
             self.versions_table.add_item(
@@ -75,6 +82,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
                 source_path=v.source,
                 destination_path=v.destination,
             )
+        self.loading_in_progress = False
 
     def show_error(self):
         if self.versions_job and self.versions_job.status != "cancelled":

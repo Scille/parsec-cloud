@@ -356,12 +356,8 @@ class VersionListerTaskList:
 
 
 class VersionLister:
-    def __init__(
-        self, workspace_fs, manifest_cache=None, versions_list_cache=None, download_limit=0
-    ):
-        self.manifest_cache = ManifestCacheCounter(
-            manifest_cache or ManifestCache(workspace_fs.remote_loader), download_limit
-        )
+    def __init__(self, workspace_fs, manifest_cache=None, versions_list_cache=None):
+        self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
             workspace_fs.remote_loader
         )
@@ -435,9 +431,12 @@ class VersionLister:
         root_manifest = await self.workspace_fs.transactions._get_manifest(
             self.workspace_fs.workspace_id
         )
-        download_limit_reached = False
+        download_limit_reached = True
         try:
-            task_list = VersionListerTaskList(self.manifest_cache, self.versions_list_cache)
+            task_list = VersionListerTaskList(
+                ManifestCacheCounter(self.manifest_cache, max_manifest_queries),
+                self.versions_list_cache,
+            )
             task_list.add(
                 starting_timestamp or root_manifest.created,
                 VersionListerTask(
@@ -453,7 +452,7 @@ class VersionLister:
             while not task_list.is_empty():
                 await task_list.execute_one()
         except ManifestCacheDownloadLimitReached:  # TODO : what is limit?..
-            download_limit_reached = True
+            download_limit_reached = False
         versions_list = [
             TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
             for item in sorted(
