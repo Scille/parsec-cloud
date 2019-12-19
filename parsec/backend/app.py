@@ -370,7 +370,7 @@ class BackendApp:
                 await stream.send_all(content + content_body)
                 await stream.aclose()
 
-            except TransportError:
+            except trio.BrokenResourceError:
                 # Stream is really dead, nothing else to do...
                 pass
 
