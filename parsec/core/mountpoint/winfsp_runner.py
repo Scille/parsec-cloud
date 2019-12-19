@@ -3,7 +3,7 @@
 import trio
 import unicodedata
 from zlib import adler32
-from pathlib import PurePath
+from pathlib import Path
 from structlog import get_logger
 from itertools import count
 from winfspy import FileSystem, enable_debug_log
@@ -20,10 +20,47 @@ __all__ = ("winfsp_mountpoint_runner",)
 logger = get_logger()
 
 
-async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_name) -> PurePath:
+async def cleanup_broken_links(path: trio.Path) -> None:
+    def target():
+        for child in sync_path.iterdir():
+            try:
+                if not child.exists():
+                    child.unlink()
+            except OSError:
+                pass
+
+    # This should be migrated to trio.Path API once issue #1308 is fixed.
+    sync_path = Path(str(path))
+    await trio.to_thread.run_sync(target)
+
+
+async def is_path_available(path: trio.Path) -> bool:
+    # The path already exists
+    if await path.exists():
+        return False
+
+    # The path is a broken link
+    try:
+        await path.lstat()
+        return True
+    except OSError:
+        pass
+
+    # The path is available
+    return True
+
+
+async def _bootstrap_mountpoint(base_mountpoint_path: Path, workspace_name) -> Path:
     # Mountpoint can be a drive letter, in such case nothing to do
     if str(base_mountpoint_path) == base_mountpoint_path.drive:
         return
+
+    # On Windows, only mountpoint's parent must exists
+    trio_base_mountpoint_path = trio.Path(base_mountpoint_path)
+    await trio_base_mountpoint_path.mkdir(exist_ok=True, parents=True)
+
+    # Clean up broken links in base directory
+    await cleanup_broken_links(trio_base_mountpoint_path)
 
     # Find a suitable path where to mount the workspace. The check we are doing
     # here are not atomic (and the mount operation is not itself atomic anyway),
@@ -34,14 +71,15 @@ async def _bootstrap_mountpoint(base_mountpoint_path: PurePath, workspace_name) 
             dirname = workspace_name
         else:
             dirname = f"{workspace_name} ({tentative})"
+
         mountpoint_path = base_mountpoint_path / dirname
+        trio_mountpoint_path = trio_base_mountpoint_path / dirname
 
         try:
-            # On Windows, only mountpoint's parent must exists
-            trio_mountpoint_path = trio.Path(mountpoint_path)
-            await trio_mountpoint_path.parent.mkdir(exist_ok=True, parents=True)
-            if await trio_mountpoint_path.exists():
+            # Ignore if the path is not available
+            if not await is_path_available(trio_mountpoint_path):
                 continue
+
             return mountpoint_path
 
         except OSError:
@@ -57,7 +95,7 @@ def _generate_volume_serial_number(device, workspace_id):
 
 async def winfsp_mountpoint_runner(
     workspace_fs,
-    base_mountpoint_path: PurePath,
+    base_mountpoint_path: Path,
     config: dict,
     event_bus,
     *,
