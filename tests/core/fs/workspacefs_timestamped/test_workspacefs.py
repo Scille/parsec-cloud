@@ -14,7 +14,7 @@ def _day(d):
 async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, alice):
     version_lister = alice_workspace.get_version_lister()
     versions, down = await version_lister.list(FsPath("/files/renamed"), skip_minimal_sync=False)
-    assert down is False
+    assert down is True
     assert len(versions) == 6
 
     # Moved /files/content to /files/renamed on day 5, moved it again later
@@ -81,7 +81,7 @@ async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, 
 async def test_versions_existing_file_remove_minimal_synced(alice_workspace, alice):
     version_lister = alice_workspace.get_version_lister()
     versions, down = await version_lister.list(FsPath("/files/renamed"))
-    assert down is False
+    assert down is True
     assert len(versions) == 5
 
     # Moved /files/content to /files/renamed on day 5, moved it again later
@@ -150,7 +150,7 @@ async def test_versions_non_existing_file_remove_minimal_synced(
     versions, down = await version_lister.list(
         FsPath("/moved/renamed"), skip_minimal_sync=skip_minimal_sync
     )
-    assert down is False
+    assert down is True
     assert len(versions) == 1
 
     assert versions[0][1:] == (
@@ -173,7 +173,7 @@ async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_
     versions, down = await version_lister.list(
         FsPath("/files"), skip_minimal_sync=skip_minimal_sync
     )
-    assert down is False
+    assert down is True
     assert len(versions) == 8
 
     assert versions[0][1:] == (
@@ -262,7 +262,7 @@ async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_
 async def test_version_non_existing_directory(alice_workspace, alice):
     version_lister = alice_workspace.get_version_lister()
     versions, down = await version_lister.list(FsPath("/moved"))
-    assert down is False
+    assert down is True
     assert len(versions) == 2
 
     assert versions[0][1:] == (
