@@ -88,7 +88,7 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
             self._trio_token = trio.hazmat.current_trio_token()
 
             async def _mountpoint_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
-                async with user_fs_factory(alice) as user_fs:
+                async with user_fs_factory(alice, offline=True) as user_fs:
 
                     self.default_workspace_id = await user_fs.workspace_create(
                         f"{self.default_workspace_name}"

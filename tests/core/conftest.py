@@ -7,6 +7,8 @@ from async_generator import asynccontextmanager
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
     backend_anonymous_cmds_factory,
+    BackendAuthenticatedCmds,
+    BackendNotAvailable,
 )
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS
@@ -117,12 +119,28 @@ async def anonymous_backend_cmds(running_backend, coolorg):
 
 @pytest.fixture
 def user_fs_factory(
-    local_storage_path, event_bus_factory, persistent_mockup, initialize_userfs_storage
+    local_storage_path, event_bus_factory, persistent_mockup, initialize_userfs_storage, coolorg
 ):
     @asynccontextmanager
-    async def _user_fs_factory(device, event_bus=None, initialize_in_v0: bool = False):
+    async def _user_fs_factory(
+        device, event_bus=None, initialize_in_v0: bool = False, offline: bool = False
+    ):
+        if offline:
+
+            @asynccontextmanager
+            async def _acquire_transport(**kwargs):
+                raise BackendNotAvailable()
+                yield
+
+            @asynccontextmanager
+            async def cmds_factory(*args):
+                yield BackendAuthenticatedCmds(coolorg.addr, _acquire_transport)
+
+        else:
+            cmds_factory = backend_authenticated_cmds_factory
+
         event_bus = event_bus or event_bus_factory()
-        async with backend_authenticated_cmds_factory(
+        async with cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
             path = local_storage_path(device)

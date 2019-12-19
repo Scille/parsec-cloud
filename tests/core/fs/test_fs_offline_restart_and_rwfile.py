@@ -12,8 +12,8 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
 @pytest.mark.slow
-def test_fs_offline_restart_and_rwfile(user_fs_state_machine, alice):
-    class FSOfflineRestartAndRWFile(user_fs_state_machine):
+def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
+    class FSOfflineRestartAndRWFile(user_fs_offline_state_machine):
         @initialize()
         async def init(self):
             await self.reset_all()

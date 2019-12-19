@@ -17,8 +17,8 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
-def test_fs_offline_restart_and_tree(user_fs_state_machine, oracle_fs_factory, alice):
-    class FSOfflineRestartAndTree(user_fs_state_machine):
+def test_fs_offline_restart_and_tree(user_fs_offline_state_machine, oracle_fs_factory, alice):
+    class FSOfflineRestartAndTree(user_fs_offline_state_machine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
