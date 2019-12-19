@@ -244,11 +244,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspaces = job.ret
 
         if not workspaces:
+            self.line_edit_search.hide()
             label = QLabel(_("LABEL_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_workspaces.addWidget(label)
             return
 
+        self.line_edit_search.show()
         for count, workspace in enumerate(workspaces):
             workspace_fs, ws_entry, users_roles, files, timestamped = workspace
 
