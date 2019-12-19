@@ -44,7 +44,6 @@ class InstanceWidget(QWidget):
     logged_out = pyqtSignal()
     state_changed = pyqtSignal(QWidget, str)
     login_failed = pyqtSignal()
-    tab_notification = pyqtSignal(QWidget, str)
 
     devices_connected = []
 
@@ -83,9 +82,6 @@ class InstanceWidget(QWidget):
     @property
     def is_logged_in(self):
         return self.running_core_job is not None
-
-    def on_new_notification(self, event, event_type, msg):
-        self.tab_notification.emit(self, event)
 
     def on_core_config_updated(self, event, **kwargs):
         self.event_bus.send("gui.config.changed", **kwargs)
@@ -194,7 +190,6 @@ class InstanceWidget(QWidget):
         )
         self.layout().addWidget(central_widget)
         central_widget.logout_requested.connect(self.logout)
-        central_widget.new_notification.connect(self.on_new_notification)
         central_widget.show()
 
     def show_login_widget(self, show_meth=None, **kwargs):

@@ -40,8 +40,10 @@ async def _do_get_participants(core, workspace_fs):
 
 
 async def _do_user_find(core, text):
-    users = await core.backend_cmds.user_find(text, 1, 100, True)
-    users = [u for u in users if u != core.device.user_id]
+    rep = await core.backend_cmds.user_find(text, 1, 100, True)
+    if rep["status"] != "ok":
+        raise JobResultError("error", rep=rep)
+    users = [u for u in rep["results"] if u != core.device.user_id]
     return users
 
 

@@ -22,7 +22,8 @@ async def alice_backend_conn(alice, event_bus_factory, running_backend_ready):
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
-                "backend.connection.changed", {"status": BackendConnStatus.READY}
+                "backend.connection.changed",
+                {"status": BackendConnStatus.READY, "status_exc": None},
             )
             yield conn
 
@@ -50,8 +51,14 @@ async def test_init_with_backend_online(running_backend, event_bus, alice):
         async with conn.run():
             await spy.wait_multiple_with_timeout(
                 [
-                    ("backend.connection.changed", {"status": BackendConnStatus.INITIALIZING}),
-                    ("backend.connection.changed", {"status": BackendConnStatus.READY}),
+                    (
+                        "backend.connection.changed",
+                        {"status": BackendConnStatus.INITIALIZING, "status_exc": None},
+                    ),
+                    (
+                        "backend.connection.changed",
+                        {"status": BackendConnStatus.READY, "status_exc": None},
+                    ),
                 ]
             )
             assert conn.status == BackendConnStatus.READY
@@ -80,7 +87,8 @@ async def test_init_with_backend_offline(event_bus, alice):
     with event_bus.listen() as spy:
         async with conn.run():
             await spy.wait_with_timeout(
-                "backend.connection.changed", {"status": BackendConnStatus.LOST}
+                "backend.connection.changed",
+                {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.LOST
 
@@ -106,7 +114,8 @@ async def test_monitor_crash(running_backend, event_bus, alice, during_bootstrap
         conn.register_monitor(_bad_monitor)
         async with conn.run():
             await spy.wait_with_timeout(
-                "backend.connection.changed", {"status": BackendConnStatus.CRASHED}
+                "backend.connection.changed",
+                {"status": BackendConnStatus.CRASHED, "status_exc": spy.ANY},
             )
             assert conn.status == BackendConnStatus.CRASHED
 
@@ -127,14 +136,16 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
 
             # Wait for the connection to be initialized
             await spy.wait_with_timeout(
-                "backend.connection.changed", {"status": BackendConnStatus.READY}
+                "backend.connection.changed",
+                {"status": BackendConnStatus.READY, "status_exc": None},
             )
 
             # Switch backend offline and wait for according event
             spy.clear()
             with running_backend.offline():
                 await spy.wait_with_timeout(
-                    "backend.connection.changed", {"status": BackendConnStatus.LOST}
+                    "backend.connection.changed",
+                    {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
                 )
                 assert conn.status == BackendConnStatus.LOST
 
@@ -144,7 +155,8 @@ async def test_switch_offline(mock_clock, running_backend, event_bus, alice):
             # Backend event manager waits before retrying to connect
             mock_clock.jump(5.0)
             await spy.wait_with_timeout(
-                "backend.connection.changed", {"status": BackendConnStatus.READY}
+                "backend.connection.changed",
+                {"status": BackendConnStatus.READY, "status_exc": None},
             )
             assert conn.status == BackendConnStatus.READY
 
@@ -278,7 +290,8 @@ async def test_connection_refused(mock_clock, running_backend, event_bus, mallor
 
             # Wait for the connection to be initialized
             await spy.wait_with_timeout(
-                "backend.connection.changed", {"status": BackendConnStatus.REFUSED}
+                "backend.connection.changed",
+                {"status": BackendConnStatus.REFUSED, "status_exc": spy.ANY},
             )
 
             # Trying to use the connection should endup with an exception

@@ -1350,12 +1350,6 @@ msgstr "Modifications will take effect the next time you start the application."
 msgid "BUTTON_TASKBAR_NOTIFICATION"
 msgstr "Show notifications."
 
-msgid "NOTIF_WARN_CONNECTION_REFUSED"
-msgstr "The server has rejected our connection attempt."
-
-msgid "NOTIF_WARN_CONNECTION_CRASHED"
-msgstr "An unexpected error occured during server connection."
-
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Mountpoint has been lost."
 
@@ -1397,11 +1391,23 @@ msgstr "Connected"
 msgid "BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
-msgid "BACKEND_STATE_REFUSED"
-msgstr "Connection refused by the server"
+msgid "BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}"
+msgstr "Connection refused by the server.\n"
+"Client API is incompatible (required version(s): {})."
 
-msgid "BACKEND_STATE_CRASHED"
-msgstr "Connection unavailable due to internal crashed :'("
+msgid "BACKEND_STATE_REASON_REVOKED_DEVICE"
+msgstr "Connection refused by the server.\n"
+"You have been revoked."
+
+msgid "BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED"
+msgstr "Connection refused by the server.\n"
+"Your organization has expired."
+
+msgid "BACKEND_STATE_REASON_REFUSED_DEFAULT"
+msgstr "Connection refused by the server."
+
+msgid "BACKEND_STATE_REASON_CRASHED_{}"
+msgstr "Connection unavailable due to internal crash: {}"
 
 msgid "MENU_DOCUMENTS"
 msgstr "Documents"

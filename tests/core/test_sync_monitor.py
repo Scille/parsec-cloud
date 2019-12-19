@@ -158,7 +158,7 @@ async def test_reconnect_with_remote_changes(
         # Now alice should sync back the changes
         await spy.wait_with_timeout(
             "backend.connection.changed",
-            {"status": BackendConnStatus.READY},
+            {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
             timeout=60,  # autojump, so not *really* 60s
         )
         await spy.wait_multiple_with_timeout(

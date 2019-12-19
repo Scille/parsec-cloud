@@ -174,6 +174,10 @@ class BackendAuthenticatedConn:
         return self._status
 
     @property
+    def status_exc(self) -> Exception:
+        return self._status_exc
+
+    @property
     def cmds(self) -> BackendAuthenticatedCmds:
         return self._cmds
 
@@ -210,7 +214,9 @@ class BackendAuthenticatedConn:
 
             assert self._status not in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING)
             if self._backend_connection_failures == 0:
-                self.event_bus.send("backend.connection.changed", status=self._status)
+                self.event_bus.send(
+                    "backend.connection.changed", status=self._status, status_exc=self._status_exc
+                )
             if self._status == BackendConnStatus.LOST:
                 # Wait some time before retrying to connect
                 cooldown_time = 2 ** self._backend_connection_failures
@@ -233,7 +239,9 @@ class BackendAuthenticatedConn:
             self._status = BackendConnStatus.INITIALIZING
             self._status_exc = None
             self._backend_connection_failures = 0
-            self.event_bus.send("backend.connection.changed", status=self._status)
+            self.event_bus.send(
+                "backend.connection.changed", status=self._status, status_exc=self._status_exc
+            )
             logger.info("Backend online")
 
             await cmds.events_subscribe(transport)
@@ -251,7 +259,9 @@ class BackendAuthenticatedConn:
                         monitors_bootstrap_nursery.start_soon(_bootstrap_monitor, monitor_cb)
 
                 self._status = BackendConnStatus.READY
-                self.event_bus.send("backend.connection.changed", status=self._status)
+                self.event_bus.send(
+                    "backend.connection.changed", status=self._status, status_exc=None
+                )
 
                 while True:
                     rep = await cmds.events_listen(transport, wait=True)

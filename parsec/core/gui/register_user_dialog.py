@@ -38,7 +38,7 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
     if rep["status"] != "ok":
         raise JobResultError("registration-invite-error", info=str(rep))
 
-    for u in rep["users"]:
+    for u in rep["results"]:
         if u == new_user_id:
             raise JobResultError("registration-invite-already-exists")
 

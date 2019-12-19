@@ -1370,12 +1370,6 @@ msgstr "La nouvelle configuration sera effective au redémarrage de l'applicatio
 msgid "BUTTON_TASKBAR_NOTIFICATION"
 msgstr "Afficher les notifications."
 
-msgid "NOTIF_WARN_CONNECTION_REFUSED"
-msgstr "Le serveur a rejeté notre tentative de connexion."
-
-msgid "NOTIF_WARN_CONNECTION_CRASHED"
-msgstr "Une erreur inattendue est arrivée pendant notre tentative de connexion au serveur."
-
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
 msgstr "Le point de montage a été perdu."
 
@@ -1420,11 +1414,23 @@ msgstr "Connecté"
 msgid "BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "BACKEND_STATE_REFUSED"
-msgstr "Connexion refusée par le serveur"
+msgid "BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}"
+msgstr "Connection refusée par le serveur.\n"
+"Le client n'a pas une API compatible (version(s) supportées: {})."
 
-msgid "BACKEND_STATE_CRASHED"
-msgstr "Connexion indisponible à cause d'une erreur interne :'("
+msgid "BACKEND_STATE_REASON_REVOKED_DEVICE"
+msgstr "Connection refusée par le serveur.\n"
+"Vous avez été révoqué."
+
+msgid "BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED"
+msgstr "Connection refusée par le serveur.\n"
+"Votre organisation a expiré."
+
+msgid "BACKEND_STATE_REASON_REFUSED_DEFAULT"
+msgstr "Connexion refusée par le serveur."
+
+msgid "BACKEND_STATE_REASON_CRASHED_{}"
+msgstr "Connexion indisponible à cause d'une erreur interne : {}"
 
 msgid "MENU_DOCUMENTS"
 msgstr "Documents"

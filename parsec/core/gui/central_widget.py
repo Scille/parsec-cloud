@@ -15,6 +15,11 @@ from parsec.core.gui.custom_widgets import NotificationTaskbarButton
 from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
+from parsec.api.protocol import (
+    HandshakeAPIVersionError,
+    HandshakeRevokedDevice,
+    HandshakeOrganizationExpired,
+)
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.fs import (
     FSWorkspaceNoReadAccess,
@@ -33,7 +38,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         "fs.entry.file_update_conflicted",
     ]
 
-    connection_state_changed = pyqtSignal(object)
+    connection_state_changed = pyqtSignal(object, object)
     logout_requested = pyqtSignal()
     new_notification = pyqtSignal(str, str)
 
@@ -95,7 +100,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         )
         self.widget_central.layout().insertWidget(0, self.settings_widget)
 
-        self._on_connection_state_changed(self.core.backend_conn.status)
+        self._on_connection_state_changed(
+            self.core.backend_conn.status, self.core.backend_conn.status_exc
+        )
         self.show_mount_widget()
 
     def open_mountpoint(self, path):
@@ -103,7 +110,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.changed":
-            self.connection_state_changed.emit(kwargs["status"])
+            self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
         elif event == "mountpoint.stopped":
             self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == "mountpoint.remote_error":
@@ -163,33 +170,48 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.button_notif.setChecked(True)
             self.button_notif.reset_notif_count()
 
-    def _on_connection_state_changed(self, status):
+    def _on_connection_state_changed(self, status, status_exc):
+        text = None
+        icon = None
+        tooltip = None
+        notif = None
+
         if status in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING):
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_CONNECTED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_online.png")
-            )
+            tooltip = text = _("BACKEND_STATE_CONNECTED")
+            icon = QPixmap(":/icons/images/icons/cloud_online.png")
 
         elif status == BackendConnStatus.LOST:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_DISCONNECTED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_offline.png")
-            )
+            tooltip = text = _("BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
 
         elif status == BackendConnStatus.REFUSED:
-            # TODO: provide better message for each possible refused reason
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_REFUSED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_offline.png")
-            )
-            self.new_notification.emit("WARNING", _("NOTIF_WARN_CONNECTION_REFUSED"))
+            cause = status_exc.__cause__
+            if isinstance(cause, HandshakeAPIVersionError):
+                tooltip = _("BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}").format(
+                    ", ".join([v.version for v in cause.backend_versions])
+                )
+            elif isinstance(cause, HandshakeRevokedDevice):
+                tooltip = _("BACKEND_STATE_REASON_REVOKED_DEVICE")
+            elif isinstance(cause, HandshakeOrganizationExpired):
+                tooltip = _("BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED")
+            else:
+                tooltip = _("BACKEND_STATE_REASON_REFUSED_DEFAULT")
+            text = _("BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+            notif = ("WARNING", tooltip)
 
         elif status == BackendConnStatus.CRASHED:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_CRASHED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_offline.png")
-            )
-            self.new_notification.emit("ERROR", _("NOTIF_WARN_CONNECTION_CRASHED"))
+            text = _("BACKEND_STATE_DISCONNECTED")
+            tooltip = _("BACKEND_STATE_CRASHED_{}").format(str(status_exc.__cause__))
+            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+            notif = ("ERROR", tooltip)
+
+        self.menu.label_connection_text.setText(text)
+        self.menu.label_connection_text.setToolTip(tooltip)
+        self.menu.label_connection_icon.setPixmap(icon)
+        self.menu.label_connection_icon.setToolTip(tooltip)
+        if notif:
+            self.new_notification.emit(*notif)
 
     def on_new_notification(self, notif_type, msg):
         self.notification_center.add_notification(notif_type, msg)

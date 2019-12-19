@@ -666,7 +666,8 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
                     await spy.wait_with_timeout(
-                        "backend.connection.changed", {"status": BackendConnStatus.READY}
+                        "backend.connection.changed",
+                        {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                     )
 
                 yield core

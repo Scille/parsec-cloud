@@ -121,7 +121,7 @@ async def _do_list_users(core):
         raise JobResultError("error") from exc
     try:
         ret = []
-        for user in rep["users"]:
+        for user in rep["results"]:
             user_info, user_revoked_info = await core.remote_devices_manager.get_user(user)
             ret.append((user_info, user_revoked_info))
         return ret
