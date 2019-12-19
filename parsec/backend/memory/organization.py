@@ -44,7 +44,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum] = None
     ) -> None:
-        if id in self._organizations:
+        org = self._organizations.get(id)
+
+        # Allow overwritting of not-yet-bootstrapped organization
+        if org and org.root_verify_key:
             raise OrganizationAlreadyExistsError()
 
         self._organizations[id] = Organization(

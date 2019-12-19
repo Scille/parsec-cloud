@@ -61,6 +61,54 @@ async def test_organization_create_wrong_expiration_date(administration_backend_
 
 
 @pytest.mark.trio
+async def test_organization_recreate_and_bootstrap(
+    backend,
+    organization_factory,
+    local_device_factory,
+    administration_backend_sock,
+    backend_sock_factory,
+):
+    neworg = organization_factory("NewOrg")
+    rep = await organization_create(administration_backend_sock, neworg.organization_id)
+    assert rep == {"status": "ok", "bootstrap_token": ANY}
+    bootstrap_token1 = rep["bootstrap_token"]
+
+    # Can recreate the organization as long as it hasn't been bootstrapped yet
+    rep = await organization_create(administration_backend_sock, neworg.organization_id)
+    assert rep == {"status": "ok", "bootstrap_token": ANY}
+    bootstrap_token2 = rep["bootstrap_token"]
+
+    assert bootstrap_token1 != bootstrap_token2
+
+    newalice = local_device_factory(org=neworg)
+    backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
+
+    async with backend_sock_factory(backend, neworg.organization_id) as sock:
+        # Old token is now invalid
+        rep = await organization_bootstrap(
+            sock,
+            bootstrap_token1,
+            backend_newalice.user_certificate,
+            backend_newalice_first_device.device_certificate,
+            neworg.root_verify_key,
+        )
+        assert rep == {"status": "not_found"}
+
+        rep = await organization_bootstrap(
+            sock,
+            bootstrap_token2,
+            backend_newalice.user_certificate,
+            backend_newalice_first_device.device_certificate,
+            neworg.root_verify_key,
+        )
+        assert rep == {"status": "ok"}
+
+    # Now we are no longer allowed to re-create the organization
+    rep = await organization_create(administration_backend_sock, neworg.organization_id)
+    assert rep == {"status": "already_exists"}
+
+
+@pytest.mark.trio
 async def test_organization_create_and_bootstrap(
     backend,
     organization_factory,
