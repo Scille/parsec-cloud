@@ -55,13 +55,22 @@ class BackendAddr:
             raise ValueError(f"Must start with `{PARSEC_SCHEME}://`")
 
         if split.query:
-            params = parse_qs(split.query, keep_blank_values=True, strict_parsing=True)
+            # Note `parse_qs` takes care of percent-encoding
+            params = parse_qs(
+                split.query,
+                keep_blank_values=True,
+                strict_parsing=True,
+                encoding="utf-8",
+                errors="strict",
+            )
         else:
             params = {}
 
+        path = unquote_plus(split.path)
+
         kwargs = {
             **cls._from_url_parse_and_consume_params(params),
-            **cls._from_url_parse_path(split.path),
+            **cls._from_url_parse_path(path),
         }
 
         return cls(hostname=split.hostname, port=split.port, **kwargs)
@@ -86,23 +95,21 @@ class BackendAddr:
         else:
             raise ValueError("Invalid `no_ssl` param value (must be true or false)")
 
-    def to_url(self):
+    def to_url(self) -> str:
         _, custom_port = self._parse_port(self._port, self._use_ssl)
         if custom_port:
             netloc = f"{self._hostname}:{custom_port}"
         else:
             netloc = self.hostname
-        query = "&".join(f"{k}={v}" for k, v in sorted(self._to_url_get_params().items()))
-        return urlunsplit((PARSEC_SCHEME, netloc, self._to_url_get_path(), query, None))
+        query = "&".join(f"{k}={quote_plus(v)}" for k, v in self._to_url_get_params())
+        return urlunsplit((PARSEC_SCHEME, netloc, quote_plus(self._to_url_get_path()), query, None))
 
     def _to_url_get_path(self):
         return ""
 
     def _to_url_get_params(self):
-        params = {}
-        if not self._use_ssl:
-            params["no_ssl"] = "true"
-        return params
+        # Return a list to easily manage the order of params
+        return [("no_ssl", "true")] if not self._use_ssl else []
 
     @property
     def hostname(self):
@@ -147,7 +154,10 @@ class OrganizationParamsFixture(BackendAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        return {**super()._to_url_get_params(), "rvk": export_root_verify_key(self.root_verify_key)}
+        return [
+            *super()._to_url_get_params(),
+            ("rvk", export_root_verify_key(self.root_verify_key)),
+        ]
 
     @property
     def organization_id(self) -> OrganizationID:
@@ -230,7 +240,7 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         if len(value) != 1:
             raise ValueError("Missing mandatory `token` param")
         try:
-            kwargs["token"] = unquote_plus(value[0])
+            kwargs["token"] = value[0]
         except ValueError:
             raise ValueError("Invalid `token` param value")
         if not kwargs["token"]:
@@ -242,11 +252,11 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        return {
-            **super()._to_url_get_params(),
-            "action": "bootstrap_organization",
-            "token": quote_plus(self._token),
-        }
+        return [
+            ("action", "bootstrap_organization"),
+            ("token", self._token),
+            *super()._to_url_get_params(),
+        ]
 
     @classmethod
     def build(
@@ -301,24 +311,24 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
         if len(value) != 1:
             raise ValueError("Missing mandatory `user_id` param")
         try:
-            kwargs["user_id"] = UserID(unquote_plus(value[0]))
+            kwargs["user_id"] = UserID(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `user_id` param value") from exc
 
         value = params.pop("token", ())
         if len(value) > 0:
             try:
-                kwargs["token"] = unquote_plus(value[0])
+                kwargs["token"] = value[0]
             except ValueError:
                 raise ValueError("Invalid `token` param value")
 
         return kwargs
 
     def _to_url_get_params(self):
-        kwargs = super()._to_url_get_params()
+        params = [("action", "claim_user"), ("user_id", self._user_id)]
         if self._token:
-            kwargs["token"] = self._token
-        return {**kwargs, "action": "claim_user", "user_id": quote_plus(str(self._user_id))}
+            params.append(("token", self._token))
+        return [*params, *super()._to_url_get_params()]
 
     @classmethod
     def build(
@@ -380,24 +390,24 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
         if len(value) != 1:
             raise ValueError("Missing mandatory `device_id` param")
         try:
-            kwargs["device_id"] = DeviceID(unquote_plus(value[0]))
+            kwargs["device_id"] = DeviceID(value[0])
         except ValueError as exc:
             raise ValueError("Invalid `device_id` param value") from exc
 
         value = params.pop("token", ())
         if len(value) > 0:
             try:
-                kwargs["token"] = unquote_plus(value[0])
+                kwargs["token"] = value[0]
             except ValueError:
                 raise ValueError("Invalid `token` param value")
 
         return kwargs
 
     def _to_url_get_params(self):
-        kwargs = super()._to_url_get_params()
+        params = [("action", "claim_device"), ("device_id", self._device_id)]
         if self._token:
-            kwargs["token"] = self._token
-        return {**kwargs, "action": "claim_device", "device_id": quote_plus(self._device_id)}
+            params.append(("token", self._token))
+        return [*params, *super()._to_url_get_params()]
 
     @classmethod
     def build(
