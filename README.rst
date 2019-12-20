@@ -1,8 +1,6 @@
 ===============================
 ParSec
 ===============================
-Secure cloud framework
-
 .. image:: https://travis-ci.org/Scille/parsec-cloud.svg?branch=master
     :target: https://travis-ci.org/Scille/parsec-cloud
     :alt: Travis CI Status
@@ -30,13 +28,14 @@ Secure cloud framework
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
     :alt: Code style: black
-
+Secure cloud framework
 
 Install
 =======
 Windows
 -------
 Test1
+
 Linux
 -----
 Test2
