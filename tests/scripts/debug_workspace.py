@@ -15,6 +15,7 @@ from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import list_available_devices, load_device_with_password
 from parsec.test_utils import (
     make_workspace_dir_inconsistent as make_workspace_dir_inconsistent_helper,
+    make_workspace_dir_complex_versions as make_workspace_dir_complex_versions_helper,
 )
 
 
@@ -25,6 +26,11 @@ PASSWORD = "test"
 
 async def make_workspace_dir_inconsistent(device, workspace, corrupted_path):
     await make_workspace_dir_inconsistent_helper(workspace, FsPath(corrupted_path))
+    print(f"{device.device_id} | {workspace.get_workspace_name()} | {corrupted_path}")
+
+
+async def make_workspace_dir_complex_versions(device, workspace, corrupted_path):
+    await make_workspace_dir_complex_versions_helper(workspace, FsPath(corrupted_path))
     print(f"{device.device_id} | {workspace.get_workspace_name()} | {corrupted_path}")
 
 
@@ -79,6 +85,7 @@ async def main():
         workspace = core.user_fs.get_workspace(workspace_entry.id)
 
         await make_workspace_dir_inconsistent(device, workspace, "/bar")
+        # await make_workspace_dir_complex_versions(device, workspace, "/foo")
         # await benchmark_file_writing(device, workspace)
 
 

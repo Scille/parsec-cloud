@@ -10,7 +10,7 @@ from parsec.core.gui.ui.file_history_dialog import Ui_FileHistoryDialog
 
 
 async def _do_workspace_version(version_lister, path):
-    return await version_lister.list(path, max_manifest_queries=200)
+    return await version_lister.list(path, max_manifest_queries=100)
     # TODO : check no exception raised, create tests...
 
 
@@ -39,7 +39,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.get_versions_success.connect(self.add_history)
         self.get_versions_error.connect(self.show_error)
         self.button_close.clicked.connect(self.close_dialog)
-        self.button_load_more_entries.clicked.connect(self.reset_dialog)
+        self.button_load_more_entries.clicked.connect(self.load_more)
         self.workspace_fs = workspace_fs
         self.version_lister = workspace_fs.get_version_lister()
         self.loading_in_progress = False
@@ -55,13 +55,22 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.label_file_name.setText(f'"{file_name}"')
         self.workspace_fs = workspace_fs
         self.path = path
+        self.reset_list()
+
+    def load_more(self):
+        if self.loading_in_progress:
+            return
+        self.loading_in_progress = True
+        self.reset_list()
+
+    def reset_list(self):
         self.versions_table.clear()
         self.versions_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "get_versions_success"),
             ThreadSafeQtSignal(self, "get_versions_error"),
             _do_workspace_version,
             version_lister=self.version_lister,
-            path=path,
+            path=self.path,
         )
 
     def add_history(self):
