@@ -30,16 +30,25 @@ ParSec
     :alt: Code style: black
 Secure cloud framework
 
-Install
-=======
+Installation methods
+====================
 Windows
 -------
-Test1
+Windows installers are available at https://github.com/Scille/parsec-cloud/releases
 
-Linux
------
-Test2
+Linux Snap
+----------
+Available for Linux through Snapcraft at https://snapcraft.io/parsec
 
+Python PIP
+----------
+Parsec is also available directly through PIP for both Linux and Windows with Python > 3.6 with the command:
+``pip install parsec-cloud``
+(or, if you need to specify Python 3 pip version, ``pip3 install parsec-cloud``)
+
+
+Resources
+=========
 * Free software: AGPL v3
 * Wiki: https://github.com/Scille/parsec-cloud/wiki/Parsec-overview
 * Documentation: https://parsec-cloud.readthedocs.org.
