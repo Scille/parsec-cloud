@@ -32,8 +32,8 @@ Secure cloud framework
 
 Installation methods
 ====================
-Windows
--------
+Windows installer
+-----------------
 Windows installers are available at https://github.com/Scille/parsec-cloud/releases
 
 Linux Snap
