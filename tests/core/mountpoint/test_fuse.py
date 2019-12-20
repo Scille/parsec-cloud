@@ -12,14 +12,13 @@ from parsec.core.mountpoint import mountpoint_manager_factory, MountpointDriverC
 @pytest.mark.mountpoint
 def test_delete_then_close_file(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
-        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        workspace = user_fs.get_workspace(mountpoint_service.wid)
         await workspace.touch("/with_fsync.txt")
         await workspace.touch("/without_fsync.txt")
 
-    mountpoint_service.start()
     mountpoint_service.execute(_bootstrap)
 
-    w_path = mountpoint_service.get_default_workspace_mountpoint()
+    w_path = mountpoint_service.wpath
 
     path = w_path / "with_fsync.txt"
     fd = os.open(path, os.O_RDWR)
@@ -37,19 +36,16 @@ def test_delete_then_close_file(mountpoint_service):
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, event_bus):
-    mountpoint_path = base_mountpoint / "w"
     wid = await alice_user_fs.workspace_create("w")
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
-
-    bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
 
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
 
         with event_bus.listen() as spy:
-            await mountpoint_manager.mount_workspace(wid)
+            mountpoint_path = await mountpoint_manager.mount_workspace(wid)
             command = f"fusermount -u {mountpoint_path}".split()
 
             completed_process = await trio.run_process(command)
@@ -59,7 +55,7 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_user_fs, ev
                     completed_process = await trio.run_process(command)
                 await spy.wait("mountpoint.stopped", {"mountpoint": mountpoint_path})
 
-        assert not await bar_txt.exists()
+        assert not await trio.Path(mountpoint_path / "bar.txt").exists()
 
     # Mountpoint path should be removed on umounting
     assert not await trio.Path(mountpoint_path).exists()

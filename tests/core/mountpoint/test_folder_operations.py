@@ -86,7 +86,7 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service):
+def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
 
     tentative = 0
 
@@ -102,24 +102,25 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
             tentative += 1
             caplog.clear()
 
-            mountpoint_service.start()
+            async def _bootstrap(user_fs, mountpoint_manager):
+                wid = await user_fs.workspace_create("w")
+                await mountpoint_manager.mount_workspace(wid)
+
+            self.mountpoint_service = mountpoint_service_factory(_bootstrap)
 
             self.folder_oracle = Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
-            (oracle_root / mountpoint_service.default_workspace_name).mkdir()
+            (oracle_root / "w").mkdir()
             oracle_root.chmod(0o500)  # Also protect workspace from deletion
 
-            return PathElement(
-                f"/{mountpoint_service.default_workspace_name}",
-                mountpoint_service.base_mountpoint,
-                oracle_root,
-            )
+            return PathElement(f"/w", self.mountpoint_service.base_mountpoint, oracle_root)
 
         def teardown(self):
-            mountpoint_service.stop()
+            if hasattr(self, "mountpoint_service"):
+                self.mountpoint_service.stop()
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         def touch(self, parent, name):

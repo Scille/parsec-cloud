@@ -3,9 +3,9 @@
 import pytest
 import threading
 import trio
-import pathlib
-from contextlib import contextmanager
+from pathlib import Path
 from inspect import iscoroutinefunction
+from queue import Queue
 
 from parsec.utils import start_task
 from parsec.core.mountpoint import mountpoint_manager_factory
@@ -13,31 +13,55 @@ from parsec.core.mountpoint import mountpoint_manager_factory
 
 @pytest.fixture
 def base_mountpoint(tmpdir):
-    return pathlib.Path(tmpdir / "base_mountpoint")
+    return Path(tmpdir / "base_mountpoint")
 
 
 @pytest.fixture
 @pytest.mark.mountpoint
-def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
+def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, reset_testbed):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
     """
 
-    do_reset_testbed = reset_testbed
+    async def _run_mountpoint(
+        base_mountpoint, bootstrap_cb, *, task_status=trio.TASK_STATUS_IGNORED
+    ):
+        device = local_device_factory()
+        async with user_fs_factory(device, offline=True) as user_fs:
+
+            async with mountpoint_manager_factory(
+                user_fs, user_fs.event_bus, base_mountpoint, debug=False
+            ) as mountpoint_manager:
+
+                if bootstrap_cb:
+                    await bootstrap_cb(user_fs, mountpoint_manager)
+
+                task_status.started((user_fs, mountpoint_manager))
+                await trio.sleep_forever()
+
+    async def _run_mountpoint_service_trio_loop(ready_queue):
+        async with trio.open_nursery() as nursery:
+            ready_queue.put((trio.hazmat.current_trio_token(), nursery))
+            await trio.sleep_forever()
 
     class MountpointService:
-        def __init__(self, base_mountpoint):
-            self.base_mountpoint = pathlib.Path(base_mountpoint)
-            # Provide a default workspace given we cannot create it through FUSE
-            self.default_workspace_name = "w"
-            self._task = None
-            self._trio_token = None
-            self._need_stop = trio.Event()
-            self._stopped = trio.Event()
-            self._need_start = trio.Event()
-            self._started = trio.Event()
-            self._ready = threading.Event()
+        def __init__(self, base_mountpoint, trio_token, task):
+            self.base_mountpoint = base_mountpoint
+            self._trio_token = trio_token
+            self._task = task
+
+        @classmethod
+        def build(cls, base_mountpoint, trio_token, nursery, bootstrap_cb=None):
+            task = trio.from_thread.run(
+                start_task,
+                nursery,
+                _run_mountpoint,
+                base_mountpoint,
+                bootstrap_cb,
+                trio_token=trio_token,
+            )
+            return cls(base_mountpoint, trio_token, task)
 
         def execute(self, cb):
             if iscoroutinefunction(cb):
@@ -45,101 +69,49 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
             else:
                 trio.from_thread.run_sync(cb, *self._task.value, trio_token=self._trio_token)
 
-        def get_default_workspace_mountpoint(self):
-            return self.get_workspace_mountpoint(self.default_workspace_name)
+        def stop(self):
+            async def _do():
+                await self._task.cancel_and_join()
+                await reset_testbed()
 
-        def get_workspace_mountpoint(self, workspace_name):
-            return self.base_mountpoint / workspace_name
+            trio.from_thread.run(_do, trio_token=self._trio_token)
 
-        def start(self):
-            async def _start():
-                self._need_start.set()
-                await self._started.wait()
-
-            trio.from_thread.run(_start, trio_token=self._trio_token)
-
-        def stop(self, reset_testbed=True):
-            async def _stop():
-                if self._started.is_set():
-                    self._need_stop.set()
-                    await self._stopped.wait()
-                    if reset_testbed:
-                        await do_reset_testbed(keep_logs=True)
-
-            trio.from_thread.run(_stop, trio_token=self._trio_token)
-
-        def init(self):
-            self._thread = threading.Thread(target=trio.run, args=(self._service,))
-            self._thread.setName("MountpointService")
-            self._thread.start()
-            self._ready.wait()
-
-        async def _teardown(self):
-            self._nursery.cancel_scope.cancel()
-
-        def teardown(self):
-            if self._trio_token is None:
-                return
-            self.stop(reset_testbed=False)
-            trio.from_thread.run(self._teardown, trio_token=self._trio_token)
-            self._thread.join()
-
-        async def _service(self):
-            self._trio_token = trio.hazmat.current_trio_token()
-
-            async def _mountpoint_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
-                async with user_fs_factory(alice, offline=True) as user_fs:
-
-                    self.default_workspace_id = await user_fs.workspace_create(
-                        f"{self.default_workspace_name}"
-                    )
-
-                    async with mountpoint_manager_factory(
-                        user_fs, user_fs.event_bus, self.base_mountpoint, debug=False
-                    ) as mountpoint_manager:
-
-                        await mountpoint_manager.mount_workspace(self.default_workspace_id)
-
-                        task_status.started((user_fs, mountpoint_manager))
-                        await trio.sleep_forever()
-
-            async with trio.open_service_nursery() as self._nursery:
-                self._ready.set()
-                while True:
-                    await self._need_start.wait()
-                    self._need_stop = trio.Event()
-                    self._stopped = trio.Event()
-
-                    self._task = await start_task(self._nursery, _mountpoint_controlled_cb)
-                    self._started.set()
-
-                    await self._need_stop.wait()
-                    self._need_start = trio.Event()
-                    self._started = trio.Event()
-                    await self._task.cancel_and_join()
-                    self._stopped.set()
+    # Run a trio loop in a thread
+    ready_queue = Queue(1)
+    thread = threading.Thread(
+        target=trio.run, args=(_run_mountpoint_service_trio_loop, ready_queue)
+    )
+    thread.setName("MountpointServiceTrioLoop")
+    thread.start()
+    trio_token, nursery = ready_queue.get()
 
     count = 0
 
-    @contextmanager
-    def _mountpoint_service_factory(base_mountpoint=None):
+    def _mountpoint_service_factory(bootstrap_cb=None):
         nonlocal count
         count += 1
-        if not base_mountpoint:
-            base_mountpoint = tmpdir / f"mountpoint-svc-{count}"
+        return MountpointService.build(
+            Path(tmpdir / f"mountpoint-svc-{count}"), trio_token, nursery, bootstrap_cb
+        )
 
-        mountpoint_service = MountpointService(str(base_mountpoint))
-        mountpoint_service.init()
-        try:
-            yield mountpoint_service
-
-        finally:
-            mountpoint_service.teardown()
-
-    return _mountpoint_service_factory
+    try:
+        yield _mountpoint_service_factory
+    finally:
+        trio.from_thread.run_sync(nursery.cancel_scope.cancel, trio_token=trio_token)
+        thread.join()
 
 
 @pytest.fixture
 def mountpoint_service(mountpoint_service_factory):
-    with mountpoint_service_factory() as fuse:
-        yield fuse
+    wid = None
+    wpath = None
+
+    async def _bootstrap(user_fs, mountpoint_manager):
+        nonlocal wid, wpath
+        wid = await user_fs.workspace_create("w")
+        wpath = await mountpoint_manager.mount_workspace(wid)
+
+    service = mountpoint_service_factory(_bootstrap)
+    service.wid = wid
+    service.wpath = wpath
+    return service
