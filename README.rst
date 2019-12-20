@@ -1,5 +1,6 @@
 ===============================
 ParSec
+Secure cloud framework
 ===============================
 
 .. image:: https://travis-ci.org/Scille/parsec-cloud.svg?branch=master
@@ -30,7 +31,12 @@ ParSec
     :target: https://github.com/ambv/black
     :alt: Code style: black
 
-Secure cloud framework
+
+# Install
+ ## Windows
+Test1
+ ## Linux
+Test2
 
 * Free software: AGPL v3
 * Wiki: https://github.com/Scille/parsec-cloud/wiki/Parsec-overview
