@@ -1,7 +1,6 @@
 ===============================
 ParSec
 ===============================
-
 .. image:: https://travis-ci.org/Scille/parsec-cloud.svg?branch=master
     :target: https://travis-ci.org/Scille/parsec-cloud
     :alt: Travis CI Status
@@ -29,9 +28,27 @@ ParSec
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
     :alt: Code style: black
-
 Secure cloud framework
 
+Installation methods
+====================
+Windows installer
+-----------------
+Windows installers are available at https://github.com/Scille/parsec-cloud/releases
+
+Linux Snap
+----------
+Available for Linux through Snapcraft at https://snapcraft.io/parsec
+
+Python PIP
+----------
+Parsec is also available directly through PIP for both Linux and Windows with Python > 3.6 with the command:
+``pip install parsec-cloud``
+(or, if you need to specify Python 3 pip version, ``pip3 install parsec-cloud``)
+
+
+Resources
+=========
 * Free software: AGPL v3
 * Wiki: https://github.com/Scille/parsec-cloud/wiki/Parsec-overview
 * Documentation: https://parsec-cloud.readthedocs.org.
