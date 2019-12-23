@@ -2,6 +2,7 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog
+from PyQt5.QtSvg import QSvgWidget
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_dialogs import show_error
@@ -42,13 +43,23 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         self.button_load_more_entries.clicked.connect(self.load_more)
         self.workspace_fs = workspace_fs
         self.version_lister = workspace_fs.get_version_lister()
-        self.loading_in_progress = False
+        self.spinner = QSvgWidget(":/icons/images/icons/spinner.svg")
+        self.spinner.setFixedSize(100, 100)
+        self.spinner_frame.setLayout(self.spinner_layout)
+        self.spinner_layout.addWidget(self.spinner, Qt.AlignCenter)
+        self.spinner_layout.setAlignment(Qt.AlignCenter)
+        self.set_loading_in_progress(False)
         self.reset_dialog(workspace_fs, self.version_lister, path)
+
+    def set_loading_in_progress(self, in_progress: bool):
+        self.loading_in_progress = in_progress
+        self.versions_table.setVisible(not in_progress)
+        self.spinner_frame.setVisible(in_progress)
 
     def reset_dialog(self, workspace_fs, version_lister, path):
         if self.loading_in_progress:
             return
-        self.loading_in_progress = True
+        self.set_loading_in_progress(True)
         file_name = path.name
         if len(file_name) > 64:
             file_name = file_name[:64] + "..."
@@ -60,7 +71,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
     def load_more(self):
         if self.loading_in_progress:
             return
-        self.loading_in_progress = True
+        self.set_loading_in_progress(True)
         self.reset_list()
 
     def reset_list(self):
@@ -91,7 +102,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
                 source_path=v.source,
                 destination_path=v.destination,
             )
-        self.loading_in_progress = False
+        self.set_loading_in_progress(False)
 
     def show_error(self):
         if self.versions_job and self.versions_job.status != "cancelled":
