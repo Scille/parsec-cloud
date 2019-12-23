@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from heapq import heapify, heappush, heappop
 import attr
 import trio
 from typing import List, Tuple, NamedTuple
@@ -324,9 +325,11 @@ class VersionListerTaskList:
     Enables prioritization of tasks, as it is better to be able to configure it that way
     """
 
-    # TODO : use min stack for minimal, use nursery for coroutines
+    # TODO : use nursery for coroutines
     def __init__(self, manifest_cache, versions_list_cache):
         self.tasks = {}
+        self.heapq_tasks = []
+        heapify(self.heapq_tasks)
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
         # self.nursery = nursery
@@ -336,9 +339,10 @@ class VersionListerTaskList:
             self.tasks[timestamp].append(task)
         else:
             self.tasks[timestamp] = [task]
+            heappush(self.heapq_tasks, timestamp)
 
     def min(self):
-        return min(self.tasks.keys())
+        return self.heapq_tasks[0]
 
     def is_empty(self):
         return self.tasks == {}
@@ -348,6 +352,7 @@ class VersionListerTaskList:
         task = self.tasks[min].pop()
         if len(self.tasks[min]) == 0:
             del self.tasks[min]
+            heappop(self.heapq_tasks)
         await task.callback(self, *task.args, **task.kwargs)
 
     async def execute(self, number: int = 1):
