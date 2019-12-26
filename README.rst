@@ -34,7 +34,7 @@ Installation methods
 ====================
 Windows installer
 -----------------
-Windows installers are available at https://github.com/Scille/parsec-cloud/releases
+Windows installers are available at https://github.com/Scille/parsec-cloud/releases/latest
 
 Linux Snap
 ----------

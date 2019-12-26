@@ -17,7 +17,7 @@ from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 
 
-RELEASE_URL = "https://github.com/Scille/parsec-build/releases/latest"
+RELEASE_URL = "https://github.com/Scille/parsec-cloud/releases/latest"
 
 
 def _extract_version_tuple(raw):
