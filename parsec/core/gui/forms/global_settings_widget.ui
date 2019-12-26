@@ -453,7 +453,7 @@ background-color: rgb(255, 255, 255);
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
-               <widget class="ShadowedButton" name="button_check_version">
+               <widget class="ParsecButton" name="button_check_version">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -647,7 +647,7 @@ background-color: rgb(255, 255, 255);
       </spacer>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_save">
+      <widget class="ParsecButton" name="button_save">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -703,7 +703,7 @@ background-color: rgb(255, 255, 255);
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

@@ -115,7 +115,7 @@ color: rgb(12, 65, 157);
          </spacer>
         </item>
         <item>
-         <widget class="ShadowedButton" name="button_cancel">
+         <widget class="ParsecButton" name="button_cancel">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -166,7 +166,7 @@ color: rgb(12, 65, 157);
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

@@ -215,7 +215,7 @@ border: 0;
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
-             <widget class="ShadowedButton" name="button_skip">
+             <widget class="ParsecButton" name="button_skip">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -236,7 +236,7 @@ border: 0;
              </widget>
             </item>
             <item>
-             <widget class="ShadowedButton" name="button_replace">
+             <widget class="ParsecButton" name="button_replace">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -297,7 +297,7 @@ border: 0;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

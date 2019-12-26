@@ -140,7 +140,7 @@ background-color: rgb(255, 255, 255);
             </spacer>
            </item>
            <item>
-            <widget class="ShadowedButton" name="button_share">
+            <widget class="ParsecButton" name="button_share">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -341,7 +341,7 @@ border: 1px solid rgb(46, 46, 46);
          </spacer>
         </item>
         <item>
-         <widget class="ShadowedButton" name="button_apply">
+         <widget class="ParsecButton" name="button_apply">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -391,7 +391,7 @@ border: 1px solid rgb(46, 46, 46);
          </spacer>
         </item>
         <item>
-         <widget class="ShadowedButton" name="button_close">
+         <widget class="ParsecButton" name="button_close">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -442,7 +442,7 @@ border: 1px solid rgb(46, 46, 46);
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

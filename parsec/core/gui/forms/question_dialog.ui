@@ -276,7 +276,7 @@ border: 0;
              </spacer>
             </item>
             <item>
-             <widget class="ShadowedButton" name="button_no">
+             <widget class="ParsecButton" name="button_no">
               <property name="minimumSize">
                <size>
                 <width>64</width>
@@ -308,7 +308,7 @@ border: 0;
              </widget>
             </item>
             <item>
-             <widget class="ShadowedButton" name="button_yes">
+             <widget class="ParsecButton" name="button_yes">
               <property name="minimumSize">
                <size>
                 <width>64</width>
@@ -352,7 +352,7 @@ border: 0;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

@@ -292,7 +292,7 @@ border: 0;
          </spacer>
         </item>
         <item>
-         <widget class="ShadowedButton" name="button_continue">
+         <widget class="ParsecButton" name="button_continue">
           <property name="font">
            <font>
             <pointsize>-1</pointsize>
@@ -446,7 +446,7 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

@@ -231,7 +231,7 @@ padding-left: 10px;</string>
          </spacer>
         </item>
         <item>
-         <widget class="ShadowedButton" name="button_ok">
+         <widget class="ParsecButton" name="button_ok">
           <property name="minimumSize">
            <size>
             <width>64</width>
@@ -273,7 +273,7 @@ padding-left: 10px;</string>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

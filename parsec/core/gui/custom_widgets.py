@@ -149,6 +149,20 @@ class PointingHandButton(QPushButton):
         self.setCursor(QCursor(Qt.PointingHandCursor))
 
 
+class ParsecButton(PointingHandButton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setStyleSheet(
+            "QPushButton{background-color: #0b419b; border-radius: 3px}QPushButton:hover{background-color: #2454a5;}QPushButton:pressed{background-color: #082d6e;}"
+        )
+        effect = QGraphicsDropShadowEffect(self)
+        effect.setColor(QColor(0, 0, 0, 75))
+        effect.setBlurRadius(7)
+        effect.setXOffset(0)
+        effect.setYOffset(2)
+        self.setGraphicsEffect(effect)
+
+
 class ShadowedButton(PointingHandButton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

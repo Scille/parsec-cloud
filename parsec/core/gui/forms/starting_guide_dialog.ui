@@ -330,7 +330,7 @@ font-weight: 700;
       </spacer>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_previous">
+      <widget class="ParsecButton" name="button_previous">
        <property name="minimumSize">
         <size>
          <width>120</width>
@@ -381,7 +381,7 @@ background-color: rgb(255, 255, 255);
       </widget>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_next">
+      <widget class="ParsecButton" name="button_next">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -422,7 +422,7 @@ background-color: rgb(255, 255, 255);
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

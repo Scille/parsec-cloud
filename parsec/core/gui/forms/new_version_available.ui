@@ -62,7 +62,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="ShadowedButton" name="button_download">
+        <widget class="ParsecButton" name="button_download">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -128,7 +128,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_ignore">
+      <widget class="ParsecButton" name="button_ignore">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -177,7 +177,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

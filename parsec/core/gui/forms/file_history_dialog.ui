@@ -355,7 +355,7 @@ height: 16px;
          </spacer>
         </item>
         <item>
-         <widget class="ShadowedButton" name="button_close">
+         <widget class="ParsecButton" name="button_close">
           <property name="text">
            <string>BUTTON_CLOSE</string>
           </property>
@@ -383,7 +383,7 @@ height: 16px;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
+   <class>ParsecButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
