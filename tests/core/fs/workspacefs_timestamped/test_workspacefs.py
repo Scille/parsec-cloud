@@ -4,6 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath
+from parsec.core.fs import FSError
 
 
 def _day(d):
@@ -286,4 +287,28 @@ async def test_version_non_existing_directory(alice_workspace, alice):
         None,
         None,
         FsPath("/files"),
+    )
+
+
+@pytest.mark.trio
+async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
+    backend_cmds = alice_workspace.remote_loader.backend_cmds
+    original_vlob_read = backend_cmds.vlob_read
+
+    async def mocked_vlob_read(*args, **kwargs):
+        r = await original_vlob_read(*args, **kwargs)
+        return (r[0], r[1].add(seconds=1), *r[2:])
+
+    backend_cmds.vlob_read = mocked_vlob_read
+
+    with pytest.raises(FSError) as exc:
+        version_lister = alice_workspace.get_version_lister()
+        versions, down = await version_lister.list(
+            FsPath("/files/renamed"), skip_minimal_sync=False
+        )
+    value = exc.value.args[0]
+    assert value[:53] == "Backend returned invalid expected timestamp for vlob "
+    assert (
+        value[-82:]
+        == " at version 1 (expecting 2000-01-01T00:00:01+00:00, got 2000-01-01T00:00:00+00:00)"
     )
