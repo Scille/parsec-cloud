@@ -167,7 +167,7 @@ border-bottom: 2px solid rgb(130, 130, 130);
           </property>
           <property name="font">
            <font>
-            <family>Proxima Nova</family>
+            <family>Roboto</family>
             <pointsize>13</pointsize>
             <weight>50</weight>
             <italic>false</italic>
@@ -229,7 +229,7 @@ border-bottom: 2px solid rgb(130, 130, 130);
           </property>
           <property name="font">
            <font>
-            <family>Proxima Nova</family>
+            <family>Roboto</family>
             <pointsize>13</pointsize>
             <weight>50</weight>
             <italic>false</italic>
@@ -285,7 +285,7 @@ border-bottom: 2px solid rgb(130, 130, 130);
           </property>
           <property name="font">
            <font>
-            <family>Proxima Nova</family>
+            <family>Roboto</family>
             <pointsize>13</pointsize>
             <weight>50</weight>
             <italic>false</italic>
@@ -344,7 +344,7 @@ border-bottom: 2px solid rgb(130, 130, 130);
           </property>
           <property name="font">
            <font>
-            <family>Proxima Nova</family>
+            <family>Roboto</family>
             <pointsize>13</pointsize>
             <weight>50</weight>
             <italic>false</italic>
@@ -614,7 +614,7 @@ color: rgb(255, 255, 255);
           </property>
           <property name="font">
            <font>
-            <family>Proxima Nova</family>
+            <family>Roboto</family>
             <pointsize>13</pointsize>
             <weight>50</weight>
             <italic>false</italic>
