@@ -477,11 +477,14 @@ async def _populate_tree_load(
     early: Pendulum,
     late: Pendulum,
     version_number: int,
+    expected_timestamp: Pendulum,
     next_version_number: int,
 ):
     if early > late:
         return
-    manifest = await task_list.manifest_cache.load(entry_id, version=version_number)
+    manifest = await task_list.manifest_cache.load(
+        entry_id, version=version_number, timestamp=expected_timestamp
+    )
     data = ManifestDataAndMutablePaths(
         ManifestData(
             manifest.author,
@@ -532,7 +535,7 @@ async def _populate_tree_list_versions(
     # TODO : Check if directory, melt the same entries through different parent
     versions = await task_list.versions_list_cache.load(entry_id)
     for version, (timestamp, creator) in versions.items():
-        next_version = min((v for v in versions if v > version), default=None)
+        next_version = min((v for v in versions if v > version), default=None)  # TODO : consistency
         task_list.add(
             max(early, timestamp),
             VersionListerTask(
@@ -544,6 +547,7 @@ async def _populate_tree_list_versions(
                 max(early, timestamp),
                 late if next_version not in versions else min(late, versions[next_version][0]),
                 version,
+                timestamp,
                 next_version,
             ),
         )

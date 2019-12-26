@@ -248,6 +248,9 @@ class RemoteLoader:
         self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
     ) -> RemoteManifest:
         """
+        If both version and timestamp are given, use version to ask the backend for the correct
+        version, then use timestamp to check for consistency
+
         Raises:
             FSError
             FSBackendOfflineError
@@ -263,7 +266,7 @@ class RemoteLoader:
             workspace_entry.encryption_revision,
             entry_id,
             version=version,
-            timestamp=timestamp,
+            timestamp=timestamp if version is None else None,
         )
         if rep["status"] == "not_found":
             raise FSRemoteManifestNotFound(entry_id)
@@ -291,6 +294,11 @@ class RemoteLoader:
         if version not in (None, expected_version):
             raise FSError(
                 f"Backend returned invalid version for vlob {entry_id} (expecting {version}, got {expected_version})"
+            )
+
+        if version is not None and timestamp != expected_timestamp:
+            raise FSError(
+                f"Backend returned invalid expected timestamp for vlob {entry_id} at version {version} (expecting {expected_timestamp}, got {timestamp})"
             )
 
         author = await self.remote_device_manager.get_device(expected_author)
@@ -504,6 +512,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
 
+        If both version and timestamp are given, use version to ask the backend for the correct
+        version, then use timestamp to check for consistency
+
         Raises:
             FSError
             FSBackendOfflineError
@@ -515,11 +526,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
         return await super().load_manifest(
             entry_id,
             version=version,
-            timestamp=None
-            if version is not None
-            else self.timestamp
-            if timestamp is None
-            else timestamp,
+            timestamp=timestamp if timestamp else None if version is not None else self.timestamp,
         )
 
     async def upload_manifest(self, *e, **ke):
