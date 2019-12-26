@@ -209,6 +209,10 @@ class FSRemoteManifestNotFoundBadTimestamp(FSRemoteManifestNotFound):
     pass
 
 
+class FSRemoteManifestInconsistentTimestamp(FSRemoteOperationError):
+    pass
+
+
 class FSRemoteBlockNotFound(FSRemoteOperationError):
     pass
 

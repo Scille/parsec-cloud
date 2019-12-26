@@ -20,6 +20,7 @@ from parsec.core.fs.exceptions import (
     FSRemoteManifestNotFound,
     FSRemoteManifestNotFoundBadVersion,
     FSRemoteManifestNotFoundBadTimestamp,
+    FSRemoteManifestInconsistentTimestamp,
     FSRemoteBlockNotFound,
     FSBackendOfflineError,
     FSWorkspaceInMaintenance,
@@ -297,7 +298,7 @@ class RemoteLoader:
             )
 
         if version is not None and timestamp != expected_timestamp:
-            raise FSError(
+            raise FSRemoteManifestInconsistentTimestamp(
                 f"Backend returned invalid expected timestamp for vlob {entry_id} at version {version} (expecting {expected_timestamp}, got {timestamp})"
             )
 

@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSError
+from parsec.core.fs import FSRemoteManifestInconsistentTimestamp
 
 
 def _day(d):
@@ -301,12 +301,12 @@ async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
 
     backend_cmds.vlob_read = mocked_vlob_read
 
-    with pytest.raises(FSError) as exc:
+    with pytest.raises(FSRemoteManifestInconsistentTimestamp) as exc:
         version_lister = alice_workspace.get_version_lister()
         versions, down = await version_lister.list(
             FsPath("/files/renamed"), skip_minimal_sync=False
         )
-    value = exc.value.args[0]
+    value = exc.value.args[1]
     assert value[:53] == "Backend returned invalid expected timestamp for vlob "
     assert (
         value[-82:]
