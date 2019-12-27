@@ -14,7 +14,10 @@ from parsec.core.backend_connection import backend_administration_cmds_factory
 async def _create_organization(debug, name, backend_addr, administration_token, expiration_date):
     async with spinner("Creating organization in backend"):
         async with backend_administration_cmds_factory(backend_addr, administration_token) as cmds:
-            bootstrap_token = await cmds.organization_create(name, expiration_date)
+            rep = await cmds.organization_create(name, expiration_date)
+            if rep["status"] != "ok":
+                raise RuntimeError("Backend refused to create organization: {rep}")
+            bootstrap_token = rep["bootstrap_token"]
 
     organization_addr = BackendOrganizationBootstrapAddr.build(backend_addr, name, bootstrap_token)
     organization_addr_display = click.style(organization_addr.to_url(), fg="yellow")

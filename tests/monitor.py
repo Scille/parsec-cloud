@@ -33,6 +33,15 @@ else:
 END_CONTINUE = " " * len(END_PREFIX)
 
 
+def is_shielded_task(task):
+    cancel_status = task._cancel_status
+    while cancel_status:
+        if cancel_status._scope.shield:
+            return True
+        cancel_status = cancel_status._parent
+    return False
+
+
 def _render_subtree(name, rendered_children):
     lines = []
     lines.append(name)
@@ -273,7 +282,7 @@ io_statistics:
                     widths[1],
                     task._monitor_state,
                     widths[2],
-                    "yes" if task._cancel_status._scope.shield else "",
+                    "yes" if is_shielded_task(task) else "",
                     widths[3],
                     task.name,
                 )
@@ -289,7 +298,7 @@ io_statistics:
                 task.name,
                 task._monitor_short_id,
                 task._monitor_state,
-                ", shielded" if task._cancel_status._scope.shield else "",
+                ", shielded" if is_shielded_task(task) else "",
             )
 
         task_tree = render_task_tree(root_task, _format_task)

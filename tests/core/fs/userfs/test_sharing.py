@@ -45,12 +45,13 @@ async def test_share_bad_recipient(running_backend, alice_user_fs, alice, mallor
 
 
 @pytest.mark.trio
-async def test_share_offline(alice_user_fs, bob):
+async def test_share_offline(running_backend, alice_user_fs, bob):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")
 
-    with pytest.raises(FSBackendOfflineError):
-        await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
+    with running_backend.offline():
+        with pytest.raises(FSBackendOfflineError):
+            await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
 
 
 @pytest.mark.trio
@@ -335,7 +336,10 @@ async def test_share_no_manager_right(running_backend, alice_user_fs, alice, bob
 
     with pytest.raises(FSSharingNotAllowedError) as exc:
         await alice_user_fs.workspace_share(wid, bob.user_id, WorkspaceRole.MANAGER)
-    assert exc.value.message == "Must be Owner or Manager on the workspace is mandatory to share it"
+    assert (
+        exc.value.message
+        == "Must be Owner or Manager on the workspace is mandatory to share it: {'status': 'not_allowed'}"
+    )
 
 
 @pytest.mark.trio
@@ -412,7 +416,7 @@ async def test_share_workspace_then_conflict_on_rights(
         # if we cache the second message role...
         await alice2_user_fs.process_last_messages()
 
-    if first_to_sync == "alice2":
+    if first_to_sync == "alice":
         first = alice_user_fs
         second = alice2_user_fs
         synced_timestamp = Pendulum(2000, 1, 7)

@@ -3,7 +3,7 @@
 import trio
 
 from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer
-from parsec.backend.utils import catch_protocol_errors
+from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport
 from parsec.backend.realm import BaseRealmComponent
 
 
@@ -94,28 +94,9 @@ class EventsComponent:
         msg = events_listen_serializer.req_load(msg)
 
         if msg["wait"]:
-            # This is kind of a special case here:
-            # unlike other requests this one is going to (potentially) take
-            # a long time to complete. In the meantime we must monitor the
-            # connection with the client in order to make sure it is still
-            # online and handles websocket pings
-            event_data = None
-
-            async def _get_event(cancel_scope):
-                nonlocal event_data
-                event_data = await client_ctx.receive_events_channel.receive()
-                cancel_scope.cancel()
-
-            async def _keep_transport_breathing(cancel_scope):
-                # If a command is received, the client is violating the
-                # request/reply pattern. We consider this as an order to stop
-                # listening events.
-                await client_ctx.transport.recv()
-                cancel_scope.cancel()
-
-            async with trio.open_service_nursery() as nursery:
-                nursery.start_soon(_get_event, nursery.cancel_scope)
-                nursery.start_soon(_keep_transport_breathing, nursery.cancel_scope)
+            event_data = await run_with_breathing_transport(
+                client_ctx.transport, client_ctx.receive_events_channel.receive
+            )
 
             if not event_data:
                 return {"status": "cancelled", "reason": "Client cancelled the listening"}

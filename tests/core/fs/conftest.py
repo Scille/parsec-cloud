@@ -105,19 +105,15 @@ async def alice_sync_transactions(
 
 
 @pytest.fixture
-def user_fs_state_machine(
-    user_fs_factory,
-    backend_factory,
-    server_factory,
-    backend_addr,
-    persistent_mockup,
-    reset_testbed,
-    hypothesis_settings,
+def user_fs_offline_state_machine(
+    user_fs_factory, persistent_mockup, reset_testbed, hypothesis_settings
 ):
-    class UserFSStateMachine(TrioAsyncioRuleBasedStateMachine):
+    class UserFSOfflineStateMachine(TrioAsyncioRuleBasedStateMachine):
+        OFFLINE = True
+
         async def start_user_fs(self, device):
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=device) as user_fs:
+                async with user_fs_factory(device=device, offline=self.OFFLINE) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.user_fs_controller = await self.get_root_nursery().start(
@@ -138,6 +134,28 @@ def user_fs_state_machine(
             await self.stop_user_fs()
             persistent_mockup.clear()
             await self.start_user_fs(device)
+
+        async def reset_all(self):
+            await self.stop_user_fs()
+            await reset_testbed()
+
+        @property
+        def user_fs(self):
+            return self.user_fs_controller.user_fs
+
+        @classmethod
+        def run_as_test(cls):
+            run_state_machine_as_test(cls, settings=hypothesis_settings)
+
+    return UserFSOfflineStateMachine
+
+
+@pytest.fixture
+def user_fs_online_state_machine(
+    user_fs_offline_state_machine, backend_factory, server_factory, backend_addr, reset_testbed
+):
+    class UserFSOnlineStateMachine(user_fs_offline_state_machine):
+        OFFLINE = False
 
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
@@ -161,15 +179,7 @@ def user_fs_state_machine(
             await reset_testbed()
 
         @property
-        def user_fs(self):
-            return self.user_fs_controller.user_fs
-
-        @property
         def backend(self):
             return self.backend_controller.backend
 
-        @classmethod
-        def run_as_test(cls):
-            run_state_machine_as_test(cls, settings=hypothesis_settings)
-
-    return UserFSStateMachine
+    return UserFSOnlineStateMachine

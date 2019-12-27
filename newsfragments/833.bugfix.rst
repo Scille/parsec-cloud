@@ -1,0 +1,2 @@
+Fix unhandled exception in backend when a client connected over ssl disconnect
+during handshake.

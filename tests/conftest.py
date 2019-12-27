@@ -28,6 +28,7 @@ from parsec.api.transport import Transport
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
+from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
 from parsec.core.fs.storage import LocalDatabase, local_database
 
@@ -251,13 +252,18 @@ def postgresql_url(request):
 
 
 @pytest.fixture
-async def asyncio_loop():
-    # When a ^C happens, trio send a Cancelled exception to each running
-    # coroutine. We must protect this one to avoid deadlock if it is cancelled
-    # before another coroutine that uses trio-asyncio.
-    with trio.CancelScope(shield=True):
-        async with trio_asyncio.open_loop() as loop:
-            yield loop
+async def asyncio_loop(request):
+    # asyncio loop is only needed for triopg
+    if not request.config.getoption("--postgresql"):
+        yield None
+
+    else:
+        # When a ^C happens, trio send a Cancelled exception to each running
+        # coroutine. We must protect this one to avoid deadlock if it is cancelled
+        # before another coroutine that uses trio-asyncio.
+        with trio.CancelScope(shield=True):
+            async with trio_asyncio.open_loop() as loop:
+                yield loop
 
 
 @pytest.fixture(scope="session")
@@ -373,7 +379,8 @@ def persistent_mockup(monkeypatch):
         return mockup_context.get(storage.path)
 
     async def _close(storage):
-        storage_set.remove(storage)
+        # Idempotent operation
+        storage_set.discard(storage)
         storage._conn = None
 
     @asynccontextmanager
@@ -659,7 +666,10 @@ def core_factory(request, running_backend_ready, event_bus_factory, core_config)
                 # Henc we risk concurrency issues if the connection to backend
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
-                    await spy.wait_with_timeout("backend.connection.ready")
+                    await spy.wait_with_timeout(
+                        "backend.connection.changed",
+                        {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
+                    )
 
                 yield core
 

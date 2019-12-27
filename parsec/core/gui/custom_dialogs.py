@@ -89,11 +89,15 @@ class UserInputDialog(QDialog, Ui_InputDialog):
     def show_auto_complete(self):
         self.timer.stop()
         if len(self.line_edit_text.text()):
-            users = trio.from_thread.run(
+            rep = trio.from_thread.run(
                 self.core.backend_cmds.user_find,
                 self.line_edit_text.text(),
                 trio_token=self._trio_token,
             )
+            if rep["status"] == "ok":
+                users = rep["results"]
+            else:
+                users = []
             if self.exclude:
                 users = [u for u in users if u not in self.exclude]
             completer = QCompleter(users)

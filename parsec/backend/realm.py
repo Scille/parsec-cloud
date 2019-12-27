@@ -175,7 +175,6 @@ class BaseRealmComponent:
     @catch_protocol_errors
     async def api_realm_get_role_certificates(self, client_ctx, msg):
         msg = realm_get_role_certificates_serializer.req_load(msg)
-
         try:
             certificates = await self.get_role_certificates(
                 client_ctx.organization_id, client_ctx.device_id, **msg

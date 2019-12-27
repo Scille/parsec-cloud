@@ -19,7 +19,7 @@ from parsec.api.protocol import (
     InvalidMessageError,
     ServerHandshake,
 )
-from parsec.backend.utils import check_anonymous_api_allowed
+from parsec.backend.utils import check_anonymous_api_allowed, CancelledByNewRequest
 from parsec.backend.config import BackendConfig
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
@@ -370,7 +370,7 @@ class BackendApp:
                 await stream.send_all(content + content_body)
                 await stream.aclose()
 
-            except TransportError:
+            except trio.BrokenResourceError:
                 # Stream is really dead, nothing else to do...
                 pass
 
@@ -422,8 +422,11 @@ class BackendApp:
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
 
     async def _handle_client_loop(self, transport, client_ctx):
+        raw_req = None
         while True:
-            raw_req = await transport.recv()
+            # raw_req can be already defined if we received a new request
+            # while processing a command
+            raw_req = raw_req or await transport.recv()
             req = unpackb(raw_req)
             if get_log_level() <= LOG_LEVEL_DEBUG:
                 client_ctx.logger.debug("Request", req=_filter_binary_fields(req))
@@ -458,9 +461,16 @@ class BackendApp:
                 except ProtocolError as exc:
                     rep = {"status": "bad_message", "reason": str(exc)}
 
+                except CancelledByNewRequest as exc:
+                    # Long command handling such as message_get can be cancelled
+                    # when the peer send a new request
+                    raw_req = exc.new_raw_req
+                    continue
+
             if get_log_level() <= LOG_LEVEL_DEBUG:
                 client_ctx.logger.debug("Response", rep=_filter_binary_fields(req))
             else:
                 client_ctx.logger.info("Request", cmd=cmd, status=rep["status"])
             raw_rep = packb(rep)
             await transport.send(raw_rep)
+            raw_req = None

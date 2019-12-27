@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+from typing import List, Tuple
 from secrets import token_bytes
 
 from parsec.crypto import CryptoError
@@ -39,7 +40,7 @@ class HandshakeRevokedDevice(HandshakeError):
 
 
 class HandshakeAPIVersionError(HandshakeError):
-    def __init__(self, backend_versions, client_versions):
+    def __init__(self, backend_versions: ApiVersion, client_versions: ApiVersion):
         self.client_versions = client_versions
         self.backend_versions = backend_versions
         client_versions_str = "{" + ", ".join(map(str, client_versions)) + "}"
@@ -52,15 +53,17 @@ class HandshakeAPIVersionError(HandshakeError):
     def __str__(self):
         return self.message
 
-    @classmethod
-    def match_versions(cls, backend_versions, client_versions):
-        sorted_client_versions = sorted(client_versions)
-        backend_dct = {version[0]: version for version in backend_versions}
-        for client_version in reversed(sorted_client_versions):
-            if client_version[0] in backend_dct:
-                backend_version = backend_dct[client_version[0]]
-                return (backend_version, client_version)
-        raise cls(backend_versions, client_versions)
+
+def _settle_compatible_versions(
+    backend_versions: List[ApiVersion], client_versions: List[ApiVersion]
+) -> Tuple[ApiVersion, ApiVersion]:
+    # Try to use the newest version first
+    for cv in reversed(sorted(client_versions)):
+        # No need to compare `revision` because only `version` field breaks compatibility
+        bv = next((bv for bv in backend_versions if bv.version == cv.version), None)
+        if bv:
+            return bv, cv
+    raise HandshakeAPIVersionError(backend_versions, client_versions)
 
 
 class ApiVersionField(fields.Tuple):
@@ -183,7 +186,7 @@ class ServerHandshake:
 
         # API version matching
         client_api_versions = frozenset([self.answer_data["client_api_version"]])
-        self.backend_api_version, self.client_api_version = HandshakeAPIVersionError.match_versions(
+        self.backend_api_version, self.client_api_version = _settle_compatible_versions(
             self.supported_api_versions, client_api_versions
         )
 
@@ -284,7 +287,7 @@ class BaseClientHandshake:
 
         # API version matching
         backend_api_versions = frozenset(self.challenge_data["supported_api_versions"])
-        self.backend_api_version, self.client_api_version = HandshakeAPIVersionError.match_versions(
+        self.backend_api_version, self.client_api_version = _settle_compatible_versions(
             backend_api_versions, self.supported_api_versions
         )
 

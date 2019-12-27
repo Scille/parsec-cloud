@@ -12,7 +12,10 @@ from parsec.api.data import (
 )
 from parsec.api.protocol import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
-from parsec.core.backend_connection import backend_cmds_pool_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import (
+    backend_authenticated_cmds_factory,
+    backend_anonymous_cmds_factory,
+)
 
 
 @pytest.mark.trio
@@ -25,9 +28,10 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
     async def _alice_invite():
         nonlocal device_certificate
 
-        encrypted_claim = await alice_backend_cmds.device_invite(nd_id.device_name)
+        ret = await alice_backend_cmds.device_invite(nd_id.device_name)
+        assert ret["status"] == "ok"
         claim = DeviceClaimContent.decrypt_and_load_for(
-            encrypted_claim, recipient_privkey=alice.private_key
+            ret["encrypted_claim"], recipient_privkey=alice.private_key
         )
 
         assert claim.token == token
@@ -44,16 +48,16 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             user_manifest_key=alice.user_manifest_key,
         ).dump_and_encrypt_for(recipient_pubkey=claim.answer_public_key)
         with trio.fail_after(1):
-            await alice_backend_cmds.device_create(device_certificate, encrypted_answer)
+            ret = await alice_backend_cmds.device_create(device_certificate, encrypted_answer)
+            assert ret["status"] == "ok"
 
     async def _alice_nd_claim():
         async with backend_anonymous_cmds_factory(alice.organization_addr) as cmds:
-            creator_user_certificate, creator_device_certificate, trustchain = await cmds.device_get_invitation_creator(
-                nd_id
-            )
-            assert trustchain == {"devices": [], "revoked_users": [], "users": []}
-            creator = UserCertificateContent.unsecure_load(creator_user_certificate)
-            creator_device = DeviceCertificateContent.unsecure_load(creator_device_certificate)
+            ret = await cmds.device_get_invitation_creator(nd_id)
+            assert ret["status"] == "ok"
+            assert ret["trustchain"] == {"devices": [], "revoked_users": [], "users": []}
+            creator = UserCertificateContent.unsecure_load(ret["user_certificate"])
+            creator_device = DeviceCertificateContent.unsecure_load(ret["device_certificate"])
             assert creator_device.device_id.user_id == creator.user_id
 
             answer_private_key = PrivateKey.generate()
@@ -64,13 +68,12 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
                 answer_public_key=answer_private_key.public_key,
             ).dump_and_encrypt_for(recipient_pubkey=creator.public_key)
             with trio.fail_after(1):
-                claim_device_certificate, encrypted_answer = await cmds.device_claim(
-                    nd_id, encrypted_claim
-                )
+                ret = await cmds.device_claim(nd_id, encrypted_claim)
+                assert ret["status"] == "ok"
 
-            assert claim_device_certificate == device_certificate
+            assert ret["device_certificate"] == device_certificate
             answer = DeviceClaimAnswerContent.decrypt_and_load_for(
-                encrypted_answer, recipient_privkey=answer_private_key
+                ret["encrypted_answer"], recipient_privkey=answer_private_key
             )
             assert answer == DeviceClaimAnswerContent(
                 private_key=alice.private_key,
@@ -85,6 +88,8 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
             nursery.start_soon(_alice_nd_claim)
 
     # Now alice's new device should be able to connect to backend
-    async with backend_cmds_pool_factory(alice.organization_addr, nd_id, nd_signing_key) as cmds:
-        pong = await cmds.ping("Hello World !")
-        assert pong == "Hello World !"
+    async with backend_authenticated_cmds_factory(
+        alice.organization_addr, nd_id, nd_signing_key
+    ) as cmds:
+        ret = await cmds.ping("Hello World !")
+        assert ret == {"pong": "Hello World !", "status": "ok"}

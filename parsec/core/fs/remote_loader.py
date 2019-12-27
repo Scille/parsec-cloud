@@ -12,16 +12,7 @@ from parsec.api.data import (
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
 )
-from parsec.core.backend_connection import (
-    BackendCmdsBadResponse,
-    BackendCmdsInMaintenance,
-    BackendCmdsAlreadyExists,
-    BackendCmdsNotFound,
-    BackendCmdsNotAllowed,
-    BackendCmdsBadVersion,
-    BackendNotAvailable,
-    BackendConnectionError,
-)
+from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.types import EntryID, ChunkID
 from parsec.core.fs.exceptions import (
     FSError,
@@ -73,28 +64,30 @@ class RemoteLoader:
         else:
             return None
 
-    async def _load_realm_role_certificates(self, realm_id: Optional[EntryID] = None):
+    async def _backend_cmds(self, cmd, *args, **kwargs):
         try:
-            uv_roles = await self.backend_cmds.realm_get_role_certificates(
-                realm_id or self.workspace_id
-            )
+            return await getattr(self.backend_cmds, cmd)(*args, **kwargs)
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
-        except BackendCmdsNotAllowed as exc:
-            # Seems we lost the access to the realm
-            raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access") from exc
-
         except BackendConnectionError as exc:
-            raise FSError(f"Cannot retrieve workspace roles: {exc}") from exc
+            raise FSError(f"`{cmd}` request has failed due to connection error `{exc}`") from exc
+
+    async def _load_realm_role_certificates(self, realm_id: Optional[EntryID] = None):
+        rep = await self._backend_cmds("realm_get_role_certificates", realm_id or self.workspace_id)
+        if rep["status"] == "not_allowed":
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoReadAccess("Cannot get workspace roles: no read access")
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot retrieve workspace roles: `{rep['status']}`")
 
         try:
             # Must read unverified certificates to access metadata
             unsecure_certifs = sorted(
                 [
                     (RealmRoleCertificateContent.unsecure_load(uv_role), uv_role)
-                    for uv_role in uv_roles
+                    for uv_role in rep["certificates"]
                 ],
                 key=lambda x: x[0].timestamp,
             )
@@ -190,34 +183,22 @@ class RemoteLoader:
             FSWorkspaceNoAccess
         """
         # Download
-        try:
-            ciphered_block = await self.backend_cmds.block_read(access.id)
-
-        # Block not found
-        except BackendCmdsNotFound as exc:
-            raise FSRemoteBlockNotFound(access) from exc
-
-        except BackendCmdsNotAllowed as exc:
+        rep = await self._backend_cmds("block_read", access.id)
+        if rep["status"] == "not_found":
+            raise FSRemoteBlockNotFound(access)
+        elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoReadAccess("Cannot load block: no read access") from exc
-
-        # Backend not available
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        # Workspace in maintenance
-        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceNoReadAccess("Cannot load block: no read access")
+        elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot download block while the workspace in maintenance"
-            ) from exc
-
-        # Another backend error
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot download block: {exc}") from exc
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot download block: `{rep['status']}`")
 
         # Decryption
         try:
-            block = access.key.decrypt(ciphered_block)
+            block = access.key.decrypt(rep["block"])
 
         # Decryption error
         except CryptoError as exc:
@@ -244,32 +225,20 @@ class RemoteLoader:
             raise FSError(f"Cannot encrypt block: {exc}") from exc
 
         # Upload block
-        try:
-            await self.backend_cmds.block_create(access.id, self.workspace_id, ciphered)
-
-        # Block already exists
-        except BackendCmdsAlreadyExists:
+        rep = await self._backend_cmds("block_create", access.id, self.workspace_id, ciphered)
+        if rep["status"] == "already_exists":
             # Ignore exception if the block has already been uploaded
             # This might happen when a failure occurs before the local storage is updated
             pass
-
-        except BackendCmdsNotAllowed as exc:
+        elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access") from exc
-
-        # Backend is not available
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        # Workspace is in maintenance
-        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceNoWriteAccess("Cannot upload block: no write access")
+        elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot upload block while the workspace in maintenance"
-            ) from exc
-
-        # Another backend error
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot upload block: {exc}") from exc
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot upload block: {rep}")
 
         # Update local storage
         await self.local_storage.set_clean_block(access.id, data)
@@ -289,48 +258,36 @@ class RemoteLoader:
         """
         # Download the vlob
         workspace_entry = self.get_workspace_entry()
-        try:
-            args = await self.backend_cmds.vlob_read(
-                workspace_entry.encryption_revision, entry_id, version=version, timestamp=timestamp
-            )
-
-        # Vlob is not found
-        except BackendCmdsNotFound as exc:
-            raise FSRemoteManifestNotFound(entry_id) from exc
-
-        except BackendCmdsNotAllowed as exc:
+        rep = await self._backend_cmds(
+            "vlob_read",
+            workspace_entry.encryption_revision,
+            entry_id,
+            version=version,
+            timestamp=timestamp,
+        )
+        if rep["status"] == "not_found":
+            raise FSRemoteManifestNotFound(entry_id)
+        elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access") from exc
-
-        # Backend is not available
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        # Workspace is in maintenance
-        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
+        elif rep["status"] == "bad_version":
+            raise FSRemoteManifestNotFoundBadVersion(entry_id)
+        elif rep["status"] == "bad_timestamp":
+            raise FSRemoteManifestNotFoundBadTimestamp(entry_id)
+        elif rep["status"] == "bad_encryption_revision":
+            raise FSBadEncryptionRevision(
+                f"Cannot fetch vlob {entry_id}: Bad encryption revision provided"
+            )
+        elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot download vlob while the workspace is in maintenance"
-            ) from exc
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
 
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "bad_version":
-                raise FSRemoteManifestNotFoundBadVersion(entry_id)
-            elif exc.status == "bad_timestamp":
-                raise FSRemoteManifestNotFoundBadTimestamp(entry_id)
-            if exc.status == "not_found":
-                raise FSRemoteManifestNotFound(entry_id)
-            elif exc.status == "bad_encryption_revision":
-                raise FSBadEncryptionRevision(
-                    f"Cannot fetch vlob {entry_id}: Bad encryption revision provided"
-                ) from exc
-            else:
-                raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
-
-        # Another backend error
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
-
-        expected_author, expected_timestamp, expected_version, encrypted = args
+        expected_version = rep["version"]
+        expected_author = rep["author"]
+        expected_timestamp = rep["timestamp"]
         if version not in (None, expected_version):
             raise FSError(
                 f"Backend returned invalid version for vlob {entry_id} (expecting {version}, got {expected_version})"
@@ -340,7 +297,7 @@ class RemoteLoader:
 
         try:
             remote_manifest = RemoteManifest.decrypt_verify_and_load(
-                encrypted,
+                rep["blob"],
                 key=workspace_entry.key,
                 author_verify_key=author.verify_key,
                 expected_author=expected_author,
@@ -376,34 +333,20 @@ class RemoteLoader:
             FSWorkspaceInMaintenance
             FSRemoteManifestNotFound
         """
-        try:
-            versions_dict = await self.backend_cmds.vlob_list_versions(entry_id)
-
-        # Vlob is not found
-        except BackendCmdsNotFound as exc:
-            raise FSRemoteManifestNotFound(entry_id) from exc
-
-        # Backend is not available
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        # Workspace is in maintenance
-        except BackendCmdsInMaintenance as exc:
+        rep = await self._backend_cmds("vlob_list_versions", entry_id)
+        if rep["status"] == "not_allowed":
+            # Seems we lost the access to the realm
+            raise FSWorkspaceNoReadAccess("Cannot load manifest: no read access")
+        elif rep["status"] == "not_found":
+            raise FSRemoteManifestNotFound(entry_id)
+        elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot download vlob while the workspace is in maintenance"
-            ) from exc
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot fetch vlob {entry_id}: `{rep['status']}`")
 
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "not_found":
-                raise FSRemoteManifestNotFound(entry_id)
-            else:
-                raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
-
-        # Another backend error
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot fetch vlob {entry_id}: {exc}") from exc
-
-        return versions_dict
+        return rep["versions"]
 
     async def create_realm(self, realm_id: EntryID):
         """
@@ -415,23 +358,14 @@ class RemoteLoader:
             author=self.device.device_id, timestamp=pendulum_now(), realm_id=realm_id
         ).dump_and_sign(self.device.signing_key)
 
-        try:
-            await self.backend_cmds.realm_create(certif)
-
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "already_exists":
-                # It's possible a previous attempt to create this realm
-                # succeeded but we didn't receive the confirmation, hence
-                # we play idempotent here.
-                return
-            else:
-                raise FSError(f"Cannot create realm {realm_id}: {exc}") from exc
-
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot create realm {realm_id}: {exc}") from exc
+        rep = await self._backend_cmds("realm_create", certif)
+        if rep["status"] == "already_exists":
+            # It's possible a previous attempt to create this realm
+            # succeeded but we didn't receive the confirmation, hence
+            # we play idempotent here.
+            return
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
 
     async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifest):
         """
@@ -481,43 +415,25 @@ class RemoteLoader:
             FSWorkspaceNoAccess
         """
 
-        # Vlob updload
-        try:
-            await self.backend_cmds.vlob_create(
-                self.workspace_id, encryption_revision, entry_id, now, ciphered
-            )
-
-        # Vlob alread exists
-        except BackendCmdsAlreadyExists as exc:
-            raise FSRemoteSyncError(entry_id) from exc
-
-        except BackendCmdsNotAllowed as exc:
+        # Vlob upload
+        rep = await self._backend_cmds(
+            "vlob_create", self.workspace_id, encryption_revision, entry_id, now, ciphered
+        )
+        if rep["status"] == "already_exists":
+            raise FSRemoteSyncError(entry_id)
+        elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access") from exc
-
-        # Backend not available
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        # Workspace in maintenance
-        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
+        elif rep["status"] == "bad_encryption_revision":
+            raise FSBadEncryptionRevision(
+                f"Cannot create vlob {entry_id}: Bad encryption revision provided"
+            )
+        elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot create vlob while the workspace is in maintenance"
-            ) from exc
-
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "already_exists":
-                raise FSRemoteSyncError(entry_id)
-            elif exc.status == "bad_encryption_revision":
-                raise FSBadEncryptionRevision(
-                    f"Cannot create vlob {entry_id}: Bad encryption revision provided"
-                ) from exc
-            else:
-                raise FSError(f"Cannot create vlob {entry_id}: {exc}") from exc
-
-        # Another backend error
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot update vlob: {exc}") from exc
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot create vlob {entry_id}: `{rep['status']}`")
 
     async def _vlob_update(
         self,
@@ -537,50 +453,30 @@ class RemoteLoader:
             FSWorkspaceNoAccess
         """
         # Vlob upload
-        try:
-            await self.backend_cmds.vlob_update(
-                encryption_revision, entry_id, version, now, ciphered
-            )
-
-        # Vlob not found
-        except BackendCmdsNotFound as exc:
-            raise FSRemoteSyncError(entry_id) from exc
-
-        except BackendCmdsNotAllowed as exc:
+        rep = await self._backend_cmds(
+            "vlob_update", encryption_revision, entry_id, version, now, ciphered
+        )
+        if rep["status"] == "not_found":
+            raise FSRemoteSyncError(entry_id)
+        elif rep["status"] == "not_allowed":
             # Seems we lost the access to the realm
-            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access") from exc
-
-        # Workspace in maintenance
-        except BackendCmdsInMaintenance as exc:
+            raise FSWorkspaceNoWriteAccess("Cannot upload manifest: no write access")
+        elif rep["status"] == "bad_version":
+            raise FSRemoteSyncError(entry_id)
+        elif rep["status"] == "bad_timestamp":
+            # Quick and dirty fix before a better version with a retry loop : go offline so we
+            # don't have to deal with another client updating manifest with a later timestamp
+            raise FSBackendOfflineError(rep)
+        elif rep["status"] == "bad_encryption_revision":
+            raise FSBadEncryptionRevision(
+                f"Cannot update vlob {entry_id}: Bad encryption revision provided"
+            )
+        elif rep["status"] == "in_maintenance":
             raise FSWorkspaceInMaintenance(
                 f"Cannot create vlob while the workspace is in maintenance"
-            ) from exc
-
-        # Versions do not match
-        except BackendCmdsBadVersion as exc:
-            raise FSRemoteSyncError(entry_id) from exc
-
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "bad_version":
-                raise FSRemoteSyncError(entry_id)
-            elif exc.status == "bad_timestamp":
-                # Quick and dirty fix before a better version with a retry loop : go offline so we
-                # don't have to deal with another client updating manifest with a later timestamp
-                raise FSBackendOfflineError(str(exc)) from exc
-            elif exc.status == "bad_encryption_revision":
-                raise FSBadEncryptionRevision(
-                    f"Cannot update vlob {entry_id}: Bad encryption revision provided"
-                ) from exc
-            else:
-                raise FSError(f"Cannot update vlob {entry_id}: {exc}") from exc
-
-        # Backend not available
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
-
-        # Another backend error
-        except BackendConnectionError as exc:
-            raise FSError(f"Cannot update vlob: {exc}") from exc
+            )
+        elif rep["status"] != "ok":
+            raise FSError(f"Cannot update vlob {entry_id}: `{rep['status']}`")
 
     def to_timestamped(self, timestamp):
         return RemoteLoaderTimestamped(self, timestamp)

@@ -15,7 +15,12 @@ from parsec.core.gui.custom_widgets import NotificationTaskbarButton
 from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
-from parsec.core.backend_connection.monitor import BackendState, current_backend_connection_state
+from parsec.api.protocol import (
+    HandshakeAPIVersionError,
+    HandshakeRevokedDevice,
+    HandshakeOrganizationExpired,
+)
+from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.fs import (
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
@@ -25,8 +30,7 @@ from parsec.core.fs import (
 
 class CentralWidget(QWidget, Ui_CentralWidget):
     NOTIFICATION_EVENTS = [
-        "backend.connection.incompatible_version",
-        "backend.connection.rvk_mismatch",
+        "backend.connection.changed",
         "mountpoint.stopped",
         "mountpoint.remote_error",
         "mountpoint.unhandled_error",
@@ -34,9 +38,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         "fs.entry.file_update_conflicted",
     ]
 
-    connection_state_changed = pyqtSignal(int)
+    connection_state_changed = pyqtSignal(object, object)
     logout_requested = pyqtSignal()
-    new_notification = pyqtSignal(str, str, str)
+    new_notification = pyqtSignal(str, str)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -54,15 +58,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.widget_notif.layout().addWidget(self.notification_center)
         self.notification_center.hide()
 
-        self.event_bus.connect("backend.connection.ready", self._on_connection_changed)
-        self.event_bus.connect("backend.connection.lost", self._on_connection_changed)
-        self.event_bus.connect(
-            "backend.connection.incompatible_version", self._on_connection_changed
-        )
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, self.handle_event)
 
-        self._on_connection_state_changed(current_backend_connection_state(event_bus).value)
         self.label_mountpoint.setText(str(self.core.config.mountpoint_base_dir))
         self.label_mountpoint.clicked.connect(self.open_mountpoint)
         self.menu.organization = self.core.device.organization_addr.organization_id
@@ -79,8 +77,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.button_notif.clicked.connect(self.show_notification_center)
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.notification_center.close_requested.connect(self.close_notification_center)
-        if current_backend_connection_state(event_bus) == BackendState.INCOMPATIBLE_VERSION:
-            self.handle_event("backend.connection.incompatible_version")
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -104,18 +100,19 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         )
         self.widget_central.layout().insertWidget(0, self.settings_widget)
 
+        self._on_connection_state_changed(
+            self.core.backend_conn.status, self.core.backend_conn.status_exc
+        )
         self.show_mount_widget()
 
     def open_mountpoint(self, path):
         desktop.open_file(path)
 
     def handle_event(self, event, **kwargs):
-        if event == "backend.connection.incompatible_version":
-            self.new_notification.emit(event, "WARNING", _("NOTIF_WARN_INCOMPATIBLE_VERSION"))
-        if event == "backend.connection.rvk_mismatch":
-            self.new_notification.emit(event, "ERROR", _("NOTIF_WARN_RVK_MISMATCH"))
+        if event == "backend.connection.changed":
+            self.connection_state_changed.emit(kwargs["status"], kwargs["status_exc"])
         elif event == "mountpoint.stopped":
-            self.new_notification.emit(event, "WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
+            self.new_notification.emit("WARNING", _("NOTIF_WARN_MOUNTPOINT_UNMOUNTED"))
         elif event == "mountpoint.remote_error":
             exc = kwargs["exc"]
             path = kwargs["path"]
@@ -127,13 +124,12 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 msg = _("NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}").format(path)
             else:
                 msg = _("NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}").format(path, str(exc))
-            self.new_notification.emit(event, "WARNING", msg)
+            self.new_notification.emit("WARNING", msg)
         elif event == "mountpoint.unhandled_error":
             exc = kwargs["exc"]
             path = kwargs["path"]
             operation = kwargs["operation"]
             self.new_notification.emit(
-                event,
                 "ERROR",
                 _("NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}").format(
                     operation, path, str(exc)
@@ -146,19 +142,19 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             previous_role = getattr(previous_entry, "role", None)
             if new_role is not None and previous_role is None:
                 self.new_notification.emit(
-                    event, "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
+                    "INFO", _("NOTIF_INFO_WORKSPACE_SHARED_{}").format(new_entry.name)
                 )
             elif new_role is not None and previous_role is not None:
                 self.new_notification.emit(
-                    event, "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
+                    "INFO", _("NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}").format(new_entry.name)
                 )
             elif new_role is None and previous_role is not None:
                 self.new_notification.emit(
-                    event, "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
+                    "INFO", _("NOTIF_INFO_WORKSPACE_UNSHARED_{}").format(previous_entry.name)
                 )
         elif event == "fs.entry.file_update_conflicted":
             self.new_notification.emit(
-                event, "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
+                "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )
 
     def close_notification_center(self):
@@ -174,36 +170,54 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.button_notif.setChecked(True)
             self.button_notif.reset_notif_count()
 
-    def _on_connection_state_changed(self, state):
-        if state == BackendState.READY.value:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_CONNECTED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_online.png")
-            )
-        elif state == BackendState.LOST.value:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_DISCONNECTED"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_offline.png")
-            )
-        elif state == BackendState.INCOMPATIBLE_VERSION.value:
-            self.menu.label_connection_text.setText(_("BACKEND_STATE_INCOMPATIBLE_VERSION"))
-            self.menu.label_connection_icon.setPixmap(
-                QPixmap(":/icons/images/icons/cloud_offline.png")
-            )
+    def _on_connection_state_changed(self, status, status_exc):
+        text = None
+        icon = None
+        tooltip = None
+        notif = None
 
-    def on_new_notification(self, event, notif_type, msg):
+        if status in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING):
+            tooltip = text = _("BACKEND_STATE_CONNECTED")
+            icon = QPixmap(":/icons/images/icons/cloud_online.png")
+
+        elif status == BackendConnStatus.LOST:
+            tooltip = text = _("BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+
+        elif status == BackendConnStatus.REFUSED:
+            cause = status_exc.__cause__
+            if isinstance(cause, HandshakeAPIVersionError):
+                tooltip = _("BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}").format(
+                    ", ".join([v.version for v in cause.backend_versions])
+                )
+            elif isinstance(cause, HandshakeRevokedDevice):
+                tooltip = _("BACKEND_STATE_REASON_REVOKED_DEVICE")
+            elif isinstance(cause, HandshakeOrganizationExpired):
+                tooltip = _("BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED")
+            else:
+                tooltip = _("BACKEND_STATE_REASON_REFUSED_DEFAULT")
+            text = _("BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+            notif = ("WARNING", tooltip)
+
+        elif status == BackendConnStatus.CRASHED:
+            text = _("BACKEND_STATE_DISCONNECTED")
+            tooltip = _("BACKEND_STATE_CRASHED_{}").format(str(status_exc.__cause__))
+            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+            notif = ("ERROR", tooltip)
+
+        self.menu.label_connection_text.setText(text)
+        self.menu.label_connection_text.setToolTip(tooltip)
+        self.menu.label_connection_icon.setPixmap(icon)
+        self.menu.label_connection_icon.setToolTip(tooltip)
+        if notif:
+            self.new_notification.emit(*notif)
+
+    def on_new_notification(self, notif_type, msg):
         self.notification_center.add_notification(notif_type, msg)
         if self.notification_center.isHidden():
             self.button_notif.inc_notif_count()
             self.button_notif.repaint()
-
-    def _on_connection_changed(self, event):
-        if event == "backend.connection.ready":
-            self.connection_state_changed.emit(BackendState.READY.value)
-        elif event == "backend.connection.lost":
-            self.connection_state_changed.emit(BackendState.LOST.value)
-        elif event == "backend.connection.incompatible_version":
-            self.connection_state_changed.emit(BackendState.INCOMPATIBLE_VERSION.value)
 
     def show_mount_widget(self):
         self.clear_widgets()

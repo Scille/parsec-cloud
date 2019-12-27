@@ -32,7 +32,7 @@ from parsec.api.protocol import (
     device_cancel_invitation_serializer,
     device_create_serializer,
 )
-from parsec.backend.utils import anonymous_api, catch_protocol_errors
+from parsec.backend.utils import anonymous_api, catch_protocol_errors, run_with_breathing_transport
 
 
 class UserError(Exception):
@@ -225,7 +225,9 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await self._api_user_invite(client_ctx, msg)
+            rep = await run_with_breathing_transport(
+                client_ctx.transport, self._api_user_invite, client_ctx, msg
+            )
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -294,7 +296,9 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await self._api_user_claim(client_ctx, msg)
+            rep = await run_with_breathing_transport(
+                client_ctx.transport, self._api_user_claim, client_ctx, msg
+            )
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -499,7 +503,9 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await self._api_device_invite(client_ctx, msg)
+            rep = await run_with_breathing_transport(
+                client_ctx.transport, self._api_device_invite, client_ctx, msg
+            )
 
         if cancel_scope.cancelled_caught:
             rep = {
@@ -571,7 +577,9 @@ class BaseUserComponent:
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            rep = await self._api_device_claim(client_ctx, msg)
+            rep = await run_with_breathing_transport(
+                client_ctx.transport, self._api_device_claim, client_ctx, msg
+            )
 
         if cancel_scope.cancelled_caught:
             rep = {

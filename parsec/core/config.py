@@ -53,6 +53,8 @@ class CoreConfig:
     mountpoint_base_dir: Path
 
     debug: bool = False
+
+    backend_max_cooldown: int = 30
     backend_connection_keepalive: Optional[int] = 29
     backend_max_connections: int = 4
 
@@ -86,6 +88,7 @@ def config_factory(
     cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     mountpoint_enabled: bool = False,
+    backend_max_cooldown: int = 30,
     backend_connection_keepalive: Optional[int] = 29,
     backend_max_connections: int = 4,
     telemetry_enabled: bool = True,
@@ -107,6 +110,7 @@ def config_factory(
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
         mountpoint_enabled=mountpoint_enabled,
+        backend_max_cooldown=backend_max_cooldown,
         backend_connection_keepalive=backend_connection_keepalive,
         backend_max_connections=backend_max_connections,
         telemetry_enabled=telemetry_enabled,
@@ -182,6 +186,7 @@ def save_config(config: CoreConfig):
                 "cache_base_dir": str(config.cache_base_dir),
                 "mountpoint_base_dir": str(config.mountpoint_base_dir),
                 "telemetry_enabled": config.telemetry_enabled,
+                "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "gui_last_device": config.gui_last_device,
                 "gui_tray_enabled": config.gui_tray_enabled,

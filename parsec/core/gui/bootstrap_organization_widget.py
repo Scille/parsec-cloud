@@ -10,11 +10,10 @@ from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import (
-    BackendCmdsBadResponse,
     backend_anonymous_cmds_factory,
     BackendNotAvailable,
-    BackendIncompatibleVersion,
-    BackendHandshakeError,
+    BackendConnectionRefused,
+    BackendConnectionError,
 )
 from parsec.core.local_device import (
     generate_new_device,
@@ -77,7 +76,7 @@ async def _do_bootstrap_organization(
 
     try:
         async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
-            await cmds.organization_bootstrap(
+            rep = await cmds.organization_bootstrap(
                 bootstrap_addr.organization_id,
                 bootstrap_addr.token,
                 root_verify_key,
@@ -85,16 +84,19 @@ async def _do_bootstrap_organization(
                 device_certificate,
             )
 
-    except BackendIncompatibleVersion as exc:
-        raise JobResultError("bad-api-version", info=str(exc)) from exc
+            if rep["status"] in ("already_bootstrapped", "not_found"):
+                raise JobResultError("invalid-url", info=str(rep))
+            elif rep["status"] != "ok":
+                raise JobResultError("refused-by-backend", info=str(rep))
+            # TODO: handle `JobResultError("bad-api-version")` ?
 
-    except BackendHandshakeError as exc:
-        raise JobResultError("invalid-url") from exc
+    except BackendConnectionRefused as exc:
+        raise JobResultError("invalid-url", info=str(exc)) from exc
 
     except BackendNotAvailable as exc:
         raise JobResultError("backend-offline", info=str(exc)) from exc
 
-    except BackendCmdsBadResponse as exc:
+    except BackendConnectionError as exc:
         raise JobResultError("refused-by-backend", info=str(exc)) from exc
 
     return device, password
