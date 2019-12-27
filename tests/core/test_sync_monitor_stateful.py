@@ -71,7 +71,6 @@ def test_sync_monitor_stateful(
     )
 
     class SyncMonitorStateful(TrioAsyncioRuleBasedStateMachine):
-
         SharedWorkspaces = Bundle("shared_workspace")
         SyncedFiles = Bundle("synced_files")
 

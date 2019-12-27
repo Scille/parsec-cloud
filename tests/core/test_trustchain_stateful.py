@@ -23,9 +23,7 @@ from parsec.core.trustchain import TrustchainContext
 
 
 @pytest.mark.slow
-def test_workspace_reencryption_need(
-    hypothesis_settings, reset_testbed, local_device_factory, coolorg
-):
+def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_factory, coolorg):
     name_count = 0
 
     class TrustchainValidate(RuleBasedStateMachine):
@@ -73,6 +71,7 @@ def test_workspace_reencryption_need(
 
         @initialize(target=NonRevokedAdminUsers)
         def init(self):
+            caplog.clear()
             self.users_certifs = {}
             self.users_content = {}
             self.revoked_users_certifs = {}
