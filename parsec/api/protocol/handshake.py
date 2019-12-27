@@ -61,9 +61,8 @@ def _settle_compatible_versions(
     for cv in reversed(sorted(client_versions)):
         # No need to compare `revision` because only `version` field breaks compatibility
         bv = next((bv for bv in backend_versions if bv.version == cv.version), None)
-        if not bv:
-            continue
-        return bv, cv
+        if bv:
+            return bv, cv
     raise HandshakeAPIVersionError(backend_versions, client_versions)
 
 

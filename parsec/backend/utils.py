@@ -40,11 +40,13 @@ class CancelledByNewRequest(Exception):
 
 
 async def run_with_breathing_transport(transport, fn, *args, **kwargs):
-    # This is kind of a special case here:
-    # unlike other requests this one is going to (potentially) take
-    # a long time to complete. In the meantime we must monitor the
-    # connection with the client in order to make sure it is still
-    # online and handles websocket pings
+    """
+    This is kind of a special case here:
+    unlike other requests this one is going to (potentially) take
+    a long time to complete. In the meantime we must monitor the
+    connection with the client in order to make sure it is still
+    online and handles websocket pings
+    """
 
     rep = None
 

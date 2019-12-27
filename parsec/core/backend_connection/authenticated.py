@@ -218,11 +218,13 @@ class BackendAuthenticatedConn:
                     "backend.connection.changed", status=self._status, status_exc=self._status_exc
                 )
             if self._status == BackendConnStatus.LOST:
-                # Wait some time before retrying to connect
+                # Start with a 1s cooldown and increase by power of 2 until
+                # max cooldown every time the connection trial fails
+                # (e.g. 1, 2, 4, 8, 15, 15, 15 etc. if max cooldown is 15s)
                 cooldown_time = 2 ** self._backend_connection_failures
-                self._backend_connection_failures += 1
                 if cooldown_time > self.max_cooldown:
                     cooldown_time = self.max_cooldown
+                self._backend_connection_failures += 1
                 logger.info("Backend offline", cooldown_time=cooldown_time)
                 await trio.sleep(cooldown_time)
             else:
