@@ -379,7 +379,8 @@ def persistent_mockup(monkeypatch):
         return mockup_context.get(storage.path)
 
     async def _close(storage):
-        storage_set.remove(storage)
+        # Idempotent operation
+        storage_set.discard(storage)
         storage._conn = None
 
     @asynccontextmanager
