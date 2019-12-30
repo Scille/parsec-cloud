@@ -62,7 +62,9 @@ async def initialize_test_organization(
 
     async with backend_administration_cmds_factory(backend_address, administration_token) as cmds:
 
-        bootstrap_token = await cmds.organization_create(organization_id)
+        rep = await cmds.organization_create(organization_id)
+        assert rep["status"] == "ok"
+        bootstrap_token = rep["bootstrap_token"]
 
         organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
             backend_address, organization_id, bootstrap_token
@@ -94,13 +96,14 @@ async def initialize_test_organization(
             verify_key=alice_device.verify_key,
         ).dump_and_sign(author_signkey=root_signing_key)
 
-        await cmds.organization_bootstrap(
+        rep = await cmds.organization_bootstrap(
             organization_bootstrap_addr.organization_id,
             organization_bootstrap_addr.token,
             root_verify_key,
             user_certificate,
             device_certificate,
         )
+        assert rep["status"] == "ok"
 
     # Create a workspace for Alice
 
