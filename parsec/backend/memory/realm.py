@@ -25,6 +25,7 @@ from parsec.backend.realm import (
 from parsec.backend.user import BaseUserComponent, UserNotFoundError
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
+from parsec.backend.memory.block import MemoryBlockComponent
 
 
 @attr.s
@@ -59,11 +60,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         user: BaseUserComponent,
         message: BaseMessageComponent,
         vlob: MemoryVlobComponent,
+        block: MemoryBlockComponent,
         **other_components,
     ):
         self._user_component = user
         self._message_component = message
         self._vlob_component = vlob
+        self._block_component = block
 
     def _get_realm(self, organization_id, realm_id):
         try:
@@ -239,15 +242,15 @@ class MemoryRealmComponent(BaseRealmComponent):
             per_participant_message.keys(), not_revoked_users
         )
 
+        await self._vlob_component._maintenance_garbage_collection_start_hook(
+            author, organization_id, realm_id, realm.status.encryption_revision
+        )
         realm.status = RealmStatus(
             maintenance_type=MaintenanceType.GARBAGE_COLLECTION,
             maintenance_started_on=timestamp,
             maintenance_started_by=author,
             encryption_revision=realm.status.encryption_revision,
         )
-
-        self._vlob_component._maintenance_garbage_collection_start_hook(organization_id, realm_id)
-
         await self._send_maintenance_starting_messages(
             organization_id,
             author,

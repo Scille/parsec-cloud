@@ -15,8 +15,8 @@ from parsec.api.protocol import (
     vlob_poll_changes_serializer,
     vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
-    vlob_maintenance_save_garbage_collection_vlob_serializer,
-    vlob_maintenance_get_garbage_collection_vlob_serializer,
+    vlob_maintenance_save_garbage_collection_batch_serializer,
+    vlob_maintenance_get_garbage_collection_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors
@@ -126,7 +126,6 @@ class BaseVlobComponent:
     @catch_protocol_errors
     async def api_vlob_create(self, client_ctx, msg):
         msg = vlob_create_serializer.req_load(msg)
-
         now = pendulum.now()
         if not timestamps_in_the_ballpark(msg["timestamp"], now):
             return {"status": "bad_timestamp", "reason": f"Timestamp is out of date."}
@@ -153,7 +152,6 @@ class BaseVlobComponent:
     @_catch_item_vlob_errors(vlob_read_serializer)
     async def api_vlob_read(self, client_ctx, msg):
         msg = vlob_read_serializer.req_load(msg)
-
         version, blob, author, created_on, to_quarantine = await self.read(
             client_ctx.organization_id, client_ctx.device_id, **msg
         )
@@ -220,34 +218,36 @@ class BaseVlobComponent:
         return vlob_list_versions_serializer.rep_dump({"status": "ok", "versions": versions_dict})
 
     @catch_protocol_errors
-    @_catch_common_vlob_errors(vlob_maintenance_get_garbage_collection_vlob_serializer)
-    @_catch_common_in_maintenance_errors(vlob_maintenance_get_garbage_collection_vlob_serializer)
-    async def api_vlob_maintenance_get_garbage_collection_vlob(self, client_ctx, msg):
-        msg = vlob_maintenance_get_garbage_collection_vlob_serializer.req_load(msg)
-
-        vlob = await self.maintenance_get_garbage_collection_vlobs(
+    @_catch_common_vlob_errors(vlob_maintenance_get_garbage_collection_batch_serializer)
+    @_catch_common_in_maintenance_errors(vlob_maintenance_get_garbage_collection_batch_serializer)
+    async def api_vlob_maintenance_get_garbage_collection_batch(self, client_ctx, msg):
+        msg = vlob_maintenance_get_garbage_collection_batch_serializer.req_load(msg)
+        batch = await self.maintenance_get_garbage_collection_batch(
             client_ctx.organization_id, client_ctx.device_id, **msg
         )
-
-        return vlob_maintenance_get_garbage_collection_vlob_serializer.rep_dump(
-            {"status": "ok", "vlob": (vlob[0], vlob[1])}
+        return vlob_maintenance_get_garbage_collection_batch_serializer.rep_dump(
+            {
+                "status": "ok",
+                "batch": [
+                    {"vlob_id": vlob_id, "version": version, "datetime": datetime, "blob": blob}
+                    for vlob_id, version, (datetime, blob) in batch
+                ],
+            }
         )
 
     @catch_protocol_errors
-    @_catch_common_vlob_errors(vlob_maintenance_save_garbage_collection_vlob_serializer)
-    @_catch_common_in_maintenance_errors(vlob_maintenance_save_garbage_collection_vlob_serializer)
-    async def api_vlob_maintenance_save_garbage_collection_vlob(self, client_ctx, msg):
-        msg = vlob_maintenance_save_garbage_collection_vlob_serializer.req_load(msg)
-
-        total, done = await self.maintenance_save_garbage_collection_vlob(
+    @_catch_common_vlob_errors(vlob_maintenance_save_garbage_collection_batch_serializer)
+    @_catch_common_in_maintenance_errors(vlob_maintenance_save_garbage_collection_batch_serializer)
+    async def api_vlob_maintenance_save_garbage_collection_batch(self, client_ctx, msg):
+        msg = vlob_maintenance_save_garbage_collection_batch_serializer.req_load(msg)
+        total, done = await self.maintenance_save_garbage_collection_batch(
             client_ctx.organization_id,
             client_ctx.device_id,
             realm_id=msg["realm_id"],
-            vlob_id=msg["vlob_id"],
-            versions_to_erase=msg["versions_to_erase"],
+            batch=[(x["vlob_id"], x["version"], x["blocks_to_erase"]) for x in msg["batch"]],
         )
 
-        return vlob_maintenance_save_garbage_collection_vlob_serializer.rep_dump(
+        return vlob_maintenance_save_garbage_collection_batch_serializer.rep_dump(
             {"status": "ok", "total": total, "done": done}
         )
 

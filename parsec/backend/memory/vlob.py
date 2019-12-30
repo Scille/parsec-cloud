@@ -5,11 +5,12 @@ import pendulum
 from uuid import UUID
 from datetime import datetime
 from typing import List, Tuple, Dict, Optional
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import RealmRole
 from parsec.backend.realm import BaseRealmComponent, RealmNotFoundError
+from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobAccessError,
@@ -47,74 +48,15 @@ class RealmTask:
     def get_vlobs(self):
         raise NotImplementedError("subclass must override this method")
 
+    def _todo_items(self):
+        return self._todo.items()
+
     def is_finished(self):
         return not self._todo
 
-
-class GarbageCollection(RealmTask):
-    def _init_todo(self, vlobs):
-        todo = {}
-        for vlob_id, vlob in vlobs.items():
-            for version, (_, _, created_at, to_quarantine) in enumerate(vlob.data):
-                if to_quarantine is None:
-                    try:
-                        todo[vlob_id].append((version, created_at))
-                    except KeyError:
-                        todo[vlob_id] = [(version, created_at)]
-        return todo
-
-    def get_one_vlob(self):
-        for vlob_id, timesdata in self._todo.items():
-            if vlob_id in self._done:
-                continue
-            return (vlob_id, timesdata)
-
-    def save_vlob(self, vlob_id, versions_to_erase):
-        if vlob_id not in self._done:
-            try:
-                del self._todo[vlob_id]
-            except KeyError:
-                raise VlobNotFoundError()
-            else:
-                self._done[vlob_id] = versions_to_erase
-        return self._total, len(self._done)
-
-    def get_vlobs(self):
-        assert self.is_finished()
-        vlobs = {}
-        now = pendulum.now()
-        for vlob_id, versions_to_erase in sorted(self._done.items()):
-            try:
-                vlob = self._original_vlobs[vlob_id]
-            except KeyError:
-                raise VlobNotFoundError()
-            else:
-                data = []
-                for version, _ in enumerate(vlob.data):
-                    (data, author, timestamp, to_quarantine) = vlob.data[version]
-                    if version in versions_to_erase:
-                        to_quarantine = now
-                    if vlob_id not in vlobs:
-                        vlobs[vlob_id] = Vlob(
-                            self.realm_id, [(data, author, timestamp, to_quarantine)]
-                        )
-                    else:
-                        vlobs[vlob_id].data.append((data, author, timestamp, to_quarantine))
-        return vlobs
-
-
-class Reencryption(RealmTask):
-    def _init_todo(self, vlobs):
-        todo = {}
-        for vlob_id, vlob in vlobs.items():
-            for index, (data, _, _, _) in enumerate(vlob.data):
-                version = index + 1
-                todo[(vlob_id, version)] = data
-        return todo
-
     def get_batch(self, size):
         batch = []
-        for (vlob_id, version), data in self._todo.items():
+        for (vlob_id, version), data in self._todo_items():
             if (vlob_id, version) in self._done:
                 continue
             batch.append((vlob_id, version, data))
@@ -132,6 +74,63 @@ class Reencryption(RealmTask):
             self._done[key] = data
 
         return self._total, len(self._done)
+
+
+class GarbageCollection(RealmTask):
+    def __init__(self, realm_id, vlobs, _block_component=None):
+        self._block_component = _block_component
+        self._blocks_to_erase = []
+        super(GarbageCollection, self).__init__(realm_id, vlobs)
+
+    def _init_todo(self, vlobs):
+        # need async init to retrive the versioned vlob
+        return OrderedDict()
+
+    def _todo_items(self):
+        return reversed(super()._todo_items())
+
+    async def init_todo(self, organization_id, author, encryption_revision, read):
+        for vlob_id, vlob in self._original_vlobs.items():
+            sorted_data = sorted(vlob.data, key=lambda v: v[2])
+            for version, (_, _, created_at, to_quarantine) in enumerate(sorted_data):
+                if not to_quarantine:
+                    (_, blob, _, _, _) = await read(
+                        organization_id, author, encryption_revision, vlob_id, version + 1
+                    )
+                    self._todo[(vlob_id, version)] = (created_at, blob)
+        self._total = len(self._todo)
+
+    def get_vlobs(self):
+        assert self.is_finished()
+        vlobs = {}
+        now = pendulum.now()
+        for (vlob_id, version), blocks_to_erase in sorted(self._done.items()):
+            try:
+                vlob = self._original_vlobs[vlob_id]
+            except KeyError:
+                raise VlobNotFoundError()
+            else:
+                data = []
+
+                (data, author, timestamp, to_quarantine) = vlob.data[version]
+                for block in blocks_to_erase:
+                    self._blocks_to_erase.append((block, now))
+                print(to_quarantine, "to_erase", blocks_to_erase)
+                if vlob_id not in vlobs:
+                    vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp, to_quarantine)])
+                else:
+                    vlobs[vlob_id].data.append((data, author, timestamp, to_quarantine))
+        return vlobs
+
+
+class Reencryption(RealmTask):
+    def _init_todo(self, vlobs):
+        todo = {}
+        for vlob_id, vlob in vlobs.items():
+            for index, (data, _, _, _) in enumerate(vlob.data):
+                version = index + 1
+                todo[(vlob_id, version)] = data
+        return todo
 
     def get_vlobs(self):
         assert self.is_finished()
@@ -169,8 +168,11 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._vlobs = {}
         self._per_realm_changes = defaultdict(Changes)
 
-    def register_components(self, realm: BaseRealmComponent, **other_components):
+    def register_components(
+        self, realm: BaseRealmComponent, blockstore: BaseBlockStoreComponent, **other_components
+    ):
         self._realm_component = realm
+        self._blockstore_component = blockstore
 
     def _get_changes_to_maintenance_start_hook(self, organization_id, realm_id):
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -185,10 +187,11 @@ class MemoryVlobComponent(BaseVlobComponent):
             if orgid == organization_id and vlob.realm_id == realm_id
         }
 
-    def _maintenance_start_hook(self, attr, Task, organization_id, realm_id):
+    def _maintenance_start_hook(self, attr, Task, organization_id, realm_id, task_args=None):
+        task_args = task_args or []
         changes = self._get_changes_to_maintenance_start_hook(organization_id, realm_id)
         realm_vlobs = self._get_realm_vlobs(organization_id, realm_id)
-        setattr(changes, attr, Task(realm_id, realm_vlobs))
+        setattr(changes, attr, Task(realm_id, realm_vlobs, *task_args))
 
     def _maintenance_finished_hook(self, attr, organization_id, realm_id):
         changes = self._per_realm_changes[(organization_id, realm_id)]
@@ -206,10 +209,18 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes.garbage_collection = None
         return True
 
-    def _maintenance_garbage_collection_start_hook(self, organization_id, realm_id):
+    async def _maintenance_garbage_collection_start_hook(
+        self, author, organization_id, realm_id, encryption_revision
+    ):
         self._maintenance_start_hook(
-            "garbage_collection", GarbageCollection, organization_id, realm_id
+            "garbage_collection",
+            GarbageCollection,
+            organization_id,
+            realm_id,
+            [self._blockstore_component],
         )
+        garbage_collection = self._per_realm_changes[(organization_id, realm_id)].garbage_collection
+        await garbage_collection.init_todo(organization_id, author, encryption_revision, self.read)
 
     def _maintenance_garbage_collection_is_finished_hook(self, organization_id, realm_id):
         return self._maintenance_finished_hook("garbage_collection", organization_id, realm_id)
@@ -327,7 +338,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         key = (organization_id, vlob_id)
         if key in self._vlobs:
             raise VlobAlreadyExistsError()
-
         self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp, None)])
         await self._update_changes(organization_id, author, realm_id, vlob_id)
 
@@ -451,8 +461,8 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         return changes.reencryption.get_batch(size)
 
-    async def maintenance_get_garbage_collection_vlobs(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    async def maintenance_get_garbage_collection_batch(
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, size: int
     ) -> Tuple[UUID, datetime]:
         self._check_realm_in_maintenance_access(
             organization_id,
@@ -461,19 +471,18 @@ class MemoryVlobComponent(BaseVlobComponent):
             encryption_revision=None,
             check_encryption_revision=False,
         )
-
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert changes.garbage_collection
 
-        return changes.garbage_collection.get_one_vlob()
+        res = changes.garbage_collection.get_batch(size)
+        return res
 
-    async def maintenance_save_garbage_collection_vlob(
+    async def maintenance_save_garbage_collection_batch(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
-        vlob_id: UUID,
-        versions_to_erase: List[int],
+        batch: List[Tuple[UUID, int, List[int], List[int]]],
     ) -> Tuple[int, int]:
         self._check_realm_in_maintenance_access(
             organization_id,
@@ -486,7 +495,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert changes.garbage_collection
 
-        total, done = changes.garbage_collection.save_vlob(vlob_id, versions_to_erase)
+        total, done = changes.garbage_collection.save_batch(batch)
         return total, done
 
     async def maintenance_save_reencryption_batch(
