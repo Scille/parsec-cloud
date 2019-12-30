@@ -77,8 +77,8 @@ from parsec.api.protocol.vlob import (
     vlob_list_versions_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
-    vlob_maintenance_get_garbage_collection_vlob_serializer,
-    vlob_maintenance_save_garbage_collection_vlob_serializer,
+    vlob_maintenance_get_garbage_collection_batch_serializer,
+    vlob_maintenance_save_garbage_collection_batch_serializer,
 )
 
 
@@ -155,8 +155,8 @@ __all__ = (
     "vlob_list_versions_serializer",
     "vlob_maintenance_get_reencryption_batch_serializer",
     "vlob_maintenance_save_reencryption_batch_serializer",
-    "vlob_maintenance_get_garbage_collection_vlob_serializer",
-    "vlob_maintenance_save_garbage_collection_vlob_serializer",
+    "vlob_maintenance_get_garbage_collection_batch_serializer",
+    "vlob_maintenance_save_garbage_collection_batch_serializer",
     # Block
     "block_create_serializer",
     "block_read_serializer",
