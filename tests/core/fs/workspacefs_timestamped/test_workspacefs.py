@@ -297,7 +297,8 @@ async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
 
     async def mocked_vlob_read(*args, **kwargs):
         r = await original_vlob_read(*args, **kwargs)
-        return (r[0], r[1].add(seconds=1), *r[2:])
+        r["timestamp"] = r["timestamp"].add(seconds=1)
+        return r
 
     backend_cmds.vlob_read = mocked_vlob_read
 
