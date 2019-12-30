@@ -52,7 +52,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
-        self.button_add_instance = QPushButton(QIcon(":/icons/images/icons/plus_on.png"), "")
+        self.button_add_instance = QPushButton(
+            QIcon(":/icons/images/icons/tray_icons/plus-default.svg"), ""
+        )
         self.button_add_instance.clicked.connect(self._on_add_instance_clicked)
         self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
         self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")
