@@ -13,4 +13,4 @@ def test_run_test_env_linux():
 @pytest.mark.skipif(os.name != "nt", reason="Test for windows")
 def test_run_test_env_windows():
     os.chdir(os.path.dirname(__file__))
-    assert os.system("scripts/run_testenv.bat") == 0
+    assert os.system("scripts\\run_testenv.bat") == 0
