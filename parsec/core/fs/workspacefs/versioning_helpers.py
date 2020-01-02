@@ -324,7 +324,6 @@ class VersionListerTaskList:
         heapify(self.heapq_tasks)
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
-        # self.nursery = nursery
 
     def add(self, timestamp: Pendulum, task: partial):
         if timestamp in self.tasks:
