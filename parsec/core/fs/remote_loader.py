@@ -524,11 +524,9 @@ class RemoteLoaderTimestamped(RemoteLoader):
             FSBadEncryptionRevision
             FSWorkspaceNoAccess
         """
-        return await super().load_manifest(
-            entry_id,
-            version=version,
-            timestamp=timestamp if timestamp else None if version is not None else self.timestamp,
-        )
+        if timestamp is None and version is not None:
+            timestamp = self.timestamp
+        return await super().load_manifest(entry_id, version=version, timestamp=timestamp)
 
     async def upload_manifest(self, *e, **ke):
         raise FSError(f"Cannot upload manifest through a timestamped remote loader")
