@@ -365,14 +365,19 @@ class VersionLister:
     to continue the download of the manifests where it stopped.
     """
 
-    def __init__(self, workspace_fs, manifest_cache=None, versions_list_cache=None):
+    def __init__(
+        self,
+        workspace_fs,
+        manifest_cache: ManifestCache = None,
+        versions_list_cache: VersionsListCache = None,
+    ):
         self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
             workspace_fs.remote_loader
         )
         self.workspace_fs = workspace_fs
 
-    def sanitize_list(self, versions_list, skip_minimal_sync):
+    def _sanitize_list(self, versions_list, skip_minimal_sync):
         previous = None
         new_list = []
         # Merge duplicates with overlapping time frames as it can be caused by an update of a
@@ -470,7 +475,7 @@ class VersionLister:
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
         ]
-        return (self.sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
+        return (self._sanitize_list(versions_list, skip_minimal_sync), download_limit_reached)
 
 
 async def _populate_tree_load(
