@@ -293,6 +293,24 @@ async def test_version_non_existing_directory(alice_workspace, alice):
 
 
 @pytest.mark.trio
+async def test_versions_not_enough_download_permited(alice_workspace, alice):
+    version_lister = alice_workspace.get_version_lister()
+    version_lister = alice_workspace.get_version_lister()
+    versions, version_list_is_complete = await version_lister.list(
+        FsPath("/files/renamed"), skip_minimal_sync=False, max_manifest_queries=1
+    )
+    assert version_list_is_complete is False
+    versions, version_list_is_complete = await version_lister.list(
+        FsPath("/files/renamed"), skip_minimal_sync=False
+    )
+    assert version_list_is_complete is True
+    versions, version_list_is_complete = await version_lister.list(
+        FsPath("/files/renamed"), skip_minimal_sync=False, max_manifest_queries=1
+    )
+    assert version_list_is_complete is True
+
+
+@pytest.mark.trio
 async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
     backend_cmds = alice_workspace.remote_loader.backend_cmds
     original_vlob_read = backend_cmds.vlob_read
