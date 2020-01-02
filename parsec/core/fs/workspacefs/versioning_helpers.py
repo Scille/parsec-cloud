@@ -3,6 +3,7 @@
 from heapq import heapify, heappush, heappop
 import attr
 import trio
+from functools import partial
 from typing import List, Tuple, NamedTuple
 from pendulum import Pendulum
 
@@ -311,17 +312,6 @@ class VersionsListCache:
         return self._versions_list_cache[entry_id]
 
 
-class VersionListerTask:
-    """
-    Defines a task that has to be done in the future, including callback and args
-    """
-
-    def __init__(self, callback, *args, **kwargs):
-        self.callback = callback
-        self.args = args
-        self.kwargs = kwargs
-
-
 class VersionListerTaskList:
     """
     Enables prioritization of tasks, as it is better to be able to configure it that way
@@ -336,7 +326,7 @@ class VersionListerTaskList:
         self.versions_list_cache = versions_list_cache
         # self.nursery = nursery
 
-    def add(self, timestamp: Pendulum, task: VersionListerTask):
+    def add(self, timestamp: Pendulum, task: partial):
         if timestamp in self.tasks:
             self.tasks[timestamp].append(task)
         else:
@@ -355,7 +345,7 @@ class VersionListerTaskList:
         if len(self.tasks[min]) == 0:
             del self.tasks[min]
             heappop(self.heapq_tasks)
-        await task.callback(self, *task.args, **task.kwargs)
+        await task()
 
     async def execute(self, number: int = 1):
         for i in range(number):
@@ -446,8 +436,9 @@ class VersionLister:
             )
             task_list.add(
                 starting_timestamp or root_manifest.created,
-                VersionListerTask(
+                partial(
                     _populate_tree_list_versions,
+                    task_list,
                     path,
                     0,
                     return_tree,
@@ -538,8 +529,9 @@ async def _populate_tree_list_versions(
         next_version = min((v for v in versions if v > version), default=None)  # TODO : consistency
         task_list.add(
             max(early, timestamp),
-            VersionListerTask(
+            partial(
                 _populate_tree_load,
+                task_list,
                 target,
                 path_level,
                 tree,
