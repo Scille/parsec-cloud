@@ -351,6 +351,20 @@ class VersionListerTaskList:
 
 
 class VersionLister:
+    """
+    This class builds a version tree of a path to allow obtention of a version list.
+
+    As we both have multiple versions of manifests for the same entry_id, and in some conditions
+    entry_ids that change paths, we need a way to keep track of all those changes.
+    So, we need to list versions of the different manifests composing the path, and the children of
+    the dir matching pathname, recursively. By that we must also keep track of timeframes at which
+    a manifest at a specific version corresponds to a part of the path.
+    We also prioritize obtention of the latest used manifests at specific versions so that if a
+    download cache limit is set, as many version entries as possible will be available. It is then
+    also possible to re-launch the algorithm another time, using the same cache, which enables it
+    to continue the download of the manifests where it stopped.
+    """
+
     def __init__(self, workspace_fs, manifest_cache=None, versions_list_cache=None):
         self.manifest_cache = manifest_cache or ManifestCache(workspace_fs.remote_loader)
         self.versions_list_cache = versions_list_cache or VersionsListCache(
