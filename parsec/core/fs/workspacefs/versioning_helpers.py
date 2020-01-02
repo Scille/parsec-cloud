@@ -6,6 +6,7 @@ import trio
 from functools import partial
 from typing import List, Tuple, NamedTuple
 from pendulum import Pendulum
+from collections import defaultdict
 
 from parsec.api.data import Manifest as RemoteManifest
 from parsec.api.protocol import DeviceID
@@ -315,22 +316,23 @@ class VersionsListCache:
 class VersionListerTaskList:
     """
     Enables prioritization of tasks, as it is better to be able to configure it that way
+
+    This class uses both an heapq to enables us to always access the latest timestamp of the tasks
+    in linear time, and a dict containing lists of tasks with timestamp as keys
     """
 
     # TODO : use nursery for coroutines
     def __init__(self, manifest_cache, versions_list_cache):
         self.tasks = {}
-        self.heapq_tasks = []
+        self.heapq_tasks = defaultdict(list)
         heapify(self.heapq_tasks)
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
 
     def add(self, timestamp: Pendulum, task: partial):
-        if timestamp in self.tasks:
-            self.tasks[timestamp].append(task)
-        else:
-            self.tasks[timestamp] = [task]
+        if timestamp not in self.tasks:
             heappush(self.heapq_tasks, timestamp)
+        self.tasks[timestamp].append(task)
 
     def is_empty(self):
         return not bool(self.tasks)
