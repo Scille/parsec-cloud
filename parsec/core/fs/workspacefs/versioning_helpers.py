@@ -516,7 +516,7 @@ async def _populate_tree_load(
             else None,
         )
     else:
-        if not is_file_manifest(manifest):
+        if not is_file_manifest(manifest):  # If it is a file, just ignores current path
             for child_name, child_id in manifest.children.items():
                 if child_name == target.parts[path_level]:
                     return await _populate_tree_list_versions(
@@ -528,8 +528,6 @@ async def _populate_tree_load(
                         early if early > manifest.updated else manifest.updated,
                         late,
                     )
-        else:
-            pass  # TODO : Broken path. What to do?
 
 
 async def _populate_tree_list_versions(
