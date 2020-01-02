@@ -466,7 +466,8 @@ class VersionLister:
             )
             while not task_list.is_empty():
                 await task_list.execute_one()
-        except ManifestCacheDownloadLimitReached:  # TODO : what is limit?..
+        except ManifestCacheDownloadLimitReached:
+            # TODO : expose last timestamp for which we don't miss data
             download_limit_reached = False
         versions_list = [
             TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
