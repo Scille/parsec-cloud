@@ -94,7 +94,9 @@ class ManifestDataAndMutablePaths:
             manifest_cache, entry_id, timestamp
         )
 
-    async def populate_paths(self, manifest_cache, entry_id, earlier, early, late):
+    async def populate_paths(
+        self, manifest_cache, entry_id: EntryID, early: Pendulum, late: Pendulum
+    ):
         # TODO : Use future manifest source field to follow files and directories
         async with trio.open_service_nursery() as child_nursery:
             child_nursery.start_soon(
@@ -494,9 +496,7 @@ async def _populate_tree_load(
         )
     )
     if len(target.parts) == path_level:
-        await data.populate_paths(
-            task_list.manifest_cache, entry_id, early.add(microseconds=-1), early, late
-        )
+        await data.populate_paths(task_list.manifest_cache, entry_id, early, late)
         tree[
             TimestampBoundedEntry(manifest.id, manifest.version, early, late)
         ] = ManifestDataAndPaths(
