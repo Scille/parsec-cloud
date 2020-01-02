@@ -26,8 +26,8 @@ from parsec.api.protocol import (
     vlob_update_serializer,
     vlob_poll_changes_serializer,
     vlob_list_versions_serializer,
-    vlob_maintenance_get_garbage_collection_vlob_serializer,
-    vlob_maintenance_save_garbage_collection_vlob_serializer,
+    vlob_maintenance_get_garbage_collection_batch_serializer,
+    vlob_maintenance_save_garbage_collection_batch_serializer,
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
     realm_create_serializer,
@@ -203,28 +203,28 @@ async def vlob_list_versions(transport: Transport, vlob_id: UUID) -> dict:
     )
 
 
-async def vlob_maintenance_get_garbage_collection_vlob(
-    transport: Transport, realm_id: UUID
+async def vlob_maintenance_get_garbage_collection_batch(
+    transport: Transport, realm_id: UUID, size: int
 ) -> List[Tuple[EntryID, int, bytes]]:
     rep = await _send_cmd(
         transport,
-        vlob_maintenance_get_garbage_collection_vlob_serializer,
-        cmd="vlob_maintenance_get_garbage_collection_vlob",
+        vlob_maintenance_get_garbage_collection_batch_serializer,
+        cmd="vlob_maintenance_get_garbage_collection_batch",
         realm_id=realm_id,
+        size=size,
     )
-    return rep["vlob"]
+    return [(x["vlob_id"], x["version"], x["datetime"], x["blob"]) for x in rep["batch"]]
 
 
-async def vlob_maintenance_save_garbage_collection_vlob(
-    transport: Transport, realm_id: UUID, vlob_id: UUID, versions_to_erase: List[int]
+async def vlob_maintenance_save_garbage_collection_batch(
+    transport: Transport, realm_id: UUID, batch: List[Tuple[EntryID, int, List[EntryID]]]
 ) -> Tuple[int, int]:
     rep = await _send_cmd(
         transport,
-        vlob_maintenance_save_garbage_collection_vlob_serializer,
-        cmd="vlob_maintenance_save_garbage_collection_vlob",
+        vlob_maintenance_save_garbage_collection_batch_serializer,
+        cmd="vlob_maintenance_save_garbage_collection_batch",
         realm_id=realm_id,
-        vlob_id=vlob_id,
-        versions_to_erase=versions_to_erase,
+        batch=[{"vlob_id": x[0], "version": x[1], "blocks_to_erase": x[2]} for x in batch],
     )
     return rep["total"], rep["done"]
 

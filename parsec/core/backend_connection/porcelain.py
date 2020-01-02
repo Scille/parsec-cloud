@@ -64,11 +64,11 @@ class BackendCmdsPool:
     vlob_maintenance_get_reencryption_batch = _expose_cmds_with_retrier(
         "vlob_maintenance_get_reencryption_batch"
     )
-    vlob_maintenance_get_garbage_collection_vlob = _expose_cmds_with_retrier(
-        "vlob_maintenance_get_garbage_collection_vlob"
+    vlob_maintenance_get_garbage_collection_batch = _expose_cmds_with_retrier(
+        "vlob_maintenance_get_garbage_collection_batch"
     )
-    vlob_maintenance_save_garbage_collection_vlob = _expose_cmds_with_retrier(
-        "vlob_maintenance_save_garbage_collection_vlob"
+    vlob_maintenance_save_garbage_collection_batch = _expose_cmds_with_retrier(
+        "vlob_maintenance_save_garbage_collection_batch"
     )
     vlob_maintenance_save_reencryption_batch = _expose_cmds_with_retrier(
         "vlob_maintenance_save_reencryption_batch"

@@ -20,6 +20,7 @@ from parsec.api.data import (
     SharingGarbageCollectedMessageContent,
     PingMessageContent,
     UserManifest,
+    Manifest as RemoteManifest,
 )
 from parsec.api.protocol import UserID, DeviceID, MaintenanceType
 from parsec.core.types import (
@@ -57,6 +58,7 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceInMaintenance,
     FSWorkspaceNotInMaintenance,
 )
+from parsec.core.fs.utils import is_file_manifest
 
 
 logger = get_logger()
@@ -77,39 +79,66 @@ def _handle_maintenance_job_exception(exc, kind, workspace_id):
 
 
 class GarbageCollectionJob:
-    def __init__(self, backend_cmds, workspace_entry):
+    def __init__(self, backend_cmds, workspace_entry, device):
         self.backend_cmds = backend_cmds
         self.workspace_entry = workspace_entry
+        self.device = device
+        self._minimum_counter = 2
+        self._blocks_to_keep = {}
+        self.couter_by_versions = {}
 
-    async def do_one_vlob(self, minimum_limit=5):
+    async def do_one_batch(self, datetime_limit=None, size=100):
+        if not datetime_limit:
+            datetime_limit = pendulum_now().add(months=-6)
         workspace_id = self.workspace_entry.id
         try:
-            vlob_id, data = await self.backend_cmds.vlob_maintenance_get_garbage_collection_vlob(
-                workspace_id
+            batch = await self.backend_cmds.vlob_maintenance_get_garbage_collection_batch(
+                workspace_id, size
             )
+            total = 0
+            done = 0
+            done_batch = []
+            for vlob_id, version, datetime, blob in batch:
+                try:
+                    manifest = RemoteManifest.decrypt_verify_and_load(
+                        blob,
+                        key=self.workspace_entry.key,
+                        author_verify_key=self.device.verify_key,
+                        expected_author=self.device.device_id,
+                        expected_timestamp=datetime,
+                        expected_version=version + 1,
+                        expected_id=vlob_id,
+                    )
+                except DataError as exc:
+                    raise FSError(f"Cannot decrypt vlob: {exc}") from exc
 
-            versions_to_erase = []
-            if len(data) > minimum_limit:
-                versions_to_keep = {}
-                for version, datetime in sorted(
-                    data[1:], key=lambda d: d[1] and d[0], reverse=True
-                ):
-                    if datetime > pendulum_now().add(months=-1):
-                        key = datetime.day
-                    elif datetime > pendulum_now().add(months=-6):
-                        key = f"{datetime.week_of_month}_{datetime.month}"
-                    else:
-                        key = f"{datetime.month}_{datetime.year}"
-                    if versions_to_keep.get(key):
-                        versions_to_erase.append(version)
-                    else:
-                        versions_to_keep[key] = version
+                blocks_to_erase = set()
+                if is_file_manifest(manifest):
+                    try:
+                        _ = self._blocks_to_keep[vlob_id]
+                    except KeyError:
+                        self._blocks_to_keep[vlob_id] = set()
+                        self.couter_by_versions[vlob_id] = 0
 
-            total, done = await self.backend_cmds.vlob_maintenance_save_garbage_collection_vlob(
-                workspace_id, vlob_id, versions_to_erase
+                    blocks_id = set([b.id for b in manifest.blocks])
+                    if (
+                        datetime > datetime_limit
+                        or self.couter_by_versions[vlob_id] < self._minimum_counter
+                    ):
+                        self.couter_by_versions[vlob_id] += 1
+                        self._blocks_to_keep[vlob_id].update(blocks_id)
+                    else:
+                        to_erase = filter(
+                            lambda i: i not in self._blocks_to_keep[vlob_id], blocks_id
+                        )
+                        blocks_to_erase.update(set(to_erase))
+                done_batch.append((vlob_id, version, blocks_to_erase))
+            total, done = await self.backend_cmds.vlob_maintenance_save_garbage_collection_batch(
+                workspace_id, done_batch
             )
             if total == done:
                 await self.backend_cmds.realm_finish_garbage_collection_maintenance(workspace_id)
+
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
 
@@ -1071,7 +1100,7 @@ class UserFS:
                 continue
             else:
                 break
-        return GarbageCollectionJob(self.backend_cmds, workspace_entry)
+        return GarbageCollectionJob(self.backend_cmds, workspace_entry, self.device)
 
     async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
         """

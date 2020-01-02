@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 import pytest
-from pendulum import now as pendulum_now, parse
+from pendulum import now as pendulum_now
 
 from parsec.core.types import EntryID
 from parsec.core.fs import (
@@ -31,66 +31,37 @@ async def vlob(running_backend, alice_user_fs, workspace):
         await workspace.touch("/foo.txt")
         await workspace.sync()
 
-        await workspace.write_bytes("/foo.txt", b"v2")
+        await workspace.write_bytes("/foo.txt", b"0")
+        await workspace.sync()
+    with freeze_time(now.add(months=-15).to_date_string()):
+        await workspace.write_bytes("/foo.txt", b"1")
         await workspace.sync()
 
     with freeze_time(now.add(months=-14).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v3")
-        await workspace.sync()
 
-        await workspace.write_bytes("/foo.txt", b"v4")
+        await workspace.write_bytes("/foo.txt", b"2")
         await workspace.sync()
-
-    with freeze_time(now.add(months=-12).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v5")
+        num_chars = 512 * 1024
+        await workspace.write_bytes("/foo.txt", b"v3" * num_chars)
+        await workspace.sync()
+    with freeze_time(now.add(months=-13).to_date_string()):
+        await workspace.write_bytes("/foo.txt", b"4")
         await workspace.sync()
 
     with freeze_time(now.add(months=-10).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v6")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v7")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v8")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v9")
+        await workspace.write_bytes("/foo.txt", b"5")
         await workspace.sync()
 
-    six_month_ago = now.add(months=-6)
+    six_month_ago = now.add(months=-5)
     with freeze_time(six_month_ago.add(weeks=1).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v10")
+        await workspace.write_bytes("/foo.txt", b"8")
         await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v11")
+        await workspace.write_bytes("/foo.txt", b"9")
         await workspace.sync()
     with freeze_time(six_month_ago.add(weeks=2).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v12")
+        await workspace.write_bytes("/foo.txt", b"10")
         await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v13")
-        await workspace.sync()
-    with freeze_time(six_month_ago.add(weeks=6).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v14")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v15")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v16")
-        await workspace.sync()
-
-    one_month_ago = now.add(months=-1)
-    with freeze_time(one_month_ago.add(days=1).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v17")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v18")
-        await workspace.sync()
-    with freeze_time(one_month_ago.add(days=2).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v19")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v20")
-        await workspace.sync()
-    with freeze_time(one_month_ago.add(days=6).to_date_string()):
-        await workspace.write_bytes("/foo.txt", b"v21")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v22")
-        await workspace.sync()
-        await workspace.write_bytes("/foo.txt", b"v23")
+        await workspace.write_bytes("/foo.txt", b"11")
         await workspace.sync()
 
     return await workspace.path_id("/foo.txt")
@@ -101,7 +72,6 @@ async def test_do_garbage_collection(running_backend, workspace, alice, alice_us
 
     with running_backend.backend.event_bus.listen() as spy:
         job = await alice_user_fs.workspace_start_garbage_collection(workspace)
-
         # Check events
         await spy.wait_multiple_with_timeout(
             [
@@ -127,27 +97,25 @@ async def test_do_garbage_collection(running_backend, workspace, alice, alice_us
         )
         now = pendulum_now()
         with freeze_time(now.to_date_string()):
-            total, done = await job.do_one_vlob(minimum_limit=1)
-            assert total == 2
+
+            total, done = await job.do_one_batch(size=1)
+            assert total == 13
             assert done == 1
-            total, done = await job.do_one_vlob(minimum_limit=1)
-            assert total == 2
-            assert done == 2
+
+            total, done = await job.do_one_batch(size=3)
+            assert total == 13
+            assert done == 4
+
+            total, done = await job.do_one_batch(size=5)
+            assert total == 13
+            assert done == 9
+
+            total, done = await job.do_one_batch(size=4)
+            assert total == 13
+            assert done == 13
+
             with pytest.raises(FSWorkspaceNotInMaintenance):
-                await job.do_one_vlob()
-
-            workspace = alice_user_fs.get_workspace(workspace)
-            versions_to_keep = [1, 2, 4, 5, 9, 11, 13, 16, 18, 20, 23]
-            for i in range(1, 24):
-                _, _, _, _, to_quarantine = await workspace.backend_cmds.vlob_read(
-                    encryption_revision=1, version=i, vlob_id=vlob
-                )
-
-                if i in versions_to_keep:
-                    res = None
-                else:
-                    res = parse(now.to_date_string())
-                assert to_quarantine == res
+                await job.do_one_batch()
 
 
 @pytest.mark.trio
