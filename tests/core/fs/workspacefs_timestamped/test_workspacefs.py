@@ -14,8 +14,10 @@ def _day(d):
 @pytest.mark.trio
 async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, alice):
     version_lister = alice_workspace.get_version_lister()
-    versions, down = await version_lister.list(FsPath("/files/renamed"), skip_minimal_sync=False)
-    assert down is True
+    versions, version_list_is_complete = await version_lister.list(
+        FsPath("/files/renamed"), skip_minimal_sync=False
+    )
+    assert version_list_is_complete is True
     assert len(versions) == 6
 
     # Moved /files/content to /files/renamed on day 5, moved it again later
@@ -81,8 +83,8 @@ async def test_versions_existing_file_no_remove_minimal_synced(alice_workspace, 
 @pytest.mark.trio
 async def test_versions_existing_file_remove_minimal_synced(alice_workspace, alice):
     version_lister = alice_workspace.get_version_lister()
-    versions, down = await version_lister.list(FsPath("/files/renamed"))
-    assert down is True
+    versions, version_list_is_complete = await version_lister.list(FsPath("/files/renamed"))
+    assert version_list_is_complete is True
     assert len(versions) == 5
 
     # Moved /files/content to /files/renamed on day 5, moved it again later
@@ -148,10 +150,10 @@ async def test_versions_non_existing_file_remove_minimal_synced(
     alice_workspace, alice, skip_minimal_sync
 ):
     version_lister = alice_workspace.get_version_lister()
-    versions, down = await version_lister.list(
+    versions, version_list_is_complete = await version_lister.list(
         FsPath("/moved/renamed"), skip_minimal_sync=skip_minimal_sync
     )
-    assert down is True
+    assert version_list_is_complete is True
     assert len(versions) == 1
 
     assert versions[0][1:] == (
@@ -171,10 +173,10 @@ async def test_versions_non_existing_file_remove_minimal_synced(
 @pytest.mark.parametrize("skip_minimal_sync", (False, True))
 async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_sync):
     version_lister = alice_workspace.get_version_lister()
-    versions, down = await version_lister.list(
+    versions, version_list_is_complete = await version_lister.list(
         FsPath("/files"), skip_minimal_sync=skip_minimal_sync
     )
-    assert down is True
+    assert version_list_is_complete is True
     assert len(versions) == 8
 
     assert versions[0][1:] == (
@@ -262,8 +264,8 @@ async def test_versions_existing_directory(alice_workspace, alice, skip_minimal_
 @pytest.mark.trio
 async def test_version_non_existing_directory(alice_workspace, alice):
     version_lister = alice_workspace.get_version_lister()
-    versions, down = await version_lister.list(FsPath("/moved"))
-    assert down is True
+    versions, version_list_is_complete = await version_lister.list(FsPath("/moved"))
+    assert version_list_is_complete is True
     assert len(versions) == 2
 
     assert versions[0][1:] == (
@@ -306,7 +308,7 @@ async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
 
     with pytest.raises(FSRemoteManifestInconsistentTimestamp) as exc:
         version_lister = alice_workspace.get_version_lister()
-        versions, down = await version_lister.list(
+        versions, version_list_is_complete = await version_lister.list(
             FsPath("/files/renamed"), skip_minimal_sync=False
         )
     value = exc.value.args[1]
