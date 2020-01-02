@@ -524,7 +524,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
             FSBadEncryptionRevision
             FSWorkspaceNoAccess
         """
-        if timestamp is None and version is not None:
+        if timestamp is None and version is None:
             timestamp = self.timestamp
         return await super().load_manifest(entry_id, version=version, timestamp=timestamp)
 

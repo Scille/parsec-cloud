@@ -3,6 +3,7 @@
 from heapq import heapify, heappush, heappop
 import attr
 import trio
+from functools import partial
 from typing import List, Tuple, NamedTuple
 from pendulum import Pendulum
 
@@ -94,7 +95,9 @@ class ManifestDataAndMutablePaths:
             manifest_cache, entry_id, timestamp
         )
 
-    async def populate_paths(self, manifest_cache, entry_id, earlier, early, late):
+    async def populate_paths(
+        self, manifest_cache, entry_id: EntryID, early: Pendulum, late: Pendulum
+    ):
         # TODO : Use future manifest source field to follow files and directories
         async with trio.open_service_nursery() as child_nursery:
             child_nursery.start_soon(
@@ -182,8 +185,8 @@ class ManifestCache:
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache
 
         Returns:
-            A tuple containing the manifest that has been downloaded or gotten from then cache, and
-            a boolean indicating if downloading it was required
+            A tuple containing the manifest that has been downloaded or retrieved from then cache,
+            and a boolean indicating if a download was required
 
         Raises:
             FSError
@@ -309,17 +312,6 @@ class VersionsListCache:
         return self._versions_list_cache[entry_id]
 
 
-class VersionListerTask:
-    """
-    Defines a task that has to be done in the future, including callback and args
-    """
-
-    def __init__(self, callback, *args, **kwargs):
-        self.callback = callback
-        self.args = args
-        self.kwargs = kwargs
-
-
 class VersionListerTaskList:
     """
     Enables prioritization of tasks, as it is better to be able to configure it that way
@@ -332,28 +324,24 @@ class VersionListerTaskList:
         heapify(self.heapq_tasks)
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
-        # self.nursery = nursery
 
-    def add(self, timestamp: Pendulum, task: VersionListerTask):
+    def add(self, timestamp: Pendulum, task: partial):
         if timestamp in self.tasks:
             self.tasks[timestamp].append(task)
         else:
             self.tasks[timestamp] = [task]
             heappush(self.heapq_tasks, timestamp)
 
-    def min(self):
-        return self.heapq_tasks[0]
-
     def is_empty(self):
-        return self.tasks == {}
+        return not bool(self.tasks)
 
     async def execute_one(self):
-        min = self.min()
+        min = self.heapq_tasks[0]
         task = self.tasks[min].pop()
         if len(self.tasks[min]) == 0:
             del self.tasks[min]
             heappop(self.heapq_tasks)
-        await task.callback(self, *task.args, **task.kwargs)
+        await task()
 
     async def execute(self, number: int = 1):
         for i in range(number):
@@ -444,8 +432,9 @@ class VersionLister:
             )
             task_list.add(
                 starting_timestamp or root_manifest.created,
-                VersionListerTask(
+                partial(
                     _populate_tree_list_versions,
+                    task_list,
                     path,
                     0,
                     return_tree,
@@ -494,9 +483,7 @@ async def _populate_tree_load(
         )
     )
     if len(target.parts) == path_level:
-        await data.populate_paths(
-            task_list.manifest_cache, entry_id, early.add(microseconds=-1), early, late
-        )
+        await data.populate_paths(task_list.manifest_cache, entry_id, early, late)
         tree[
             TimestampBoundedEntry(manifest.id, manifest.version, early, late)
         ] = ManifestDataAndPaths(
@@ -538,8 +525,9 @@ async def _populate_tree_list_versions(
         next_version = min((v for v in versions if v > version), default=None)  # TODO : consistency
         task_list.add(
             max(early, timestamp),
-            VersionListerTask(
+            partial(
                 _populate_tree_load,
+                task_list,
                 target,
                 path_level,
                 tree,
