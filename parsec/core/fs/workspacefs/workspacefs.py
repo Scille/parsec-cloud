@@ -182,11 +182,6 @@ class WorkspaceFS:
 
         Raises:
             FSError
-            FSBackendOfflineError
-            FSWorkspaceInMaintenance
-            FSRemoteManifestNotFound
-            FSBadEncryptionRevision
-            FSWorkspaceNoAccess
         """
         versions_dict = await self.remote_loader.list_versions(self.get_workspace_entry().id)
         minimal_timestamp = min(versions_dict.items(), key=lambda v: v[0])[1][0]
