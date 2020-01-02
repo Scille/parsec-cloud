@@ -174,7 +174,7 @@ class WorkspaceFS:
 
     # Versioning
 
-    async def get_earliest_timestamp(self):
+    async def get_earliest_timestamp(self) -> Pendulum:
         versions_dict = await self.remote_loader.list_versions(self.get_workspace_entry().id)
         return min(versions_dict.items(), key=lambda v: v[0])[1][0]
 
