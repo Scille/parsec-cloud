@@ -37,8 +37,8 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         update_version_list.connect(self.reset_dialog)
         close_version_list.connect(self.close_dialog)
         self.setWindowFlags(Qt.SplashScreen)
-        self.get_versions_success.connect(self.add_history)
-        self.get_versions_error.connect(self.show_error)
+        self.get_versions_success.connect(self.on_get_version_success)
+        self.get_versions_error.connect(self.on_get_version_error)
         self.button_close.clicked.connect(self.close_dialog)
         self.button_load_more_entries.clicked.connect(self.load_more)
         self.workspace_fs = workspace_fs
@@ -84,7 +84,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
             path=self.path,
         )
 
-    def add_history(self):
+    def on_get_version_success(self):
         versions_list, download_limit_reached = self.versions_job.ret
         if download_limit_reached:
             self.button_load_more_entries.setVisible(False)
@@ -104,7 +104,7 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
             )
         self.set_loading_in_progress(False)
 
-    def show_error(self):
+    def on_get_version_error(self):
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("ERR_LIST_VERSIONS_ACCESS"), exception=self.versions_job.exc)
         self.versions_job = None
