@@ -184,8 +184,8 @@ class ManifestCache:
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache
 
         Returns:
-            A tuple containing the manifest that has been downloaded or gotten from then cache, and
-            a boolean indicating if downloading it was required
+            A tuple containing the manifest that has been downloaded or retrieved from then cache,
+            and a boolean indicating if a download was required
 
         Raises:
             FSError
