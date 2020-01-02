@@ -4,7 +4,7 @@ from heapq import heapify, heappush, heappop
 import attr
 import trio
 from functools import partial
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple, Optional
 from pendulum import Pendulum
 from collections import defaultdict
 
@@ -77,7 +77,7 @@ class ManifestDataAndMutablePaths:
 
     async def try_get_path_at_timestamp(
         self, manifest_cache, entry_id: EntryID, timestamp: Pendulum
-    ) -> FsPath:
+    ) -> Optional[FsPath]:
         try:
             return await manifest_cache.get_path_at_timestamp(entry_id, timestamp)
         except EntryNotFound:
