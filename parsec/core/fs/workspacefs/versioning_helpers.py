@@ -332,14 +332,11 @@ class VersionListerTaskList:
             self.tasks[timestamp] = [task]
             heappush(self.heapq_tasks, timestamp)
 
-    def min(self):
-        return self.heapq_tasks[0]
-
     def is_empty(self):
-        return self.tasks == {}
+        return not bool(self.tasks)
 
     async def execute_one(self):
-        min = self.min()
+        min = self.heapq_tasks[0]
         task = self.tasks[min].pop()
         if len(self.tasks[min]) == 0:
             del self.tasks[min]
