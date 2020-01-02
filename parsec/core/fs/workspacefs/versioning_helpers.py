@@ -323,8 +323,8 @@ class VersionListerTaskList:
 
     # TODO : use nursery for coroutines
     def __init__(self, manifest_cache, versions_list_cache):
-        self.tasks = {}
-        self.heapq_tasks = defaultdict(list)
+        self.tasks = defaultdict(list)
+        self.heapq_tasks = []
         heapify(self.heapq_tasks)
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
