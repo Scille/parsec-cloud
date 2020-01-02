@@ -294,10 +294,12 @@ async def test_version_non_existing_directory(alice_workspace, alice):
 async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
     backend_cmds = alice_workspace.remote_loader.backend_cmds
     original_vlob_read = backend_cmds.vlob_read
+    vlob_id = []
 
     async def mocked_vlob_read(*args, **kwargs):
         r = await original_vlob_read(*args, **kwargs)
         r["timestamp"] = r["timestamp"].add(seconds=1)
+        vlob_id.append(args[1])
         return r
 
     backend_cmds.vlob_read = mocked_vlob_read
@@ -308,8 +310,7 @@ async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
             FsPath("/files/renamed"), skip_minimal_sync=False
         )
     value = exc.value.args[1]
-    assert value[:53] == "Backend returned invalid expected timestamp for vlob "
     assert (
-        value[-82:]
-        == " at version 1 (expecting 2000-01-01T00:00:01+00:00, got 2000-01-01T00:00:00+00:00)"
+        value
+        == f"Backend returned invalid expected timestamp for vlob {vlob_id.pop()} at version 1 (expecting 2000-01-01T00:00:01+00:00, got 2000-01-01T00:00:00+00:00)"
     )
