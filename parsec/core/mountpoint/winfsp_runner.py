@@ -147,6 +147,7 @@ async def winfsp_mountpoint_runner(
         um_file_context_is_user_context2=1,
         file_system_name="parsec-mnt",
         prefix="",
+        irp_timeout=60000,  # The minimum value for IRP timeout is 1 minute (default is 5)
         # security_timeout_valid=1,
         # security_timeout=10000,
     )
