@@ -633,8 +633,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete:
-            row = self.table_files.currentRow()
-            self.delete_item(row)()
+            self.delete_files()
 
     def _on_rename_success(self, job):
         self.reset()
