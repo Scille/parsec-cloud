@@ -1,0 +1,1 @@
+Prevent winfsp from freezing the application when the mounting operation times out.
