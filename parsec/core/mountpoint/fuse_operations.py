@@ -62,7 +62,11 @@ class FuseOperations(LoggingMixIn, Operations):
         self._need_exit = False
 
     def __call__(self, name, path, *args, **kwargs):
-        path = FsPath(path)
+        # The path argument might be None or "-" in some special cases
+        # related to `release` and `releasedir` (when the file descriptor
+        # is available but the corresponding path is not). In those cases,
+        # we can simply ignore the path.
+        path = FsPath(path) if path not in (None, "-") else None
         with translate_error(self.event_bus, name, path):
             return super().__call__(name, path, *args, **kwargs)
 
