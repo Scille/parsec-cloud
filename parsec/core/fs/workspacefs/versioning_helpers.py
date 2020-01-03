@@ -470,8 +470,19 @@ class VersionLister:
             # TODO : expose last timestamp for which we don't miss data
             download_limit_reached = False
         versions_list = [
-            TimestampBoundedData(*item[0], *item[1].data, item[1].source, item[1].destination)
-            for item in sorted(
+            TimestampBoundedData(
+                id,
+                version,
+                early,
+                late,
+                value.data.creator,
+                value.data.updated,
+                value.data.is_folder,
+                value.data.size,
+                value.source,
+                value.destination,
+            )
+            for (id, version, early, late), value in sorted(
                 list(return_tree.items()),
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
@@ -480,7 +491,7 @@ class VersionLister:
 
 
 async def _populate_tree_load(
-    task_list,
+    task_list: VersionListerTaskList,
     target: FsPath,
     path_level: int,
     tree: dict,
