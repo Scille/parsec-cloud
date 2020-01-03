@@ -47,7 +47,6 @@ class VlobReadReqSchema(BaseReqSchema):
     vlob_id = fields.UUID(required=True)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
     timestamp = fields.DateTime(allow_none=True, missing=None)
-    to_quarantine = fields.DateTime(allow_none=True, missing=None)
 
 
 class VlobReadRepSchema(BaseRepSchema):
@@ -55,7 +54,6 @@ class VlobReadRepSchema(BaseRepSchema):
     blob = fields.Bytes(required=True)
     author = DeviceIDField(required=True)
     timestamp = fields.DateTime(required=True)
-    to_quarantine = fields.DateTime(allow_none=True, required=True)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)

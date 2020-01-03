@@ -152,7 +152,7 @@ class BaseVlobComponent:
     @_catch_item_vlob_errors(vlob_read_serializer)
     async def api_vlob_read(self, client_ctx, msg):
         msg = vlob_read_serializer.req_load(msg)
-        version, blob, author, created_on, to_quarantine = await self.read(
+        version, blob, author, created_on = await self.read(
             client_ctx.organization_id, client_ctx.device_id, **msg
         )
 
@@ -163,7 +163,6 @@ class BaseVlobComponent:
                 "version": version,
                 "author": author,
                 "timestamp": created_on,
-                "to_quarantine": to_quarantine,
             }
         )
 

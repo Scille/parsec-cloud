@@ -90,7 +90,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         metadata_size = 0
         for (vlob_organization_id, _), vlob in self._vlob_component._vlobs.items():
             if vlob_organization_id == id:
-                metadata_size += sum(len(blob) for (blob, _, _, _) in vlob.data)
+                metadata_size += sum(len(blob) for (blob, _, _) in vlob.data)
 
         data_size = 0
         for (vlob_organization_id, _), blockmeta in self._block_component._blockmetas.items():

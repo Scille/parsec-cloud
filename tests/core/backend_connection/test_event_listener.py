@@ -188,7 +188,7 @@ async def test_realm_notif_maintenance_on_garbage_collection(
 
     with alice_core.event_bus.listen() as spy:
         # Finish maintenance
-        total, done = await job.do_one_vlob()
+        total, done = await job.do_one_batch()
         assert total == done
 
         await spy.wait_with_timeout(

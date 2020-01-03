@@ -27,7 +27,7 @@ from parsec.backend.vlob import (
 @attr.s
 class Vlob:
     realm_id: UUID = attr.ib()
-    data: List[Tuple[bytes, DeviceID, pendulum.Pendulum, pendulum.Pendulum]] = attr.ib(factory=list)
+    data: List[Tuple[bytes, DeviceID, pendulum.Pendulum]] = attr.ib(factory=list)
 
     @property
     def current_version(self):
@@ -92,12 +92,11 @@ class GarbageCollection(RealmTask):
     async def init_todo(self, organization_id, author, encryption_revision, read):
         for vlob_id, vlob in self._original_vlobs.items():
             sorted_data = sorted(vlob.data, key=lambda v: v[2])
-            for version, (_, _, created_at, to_quarantine) in enumerate(sorted_data):
-                if not to_quarantine:
-                    (_, blob, _, _, _) = await read(
-                        organization_id, author, encryption_revision, vlob_id, version + 1
-                    )
-                    self._todo[(vlob_id, version)] = (created_at, blob)
+            for version, (_, _, created_at) in enumerate(sorted_data):
+                (_, blob, _, _) = await read(
+                    organization_id, author, encryption_revision, vlob_id, version + 1
+                )
+                self._todo[(vlob_id, version)] = (created_at, blob)
         self._total = len(self._todo)
 
     def get_vlobs(self):
@@ -112,14 +111,13 @@ class GarbageCollection(RealmTask):
             else:
                 data = []
 
-                (data, author, timestamp, to_quarantine) = vlob.data[version]
+                (data, author, timestamp) = vlob.data[version]
                 for block in blocks_to_erase:
                     self._blocks_to_erase.append((block, now))
-                print(to_quarantine, "to_erase", blocks_to_erase)
                 if vlob_id not in vlobs:
-                    vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp, to_quarantine)])
+                    vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp)])
                 else:
-                    vlobs[vlob_id].data.append((data, author, timestamp, to_quarantine))
+                    vlobs[vlob_id].data.append((data, author, timestamp))
         return vlobs
 
 
@@ -127,7 +125,7 @@ class Reencryption(RealmTask):
     def _init_todo(self, vlobs):
         todo = {}
         for vlob_id, vlob in vlobs.items():
-            for index, (data, _, _, _) in enumerate(vlob.data):
+            for index, (data, _, _) in enumerate(vlob.data):
                 version = index + 1
                 todo[(vlob_id, version)] = data
         return todo
@@ -137,17 +135,15 @@ class Reencryption(RealmTask):
         vlobs = {}
         for (vlob_id, version), data in sorted(self._done.items()):
             try:
-                (_, author, timestamp, to_quarantine) = self._original_vlobs[vlob_id].data[
-                    version - 1
-                ]
+                (_, author, timestamp) = self._original_vlobs[vlob_id].data[version - 1]
 
             except KeyError:
                 raise VlobNotFoundError()
 
             if vlob_id not in vlobs:
-                vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp, to_quarantine)])
+                vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp)])
             else:
-                vlobs[vlob_id].data.append((data, author, timestamp, to_quarantine))
+                vlobs[vlob_id].data.append((data, author, timestamp))
             assert len(vlobs[vlob_id].data) == version
 
         return vlobs
@@ -338,7 +334,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         key = (organization_id, vlob_id)
         if key in self._vlobs:
             raise VlobAlreadyExistsError()
-        self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp, None)])
+        self._vlobs[key] = Vlob(realm_id, [(blob, author, timestamp)])
         await self._update_changes(organization_id, author, realm_id, vlob_id)
 
     async def read(
@@ -349,7 +345,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob_id: UUID,
         version: Optional[int] = None,
         timestamp: Optional[pendulum.Pendulum] = None,
-        to_quarantine: Optional[pendulum.Pendulum] = None,
     ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         vlob = self._get_vlob(organization_id, vlob_id)
 
@@ -392,7 +387,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobVersionError()
         if timestamp < vlob.data[vlob.current_version - 1][2]:
             raise VlobTimestampError(timestamp, vlob.data[vlob.current_version - 1][2])
-        vlob.data.append((blob, author, timestamp, None))
+        vlob.data.append((blob, author, timestamp))
 
         await self._update_changes(organization_id, author, vlob.realm_id, vlob_id, version)
 

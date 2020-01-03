@@ -434,7 +434,7 @@ class UserFS:
             # Note encryption_revision is always 1 given we never reencrypt
             # the user manifest's realm
             args = await self.backend_cmds.vlob_read(1, self.user_manifest_id, version)
-            expected_author, expected_timestamp, expected_version, blob, _ = args
+            expected_author, expected_timestamp, expected_version, blob = args
 
         except BackendNotAvailable as exc:
             raise FSBackendOfflineError(str(exc)) from exc
