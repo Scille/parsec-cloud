@@ -531,13 +531,7 @@ async def _populate_tree_load(
             for child_name, child_id in manifest.children.items():
                 if child_name == target.parts[path_level]:
                     return await _populate_tree_list_versions(
-                        task_list,
-                        target,
-                        path_level + 1,
-                        tree,
-                        child_id,
-                        early if early > manifest.updated else manifest.updated,
-                        late,
+                        task_list, target, path_level + 1, tree, child_id, early, late
                     )
 
 
