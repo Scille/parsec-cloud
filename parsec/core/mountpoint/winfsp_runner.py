@@ -153,7 +153,11 @@ async def winfsp_mountpoint_runner(
     )
     try:
         event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
-        fs.start()
+
+        # Run fs start in a thread, as a cancellable operation
+        # This is because fs.start() might get stuck for while in case of an IRP timeout
+        await trio.to_thread.run_sync(fs.start, cancellable=True)
+
         event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
         task_status.started(mountpoint_path)
 
