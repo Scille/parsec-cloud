@@ -479,7 +479,7 @@ class VersionListerOneShot:
                 value.destination,
             )
             for (id, version, early, late), value in sorted(
-                list(self.return_dict.items()),
+                self.return_dict.items(),
                 key=lambda item: (item[0].late, item[0].id, item[0].version),
             )
         ]
