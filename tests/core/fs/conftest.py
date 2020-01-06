@@ -137,7 +137,7 @@ def user_fs_offline_state_machine(
 
         async def reset_all(self):
             await self.stop_user_fs()
-            await reset_testbed()
+            await reset_testbed(keep_logs=True)
 
         @property
         def user_fs(self):
@@ -176,7 +176,7 @@ def user_fs_online_state_machine(
         async def reset_all(self):
             await self.stop_user_fs()
             await self.stop_backend()
-            await reset_testbed()
+            await reset_testbed(keep_logs=True)
 
         @property
         def backend(self):

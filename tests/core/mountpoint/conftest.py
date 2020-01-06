@@ -64,7 +64,7 @@ def mountpoint_service_factory(tmpdir, alice, user_fs_factory, reset_testbed):
                     self._need_stop.set()
                     await self._stopped.wait()
                     if reset_testbed:
-                        await do_reset_testbed()
+                        await do_reset_testbed(keep_logs=True)
 
             trio.from_thread.run(_stop, trio_token=self._trio_token)
 
