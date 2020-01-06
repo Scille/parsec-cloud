@@ -35,13 +35,14 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         for o, d, t, kf in devices:
             self.combo_login.addItem(f"{o}:{d}")
             self.devices[f"{o}:{d}"] = (o, d, t, kf)
+        self.button_login.setEnabled(self.combo_login.count() > 0)
         last_device = self.config.gui_last_device
         if last_device and last_device in self.devices:
             self.combo_login.setCurrentText(last_device)
         self.line_edit_password.setFocus()
 
     def on_login_failed(self):
-        self.button_login.setEnabled(True)
+        self.button_login.setEnabled(self.combo_login.count() > 0)
         self.button_login.setText(_("BUTTON_LOG_IN"))
 
     def keyPressEvent(self, event):
@@ -50,6 +51,8 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         event.accept()
 
     def emit_login(self):
+        if not self.combo_login.currentText():
+            return
         *args, key_file = self.devices[self.combo_login.currentText()]
         self.button_login.setDisabled(True)
         self.button_login.setText(_("BUTTON_LOGGING_IN"))
