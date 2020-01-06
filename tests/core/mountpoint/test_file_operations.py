@@ -13,7 +13,7 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-def test_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
+def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service):
     tentative = 0
 
     class FileOperationsStateMachine(RuleBasedStateMachine):
@@ -21,6 +21,7 @@ def test_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
         def init(self):
             nonlocal tentative
             tentative += 1
+            caplog.clear()
 
             mountpoint_service.start()
 

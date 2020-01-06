@@ -19,10 +19,9 @@ elif [ -n "$ZSH_VERSION" ]; then
   script_dir=$(dirname $(realpath -s $0))
 fi
 
-
 # Run python script and source
 source_file=$(tempfile)
-$script_dir/run_testenv.py --source-file $source_file $@
+$script_dir/run_testenv.py --source-file $source_file $@ || return $?
 source $source_file
 
 # Clean up
