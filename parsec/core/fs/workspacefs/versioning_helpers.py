@@ -1,5 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+"""Versioning helpers
+
+This file implements the algorithm needed to reconstruct the history of a path. For that, we
+recursively list versions and download manifests that matches the path for a given timeframe.
+
+This recursive implementation using tasks which are attributed a timestamp facilitates the
+development of different loading strategies, concerning whether the possibility to prioritize
+the download of the soonest needed manifests (which is already implemented), or the number of
+concurrent downloads (which will be implemented in a next version).
+"""
+
 from heapq import heapify, heappush, heappop
 import attr
 import trio
