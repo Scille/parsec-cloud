@@ -10,6 +10,7 @@ addons:
   apt:
     packages:
     - postgresql-server-dev-9.5
+    - desktop-file-utils
 install:
 - pip install -U wheel
 - python setup.py bdist_wheel
