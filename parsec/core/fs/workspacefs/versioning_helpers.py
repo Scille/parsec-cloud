@@ -5,6 +5,10 @@
 This file implements the algorithm needed to reconstruct the history of a path. For that, we
 recursively list versions and download manifests that matches the path for a given timeframe.
 
+As a path can be valid or not during a timeframe depending on the fact that all the manifests
+composing it can change, and as a manifest can also represent different files during it's life,
+this implementation is quite complex.
+
 This recursive implementation using tasks which are attributed a timestamp facilitates the
 development of different loading strategies, concerning whether the possibility to prioritize
 the download of the soonest needed manifests (which is already implemented), or the number of
