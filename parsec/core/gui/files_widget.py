@@ -140,7 +140,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
-    taskbar_updated = pyqtSignal()
+    taskbar_updated = pyqtSignal(list)
     back_clicked = pyqtSignal()
 
     rename_success = pyqtSignal(QtToTrioJob)
@@ -814,7 +814,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             reload_after_remount,
         ) = job.ret
         self.set_workspace_fs(workspace_fs, path.parent if file_type == FileType.File else path)
-        self.parent().widget_switched.emit(self.get_taskbar_buttons())
+        self.taskbar_updated.emit(self.get_taskbar_buttons())
         # TODO : Select element if possible?
         if close_after_load:
             self.close_version_list.emit()
