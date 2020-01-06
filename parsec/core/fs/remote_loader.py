@@ -297,7 +297,7 @@ class RemoteLoader:
                 f"Backend returned invalid version for vlob {entry_id} (expecting {version}, got {expected_version})"
             )
 
-        if version is not None and timestamp != expected_timestamp:
+        if version is not None and timestamp is not None and timestamp != expected_timestamp:
             raise FSRemoteManifestInconsistentTimestamp(
                 f"Backend returned invalid expected timestamp for vlob {entry_id} at version {version} (expecting {expected_timestamp}, got {timestamp})"
             )

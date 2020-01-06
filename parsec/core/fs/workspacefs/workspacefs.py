@@ -183,12 +183,8 @@ class WorkspaceFS:
         Raises:
             FSError
         """
-        versions_dict = await self.remote_loader.list_versions(self.get_workspace_entry().id)
-        minimal_timestamp = min(versions_dict.items(), key=lambda v: v[0])[1][0]
-        self.remote_loader.load_manifest(
-            self.get_workspace_entry().id, version=0, timestamp=minimal_timestamp
-        )  # Tries to get the manifest at version 0 to verify the expected timestamp
-        return minimal_timestamp
+        manifest = await self.remote_loader.load_manifest(self.get_workspace_entry().id, version=1)
+        return manifest.timestamp
 
     def get_version_lister(self):
         return VersionLister(self)
