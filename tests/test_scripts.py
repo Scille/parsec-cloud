@@ -5,6 +5,7 @@ import re
 import pytest
 import psutil
 import pathlib
+import tempfile
 import subprocess
 
 from parsec.core.config import config_factory
@@ -24,14 +25,16 @@ def kill_local_backend(backend_port=6888):
 def run_testenv():
     try:
         # Source the run_testenv script and echo the testenv path
-        os.chdir(os.path.dirname(__file__))
+        base_dir = os.path.dirname(__file__)
         if os.name == "nt":
-            output = subprocess.check_output(
-                "scripts\\run_testenv.bat && echo %APPDATA%", shell=True
-            )
+            fd, bat_script = tempfile.mkstemp(suffix=".bat")
+            with open(fd, "w") as f:
+                f.write(f"call {base_dir}\\scripts\\run_testenv.bat\r\necho %APPDATA%")
+            output = subprocess.check_output(str(bat_script))
+            os.unlink(bat_script)
         else:
             output = subprocess.check_output(
-                "source scripts/run_testenv.sh && echo $XDG_CONFIG_HOME",
+                f"source {base_dir}/scripts/run_testenv.sh && echo $XDG_CONFIG_HOME",
                 shell=True,
                 executable="bash",
             )
