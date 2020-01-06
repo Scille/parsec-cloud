@@ -17,6 +17,7 @@ concurrent downloads (which will be implemented in a next version).
 
 from heapq import heapify, heappush, heappop
 import attr
+import math
 import trio
 from functools import partial
 from typing import List, Tuple, NamedTuple, Optional
@@ -283,12 +284,12 @@ class ManifestCacheCounter:
     def __init__(self, manifest_cache: ManifestCache, limit: int):
         self._manifest_cache = manifest_cache
         self.counter = 0
-        self.limit = limit
+        self.limit = limit or math.inf
 
     async def load(
         self, entry_id: EntryID, version=None, timestamp=None
     ) -> Tuple[RemoteManifest, bool]:
-        if self.limit and self.limit == self.counter:
+        if self.limit == self.counter:
             raise ManifestCacheDownloadLimitReached
         manifest, was_downloaded = await self._manifest_cache.load(entry_id, version, timestamp)
         if was_downloaded:
