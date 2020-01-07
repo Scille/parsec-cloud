@@ -19,6 +19,7 @@ from heapq import heapify, heappush, heappop
 import attr
 import math
 import trio
+import typing
 from functools import partial
 from typing import List, Tuple, NamedTuple, Optional
 from pendulum import Pendulum
@@ -364,7 +365,7 @@ class VersionListerTaskList:
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
 
-    def add(self, timestamp: Pendulum, task: partial):
+    def add(self, timestamp: Pendulum, task: typing.Callable):
         if timestamp not in self.tasks:
             heappush(self.heapq_tasks, timestamp)
         self.tasks[timestamp].append(task)
