@@ -96,7 +96,7 @@ class GarbageCollection(RealmTask):
                 (_, blob, _, _) = await read(
                     organization_id, author, encryption_revision, vlob_id, version + 1
                 )
-                self._todo[(vlob_id, version)] = (created_at, blob)
+                self._todo[(vlob_id, version + 1)] = (created_at, blob)
         self._total = len(self._todo)
 
     def get_vlobs(self):
@@ -111,13 +111,14 @@ class GarbageCollection(RealmTask):
             else:
                 data = []
 
-                (data, author, timestamp) = vlob.data[version]
+                (data, author, timestamp) = vlob.data[version - 1]
                 for block in blocks_to_erase:
                     self._blocks_to_erase.append((block, now))
                 if vlob_id not in vlobs:
                     vlobs[vlob_id] = Vlob(self.realm_id, [(data, author, timestamp)])
                 else:
                     vlobs[vlob_id].data.append((data, author, timestamp))
+                assert len(vlobs[vlob_id].data) == version
         return vlobs
 
 
@@ -191,18 +192,14 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     def _maintenance_finished_hook(self, attr, organization_id, realm_id):
         changes = self._per_realm_changes[(organization_id, realm_id)]
-
         task = getattr(changes, attr)
         assert task
         if not task.is_finished():
             return False
-
         realm_vlobs = task.get_vlobs()
         for vlob_id, vlob in realm_vlobs.items():
             self._vlobs[(organization_id, vlob_id)] = vlob
-
         setattr(changes, attr, None)
-        changes.garbage_collection = None
         return True
 
     async def _maintenance_garbage_collection_start_hook(

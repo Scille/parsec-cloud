@@ -268,12 +268,10 @@ class MemoryRealmComponent(BaseRealmComponent):
             raise RealmAccessError()
         if not realm.status.in_maintenance:
             raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
-
         if not self._vlob_component._maintenance_garbage_collection_is_finished_hook(
             organization_id, realm_id
         ):
             raise RealmMaintenanceError("Garbage collection operations are not over")
-
         realm.status = RealmStatus(
             maintenance_type=None,
             maintenance_started_on=None,
