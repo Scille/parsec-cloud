@@ -503,16 +503,16 @@ class VersionListerOneShot:
             download_limit_reached = False
         versions_list = [
             TimestampBoundedData(
-                id,
-                version,
-                early,
-                late,
-                value.data.creator,
-                value.data.updated,
-                value.data.is_folder,
-                value.data.size,
-                value.source,
-                value.destination,
+                id=id,
+                version=version,
+                early=early,
+                late=late,
+                creator=value.data.creator,
+                updated=value.data.updated,
+                is_folder=value.data.is_folder,
+                size=value.data.size,
+                source=value.source,
+                destination=value.destination,
             )
             for (id, version, early, late), value in sorted(
                 self.return_dict.items(),
@@ -535,16 +535,16 @@ class VersionListerOneShot:
                     if previous.late == item.early:
                         # Update source FsPath for current entry
                         previous = TimestampBoundedData(
-                            item.id,
-                            item.version,
-                            previous.early,
-                            item.late,
-                            item.creator,
-                            item.updated,
-                            item.is_folder,
-                            item.size,
-                            previous.source,
-                            item.destination,
+                            id=item.id,
+                            version=item.version,
+                            early=previous.early,
+                            late=item.late,
+                            creator=item.creator,
+                            updated=item.updated,
+                            is_folder=item.is_folder,
+                            size=item.size,
+                            source=previous.source,
+                            destination=item.destination,
                         )
                         continue
                 # If option is set, same entry_id, previous version is 0 bytes
