@@ -15,7 +15,7 @@ the download of the soonest needed manifests (which is already implemented), or 
 concurrent downloads (which will be implemented in a next version).
 """
 
-from heapq import heapify, heappush, heappop
+from heapq import heappush, heappop
 import attr
 import math
 import trio
@@ -361,7 +361,6 @@ class VersionListerTaskList:
     def __init__(self, manifest_cache, versions_list_cache):
         self.tasks = defaultdict(list)
         self.heapq_tasks = []
-        heapify(self.heapq_tasks)
         self.manifest_cache = manifest_cache
         self.versions_list_cache = versions_list_cache
 
