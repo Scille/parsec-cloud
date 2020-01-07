@@ -329,7 +329,7 @@ async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
         versions, version_list_is_complete = await version_lister.list(
             FsPath("/files/renamed"), skip_minimal_sync=False
         )
-    value = exc.value.args[1]
+    value = exc.value.args[0]
     assert (
         value
         == f"Backend returned invalid expected timestamp for vlob {vlob_id.pop()} at version 1 (expecting 2000-01-01T00:00:00+00:00, got 2000-01-01T00:00:01+00:00)"
