@@ -2,6 +2,7 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog
+from PyQt5.QtSvg import QSvgWidget
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.custom_dialogs import show_error
@@ -9,8 +10,9 @@ from parsec.core.gui.trio_thread import ThreadSafeQtSignal
 from parsec.core.gui.ui.file_history_dialog import Ui_FileHistoryDialog
 
 
-async def _do_workspace_version(workspace_fs, path):
-    return await workspace_fs.versions(path)
+async def _do_workspace_version(version_lister, path):
+    return await version_lister.list(path, max_manifest_queries=100)
+    # TODO : check no exception raised, create tests...
 
 
 class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
@@ -35,30 +37,57 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
         update_version_list.connect(self.reset_dialog)
         close_version_list.connect(self.close_dialog)
         self.setWindowFlags(Qt.SplashScreen)
-        self.get_versions_success.connect(self.add_history)
-        self.get_versions_error.connect(self.show_error)
+        self.get_versions_success.connect(self.on_get_version_success)
+        self.get_versions_error.connect(self.on_get_version_error)
         self.button_close.clicked.connect(self.close_dialog)
+        self.button_load_more_entries.clicked.connect(self.load_more)
         self.workspace_fs = workspace_fs
-        self.reset_dialog(workspace_fs, path)
+        self.version_lister = workspace_fs.get_version_lister()
+        self.spinner = QSvgWidget(":/icons/images/icons/spinner.svg")
+        self.spinner.setFixedSize(100, 100)
+        self.spinner_frame.setLayout(self.spinner_layout)
+        self.spinner_layout.addWidget(self.spinner, Qt.AlignCenter)
+        self.spinner_layout.setAlignment(Qt.AlignCenter)
+        self.set_loading_in_progress(False)
+        self.reset_dialog(workspace_fs, self.version_lister, path)
 
-    def reset_dialog(self, workspace_fs, path):
+    def set_loading_in_progress(self, in_progress: bool):
+        self.loading_in_progress = in_progress
+        self.versions_table.setVisible(not in_progress)
+        self.spinner_frame.setVisible(in_progress)
+
+    def reset_dialog(self, workspace_fs, version_lister, path):
+        if self.loading_in_progress:
+            return
+        self.set_loading_in_progress(True)
         file_name = path.name
         if len(file_name) > 64:
             file_name = file_name[:64] + "..."
         self.label_file_name.setText(f'"{file_name}"')
         self.workspace_fs = workspace_fs
         self.path = path
+        self.reset_list()
+
+    def load_more(self):
+        if self.loading_in_progress:
+            return
+        self.set_loading_in_progress(True)
+        self.reset_list()
+
+    def reset_list(self):
         self.versions_table.clear()
         self.versions_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "get_versions_success"),
             ThreadSafeQtSignal(self, "get_versions_error"),
             _do_workspace_version,
-            workspace_fs=self.workspace_fs,
-            path=path,
+            version_lister=self.version_lister,
+            path=self.path,
         )
 
-    def add_history(self):
-        versions_list = self.versions_job.ret
+    def on_get_version_success(self):
+        versions_list, download_limit_reached = self.versions_job.ret
+        if download_limit_reached:
+            self.button_load_more_entries.setVisible(False)
         self.versions_job = None
         for v in versions_list:
             self.versions_table.add_item(
@@ -73,8 +102,9 @@ class FileHistoryDialog(QDialog, Ui_FileHistoryDialog):
                 source_path=v.source,
                 destination_path=v.destination,
             )
+        self.set_loading_in_progress(False)
 
-    def show_error(self):
+    def on_get_version_error(self):
         if self.versions_job and self.versions_job.status != "cancelled":
             show_error(self, _("ERR_LIST_VERSIONS_ACCESS"), exception=self.versions_job.exc)
         self.versions_job = None

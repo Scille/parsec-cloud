@@ -59,6 +59,11 @@ QTableWidget#versions_table
 border: 1px solid rgb(46, 46, 46);
 }
 
+QFrame#spinner_frame
+{
+border: 1px solid rgb(46, 46, 46);
+}
+
 QScrollBar::handle:vertical
 {
 background: rgb(46, 46, 46);
@@ -216,7 +221,10 @@ height: 16px;
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <layout class="QVBoxLayout" name="vertical_layout">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <property name="topMargin">
          <number>0</number>
         </property>
@@ -329,6 +337,38 @@ height: 16px;
             <string>LABEL_FILE_DESTINATION</string>
            </property>
           </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="spinner_frame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <widget class="QWidget" name="verticalLayoutWidget">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>321</width>
+             <height>101</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="spinner_layout">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetNoConstraint</enum>
+            </property>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_load_more_entries">
+          <property name="text">
+           <string>BUTTON_LOAD_MORE_ENTRIES</string>
+          </property>
          </widget>
         </item>
        </layout>

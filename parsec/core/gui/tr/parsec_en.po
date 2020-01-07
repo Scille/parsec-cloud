@@ -1269,6 +1269,9 @@ msgstr "Warning"
 msgid "BUTTON_CLOSE"
 msgstr "Close"
 
+msgid "BUTTON_LOAD_MORE_ENTRIES"
+msgstr "Load more entries"
+
 msgid "ERR_DIALOG_TITLE"
 msgstr "Error"
 

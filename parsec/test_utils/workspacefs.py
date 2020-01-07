@@ -17,6 +17,35 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
     await workspace.sync()
 
 
+async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPath):
+    await workspace.mkdir(dir)
+    await workspace.sync()
+    # Create useless stuff before file creation.
+    for i in range(50):
+        await workspace.touch(dir / f"foo{i}.txt")
+        await workspace.sync()
+    await workspace.mkdir(dir / "foo")
+    await workspace.sync()
+    for i in range(50):
+        await workspace.touch(dir / "foo" / f"foo{i}.txt")
+        await workspace.sync()
+    await workspace.mkdir(dir / "foo" / "foo")
+    await workspace.sync()
+    # Now write an interesting file when benchmarking GUI
+    await workspace.touch(dir / "foo" / "foo" / "foo.txt")
+    await workspace.sync()
+    # Add files in the same directory
+    for i in range(50):
+        await workspace.touch(dir / "foo" / "foo" / f"foo{i}.txt")
+        await workspace.sync()
+    # Remove useless stuff after file creation.
+    for i in range(50):
+        await workspace.unlink(dir / "foo" / "foo" / f"foo{i}.txt")
+        await workspace.unlink(dir / "foo" / f"foo{i}.txt")
+        await workspace.unlink(dir / f"foo{i}.txt")
+        await workspace.sync()
+
+
 async def create_inconsistent_workspace(user_fs: UserFS, name="w") -> WorkspaceFS:
     wid = await user_fs.workspace_create(name)
     workspace = user_fs.get_workspace(wid)
