@@ -106,7 +106,7 @@ class GarbageCollectionJob:
                         author_verify_key=self.device.verify_key,
                         expected_author=self.device.device_id,
                         expected_timestamp=datetime,
-                        expected_version=version + 1,
+                        expected_version=version,
                         expected_id=vlob_id,
                     )
                 except DataError as exc:
@@ -1086,21 +1086,23 @@ class UserFS:
             raise FSWorkspaceNotFoundError(f"Unknown workspace `{workspace_id}`")
 
         now = pendulum_now()
+        new_workspace_entry = workspace_entry.evolve(garbage_collected_on=now)
+
         while True:
             participants = await self._retreive_participants(workspace_entry.id)
             garbage_collection_msgs = self._generate_garbage_collection_messages(
-                workspace_entry, participants, now
+                new_workspace_entry, participants, now
             )
 
             try:
                 await self._send_start_garbage_collection_cmd(
-                    workspace_entry.id, now, garbage_collection_msgs
+                    new_workspace_entry.id, now, garbage_collection_msgs
                 )
             except BackendCmdsParticipantsMismatchError:
                 continue
             else:
                 break
-        return GarbageCollectionJob(self.backend_cmds, workspace_entry, self.device)
+        return GarbageCollectionJob(self.backend_cmds, new_workspace_entry, self.device)
 
     async def workspace_start_reencryption(self, workspace_id: EntryID) -> ReencryptionJob:
         """
