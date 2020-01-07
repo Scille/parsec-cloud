@@ -373,11 +373,12 @@ class VersionListerTaskList:
         return not bool(self.tasks)
 
     async def execute_one(self):
-        min = self.heapq_tasks[0]
+        min = heappop(self.heapq_tasks)
         task = self.tasks[min].pop()
         if len(self.tasks[min]) == 0:
             del self.tasks[min]
-            heappop(self.heapq_tasks)
+        else:
+            heappush(self.heapq_tasks, min)
         await task()
 
     async def execute(self, number: int = 1):
