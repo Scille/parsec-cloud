@@ -203,10 +203,10 @@ async def test_create_dir_already_exists(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
         classmethod(lambda *args, **kwargs: ("Dir1")),
     )
-    async with aqtbot.wait_signal(w_f.folder_create_success):
+    async with aqtbot.wait_signals(
+        [w_f.folder_create_success, w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000
+    ):
         await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
-    async with aqtbot.wait_signals([w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000):
-        pass
 
     assert w_f.table_files.rowCount() == 2
     assert w_f.table_files.item(1, 1).text() == "Dir1"
