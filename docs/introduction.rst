@@ -5,8 +5,8 @@ Introduction
 ============
 
 
-Parsec is a free software (AGPL v3) aiming at easily work and share your
-data in the cloud with a total privacy thanks to cryptographic security.
+Parsec is a free software (AGPL v3) aiming at easily share your work and
+data in the cloud in a total privacy thanks to cryptographic security.
 
 
 .. image:: parsec_snapshot.png
@@ -24,7 +24,7 @@ Key features:
   and the ones you choose to share with.
 - Cryptographic signature. Each modification is signed by it author making trivial
   to identify modifications.
-- Simplified enrolment. New user enrolment is simple as sharing a link and a token code.
+- Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
 - Simple to host. Parsec server only requires a PostgreSQL DB and S3 or OpenStack
   Swift object storage.
 
@@ -33,7 +33,7 @@ Overview
 ========
 
 
-Parsec is divided between a client (responsible to expose data to the user and
+Parsec is divided between a client (responsible for expose data to the user and
 provide an encryption layer) and a server (storing the encrypted data and notifying clients about
 other users activity such as data modification or new sharing).
 

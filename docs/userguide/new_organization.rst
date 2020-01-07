@@ -17,9 +17,9 @@ URL in the style ``parsec://saas.parsec.cloud/TestOrg?action=bootstrap_organizat
     You can read about this in the :ref:`the Hosting server <doc_hosting_server>`
     part.
 
-This URL is needed to bootstrap the organization by registering yourself as it
+This URL is needed to bootstrap the organization by registering yourself as its
 first user and device. Clicking on the URL should bring up Parsec (starting it
-if needed) with following view:
+if needed) with the following view:
 
 .. image:: organization_bootstrap.gif
     :align: center
@@ -40,7 +40,7 @@ Few key points here:
 .. note::
 
     The keys stored encrypted on your computer are what makes Parsec secure.
-    Hence the is no way to recover if you lost them (e.g. if you computer is
+    Hence there is no way to recover if you lost them (e.g. if you computer is
     stolen) or if you forget the password protecting them.
 
     To avoid losing access to your data you should always have

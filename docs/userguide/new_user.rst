@@ -3,11 +3,11 @@
 Create new users
 ================
 
-Now that our organization is ready, it's time to start inviting new users !
+Now that our organization is ready, it's time to start inviting new users!
 
-In Parsec, inviting a user is as a critical operation that aims at building
-trust toward an unknown user the inviting using has vouch for.
-For this reason the operation requires both the invitee and inviting users must
+In Parsec, inviting a user is a critical operation that aims at building
+trust toward an unknown user the inviting using has vouched for.
+For this reason the operation requires both the invitee and inviting users to
 be connected to the Parsec server at the same time.
 
 Invite step
@@ -25,7 +25,7 @@ to the invitee.
 
 It's also during this step that is chosen if the invitee will have administrator
 rights over the organization. Make sure to double check this as you won't be
-able to change that later !
+able to change that later!
 
 .. warning::
 
@@ -50,7 +50,7 @@ Parsec:
     :align: center
     :alt: User claim process
 
-That's it ! The invitee user's Parsec client has been configured and is ready
+That's it! The invitee user's Parsec client has been configured and is ready
 to log in.
 
 .. note::

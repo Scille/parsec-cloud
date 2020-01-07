@@ -9,7 +9,7 @@ Get the sources
 
 Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
-1. You should fist clone it with ``git`` and move the the project dir::
+1. You should fist clone it with ``git`` and move to the project dir::
 
     $ git clone git@github.com:Scille/parsec-cloud.git
     $ cd parsec-cloud
@@ -40,7 +40,7 @@ Run the tests with pytest::
 
     $ py.test tests
 
-On top of that, multiple options are availables:
+On top of that, multiple options are available:
 
 ===============   ========================
 --runmountpoint   Include mountpoint tests
@@ -75,7 +75,7 @@ On Windows::
 This script will:
 
 - Start a development backend server with in-memory storage
-- Configure enviroment variables to isolate the development environment from
+- Configure environment variables to isolate the development environment from
   your global Parsec configuration
 - Create a default organization
-- Create multiple user and devices for this organization
+- Create multiple users and devices for this organization

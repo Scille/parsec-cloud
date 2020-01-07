@@ -3,10 +3,10 @@
 Revoking users
 ==============
 
-Revoking a user is the operation that aims at removing it access rights to
+Revoking a user is the operation that aims at removing their access rights to
 the organization. This is needed when:
 
-- the user is no longer needed (e.g. a person leaving his company)
+- the user is no longer needed (e.g. a person leaving their company)
 - the user has been compromised
 
 .. note::
@@ -28,7 +28,7 @@ Revocation is done from the client:
 .. note::
 
     - Only an administrator of the organization can revoke a user
-    - Revocation is irreversible !
+    - Revocation is irreversible!
 
 Workspace re-encryption
 -----------------------
@@ -39,13 +39,14 @@ connect to the server. In practice this means the user won't be able to do any
 changes or to consult the data he used to have access to.
 
 However from a cryptographic point of view this user still knows the encryption
-key of the workspaces that have been shared with him. For this reason, those
+key of the workspaces that have been shared with them. For this reason, those
 workspaces must be re-encrypted to ensure security of the data.
 
 Concretely, once a user is revoked, each owner of a previously shared workspace
 will be notified a re-encryption operation is needed.
 Each owner can then choose to do the operation on the spot, or to wait until a
-better time to do it (for instance if multiple user a getting revoked in one batch).
+better time to do it (for instance if multiple user are getting revoked in one
+batch).
 
 .. image:: reencrypt_workspace.gif
     :align: center

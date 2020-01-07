@@ -3,7 +3,7 @@
 Create new devices
 ==================
 
-So far, we've only register users on a single computer. However what would
+So far, we've only registered users on a single computer. However what would
 happened if this computer get lost or stolen ?
 
 For this reason it's a good idea for a user to register himself on multiple
@@ -50,7 +50,7 @@ From the new computer, clicking on the invitation URL should open up Parsec:
     :align: center
     :alt: Claim invitation process
 
-That's it ! The user has now two devices, each on a different computer.
+That's it! The user now has two devices, each on a different computer.
 
 .. note::
 
