@@ -13,7 +13,7 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service):
+def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service_factory):
     tentative = 0
 
     class FileOperationsStateMachine(RuleBasedStateMachine):
@@ -22,17 +22,23 @@ def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service
             nonlocal tentative
             tentative += 1
             caplog.clear()
+            wpath = None
 
-            mountpoint_service.start()
+            async def _bootstrap(user_fs, mountpoint_manager):
+                nonlocal wpath
+                wid = await user_fs.workspace_create("w")
+                wpath = await mountpoint_manager.mount_workspace(wid)
 
-            self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR | os.O_CREAT)
-            self.fd = os.open(
-                mountpoint_service.get_default_workspace_mountpoint() / "bar.txt",
-                os.O_RDWR | os.O_CREAT,
-            )
+            self.mountpoint_service = mountpoint_service_factory(_bootstrap)
+
+            self.oracle_file_path = str(tmpdir / f"oracle-test-{tentative}")
+            self.file_path = str(wpath / "bar.txt")
+
+            self.oracle_fd = os.open(self.oracle_file_path, os.O_RDWR | os.O_CREAT)
+            self.fd = os.open(self.file_path, os.O_RDWR | os.O_CREAT)
 
         def teardown(self):
-            mountpoint_service.stop()
+            self.mountpoint_service.stop()
 
         @rule(size=st.integers(min_value=0, max_value=BALLPARK))
         def read(self, size):
@@ -84,10 +90,8 @@ def test_file_operations(tmpdir, caplog, hypothesis_settings, mountpoint_service
         @rule()
         def reopen(self):
             os.close(self.fd)
-            self.fd = os.open(
-                mountpoint_service.get_default_workspace_mountpoint() / "bar.txt", os.O_RDWR
-            )
+            self.fd = os.open(self.file_path, os.O_RDWR)
             os.close(self.oracle_fd)
-            self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR)
+            self.oracle_fd = os.open(self.oracle_file_path, os.O_RDWR)
 
     run_state_machine_as_test(FileOperationsStateMachine, settings=hypothesis_settings)

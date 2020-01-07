@@ -237,19 +237,20 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
 
 
 @pytest.mark.mountpoint
-def test_manifest_not_available(mountpoint_service):
+def test_manifest_not_available(mountpoint_service_factory):
+    x_path = None
+
     async def _bootstrap(user_fs, mountpoint_manager):
+        nonlocal x_path
         wid = await user_fs.workspace_create("x")
         workspace = user_fs.get_workspace(wid)
         await workspace.touch("/foo.txt")
         foo_id = await workspace.path_id("/foo.txt")
         async with workspace.local_storage.lock_entry_id(foo_id):
             await workspace.local_storage.clear_manifest(foo_id)
-        await mountpoint_manager.mount_all()
+        x_path = await mountpoint_manager.mount_workspace(wid)
 
-    mountpoint_service.start()
-    mountpoint_service.execute(_bootstrap)
-    x_path = mountpoint_service.get_workspace_mountpoint("x")
+    mountpoint_service_factory(_bootstrap)
 
     with pytest.raises(OSError) as exc:
         (x_path / "foo.txt").stat()
@@ -305,10 +306,8 @@ def test_unhandled_crash_in_fs_operation(caplog, mountpoint_service, monkeypatch
         "parsec.core.mountpoint.thread_fs_access.ThreadFSAccess.entry_info", _entry_info_crash
     )
 
-    mountpoint_service.start()
-    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
     with pytest.raises(OSError) as exc:
-        (mountpoint / "crash_me").stat()
+        (mountpoint_service.wpath / "crash_me").stat()
 
     assert exc.value.errno == errno.EINVAL
     if os.name == "nt":
@@ -474,20 +473,16 @@ async def test_mountpoint_revoke_access(
 @pytest.mark.skipif(os.name == "nt", reason="TODO: crash with WinFSP :'(")
 def test_stat_mountpoint(mountpoint_service):
     async def _bootstrap(user_fs, mountpoint_manager):
-        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        workspace = user_fs.get_workspace(mountpoint_service.wid)
         await workspace.touch("/foo.txt")
 
-    mountpoint_service.start()
     mountpoint_service.execute(_bootstrap)
-    wpath = mountpoint_service.get_default_workspace_mountpoint()
 
-    assert os.listdir(str(mountpoint_service.base_mountpoint)) == [
-        mountpoint_service.default_workspace_name
-    ]
+    assert os.listdir(str(mountpoint_service.base_mountpoint)) == [mountpoint_service.wpath.name]
     # Just make sure stats don't lead to a crash
     assert os.stat(str(mountpoint_service.base_mountpoint))
-    assert os.stat(str(wpath))
-    assert os.stat(str(wpath / "foo.txt"))
+    assert os.stat(str(mountpoint_service.wpath))
+    assert os.stat(str(mountpoint_service.wpath / "foo.txt"))
 
 
 @pytest.mark.trio
@@ -520,9 +515,7 @@ async def test_mountpoint_access_unicode(base_mountpoint, alice_user_fs, event_b
 
 @pytest.mark.mountpoint
 def test_nested_rw_access(mountpoint_service):
-    mountpoint_service.start()
-    wpath = mountpoint_service.get_default_workspace_mountpoint()
-    fpath = wpath / "foo.txt"
+    fpath = mountpoint_service.wpath / "foo.txt"
 
     with open(str(fpath), "ab") as f:
         f.write(b"whatever")

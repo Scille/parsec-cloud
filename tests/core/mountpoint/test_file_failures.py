@@ -13,8 +13,7 @@ from tests.common import create_shared_workspace
 
 @pytest.mark.mountpoint
 def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
-    mountpoint_service.start()
-    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
+    mountpoint = mountpoint_service.wpath
 
     oracle_fd = os.open(tmpdir / f"oracle-test", os.O_RDWR | os.O_CREAT)
     fd = os.open(mountpoint / "bar.txt", os.O_RDWR | os.O_CREAT)
@@ -31,8 +30,7 @@ def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
 
 @pytest.mark.mountpoint
 def test_empty_read_then_reopen(tmpdir, mountpoint_service):
-    mountpoint_service.start()
-    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
+    mountpoint = mountpoint_service.wpath
 
     oracle_fd = os.open(tmpdir / f"oracle-test", os.O_RDWR | os.O_CREAT)
     fd = os.open(mountpoint / "bar.txt", os.O_RDWR | os.O_CREAT)

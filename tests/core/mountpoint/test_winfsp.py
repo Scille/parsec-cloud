@@ -8,17 +8,19 @@ import threading
 @pytest.mark.win32
 @pytest.mark.mountpoint
 def test_rename_to_another_drive(mountpoint_service):
+    x_path = None
+    y_path = None
+
     async def _bootstrap(user_fs, mountpoint_manager):
+        nonlocal x_path, y_path
         xid = await user_fs.workspace_create("x")
         xworkspace = user_fs.get_workspace(xid)
         await xworkspace.touch("/foo.txt")
-        await user_fs.workspace_create("y")
-        await mountpoint_manager.mount_all()
+        yid = await user_fs.workspace_create("y")
+        x_path = await mountpoint_manager.mount_workspace(xid)
+        y_path = await mountpoint_manager.mount_workspace(yid)
 
-    mountpoint_service.start()
     mountpoint_service.execute(_bootstrap)
-    x_path = mountpoint_service.get_workspace_mountpoint("x")
-    y_path = mountpoint_service.get_workspace_mountpoint("y")
 
     with pytest.raises(OSError) as exc:
         (x_path / "foo.txt").rename(y_path)
@@ -72,7 +74,7 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
     def _wait_and_stop_mountpoint():
         mountpoint_needed_stop.wait()
         try:
-            mountpoint_service.stop(reset_testbed=False)
+            mountpoint_service.stop()
         finally:
             mountpoint_stopped.set()
 
@@ -84,10 +86,8 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
 
     try:
 
-        mountpoint_service.start()
-        mountpoint = mountpoint_service.get_default_workspace_mountpoint()
         with pytest.raises(OSError) as exc:
-            (mountpoint / "stop_loop").stat()
+            (mountpoint_service.wpath / "stop_loop").stat()
 
         assert str(exc.value).startswith(
             "[WinError 995] The I/O operation has been aborted because of either a thread exit or an application request"
@@ -101,7 +101,7 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
 
 @pytest.mark.win32
 @pytest.mark.mountpoint
-def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
+def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service_factory):
     # see https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
     items = (
         (
@@ -150,13 +150,11 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
             await workspace.touch(f"/{name}")
         await mountpoint_manager.mount_all()
 
-    mountpoint_service.start()
-    mountpoint_service.execute(_bootstrap)
+    mountpoint_service = mountpoint_service_factory(_bootstrap)
 
     workspaces = list(mountpoint_service.base_mountpoint.iterdir())
 
-    # mountpoint_service creates a `w` workspace by default
-    assert set(x.name for x in workspaces) == {"w", *{cooked_name for _, cooked_name in items}}
+    assert set(x.name for x in workspaces) == {cooked_name for _, cooked_name in items}
 
     for _, cooked_name in items:
         workspace = mountpoint_service.base_mountpoint / cooked_name
@@ -170,7 +168,7 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service):
 
 @pytest.mark.win32
 @pytest.mark.mountpoint
-def test_mount_workspace_with_too_long_name(mountpoint_service):
+def test_mount_workspace_with_too_long_name(mountpoint_service_factory):
     # WinFSP volume_label (with no trailing '\0') is stored on 32 WCHAR
     too_long = "x" * 33
     # Smiley takes 4 bytes (2 WCHAR) once encoded in UTF-16
@@ -187,8 +185,7 @@ def test_mount_workspace_with_too_long_name(mountpoint_service):
 
         await mountpoint_manager.mount_all()
 
-    mountpoint_service.start()
-    mountpoint_service.execute(_bootstrap)
+    mountpoint_service = mountpoint_service_factory(_bootstrap)
 
     # TODO: should be doing a `workspace.exists()` instead
     assert (mountpoint_service.base_mountpoint / too_long / "foo.txt").exists()
@@ -201,7 +198,7 @@ def test_iterdir_with_marker(mountpoint_service):
     expected_entries_names = []
 
     async def _bootstrap(user_fs, mountpoint_manager):
-        workspace = user_fs.get_workspace(mountpoint_service.default_workspace_id)
+        workspace = user_fs.get_workspace(mountpoint_service.wid)
         for i in range(150):
             if i < 50:
                 # File name < `..` (`..` is always the first item in our implementation)
@@ -214,11 +211,8 @@ def test_iterdir_with_marker(mountpoint_service):
                 await workspace.mkdir(path)
             expected_entries_names.append(path[1:])
 
-    mountpoint_service.start()
-    mountpoint_service.execute(_bootstrap)
     expected_entries_names = sorted(expected_entries_names)
 
-    mountpoint = mountpoint_service.get_default_workspace_mountpoint()
     # Note `os.listdir()` ignores `.` and `..` entries
-    entries_names = os.listdir(mountpoint)
+    entries_names = os.listdir(mountpoint_service.wpath)
     assert entries_names == expected_entries_names
