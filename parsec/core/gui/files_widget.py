@@ -474,6 +474,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self.button_create_folder,
             ]
 
+    def update_taskbar_buttons(self):
+        self.taskbar_updated.emit(self.get_taskbar_buttons())
+
     def reload(self):
         self.load(self.current_directory)
 
@@ -783,9 +786,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 and new_entry.role == WorkspaceRole.READER
             ):
                 show_warning(self, _("WARN_FILE_SHARING_READER"))
-                self.taskbar_updated.emit()
+                self.update_taskbar_buttons()
             else:
-                self.taskbar_updated.emit()
+                self.update_taskbar_buttons()
 
     def _on_reload_timestamped_requested(
         self, timestamp, path, file_type, open_after_load, close_after_remount, reload_after_remount
@@ -814,7 +817,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             reload_after_remount,
         ) = job.ret
         self.set_workspace_fs(workspace_fs, path.parent if file_type == FileType.File else path)
-        self.taskbar_updated.emit(self.get_taskbar_buttons())
+        self.update_taskbar_buttons()
         # TODO : Select element if possible?
         if close_after_load:
             self.close_version_list.emit()
