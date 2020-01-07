@@ -144,7 +144,9 @@ class ManifestCache:
         self._manifest_cache = {}
         self._remote_loader = remote_loader
 
-    def get(self, entry_id: EntryID, version=None, timestamp=None) -> RemoteManifest:
+    def get(
+        self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
+    ) -> RemoteManifest:
         """
         Tries to find specified manifest in cache, raises ManifestCacheNotFound otherwise
 
@@ -196,7 +198,11 @@ class ManifestCache:
                 )
 
     async def load(
-        self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
+        self,
+        entry_id: EntryID,
+        version: int = None,
+        timestamp: Pendulum = None,
+        expected_backend_timestamp: Pendulum = None,
     ) -> Tuple[RemoteManifest, bool]:
         """
         Tries to find specified manifest in cache, tries to download it otherwise and updates cache
@@ -214,11 +220,22 @@ class ManifestCache:
             FSWorkspaceNoAccess
         """
         try:
-            return (self.get(entry_id, version=version, timestamp=timestamp), False)
+            return (
+                self.get(
+                    entry_id,
+                    version=version,
+                    timestamp=timestamp,
+                    expected_backend_timestamp=expected_backend_timestamp,
+                ),
+                False,
+            )
         except ManifestCacheNotFound:
             pass
         manifest = await self._remote_loader.load_manifest(
-            entry_id, version=version, timestamp=timestamp
+            entry_id,
+            version=version,
+            timestamp=timestamp,
+            expected_backend_timestamp=expected_backend_timestamp,
         )
         self.update(manifest, entry_id, version=version, timestamp=timestamp)
         return (manifest, True)
@@ -287,11 +304,13 @@ class ManifestCacheCounter:
         self.limit = limit or math.inf
 
     async def load(
-        self, entry_id: EntryID, version=None, timestamp=None
+        self, entry_id: EntryID, version=None, timestamp=None, expected_backend_timestamp=None
     ) -> Tuple[RemoteManifest, bool]:
         if self.limit == self.counter:
             raise ManifestCacheDownloadLimitReached
-        manifest, was_downloaded = await self._manifest_cache.load(entry_id, version, timestamp)
+        manifest, was_downloaded = await self._manifest_cache.load(
+            entry_id, version, timestamp, expected_backend_timestamp
+        )
         if was_downloaded:
             self.counter += 1
         return manifest
@@ -560,7 +579,7 @@ class VersionListerOneShot:
         if early > late:
             return
         manifest = await self.task_list.manifest_cache.load(
-            entry_id, version=version_number, timestamp=expected_timestamp
+            entry_id, version=version_number, expected_backend_timestamp=expected_timestamp
         )
         data = ManifestDataAndMutablePaths(
             ManifestData(

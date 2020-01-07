@@ -246,11 +246,18 @@ class RemoteLoader:
         await self.local_storage.clear_chunk(ChunkID(access.id), miss_ok=True)
 
     async def load_manifest(
-        self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
+        self,
+        entry_id: EntryID,
+        version: int = None,
+        timestamp: Pendulum = None,
+        expected_backend_timestamp: Pendulum = None,
     ) -> RemoteManifest:
         """
-        If both version and timestamp are given, use version to ask the backend for the correct
-        version, then use timestamp to check for consistency
+        Download a manifest.
+
+        Only one from version or timestamp parameters can be specified at the same time.
+        expected_backend_timestamp enables to check a timestamp against the one returned by the
+        backend.
 
         Raises:
             FSError
@@ -260,6 +267,11 @@ class RemoteLoader:
             FSBadEncryptionRevision
             FSWorkspaceNoAccess
         """
+        if timestamp is not None and version is not None:
+            raise FSError(
+                f"Supplied both version {version} and timestamp `{timestamp}` for manifest "
+                f"`{entry_id}`"
+            )
         # Download the vlob
         workspace_entry = self.get_workspace_entry()
         rep = await self._backend_cmds(
@@ -294,12 +306,14 @@ class RemoteLoader:
         expected_timestamp = rep["timestamp"]
         if version not in (None, expected_version):
             raise FSError(
-                f"Backend returned invalid version for vlob {entry_id} (expecting {version}, got {expected_version})"
+                f"Backend returned invalid version for vlob {entry_id} (expecting {version}, "
+                f"got {expected_version})"
             )
 
-        if version is not None and timestamp is not None and timestamp != expected_timestamp:
+        if expected_backend_timestamp and expected_backend_timestamp != expected_timestamp:
             raise FSRemoteManifestInconsistentTimestamp(
-                f"Backend returned invalid expected timestamp for vlob {entry_id} at version {version} (expecting {expected_timestamp}, got {timestamp})"
+                f"Backend returned invalid expected timestamp for vlob {entry_id} at version "
+                f"{version} (expecting {expected_backend_timestamp}, got {expected_timestamp})"
             )
 
         author = await self.remote_device_manager.get_device(expected_author)
@@ -507,14 +521,19 @@ class RemoteLoaderTimestamped(RemoteLoader):
         raise FSError(f"Cannot upload block through a timestamped remote loader")
 
     async def load_manifest(
-        self, entry_id: EntryID, version: int = None, timestamp: Pendulum = None
+        self,
+        entry_id: EntryID,
+        version: int = None,
+        timestamp: Pendulum = None,
+        expected_backend_timestamp: Pendulum = None,
     ) -> RemoteManifest:
         """
         Allows to have manifests at all timestamps as it is needed by the versions method of either
         a WorkspaceFS or a WorkspaceFSTimestamped
 
-        If both version and timestamp are given, use version to ask the backend for the correct
-        version, then use timestamp to check for consistency
+        Only one from version or timestamp can be specified at the same time.
+        expected_backend_timestamp enables to check a timestamp against the one returned by the
+        backend.
 
         Raises:
             FSError
@@ -526,7 +545,12 @@ class RemoteLoaderTimestamped(RemoteLoader):
         """
         if timestamp is None and version is None:
             timestamp = self.timestamp
-        return await super().load_manifest(entry_id, version=version, timestamp=timestamp)
+        return await super().load_manifest(
+            entry_id,
+            version=version,
+            timestamp=timestamp,
+            expected_backend_timestamp=expected_backend_timestamp,
+        )
 
     async def upload_manifest(self, *e, **ke):
         raise FSError(f"Cannot upload manifest through a timestamped remote loader")
