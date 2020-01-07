@@ -4,7 +4,7 @@ import pytest
 from pendulum import Pendulum
 
 from parsec.core.types import FsPath
-from parsec.core.fs import FSRemoteManifestInconsistentTimestamp
+from parsec.core.fs import FSError
 
 
 def _day(d):
@@ -324,7 +324,7 @@ async def test_versions_backend_timestamp_not_matching(alice_workspace, alice):
 
     backend_cmds.vlob_read = mocked_vlob_read
 
-    with pytest.raises(FSRemoteManifestInconsistentTimestamp) as exc:
+    with pytest.raises(FSError) as exc:
         version_lister = alice_workspace.get_version_lister()
         versions, version_list_is_complete = await version_lister.list(
             FsPath("/files/renamed"), skip_minimal_sync=False
