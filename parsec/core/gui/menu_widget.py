@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QPainter, QFont
+from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption
 
 from parsec.core.gui.ui.menu_widget import Ui_MenuWidget
@@ -22,12 +22,6 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_devices.clicked.connect(self.devices_clicked.emit)
         self.button_settings.clicked.connect(self.settings_clicked.emit)
         self.button_logout.clicked.connect(self.logout_clicked.emit)
-        f = QFont("Roboto", 10, QFont.Bold)
-        self.button_files.setFont(f)
-        self.button_users.setFont(f)
-        self.button_devices.setFont(f)
-        self.button_settings.setFont(f)
-        self.button_logout.setFont(f)
 
     def paintEvent(self, _):
         opt = QStyleOption()

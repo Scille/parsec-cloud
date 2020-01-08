@@ -5,7 +5,7 @@ import signal
 from structlog import get_logger
 from queue import Queue
 
-from PyQt5.QtCore import QTimer, Qt, QDir
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
@@ -92,7 +92,6 @@ def run_gui(config: CoreConfig, start_arg: str = None):
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
 
-    QDir("Roboto")
     QFontDatabase.addApplicationFont(":/fonts/fonts/Roboto-Regular.ttf")
     f = QFont("Roboto")
     app.setFont(f)
