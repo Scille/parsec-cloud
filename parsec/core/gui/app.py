@@ -6,7 +6,7 @@ from structlog import get_logger
 from queue import Queue
 
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
 from parsec.core.config import CoreConfig
@@ -83,9 +83,6 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
 def run_gui(config: CoreConfig, start_arg: str = None):
     logger.info("Starting UI")
 
-    #    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    #    os.environ["QT_SCALE_FACTOR"] = "1"
-
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
@@ -95,7 +92,8 @@ def run_gui(config: CoreConfig, start_arg: str = None):
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
 
-    f = QFont("Arial")
+    QFontDatabase.addApplicationFont(":/fonts/fonts/Roboto-Regular.ttf")
+    f = QFont("Roboto")
     app.setFont(f)
 
     lang_key = lang.switch_language(config)

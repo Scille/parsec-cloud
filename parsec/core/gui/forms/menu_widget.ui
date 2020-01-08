@@ -50,6 +50,7 @@ color: rgb(255, 255, 255);
 background-color: rgb(46, 46, 46);
 text-align: left;
 padding-left: 10px;
+font-size: 20px;
 }
 
 QPushButton:checked
@@ -165,24 +166,6 @@ border-bottom: 2px solid rgb(130, 130, 130);
             <height>0</height>
            </size>
           </property>
-          <property name="font">
-           <font>
-            <family>Proxima Nova</family>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
           <property name="text">
            <string>MENU_DOCUMENTS</string>
           </property>
@@ -227,18 +210,6 @@ border-bottom: 2px solid rgb(130, 130, 130);
             <height>64</height>
            </size>
           </property>
-          <property name="font">
-           <font>
-            <family>Proxima Nova</family>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
           <property name="text">
            <string>MENU_USERS</string>
           </property>
@@ -282,18 +253,6 @@ border-bottom: 2px solid rgb(130, 130, 130);
             <width>0</width>
             <height>64</height>
            </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Proxima Nova</family>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
           </property>
           <property name="text">
            <string>MENU_DEVICES</string>
@@ -341,15 +300,6 @@ border-bottom: 2px solid rgb(130, 130, 130);
             <width>0</width>
             <height>64</height>
            </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Proxima Nova</family>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
           </property>
           <property name="styleSheet">
            <string notr="true"/>
@@ -611,18 +561,6 @@ color: rgb(255, 255, 255);
             <width>0</width>
             <height>64</height>
            </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Proxima Nova</family>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
           </property>
           <property name="text">
            <string>BUTTON_LOG_OUT</string>

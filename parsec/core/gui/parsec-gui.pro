@@ -45,5 +45,4 @@ FORMS += forms/main_window.ui \
          forms/about_widget.ui \
          forms/file_history_dialog.ui \
          forms/file_history_widget.ui
-
 RESOURCES += rc/resources.qrc
