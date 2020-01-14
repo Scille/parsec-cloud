@@ -68,7 +68,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._vlob_component = vlob
         self._block_component = block
 
-    def _get_realm(self, organization_id, realm_id):
+    def _get_realm(self, organization_id: OrganizationID, realm_id: UUID):
         try:
             return self._realms[(organization_id, realm_id)]
         except KeyError:
@@ -184,7 +184,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 recipient_message,
             )
 
-    def _check_maintenance_starting_access(self, realm, realm_id, author):
+    def _check_maintenance_starting_access(self, realm: Realm, realm_id: UUID, author: DeviceID):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if realm.status.in_maintenance:
