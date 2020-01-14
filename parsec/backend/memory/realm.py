@@ -3,7 +3,7 @@
 import attr
 import pendulum
 from uuid import UUID
-from typing import List, Dict, Optional
+from typing import List, Set, Dict, Optional
 
 from parsec.api.protocol import RealmRole
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
@@ -202,12 +202,12 @@ class MemoryRealmComponent(BaseRealmComponent):
 
     async def _send_maintenance_starting_messages(
         self,
-        organization_id,
-        author,
-        realm_id,
-        encryption_revision,
-        timestamp,
-        per_participant_message,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        encryption_revision: int,
+        timestamp: pendulum.Pendulum,
+        per_participant_message: Dict[UserID, bytes],
     ):
         # Should first send maintenance event, then message to each participant
         await self._send_event(
@@ -221,8 +221,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         for recipient, msg in per_participant_message.items():
             await self._message_component.send(organization_id, author, recipient, timestamp, msg)
 
-    def _check_per_participant_message_recipients(self, recipients_id, not_revoked_roles):
-        if recipients_id ^ not_revoked_roles:
+    def _check_per_participant_message_recipients(self, recipients_ids: Set[BaseUserComponent], not_revoked_roles: Set[BaseUserComponent]):
+        if recipients_ids ^ not_revoked_roles:
             raise RealmParticipantsMismatchError(
                 "Realm participants and message recipients mismatch"
             )
@@ -239,7 +239,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._check_maintenance_starting_access(realm, realm_id, author)
         not_revoked_users = await self._list_not_revoked_users(realm, organization_id)
         self._check_per_participant_message_recipients(
-            per_participant_message.keys(), not_revoked_users
+            set(per_participant_message.keys()), not_revoked_users
         )
 
         await self._vlob_component._maintenance_garbage_collection_start_hook(
@@ -300,8 +300,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         not_revoked_users = await self._list_not_revoked_users(realm, organization_id)
+        print(not_revoked_users)
         self._check_per_participant_message_recipients(
-            per_participant_message.keys(), not_revoked_users
+            set(per_participant_message.keys()), not_revoked_users
         )
 
         realm.status = RealmStatus(
