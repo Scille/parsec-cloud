@@ -478,6 +478,21 @@ class BaseRealmComponent:
         """
         raise NotImplementedError()
 
+    async def finish_reencryption_maintenance(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        encryption_revision: int,
+    ) -> None:
+        """
+        Raises:
+            RealmNotFoundError
+            RealmAccessError
+            RealmMaintenanceError: not in maintenance or bad encryption_revision
+        """
+        raise NotImplementedError()
+
     async def start_garbage_collection_maintenance(
         self,
         organization_id: OrganizationID,
