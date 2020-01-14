@@ -187,6 +187,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     def _maintenance_start_hook(self, attr: str, organization_id: OrganizationID, realm_id: UUID, Task: RealmTask, task_args: Optional[List] = []):
         changes = self._get_changes_to_maintenance_start_hook(organization_id, realm_id)
         realm_vlobs = self._get_realm_vlobs(organization_id, realm_id)
+        assert attr in ('reencryption', 'garbage_collection')
         setattr(changes, attr, Task(realm_id, realm_vlobs, *task_args))
 
     def _maintenance_finished_hook(self, attr: str, organization_id: OrganizationID, realm_id: UUID):
@@ -198,6 +199,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_vlobs = task.get_vlobs()
         for vlob_id, vlob in realm_vlobs.items():
             self._vlobs[(organization_id, vlob_id)] = vlob
+        assert attr in ('reencryption', 'garbage_collection')
         setattr(changes, attr, None)
         return True
 
