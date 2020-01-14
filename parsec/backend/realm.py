@@ -138,7 +138,6 @@ class BaseRealmComponent:
             }
 
         try:
-            client_ctx.logger.debug("test")
             await self.create(client_ctx.organization_id, granted_role)
 
         except RealmNotFoundError as exc:
