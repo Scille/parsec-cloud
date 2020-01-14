@@ -137,14 +137,6 @@ async def test_unknown_workspace(alice_user_fs):
 
 
 @pytest.mark.trio
-async def test_concurrent_start_garbage_collection(workspace, alice_user_fs):
-    await alice_user_fs.workspace_start_garbage_collection(workspace)
-
-    with pytest.raises(FSWorkspaceInMaintenance):
-        await alice_user_fs.workspace_start_garbage_collection(workspace)
-
-
-@pytest.mark.trio
 async def test_garbage_collection_already_started(running_backend, alice_user_fs):
     with freeze_time("2000-01-02"):
         wid = await alice_user_fs.workspace_create("w1")

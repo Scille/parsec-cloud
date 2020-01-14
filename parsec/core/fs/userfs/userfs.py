@@ -154,7 +154,6 @@ class GarbageCollectionJob:
             rep = await self.backend_cmds.vlob_maintenance_save_garbage_collection_batch(
                 workspace_id, done_batch
             )
-            print('fuckkk rep')
             _handle_maintenance_job_rep(rep)
             total = rep['total']
             done = rep['done']

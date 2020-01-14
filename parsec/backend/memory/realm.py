@@ -300,7 +300,6 @@ class MemoryRealmComponent(BaseRealmComponent):
         if encryption_revision != realm.status.encryption_revision + 1:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         not_revoked_users = await self._list_not_revoked_users(realm, organization_id)
-        print(not_revoked_users)
         self._check_per_participant_message_recipients(
             set(per_participant_message.keys()), not_revoked_users
         )
