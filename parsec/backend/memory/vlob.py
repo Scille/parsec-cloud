@@ -150,12 +150,12 @@ class Reencryption(RealmTask):
         return vlobs
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class Changes:
-    checkpoint: int = attr.ib(default=0)
-    changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.ib(factory=dict)
-    reencryption: Reencryption = attr.ib(default=None)
-    garbage_collection: GarbageCollection = attr.ib(default=None)
+    checkpoint: int = 0
+    changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.factory(dict)
+    reencryption: Optional[Reencryption] = None
+    garbage_collection: Optional[GarbageCollection] = None
 
 
 class MemoryVlobComponent(BaseVlobComponent):
