@@ -5,6 +5,7 @@ from pathlib import Path
 from pendulum import Pendulum, now as pendulum_now
 from typing import List, Tuple, Optional, Union
 from structlog import get_logger
+from collections import defaultdict
 
 from async_generator import asynccontextmanager
 
@@ -95,8 +96,8 @@ class GarbageCollectionJob:
         self.workspace_entry = workspace_entry
         self.device = device
         self._minimum_counter = 2
-        self._blocks_to_keep = {}
-        self.couter_by_versions = {}
+        self._blocks_to_keep = defaultdict(set)
+        self.counter_by_versions = defaultdict(int)
 
     async def do_one_batch(self, datetime_limit=None, size=100):
         if not datetime_limit:
@@ -132,18 +133,13 @@ class GarbageCollectionJob:
 
                 blocks_to_erase = set()
                 if is_file_manifest(manifest):
-                    try:
-                        _ = self._blocks_to_keep[vlob_id]
-                    except KeyError:
-                        self._blocks_to_keep[vlob_id] = set()
-                        self.couter_by_versions[vlob_id] = 0
 
                     blocks_id = set([b.id for b in manifest.blocks])
                     if (
                         datetime > datetime_limit
-                        or self.couter_by_versions[vlob_id] < self._minimum_counter
+                        or self.counter_by_versions[vlob_id] < self._minimum_counter
                     ):
-                        self.couter_by_versions[vlob_id] += 1
+                        self.counter_by_versions[vlob_id] += 1
                         self._blocks_to_keep[vlob_id].update(blocks_id)
                     else:
                         to_erase = filter(

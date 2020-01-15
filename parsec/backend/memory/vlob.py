@@ -153,7 +153,7 @@ class Reencryption(RealmTask):
 @attr.s(auto_attribs=True)
 class Changes:
     checkpoint: int = 0
-    changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.factory(dict)
+    changes: Dict[UUID, Tuple[DeviceID, int, int]] = attr.Factory(dict)
     reencryption: Optional[Reencryption] = None
     garbage_collection: Optional[GarbageCollection] = None
 
