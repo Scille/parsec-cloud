@@ -186,17 +186,17 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
         self.current_user_role = ws_entry.role
-        current_index = _ROLES_TO_INDEX[self.current_user_role]
-        for role, index in _ROLES_TO_INDEX.items():
-            if index <= current_index:
-                if role == WorkspaceRole.READER:
-                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_READER"))
-                elif role == WorkspaceRole.CONTRIBUTOR:
-                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_CONTRIBUTOR"))
-                elif role == WorkspaceRole.MANAGER:
-                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_MANAGER"))
-                elif role == WorkspaceRole.OWNER:
-                    self.combo_role.insertItem(index, _("WORKSPACE_ROLE_OWNER"))
+
+        if (
+            self.current_user_role == WorkspaceRole.MANAGER
+            or self.current_user_role == WorkspaceRole.OWNER
+        ):
+            self.combo_role.insertItem(self.combo_role.count(), _("WORKSPACE_ROLE_READER"))
+            self.combo_role.insertItem(self.combo_role.count(), _("WORKSPACE_ROLE_CONTRIBUTOR"))
+        if self.current_user_role == WorkspaceRole.OWNER:
+            self.combo_role.insertItem(self.combo_role.count(), _("WORKSPACE_ROLE_MANAGER"))
+            self.combo_role.insertItem(self.combo_role.count(), _("WORKSPACE_ROLE_OWNER"))
+
         if (
             self.current_user_role == WorkspaceRole.READER
             or self.current_user_role == WorkspaceRole.CONTRIBUTOR
