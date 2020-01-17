@@ -688,7 +688,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.filter_files(self.line_edit_search.text())
 
     def _on_folder_stat_error(self, job):
-        pass
+        self.table_files.clear()
+        if self.current_directory == FsPath("/"):
+            self.table_files.add_parent_workspace()
+        else:
+            self.table_files.add_parent_folder()
 
     def _on_folder_create_success(self, job):
         pass
