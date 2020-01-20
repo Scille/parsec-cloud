@@ -1,2 +1,0 @@
-Fix recreation of an organization by the administration as long as it hasn't
-been bootstrapped.

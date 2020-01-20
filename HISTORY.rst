@@ -6,6 +6,51 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.5.0 (2020-01-20)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Add copy, cut and paste to the Parsec file explorer  (`#855
+  <https://github.com/Scille/parsec-cloud/issues/855>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix unhandled exception in backend when a client connected over ssl disconnect
+  during handshake. (`#833 <https://github.com/Scille/parsec-
+  cloud/issues/833>`__)
+* Fix Organization bootstrap and user/device claim links encoding when their
+  corresponding organization ID contains unicode. (`#884
+  <https://github.com/Scille/parsec-cloud/issues/884>`__)
+* Fix recreation of an organization by the administration as long as it hasn't
+  been bootstrapped.  (`#885 <https://github.com/Scille/parsec-
+  cloud/issues/885>`__)
+* Clear displayed files on stat error  (`#920 <https://github.com/Scille/parsec-
+  cloud/issues/920>`__)
+* Fix a bug related to broken symlinks in the base directory for mountpoints
+  after a hard shutdown.  (`#881 <https://github.com/Scille/parsec-
+  cloud/issues/881>`__)
+* Used new partial strategy to download manifests when rebuilding history to fix
+  it not loading on a heavy workspace.  (`#888
+  <https://github.com/Scille/parsec-cloud/issues/888>`__)
+* Fix incorrect behavior when the backend accept anonymous connection to expired
+  organization. (`#891 <https://github.com/Scille/parsec-cloud/issues/891>`__)
+* Prevent winfsp from freezing the application when the mounting operation times
+  out.  (`#905 <https://github.com/Scille/parsec-cloud/issues/905>`__)
+* Prevent managers from inviting other users as managers  (`#916
+  <https://github.com/Scille/parsec-cloud/issues/916>`__)
+* Deal with special dash paths in fuse operations.  (`#904
+  <https://github.com/Scille/parsec-cloud/issues/904>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Allow owners to switch the role of other owners  (`#870
+  <https://github.com/Scille/parsec-cloud/issues/870>`__)
+
+
 Parsec 1.4.0 (2019-12-06)
 -------------------------
 

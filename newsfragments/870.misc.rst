@@ -1,1 +1,0 @@
-Allow owners to switch the role of other owners

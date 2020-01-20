@@ -1,2 +1,0 @@
-Fix incorrect behavior when the backend accept anonymous connection to
-expired organization.

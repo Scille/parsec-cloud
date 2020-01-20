@@ -1,1 +1,0 @@
-Fix a bug related to broken symlinks in the base directory for mountpoints after a hard shutdown.

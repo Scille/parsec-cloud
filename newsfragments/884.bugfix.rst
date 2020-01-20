@@ -1,2 +1,0 @@
-Fix Organization bootstrap and user/device claim links encoding when their
-corresponding organization ID contains unicode.

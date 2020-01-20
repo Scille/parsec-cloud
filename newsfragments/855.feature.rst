@@ -1,1 +1,0 @@
-Add copy, cut and paste to the Parsec file explorer
