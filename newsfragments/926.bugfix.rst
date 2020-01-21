@@ -1,0 +1,1 @@
+Fix files display on low horizontal resolutions

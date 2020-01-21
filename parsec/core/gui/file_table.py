@@ -47,6 +47,9 @@ class ItemDelegate(QStyledItemDelegate):
 
 
 class FileTable(QTableWidget):
+    FIXED_COL_SIZE = 560
+    NAME_COL_MIN_SIZE = 150
+
     file_moved = pyqtSignal(str, str)
     item_activated = pyqtSignal(FileType, str)
     files_dropped = pyqtSignal(list, str)
@@ -62,16 +65,20 @@ class FileTable(QTableWidget):
         super().__init__(*args, **kwargs)
         self.previous_selection = []
         self.setColumnCount(5)
+
         h_header = self.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         h_header.setSectionResizeMode(0, QHeaderView.Fixed)
-        h_header.setSectionResizeMode(1, QHeaderView.Stretch)
+        h_header.setSectionResizeMode(1, QHeaderView.Fixed)
         h_header.setSectionResizeMode(2, QHeaderView.Fixed)
         h_header.setSectionResizeMode(3, QHeaderView.Fixed)
         h_header.setSectionResizeMode(4, QHeaderView.Fixed)
 
         self.setColumnWidth(0, 60)
+        self.setColumnWidth(
+            1, max(self.size().width() - FileTable.FIXED_COL_SIZE, FileTable.NAME_COL_MIN_SIZE)
+        )
         self.setColumnWidth(2, 200)
         self.setColumnWidth(3, 200)
         self.setColumnWidth(4, 100)
@@ -85,6 +92,12 @@ class FileTable(QTableWidget):
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.current_user_role = WorkspaceRole.OWNER
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.setColumnWidth(
+            1, max(event.size().width() - FileTable.FIXED_COL_SIZE, FileTable.NAME_COL_MIN_SIZE)
+        )
 
     def set_rows_cut(self, rows):
         for row in range(self.rowCount()):
