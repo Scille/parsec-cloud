@@ -668,6 +668,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.table_files.add_parent_folder()
         self.line_edit_current_directory.setText(str_dir)
         self.line_edit_current_directory.setCursorPosition(0)
+        tooltip_dir = [str_dir[i : i + 64] for i in range(0, len(str_dir), 64)]
+        self.line_edit_current_directory.setToolTip("\n".join(tooltip_dir))
         for path, stats in files_stats.items():
             if stats["type"] == "inconsistency":
                 self.table_files.add_inconsistency(str(path), stats["id"])
