@@ -15,6 +15,7 @@ from parsec.core.types import (
     WorkspaceRole,
     LocalFolderishManifests,
     LocalFileManifest,
+    DEFAULT_BLOCK_SIZE,
 )
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -390,7 +391,11 @@ class WorkspaceFS:
                 await self.copyfile(source_file, target_file)
 
     async def copyfile(
-        self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024, exist_ok: bool = False
+        self,
+        source_path: AnyPath,
+        target_path: AnyPath,
+        length=DEFAULT_BLOCK_SIZE,
+        exist_ok: bool = False,
     ):
         """
         Raises:
