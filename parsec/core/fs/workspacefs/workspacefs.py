@@ -332,6 +332,7 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
+        await self.transactions.file_resize(path, offset)
         _, fd = await self.transactions.file_open(path, "w")
         try:
             return await self.transactions.fd_write(fd, data, offset)

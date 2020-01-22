@@ -257,10 +257,14 @@ async def test_write_bytes(alice_workspace):
     assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
 
     assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze"
-
+    assert await alice_workspace.read_bytes("/foo/bar") == b"axyz"
     assert await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze[append]"
+    assert await alice_workspace.read_bytes("/foo/bar") == b"append]"
+
+    assert await alice_workspace.write_bytes("/foo/bar", b"abcde")
+    assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
+    assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=5)
+    assert await alice_workspace.read_bytes("/foo/bar") == b"abcdexyz"
 
     with pytest.raises(IsADirectoryError):
         await alice_workspace.read_bytes("/foo")
