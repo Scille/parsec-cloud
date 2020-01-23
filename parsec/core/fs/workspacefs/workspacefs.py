@@ -326,15 +326,17 @@ class WorkspaceFS:
         finally:
             await self.transactions.fd_close(fd)
 
-    async def write_bytes(self, path: AnyPath, data: bytes, offset: int = 0) -> int:
+    async def write_bytes(
+        self, path: AnyPath, data: bytes, offset: int = 0, truncate: bool = True
+    ) -> int:
         """
         Raises:
             FSError
         """
         path = FsPath(path)
-        if offset >= 0:
-            await self.transactions.file_resize(path, offset)
         _, fd = await self.transactions.file_open(path, "w")
+        if offset >= 0 and truncate:
+            await self.transactions.fd_resize(fd, offset)
         try:
             return await self.transactions.fd_write(fd, data, offset)
         finally:

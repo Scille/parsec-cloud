@@ -59,7 +59,7 @@ def test_fs_online_rwfile_and_sync(user_fs_online_state_machine, alice):
         )
         async def atomic_write(self, offset, content):
             workspace = self.user_fs.get_workspace(self.wid)
-            await workspace.write_bytes("/foo.txt", data=content, offset=offset)
+            await workspace.write_bytes("/foo.txt", data=content, offset=offset, truncate=False)
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
