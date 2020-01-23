@@ -2,13 +2,7 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint, QRect
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor
-from PyQt5.QtWidgets import (
-    QPushButton,
-    QLabel,
-    QGraphicsDropShadowEffect,
-    QLayout,
-    QSizePolicy,
-)
+from PyQt5.QtWidgets import QPushButton, QLabel, QGraphicsDropShadowEffect, QLayout, QSizePolicy
 
 
 class FlowLayout(QLayout):
