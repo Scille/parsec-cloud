@@ -15,6 +15,7 @@ from parsec.core.types import (
     WorkspaceRole,
     LocalFolderishManifests,
     LocalFileManifest,
+    DEFAULT_BLOCK_SIZE,
 )
 from parsec.core.fs import workspacefs
 from parsec.core.fs.remote_loader import RemoteLoader
@@ -325,14 +326,21 @@ class WorkspaceFS:
         finally:
             await self.transactions.fd_close(fd)
 
-    async def write_bytes(self, path: AnyPath, data: bytes, offset: int = 0) -> int:
+    async def write_bytes(
+        self, path: AnyPath, data: bytes, offset: int = 0, truncate: bool = True
+    ) -> int:
         """
+        The offset value is used to determine the index of the writing operation.
+        If the offset is negative, we append the new bytes to the current content.
+        If the truncate argument is set to True, the offset argument is also used to resize the file.
         Raises:
             FSError
         """
         path = FsPath(path)
         _, fd = await self.transactions.file_open(path, "w")
         try:
+            if offset >= 0 and truncate:
+                await self.transactions.fd_resize(fd, offset)
             return await self.transactions.fd_write(fd, data, offset)
         finally:
             await self.transactions.fd_close(fd)
@@ -390,7 +398,11 @@ class WorkspaceFS:
                 await self.copyfile(source_file, target_file)
 
     async def copyfile(
-        self, source_path: AnyPath, target_path: AnyPath, length=16 * 1024, exist_ok: bool = False
+        self,
+        source_path: AnyPath,
+        target_path: AnyPath,
+        length=DEFAULT_BLOCK_SIZE,
+        exist_ok: bool = False,
     ):
         """
         Raises:

@@ -43,7 +43,9 @@ def test_fs_offline_restart_and_rwfile(user_fs_offline_state_machine, alice):
             content=st.binary(max_size=PLAYGROUND_SIZE),
         )
         async def atomic_write(self, offset, content):
-            await self.workspace.write_bytes("/foo.txt", data=content, offset=offset)
+            await self.workspace.write_bytes(
+                "/foo.txt", data=content, offset=offset, truncate=False
+            )
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
