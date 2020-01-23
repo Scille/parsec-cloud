@@ -338,9 +338,9 @@ class WorkspaceFS:
         """
         path = FsPath(path)
         _, fd = await self.transactions.file_open(path, "w")
-        if offset >= 0 and truncate:
-            await self.transactions.fd_resize(fd, offset)
         try:
+            if offset >= 0 and truncate:
+                await self.transactions.fd_resize(fd, offset)
             return await self.transactions.fd_write(fd, data, offset)
         finally:
             await self.transactions.fd_close(fd)
