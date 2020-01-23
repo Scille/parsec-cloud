@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-12-06 12:12+0100\n"
-"PO-Revision-Date: 2019-12-06 12:13+0100\n"
+"POT-Creation-Date: 2020-01-23 15:48+0100\n"
+"PO-Revision-Date: 2020-01-23 15:49+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -42,6 +42,12 @@ msgstr "Importer des fichiers."
 
 msgid "BUTTON_TASKBAR_CREATE_FOLDER"
 msgstr "Créer un nouveau répertoire."
+
+msgid "ERR_FILE_PASTE"
+msgstr "Une erreur est survenue lors du collage d'un fichier."
+
+msgid "ERR_FOLDER_MOVED_INTO_ITSELF"
+msgstr "Impossible de déplacer un répertoire dans lui-même."
 
 msgid "ERR_FILE_HISTORY_MONO"
 msgstr "Vous ne pouvez observer l'historique que d'un fichier à la fois."
@@ -1285,11 +1291,11 @@ msgstr "Avertissement"
 msgid "BUTTON_CLOSE"
 msgstr "Fermer"
 
-msgid "BUTTON_LOAD_MORE_ENTRIES"
-msgstr "Afficher plus d'entrées"
-
 msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
+
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr ""
 
 msgid "ERR_LOGIN_UNKNOWN"
 msgstr "Impossible de se connecter."
@@ -1418,22 +1424,25 @@ msgid "BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
 msgid "BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}"
-msgstr "Connection refusée par le serveur.\n"
+msgstr ""
+"Connection refusée par le serveur.\n"
 "Le client n'a pas une API compatible (version(s) supportées: {})."
 
 msgid "BACKEND_STATE_REASON_REVOKED_DEVICE"
-msgstr "Connection refusée par le serveur.\n"
+msgstr ""
+"Connection refusée par le serveur.\n"
 "Vous avez été révoqué."
 
 msgid "BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED"
-msgstr "Connection refusée par le serveur.\n"
+msgstr ""
+"Connection refusée par le serveur.\n"
 "Votre organisation a expiré."
 
 msgid "BACKEND_STATE_REASON_REFUSED_DEFAULT"
 msgstr "Connexion refusée par le serveur."
 
-msgid "BACKEND_STATE_REASON_CRASHED_{}"
-msgstr "Connexion indisponible à cause d'une erreur interne : {}"
+msgid "BACKEND_STATE_CRASHED_{}"
+msgstr ""
 
 msgid "MENU_DOCUMENTS"
 msgstr "Documents"
@@ -1606,6 +1615,9 @@ msgstr "Source"
 
 msgid "LABEL_FILE_DESTINATION"
 msgstr "Destination"
+
+msgid "BUTTON_LOAD_MORE_ENTRIES"
+msgstr "Afficher plus d'entrées"
 
 msgid "LABEL_SEARCH_FILES"
 msgstr "Rechercher des fichiers ou dossiers"
@@ -1883,3 +1895,6 @@ msgstr "Rechercher un espace de travail"
 
 #~ msgid "BUTTON_REGISTER_NEW_DEVICE"
 #~ msgstr "Enregistrer un nouvel appareil"
+
+#~ msgid "BACKEND_STATE_REASON_CRASHED_{}"
+#~ msgstr "Connexion indisponible à cause d'une erreur interne : {}"
