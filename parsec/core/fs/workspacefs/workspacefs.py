@@ -330,6 +330,9 @@ class WorkspaceFS:
         self, path: AnyPath, data: bytes, offset: int = 0, truncate: bool = True
     ) -> int:
         """
+        The offset value is used to determine the index of the writing operation.
+        If the offset is negative, we append the new bytes to the current content.
+        If the truncate argument is set to True, the offset argument is also used to resize the file.
         Raises:
             FSError
         """
