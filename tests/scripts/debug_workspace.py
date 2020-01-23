@@ -30,14 +30,14 @@ async def make_workspace_dir_inconsistent(device, workspace, corrupted_path):
     print(f"{device.device_id} | {workspace.get_workspace_name()} | {corrupted_path}")
 
 
-async def make_workspace_dir_simple_versions(device, workspace, corrupted_path):
-    await make_workspace_dir_simple_versions_helper(workspace, FsPath(corrupted_path))
-    print(f"{device.device_id} | {workspace.get_workspace_name()} | {corrupted_path}")
+async def make_workspace_dir_simple_versions(device, workspace, path):
+    await make_workspace_dir_simple_versions_helper(workspace, FsPath(path))
+    print(f"{device.device_id} | {workspace.get_workspace_name()} | {path}")
 
 
-async def make_workspace_dir_complex_versions(device, workspace, corrupted_path):
-    await make_workspace_dir_complex_versions_helper(workspace, FsPath(corrupted_path))
-    print(f"{device.device_id} | {workspace.get_workspace_name()} | {corrupted_path}")
+async def make_workspace_dir_complex_versions(device, workspace, path):
+    await make_workspace_dir_complex_versions_helper(workspace, FsPath(path))
+    print(f"{device.device_id} | {workspace.get_workspace_name()} | {path}")
 
 
 async def benchmark_file_writing(device, workspace):
