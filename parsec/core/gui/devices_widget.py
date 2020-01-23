@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.password_change_dialog import PasswordChangeDialog
-from parsec.core.gui.custom_widgets import TaskbarButton
+from parsec.core.gui.custom_widgets import TaskbarButton, FlowLayout
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
@@ -95,6 +95,8 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.jobs_ctx = jobs_ctx
         self.core = core
         self.event_bus = event_bus
+        self.layout_devices = FlowLayout(spacing=20)
+        self.layout_content.addLayout(self.layout_devices)
         self.devices = []
         self.taskbar_buttons = []
         button_add_device = TaskbarButton(
@@ -143,9 +145,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         if device_name in self.devices:
             return
         button = DeviceButton(device_name, is_current_device, certified_on)
-        self.layout_devices.addWidget(
-            button, int(len(self.devices) / 4), int(len(self.devices) % 4)
-        )
+        self.layout_devices.addWidget(button)
         button.change_password_clicked.connect(self.change_password)
         button.show()
         self.devices.append(device_name)
@@ -154,13 +154,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         devices = job.ret
         current_device = self.core.device
         self.devices = []
-        while self.layout_devices.count() != 0:
-            item = self.layout_devices.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_devices.removeWidget(w)
-                w.setParent(None)
-
+        self.layout_devices.clear()
         for device in devices:
             device_name = device.device_id.device_name
             self.add_device(

@@ -1,8 +1,99 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint
+from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint, QRect
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor
-from PyQt5.QtWidgets import QPushButton, QLabel, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import (
+    QPushButton,
+    QLabel,
+    QGraphicsDropShadowEffect,
+    QLayout,
+    QSizePolicy,
+)
+
+
+class FlowLayout(QLayout):
+    def __init__(self, spacing=10, parent=None):
+        super().__init__(parent)
+        self.setSpacing(spacing)
+        self.items = []
+
+    def addItem(self, item):
+        self.items.append(item)
+
+    def expandingDirections(self):
+        return Qt.Horizontal
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        old_width = self.geometry().width() - 2 * self.contentsMargins().top()
+        _, old_height = self._do_layout(QRect(0, 0, old_width, 0), True)
+        _, height = self._do_layout(QRect(0, 0, width, 0), True)
+        if height != old_height:
+            self.update()
+        return height
+
+    def count(self):
+        return len(self.items)
+
+    def itemAt(self, index):
+        if index >= 0 and index < len(self.items):
+            return self.items[index]
+        return None
+
+    def minimumSize(self):
+        if len(self.items):
+            return QSize(self.items[0].sizeHint())
+        return QSize(0, 0)
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        self._do_layout(rect, False)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def takeAt(self, index):
+        if index >= 0 and index < len(self.items):
+            return self.items.pop(index)
+        return None
+
+    def clear(self):
+        while self.count() != 0:
+            item = self.takeAt(0)
+            if item:
+                w = item.widget()
+                self.removeWidget(w)
+                w.hide()
+                w.setParent(None)
+
+    def _do_layout(self, rect, test_only=False):
+        x = rect.x()
+        y = rect.y()
+        line_height = 0
+        max_line_width = 0
+
+        for item in self.items:
+            w = item.widget()
+            space_x = self.spacing() + w.style().layoutSpacing(
+                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
+            )
+            space_y = self.spacing() + w.style().layoutSpacing(
+                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical
+            )
+            next_x = x + item.sizeHint().width() + space_x
+            if next_x - space_x > rect.right() and line_height > 0:
+                max_line_width = max(x - rect.x(), max_line_width, item.sizeHint().width())
+                x = rect.x()
+                y = y + line_height + space_y
+                next_x = x + item.sizeHint().width() + space_x
+                line_height = 0
+            if not test_only:
+                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+            x = next_x
+            line_height = max(line_height, item.sizeHint().height())
+        return max_line_width, y + line_height - rect.y()
 
 
 class FileLabel(QLabel):

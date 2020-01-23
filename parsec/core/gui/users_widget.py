@@ -17,7 +17,7 @@ from parsec.core.backend_connection import BackendConnectionError, BackendNotAva
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.custom_dialogs import show_error, show_info, QuestionDialog
-from parsec.core.gui.custom_widgets import TaskbarButton
+from parsec.core.gui.custom_widgets import TaskbarButton, FlowLayout
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -144,6 +144,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.core = core
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
+        self.layout_users = FlowLayout(spacing=20)
+        self.layout_content.addLayout(self.layout_users)
         self.users = []
         self.taskbar_buttons = []
         if core.device.is_admin:
@@ -196,7 +198,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             is_revoked,
             current_user_is_admin=self.core.device.is_admin,
         )
-        self.layout_users.addWidget(button, int(len(self.users) / 4), int(len(self.users) % 4))
+        self.layout_users.addWidget(button)
         button.revoke_clicked.connect(self.revoke_user)
         button.show()
         self.users.append(user_name)
@@ -239,12 +241,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def on_list_success(self, job):
         self.users = []
-        while self.layout_users.count() != 0:
-            item = self.layout_users.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_users.removeWidget(w)
-                w.setParent(None)
+        self.layout_users.clear()
         current_user = self.core.device.user_id
         for user_info, user_revoked_info in job.ret:
             self.add_user(
