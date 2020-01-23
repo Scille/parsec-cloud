@@ -253,18 +253,27 @@ async def test_read_bytes(alice_workspace):
 
 @pytest.mark.trio
 async def test_write_bytes(alice_workspace):
-    assert await alice_workspace.write_bytes("/foo/bar", b"abcde")
+    # Pathlib mode (truncate=True)
+    await alice_workspace.write_bytes("/foo/bar", b"abcde")
     assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
-
-    assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1)
+    await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1)
     assert await alice_workspace.read_bytes("/foo/bar") == b"axyz"
-    assert await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1)
+    await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1)
     assert await alice_workspace.read_bytes("/foo/bar") == b"axyz[append]"
 
-    assert await alice_workspace.write_bytes("/foo/bar", b"abcde")
+    # Clear the content of an existing file
+    await alice_workspace.write_bytes("/foo/bar", b"")
+    assert await alice_workspace.read_bytes("/foo/bar") == b""
+
+    # Atomic write mode (truncate=False)
+    assert await alice_workspace.write_bytes("/foo/bar", b"abcde", truncate=False) == 5
     assert await alice_workspace.read_bytes("/foo/bar") == b"abcde"
-    assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=5)
-    assert await alice_workspace.read_bytes("/foo/bar") == b"abcdexyz"
+    assert await alice_workspace.write_bytes("/foo/bar", b"xyz", offset=1, truncate=False) == 3
+    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze"
+    assert (
+        await alice_workspace.write_bytes("/foo/bar", b"[append]", offset=-1, truncate=False) == 8
+    )
+    assert await alice_workspace.read_bytes("/foo/bar") == b"axyze[append]"
 
     with pytest.raises(IsADirectoryError):
         await alice_workspace.read_bytes("/foo")
