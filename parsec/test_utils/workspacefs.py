@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from parsec.core.fs import UserFS, WorkspaceFS
+import string
+
+from parsec.core.fs import UserFS, WorkspaceFS, FSFileNotFoundError
 from parsec.core.types import FsPath, EntryID
 
 
@@ -15,6 +17,27 @@ async def make_workspace_dir_inconsistent(workspace: WorkspaceFS, dir: FsPath):
     async with workspace.local_storage.lock_manifest(rep_info["id"]):
         await workspace.local_storage.set_manifest(rep_info["id"], rep_manifest)
     await workspace.sync()
+
+
+async def make_workspace_dir_simple_versions(workspace: WorkspaceFS, dir: FsPath):
+    await workspace.mkdir(dir)
+    await workspace.sync()
+    for i in range(0, 9):
+        file_name = f"hello.txt"
+        path = f"{dir}/{file_name}"
+        num_chars = (i % 4 + 4) * 100 * 1024
+        text = "".join(
+            [
+                string.ascii_letters[(i + 1) * (j + 1) % len(string.ascii_letters)]
+                for j in range(num_chars)
+            ]
+        )
+        try:
+            await workspace.write_bytes(path, text.encode())
+        except FSFileNotFoundError:
+            await workspace.touch(path)
+            await workspace.write_bytes(path, text.encode())
+        await workspace.sync()
 
 
 async def make_workspace_dir_complex_versions(workspace: WorkspaceFS, dir: FsPath):
