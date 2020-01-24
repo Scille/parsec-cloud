@@ -307,7 +307,11 @@ test_requirements = [
     "hypothesis-trio==0.5.0",
     "trustme==0.5.2",
     "black==19.3b0",  # Pin black to avoid flaky style check
-    'winfspy[test]==0.7.2;platform_system=="Windows"',  # Winfstest requirements
+    # Winfstest requirements
+    # We can't use `winfspy[test]` because of some pip limitations
+    # - see pip issues #7096/#6239/#4391/#988
+    # Looking forward to the new pip dependency resolver!
+    'pywin32==227;platform_system=="Windows"',
 ]
 
 
