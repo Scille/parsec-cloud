@@ -345,9 +345,8 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def set_file_size(self, file_context, new_size, set_allocation_size):
-
-        if not set_allocation_size:
-            self.fs_access.fd_resize(file_context.fd, new_size)
+        truncate_only = set_allocation_size
+        self.fs_access.fd_resize(file_context.fd, new_size, truncate_only=truncate_only)
 
     @handle_error
     def can_delete(self, file_context, file_name: str) -> None:

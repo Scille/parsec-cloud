@@ -176,9 +176,13 @@ class FileTransactions:
         self._send_event("fs.entry.updated", id=manifest.id)
         return len(content)
 
-    async def fd_resize(self, fd: FileDescriptor, length: int) -> None:
+    async def fd_resize(self, fd: FileDescriptor, length: int, truncate_only=False) -> None:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
+
+            # Truncate only
+            if truncate_only and manifest.size <= length:
+                return
 
             # Perform the resize operation
             await self._manifest_resize(manifest, length)
