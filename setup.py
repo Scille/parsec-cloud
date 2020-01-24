@@ -307,6 +307,7 @@ test_requirements = [
     "hypothesis-trio==0.5.0",
     "trustme==0.5.2",
     "black==19.3b0",  # Pin black to avoid flaky style check
+    'winfspy[test]==0.7.2;platform_system=="Windows"',  # Winfstest requirements
 ]
 
 
@@ -318,7 +319,7 @@ extra_requirements = {
         PYQT_DEP,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.7.0;platform_system=="Windows"',
+        'winfspy==0.7.2;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
