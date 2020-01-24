@@ -171,7 +171,7 @@ def stat_to_winfsp_attributes(stat):
         attributes["file_size"] = 0
 
     else:
-        attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_NORMAL
+        attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_ARCHIVE
         attributes["allocation_size"] = round_to_block_size(stat["size"])
         attributes["file_size"] = stat["size"]
 
