@@ -35,7 +35,7 @@ def test_winfstest(test_module_path, file_system_path, process_runner):
     if "MoveFile" in test_module_path.name:
         pytest.xfail()
 
-    # Settings file attributes is not supported at the moment
+    # Setting file attributes is not supported at the moment
     if "SetGetFileAttributes" in test_module_path.name:
         pytest.xfail()
 
