@@ -362,15 +362,24 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def read_directory(self, file_context, marker):
+        entries = []
         stat = self.fs_access.entry_info(file_context.path)
 
         if stat["type"] == "file":
             raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
 
-        # Given `..` is always the first item, if a marker is provided
-        # it could be `..` (hence we must skip `..`) or something else (hence
-        # the marker is after `..`). In all case we skip `..`.
-        items = [] if marker is not None else [{"file_name": ".."}]
+        # The "." and ".." directories should ONLY be included
+        # if the queried directory is not root
+        if not file_context.path.is_root():
+
+            # Current directory
+            entry = {"file_name": ".", **stat_to_winfsp_attributes(stat)}
+            entries.append(entry)
+
+            # Parent directory
+            parent_stat = self.fs_access.entry_info(file_context.path.parent)
+            entry = {"file_name": "..", **stat_to_winfsp_attributes(parent_stat)}
+            entries.append(entry)
 
         # Note we *do not* rely on alphabetically sorting to compare the
         # marker given `..` is always the first element event if we could
@@ -380,17 +389,22 @@ class WinFSPOperations(BaseFileSystemOperations):
             for child_name in iter_children_names:
                 if child_name == marker:
                     break
+
         # All remaining children are located after the marker
         for child_name in iter_children_names:
+            name = winify_entry_name(child_name)
             child_stat = self.fs_access.entry_info(file_context.path / child_name)
-            items.append(
-                {
-                    "file_name": winify_entry_name(child_name),
-                    **stat_to_winfsp_attributes(child_stat),
-                }
-            )
+            entry = {"file_name": name, **stat_to_winfsp_attributes(child_stat)}
+            entries.append(entry)
 
-        return items
+        return entries
+
+    @handle_error
+    def get_dir_info_by_name(self, file_context, file_name):
+        child_name = unwinify_entry_name(file_name)
+        stat = self.fs_access.entry_info(file_context.path / child_name)
+        entry = {"file_name": file_name, **stat_to_winfsp_attributes(stat)}
+        return entry
 
     @handle_error
     def read(self, file_context, offset, length):
