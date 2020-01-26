@@ -303,8 +303,8 @@ test_requirements = [
     "Sphinx",
     "sphinx-rtd-theme",
     "flake8==3.7.7",
-    "hypothesis==4.55.1",
-    "hypothesis-trio==0.4.0",
+    "hypothesis==5.3.0",
+    "hypothesis-trio==0.5.0",
     "trustme==0.5.2",
     "black==19.3b0",  # Pin black to avoid flaky style check
 ]
