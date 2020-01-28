@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-12-06 12:12+0100\n"
-"PO-Revision-Date: 2019-12-06 12:14+0100\n"
+"POT-Creation-Date: 2020-01-23 15:48+0100\n"
+"PO-Revision-Date: 2020-01-23 15:48+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -42,6 +42,12 @@ msgstr "Import files."
 
 msgid "BUTTON_TASKBAR_CREATE_FOLDER"
 msgstr "Create a new folder."
+
+msgid "ERR_FILE_PASTE"
+msgstr "An error occured while pasting a file."
+
+msgid "ERR_FOLDER_MOVED_INTO_ITSELF"
+msgstr "Can not move a folder into itself."
 
 msgid "ERR_FILE_HISTORY_MONO"
 msgstr "You can only see one file history at a time."
@@ -1269,11 +1275,11 @@ msgstr "Warning"
 msgid "BUTTON_CLOSE"
 msgstr "Close"
 
-msgid "BUTTON_LOAD_MORE_ENTRIES"
-msgstr "Load more entries"
-
 msgid "ERR_DIALOG_TITLE"
 msgstr "Error"
+
+msgid "ERR_LOGIN_DEVICE_REVOKED"
+msgstr ""
 
 msgid "ERR_LOGIN_UNKNOWN"
 msgstr "Cannot login."
@@ -1395,22 +1401,25 @@ msgid "BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
 msgid "BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}"
-msgstr "Connection refused by the server.\n"
+msgstr ""
+"Connection refused by the server.\n"
 "Client API is incompatible (required version(s): {})."
 
 msgid "BACKEND_STATE_REASON_REVOKED_DEVICE"
-msgstr "Connection refused by the server.\n"
+msgstr ""
+"Connection refused by the server.\n"
 "You have been revoked."
 
 msgid "BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED"
-msgstr "Connection refused by the server.\n"
+msgstr ""
+"Connection refused by the server.\n"
 "Your organization has expired."
 
 msgid "BACKEND_STATE_REASON_REFUSED_DEFAULT"
 msgstr "Connection refused by the server."
 
-msgid "BACKEND_STATE_REASON_CRASHED_{}"
-msgstr "Connection unavailable due to internal crash: {}"
+msgid "BACKEND_STATE_CRASHED_{}"
+msgstr ""
 
 msgid "MENU_DOCUMENTS"
 msgstr "Documents"
@@ -1577,6 +1586,9 @@ msgstr "Source"
 
 msgid "LABEL_FILE_DESTINATION"
 msgstr "Destination"
+
+msgid "BUTTON_LOAD_MORE_ENTRIES"
+msgstr "Load more entries"
 
 msgid "LABEL_SEARCH_FILES"
 msgstr "Search files or folders"
@@ -1852,3 +1864,6 @@ msgstr "Search a workspace"
 
 #~ msgid "BUTTON_REGISTER_NEW_DEVICE"
 #~ msgstr "Register a new device"
+
+#~ msgid "BACKEND_STATE_REASON_CRASHED_{}"
+#~ msgstr "Connection unavailable due to internal crash: {}"

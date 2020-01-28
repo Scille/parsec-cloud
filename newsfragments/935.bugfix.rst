@@ -1,0 +1,1 @@
+Display an error when trying to move a folder into itself

@@ -1,0 +1,1 @@
+Disable Paste button if nothing has been copied/cut

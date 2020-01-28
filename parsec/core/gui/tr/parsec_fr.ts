@@ -177,38 +177,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="192"/>
+        <location filename="../forms/file_history_dialog.ui" line="197"/>
         <source>LABEL_HISTORY_TITLE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="309"/>
+        <location filename="../forms/file_history_dialog.ui" line="317"/>
         <source>LABEL_FILE_TIMESTAMP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="314"/>
+        <location filename="../forms/file_history_dialog.ui" line="322"/>
         <source>LABEL_FILE_USER_ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="319"/>
+        <location filename="../forms/file_history_dialog.ui" line="327"/>
         <source>LABEL_FILE_SIZE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="324"/>
+        <location filename="../forms/file_history_dialog.ui" line="332"/>
         <source>LABEL_FILE_SOURCE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="329"/>
+        <location filename="../forms/file_history_dialog.ui" line="337"/>
         <source>LABEL_FILE_DESTINATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_history_dialog.ui" line="360"/>
+        <location filename="../forms/file_history_dialog.ui" line="400"/>
         <source>BUTTON_CLOSE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/file_history_dialog.ui" line="370"/>
+        <source>BUTTON_LOAD_MORE_ENTRIES</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -421,32 +426,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="187"/>
+        <location filename="../forms/menu_widget.ui" line="170"/>
         <source>MENU_DOCUMENTS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="243"/>
+        <location filename="../forms/menu_widget.ui" line="214"/>
         <source>MENU_USERS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="299"/>
+        <location filename="../forms/menu_widget.ui" line="258"/>
         <source>MENU_DEVICES</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="358"/>
+        <location filename="../forms/menu_widget.ui" line="308"/>
         <source>MENU_SETTINGS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="442"/>
+        <location filename="../forms/menu_widget.ui" line="392"/>
         <source>BACKEND_STATE_DISCONNECTED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="628"/>
+        <location filename="../forms/menu_widget.ui" line="566"/>
         <source>BUTTON_LOG_OUT</source>
         <translation type="unfinished"></translation>
     </message>

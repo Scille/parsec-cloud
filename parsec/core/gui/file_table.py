@@ -92,6 +92,7 @@ class FileTable(QTableWidget):
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.cellDoubleClicked.connect(self.item_double_clicked)
         self.current_user_role = WorkspaceRole.OWNER
+        self.paste_disabled = True
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -111,7 +112,8 @@ class FileTable(QTableWidget):
         elif event.matches(QKeySequence.Cut):
             self.cut_clicked.emit()
         elif event.matches(QKeySequence.Paste):
-            self.paste_clicked.emit()
+            if not self.paste_disabled:
+                self.paste_clicked.emit()
 
     def selected_files(self):
         SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
@@ -157,6 +159,8 @@ class FileTable(QTableWidget):
             action.triggered.connect(self.cut_clicked.emit)
         action = menu.addAction(_("FILE_MENU_PASTE"))
         action.triggered.connect(self.paste_clicked.emit)
+        if self.paste_disabled:
+            action.setDisabled(True)
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):

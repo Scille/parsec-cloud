@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QFileDialog, QWidget
 
 from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
-from parsec.core.fs.exceptions import FSRemoteManifestNotFound
+from parsec.core.fs.exceptions import FSRemoteManifestNotFound, FSInvalidArgumentError
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
@@ -282,6 +282,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 continue
             files_to_copy.append((self.current_directory / f.name, f.type))
         self.clipboard = Clipboard(files_to_copy, Clipboard.Status.Copied)
+        self.table_files.paste_disabled = False
 
     def on_cut_clicked(self):
         files = self.table_files.selected_files()
@@ -293,11 +294,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             rows.append(f.row)
             files_to_cut.append((self.current_directory / f.name, f.type))
         self.table_files.set_rows_cut(rows)
+        self.table_files.paste_disabled = False
         self.clipboard = Clipboard(files_to_cut, Clipboard.Status.Cut)
 
     def on_paste_clicked(self):
         if not self.clipboard:
             return
+        error_count = 0
+        last_exc = None
         for f in self.clipboard.files:
             src = f[0]
             src_type = f[1]
@@ -322,15 +326,42 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                             self.jobs_ctx.run(self.workspace_fs.copyfile, src, dst)
                     break
                 except FileExistsError:
+                    # File already exists, we append a counter at the end of its name
                     file_name = "{} ({}){}".format(
                         base_name, count, "".join(pathlib.Path(src.name).suffixes)
                     )
                     count += 1
+                except FSInvalidArgumentError as exc:
+                    # Move a file onto itself
+                    # Not a big deal for files, we just do nothing and pretend we
+                    # actually did something
+                    # For folders we have to warn the user
+                    if src_type == FileType.Folder:
+                        error_count += 1
+                        last_exc = exc
+                    break
                 except Exception as exc:
+                    # No idea what happened, we'll just warn the user that we encountered an
+                    # unexcepted error and log it
+                    error_count += 1
+                    last_exc = exc
                     logger.exception("Unhandled error while cut/copy file", exc_info=exc)
                     break
         if self.clipboard.status == Clipboard.Status.Cut:
             self.clipboard = None
+            self.table_files.paste_disabled = True
+
+        if last_exc:
+            # Multiple errors, we'll just display a generic error message
+            if error_count > 1:
+                show_error(self, _("ERR_FILE_PASTE"))
+            else:
+                # Folder moved into itself
+                if type(last_exc) == FSInvalidArgumentError:
+                    show_error(self, _("ERR_FOLDER_MOVED_INTO_ITSELF"))
+                else:
+                    show_error(self, _("ERR_FILE_PASTE"))
+
         self.reset()
 
     def show_history(self):
