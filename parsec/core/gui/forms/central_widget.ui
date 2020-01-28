@@ -75,7 +75,7 @@
           <enum>QLayout::SetMaximumSize</enum>
          </property>
          <property name="topMargin">
-          <number>15</number>
+          <number>10</number>
          </property>
          <item>
           <widget class="QWidget" name="widget_title" native="true">
@@ -84,7 +84,7 @@
              <number>30</number>
             </property>
             <property name="topMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <property name="rightMargin">
              <number>30</number>
@@ -236,7 +236,7 @@ color: rgb(11, 65, 155);
              <number>30</number>
             </property>
             <property name="bottomMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
            </layout>
           </widget>
@@ -292,6 +292,9 @@ color: rgb(11, 65, 155);
        <property name="spacing">
         <number>0</number>
        </property>
+       <property name="rightMargin">
+        <number>15</number>
+       </property>
        <property name="bottomMargin">
         <number>15</number>
        </property>
@@ -317,9 +320,10 @@ color: rgb(11, 65, 155);
           </sizepolicy>
          </property>
          <property name="styleSheet">
-          <string notr="true">QWidget#widget_taskbar{
-            background-color: rgba(0, 0, 0, 0);
-          }</string>
+          <string notr="true">QWidget#widget_taskbar
+{
+background-color: rgb(255, 255, 255);
+}</string>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <property name="spacing">

@@ -3,7 +3,7 @@
 from typing import Optional
 from structlog import get_logger
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication
 
@@ -55,6 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_add_instance = QPushButton(
             QIcon(":/icons/images/icons/tray_icons/plus-default.svg"), ""
         )
+        self.button_add_instance.setIconSize(QSize(25, 25))
         self.button_add_instance.clicked.connect(self._on_add_instance_clicked)
         self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
         self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")

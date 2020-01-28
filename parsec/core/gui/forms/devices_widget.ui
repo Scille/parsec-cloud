@@ -159,7 +159,20 @@ background-color: rgb(255, 255, 255);
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <layout class="QGridLayout" name="layout_devices"/>
+          <layout class="QVBoxLayout" name="layout_content">
+           <property name="leftMargin">
+            <number>20</number>
+           </property>
+           <property name="topMargin">
+            <number>20</number>
+           </property>
+           <property name="rightMargin">
+            <number>20</number>
+           </property>
+           <property name="bottomMargin">
+            <number>20</number>
+           </property>
+          </layout>
          </item>
         </layout>
        </widget>

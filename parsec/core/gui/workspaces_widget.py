@@ -24,7 +24,7 @@ from parsec.core.gui.trio_thread import (
 )
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_dialogs import show_error, show_warning, TextInputDialog, QuestionDialog
-from parsec.core.gui.custom_widgets import TaskbarButton
+from parsec.core.gui.custom_widgets import TaskbarButton, FlowLayout
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ts_ws_dialog import TsWsDialog
@@ -143,6 +143,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus = event_bus
         self.reencrypting = set()
 
+        self.layout_workspaces = FlowLayout(spacing=40)
+        self.layout_content.addLayout(self.layout_workspaces)
+
         self.taskbar_buttons = []
 
         button_add_workspace = TaskbarButton(
@@ -235,12 +238,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             show_error(self, _("ERR_WORKSPACE_RENAME"), exception=job.exc)
 
     def on_list_success(self, job):
-        while self.layout_workspaces.count() != 0:
-            item = self.layout_workspaces.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_workspaces.removeWidget(w)
-                w.setParent(None)
+        self.layout_workspaces.clear()
         workspaces = job.ret
 
         if not workspaces:
@@ -256,18 +254,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
             try:
                 self.add_workspace(
-                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped, count=count
+                    workspace_fs, ws_entry, users_roles, files, timestamped=timestamped
                 )
             except JobSchedulerNotAvailable:
                 pass
 
     def on_list_error(self, job):
-        while self.layout_workspaces.count() != 0:
-            item = self.layout_workspaces.takeAt(0)
-            if item:
-                w = item.widget()
-                self.layout_workspaces.removeWidget(w)
-                w.setParent(None)
+        self.layout_workspaces.clear()
         label = QLabel(_("LABEL_NO_WORKSPACES"))
         label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout_workspaces.addWidget(label)
@@ -295,12 +288,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def on_reencryption_needs_error(self, job):
         pass
 
-    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped, count=None):
+    def add_workspace(self, workspace_fs, ws_entry, users_roles, files, timestamped):
 
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
         # as they won't block the Qt loop for long
-        user_manifest = self.jobs_ctx.run_sync(self.core.user_fs.get_user_manifest)
         workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
         button = WorkspaceButton(
             workspace_name,
@@ -311,14 +303,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             enable_workspace_color=self.core.config.gui_workspace_color,
             timestamped=timestamped,
         )
-        if count is None:
-            count = len(user_manifest.workspaces) - 1 or 1
-
-        columns_count = int(self.size().width() / 400) or 1
-
-        self.layout_workspaces.addWidget(
-            button, int(count / columns_count), int(count % columns_count)
-        )
+        self.layout_workspaces.addWidget(button)
         button.clicked.connect(self.load_workspace)
         button.share_clicked.connect(self.share_workspace)
         button.reencrypt_clicked.connect(self.reencrypt_workspace)
@@ -505,9 +490,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             core=self.core,
             workspace_name=workspace_name,
         )
-
-    def resizeEvent(self, event):
-        self.reset()
 
     def reset(self):
         if not self.reset_timer.isActive():

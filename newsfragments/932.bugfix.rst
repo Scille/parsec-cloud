@@ -1,0 +1,1 @@
+Fix menu bar being resized when changing window size
