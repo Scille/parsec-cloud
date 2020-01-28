@@ -35,6 +35,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         for o, d, t, kf in devices:
             self.combo_login.addItem(f"{o}:{d}")
             self.devices[f"{o}:{d}"] = (o, d, t, kf)
+        self.combo_login.currentTextChanged.connect(self.line_edit_password.clear)
         self.button_login.setEnabled(self.combo_login.count() > 0)
         last_device = self.config.gui_last_device
         if last_device and last_device in self.devices:
