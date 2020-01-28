@@ -179,33 +179,121 @@ width: 20px;
 
 QTabWidget::pane
 {
-border: none;
+border-top: 1px solid rgb(210, 210, 210);
+background: white;
 }
 
-QTabWidget#tab_center
+QTabWidget::tab-bar:top
 {
-border: none;
+top: 1px;
+}
+
+QTabWidget::tab-bar:bottom
+{
+bottom: 1px;
+}
+
+QTabWidget::tab-bar:left
+{
+right: 1px;
+}
+
+QTabWidget::tab-bar:right
+{
+left: 1px;
 }
 
 QTabBar::tab
 {
-height: 32px;
 font-size: 14px;
 font-weight: bold;
-padding-left: 15px;
-padding-right: 15px;
+padding-left: 10px;
+padding-right: 10px;
 border-top: 1px solid rgb(30, 78, 162);
 border-left: 1px solid rgb(30, 78, 162);
 border-right: 1px solid rgb(30, 78, 162);
+}
+
+QTabBar::tab:selected
+{
+background: white;
+}
+
+QTabBar::tab:!selected
+{
+background: rgb(230, 230, 230);
+}
+
+QTabBar::tab:top:!selected
+{
+margin-top: 3px;
+}
+
+QTabBar::tab:bottom:!selected 
+{
+margin-bottom: 3px;
+}
+
+QTabBar::tab:top, QTabBar::tab:bottom
+{
+min-width: 8ex;
+margin-right: -1px;
+padding: 5px 10px 5px 10px;
+}
+
+QTabBar::tab:top:selected
+{
+border-bottom-color: none;
+}
+
+QTabBar::tab:bottom:selected
+{
+border-top-color: none;
+}
+
+QTabBar::tab:top:last, QTabBar::tab:bottom:last,
+QTabBar::tab:top:only-one, QTabBar::tab:bottom:only-one
+{
+margin-right: 0;
+}
+
+QTabBar::tab:left:!selected
+{
+margin-right: 3px;
+}
+
+QTabBar::tab:right:!selected
+{
+margin-left: 3px;
+}
+
+QTabBar::tab:left, QTabBar::tab:right
+{
+min-height: 8ex;
+margin-bottom: -1px;
+padding: 10px 5px 10px 5px;
+}
+
+QTabBar::tab:left:selected
+{
+border-left-color: none;
+}
+
+QTabBar::tab:right:selected
+{
+border-right-color: none;
+}
+
+QTabBar::tab:left:last, QTabBar::tab:right:last,
+QTabBar::tab:left:only-one, QTabBar::tab:right:only-one
+{
+margin-bottom: 0;
 }
 
 QTabBar::close-button
 {
 image: url(:/icons/images/icons/cancel.png);
 }</string>
-  </property>
-  <property name="documentMode">
-   <bool>false</bool>
   </property>
   <property name="tabShape">
    <enum>QTabWidget::Rounded</enum>
@@ -234,9 +322,6 @@ image: url(:/icons/images/icons/cancel.png);
      <widget class="QTabWidget" name="tab_center">
       <property name="currentIndex">
        <number>-1</number>
-      </property>
-      <property name="documentMode">
-       <bool>true</bool>
       </property>
       <property name="tabsClosable">
        <bool>true</bool>

@@ -137,8 +137,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device = tab.current_device
             tab_name = f"{device.organization_id}:{device.user_id}@{device.device_name}"
             self.tab_center.setTabToolTip(idx, tab_name)
-            if len(tab_name) > 15:
-                tab_name = f"{tab_name[:12]}..."
             self.tab_center.setTabText(idx, tab_name)
         self.toggle_add_instance_button()
 
