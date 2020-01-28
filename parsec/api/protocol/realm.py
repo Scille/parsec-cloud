@@ -109,6 +109,7 @@ realm_start_reencryption_maintenance_serializer = CmdSerializer(
 
 class RealmStartGarbageCollectionMaintenanceReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
+    garbage_collection_revision = fields.Integer(required=True)
     timestamp = fields.DateTime(required=True)
     per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)
 
@@ -124,6 +125,7 @@ realm_start_garbage_collection_maintenance_serializer = CmdSerializer(
 
 class RealmFinishGarbageCollectionMaintenanceReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
+    garbage_collection_revision = fields.Integer(required=True)
 
 
 class RealmFinishGarbageCollectionMaintenanceRepSchema(BaseRepSchema):

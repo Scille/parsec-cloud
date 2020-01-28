@@ -151,6 +151,7 @@ class GarbageCollectionSaveBatchEntry(BaseSchema):
 
 class VlobMaintenanceSaveGarbageCollectionVlobReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
+    garbage_collection_revision = fields.Integer(required=True)
     batch = fields.List(fields.Nested(GarbageCollectionSaveBatchEntry), required=True)
 
 
@@ -167,6 +168,7 @@ vlob_maintenance_save_garbage_collection_batch_serializer = CmdSerializer(
 
 class VlobMaintenanceGetGarbageCollectionBatchReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
+    garbage_collection_revision = fields.Integer(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0, max=1000))
 
 

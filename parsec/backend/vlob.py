@@ -243,6 +243,7 @@ class BaseVlobComponent:
             client_ctx.organization_id,
             client_ctx.device_id,
             realm_id=msg["realm_id"],
+            garbage_collection_revision=msg["garbage_collection_revision"],
             batch=[(x["vlob_id"], x["version"], x["blocks_to_erase"]) for x in msg["batch"]],
         )
 

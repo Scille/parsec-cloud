@@ -121,7 +121,7 @@ async def realm_start_reencryption_maintenance(
 
 
 async def realm_start_garbage_collection_maintenance(
-    sock, realm_id, timestamp, per_participant_message, check_rep=True
+    sock, realm_id, garbage_collection_revision, timestamp, per_participant_message, check_rep=True
 ):
 
     raw_rep = await sock.send(
@@ -129,6 +129,7 @@ async def realm_start_garbage_collection_maintenance(
             {
                 "cmd": "realm_start_garbage_collection_maintenance",
                 "realm_id": realm_id,
+                "garbage_collection_revision": garbage_collection_revision,
                 "timestamp": timestamp,
                 "per_participant_message": per_participant_message,
             }

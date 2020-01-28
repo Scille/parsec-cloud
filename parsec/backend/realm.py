@@ -49,6 +49,10 @@ class RealmEncryptionRevisionError(RealmError):
     pass
 
 
+class RealmGarbageCollectionRevisionError(RealmError):
+    pass
+
+
 class RealmParticipantsMismatchError(RealmError):
     pass
 
@@ -71,6 +75,7 @@ class RealmStatus:
     maintenance_started_on: Optional[DeviceID]
     maintenance_started_by: Optional[pendulum.Pendulum]
     encryption_revision: int
+    garbage_collection_revision: int
 
     @property
     def in_maintenance(self) -> bool:
@@ -254,6 +259,7 @@ class BaseRealmComponent:
 
     @catch_protocol_errors
     async def api_realm_start_garbage_collection_maintenance(self, client_ctx, msg):
+
         msg = realm_start_garbage_collection_maintenance_serializer.req_load(msg)
         now = pendulum.now()
 

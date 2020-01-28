@@ -56,6 +56,7 @@ class RealmTask:
 
     def get_batch(self, size):
         batch = []
+
         for (vlob_id, version), data in self._todo_items():
             if (vlob_id, version) in self._done:
                 continue
@@ -171,7 +172,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         self._realm_component = realm
         self._blockstore_component = blockstore
 
-    def _get_changes_to_maintenance_start_hook(self, organization_id: OrganizationID, realm_id: UUID):
+    def _get_changes_to_maintenance_start_hook(
+        self, organization_id: OrganizationID, realm_id: UUID
+    ):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert not changes.reencryption
         assert not changes.garbage_collection
@@ -184,13 +187,22 @@ class MemoryVlobComponent(BaseVlobComponent):
             if orgid == organization_id and vlob.realm_id == realm_id
         }
 
-    def _maintenance_start_hook(self, attr: str, organization_id: OrganizationID, realm_id: UUID, Task: RealmTask, task_args: Optional[List] = []):
+    def _maintenance_start_hook(
+        self,
+        attr: str,
+        organization_id: OrganizationID,
+        realm_id: UUID,
+        Task: RealmTask,
+        task_args: Optional[List] = [],
+    ):
         changes = self._get_changes_to_maintenance_start_hook(organization_id, realm_id)
         realm_vlobs = self._get_realm_vlobs(organization_id, realm_id)
-        assert attr in ('reencryption', 'garbage_collection')
+        assert attr in ("reencryption", "garbage_collection")
         setattr(changes, attr, Task(realm_id, realm_vlobs, *task_args))
 
-    def _maintenance_finished_hook(self, attr: str, organization_id: OrganizationID, realm_id: UUID):
+    def _maintenance_finished_hook(
+        self, attr: str, organization_id: OrganizationID, realm_id: UUID
+    ):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         task = getattr(changes, attr)
         assert task
@@ -199,12 +211,16 @@ class MemoryVlobComponent(BaseVlobComponent):
         realm_vlobs = task.get_vlobs()
         for vlob_id, vlob in realm_vlobs.items():
             self._vlobs[(organization_id, vlob_id)] = vlob
-        assert attr in ('reencryption', 'garbage_collection')
+        assert attr in ("reencryption", "garbage_collection")
         setattr(changes, attr, None)
         return True
 
     async def _maintenance_garbage_collection_start_hook(
-        self, author: DeviceID, organization_id: OrganizationID, realm_id: UUID, encryption_revision: int
+        self,
+        author: DeviceID,
+        organization_id: OrganizationID,
+        realm_id: UUID,
+        garbage_collection_revision: int,
     ):
         self._maintenance_start_hook(
             "garbage_collection",
@@ -214,12 +230,18 @@ class MemoryVlobComponent(BaseVlobComponent):
             [self._blockstore_component],
         )
         garbage_collection = self._per_realm_changes[(organization_id, realm_id)].garbage_collection
-        await garbage_collection.init_todo(organization_id, author, encryption_revision, self.read)
+        await garbage_collection.init_todo(
+            organization_id, author, garbage_collection_revision, self.read
+        )
 
-    def _maintenance_garbage_collection_is_finished_hook(self, organization_id: OrganizationID, realm_id: UUID):
+    def _maintenance_garbage_collection_is_finished_hook(
+        self, organization_id: OrganizationID, realm_id: UUID
+    ):
         return self._maintenance_finished_hook("garbage_collection", organization_id, realm_id)
 
-    def _maintenance_reencryption_start_hook(self, organization_id: OrganizationID, realm_id: UUID, encryption_revision: int):
+    def _maintenance_reencryption_start_hook(
+        self, organization_id: OrganizationID, realm_id: UUID, encryption_revision: int
+    ):
         self._maintenance_start_hook("reencryption", organization_id, realm_id, Reencryption)
 
     def _maintenance_reencryption_is_finished_hook(
@@ -234,7 +256,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
 
-    def _check_realm_read_access(self, organization_id: OrganizationID, realm_id: UUID, user_id: UUID, encryption_revision: int):
+    def _check_realm_read_access(
+        self,
+        organization_id: OrganizationID,
+        realm_id: UUID,
+        user_id: UUID,
+        encryption_revision: int,
+    ):
         can_read_roles = (
             RealmRole.OWNER,
             RealmRole.MANAGER,
@@ -242,13 +270,19 @@ class MemoryVlobComponent(BaseVlobComponent):
             RealmRole.READER,
         )
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, can_read_roles
+            organization_id, realm_id, user_id, can_read_roles, encryption_revision
         )
 
-    def _check_realm_write_access(self, organization_id: OrganizationID, realm_id: UUID, user_id: UUID, encryption_revision: int):
+    def _check_realm_write_access(
+        self,
+        organization_id: OrganizationID,
+        realm_id: UUID,
+        user_id: UUID,
+        encryption_revision: int,
+    ):
         can_write_roles = (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR)
         self._check_realm_access(
-            organization_id, realm_id, user_id, encryption_revision, can_write_roles
+            organization_id, realm_id, user_id, can_write_roles, encryption_revision
         )
 
     def _check_realm_access(
@@ -256,10 +290,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: UUID,
         user_id: UUID,
-        encryption_revision: int,
         allowed_roles: List[RealmRole],
+        encryption_revision: Optional[int] = None,
+        garbage_collection_revision: Optional[int] = None,
         expected_maintenance: Optional[bool] = False,
-        check_encryption_revision: Optional[bool] = True,
     ):
         try:
             realm = self._realm_component._get_realm(organization_id, realm_id)
@@ -268,7 +302,6 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         if realm.roles.get(user_id) not in allowed_roles:
             raise VlobAccessError()
-
         if expected_maintenance is False:
             if realm.status.in_maintenance:
                 raise VlobInMaintenanceError(f"Realm `{realm_id}` is currently under maintenance")
@@ -276,9 +309,16 @@ class MemoryVlobComponent(BaseVlobComponent):
             if not realm.status.in_maintenance:
                 raise VlobNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
 
-        if check_encryption_revision and encryption_revision not in (
-            None,
+        if garbage_collection_revision is not None and garbage_collection_revision not in (
+            realm.status.garbage_collection_revision,
+        ):
+            raise Exception(
+                "toto %s %s"
+                % (garbage_collection_revision, realm.status.garbage_collection_revision)
+            )
+        elif encryption_revision is not None and encryption_revision not in (
             realm.status.encryption_revision,
+            None,
         ):
             raise VlobEncryptionRevisionError()
 
@@ -287,21 +327,28 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         realm_id: UUID,
         user_id: UUID,
-        encryption_revision: int,
-        check_encryption_revision: Optional[bool] = True,
+        encryption_revision: Optional[int] = None,
+        garbage_collection_revision: Optional[int] = None,
     ):
         can_do_maintenance_roles = (RealmRole.OWNER,)
         self._check_realm_access(
             organization_id,
             realm_id,
             user_id,
-            encryption_revision,
             can_do_maintenance_roles,
-            check_encryption_revision=check_encryption_revision,
-            expected_maintenance=True,
+            encryption_revision,
+            garbage_collection_revision,
+            True,
         )
 
-    async def _update_changes(self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, src_id: UUID, src_version: Optional[int] = 1):
+    async def _update_changes(
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        src_id: UUID,
+        src_version: Optional[int] = 1,
+    ):
         changes = self._per_realm_changes[(organization_id, realm_id)]
         changes.checkpoint += 1
         changes.changes[src_id] = (author, changes.checkpoint, src_version)
@@ -455,18 +502,19 @@ class MemoryVlobComponent(BaseVlobComponent):
         return changes.reencryption.get_batch(size)
 
     async def maintenance_get_garbage_collection_batch(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, size: int
+        self,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: UUID,
+        garbage_collection_revision: int,
+        size: int,
     ) -> Tuple[UUID, datetime]:
+
         self._check_realm_in_maintenance_access(
-            organization_id,
-            realm_id,
-            author.user_id,
-            encryption_revision=None,
-            check_encryption_revision=False,
+            organization_id, realm_id, author.user_id, garbage_collection_revision
         )
         changes = self._per_realm_changes[(organization_id, realm_id)]
         assert changes.garbage_collection
-
         res = changes.garbage_collection.get_batch(size)
         return res
 
@@ -475,14 +523,14 @@ class MemoryVlobComponent(BaseVlobComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: UUID,
+        garbage_collection_revision,
         batch: List[Tuple[UUID, int, List[int], List[int]]],
     ) -> Tuple[int, int]:
         self._check_realm_in_maintenance_access(
             organization_id,
             realm_id,
             author.user_id,
-            encryption_revision=None,
-            check_encryption_revision=False,
+            garbage_collection_revision=garbage_collection_revision,
         )
 
         changes = self._per_realm_changes[(organization_id, realm_id)]

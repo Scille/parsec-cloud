@@ -35,6 +35,7 @@ class SharingGrantedMessageContent(MessageContent):
         encryption_revision = fields.Integer(required=True)
         encrypted_on = fields.DateTime(required=True)
         key = fields.SecretKey(required=True)
+        garbage_collection_revision = fields.Integer(required=True)
         # Don't include role given the only reliable way to get this information
         # is to fetch the realm role certificate from the backend.
         # Besides, we will also need the message sender's realm role certificate
@@ -50,6 +51,7 @@ class SharingGrantedMessageContent(MessageContent):
     encryption_revision: int
     encrypted_on: Pendulum
     key: SecretKey
+    garbage_collection_revision: int
 
 
 class SharingReencryptedMessageContent(SharingGrantedMessageContent):

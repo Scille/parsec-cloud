@@ -3,12 +3,7 @@ import pytest
 from pendulum import now as pendulum_now
 
 from parsec.core.types import EntryID
-from parsec.core.fs import (
-    FSError,
-    FSWorkspaceNotInMaintenance,
-    FSWorkspaceInMaintenance,
-    FSWorkspaceNotFoundError,
-)
+from parsec.core.fs import FSError, FSWorkspaceNotInMaintenance, FSWorkspaceNotFoundError
 
 from tests.common import freeze_time
 
@@ -82,6 +77,7 @@ async def test_do_garbage_collection(running_backend, workspace, alice, alice_us
                         "author": alice.device_id,
                         "realm_id": workspace,
                         "encryption_revision": 1,
+                        "garbage_collection_revision": 1,
                     },
                 ),
                 (

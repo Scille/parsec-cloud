@@ -14,7 +14,7 @@ from tests.backend.conftest import realm_status, realm_start_garbage_collection_
 @pytest.mark.trio
 async def test_start_bad_timestamp(backend, alice_backend_sock, realm):
     rep = await realm_start_garbage_collection_maintenance(
-        alice_backend_sock, realm, Pendulum(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
+        alice_backend_sock, realm, 1, Pendulum(2000, 1, 1), {"alice": b"wathever"}, check_rep=False
     )
     assert rep == {"status": "bad_timestamp", "reason": "Timestamp is out of date."}
 
@@ -70,7 +70,7 @@ async def test_start_bad_per_participant_message(
         {alice.user_id: b"ok", adam.user_id: b"bad"},
     ]:
         rep = await realm_start_garbage_collection_maintenance(
-            alice_backend_sock, realm, pendulum_now(), msg, check_rep=False
+            alice_backend_sock, realm, 1, pendulum_now(), msg, check_rep=False
         )
         assert rep == {
             "status": "participants_mismatch",
@@ -78,7 +78,7 @@ async def test_start_bad_per_participant_message(
         }
     # Finally make sure the reencryption is possible
     await realm_start_garbage_collection_maintenance(
-        alice_backend_sock, realm, pendulum_now(), {alice.user_id: b"ok"}
+        alice_backend_sock, realm, 1, pendulum_now(), {alice.user_id: b"ok"}
     )
 
 
@@ -99,7 +99,7 @@ async def test_start_send_message_to_participants(
 
     with freeze_time("2000-01-02"):
         await realm_start_garbage_collection_maintenance(
-            alice_backend_sock, realm, pendulum_now(), {"alice": b"alice msg", "bob": b"bob msg"}
+            alice_backend_sock, realm, 1, pendulum_now(), {"alice": b"alice msg", "bob": b"bob msg"}
         )
 
     # Each participant should have received a message
@@ -122,7 +122,7 @@ async def test_start_send_message_to_participants(
 async def test_start_reencryption_update_status(alice_backend_sock, alice, realm):
     with freeze_time("2000-01-02"):
         await realm_start_garbage_collection_maintenance(
-            alice_backend_sock, realm, pendulum_now(), {"alice": b"foo"}
+            alice_backend_sock, realm, 1, pendulum_now(), {"alice": b"foo"}
         )
     rep = await realm_status(alice_backend_sock, realm)
     assert rep == {
@@ -138,12 +138,12 @@ async def test_start_reencryption_update_status(alice_backend_sock, alice, realm
 @pytest.mark.trio
 async def test_start_already_in_maintenance(backend, alice_backend_sock, realm):
     await realm_start_garbage_collection_maintenance(
-        alice_backend_sock, realm, pendulum_now(), {"alice": b"wathever"}
+        alice_backend_sock, realm, 1, pendulum_now(), {"alice": b"wathever"}
     )
     # Providing good or bad encryption revision shouldn't change anything
     for encryption_revision in (2, 3):
         rep = await realm_start_garbage_collection_maintenance(
-            alice_backend_sock, realm, pendulum_now(), {"alice": b"wathever"}, check_rep=False
+            alice_backend_sock, realm, 1, pendulum_now(), {"alice": b"wathever"}, check_rep=False
         )
         assert rep == {"status": "in_maintenance"}
 
@@ -152,7 +152,7 @@ async def test_start_already_in_maintenance(backend, alice_backend_sock, realm):
 async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, realm):
     # User not part of the realm
     rep = await realm_start_garbage_collection_maintenance(
-        bob_backend_sock, realm, pendulum_now(), {"alice": b"wathever"}, check_rep=False
+        bob_backend_sock, realm, 1, pendulum_now(), {"alice": b"wathever"}, check_rep=False
     )
     assert rep == {"status": "not_allowed"}
 
@@ -172,6 +172,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
         rep = await realm_start_garbage_collection_maintenance(
             bob_backend_sock,
             realm,
+            1,
             pendulum_now(),
             {"alice": b"foo", "bob": b"bar"},
             check_rep=False,
@@ -191,7 +192,12 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
     )
 
     rep = await realm_start_garbage_collection_maintenance(
-        bob_backend_sock, realm, pendulum_now(), {"alice": b"foo", "bob": b"bar"}, check_rep=False
+        bob_backend_sock,
+        realm,
+        1,
+        pendulum_now(),
+        {"alice": b"foo", "bob": b"bar"},
+        check_rep=False,
     )
     assert rep == {"status": "ok"}
 
@@ -200,7 +206,7 @@ async def test_start_check_access_rights(backend, bob_backend_sock, alice, bob, 
 async def test_start_other_organization(backend, sock_from_other_organization_factory, realm):
     async with sock_from_other_organization_factory(backend) as sock:
         rep = await realm_start_garbage_collection_maintenance(
-            sock, realm, pendulum_now(), {"alice": b"foo"}, check_rep=False
+            sock, realm, 1, pendulum_now(), {"alice": b"foo"}, check_rep=False
         )
     assert rep == {
         "status": "not_found",
