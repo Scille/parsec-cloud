@@ -3,9 +3,9 @@
 from typing import Optional
 from structlog import get_logger
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication, QMenu
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -20,7 +20,12 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_dialogs import QuestionDialog, show_error
+from parsec.core.gui.changelog_widget import ChangelogWidget
+from parsec.core.gui.license_widget import LicenseWidget
+from parsec.core.gui.about_widget import AboutWidget
+from parsec.core.gui.settings_widget import SettingsWidget
+from parsec.core.gui.custom_dialogs import QuestionDialog, show_error, MiscDialog
+from parsec.core.gui.custom_widgets import MenuButton
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -52,19 +57,63 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
-        self.button_add_instance = QPushButton(
-            QIcon(":/icons/images/icons/tray_icons/plus-default.svg"), ""
-        )
-        self.button_add_instance.setIconSize(QSize(25, 25))
-        self.button_add_instance.clicked.connect(self._on_add_instance_clicked)
-        self.button_add_instance.setToolTip(_("BUTTON_ADD_INSTANCE"))
-        self.button_add_instance.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.button_add_instance.hide()
         self.button_send_feedback = QPushButton(_("LABEL_FEEDBACK_LINK"))
         self.button_send_feedback.clicked.connect(self._on_send_feedback_clicked)
         self.button_send_feedback.setStyleSheet("border: 0;")
         self.tab_center.setCornerWidget(self.button_send_feedback, Qt.TopRightCorner)
+        self.menu_button = MenuButton()
+        self.menu_button.clicked.connect(self._show_menu)
+        self.tab_center.setCornerWidget(self.menu_button, Qt.TopLeftCorner)
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
+
+    def _show_menu(self):
+        menu = QMenu(self)
+        action = None
+        idx = self._get_login_tab_index()
+        if idx == -1:
+            action = menu.addAction(_("BUTTON_ADD_INSTANCE"))
+        else:
+            action = menu.addAction(_("BUTTON_ADD_INSTANCE"))
+            action.setDisabled(True)
+        action.triggered.connect(self._on_add_instance_clicked)
+        action = menu.addAction(_("MENU_SETTINGS"))
+        action.triggered.connect(self._show_settings)
+        menu.addSeparator()
+        action = menu.addAction(_("BUTTON_ABOUT"))
+        action.triggered.connect(self._show_about)
+        action = menu.addAction(_("BUTTON_CHANGELOG"))
+        action.triggered.connect(self._show_changelog)
+        action = menu.addAction(_("BUTTON_LICENSE"))
+        action.triggered.connect(self._show_license)
+        action = menu.addAction(_("LABEL_FEEDBACK_LINK"))
+        action.triggered.connect(self._on_send_feedback_clicked)
+        menu.addSeparator()
+        action = menu.addAction(_("BUTTON_QUIT_PARSEC"))
+        action.triggered.connect(self.close_app)
+        pos = self.menu_button.pos()
+        pos.setY(pos.y() + self.menu_button.size().height())
+        pos = self.mapToGlobal(pos)
+        menu.exec_(pos)
+
+    def _show_about(self):
+        w = AboutWidget()
+        d = MiscDialog(None, w, parent=self)
+        d.exec_()
+
+    def _show_license(self):
+        w = LicenseWidget()
+        d = MiscDialog(_("LICENSE_TITLE"), w, parent=self)
+        d.exec_()
+
+    def _show_changelog(self):
+        w = ChangelogWidget()
+        d = MiscDialog(_("CHANGELOG_TITLE"), w, parent=self)
+        d.exec_()
+
+    def _show_settings(self):
+        w = SettingsWidget(self.config, self.jobs_ctx, self.event_bus)
+        d = MiscDialog(_("SETTINGS_TITLE"), w, parent=self)
+        d.exec_()
 
     def _on_send_feedback_clicked(self):
         desktop.open_feedback_link()
@@ -138,16 +187,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tab_name = f"{device.organization_id}:{device.user_id}@{device.device_name}"
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(idx, tab_name)
-        self.toggle_add_instance_button()
 
-    def toggle_add_instance_button(self):
-        idx = self._get_login_tab_index()
-        if idx == -1:
-            self.tab_center.setCornerWidget(self.button_add_instance, Qt.TopLeftCorner)
-            self.button_add_instance.show()
-        else:
-            self.tab_center.setCornerWidget(None, Qt.TopLeftCorner)
-            self.button_add_instance.hide()
+    #        self.toggle_add_instance_button()
+
+    # def toggle_add_instance_button(self):
+    #     idx = self._get_login_tab_index()
+    #     if idx == -1:
+    #         self.tab_center.setCornerWidget(self.button_add_instance, Qt.TopRightCorner)
+    #         self.button_add_instance.show()
+    #     else:
+    #         self.tab_center.setCornerWidget(None, Qt.TopRightCorner)
+    #         self.button_add_instance.hide()
 
     def on_tab_notification(self, widget, event):
         idx = self.tab_center.indexOf(widget)
@@ -235,7 +285,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab.logout()
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
-        self.toggle_add_instance_button()
+
+    #        self.toggle_add_instance_button()
 
     def closeEvent(self, event):
         if self.minimize_on_close and not self.need_close:

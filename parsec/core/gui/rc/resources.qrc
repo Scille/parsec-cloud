@@ -111,6 +111,7 @@
         <file>images/icons/file_icons/file_xml.png</file>
         <file>images/icons/file_icons/file_zip.png</file>
         <file>images/icons/file_icons/folder.png</file>
+        <file>images/icons/settings_bars.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

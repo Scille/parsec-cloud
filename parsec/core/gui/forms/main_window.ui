@@ -53,6 +53,11 @@ background-color: rgb(45, 144, 209);
 color: rgb(255, 255, 255);
 }
 
+QMenu::separator
+{
+background-color: rgb(220, 220, 200);
+}
+
 QToolTip
 {
 background-color: rgb(46, 146, 208);

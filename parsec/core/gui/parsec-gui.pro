@@ -23,9 +23,7 @@ FORMS += forms/main_window.ui \
          forms/question_dialog.ui \
          forms/device_button.ui \
          forms/network_settings_widget.ui \
-         forms/global_settings_widget.ui \
          forms/register_user_dialog.ui \
-         forms/settings_dialog.ui \
          forms/starting_guide_dialog.ui \
          forms/central_widget.ui \
          forms/notification_center_widget.ui \
@@ -42,7 +40,9 @@ FORMS += forms/main_window.ui \
          forms/password_change_dialog.ui \
          forms/new_version_info.ui \
          forms/new_version_available.ui \
-         forms/about_widget.ui \
          forms/file_history_dialog.ui \
-         forms/file_history_widget.ui
+         forms/misc_dialog.ui \
+         forms/changelog_widget.ui \
+         forms/license_widget.ui \
+         forms/about_widget.ui
 RESOURCES += rc/resources.qrc
