@@ -2,31 +2,34 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint, QRect
 from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor
-from PyQt5.QtWidgets import QPushButton, QLabel, QGraphicsDropShadowEffect, QLayout, QSizePolicy
+from PyQt5.QtWidgets import (
+    QPushButton,
+    QLabel,
+    QGraphicsDropShadowEffect,
+    QLayout,
+    QSizePolicy,
+    QStyle,
+)
 
 
 class FlowLayout(QLayout):
     def __init__(self, spacing=10, parent=None):
         super().__init__(parent)
-        self.setSpacing(spacing)
+        self.spacing = spacing
         self.items = []
 
     def addItem(self, item):
         self.items.append(item)
 
-    def expandingDirections(self):
-        return Qt.Horizontal
+    def horizontalSpacing(self):
+        if self.spacing >= 0:
+            return self.spacing
+        return self._smart_spacing(QStyle.PM_LayoutHorizontalSpacing)
 
-    def hasHeightForWidth(self):
-        return True
-
-    def heightForWidth(self, width):
-        old_width = self.geometry().width() - 2 * self.contentsMargins().top()
-        _, old_height = self._do_layout(QRect(0, 0, old_width, 0), True)
-        _, height = self._do_layout(QRect(0, 0, width, 0), True)
-        if height != old_height:
-            self.update()
-        return height
+    def verticalSpacing(self):
+        if self.spacing >= 0:
+            return self.spacing
+        return self._smart_spacing(QStyle.PM_LayoutVerticalSpacing)
 
     def count(self):
         return len(self.items)
@@ -35,18 +38,6 @@ class FlowLayout(QLayout):
         if index >= 0 and index < len(self.items):
             return self.items[index]
         return None
-
-    def minimumSize(self):
-        if len(self.items):
-            return QSize(self.items[0].sizeHint())
-        return QSize(0, 0)
-
-    def setGeometry(self, rect):
-        super().setGeometry(rect)
-        self._do_layout(rect, False)
-
-    def sizeHint(self):
-        return self.minimumSize()
 
     def takeAt(self, index):
         if index >= 0 and index < len(self.items):
@@ -62,23 +53,48 @@ class FlowLayout(QLayout):
                 w.hide()
                 w.setParent(None)
 
-    def _do_layout(self, rect, test_only=False):
+    def expandingDirections(self):
+        return Qt.Horizontal
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        height = self._do_layout(QRect(0, 0, width, 0), True)
+        return height
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        self._do_layout(rect, False)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def minimumSize(self):
+        size = QSize()
+        for item in self.items:
+            size = size.expandedTo(item.minimumSize())
+        return size
+
+    def _do_layout(self, rect, test_only):
         x = rect.x()
         y = rect.y()
         line_height = 0
-        max_line_width = 0
 
         for item in self.items:
             w = item.widget()
-            space_x = self.spacing() + w.style().layoutSpacing(
-                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
-            )
-            space_y = self.spacing() + w.style().layoutSpacing(
-                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical
-            )
+            space_x = self.horizontalSpacing()
+            if space_x == -1:
+                space_x = w.style().layoutSpacing(
+                    QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
+                )
+            space_y = self.verticalSpacing()
+            if space_y == -1:
+                space_y = w.style().layoutSpacing(
+                    QSizePolicy.QPushButton, QSizePolicy.QPushButton, Qt.Vertical
+                )
             next_x = x + item.sizeHint().width() + space_x
             if next_x - space_x > rect.right() and line_height > 0:
-                max_line_width = max(x - rect.x(), max_line_width, item.sizeHint().width())
                 x = rect.x()
                 y = y + line_height + space_y
                 next_x = x + item.sizeHint().width() + space_x
@@ -87,7 +103,16 @@ class FlowLayout(QLayout):
                 item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
             x = next_x
             line_height = max(line_height, item.sizeHint().height())
-        return max_line_width, y + line_height - rect.y()
+        return y + line_height - rect.x()
+
+    def _smart_spacing(self, pm):
+        parent = self.parent()
+        if not parent:
+            return -1
+        elif parent.isWidgetType():
+            parent.style().pixelMetric(pm, 0, parent)
+        else:
+            parent.spacing()
 
 
 class FileLabel(QLabel):
