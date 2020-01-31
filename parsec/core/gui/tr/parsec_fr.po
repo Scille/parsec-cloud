@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-01-23 15:48+0100\n"
-"PO-Revision-Date: 2020-01-23 15:49+0100\n"
+"POT-Creation-Date: 2020-01-30 10:28+0100\n"
+"PO-Revision-Date: 2020-01-30 10:30+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -144,6 +144,225 @@ msgstr "Le mot de passe est invalide."
 
 msgid "PARSEC_VERSION_LABEL_{}"
 msgstr "Parsec version {version}"
+
+msgid "ASK_FILE_EXISTS_REPLACE"
+msgstr "Un fichier nommé \"{}\" existe déjà. Voulez-vous le remplacer ?"
+
+msgid "PASSWORD_STR_TOO_SHORT"
+msgstr "Trop court"
+
+msgid "PASSWORD_STR_VERY_WEAK"
+msgstr "Très faible"
+
+msgid "PASSWORD_STR_WEAK"
+msgstr "Faible"
+
+msgid "PASSWORD_STR_AVERAGE"
+msgstr "Moyen"
+
+msgid "PASSWORD_STR_GOOD"
+msgstr "Bon"
+
+msgid "PASSWORD_STR_STRONG"
+msgstr "Fort"
+
+msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
+msgstr "Cet espace de travail doit être rechiffré."
+
+msgid "WORKSPACE_SHARED_DISPLAY"
+msgstr "partagé"
+
+msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
+msgstr "- à {}"
+
+msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
+msgstr "Copié dans le presse-papier."
+
+msgid "ERR_BAD_DEVICE_NAME"
+msgstr "Le nom de l'appareil est invalide."
+
+msgid "ERR_REGISTER_DEVICE_EXISTS"
+msgstr "L'appareil existe déjà."
+
+msgid "ERR_REGISTER_DEVICE_OFFLINE"
+msgstr "Impossible de contacter le serveur."
+
+msgid "ERR_REGISTER_WRONG_PARAMETERS"
+msgstr "L'utilisateur n'a pas fourni les informations correctes."
+
+msgid "ERR_REGISTER_DEVICE_TIMEOUT"
+msgstr "L'appareil a mis trop de temps à s'enregistrer."
+
+msgid "ERR_REGISTER_DEVICE_UNKNOWN"
+msgstr "Impossible d'enregistrer l'appareil."
+
+msgid "INFO_REGISTER_DEVICE_SUCCESS"
+msgstr "L'appareil a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
+
+msgid "WARN_REGISTER_DEVICE_EMPTY"
+msgstr "Le nom de l'appareil ne peut pas être vide."
+
+msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
+msgstr ""
+"Enregistrez l'utilisateur \"<b>{user}</b>\" de l'organisation "
+"\"<b>{organization}</b>\" en choisissant un nom d'appareil, un mot de passe, et "
+"en fournissant le jeton de vérification."
+
+msgid "LABEL_USER_REGISTRATION"
+msgstr "Veuillez patienter pendant que l'utilisateur s'enregistre."
+
+msgid "ERR_CLAIM_USER_NOT_FOUND"
+msgstr "Aucune invitation trouvée pour cet utilisateur."
+
+msgid "ERR_PASSWORD_COMPLEXITY"
+msgstr "Le mot de passe doit faire au moins huit caractères."
+
+msgid "ERR_BAD_URL"
+msgstr "L'URL est invalide."
+
+msgid "ERR_BAD_USER_NAME"
+msgstr "Le nom d'utilisateur est invalide."
+
+msgid "ERR_BACKEND_REFUSED"
+msgstr ""
+"Le serveur a refusé votre requête. Toutes les informations sont-elles "
+"correctes ?"
+
+msgid "ERR_BACKEND_OFFLINE"
+msgstr ""
+"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
+"internet."
+
+msgid "ERR_CLAIM_USER_UNKNOWN"
+msgstr "Impossible d'enregistrer l'utilisateur."
+
+msgid "DEVICE_CURRENT_TEXT"
+msgstr "actuel"
+
+msgid "DEVICE_MENU_SHOW_INFO"
+msgstr "Voir les informations"
+
+msgid "DEVICE_MENU_CHANGE_PASSWORD"
+msgstr "Modifier le mot de passe"
+
+msgid "DEVICE_CREATED_ON_{}"
+msgstr "Créé le {}"
+
+msgid "DEVICE_IS_REVOKED"
+msgstr "Cet appareil a été révoqué."
+
+msgid "BUTTON_TASKBAR_ADD_DEVICE"
+msgstr "Créer un nouvel appareil."
+
+msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
+msgstr "Créer un nouvel espace de travail."
+
+msgid "ERR_WORKSPACE_INVALID_NAME"
+msgstr "Nom d'espace de travail invalide."
+
+msgid "ERR_WORKSPACE_CREATE"
+msgstr "Impossible de créer l'espace de travail."
+
+msgid "ERR_WORKSPACE_RENAME"
+msgstr "Impossible de renommer l'espace de travail."
+
+msgid "LABEL_NO_WORKSPACES"
+msgstr "Aucun espace de travail n'a été créé pour le moment."
+
+msgid "ERR_WORKSPACE_MOUNT_{}"
+msgstr "Impossible de voir l'espace de travail \"{}\" tel qu'il était le {}."
+
+msgid "ASK_WORKSPACE_DELETE_TITLE"
+msgstr "Supprimer un espace de travail"
+
+msgid "ASK_WORKSPACE_DELETE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir supprimer l'espace de travail \"{}\" ?"
+
+msgid "WARN_WORKSPACE_DELETE"
+msgstr "Non implémenté."
+
+msgid "ASK_RENAME_WORKSPACE_TITLE"
+msgstr "Renommer un espace de travail"
+
+msgid "ASK_RENAME_WORKSPACE_CONTENT"
+msgstr ""
+"Entrez le nouveau nom de l'espace de travail (les changements ne seront pas "
+"visibles par les autres utilisateurs)."
+
+msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
+msgstr "Nom de l'espace de travail"
+
+msgid "ASK_WORKSPACE_USER_REVOKED"
+msgstr "Un utilisateur de cet espace de travail a été révoqué."
+
+msgid "ASK_WORKSPACE_USER_REMOVED"
+msgstr "Un utilisateur a été retiré du partage de cet espace de travail."
+
+msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
+msgstr ""
+"Cet espace de travail doit être rechiffré pour assurer la sécurité de vos "
+"données.\n"
+"Cette opération prend du temps et empêchera temporairement la synchronisation "
+"de l'espace de travail.\n"
+"\n"
+"Voulez-vous continuer ?"
+
+msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
+msgstr "Rechiffrement de l'espace de travail"
+
+msgid "ASK_NEW_WORKSPACE_TITLE"
+msgstr "Créer un espace de travail"
+
+msgid "ASK_NEW_WORKSPACE_CONTENT"
+msgstr "Entrez le nom de l'espace de travail"
+
+msgid "ASK_NEW_WORKSPACE_PLACEHOLDER"
+msgstr "Nom de l'espace de travail"
+
+msgid "USER_CURRENT_TEXT"
+msgstr "vous"
+
+msgid "USER_MENU_SHOW_INFO"
+msgstr "Voir les informations"
+
+msgid "USER_MENU_REVOKE"
+msgstr "Révoquer"
+
+msgid "USER_CREATED_ON_{}"
+msgstr "Créé le {}"
+
+msgid "USER_IS_ADMIN"
+msgstr "Administrateur"
+
+msgid "USER_IS_REVOKED"
+msgstr "Cet utilisateur a été révoqué."
+
+msgid "BUTTON_TASKBAR_ADD_USER"
+msgstr "Créer un nouvel utilisateur."
+
+msgid "INFO_USER_REVOKED_SUCCESS_{}"
+msgstr "L'utilisateur \"{}\" a été révoqué avec succès."
+
+msgid "ERR_USER_REVOKED_ALREADY"
+msgstr "Cet utilisateur a déjà été révoqué."
+
+msgid "ERR_USER_REVOKED_NOT_FOUND"
+msgstr "Cet utilisateur n'existe pas."
+
+msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
+msgstr "Vous n'avez pas les permissions de révoquer cet utilisateur."
+
+msgid "ERR_USER_REVOKED_UNKNOWN_ERROR"
+msgstr "Impossible de révoquer cet utilisateur."
+
+msgid "ASK_USER_REVOKE_TITLE"
+msgstr "Révoquer un utilisateur"
+
+msgid "ASK_USER_REVOKE_CONTENT_{}"
+msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
+
+msgid "ERR_USER_LIST_UNKNOWN_ERROR"
+msgstr "Impossible de retrouver la liste des utilisateurs."
 
 msgid "PARSEC_LICENSE_CONTENT"
 msgstr ""
@@ -874,225 +1093,6 @@ msgstr ""
 "\n"
 "</body></html>"
 
-msgid "ASK_FILE_EXISTS_REPLACE"
-msgstr "Un fichier nommé \"{}\" existe déjà. Voulez-vous le remplacer ?"
-
-msgid "PASSWORD_STR_TOO_SHORT"
-msgstr "Trop court"
-
-msgid "PASSWORD_STR_VERY_WEAK"
-msgstr "Très faible"
-
-msgid "PASSWORD_STR_WEAK"
-msgstr "Faible"
-
-msgid "PASSWORD_STR_AVERAGE"
-msgstr "Moyen"
-
-msgid "PASSWORD_STR_GOOD"
-msgstr "Bon"
-
-msgid "PASSWORD_STR_STRONG"
-msgstr "Fort"
-
-msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
-msgstr "Cet espace de travail doit être rechiffré."
-
-msgid "WORKSPACE_SHARED_DISPLAY"
-msgstr "partagé"
-
-msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
-msgstr "- à {}"
-
-msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
-msgstr "Copié dans le presse-papier."
-
-msgid "ERR_BAD_DEVICE_NAME"
-msgstr "Le nom de l'appareil est invalide."
-
-msgid "ERR_REGISTER_DEVICE_EXISTS"
-msgstr "L'appareil existe déjà."
-
-msgid "ERR_REGISTER_DEVICE_OFFLINE"
-msgstr "Impossible de contacter le serveur."
-
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "L'utilisateur n'a pas fourni les informations correctes."
-
-msgid "ERR_REGISTER_DEVICE_TIMEOUT"
-msgstr "L'appareil a mis trop de temps à s'enregistrer."
-
-msgid "ERR_REGISTER_DEVICE_UNKNOWN"
-msgstr "Impossible d'enregistrer l'appareil."
-
-msgid "INFO_REGISTER_DEVICE_SUCCESS"
-msgstr "L'appareil a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
-
-msgid "WARN_REGISTER_DEVICE_EMPTY"
-msgstr "Le nom de l'appareil ne peut pas être vide."
-
-msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
-msgstr ""
-"Enregistrez l'utilisateur \"<b>{user}</b>\" de l'organisation "
-"\"<b>{organization}</b>\" en choisissant un nom d'appareil, un mot de passe, et "
-"en fournissant le jeton de vérification."
-
-msgid "LABEL_USER_REGISTRATION"
-msgstr "Veuillez patienter pendant que l'utilisateur s'enregistre."
-
-msgid "ERR_CLAIM_USER_NOT_FOUND"
-msgstr "Aucune invitation trouvée pour cet utilisateur."
-
-msgid "ERR_PASSWORD_COMPLEXITY"
-msgstr "Le mot de passe doit faire au moins huit caractères."
-
-msgid "ERR_BAD_URL"
-msgstr "L'URL est invalide."
-
-msgid "ERR_BAD_USER_NAME"
-msgstr "Le nom d'utilisateur est invalide."
-
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"Le serveur a refusé votre requête. Toutes les informations sont-elles "
-"correctes ?"
-
-msgid "ERR_BACKEND_OFFLINE"
-msgstr ""
-"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
-"internet."
-
-msgid "ERR_CLAIM_USER_UNKNOWN"
-msgstr "Impossible d'enregistrer l'utilisateur."
-
-msgid "DEVICE_CURRENT_TEXT"
-msgstr "actuel"
-
-msgid "DEVICE_MENU_SHOW_INFO"
-msgstr "Voir les informations"
-
-msgid "DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Modifier le mot de passe"
-
-msgid "DEVICE_CREATED_ON_{}"
-msgstr "Créé le {}"
-
-msgid "DEVICE_IS_REVOKED"
-msgstr "Cet appareil a été révoqué."
-
-msgid "BUTTON_TASKBAR_ADD_DEVICE"
-msgstr "Créer un nouvel appareil."
-
-msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
-msgstr "Créer un nouvel espace de travail."
-
-msgid "ERR_WORKSPACE_INVALID_NAME"
-msgstr "Nom d'espace de travail invalide."
-
-msgid "ERR_WORKSPACE_CREATE"
-msgstr "Impossible de créer l'espace de travail."
-
-msgid "ERR_WORKSPACE_RENAME"
-msgstr "Impossible de renommer l'espace de travail."
-
-msgid "LABEL_NO_WORKSPACES"
-msgstr "Aucun espace de travail n'a été créé pour le moment."
-
-msgid "ERR_WORKSPACE_MOUNT_{}"
-msgstr "Impossible de voir l'espace de travail \"{}\" tel qu'il était le {}."
-
-msgid "ASK_WORKSPACE_DELETE_TITLE"
-msgstr "Supprimer un espace de travail"
-
-msgid "ASK_WORKSPACE_DELETE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir supprimer l'espace de travail \"{}\" ?"
-
-msgid "WARN_WORKSPACE_DELETE"
-msgstr "Non implémenté."
-
-msgid "ASK_RENAME_WORKSPACE_TITLE"
-msgstr "Renommer un espace de travail"
-
-msgid "ASK_RENAME_WORKSPACE_CONTENT"
-msgstr ""
-"Entrez le nouveau nom de l'espace de travail (les changements ne seront pas "
-"visibles par les autres utilisateurs)."
-
-msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
-msgstr "Nom de l'espace de travail"
-
-msgid "ASK_WORKSPACE_USER_REVOKED"
-msgstr "Un utilisateur de cet espace de travail a été révoqué."
-
-msgid "ASK_WORKSPACE_USER_REMOVED"
-msgstr "Un utilisateur a été retiré du partage de cet espace de travail."
-
-msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
-msgstr ""
-"Cet espace de travail doit être rechiffré pour assurer la sécurité de vos "
-"données.\n"
-"Cette opération prend du temps et empêchera temporairement la synchronisation "
-"de l'espace de travail.\n"
-"\n"
-"Voulez-vous continuer ?"
-
-msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
-msgstr "Rechiffrement de l'espace de travail"
-
-msgid "ASK_NEW_WORKSPACE_TITLE"
-msgstr "Créer un espace de travail"
-
-msgid "ASK_NEW_WORKSPACE_CONTENT"
-msgstr "Entrez le nom de l'espace de travail"
-
-msgid "ASK_NEW_WORKSPACE_PLACEHOLDER"
-msgstr "Nom de l'espace de travail"
-
-msgid "USER_CURRENT_TEXT"
-msgstr "vous"
-
-msgid "USER_MENU_SHOW_INFO"
-msgstr "Voir les informations"
-
-msgid "USER_MENU_REVOKE"
-msgstr "Révoquer"
-
-msgid "USER_CREATED_ON_{}"
-msgstr "Créé le {}"
-
-msgid "USER_IS_ADMIN"
-msgstr "Administrateur"
-
-msgid "USER_IS_REVOKED"
-msgstr "Cet utilisateur a été révoqué."
-
-msgid "BUTTON_TASKBAR_ADD_USER"
-msgstr "Créer un nouvel utilisateur."
-
-msgid "INFO_USER_REVOKED_SUCCESS_{}"
-msgstr "L'utilisateur \"{}\" a été révoqué avec succès."
-
-msgid "ERR_USER_REVOKED_ALREADY"
-msgstr "Cet utilisateur a déjà été révoqué."
-
-msgid "ERR_USER_REVOKED_NOT_FOUND"
-msgstr "Cet utilisateur n'existe pas."
-
-msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
-msgstr "Vous n'avez pas les permissions de révoquer cet utilisateur."
-
-msgid "ERR_USER_REVOKED_UNKNOWN_ERROR"
-msgstr "Impossible de révoquer cet utilisateur."
-
-msgid "ASK_USER_REVOKE_TITLE"
-msgstr "Révoquer un utilisateur"
-
-msgid "ASK_USER_REVOKE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
-
-msgid "ERR_USER_LIST_UNKNOWN_ERROR"
-msgstr "Impossible de retrouver la liste des utilisateurs."
-
 msgid "FILE_SIZE_TB"
 msgstr "To"
 
@@ -1295,7 +1295,7 @@ msgid "ERR_DIALOG_TITLE"
 msgstr "Erreur"
 
 msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr ""
+msgstr "Cet appareil a été révoqué."
 
 msgid "ERR_LOGIN_UNKNOWN"
 msgstr "Impossible de se connecter."
@@ -1366,12 +1366,6 @@ msgstr "L'appareil a été créé. Vous pouvez maintenant vous connecter."
 
 msgid "ERR_LIST_VERSIONS_ACCESS"
 msgstr "Impossible de récupérer la liste des versions."
-
-msgid "MENU_SETTINGS_GLOBAL"
-msgstr "Globale"
-
-msgid "MENU_SETTINGS_ABOUT"
-msgstr "À propos de Parsec"
 
 msgid "SETTINGS_NEED_RESTART"
 msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
@@ -1453,9 +1447,6 @@ msgstr "Utilisateurs"
 msgid "MENU_DEVICES"
 msgstr "Appareils"
 
-msgid "MENU_SETTINGS"
-msgstr "Configuration"
-
 msgid "ERR_REGISTER_USER_OFFLINE"
 msgstr "Impossible de contacter le serveur."
 
@@ -1513,11 +1504,35 @@ msgstr "Les rôles ont été mis à jour."
 msgid "PARSEC_WINDOW_TITLE"
 msgstr "Parsec - {}"
 
-msgid "BUTTON_ADD_INSTANCE"
-msgstr "Ajouter une instance"
-
 msgid "LABEL_FEEDBACK_LINK"
 msgstr "Donner votre avis"
+
+msgid "BUTTON_ADD_INSTANCE"
+msgstr "Ouvrir un nouvel onglet"
+
+msgid "MENU_SETTINGS"
+msgstr "Configuration"
+
+msgid "BUTTON_ABOUT"
+msgstr "À propos"
+
+msgid "BUTTON_CHANGELOG"
+msgstr "Changelog"
+
+msgid "BUTTON_LICENSE"
+msgstr "License"
+
+msgid "BUTTON_QUIT_PARSEC"
+msgstr "Quitter Parsec"
+
+msgid "LICENSE_TITLE"
+msgstr "License"
+
+msgid "CHANGELOG_TITLE"
+msgstr "Changelog"
+
+msgid "SETTINGS_TITLE"
+msgstr "Configuration"
 
 msgid "ASK_ADD_TAB_TITLE"
 msgstr "Nouvelle instance"
@@ -1567,12 +1582,6 @@ msgstr "Êtes-vous sûr de vouloir quitter l'application ?"
 
 msgid "PARSEC_DEVELOPMENT_LABEL"
 msgstr "Développé par <a href=\"http://scille.eu\">Scille</a>."
-
-msgid "TITLE_LICENSE"
-msgstr "License"
-
-msgid "TITLE_CHANGELOG"
-msgstr "Changelog"
 
 msgid "LABEL_DEVICE_NAME"
 msgstr "Nom de l'appareil"
@@ -1631,48 +1640,6 @@ msgstr "Créé le"
 msgid "LABEL_FILE_UPDATED"
 msgstr "Mis à jour le"
 
-msgid "SETTINGS_TITLE_BEHAVIOR"
-msgstr "Comportement"
-
-msgid "CHECK_MINIMIZE_IN_TRAY"
-msgstr "Minimiser dans la barre des tâches"
-
-msgid "SETTINGS_TITLE_LOCALIZATION"
-msgstr "Localisation"
-
-msgid "LABEL_LANGUAGE"
-msgstr "Langues"
-
-msgid "SETTINGS_TITLE_VERSION"
-msgstr "Version"
-
-msgid "CHECK_CHECK_NEW_VERSION"
-msgstr "Vérifier si une nouvelle version est disponible au démarrage"
-
-msgid "BUTTON_CHECK_NEW_VERSION"
-msgstr "Vérifier si une nouvelle version est disponible"
-
-msgid "SETTINGS_TITLE_ERROR_REPORTING"
-msgstr "Rapport d'erreur"
-
-msgid "CHECK_SEND_CRASH_INFO"
-msgstr "Envoyer des informations en cas d'erreur"
-
-msgid "SETTINGS_TITLE_INTERFACE"
-msgstr "Interface"
-
-msgid "CHECK_USE_WORKSPACE_COLORS"
-msgstr "Utiliser des couleurs pour les espaces de travail"
-
-msgid "BUTTON_SAVE"
-msgstr "Sauvegarder"
-
-msgid "SETTINGS_TITLE_HELP"
-msgstr "Aide"
-
-msgid "LABEL_USER_GUIDE_LINK"
-msgstr "Guide de démarrage"
-
 msgid "BUTTON_OK"
 msgstr "OK"
 
@@ -1681,9 +1648,6 @@ msgstr "En cours d'import"
 
 msgid "LABEL_IDENTIFIER"
 msgstr "Identifiant"
-
-msgid "BUTTON_SETTINGS"
-msgstr "Configuration"
 
 msgid "BUTTON_ENTER_URL"
 msgstr "Fournir une adresse manuellement"
@@ -1696,6 +1660,9 @@ msgstr "Détails"
 
 msgid "BUTTON_COPY_TO_CLIPBOARD"
 msgstr "Copier dans le presse-papier"
+
+msgid "TITLE_SETTINGS"
+msgstr "Configuration"
 
 msgid "SETTINGS_TITLE_PROXY"
 msgstr "Proxy"
@@ -1744,6 +1711,9 @@ msgstr "Divers"
 
 msgid "LABEL_SIM_CONNECTIONS"
 msgstr "Nombre de connections simultanées"
+
+msgid "BUTTON_SAVE"
+msgstr "Sauvegarder"
 
 msgid "BUTTON_DOWNLOAD"
 msgstr "Télécharger"
@@ -1819,8 +1789,38 @@ msgstr "Remplacer"
 msgid "CHECK_DO_THE_SAME"
 msgstr "Appliquer aux fichiers suivants"
 
-msgid "TITLE_SETTINGS"
-msgstr "Configuration"
+msgid "SETTINGS_TITLE_BEHAVIOR"
+msgstr "Comportement"
+
+msgid "CHECK_MINIMIZE_IN_TRAY"
+msgstr "Minimiser dans la barre des tâches"
+
+msgid "SETTINGS_TITLE_LOCALIZATION"
+msgstr "Localisation"
+
+msgid "LABEL_LANGUAGE"
+msgstr "Langues"
+
+msgid "SETTINGS_TITLE_VERSION"
+msgstr "Version"
+
+msgid "CHECK_CHECK_NEW_VERSION"
+msgstr "Vérifier si une nouvelle version est disponible au démarrage"
+
+msgid "BUTTON_CHECK_NEW_VERSION"
+msgstr "Vérifier si une nouvelle version est disponible"
+
+msgid "SETTINGS_TITLE_ERROR_REPORTING"
+msgstr "Rapport d'erreur"
+
+msgid "CHECK_SEND_CRASH_INFO"
+msgstr "Envoyer des informations en cas d'erreur"
+
+msgid "SETTINGS_TITLE_INTERFACE"
+msgstr "Interface"
+
+msgid "CHECK_USE_WORKSPACE_COLORS"
+msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "BUTTON_BACK"
 msgstr "Retour"
@@ -1881,20 +1881,3 @@ msgstr "Afficher les utilisateurs révoqués"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
-
-#~ msgid "WORKSPACE_NAME_REENCRYPTION_{}"
-#~ msgstr "- rechiffrement ({}%)"
-
-#~ msgid "LABEL_BOOTSTRAP_ORG_INSTRUCTIONS"
-#~ msgstr ""
-#~ "Pour démarrer une organisation, créez la sur le site et collez ici les "
-#~ "informations."
-
-#~ msgid "BUTTON_REGISTER_NEW_USER"
-#~ msgstr "Enregistrer un nouvel utilisateur"
-
-#~ msgid "BUTTON_REGISTER_NEW_DEVICE"
-#~ msgstr "Enregistrer un nouvel appareil"
-
-#~ msgid "BACKEND_STATE_REASON_CRASHED_{}"
-#~ msgstr "Connexion indisponible à cause d'une erreur interne : {}"

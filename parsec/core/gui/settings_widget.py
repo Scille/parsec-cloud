@@ -1,35 +1,50 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QIcon
+import platform
 
-from parsec.core.gui.custom_dialogs import show_info
+from PyQt5.QtWidgets import QWidget
+
+from parsec.core.gui import lang
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.global_settings_widget import GlobalSettingsWidget
-from parsec.core.gui.about_widget import AboutWidget
+from parsec.core.gui.custom_dialogs import show_info
+from parsec.core.gui.new_version import CheckNewVersion
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
 class SettingsWidget(QWidget, Ui_SettingsWidget):
-    def __init__(self, config, jobs_ctx, event_bus, *args, **kwargs):
+    def __init__(self, core_config, jobs_ctx, event_bus, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setupUi(self)
-        self.config = config
+        self.core_config = core_config
         self.event_bus = event_bus
-        self.global_settings = GlobalSettingsWidget(config, jobs_ctx, self.event_bus)
-        self.tab_settings.addTab(
-            self.global_settings,
-            QIcon(":/icons/images/icons/settings_on.png"),
-            _("MENU_SETTINGS_GLOBAL"),
-        )
-        self.about_settings = AboutWidget()
-        self.tab_settings.addTab(
-            self.about_settings,
-            QIcon(":/icons/images/icons/question.png"),
-            _("MENU_SETTINGS_ABOUT"),
-        )
-        self.global_settings.save_clicked.connect(self.save)
+        self.jobs_ctx = jobs_ctx
+        self.setupUi(self)
+        if platform.system() != "Windows":
+            self.widget_version.hide()
+        self.button_save.clicked.connect(self.save)
+        self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
+        current = None
+        for lg, key in lang.LANGUAGES.items():
+            self.combo_languages.addItem(lg, key)
+            if key == self.core_config.gui_language:
+                current = lg
+        if current:
+            self.combo_languages.setCurrentText(current)
+        self.check_box_check_at_startup.setChecked(self.core_config.gui_check_version_at_startup)
+        self.check_box_send_data.setChecked(self.core_config.telemetry_enabled)
+        self.check_box_workspace_color.setChecked(self.core_config.gui_workspace_color)
+        self.button_check_version.clicked.connect(self.check_version)
+
+    def check_version(self):
+        d = CheckNewVersion(self.jobs_ctx, self.event_bus, self.core_config, parent=self)
+        d.exec_()
 
     def save(self):
-        self.global_settings.save()
+        self.event_bus.send(
+            "gui.config.changed",
+            telemetry_enabled=self.check_box_send_data.isChecked(),
+            gui_tray_enabled=self.check_box_tray.isChecked(),
+            gui_language=self.combo_languages.currentData(),
+            gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
+            gui_workspace_color=self.check_box_workspace_color.isChecked(),
+        )
         show_info(self, _("SETTINGS_NEED_RESTART"))

@@ -14,7 +14,6 @@ from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.settings_dialog import SettingsDialog
 from parsec.core.gui.custom_dialogs import show_info, TextInputDialog, show_error
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
@@ -74,7 +73,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_enter_url.clicked.connect(self.enter_url)
-        self.button_settings.clicked.connect(self.show_settings)
 
         self.show_login_widget()
 
@@ -127,10 +125,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def emit_login_with_password(self, key_file, password):
         self.login_with_password_clicked.emit(key_file, password)
-
-    def show_settings(self):
-        settings_dialog = SettingsDialog(self.config, self.jobs_ctx, self.event_bus, parent=self)
-        settings_dialog.exec_()
 
     def show_login_widget(self):
         self.clear_widgets()

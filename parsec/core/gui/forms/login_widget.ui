@@ -345,34 +345,6 @@ text-decoration: underline;
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="button_settings">
-               <property name="font">
-                <font>
-                 <pointsize>12</pointsize>
-                </font>
-               </property>
-               <property name="cursor">
-                <cursorShape>PointingHandCursor</cursorShape>
-               </property>
-               <property name="text">
-                <string>BUTTON_SETTINGS</string>
-               </property>
-               <property name="icon">
-                <iconset resource="../rc/resources.qrc">
-                 <normaloff>:/icons/images/icons/menu_settings.png</normaloff>:/icons/images/icons/menu_settings.png</iconset>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>20</width>
-                 <height>20</height>
-                </size>
-               </property>
-               <property name="flat">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
           </layout>

@@ -130,11 +130,25 @@ class FileLabel(QLabel):
         super().setText(text)
 
 
+class MenuButton(QPushButton):
+    def __init__(self):
+        super().__init__(QIcon(":/icons/images/icons/settings_bars.png"), "")
+        self.setMinimumSize(32, 32)
+        self.setMaximumSize(32, 32)
+        self.setFixedSize(32, 32)
+        self.setStyleSheet(
+            "QPushButton{"
+            "background-color: rgb(255, 255, 255);"
+            "border: none;"
+            "padding: 10px;"
+            "}"
+        )
+
+
 class TaskbarButton(QPushButton):
     def __init__(self, icon_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.state_string = "default"
-        self.installEventFilter
         self.setMinimumSize(64, 64)
         self.setMaximumSize(64, 64)
         self.setFixedSize(64, 64)

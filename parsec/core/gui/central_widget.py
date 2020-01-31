@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 from parsec.core.gui import desktop
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
-from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui.lang import translate as _
@@ -71,7 +70,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.new_notification.connect(self.on_new_notification)
         self.menu.files_clicked.connect(self.show_mount_widget)
         self.menu.users_clicked.connect(self.show_users_widget)
-        self.menu.settings_clicked.connect(self.show_settings_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
         self.menu.logout_clicked.connect(self.logout_requested.emit)
         self.button_notif.clicked.connect(self.show_notification_center)
@@ -94,11 +92,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.devices_widget = DevicesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.devices_widget)
-
-        self.settings_widget = SettingsWidget(
-            self.core.config, self.jobs_ctx, self.event_bus, parent=self
-        )
-        self.widget_central.layout().insertWidget(0, self.settings_widget)
 
         self._on_connection_state_changed(
             self.core.backend_conn.status, self.core.backend_conn.status_exc
@@ -241,13 +234,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons())
         self.devices_widget.show()
 
-    def show_settings_widget(self):
-        self.clear_widgets()
-        self.menu.activate_settings()
-        self.label_title.setText(_("MENU_SETTINGS"))
-        self.set_taskbar_buttons([])
-        self.settings_widget.show()
-
     def set_taskbar_buttons(self, buttons):
         while self.widget_taskbar.layout().count() != 0:
             item = self.widget_taskbar.layout().takeAt(0)
@@ -269,5 +255,4 @@ class CentralWidget(QWidget, Ui_CentralWidget):
     def clear_widgets(self):
         self.users_widget.hide()
         self.mount_widget.hide()
-        self.settings_widget.hide()
         self.devices_widget.hide()

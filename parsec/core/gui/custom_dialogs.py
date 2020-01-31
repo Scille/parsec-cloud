@@ -21,6 +21,21 @@ from parsec.core.gui import desktop
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.input_dialog import Ui_InputDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
+from parsec.core.gui.ui.misc_dialog import Ui_MiscDialog
+
+
+class MiscDialog(QDialog, Ui_MiscDialog):
+    def __init__(self, title, main_widget, parent):
+        super().__init__(parent=parent)
+        self.setupUi(self)
+        if not title:
+            self.label_title.hide()
+        else:
+            self.label_title.setText(title)
+        self.setWindowFlags(Qt.SplashScreen)
+        self.resize(main_widget.sizeHint())
+        self.layout.insertWidget(0, main_widget)
+        self.button_close.clicked.connect(self.accept)
 
 
 class TextInputDialog(QDialog, Ui_InputDialog):
