@@ -146,8 +146,6 @@ class FileTable(QTableWidget):
         if len(selected):
             action = menu.addAction(_("FILE_MENU_OPEN"))
             action.triggered.connect(self.open_clicked.emit)
-            action = menu.addAction(_("FILE_MENU_HISTORY"))
-            action.triggered.connect(self.show_history_clicked.emit)
             if self.current_user_role != WorkspaceRole.READER:
                 action = menu.addAction(_("FILE_MENU_RENAME"))
                 action.triggered.connect(self.rename_clicked.emit)
@@ -157,6 +155,9 @@ class FileTable(QTableWidget):
             action.triggered.connect(self.copy_clicked.emit)
             action = menu.addAction(_("FILE_MENU_CUT"))
             action.triggered.connect(self.cut_clicked.emit)
+        if len(selected) == 1:
+            action = menu.addAction(_("FILE_MENU_HISTORY"))
+            action.triggered.connect(self.show_history_clicked.emit)
         action = menu.addAction(_("FILE_MENU_PASTE"))
         action.triggered.connect(self.paste_clicked.emit)
         if self.paste_disabled:
