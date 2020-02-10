@@ -17,20 +17,33 @@ environment:
     - PYTHON: C:\Python36-x64
 
 build_script:
+  # PostgreSQL
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
   - which pg_config
   - pg_config --version
+
+  # Winfsp
   # Not available on chocolatey at the moment
   # - choco install winfsp -y --version=1.7.20038
   - appveyor DownloadFile https://github.com/billziss-gh/winfsp/releases/download/v1.7B1/winfsp-1.7.20038.msi
   - msiexec.exe /qn /i winfsp-1.7.20038.msi /L winfsp-install.log ADDLOCAL=ALL
   - type winfsp-install.log
+
+  # Winfsp-tests
+  - appveyor DownloadFile https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -FileName %PYTHON%\Scripts\winfsp-tests.zip
+  - 7z x %PYTHON%\Scripts\winfsp-tests.zip -o%PYTHON%\Scripts\
+
+  # Information
   - git --no-pager log -n2
   - echo %APPVEYOR_REPO_COMMIT%
+
+  # Python
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
   - python misc/releaser.py check
+
+  # Build and install wheel
   - pip install -U wheel
   - python setup.py bdist_wheel
   # TODO: insert a sarcastic comment about lacking wildcard support, powershell
