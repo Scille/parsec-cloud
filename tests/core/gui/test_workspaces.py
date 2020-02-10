@@ -46,7 +46,7 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch, i
     c_w = logged_gui.test_get_central_widget()
     assert c_w is not None
 
-    add_button = c_w.widget_taskbar.layout().itemAt(0).widget()
+    add_button = c_w.widget_taskbar.layout().itemAt(1).widget()
     assert add_button is not None
 
     workspace_name = ".." if invalid_name else "Workspace1"
@@ -88,7 +88,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     c_w = logged_gui.test_get_central_widget()
     assert c_w is not None
 
-    add_button = c_w.widget_taskbar.layout().itemAt(0).widget()
+    add_button = c_w.widget_taskbar.layout().itemAt(1).widget()
     assert add_button is not None
 
     monkeypatch.setattr(

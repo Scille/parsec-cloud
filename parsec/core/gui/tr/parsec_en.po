@@ -43,6 +43,9 @@ msgstr "Import files."
 msgid "BUTTON_TASKBAR_CREATE_FOLDER"
 msgstr "Create a new folder."
 
+msgid "FILE_LINK_CONTENT"
+msgstr "Link to the file has been copied to the clipboard."
+
 msgid "ERR_FILE_PASTE"
 msgstr "An error occured while pasting a file."
 
@@ -114,6 +117,12 @@ msgstr "Cannot delete the files."
 
 msgid "ERR_DELETE_FILE"
 msgstr "Cannot delete the file."
+
+msgid "ERR_GOTO_FILE_NOT_FOUND"
+msgstr "The file does not exist."
+
+msgid "ERR_DIR_NOT_FOUND"
+msgstr "The folder does not exist."
 
 msgid "ERR_FOLDER_CREATE_ALREADY_EXISTS"
 msgstr "A folder with this name already exists."
@@ -252,6 +261,24 @@ msgstr "Create a new device."
 
 msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
 msgstr "Create a new workspace."
+
+msgid "BUTTON_GOTO_FILE"
+msgstr "Go to a file using its path."
+
+msgid "ASK_FILE_LINK_TITLE"
+msgstr "Go to a file"
+
+msgid "ASK_FILE_LINK_CONTENT"
+msgstr "Provide a link to the file."
+
+msgid "ASK_FILE_LINK_PLACEHOLDER"
+msgstr "Link to a file"
+
+msgid "GOTO_FILE_INVALID_LINK"
+msgstr "The link is not valid."
+
+msgid "GOTO_FILE_NO_WORKSPACE"
+msgstr "The workspace does not exist."
 
 msgid "ERR_WORKSPACE_INVALID_NAME"
 msgstr "Invalid workspace name."
@@ -1231,6 +1258,9 @@ msgstr "Couper"
 
 msgid "FILE_MENU_HISTORY"
 msgstr "Show history"
+
+msgid "FILE_MENU_GET_LINK"
+msgstr "Link to this file"
 
 msgid "FILE_MENU_PASTE"
 msgstr "Coller"

@@ -7,6 +7,8 @@ from marshmallow import ValidationError
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
+from parsec.api.data import EntryID
+from parsec.core.types.base import FsPath
 
 
 PARSEC_SCHEME = "parsec"
@@ -200,6 +202,7 @@ class BackendActionAddr(BackendAddr):
                 BackendOrganizationBootstrapAddr,
                 BackendOrganizationClaimUserAddr,
                 BackendOrganizationClaimDeviceAddr,
+                BackendOrganizationFileLinkAddr,
             ):
                 try:
                     return BackendAddr.from_url.__func__(type, url)
@@ -440,6 +443,85 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
     @property
     def token(self) -> Optional[str]:
         return self._token
+
+
+class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAddr):
+    """
+    Represent the URL to share a file link
+    (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy``)
+    """
+
+    __slots__ = ("_workspace_id", "_path")
+
+    def __init__(self, workspace_id: EntryID, path: FsPath, **kwargs):
+        super().__init__(**kwargs)
+        self._workspace_id = workspace_id
+        self._path = path
+
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
+
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "file_link":
+            raise ValueError("Expected `action=file_link` value")
+
+        value = params.pop("workspace_id", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `workspace_id` param")
+        try:
+            kwargs["workspace_id"] = EntryID(value[0])
+        except ValueError as exc:
+            raise ValueError("Invalid `workspace_id` param value") from exc
+
+        value = params.pop("path", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `path` param")
+        try:
+            kwargs["path"] = FsPath(value[0])
+        except ValueError as exc:
+            raise ValueError("Invalid `path` param value") from exc
+
+        return kwargs
+
+    def _to_url_get_params(self):
+        params = [
+            ("action", "file_link"),
+            ("workspace_id", str(self._workspace_id)),
+            ("path", str(self._path)),
+        ]
+        return [*params, *super()._to_url_get_params()]
+
+    @classmethod
+    def build(
+        cls, organization_addr: BackendOrganizationAddr, workspace_id: EntryID, path: FsPath
+    ) -> "BackendOrganizationFileLinkAddr":
+        return cls(
+            hostname=organization_addr.hostname,
+            port=organization_addr.port,
+            use_ssl=organization_addr.use_ssl,
+            organization_id=organization_addr.organization_id,
+            root_verify_key=organization_addr.root_verify_key,
+            workspace_id=workspace_id,
+            path=path,
+        )
+
+    def to_organization_addr(self):
+        return BackendOrganizationAddr.build(
+            backend_addr=self,
+            organization_id=self.organization_id,
+            root_verify_key=self.root_verify_key,
+        )
+
+    @property
+    def workspace_id(self) -> EntryID:
+        return self._workspace_id
+
+    @property
+    def path(self) -> FsPath:
+        return self._path
 
 
 class BackendOrganizationAddrField(fields.Field):

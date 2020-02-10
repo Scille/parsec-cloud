@@ -49,7 +49,7 @@ async def logged_gui(
     async with aqtbot.wait_signal(wk_widget.list_success):
         pass
 
-    add_button = central_widget.widget_taskbar.layout().itemAt(0).widget()
+    add_button = central_widget.widget_taskbar.layout().itemAt(1).widget()
     assert add_button is not None
 
     monkeypatch.setattr(

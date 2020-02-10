@@ -43,6 +43,9 @@ msgstr "Importer des fichiers."
 msgid "BUTTON_TASKBAR_CREATE_FOLDER"
 msgstr "Créer un nouveau répertoire."
 
+msgid "FILE_LINK_CONTENT"
+msgstr "Le lien vers le fichier a été copié dans le presse-papier."
+
 msgid "ERR_FILE_PASTE"
 msgstr "Une erreur est survenue lors du collage d'un fichier."
 
@@ -114,6 +117,12 @@ msgstr "Impossible de supprimer les fichiers."
 
 msgid "ERR_DELETE_FILE"
 msgstr "Impossible de supprimer le fichier."
+
+msgid "ERR_GOTO_FILE_NOT_FOUND"
+msgstr "Le fichier n'existe pas."
+
+msgid "ERR_DIR_NOT_FOUND"
+msgstr "Le répertoire n'existe pas."
 
 msgid "ERR_FOLDER_CREATE_ALREADY_EXISTS"
 msgstr "Un répertoire du même nom existe déjà."
@@ -256,6 +265,24 @@ msgstr "Créer un nouvel appareil."
 
 msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
 msgstr "Créer un nouvel espace de travail."
+
+msgid "BUTTON_GOTO_FILE"
+msgstr "Accéder à un fichier par son lien."
+
+msgid "ASK_FILE_LINK_TITLE"
+msgstr "Accéder à un fichier"
+
+msgid "ASK_FILE_LINK_CONTENT"
+msgstr "Fournissez le lien vers le fichier."
+
+msgid "ASK_FILE_LINK_PLACEHOLDER"
+msgstr "Lien vers un fichier"
+
+msgid "GOTO_FILE_INVALID_LINK"
+msgstr "Le lien est invalide."
+
+msgid "GOTO_FILE_NO_WORKSPACE"
+msgstr "L'espace de travail n'existe pas."
 
 msgid "ERR_WORKSPACE_INVALID_NAME"
 msgstr "Nom d'espace de travail invalide."
@@ -1247,6 +1274,9 @@ msgstr "Cut"
 
 msgid "FILE_MENU_HISTORY"
 msgstr "Voir l'historique"
+
+msgid "FILE_MENU_GET_LINK"
+msgstr "Obtenir un lien vers le fichier"
 
 msgid "FILE_MENU_PASTE"
 msgstr "Paste"

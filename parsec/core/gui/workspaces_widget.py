@@ -7,7 +7,14 @@ from PyQt5.QtWidgets import QWidget, QDialog, QLabel
 
 import pendulum
 
-from parsec.core.types import WorkspaceEntry, FsPath, WorkspaceRole, EntryID, EntryName
+from parsec.core.types import (
+    WorkspaceEntry,
+    FsPath,
+    WorkspaceRole,
+    EntryID,
+    EntryName,
+    BackendOrganizationFileLinkAddr,
+)
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
@@ -116,7 +123,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     _workspace_created_qt = pyqtSignal(WorkspaceEntry)
-    load_workspace_clicked = pyqtSignal(WorkspaceFS)
+    load_workspace_clicked = pyqtSignal(WorkspaceFS, FsPath, bool)
     workspace_reencryption_success = pyqtSignal(QtToTrioJob)
     workspace_reencryption_error = pyqtSignal(QtToTrioJob)
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
@@ -154,6 +161,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button_add_workspace.clicked.connect(self.create_workspace_clicked)
         button_add_workspace.setToolTip(_("BUTTON_TASKBAR_ADD_WORKSPACE"))
 
+        button_goto_file = TaskbarButton(
+            icon_path=":/icons/images/icons/tray_icons/file-$STATE.svg"
+        )
+        button_goto_file.clicked.connect(self.goto_file_clicked)
+        button_goto_file.setToolTip(_("BUTTON_GOTO_FILE"))
+
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
         self.entry_downsynced_qt.connect(self._on_entry_downsynced_qt)
@@ -182,6 +195,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
 
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
+
+        self.taskbar_buttons.append(button_goto_file)
         self.taskbar_buttons.append(button_add_workspace)
 
     def disconnect_all(self):
@@ -205,6 +220,31 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         except ValueError:
             pass
 
+    def goto_file_clicked(self):
+        file_link = TextInputDialog.get_text(
+            self,
+            _("ASK_FILE_LINK_TITLE"),
+            _("ASK_FILE_LINK_CONTENT"),
+            placeholder=_("ASK_FILE_LINK_PLACEHOLDER"),
+            default_text="",
+        )
+        if not file_link:
+            return
+
+        url = None
+        try:
+            url = BackendOrganizationFileLinkAddr.from_url(file_link)
+        except ValueError as exc:
+            show_error(self, _("GOTO_FILE_INVALID_LINK"), exception=exc)
+            return
+
+        for item in self.layout_workspaces.items:
+            w = item.widget()
+            if w and w.workspace_fs.workspace_id == url.workspace_id:
+                self.load_workspace(w.workspace_fs, path=url.path, selected=True)
+                return
+        show_warning(self, _("GOTO_FILE_NO_WORKSPACE"))
+
     def on_workspace_filter(self, pattern):
         pattern = pattern.lower()
         for i in range(self.layout_workspaces.count()):
@@ -216,8 +256,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 else:
                     w.show()
 
-    def load_workspace(self, workspace_fs):
-        self.load_workspace_clicked.emit(workspace_fs)
+    def load_workspace(self, workspace_fs, path=FsPath("/"), selected=False):
+        self.load_workspace_clicked.emit(workspace_fs, path, selected)
 
     def on_create_success(self, job):
         pass
