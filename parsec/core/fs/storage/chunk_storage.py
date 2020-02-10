@@ -167,6 +167,6 @@ class BlockStorage(ChunkStorage):
         extra_blocks = nb_blocks - self.block_limit
         if extra_blocks > 0:
 
-            # Remove the extra block plus 10 % of the cache size, i.e 26 blocks
+            # Remove the extra block plus 10 % of the cache size, i.e about 100 blocks
             limit = extra_blocks + self.block_limit // 10
             await self.clear_old_blocks(limit=limit)
