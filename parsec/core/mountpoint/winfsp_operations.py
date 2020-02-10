@@ -408,7 +408,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def read(self, file_context, offset, length):
-        buffer = self.fs_access.fd_read(file_context.fd, length, offset)
+        buffer = self.fs_access.fd_read(file_context.fd, length, offset, raise_eof=True)
         return buffer
 
     @handle_error

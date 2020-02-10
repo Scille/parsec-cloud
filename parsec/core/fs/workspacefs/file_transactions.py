@@ -10,7 +10,7 @@ from parsec.core.types import FileDescriptor, EntryID, LocalDevice
 
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs.storage import WorkspaceStorage
-from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor
+from parsec.core.fs.exceptions import FSLocalMissError, FSInvalidFileDescriptor, FSEndOfFileError
 from parsec.core.types import Chunk, BlockID, LocalFileManifest
 from parsec.core.fs.workspacefs.file_operations import (
     prepare_read,
@@ -190,7 +190,7 @@ class FileTransactions:
         # Notify
         self._send_event("fs.entry.updated", id=manifest.id)
 
-    async def fd_read(self, fd: FileDescriptor, size: int, offset: int) -> bytes:
+    async def fd_read(self, fd: FileDescriptor, size: int, offset: int, raise_eof=False) -> bytes:
         # Loop over attemps
         missing = []
         while True:
@@ -200,6 +200,10 @@ class FileTransactions:
 
             # Fetch and lock
             async with self._load_and_lock_file(fd) as manifest:
+
+                # End of file
+                if raise_eof and offset >= manifest.size:
+                    raise FSEndOfFileError()
 
                 # Normalize
                 offset = normalize_argument(offset, manifest)

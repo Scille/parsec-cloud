@@ -131,7 +131,8 @@ class FuseOperations(LoggingMixIn, Operations):
         self.fs_access.fd_close(fh)
 
     def read(self, path: FsPath, size: int, offset: int, fh: int):
-        ret = self.fs_access.fd_read(fh, size, offset)
+        # Atomic read
+        ret = self.fs_access.fd_read(fh, size, offset, raise_eof=False)
         # Fuse wants bytes but fd_read returns a bytearray
         return bytes(ret)
 

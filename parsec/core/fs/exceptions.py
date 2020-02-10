@@ -189,6 +189,11 @@ class FSInvalidArgumentError(FSLocalOperationError):
     NTSTATUS = ntstatus.STATUS_INVALID_PARAMETER
 
 
+class FSEndOfFileError(FSLocalOperationError):
+    ERRNO = errno.EINVAL
+    NTSTATUS = ntstatus.STATUS_END_OF_FILE
+
+
 # Remote operation errors
 
 
