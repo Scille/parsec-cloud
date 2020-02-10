@@ -413,13 +413,13 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def write(self, file_context, buffer, offset, write_to_end_of_file, constrained_io):
-        # `constrained_io` seems too complicated to implement for us
+        # Adapt offset
         if write_to_end_of_file:
             offset = -1
-        # LocalStorage.set only wants bytes or bytearray...
+        # LocalStorage.set only wants bytes or bytearray, not a cffi buffer
         buffer = bytes(buffer)
-        ret = self.fs_access.fd_write(file_context.fd, buffer, offset)
-        return ret
+        # Atomic write
+        return self.fs_access.fd_write(file_context.fd, buffer, offset, constrained_io)
 
     @handle_error
     def flush(self, file_context) -> None:
@@ -436,4 +436,4 @@ class WinFSPOperations(BaseFileSystemOperations):
     def overwrite(
         self, file_context, file_attributes, replace_file_attributes: bool, allocation_size: int
     ) -> None:
-        self.fs_access.fd_resize(file_context.fd, 0)
+        self.fs_access.fd_resize(file_context.fd, allocation_size, truncate_only=True)

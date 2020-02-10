@@ -146,9 +146,17 @@ class FileTransactions:
             # Clear write count
             self._write_count.pop(fd, None)
 
-    async def fd_write(self, fd: FileDescriptor, content: bytes, offset: int) -> int:
+    async def fd_write(
+        self, fd: FileDescriptor, content: bytes, offset: int, constrained: bool = False
+    ) -> int:
         # Fetch and lock
         async with self._load_and_lock_file(fd) as manifest:
+
+            # Constrained - truncate content to the right length
+            if constrained:
+                end_offset = min(manifest.size, offset + len(content))
+                length = max(end_offset - offset, 0)
+                content = content[:length]
 
             # No-op
             if not content:
