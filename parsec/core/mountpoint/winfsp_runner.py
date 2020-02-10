@@ -146,7 +146,10 @@ async def winfsp_mountpoint_runner(
         um_file_context_is_user_context2=1,
         file_system_name="Parsec",
         prefix="",
-        irp_timeout=60000,  # The minimum value for IRP timeout is 1 minute (default is 5)
+        # The minimum value for IRP timeout is 1 minute (default is 5)
+        irp_timeout=60000,
+        # Work around the avast/winfsp incompatibility
+        reject_irp_prior_to_transact0=True,
         # security_timeout_valid=1,
         # security_timeout=10000,
     )
