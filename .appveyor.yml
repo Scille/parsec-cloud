@@ -20,7 +20,11 @@ build_script:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
   - which pg_config
   - pg_config --version
-  - choco install winfsp -y --version=1.4.19049
+  # Not available on chocolatey at the moment
+  # - choco install winfsp -y --version=1.7.20038
+  - appveyor DownloadFile https://github.com/billziss-gh/winfsp/releases/download/v1.7B1/winfsp-1.7.20038.msi
+  - msiexec.exe /qn /i winfsp-1.7.20038.msi /L winfsp-install.log ADDLOCAL=ALL
+  - type winfsp-install.log
   - git --no-pager log -n2
   - echo %APPVEYOR_REPO_COMMIT%
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%

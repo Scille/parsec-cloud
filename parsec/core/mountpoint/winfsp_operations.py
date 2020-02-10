@@ -211,7 +211,7 @@ class WinFSPOperations(BaseFileSystemOperations):
     def __init__(self, event_bus, volume_label, fs_access):
         super().__init__()
         # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
-        self._security_descriptor = SecurityDescriptor(
+        self._security_descriptor = SecurityDescriptor.from_string(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"
         )
