@@ -160,6 +160,12 @@ async def winfsp_mountpoint_runner(
         # This is because fs.start() might get stuck for while in case of an IRP timeout
         await trio.to_thread.run_sync(fs.start, cancellable=True)
 
+        # Because of reject_irp_prior_to_transact0, the mountpoint isn't ready yet
+        # We have to add a bit of delay here, the tests would fail otherwise
+        # 10 ms is more than enough, although a strict process would be nicer
+        # Still, this is only temporary as avast is working on a fix at the moment
+        await trio.sleep(0.01)
+
         event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
         task_status.started(mountpoint_path)
 
