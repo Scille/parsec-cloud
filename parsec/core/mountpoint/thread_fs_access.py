@@ -62,14 +62,14 @@ class ThreadFSAccess:
     def fd_seek(self, fh, offset):
         return self._run(self.workspace_fs.transactions.fd_seek, fh, offset)
 
-    def fd_read(self, fh, size, offset):
-        return self._run(self.workspace_fs.transactions.fd_read, fh, size, offset)
+    def fd_read(self, fh, size, offset, raise_eof=False):
+        return self._run(self.workspace_fs.transactions.fd_read, fh, size, offset, raise_eof)
 
-    def fd_write(self, fh, data, offset):
-        return self._run(self.workspace_fs.transactions.fd_write, fh, data, offset)
+    def fd_write(self, fh, data, offset, constrained=False):
+        return self._run(self.workspace_fs.transactions.fd_write, fh, data, offset, constrained)
 
-    def fd_resize(self, fh, length):
-        return self._run(self.workspace_fs.transactions.fd_resize, fh, length)
+    def fd_resize(self, fh, length, truncate_only=False):
+        return self._run(self.workspace_fs.transactions.fd_resize, fh, length, truncate_only)
 
     def fd_flush(self, fh):
         return self._run(self.workspace_fs.transactions.fd_flush, fh)

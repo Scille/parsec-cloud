@@ -171,7 +171,11 @@ def stat_to_winfsp_attributes(stat):
         attributes["file_size"] = 0
 
     else:
-        attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_NORMAL
+        # FILE_ATTRIBUTE_ARCHIVE is a good default attribute
+        # This way, we don't need to deal with the weird semantics of
+        # FILE_ATTRIBUTE_NORMAL which means "no other attributes is set"
+        # Also, this is what the winfsp memfs does.
+        attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_ARCHIVE
         attributes["allocation_size"] = round_to_block_size(stat["size"])
         attributes["file_size"] = stat["size"]
 
@@ -211,7 +215,7 @@ class WinFSPOperations(BaseFileSystemOperations):
     def __init__(self, event_bus, volume_label, fs_access):
         super().__init__()
         # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
-        self._security_descriptor = SecurityDescriptor(
+        self._security_descriptor = SecurityDescriptor.from_string(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"
         )
@@ -345,9 +349,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def set_file_size(self, file_context, new_size, set_allocation_size):
-
-        if not set_allocation_size:
-            self.fs_access.fd_resize(file_context.fd, new_size)
+        self.fs_access.fd_resize(file_context.fd, new_size, truncate_only=set_allocation_size)
 
     @handle_error
     def can_delete(self, file_context, file_name: str) -> None:
@@ -363,15 +365,24 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def read_directory(self, file_context, marker):
+        entries = []
         stat = self.fs_access.entry_info(file_context.path)
 
         if stat["type"] == "file":
             raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
 
-        # Given `..` is always the first item, if a marker is provided
-        # it could be `..` (hence we must skip `..`) or something else (hence
-        # the marker is after `..`). In all case we skip `..`.
-        items = [] if marker is not None else [{"file_name": ".."}]
+        # The "." and ".." directories should ONLY be included
+        # if the queried directory is not root
+        if not file_context.path.is_root():
+
+            # Current directory
+            entry = {"file_name": ".", **stat_to_winfsp_attributes(stat)}
+            entries.append(entry)
+
+            # Parent directory
+            parent_stat = self.fs_access.entry_info(file_context.path.parent)
+            entry = {"file_name": "..", **stat_to_winfsp_attributes(parent_stat)}
+            entries.append(entry)
 
         # Note we *do not* rely on alphabetically sorting to compare the
         # marker given `..` is always the first element event if we could
@@ -381,32 +392,37 @@ class WinFSPOperations(BaseFileSystemOperations):
             for child_name in iter_children_names:
                 if child_name == marker:
                     break
+
         # All remaining children are located after the marker
         for child_name in iter_children_names:
+            name = winify_entry_name(child_name)
             child_stat = self.fs_access.entry_info(file_context.path / child_name)
-            items.append(
-                {
-                    "file_name": winify_entry_name(child_name),
-                    **stat_to_winfsp_attributes(child_stat),
-                }
-            )
+            entry = {"file_name": name, **stat_to_winfsp_attributes(child_stat)}
+            entries.append(entry)
 
-        return items
+        return entries
+
+    @handle_error
+    def get_dir_info_by_name(self, file_context, file_name):
+        child_name = unwinify_entry_name(file_name)
+        stat = self.fs_access.entry_info(file_context.path / child_name)
+        entry = {"file_name": file_name, **stat_to_winfsp_attributes(stat)}
+        return entry
 
     @handle_error
     def read(self, file_context, offset, length):
-        buffer = self.fs_access.fd_read(file_context.fd, length, offset)
+        buffer = self.fs_access.fd_read(file_context.fd, length, offset, raise_eof=True)
         return buffer
 
     @handle_error
     def write(self, file_context, buffer, offset, write_to_end_of_file, constrained_io):
-        # `constrained_io` seems too complicated to implement for us
+        # Adapt offset
         if write_to_end_of_file:
             offset = -1
-        # LocalStorage.set only wants bytes or bytearray...
+        # LocalStorage.set only wants bytes or bytearray, not a cffi buffer
         buffer = bytes(buffer)
-        ret = self.fs_access.fd_write(file_context.fd, buffer, offset)
-        return ret
+        # Atomic write
+        return self.fs_access.fd_write(file_context.fd, buffer, offset, constrained_io)
 
     @handle_error
     def flush(self, file_context) -> None:
@@ -423,4 +439,4 @@ class WinFSPOperations(BaseFileSystemOperations):
     def overwrite(
         self, file_context, file_attributes, replace_file_attributes: bool, allocation_size: int
     ) -> None:
-        self.fs_access.fd_resize(file_context.fd, 0)
+        self.fs_access.fd_resize(file_context.fd, allocation_size, truncate_only=True)

@@ -142,12 +142,14 @@ async def winfsp_mountpoint_runner(
         named_streams=0,
         read_only_volume=0,
         post_cleanup_when_modified_only=1,
-        pass_query_directory_file_name=0,  # TODO: implement `operations.get_dir_info_by_name`
         device_control=0,
         um_file_context_is_user_context2=1,
-        file_system_name="parsec-mnt",
+        file_system_name="Parsec",
         prefix="",
-        irp_timeout=60000,  # The minimum value for IRP timeout is 1 minute (default is 5)
+        # The minimum value for IRP timeout is 1 minute (default is 5)
+        irp_timeout=60000,
+        # Work around the avast/winfsp incompatibility
+        reject_irp_prior_to_transact0=True,
         # security_timeout_valid=1,
         # security_timeout=10000,
     )
@@ -157,6 +159,15 @@ async def winfsp_mountpoint_runner(
         # Run fs start in a thread, as a cancellable operation
         # This is because fs.start() might get stuck for while in case of an IRP timeout
         await trio.to_thread.run_sync(fs.start, cancellable=True)
+
+        # Because of reject_irp_prior_to_transact0, the mountpoint isn't ready yet
+        # We have to add a bit of delay here, the tests would fail otherwise
+        # 10 ms is more than enough, although a strict process would be nicer
+        # Still, this is only temporary as avast is working on a fix at the moment
+        # Another way to address this problem would be to migrate to python 3.8,
+        # then use `os.stat` to differentiate between a started and a non-started
+        # file syste.
+        await trio.sleep(0.01)
 
         event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
         task_status.started(mountpoint_path)

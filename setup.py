@@ -307,6 +307,11 @@ test_requirements = [
     "hypothesis-trio==0.5.0",
     "trustme==0.5.2",
     "black==19.3b0",  # Pin black to avoid flaky style check
+    # Winfstest requirements
+    # We can't use `winfspy[test]` because of some pip limitations
+    # - see pip issues #7096/#6239/#4391/#988
+    # Looking forward to the new pip dependency resolver!
+    'pywin32==227;platform_system=="Windows"',
 ]
 
 
@@ -318,7 +323,7 @@ extra_requirements = {
         PYQT_DEP,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.7.0;platform_system=="Windows"',
+        'winfspy==0.7.3;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
