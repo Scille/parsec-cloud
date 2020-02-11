@@ -30,8 +30,8 @@ from parsec.core.fs.storage.version import WORKSPACE_DATA_STORAGE_NAME, WORKSPAC
 logger = get_logger()
 
 # TODO: should be in config.py
-DEFAULT_BLOCK_CACHE_SIZE = 128 * 1024 * 1024
-DEFAULT_CHUNK_VACUUM_THRESHOLD = 128 * 1024 * 1024
+DEFAULT_BLOCK_CACHE_SIZE = 512 * 1024 * 1024
+DEFAULT_CHUNK_VACUUM_THRESHOLD = 512 * 1024 * 1024
 
 
 class WorkspaceStorage:
