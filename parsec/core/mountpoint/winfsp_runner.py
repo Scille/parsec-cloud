@@ -164,6 +164,9 @@ async def winfsp_mountpoint_runner(
         # We have to add a bit of delay here, the tests would fail otherwise
         # 10 ms is more than enough, although a strict process would be nicer
         # Still, this is only temporary as avast is working on a fix at the moment
+        # Another way to address this problem would be to migrate to python 3.8,
+        # then use `os.stat` to differentiate between a started and a non-started
+        # file syste.
         await trio.sleep(0.01)
 
         event_bus.send("mountpoint.started", mountpoint=mountpoint_path)

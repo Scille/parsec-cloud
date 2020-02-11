@@ -52,7 +52,7 @@ def test_teardown_during_fs_access(mountpoint_service, monkeypatch):
             # Given this is the behavior we are testing here, make sure we
             # have actually reach this point before going further.
             mountpoint_winfsp_stop.wait()
-            # Make sure winfsp shutdown gets block by this operation
+            # Make sure winfsp shutdown gets blocked by this operation
             time.sleep(0.1)
         return vanilla_entry_info(self, path)
 

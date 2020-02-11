@@ -171,6 +171,10 @@ def stat_to_winfsp_attributes(stat):
         attributes["file_size"] = 0
 
     else:
+        # FILE_ATTRIBUTE_ARCHIVE is a good default attribute
+        # This way, we don't need to deal with the weird semantics of
+        # FILE_ATTRIBUTE_NORMAL which means "no other attributes is set"
+        # Also, this is what the winfsp memfs does.
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_ARCHIVE
         attributes["allocation_size"] = round_to_block_size(stat["size"])
         attributes["file_size"] = stat["size"]
@@ -345,8 +349,7 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def set_file_size(self, file_context, new_size, set_allocation_size):
-        truncate_only = set_allocation_size
-        self.fs_access.fd_resize(file_context.fd, new_size, truncate_only=truncate_only)
+        self.fs_access.fd_resize(file_context.fd, new_size, truncate_only=set_allocation_size)
 
     @handle_error
     def can_delete(self, file_context, file_name: str) -> None:
