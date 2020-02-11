@@ -58,12 +58,19 @@ test_script:
   - cd empty
   # No sed ? Hold my beer !
   - python -c "from pathlib import Path; fd = Path('../setup.cfg'); fd.write_text(fd.read_text().replace('parsec/core/gui/*', 'parsec/core/gui/*,../parsec/core/gui/*'))"
-  # Run everything with memory driver
-  - py.test ../tests/ --runmountpoint --runslow --max-worker-restart=0  --log-level=DEBUG -vvv --cov=parsec --cov-config=../setup.cfg --cov-append
-  # Run backend tests with postgresql driver
-  - py.test ../tests/backend ../tests/test_cli.py --postgresql --runslow -n 2 --max-worker-restart=0  --log-level=DEBUG -vvv -x --cov=parsec --cov-config=../setup.cfg --cov-append
-  # Finally only run gui tests without parallelism
-  - py.test ../tests/ -m gui --runmountpoint --runslow --rungui -vvv -x --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+  - set PYTEST_OPTS=--log-level=DEBUG -vvv -x --cov=parsec --cov-config=../setup.cfg --cov-append
+
+  # Run basic tests
+  - py.test ../tests/ %PYTEST_OPTS%
+  # Run mountpoint tests without parallelism
+  - py.test ../tests/ -m mountpoint --runmountpoint --runslow %PYTEST_OPTS%
+  # Run gui tests without parallelism
+  - py.test ../tests/ -m gui --runmountpoint --runslow --rungui %PYTEST_OPTS%
+  # Run backend tests with parallelism postgresql driver
+  - py.test ../tests/backend ../tests/test_cli.py --postgresql --runslow -n 2 --max-worker-restart=0 %PYTEST_OPTS%
+  # Run slow tests with parallelism with memory driver
+  - py.test ../tests/ -m slow --runslow -n 2 --max-worker-restart=0 %PYTEST_OPTS%
+
 
 on_success:
   - pip install -U --user codecov
