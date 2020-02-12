@@ -6,6 +6,36 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.6.0 (2020-02-12)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Added a global menu to the GUI  (`#945 <https://github.com/Scille/parsec-
+  cloud/issues/945>`__)
+* Add a line under the tab bar  (`#942 <https://github.com/Scille/parsec-
+  cloud/issues/942>`__)
+* Removed tab title length limit  (`#944 <https://github.com/Scille/parsec-
+  cloud/issues/944>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Clear password input when switching device on login  (`#946
+  <https://github.com/Scille/parsec-cloud/issues/946>`__)
+* Fix files display on low horizontal resolutions  (`#926
+  <https://github.com/Scille/parsec-cloud/issues/926>`__)
+* Display an error when trying to move a folder into itself  (`#935
+  <https://github.com/Scille/parsec-cloud/issues/935>`__)
+* Fix users and devices being hidden on low resolutions  (`#927
+  <https://github.com/Scille/parsec-cloud/issues/927>`__)
+* Disable Paste button if nothing has been copied/cut  (`#934
+  <https://github.com/Scille/parsec-cloud/issues/934>`__)
+* Fix menu bar being resized when changing window size  (`#932
+  <https://github.com/Scille/parsec-cloud/issues/932>`__)
+
+
 Parsec 1.5.0 (2020-01-20)
 -------------------------
 

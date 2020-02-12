@@ -1,1 +1,0 @@
-Fix users and devices being hidden on low resolutions
