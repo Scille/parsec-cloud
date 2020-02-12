@@ -21,6 +21,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointNotMounted,
     MountpointDisabled,
 )
+from parsec.core.mountpoint.winify import winify_entry_name
 
 
 def get_mountpoint_runner():
@@ -71,12 +72,9 @@ class MountpointManager:
         self._timestamped_workspacefs = {}
 
         if os.name == "nt":
-            from parsec.core.mountpoint.winfsp_operations import winify_entry_name
-
             self._build_mountpoint_path = lambda base_path, parts: base_path / "\\".join(
                 winify_entry_name(x) for x in parts
             )
-
         else:
             self._build_mountpoint_path = lambda base_path, parts: base_path / "/".join(parts)
 
