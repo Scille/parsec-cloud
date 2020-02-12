@@ -5,6 +5,8 @@ import os
 import time
 import threading
 
+from parsec.core.fs.utils import ntstatus
+
 
 @pytest.mark.win32
 @pytest.mark.mountpoint
@@ -219,3 +221,12 @@ def test_iterdir_with_marker(mountpoint_service):
     # Note `os.listdir()` ignores `.` and `..` entries
     entries_names = os.listdir(mountpoint_service.wpath)
     assert entries_names == expected_entries_names
+
+
+@pytest.mark.win32
+@pytest.mark.mountpoint
+def test_ntstatus_in_fs_errors():
+    from winfspy.plumbing.winstuff import NTSTATUS
+
+    for status in ntstatus:
+        assert getattr(NTSTATUS, status.name) == status
