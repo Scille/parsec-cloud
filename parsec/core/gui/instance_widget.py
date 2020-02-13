@@ -205,6 +205,13 @@ class InstanceWidget(QWidget):
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.show()
 
+    def get_central_widget(self):
+        item = self.layout().itemAt(0)
+        if item:
+            if isinstance(item.widget(), CentralWidget):
+                return item.widget()
+        return None
+
     def clear_widgets(self):
         item = self.layout().takeAt(0)
         if item:

@@ -51,7 +51,9 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.files_widget.set_workspace_fs(
             workspace_fs,
             current_directory=default_path.parent,
-            default_selection=default_path.name if selected else None,
+            default_selection=default_path.name
+            if len(default_path.parts) != 0 and selected
+            else None,
         )
         self.files_widget.show()
         self.widget_switched.emit(self.files_widget.get_taskbar_buttons().copy())

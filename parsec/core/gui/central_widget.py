@@ -239,7 +239,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             item = self.widget_taskbar.layout().takeAt(0)
             if item:
                 w = item.widget()
-                self.widget_taskbar.layout().removeWidget(w)
+                w.hide()
                 w.setParent(None)
         buttons.append(self.button_notif)
         total_width = 0
