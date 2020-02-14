@@ -12,6 +12,14 @@ echo "This script must be sourced. Use --help for more information."
 exit 1
 fi
 
+no_clean=0
+
+if [[ "$1" == "--no-clean" ]];
+then
+    no_clean=1
+    shift
+fi
+
 # Cross-shell script directory detection
 if [ -n "$BASH_SOURCE" ]; then
   script_dir=$(dirname $(realpath -s $BASH_SOURCE))
@@ -25,6 +33,11 @@ $script_dir/run_testenv.py --source-file $source_file $@ || return $?
 source $source_file
 
 # Clean up
-rm $source_file
-unset source_file
-unset script_dir
+if [[ "$no_clean" == "1" ]];
+then
+    echo "You can source '$source_file' in another term"
+else
+    rm $source_file
+    unset source_file
+    unset script_dir
+fi
