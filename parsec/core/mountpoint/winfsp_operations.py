@@ -100,6 +100,9 @@ def stat_to_winfsp_attributes(stat):
         attributes["allocation_size"] = round_to_block_size(stat["size"])
         attributes["file_size"] = stat["size"]
 
+    # Disable content indexing for all files and directories
+    attributes["file_attributes"] |= FILE_ATTRIBUTE.FILE_ATTRIBUTE_NOT_CONTENT_INDEXED
+
     return attributes
 
 
