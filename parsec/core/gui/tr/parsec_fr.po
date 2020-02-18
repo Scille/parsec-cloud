@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-01-30 10:28+0100\n"
-"PO-Revision-Date: 2020-01-30 10:30+0100\n"
+"POT-Creation-Date: 2020-02-18 05:29+0100\n"
+"PO-Revision-Date: 2020-02-18 05:34+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -235,6 +235,19 @@ msgstr ""
 
 msgid "ERR_CLAIM_USER_UNKNOWN"
 msgstr "Impossible d'enregistrer l'utilisateur."
+
+msgid "ASK_PASSWORD_WARNING_TITLE"
+msgstr "Importance du mot de passe"
+
+msgid "ASK_PASSWORD_WARNING_CONTENT"
+msgstr ""
+"Votre mot de passe est extrêmement important. Sans lui, vous ne pourrez pas "
+"récupérer vos données.\n"
+"Nous vous encourageons à en choisir un que vous retiendrez, à créer d'autres "
+"appareils, ainsi qu'à partager vos données avec d'autres utilisateurs si "
+"commode.\n"
+"\n"
+"Êtes-vous satisfait de ce mot de passe ?"
 
 msgid "DEVICE_CURRENT_TEXT"
 msgstr "actuel"
@@ -1233,9 +1246,6 @@ msgstr "Commencer"
 msgid "FILE_MENU_OPEN"
 msgstr "Ouvrir"
 
-msgid "FILE_MENU_HISTORY"
-msgstr "Voir l'historique"
-
 msgid "FILE_MENU_RENAME"
 msgstr "Renommer"
 
@@ -1247,6 +1257,9 @@ msgstr "Copy"
 
 msgid "FILE_MENU_CUT"
 msgstr "Cut"
+
+msgid "FILE_MENU_HISTORY"
+msgstr "Voir l'historique"
 
 msgid "FILE_MENU_PASTE"
 msgstr "Paste"

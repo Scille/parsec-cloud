@@ -14,7 +14,7 @@ from parsec.core.invite_claim import (
 from parsec.core.gui import validators
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_dialogs import show_error, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
@@ -192,6 +192,12 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
 
     def claim_clicked(self):
         assert not self.claim_user_job
+
+        r = QuestionDialog.ask(
+            self, _("ASK_PASSWORD_WARNING_TITLE"), _("ASK_PASSWORD_WARNING_CONTENT")
+        )
+        if not r:
+            return
 
         self.claim_user_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "claim_success"),

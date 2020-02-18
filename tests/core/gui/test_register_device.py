@@ -51,7 +51,14 @@ async def test_register_device_open_modal(aqtbot, logged_gui, running_backend):
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_device_modal_ok(
-    aqtbot, gui, logged_gui, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot,
+    gui,
+    logged_gui,
+    running_backend,
+    qt_thread_gateway,
+    alice,
+    autoclose_dialog,
+    monkeypatch,
 ):
     d_w = logged_gui.test_get_devices_widget()
     assert d_w is not None
@@ -81,6 +88,9 @@ async def test_register_device_modal_ok(
         assert modal.line_edit_url.text()
         assert modal.line_edit_device_name.text() == "new_device"
         assert modal.line_edit_token.text()
+        monkeypatch.setattr(
+            "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+        )
         with aqtbot.qtbot.waitSignal(modal.device_registered):
             _claim_device(modal.line_edit_token.text(), modal.line_edit_url.text(), "P@ssw0rd!")
         assert (

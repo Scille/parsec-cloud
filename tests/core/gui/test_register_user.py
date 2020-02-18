@@ -60,7 +60,14 @@ async def test_register_user_open_modal(aqtbot, logged_gui_alice, running_backen
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_register_user_modal_ok(
-    aqtbot, gui, logged_gui_alice, running_backend, qt_thread_gateway, alice, autoclose_dialog
+    aqtbot,
+    gui,
+    logged_gui_alice,
+    running_backend,
+    qt_thread_gateway,
+    alice,
+    autoclose_dialog,
+    monkeypatch,
 ):
     u_w = logged_gui_alice.test_get_users_widget()
     assert u_w is not None
@@ -91,6 +98,9 @@ async def test_register_user_modal_ok(
         assert modal.line_edit_url.text()
         assert modal.line_edit_username.text() == "new_user"
         assert modal.line_edit_token.text()
+        monkeypatch.setattr(
+            "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+        )
         with aqtbot.qtbot.waitSignal(modal.user_registered):
             _claim_user(
                 "laptop", modal.line_edit_token.text(), modal.line_edit_url.text(), "P@ssw0rd!"

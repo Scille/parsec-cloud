@@ -21,7 +21,7 @@ from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
 )
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_dialogs import show_error, QuestionDialog
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators
@@ -185,6 +185,12 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
 
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
+
+        r = QuestionDialog.ask(
+            self, _("ASK_PASSWORD_WARNING_TITLE"), _("ASK_PASSWORD_WARNING_CONTENT")
+        )
+        if not r:
+            return
 
         self.bootstrap_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "bootstrap_success"),

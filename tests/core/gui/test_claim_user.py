@@ -57,6 +57,9 @@ async def test_claim_user(aqtbot, gui, autoclose_dialog, alice_invite, monkeypat
     assert claim_w is not None
 
     autoclose_dialog.dialogs = []
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
     async with aqtbot.wait_signal(claim_w.user_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
@@ -73,6 +76,9 @@ async def test_claim_user_offline(
     claim_w = gui.test_get_claim_user_widget()
 
     assert claim_w is not None
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
 
     with running_backend.offline():
         async with aqtbot.wait_signal(claim_w.claim_error):
@@ -95,6 +101,9 @@ async def test_claim_user_unknown_error(monkeypatch, aqtbot, gui, autoclose_dial
         raise RuntimeError()
 
     monkeypatch.setattr("parsec.core.gui.claim_user_widget.core_claim_user", _broken)
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
 
     async with aqtbot.wait_signal(claim_w.claim_error):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)

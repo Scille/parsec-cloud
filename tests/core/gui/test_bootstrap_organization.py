@@ -47,6 +47,10 @@ async def test_bootstrap_organization(aqtbot, running_backend, gui, autoclose_di
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch)
 
     bootstrap_w = gui.test_get_bootstrap_organization_widget()
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
+
     async with aqtbot.wait_signal(bootstrap_w.organization_bootstrapped):
         await aqtbot.mouse_click(bootstrap_w.button_bootstrap, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
@@ -63,6 +67,10 @@ async def test_bootstrap_organization_backend_offline(
     aqtbot, running_backend, gui, autoclose_dialog, monkeypatch
 ):
     await _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch)
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
 
     with running_backend.offline():
         bootstrap_w = gui.test_get_bootstrap_organization_widget()
@@ -87,6 +95,9 @@ async def test_bootstrap_organization_unknown_error(
 
     monkeypatch.setattr(
         "parsec.core.gui.bootstrap_organization_widget.UserCertificateContent", _broken
+    )
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
     )
 
     async with aqtbot.wait_signal(bootstrap_w.bootstrap_error):

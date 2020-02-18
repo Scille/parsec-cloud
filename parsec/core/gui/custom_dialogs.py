@@ -149,7 +149,7 @@ class QuestionDialog(QDialog, Ui_QuestionDialog):
         self.label_message.setText(message)
         self.setWindowFlags(Qt.SplashScreen)
         message_size = self.label_message.sizeHint()
-        self.resize(self.sizeHint().width(), message_size.height() * 2 + 85)
+        self.resize(self.sizeHint().width(), message_size.height() * 2 + 100)
 
     @classmethod
     def ask(cls, parent, title, message):

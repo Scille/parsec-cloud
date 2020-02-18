@@ -59,6 +59,10 @@ async def _gui_ready_for_claim(aqtbot, gui, invitation, monkeypatch):
 async def test_claim_device(aqtbot, gui, autoclose_dialog, alice_invite, monkeypatch):
     await _gui_ready_for_claim(aqtbot, gui, alice_invite, monkeypatch)
     claim_w = gui.test_get_claim_device_widget()
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
+
     async with aqtbot.wait_signal(claim_w.device_claimed):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
     assert autoclose_dialog.dialogs == [
@@ -73,6 +77,10 @@ async def test_claim_device_offline(
 ):
     await _gui_ready_for_claim(aqtbot, gui, alice_invite, monkeypatch)
     claim_w = gui.test_get_claim_device_widget()
+
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
 
     with running_backend.offline():
         async with aqtbot.wait_signal(claim_w.claim_error):
@@ -93,6 +101,9 @@ async def test_claim_device_unknown_error(monkeypatch, aqtbot, gui, autoclose_di
         raise RuntimeError()
 
     monkeypatch.setattr("parsec.core.gui.claim_device_widget.core_claim_device", _broken)
+    monkeypatch.setattr(
+        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+    )
 
     async with aqtbot.wait_signal(claim_w.claim_error):
         await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)

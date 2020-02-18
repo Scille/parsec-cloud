@@ -12,7 +12,7 @@ from parsec.core.invite_claim import (
     InviteClaimBackendOfflineError,
 )
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.custom_dialogs import show_error, show_info
+from parsec.core.gui.custom_dialogs import show_error, show_info, QuestionDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
@@ -178,6 +178,12 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
 
     def claim_clicked(self):
         assert not self.claim_device_job
+
+        r = QuestionDialog.ask(
+            self, _("ASK_PASSWORD_WARNING_TITLE"), _("ASK_PASSWORD_WARNING_CONTENT")
+        )
+        if not r:
+            return
 
         self.claim_device_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "claim_success"),
