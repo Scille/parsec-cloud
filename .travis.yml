@@ -3,14 +3,18 @@ language: python
 python:
 - '3.6'
 #- '3.7-dev'
-services:
-- postgresql
+
 addons:
-  postgresql: "9.5"
   apt:
     packages:
-    - postgresql-server-dev-9.5
+    - postgresql-10
+    - postgresql-server-dev-10
     - desktop-file-utils
+
+env:
+  global:
+  - PGINSTALLATION=/usr/lib/postgresql/10/bin
+
 install:
 # Update packaging packages
 - pip install -U wheel pip setuptools
@@ -22,8 +26,10 @@ install:
 - pip install $(ls dist/parsec_cloud-*.whl)[all]
 # Check dependency compatibility
 - pip check parsec[all]
+
 before_script:
 - sudo modprobe fuse
+
 script:
 - set -e  # stop build as soon as a command fails
 - git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
@@ -41,11 +47,14 @@ script:
 # The GUI tests fail on travis for some reason, even with the xvfb service
 # - py.test ../tests/ -m gui --runmountpoint --runslow --rungui -vvv -x --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
 - set +e
+
 after_success:
 - pip install -U codecov
 - codecov
+
 before_deploy:
 - cd $TRAVIS_BUILD_DIR
+
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
