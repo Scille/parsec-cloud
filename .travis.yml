@@ -12,7 +12,7 @@ addons:
     - postgresql-server-dev-9.5
     - desktop-file-utils
 install:
-- pip install -U wheel
+- pip install -U wheel pip setuptools
 - python setup.py bdist_wheel
 - pip install $(ls dist/parsec_cloud-*.whl)[all]
 before_script:
