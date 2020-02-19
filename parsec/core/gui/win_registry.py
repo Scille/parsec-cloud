@@ -23,6 +23,9 @@ DK_ICON_PATH = (
 )
 PARSEC_INSTALL_PATH = "Software\\Parsec"
 
+ACROBAT_READER_DC_PRIVILEGED = "Software\\Adobe\\Acrobat Reader\\DC\\Privileged"
+ENABLE_APP_CONTAINER = "bEnableProtectedModeAppContainer"
+
 
 # Keys and values that will have to be removed when uninstalling Parsec on Windows
 # HKEY_CURRENT_USER\Software\Classes\CLSID\{6C37F945-7EFC-480A-A444-A6D44A3D107F}\
@@ -181,3 +184,53 @@ def add_nav_link(mountpoint):
         _add_nav_link(mountpoint)
     except OSError:
         logger.exception("Error while adding navbar registry values")
+
+
+# Acrobat container app workaround
+
+
+def read_user_dword(key, name):
+    import winreg
+
+    hkcu = winreg.HKEY_CURRENT_USER
+    with winreg.OpenKey(hkcu, key, access=winreg.KEY_READ) as key_obj:
+        value, value_type = winreg.QueryValueEx(key_obj, name)
+    assert value_type == winreg.REG_DWORD
+    return value
+
+
+def write_user_dword(key, name, value):
+    import winreg
+
+    hkcu = winreg.HKEY_CURRENT_USER
+    with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
+        winreg.SetValueEx(key_obj, name, None, winreg.REG_DWORD, value)
+
+
+def is_acrobat_reader_dc_present():
+    if platform.system() != "Windows":
+        return False
+    try:
+        import winreg  # noqa
+    except ImportError:
+        logger.warning("OS is Windows but cannot import winreg")
+        return False
+
+    try:
+        read_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER)
+    except FileNotFoundError:
+        return False
+
+    return True
+
+
+def get_acrobat_app_container_enabled():
+    if not is_acrobat_reader_dc_present():
+        return False
+    return bool(read_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER))
+
+
+def set_acrobat_app_container_enabled(value):
+    if not is_acrobat_reader_dc_present():
+        return
+    write_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER, value)
