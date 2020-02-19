@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import platform
 from typing import Optional
 from structlog import get_logger
 
@@ -20,6 +21,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
+from parsec.core.gui import win_registry
 from parsec.core.gui.changelog_widget import ChangelogWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
@@ -160,6 +162,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self, _("ASK_ERROR_REPORTING_TITLE"), _("ASK_ERROR_REPORTING_CONTENT")
             )
             self.event_bus.send("gui.config.changed", gui_first_launch=False, telemetry_enabled=r)
+            if (
+                True
+                or platform.system() == "Windows"
+                and win_registry.is_acrobat_reader_dc_present()
+                and win_registry.get_acrobat_app_container_enabled()
+            ):
+                r = QuestionDialog.ask(
+                    self,
+                    _("ASK_DISABLE_ACROBAT_CONTAINER_TITLE"),
+                    _("ASK_DISABLE_ACROBAT_CONTAINER_CONTENT"),
+                )
+                if r:
+                    win_registry.set_acrobat_app_container_enabled(False)
         telemetry.init(self.config)
 
     def show_top(self):

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-01-30 10:28+0100\n"
-"PO-Revision-Date: 2020-01-30 10:30+0100\n"
+"POT-Creation-Date: 2020-02-19 15:42+0100\n"
+"PO-Revision-Date: 2020-02-19 15:46+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1233,9 +1233,6 @@ msgstr "Commencer"
 msgid "FILE_MENU_OPEN"
 msgstr "Ouvrir"
 
-msgid "FILE_MENU_HISTORY"
-msgstr "Voir l'historique"
-
 msgid "FILE_MENU_RENAME"
 msgstr "Renommer"
 
@@ -1247,6 +1244,9 @@ msgstr "Copy"
 
 msgid "FILE_MENU_CUT"
 msgstr "Cut"
+
+msgid "FILE_MENU_HISTORY"
+msgstr "Voir l'historique"
 
 msgid "FILE_MENU_PASTE"
 msgstr "Paste"
@@ -1548,6 +1548,16 @@ msgstr ""
 "Autorisez-vous l'application à nous envoyer des données quand elle rencontre "
 "une erreur pour nous aider à améliorer votre expérience ?"
 
+msgid "ASK_DISABLE_ACROBAT_CONTAINER_TITLE"
+msgstr "Désactiver les conteneurs d'Acrobat Reader"
+
+msgid "ASK_DISABLE_ACROBAT_CONTAINER_CONTENT"
+msgstr ""
+"Acrobat Reader est installé sur votre machine. Un bug connu empêche "
+"l'application d'ouvrir les fichiers PDF stockés dans Parsec.\n"
+"Nous autorisez-vous à désactiver à désactiver les conteneurs Acrobat Reader "
+"afin que l'application puisse lire les fichiers ?"
+
 msgid "TAB_TITLE_LOG_IN"
 msgstr "Se connecter"
 
@@ -1821,6 +1831,9 @@ msgstr "Interface"
 
 msgid "CHECK_USE_WORKSPACE_COLORS"
 msgstr "Utiliser des couleurs pour les espaces de travail"
+
+msgid "CHECK_DISABLE_ACROBAT_CONTAINER"
+msgstr "Désactiver les conteneurs Acrobat Reader"
 
 msgid "BUTTON_BACK"
 msgstr "Retour"

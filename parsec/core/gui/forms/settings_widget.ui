@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>400</height>
+    <height>563</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -57,8 +57,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>466</width>
-        <height>403</height>
+        <width>480</width>
+        <height>489</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -385,6 +385,44 @@ background-color: rgb(255, 255, 255);
              <widget class="QCheckBox" name="check_box_workspace_color">
               <property name="text">
                <string>CHECK_USE_WORKSPACE_COLORS</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_misc" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>SETTINGS_TITLE_MISC</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <property name="leftMargin">
+             <number>20</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="check_acrobat_container">
+              <property name="text">
+               <string>CHECK_DISABLE_ACROBAT_CONTAINER</string>
               </property>
              </widget>
             </item>
