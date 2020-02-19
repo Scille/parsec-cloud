@@ -163,8 +163,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.event_bus.send("gui.config.changed", gui_first_launch=False, telemetry_enabled=r)
             if (
-                True
-                or platform.system() == "Windows"
+                platform.system() == "Windows"
                 and win_registry.is_acrobat_reader_dc_present()
                 and win_registry.get_acrobat_app_container_enabled()
             ):
