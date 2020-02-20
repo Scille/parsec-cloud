@@ -25,6 +25,10 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         else:
             if not win_registry.is_acrobat_reader_dc_present():
                 self.widget_misc.hide()
+            else:
+                self.check_acrobat_container.setChecked(
+                    not win_registry.get_acrobat_app_container_enabled()
+                )
         self.button_save.clicked.connect(self.save)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None
