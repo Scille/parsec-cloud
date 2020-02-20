@@ -15,6 +15,7 @@ from parsec.api.protocol import (
     organization_bootstrap_serializer,
     organization_stats_serializer,
     organization_status_serializer,
+    organization_update_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
 from parsec.backend.user import new_user_factory, User, Device
@@ -45,6 +46,10 @@ class OrganizationFirstUserCreationError(OrganizationError):
     pass
 
 
+class OrganizationExpiredError(OrganizationError):
+    pass
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class Organization:
     organization_id: OrganizationID
@@ -54,6 +59,9 @@ class Organization:
 
     def is_bootstrapped(self):
         return self.root_verify_key is not None
+
+    def is_expired(self):
+        return self.expiration_date < Pendulum.now()
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -103,7 +111,11 @@ class BaseOrganizationComponent:
             return {"status": "not_found"}
 
         return organization_status_serializer.rep_dump(
-            {"is_bootstrapped": organization.is_bootstrapped(), "status": "ok"}
+            {
+                "is_bootstrapped": organization.is_bootstrapped(),
+                "expiration_date": organization.expiration_date,
+                "status": "ok",
+            }
         )
 
     @catch_protocol_errors
@@ -124,6 +136,20 @@ class BaseOrganizationComponent:
                 "metadata_size": stats.metadata_size,
             }
         )
+
+    @catch_protocol_errors
+    async def api_organization_update(self, client_ctx, msg):
+        msg = organization_update_serializer.req_load(msg)
+
+        try:
+            await self.set_expiration_date(
+                msg["organization_id"], expiration_date=msg["expiration_date"]
+            )
+
+        except OrganizationNotFoundError:
+            return {"status": "not_found"}
+
+        return organization_update_serializer.rep_dump({"status": "ok"})
 
     @anonymous_api
     @catch_protocol_errors
@@ -225,6 +251,13 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def stats(self, id: OrganizationID) -> OrganizationStats:
+        """
+        Raises:
+            OrganizationNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def set_expiration_date(self, id: OrganizationID, expiration_date: Pendulum = None):
         """
         Raises:
             OrganizationNotFoundError

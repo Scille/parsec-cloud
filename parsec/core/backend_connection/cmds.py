@@ -17,6 +17,7 @@ from parsec.api.protocol import (
     organization_create_serializer,
     organization_stats_serializer,
     organization_status_serializer,
+    organization_update_serializer,
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
@@ -431,6 +432,18 @@ async def organization_status(transport: Transport, organization_id: Organizatio
         organization_status_serializer,
         cmd="organization_status",
         organization_id=organization_id,
+    )
+
+
+async def organization_update(
+    transport: Transport, organization_id: OrganizationID, expiration_date: Pendulum = None
+) -> dict:
+    return await _send_cmd(
+        transport,
+        organization_update_serializer,
+        cmd="organization_update",
+        organization_id=organization_id,
+        expiration_date=expiration_date,
     )
 
 

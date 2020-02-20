@@ -60,8 +60,23 @@ class OrganizationStatusReqSchema(BaseReqSchema):
 
 class OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
+    expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
 organization_status_serializer = CmdSerializer(
     OrganizationStatusReqSchema, OrganizationStatusRepSchema
+)
+
+
+class OrganizationUpdateReqSchema(BaseReqSchema):
+    organization_id = OrganizationIDField(required=True)
+    expiration_date = fields.DateTime(allow_none=True, required=False)
+
+
+class OrganizationUpdateRepSchema(BaseRepSchema):
+    pass
+
+
+organization_update_serializer = CmdSerializer(
+    OrganizationUpdateReqSchema, OrganizationUpdateRepSchema
 )

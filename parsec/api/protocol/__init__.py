@@ -35,6 +35,7 @@ from parsec.api.protocol.organization import (
     organization_bootstrap_serializer,
     organization_stats_serializer,
     organization_status_serializer,
+    organization_update_serializer,
 )
 from parsec.api.protocol.events import events_subscribe_serializer, events_listen_serializer
 from parsec.api.protocol.ping import ping_serializer
@@ -109,6 +110,7 @@ __all__ = (
     "organization_bootstrap_serializer",
     "organization_stats_serializer",
     "organization_status_serializer",
+    "organization_update_serializer",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",

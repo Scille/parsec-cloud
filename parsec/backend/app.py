@@ -211,6 +211,7 @@ class BackendApp:
             "organization_create": self.organization.api_organization_create,
             "organization_stats": self.organization.api_organization_stats,
             "organization_status": self.organization.api_organization_status,
+            "organization_update": self.organization.api_organization_update,
             "ping": self.ping.api_ping,
         }
         for fn in self.anonymous_cmds.values():

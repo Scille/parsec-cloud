@@ -85,6 +85,14 @@ _q_get_stats = Query.select(
 ).get_sql()
 
 
+_q_update_organisation_expiration_date = (
+    Query.update(t_organization)
+    .where((t_organization.organization_id == Parameter("$1")))
+    .set(t_organization.expiration_date, Parameter("$2"))
+    .get_sql()
+)
+
+
 class PGOrganizationComponent(BaseOrganizationComponent):
     def __init__(self, dbh: PGHandler, **kwargs):
         super().__init__(**kwargs)
@@ -160,3 +168,15 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             data_size=result["data_size"],
             metadata_size=result["metadata_size"],
         )
+
+    async def set_expiration_date(
+        self, id: OrganizationID, expiration_date: Pendulum = None
+    ) -> None:
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            result = await conn.execute(_q_update_organisation_expiration_date, id, expiration_date)
+
+            if result == "UPDATE 0":
+                raise OrganizationNotFoundError
+
+            if result != "UPDATE 1":
+                raise OrganizationError(f"Update error: {result}")
