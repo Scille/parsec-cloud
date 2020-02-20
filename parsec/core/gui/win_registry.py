@@ -189,7 +189,7 @@ def add_nav_link(mountpoint):
 # Acrobat container app workaround
 
 
-def read_user_dword(key, name):
+def winreg_read_user_dword(key, name):
     import winreg
 
     hkcu = winreg.HKEY_CURRENT_USER
@@ -199,7 +199,7 @@ def read_user_dword(key, name):
     return value
 
 
-def write_user_dword(key, name, value):
+def winreg_write_user_dword(key, name, value):
     import winreg
 
     hkcu = winreg.HKEY_CURRENT_USER
@@ -207,30 +207,43 @@ def write_user_dword(key, name, value):
         winreg.SetValueEx(key_obj, name, None, winreg.REG_DWORD, value)
 
 
+def winreg_has_user_key(key):
+    import winreg
+
+    hkcu = winreg.HKEY_CURRENT_USER
+    try:
+        with winreg.OpenKey(hkcu, key, access=winreg.KEY_READ):
+            return True
+    except FileNotFoundError:
+        return False
+
+
 def is_acrobat_reader_dc_present():
     if platform.system() != "Windows":
         return False
+
     try:
         import winreg  # noqa
     except ImportError:
         logger.warning("OS is Windows but cannot import winreg")
         return False
 
-    try:
-        read_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER)
-    except FileNotFoundError:
-        return False
-
-    return True
+    return winreg_has_user_key(ACROBAT_READER_DC_PRIVILEGED)
 
 
 def get_acrobat_app_container_enabled():
     if not is_acrobat_reader_dc_present():
         return False
-    return bool(read_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER))
+    try:
+        value = winreg_read_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER)
+    except FileNotFoundError:
+        # If the value doesn't exist, Acrobat considers it true
+        return True
+
+    return bool(value)
 
 
 def set_acrobat_app_container_enabled(value):
     if not is_acrobat_reader_dc_present():
         return
-    write_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER, value)
+    winreg_write_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER, value)
