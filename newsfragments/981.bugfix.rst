@@ -1,0 +1,1 @@
+Disable file operations for a reader
