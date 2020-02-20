@@ -17,6 +17,7 @@ import os
 import re
 import tempfile
 import subprocess
+import json
 
 import trio
 import click
@@ -76,6 +77,24 @@ Your environment will be configured with the following commands:
     async with await trio.open_file(source_file, "a") as f:
         for line in export_lines:
             await f.write(line + "\n")
+
+
+async def generate_gui_config():
+    config_dir = None
+    if os.name == "nt":
+        config_dir = trio.Path(os.environ["APPDATA"]) / "parsec/config"
+    else:
+        config_dir = trio.Path(os.environ["XDG_CONFIG_HOME"]) / "parsec"
+    await config_dir.mkdir(parents=True, exist_ok=True)
+
+    config_file = config_dir / "config.json"
+
+    config = {
+        "gui_first_launch": False,
+        "gui_check_version_at_startup": False,
+        "gui_tray_enabled": False,
+    }
+    await config_file.write_text(json.dumps(config, indent=4))
 
 
 async def configure_mime_types():
@@ -221,6 +240,9 @@ async def amain(
 
     # Configure MIME types locally
     await configure_mime_types()
+
+    # Generate dummy config file for gui
+    await generate_gui_config()
 
     # Keep the environment empty
     if empty:
