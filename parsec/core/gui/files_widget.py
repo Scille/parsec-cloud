@@ -252,24 +252,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
 
-    def disconnect_all(self):
-        pass
-
-    def showEvent(self, event):
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
         self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
-        self.reset()
 
-    def hideEvent(self, event):
-        try:
-            self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
-            self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
-            self.event_bus.disconnect("fs.entry.downsynced", self._on_entry_downsynced_trio)
-        except ValueError:
-            pass
+    def disconnect_all(self):
+        pass
 
     def set_workspace_fs(self, wk_fs, current_directory=FsPath("/"), default_selection=None):
         self.current_directory = current_directory
