@@ -31,8 +31,8 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.widget_switched.emit(self.get_taskbar_buttons())
         self.show_workspaces_widget()
 
-    def load_workspace(self, workspace_fs):
-        self.show_files_widget(workspace_fs)
+    def load_workspace(self, workspace_fs, default_path, select=False):
+        self.show_files_widget(workspace_fs, default_path, select)
 
     def get_taskbar_buttons(self):
         if not self.files_widget.isVisible() and not self.workspaces_widget.isVisible():
@@ -46,9 +46,15 @@ class MountWidget(QWidget, Ui_MountWidget):
     def on_taskbar_updated(self):
         self.widget_switched.emit(self.get_taskbar_buttons())
 
-    def show_files_widget(self, workspace_fs):
+    def show_files_widget(self, workspace_fs, default_path, selected=False):
         self.workspaces_widget.hide()
-        self.files_widget.set_workspace_fs(workspace_fs)
+        self.files_widget.set_workspace_fs(
+            workspace_fs,
+            current_directory=default_path.parent,
+            default_selection=default_path.name
+            if len(default_path.parts) != 0 and selected
+            else None,
+        )
         self.files_widget.show()
         self.widget_switched.emit(self.files_widget.get_taskbar_buttons().copy())
 

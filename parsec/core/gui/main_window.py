@@ -16,6 +16,7 @@ from parsec.core.types import (
     BackendOrganizationBootstrapAddr,
     BackendOrganizationClaimUserAddr,
     BackendOrganizationClaimDeviceAddr,
+    BackendOrganizationFileLinkAddr,
 )
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
@@ -26,7 +27,7 @@ from parsec.core.gui.changelog_widget import ChangelogWidget
 from parsec.core.gui.license_widget import LicenseWidget
 from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.custom_dialogs import QuestionDialog, show_error, MiscDialog
+from parsec.core.gui.custom_dialogs import QuestionDialog, show_error, MiscDialog, show_warning
 from parsec.core.gui.custom_widgets import MenuButton
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
@@ -207,17 +208,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabToolTip(idx, tab_name)
             self.tab_center.setTabText(idx, tab_name)
 
-    #        self.toggle_add_instance_button()
-
-    # def toggle_add_instance_button(self):
-    #     idx = self._get_login_tab_index()
-    #     if idx == -1:
-    #         self.tab_center.setCornerWidget(self.button_add_instance, Qt.TopRightCorner)
-    #         self.button_add_instance.show()
-    #     else:
-    #         self.tab_center.setCornerWidget(None, Qt.TopRightCorner)
-    #         self.button_add_instance.hide()
-
     def on_tab_notification(self, widget, event):
         idx = self.tab_center.indexOf(widget)
         if idx == -1 or idx == self.tab_center.currentIndex():
@@ -231,6 +221,55 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return idx
         return -1
 
+    def add_new_tab(self):
+        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
+        self.tab_center.addTab(tab, "")
+        tab.state_changed.connect(self.on_tab_state_changed)
+        self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
+        if self.tab_center.count() > 1:
+            self.tab_center.setTabsClosable(True)
+        else:
+            self.tab_center.setTabsClosable(False)
+        return tab
+
+    def switch_to_tab(self, idx):
+        if not QApplication.activeModalWidget():
+            self.tab_center.setCurrentIndex(idx)
+
+    def go_to_file_link(self, action_addr):
+        for idx in range(self.tab_center.count()):
+            if self.tab_center.tabText(idx) == _("TAB_TITLE_LOG_IN"):
+                continue
+            w = self.tab_center.widget(idx)
+            if (
+                not w
+                or not w.core
+                or w.core.device.organization_addr.organization_id != action_addr.organization_id
+            ):
+                continue
+            user_manifest = w.core.user_fs.get_user_manifest()
+            for wk in user_manifest.workspaces:
+                if not wk.role:
+                    continue
+                if wk.id != action_addr.workspace_id:
+                    continue
+                central_widget = w.get_central_widget()
+                try:
+                    central_widget.show_mount_widget()
+                    central_widget.mount_widget.show_files_widget(
+                        w.core.user_fs.get_workspace(wk.id), action_addr.path, selected=True
+                    )
+                    self.switch_to_tab(idx)
+                except AttributeError:
+                    logger.exception("Central widget is not available")
+                return
+        show_warning(self, _("WARN_FILE_LINK_LOG_IN_{}").format(action_addr.organization_id))
+
+        tab = self.add_new_tab()
+        tab.show_login_widget()
+        self.on_tab_state_changed(tab, "login")
+        self.switch_to_tab(self._get_login_tab_index())
+
     def add_instance(self, start_arg: Optional[str] = None):
         action_addr = None
         if start_arg:
@@ -243,8 +282,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             idx = self._get_login_tab_index()
             if idx != -1:
                 # There's already a login tab, just put it in front
-                self.tab_center.setCurrentIndex(idx)
+                self.switch_to_tab(idx)
                 return
+            else:
+                tab = self.add_new_tab()
+                tab.show_login_widget()
+                self.on_tab_state_changed(tab, "login")
+                self.switch_to_tab(self.tab_center.count() - 1)
+            return
+
+        if isinstance(action_addr, BackendOrganizationFileLinkAddr):
+            self.go_to_file_link(action_addr)
+            return
 
         action = None
         method = None
@@ -258,14 +307,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             action = "claim_device"
             method = "show_claim_device_widget"
 
-        tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
-        self.tab_center.addTab(tab, "")
-        tab.state_changed.connect(self.on_tab_state_changed)
-        self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
-        if self.tab_center.count() > 1:
-            self.tab_center.setTabsClosable(True)
-        else:
-            self.tab_center.setTabsClosable(False)
+        tab = self.add_new_tab()
 
         if action:
             tab.show_login_widget(show_meth=method, addr=action_addr)
@@ -273,9 +315,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             tab.show_login_widget()
             self.on_tab_state_changed(tab, "login")
-
-        if not QApplication.activeModalWidget():
-            self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
+        self.switch_to_tab(self.tab_center.count() - 1)
 
     def close_app(self, force=False):
         self.need_close = True
@@ -304,8 +344,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab.logout()
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
-
-    #        self.toggle_add_instance_button()
 
     def closeEvent(self, event):
         if self.minimize_on_close and not self.need_close:

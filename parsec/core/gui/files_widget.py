@@ -10,14 +10,24 @@ from structlog import get_logger
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QFileDialog, QWidget
 
-from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole
+from parsec.core.types import FsPath, WorkspaceEntry, WorkspaceRole, BackendOrganizationFileLinkAddr
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
-from parsec.core.fs.exceptions import FSRemoteManifestNotFound, FSInvalidArgumentError
+from parsec.core.fs.exceptions import (
+    FSRemoteManifestNotFound,
+    FSInvalidArgumentError,
+    FSFileNotFoundError,
+)
 
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal, QtToTrioJob
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType, TYPE_DATA_INDEX, UUID_DATA_INDEX
-from parsec.core.gui.custom_dialogs import QuestionDialog, show_error, show_warning, TextInputDialog
+from parsec.core.gui.custom_dialogs import (
+    QuestionDialog,
+    show_error,
+    show_warning,
+    TextInputDialog,
+    show_info,
+)
 from parsec.core.gui.custom_widgets import TaskbarButton
 from parsec.core.gui.file_history_dialog import FileHistoryDialog
 from parsec.core.gui.loading_dialog import LoadingDialog
@@ -57,7 +67,7 @@ async def _do_delete(workspace_fs, files, silent=False):
                 raise JobResultError("error", multi=len(files) > 1) from exc
 
 
-async def _do_folder_stat(workspace_fs, path):
+async def _do_folder_stat(workspace_fs, path, default_selection):
     stats = {}
     dir_stat = await workspace_fs.path_info(path)
     for child in dir_stat["children"]:
@@ -66,7 +76,7 @@ async def _do_folder_stat(workspace_fs, path):
         except FSRemoteManifestNotFound as exc:
             child_stat = {"type": "inconsistency", "id": exc.args[0]}
         stats[child] = child_stat
-    return path, dir_stat["id"], stats
+    return path, dir_stat["id"], stats, default_selection
 
 
 async def _do_folder_create(workspace_fs, path):
@@ -221,6 +231,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.paste_clicked.connect(self.on_paste_clicked)
         self.table_files.copy_clicked.connect(self.on_copy_clicked)
         self.table_files.cut_clicked.connect(self.on_cut_clicked)
+        self.table_files.file_path_clicked.connect(self.on_get_file_path_clicked)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.rename_success.connect(self._on_rename_success)
@@ -241,26 +252,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_progress.connect(self._on_import_progress)
 
-    def disconnect_all(self):
-        pass
-
-    def showEvent(self, event):
         self.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
         self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
-        self.reset()
 
-    def hideEvent(self, event):
-        try:
-            self.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
-            self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
-            self.event_bus.disconnect("fs.entry.downsynced", self._on_entry_downsynced_trio)
-        except ValueError:
-            pass
+    def disconnect_all(self):
+        pass
 
-    def set_workspace_fs(self, wk_fs, current_directory=FsPath("/")):
+    def set_workspace_fs(self, wk_fs, current_directory=FsPath("/"), default_selection=None):
         self.current_directory = current_directory
         self.workspace_fs = wk_fs
         ws_entry = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_entry)
@@ -268,13 +268,25 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
         self.clipboard = None
-        self.reset()
+        self.reset(default_selection)
 
-    def reset(self):
+    def reset(self, default_selection=None):
         workspace_name = self.jobs_ctx.run_sync(self.workspace_fs.get_workspace_name)
         self.label_current_workspace.setText(workspace_name)
-        self.load(self.current_directory)
+        self.load(self.current_directory, default_selection)
         self.table_files.sortItems(0)
+
+    def on_get_file_path_clicked(self):
+        files = self.table_files.selected_files()
+        if len(files) != 1:
+            return
+        url = BackendOrganizationFileLinkAddr.build(
+            self.core.device.organization_addr,
+            self.workspace_fs.workspace_id,
+            self.current_directory / files[0].name,
+        )
+        desktop.copy_to_clipboard(str(url))
+        show_info(self, _("FILE_LINK_CONTENT"))
 
     def on_copy_clicked(self):
         files = self.table_files.selected_files()
@@ -513,13 +525,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def reload(self):
         self.load(self.current_directory)
 
-    def load(self, directory):
+    def load(self, directory, default_selection=None):
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "folder_stat_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "folder_stat_error", QtToTrioJob),
             _do_folder_stat,
             workspace_fs=self.workspace_fs,
             path=directory,
+            default_selection=default_selection,
         )
 
     def import_all(self, files, total_size):
@@ -688,9 +701,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(self, _("ERR_DELETE_FILE"), exception=job.exc)
 
     def _on_folder_stat_success(self, job):
-        self.current_directory, self.current_directory_uuid, files_stats = job.ret
+        self.current_directory, self.current_directory_uuid, files_stats, default_selection = (
+            job.ret
+        )
         str_dir = str(self.current_directory)
-
         self.table_files.clear()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
@@ -703,11 +717,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.line_edit_current_directory.setCursorPosition(0)
         tooltip_dir = [str_dir[i : i + 64] for i in range(0, len(str_dir), 64)]
         self.line_edit_current_directory.setToolTip("\n".join(tooltip_dir))
+        file_found = False
         for path, stats in files_stats.items():
+            selected = False
+            if default_selection and str(path) == default_selection:
+                selected = True
+                file_found = True
             if stats["type"] == "inconsistency":
                 self.table_files.add_inconsistency(str(path), stats["id"])
             elif stats["type"] == "folder":
-                self.table_files.add_folder(str(path), stats["id"], not stats["need_sync"])
+                self.table_files.add_folder(
+                    str(path), stats["id"], not stats["need_sync"], selected
+                )
             else:
                 self.table_files.add_file(
                     str(path),
@@ -716,14 +737,21 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     stats["created"],
                     stats["updated"],
                     not stats["need_sync"],
+                    selected,
                 )
         self.table_files.sortItems(old_sort, old_order)
         self.table_files.setSortingEnabled(True)
         if self.line_edit_search.text():
             self.filter_files(self.line_edit_search.text())
+        if default_selection and not file_found:
+            show_warning(self, _("ERR_GOTO_FILE_NOT_FOUND"))
 
     def _on_folder_stat_error(self, job):
         self.table_files.clear()
+        if isinstance(job.exc, FSFileNotFoundError):
+            show_error(self, _("ERR_DIR_NOT_FOUND"))
+            self.table_files.add_parent_workspace()
+            return
         if self.current_directory == FsPath("/"):
             self.table_files.add_parent_workspace()
         else:

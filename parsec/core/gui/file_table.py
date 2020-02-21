@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QStyleOptionViewItem,
     QStyle,
     QMenu,
+    QTableWidgetSelectionRange,
 )
 
 from parsec.core.types import WorkspaceRole
@@ -60,6 +61,7 @@ class FileTable(QTableWidget):
     paste_clicked = pyqtSignal()
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
+    file_path_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -162,6 +164,8 @@ class FileTable(QTableWidget):
         if len(selected) == 1:
             action = menu.addAction(_("FILE_MENU_HISTORY"))
             action.triggered.connect(self.show_history_clicked.emit)
+            action = menu.addAction(_("FILE_MENU_GET_LINK"))
+            action.triggered.connect(self.file_path_clicked.emit)
         if not self.is_read_only():
             action = menu.addAction(_("FILE_MENU_PASTE"))
             action.triggered.connect(self.paste_clicked.emit)
@@ -249,7 +253,7 @@ class FileTable(QTableWidget):
         item.setFlags(Qt.ItemIsEnabled)
         self.setItem(row_idx, 4, item)
 
-    def add_folder(self, folder_name, uuid, is_synced):
+    def add_folder(self, folder_name, uuid, is_synced, selected=False):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FolderTableItem(is_synced)
@@ -276,8 +280,14 @@ class FileTable(QTableWidget):
         item.setData(TYPE_DATA_INDEX, FileType.Folder)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 4, item)
+        if selected:
+            self.setRangeSelected(
+                QTableWidgetSelectionRange(row_idx, 0, row_idx, self.columnCount() - 1), True
+            )
 
-    def add_file(self, file_name, uuid, file_size, created_on, updated_on, is_synced):
+    def add_file(
+        self, file_name, uuid, file_size, created_on, updated_on, is_synced, selected=False
+    ):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
         item = FileTableItem(is_synced, file_name)
@@ -306,6 +316,10 @@ class FileTable(QTableWidget):
         item.setData(TYPE_DATA_INDEX, FileType.File)
         item.setData(UUID_DATA_INDEX, uuid)
         self.setItem(row_idx, 4, item)
+        if selected:
+            self.setRangeSelected(
+                QTableWidgetSelectionRange(row_idx, 0, row_idx, self.columnCount() - 1), True
+            )
 
     def add_inconsistency(self, file_name, uuid):
         inconsistency_color = QColor(255, 144, 155)

@@ -8,6 +8,7 @@ from parsec.core.types import (
     BackendOrganizationBootstrapAddr,
     BackendOrganizationClaimUserAddr,
     BackendOrganizationClaimDeviceAddr,
+    BackendOrganizationFileLinkAddr,
 )
 
 
@@ -17,6 +18,8 @@ TOKEN = "1234ABCD"
 DOMAIN = "parsec.cloud.com"
 USER_ID = "John"
 DEVICE_ID = "John%40Dev42"
+PATH = "%2Fdir%2Ffile"
+WORKSPACE_ID = "2d4ded12-7406-4608-833b-7f57f01156e2"
 DEFAULT_ARGS = {
     "ORG": ORG,
     "RVK": RVK,
@@ -24,6 +27,8 @@ DEFAULT_ARGS = {
     "DOMAIN": DOMAIN,
     "USER_ID": USER_ID,
     "DEVICE_ID": DEVICE_ID,
+    "PATH": PATH,
+    "WORKSPACE_ID": WORKSPACE_ID,
 }
 
 
@@ -73,6 +78,11 @@ BackendOrganizationClaimDeviceAddrNoTokenTestbed = AddrTestbed(
     BackendOrganizationClaimDeviceAddr,
     "parsec://{DOMAIN}/{ORG}?action=claim_device&device_id={DEVICE_ID}&rvk={RVK}",
 )
+BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
+    "org_file_link_addr",
+    BackendOrganizationFileLinkAddr,
+    "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={PATH}&rvk={RVK}",
+)
 
 
 @pytest.fixture(
@@ -84,6 +94,7 @@ BackendOrganizationClaimDeviceAddrNoTokenTestbed = AddrTestbed(
         BackendOrganizationClaimDeviceAddrTestbed,
         BackendOrganizationClaimUserAddrNoTokenTestbed,
         BackendOrganizationClaimDeviceAddrNoTokenTestbed,
+        BackendOrganizationFileLinkAddrTestbed,
     ]
 )
 def addr_testbed(request):
@@ -98,6 +109,7 @@ def addr_testbed(request):
         BackendOrganizationClaimDeviceAddrTestbed,
         BackendOrganizationClaimUserAddrNoTokenTestbed,
         BackendOrganizationClaimDeviceAddrNoTokenTestbed,
+        BackendOrganizationFileLinkAddrTestbed,
     ]
 )
 def addr_with_org_testbed(request):
@@ -113,6 +125,11 @@ def addr_with_org_testbed(request):
 )
 def addr_with_token_testbed(request):
     return request.param
+
+
+@pytest.fixture
+def addr_file_link_testbed(request):
+    return BackendOrganizationFileLinkAddrTestbed
 
 
 def test_good_addr(addr_testbed):
@@ -175,3 +192,17 @@ def test_addr_with_bad_percent_encoded_token(addr_with_token_testbed):
     url = addr_with_token_testbed.generate_url(TOKEN=bad_percent_quoted)
     with pytest.raises(ValueError):
         addr_with_token_testbed.cls.from_url(url)
+
+
+@pytest.mark.parametrize("invalid_workspace", [None, "4def"])
+def test_file_link_addr_invalid_workspace(addr_file_link_testbed, invalid_workspace):
+    url = addr_file_link_testbed.generate_url(WORKSPACE_ID=invalid_workspace)
+    with pytest.raises(ValueError):
+        addr_file_link_testbed.cls.from_url(url)
+
+
+@pytest.mark.parametrize("invalid_path", [None, "dir/path"])
+def test_file_link_addr_invalid_path(addr_file_link_testbed, invalid_path):
+    url = addr_file_link_testbed.generate_url(PATH=invalid_path)
+    with pytest.raises(ValueError):
+        addr_file_link_testbed.cls.from_url(url)
