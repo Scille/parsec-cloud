@@ -263,8 +263,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 except AttributeError:
                     logger.exception("Central widget is not available")
                 return
+        show_warning(self, _("WARN_FILE_LINK_LOG_IN_{}").format(action_addr.organization_id))
+
+        tab = self.add_new_tab()
+        tab.show_login_widget()
+        self.on_tab_state_changed(tab, "login")
         self.switch_to_tab(self._get_login_tab_index())
-        show_warning(self, _("WARN_FILE_LINK_LOG_IN_{}".format(action_addr.organization_id)))
 
     def add_instance(self, start_arg: Optional[str] = None):
         action_addr = None
