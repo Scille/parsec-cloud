@@ -5,6 +5,7 @@ from pendulum import Pendulum
 import pytest
 
 from parsec.api.protocol import organization_status_serializer, organization_update_serializer
+from parsec.api.protocol.base import packb, unpackb
 from tests.backend.test_organization import organization_create
 
 
@@ -86,3 +87,16 @@ async def test_organization_update_expiration_date_unknown_organization(
 async def test_status_unknown_organization(administration_backend_sock):
     rep = await organization_status(administration_backend_sock, organization_id="dummy")
     assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_non_admin_has_limited_access(alice_backend_sock):
+    for cmd in [
+        "organization_create",
+        "organization_status",
+        "organization_stats",
+        "organization_update",
+    ]:
+        await alice_backend_sock.send(packb({"cmd": cmd}))
+        rep = await alice_backend_sock.recv()
+        assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}
