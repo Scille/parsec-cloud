@@ -1840,8 +1840,9 @@ msgstr "Utiliser des couleurs pour les espaces de travail"
 
 msgid "CHECK_DISABLE_ACROBAT_CONTAINER"
 msgstr ""
-"Désactiver la fonctionnalité \"Exécuter dans le conteneur d'application\" de "
-"Acrobat Reader DC"
+"Désactiver la fonctionnalité\n"
+"\"Exécuter dans le conteneur d'application\"\n"
+"d'Acrobat Reader DC"
 
 msgid "BUTTON_BACK"
 msgstr "Retour"

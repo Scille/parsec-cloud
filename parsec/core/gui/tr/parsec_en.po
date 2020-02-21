@@ -1805,7 +1805,9 @@ msgid "CHECK_USE_WORKSPACE_COLORS"
 msgstr "Use colors for workspaces"
 
 msgid "CHECK_DISABLE_ACROBAT_CONTAINER"
-msgstr "Disable Acrobat Reader DC \"Run in AppContainer\" feature"
+msgstr ""
+"Disable Acrobat Reader DC\n"
+"\"Run in AppContainer\" feature"
 
 msgid "BUTTON_BACK"
 msgstr "Back"
