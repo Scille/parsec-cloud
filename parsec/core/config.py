@@ -69,6 +69,7 @@ class CoreConfig:
     gui_tray_enabled: bool = True
     gui_language: Optional[str] = None
     gui_first_launch: bool = True
+    gui_last_version: Optional[str] = None
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-cloud/releases/latest"
     gui_confirmation_before_close: bool = True
@@ -97,6 +98,7 @@ def config_factory(
     gui_tray_enabled: bool = True,
     gui_language: str = None,
     gui_first_launch: bool = True,
+    gui_last_version: str = None,
     gui_check_version_at_startup: bool = True,
     gui_workspace_color: bool = False,
     gui_allow_multiple_instances: bool = False,
@@ -120,6 +122,7 @@ def config_factory(
         gui_tray_enabled=gui_tray_enabled,
         gui_language=gui_language,
         gui_first_launch=gui_first_launch,
+        gui_last_version=gui_last_version,
         gui_check_version_at_startup=gui_check_version_at_startup,
         gui_workspace_color=gui_workspace_color,
         gui_allow_multiple_instances=gui_allow_multiple_instances,
@@ -186,6 +189,7 @@ def save_config(config: CoreConfig):
                 "gui_tray_enabled": config.gui_tray_enabled,
                 "gui_language": config.gui_language,
                 "gui_first_launch": config.gui_first_launch,
+                "gui_last_version": config.gui_last_version,
                 "gui_check_version_at_startup": config.gui_check_version_at_startup,
                 "gui_workspace_color": config.gui_workspace_color,
                 "gui_allow_multiple_instances": config.gui_allow_multiple_instances,

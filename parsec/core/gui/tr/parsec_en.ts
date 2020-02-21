@@ -844,8 +844,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="474"/>
+        <location filename="../forms/settings_widget.ui" line="512"/>
         <source>BUTTON_SAVE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="411"/>
+        <source>SETTINGS_TITLE_MISC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="425"/>
+        <source>CHECK_DISABLE_ACROBAT_CONTAINER</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
