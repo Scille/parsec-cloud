@@ -156,12 +156,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def showMaximized(self):
         super().showMaximized()
         QCoreApplication.processEvents()
-        if self.config.gui_first_launch:
+        if self.config.gui_first_launch or self.config.gui_last_version != PARSEC_VERSION:
             # self.show_starting_guide()
             r = QuestionDialog.ask(
                 self, _("ASK_ERROR_REPORTING_TITLE"), _("ASK_ERROR_REPORTING_CONTENT")
             )
-            self.event_bus.send("gui.config.changed", gui_first_launch=False, telemetry_enabled=r)
+            self.event_bus.send(
+                "gui.config.changed",
+                gui_first_launch=False,
+                gui_last_version=PARSEC_VERSION,
+                telemetry_enabled=r,
+            )
             if (
                 platform.system() == "Windows"
                 and win_registry.is_acrobat_reader_dc_present()

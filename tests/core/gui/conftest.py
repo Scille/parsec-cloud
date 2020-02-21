@@ -10,6 +10,7 @@ import threading
 from concurrent import futures
 
 from parsec.event_bus import EventBus
+from parsec import __version__ as parsec_version
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget, LoginLoginWidget
@@ -237,6 +238,7 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
         core_config = core_config.evolve(
             gui_check_version_at_startup=False,
             gui_first_launch=False,
+            gui_last_version=parsec_version,
             mountpoint_enabled=False,
             gui_language="en",
         )
