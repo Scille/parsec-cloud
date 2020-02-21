@@ -21,7 +21,7 @@ from parsec.core.gui.central_widget import CentralWidget
 logger = get_logger()
 
 
-async def _do_run_core(config, device, event_bus, qt_on_ready):
+async def _do_run_core(config, device, qt_on_ready):
     # Quick fix to avoid MultiError<Cancelled, ...> exception bubbling up
     # TODO: replace this by a proper generic MultiError handling
     with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
@@ -97,7 +97,6 @@ class InstanceWidget(QWidget):
             _do_run_core,
             self.config,
             device,
-            self.event_bus,
             ThreadSafeQtSignal(self, "run_core_ready", object, object),
         )
 

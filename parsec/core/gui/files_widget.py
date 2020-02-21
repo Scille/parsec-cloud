@@ -200,6 +200,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.button_create_folder.setToolTip(_("BUTTON_TASKBAR_CREATE_FOLDER"))
         self.line_edit_search.textChanged.connect(self.filter_files)
+        self.line_edit_search.hide()
         self.current_directory = FsPath("/")
         self.current_directory_uuid = None
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
@@ -248,6 +249,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
         self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
+        self.reset()
 
     def hideEvent(self, event):
         try:

@@ -107,13 +107,14 @@ class FileTable(QTableWidget):
                 item.setData(COPY_STATUS_DATA_INDEX, row in rows)
 
     def keyReleaseEvent(self, event):
-        if event.matches(QKeySequence.Copy):
-            self.copy_clicked.emit()
-        elif event.matches(QKeySequence.Cut):
-            self.cut_clicked.emit()
-        elif event.matches(QKeySequence.Paste):
-            if not self.paste_disabled:
-                self.paste_clicked.emit()
+        if not self.is_read_only():
+            if event.matches(QKeySequence.Copy):
+                self.copy_clicked.emit()
+            elif event.matches(QKeySequence.Cut):
+                self.cut_clicked.emit()
+            elif event.matches(QKeySequence.Paste):
+                if not self.paste_disabled:
+                    self.paste_clicked.emit()
 
     def selected_files(self):
         SelectedFile = namedtuple("SelectedFile", ["row", "type", "name", "uuid"])
@@ -137,6 +138,9 @@ class FileTable(QTableWidget):
             uuid == self.item(row, 1).data(UUID_DATA_INDEX) for row in range(self.rowCount())
         )
 
+    def is_read_only(self):
+        return self.current_user_role == WorkspaceRole.READER
+
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
 
@@ -146,22 +150,23 @@ class FileTable(QTableWidget):
         if len(selected):
             action = menu.addAction(_("FILE_MENU_OPEN"))
             action.triggered.connect(self.open_clicked.emit)
-            if self.current_user_role != WorkspaceRole.READER:
+            if not self.is_read_only():
                 action = menu.addAction(_("FILE_MENU_RENAME"))
                 action.triggered.connect(self.rename_clicked.emit)
                 action = menu.addAction(_("FILE_MENU_DELETE"))
                 action.triggered.connect(self.delete_clicked.emit)
-            action = menu.addAction(_("FILE_MENU_COPY"))
-            action.triggered.connect(self.copy_clicked.emit)
-            action = menu.addAction(_("FILE_MENU_CUT"))
-            action.triggered.connect(self.cut_clicked.emit)
+                action = menu.addAction(_("FILE_MENU_COPY"))
+                action.triggered.connect(self.copy_clicked.emit)
+                action = menu.addAction(_("FILE_MENU_CUT"))
+                action.triggered.connect(self.cut_clicked.emit)
         if len(selected) == 1:
             action = menu.addAction(_("FILE_MENU_HISTORY"))
             action.triggered.connect(self.show_history_clicked.emit)
-        action = menu.addAction(_("FILE_MENU_PASTE"))
-        action.triggered.connect(self.paste_clicked.emit)
-        if self.paste_disabled:
-            action.setDisabled(True)
+        if not self.is_read_only():
+            action = menu.addAction(_("FILE_MENU_PASTE"))
+            action.triggered.connect(self.paste_clicked.emit)
+            if self.paste_disabled:
+                action.setDisabled(True)
         menu.exec_(global_pos)
 
     def item_double_clicked(self, row, column):
@@ -339,9 +344,15 @@ class FileTable(QTableWidget):
         self.setItem(row_idx, 4, item)
 
     def dragEnterEvent(self, event):
-        event.accept()
+        if not self.is_read_only():
+            event.accept()
+        else:
+            event.ignore()
 
     def dragMoveEvent(self, event):
+        if self.is_read_only():
+            event.ignore()
+            return
         if event.mimeData().hasUrls():
             event.accept()
         else:
@@ -359,6 +370,9 @@ class FileTable(QTableWidget):
                 event.ignore()
 
     def dropEvent(self, event):
+        if self.is_read_only():
+            event.ignore()
+            return
         if event.mimeData().hasUrls():
             event.accept()
             target_row = self.indexAt(event.pos()).row()

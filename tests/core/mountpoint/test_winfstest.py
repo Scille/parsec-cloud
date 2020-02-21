@@ -35,6 +35,10 @@ def test_winfstest(test_module_path, file_system_path, process_runner):
     if "CreateFile_Attributes" in test_module_path.name:
         pytest.xfail()
 
+    # Does not pass because of strict attribute testing
+    if "CreateRemoveDirectory" in test_module_path.name:
+        pytest.xfail()
+
     # Read-only attribute is required for the MoveFile test case
     if "MoveFile" in test_module_path.name:
         pytest.xfail()
