@@ -6,6 +6,26 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.7.0 (2020-02-22)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Add a way to copy/paste an internal link to a file  (`#937
+  <https://github.com/Scille/parsec-cloud/issues/937>`__)
+* Access a file directly using an url  (`#938 <https://github.com/Scille/parsec-
+  cloud/issues/938>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Disable file operations for a reader  (`#981
+  <https://github.com/Scille/parsec-cloud/issues/981>`__)
+* Fix files display not being updated automatically  (`#980
+  <https://github.com/Scille/parsec-cloud/issues/980>`__)
+
+
 Parsec 1.6.0 (2020-02-12)
 -------------------------
 

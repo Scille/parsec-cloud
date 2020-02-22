@@ -1,1 +1,0 @@
-Add a way to copy/paste an internal link to a file
