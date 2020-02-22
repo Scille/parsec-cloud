@@ -54,6 +54,9 @@ async def test_anonymous_has_limited_access(anonymous_backend_sock):
         "message_new",
         "pubkey_get",
         "organization_create",
+        "organization_status",
+        "organization_stats",
+        "organization_update",
     ]:
         await anonymous_backend_sock.send(packb({"cmd": cmd}))
         rep = await anonymous_backend_sock.recv()

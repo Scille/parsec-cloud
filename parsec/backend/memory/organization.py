@@ -100,3 +100,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         users = len(self._user_component._organizations[id]._users)
 
         return OrganizationStats(users=users, data_size=data_size, metadata_size=metadata_size)
+
+    async def set_expiration_date(
+        self, id: OrganizationID, expiration_date: Pendulum = None
+    ) -> None:
+        try:
+            self._organizations[id] = self._organizations[id].evolve(
+                expiration_date=expiration_date
+            )
+        except KeyError:
+            raise OrganizationNotFoundError()
