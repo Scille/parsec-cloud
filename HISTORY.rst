@@ -14,7 +14,11 @@ No significant changes.
 Parsec 1.7.1 (2020-02-24)
 -------------------------
 
-No significant changes.
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fix bug in sdist/bdist_wheel configuration that prevented release on pypi.org
+  since 1.4.0 (`#992 <https://github.com/Scille/parsec-cloud/issues/992>`__)
 
 
 Parsec 1.7.0 (2020-02-22)
