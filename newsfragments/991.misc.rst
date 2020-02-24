@@ -1,0 +1,1 @@
+Fix bug in sdist/bdist_wheel configuration release on pypi.org
