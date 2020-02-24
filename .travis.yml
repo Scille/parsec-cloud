@@ -17,11 +17,13 @@ env:
 
 install:
 # Update packaging packages
-- pip install -U wheel pip setuptools
+- pip install -U wheel pip setuptools twine
 # Workaround a compatibility issue by pre-installing requests
 - pip install requests
 # Build the parsec wheel
 - python setup.py bdist_wheel
+# Make sure the python package is ready for release
+- twine check dist/parsec_cloud-*.whl
 # Install the parsec wheel with all dependencies
 - pip install $(ls dist/parsec_cloud-*.whl)[all]
 # Check dependency compatibility

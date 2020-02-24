@@ -400,4 +400,5 @@ setup(
     ],
     test_suite="tests",
     tests_require=test_requirements,
+    long_description_content_type="rst",
 )
