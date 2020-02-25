@@ -48,7 +48,15 @@ class EventBus:
         if "event_name" not in kwargs:
             logger.debug("Send event", event_name=event, **kwargs)
         for cb in self._event_handlers[event]:
-            cb(event, **kwargs)
+            try:
+                cb(event, **kwargs)
+            except Exception:
+                logger.exception(
+                    "Unhandled exception in event bus callback",
+                    callback=cb,
+                    event_name=event,
+                    **kwargs
+                )
 
     @contextmanager
     def waiter_on(self, event: str, *, filter=None):
