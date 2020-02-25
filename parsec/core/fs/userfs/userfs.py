@@ -459,9 +459,9 @@ class UserFS:
                 # Sharing role has changed
                 # Note it's possible to have `old_entry.role == new_entry.role`
                 # (e.g. if our role went A -> B then B -> A while we were offline)
-                # We should notify this anyway given it means some events could not
-                # have been delivered to us (typically if we got revoked for a
-                # short period of time while a `realm.vlobs_updated` event occured).
+                # We should notify this anyway given it means some events could not have
+                # been delivered to us (typically if we got removed from a workspace for
+                # a short period of time while a `realm.vlobs_updated` event occured).
                 self.event_bus.send(
                     "sharing.updated", new_entry=new_entry, previous_entry=old_entry
                 )
