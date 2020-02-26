@@ -1,6 +1,13 @@
+version: 2
+
+# The Docker image used for building the docs.
 build:
-    image: latest
+  image: stable
 
 python:
-    version: 3.6
-    setup_py_install: true
+  version: 3.7
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - all

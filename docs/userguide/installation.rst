@@ -14,7 +14,7 @@ use the 64bits version (called ``parsec-vX.Y.Z-win64-setup.exe``).
 Linux
 -----
 
-Parsec builds are available on Snap:
+Parsec is available on Snap:
 
 .. raw:: html
 
@@ -44,7 +44,7 @@ Parsec is not yet available on MacOS.
 Via pip
 -------
 
-Given Parsec is written in Python, an alternative way to install it is through 
+Given Parsec is written in Python, an alternative way to install it is through
 `pip (the Python package repository) <https://pypi.org/project/parsec-cloud/>`_.
 
 .. code-block:: shell

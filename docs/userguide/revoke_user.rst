@@ -3,10 +3,10 @@
 Revoking users
 ==============
 
-Revoking a user is the operation that aims at removing their access rights to
+Revoking a user is the operation that aims at removing his access rights to
 the organization. This is needed when:
 
-- the user is no longer needed (e.g. a person leaving their company)
+- the user is no longer needed (e.g. a person leaving his company)
 - the user has been compromised
 
 .. note::
@@ -35,8 +35,9 @@ Workspace re-encryption
 .. _doc_userguide_revoke_user_workspace_re_encryption:
 
 Once a user is revoked, it corresponding devices are no longer allowed to
-connect to the server. In practice this means the user won't be able to do any
-changes or to consult the data he used to have access to.
+connect to the Parsec server hosting the organization. In practice this
+means the user won't be able to do any changes or to consult the data he
+used to have access to.
 
 However from a cryptographic point of view this user still knows the encryption
 key of the workspaces that have been shared with them. For this reason, those

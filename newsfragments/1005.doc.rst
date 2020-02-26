@@ -1,0 +1,1 @@
+Add french translation to the documentation

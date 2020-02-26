@@ -1,3 +1,8 @@
+.. note::
+    Parsec's documentation is available in various languages and versions.
+    Expand the "Read the Docs" panel at the bottom of the sidebar to see the list.
+
+
 ===========
 Parsec Docs
 ===========
@@ -7,7 +12,7 @@ Parsec Docs
     :alt: parsec banner
 
 Welcome to the Parsec documentation. If you are new to this documentation,
-we recommend that  you read the :ref:`introduction page <doc_introduction>` to get
+we recommend that you read the :ref:`introduction page <doc_introduction>` to get
 an overview of what this documentation has to offer.
 
 The table of contents below and in the sidebar should let you easily access the
