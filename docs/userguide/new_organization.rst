@@ -7,19 +7,19 @@ Once installed, the Parsec client must be connected to an organization that have
 been created on a Parsec server.
 
 The simplest way to do that is to join the `Parsec SAAS service <https://my.parsec.cloud/>`_
-and create an organization from there. This should provides you with a bootstrap
+and create an organization from there. This should provides you with an organization bootstrap
 URL in the style ``parsec://saas.parsec.cloud/TestOrg?action=bootstrap_organization&token=e5d61d7eb1d94fd32``.
 
 .. note::
 
     Another possibility (though more technical) is to host you own Parsec server
-    and create the organization on it using the parsec CLI.
+    and create the organization on it using the Parsec CLI.
     You can read about this in the :ref:`the Hosting server <doc_hosting_server>`
     part.
 
 This URL is needed to bootstrap the organization by registering yourself as its
-first user and device. Clicking on the URL should bring up Parsec (starting it
-if needed) with the following view:
+first user and device. Clicking on the URL should bring up Parsec client
+(starting it if needed) with the following view:
 
 .. image:: organization_bootstrap.gif
     :align: center

@@ -26,8 +26,7 @@ Regarding the different sharing roles:
   roles to other users.
 - Owner: same as Manager, but can also give Manager and Owner roles to other users.
   On top of that, owners are responsible for maintenance tasks such as
-  :ref:`workspace re-encryption <doc_userguide_revoke_user_workspace_re_encryption>` or
-  history garbage collector.
+  :ref:`workspace re-encryption <doc_userguide_revoke_user_workspace_re_encryption>`.
 
 .. warning::
 

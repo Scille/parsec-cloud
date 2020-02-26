@@ -18,15 +18,15 @@ and the invitee devices both connected to the server at the same time.
 Invite step
 -----------
 
-Inviting a user is done from the Parsec client:
+Inviting a new device is done from the Parsec client:
 
 .. image:: invite_device.gif
     :align: center
     :alt: Device invitation process
 
-Once started the invitation is pending (note you can cancel it though) and an
-invitation URL and token are displayed. Those URL and token should be transfered
-to the other computer.
+Once started, the invitation is pending (note you can cancel it though) and an
+invitation URL and token are displayed. The URL shoul now be transfered on
+the invited computer.
 
 .. warning::
 
@@ -55,7 +55,7 @@ That's it! The user now has two devices, each on a different computer.
 .. note::
 
     - If clicking on the URL doesn't work, you can also use the
-      ``Enter a URL manually`` dialog.
+      ``Enter a URL manually`` dialog inside Parsec.
     - The inviting device will also be notified of the successful claim.
     - Given the password is only used locally, it doesn't have to be the same
       across devices.

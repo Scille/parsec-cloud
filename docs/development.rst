@@ -23,7 +23,7 @@ Source code is `available on github <https://github.com/Scille/parsec-cloud>`_.
 
     Parsec requires Python >= 3.6
 
-3. Install parsec within the virtualenv::
+3. Install Parsec within the virtualenv::
 
     $ pip install --editable .[all]
 
@@ -42,17 +42,17 @@ Run the tests with pytest::
 
 On top of that, multiple options are available:
 
-===============   ========================
---runmountpoint   Include mountpoint tests
---rungui          Include GUI tests
---runslow         Include slow tests
---postgresql      Use PostgreSQL in the backend instead of a mock in memory
--n 4              Run tests in parallel
-===============   ========================
+===================   ========================
+``--runmountpoint``   Include mountpoint tests
+``--rungui``          Include GUI tests
+``--runslow``         Include slow tests
+``--postgresql``      Use PostgreSQL in the backend instead of a mock in memory
+``-n 4``              Run tests in parallel
+===================   ========================
 
 Note you can mix&match the flags, e.g. ``py.test tests --runmountpoint --postgresql --runslow -n auto``.
 
-If you want to run GUI test, it is a good idea to install pytest-xvfb in order to
+If you want to run GUI test, it is a good idea to install ``pytest-xvfb`` in order to
 hide the Qt windows when running the GUI tests::
 
     $ apt install xvfb
@@ -62,7 +62,7 @@ hide the Qt windows when running the GUI tests::
 Run Parsec in local
 -------------------
 
-You can use the run_testenv scripts to easily create a development environment:
+You can use the ``run_testenv`` scripts to easily create a development environment:
 
 On linux::
 

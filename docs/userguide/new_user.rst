@@ -44,7 +44,7 @@ Claim step
 ----------
 
 From the invitee user's computer, clicking on the invitation URL should open up
-Parsec:
+Parsec client:
 
 .. image:: claim_user.gif
     :align: center
