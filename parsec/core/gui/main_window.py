@@ -122,9 +122,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         desktop.open_feedback_link()
 
     def _on_add_instance_clicked(self):
-        r = QuestionDialog.ask(self, _("ASK_ADD_TAB_TITLE"), _("ASK_ADD_TAB_CONTENT"))
-        if not r:
-            return
         self.add_instance()
 
     def on_current_tab_changed(self, index):
