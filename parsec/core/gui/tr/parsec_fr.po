@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-02-19 15:42+0100\n"
-"PO-Revision-Date: 2020-02-26 09:07+0100\n"
+"POT-Creation-Date: 2020-02-26 09:21+0100\n"
+"PO-Revision-Date: 2020-02-26 09:22+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1543,6 +1543,9 @@ msgstr "Ouvrir un nouvel onglet"
 msgid "MENU_SETTINGS"
 msgstr "Configuration"
 
+msgid "BUTTON_DOCUMENTATION"
+msgstr "Documentation"
+
 msgid "BUTTON_ABOUT"
 msgstr "À propos"
 
@@ -1563,12 +1566,6 @@ msgstr "Journal des modifications"
 
 msgid "SETTINGS_TITLE"
 msgstr "Configuration"
-
-msgid "ASK_ADD_TAB_TITLE"
-msgstr "Nouvelle instance"
-
-msgid "ASK_ADD_TAB_CONTENT"
-msgstr "Voulez-vous ouvrir un nouvel onglet ?"
 
 msgid "ASK_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
@@ -1938,3 +1935,9 @@ msgstr "Afficher les utilisateurs révoqués"
 
 msgid "WORKSPACE_SEARCH"
 msgstr "Rechercher un espace de travail"
+
+#~ msgid "ASK_ADD_TAB_TITLE"
+#~ msgstr "Nouvelle instance"
+
+#~ msgid "ASK_ADD_TAB_CONTENT"
+#~ msgstr "Voulez-vous ouvrir un nouvel onglet ?"

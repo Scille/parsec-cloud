@@ -82,6 +82,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         action = menu.addAction(_("MENU_SETTINGS"))
         action.triggered.connect(self._show_settings)
         menu.addSeparator()
+        action = menu.addAction(_("BUTTON_DOCUMENTATION"))
+        action.triggered.connect(self._on_show_doc_clicked)
         action = menu.addAction(_("BUTTON_ABOUT"))
         action.triggered.connect(self._show_about)
         action = menu.addAction(_("BUTTON_CHANGELOG"))
@@ -117,6 +119,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         w = SettingsWidget(self.config, self.jobs_ctx, self.event_bus)
         d = MiscDialog(_("SETTINGS_TITLE"), w, parent=self)
         d.exec_()
+
+    def _on_show_doc_clicked(self):
+        desktop.open_doc_link()
 
     def _on_send_feedback_clicked(self):
         desktop.open_feedback_link()
