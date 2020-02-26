@@ -18,6 +18,8 @@ env:
 install:
 # Update packaging packages
 - pip install -U wheel pip setuptools twine
+# Install code quality check tools
+- pip install flake8==3.7.7 black==19.3b0
 # Workaround a compatibility issue by pre-installing requests
 - pip install requests
 # Build the parsec wheel

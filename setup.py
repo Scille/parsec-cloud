@@ -268,6 +268,7 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
+
 requirements = [
     "attrs==19.2.0",
     "click==7.0",
@@ -299,24 +300,24 @@ test_requirements = [
     "pytest-trio==0.5.2",
     "pytest-qt==3.2.2",
     "pluggy==0.9.0",  # see https://github.com/pytest-dev/pytest/issues/3753
-    "wheel",
-    "Sphinx",
-    "sphinx-rtd-theme",
-    "flake8==3.7.7",
     "hypothesis==5.3.0",
     "hypothesis-trio==0.5.0",
     "trustme==0.5.2",
-    "black==19.3b0",  # Pin black to avoid flaky style check
-    # Winfstest requirements
+    # Winfsptest requirements
     # We can't use `winfspy[test]` because of some pip limitations
     # - see pip issues #7096/#6239/#4391/#988
     # Looking forward to the new pip dependency resolver!
     'pywin32==227;platform_system=="Windows"',
+    # Documentation generation requirements
+    "sphinx==2.4.3",
+    "sphinx-intl==2.0.0",
+    "sphinx-rtd-theme==0.4.3",
 ]
 
 
 PYQT_DEP = "PyQt5==5.13.1"
-BABEL_DEP = ("Babel==2.6.0",)
+BABEL_DEP = "Babel==2.6.0"
+WHEEL_DEP = "wheel==0.34.2"
 DOCUTILS_DEP = "docutils==0.14"
 extra_requirements = {
     "core": [
@@ -353,7 +354,7 @@ setup(
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(include=["parsec", "parsec.*"]),
     package_dir={"parsec": "parsec"},
-    setup_requires=[PYQT_DEP, BABEL_DEP, "wheel", DOCUTILS_DEP],  # To generate resources bundle
+    setup_requires=[WHEEL_DEP, PYQT_DEP, BABEL_DEP, DOCUTILS_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
     cmdclass={
