@@ -1,4 +1,0 @@
-# By default, readthedocs automatically install `requirements.txt` if it is
-# present. However this fail given readthedocs uses Python 3.5 and our
-# application needs Python >= 3.6.
-# The hacky solution is to configure readthedocs to "install" this empty file.
