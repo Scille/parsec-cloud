@@ -112,7 +112,7 @@ class FileTableItem(IconTableItem):
 
     def __init__(self, is_synced, file_name, *args, **kwargs):
         ext = pathlib.Path(file_name).suffix
-        icon = self.EXTENSIONS.get(ext, "file_unknown")
+        icon = self.EXTENSIONS.get(ext.lower(), "file_unknown")
         super().__init__(
             is_synced, ":/icons/images/icons/file_icons/{}.png".format(icon), "", *args, **kwargs
         )
