@@ -16,6 +16,10 @@ def open_url(url):
     QDesktopServices.openUrl(QUrl(url))
 
 
+def open_doc_link():
+    open_url("https://parsec-cloud.readthedocs.io")
+
+
 def open_feedback_link():
     open_url("https://my.parsec.cloud/feedback")
 
