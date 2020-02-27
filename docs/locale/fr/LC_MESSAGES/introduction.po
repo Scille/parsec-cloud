@@ -51,7 +51,7 @@ msgid ""
 " that never destroys anything, hence you can browse data history and recover"
 " from any point in time."
 msgstr ""
-"Ne perdez jamais la moindre donnée ! Les données chiffrées sont synchronisée"
+"Ne perdez jamais la moindre donnée ! Les données chiffrées sont synchronisées "
 "avec le serveur distant qui ne supprime jamais rien. Vous pouvez donc "
 "consulter l'historique de vos données et revenir à n'importe où dans le passé."
 
@@ -69,14 +69,14 @@ msgid ""
 "trivial to identify modifications."
 msgstr ""
 "Signature cryptographique. Chaque modification est signée par son auteur, "
-"rendant donc triviale sont identification."
+"rendant donc triviale son identification."
 
 #: ../../introduction.rst:27
 msgid ""
 "Simplified enrollment. New user enrollment is simple as sharing a link "
 "and a token code."
 msgstr ""
-"Inscription des nouveaux utilisateur facilité. Il suffit de partager un "
+"Inscription des nouveaux utilisateurs facilitée. Il suffit de partager un "
 "lien d'invitation ainsi qu'un code pin au nouveau venu pour l'ajouter au système."
 
 #: ../../introduction.rst:28
