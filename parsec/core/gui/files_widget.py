@@ -149,7 +149,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_synced_qt = pyqtSignal(str, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
 
-    sharing_updated_qt = pyqtSignal(WorkspaceEntry, WorkspaceEntry)
+    sharing_updated_qt = pyqtSignal(WorkspaceEntry, object)
     taskbar_updated = pyqtSignal(list)
     back_clicked = pyqtSignal()
 
