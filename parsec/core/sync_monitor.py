@@ -103,7 +103,7 @@ class SyncContext:
             # Workspace not yet synchronized with backend
             new_checkpoint = 0
             changes = {}
-        if rep["status"] in ("in_maintenance", "not_allowed"):
+        elif rep["status"] in ("in_maintenance", "not_allowed"):
             return False
         elif rep["status"] != "ok":
             return False
