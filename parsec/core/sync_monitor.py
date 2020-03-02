@@ -70,9 +70,8 @@ class SyncContext:
         self.read_only = read_only
         self.local_changes = {}
         self.remote_changes = set()
-        self.need_bootstrap = True
         self.bootstrapped = False
-        self.due_time = timestamp()
+        self.due_time = math.inf
 
     def _sync(self, entry_id: EntryID):
         raise NotImplementedError
