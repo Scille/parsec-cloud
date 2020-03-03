@@ -71,7 +71,8 @@ class SyncContext:
         self.local_changes = {}
         self.remote_changes = set()
         self.bootstrapped = False
-        self.due_time = math.inf
+        # Force an initial tick to do the bootstrap step asap
+        self.due_time = timestamp()
 
     def _sync(self, entry_id: EntryID):
         raise NotImplementedError
