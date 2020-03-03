@@ -234,7 +234,7 @@ QTabBar::tab:top:!selected
 margin-top: 3px;
 }
 
-QTabBar::tab:bottom:!selected 
+QTabBar::tab:bottom:!selected
 {
 margin-bottom: 3px;
 }
