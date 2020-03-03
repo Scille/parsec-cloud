@@ -70,8 +70,8 @@ class SyncContext:
         self.read_only = read_only
         self.local_changes = {}
         self.remote_changes = set()
-        self.need_bootstrap = True
         self.bootstrapped = False
+        # Force an initial tick to do the bootstrap step asap
         self.due_time = timestamp()
 
     def _sync(self, entry_id: EntryID):
@@ -104,7 +104,7 @@ class SyncContext:
             # Workspace not yet synchronized with backend
             new_checkpoint = 0
             changes = {}
-        if rep["status"] in ("in_maintenance", "not_allowed"):
+        elif rep["status"] in ("in_maintenance", "not_allowed"):
             return False
         elif rep["status"] != "ok":
             return False
