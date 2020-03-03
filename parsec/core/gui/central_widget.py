@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, QSize
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
@@ -10,8 +10,6 @@ from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui.custom_widgets import NotificationTaskbarButton
-from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
 from parsec.api.protocol import (
@@ -51,11 +49,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.menu = MenuWidget(parent=self)
         self.widget_menu.layout().addWidget(self.menu)
-        self.notification_center = NotificationCenterWidget(parent=self)
-        self.button_notif = NotificationTaskbarButton()
-        self.button_notif.setToolTip(_("BUTTON_TASKBAR_NOTIFICATION"))
-        self.widget_notif.layout().addWidget(self.notification_center)
-        self.notification_center.hide()
 
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, self.handle_event)
@@ -72,9 +65,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.menu.users_clicked.connect(self.show_users_widget)
         self.menu.devices_clicked.connect(self.show_devices_widget)
         self.menu.logout_clicked.connect(self.logout_requested.emit)
-        self.button_notif.clicked.connect(self.show_notification_center)
         self.connection_state_changed.connect(self._on_connection_state_changed)
-        self.notification_center.close_requested.connect(self.close_notification_center)
+
+        self.widget_title2.hide()
+        self.widget_title3.hide()
+        self.title2_icon.apply_style()
+        self.title3_icon.apply_style()
+
+        self.icon_mountpoint.apply_style()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -85,7 +83,7 @@ class CentralWidget(QWidget, Ui_CentralWidget):
 
         self.mount_widget = MountWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.mount_widget)
-        self.mount_widget.widget_switched.connect(self.set_taskbar_buttons)
+        self.mount_widget.folder_changed.connect(self._on_folder_changed)
 
         self.users_widget = UsersWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
         self.widget_central.layout().insertWidget(0, self.users_widget)
@@ -97,6 +95,16 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.core.backend_conn.status, self.core.backend_conn.status_exc
         )
         self.show_mount_widget()
+
+    def _on_folder_changed(self, workspace_name, path):
+        if workspace_name and path:
+            self.widget_title2.show()
+            self.label_title2.setText(workspace_name)
+            self.widget_title3.show()
+            self.label_title3.setText(path)
+        else:
+            self.widget_title2.hide()
+            self.widget_title3.hide()
 
     def open_mountpoint(self, path):
         desktop.open_file(path)
@@ -150,19 +158,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 "WARNING", _("NOTIF_WARN_SYNC_CONFLICT_{}").format(kwargs["path"])
             )
 
-    def close_notification_center(self):
-        self.notification_center.hide()
-        self.button_notif.setChecked(False)
-
-    def show_notification_center(self):
-        if self.notification_center.isVisible():
-            self.notification_center.hide()
-            self.button_notif.setChecked(False)
-        else:
-            self.notification_center.show()
-            self.button_notif.setChecked(True)
-            self.button_notif.reset_notif_count()
-
     def _on_connection_state_changed(self, status, status_exc):
         text = None
         icon = None
@@ -170,90 +165,64 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         notif = None
 
         if status in (BackendConnStatus.READY, BackendConnStatus.INITIALIZING):
-            tooltip = text = _("BACKEND_STATE_CONNECTED")
-            icon = QPixmap(":/icons/images/icons/cloud_online.png")
+            tooltip = text = _("TEXT_BACKEND_STATE_CONNECTED")
+            icon = QPixmap(":/icons/images/material/cloud_queue.svg")
 
         elif status == BackendConnStatus.LOST:
-            tooltip = text = _("BACKEND_STATE_DISCONNECTED")
-            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+            tooltip = text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
 
         elif status == BackendConnStatus.REFUSED:
             cause = status_exc.__cause__
             if isinstance(cause, HandshakeAPIVersionError):
-                tooltip = _("BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}").format(
-                    ", ".join([v.version for v in cause.backend_versions])
+                tooltip = _("TEXT_BACKEND_STATE_API_MISMATCH_versions").format(
+                    versions=", ".join([v.version for v in cause.backend_versions])
                 )
             elif isinstance(cause, HandshakeRevokedDevice):
-                tooltip = _("BACKEND_STATE_REASON_REVOKED_DEVICE")
+                tooltip = _("TEXT_BACKEND_STATE_REVOKED_DEVICE")
             elif isinstance(cause, HandshakeOrganizationExpired):
-                tooltip = _("BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED")
+                tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")
             else:
-                tooltip = _("BACKEND_STATE_REASON_REFUSED_DEFAULT")
-            text = _("BACKEND_STATE_DISCONNECTED")
-            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+                tooltip = _("TEXT_BACKEND_STATE_UNKNOWN")
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
             notif = ("WARNING", tooltip)
 
         elif status == BackendConnStatus.CRASHED:
-            text = _("BACKEND_STATE_DISCONNECTED")
-            tooltip = _("BACKEND_STATE_CRASHED_{}").format(str(status_exc.__cause__))
-            icon = QPixmap(":/icons/images/icons/cloud_offline.png")
+            text = _("TEXT_BACKEND_STATE_DISCONNECTED")
+            tooltip = _("TEXT_BACKEND_STATE_CRASHED_cause").format(cause=str(status_exc.__cause__))
+            icon = QPixmap(":/icons/images/material/cloud_off.svg")
             notif = ("ERROR", tooltip)
 
-        self.menu.label_connection_text.setText(text)
-        self.menu.label_connection_text.setToolTip(tooltip)
-        self.menu.label_connection_icon.setPixmap(icon)
-        self.menu.label_connection_icon.setToolTip(tooltip)
+        self.menu.set_connection_state(text, tooltip, icon)
         if notif:
             self.new_notification.emit(*notif)
 
     def on_new_notification(self, notif_type, msg):
-        self.notification_center.add_notification(notif_type, msg)
-        if self.notification_center.isHidden():
-            self.button_notif.inc_notif_count()
-            self.button_notif.repaint()
+        pass
 
     def show_mount_widget(self):
         self.clear_widgets()
         self.menu.activate_files()
-        self.label_title.setText(_("MENU_DOCUMENTS"))
-        self.set_taskbar_buttons(self.mount_widget.get_taskbar_buttons())
+        self.label_title.setText(_("ACTION_MENU_DOCUMENTS"))
         self.mount_widget.show()
         self.mount_widget.show_workspaces_widget()
 
     def show_users_widget(self):
         self.clear_widgets()
         self.menu.activate_users()
-        self.label_title.setText(_("MENU_USERS"))
-        self.set_taskbar_buttons(self.users_widget.get_taskbar_buttons())
+        self.label_title.setText(_("ACTION_MENU_USERS"))
         self.users_widget.show()
 
     def show_devices_widget(self):
         self.clear_widgets()
         self.menu.activate_devices()
-        self.label_title.setText(_("MENU_DEVICES"))
-        self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons())
+        self.label_title.setText(_("ACTION_MENU_DEVICES"))
         self.devices_widget.show()
 
-    def set_taskbar_buttons(self, buttons):
-        while self.widget_taskbar.layout().count() != 0:
-            item = self.widget_taskbar.layout().takeAt(0)
-            if item:
-                w = item.widget()
-                w.hide()
-                w.setParent(None)
-        buttons.append(self.button_notif)
-        total_width = 0
-        if len(buttons) == 0:
-            self.widget_taskbar.hide()
-        else:
-            self.widget_taskbar.show()
-            for b in buttons:
-                self.widget_taskbar.layout().addWidget(b)
-                b.show()
-                total_width += b.size().width()
-            self.widget_taskbar.setFixedSize(QSize(total_width + 44, 68))
-
     def clear_widgets(self):
+        self.widget_title2.hide()
+        self.widget_title3.hide()
         self.users_widget.hide()
         self.mount_widget.hide()
         self.devices_widget.hide()

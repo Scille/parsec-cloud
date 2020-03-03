@@ -80,7 +80,9 @@ class NewVersionAvailable(QWidget, Ui_NewVersionAvailable):
     def set_version(self, version):
         if version:
             self.label.setText(
-                _("LABEL_NEW_VERSION_AVAILABLE_{}").format(".".join([str(_) for _ in version]))
+                _("TEXT_PARSEC_NEW_VERSION_AVAILABLE_version").format(
+                    version=".".join([str(_) for _ in version])
+                )
             )
 
 

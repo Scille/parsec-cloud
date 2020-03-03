@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>713</width>
+    <width>766</width>
     <height>489</height>
    </rect>
   </property>
@@ -20,88 +20,21 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#FilesWidget
-{
-background-color: rgb(255, 255, 255);
+   <string notr="true">#button_import_folder, #button_import_files, #button_create_folder {
+    background-color: none;
+    border: none;
+    color: #0092FF;
 }
 
-QScrollBar:vertical
-{
-background: rgb(255, 255, 255);
+#button_back {
+    background-color: #FFFFFF;
+	border: none;
+    border-radius: 4px;
 }
 
-QScrollBar::handle:vertical
-{
-background: rgb(46, 46, 46);
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
-{
-border: none;
-background: none;
-}
-
-QToolTip
-{
-background-color: rgb(46, 146, 208);
-border: 1px solid rgb(12, 65, 157);
-color: rgb(255, 255, 255);
-}
-
-QTableWidget#table_files
-{
-border: 1px solid rgb(46, 46, 46);
-}
-
-QHeaderView::section
-{
-padding-left: 15px;
-border: 0;
-background-color: rgb(46, 46, 46);
-color: white;
-font-size: 16px;
-font-weight: bold;
-height: 32px;
-text-align: left;
-}
-
-QHeaderView
-{
-background-color: rgb(46, 46, 46);
-}
-
-QTableWidget::item
-{
-background-color: rgb(255, 255, 255);
-border: 0px;
-padding: 15px;
-color: rgb(0, 0, 0);
-}
-
-QTableWidget::item:selected
-{
-background-color: rgb(206, 225, 239);
-color: rgb(0, 0, 0);
-}
-
-QHeaderView::down-arrow
-{
-image: url(&quot;:/icons/images/icons/sort_down_arrow.png&quot;);
-subcontrol-position: center right;
-subcontrol-origin: padding;
-padding-right: 32px;
-width: 16px;
-height: 16px;
-}
-
-QHeaderView::up-arrow
-{
-image: url(&quot;:/icons/images/icons/sort_up_arrow.png&quot;);
-subcontrol-position: center right;
-subcontrol-origin: padding;
-padding-right: 32px;
-width: 16px;
-height: 16px;
+#line_edit_current_directory {
+	background-color: none;
+	border: none;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -127,7 +60,7 @@ height: 16px;
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
-       <number>10</number>
+       <number>15</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -142,90 +75,170 @@ height: 16px;
        <number>0</number>
       </property>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <property name="spacing">
-         <number>10</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QLabel" name="label_current_workspace">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <widget class="Button" name="button_back">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>16777215</width>
-            <height>16777215</height>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/material/arrow_back.svg</normaloff>:/icons/images/material/arrow_back.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <property name="color" stdset="0">
+           <color>
+            <red>136</red>
+            <green>138</green>
+            <blue>133</blue>
+           </color>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="line_edit_search">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
            </size>
           </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
            </font>
           </property>
-          <property name="styleSheet">
-           <string notr="true">color: rgb(123, 134, 164);</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="textInteractionFlags">
-           <set>Qt::TextSelectableByMouse</set>
+          <property name="placeholderText">
+           <string>TEXT_FILE_FILTER_PLACEHOLDER</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_caret">
-          <property name="maximumSize">
+         <widget class="Button" name="button_create_folder">
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="toolTip">
+           <string>TEXT_FILE_CREATE_FOLDER_TOOLTIP</string>
+          </property>
+          <property name="text">
+           <string>ACTION_FILE_CREATE_FOLDER</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/material/create_new_folder.svg</normaloff>:/icons/images/material/create_new_folder.svg</iconset>
+          </property>
+          <property name="iconSize">
            <size>
-            <width>18</width>
-            <height>18</height>
+            <width>24</width>
+            <height>24</height>
            </size>
           </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <property name="color" stdset="0">
+           <color>
+            <red>0</red>
+            <green>146</green>
+            <blue>255</blue>
+           </color>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Button" name="button_import_files">
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="toolTip">
+           <string>TEXT_FILE_IMPORT_FILES_TOOLTIP</string>
           </property>
           <property name="text">
-           <string/>
+           <string>ACTION_FILE_IMPORT_FILES</string>
           </property>
-          <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/material/control_point.svg</normaloff>:/icons/images/material/control_point.svg</iconset>
           </property>
-          <property name="scaledContents">
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="flat">
            <bool>true</bool>
+          </property>
+          <property name="color" stdset="0">
+           <color>
+            <red>0</red>
+            <green>146</green>
+            <blue>255</blue>
+           </color>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="line_edit_current_directory">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit#line_edit_current_directory
-{
-border: 0;
-background-color: rgb(255, 255, 255);
-}</string>
+         <widget class="Button" name="button_import_folder">
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="readOnly">
+          <property name="toolTip">
+           <string>TEXT_FILE_IMPORT_FOLDER_TOOLTIP</string>
+          </property>
+          <property name="text">
+           <string>ACTION_FILE_IMPORT_FOLDER</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/material/add_circle_outline.svg</normaloff>:/icons/images/material/add_circle_outline.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="flat">
            <bool>true</bool>
+          </property>
+          <property name="color" stdset="0">
+           <color>
+            <red>0</red>
+            <green>146</green>
+            <blue>255</blue>
+           </color>
           </property>
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer">
+         <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Minimum</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -235,64 +248,20 @@ background-color: rgb(255, 255, 255);
           </property>
          </spacer>
         </item>
-        <item>
-         <widget class="QLabel" name="label_role">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QLabel#label_role
-{
-border: 1px solid rgb(12, 65, 157);
-border-top-left-radius: 5px;
-border-bottom-left-radius: 5px;
-border-top-right-radius: 5px;
-border-bottom-right-radius: 5px;
-color: rgb(12, 65, 157);
-}</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
        </layout>
       </item>
       <item>
-       <widget class="QLineEdit" name="line_edit_search">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>32</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-image: url(:/icons/images/icons/search.png);
-background-repeat: no-repeat;
-background-position: right;
-border: 1px solid rgb(46, 46, 46);
-padding-left: 10px;
-color: rgb(46, 46, 46);</string>
-        </property>
-        <property name="placeholderText">
-         <string>LABEL_SEARCH_FILES</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <property name="spacing">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="leftMargin">
          <number>0</number>
         </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
         <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -367,8 +336,14 @@ color: rgb(46, 46, 46);</string>
           <property name="columnCount">
            <number>5</number>
           </property>
+          <attribute name="horizontalHeaderVisible">
+           <bool>true</bool>
+          </attribute>
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>false</bool>
+          </attribute>
+          <attribute name="verticalHeaderVisible">
+           <bool>true</bool>
           </attribute>
           <attribute name="verticalHeaderShowSortIndicator" stdset="0">
            <bool>false</bool>
@@ -383,22 +358,22 @@ color: rgb(46, 46, 46);</string>
           </column>
           <column>
            <property name="text">
-            <string>LABEL_FILE_NAME</string>
+            <string>TEXT_FILE_NAME_HEADER</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>LABEL_FILE_CREATED</string>
+            <string>TEXT_FILE_CREATED_HEADER</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>LABEL_FILE_UPDATED</string>
+            <string>TEXT_FILE_UPDATED_HEADER</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>LABEL_FILE_SIZE</string>
+            <string>TEXT_FILE_SIZE_HEADER</string>
            </property>
           </column>
          </widget>
@@ -411,6 +386,11 @@ color: rgb(46, 46, 46);</string>
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
   <customwidget>
    <class>FileTable</class>
    <extends>QTableWidget</extends>

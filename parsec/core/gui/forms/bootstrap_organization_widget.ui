@@ -7,34 +7,22 @@
     <x>0</x>
     <y>0</y>
     <width>463</width>
-    <height>398</height>
+    <height>482</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#button_bootstrap,
-#button_cancel
-{
-background-color: rgb(12, 65, 156);
-height: 32px;
-}
-
-#button_bootstrap:pressed,
-#button_cancel:pressed
-{
-background-color: rgb(32, 85, 176);
-}
-
-#button_bootstrap:disabled,
-#button_cancel:disabled
-{
-background-color: rgb(112, 112, 112);
-color: rgb(255, 255, 255);
+   <string notr="true">#label_device_name, #label_username, #label_password, #label_confirmation {
+	color: #999999;
+	padding-left: 10px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
+   <property name="spacing">
+    <number>30</number>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -111,7 +99,7 @@ color: rgb(255, 255, 255);
        <widget class="QWidget" name="widget_2" native="true">
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
-          <number>5</number>
+          <number>20</number>
          </property>
          <property name="leftMargin">
           <number>0</number>
@@ -128,20 +116,22 @@ color: rgb(255, 255, 255);
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <property name="spacing">
-            <number>0</number>
+            <number>5</number>
            </property>
            <item>
-            <widget class="QLabel" name="label">
+            <widget class="QLabel" name="label_username">
              <property name="font">
               <font>
-               <pointsize>12</pointsize>
+               <pointsize>11</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
               </font>
              </property>
              <property name="text">
-              <string>LABEL_USER_NAME</string>
+              <string>TEXT_LABEL_USER_NAME</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
@@ -158,6 +148,9 @@ color: rgb(255, 255, 255);
                <pointsize>12</pointsize>
               </font>
              </property>
+             <property name="placeholderText">
+              <string/>
+             </property>
             </widget>
            </item>
           </layout>
@@ -165,20 +158,22 @@ color: rgb(255, 255, 255);
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_7">
            <property name="spacing">
-            <number>0</number>
+            <number>5</number>
            </property>
            <item>
-            <widget class="QLabel" name="label_7">
+            <widget class="QLabel" name="label_device_name">
              <property name="font">
               <font>
-               <pointsize>12</pointsize>
+               <pointsize>11</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
               </font>
              </property>
              <property name="text">
-              <string>LABEL_DEVICE_NAME</string>
+              <string>TEXT_LABEL_DEVICE_NAME</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
@@ -194,6 +189,9 @@ color: rgb(255, 255, 255);
               <font>
                <pointsize>12</pointsize>
               </font>
+             </property>
+             <property name="placeholderText">
+              <string/>
              </property>
             </widget>
            </item>
@@ -220,20 +218,22 @@ color: rgb(255, 255, 255);
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <property name="spacing">
-               <number>0</number>
+               <number>5</number>
               </property>
               <item>
-               <widget class="QLabel" name="label_2">
+               <widget class="QLabel" name="label_password">
                 <property name="font">
                  <font>
-                  <pointsize>12</pointsize>
+                  <pointsize>11</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
                  </font>
                 </property>
                 <property name="text">
-                 <string>LABEL_PASSWORD</string>
+                 <string>TEXT_LABEL_PASSWORD</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -256,6 +256,9 @@ color: rgb(255, 255, 255);
                 <property name="echoMode">
                  <enum>QLineEdit::Password</enum>
                 </property>
+                <property name="placeholderText">
+                 <string/>
+                </property>
                </widget>
               </item>
              </layout>
@@ -263,20 +266,22 @@ color: rgb(255, 255, 255);
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_11">
               <property name="spacing">
-               <number>0</number>
+               <number>5</number>
               </property>
               <item>
-               <widget class="QLabel" name="label_6">
+               <widget class="QLabel" name="label_confirmation">
                 <property name="font">
                  <font>
-                  <pointsize>12</pointsize>
+                  <pointsize>11</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
                  </font>
                 </property>
                 <property name="text">
-                 <string>LABEL_PASSWORD_CHECK</string>
+                 <string>TEXT_LABEL_PASSWORD_CONFIRMATION</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -296,39 +301,15 @@ color: rgb(255, 255, 255);
                 <property name="echoMode">
                  <enum>QLineEdit::Password</enum>
                 </property>
+                <property name="placeholderText">
+                 <string/>
+                </property>
                </widget>
               </item>
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout">
-              <item>
-               <widget class="QLabel" name="label_password_strength">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                  <weight>75</weight>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="lineWidth">
-                 <number>0</number>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <layout class="QHBoxLayout" name="layout_password_strength"/>
             </item>
            </layout>
           </widget>
@@ -355,29 +336,23 @@ color: rgb(255, 255, 255);
             </spacer>
            </item>
            <item>
-            <widget class="PointingHandButton" name="button_cancel">
+            <widget class="QPushButton" name="button_bootstrap">
              <property name="font">
               <font>
                <pointsize>13</pointsize>
               </font>
              </property>
-             <property name="text">
-              <string>BUTTON_CANCEL</string>
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
              </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="PointingHandButton" name="button_bootstrap">
-             <property name="font">
-              <font>
-               <pointsize>13</pointsize>
-              </font>
+             <property name="toolTip">
+              <string>TEXT_BOOTSTRAP_ORG_TOOLTIP</string>
              </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
              <property name="text">
-              <string>BUTTON_BOOTSTRAP_ORG</string>
+              <string>ACTION_BOOTSTRAP_ORG</string>
              </property>
              <property name="iconSize">
               <size>
@@ -400,13 +375,6 @@ color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>PointingHandButton</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

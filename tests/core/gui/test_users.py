@@ -108,7 +108,7 @@ async def test_revoke_user(
     assert bob_w.user_name == "bob"
     assert bob_w.is_revoked is False
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+        "parsec.core.gui.custom_dialogs.ask_question", classmethod(lambda *args: _("BUTTON_OK"))
     )
 
     if online:

@@ -11,6 +11,7 @@ from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 class MountWidget(QWidget, Ui_MountWidget):
     widget_switched = pyqtSignal(list)
+    folder_changed = pyqtSignal(str, str)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -25,26 +26,13 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.layout_content.insertWidget(0, self.workspaces_widget)
         self.workspaces_widget.load_workspace_clicked.connect(self.load_workspace)
         self.files_widget = FilesWidget(self.core, self.jobs_ctx, self.event_bus, parent=self)
+        self.files_widget.folder_changed.connect(self.folder_changed.emit)
         self.layout_content.insertWidget(0, self.files_widget)
         self.files_widget.back_clicked.connect(self.show_workspaces_widget)
-        self.files_widget.taskbar_updated.connect(self.on_taskbar_updated)
-        self.widget_switched.emit(self.get_taskbar_buttons())
         self.show_workspaces_widget()
 
     def load_workspace(self, workspace_fs, default_path, select=False):
         self.show_files_widget(workspace_fs, default_path, select)
-
-    def get_taskbar_buttons(self):
-        if not self.files_widget.isVisible() and not self.workspaces_widget.isVisible():
-            return self.workspaces_widget.get_taskbar_buttons().copy()
-        elif self.files_widget.isVisible():
-            return self.files_widget.get_taskbar_buttons().copy()
-        elif self.workspaces_widget.isVisible():
-            return self.workspaces_widget.get_taskbar_buttons().copy()
-        return []
-
-    def on_taskbar_updated(self):
-        self.widget_switched.emit(self.get_taskbar_buttons())
 
     def show_files_widget(self, workspace_fs, default_path, selected=False):
         self.workspaces_widget.hide()
@@ -56,10 +44,9 @@ class MountWidget(QWidget, Ui_MountWidget):
             else None,
         )
         self.files_widget.show()
-        self.widget_switched.emit(self.files_widget.get_taskbar_buttons().copy())
 
     def show_workspaces_widget(self):
+        self.folder_changed.emit(None, None)
         self.files_widget.hide()
         self.workspaces_widget.show()
         self.workspaces_widget.reset()
-        self.widget_switched.emit(self.workspaces_widget.get_taskbar_buttons().copy())

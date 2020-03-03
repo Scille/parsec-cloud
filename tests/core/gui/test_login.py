@@ -45,7 +45,7 @@ async def test_bootstrap_org_missing_fields(
     lw = gui.test_get_login_widget()
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(
             lambda *args, **kwargs: (
                 "parsec://host/org?action=bootstrap_organization&no_ssl=true&token=2eead2c011e4ad9878ffc5854a38b395ecd22279b86994f804bdfc7cad81ed66"
@@ -87,7 +87,7 @@ async def test_claim_user_missing_fields(
     lw = gui.test_get_login_widget()
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(
             lambda *args, **kwargs: (
                 "parsec://host/org?action=claim_user&no_ssl=true&rvk=CMT42NY7MVLO746AI6XOU4PWJDFWYHHEPYWOAVDJKSAP6QN6FYPAssss&user_id=test"
@@ -129,7 +129,7 @@ async def test_claim_device_missing_fields(
     lw = gui.test_get_login_widget()
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(
             lambda *args, **kwargs: (
                 "parsec://host/org?action=claim_device&device_id=test@test&no_ssl=true&rvk=CMT42NY7MVLO746AI6XOU4PWJDFWYHHEPYWOAVDJKSAP6QN6FYPAssss"

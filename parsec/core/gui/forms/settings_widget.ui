@@ -6,18 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>563</height>
+    <width>400</width>
+    <height>667</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>500</width>
-    <height>400</height>
+    <width>400</width>
+    <height>300</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#SettingsWidget
+{
+background-color: #FFFFFF;
+}
+
+#scrollAreaWidgetContents
+{
+background-color: rgb(255, 255, 255);
+border-radius: 8px;
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -57,25 +69,31 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>480</width>
-        <height>489</height>
+        <width>465</width>
+        <height>609</height>
        </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">#scrollAreaWidgetContents
-{
-background-color: rgb(255, 255, 255);
-}</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="spacing">
-        <number>15</number>
+        <number>25</number>
+       </property>
+       <property name="leftMargin">
+        <number>30</number>
+       </property>
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <property name="rightMargin">
+        <number>30</number>
+       </property>
+       <property name="bottomMargin">
+        <number>20</number>
        </property>
        <item>
         <widget class="QWidget" name="widget_behavior" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_9">
           <property name="spacing">
-           <number>5</number>
+           <number>15</number>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -101,7 +119,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>SETTINGS_TITLE_BEHAVIOR</string>
+               <string>TEXT_SETTINGS_BEHAVIOR_TITLE</string>
               </property>
              </widget>
             </item>
@@ -110,12 +128,12 @@ background-color: rgb(255, 255, 255);
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="leftMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QCheckBox" name="check_box_tray">
               <property name="text">
-               <string>CHECK_MINIMIZE_IN_TRAY</string>
+               <string>TEXT_SETTINGS_CHECK_MINIMIZE_IN_TRAY</string>
               </property>
              </widget>
             </item>
@@ -128,7 +146,7 @@ background-color: rgb(255, 255, 255);
         <widget class="QWidget" name="widget_locale" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_13">
           <property name="spacing">
-           <number>5</number>
+           <number>15</number>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -154,7 +172,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>SETTINGS_TITLE_LOCALIZATION</string>
+               <string>TEXT_SETTINGS_LOCALIZATION_TITLE</string>
               </property>
              </widget>
             </item>
@@ -163,19 +181,19 @@ background-color: rgb(255, 255, 255);
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_11">
             <property name="leftMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_9">
               <item>
                <widget class="QLabel" name="label_10">
                 <property name="text">
-                 <string>LABEL_LANGUAGE</string>
+                 <string>TEXT_LABEL_LANGUAGE</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="combo_languages">
+               <widget class="ComboBox" name="combo_languages">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -201,7 +219,7 @@ background-color: rgb(255, 255, 255);
         <widget class="QWidget" name="widget_version" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <property name="spacing">
-           <number>5</number>
+           <number>15</number>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -227,7 +245,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>SETTINGS_TITLE_VERSION</string>
+               <string>TEXT_SETTINGS_VERSION_TITLE</string>
               </property>
              </widget>
             </item>
@@ -236,14 +254,14 @@ background-color: rgb(255, 255, 255);
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <property name="leftMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
                <widget class="QCheckBox" name="check_box_check_at_startup">
                 <property name="text">
-                 <string>CHECK_CHECK_NEW_VERSION</string>
+                 <string>TEXT_SETTINGS_CHECK_NEW_VERSION_ON_STARTUP</string>
                 </property>
                </widget>
               </item>
@@ -252,7 +270,7 @@ background-color: rgb(255, 255, 255);
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
-               <widget class="ShadowedButton" name="button_check_version">
+               <widget class="QPushButton" name="button_check_version">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -265,11 +283,14 @@ background-color: rgb(255, 255, 255);
                   <bold>true</bold>
                  </font>
                 </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
                 <property name="styleSheet">
                  <string notr="true"/>
                 </property>
                 <property name="text">
-                 <string>BUTTON_CHECK_NEW_VERSION</string>
+                 <string>ACTION_SETTINGS_CHECK_NEW_VERSION</string>
                 </property>
                </widget>
               </item>
@@ -296,6 +317,9 @@ background-color: rgb(255, 255, 255);
        <item>
         <widget class="QWidget" name="widget_error_reporting" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_6">
+          <property name="spacing">
+           <number>15</number>
+          </property>
           <property name="leftMargin">
            <number>0</number>
           </property>
@@ -320,7 +344,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>SETTINGS_TITLE_ERROR_REPORTING</string>
+               <string>TEXT_SETTINGS_ERROR_REPORTING_TITLE</string>
               </property>
              </widget>
             </item>
@@ -329,12 +353,12 @@ background-color: rgb(255, 255, 255);
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
             <property name="leftMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QCheckBox" name="check_box_send_data">
               <property name="text">
-               <string>CHECK_SEND_CRASH_INFO</string>
+               <string>TEXT_SETTINGS_CHECK_SEND_CRASH_REPORT</string>
               </property>
              </widget>
             </item>
@@ -346,6 +370,9 @@ background-color: rgb(255, 255, 255);
        <item>
         <widget class="QWidget" name="widget_interface" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_7">
+          <property name="spacing">
+           <number>15</number>
+          </property>
           <property name="leftMargin">
            <number>0</number>
           </property>
@@ -370,7 +397,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>SETTINGS_TITLE_INTERFACE</string>
+               <string>TEXT_SETTINGS_INTERFACE_TITLE</string>
               </property>
              </widget>
             </item>
@@ -379,12 +406,12 @@ background-color: rgb(255, 255, 255);
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_11">
             <property name="leftMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QCheckBox" name="check_box_workspace_color">
               <property name="text">
-               <string>CHECK_USE_WORKSPACE_COLORS</string>
+               <string>TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS</string>
               </property>
              </widget>
             </item>
@@ -396,6 +423,21 @@ background-color: rgb(255, 255, 255);
        <item>
         <widget class="QWidget" name="widget_misc" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_8">
+          <property name="spacing">
+           <number>15</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
@@ -408,7 +450,7 @@ background-color: rgb(255, 255, 255);
                </font>
               </property>
               <property name="text">
-               <string>SETTINGS_TITLE_MISC</string>
+               <string>TEXT_SETTINGS_MISC_TITLE</string>
               </property>
              </widget>
             </item>
@@ -417,12 +459,12 @@ background-color: rgb(255, 255, 255);
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_12">
             <property name="leftMargin">
-             <number>20</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QCheckBox" name="check_acrobat_container">
               <property name="text">
-               <string>CHECK_DISABLE_ACROBAT_CONTAINER</string>
+               <string>TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS</string>
               </property>
              </widget>
             </item>
@@ -483,7 +525,7 @@ background-color: rgb(255, 255, 255);
       </spacer>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_save">
+      <widget class="QPushButton" name="button_save">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -502,6 +544,9 @@ background-color: rgb(255, 255, 255);
          <bold>true</bold>
         </font>
        </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
        </property>
@@ -509,7 +554,7 @@ background-color: rgb(255, 255, 255);
         <string notr="true"/>
        </property>
        <property name="text">
-        <string>BUTTON_SAVE</string>
+        <string>ACTION_SAVE</string>
        </property>
        <property name="iconSize">
         <size>
@@ -519,27 +564,14 @@ background-color: rgb(255, 255, 255);
        </property>
       </widget>
      </item>
-     <item>
-      <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
     </layout>
    </item>
   </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ShadowedButton</class>
-   <extends>QPushButton</extends>
+   <class>ComboBox</class>
+   <extends>QComboBox</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

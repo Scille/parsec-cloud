@@ -43,7 +43,7 @@ async def _gui_ready_for_claim(aqtbot, gui, invitation, monkeypatch):
     lw = gui.test_get_login_widget()
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: (invitation["addr"].to_url())),
     )
     await aqtbot.mouse_click(lw.button_enter_url, QtCore.Qt.LeftButton)

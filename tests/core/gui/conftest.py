@@ -13,10 +13,7 @@ from parsec.event_bus import EventBus
 from parsec import __version__ as parsec_version
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler
-from parsec.core.gui.login_widget import LoginWidget, LoginLoginWidget
-from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
-from parsec.core.gui.claim_user_widget import ClaimUserWidget
-from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
 
@@ -220,10 +217,10 @@ def autoclose_dialog(monkeypatch):
     spy = DialogSpy()
 
     def _dialog_exec(dialog):
-        spy.dialogs.append((dialog.label_title.text(), dialog.label_message.text()))
+        spy.dialogs.append((dialog.label_title.text()))
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.MessageDialog.exec_", _dialog_exec, raising=False
+        "parsec.core.gui.custom_dialogs.GreyedDialog.exec_", _dialog_exec, raising=False
     )
     return spy
 
@@ -317,54 +314,6 @@ def test_get_login_widget(self):
     if not isinstance(main_widget, LoginWidget):
         return None
     return main_widget
-
-
-@add_method(MainWindow)
-def test_get_login_login_widget(self):
-    login_w = self.test_get_login_widget()
-    if not login_w:
-        return None
-    item = login_w.layout.itemAt(0)
-    w = item.widget()
-    if not isinstance(w, LoginLoginWidget):
-        return None
-    return w
-
-
-@add_method(MainWindow)
-def test_get_claim_user_widget(self):
-    login_w = self.test_get_login_widget()
-    if not login_w:
-        return None
-    item = login_w.layout.itemAt(0)
-    w = item.widget()
-    if not isinstance(w, ClaimUserWidget):
-        return None
-    return w
-
-
-@add_method(MainWindow)
-def test_get_claim_device_widget(self):
-    login_w = self.test_get_login_widget()
-    if not login_w:
-        return None
-    item = login_w.layout.itemAt(0)
-    w = item.widget()
-    if not isinstance(w, ClaimDeviceWidget):
-        return None
-    return w
-
-
-@add_method(MainWindow)
-def test_get_bootstrap_organization_widget(self):
-    login_w = self.test_get_login_widget()
-    if not login_w:
-        return None
-    item = login_w.layout.itemAt(0)
-    w = item.widget()
-    if not isinstance(w, BootstrapOrganizationWidget):
-        return None
-    return w
 
 
 @add_method(MainWindow)

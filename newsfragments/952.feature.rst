@@ -1,0 +1,1 @@
+The overall appearance of the GUI has changed: new icons, new colors, new texts, and a few fixes

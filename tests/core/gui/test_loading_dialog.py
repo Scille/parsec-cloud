@@ -3,13 +3,13 @@
 import pytest
 from PyQt5 import QtCore
 
-from parsec.core.gui.loading_dialog import LoadingDialog
+from parsec.core.gui.loading_widget import LoadingWidget
 
 
 @pytest.mark.gui
 def test_loading_dialog(qtbot):
 
-    w = LoadingDialog(total_size=10000, parent=None)
+    w = LoadingWidget(total_size=10000)
 
     qtbot.addWidget(w)
     assert w.progress_bar.text() == "0%"
@@ -29,5 +29,3 @@ def test_loading_dialog(qtbot):
     assert w.progress_bar.text() == "70%"
     w.set_progress(10000)
     assert w.progress_bar.text() == "100%"
-
-    qtbot.mouseClick(w.button_cancel, QtCore.Qt.LeftButton)

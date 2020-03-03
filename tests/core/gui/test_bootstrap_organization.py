@@ -27,7 +27,7 @@ async def _gui_ready_for_bootstrap(aqtbot, gui, running_backend, monkeypatch):
     assert bootstrap_w is None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: (organization_addr.to_url())),
     )
     await aqtbot.mouse_click(login_w.button_enter_url, QtCore.Qt.LeftButton)

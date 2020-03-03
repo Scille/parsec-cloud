@@ -1,1906 +1,1234 @@
 # English translations for PROJECT.
-# Copyright (C) 2019 ORGANIZATION
+# Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-02-26 09:21+0100\n"
-"PO-Revision-Date: 2020-03-06 13:49+0100\n"
+"POT-Creation-Date: 2020-03-19 18:11+0100\n"
+"PO-Revision-Date: 2020-03-19 15:49+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-"X-Generator: Poedit 2.3\n"
 
-msgid "WORKSPACE_ROLE_READER"
+msgid "TEXT_WORKSPACE_ROLE_READER"
 msgstr "Reader"
 
-msgid "WORKSPACE_ROLE_CONTRIBUTOR"
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
 msgstr "Contributor"
 
-msgid "WORKSPACE_ROLE_MANAGER"
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
 msgstr "Manager"
 
-msgid "WORKSPACE_ROLE_OWNER"
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
 msgstr "Owner"
 
-msgid "BUTTON_TASKBAR_BACK"
-msgstr "Go back to the list of workspaces."
+msgid "TEXT_FILE_LINK"
+msgstr "Link to the file has been copied in your clipboard."
 
-msgid "BUTTON_TASKBAR_IMPORT_FOLDER"
-msgstr "Import a entire folder."
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Cannot paste this file here."
 
-msgid "BUTTON_TASKBAR_IMPORT_FILES"
-msgstr "Import files."
+msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
+msgstr "Cannot move a folder into itself."
 
-msgid "BUTTON_TASKBAR_CREATE_FOLDER"
-msgstr "Create a new folder."
-
-msgid "FILE_LINK_CONTENT"
-msgstr "Link to the file has been copied to the clipboard."
-
-msgid "ERR_FILE_PASTE"
-msgstr "An error occured while pasting a file."
-
-msgid "ERR_FOLDER_MOVED_INTO_ITSELF"
-msgstr "Can not move a folder into itself."
-
-msgid "ERR_FILE_HISTORY_MONO"
-msgstr "You can only see one file history at a time."
-
-msgid "ASK_FILE_RENAME_TITLE"
-msgstr "Rename the file"
-
-msgid "ASK_FILE_RENAME_CONTENT"
-msgstr "Enter file new name"
-
-msgid "ASK_FILE_RENAME_PLACEHOLDER"
-msgstr "File Name"
-
-msgid "ASK_MULTI_FILE_RENAME_TITLE_{}"
-msgstr "Rename {} files"
-
-msgid "ASK_MULTI_FILE_RENAME_CONTENT_{}"
-msgstr "Enter the {} files new name (without extension)."
-
-msgid "ASK_MULTI_FILE_RENAME_PLACEHOLDER"
-msgstr "Files name"
-
-msgid "ASK_FILE_DELETE_TITLE"
-msgstr "Delete the file"
-
-msgid "ASK_FILE_DELETE_CONTENT_{}"
-msgstr "Are you sure you want to delete the file \"{}\"?"
-
-msgid "ASK_MULTI_FILE_DELETE_TITLE_{}"
-msgstr "Delete {} files"
-
-msgid "ASK_MULTI_FILE_DELETE_CONTENT_{}"
-msgstr "Are you sure you want to delete the {} files?"
-
-msgid "ASK_OPEN_MULTI_FILE_TITLE_{}"
-msgstr "Open {} files"
-
-msgid "ASK_OPEN_MULTI_FILE_CONTENT_{}"
-msgstr "Are you sure you want to open {} files?"
-
-msgid "ASK_IMPORT_FILES_TITLE"
-msgstr "Select files to import"
-
-msgid "ASK_IMPORT_FOLDER_TITLE"
-msgstr "Select a folder to import"
-
-msgid "ASK_CREATE_FOLDER_TITLE"
-msgstr "Create a folder"
-
-msgid "ASK_CREATE_FOLDER_CONTENT"
-msgstr "Enter folder name"
-
-msgid "ASK_CREATE_FOLDER_PLACEHOLDER"
-msgstr "Folder name"
-
-msgid "ERR_RENAME_MULTI_FILE"
-msgstr "Cannot rename the files."
-
-msgid "ERR_RENAME_FILE"
-msgstr "Cannot rename the file."
-
-msgid "ERR_DELETE_MULTI_FILE"
-msgstr "Cannot delete the files."
-
-msgid "ERR_DELETE_FILE"
-msgstr "Cannot delete the file."
-
-msgid "ERR_GOTO_FILE_NOT_FOUND"
-msgstr "The file does not exist."
-
-msgid "ERR_DIR_NOT_FOUND"
-msgstr "The folder does not exist."
-
-msgid "ERR_FOLDER_CREATE_ALREADY_EXISTS"
-msgstr "A folder with this name already exists."
-
-msgid "ERR_FOLDER_CREATE_UNKNOWN"
-msgstr "Cannot create the folder."
-
-msgid "ERR_IMPORT_FILES"
-msgstr "Cannot import the files."
-
-msgid "ERR_FILE_SHARING_REVOKED"
-msgstr "You no longer have permissions to access this workspace."
-
-msgid "WARN_FILE_SHARING_READER"
-msgstr "You are now a reader on this workspace."
-
-msgid "LABEL_PASSWORD_STRENGTH_{}"
-msgstr "Password strength: {}"
-
-msgid "ERR_PASSWORD_MISMATCH"
-msgstr "Passwords don't match."
-
-msgid "INFO_CHANGE_PASSWORD_SUCCESS"
-msgstr "Your password has been successfully changed."
-
-msgid "ERR_PASSWORD_CHANGE_INVALID_PASSWORD"
-msgstr "Your old password is invalid."
-
-msgid "PARSEC_VERSION_LABEL_{}"
-msgstr "Parsec version {version}"
-
-msgid "ASK_FILE_EXISTS_REPLACE"
-msgstr "A file with the name \"{}\" already exists. Do you want to replace it?"
-
-msgid "PASSWORD_STR_TOO_SHORT"
-msgstr "Too short"
-
-msgid "PASSWORD_STR_VERY_WEAK"
-msgstr "Very weak"
-
-msgid "PASSWORD_STR_WEAK"
-msgstr "Weak"
-
-msgid "PASSWORD_STR_AVERAGE"
-msgstr "Average"
-
-msgid "PASSWORD_STR_GOOD"
-msgstr "Good"
-
-msgid "PASSWORD_STR_STRONG"
-msgstr "Strong"
-
-msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
-msgstr "This workspace needs to be reencrypted."
-
-msgid "WORKSPACE_SHARED_DISPLAY"
-msgstr "shared with others"
-
-msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
-msgstr "- at {}"
-
-msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
-msgstr "Copied to clipboard."
-
-msgid "ERR_BAD_DEVICE_NAME"
-msgstr "The device name is invalid."
-
-msgid "ERR_REGISTER_DEVICE_EXISTS"
-msgstr "The device already exists."
-
-msgid "ERR_REGISTER_DEVICE_OFFLINE"
-msgstr "Cannot reach the server."
-
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "User did not provide the right information."
-
-msgid "ERR_REGISTER_DEVICE_TIMEOUT"
-msgstr "The device took too much time to register."
-
-msgid "ERR_REGISTER_DEVICE_UNKNOWN"
-msgstr "Cannot register the device."
-
-msgid "INFO_REGISTER_DEVICE_SUCCESS"
-msgstr "The device has been registered. You may now close this window."
-
-msgid "WARN_REGISTER_DEVICE_EMPTY"
-msgstr "The device name cannot be empty."
-
-msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
+msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Register the user \"<b>{user}</b>\" of the organization \"<b>{organization}</b>"
-"\" by choosing a device name, a password, and entering the verification token."
+"Cannot show the history of multiple files at once. Please select only one"
+" file."
 
-msgid "LABEL_USER_REGISTRATION"
-msgstr "Please wait while the user is registering."
+msgid "TEXT_FILE_RENAME_TITLE"
+msgstr "Rename a file"
 
-msgid "ERR_CLAIM_USER_NOT_FOUND"
-msgstr "No invitation found for this user."
+msgid "TEXT_FILE_RENAME_INSTRUCTIONS"
+msgstr "Enter the new file name."
 
-msgid "ERR_PASSWORD_COMPLEXITY"
-msgstr "The password must be at least 8 characters long."
+msgid "TEXT_FILE_RENAME_PLACEHOLDER"
+msgstr "File name"
 
-msgid "ERR_BAD_URL"
-msgstr "URL is invalid."
-
-msgid "ERR_BAD_USER_NAME"
-msgstr "User name is invalid."
-
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"The server has refused your request. Are you sure all information are correct?"
-
-msgid "ERR_BACKEND_OFFLINE"
-msgstr "Cannot reach the server. Please check your internet connection."
-
-msgid "ERR_CLAIM_USER_UNKNOWN"
-msgstr "Cannot register the user."
-
-msgid "DEVICE_CURRENT_TEXT"
-msgstr "current"
-
-msgid "DEVICE_MENU_SHOW_INFO"
-msgstr "Show info"
-
-msgid "DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Change password"
-
-msgid "DEVICE_CREATED_ON_{}"
-msgstr "Created on {}"
-
-msgid "DEVICE_IS_REVOKED"
-msgstr "This device has been revoked."
-
-msgid "BUTTON_TASKBAR_ADD_DEVICE"
-msgstr "Create a new device."
-
-msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
-msgstr "Create a new workspace."
-
-msgid "BUTTON_GOTO_FILE"
-msgstr "Go to a file using its path."
-
-msgid "ASK_FILE_LINK_TITLE"
-msgstr "Go to a file"
-
-msgid "ASK_FILE_LINK_CONTENT"
-msgstr "Provide a link to the file."
-
-msgid "ASK_FILE_LINK_PLACEHOLDER"
-msgstr "Link to a file"
-
-msgid "GOTO_FILE_INVALID_LINK"
-msgstr "The link is not valid."
-
-msgid "GOTO_FILE_NO_WORKSPACE"
-msgstr "The workspace does not exist."
-
-msgid "ERR_WORKSPACE_INVALID_NAME"
-msgstr "Invalid workspace name."
-
-msgid "ERR_WORKSPACE_CREATE"
-msgstr "Cannot create the workspace."
-
-msgid "ERR_WORKSPACE_RENAME"
-msgstr "Cannot rename the workspace."
-
-msgid "LABEL_NO_WORKSPACES"
-msgstr "No workspace has been created yet."
-
-msgid "ERR_WORKSPACE_MOUNT_{}"
-msgstr "Can not get the workspace \"{}\" at \"{}\"."
-
-msgid "ASK_WORKSPACE_DELETE_TITLE"
-msgstr "Delete a workspace"
-
-msgid "ASK_WORKSPACE_DELETE_CONTENT_{}"
-msgstr "Are you sure you want to delete the workspaces \"{}\"?"
-
-msgid "WARN_WORKSPACE_DELETE"
-msgstr "Not yet implemented."
-
-msgid "ASK_RENAME_WORKSPACE_TITLE"
-msgstr "Rename a workspace"
-
-msgid "ASK_RENAME_WORKSPACE_CONTENT"
-msgstr "Enter new workspace name (changes will not be seen by other users)."
-
-msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
-msgstr "Workspace Name"
-
-msgid "ASK_WORKSPACE_USER_REVOKED"
-msgstr "A user of this workspace has been revoked."
-
-msgid "ASK_WORKSPACE_USER_REMOVED"
-msgstr "A user has been removed from this workspace sharing."
-
-msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
-msgstr ""
-"This workspace needs to be reencrypted to ensure the security of your data.\n"
-"This operation will take some time and prevent the workspace synchronization.\n"
-"\n"
-"Do you want to continue?"
-
-msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
-msgstr "Workspace reencryption"
-
-msgid "ASK_NEW_WORKSPACE_TITLE"
-msgstr "Create a workspace"
-
-msgid "ASK_NEW_WORKSPACE_CONTENT"
-msgstr "Enter workspace name"
-
-msgid "ASK_NEW_WORKSPACE_PLACEHOLDER"
-msgstr "Workspace Name"
-
-msgid "USER_CURRENT_TEXT"
-msgstr "you"
-
-msgid "USER_MENU_SHOW_INFO"
-msgstr "Show info"
-
-msgid "USER_MENU_REVOKE"
-msgstr "Revoke"
-
-msgid "USER_CREATED_ON_{}"
-msgstr "Created on {}"
-
-msgid "USER_IS_ADMIN"
-msgstr "Administrator"
-
-msgid "USER_IS_REVOKED"
-msgstr "This user has been revoked."
-
-msgid "BUTTON_TASKBAR_ADD_USER"
-msgstr "Create a new user."
-
-msgid "INFO_USER_REVOKED_SUCCESS_{}"
-msgstr "User \"{}\" has been successfully revoked."
-
-msgid "ERR_USER_REVOKED_ALREADY"
-msgstr "This user has already been revoked."
-
-msgid "ERR_USER_REVOKED_NOT_FOUND"
-msgstr "This user does not exists."
-
-msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
-msgstr "You don't have the permissions required to revoke this user."
-
-msgid "ERR_USER_REVOKED_UNKNOWN_ERROR"
-msgstr "Cannot revoke this user."
-
-msgid "ASK_USER_REVOKE_TITLE"
-msgstr "Revoke a user"
-
-msgid "ASK_USER_REVOKE_CONTENT_{}"
-msgstr "Are you sure you want to revoke user \"{}\"?"
-
-msgid "ERR_USER_LIST_UNKNOWN_ERROR"
-msgstr "Cannot retrieve the list of users."
-
-msgid "PARSEC_LICENSE_CONTENT"
-msgstr ""
-"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
-"    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
-"\n"
-"<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n"
-"<head>\n"
-" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n"
-" <title>GNU Affero General Public License - GNU Project - Free Software "
-"Foundation (FSF)</title>\n"
-" <link rel=\"alternate\" type=\"application/rdf+xml\"\n"
-"       href=\"http://www.gnu.org/licenses/agpl-3.0.rdf\" /> \n"
-"</head>\n"
-"<body>\n"
-"<h3 style=\"text-align: center;\">GNU AFFERO GENERAL PUBLIC LICENSE</h3>\n"
-"<p style=\"text-align: center;\">Version 3, 19 November 2007</p>\n"
-"\n"
-"<p>Copyright &copy; 2007 Free Software Foundation,\n"
-"Inc. &lt;<a href=\"https://fsf.org/\">https://fsf.org/</a>&gt;\n"
-" <br />\n"
-" Everyone is permitted to copy and distribute verbatim copies\n"
-" of this license document, but changing it is not allowed.</p>\n"
-"\n"
-"<h3><a name=\"preamble\"></a>Preamble</h3>\n"
-"\n"
-"<p>The GNU Affero General Public License is a free, copyleft license\n"
-"for software and other kinds of works, specifically designed to ensure\n"
-"cooperation with the community in the case of network server software.</p>\n"
-"\n"
-"<p>The licenses for most software and other practical works are\n"
-"designed to take away your freedom to share and change the works.  By\n"
-"contrast, our General Public Licenses are intended to guarantee your\n"
-"freedom to share and change all versions of a program--to make sure it\n"
-"remains free software for all its users.</p>\n"
-"\n"
-"<p>When we speak of free software, we are referring to freedom, not\n"
-"price.  Our General Public Licenses are designed to make sure that you\n"
-"have the freedom to distribute copies of free software (and charge for\n"
-"them if you wish), that you receive source code or can get it if you\n"
-"want it, that you can change the software or use pieces of it in new\n"
-"free programs, and that you know you can do these things.</p>\n"
-"\n"
-"<p>Developers that use our General Public Licenses protect your rights\n"
-"with two steps: (1) assert copyright on the software, and (2) offer\n"
-"you this License which gives you legal permission to copy, distribute\n"
-"and/or modify the software.</p>\n"
-"\n"
-"<p>A secondary benefit of defending all users' freedom is that\n"
-"improvements made in alternate versions of the program, if they\n"
-"receive widespread use, become available for other developers to\n"
-"incorporate.  Many developers of free software are heartened and\n"
-"encouraged by the resulting cooperation.  However, in the case of\n"
-"software used on network servers, this result may fail to come about.\n"
-"The GNU General Public License permits making a modified version and\n"
-"letting the public access it on a server without ever releasing its\n"
-"source code to the public.</p>\n"
-"\n"
-"<p>The GNU Affero General Public License is designed specifically to\n"
-"ensure that, in such cases, the modified source code becomes available\n"
-"to the community.  It requires the operator of a network server to\n"
-"provide the source code of the modified version running there to the\n"
-"users of that server.  Therefore, public use of a modified version, on\n"
-"a publicly accessible server, gives the public access to the source\n"
-"code of the modified version.</p>\n"
-"\n"
-"<p>An older license, called the Affero General Public License and\n"
-"published by Affero, was designed to accomplish similar goals.  This is\n"
-"a different license, not a version of the Affero GPL, but Affero has\n"
-"released a new version of the Affero GPL which permits relicensing under\n"
-"this license.</p>\n"
-"\n"
-"<p>The precise terms and conditions for copying, distribution and\n"
-"modification follow.</p>\n"
-"\n"
-"<h3><a name=\"terms\"></a>TERMS AND CONDITIONS</h3>\n"
-"\n"
-"<h4><a name=\"section0\"></a>0. Definitions.</h4>\n"
-"\n"
-"<p>&quot;This License&quot; refers to version 3 of the GNU Affero General "
-"Public\n"
-"License.</p>\n"
-"\n"
-"<p>&quot;Copyright&quot; also means copyright-like laws that apply to other "
-"kinds\n"
-"of works, such as semiconductor masks.</p>\n"
-"\n"
-"<p>&quot;The Program&quot; refers to any copyrightable work licensed under "
-"this\n"
-"License.  Each licensee is addressed as &quot;you&quot;.  &quot;Licensees&quot; "
-"and\n"
-"&quot;recipients&quot; may be individuals or organizations.</p>\n"
-"\n"
-"<p>To &quot;modify&quot; a work means to copy from or adapt all or part of the "
-"work\n"
-"in a fashion requiring copyright permission, other than the making of an\n"
-"exact copy.  The resulting work is called a &quot;modified version&quot; of "
-"the\n"
-"earlier work or a work &quot;based on&quot; the earlier work.</p>\n"
-"\n"
-"<p>A &quot;covered work&quot; means either the unmodified Program or a work "
-"based\n"
-"on the Program.</p>\n"
-"\n"
-"<p>To &quot;propagate&quot; a work means to do anything with it that, without\n"
-"permission, would make you directly or secondarily liable for\n"
-"infringement under applicable copyright law, except executing it on a\n"
-"computer or modifying a private copy.  Propagation includes copying,\n"
-"distribution (with or without modification), making available to the\n"
-"public, and in some countries other activities as well.</p>\n"
-"\n"
-"<p>To &quot;convey&quot; a work means any kind of propagation that enables "
-"other\n"
-"parties to make or receive copies.  Mere interaction with a user through\n"
-"a computer network, with no transfer of a copy, is not conveying.</p>\n"
-"\n"
-"<p>An interactive user interface displays &quot;Appropriate Legal "
-"Notices&quot;\n"
-"to the extent that it includes a convenient and prominently visible\n"
-"feature that (1) displays an appropriate copyright notice, and (2)\n"
-"tells the user that there is no warranty for the work (except to the\n"
-"extent that warranties are provided), that licensees may convey the\n"
-"work under this License, and how to view a copy of this License.  If\n"
-"the interface presents a list of user commands or options, such as a\n"
-"menu, a prominent item in the list meets this criterion.</p>\n"
-"\n"
-"<h4><a name=\"section1\"></a>1. Source Code.</h4>\n"
-"\n"
-"<p>The &quot;source code&quot; for a work means the preferred form of the work\n"
-"for making modifications to it.  &quot;Object code&quot; means any non-source\n"
-"form of a work.</p>\n"
-"\n"
-"<p>A &quot;Standard Interface&quot; means an interface that either is an "
-"official\n"
-"standard defined by a recognized standards body, or, in the case of\n"
-"interfaces specified for a particular programming language, one that\n"
-"is widely used among developers working in that language.</p>\n"
-"\n"
-"<p>The &quot;System Libraries&quot; of an executable work include anything, "
-"other\n"
-"than the work as a whole, that (a) is included in the normal form of\n"
-"packaging a Major Component, but which is not part of that Major\n"
-"Component, and (b) serves only to enable use of the work with that\n"
-"Major Component, or to implement a Standard Interface for which an\n"
-"implementation is available to the public in source code form.  A\n"
-"&quot;Major Component&quot;, in this context, means a major essential "
-"component\n"
-"(kernel, window system, and so on) of the specific operating system\n"
-"(if any) on which the executable work runs, or a compiler used to\n"
-"produce the work, or an object code interpreter used to run it.</p>\n"
-"\n"
-"<p>The &quot;Corresponding Source&quot; for a work in object code form means "
-"all\n"
-"the source code needed to generate, install, and (for an executable\n"
-"work) run the object code and to modify the work, including scripts to\n"
-"control those activities.  However, it does not include the work's\n"
-"System Libraries, or general-purpose tools or generally available free\n"
-"programs which are used unmodified in performing those activities but\n"
-"which are not part of the work.  For example, Corresponding Source\n"
-"includes interface definition files associated with source files for\n"
-"the work, and the source code for shared libraries and dynamically\n"
-"linked subprograms that the work is specifically designed to require,\n"
-"such as by intimate data communication or control flow between those\n"
-"subprograms and other parts of the work.</p>\n"
-"\n"
-"<p>The Corresponding Source need not include anything that users\n"
-"can regenerate automatically from other parts of the Corresponding\n"
-"Source.</p>\n"
-"\n"
-"<p>The Corresponding Source for a work in source code form is that\n"
-"same work.</p>\n"
-"\n"
-"<h4><a name=\"section2\"></a>2. Basic Permissions.</h4>\n"
-"\n"
-"<p>All rights granted under this License are granted for the term of\n"
-"copyright on the Program, and are irrevocable provided the stated\n"
-"conditions are met.  This License explicitly affirms your unlimited\n"
-"permission to run the unmodified Program.  The output from running a\n"
-"covered work is covered by this License only if the output, given its\n"
-"content, constitutes a covered work.  This License acknowledges your\n"
-"rights of fair use or other equivalent, as provided by copyright law.</p>\n"
-"\n"
-"<p>You may make, run and propagate covered works that you do not\n"
-"convey, without conditions so long as your license otherwise remains\n"
-"in force.  You may convey covered works to others for the sole purpose\n"
-"of having them make modifications exclusively for you, or provide you\n"
-"with facilities for running those works, provided that you comply with\n"
-"the terms of this License in conveying all material for which you do\n"
-"not control copyright.  Those thus making or running the covered works\n"
-"for you must do so exclusively on your behalf, under your direction\n"
-"and control, on terms that prohibit them from making any copies of\n"
-"your copyrighted material outside their relationship with you.</p>\n"
-"\n"
-"<p>Conveying under any other circumstances is permitted solely under\n"
-"the conditions stated below.  Sublicensing is not allowed; section 10\n"
-"makes it unnecessary.</p>\n"
-"\n"
-"<h4><a name=\"section3\"></a>3. Protecting Users' Legal Rights From Anti-"
-"Circumvention Law.</h4>\n"
-"\n"
-"<p>No covered work shall be deemed part of an effective technological\n"
-"measure under any applicable law fulfilling obligations under article\n"
-"11 of the WIPO copyright treaty adopted on 20 December 1996, or\n"
-"similar laws prohibiting or restricting circumvention of such\n"
-"measures.</p>\n"
-"\n"
-"<p>When you convey a covered work, you waive any legal power to forbid\n"
-"circumvention of technological measures to the extent such circumvention\n"
-"is effected by exercising rights under this License with respect to\n"
-"the covered work, and you disclaim any intention to limit operation or\n"
-"modification of the work as a means of enforcing, against the work's\n"
-"users, your or third parties' legal rights to forbid circumvention of\n"
-"technological measures.</p>\n"
-"\n"
-"<h4><a name=\"section4\"></a>4. Conveying Verbatim Copies.</h4>\n"
-"\n"
-"<p>You may convey verbatim copies of the Program's source code as you\n"
-"receive it, in any medium, provided that you conspicuously and\n"
-"appropriately publish on each copy an appropriate copyright notice;\n"
-"keep intact all notices stating that this License and any\n"
-"non-permissive terms added in accord with section 7 apply to the code;\n"
-"keep intact all notices of the absence of any warranty; and give all\n"
-"recipients a copy of this License along with the Program.</p>\n"
-"\n"
-"<p>You may charge any price or no price for each copy that you convey,\n"
-"and you may offer support or warranty protection for a fee.</p>\n"
-"\n"
-"<h4><a name=\"section5\"></a>5. Conveying Modified Source Versions.</h4>\n"
-"\n"
-"<p>You may convey a work based on the Program, or the modifications to\n"
-"produce it from the Program, in the form of source code under the\n"
-"terms of section 4, provided that you also meet all of these conditions:</p>\n"
-"\n"
-"<ul>\n"
-"\n"
-"<li>a) The work must carry prominent notices stating that you modified\n"
-"    it, and giving a relevant date.</li>\n"
-"\n"
-"<li>b) The work must carry prominent notices stating that it is\n"
-"    released under this License and any conditions added under section\n"
-"    7.  This requirement modifies the requirement in section 4 to\n"
-"    &quot;keep intact all notices&quot;.</li>\n"
-"\n"
-"<li>c) You must license the entire work, as a whole, under this\n"
-"    License to anyone who comes into possession of a copy.  This\n"
-"    License will therefore apply, along with any applicable section 7\n"
-"    additional terms, to the whole of the work, and all its parts,\n"
-"    regardless of how they are packaged.  This License gives no\n"
-"    permission to license the work in any other way, but it does not\n"
-"    invalidate such permission if you have separately received it.</li>\n"
-"\n"
-"<li>d) If the work has interactive user interfaces, each must display\n"
-"    Appropriate Legal Notices; however, if the Program has interactive\n"
-"    interfaces that do not display Appropriate Legal Notices, your\n"
-"    work need not make them do so.</li>\n"
-"\n"
-"</ul>\n"
-"\n"
-"<p>A compilation of a covered work with other separate and independent\n"
-"works, which are not by their nature extensions of the covered work,\n"
-"and which are not combined with it such as to form a larger program,\n"
-"in or on a volume of a storage or distribution medium, is called an\n"
-"&quot;aggregate&quot; if the compilation and its resulting copyright are not\n"
-"used to limit the access or legal rights of the compilation's users\n"
-"beyond what the individual works permit.  Inclusion of a covered work\n"
-"in an aggregate does not cause this License to apply to the other\n"
-"parts of the aggregate.</p>\n"
-"\n"
-"<h4><a name=\"section6\"></a>6. Conveying Non-Source Forms.</h4>\n"
-"\n"
-"<p>You may convey a covered work in object code form under the terms\n"
-"of sections 4 and 5, provided that you also convey the\n"
-"machine-readable Corresponding Source under the terms of this License,\n"
-"in one of these ways:</p>\n"
-"\n"
-"<ul>\n"
-"\n"
-"<li>a) Convey the object code in, or embodied in, a physical product\n"
-"    (including a physical distribution medium), accompanied by the\n"
-"    Corresponding Source fixed on a durable physical medium\n"
-"    customarily used for software interchange.</li>\n"
-"\n"
-"<li>b) Convey the object code in, or embodied in, a physical product\n"
-"    (including a physical distribution medium), accompanied by a\n"
-"    written offer, valid for at least three years and valid for as\n"
-"    long as you offer spare parts or customer support for that product\n"
-"    model, to give anyone who possesses the object code either (1) a\n"
-"    copy of the Corresponding Source for all the software in the\n"
-"    product that is covered by this License, on a durable physical\n"
-"    medium customarily used for software interchange, for a price no\n"
-"    more than your reasonable cost of physically performing this\n"
-"    conveying of source, or (2) access to copy the\n"
-"    Corresponding Source from a network server at no charge.</li>\n"
-"\n"
-"<li>c) Convey individual copies of the object code with a copy of the\n"
-"    written offer to provide the Corresponding Source.  This\n"
-"    alternative is allowed only occasionally and noncommercially, and\n"
-"    only if you received the object code with such an offer, in accord\n"
-"    with subsection 6b.</li>\n"
-"\n"
-"<li>d) Convey the object code by offering access from a designated\n"
-"    place (gratis or for a charge), and offer equivalent access to the\n"
-"    Corresponding Source in the same way through the same place at no\n"
-"    further charge.  You need not require recipients to copy the\n"
-"    Corresponding Source along with the object code.  If the place to\n"
-"    copy the object code is a network server, the Corresponding Source\n"
-"    may be on a different server (operated by you or a third party)\n"
-"    that supports equivalent copying facilities, provided you maintain\n"
-"    clear directions next to the object code saying where to find the\n"
-"    Corresponding Source.  Regardless of what server hosts the\n"
-"    Corresponding Source, you remain obligated to ensure that it is\n"
-"    available for as long as needed to satisfy these requirements.</li>\n"
-"\n"
-"<li>e) Convey the object code using peer-to-peer transmission, provided\n"
-"    you inform other peers where the object code and Corresponding\n"
-"    Source of the work are being offered to the general public at no\n"
-"    charge under subsection 6d.</li>\n"
-"\n"
-"</ul>\n"
-"\n"
-"<p>A separable portion of the object code, whose source code is excluded\n"
-"from the Corresponding Source as a System Library, need not be\n"
-"included in conveying the object code work.</p>\n"
-"\n"
-"<p>A &quot;User Product&quot; is either (1) a &quot;consumer product&quot;, "
-"which means any\n"
-"tangible personal property which is normally used for personal, family,\n"
-"or household purposes, or (2) anything designed or sold for incorporation\n"
-"into a dwelling.  In determining whether a product is a consumer product,\n"
-"doubtful cases shall be resolved in favor of coverage.  For a particular\n"
-"product received by a particular user, &quot;normally used&quot; refers to a\n"
-"typical or common use of that class of product, regardless of the status\n"
-"of the particular user or of the way in which the particular user\n"
-"actually uses, or expects or is expected to use, the product.  A product\n"
-"is a consumer product regardless of whether the product has substantial\n"
-"commercial, industrial or non-consumer uses, unless such uses represent\n"
-"the only significant mode of use of the product.</p>\n"
-"\n"
-"<p>&quot;Installation Information&quot; for a User Product means any methods,\n"
-"procedures, authorization keys, or other information required to install\n"
-"and execute modified versions of a covered work in that User Product from\n"
-"a modified version of its Corresponding Source.  The information must\n"
-"suffice to ensure that the continued functioning of the modified object\n"
-"code is in no case prevented or interfered with solely because\n"
-"modification has been made.</p>\n"
-"\n"
-"<p>If you convey an object code work under this section in, or with, or\n"
-"specifically for use in, a User Product, and the conveying occurs as\n"
-"part of a transaction in which the right of possession and use of the\n"
-"User Product is transferred to the recipient in perpetuity or for a\n"
-"fixed term (regardless of how the transaction is characterized), the\n"
-"Corresponding Source conveyed under this section must be accompanied\n"
-"by the Installation Information.  But this requirement does not apply\n"
-"if neither you nor any third party retains the ability to install\n"
-"modified object code on the User Product (for example, the work has\n"
-"been installed in ROM).</p>\n"
-"\n"
-"<p>The requirement to provide Installation Information does not include a\n"
-"requirement to continue to provide support service, warranty, or updates\n"
-"for a work that has been modified or installed by the recipient, or for\n"
-"the User Product in which it has been modified or installed.  Access to a\n"
-"network may be denied when the modification itself materially and\n"
-"adversely affects the operation of the network or violates the rules and\n"
-"protocols for communication across the network.</p>\n"
-"\n"
-"<p>Corresponding Source conveyed, and Installation Information provided,\n"
-"in accord with this section must be in a format that is publicly\n"
-"documented (and with an implementation available to the public in\n"
-"source code form), and must require no special password or key for\n"
-"unpacking, reading or copying.</p>\n"
-"\n"
-"<h4><a name=\"section7\"></a>7. Additional Terms.</h4>\n"
-"\n"
-"<p>&quot;Additional permissions&quot; are terms that supplement the terms of "
-"this\n"
-"License by making exceptions from one or more of its conditions.\n"
-"Additional permissions that are applicable to the entire Program shall\n"
-"be treated as though they were included in this License, to the extent\n"
-"that they are valid under applicable law.  If additional permissions\n"
-"apply only to part of the Program, that part may be used separately\n"
-"under those permissions, but the entire Program remains governed by\n"
-"this License without regard to the additional permissions.</p>\n"
-"\n"
-"<p>When you convey a copy of a covered work, you may at your option\n"
-"remove any additional permissions from that copy, or from any part of\n"
-"it.  (Additional permissions may be written to require their own\n"
-"removal in certain cases when you modify the work.)  You may place\n"
-"additional permissions on material, added by you to a covered work,\n"
-"for which you have or can give appropriate copyright permission.</p>\n"
-"\n"
-"<p>Notwithstanding any other provision of this License, for material you\n"
-"add to a covered work, you may (if authorized by the copyright holders of\n"
-"that material) supplement the terms of this License with terms:</p>\n"
-"\n"
-"<ul>\n"
-"\n"
-"<li>a) Disclaiming warranty or limiting liability differently from the\n"
-"    terms of sections 15 and 16 of this License; or</li>\n"
-"\n"
-"<li>b) Requiring preservation of specified reasonable legal notices or\n"
-"    author attributions in that material or in the Appropriate Legal\n"
-"    Notices displayed by works containing it; or</li>\n"
-"\n"
-"<li>c) Prohibiting misrepresentation of the origin of that material, or\n"
-"    requiring that modified versions of such material be marked in\n"
-"    reasonable ways as different from the original version; or</li>\n"
-"\n"
-"<li>d) Limiting the use for publicity purposes of names of licensors or\n"
-"    authors of the material; or</li>\n"
-"\n"
-"<li>e) Declining to grant rights under trademark law for use of some\n"
-"    trade names, trademarks, or service marks; or</li>\n"
-"\n"
-"<li>f) Requiring indemnification of licensors and authors of that\n"
-"    material by anyone who conveys the material (or modified versions of\n"
-"    it) with contractual assumptions of liability to the recipient, for\n"
-"    any liability that these contractual assumptions directly impose on\n"
-"    those licensors and authors.</li>\n"
-"\n"
-"</ul>\n"
-"\n"
-"<p>All other non-permissive additional terms are considered &quot;further\n"
-"restrictions&quot; within the meaning of section 10.  If the Program as you\n"
-"received it, or any part of it, contains a notice stating that it is\n"
-"governed by this License along with a term that is a further restriction,\n"
-"you may remove that term.  If a license document contains a further\n"
-"restriction but permits relicensing or conveying under this License, you\n"
-"may add to a covered work material governed by the terms of that license\n"
-"document, provided that the further restriction does not survive such\n"
-"relicensing or conveying.</p>\n"
-"\n"
-"<p>If you add terms to a covered work in accord with this section, you\n"
-"must place, in the relevant source files, a statement of the\n"
-"additional terms that apply to those files, or a notice indicating\n"
-"where to find the applicable terms.</p>\n"
-"\n"
-"<p>Additional terms, permissive or non-permissive, may be stated in the\n"
-"form of a separately written license, or stated as exceptions;\n"
-"the above requirements apply either way.</p>\n"
-"\n"
-"<h4><a name=\"section8\"></a>8. Termination.</h4>\n"
-"\n"
-"<p>You may not propagate or modify a covered work except as expressly\n"
-"provided under this License.  Any attempt otherwise to propagate or\n"
-"modify it is void, and will automatically terminate your rights under\n"
-"this License (including any patent licenses granted under the third\n"
-"paragraph of section 11).</p>\n"
-"\n"
-"<p>However, if you cease all violation of this License, then your\n"
-"license from a particular copyright holder is reinstated (a)\n"
-"provisionally, unless and until the copyright holder explicitly and\n"
-"finally terminates your license, and (b) permanently, if the copyright\n"
-"holder fails to notify you of the violation by some reasonable means\n"
-"prior to 60 days after the cessation.</p>\n"
-"\n"
-"<p>Moreover, your license from a particular copyright holder is\n"
-"reinstated permanently if the copyright holder notifies you of the\n"
-"violation by some reasonable means, this is the first time you have\n"
-"received notice of violation of this License (for any work) from that\n"
-"copyright holder, and you cure the violation prior to 30 days after\n"
-"your receipt of the notice.</p>\n"
-"\n"
-"<p>Termination of your rights under this section does not terminate the\n"
-"licenses of parties who have received copies or rights from you under\n"
-"this License.  If your rights have been terminated and not permanently\n"
-"reinstated, you do not qualify to receive new licenses for the same\n"
-"material under section 10.</p>\n"
-"\n"
-"<h4><a name=\"section9\"></a>9. Acceptance Not Required for Having Copies.</"
-"h4>\n"
-"\n"
-"<p>You are not required to accept this License in order to receive or\n"
-"run a copy of the Program.  Ancillary propagation of a covered work\n"
-"occurring solely as a consequence of using peer-to-peer transmission\n"
-"to receive a copy likewise does not require acceptance.  However,\n"
-"nothing other than this License grants you permission to propagate or\n"
-"modify any covered work.  These actions infringe copyright if you do\n"
-"not accept this License.  Therefore, by modifying or propagating a\n"
-"covered work, you indicate your acceptance of this License to do so.</p>\n"
-"\n"
-"<h4><a name=\"section10\"></a>10. Automatic Licensing of Downstream Recipients."
-"</h4>\n"
-"\n"
-"<p>Each time you convey a covered work, the recipient automatically\n"
-"receives a license from the original licensors, to run, modify and\n"
-"propagate that work, subject to this License.  You are not responsible\n"
-"for enforcing compliance by third parties with this License.</p>\n"
-"\n"
-"<p>An &quot;entity transaction&quot; is a transaction transferring control of "
-"an\n"
-"organization, or substantially all assets of one, or subdividing an\n"
-"organization, or merging organizations.  If propagation of a covered\n"
-"work results from an entity transaction, each party to that\n"
-"transaction who receives a copy of the work also receives whatever\n"
-"licenses to the work the party's predecessor in interest had or could\n"
-"give under the previous paragraph, plus a right to possession of the\n"
-"Corresponding Source of the work from the predecessor in interest, if\n"
-"the predecessor has it or can get it with reasonable efforts.</p>\n"
-"\n"
-"<p>You may not impose any further restrictions on the exercise of the\n"
-"rights granted or affirmed under this License.  For example, you may\n"
-"not impose a license fee, royalty, or other charge for exercise of\n"
-"rights granted under this License, and you may not initiate litigation\n"
-"(including a cross-claim or counterclaim in a lawsuit) alleging that\n"
-"any patent claim is infringed by making, using, selling, offering for\n"
-"sale, or importing the Program or any portion of it.</p>\n"
-"\n"
-"<h4><a name=\"section11\"></a>11. Patents.</h4>\n"
-"\n"
-"<p>A &quot;contributor&quot; is a copyright holder who authorizes use under "
-"this\n"
-"License of the Program or a work on which the Program is based.  The\n"
-"work thus licensed is called the contributor's &quot;contributor version&quot;."
-"</p>\n"
-"\n"
-"<p>A contributor's &quot;essential patent claims&quot; are all patent claims\n"
-"owned or controlled by the contributor, whether already acquired or\n"
-"hereafter acquired, that would be infringed by some manner, permitted\n"
-"by this License, of making, using, or selling its contributor version,\n"
-"but do not include claims that would be infringed only as a\n"
-"consequence of further modification of the contributor version.  For\n"
-"purposes of this definition, &quot;control&quot; includes the right to grant\n"
-"patent sublicenses in a manner consistent with the requirements of\n"
-"this License.</p>\n"
-"\n"
-"<p>Each contributor grants you a non-exclusive, worldwide, royalty-free\n"
-"patent license under the contributor's essential patent claims, to\n"
-"make, use, sell, offer for sale, import and otherwise run, modify and\n"
-"propagate the contents of its contributor version.</p>\n"
-"\n"
-"<p>In the following three paragraphs, a &quot;patent license&quot; is any "
-"express\n"
-"agreement or commitment, however denominated, not to enforce a patent\n"
-"(such as an express permission to practice a patent or covenant not to\n"
-"sue for patent infringement).  To &quot;grant&quot; such a patent license to a\n"
-"party means to make such an agreement or commitment not to enforce a\n"
-"patent against the party.</p>\n"
-"\n"
-"<p>If you convey a covered work, knowingly relying on a patent license,\n"
-"and the Corresponding Source of the work is not available for anyone\n"
-"to copy, free of charge and under the terms of this License, through a\n"
-"publicly available network server or other readily accessible means,\n"
-"then you must either (1) cause the Corresponding Source to be so\n"
-"available, or (2) arrange to deprive yourself of the benefit of the\n"
-"patent license for this particular work, or (3) arrange, in a manner\n"
-"consistent with the requirements of this License, to extend the patent\n"
-"license to downstream recipients.  &quot;Knowingly relying&quot; means you "
-"have\n"
-"actual knowledge that, but for the patent license, your conveying the\n"
-"covered work in a country, or your recipient's use of the covered work\n"
-"in a country, would infringe one or more identifiable patents in that\n"
-"country that you have reason to believe are valid.</p>\n"
-"\n"
-"<p>If, pursuant to or in connection with a single transaction or\n"
-"arrangement, you convey, or propagate by procuring conveyance of, a\n"
-"covered work, and grant a patent license to some of the parties\n"
-"receiving the covered work authorizing them to use, propagate, modify\n"
-"or convey a specific copy of the covered work, then the patent license\n"
-"you grant is automatically extended to all recipients of the covered\n"
-"work and works based on it.</p>\n"
-"\n"
-"<p>A patent license is &quot;discriminatory&quot; if it does not include "
-"within\n"
-"the scope of its coverage, prohibits the exercise of, or is\n"
-"conditioned on the non-exercise of one or more of the rights that are\n"
-"specifically granted under this License.  You may not convey a covered\n"
-"work if you are a party to an arrangement with a third party that is\n"
-"in the business of distributing software, under which you make payment\n"
-"to the third party based on the extent of your activity of conveying\n"
-"the work, and under which the third party grants, to any of the\n"
-"parties who would receive the covered work from you, a discriminatory\n"
-"patent license (a) in connection with copies of the covered work\n"
-"conveyed by you (or copies made from those copies), or (b) primarily\n"
-"for and in connection with specific products or compilations that\n"
-"contain the covered work, unless you entered into that arrangement,\n"
-"or that patent license was granted, prior to 28 March 2007.</p>\n"
-"\n"
-"<p>Nothing in this License shall be construed as excluding or limiting\n"
-"any implied license or other defenses to infringement that may\n"
-"otherwise be available to you under applicable patent law.</p>\n"
-"\n"
-"<h4><a name=\"section12\"></a>12. No Surrender of Others' Freedom.</h4>\n"
-"\n"
-"<p>If conditions are imposed on you (whether by court order, agreement or\n"
-"otherwise) that contradict the conditions of this License, they do not\n"
-"excuse you from the conditions of this License.  If you cannot convey a\n"
-"covered work so as to satisfy simultaneously your obligations under this\n"
-"License and any other pertinent obligations, then as a consequence you may\n"
-"not convey it at all.  For example, if you agree to terms that obligate you\n"
-"to collect a royalty for further conveying from those to whom you convey\n"
-"the Program, the only way you could satisfy both those terms and this\n"
-"License would be to refrain entirely from conveying the Program.</p>\n"
-"\n"
-"<h4><a name=\"section13\"></a>13. Remote Network Interaction; Use with the GNU "
-"General Public License.</h4>\n"
-"\n"
-"<p>Notwithstanding any other provision of this License, if you modify the\n"
-"Program, your modified version must prominently offer all users\n"
-"interacting with it remotely through a computer network (if your version\n"
-"supports such interaction) an opportunity to receive the Corresponding\n"
-"Source of your version by providing access to the Corresponding Source\n"
-"from a network server at no charge, through some standard or customary\n"
-"means of facilitating copying of software.  This Corresponding Source\n"
-"shall include the Corresponding Source for any work covered by version 3\n"
-"of the GNU General Public License that is incorporated pursuant to the\n"
-"following paragraph.</p>\n"
-"\n"
-"<p>Notwithstanding any other provision of this License, you have permission\n"
-"to link or combine any covered work with a work licensed under version 3\n"
-"of the GNU General Public License into a single combined work, and to\n"
-"convey the resulting work.  The terms of this License will continue to\n"
-"apply to the part which is the covered work, but the work with which it is\n"
-"combined will remain governed by version 3 of the GNU General Public\n"
-"License.</p>\n"
-"\n"
-"<h4><a name=\"section14\"></a>14. Revised Versions of this License.</h4>\n"
-"\n"
-"<p>The Free Software Foundation may publish revised and/or new versions of\n"
-"the GNU Affero General Public License from time to time.  Such new\n"
-"versions will be similar in spirit to the present version, but may differ\n"
-"in detail to address new problems or concerns.</p>\n"
-"\n"
-"<p>Each version is given a distinguishing version number.  If the\n"
-"Program specifies that a certain numbered version of the GNU Affero\n"
-"General Public License &quot;or any later version&quot; applies to it, you "
-"have\n"
-"the option of following the terms and conditions either of that\n"
-"numbered version or of any later version published by the Free\n"
-"Software Foundation.  If the Program does not specify a version number\n"
-"of the GNU Affero General Public License, you may choose any version\n"
-"ever published by the Free Software Foundation.</p>\n"
-"\n"
-"<p>If the Program specifies that a proxy can decide which future\n"
-"versions of the GNU Affero General Public License can be used, that\n"
-"proxy's public statement of acceptance of a version permanently\n"
-"authorizes you to choose that version for the Program.</p>\n"
-"\n"
-"<p>Later license versions may give you additional or different\n"
-"permissions.  However, no additional obligations are imposed on any\n"
-"author or copyright holder as a result of your choosing to follow a\n"
-"later version.</p>\n"
-"\n"
-"<h4><a name=\"section15\"></a>15. Disclaimer of Warranty.</h4>\n"
-"\n"
-"<p>THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\n"
-"APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
-"HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM &quot;AS IS&quot; WITHOUT "
-"WARRANTY\n"
-"OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,\n"
-"THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n"
-"PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM\n"
-"IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF\n"
-"ALL NECESSARY SERVICING, REPAIR OR CORRECTION.</p>\n"
-"\n"
-"<h4><a name=\"section16\"></a>16. Limitation of Liability.</h4>\n"
-"\n"
-"<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING\n"
-"WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS\n"
-"THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY\n"
-"GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE\n"
-"USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF\n"
-"DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD\n"
-"PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),\n"
-"EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF\n"
-"SUCH DAMAGES.</p>\n"
-"\n"
-"<h4><a name=\"section17\"></a>17. Interpretation of Sections 15 and 16.</h4>\n"
-"\n"
-"<p>If the disclaimer of warranty and limitation of liability provided\n"
-"above cannot be given local legal effect according to their terms,\n"
-"reviewing courts shall apply local law that most closely approximates\n"
-"an absolute waiver of all civil liability in connection with the\n"
-"Program, unless a warranty or assumption of liability accompanies a\n"
-"copy of the Program in return for a fee.</p>\n"
-"\n"
-"<p>END OF TERMS AND CONDITIONS</p>\n"
-"\n"
-"<h3><a name=\"howto\"></a>How to Apply These Terms to Your New Programs</h3>\n"
-"\n"
-"<p>If you develop a new program, and you want it to be of the greatest\n"
-"possible use to the public, the best way to achieve this is to make it\n"
-"free software which everyone can redistribute and change under these terms.</"
-"p>\n"
-"\n"
-"<p>To do so, attach the following notices to the program.  It is safest\n"
-"to attach them to the start of each source file to most effectively\n"
-"state the exclusion of warranty; and each file should have at least\n"
-"the &quot;copyright&quot; line and a pointer to where the full notice is found."
-"</p>\n"
-"\n"
-"<pre>    &lt;one line to give the program's name and a brief idea of what it "
-"does.&gt;\n"
-"    Copyright (C) &lt;year&gt;  &lt;name of author&gt;\n"
-"\n"
-"    This program is free software: you can redistribute it and/or modify\n"
-"    it under the terms of the GNU Affero General Public License as\n"
-"    published by the Free Software Foundation, either version 3 of the\n"
-"    License, or (at your option) any later version.\n"
-"\n"
-"    This program is distributed in the hope that it will be useful,\n"
-"    but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"    GNU Affero General Public License for more details.\n"
-"\n"
-"    You should have received a copy of the GNU Affero General Public License\n"
-"    along with this program.  If not, see &lt;https://www.gnu.org/licenses/"
-"&gt;.\n"
-"</pre>\n"
-"\n"
-"<p>Also add information on how to contact you by electronic and paper mail.</"
-"p>\n"
-"\n"
-"<p>If your software can interact with users remotely through a computer\n"
-"network, you should also make sure that it provides a way for users to\n"
-"get its source.  For example, if your program is a web application, its\n"
-"interface could display a &quot;Source&quot; link that leads users to an "
-"archive\n"
-"of the code.  There are many ways you could offer source, and different\n"
-"solutions will be better for different programs; see section 13 for the\n"
-"specific requirements.</p>\n"
-"\n"
-"<p>You should also get your employer (if you work as a programmer) or school,\n"
-"if any, to sign a &quot;copyright disclaimer&quot; for the program, if "
-"necessary.\n"
-"For more information on this, and how to apply and follow the GNU AGPL, see\n"
-"&lt;<a href=\"https://www.gnu.org/licenses/\">https://www.gnu.org/licenses/</"
-"a>&gt;.</p>\n"
-"\n"
-"</body></html>"
-
-msgid "FILE_SIZE_TB"
-msgstr "TB"
-
-msgid "FILE_SIZE_GB"
-msgstr "GB"
-
-msgid "FILE_SIZE_MB"
-msgstr "MB"
-
-msgid "FILE_SIZE_KB"
-msgstr "KB"
-
-msgid "FILE_SIZE_B"
-msgstr "B"
-
-msgid "LABEL_NEW_VERSION_AVAILABLE_{}"
-msgstr "A new version ({}) of Parsec is available!"
-
-msgid "WORKSPACE_REENCRYPTION_WAIT"
-msgstr "Please wait while we are retrieving versions of this workspace."
-
-msgid "WORKSPACE_REENCRYPTION_INFO"
-msgstr ""
-"You will be able to see a workspace at a given point in time, with all your "
-"files exactly as they looked back then.\n"
-"Don't worry, you will not lose your current files."
-
-msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
-msgstr "Can not retrieve versions of this workspace."
-
-msgid "STARTING_GUIDE_WELCOME_TITLE"
-msgstr "Welcome!"
-
-msgid "STARTING_GUIDE_WELCOME_CONTENT"
-msgstr ""
-"Parsec allows you to store data in the cloud with a very high security level.\n"
-"Find out more by letting us guide you step by step!"
-
-msgid "STARTING_GUIDE_WELCOME_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/cloud-computing.png"
-
-msgid "STARTING_GUIDE_WORKSPACES_TITLE"
-msgstr "Workspaces"
-
-msgid "STARTING_GUIDE_WORKSPACES_CONTENT"
-msgstr ""
-"Arrange all your files by workspaces, a clear interface for an easy to use\n"
-"and simple process."
-
-msgid "STARTING_GUIDE_WORKSPACES_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/workspaces.png"
-
-msgid "STARTING_GUIDE_DOCUMENTS_TITLE"
-msgstr "Document"
-
-msgid "STARTING_GUIDE_DOCUMENTS_CONTENT"
-msgstr ""
-"In your workspaces, see and manage all your files, just as with a regular\n"
-"file explorer. A lightweight display to increase your productivity!"
-
-msgid "STARTING_GUIDE_DOCUMENTS_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/documents.png"
-
-msgid "STARTING_GUIDE_SHARING_TITLE"
-msgstr "Sharing"
-
-msgid "STARTING_GUIDE_SHARING_CONTENT"
-msgstr ""
-"Share your workspaces with a few clicks. See who can access it, and what\n"
-"others share with you.\n"
-"Everything shared with you automatically appears."
-
-msgid "STARTING_GUIDE_SHARING_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/page4.png"
-
-msgid "STARTING_GUIDE_DEVICES_TITLE"
-msgstr "Manage your devices"
-
-msgid "STARTING_GUIDE_DEVICES_CONTENT"
-msgstr ""
-"See and manage thee devices you trust. Those are the key to the guaranted\n"
-"security of your files."
-
-msgid "STARTING_GUIDE_DEVICES_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/devices.png"
-
-msgid "STARTING_GUIDE_USERS_TITLE"
-msgstr "Manage the users"
-
-msgid "STARTING_GUIDE_USERS_CONTENT"
-msgstr ""
-"And for the administrators ? You can manage all users and their privileges,\n"
-"add users, or revoke them."
-
-msgid "STARTING_GUIDE_USERS_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/users.png"
-
-msgid "STARTING_GUIDE_OFFLINE_TITLE"
-msgstr "Even offline"
-
-msgid "STARTING_GUIDE_OFFLINE_CONTENT"
-msgstr ""
-"No network ? Not a problem. You can access all your files. Modifications will\n"
-"be saved locally until your device comes online again."
-
-msgid "STARTING_GUIDE_OFFLINE_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/offline_en.png"
-
-msgid "STARTING_GUIDE_YOUR_TURN_TITLE"
-msgstr "Now it's your turn!"
-
-msgid "STARTING_GUIDE_YOUR_TURN_CONTENT"
-msgstr ""
-"Create your first workspace, import your files, share your documents.\n"
-"\n"
-"Security waits for no one!"
-
-msgid "STARTING_GUIDE_YOUR_TURN_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/your_turn.png"
-
-msgid "BUTTON_END"
-msgstr "End"
-
-msgid "BUTTON_CONTINUE"
-msgstr "Continue"
-
-msgid "BUTTON_START"
-msgstr "Start"
-
-msgid "FILE_MENU_OPEN"
-msgstr "Open"
-
-msgid "FILE_MENU_RENAME"
+msgid "ACTION_FILE_RENAME"
 msgstr "Rename"
 
-msgid "FILE_MENU_DELETE"
+msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
+msgstr "Rename {count} files"
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count"
+msgstr ""
+"Enter the files names. Files will be renamed automatically according to "
+"the following scheme: NAME_COUNT.EXTENSION."
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"
+msgstr "Files names"
+
+msgid "ACTION_FILE_RENAME_MULTIPLE"
+msgstr "Rename"
+
+msgid "TEXT_FILE_DELETE_TITLE"
+msgstr "Delete a file"
+
+msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
+msgstr "Are you sure you want to delete the file \"{name}\"?"
+
+msgid "ACTION_CANCEL"
+msgstr "Cancel"
+
+msgid "ACTION_FILE_DELETE"
 msgstr "Delete"
 
-msgid "FILE_MENU_COPY"
-msgstr "Copier"
+msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
+msgstr "Delete multiple files"
 
-msgid "FILE_MENU_CUT"
-msgstr "Couper"
+msgid "TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Are you sure you want to delete {count} files?"
 
-msgid "FILE_MENU_HISTORY"
+msgid "ACTION_FILE_DELETE_MULTIPLE"
+msgstr "Delete"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
+msgstr "Open multiple files"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Are you sure you want to open {count} files? This may take some time."
+
+msgid "ACTION_FILE_OPEN_MULTIPLE"
+msgstr "Open the files"
+
+msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
+msgstr "Importing"
+
+msgid "TEXT_FILE_IMPORT_FILES"
+msgstr "Import files"
+
+msgid "TEXT_FILE_IMPORT_FOLDER"
+msgstr "Import a folder"
+
+msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
+msgstr "Create a folder"
+
+msgid "TEXT_FILE_CREATE_FOLDER_INSTRUCTIONS"
+msgstr "Enter the folder name."
+
+msgid "TEXT_FILE_CREATE_FOLDER_PLACEHOLDER"
+msgstr "Folder name"
+
+msgid "ACTION_FILE_CREATE_FOLDER"
+msgstr "Create a new folder"
+
+msgid "TEXT_FILE_RENAME_MULTIPLE_ERROR"
+msgstr ""
+"There has been an error while renaming the files. Some files may not have"
+" been renamed."
+
+msgid "TEXT_FILE_RENAME_ERROR"
+msgstr "The file could not be renamed."
+
+msgid "TEXT_FILE_DELETE_MULTIPLE_ERROR"
+msgstr ""
+"There has been an error while deleting the files. Some files may not have"
+" been deleted."
+
+msgid "TEXT_FILE_DELETE_ERROR"
+msgstr "This file could not be deleted."
+
+msgid "TEXT_FILE_GOTO_LINK_NOT_FOUND"
+msgstr "The file could not be found."
+
+msgid "TEXT_FILE_FOLDER_NOT_FOUND"
+msgstr "The folder does not exist."
+
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"
+msgstr "A folder with the same name already exists."
+
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
+msgstr "Cannot create the new folder."
+
+msgid "TEXT_FILE_IMPORT_ERROR"
+msgstr ""
+"There has been an error while importing the files. Some files may not "
+"have been imported."
+
+msgid "TEXT_FILE_SHARING_REVOKED"
+msgstr ""
+"Your permissions on this workspace have been revoked. You no longer have "
+"access to theses files."
+
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgstr ""
+"Your role on this workspace has changed to <b>Reader</b>. You can no "
+"longer add, update or delete files, but you can still see them."
+
+msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
+msgstr "Error while retrieving the file history."
+
+msgid "TEXT_FILE_HISTORY_TITLE_name"
+msgstr "File history of {name}"
+
+msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
+msgstr "This user is revoked."
+
+msgid "TEXT_WORKSPACE_SHARING_CANNOT_SHARE_WITH_YOURSELF"
+msgstr "Cannot share the workspace with yourself."
+
+msgid "TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user"
+msgstr "This workspace is already shared with <b>{user}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_TITLE"
+msgstr "Unshare the workspace"
+
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user"
+msgstr ""
+"Are you sure you want to remove <b>{user}</b> from this workspace? The "
+"user will not be able to see future updates made to this workspace."
+
+msgid "ACTION_WORKSPACE_UNSHARE_CONFIRM"
+msgstr "Unshare"
+
+msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
+msgstr "Cannot share the workspace \"{workspace}\" with \"{user\"}."
+
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
+msgstr "Cannot remove <b>{user}</b> from the workspace <b>{workspace}</b>."
+
+msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_ERROR_errors"
+msgstr ""
+"There has been an error while trying to update the users' roles on this "
+"workspace. Some roles may not have been updated."
+
+msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_SUCCESS"
+msgstr "The users roles have been successfully updated."
+
+msgid "TEXT_WORKSPACE_SHARING_TITLE"
+msgstr "Share the workspace"
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
+msgstr "Cannot retrieve this workspace history."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
+msgstr "Go back in time"
+
+msgid "TEXT_PARSEC_VERSION_version"
+msgstr "PARSEC version {version}"
+
+msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
+msgstr "TOO SHORT"
+
+msgid "TEXT_PASSWORD_VALIDATION_VERY_WEAK"
+msgstr "VERY WEAK"
+
+msgid "TEXT_PASSWORD_VALIDATION_WEAK"
+msgstr "WEAK"
+
+msgid "TEXT_PASSWORD_VALIDATION_AVERAGE"
+msgstr "AVERAGE"
+
+msgid "TEXT_PASSWORD_VALIDATION_GOOD"
+msgstr "GOOD"
+
+msgid "TEXT_PASSWORD_VALIDATION_EXCELLENT"
+msgstr "EXCELLENT"
+
+msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
+msgstr "Password strength: {strength}"
+
+msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
+msgstr "Only a workspace owner can reencrypt."
+
+msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
+msgstr "Reencrypting the workspace"
+
+msgid "TEXT_WORKSPACE_IS_SHARED"
+msgstr "shared with others"
+
+msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
+msgstr "temporary_{date}"
+
+msgid "TEXT_CLAIM_USER_INSTRUCTIONS_user-url-organization"
+msgstr ""
+"An administrator has invited you to join the organization "
+"<b>{organization}</b> with the username <b>{user}</b>.\n"
+"\n"
+"To finalize the registration process, please provide the six digits token"
+" that has been given to you by the administrator, as well as a password "
+"and a device name.\n"
+"\n"
+"If this invitation was not meant for you, please ignore this message."
+
+msgid "TEXT_CLAIM_USER_NOT_FOUND"
+msgstr "No invitation has been found for this user."
+
+msgid "TEXT_CLAIM_USER_PASSWORD_MISMATCH"
+msgstr "The password and the password confirmation do no match."
+
+msgid "TEXT_CLAIM_USER_PASSWORD_COMPLEXITY"
+msgstr "The password is not complex enough."
+
+msgid "TEXT_CLAIM_USER_INVALID_URL"
+msgstr "An internal error occurred while registering the user."
+
+msgid "TEXT_CLAIM_USER_BAD_DEVICE_NAME"
+msgstr "The device name is invalid."
+
+msgid "TEXT_CLAIM_USER_BAD_USER_NAME"
+msgstr "The user name is invalid."
+
+msgid "TEXT_CLAIM_USER_BACKEND_REFUSAL"
+msgstr "The server refused the registration."
+
+msgid "TEXT_CLAIM_USER_BACKEND_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_CLAIM_USER_UNKNOWN_FAILURE"
+msgstr "An unknown error occurred while registering the user."
+
+msgid "TEXT_CLAIM_USER_SUCCESS"
+msgstr "The user has been successfully created! You can now log in."
+
+msgid "ACTION_CONTINUE"
+msgstr "Continue"
+
+msgid "TEXT_CLAIM_USER_TITLE"
+msgstr "Register a user"
+
+msgid "TEXT_DEVICE_IS_CURRENT"
+msgstr "current"
+
+msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
+msgstr "Change password"
+
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
+msgstr "Access a file by its link"
+
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INSTRUCTIONS"
+msgstr "Please provide the link to the file."
+
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy"
+
+msgid "ACTION_GOTO_FILE_LINK"
+msgstr "Go to file"
+
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"
+msgstr "This link is invalid."
+
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"
+msgstr ""
+"Could not find the workspace this file belongs to. Maybe it has not been "
+"shared with you."
+
+msgid "TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"
+msgstr "Could not create the workspace. This name is not a valid workspace name."
+
+msgid "TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"
+msgstr "Cannot create the workspace."
+
+msgid "TEXT_WORKSPACE_RENAME_INVALID_NAME"
+msgstr "Could not rename the workspace. This name is not a valid workspace name."
+
+msgid "TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"
+msgstr "Cannot rename the workspace."
+
+msgid "TEXT_WORKSPACE_NO_WORKSPACES"
+msgstr "No workspace has been created yet."
+
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
+msgstr ""
+"An internal error prevents PARSEC from accessing the files in this "
+"workspace."
+
+msgid "TEXT_WORKSPACE_DELETE_TITLE"
+msgstr "Delete the workspace"
+
+msgid "TEXT_WORKSPACE_DELETE_INSTRUCTIONS_workspace"
+msgstr ""
+"The workspace <b>{workspace}</b> will be deleted. If it is a temporary "
+"workspace, do not worry, your files are still there.<br /><br />\n"
+"Do you want to continue?"
+
+msgid "ACTION_DELETE_WORKSPACE_CONFIRM"
+msgstr "Delete"
+
+msgid "TEXT_WORKSPACE_RENAME_TITLE"
+msgstr "Rename the workspace"
+
+msgid "TEXT_WORKSPACE_RENAME_INSTRUCTIONS"
+msgstr "The renaming will only be seen by you."
+
+msgid "TEXT_WORKSPACE_RENAME_PLACEHOLDER"
+msgstr "Workspace name"
+
+msgid "ACTION_WORKSPACE_RENAME_CONFIRM"
+msgstr "Rename"
+
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REVOKED"
+msgstr "A user the workspace was shared with was revoked."
+
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REMOVED"
+msgstr "The workspace has been unshared with a user."
+
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS"
+msgstr ""
+"This operation will reencrypt the workspace to prevent users that should "
+"not have access to it to see the data it contains. It is a very important"
+" step to ensure the security of your files.<br /><br />\n"
+"\n"
+"The operation may take some time, depending on the workspace size, and "
+"the synchronization will not be available.<br /><br />\n"
+"\n"
+"Are you sure you want to continue?"
+
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"
+msgstr "Reencrypt the workspace"
+
+msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
+msgstr "Reencrypt"
+
+msgid "TEXT_WORKSPACE_NEW_TITLE"
+msgstr "Create a workspace"
+
+msgid "TEXT_WORKSPACE_NEW_INSTRUCTIONS"
+msgstr "Please provide the workspace name"
+
+msgid "TEXT_WORKSPACE_NEW_PLACEHOLDER"
+msgstr "Workspace"
+
+msgid "ACTION_WORKSPACE_NEW_CREATE"
+msgstr "Create"
+
+msgid "TEXT_USER_ROLE_ADMIN"
+msgstr "Administrator"
+
+msgid "TEXT_USER_ROLE_CONTRIBUTOR"
+msgstr "Contributor"
+
+msgid "TEXT_USER_IS_CURRENT"
+msgstr "you"
+
+msgid "TEXT_USER_IS_REVOKED"
+msgstr "Revoked"
+
+msgid "ACTION_USER_MENU_REVOKE"
+msgstr "Revoke"
+
+msgid "TEXT_USER_REVOKE_SUCCESS_user"
+msgstr ""
+"The user <b>{user}</b> has been successfully revoked. Do no forget to "
+"reencrypt the workspaces that were shared with them."
+
+msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"
+msgstr "This user has already been revoked."
+
+msgid "TEXT_USER_REVOCATION_USER_NOT_FOUND"
+msgstr "The user was not found."
+
+msgid "TEXT_USER_REVOCATION_NOT_ENOUGH_PERMISSIONS"
+msgstr "You don't have enough permissions to revoke this user."
+
+msgid "TEXT_USER_REVOCATION_BACKEND_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_USER_REVOCATION_UNKNOWN_FAILURE"
+msgstr "Could not revoke this user."
+
+msgid "TEXT_USER_REVOCATION_TITLE"
+msgstr "Revoke a user"
+
+msgid "TEXT_USER_REVOCATION_INSTRUCTIONS_user"
+msgstr ""
+"A revoked user will no longer have access to the organization and the "
+"data stored within it.<br />\n"
+"<br />\n"
+"Are you sure you want to revoke the user <b>{user}</b>?"
+
+msgid "ACTION_USER_REVOCATION_CONFIRM"
+msgstr "Revoke the user"
+
+msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
+msgstr "Failed to retrieve the user list from the server."
+
+msgid "TEXT_PARSEC_LICENSE"
+msgstr "PARSEC License"
+
+msgid "TEXT_FILE_SIZE_TB"
+msgstr "Tb"
+
+msgid "TEXT_FILE_SIZE_GB"
+msgstr "Gb"
+
+msgid "TEXT_FILE_SIZE_MB"
+msgstr "Mb"
+
+msgid "TEXT_FILE_SIZE_KB"
+msgstr "Kb"
+
+msgid "TEXT_FILE_SIZE_B"
+msgstr "b"
+
+msgid "TEXT_INVITE_DEVICE_COPIED_TO_CLIPBOARD"
+msgstr "Information has been copied to the clipboard."
+
+msgid "TEXT_INVITE_DEVICE_BAD_DEVICE_NAME"
+msgstr "The device name is invalid."
+
+msgid "TEXT_INVITE_DEVICE_ALREADY_EXISTS"
+msgstr "This device name is already in use."
+
+msgid "TEXT_INVITE_DEVICE_HOST_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_INVITE_DEVICE_WRONG_PARAMETERS"
+msgstr "The device could not be invited."
+
+msgid "TEXT_INVITE_DEVICE_TIMEOUT"
+msgstr ""
+"The device failed to register in time. You can restart the invitation "
+"process (only the token will change)."
+
+msgid "TEXT_INVITE_DEVICE_UNKNOWN_FAILURE"
+msgstr "The device could not be invited."
+
+msgid "TEXT_INVITE_DEVICE_SUCCESS"
+msgstr "The device has successfully registered."
+
+msgid "TEXT_INVITE_DEVICE_EMPTY_DEVICE_NAME"
+msgstr "Please provide a name for the device to invite."
+
+msgid "TEXT_INVITE_DEVICE_TITLE"
+msgstr "Invite a new device"
+
+msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
+msgstr "The version <b>{version}</b> of PARSEC is available!"
+
+msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
+msgstr "The password and the password confirmation do no match."
+
+msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
+msgstr "The password has been successfully changed."
+
+msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
+msgstr "You did not provide the right password for this device."
+
+msgid "TEXT_CHANGE_PASSWORD_TITLE"
+msgstr "Change password"
+
+msgid "ACTION_FILE_MENU_OPEN"
+msgstr "Open"
+
+msgid "ACTION_FILE_MENU_RENAME"
+msgstr "Rename"
+
+msgid "ACTION_FILE_MENU_DELETE"
+msgstr "Delete"
+
+msgid "ACTION_FILE_MENU_COPY"
+msgstr "Copy"
+
+msgid "ACTION_FILE_MENU_CUT"
+msgstr "Cut"
+
+msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Show history"
 
-msgid "FILE_MENU_GET_LINK"
-msgstr "Link to this file"
+msgid "ACTION_FILE_MENU_GET_FILE_LINK"
+msgstr "Link to the file"
 
-msgid "FILE_MENU_PASTE"
-msgstr "Coller"
+msgid "ACTION_FILE_MENU_PASTE"
+msgstr "Paste"
 
-msgid "FILE_TREE_PARENT_FOLDER"
-msgstr "Parent Folder"
+msgid "TEXT_FILE_TREE_PARENT_FOLDER"
+msgstr "Parent folder"
 
-msgid "FILE_TREE_PARENT_FOLDER_TOOLTIP"
-msgstr "Go back to the parent folder"
+msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
+msgstr "Workspace list"
 
-msgid "FILE_TREE_PARENT_WORKSPACE"
-msgstr "Return to workspaces list"
-
-msgid "FILE_TREE_PARENT_WORKSPACE_TOOLTIP"
-msgstr "Go back to workspace list"
-
-msgid "LABEL_BOOTSTRAP_INSTRUCTIONS"
+msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
 msgstr ""
-"Bootstrap the organization \"{organization}\" by choosing a user name, a device "
-"name, and a password."
+"You are about to bootstrap the organization <b>{organization}</b>. You "
+"will be the first administrator of the organization.<br /><br />\n"
+"\n"
+"To proceed, please chose a username, a device name, and a password."
 
-msgid "ERR_REGISTER_USER_EXISTS"
-msgstr "This user already exists."
+msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
+msgstr "The URL is invalid to bootstrap the organization."
 
-msgid "ERR_BAD_API_VERSION"
+msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
+msgstr "This organization has already been bootstrapped."
+
+msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
+msgstr "This username already exists within this organization."
+
+msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
+msgstr "The password and the password confirmation do no match."
+
+msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
+msgstr "The password is not complex enough."
+
+msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
+msgstr "The device name is invalid."
+
+msgid "TEXT_BOOTSTRAP_ORG_BAD_USER_NAME"
+msgstr "The username is invalid."
+
+msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
 msgstr ""
-"The server version differs from the client version. Is your client is up-to-"
-"date?"
+"Your application is not compatible with this server. Try to update it to "
+"the latest version."
 
-msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
-msgstr "Cannot bootstrap this organization."
+msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
+msgstr "Could not bootstrap the organization."
 
-msgid "LABEL_USER_NAME"
-msgstr "User name"
+msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
-msgid "INFO_DIALOG_TITLE"
-msgstr "Information"
+msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
+msgstr "Could not bootstrap the organization."
 
-msgid "WARN_DIALOG_TITLE"
-msgstr "Warning"
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS"
+msgstr "The organization was successfully bootstrapped! You can now log in."
 
-msgid "BUTTON_CLOSE"
-msgstr "Close"
+msgid "TEXT_BOOTSTRAP_ORG_TITLE"
+msgstr "Bootstrap the organization"
 
-msgid "ERR_DIALOG_TITLE"
+msgid "ACTION_OK"
+msgstr "OK"
+
+msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Error"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "This device has been revoked."
+msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
+msgstr "This device has been revoked and can no longer be used to log in."
 
-msgid "ERR_LOGIN_UNKNOWN"
-msgstr "Cannot login."
+msgid "TEXT_LOGIN_UNKNOWN_ERROR"
+msgstr "Cannot log in."
 
-msgid "ERR_LOGIN_ALREADY_CONNECTED"
-msgstr "This device is already connected."
+msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
+msgstr "This device is already logged in, probably in another tab."
 
-msgid "ERR_LOGIN_AUTH_FAILED"
-msgstr "Authentication failed."
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "The password is incorrect."
 
-msgid "ERR_LOGIN_MOUNTPOINT"
-msgstr "Mountpoint is already in use."
+msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
+msgstr "Cannot log in. The workspaces could not be mounted."
 
-msgid "MENU_SHOW_WINDOW"
-msgstr "Show window"
+msgid "ACTION_SYSTRAY_SHOW_WINDOW"
+msgstr "Show PARSEC"
 
-msgid "MENU_EXIT"
-msgstr "Exit"
+msgid "ACTION_SYSTRAY_QUIT_PARSEC"
+msgstr "Quit"
 
-msgid "BUTTON_LOG_IN"
+msgid "ACTION_LOG_IN"
 msgstr "Log In"
 
-msgid "BUTTON_LOGGING_IN"
+msgid "ACTION_LOGGING_IN"
 msgstr "Logging in..."
 
-msgid "LABEL_ENTER_URL_TITLE"
-msgstr "Enter a URL"
-
-msgid "LABEL_ENTER_URL_MESSAGE"
-msgstr "URL has been given to you by another user or the my.parsec.cloud website."
-
-msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
+msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
 msgstr ""
-"The organization and the user have been created.\n"
-"You will now be logged in."
+"You can finalize the creation of your device <b>{device}</b> of the "
+"organization <b>{organization}</b> by choosing a password and providing "
+"the six digits token."
 
-msgid "INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"
-msgstr "The organization and the user have been created. You can now log in."
+msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
+msgstr "No invitation has been found for this device."
 
-msgid "INFO_USER_CREATED_SUCCESS_MONO_DEVICE"
-msgstr ""
-"The user has been created.\n"
-"You will now be logged in."
+msgid "TEXT_CLAIM_DEVICE_PASSWORD_MISMATCH"
+msgstr "The password and the password confirmation do no match."
 
-msgid "INFO_USER_CREATED_SUCCESS_MULTI_DEVICE"
-msgstr "The user has been created. You can now log in."
+msgid "TEXT_CLAIM_DEVICE_PASSWORD_COMPLEXITY_TOO_LOW"
+msgstr "The password is not complex enough."
 
-msgid "LABEL_CLAIM_DEVICE_INSTRUCTIONS"
-msgstr ""
-"Register the device \"<b>{device}</b>\" by choosing a password and entering the "
-"verification token."
+msgid "TEXT_CLAIM_DEVICE_INVALID_URL"
+msgstr "An internal error occurred while registering the device."
 
-msgid "LABEL_DEVICE_REGISTRATION"
-msgstr "Please wait while the device is being registered."
+msgid "TEXT_CLAIM_DEVICE_BAD_DEVICE_NAME"
+msgstr "The device name is invalid."
 
-msgid "ERR_CLAIM_DEVICE_NOT_FOUND"
-msgstr "No invitation found for this device."
+msgid "TEXT_CLAIM_DEVICE_BAD_USER_NAME"
+msgstr "An internal error occurred while registering the device."
 
-msgid "ERR_CLAIM_DEVICE_UNKNOWN"
-msgstr "Cannot claim this device."
+msgid "TEXT_CLAIM_DEVICE_BACKEND_REFUSAL"
+msgstr "An internal error occurred while registering the device."
 
-msgid "INFO_DEVICE_REGISTERED"
-msgstr "The device has been created. You can now log in."
+msgid "TEXT_CLAIM_DEVICE_BACKEND_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
-msgid "ERR_LIST_VERSIONS_ACCESS"
-msgstr "Can not retrieve versions list."
+msgid "TEXT_CLAIM_DEVICE_UNKNOWN_FAILURE"
+msgstr "An internal error occurred while registering the device."
 
-msgid "SETTINGS_NEED_RESTART"
-msgstr "Modifications will take effect the next time you start the application."
+msgid "TEXT_CLAIM_DEVICE_SUCCESS"
+msgstr "Your device was successfully registered!"
 
-msgid "BUTTON_TASKBAR_NOTIFICATION"
-msgstr "Show notifications."
+msgid "TEXT_CLAIM_DEVICE_TITLE"
+msgstr "Register a device"
+
+msgid "TEXT_SETTINGS_NEED_RESTART"
+msgstr "You will need to restart the application for the changes to take effect."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-msgstr "Mountpoint has been lost."
+msgstr ""
 
 msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
 msgstr ""
-"Cannot access \"{}\" from the server given you lost read access to the "
-"workspace."
 
 msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
 msgstr ""
-"Cannot sync \"{}\" with the server given you lost write access to the workspace."
 
 msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
 msgstr ""
-"Cannot access \"{}\" from the server given the workspace is currently under "
-"maintenance."
 
 msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
-msgstr "Cannot access \"{}\" from the server: {}."
+msgstr ""
 
 msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
-msgstr "Unexpected error while performing \"{}\" operation on \"{}\": {}."
+msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
-msgstr "Workspace \"{}\" shared with you."
+msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
-msgstr "Role on workspace \"{}\" has changed."
+msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr "Workspace \"{}\" no longer shared with you."
+msgstr ""
 
 msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
-msgstr "Conflict while syncing the file \"{}\"."
+msgstr ""
 
-msgid "BACKEND_STATE_CONNECTED"
+msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connected"
 
-msgid "BACKEND_STATE_DISCONNECTED"
+msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Disconnected"
 
-msgid "BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}"
-msgstr ""
-"Connection refused by the server.\n"
-"Client API is incompatible (required version(s): {})."
+msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
+msgstr "Application incompatible with the server"
 
-msgid "BACKEND_STATE_REASON_REVOKED_DEVICE"
-msgstr ""
-"Connection refused by the server.\n"
-"You have been revoked."
+msgid "TEXT_BACKEND_STATE_REVOKED_DEVICE"
+msgstr "This device is revoked"
 
-msgid "BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED"
-msgstr ""
-"Connection refused by the server.\n"
-"Your organization has expired."
+msgid "TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED"
+msgstr "The organization has expired"
 
-msgid "BACKEND_STATE_REASON_REFUSED_DEFAULT"
-msgstr "Connection refused by the server."
+msgid "TEXT_BACKEND_STATE_UNKNOWN"
+msgstr "Unknown"
 
-msgid "BACKEND_STATE_CRASHED_{}"
-msgstr ""
+msgid "TEXT_BACKEND_STATE_CRASHED_cause"
+msgstr "Connection to the server lost"
 
-msgid "MENU_DOCUMENTS"
+msgid "ACTION_MENU_DOCUMENTS"
 msgstr "Documents"
 
-msgid "MENU_USERS"
+msgid "ACTION_MENU_USERS"
 msgstr "Users"
 
-msgid "MENU_DEVICES"
+msgid "ACTION_MENU_DEVICES"
 msgstr "Devices"
 
-msgid "ERR_REGISTER_USER_OFFLINE"
-msgstr "Cannot reach the server."
+msgid "TEXT_INVITE_USER_COPIED_TO_CLIPBOARD"
+msgstr "Information has been copied to the clipboard."
 
-msgid "ERR_REGISTER_USER_TIMEOUT"
-msgstr "The user took too much time to register."
+msgid "TEXT_INVITE_USER_BAD_USER_NAME"
+msgstr "The username is invalid."
 
-msgid "ERR_REGISTER_USER_UNKNOWN"
-msgstr "Cannot register the user."
+msgid "TEXT_INVITE_USER_ALREADY_EXISTS"
+msgstr "This username already exists."
 
-msgid "INFO_REGISTER_USER_SUCCESS"
-msgstr "The user has been registered. You may now close this window."
+msgid "TEXT_INVITE_USER_WRONG_PARAMETERS"
+msgstr "The user could not be invited."
 
-msgid "WARN_REGISTER_USER_EMPTY"
-msgstr "The user name cannot be empty."
+msgid "TEXT_INVITE_USER_HOST_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
 
-msgid "WARN_WORKSPACE_SHARING_WITH_YOURSELF"
-msgstr "Cannot share a workspace with yourself."
-
-msgid "WARN_WORKSPACE_ALREADY_SHARED_{}"
-msgstr "The workspace is already shared with \"{}\"."
-
-msgid "ASK_WORKSPACE_UNSHARE_TITLE"
-msgstr "Unshare the workspace"
-
-msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
-msgstr "Are you sure you want to stop sharing the workspace with \"{}\"?"
-
-msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
-msgstr "Forget the modifications"
-
-msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
+msgid "TEXT_INVITE_USER_TIMEOUT"
 msgstr ""
-"You have made some unsaved modifications. Are you sure you want to close this "
-"window and discard them?"
+"The user failed to register in time. You can restart the invitation "
+"process (only the token will change)."
 
-msgid "ERR_WORKSPACE_CANNOT_SHARE_{}"
-msgstr "Cannot share the workspace \"{workspace}\" with \"{user}\"."
+msgid "TEXT_INVITE_USER_UNKNOWN_FAILURE"
+msgstr "The user could not be invited."
 
-msgid "ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}"
-msgstr "Cannot remove \"{user}\" from the workspace \"{workspace}\"."
+msgid "TEXT_INVITE_USER_SUCCESS"
+msgstr "The user has successfully registered."
 
-msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
-msgstr ""
-"Roles could not be updated for the following users:\n"
-"{}"
+msgid "TEXT_INVITE_USER_EMPTY_USER_NAME"
+msgstr "The username cannot be empty."
 
-msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
-msgstr "Roles have been updated."
+msgid "TEXT_INVITE_USER_TITLE"
+msgstr "Invite a user"
 
-msgid "PARSEC_WINDOW_TITLE"
-msgstr "Parsec - {}"
+msgid "TEXT_PARSEC_WINDOW_TITLE_version"
+msgstr "PARSEC {version}"
 
-msgid "LABEL_FEEDBACK_LINK"
-msgstr "Send us feedback"
+msgid "ACTION_FEEDBACK_SEND"
+msgstr "Give your feedback"
 
-msgid "BUTTON_ADD_INSTANCE"
+msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
 msgstr "Open a new tab"
 
-msgid "MENU_SETTINGS"
+msgid "ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"
+msgstr "Bootstrap an organization"
+
+msgid "ACTION_MAIN_MENU_CLAIM_USER"
+msgstr "Register a user"
+
+msgid "ACTION_MAIN_MENU_CLAIM_DEVICE"
+msgstr "Register a device"
+
+msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Settings"
 
-msgid "BUTTON_DOCUMENTATION"
-msgstr "Documentation"
+msgid "ACTION_MAIN_MENU_OPEN_DOCUMENTATION"
+msgstr "Open the documentation"
 
-msgid "BUTTON_ABOUT"
-msgstr "About Parsec"
+msgid "ACTION_MAIN_MENU_ABOUT"
+msgstr "About PARSEC"
 
-msgid "BUTTON_CHANGELOG"
-msgstr "Changelog"
+msgid "ACTION_MAIN_MENU_CHANGELOG"
+msgstr "Software changelog"
 
-msgid "BUTTON_LICENSE"
-msgstr "License"
+msgid "ACTION_MAIN_MENU_LICENSE"
+msgstr "Software license"
 
-msgid "BUTTON_QUIT_PARSEC"
-msgstr "Exit Parsec"
+msgid "ACTION_MAIN_MENU_FEEDBACK_SEND"
+msgstr "Give your feedback"
 
-msgid "LICENSE_TITLE"
-msgstr "License"
+msgid "ACTION_MAIN_MENU_QUIT_PARSEC"
+msgstr "Quit"
 
-msgid "CHANGELOG_TITLE"
-msgstr "Changelog"
+msgid "TEXT_LICENSE_TITLE"
+msgstr "PARSEC License"
 
-msgid "SETTINGS_TITLE"
+msgid "TEXT_CHANGELOG_TITLE"
+msgstr "PARSEC Changelog"
+
+msgid "TEXT_SETTINGS_TITLE"
 msgstr "Settings"
 
-msgid "ASK_ERROR_REPORTING_TITLE"
+msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
+msgstr "Bootstrap an organization"
+
+msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
+msgstr "Please provide the link to bootstrap the organization."
+
+msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
+
+msgid "TEXT_CLAIM_USER_URL_TITLE"
+msgstr "Register a user"
+
+msgid "TEXT_CLAIM_USER_URL_INSTRUCTIONS"
+msgstr ""
+"Please provide the link to register the user. The link should have been "
+"given by the person inviting you."
+
+msgid "TEXT_CLAIM_USER_URL_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
+
+msgid "TEXT_CLAIM_DEVICE_URL_TITLE"
+msgstr "Register a device"
+
+msgid "TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"
+msgstr ""
+"Please provide the link to register the device. The link should have been"
+" given to you when you started the invitation process for your new "
+"device."
+
+msgid "TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
+
+msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"
 
-msgid "ASK_ERROR_REPORTING_CONTENT"
+msgid "TEXT_ERROR_REPORTING_INSTRUCTIONS"
 msgstr ""
-"Do you authorize Parsec to send us some data when it encounters an error to "
-"help us improve your experience?"
+"PARSEC can automatically send information when it encounters an error. "
+"This information helps us to improve your user experience.\n"
+"\n"
+"Do you allow PARSEC to automatically report errors? This can later be "
+"turned ON or OFF in the settings."
 
-msgid "ASK_DISABLE_ACROBAT_CONTAINER_TITLE"
-msgstr "Allow Parsec to restore compatibility with Acrobat Reader DC"
+msgid "ACTION_NO"
+msgstr "No"
 
-msgid "ASK_DISABLE_ACROBAT_CONTAINER_CONTENT"
+msgid "ACTION_ERROR_REPORTING_ACCEPT"
+msgstr "Allow error reporting"
+
+msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
+msgstr "Restore compatibility with Acrobat Reader DC"
+
+msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"
 msgstr ""
-"The current configuration of Acrobat Reader DC is not compatible with Parsec. "
-"In its current state, Acrobat is not able to open PDF files from the Parsec "
-"workspaces.\n"
+"The current configuration of Acrobat Reader DC is not compatible with "
+"PARSEC.<br />\n"
+"In its current state, Acrobat will not be able to open PDF files from the"
+" PARSEC workspaces.<br /><br />\n"
 "\n"
 "Do you allow Parsec to restore compatibility by disabling the \"Run in "
 "AppContainer\" feature from the Acrobat configuration? This option is "
-"accessible from the Parsec settings if necessary."
+"accessible from the PARSEC settings if necessary."
 
-msgid "TAB_TITLE_LOG_IN"
+msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
+msgstr "Disable Acrobat Containers"
+
+msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Log In"
 
-msgid "TAB_TITLE_BOOTSTRAP"
-msgstr "Bootstrap organization"
+msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
+msgstr ""
+"The file could not be found within the organization "
+"<b>{organization}</b>. Maybe it was not shared with you."
 
-msgid "TAB_TITLE_CLAIM_USER"
-msgstr "Claim user"
+msgid "TEXT_INVALID_URL"
+msgstr "The URL is invalid."
 
-msgid "TAB_TITLE_CLAIM_DEVICE"
-msgstr "Claim device"
-
-msgid "WARN_FILE_LINK_LOG_IN_{}"
-msgstr "Please log in on a device of the organization \"{}\" to access this file."
-
-msgid "ASK_CLOSE_TAB_TITLE"
+msgid "TEXT_TAB_CLOSE_TITLE"
 msgstr "Close the tab"
 
-msgid "ASK_CLOSE_TAB_CONTENT_LOGGED_IN"
+msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
 msgstr ""
-"Are you sure you want to close this tab? You will be automatically disconnected."
+"Are you sure you want to close this tab? You will be automatically logged"
+" out."
 
-msgid "ASK_CLOSE_TAB_CONTENT"
-msgstr "Are you sure you want to close this tab?"
+msgid "ACTION_TAB_CLOSE_CONFIRM"
+msgstr "Close the tab"
 
-msgid "TRAY_PARSEC_RUNNING"
-msgstr "Parsec is still running."
+msgid "TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"
+msgstr "PARSEC is still running."
 
-msgid "ASK_QUIT_TITLE"
-msgstr "Close the application"
+msgid "TEXT_PARSEC_QUIT_TITLE"
+msgstr "Close PARSEC"
 
-msgid "ASK_QUIT_CONTENT"
-msgstr "Are you sure you want to close the application?"
+msgid "TEXT_PARSEC_QUIT_INSTRUCTIONS"
+msgstr "Are you sure you want to close PARSEC?"
 
-msgid "PARSEC_DEVELOPMENT_LABEL"
-msgstr "Developed by <a href=\"http://scille.eu\">Scille</a>."
+msgid "ACTION_PARSEC_QUIT_CONFIRM"
+msgstr "Quit"
 
-msgid "LABEL_DEVICE_NAME"
+msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
+msgstr "Developped by <a href=\"https://scille.eu\">Scille</a>."
+
+msgid "TEXT_LABEL_USER_NAME"
+msgstr "Username"
+
+msgid "TEXT_LABEL_DEVICE_NAME"
 msgstr "Device name"
 
-msgid "LABEL_PASSWORD"
+msgid "TEXT_LABEL_PASSWORD"
 msgstr "Password"
 
-msgid "LABEL_PASSWORD_CHECK"
-msgstr "Password check"
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Password confirmation"
 
-msgid "BUTTON_CANCEL"
-msgstr "Cancel"
-
-msgid "BUTTON_BOOTSTRAP_ORG"
+msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
 msgstr "Bootstrap the organization"
 
-msgid "LABEL_TOKEN"
+msgid "ACTION_BOOTSTRAP_ORG"
+msgstr "Bootstrap the organization"
+
+msgid "TEXT_LABEL_TOKEN"
 msgstr "Token"
 
-msgid "BUTTON_CLAIM"
-msgstr "Register"
-
-msgid "LABEL_SEARCH_DEVICES"
-msgstr "Search devices"
-
-msgid "LABEL_HISTORY_TITLE"
-msgstr "History of file"
-
-msgid "LABEL_FILE_TIMESTAMP"
-msgstr "Timestamp"
-
-msgid "LABEL_FILE_USER_ID"
-msgstr "User"
-
-msgid "LABEL_FILE_SIZE"
-msgstr "Size"
-
-msgid "LABEL_FILE_SOURCE"
-msgstr "Source"
-
-msgid "LABEL_FILE_DESTINATION"
-msgstr "Destination"
-
-msgid "BUTTON_LOAD_MORE_ENTRIES"
-msgstr "Load more entries"
-
-msgid "LABEL_SEARCH_FILES"
-msgstr "Search files or folders"
-
-msgid "LABEL_FILE_NAME"
-msgstr "Name"
-
-msgid "LABEL_FILE_CREATED"
-msgstr "Created"
-
-msgid "LABEL_FILE_UPDATED"
-msgstr "Updated"
-
-msgid "BUTTON_OK"
-msgstr "OK"
-
-msgid "LABEL_IMPORTING"
-msgstr "Importing"
-
-msgid "LABEL_IDENTIFIER"
-msgstr "Identifier"
-
-msgid "BUTTON_ENTER_URL"
-msgstr "Enter a URL manually"
-
-msgid "BUTTON_LOG_OUT"
-msgstr "Log Out"
-
-msgid "BUTTON_DETAILS"
-msgstr "Details"
-
-msgid "BUTTON_COPY_TO_CLIPBOARD"
-msgstr "Copy to clipboard"
-
-msgid "TITLE_SETTINGS"
-msgstr "Settings"
-
-msgid "SETTINGS_TITLE_PROXY"
-msgstr "Proxy"
-
-msgid "LABEL_PROXY_TYPE"
-msgstr "Proxy type"
-
-msgid "LABEL_NO_PROXY"
-msgstr "No Proxy"
-
-msgid "LABEL_PROXY_HTTP"
-msgstr "HTTP"
-
-msgid "LABEL_PROXY_SOCKS4"
-msgstr "Socks4"
-
-msgid "LABEL_PROXY_SOCKS5"
-msgstr "Socks5"
-
-msgid "LABEL_HOST"
-msgstr "Host"
-
-msgid "LABEL_PORT"
-msgstr "Port"
-
-msgid "SETTINGS_TITLE_SPEED_LIMITS"
-msgstr "Speed limits"
-
-msgid "LABEL_UPLOAD"
-msgstr "Upload"
-
-msgid "LABEL_SPEED_NO_LIMIT"
-msgstr "No limit"
-
-msgid "LABEL_SPEED_LIMIT_TO"
-msgstr "Limit to"
-
-msgid "LABEL_KB_S"
-msgstr "KB/s"
-
-msgid "LABEL_DOWNLOAD"
-msgstr "Download"
-
-msgid "SETTINGS_TITLE_MISC"
-msgstr "Miscellaneous"
-
-msgid "LABEL_SIM_CONNECTIONS"
-msgstr "Simultaneous connections"
-
-msgid "BUTTON_SAVE"
-msgstr "Save"
-
-msgid "BUTTON_DOWNLOAD"
-msgstr "Download"
-
-msgid "BUTTON_IGNORE"
-msgstr "Ignore"
-
-msgid "LABEL_CHECKING_NEW_VERSION"
-msgstr "Checking if a new version is available..."
-
-msgid "LABEL_NEW_VERSION_ERROR"
-msgstr "Cannot check if a new version is available. Please check your network."
-
-msgid "LABEL_VERSION_UPDATE_TO_DATE"
-msgstr "Your Parsec is up-to-date."
-
-msgid "LABEL_NOTIFICATIONS"
-msgstr "Notifications"
-
-msgid "LABEL_CHANGE_PASSWORD"
-msgstr "Change your password."
-
-msgid "LABEL_PASSWORD_OLD"
-msgstr "Old password"
-
-msgid "BUTTON_CHANGE_PASSWORD"
-msgstr "Change"
-
-msgid "BUTTON_NO"
-msgstr "No"
-
-msgid "BUTTON_YES"
-msgstr "Yes"
-
-msgid "TITLE_REGISTER_NEW_DEVICE"
-msgstr "Register a new device"
-
-msgid "LABEL_REGISTER_NEW_DEVICE"
-msgstr "Register a new device"
-
-msgid "LABEL_REGISTER_DEVICE_INSTRUCTIONS"
-msgstr "Use the following information to set up your new device:"
-
-msgid "LABEL_URL"
-msgstr "URL"
-
-msgid "BUTTON_REGISTER_DEVICE"
+msgid "TEXT_CLAIM_DEVICE_TOOLTIP"
 msgstr "Register the device"
 
-msgid "TITLE_REGISTER_NEW_USER"
-msgstr "Register a new user"
+msgid "ACTION_CLAIM_DEVICE"
+msgstr "Register the device"
 
-msgid "LABEL_REGISTER_NEW_USER"
-msgstr "Register a new user"
-
-msgid "CHECK_USER_IS_ADMIN"
-msgstr "User is admin"
-
-msgid "LABEL_REGISTER_USER_INSTRUCTIONS"
-msgstr "Use the following information to set up your new user:"
-
-msgid "BUTTON_REGISTER_USER"
+msgid "TEXT_CLAIM_USER_TOOLTIP"
 msgstr "Register the user"
 
-msgid "BUTTON_SKIP"
-msgstr "Skip"
+msgid "ACTION_CLAIM_USER"
+msgstr "Register the user"
 
-msgid "BUTTON_REPLACE"
-msgstr "Replace"
+msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
+msgstr "Invite a new device"
 
-msgid "CHECK_DO_THE_SAME"
-msgstr "Do the same for the following files"
+msgid "ACTION_DEVICE_ADD_NEW"
+msgstr "Invite a new device"
 
-msgid "SETTINGS_TITLE_BEHAVIOR"
-msgstr "Behavior"
+msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
+msgstr "Filter the devices"
 
-msgid "CHECK_MINIMIZE_IN_TRAY"
-msgstr "Minimize in tray"
-
-msgid "SETTINGS_TITLE_LOCALIZATION"
-msgstr "Localization"
-
-msgid "LABEL_LANGUAGE"
-msgstr "Languages"
-
-msgid "SETTINGS_TITLE_VERSION"
-msgstr "Version"
-
-msgid "CHECK_CHECK_NEW_VERSION"
-msgstr "Check for the new versions on startup"
-
-msgid "BUTTON_CHECK_NEW_VERSION"
-msgstr "Check for new version now"
-
-msgid "SETTINGS_TITLE_ERROR_REPORTING"
-msgstr "Error reporting"
-
-msgid "CHECK_SEND_CRASH_INFO"
-msgstr "Send data when encountering an error"
-
-msgid "SETTINGS_TITLE_INTERFACE"
-msgstr "Interface"
-
-msgid "CHECK_USE_WORKSPACE_COLORS"
-msgstr "Use colors for workspaces"
-
-msgid "CHECK_DISABLE_ACROBAT_CONTAINER"
-msgstr ""
-"Disable Acrobat Reader DC\n"
-"\"Run in AppContainer\" feature"
-
-msgid "BUTTON_BACK"
-msgstr "Back"
-
-msgid "WORKSPACE_REENCRYPTION_SELECT_DATE"
-msgstr "Just select a date..."
-
-msgid "WORKSPACE_REENCRYPTION_SELECT_TIME"
-msgstr "...and a time"
-
-msgid "WORKSPACE_REENCRYPTION_MOUNT"
-msgstr "See the workspace"
-
-msgid "LABEL_SEARCH_USERS"
-msgstr "Search users"
-
-msgid "LABEL_WORKSPACE_OWNER"
-msgstr "You are the owner of this workspace."
-
-msgid "LABEL_WORKSPACE_SHARED"
-msgstr "This workspace is shared."
-
-msgid "LABEL_WORKSPACE_EMPTY"
+msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "This workspace is empty."
 
-msgid "LABEL_RENAME_WORKSPACE"
+msgid "TEXT_ERROR_SHOW_DETAILS_TOOLTIP"
+msgstr "Show application execution state."
+
+msgid "ACTION_ERROR_SHOW_DETAILS"
+msgstr "Details"
+
+msgid "TEXT_ERROR_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copy application execution state to the clipboard."
+
+msgid "ACTION_ERROR_COPY_DETAILS_TO_CLIPBOARD"
+msgstr "Copy to the clipboard"
+
+msgid ""
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR"
+"/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style "
+"type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans'; font-size:10pt; font-"
+"weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; "
+"margin-left:0px; margin-right:0px; -qt-block-indent:0; text-"
+"indent:0px;\"><br /></p></body></html>"
+msgstr ""
+
+msgid "TEXT_FILE_HISTORY_VERSION"
+msgstr "Version"
+
+msgid "TEXT_FILE_HISTORY_SIZE"
+msgstr "Size"
+
+msgid "TEXT_FILE_HISTORY_WHEN"
+msgstr "On"
+
+msgid "TEXT_FILE_HISTORY_BY"
+msgstr "By"
+
+msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
+msgstr "Load more entries"
+
+msgid "ACTION_FILE_IMPORT_FILES"
+msgstr "Import files"
+
+msgid "ACTION_FILE_IMPORT_FOLDER"
+msgstr "Import a folder"
+
+msgid "TEXT_FILE_NAME_HEADER"
+msgstr "Name"
+
+msgid "TEXT_FILE_CREATED_HEADER"
+msgstr "Created"
+
+msgid "TEXT_FILE_UPDATED_HEADER"
+msgstr "Updated"
+
+msgid "TEXT_FILE_SIZE_HEADER"
+msgstr "Size"
+
+msgid "TEXT_FILE_FILTER_PLACEHOLDER"
+msgstr "Filter the files"
+
+msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
+msgstr "Return to the list of workspaces."
+
+msgid "TEXT_FILE_CREATE_FOLDER_TOOLTIP"
+msgstr "Create a new folder into this workspace."
+
+msgid "TEXT_FILE_IMPORT_FILES_TOOLTIP"
+msgstr "Import new files into this workspace."
+
+msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
+msgstr "Import a new folder into this workspace."
+
+msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
+msgstr "Close the window."
+
+msgid "TEXT_DEVICE_INVITE_DEVICE_NAME_PLACEHOLDER"
+msgstr "Device name"
+
+msgid "TEXT_DEVICE_INVITE_INSTRUCTIONS"
+msgstr ""
+"You will have to transmit the following information to your new device to"
+" complete the registration process. Please do not close this window while"
+" your new device registers."
+
+msgid "ACTION_TOKEN_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copy the token to the clipboard."
+
+msgid "ACTION_URL_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copy the URL to the clipboard."
+
+msgid "ACTION_DEVICE_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copy the device name to the clipboard."
+
+msgid "ACTION_DEVICE_INVITE"
+msgstr "Invite the device"
+
+msgid "TEXT_DEVICE_INVITE_LABEL_URL"
+msgstr "Invitation URL"
+
+msgid "TEXT_DEVICE_INVITE_LABEL_DEVICE_NAME"
+msgstr "Device name"
+
+msgid "TEXT_DEVICE_INVITE_LABEL_TOKEN"
+msgstr "Invitation token"
+
+msgid "TEXT_USER_INVITE_USER_NAME_PLACEHOLDER"
+msgstr "Username"
+
+msgid "TEXT_USER_INVITE_CHECK_IS_ADMIN"
+msgstr "User will be and administrator"
+
+msgid "TEXT_USER_INVITE_INSTRUCTIONS"
+msgstr ""
+"You will have to transmit the following information to the user. It is "
+"good practice to provide the transmit the information by two different "
+"channels (for exemple, the URL by email and the six digits token by "
+"phone). Please do not close this window while the user registers."
+
+msgid "ACTION_USER_NAME_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copy the username to the clipboard."
+
+msgid "ACTION_USER_INVITE"
+msgstr "Invite the user"
+
+msgid "TEXT_USER_INVITE_LABEL_URL"
+msgstr "Invitation URL"
+
+msgid "TEXT_USER_INVITE_LABEL_USERNAME"
+msgstr "Username"
+
+msgid "TEXT_USER_INVITE_LABEL_TOKEN"
+msgstr "Invitation token"
+
+msgid "TEXT_IMPORT_FILES_PROGRESS"
+msgstr "Importing file"
+
+msgid "ACTION_LOG_OUT"
+msgstr "Log Out"
+
+msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
+msgstr "Download the new version"
+
+msgid "ACTION_PARSEC_IGNORE_NEW_VERSION"
+msgstr "Ignore"
+
+msgid "TEXT_NEW_VERSION_CHECKING_IN_PROGRESS"
+msgstr "Checking if a new version is available"
+
+msgid "TEXT_NEW_VERSION_CHECK_FAILED"
+msgstr "Could not check for new versions."
+
+msgid "ACTION_CLOSE"
+msgstr "Close"
+
+msgid "TEXT_NEW_VERSION_UP_TO_DATE"
+msgstr "Your PARSEC is up-to-date!"
+
+msgid "LABEL_NOTIFICATIONS"
+msgstr ""
+
+msgid "TEXT_LABEL_PASSWORD_OLD"
+msgstr "Current password"
+
+msgid "ACTION_CHANGE_PASSWORD"
+msgstr "Change password"
+
+msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
+msgstr "Application behavior"
+
+msgid "TEXT_SETTINGS_CHECK_MINIMIZE_IN_TRAY"
+msgstr "Minimize in tray"
+
+msgid "TEXT_SETTINGS_LOCALIZATION_TITLE"
+msgstr "Localization"
+
+msgid "TEXT_LABEL_LANGUAGE"
+msgstr "Language"
+
+msgid "TEXT_SETTINGS_VERSION_TITLE"
+msgstr "Version"
+
+msgid "TEXT_SETTINGS_CHECK_NEW_VERSION_ON_STARTUP"
+msgstr "Check for new versions on startup"
+
+msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
+msgstr "Check for new version now"
+
+msgid "TEXT_SETTINGS_ERROR_REPORTING_TITLE"
+msgstr "Error reporting"
+
+msgid "TEXT_SETTINGS_CHECK_SEND_CRASH_REPORT"
+msgstr "Automatically send reports on errors"
+
+msgid "TEXT_SETTINGS_INTERFACE_TITLE"
+msgstr "Interface"
+
+msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
+msgstr "Use colors for workspaces"
+
+msgid "TEXT_SETTINGS_MISC_TITLE"
+msgstr "Misc"
+
+msgid "TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS"
+msgstr "Disable Acrobat Containers"
+
+msgid "ACTION_SAVE"
+msgstr "Save"
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
+msgstr "Remove the user from this workspace."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
+msgstr "You will be able to see the workspace as it was at a given time."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
+msgstr "Select a date..."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_TIME"
+msgstr "...and a time..."
+
+msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
+msgstr "See the workspace"
+
+msgid "TEXT_USER_LABEL_CREATED"
+msgstr "Created"
+
+msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
+msgstr "Filter users"
+
+msgid "ACTION_USER_INVITE_USER"
+msgstr "Invite a user"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
+msgstr "This workspace is shared."
+
+msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
+msgstr "You are this workspace owner."
+
+msgid "TEXT_WORKSPACE_RENAME_TOOLTIP"
 msgstr "Rename the workspace."
 
-msgid "LABEL_SHARE_WORKSPACE"
-msgstr "Share the workspace."
+msgid "TEXT_WORKSPACE_OPEN_SHARING_TOOLTIP"
+msgstr "Share this workspace."
 
-msgid "LABEL_MOUNT_TIMESTAMP"
-msgstr "See the workspace as it was at a specific date."
+msgid "TEXT_WORKSPACE_REMOUNT_TIMESTAMPED_TOOLTIP"
+msgstr "See the workspace as it was at a precise date."
 
-msgid "LABEL_ENCRYPT_WORKSPACE"
-msgstr "Re-encrypt the workspace."
+msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
+msgstr "Reencrypt the workspace."
 
-msgid "LABEL_DELETE_WORKSPACE"
-msgstr "Delete the workspace."
+msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
+msgstr "Remove this workspace."
 
-msgid "LABEL_REENCRYPTION_PROGRESS"
-msgstr "This workspace is being reencrypted."
+msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
+msgstr "Find a user"
 
-msgid "TITLE_WORKSPACE_SHARING"
-msgstr "Workspace sharing"
+msgid "ACTION_WORKSPACE_SHARING_SHARE"
+msgstr "Share with this user"
 
-msgid "LABEL_SHARE_WITH"
-msgstr "Share with"
+msgid "TEXT_WORKSPACE_SHARING_CHECK_SHOW_REVOKED_USER"
+msgstr "Show users who have been revoked"
 
-msgid "BUTTON_SHARE"
-msgstr "Share"
+msgid "ACTION_WORKSPACE_SHARING_UPDATE_ROLES"
+msgstr "Update the roles"
 
-msgid "BUTTON_UPDATE"
-msgstr "Update"
+msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
+msgstr "Filter the workspaces"
 
-msgid "CHECK_SHOW_REVOKED"
-msgstr "Show revoked users"
+msgid "ACTION_WORKSPACE_ADD_WORKSPACE"
+msgstr "Create a new workspace"
 
-msgid "WORKSPACE_SEARCH"
-msgstr "Filter workspaces"
-
-#~ msgid "ASK_ADD_TAB_TITLE"
-#~ msgstr "Open a new instance"
-
-#~ msgid "ASK_ADD_TAB_CONTENT"
-#~ msgstr "Do you want to open a new tab?"
+msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
+msgstr "Go to a file using a link"

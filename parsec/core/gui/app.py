@@ -5,7 +5,7 @@ import signal
 from structlog import get_logger
 from queue import Queue
 
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QFile
 from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
@@ -87,7 +87,7 @@ def run_gui(config: CoreConfig, start_arg: str = None):
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-    app = QApplication([])
+    app = QApplication(["-stylesheet"])
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
@@ -95,6 +95,11 @@ def run_gui(config: CoreConfig, start_arg: str = None):
     QFontDatabase.addApplicationFont(":/fonts/fonts/Roboto-Regular.ttf")
     f = QFont("Roboto")
     app.setFont(f)
+
+    rc = QFile(":/styles/styles/main.css")
+    rc.open(QFile.ReadOnly)
+    content = rc.readAll().data()
+    app.setStyleSheet(str(content, "utf-8"))
 
     lang_key = lang.switch_language(config)
 

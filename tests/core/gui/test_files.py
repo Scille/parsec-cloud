@@ -53,7 +53,7 @@ async def logged_gui(
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: ("Workspace")),
     )
 
@@ -99,7 +99,7 @@ async def logged_gui_with_files(aqtbot, logged_gui, running_backend, monkeypatch
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: ("dir1")),
     )
     async with aqtbot.wait_signal(w_f.folder_create_success):
@@ -130,7 +130,7 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
 
     for dir_name in dir_names:
         monkeypatch.setattr(
-            "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+            "parsec.core.gui.custom_dialogs.get_text_input",
             classmethod(lambda *args, **kwargs: (dir_name)),
         )
         async with aqtbot.wait_signal(w_f.folder_create_success):
@@ -200,7 +200,7 @@ async def test_create_dir_already_exists(
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: ("Dir1")),
     )
     async with aqtbot.wait_signals(
@@ -342,7 +342,7 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+        "parsec.core.gui.custom_dialogs.ask_question", classmethod(lambda *args: _("BUTTON_YES"))
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
@@ -360,7 +360,7 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.QuestionDialog.ask", classmethod(lambda *args: True)
+        "parsec.core.gui.custom_dialogs.ask_question", classmethod(lambda *args: _("BUTTON_YES"))
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
@@ -394,7 +394,7 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: ("Abcd")),
     )
     # Rename Dir1 to Abcd
@@ -417,7 +417,7 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: ("NewName")),
     )
     async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
@@ -466,7 +466,7 @@ async def test_rename_dir_already_exists(
     )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
+        "parsec.core.gui.custom_dialogs.get_text_input",
         classmethod(lambda *args, **kwargs: ("Dir2")),
     )
     async with aqtbot.wait_signal(w_f.rename_error):

@@ -40,7 +40,7 @@
       <enum>Qt::LeftToRight</enum>
      </property>
      <property name="text">
-      <string>LABEL_CHECKING_NEW_VERSION</string>
+      <string>TEXT_NEW_VERSION_CHECKING_IN_PROGRESS</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -55,7 +55,7 @@
       </font>
      </property>
      <property name="text">
-      <string>LABEL_NEW_VERSION_ERROR</string>
+      <string>TEXT_NEW_VERSION_CHECK_FAILED</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -70,7 +70,7 @@
       </font>
      </property>
      <property name="text">
-      <string>LABEL_VERSION_UPDATE_TO_DATE</string>
+      <string>TEXT_NEW_VERSION_UP_TO_DATE</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -106,7 +106,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_close">
+      <widget class="QPushButton" name="button_close">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -119,8 +119,11 @@
          <bold>true</bold>
         </font>
        </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
        <property name="text">
-        <string>BUTTON_CLOSE</string>
+        <string>ACTION_CLOSE</string>
        </property>
       </widget>
      </item>
@@ -141,13 +144,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ShadowedButton</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

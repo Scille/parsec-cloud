@@ -13,4 +13,4 @@ class AboutWidget(QWidget, Ui_AboutWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.label_version.setText(_("PARSEC_VERSION_LABEL_{}").format(version=__version__))
+        self.label_version.setText(_("TEXT_PARSEC_VERSION_version").format(version=__version__))

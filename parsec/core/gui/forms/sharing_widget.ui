@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>SharingWidget</class>
  <widget class="QWidget" name="SharingWidget">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -33,7 +36,7 @@ background: 0;
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
-    <number>10</number>
+    <number>20</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -68,7 +71,7 @@ background: 0;
     </spacer>
    </item>
    <item>
-    <widget class="QComboBox" name="combo_role">
+    <widget class="ComboBox" name="combo_role">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -83,13 +86,19 @@ background: 0;
     </widget>
    </item>
    <item>
-    <widget class="PointingHandButton" name="button_delete">
+    <widget class="Button" name="button_delete">
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="toolTip">
+      <string>TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP</string>
+     </property>
      <property name="text">
       <string/>
      </property>
      <property name="icon">
       <iconset resource="../rc/resources.qrc">
-       <normaloff>:/icons/images/icons/menu_cancel.png</normaloff>:/icons/images/icons/menu_cancel.png</iconset>
+       <normaloff>:/icons/images/material/clear.svg</normaloff>:/icons/images/material/clear.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -100,13 +109,25 @@ background: 0;
      <property name="flat">
       <bool>true</bool>
      </property>
+     <property name="color" stdset="0">
+      <color>
+       <red>153</red>
+       <green>153</green>
+       <blue>153</blue>
+      </color>
+     </property>
     </widget>
    </item>
   </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PointingHandButton</class>
+   <class>ComboBox</class>
+   <extends>QComboBox</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>Button</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

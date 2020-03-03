@@ -61,4 +61,4 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
             gui_check_version_at_startup=self.check_box_check_at_startup.isChecked(),
             gui_workspace_color=self.check_box_workspace_color.isChecked(),
         )
-        show_info(self, _("SETTINGS_NEED_RESTART"))
+        show_info(self, _("TEXT_SETTINGS_NEED_RESTART"))

@@ -4,7 +4,7 @@ import pytest
 from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
-from parsec.core.gui.password_change_dialog import PasswordChangeDialog
+from parsec.core.gui.password_change_widget import PasswordChangeWidget
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ async def test_change_password_invalid_old_password(
     assert item.widget().is_current_device is True
 
     def _create_change_password_dialog():
-        dlg = PasswordChangeDialog(core=d_w.core, parent=d_w)
+        dlg = PasswordChangeWidget(core=d_w.core, parent=d_w)
         dlg.line_edit_old_password.setText("0123456789")
         dlg.line_edit_password.setText("P@ssw0rd2")
         dlg.line_edit_password_check.setText("P@ssw0rd2")
@@ -74,7 +74,7 @@ async def test_change_password_invalid_password_check(
     assert item.widget().is_current_device is True
 
     def _create_change_password_dialog():
-        dlg = PasswordChangeDialog(core=d_w.core, parent=d_w)
+        dlg = PasswordChangeWidget(core=d_w.core, parent=d_w)
         dlg.line_edit_old_password.setText("P@ssw0rd")
         dlg.line_edit_password.setText("P@ssw0rd2")
         dlg.line_edit_password_check.setText("P@ssw0rd3")
@@ -102,7 +102,7 @@ async def test_change_password_success(
     assert item.widget().is_current_device is True
 
     def _create_change_password_dialog():
-        dlg = PasswordChangeDialog(core=d_w.core, parent=d_w)
+        dlg = PasswordChangeWidget(core=d_w.core, parent=d_w)
         dlg.line_edit_old_password.setText("P@ssw0rd")
         dlg.line_edit_password.setText("P@ssw0rd2")
         dlg.line_edit_password_check.setText("P@ssw0rd2")
