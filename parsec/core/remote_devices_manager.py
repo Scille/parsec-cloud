@@ -82,7 +82,7 @@ class RemoteDevicesManager:
                 None if no_cache else self._trustchain_ctx.get_revoked_user(user_id)
             )
         except TrustchainError as exc:
-            raise RemoteDevicesManagerError(exc) from exc
+            raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
         if not verified_user:
             verified_user, verified_revoked_user, _ = await self.get_user_and_devices(
                 user_id, no_cache=True
@@ -102,7 +102,7 @@ class RemoteDevicesManager:
         try:
             verified_device = None if no_cache else self._trustchain_ctx.get_device(device_id)
         except TrustchainError as exc:
-            raise RemoteDevicesManagerError(exc) from exc
+            raise RemoteDevicesManagerInvalidTrustchainError(exc) from exc
         if not verified_device:
             _, _, verified_devices = await self.get_user_and_devices(
                 device_id.user_id, no_cache=True
