@@ -5,6 +5,32 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.8.0 (2020-03-03)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Added a link to the documentation  (`#999 <https://github.com/Scille/parsec-
+  cloud/issues/999>`__)
+* Removed confirmation when opening a new tab  (`#993
+  <https://github.com/Scille/parsec-cloud/issues/993>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix French translation for changelog  (`#994
+  <https://github.com/Scille/parsec-cloud/issues/994>`__)
+* Case insensitive extension matching when displaying file icon  (`#1007
+  <https://github.com/Scille/parsec-cloud/issues/1007>`__)
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add french translation to the documentation (`#1005
+  <https://github.com/Scille/parsec-cloud/issues/1005>`__)
+
+
 Parsec 1.7.2 (2020-02-24)
 -------------------------
 

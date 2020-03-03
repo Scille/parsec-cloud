@@ -1,1 +1,0 @@
-Removed confirmation when opening a new tab
