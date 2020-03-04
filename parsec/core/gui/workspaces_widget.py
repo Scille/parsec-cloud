@@ -557,7 +557,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_workspace_created_qt(self, workspace_entry):
         self.reset()
 
-    def _on_fs_entry_synced_trio(self, event, id, path=None, workspace_id=None):
+    def _on_fs_entry_synced_trio(self, event, id, workspace_id=None):
         self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):

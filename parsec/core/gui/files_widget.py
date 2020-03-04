@@ -791,7 +791,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.loading_dialog = None
         self.import_job = None
 
-    def _on_fs_entry_synced_trio(self, event, id, path=None, workspace_id=None):
+    def _on_fs_entry_synced_trio(self, event, id, workspace_id=None):
         self.fs_synced_qt.emit(event, id)
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
