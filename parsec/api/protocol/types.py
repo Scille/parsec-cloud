@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
+from collections import namedtuple
 
-from parsec.serde import fields
+from parsec.serde import fields, validate
 
 
 def _bytes_size(txt: str) -> int:
@@ -69,3 +70,20 @@ OrganizationIDField = fields.str_based_field_factory(OrganizationID)
 UserIDField = fields.str_based_field_factory(UserID)
 DeviceNameField = fields.str_based_field_factory(DeviceName)
 DeviceIDField = fields.str_based_field_factory(DeviceID)
+
+
+class HumanHandle(namedtuple("HumanHandle", "label email")):
+    def __repr__(self):
+        return f"<HumanHandle {self.label} <{self.email}> >"
+
+
+class HumanHandleField(fields.Tuple):
+    def __init__(self, **kwargs):
+        label = fields.String(required=True, validate=validate.Range(min=0))
+        # TODO: marshmallow uses regex to do that, no sure how reliable it is...
+        email = fields.Email(required=True, validate=validate.Range(min=0))
+        super().__init__(label, email, **kwargs)
+
+    def _deserialize(self, *args, **kwargs):
+        result = super()._deserialize(*args, **kwargs)
+        return HumanHandle(*result)

@@ -18,6 +18,7 @@ from parsec.api.protocol import (
     OrganizationID,
     UserID,
     DeviceID,
+    HumanHandle,
     user_get_serializer,
     user_find_serializer,
     user_get_invitation_creator_serializer,
@@ -96,6 +97,7 @@ class User:
     user_id: UserID
     user_certificate: bytes
     user_certifier: Optional[DeviceID]
+    human_handle = Optional[HumanHandle]
     is_admin: bool = False
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None

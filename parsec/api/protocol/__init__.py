@@ -12,10 +12,12 @@ from parsec.api.protocol.types import (
     DeviceID,
     DeviceName,
     OrganizationID,
+    HumanHandle,
     UserIDField,
     DeviceIDField,
     DeviceNameField,
     OrganizationIDField,
+    HumanHandleField,
 )
 from parsec.api.protocol.handshake import (
     HandshakeError,
@@ -102,10 +104,12 @@ __all__ = (
     "DeviceID",
     "DeviceName",
     "OrganizationID",
+    "HumanHandle",
     "UserIDField",
     "DeviceIDField",
     "DeviceNameField",
     "OrganizationIDField",
+    "HumanHandleField",
     # Organization
     "organization_create_serializer",
     "organization_bootstrap_serializer",

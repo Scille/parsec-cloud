@@ -13,6 +13,7 @@ from marshmallow.fields import (
     Nested,
     Integer,
     Boolean,
+    Email,
     Field,
 )
 
@@ -39,6 +40,7 @@ __all__ = (
     "Nested",
     "Integer",
     "Boolean",
+    "Email",
     "Field",
     "Path",
     "Bytes",
@@ -257,13 +259,16 @@ class Tuple(Field):
         super().__init__(**kwargs)
         self.args = args
 
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return tuple(self.args[i]._serialize(v, attr, obj) for i, v in enumerate(value))
+
     def _deserialize(self, value, attr, obj):
         if not isinstance(value, (list, tuple)) or len(self.args) != len(value):
             self.fail("invalid")
         return tuple(self.args[i].deserialize(v, attr, obj) for i, v in enumerate(value))
-
-    def _serialize(self, value, attr, obj):
-        return tuple(self.args[i]._serialize(v, attr, obj) for i, v in enumerate(value))
 
 
 class SigningKey(Field):
