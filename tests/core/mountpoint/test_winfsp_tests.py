@@ -3,14 +3,19 @@
 import os
 import pytest
 
+
 if os.name != "nt":
     pytest.skip("Windows only", allow_module_level=True)
 
-from winfspy.tests.winfsp_tests import test_winfsp_tests as winfsp_tests
+try:
+    from winfspy.tests.winfsp_tests import test_winfsp_tests as winfsp_tests
 
-# Constants
+except RuntimeError as exc:
+    if "The `winfsp-tests-x86` executable cannot be found" in str(exc):
+        pytest.skip("winfsp-tests-x86 executable not installed", allow_module_level=True)
+    else:
+        raise
 
-TEST_CASES = winfsp_tests.TEST_CASES
 
 XFAIL_LIST = [
     # Require a case-insensitive file system
@@ -51,8 +56,7 @@ XFAIL_LIST = [
 ]
 
 
-# Fixtures
-
+# Republish fixture
 file_system_tempdir = winfsp_tests.file_system_tempdir
 
 
@@ -61,12 +65,9 @@ def file_system_path(mountpoint_service):
     return mountpoint_service.wpath
 
 
-# Tests
-
-
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.parametrize("test_case", TEST_CASES)
+@pytest.mark.parametrize("test_case", winfsp_tests.TEST_CASES)
 def test_winfsp_tests(test_case, file_system_tempdir):
 
     # Many tests are not supported
