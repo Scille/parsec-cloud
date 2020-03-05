@@ -193,6 +193,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if idx == -1:
             return
         if state == "login":
+            login_idx = self._get_login_tab_index()
+            if login_idx != -1 and login_idx != idx:
+                self.close_tab(idx, force=True)
+                return
             self.tab_center.setTabToolTip(idx, _("TAB_TITLE_LOG_IN"))
             self.tab_center.setTabText(idx, _("TAB_TITLE_LOG_IN"))
         elif state == "bootstrap":
