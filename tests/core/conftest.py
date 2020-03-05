@@ -11,8 +11,6 @@ from parsec.core.backend_connection import (
 from parsec.core.remote_devices_manager import RemoteDevicesManager
 from parsec.core.fs import UserFS
 
-from tests.common import freeze_time
-
 
 @pytest.fixture
 def local_storage_path(tmpdir):
@@ -20,19 +18,6 @@ def local_storage_path(tmpdir):
         return Path(tmpdir) / "local_storage" / device.slug
 
     return _local_storage_path
-
-
-@pytest.fixture
-def initialize_userfs_storage(initial_user_manifest_state, persistent_mockup):
-    async def _initialize_userfs_storage(storage):
-        if storage.get_user_manifest().base_version == 0:
-            with freeze_time("2000-01-01"):
-                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
-                    storage.device
-                )
-            await storage.set_user_manifest(user_manifest)
-
-    return _initialize_userfs_storage
 
 
 @pytest.fixture
@@ -112,9 +97,7 @@ async def anonymous_backend_cmds(running_backend, coolorg):
 
 
 @pytest.fixture
-def user_fs_factory(
-    local_storage_path, event_bus_factory, persistent_mockup, initialize_userfs_storage, coolorg
-):
+def user_fs_factory(local_storage_path, event_bus_factory, initialize_userfs_storage_v1, coolorg):
     @asynccontextmanager
     async def _user_fs_factory(device, event_bus=None, initialize_in_v0: bool = False):
         event_bus = event_bus or event_bus_factory()
@@ -125,7 +108,7 @@ def user_fs_factory(
             rdm = RemoteDevicesManager(cmds, device.root_verify_key)
             async with UserFS.run(device, path, cmds, rdm, event_bus) as user_fs:
                 if not initialize_in_v0:
-                    await initialize_userfs_storage(user_fs.storage)
+                    await initialize_userfs_storage_v1(user_fs.storage)
                 yield user_fs
 
     return _user_fs_factory
