@@ -47,10 +47,10 @@ class LocalChange:
     def _compute_due_time(self):
         return min(self.last_changed_on + MIN_WAIT, self.first_changed_on + MAX_WAIT)
 
-    def changed(self, changed_on) -> bool:
+    def changed(self, changed_on) -> float:
         self.last_changed_on = changed_on
         self.due_time = self._compute_due_time()
-        return self.due_time <= self.last_changed_on
+        return self.due_time
 
 
 class SyncContext:
@@ -71,8 +71,7 @@ class SyncContext:
         self.local_changes = {}
         self.remote_changes = set()
         self.bootstrapped = False
-        # Force an initial tick to do the bootstrap step asap
-        self.due_time = timestamp()
+        self.due_time = math.inf
 
     def _sync(self, entry_id: EntryID):
         raise NotImplementedError
@@ -138,7 +137,7 @@ class SyncContext:
             self.local_changes[entry_id] = local_change
             new_due_time = local_change.due_time
 
-        if new_due_time < self.due_time:
+        if new_due_time <= self.due_time:
             self.due_time = new_due_time
             return True
 
@@ -150,7 +149,7 @@ class SyncContext:
         self.due_time = timestamp()
         return True
 
-    async def tick(self) -> float:
+    async def tick(self, do_sync=True) -> float:
         if not self.bootstrapped:
             if not await self._refresh_checkpoint():
                 # Error, no sync possible for the moment
@@ -159,63 +158,66 @@ class SyncContext:
 
         now = timestamp()
 
-        if self.due_time > now:
+        # math.inf means due_time hasn't been set yet (or there is nothing
+        # to sync, in which case it's safe to continue the function)
+        if self.due_time != math.inf and self.due_time > now:
             return self.due_time
 
         min_due_time = None
 
-        # Remote changes sync have priority over local changes
-        if self.remote_changes:
-            entry_id = self.remote_changes.pop()
-            try:
-                await self._sync(entry_id)
-            except FSWorkspaceNoReadAccess:
-                # We've just lost the read access to the workspace.
-                # This likely means a `sharing.updated` event we soon arrive
-                # and destroy this sync context.
-                # Until then just pretent nothing happened.
-                min_due_time = now + MIN_WAIT
-                self.remote_changes.add(entry_id)
-            except FSWorkspaceNoWriteAccess:
-                # We don't have write access and this entry contains local
-                # modifications. Hence we can forget about this change given
-                # it's `self.local_changes` role to keep track of local changes.
-                pass
-            except FSWorkspaceInMaintenance:
-                # Not the right time for the sync, retry later
-                min_due_time = now + MAINTENANCE_MIN_WAIT
-                self.remote_changes.add(entry_id)
-
-        elif self.local_changes:
-            entry_id = next(
-                (
-                    entry_id
-                    for entry_id, change_info in self.local_changes.items()
-                    if change_info.due_time < now
-                ),
-                None,
-            )
-            if entry_id:
-                del self.local_changes[entry_id]
+        if do_sync:
+            # Remote changes sync have priority over local changes
+            if self.remote_changes:
+                entry_id = self.remote_changes.pop()
                 try:
                     await self._sync(entry_id)
-                except (FSWorkspaceNoReadAccess, FSWorkspaceNoWriteAccess):
-                    # We've just lost the write access to the workspace, and
-                    # the corresponding `sharing.updated` event hasn't updated
-                    # the `read_only` flag yet.
-                    # We keep track of the change (given we may be given back
-                    # the write access in the future) but pretent it just accured
-                    # to avoid a busy sync loop until `read_only` flag is updated.
-                    self.local_changes[entry_id] = LocalChange(now)
+                except FSWorkspaceNoReadAccess:
+                    # We've just lost the read access to the workspace.
+                    # This likely means a `sharing.updated` event we soon arrive
+                    # and destroy this sync context.
+                    # Until then just pretent nothing happened.
+                    min_due_time = now + MIN_WAIT
+                    self.remote_changes.add(entry_id)
+                except FSWorkspaceNoWriteAccess:
+                    # We don't have write access and this entry contains local
+                    # modifications. Hence we can forget about this change given
+                    # it's `self.local_changes` role to keep track of local changes.
+                    pass
                 except FSWorkspaceInMaintenance:
                     # Not the right time for the sync, retry later
                     min_due_time = now + MAINTENANCE_MIN_WAIT
-                    self.local_changes[entry_id] = LocalChange(now)
+                    self.remote_changes.add(entry_id)
 
-                # This is where we plug our vacuuming routine
-                # as it corresponds to a fresh synchronized state
-                if not self.local_changes:
-                    await self._get_local_storage().run_vacuum()
+            elif self.local_changes:
+                entry_id = next(
+                    (
+                        entry_id
+                        for entry_id, change_info in self.local_changes.items()
+                        if change_info.due_time <= now
+                    ),
+                    None,
+                )
+                if entry_id:
+                    del self.local_changes[entry_id]
+                    try:
+                        await self._sync(entry_id)
+                    except (FSWorkspaceNoReadAccess, FSWorkspaceNoWriteAccess):
+                        # We've just lost the write access to the workspace, and
+                        # the corresponding `sharing.updated` event hasn't updated
+                        # the `read_only` flag yet.
+                        # We keep track of the change (given we may be given back
+                        # the write access in the future) but pretent it just accured
+                        # to avoid a busy sync loop until `read_only` flag is updated.
+                        self.local_changes[entry_id] = LocalChange(now)
+                    except FSWorkspaceInMaintenance:
+                        # Not the right time for the sync, retry later
+                        min_due_time = now + MAINTENANCE_MIN_WAIT
+                        self.local_changes[entry_id] = LocalChange(now)
+
+                    # This is where we plug our vacuuming routine
+                    # as it corresponds to a fresh synchronized state
+                    if not self.local_changes:
+                        await self._get_local_storage().run_vacuum()
 
         # Re-compute due time
         if self.remote_changes:
@@ -332,9 +334,9 @@ async def monitor_sync(user_fs, event_bus, task_status):
             if ctx:
                 _trigger_early_wakeup()
 
-    async def _ctx_tick(ctx):
+    async def _ctx_tick(ctx, do_sync=True):
         try:
-            return await ctx.tick()
+            return await ctx.tick(do_sync=do_sync)
         except FSBackendOfflineError:
             raise
         except Exception:
@@ -354,26 +356,29 @@ async def monitor_sync(user_fs, event_bus, task_status):
         ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
         ("sharing.updated", _on_sharing_updated),
     ):
-        wait_times = []
-        wait_times.append(await ctxs.get(user_fs.user_manifest_id).tick())
+        due_times = []
+        # Init userfs sync context
+        ctx = ctxs.get(user_fs.user_manifest_id)
+        due_times.append(await _ctx_tick(ctx, do_sync=False))
+        # Init workspaces sync context
         user_manifest = user_fs.get_user_manifest()
         for entry in user_manifest.workspaces:
             if entry.role is not None:
                 ctx = ctxs.get(entry.id)
                 if ctx:
-                    wait_times.append(await _ctx_tick(ctx))
+                    due_times.append(await _ctx_tick(ctx, do_sync=False))
 
         task_status.started()
         while True:
-            wait_time = min(wait_times)
-            if wait_time == math.inf:
+            next_due_time = min(due_times)
+            if next_due_time == math.inf:
                 task_status.idle()
-            with trio.move_on_at(wait_time) as cancel_scope:
+            with trio.move_on_at(next_due_time) as cancel_scope:
                 await early_wakeup.wait()
                 early_wakeup = trio.Event()
-            wait_times.clear()
             if cancel_scope.cancelled_caught:
                 task_status.awake()
+            due_times.clear()
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
-                wait_times.append(await _ctx_tick(ctx))
+                due_times.append(await _ctx_tick(ctx))
