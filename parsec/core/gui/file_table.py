@@ -137,7 +137,9 @@ class FileTable(QTableWidget):
 
     def has_file(self, uuid):
         return any(
-            uuid == self.item(row, 1).data(UUID_DATA_INDEX) for row in range(self.rowCount())
+            uuid == self.item(row, 1).data(UUID_DATA_INDEX)
+            for row in range(self.rowCount())
+            if self.item(row, 1)
         )
 
     def is_read_only(self):
