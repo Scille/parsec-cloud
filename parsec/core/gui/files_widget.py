@@ -805,6 +805,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.entry_downsynced_qt.emit(workspace_id, id)
 
     def _on_entry_downsynced_qt(self, workspace_id, id):
+        if not self.workspace_fs:
+            return
         ws_id = self.workspace_fs.workspace_id
         if ws_id != workspace_id:
             return

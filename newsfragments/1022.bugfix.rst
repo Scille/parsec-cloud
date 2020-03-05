@@ -1,0 +1,1 @@
+Fix invalid access to workspace_id on entry_updated
