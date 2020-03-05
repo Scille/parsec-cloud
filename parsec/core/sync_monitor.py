@@ -297,9 +297,16 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_sync(user_fs, event_bus, task_status):
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
+
+    def _trigger_early_wakeup():
+        early_wakeup.set()
+        # Don't wait for the *actual* awakening to change the status to
+        # avoid having a period of time when the awakening is scheduled but
+        # not yet notified to task_status
+        task_status.awake()
 
     def _on_entry_updated(event, id, workspace_id=None):
         if workspace_id is None:
@@ -309,12 +316,12 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
         else:
             ctx = ctxs.get(workspace_id)
         if ctx and ctx.set_local_change(id):
-            early_wakeup.set()
+            _trigger_early_wakeup()
 
     def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
         ctx = ctxs.get(realm_id)
         if ctx and ctx.set_remote_change(src_id):
-            early_wakeup.set()
+            _trigger_early_wakeup()
 
     def _on_sharing_updated(sender, new_entry, previous_entry):
         # If role have changed we have to reset the sync context given
@@ -323,7 +330,7 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
         if new_entry.role is not None:
             ctx = ctxs.get(new_entry.id)
             if ctx:
-                early_wakeup.set()
+                _trigger_early_wakeup()
 
     async def _ctx_tick(ctx):
         try:
@@ -358,10 +365,15 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
 
         task_status.started()
         while True:
-            with trio.move_on_at(min(wait_times)):
+            wait_time = min(wait_times)
+            if wait_time == math.inf:
+                task_status.idle()
+            with trio.move_on_at(wait_time) as cancel_scope:
                 await early_wakeup.wait()
                 early_wakeup = trio.Event()
             wait_times.clear()
+            if cancel_scope.cancelled_caught:
+                task_status.awake()
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
                 wait_times.append(await _ctx_tick(ctx))

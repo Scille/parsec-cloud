@@ -5,6 +5,7 @@ from enum import Enum
 from async_generator import asynccontextmanager
 from typing import Optional
 from structlog import get_logger
+from functools import partial
 
 from parsec.crypto import SigningKey
 from parsec.event_bus import EventBus
@@ -165,6 +166,8 @@ class BackendAuthenticatedConn:
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
         self._monitors_cbs = []
+        self._monitors_idle_event = trio.Event()
+        self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
         self.event_bus = event_bus
         self.max_cooldown = max_cooldown
@@ -185,6 +188,12 @@ class BackendAuthenticatedConn:
         if self._started:
             raise RuntimeError("Cannot register monitor once started !")
         self._monitors_cbs.append(monitor_cb)
+
+    def are_monitors_idle(self):
+        return self._monitors_idle_event.is_set()
+
+    async def wait_idle_monitors(self):
+        await self._monitors_idle_event.wait()
 
     @asynccontextmanager
     async def run(self):
@@ -248,26 +257,47 @@ class BackendAuthenticatedConn:
 
             await cmds.events_subscribe(transport)
 
-            async with trio.open_service_nursery() as monitors_nursery:
+            # Quis custodiet ipsos custodes?
+            monitors_states = ["STALLED" for _ in range(len(self._monitors_cbs))]
 
-                # No need for a service nursery here given we dont do anything
-                # async in the main coroutine
-                async with trio.open_nursery() as monitors_bootstrap_nursery:
+            async def _wrap_monitor_cb(monitor_cb, idx, *, task_status=trio.TASK_STATUS_IGNORED):
+                def _idle():
+                    monitors_states[idx] = "IDLE"
+                    if all(state == "IDLE" for state in monitors_states):
+                        self._monitors_idle_event.set()
 
-                    async def _bootstrap_monitor(monitor_cb):
-                        await monitors_nursery.start(monitor_cb)
+                def _awake():
+                    monitors_states[idx] = "AWAKE"
+                    if self._monitors_idle_event.is_set():
+                        self._monitors_idle_event = trio.Event()
 
-                    for monitor_cb in self._monitors_cbs:
-                        monitors_bootstrap_nursery.start_soon(_bootstrap_monitor, monitor_cb)
+                task_status.idle = _idle
+                task_status.awake = _awake
+                await monitor_cb(task_status=task_status)
 
-                self._status = BackendConnStatus.READY
-                self.event_bus.send(
-                    "backend.connection.changed", status=self._status, status_exc=None
-                )
+            try:
+                async with trio.open_service_nursery() as monitors_nursery:
 
-                while True:
-                    rep = await cmds.events_listen(transport, wait=True)
-                    _handle_event(self.event_bus, rep)
+                    # No need for a service nursery here given we dont do anything
+                    # async in the main coroutine
+                    async with trio.open_nursery() as monitors_bootstrap_nursery:
+                        for idx, monitor_cb in enumerate(self._monitors_cbs):
+                            monitors_bootstrap_nursery.start_soon(
+                                monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)
+                            )
+
+                    self._status = BackendConnStatus.READY
+                    self.event_bus.send(
+                        "backend.connection.changed", status=self._status, status_exc=None
+                    )
+
+                    while True:
+                        rep = await cmds.events_listen(transport, wait=True)
+                        _handle_event(self.event_bus, rep)
+
+            finally:
+                # No more monitors are running
+                self._monitors_idle_event.set()
 
     @asynccontextmanager
     async def _acquire_transport(
