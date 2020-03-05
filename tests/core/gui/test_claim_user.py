@@ -4,17 +4,25 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
+from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationClaimUserAddr
 from parsec.core.invite_claim import invite_and_create_user
+
+from tests.common import addr_with_device_subdomain
+from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
 async def alice_invite(running_backend, backend, alice):
+    device_id = DeviceID("Zack@pc1")
+    # Modify address subdomain to be able to switch it offline whithout
+    # disconnecting the inviter
+    organization_addr = addr_with_device_subdomain(alice.organization_addr, device_id)
     invitation = {
-        "addr": BackendOrganizationClaimUserAddr.build(alice.organization_addr, "Zack", "123456"),
+        "addr": BackendOrganizationClaimUserAddr.build(organization_addr, "Zack", "123456"),
         "token": "123456",
-        "user_id": "Zack",
-        "device_name": "pc1",
+        "user_id": device_id.user_id,
+        "device_name": device_id.device_name,
         "password": "S3cr3tP@ss",
     }
 
@@ -74,7 +82,7 @@ async def test_claim_user_offline(
 
     assert claim_w is not None
 
-    with running_backend.offline():
+    with offline(alice_invite["addr"]):
         async with aqtbot.wait_signal(claim_w.claim_error):
             await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
 
