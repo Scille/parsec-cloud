@@ -323,9 +323,9 @@ def server_factory(tcp_stream_spy):
         async with trio.open_service_nursery() as nursery:
 
             def connection_factory(*args, **kwargs):
-                right, left = trio.testing.memory_stream_pair()
-                nursery.start_soon(entry_point, left)
-                return right
+                client_stream, server_stream = trio.testing.memory_stream_pair()
+                nursery.start_soon(entry_point, server_stream)
+                return client_stream
 
             tcp_stream_spy.push_hook(addr, connection_factory)
             try:

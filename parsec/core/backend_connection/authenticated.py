@@ -337,18 +337,42 @@ async def backend_authenticated_cmds_factory(
     Raises:
         BackendConnectionError
     """
-    transport = await connect(
-        addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
-    )
-    transport.logger = transport.logger.bind(device_id=device_id)
     transport_lock = trio.Lock()
+    transport = None
+    closed = False
+
+    async def _init_transport():
+        nonlocal transport
+        if not transport:
+            if closed:
+                raise trio.ClosedResourceError
+            transport = await connect(
+                addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
+            )
+            transport.logger = transport.logger.bind(device_id=device_id)
+
+    async def _destroy_transport():
+        nonlocal transport
+        if transport:
+            await transport.aclose()
+            transport = None
 
     @asynccontextmanager
     async def _acquire_transport(**kwargs):
+        nonlocal transport
+
         async with transport_lock:
-            yield transport
+            await _init_transport()
+            try:
+                yield transport
+            except BackendNotAvailable:
+                await _destroy_transport()
+                raise
 
     try:
         yield BackendAuthenticatedCmds(addr, _acquire_transport)
+
     finally:
-        await transport.aclose()
+        async with transport_lock:
+            closed = True
+            await _destroy_transport()
