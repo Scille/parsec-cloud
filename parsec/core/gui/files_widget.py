@@ -796,7 +796,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_fs_entry_updated_trio(self, event, workspace_id=None, id=None):
         assert id is not None
-        if workspace_id is None or workspace_id == self.workspace_fs.workspace_id:
+        if workspace_id is None or (
+            self.workspace_fs is not None and workspace_id == self.workspace_fs.workspace_id
+        ):
             self.fs_updated_qt.emit(event, id)
 
     def _on_entry_downsynced_trio(self, event, workspace_id=None, id=None):
