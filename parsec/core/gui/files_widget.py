@@ -893,7 +893,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if reload_after_remount:
             self.update_version_list.emit(self.workspace_fs, path)
         if open_after_load:
-            self.open_file(job.path.name)
+            self.open_file(path.name)
 
     def _on_reload_timestamped_error(self, job):
         raise job.exc

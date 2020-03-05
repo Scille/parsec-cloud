@@ -1,0 +1,1 @@
+Fix access to invalid attribute on timestamped workspace
