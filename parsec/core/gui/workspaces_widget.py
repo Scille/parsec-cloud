@@ -40,7 +40,10 @@ from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 
 
 async def _get_reencryption_needs(workspace_fs):
-    reenc_needs = await workspace_fs.get_reencryption_need()
+    try:
+        reenc_needs = await workspace_fs.get_reencryption_need()
+    except FSBackendOfflineError as exc:
+        raise JobResultError("offline") from exc
     return workspace_fs.workspace_id, reenc_needs
 
 
