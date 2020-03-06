@@ -177,6 +177,9 @@ async def _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_
         # Looks like a revoked workspace has been mounted
         except PermissionError:
             break
+        # Might be another OSError like errno 113 (No route to host)
+        except OSError:
+            break
         if stat.st_dev != initial_st_dev:
             break
 
