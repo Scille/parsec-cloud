@@ -31,7 +31,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     block = PGBlockComponent(dbh, blockstore, vlob)
     events = EventsComponent(realm)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         await dbh.init(nursery)
         try:
             yield {

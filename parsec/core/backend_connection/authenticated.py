@@ -278,9 +278,7 @@ class BackendAuthenticatedConn:
             try:
                 async with trio.open_service_nursery() as monitors_nursery:
 
-                    # No need for a service nursery here given we dont do anything
-                    # async in the main coroutine
-                    async with trio.open_nursery() as monitors_bootstrap_nursery:
+                    async with trio.open_service_nursery() as monitors_bootstrap_nursery:
                         for idx, monitor_cb in enumerate(self._monitors_cbs):
                             monitors_bootstrap_nursery.start_soon(
                                 monitors_nursery.start, partial(_wrap_monitor_cb, monitor_cb, idx)

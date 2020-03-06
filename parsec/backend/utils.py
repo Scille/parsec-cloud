@@ -62,9 +62,7 @@ async def run_with_breathing_transport(transport, fn, *args, **kwargs):
         rep = await fn(*args, **kwargs)
         cancel_scope.cancel()
 
-    # No need for a service nursery here given no await is done by the main
-    # task from within the async with block
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         nursery.start_soon(_do_fn, nursery.cancel_scope)
         nursery.start_soon(_keep_transport_breathing)
 

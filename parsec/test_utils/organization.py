@@ -130,7 +130,7 @@ async def initialize_test_organization(
         )
         save_device_with_password(config_dir, other_alice_device, password, force=force)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         nursery.start_soon(invite_task)
         nursery.start_soon(claim_task)
 
@@ -149,7 +149,7 @@ async def initialize_test_organization(
         )
         save_device_with_password(config_dir, bob_device, password, force=force)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         nursery.start_soon(invite_task)
         nursery.start_soon(claim_task)
 
