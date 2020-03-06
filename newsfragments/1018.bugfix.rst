@@ -1,1 +1,0 @@
-Fix an error on linux when mounting a workspace when the workspace manifest is absent and the session is offline.

@@ -1,1 +1,0 @@
-Fixed invalid access to file table item

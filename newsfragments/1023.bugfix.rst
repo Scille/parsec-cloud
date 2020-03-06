@@ -1,1 +1,0 @@
-Fix synchronization not triggered for newly created workspaces until they get files.

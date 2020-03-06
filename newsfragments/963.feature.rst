@@ -1,1 +1,0 @@
-Only allows one log in tab in all situations

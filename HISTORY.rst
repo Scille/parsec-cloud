@@ -5,6 +5,35 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.9.0 (2020-03-06)
+-------------------------
+
+Features
+~~~~~~~~
+
+* Only allows one log in tab in all situations  (`#963
+  <https://github.com/Scille/parsec-cloud/issues/963>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fixed invalid access to file table item  (`#1021
+  <https://github.com/Scille/parsec-cloud/issues/1021>`__)
+* Fix error handling during workspace reencryption detection when offline.
+  (`#1016 <https://github.com/Scille/parsec-cloud/issues/1016>`__)
+* Fix an error on linux when mounting a workspace when the workspace manifest is
+  absent and the session is offline.  (`#1018 <https://github.com/Scille/parsec-
+  cloud/issues/1018>`__)
+* Fix invalid access to workspace_id on entry_updated  (`#1022
+  <https://github.com/Scille/parsec-cloud/issues/1022>`__)
+* Fix workspace_fs not available on event  (`#1001
+  <https://github.com/Scille/parsec-cloud/issues/1001>`__)
+* Fix access to invalid attribute on timestamped workspace  (`#1020
+  <https://github.com/Scille/parsec-cloud/issues/1020>`__)
+* Fix synchronization not triggered for newly created workspaces until they get
+  files. (`#1023 <https://github.com/Scille/parsec-cloud/issues/1023>`__)
+
+
 Parsec 1.8.0 (2020-03-03)
 -------------------------
 
