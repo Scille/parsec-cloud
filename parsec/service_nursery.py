@@ -12,7 +12,10 @@ from typing import Any, AsyncIterator, Awaitable, Callable, MutableSet, Optional
 
 import attr
 import trio
+from structlog import get_logger
 from async_generator import asynccontextmanager
+
+logger = get_logger()
 
 
 @attr.s(cmp=False)
@@ -124,7 +127,7 @@ def _get_coroutine_or_flag_problem(
 
 
 @asynccontextmanager
-async def open_service_nursery() -> AsyncIterator:
+async def _open_service_nursery() -> AsyncIterator:
     """Provides a nursery augmented with a cancellation ordering constraint.
     If an entire service nursery becomes cancelled, either due to an
     exception raised by some task in the nursery or due to the
@@ -189,6 +192,43 @@ async def open_service_nursery() -> AsyncIterator:
             yield nursery
         finally:
             child_task_scopes.shield = False
+
+
+def collapse_multierror(multierror):
+    exceptions = multierror.exceptions
+    pick = exceptions[0]
+    try:
+        name = f"{type(pick).__name__}AndFriends"
+        cls = type(name, (type(pick), trio.MultiError), {})
+        result = super(cls, cls).__new__(cls)
+        result.__dict__.update(pick.__dict__)
+        result.args = pick.args
+        result.exceptions = exceptions
+        result.__cause__ = multierror.__cause__
+        result.__context__ = multierror.__context__
+        result.__traceback__ = multierror.__traceback__
+        result.__suppress_context__ = True
+        return result
+    except Exception:
+        logger.exception("Cound not create a collapsed exception")
+        return pick
+
+
+@asynccontextmanager
+async def open_service_nursery() -> AsyncIterator:
+    """Open a service nursery.
+
+    This nursery does not raise MultiError exceptions.
+    Instead, it collapses the MultiError into a single exception.
+    More precisely, the first exception of the MultiError is raised,
+    patched with extra MultiError capabilities.
+    """
+    try:
+        async with _open_service_nursery() as nursery:
+            yield nursery
+    except trio.MultiError as exc:
+        logger.exception("A MultiError has been detected")
+        raise collapse_multierror(exc)
 
 
 # Add it to trio
