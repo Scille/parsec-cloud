@@ -47,10 +47,10 @@ class LocalChange:
     def _compute_due_time(self):
         return min(self.last_changed_on + MIN_WAIT, self.first_changed_on + MAX_WAIT)
 
-    def changed(self, changed_on) -> bool:
+    def changed(self, changed_on) -> float:
         self.last_changed_on = changed_on
         self.due_time = self._compute_due_time()
-        return self.due_time <= self.last_changed_on
+        return self.due_time
 
 
 class SyncContext:
@@ -68,11 +68,10 @@ class SyncContext:
         self.user_fs = user_fs
         self.id = id
         self.read_only = read_only
-        self.local_changes = {}
-        self.remote_changes = set()
-        self.bootstrapped = False
-        # Force an initial tick to do the bootstrap step asap
-        self.due_time = timestamp()
+        self.due_time = math.inf
+        self._changes_loaded = False
+        self._local_changes = {}
+        self._remote_changes = set()
 
     def _sync(self, entry_id: EntryID):
         raise NotImplementedError
@@ -86,7 +85,15 @@ class SyncContext:
     def __repr__(self):
         return f"{type(self).__name__}(id={self.id!r})"
 
-    async def _refresh_checkpoint(self) -> bool:
+    async def _load_changes(self) -> bool:
+        if self._changes_loaded:
+            return True
+
+        # Initialize due_time so that if we cannot retreive the changes, we
+        # will wait until an external event (most likely a `sharing.updated`)
+        # make it worth to retry
+        self.due_time = math.inf
+
         # 1) Fetch new checkpoint and changes
         realm_checkpoint = await self._get_local_storage().get_realm_checkpoint()
         try:
@@ -120,9 +127,13 @@ class SyncContext:
         now = timestamp()
         # Ignore local changes in read only mode
         if not self.read_only:
-            self.local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
-        self.remote_changes = need_sync_remote
+            self._local_changes = {entry_id: LocalChange(now) for entry_id in need_sync_local}
+        self._remote_changes = need_sync_remote
 
+        # 4) Finally refresh due time according to the changes
+        self._compute_due_time()
+
+        self._changes_loaded = True
         return True
 
     def set_local_change(self, entry_id: EntryID) -> bool:
@@ -132,13 +143,13 @@ class SyncContext:
 
         now = timestamp()
         try:
-            new_due_time = self.local_changes[entry_id].changed(now)
+            new_due_time = self._local_changes[entry_id].changed(now)
         except KeyError:
             local_change = LocalChange(now)
-            self.local_changes[entry_id] = local_change
+            self._local_changes[entry_id] = local_change
             new_due_time = local_change.due_time
 
-        if new_due_time < self.due_time:
+        if new_due_time <= self.due_time:
             self.due_time = new_due_time
             return True
 
@@ -146,27 +157,45 @@ class SyncContext:
             return False
 
     def set_remote_change(self, entry_id: EntryID) -> bool:
-        self.remote_changes.add(entry_id)
+        self._remote_changes.add(entry_id)
         self.due_time = timestamp()
         return True
 
+    def _compute_due_time(self, now=None, min_due_time=None):
+        if self._remote_changes:
+            self.due_time = now or timestamp()
+        elif self._local_changes:
+            # TODO: index changes by due_time to avoid this O(n) operation
+            self.due_time = min(
+                change_info.due_time for change_info in self._local_changes.values()
+            )
+        else:
+            self.due_time = math.inf
+
+        if min_due_time:
+            self.due_time = max(self.due_time, min_due_time)
+
+        return self.due_time
+
+    async def bootstrap(self) -> float:
+        await self._load_changes()
+        return self.due_time
+
     async def tick(self) -> float:
-        if not self.bootstrapped:
-            if not await self._refresh_checkpoint():
-                # Error, no sync possible for the moment
-                return math.inf
-            self.bootstrapped = True
-
         now = timestamp()
-
         if self.due_time > now:
+            return self.due_time
+
+        # Sync contexts created by `SyncContextStore.get` are bootstrapped
+        # lazily on first tick
+        if not await self._load_changes():
             return self.due_time
 
         min_due_time = None
 
         # Remote changes sync have priority over local changes
-        if self.remote_changes:
-            entry_id = self.remote_changes.pop()
+        if self._remote_changes:
+            entry_id = self._remote_changes.pop()
             try:
                 await self._sync(entry_id)
             except FSWorkspaceNoReadAccess:
@@ -175,28 +204,28 @@ class SyncContext:
                 # and destroy this sync context.
                 # Until then just pretent nothing happened.
                 min_due_time = now + MIN_WAIT
-                self.remote_changes.add(entry_id)
+                self._remote_changes.add(entry_id)
             except FSWorkspaceNoWriteAccess:
                 # We don't have write access and this entry contains local
                 # modifications. Hence we can forget about this change given
-                # it's `self.local_changes` role to keep track of local changes.
+                # it's `self._local_changes` role to keep track of local changes.
                 pass
             except FSWorkspaceInMaintenance:
                 # Not the right time for the sync, retry later
                 min_due_time = now + MAINTENANCE_MIN_WAIT
-                self.remote_changes.add(entry_id)
+                self._remote_changes.add(entry_id)
 
-        elif self.local_changes:
+        elif self._local_changes:
             entry_id = next(
                 (
                     entry_id
-                    for entry_id, change_info in self.local_changes.items()
-                    if change_info.due_time < now
+                    for entry_id, change_info in self._local_changes.items()
+                    if change_info.due_time <= now
                 ),
                 None,
             )
             if entry_id:
-                del self.local_changes[entry_id]
+                del self._local_changes[entry_id]
                 try:
                     await self._sync(entry_id)
                 except (FSWorkspaceNoReadAccess, FSWorkspaceNoWriteAccess):
@@ -206,29 +235,18 @@ class SyncContext:
                     # We keep track of the change (given we may be given back
                     # the write access in the future) but pretent it just accured
                     # to avoid a busy sync loop until `read_only` flag is updated.
-                    self.local_changes[entry_id] = LocalChange(now)
+                    self._local_changes[entry_id] = LocalChange(now)
                 except FSWorkspaceInMaintenance:
                     # Not the right time for the sync, retry later
                     min_due_time = now + MAINTENANCE_MIN_WAIT
-                    self.local_changes[entry_id] = LocalChange(now)
+                    self._local_changes[entry_id] = LocalChange(now)
 
                 # This is where we plug our vacuuming routine
                 # as it corresponds to a fresh synchronized state
-                if not self.local_changes:
+                if not self._local_changes:
                     await self._get_local_storage().run_vacuum()
 
-        # Re-compute due time
-        if self.remote_changes:
-            self.due_time = now
-        elif self.local_changes:
-            # TODO: index changes by due_time to avoid this O(n) operation
-            self.due_time = min(change_info.due_time for change_info in self.local_changes.values())
-        else:
-            self.due_time = math.inf
-
-        if min_due_time:
-            self.due_time = max(self.due_time, min_due_time)
-
+        self._compute_due_time(now=now, min_due_time=min_due_time)
         return self.due_time
 
 
@@ -297,9 +315,16 @@ class SyncContextStore:
         self._ctxs.pop(entry_id, None)
 
 
-async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_sync(user_fs, event_bus, task_status):
     ctxs = SyncContextStore(user_fs)
     early_wakeup = trio.Event()
+
+    def _trigger_early_wakeup():
+        early_wakeup.set()
+        # Don't wait for the *actual* awakening to change the status to
+        # avoid having a period of time when the awakening is scheduled but
+        # not yet notified to task_status
+        task_status.awake()
 
     def _on_entry_updated(event, id, workspace_id=None):
         if workspace_id is None:
@@ -309,12 +334,12 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
         else:
             ctx = ctxs.get(workspace_id)
         if ctx and ctx.set_local_change(id):
-            early_wakeup.set()
+            _trigger_early_wakeup()
 
     def _on_realm_vlobs_updated(sender, realm_id, checkpoint, src_id, src_version):
         ctx = ctxs.get(realm_id)
         if ctx and ctx.set_remote_change(src_id):
-            early_wakeup.set()
+            _trigger_early_wakeup()
 
     def _on_sharing_updated(sender, new_entry, previous_entry):
         # If role have changed we have to reset the sync context given
@@ -323,11 +348,14 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
         if new_entry.role is not None:
             ctx = ctxs.get(new_entry.id)
             if ctx:
-                early_wakeup.set()
+                # Change the due_time so the context understants the early
+                # wakeup is for him
+                ctx.due_time = timestamp()
+                _trigger_early_wakeup()
 
-    async def _ctx_tick(ctx):
+    async def _ctx_action(ctx, meth):
         try:
-            return await ctx.tick()
+            return await getattr(ctx, meth)()
         except FSBackendOfflineError:
             raise
         except Exception:
@@ -337,7 +365,7 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
             ctx = ctxs.get(ctx.id)
             if ctx:
                 # Add small cooldown just to be sure not end up in a crazy busy error loop
-                ctx.due_time += TICK_CRASH_COOLDOWN
+                ctx.due_time = timestamp() + TICK_CRASH_COOLDOWN
                 return ctx.due_time
             else:
                 return math.inf
@@ -347,21 +375,31 @@ async def monitor_sync(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNOR
         ("backend.realm.vlobs_updated", _on_realm_vlobs_updated),
         ("sharing.updated", _on_sharing_updated),
     ):
-        wait_times = []
-        wait_times.append(await ctxs.get(user_fs.user_manifest_id).tick())
+        due_times = []
+        # Init userfs sync context
+        ctx = ctxs.get(user_fs.user_manifest_id)
+        due_times.append(await _ctx_action(ctx, "bootstrap"))
+        # Init workspaces sync context
         user_manifest = user_fs.get_user_manifest()
         for entry in user_manifest.workspaces:
             if entry.role is not None:
                 ctx = ctxs.get(entry.id)
                 if ctx:
-                    wait_times.append(await _ctx_tick(ctx))
+                    due_times.append(await _ctx_action(ctx, "bootstrap"))
 
         task_status.started()
         while True:
-            with trio.move_on_at(min(wait_times)):
+            next_due_time = min(due_times)
+            if next_due_time == math.inf:
+                task_status.idle()
+            with trio.move_on_at(next_due_time) as cancel_scope:
                 await early_wakeup.wait()
                 early_wakeup = trio.Event()
-            wait_times.clear()
+            # In case of early wakeup, `_trigger_early_wakeup` is responsible
+            # for calling `task_status.awake()`
+            if cancel_scope.cancelled_caught:
+                task_status.awake()
+            due_times.clear()
             await freeze_sync_monitor_mockpoint()
             for ctx in ctxs.iter():
-                wait_times.append(await _ctx_tick(ctx))
+                due_times.append(await _ctx_action(ctx, "tick"))

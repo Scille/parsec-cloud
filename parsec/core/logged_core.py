@@ -34,6 +34,12 @@ class LoggedCore:
     def backend_cmds(self):
         return self.backend_conn.cmds
 
+    def are_monitors_idle(self):
+        return self.backend_conn.are_monitors_idle()
+
+    async def wait_idle_monitors(self):
+        await self.backend_conn.wait_idle_monitors()
+
 
 @asynccontextmanager
 async def logged_core_factory(

@@ -552,7 +552,7 @@ class UserFS:
             if to_sync_um.version > diverged_um.base_version:
                 merged_um = merge_local_user_manifests(diverged_um, to_sync_um)
                 await self.set_user_manifest(merged_um)
-            self.event_bus.send("fs.entry.synced", path="/", id=self.user_manifest_id)
+            self.event_bus.send("fs.entry.synced", id=self.user_manifest_id)
 
         return True
 
@@ -818,7 +818,7 @@ class UserFS:
 
             if not already_existing_entry:
                 # TODO: remove this event ?
-                self.event_bus.send("fs.entry.synced", id=workspace_entry.id, path=f"/{msg.name}")
+                self.event_bus.send("fs.entry.synced", id=workspace_entry.id)
 
             self.event_bus.send(
                 "sharing.updated", new_entry=workspace_entry, previous_entry=already_existing_entry

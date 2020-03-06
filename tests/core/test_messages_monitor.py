@@ -10,6 +10,17 @@ from parsec.core.types import WorkspaceEntry, WorkspaceRole
 
 
 @pytest.mark.trio
+async def test_monitors_idle(running_backend, alice_core):
+    assert alice_core.are_monitors_idle()
+
+    # Force wakeup of the message monitor
+    alice_core.event_bus.send("backend.message.received", index=42)
+    assert not alice_core.are_monitors_idle()
+    await alice_core.wait_idle_monitors()
+    assert alice_core.are_monitors_idle()
+
+
+@pytest.mark.trio
 async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     # First, create a folder and sync it on backend
     with freeze_time("2000-01-01"):

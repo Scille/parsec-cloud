@@ -243,6 +243,21 @@ def initial_user_manifest_state():
     return InitialUserManifestState()
 
 
+@pytest.fixture
+def initialize_userfs_storage_v1(initial_user_manifest_state, persistent_mockup):
+    async def _initialize_userfs_storage(storage):
+        if storage.get_user_manifest().base_version == 0:
+            with freeze_time("2000-01-01"):
+                user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(
+                    storage.device
+                )
+            await storage.set_user_manifest(user_manifest)
+            # Chcekpoint 1 *is* the upload of user manifest v1
+            await storage.update_realm_checkpoint(1, {})
+
+    return _initialize_userfs_storage
+
+
 def local_device_to_backend_user(
     device: LocalDevice, certifier: Union[LocalDevice, OrganizationFullData]
 ) -> Tuple[BackendUser, BackendDevice]:

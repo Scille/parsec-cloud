@@ -80,11 +80,11 @@ async def test_concurrent_devices_agreed_on_root_manifest(
     ) as user_fs2:
 
         with freeze_time("2000-01-03"):
-            wid = await user_fs1.workspace_create("from_1")
-            workspace1 = user_fs1.get_workspace(wid)
+            wid1 = await user_fs1.workspace_create("from_1")
+            workspace1 = user_fs1.get_workspace(wid1)
         with freeze_time("2000-01-04"):
-            wid = await user_fs2.workspace_create("from_2")
-            workspace2 = user_fs2.get_workspace(wid)
+            wid2 = await user_fs2.workspace_create("from_2")
+            workspace2 = user_fs2.get_workspace(wid2)
 
         with user_fs1.event_bus.listen() as spy:
             with freeze_time("2000-01-05"):
@@ -92,10 +92,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         date_sync = Pendulum(2000, 1, 5)
         spy.assert_events_exactly_occured(
             [
-                ("fs.entry.minimal_synced", {"path": "/", "id": spy.ANY}, date_sync),
-                ("fs.entry.minimal_synced", {"path": "/from_1", "id": spy.ANY}, date_sync),
-                ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
-                ("fs.entry.synced", {"path": "/from_1", "id": spy.ANY}, date_sync),
+                ("fs.entry.minimal_synced", {"id": alice.user_manifest_id}, date_sync),
+                ("fs.entry.minimal_synced", {"id": wid1}, date_sync),
+                ("fs.entry.synced", {"id": alice.user_manifest_id}, date_sync),
+                ("fs.entry.synced", {"id": wid1}, date_sync),
             ]
         )
 
@@ -105,10 +105,10 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         date_sync = Pendulum(2000, 1, 6)
         spy.assert_events_exactly_occured(
             [
-                ("fs.entry.minimal_synced", {"path": "/", "id": spy.ANY}, date_sync),
-                ("fs.entry.minimal_synced", {"path": "/from_2", "id": spy.ANY}, date_sync),
-                ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
-                ("fs.entry.synced", {"path": "/from_2", "id": spy.ANY}, date_sync),
+                ("fs.entry.minimal_synced", {"id": alice.user_manifest_id}, date_sync),
+                ("fs.entry.minimal_synced", {"id": wid2}, date_sync),
+                ("fs.entry.synced", {"id": alice.user_manifest_id}, date_sync),
+                ("fs.entry.synced", {"id": wid2}, date_sync),
             ]
         )
 

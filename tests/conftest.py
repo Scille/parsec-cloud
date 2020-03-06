@@ -30,7 +30,7 @@ from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.backend_connection import BackendConnStatus
 from parsec.core.mountpoint.manager import get_mountpoint_runner
-from parsec.core.fs.storage import LocalDatabase, local_database
+from parsec.core.fs.storage import LocalDatabase, local_database, UserStorage
 
 from parsec.backend import backend_app_factory
 from parsec.backend.config import (
@@ -323,9 +323,9 @@ def server_factory(tcp_stream_spy):
         async with trio.open_service_nursery() as nursery:
 
             def connection_factory(*args, **kwargs):
-                right, left = trio.testing.memory_stream_pair()
-                nursery.start_soon(entry_point, left)
-                return right
+                client_stream, server_stream = trio.testing.memory_stream_pair()
+                nursery.start_soon(entry_point, server_stream)
+                return client_stream
 
             tcp_stream_spy.push_hook(addr, connection_factory)
             try:
@@ -657,21 +657,32 @@ def core_config(tmpdir):
 
 
 @pytest.fixture
-def core_factory(request, running_backend_ready, event_bus_factory, core_config):
+def core_factory(
+    request, running_backend_ready, event_bus_factory, core_config, initialize_userfs_storage_v1
+):
     @asynccontextmanager
-    async def _core_factory(device):
+    async def _core_factory(device, event_bus=None, user_manifest_in_v0=False):
         await running_backend_ready.wait()
-        event_bus = event_bus_factory()
+        event_bus = event_bus or event_bus_factory()
+
+        if not user_manifest_in_v0:
+            # Create a storage just for this operation (the underlying database
+            # will be reused by the core's storage thanks to `persistent_mockup`)
+            path = core_config.data_base_dir / device.slug
+            async with UserStorage.run(device=device, path=path) as storage:
+                await initialize_userfs_storage_v1(storage)
+
         with event_bus.listen() as spy:
             async with logged_core_factory(core_config, device, event_bus) as core:
                 # On startup core is always considered offline.
-                # Henc we risk concurrency issues if the connection to backend
+                # Hence we risk concurrency issues if the connection to backend
                 # switches online concurrently with the test.
                 if "running_backend" in request.fixturenames:
                     await spy.wait_with_timeout(
                         "backend.connection.changed",
                         {"status": BackendConnStatus.READY, "status_exc": spy.ANY},
                     )
+                assert core.are_monitors_idle()
 
                 yield core
 

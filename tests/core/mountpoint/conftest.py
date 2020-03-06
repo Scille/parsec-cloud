@@ -28,7 +28,7 @@ def mountpoint_service_factory(tmpdir, local_device_factory, user_fs_factory, re
         base_mountpoint, bootstrap_cb, *, task_status=trio.TASK_STATUS_IGNORED
     ):
         device = local_device_factory()
-        async with user_fs_factory(device, offline=True) as user_fs:
+        async with user_fs_factory(device) as user_fs:
 
             async with mountpoint_manager_factory(
                 user_fs, user_fs.event_bus, base_mountpoint, debug=False

@@ -11,12 +11,23 @@ async def freeze_messages_monitor_mockpoint():
     pass
 
 
-async def monitor_messages(user_fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
-    with event_bus.waiter_on("backend.message.received") as on_message_received:
+async def monitor_messages(user_fs, event_bus, task_status):
+    wakeup = trio.Event()
+
+    def _on_message_received(event, index):
+        nonlocal wakeup
+        wakeup.set()
+        # Don't wait for the *actual* awakening to change the status to
+        # avoid having a period of time when the awakening is scheduled but
+        # not yet notified to task_status
+        task_status.awake()
+
+    with event_bus.connect_in_context(("backend.message.received", _on_message_received)):
         await user_fs.process_last_messages()
         task_status.started()
         while True:
-            await on_message_received.wait()
-            on_message_received.clear()
+            task_status.idle()
+            await wakeup.wait()
+            wakeup = trio.Event()
             await freeze_messages_monitor_mockpoint()
             await user_fs.process_last_messages()

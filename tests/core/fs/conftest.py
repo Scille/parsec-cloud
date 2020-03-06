@@ -109,11 +109,9 @@ def user_fs_offline_state_machine(
     user_fs_factory, persistent_mockup, reset_testbed, hypothesis_settings
 ):
     class UserFSOfflineStateMachine(TrioAsyncioRuleBasedStateMachine):
-        OFFLINE = True
-
         async def start_user_fs(self, device):
             async def _user_fs_controlled_cb(started_cb):
-                async with user_fs_factory(device=device, offline=self.OFFLINE) as user_fs:
+                async with user_fs_factory(device=device) as user_fs:
                     await started_cb(user_fs=user_fs)
 
             self.user_fs_controller = await self.get_root_nursery().start(
@@ -155,8 +153,6 @@ def user_fs_online_state_machine(
     user_fs_offline_state_machine, backend_factory, server_factory, backend_addr, reset_testbed
 ):
     class UserFSOnlineStateMachine(user_fs_offline_state_machine):
-        OFFLINE = False
-
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
                 async with backend_factory() as backend:

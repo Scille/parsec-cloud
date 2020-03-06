@@ -76,6 +76,12 @@ class OpenTCPStreamMockWrapper:
             sock.send_stream.send_all_hook = _broken_stream
             sock.receive_stream.receive_some_hook = _broken_stream
 
+            # Unlike for send stream, patching `receive_some_hook` is not enough
+            # because it is called by the stream before actually waiting for data
+            # (so in case of a long receive call, we could be past the hook call
+            # when patching, hence not blocking the next incoming frame)
+            sock.receive_stream.put_eof()
+
         self._offlines.add(netloc_suffix)
 
     def switch_online(self, addr):
@@ -83,14 +89,8 @@ class OpenTCPStreamMockWrapper:
         if netloc_suffix not in self._offlines:
             return
 
-        for netloc, sock in self._socks:
-            if not netloc.endswith(netloc_suffix):
-                continue
-
-            sock.send_stream.send_all_hook = sock.send_stream.send_all_hook.old_send_all_hook
-            sock.receive_stream.receive_some_hook = (
-                sock.receive_stream.receive_some_hook.old_receive_some_hook
-            )
+        # Note we don't try to revert the patched streams because there
+        # represent old connections that have been lost
         self._offlines.remove(netloc_suffix)
 
     @contextmanager

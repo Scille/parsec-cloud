@@ -4,19 +4,25 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
+from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import invite_and_create_device
+
+from tests.common import addr_with_device_subdomain
+from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
 async def alice_invite(running_backend, backend, alice):
+    device_id = DeviceID(f"{alice.user_id}@pc1")
+    # Modify address subdomain to be able to switch it offline whithout
+    # disconnecting the inviter
+    organization_addr = addr_with_device_subdomain(alice.organization_addr, device_id)
     invitation = {
-        "addr": BackendOrganizationClaimDeviceAddr.build(
-            alice.organization_addr, f"{alice.user_id}@pc1", "123456"
-        ),
+        "addr": BackendOrganizationClaimDeviceAddr.build(organization_addr, device_id, "123456"),
         "token": "123456",
-        "user_id": alice.user_id,
-        "device_name": "pc1",
+        "user_id": device_id.user_id,
+        "device_name": device_id.device_name,
         "password": "S3cr3tP@ss",
     }
 
@@ -39,7 +45,6 @@ async def _gui_ready_for_claim(aqtbot, gui, invitation, monkeypatch):
     assert login_w is not None
     assert claim_w is None
 
-    print(invitation["addr"].to_url())
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.TextInputDialog.get_text",
         classmethod(lambda *args, **kwargs: (invitation["addr"].to_url())),
@@ -74,7 +79,7 @@ async def test_claim_device_offline(
     await _gui_ready_for_claim(aqtbot, gui, alice_invite, monkeypatch)
     claim_w = gui.test_get_claim_device_widget()
 
-    with running_backend.offline():
+    with offline(alice_invite["addr"]):
         async with aqtbot.wait_signal(claim_w.claim_error):
             await aqtbot.mouse_click(claim_w.button_claim, QtCore.Qt.LeftButton)
 
