@@ -159,29 +159,43 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def showMaximized(self):
         super().showMaximized()
         QCoreApplication.processEvents()
-        if self.config.gui_first_launch or self.config.gui_last_version != PARSEC_VERSION:
-            # self.show_starting_guide()
-            r = QuestionDialog.ask(
+
+        # At the very first launch
+        if self.config.gui_first_launch:
+
+            # Ask for error reporting
+            telemetry_enabled = QuestionDialog.ask(
                 self, _("ASK_ERROR_REPORTING_TITLE"), _("ASK_ERROR_REPORTING_CONTENT")
             )
+
+            # Acknowledge the changes
             self.event_bus.send(
                 "gui.config.changed",
                 gui_first_launch=False,
                 gui_last_version=PARSEC_VERSION,
-                telemetry_enabled=r,
+                telemetry_enabled=telemetry_enabled,
             )
+
+        # For each parsec update
+        if self.config.gui_last_version != PARSEC_VERSION:
+
+            # Ask for acrobat reader workaround
             if (
                 platform.system() == "Windows"
                 and win_registry.is_acrobat_reader_dc_present()
                 and win_registry.get_acrobat_app_container_enabled()
             ):
-                r = QuestionDialog.ask(
+                disable_acrobat_container = QuestionDialog.ask(
                     self,
                     _("ASK_DISABLE_ACROBAT_CONTAINER_TITLE"),
                     _("ASK_DISABLE_ACROBAT_CONTAINER_CONTENT"),
                 )
-                if r:
+                if disable_acrobat_container:
                     win_registry.set_acrobat_app_container_enabled(False)
+
+            # Acknowledge the changes
+            self.event_bus.send("gui.config.changed", gui_last_version=PARSEC_VERSION)
+
         telemetry.init(self.config)
 
     def show_top(self):

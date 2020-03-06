@@ -25,6 +25,7 @@ import psutil
 
 from parsec.utils import trio_run
 from parsec.core.types import BackendAddr
+from parsec import __version__ as PARSEC_VERSION
 from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.test_utils import initialize_test_organization
 
@@ -93,6 +94,7 @@ async def generate_gui_config():
         "gui_first_launch": False,
         "gui_check_version_at_startup": False,
         "gui_tray_enabled": False,
+        "gui_last_version": PARSEC_VERSION,
     }
     await config_file.write_text(json.dumps(config, indent=4))
 
