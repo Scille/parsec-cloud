@@ -53,7 +53,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
     for component in (organization, user, message, realm, vlob, ping, block):
         component.register_components(**components)
 
-    async with trio.open_nursery() as nursery:
+    async with trio.open_service_nursery() as nursery:
         nursery.start_soon(_dispatch_event)
         try:
             yield components
