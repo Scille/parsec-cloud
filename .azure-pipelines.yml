@@ -1,19 +1,172 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# See https://aka.ms/yaml for documentation
 
 trigger:
-- master
+  branches:
+    include:
+    - '*'
+  tags:
+    include:
+    - '*'
 
-pool:
-  vmImage: 'ubuntu-latest'
+variables:
+  python.version: '3.7'
+  postgresql.version: '10'
+  winfsp.version: '1.7.20038-pre'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+jobs:
+
+
+#################################################################################
+
+
+- job: 'QA'
+  timeoutInMinutes: 5
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      python --version
+      pip install pre-commit
+    displayName: 'Bootstrap'
+  - bash: |
+      pre-commit run --all-files --show-diff-on-failure
+    displayName: 'Pre-commit hooks check'
+  - bash: |
+      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
+      python ./misc/releaser.py check --verbose
+    displayName: 'Version check'
+
+
+#################################################################################
+
+
+- job: 'Linux'
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-latest'
+  variables:
+    PGINSTALLATION: '/usr/lib/postgresql/$(postgresql.version)/bin'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      python --version
+      pip install -U wheel pip setuptools twine
+      sudo apt-get install \
+        postgresql-$(postgresql.version) \
+        desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+      psql --version
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      # Build the parsec wheel
+      python setup.py bdist_wheel
+      # Install the parsec wheel with all dependencies
+      pip install $(ls dist/parsec_cloud-*.whl)[all]
+      # Check dependency compatibility
+      pip check parsec[all]
+      # Run tests in isolated directory
+      mkdir empty
+      sed -i 's#omit = \(.*\)#omit = \1,../\1#' setup.cfg  # fix path
+    displayName: 'Install'
+  - bash: |
+      set -eux
+      py.test ../tests/ --runmountpoint --runslow \
+        -n auto -x --max-worker-restart=0 \
+        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests memory'
+  - bash: |
+      set -eux
+      py.test ../tests/backend ../tests/test_cli.py --postgresql --runslow \
+        -n auto -x --max-worker-restart=0  \
+        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests postgresql'
+  # TODO: run gui tests with xvfb
+  # - bash: |
+  #     set -eux
+  #     py.test ../tests/ -m gui --runmountpoint --runslow --rungui -x \
+  #      --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+  #   workingDirectory: $(Build.SourcesDirectory)/empty
+  #   displayName: 'Tests GUI'
+  - bash: |
+      set -eux
+      pip install -U codecov
+      codecov
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Codecov upload'
+
+
+#################################################################################
+
+
+- job: 'Windows'
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'windows-latest'
+  variables:
+    PGINSTALLATION: C:\\Program Files\\PostgreSQL\\$(postgresql.version)\\bin
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+  - bash: |
+      set -eux
+      python --version
+      pip install -U wheel pip setuptools twine
+      choco install winfsp -y --pre --version=$(winfsp.version)
+      choco install postgresql$(postgresql.version) -y
+      "$(PGINSTALLATION)/psql" --version
+      # Install winfsp-test and put it in PATH
+      mkdir winfsp-test
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -o winfsp-test/winfsp-tests.zip
+      unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+      ##vso[task.prependpath]$(Build.SourcesDirectory)/winfsp-test
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      # Build the parsec wheel
+      python setup.py bdist_wheel
+      # Install the parsec wheel with all dependencies
+      pip install $(ls dist/parsec_cloud-*.whl)[all]
+      # Check dependency compatibility
+      pip check parsec[all]
+      # Run tests in isolated directory
+      mkdir empty
+      sed -i 's#omit = \(.*\)#omit = \1,../\1#' setup.cfg  # fix path
+    displayName: 'Install'
+  - bash: |
+      set -eux
+      py.test ../tests/ --runmountpoint --runslow \
+        -n auto -x --max-worker-restart=0 \
+        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests memory'
+  - bash: |
+      set -eux
+      py.test ../tests/backend ../tests/test_cli.py --postgresql --runslow \
+        -n auto -x --max-worker-restart=0  \
+        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests postgresql'
+  - bash: |
+      set -eux
+      pip install -U codecov
+      codecov
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Codecov upload'
