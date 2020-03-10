@@ -129,8 +129,8 @@ jobs:
       set -eux
       python --version
       pip install -U wheel pip setuptools twine
-      choco install winfsp -y --pre --version=$(winfsp.version)
-      choco install postgresql$(postgresql.version) -y
+      choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
+      choco install -y --limit-output postgresql$(postgresql.version)
       "$(PGINSTALLATION)/psql" --version
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
@@ -168,5 +168,4 @@ jobs:
       set -eux
       pip install -U codecov
       codecov
-    workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Codecov upload'
