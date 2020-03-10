@@ -1,0 +1,3 @@
+#! /bin/sh
+
+${SNAP}/usr/bin/python3 -I -m parsec.cli $@
