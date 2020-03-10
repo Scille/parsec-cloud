@@ -13,7 +13,6 @@ variables:
   postgresql.version: '10'
   winfsp.version: '1.7.20038-pre'
 
-
 jobs:
 
 
@@ -130,8 +129,6 @@ jobs:
       python --version
       pip install -U wheel pip setuptools twine
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
-      choco install -y --limit-output postgresql$(postgresql.version)
-      "$(PGINSTALLATION)/psql" --version
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
       curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -o winfsp-test/winfsp-tests.zip
@@ -159,11 +156,16 @@ jobs:
     displayName: 'Tests memory'
   - bash: |
       set -eux
-      py.test ../tests/backend ../tests/test_cli.py --postgresql --runslow \
-        -n auto -x --max-worker-restart=0  \
+      py.test ../tests/ --runmountpoint --runslow -m mountpoint \
         --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
     workingDirectory: $(Build.SourcesDirectory)/empty
-    displayName: 'Tests postgresql'
+    displayName: 'Tests mountpoint'
+  - bash: |
+      set -eux
+      py.test ../tests/ --runmountpoint --runslow --rungui -m gui \
+        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests GUI'
   - bash: |
       set -eux
       pip install -U codecov
