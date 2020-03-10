@@ -77,7 +77,6 @@ jobs:
       pip check parsec[all]
       # Run tests in isolated directory
       mkdir empty
-      sed -i 's#omit = \(.*\)#omit = \1,../\1#' setup.cfg  # fix path
     displayName: 'Install'
   - bash: |
       set -eux
@@ -145,7 +144,6 @@ jobs:
       pip check parsec[all]
       # Run tests in isolated directory
       mkdir empty
-      sed -i 's#omit = \(.*\)#omit = \1,../\1#' setup.cfg  # fix path
     displayName: 'Install'
   - bash: |
       set -eux
