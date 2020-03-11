@@ -2,5 +2,7 @@
 
 from parsec._version import __version__
 
+# The parsec.utils includes a bit of patching, let's make sure it is imported
+import parsec.utils  # noqa
 
 __all__ = ("__version__",)
