@@ -147,7 +147,7 @@ def collapse_multi_error(multierror):
         result.__cause__ = multierror.__cause__
         result.__context__ = multierror.__context__
         result.__traceback__ = multierror.__traceback__
-        # Supress context, we do not want the collasping to appear in the stacktrace
+        # Supress context, we do not want the collapsing to appear in the stacktrace
         result.__suppress_context__ = True
         return result
     except Exception:
