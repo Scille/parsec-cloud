@@ -5,24 +5,12 @@ import trio
 import threading
 from inspect import iscoroutinefunction
 from structlog import get_logger
-from parsec.utils import trio_run
 from parsec.core.fs import FSError
+from parsec.utils import trio_run, split_multi_error
 from PyQt5.QtCore import pyqtBoundSignal, Q_ARG, QMetaObject, Qt
 
 
 logger = get_logger()
-
-
-def split_multi_error(exc):
-    def is_cancelled(exc):
-        return exc if isinstance(exc, trio.Cancelled) else None
-
-    def not_cancelled(exc):
-        return None if isinstance(exc, trio.Cancelled) else exc
-
-    cancelled_errors = trio.MultiError.filter(is_cancelled, exc)
-    other_exceptions = trio.MultiError.filter(not_cancelled, exc)
-    return cancelled_errors, other_exceptions
 
 
 class JobResultError(Exception):
