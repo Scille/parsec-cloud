@@ -4,7 +4,13 @@ from unittest.mock import ANY
 from pendulum import Pendulum
 import pytest
 
-from parsec.api.protocol import organization_status_serializer, organization_update_serializer
+from parsec.api.protocol import (
+    organization_status_serializer,
+    organization_update_serializer,
+    ADMINISTRATION_CMDS,
+    AUTHENTICATED_CMDS,
+    ANONYMOUS_CMDS,
+)
 from parsec.api.protocol.base import packb, unpackb
 from tests.backend.test_organization import organization_create
 
@@ -91,12 +97,7 @@ async def test_status_unknown_organization(administration_backend_sock):
 
 @pytest.mark.trio
 async def test_non_admin_has_limited_access(alice_backend_sock):
-    for cmd in [
-        "organization_create",
-        "organization_status",
-        "organization_stats",
-        "organization_update",
-    ]:
+    for cmd in (ADMINISTRATION_CMDS | ANONYMOUS_CMDS) - AUTHENTICATED_CMDS:
         await alice_backend_sock.send(packb({"cmd": cmd}))
         rep = await alice_backend_sock.recv()
         assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}
