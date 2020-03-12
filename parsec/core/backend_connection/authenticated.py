@@ -15,6 +15,8 @@ from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
+from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
+from parsec.api.protocol import AUTHENTICATED_CMDS
 
 
 logger = get_logger()
@@ -28,67 +30,8 @@ class BackendAuthenticatedCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    def _expose_cmds_with_retrier(name):
-        cmd = getattr(cmds, name)
-
-        async def wrapper(self, *args, **kwargs):
-            # Reusing the transports expose us to `BackendNotAvaiable` exceptions
-            # due to inactivity timeout while the transport was in the pool.
-            try:
-                async with self.acquire_transport(allow_not_available=True) as transport:
-                    return await cmd(transport, *args, **kwargs)
-
-            except BackendNotAvailable:
-                async with self.acquire_transport(force_fresh=True) as transport:
-                    return await cmd(transport, *args, **kwargs)
-
-        wrapper.__name__ = name
-
-        return wrapper
-
-    ping = _expose_cmds_with_retrier("ping")
-
-    events_subscribe = _expose_cmds_with_retrier("events_subscribe")
-    events_listen = _expose_cmds_with_retrier("events_listen")
-
-    message_get = _expose_cmds_with_retrier("message_get")
-
-    vlob_create = _expose_cmds_with_retrier("vlob_create")
-    vlob_read = _expose_cmds_with_retrier("vlob_read")
-    vlob_update = _expose_cmds_with_retrier("vlob_update")
-    vlob_poll_changes = _expose_cmds_with_retrier("vlob_poll_changes")
-    vlob_list_versions = _expose_cmds_with_retrier("vlob_list_versions")
-    vlob_maintenance_get_reencryption_batch = _expose_cmds_with_retrier(
-        "vlob_maintenance_get_reencryption_batch"
-    )
-    vlob_maintenance_save_reencryption_batch = _expose_cmds_with_retrier(
-        "vlob_maintenance_save_reencryption_batch"
-    )
-
-    realm_status = _expose_cmds_with_retrier("realm_status")
-    realm_create = _expose_cmds_with_retrier("realm_create")
-    realm_get_role_certificates = _expose_cmds_with_retrier("realm_get_role_certificates")
-    realm_update_roles = _expose_cmds_with_retrier("realm_update_roles")
-    realm_start_reencryption_maintenance = _expose_cmds_with_retrier(
-        "realm_start_reencryption_maintenance"
-    )
-    realm_finish_reencryption_maintenance = _expose_cmds_with_retrier(
-        "realm_finish_reencryption_maintenance"
-    )
-
-    block_create = _expose_cmds_with_retrier("block_create")
-    block_read = _expose_cmds_with_retrier("block_read")
-
-    user_get = _expose_cmds_with_retrier("user_get")
-    user_find = _expose_cmds_with_retrier("user_find")
-    user_invite = _expose_cmds_with_retrier("user_invite")
-    user_cancel_invitation = _expose_cmds_with_retrier("user_cancel_invitation")
-    user_create = _expose_cmds_with_retrier("user_create")
-    user_revoke = _expose_cmds_with_retrier("user_revoke")
-
-    device_invite = _expose_cmds_with_retrier("device_invite")
-    device_cancel_invitation = _expose_cmds_with_retrier("device_cancel_invitation")
-    device_create = _expose_cmds_with_retrier("device_create")
+    for cmd_name in AUTHENTICATED_CMDS:
+        vars()[cmd_name] = expose_cmds_with_retrier(cmd_name)
 
 
 def _handle_event(event_bus: EventBus, rep: dict) -> None:

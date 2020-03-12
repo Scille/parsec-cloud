@@ -5,9 +5,10 @@ from async_generator import asynccontextmanager
 from typing import Optional
 
 from parsec.core.types import BackendOrganizationAddr
-from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.transport import connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.core.backend_connection.expose_cmds import expose_cmds
+from parsec.api.protocol import ADMINISTRATION_CMDS
 
 
 class BackendAdministrationCmds:
@@ -15,23 +16,8 @@ class BackendAdministrationCmds:
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    def _expose_cmds(name):
-        cmd = getattr(cmds, name)
-
-        async def wrapper(self, *args, **kwargs):
-            async with self.acquire_transport() as transport:
-                return await cmd(transport, *args, **kwargs)
-
-        wrapper.__name__ = name
-
-        return wrapper
-
-    ping = _expose_cmds("ping")
-
-    organization_create = _expose_cmds("organization_create")
-    organization_status = _expose_cmds("organization_status")
-    organization_stats = _expose_cmds("organization_stats")
-    organization_stats = _expose_cmds("organization_update")
+    for cmd_name in ADMINISTRATION_CMDS:
+        vars()[cmd_name] = expose_cmds(cmd_name)
 
 
 @asynccontextmanager
