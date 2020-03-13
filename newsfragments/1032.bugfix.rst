@@ -1,1 +1,1 @@
-Added missing organization_update to admin cmds, refactored methods definition at that occasion
+Added missing organization_update to admin cmds
