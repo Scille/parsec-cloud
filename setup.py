@@ -283,7 +283,7 @@ requirements = [
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
-    "sentry-sdk==0.13.5",
+    "sentry-sdk==0.14.2",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
@@ -324,7 +324,7 @@ extra_requirements = {
         PYQT_DEP,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.7.3;platform_system=="Windows"',
+        'winfspy==0.7.4;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
