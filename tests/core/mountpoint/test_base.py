@@ -10,10 +10,11 @@ from pathlib import Path, PurePath
 
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
-    MountpointDisabled,
     MountpointConfigurationError,
     MountpointAlreadyMounted,
     MountpointNotMounted,
+    MountpointFuseNotAvailable,
+    MountpointWinfspNotAvailable,
 )
 from parsec.core import logged_core_factory
 from parsec.core.types import FsPath, WorkspaceRole
@@ -25,24 +26,16 @@ from tests.common import create_shared_workspace
 async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
-    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
-    with pytest.raises(RuntimeError):
+    def _import(name):
+        if name == "winfspy":
+            raise RuntimeError()
+        else:
+            raise ImportError()
+
+    monkeypatch.setattr("parsec.core.mountpoint.manager.import_function", _import)
+    with pytest.raises((MountpointFuseNotAvailable, MountpointWinfspNotAvailable)):
         async with mountpoint_manager_factory(alice_user_fs, event_bus, base_mountpoint):
             pass
-
-
-@pytest.mark.trio
-async def test_mountpoint_disabled(monkeypatch, alice_user_fs, event_bus):
-    base_mountpoint = Path("/foo")
-
-    wid = await alice_user_fs.workspace_create("w")
-
-    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
-    async with mountpoint_manager_factory(
-        alice_user_fs, event_bus, base_mountpoint, enabled=False
-    ) as mountpoint_manager:
-        with pytest.raises(MountpointDisabled):
-            await mountpoint_manager.mount_workspace(wid)
 
 
 @pytest.mark.trio

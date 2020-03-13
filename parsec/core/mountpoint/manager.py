@@ -2,11 +2,11 @@
 
 import os
 import trio
-import warnings
 import logging
 from functools import partial
 from pathlib import PurePath
 from pendulum import Pendulum
+from importlib import __import__ as import_function
 
 from async_generator import asynccontextmanager
 
@@ -19,45 +19,37 @@ from parsec.core.mountpoint.exceptions import (
     MountpointConfigurationWorkspaceFSTimestampedError,
     MountpointAlreadyMounted,
     MountpointNotMounted,
-    MountpointDisabled,
+    MountpointWinfspNotAvailable,
+    MountpointFuseNotAvailable,
 )
 from parsec.core.mountpoint.winify import winify_entry_name
 
 
 def get_mountpoint_runner():
+    # Windows
     if os.name == "nt":
+
         try:
-            import winfspy  # noqa: test import is working
+            import_function("winfspy")
+        except RuntimeError as exc:
+            raise MountpointWinfspNotAvailable(exc) from exc
 
-            logging.getLogger("winfspy").setLevel(logging.WARNING)
+        logging.getLogger("winfspy").setLevel(logging.WARNING)
+        from parsec.core.mountpoint.winfsp_runner import winfsp_mountpoint_runner
 
-        except (ImportError, OSError) as exc:
-            warnings.warn(f"WinFSP not available: {exc}")
-            return None
+        return winfsp_mountpoint_runner
 
-        else:
-            from parsec.core.mountpoint.winfsp_runner import winfsp_mountpoint_runner
-
-            return winfsp_mountpoint_runner
-
+    # Linux
     else:
         try:
-            from fuse import FUSE  # noqa: test import is working
+            import_function("fuse")
+        except ImportError as exc:
+            raise MountpointFuseNotAvailable(exc) from exc
 
-            logging.getLogger("fuse").setLevel(logging.WARNING)
+        logging.getLogger("fuse").setLevel(logging.WARNING)
+        from parsec.core.mountpoint.fuse_runner import fuse_mountpoint_runner
 
-        except (ImportError, OSError) as exc:
-            warnings.warn(f"FUSE not available: {exc}")
-            return None
-
-        else:
-            from parsec.core.mountpoint.fuse_runner import fuse_mountpoint_runner
-
-            return fuse_mountpoint_runner
-
-
-async def disabled_runner(*args, **kwargs):
-    raise MountpointDisabled()
+        return fuse_mountpoint_runner
 
 
 class MountpointManager:
@@ -222,12 +214,7 @@ async def mountpoint_manager_factory(
 ):
     config["debug"] = debug
 
-    if not enabled:
-        runner = disabled_runner
-    else:
-        runner = get_mountpoint_runner()
-        if not runner:
-            raise RuntimeError("Mountpoint support not available.")
+    runner = get_mountpoint_runner()
 
     async with trio.open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
