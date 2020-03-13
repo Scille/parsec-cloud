@@ -18,6 +18,9 @@ from parsec.api.protocol import (
     MessageSerializationError,
     InvalidMessageError,
     ServerHandshake,
+    ADMINISTRATION_CMDS,
+    AUTHENTICATED_CMDS,
+    ANONYMOUS_CMDS,
 )
 from parsec.backend.utils import check_anonymous_api_allowed, CancelledByNewRequest
 from parsec.backend.config import BackendConfig
@@ -164,56 +167,24 @@ class BackendApp:
         self.block = block
         self.events = events
 
-        self.logged_cmds = {
-            "events_subscribe": self.events.api_events_subscribe,
-            "events_listen": self.events.api_events_listen,
-            "ping": self.ping.api_ping,
-            # Message
-            "message_get": self.message.api_message_get,
-            # User&Device
-            "user_get": self.user.api_user_get,
-            "user_find": self.user.api_user_find,
-            "user_invite": self.user.api_user_invite,
-            "user_cancel_invitation": self.user.api_user_cancel_invitation,
-            "user_create": self.user.api_user_create,
-            "user_revoke": self.user.api_user_revoke,
-            "device_invite": self.user.api_device_invite,
-            "device_cancel_invitation": self.user.api_device_cancel_invitation,
-            "device_create": self.user.api_device_create,
-            # Block
-            "block_create": self.block.api_block_create,
-            "block_read": self.block.api_block_read,
-            # Vlob
-            "vlob_poll_changes": self.vlob.api_vlob_poll_changes,
-            "vlob_create": self.vlob.api_vlob_create,
-            "vlob_read": self.vlob.api_vlob_read,
-            "vlob_update": self.vlob.api_vlob_update,
-            "vlob_list_versions": self.vlob.api_vlob_list_versions,
-            "vlob_maintenance_get_reencryption_batch": self.vlob.api_vlob_maintenance_get_reencryption_batch,
-            "vlob_maintenance_save_reencryption_batch": self.vlob.api_vlob_maintenance_save_reencryption_batch,
-            # Realm
-            "realm_create": self.realm.api_realm_create,
-            "realm_status": self.realm.api_realm_status,
-            "realm_get_role_certificates": self.realm.api_realm_get_role_certificates,
-            "realm_update_roles": self.realm.api_realm_update_roles,
-            "realm_start_reencryption_maintenance": self.realm.api_realm_start_reencryption_maintenance,
-            "realm_finish_reencryption_maintenance": self.realm.api_realm_finish_reencryption_maintenance,
-        }
-        self.anonymous_cmds = {
-            "user_claim": self.user.api_user_claim,
-            "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
-            "device_claim": self.user.api_device_claim,
-            "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
-            "organization_bootstrap": self.organization.api_organization_bootstrap,
-            "ping": self.ping.api_ping,
-        }
+        api_modules = {block, events, message, organization, ping, realm, vlob, user}
+        api_methods = {}
+        for module in api_modules:
+            for method_name in dir(module):
+                if callable(getattr(module, method_name)) and method_name.startswith("api_"):
+                    if (method_name) in api_methods:
+                        raise AttributeError(
+                            f"The api method {method_name} has been defined more than once in "
+                            f"BackendApp modules."
+                        )
+                    api_methods[method_name] = getattr(module, method_name)
+
+        self.logged_cmds = {name: api_methods[f"api_{name}"] for name in AUTHENTICATED_CMDS}
+        self.anonymous_cmds = {name: api_methods[f"api_{name}"] for name in ANONYMOUS_CMDS}
         self.administration_cmds = {
-            "organization_create": self.organization.api_organization_create,
-            "organization_stats": self.organization.api_organization_stats,
-            "organization_status": self.organization.api_organization_status,
-            "organization_update": self.organization.api_organization_update,
-            "ping": self.ping.api_ping,
+            name: api_methods[f"api_{name}"] for name in ADMINISTRATION_CMDS
         }
+
         for fn in self.anonymous_cmds.values():
             check_anonymous_api_allowed(fn)
 

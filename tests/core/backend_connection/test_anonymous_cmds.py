@@ -9,6 +9,7 @@ from parsec.core.backend_connection import (
     BackendConnectionRefused,
     backend_anonymous_cmds_factory,
 )
+from parsec.api.protocol import ADMINISTRATION_CMDS, AUTHENTICATED_CMDS, ANONYMOUS_CMDS
 
 
 @pytest.mark.trio
@@ -72,3 +73,12 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
         async with backend_anonymous_cmds_factory(unknown_org_addr) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Unknown Organization or Device"
+
+
+@pytest.mark.trio
+async def test_anonymous_cmds_has_right_methods(running_backend, coolorg):
+    async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
+        for method_name in ANONYMOUS_CMDS:
+            assert hasattr(cmds, method_name)
+        for method_name in (ADMINISTRATION_CMDS | AUTHENTICATED_CMDS) - ANONYMOUS_CMDS:
+            assert not hasattr(cmds, method_name)

@@ -77,6 +77,7 @@ from parsec.api.protocol.vlob import (
     vlob_maintenance_get_reencryption_batch_serializer,
     vlob_maintenance_save_reencryption_batch_serializer,
 )
+from parsec.api.protocol.cmds import AUTHENTICATED_CMDS, ANONYMOUS_CMDS, ADMINISTRATION_CMDS
 
 
 __all__ = (
@@ -154,4 +155,8 @@ __all__ = (
     # Block
     "block_create_serializer",
     "block_read_serializer",
+    # List of cmds
+    "AUTHENTICATED_CMDS",
+    "ANONYMOUS_CMDS",
+    "ADMINISTRATION_CMDS",
 )
