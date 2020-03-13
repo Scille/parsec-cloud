@@ -87,29 +87,45 @@ jobs:
       set -eux
       py.test $(pytest.base_args) \
         ../tests/ --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-memory.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests memory'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
         ../tests/backend ../tests/test_cli.py --postgresql --runslow \
-        -n auto --max-worker-restart=0 -x
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-postgresql.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests postgresql'
   # TODO: run gui tests with xvfb
   # - bash: |
   #     set -eux
   #     py.test $(pytest.base_args) \
-  #       ../tests/ -m gui --runmountpoint --runslow --rungui -x
+  #       ../tests/ -m gui --runmountpoint --runslow --rungui -x \
+  #       --junitxml=test-results-gui.xml
   #   workingDirectory: $(Build.SourcesDirectory)/empty
   #   displayName: 'Tests GUI'
   - bash: |
       set -eux
       pip install -U codecov
-      codecov
+      coverage xml -o coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      # Running the tests from the empty dir messes with package&path by
+      # using absolute path, so we fix this the hard way (Note the regex is
+      # greedy so this doesn't support child folder named parsec)
+      sed -i 's#\(<package .* name="\)[^"]*\.\(parsec[".]\)#\1\2#' coverage.xml
+      sed -i 's#\( filename="\)[^"]*/\(parsec["/]\)#\1\2#' coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      codecov --file=coverage.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Codecov upload'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: 'empty/test-results-*.xml'
+      testRunTitle: 'Linux'
+    condition: succeededOrFailed()
 
 
 #################################################################################
@@ -155,26 +171,43 @@ jobs:
       set -eux
       py.test $(pytest.base_args) \
         ../tests/ --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-memory.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests memory'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runmountpoint --runslow -m mountpoint -x
+        ../tests/ --runmountpoint --runslow -m mountpoint -x \
+        --junitxml=test-results-mountpoint.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runmountpoint --runslow --rungui -m gui -x
+        ../tests/ --runmountpoint --runslow --rungui -m gui -x \
+        --junitxml=test-results-gui.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests GUI'
   - bash: |
       set -eux
       pip install -U codecov
-      codecov
+      coverage xml -o coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      # Running the tests from the empty dir messes with package&path by
+      # using absolute path, so we fix this the hard way (Note the regex is
+      # greedy so this doesn't support child folder named parsec)
+      sed -i 's#\(<package .* name="\)[^"]*\.\(parsec[".]\)#\1\2#' coverage.xml
+      sed -i 's#\( filename="\)[^"]*/\(parsec["/]\)#\1\2#' coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      codecov --file=coverage.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Codecov upload'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: 'empty/test-results-*.xml'
+      testRunTitle: 'Windows'
+    condition: succeededOrFailed()
 
 
 #################################################################################
