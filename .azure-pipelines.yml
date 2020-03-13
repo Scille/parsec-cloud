@@ -12,6 +12,9 @@ variables:
   python.version: '3.6'
   postgresql.version: '10'
   winfsp.version: '1.7.20038-pre'
+  pytest.base_args: |
+    --log-level=DEBUG \
+    --cov=parsec --cov-config=../setup.cfg --cov-append --cov-report= \
 
 jobs:
 
@@ -82,23 +85,23 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      py.test ../tests/ --runmountpoint --runslow \
-        -n auto -x --max-worker-restart=0 \
-        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow \
+        -n auto --max-worker-restart=0 -x
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests memory'
   - bash: |
       set -eux
-      py.test ../tests/backend ../tests/test_cli.py --postgresql --runslow \
-        -n auto -x --max-worker-restart=0  \
-        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+      py.test $(pytest.base_args) \
+        ../tests/backend ../tests/test_cli.py --postgresql --runslow \
+        -n auto --max-worker-restart=0 -x
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests postgresql'
   # TODO: run gui tests with xvfb
   # - bash: |
   #     set -eux
-  #     py.test ../tests/ -m gui --runmountpoint --runslow --rungui -x \
-  #      --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+  #     py.test $(pytest.base_args) \
+  #       ../tests/ -m gui --runmountpoint --runslow --rungui -x
   #   workingDirectory: $(Build.SourcesDirectory)/empty
   #   displayName: 'Tests GUI'
   - bash: |
@@ -150,21 +153,21 @@ jobs:
     displayName: 'Install'
   - bash: |
       set -eux
-      py.test ../tests/ --runmountpoint --runslow \
-        -n auto -x --max-worker-restart=0 \
-        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow \
+        -n auto --max-worker-restart=0 -x
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests memory'
   - bash: |
       set -eux
-      py.test ../tests/ --runmountpoint --runslow -m mountpoint \
-        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow -m mountpoint -x
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
-      py.test ../tests/ --runmountpoint --runslow --rungui -m gui \
-        --log-level=DEBUG --cov=parsec --cov-config=../setup.cfg --cov-append
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow --rungui -m gui -x
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests GUI'
   - bash: |
