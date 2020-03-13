@@ -295,3 +295,25 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
             f"--administration-token={administration_token}",
             env=ssl_conf.client_env,
         )
+
+
+@pytest.mark.gui
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "env",
+    [
+        pytest.param({}, id="Standard environement"),
+        pytest.param(
+            {"WINFSP_LIBRARY_PATH": "nope"},
+            id="Wrong winfsp library path",
+            marks=pytest.mark.skipif(os.name != "nt", reason="Windows only"),
+        ),
+        pytest.param(
+            {"WINFSP_DEBUG_PATH": "nope"},
+            id="Wrong winfsp binary path",
+            marks=pytest.mark.skipif(os.name != "nt", reason="Windows only"),
+        ),
+    ],
+)
+def test_gui_with_diagnose_option(env):
+    _run(f"core gui --diagnose", env=env)
