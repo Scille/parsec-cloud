@@ -5,6 +5,16 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.9.1 (2020-03-13)
+-------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Added missing organization_update to admin cmds  (`#1032
+  <https://github.com/Scille/parsec-cloud/issues/1032>`__)
+
+
 Parsec 1.9.0 (2020-03-06)
 -------------------------
 
