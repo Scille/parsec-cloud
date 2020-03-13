@@ -21,13 +21,14 @@ else:
     @click.command(short_help="run parsec GUI")
     # Let the GUI handle the parsing of the url to display dialog on error
     @click.argument("url", required=False)
+    @click.option("--diagnose", "-d", is_flag=True)
     @core_config_options
-    def run_gui(config, url, **kwargs):
+    def run_gui(config, url, diagnose, **kwargs):
         """
         Run parsec GUI
         """
         config = config.evolve(mountpoint_enabled=True)
-        _run_gui(config, start_arg=url)
+        _run_gui(config, start_arg=url, diagnose=diagnose)
 
 
 async def _run_mountpoint(config, device, timestamp: Pendulum = None):

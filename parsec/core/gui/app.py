@@ -80,7 +80,7 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
                 continue
 
 
-def run_gui(config: CoreConfig, start_arg: str = None):
+def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     logger.info("Starting UI")
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
@@ -153,8 +153,8 @@ def run_gui(config: CoreConfig, start_arg: str = None):
         # QTimer wakes up the event loop periodically which allows us to close
         # the window even when it is in background.
         timer = QTimer()
-        timer.start(400)
-        timer.timeout.connect(lambda: None)
+        timer.start(1000 if diagnose else 400)
+        timer.timeout.connect(kill_window if diagnose else lambda: None)
         if lang_key:
             event_bus.send("gui.config.changed", gui_language=lang_key)
 
