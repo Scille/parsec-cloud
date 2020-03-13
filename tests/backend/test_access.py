@@ -30,5 +30,5 @@ async def test_anonymous_has_limited_access(anonymous_backend_sock):
 @pytest.mark.trio
 async def test_authenticated_has_limited_access(alice_backend_sock):
     await check_forbidden_cmds(
-        alice_backend_sock, (ADMINISTRATION_CMDS | AUTHENTICATED_CMDS) - AUTHENTICATED_CMDS
+        alice_backend_sock, (ADMINISTRATION_CMDS | ANONYMOUS_CMDS) - AUTHENTICATED_CMDS
     )
