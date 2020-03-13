@@ -9,7 +9,7 @@ trigger:
     - '*'
 
 variables:
-  python.version: '3.7'
+  python.version: '3.6'
   postgresql.version: '10'
   winfsp.version: '1.7.20038-pre'
 
@@ -226,6 +226,7 @@ jobs:
   pool:
     vmImage: 'ubuntu-18.04'  # Shame, snap doesn't support docker...
   steps:
+  # Note there no point specifying Python version given snap doesn't take it into account
   - checkout: none
   - download: current
     artifact: linux_amd64_snap
@@ -263,7 +264,7 @@ jobs:
     submodules: true
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7'
+      versionSpec: '$(python.version)'
       architecture: '$(python.arch)'
   - task: BatchScript@1
     inputs:
