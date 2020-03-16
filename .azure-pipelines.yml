@@ -1,0 +1,335 @@
+# See https://aka.ms/yaml for documentation
+
+trigger:
+  branches:
+    include:
+    - '*'
+  tags:
+    include:
+    - '*'
+
+variables:
+  python.version: '3.6'
+  postgresql.version: '10'
+  winfsp.version: '1.7.20038-pre'
+  pytest.base_args: |
+    --log-level=DEBUG \
+    --cov=parsec --cov-config=../setup.cfg --cov-append --cov-report= \
+
+jobs:
+
+
+#################################################################################
+
+
+- job: 'qa'
+  displayName: 'Q&A'
+  timeoutInMinutes: 5
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      python --version
+      pip install pre-commit
+    displayName: 'Bootstrap'
+  - bash: |
+      pre-commit run --all-files --show-diff-on-failure
+    displayName: 'Pre-commit hooks check'
+  - bash: |
+      git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
+      python ./misc/releaser.py check --verbose
+    displayName: 'Version check'
+
+
+#################################################################################
+
+
+- job: 'linux_test'
+  displayName: 'Linux tests'
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-latest'
+  variables:
+    PGINSTALLATION: '/usr/lib/postgresql/$(postgresql.version)/bin'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      set -eux
+      python --version
+      pip install -U wheel pip setuptools twine
+      sudo apt-get install \
+        postgresql-$(postgresql.version) \
+        desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
+      psql --version
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      # Build the parsec wheel
+      python setup.py bdist_wheel
+      # Install the parsec wheel with all dependencies
+      pip install $(ls dist/parsec_cloud-*.whl)[all]
+      # Check dependency compatibility
+      pip check parsec[all]
+      # Run tests in isolated directory
+      mkdir empty
+    displayName: 'Install'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow \
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-memory.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests memory'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        ../tests/backend ../tests/test_cli.py --postgresql --runslow \
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-postgresql.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests postgresql'
+  # TODO: run gui tests with xvfb
+  # - bash: |
+  #     set -eux
+  #     py.test $(pytest.base_args) \
+  #       ../tests/ -m gui --runmountpoint --runslow --rungui -x \
+  #       --junitxml=test-results-gui.xml
+  #   workingDirectory: $(Build.SourcesDirectory)/empty
+  #   displayName: 'Tests GUI'
+  - bash: |
+      set -eux
+      pip install -U codecov
+      coverage xml -o coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      # Running the tests from the empty dir messes with package&path by
+      # using absolute path, so we fix this the hard way (Note the regex is
+      # greedy so this doesn't support child folder named parsec)
+      sed -i 's#\(<package .* name="\)[^"]*\.\(parsec[".]\)#\1\2#' coverage.xml
+      sed -i 's#\( filename="\)[^"]*/\(parsec["/]\)#\1\2#' coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      codecov --file=coverage.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Codecov upload'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: 'empty/test-results-*.xml'
+      testRunTitle: 'Linux'
+    condition: succeededOrFailed()
+
+
+#################################################################################
+
+
+- job: 'windows_test'
+  displayName: 'Windows tests'
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'windows-latest'
+  variables:
+    PGINSTALLATION: C:\\Program Files\\PostgreSQL\\$(postgresql.version)\\bin
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+  - bash: |
+      set -eux
+      python --version
+      pip install -U wheel pip setuptools twine
+      choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
+      # Install winfsp-test and put it in PATH
+      mkdir winfsp-test
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.5/winfsp-tests-1.5.20002.zip -o winfsp-test/winfsp-tests.zip
+      unzip winfsp-test/winfsp-tests.zip -d winfsp-test
+      ##vso[task.prependpath]$(Build.SourcesDirectory)/winfsp-test
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      # Build the parsec wheel
+      python setup.py bdist_wheel
+      # Install the parsec wheel with all dependencies
+      pip install $(ls dist/parsec_cloud-*.whl)[all]
+      # Check dependency compatibility
+      pip check parsec[all]
+      # Run tests in isolated directory
+      mkdir empty
+    displayName: 'Install'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow \
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-memory.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests memory'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow -m mountpoint -x \
+        --junitxml=test-results-mountpoint.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests mountpoint'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        ../tests/ --runmountpoint --runslow --rungui -m gui -x \
+        --junitxml=test-results-gui.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests GUI'
+  - bash: |
+      set -eux
+      pip install -U codecov
+      coverage xml -o coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      # Running the tests from the empty dir messes with package&path by
+      # using absolute path, so we fix this the hard way (Note the regex is
+      # greedy so this doesn't support child folder named parsec)
+      sed -i 's#\(<package .* name="\)[^"]*\.\(parsec[".]\)#\1\2#' coverage.xml
+      sed -i 's#\( filename="\)[^"]*/\(parsec["/]\)#\1\2#' coverage.xml
+      grep -E '( filename=|<package )' coverage.xml
+      codecov --file=coverage.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Codecov upload'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: 'empty/test-results-*.xml'
+      testRunTitle: 'Windows'
+    condition: succeededOrFailed()
+
+
+#################################################################################
+
+
+- job: 'linux_snap_build'
+  displayName: 'Linux snap build'
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-18.04'
+  steps:
+  - checkout: self
+    submodules: true
+  - bash: |
+      set -eux
+      sudo snap install lxd  # Multipass requires KVM which is not supported
+      sudo snap install snapcraft --classic
+      lxd --version
+      snapcraft --version
+      sudo lxd init --auto
+      sudo lxd.migrate -yes
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      cp -R $(Build.SourcesDirectory)/packaging/snap snapbuild
+      cd snapbuild
+      mkdir src
+      cp -R $(Build.SourcesDirectory)/parsec src
+      cp $(Build.SourcesDirectory)/setup.py src
+      cp $(Build.SourcesDirectory)/README.rst src
+      cp $(Build.SourcesDirectory)/HISTORY.rst src
+      VERBOSE_TAG=`git -C $(Build.SourcesDirectory) describe --tag`
+      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" src/parsec/_version.py
+      sed -i "s/__PARSEC_VERSION__/$VERBOSE_TAG/" snap/snapcraft.yaml
+      sudo snapcraft --use-lxd
+      mkdir dist
+      cp parsec*.snap dist
+    displayName: 'Build snap'
+    workingDirectory: $(Agent.TempDirectory)
+  - publish: $(Agent.TempDirectory)/snapbuild/dist
+    artifact: linux_amd64_snap
+
+
+#################################################################################
+
+
+- job: 'linux_snap_test'
+  displayName: 'Never trust a snap'
+  dependsOn: linux_snap_build
+  timeoutInMinutes: 5
+  pool:
+    vmImage: 'ubuntu-18.04'  # Shame, snap doesn't support docker...
+  steps:
+  # Note there no point specifying Python version given snap doesn't take it into account
+  - checkout: none
+  - download: current
+    artifact: linux_amd64_snap
+  - bash: |
+      set -eux
+      # TODO: xvfb doesn't currently work
+      # sudo apt-get install -y xvfb xorg
+      sudo snap install --classic --dangerous $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+      parsec.cli --version
+      # xvfb-run parsec &
+      # sleep 5
+      # jobs  # returns error if parsec is not started
+      # kill %1
+
+
+#################################################################################
+
+
+- job: 'windows_installer_build'
+  displayName: 'Windows installer build'
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'windows-latest'
+  strategy:
+    matrix:
+      "64bits":
+        python.arch: 'x64'
+        vs.arch: 'amd64'
+      "32bits":
+        python.arch: 'x86'
+        vs.arch: 'x86'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: '$(python.arch)'
+  - task: BatchScript@1
+    inputs:
+      filename: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"'
+      arguments: $(vs.arch)
+      modifyEnvironment: true
+  - bash: |
+      set -eux
+      # Path with backslash are a pain...
+      SOURCES_DIRECTORY=`python -c 'print(r"$(Build.SourcesDirectory)".replace("\\\\", "/"))'`
+      TEMP_DIRECTORY=`python -c 'print(r"$(Agent.TempDirectory)".replace("\\\\", "/"))'`
+      VERBOSE_TAG=`git -C $SOURCES_DIRECTORY describe --tag`
+      sed -i "s#^\\(__version__ = \\).*\$#\\1'$VERBOSE_TAG'#" $SOURCES_DIRECTORY/parsec/_version.py
+      cp -R $SOURCES_DIRECTORY/packaging/win32/ winbuild
+    displayName: 'Prepare build'
+    workingDirectory: $(Agent.TempDirectory)
+  # Must use cmd.exe here instead of bash otherwise `C:\Program Files\Git\bin\link.exe`
+  # takes priority over visual studio link.exe in PATH
+  - script: |
+      python freeze_parsec.py $(Build.SourcesDirectory)
+    displayName: 'Freeze Parsec'
+    workingDirectory: $(Agent.TempDirectory)/winbuild
+  - bash: |
+      set -eux
+      curl -L https://github.com/billziss-gh/winfsp/releases/download/v1.7B1/winfsp-1.7.20038.msi -o winfsp-1.7.20038.msi
+      makensis.exe installer.nsi
+      mkdir dist
+      cp build/parsec*-setup.exe dist
+    displayName: 'Build NSIS setup'
+    workingDirectory: $(Agent.TempDirectory)/winbuild
+  - publish: $(Agent.TempDirectory)/winbuild/dist
+    artifact: win_$(vs.arch)_installer

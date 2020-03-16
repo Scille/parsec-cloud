@@ -1,3 +1,4 @@
+exclude: ^misc/bench.py$
 repos:
 -   repo: https://github.com/ambv/black
     rev: 19.3b0

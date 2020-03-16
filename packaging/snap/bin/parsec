@@ -1,0 +1,25 @@
+#! /bin/sh
+
+mkdir -p ~/.config/parsec
+LOG_FILE=~/.config/parsec/parsec-core.log
+echo Starting parsec core >> $LOG_FILE
+export XDG_CURRENT_DESKTOP=unknown
+PYTHON=${SNAP}/usr/bin/python3
+
+# The site-packages dir containing parsec and it dependencies  is defined
+# by `$SNAP/usr/lib/python3.6/sitecustomize.py` which use $SNAP environ
+# variable for this. Given we are going to unset $SNAP, we replace it
+# by $SNAPCRAFT_STAGE which is also used by this script.
+export SNAPCRAFT_STAGE=$SNAP
+# *Sob* sitecustomize.py has changed and now also requires
+# $SNAPCRAFT_PART_INSTALL to be defined...
+export SNAPCRAFT_PART_INSTALL=$SNAP
+
+# SNAP env variable is used by Qt to determine we are within a sandbox
+# and hence should use xdg-desktop-portal. However this is broken
+# (see https://github.com/Scille/parsec-cloud/issues/702) so we bypass this
+# and fallback to xdg-open which is fine given we use snap in classic mode
+# (i.e. without sandbox).
+unset SNAP
+
+$PYTHON -I -m parsec.cli core gui --log-level=INFO --log-file=$LOG_FILE $@

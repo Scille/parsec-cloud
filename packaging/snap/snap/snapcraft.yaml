@@ -1,0 +1,51 @@
+name: parsec
+version: __PARSEC_VERSION__
+summary: Secure cloud framework # 79 char long summary
+description: |
+  Parsec is an open-source cloud-based application that allow simple yet
+  cryptographically secure file hosting.
+base: core18
+type: app
+
+confinement: classic # classic is needed to have fuse working
+icon: "./bin/parsec.png"
+grade: stable # must be 'stable' to release into candidate/stable channels
+
+apps:
+  parsec:
+    command: parsec
+    desktop: parsec.desktop
+    environment:
+      SENTRY_URL: https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848
+  cli:
+    command: parsec-cli
+    environment:
+      SENTRY_URL: https://863e60bbef39406896d2b7a5dbd491bb@sentry.io/1212848
+
+parts:
+  bootstrap:
+    plugin: dump
+    source: "./bin"
+    override-pull: |
+      snapcraftctl pull
+      # Make sure executables *are* executable
+      chmod 755 parsec
+      chmod 755 parsec-cli
+
+  parsec-core:
+    plugin: python
+    python-version: python3
+    source: "./src"
+    source-type: local
+    override-pull: |
+      snapcraftctl pull
+      # Ugly hack given snapcraft doesn't support extra requirements...
+      sed -i "s#install_requires=requirements#install_requires=requirements + extra_requirements['core']#g" setup.py
+    stage-packages:
+      - libfuse2
+      - libxext6
+      - libx11-6
+      - libx11-xcb1
+      - libfreetype6
+      - libpng16-16
+      - libfontconfig
