@@ -7,7 +7,7 @@ Install Parsec client
 Windows
 -------
 
-Windows installers `are available in both 32 and 64 bits <https://github.com/Scille/parsec-build/releases/latest>`_, if not sure you should
+Windows installers `are available in both 32 and 64 bits <https://github.com/Scille/parsec/releases/latest>`_, if not sure you should
 use the 64bits version (called ``parsec-vX.Y.Z-win64-setup.exe``).
 
 
