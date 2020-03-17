@@ -1,17 +1,20 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pytest
 import re
-import attr
 import os
+import sys
+import subprocess
+from time import sleep
 from pathlib import Path
 from contextlib import contextmanager
-from time import sleep
-import trustme
-import subprocess
 from unittest.mock import ANY, MagicMock, patch
-from async_generator import asynccontextmanager
+
+
+import attr
+import pytest
+import trustme
 from click.testing import CliRunner
+from async_generator import asynccontextmanager
 
 import parsec
 from parsec.cli import cli
@@ -67,15 +70,17 @@ def test_share_workspace(tmpdir, alice, bob):
     share_mock.assert_called_once_with("/ws1", alice.user_id)
 
 
-def _run(cmd, env={}):
+def _run(cmd, env={}, timeout=10.0, capture=True):
     print(f"========= RUN {cmd} ==============")
     env = {**os.environ.copy(), "DEBUG": "true", **env}
     cooked_cmd = ("python -m parsec.cli " + cmd).split()
-    ret = subprocess.run(
-        cooked_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=CWD, env=env
-    )
-    print(ret.stdout.decode())
-    print(ret.stderr.decode())
+    kwargs = {}
+    if capture:
+        kwargs["stdout"] = kwargs["stderr"] = subprocess.PIPE
+    ret = subprocess.run(cooked_cmd, cwd=CWD, env=env, timeout=timeout, **kwargs)
+    if capture:
+        print(ret.stdout.decode(), file=sys.stdout)
+        print(ret.stderr.decode(), file=sys.stderr)
     print(f"========= DONE {ret.returncode} ({cmd[:40]}) ==============")
     assert ret.returncode == 0
     return ret
@@ -316,4 +321,4 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
     ],
 )
 def test_gui_with_diagnose_option(env):
-    _run(f"core gui --diagnose", env=env)
+    _run(f"core gui --diagnose", env=env, capture=False)
