@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 1.7.2+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-26 20:04+0100\n"
+"POT-Creation-Date: 2020-03-17 23:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,328 +22,432 @@ msgid "History"
 msgstr ""
 
 #: ../../../HISTORY.rst:9
+msgid "Parsec 1.9.1 (2020-03-13)"
+msgstr ""
+
+#: ../../../HISTORY.rst:12 ../../../HISTORY.rst:28 ../../../HISTORY.rst:59
+#: ../../../HISTORY.rst:101 ../../../HISTORY.rst:123 ../../../HISTORY.rst:149
+#: ../../../HISTORY.rst:188 ../../../HISTORY.rst:226 ../../../HISTORY.rst:273
+#: ../../../HISTORY.rst:312 ../../../HISTORY.rst:332
+msgid "Bugfixes"
+msgstr ""
+
+#: ../../../HISTORY.rst:14
+msgid ""
+"Added missing organization_update to admin cmds  (`#1032 "
+"<https://github.com/Scille/parsec-cloud/issues/1032>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:19
+msgid "Parsec 1.9.0 (2020-03-06)"
+msgstr ""
+
+#: ../../../HISTORY.rst:22 ../../../HISTORY.rst:51 ../../../HISTORY.rst:93
+#: ../../../HISTORY.rst:113 ../../../HISTORY.rst:143 ../../../HISTORY.rst:211
+#: ../../../HISTORY.rst:256 ../../../HISTORY.rst:323
+msgid "Features"
+msgstr ""
+
+#: ../../../HISTORY.rst:24
+msgid ""
+"Only allows one log in tab in all situations  (`#963 "
+"<https://github.com/Scille/parsec-cloud/issues/963>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:30
+msgid ""
+"Fixed invalid access to file table item  (`#1021 "
+"<https://github.com/Scille/parsec-cloud/issues/1021>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:32
+msgid ""
+"Fix error handling during workspace reencryption detection when offline. "
+"(`#1016 <https://github.com/Scille/parsec-cloud/issues/1016>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:34
+msgid ""
+"Fix an error on linux when mounting a workspace when the workspace "
+"manifest is absent and the session is offline.  (`#1018 "
+"<https://github.com/Scille/parsec- cloud/issues/1018>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:37
+msgid ""
+"Fix invalid access to workspace_id on entry_updated  (`#1022 "
+"<https://github.com/Scille/parsec-cloud/issues/1022>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:39
+msgid ""
+"Fix workspace_fs not available on event  (`#1001 "
+"<https://github.com/Scille/parsec-cloud/issues/1001>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:41
+msgid ""
+"Fix access to invalid attribute on timestamped workspace  (`#1020 "
+"<https://github.com/Scille/parsec-cloud/issues/1020>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:43
+msgid ""
+"Fix synchronization not triggered for newly created workspaces until they"
+" get files. (`#1023 <https://github.com/Scille/parsec-"
+"cloud/issues/1023>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:48
+msgid "Parsec 1.8.0 (2020-03-03)"
+msgstr ""
+
+#: ../../../HISTORY.rst:53
+msgid ""
+"Added a link to the documentation  (`#999 "
+"<https://github.com/Scille/parsec- cloud/issues/999>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:55
+msgid ""
+"Removed confirmation when opening a new tab  (`#993 "
+"<https://github.com/Scille/parsec-cloud/issues/993>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:61
+msgid ""
+"Fix French translation for changelog  (`#994 <https://github.com/Scille"
+"/parsec-cloud/issues/994>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:63
+msgid ""
+"Case insensitive extension matching when displaying file icon  (`#1007 "
+"<https://github.com/Scille/parsec-cloud/issues/1007>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:67
+msgid "Improved Documentation"
+msgstr ""
+
+#: ../../../HISTORY.rst:69
+msgid ""
+"Add french translation to the documentation (`#1005 "
+"<https://github.com/Scille/parsec-cloud/issues/1005>`__)"
+msgstr ""
+
+#: ../../../HISTORY.rst:74
 msgid "Parsec 1.7.2 (2020-02-24)"
 msgstr ""
 
-#: ../../../HISTORY.rst:11
+#: ../../../HISTORY.rst:76
 msgid "No significant changes."
 msgstr ""
 
-#: ../../../HISTORY.rst:15
+#: ../../../HISTORY.rst:80
 msgid "Parsec 1.7.1 (2020-02-24)"
 msgstr ""
 
-#: ../../../HISTORY.rst:18 ../../../HISTORY.rst:113 ../../../HISTORY.rst:136
-#: ../../../HISTORY.rst:174 ../../../HISTORY.rst:224 ../../../HISTORY.rst:234
-#: ../../../HISTORY.rst:283
+#: ../../../HISTORY.rst:83 ../../../HISTORY.rst:178 ../../../HISTORY.rst:201
+#: ../../../HISTORY.rst:239 ../../../HISTORY.rst:289 ../../../HISTORY.rst:299
+#: ../../../HISTORY.rst:348
 msgid "Miscellaneous internal changes"
 msgstr ""
 
-#: ../../../HISTORY.rst:20
+#: ../../../HISTORY.rst:85
 msgid ""
 "Fix bug in sdist/bdist_wheel configuration that prevented release on "
 "pypi.org since 1.4.0 (`#992 <https://github.com/Scille/parsec-"
 "cloud/issues/992>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:25
+#: ../../../HISTORY.rst:90
 msgid "Parsec 1.7.0 (2020-02-22)"
 msgstr ""
 
-#: ../../../HISTORY.rst:28 ../../../HISTORY.rst:48 ../../../HISTORY.rst:78
-#: ../../../HISTORY.rst:146 ../../../HISTORY.rst:191 ../../../HISTORY.rst:258
-msgid "Features"
-msgstr ""
-
-#: ../../../HISTORY.rst:30
+#: ../../../HISTORY.rst:95
 msgid ""
 "Add a way to copy/paste an internal link to a file  (`#937 "
 "<https://github.com/Scille/parsec-cloud/issues/937>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:32
+#: ../../../HISTORY.rst:97
 msgid ""
 "Access a file directly using an url  (`#938 "
 "<https://github.com/Scille/parsec- cloud/issues/938>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:36 ../../../HISTORY.rst:58 ../../../HISTORY.rst:84
-#: ../../../HISTORY.rst:123 ../../../HISTORY.rst:161 ../../../HISTORY.rst:208
-#: ../../../HISTORY.rst:247 ../../../HISTORY.rst:267
-msgid "Bugfixes"
-msgstr ""
-
-#: ../../../HISTORY.rst:38
+#: ../../../HISTORY.rst:103
 msgid ""
 "Disable file operations for a reader  (`#981 <https://github.com/Scille"
 "/parsec-cloud/issues/981>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:40
+#: ../../../HISTORY.rst:105
 msgid ""
 "Fix files display not being updated automatically  (`#980 "
 "<https://github.com/Scille/parsec-cloud/issues/980>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:45
+#: ../../../HISTORY.rst:110
 msgid "Parsec 1.6.0 (2020-02-12)"
 msgstr ""
 
-#: ../../../HISTORY.rst:50
+#: ../../../HISTORY.rst:115
 msgid ""
 "Added a global menu to the GUI  (`#945 <https://github.com/Scille/parsec-"
 " cloud/issues/945>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:52
+#: ../../../HISTORY.rst:117
 msgid ""
 "Add a line under the tab bar  (`#942 <https://github.com/Scille/parsec- "
 "cloud/issues/942>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:54
+#: ../../../HISTORY.rst:119
 msgid ""
 "Removed tab title length limit  (`#944 <https://github.com/Scille/parsec-"
 " cloud/issues/944>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:60
+#: ../../../HISTORY.rst:125
 msgid ""
 "Clear password input when switching device on login  (`#946 "
 "<https://github.com/Scille/parsec-cloud/issues/946>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:62
+#: ../../../HISTORY.rst:127
 msgid ""
 "Fix files display on low horizontal resolutions  (`#926 "
 "<https://github.com/Scille/parsec-cloud/issues/926>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:64
+#: ../../../HISTORY.rst:129
 msgid ""
 "Display an error when trying to move a folder into itself  (`#935 "
 "<https://github.com/Scille/parsec-cloud/issues/935>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:66
+#: ../../../HISTORY.rst:131
 msgid ""
 "Fix users and devices being hidden on low resolutions  (`#927 "
 "<https://github.com/Scille/parsec-cloud/issues/927>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:68
+#: ../../../HISTORY.rst:133
 msgid ""
 "Disable Paste button if nothing has been copied/cut  (`#934 "
 "<https://github.com/Scille/parsec-cloud/issues/934>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:70
+#: ../../../HISTORY.rst:135
 msgid ""
 "Fix menu bar being resized when changing window size  (`#932 "
 "<https://github.com/Scille/parsec-cloud/issues/932>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:75
+#: ../../../HISTORY.rst:140
 msgid "Parsec 1.5.0 (2020-01-20)"
 msgstr ""
 
-#: ../../../HISTORY.rst:80
+#: ../../../HISTORY.rst:145
 msgid ""
 "Add copy, cut and paste to the Parsec file explorer  (`#855 "
 "<https://github.com/Scille/parsec-cloud/issues/855>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:86
+#: ../../../HISTORY.rst:151
 msgid ""
 "Fix unhandled exception in backend when a client connected over ssl "
 "disconnect during handshake. (`#833 <https://github.com/Scille/parsec- "
 "cloud/issues/833>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:89
+#: ../../../HISTORY.rst:154
 msgid ""
 "Fix Organization bootstrap and user/device claim links encoding when "
 "their corresponding organization ID contains unicode. (`#884 "
 "<https://github.com/Scille/parsec-cloud/issues/884>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:92
+#: ../../../HISTORY.rst:157
 msgid ""
 "Fix recreation of an organization by the administration as long as it "
 "hasn't been bootstrapped.  (`#885 <https://github.com/Scille/parsec- "
 "cloud/issues/885>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:95
+#: ../../../HISTORY.rst:160
 msgid ""
 "Clear displayed files on stat error  (`#920 "
 "<https://github.com/Scille/parsec- cloud/issues/920>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:97
+#: ../../../HISTORY.rst:162
 msgid ""
 "Fix a bug related to broken symlinks in the base directory for "
 "mountpoints after a hard shutdown.  (`#881 "
 "<https://github.com/Scille/parsec- cloud/issues/881>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:100
+#: ../../../HISTORY.rst:165
 msgid ""
 "Used new partial strategy to download manifests when rebuilding history "
 "to fix it not loading on a heavy workspace.  (`#888 "
 "<https://github.com/Scille/parsec-cloud/issues/888>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:103
+#: ../../../HISTORY.rst:168
 msgid ""
 "Fix incorrect behavior when the backend accept anonymous connection to "
 "expired organization. (`#891 <https://github.com/Scille/parsec-"
 "cloud/issues/891>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:105
+#: ../../../HISTORY.rst:170
 msgid ""
 "Prevent winfsp from freezing the application when the mounting operation "
 "times out.  (`#905 <https://github.com/Scille/parsec-"
 "cloud/issues/905>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:107
+#: ../../../HISTORY.rst:172
 msgid ""
 "Prevent managers from inviting other users as managers  (`#916 "
 "<https://github.com/Scille/parsec-cloud/issues/916>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:109
+#: ../../../HISTORY.rst:174
 msgid ""
 "Deal with special dash paths in fuse operations.  (`#904 "
 "<https://github.com/Scille/parsec-cloud/issues/904>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:115
+#: ../../../HISTORY.rst:180
 msgid ""
 "Allow owners to switch the role of other owners  (`#870 "
 "<https://github.com/Scille/parsec-cloud/issues/870>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:120
+#: ../../../HISTORY.rst:185
 msgid "Parsec 1.4.0 (2019-12-06)"
 msgstr ""
 
-#: ../../../HISTORY.rst:125
+#: ../../../HISTORY.rst:190
 msgid ""
 "Fix error handling of list&revoke user in GUI. (`#834 "
 "<https://github.com/Scille/parsec-cloud/issues/834>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:127
+#: ../../../HISTORY.rst:192
 msgid ""
 "Fix mount error on Windows when workspace name is too long (`#838 "
 "<https://github.com/Scille/parsec-cloud/issues/838>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:129
+#: ../../../HISTORY.rst:194
 msgid ""
 "Fix colored workspace button display  (`#851 <https://github.com/Scille"
 "/parsec-cloud/issues/851>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:131
+#: ../../../HISTORY.rst:196
 msgid ""
 "Fix bug when the workspaces doesn't show up on new device creation until "
 "the user manifest is actually modified. (`#854 "
 "<https://github.com/Scille/parsec- cloud/issues/854>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:138
+#: ../../../HISTORY.rst:203
 msgid ""
 "Provide fusepy with the file system encoding. Also use EINVAL as fallback"
 " error code.  (`#827 <https://github.com/Scille/parsec-"
 "cloud/issues/827>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:143
+#: ../../../HISTORY.rst:208
 msgid "Parsec 1.3.0 (2019-11-28)"
 msgstr ""
 
-#: ../../../HISTORY.rst:148
+#: ../../../HISTORY.rst:213
 msgid ""
 "Add a button to manually add a new tab Do not open a new tab when "
 "launching the app without any parameters (`#774 "
 "<https://github.com/Scille/parsec- cloud/issues/774>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:151
+#: ../../../HISTORY.rst:216
 msgid ""
 "Allow only one Log-In tab (`#777 <https://github.com/Scille/parsec- "
 "cloud/issues/777>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:153
+#: ../../../HISTORY.rst:218
 msgid ""
 "Hide revoked users in workspace sharing dialog (`#780 "
 "<https://github.com/Scille/parsec-cloud/issues/780>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:155
+#: ../../../HISTORY.rst:220
 msgid ""
 "Prevent tab change if a modal is open (`#820 <https://github.com/Scille"
 "/parsec-cloud/issues/820>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:157
+#: ../../../HISTORY.rst:222
 msgid ""
 "Tab color changes when an instance receives a notification (`#821 "
 "<https://github.com/Scille/parsec-cloud/issues/821>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:163
+#: ../../../HISTORY.rst:228
 msgid ""
 "Now handles inconsistent directories accessed from the GUI, tested "
 "mountpoint behaviour (`#782 <https://github.com/Scille/parsec-"
 "cloud/issues/782>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:165
+#: ../../../HISTORY.rst:230
 msgid ""
 "Fix infinite loop in IPC server (`#813 <https://github.com/Scille/parsec-"
 " cloud/issues/813>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:167
+#: ../../../HISTORY.rst:232
 msgid ""
 "Fix config not saved when updating from the settings tab when logged in. "
 "(`#815 <https://github.com/Scille/parsec-cloud/issues/815>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:169
+#: ../../../HISTORY.rst:234
 msgid ""
 "Fix duplication and infinite loading in view on directories containing "
 "many entries under Windows. (`#835 <https://github.com/Scille/parsec- "
 "cloud/issues/835>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:176
+#: ../../../HISTORY.rst:241
 msgid ""
 "Change the invitation token format to 6 random digits.  (`#819 "
 "<https://github.com/Scille/parsec-cloud/issues/819>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:181
+#: ../../../HISTORY.rst:246
 msgid "Parsec 1.2.1 (2019-11-20)"
 msgstr ""
 
-#: ../../../HISTORY.rst:183
+#: ../../../HISTORY.rst:248
 msgid ""
 "Add view to Display changelog history in the GUI (`#788 "
 "<https://github.com/Scille/parsec-cloud/issues/788>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:188
+#: ../../../HISTORY.rst:253
 msgid "Parsec 1.2.0 (2019-11-15)"
 msgstr ""
 
-#: ../../../HISTORY.rst:193
+#: ../../../HISTORY.rst:258
 msgid ""
 "Backend now checks if timestamp is not inferior of existant on vlob "
 "update, if it is, sends an error to client which temporarily goes offline"
@@ -351,53 +455,53 @@ msgid ""
 "<https://github.com/Scille/parsec-cloud/issues/758>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:197
+#: ../../../HISTORY.rst:262
 msgid ""
 "Add notification in GUI when an operation in the mountpoint failed in an "
 "unexpected manner. (`#759 <https://github.com/Scille/parsec- "
 "cloud/issues/759>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:200
+#: ../../../HISTORY.rst:265
 msgid ""
 "Limit a tab title to a few characters and add a tooltip to tabs  (`#775 "
 "<https://github.com/Scille/parsec-cloud/issues/775>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:202
+#: ../../../HISTORY.rst:267
 msgid ""
 "Add tooltips to taskbar buttons  (`#776 "
 "<https://github.com/Scille/parsec- cloud/issues/776>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:204
+#: ../../../HISTORY.rst:269
 msgid ""
 "Removed duplicates and supposed minimal sync when listing versions of a "
 "path (`#784 <https://github.com/Scille/parsec-cloud/issues/784>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:210
+#: ../../../HISTORY.rst:275
 msgid ""
 "Fix crash on Linux when the ipc server lock file is located in a non "
 "existant directory (`#760 <https://github.com/Scille/parsec-"
 "cloud/issues/760>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:212
+#: ../../../HISTORY.rst:277
 msgid ""
 "Fix crash in ipc server when socket file path contains missing folder "
 "(only on windows).  (`#765 <https://github.com/Scille/parsec-"
 "cloud/issues/765>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:214
+#: ../../../HISTORY.rst:279
 msgid ""
 "Fix rights checking in winfsp operations. This issue used to cause a cffi"
 " crash on windows when some operations were performed on the file system."
 " (`#770 <https://github.com/Scille/parsec-cloud/issues/770>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:217
+#: ../../../HISTORY.rst:282
 msgid ""
 "Fix len check in "
 "``OrganizationID``/``UserID``/``DeviceName``/``DeviceID`` when containing"
@@ -405,163 +509,163 @@ msgid ""
 "cloud/issues/794>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:220
+#: ../../../HISTORY.rst:285
 msgid ""
 "Improve support of unicode in the mountpoint on Windows. (`#799 "
 "<https://github.com/Scille/parsec-cloud/issues/799>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:226
+#: ../../../HISTORY.rst:291
 msgid ""
 "Improve logging output on backend server  (`#753 "
 "<https://github.com/Scille/parsec-cloud/issues/753>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:231
+#: ../../../HISTORY.rst:296
 msgid "Parsec 1.1.2 (2019-10-22)"
 msgstr ""
 
-#: ../../../HISTORY.rst:236
+#: ../../../HISTORY.rst:301
 msgid ""
 "Small GUI improvements on white border around main tab and url error "
 "message display"
 msgstr ""
 
-#: ../../../HISTORY.rst:238
+#: ../../../HISTORY.rst:303
 msgid ""
 "Remove dependency on pywin32 under Windows which cause packaging issue on"
 " previous version (`#750 <https://github.com/Scille/parsec- "
 "cloud/issues/750>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:244
+#: ../../../HISTORY.rst:309
 msgid "Parsec 1.1.1 (2019-10-21)"
 msgstr ""
 
-#: ../../../HISTORY.rst:249
+#: ../../../HISTORY.rst:314
 msgid ""
 "Fix argument parsing in backend cli commands (``PARSEC_CMD_ARGS`` env "
 "var, db param and S3 entry point default value) (`#749 "
 "<https://github.com/Scille/parsec-cloud/issues/749>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:255
+#: ../../../HISTORY.rst:320
 msgid "Parsec 1.1.0 (2019-10-21)"
 msgstr ""
 
-#: ../../../HISTORY.rst:260
+#: ../../../HISTORY.rst:325
 msgid ""
 "Add support for IPC communication in GUI to have a single instance "
 "running. Also add tab support & handle parsec:// url as start argument.  "
 "(`#684 <https://github.com/Scille/parsec-cloud/issues/684>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:263
+#: ../../../HISTORY.rst:328
 msgid ""
 "Rework backend cli argument and environ variable handling  (`#701 "
 "<https://github.com/Scille/parsec-cloud/issues/701>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:269
+#: ../../../HISTORY.rst:334
 msgid ""
 "Fix pure HTTP query handling in backend (`#699 <https://github.com/Scille"
 "/parsec-cloud/issues/699>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:271
+#: ../../../HISTORY.rst:336
 msgid ""
 "Fix long wait on GUI login with poor connection to the backend (`#706 "
 "<https://github.com/Scille/parsec-cloud/issues/706>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:273
+#: ../../../HISTORY.rst:338
 msgid ""
 "Add missing check in core to enforce consistency of timestamps between a "
 "manifest and it author's role certificate (`#734 "
 "<https://github.com/Scille/parsec-cloud/issues/734>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:276
+#: ../../../HISTORY.rst:341
 msgid ""
 "Fix fonts scaling on wayland (`#735 <https://github.com/Scille/parsec- "
 "cloud/issues/735>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:278
+#: ../../../HISTORY.rst:343
 msgid ""
 "Fix bug causing workspace mountpoint directory not being removed on "
 "application shutdown (`#737 <https://github.com/Scille/parsec- "
 "cloud/issues/737>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:285
+#: ../../../HISTORY.rst:350
 msgid ""
 "Allow dash character (i.e. ``-``) in OrganizationID, UserID & DeviceName "
 "(`#728 <https://github.com/Scille/parsec-cloud/issues/728>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:290
+#: ../../../HISTORY.rst:355
 msgid "Parsec 1.0.2 (2019-10-01)"
 msgstr ""
 
-#: ../../../HISTORY.rst:292
+#: ../../../HISTORY.rst:357
 msgid ""
 "Upgrade PyQt5 to 5.13.1 (`#690 <https://github.com/Scille/parsec-"
 "cloud/issues/690>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:294
+#: ../../../HISTORY.rst:359
 msgid ""
 "Add keepalive pings on invite/claim requests (`#693 "
 "<https://github.com/Scille/parsec-cloud/issues/693>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:299
+#: ../../../HISTORY.rst:364
 msgid "Parsec 1.0.1 (2019-09-25)"
 msgstr ""
 
-#: ../../../HISTORY.rst:301
+#: ../../../HISTORY.rst:366
 msgid ""
 "Upgrade wsproto to 0.15.0 to improve websocket compatibility (`#686 "
 "<https://github.com/Scille/parsec-cloud/issues/686>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:303
+#: ../../../HISTORY.rst:368
 msgid ""
 "Replace CXFreeze by a custom script to generate win32 builds (`#685 "
 "<https://github.com/Scille/parsec-cloud/issues/685>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:305
+#: ../../../HISTORY.rst:370
 msgid ""
 "Add organization status command in cli (`#683 <https://github.com/Scille"
 "/parsec-cloud/issues/683>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:307
+#: ../../../HISTORY.rst:372
 msgid ""
 "User/device invitation get cancelled on server side when the user use the"
 " cancel button (`#682 <https://github.com/Scille/parsec-"
 "cloud/issues/682>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:309
+#: ../../../HISTORY.rst:374
 msgid ""
 "Add organization expiration date support in backend (`#680 "
 "<https://github.com/Scille/parsec-cloud/issues/680>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:311
+#: ../../../HISTORY.rst:376
 msgid ""
 "Client connection to Backend specify a `/ws` resource endpoint (`#678 "
 "<https://github.com/Scille/parsec-cloud/issues/678>`__)"
 msgstr ""
 
-#: ../../../HISTORY.rst:316
+#: ../../../HISTORY.rst:381
 msgid "Parsec 1.0.0 (2019-09-10)"
 msgstr ""
 
-#: ../../../HISTORY.rst:318
+#: ../../../HISTORY.rst:383
 msgid "First stable release"
 msgstr ""
 
