@@ -13,15 +13,15 @@ from parsec.test_utils import create_inconsistent_workspace
 
 @pytest.fixture
 def temp_dir(tmpdir):
-    pathlib.Path(tmpdir / "dir1/dir11").mkdir(parents=True)
-    pathlib.Path(tmpdir / "dir1/dir12").mkdir(parents=True)
-    pathlib.Path(tmpdir / "dir2/dir21").mkdir(parents=True)
-    pathlib.Path(tmpdir / "file01.txt").write_text("Content file01")
-    pathlib.Path(tmpdir / "file02.txt").write_text("Content file02")
-    pathlib.Path(tmpdir / "dir1/dir11" / "file.txt").write_text("Content file111")
-    pathlib.Path(tmpdir / "dir2" / "file2.txt").write_text("Content file2")
-
-    return pathlib.Path(tmpdir)
+    temp = pathlib.Path(tmpdir) / "temp_dir"
+    pathlib.Path(temp / "dir1/dir11").mkdir(parents=True)
+    pathlib.Path(temp / "dir1/dir12").mkdir(parents=True)
+    pathlib.Path(temp / "dir2/dir21").mkdir(parents=True)
+    pathlib.Path(temp / "file01.txt").write_text("Content file01")
+    pathlib.Path(temp / "file02.txt").write_text("Content file02")
+    pathlib.Path(temp / "dir1/dir11" / "file.txt").write_text("Content file111")
+    pathlib.Path(temp / "dir2" / "file2.txt").write_text("Content file2")
+    return temp
 
 
 @pytest.fixture
