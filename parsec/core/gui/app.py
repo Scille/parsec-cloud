@@ -1,9 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
+
+import sys
 import signal
-from structlog import get_logger
 from queue import Queue
+from contextlib import contextmanager
+
+import trio
+from structlog import get_logger
 
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont, QFontDatabase
@@ -80,6 +84,30 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
                 continue
 
 
+@contextmanager
+def fail_on_first_exception(diagnose, kill_window):
+    # Fail only in diagnose mode
+    if not diagnose:
+        yield
+        return
+
+    exceptions = []
+
+    def excepthook(etype, exception, traceback):
+        exceptions.append(exception)
+        kill_window()
+        return previous_hook(etype, exception, traceback)
+
+    sys.excepthook, previous_hook = excepthook, sys.excepthook
+
+    try:
+        yield
+    finally:
+        sys.excepthook = previous_hook
+        if exceptions:
+            raise exceptions[0]
+
+
 def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     logger.info("Starting UI")
 
@@ -138,7 +166,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             systray.on_show.connect(win.show_top)
             app.aboutToQuit.connect(before_quit(systray))
 
-        if config.gui_check_version_at_startup:
+        if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
         win.showMaximized(skip_dialogs=diagnose)
@@ -159,4 +187,5 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
         if lang_key:
             event_bus.send("gui.config.changed", gui_language=lang_key)
 
-        return app.exec_()
+        with fail_on_first_exception(diagnose, kill_window):
+            return app.exec_()
