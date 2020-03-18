@@ -141,7 +141,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
         if config.gui_check_version_at_startup:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
-        win.showMaximized()
+        win.showMaximized(skip_dialogs=diagnose)
         win.show_top()
         win.new_instance_needed.emit(start_arg)
 
@@ -155,6 +155,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
         timer = QTimer()
         timer.start(1000 if diagnose else 400)
         timer.timeout.connect(kill_window if diagnose else lambda: None)
+
         if lang_key:
             event_bus.send("gui.config.changed", gui_language=lang_key)
 

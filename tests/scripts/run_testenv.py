@@ -243,12 +243,12 @@ async def amain(
     # Configure MIME types locally
     await configure_mime_types()
 
-    # Generate dummy config file for gui
-    await generate_gui_config()
-
     # Keep the environment empty
     if empty:
         return
+
+    # Generate dummy config file for gui
+    await generate_gui_config()
 
     # Start a local backend
     if backend_address is None:
