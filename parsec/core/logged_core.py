@@ -69,7 +69,7 @@ async def logged_core_factory(
         async with backend_conn.run():
 
             async with mountpoint_manager_factory(
-                user_fs, event_bus, config.mountpoint_base_dir, enabled=config.mountpoint_enabled
+                user_fs, event_bus, config.mountpoint_base_dir
             ) as mountpoint_manager:
 
                 yield LoggedCore(

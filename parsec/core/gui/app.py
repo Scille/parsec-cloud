@@ -1,9 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
+
+import sys
 import signal
-from structlog import get_logger
 from queue import Queue
+from contextlib import contextmanager
+
+import trio
+from structlog import get_logger
 
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QFont, QFontDatabase
@@ -80,7 +84,26 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
                 continue
 
 
-def run_gui(config: CoreConfig, start_arg: str = None):
+@contextmanager
+def fail_on_first_exception(kill_window):
+    exceptions = []
+
+    def excepthook(etype, exception, traceback):
+        exceptions.append(exception)
+        kill_window()
+        return previous_hook(etype, exception, traceback)
+
+    sys.excepthook, previous_hook = excepthook, sys.excepthook
+
+    try:
+        yield
+    finally:
+        sys.excepthook = previous_hook
+        if exceptions:
+            raise exceptions[0]
+
+
+def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     logger.info("Starting UI")
 
     # Needed for High DPI usage of QIcons, otherwise only QImages are well scaled
@@ -138,10 +161,10 @@ def run_gui(config: CoreConfig, start_arg: str = None):
             systray.on_show.connect(win.show_top)
             app.aboutToQuit.connect(before_quit(systray))
 
-        if config.gui_check_version_at_startup:
+        if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
 
-        win.showMaximized()
+        win.showMaximized(skip_dialogs=diagnose)
         win.show_top()
         win.new_instance_needed.emit(start_arg)
 
@@ -150,12 +173,23 @@ def run_gui(config: CoreConfig, start_arg: str = None):
             QApplication.quit()
 
         signal.signal(signal.SIGINT, kill_window)
+
         # QTimer wakes up the event loop periodically which allows us to close
         # the window even when it is in background.
         timer = QTimer()
-        timer.start(400)
-        timer.timeout.connect(lambda: None)
+        timer.start(1000 if diagnose else 400)
+        timer.timeout.connect(kill_window if diagnose else lambda: None)
+
+        if diagnose:
+            diagnose_timer = QTimer()
+            diagnose_timer.start(1000)
+            diagnose_timer.timeout.connect(kill_window)
+
         if lang_key:
             event_bus.send("gui.config.changed", gui_language=lang_key)
 
-        return app.exec_()
+        if diagnose:
+            with fail_on_first_exception(kill_window):
+                return app.exec_()
+        else:
+            return app.exec_()

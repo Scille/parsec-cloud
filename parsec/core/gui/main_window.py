@@ -156,9 +156,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         s.move(x, y)
         s.exec_()
 
-    def showMaximized(self):
+    def showMaximized(self, skip_dialogs=False):
         super().showMaximized()
         QCoreApplication.processEvents()
+
+        # Used with the --diagnose option
+        if skip_dialogs:
+            return
 
         # At the very first launch
         if self.config.gui_first_launch:

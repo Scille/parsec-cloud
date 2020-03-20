@@ -21,13 +21,17 @@ class MountpointNotAvailable(MountpointError):
     pass
 
 
-class MountpointDisabled(MountpointError):
-    pass
-
-
 class MountpointConfigurationError(MountpointError):
     pass
 
 
 class MountpointConfigurationWorkspaceFSTimestampedError(MountpointConfigurationError):
+    pass
+
+
+class MountpointWinfspNotAvailable(MountpointError):
+    pass
+
+
+class MountpointFuseNotAvailable(MountpointError):
     pass
