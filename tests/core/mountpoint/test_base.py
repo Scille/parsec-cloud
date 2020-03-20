@@ -523,3 +523,40 @@ def test_nested_rw_access(mountpoint_service):
         with open(str(fpath), "rb") as fin:
             data = fin.read()
             assert data == b"whatever"
+
+
+@pytest.mark.trio
+@pytest.mark.slow
+@pytest.mark.mountpoint
+@pytest.mark.parametrize("n", [10, 100, 1000])
+@pytest.mark.parametrize("base_path", ["/", "/foo"])
+async def test_mountpoint_iterdir_with_many_files(
+    n, base_path, base_mountpoint, alice_user_fs, event_bus
+):
+    wid = await alice_user_fs.workspace_create("w")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.mkdir(base_path, parents=True, exist_ok=True)
+    names = [f"some_file_{i:03d}.txt" for i in range(n)]
+    path_list = [FsPath(f"{base_path}/{name}") for name in names]
+
+    for path in path_list:
+        await workspace.touch(path)
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+
+        await mountpoint_manager.mount_workspace(wid)
+
+        test_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(base_path))
+
+        # Work around trio issue #1308 (https://github.com/python-trio/trio/issues/1308)
+        items = await trio.to_thread.run_sync(
+            lambda: [path.name for path in Path(test_path).iterdir()]
+        )
+        assert items == names
+
+        for path in path_list:
+            item_path = mountpoint_manager.get_path_in_mountpoint(wid, path)
+            assert await trio.Path(item_path).exists()

@@ -295,20 +295,25 @@ class WinFSPOperations(BaseFileSystemOperations):
         if stat["type"] == "file":
             raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
 
-        # The "." and ".." directories should ONLY be included
+        # NOTE: The "." and ".." directories should ONLY be included
         # if the queried directory is not root
-        if not file_context.path.is_root():
 
-            # Current directory
+        # Current directory
+        if marker is None and not file_context.path.is_root():
             entry = {"file_name": ".", **stat_to_winfsp_attributes(stat)}
             entries.append(entry)
+        elif marker == ".":
+            marker = None
 
-            # Parent directory
+        # Parent directory
+        if marker is None and not file_context.path.is_root():
             parent_stat = self.fs_access.entry_info(file_context.path.parent)
             entry = {"file_name": "..", **stat_to_winfsp_attributes(parent_stat)}
             entries.append(entry)
+        elif marker == "..":
+            marker = None
 
-        # Note we *do not* rely on alphabetically sorting to compare the
+        # NOTE: we *do not* rely on alphabetically sorting to compare the
         # marker given `..` is always the first element event if we could
         # have children name before it (`.-foo` for instance)
         iter_children_names = iter(stat["children"])
