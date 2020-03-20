@@ -30,6 +30,7 @@ def get_mountpoint_runner():
     if os.name == "nt":
 
         try:
+            # Use import function for easier mock up
             import_function("winfspy")
         except RuntimeError as exc:
             raise MountpointWinfspNotAvailable(exc) from exc
@@ -42,6 +43,7 @@ def get_mountpoint_runner():
     # Linux
     else:
         try:
+            # Use import function for easier mock up
             import_function("fuse")
         except ImportError as exc:
             raise MountpointFuseNotAvailable(exc) from exc

@@ -85,12 +85,7 @@ async def _start_ipc_server(config, main_window, start_arg, result_queue):
 
 
 @contextmanager
-def fail_on_first_exception(diagnose, kill_window):
-    # Fail only in diagnose mode
-    if not diagnose:
-        yield
-        return
-
+def fail_on_first_exception(kill_window):
     exceptions = []
 
     def excepthook(etype, exception, traceback):
@@ -178,14 +173,23 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             QApplication.quit()
 
         signal.signal(signal.SIGINT, kill_window)
+
         # QTimer wakes up the event loop periodically which allows us to close
         # the window even when it is in background.
         timer = QTimer()
         timer.start(1000 if diagnose else 400)
         timer.timeout.connect(kill_window if diagnose else lambda: None)
 
+        if diagnose:
+            diagnose_timer = QTimer()
+            diagnose_timer.start(1000)
+            diagnose_timer.timeout.connect(kill_window)
+
         if lang_key:
             event_bus.send("gui.config.changed", gui_language=lang_key)
 
-        with fail_on_first_exception(diagnose, kill_window):
+        if diagnose:
+            with fail_on_first_exception(kill_window):
+                return app.exec_()
+        else:
             return app.exec_()
