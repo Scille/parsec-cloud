@@ -468,13 +468,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             if self.config.gui_confirmation_before_close and not self.force_close:
                 result = ask_question(
-                    self,
+                    self if self.isVisible() else None,
                     _("TEXT_PARSEC_QUIT_TITLE"),
                     _("TEXT_PARSEC_QUIT_INSTRUCTIONS"),
                     [_("ACTION_PARSEC_QUIT_CONFIRM"), _("ACTION_CANCEL")],
                 )
                 if result != _("ACTION_PARSEC_QUIT_CONFIRM"):
                     event.ignore()
+                    self.force_close = False
+                    self.need_close = False
                     return
 
             self.close_all_tabs()

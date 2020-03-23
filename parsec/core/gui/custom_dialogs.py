@@ -54,7 +54,8 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
             self.button_close.hide()
         main_win = self._get_main_window()
         if main_win:
-            self.setParent(main_win)
+            if main_win.isVisible():
+                self.setParent(main_win)
             self.move(0, 0)
             self.resize(main_win.size())
         else:
