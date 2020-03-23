@@ -22,7 +22,7 @@ class Systray(QSystemTrayIcon):
         self.on_close = self.close_action.triggered
 
         self.setContextMenu(self.menu)
-        self.setIcon(QIcon(":/icons/images/icons/parsec.png"))
+        self.setIcon(QIcon(":/logos/images/icons/parsec.png"))
         self.activated.connect(self.on_activated)
         self.show()
 
