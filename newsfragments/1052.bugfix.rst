@@ -1,0 +1,1 @@
+Fix ``parsec backend init`` cli command crashing due to a missing ``init_tables.sql`` resource.
