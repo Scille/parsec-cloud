@@ -369,10 +369,9 @@ setup(
     # As you may know, setuptools is really broken, so we have to roll our
     # globing ourself to include non-python files...
     package_data={
-        "parsec.backend.drivers.postgresql": glob.glob("parsec/backend/**/*.sql"),
-        "parsec.core.gui": [
-            x[len("parsec/core/gui/") :]
-            for x in itertools.chain(
+        "parsec.backend.postgresql": glob.glob("parsec/backend/postgresql/*.sql"),
+        "parsec.core.gui": list(
+            itertools.chain(
                 glob.glob("parsec/core/gui/tr/**/*.ts", recursive=True),
                 glob.glob("parsec/core/gui/forms/**/*.ui", recursive=True),
                 glob.glob("parsec/core/gui/rc/**/*.png", recursive=True),
@@ -380,7 +379,7 @@ setup(
                 glob.glob("parsec/core/gui/rc/**/*.qrc", recursive=True),
                 glob.glob("parsec/core/gui/rc/**/*.otf", recursive=True),
             )
-        ],
+        ),
     },
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
