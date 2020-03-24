@@ -18,7 +18,6 @@ from parsec.core.types import (
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
-    MountpointDisabled,
     MountpointConfigurationError,
     MountpointConfigurationWorkspaceFSTimestampedError,
 )
@@ -70,7 +69,7 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
         try:
             await core.mountpoint_manager.unmount_workspace(workspace_id)
             await core.mountpoint_manager.mount_workspace(workspace_id)
-        except (MountpointAlreadyMounted, MountpointDisabled):
+        except MountpointAlreadyMounted:
             pass
 
 
@@ -106,7 +105,7 @@ async def _do_workspace_list(core):
 async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.Pendulum = None):
     try:
         await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
-    except (MountpointAlreadyMounted, MountpointDisabled):
+    except MountpointAlreadyMounted:
         pass
     except MountpointConfigurationError as exc:
         raise JobResultError(exc)
@@ -115,7 +114,7 @@ async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.Pendulum =
 async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.Pendulum = None):
     try:
         await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
-    except (MountpointAlreadyMounted, MountpointDisabled):
+    except MountpointAlreadyMounted:
         pass
 
 

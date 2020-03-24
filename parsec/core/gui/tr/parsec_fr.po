@@ -628,6 +628,16 @@ msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
 
+msgid "TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"
+msgstr ""
+"WinFsp n'a pas pu être chargé. \n"
+"Merci de vérifier votre installation."
+
+msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
+msgstr ""
+"FUSE n'a pas pu être chargé. \n"
+"Merci de vérifier votre installation."
+
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "Cet appareil est déjà connecté, probablement dans un autre onglet."
 

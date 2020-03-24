@@ -8,8 +8,14 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
 from parsec.core import logged_core_factory
+from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.core.local_device import LocalDeviceError, load_device_with_password
-from parsec.core.mountpoint import MountpointConfigurationError, MountpointDriverCrash
+from parsec.core.mountpoint import (
+    MountpointConfigurationError,
+    MountpointDriverCrash,
+    MountpointFuseNotAvailable,
+    MountpointWinfspNotAvailable,
+)
 
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
 from parsec.core.gui.custom_dialogs import show_error
@@ -117,9 +123,16 @@ class InstanceWidget(QWidget):
         if self.core:
             self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
         if self.running_core_job.status is not None:
-            if "Device has been revoked" in str(self.running_core_job.exc):
+            if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
                 show_error(
                     self, _("TEXT_LOGIN_ERROR_DEVICE_REVOKED"), exception=self.running_core_job.exc
+            elif isinstance(self.running_core_job.exc, MountpointWinfspNotAvailable):
+                show_error(
+                    self, _("TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"), exception=self.running_core_job.exc
+                )
+            elif isinstance(self.running_core_job.exc, MountpointFuseNotAvailable):
+                show_error(
+                    self, _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"), exception=self.running_core_job.exc
                 )
             else:
                 logger.exception("Unhandled error", exc_info=self.running_core_job.exc)

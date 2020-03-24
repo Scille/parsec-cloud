@@ -279,6 +279,8 @@ class WorkspaceFS:
             FSError
         """
         path = FsPath(path)
+        if path.is_root() and exist_ok:
+            return
         try:
             await self.transactions.folder_create(path)
         except FileNotFoundError:

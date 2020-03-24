@@ -170,11 +170,10 @@ jobs:
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runmountpoint --runslow \
-        -n auto --max-worker-restart=0 -x \
-        --junitxml=test-results-memory.xml
+        ../tests/ -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-fast.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
-    displayName: 'Tests memory'
+    displayName: 'Tests fast'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
@@ -189,6 +188,14 @@ jobs:
         --junitxml=test-results-gui.xml
     workingDirectory: $(Build.SourcesDirectory)/empty
     displayName: 'Tests GUI'
+  - bash: |
+      set -eux
+      py.test $(pytest.base_args) \
+        ../tests/ --runslow -m slow \
+        -n auto --max-worker-restart=0 -x \
+        --junitxml=test-results-slow.xml
+    workingDirectory: $(Build.SourcesDirectory)/empty
+    displayName: 'Tests slow'
   - bash: |
       set -eux
       pip install -U codecov

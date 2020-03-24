@@ -10,10 +10,11 @@ from pathlib import Path, PurePath
 
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
-    MountpointDisabled,
     MountpointConfigurationError,
     MountpointAlreadyMounted,
     MountpointNotMounted,
+    MountpointFuseNotAvailable,
+    MountpointWinfspNotAvailable,
 )
 from parsec.core import logged_core_factory
 from parsec.core.types import FsPath, WorkspaceRole
@@ -25,24 +26,16 @@ from tests.common import create_shared_workspace
 async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
 
-    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
-    with pytest.raises(RuntimeError):
+    def _import(name):
+        if name == "winfspy":
+            raise RuntimeError()
+        else:
+            raise ImportError()
+
+    monkeypatch.setattr("parsec.core.mountpoint.manager.import_function", _import)
+    with pytest.raises((MountpointFuseNotAvailable, MountpointWinfspNotAvailable)):
         async with mountpoint_manager_factory(alice_user_fs, event_bus, base_mountpoint):
             pass
-
-
-@pytest.mark.trio
-async def test_mountpoint_disabled(monkeypatch, alice_user_fs, event_bus):
-    base_mountpoint = Path("/foo")
-
-    wid = await alice_user_fs.workspace_create("w")
-
-    monkeypatch.setattr("parsec.core.mountpoint.manager.get_mountpoint_runner", lambda: None)
-    async with mountpoint_manager_factory(
-        alice_user_fs, event_bus, base_mountpoint, enabled=False
-    ) as mountpoint_manager:
-        with pytest.raises(MountpointDisabled):
-            await mountpoint_manager.mount_workspace(wid)
 
 
 @pytest.mark.trio
@@ -523,3 +516,40 @@ def test_nested_rw_access(mountpoint_service):
         with open(str(fpath), "rb") as fin:
             data = fin.read()
             assert data == b"whatever"
+
+
+@pytest.mark.trio
+@pytest.mark.slow
+@pytest.mark.mountpoint
+@pytest.mark.parametrize("n", [10, 100, 1000])
+@pytest.mark.parametrize("base_path", ["/", "/foo"])
+async def test_mountpoint_iterdir_with_many_files(
+    n, base_path, base_mountpoint, alice_user_fs, event_bus
+):
+    wid = await alice_user_fs.workspace_create("w")
+    workspace = alice_user_fs.get_workspace(wid)
+    await workspace.mkdir(base_path, parents=True, exist_ok=True)
+    names = [f"some_file_{i:03d}.txt" for i in range(n)]
+    path_list = [FsPath(f"{base_path}/{name}") for name in names]
+
+    for path in path_list:
+        await workspace.touch(path)
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+
+        await mountpoint_manager.mount_workspace(wid)
+
+        test_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath(base_path))
+
+        # Work around trio issue #1308 (https://github.com/python-trio/trio/issues/1308)
+        items = await trio.to_thread.run_sync(
+            lambda: [path.name for path in Path(test_path).iterdir()]
+        )
+        assert items == names
+
+        for path in path_list:
+            item_path = mountpoint_manager.get_path_in_mountpoint(wid, path)
+            assert await trio.Path(item_path).exists()
