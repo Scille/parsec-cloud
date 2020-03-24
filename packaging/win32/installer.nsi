@@ -94,14 +94,19 @@ Var StartMenuFolder
 
 # --- Functions ---
 
-# Check for running Parsec instance.
-Function .onInit
+Function checkParsecRunning
     System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
     IntCmp $R0 0 notRunning
         System::Call 'kernel32::CloseHandle(i $R0)'
         MessageBox MB_OK|MB_ICONEXCLAMATION "Parsec is running. Please close it first" /SD IDOK
-        Abort
+        Call checkParsecRunning
     notRunning:
+FunctionEnd
+
+# Check for running Parsec instance.
+Function .onInit
+    Call checkParsecRunning
+
     ReadRegStr $R0 HKLM \
     "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}" \
     "UninstallString"
