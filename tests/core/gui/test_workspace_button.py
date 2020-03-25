@@ -3,7 +3,9 @@
 import pytest
 from PyQt5 import QtCore
 
+
 from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.lang import switch_language
 
 
 @pytest.fixture
@@ -16,7 +18,8 @@ async def workspace_fs(alice_user_fs, running_backend):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button(qtbot, workspace_fs):
+async def test_workspace_button(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
 
     w = WorkspaceButton(
         workspace_name="Workspace",
@@ -38,7 +41,8 @@ async def test_workspace_button(qtbot, workspace_fs):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_shared_by(qtbot, workspace_fs):
+async def test_workspace_button_shared_by(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
 
     w = WorkspaceButton(
         workspace_name="Workspace",
@@ -55,12 +59,13 @@ async def test_workspace_button_shared_by(qtbot, workspace_fs):
     assert w.label_owner.isVisible() is False
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace (shared with you)"
+    assert w.label_title.text() == "Workspace"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_shared_with(qtbot, workspace_fs):
+async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
 
     w = WorkspaceButton(
         workspace_name="Workspace",
@@ -77,12 +82,15 @@ async def test_workspace_button_shared_with(qtbot, workspace_fs):
     assert w.label_owner.isVisible() is True
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace (shared with others)"
+    assert w.label_title.text() == "Workspace (shared wi..."
+    assert w.label_title.toolTip() == "Workspace (shared with others)"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_files(qtbot, workspace_fs):
+async def test_workspace_button_files(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
+
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -98,16 +106,19 @@ async def test_workspace_button_files(qtbot, workspace_fs):
     assert w.label_owner.isVisible() is True
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace (shared with others)"
-    assert w.label_file1.text() == "File1.txt"
-    assert w.label_file2.text() == "File2.txt"
-    assert w.label_file3.text() == "Dir1"
-    assert w.label_file4.text() == ""
+    assert w.label_title.text() == "Workspace (shared wi..."
+    assert w.label_title.toolTip()
+    assert w.file1_name.text() == "File1.txt"
+    assert w.file2_name.text() == "File2.txt"
+    assert w.file3_name.text() == "Dir1"
+    assert w.file4_name.text() == ""
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_clicked(qtbot, workspace_fs):
+async def test_workspace_button_clicked(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
+
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -124,7 +135,9 @@ async def test_workspace_button_clicked(qtbot, workspace_fs):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_share_clicked(qtbot, workspace_fs):
+async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
+
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -140,7 +153,9 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_rename_clicked(qtbot, workspace_fs):
+async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
+
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
@@ -156,7 +171,9 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs):
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_delete_clicked(qtbot, workspace_fs):
+async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config):
+    switch_language(core_config, "en")
+
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,

@@ -6,6 +6,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from parsec.core.local_device import save_device_with_password
 
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.file_items import FileType, NAME_DATA_INDEX, TYPE_DATA_INDEX
 
 from parsec.test_utils import create_inconsistent_workspace
@@ -32,15 +33,12 @@ async def logged_gui(
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    llw = gui.test_get_login_login_widget()
     tabw = gui.test_get_tab()
 
-    assert llw is not None
-
-    await aqtbot.key_clicks(llw.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
@@ -49,12 +47,11 @@ async def logged_gui(
     async with aqtbot.wait_signal(wk_widget.list_success):
         pass
 
-    add_button = central_widget.widget_taskbar.layout().itemAt(1).widget()
+    add_button = wk_widget.button_add_workspace
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("Workspace")),
+        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace")
     )
 
     async with aqtbot.wait_signals(
@@ -93,14 +90,11 @@ async def logged_gui_with_files(aqtbot, logged_gui, running_backend, monkeypatch
     ):
         await aqtbot.mouse_click(w_f.button_import_files, QtCore.Qt.LeftButton)
 
-    central_widget = logged_gui.test_get_central_widget()
-    assert central_widget is not None
-    add_button = central_widget.widget_taskbar.layout().itemAt(3).widget()
+    add_button = w_f.button_create_folder
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("dir1")),
+        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("dir1")
     )
     async with aqtbot.wait_signal(w_f.folder_create_success):
         await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
@@ -125,13 +119,11 @@ async def create_directories(logged_gui, aqtbot, monkeypatch, dir_names):
     w_f = logged_gui.test_get_files_widget()
     assert w_f is not None
 
-    add_button = central_widget.widget_taskbar.layout().itemAt(3).widget()
-    assert add_button is not None
+    add_button = w_f.button_create_folder
 
     for dir_name in dir_names:
         monkeypatch.setattr(
-            "parsec.core.gui.custom_dialogs.get_text_input",
-            classmethod(lambda *args, **kwargs: (dir_name)),
+            "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: (dir_name)
         )
         async with aqtbot.wait_signal(w_f.folder_create_success):
             await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
@@ -149,13 +141,9 @@ async def test_list_files(aqtbot, running_backend, logged_gui):
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         pass
 
-    assert w_f.label_current_workspace.text() == "Workspace"
-    assert w_f.line_edit_current_directory.text() == "/"
-    assert w_f.label_role.text() == "Owner"
-
     central_widget = logged_gui.test_get_central_widget()
-    assert central_widget is not None
-    assert central_widget.widget_taskbar.layout().count() == 5
+    assert central_widget.label_title2.text() == "Workspace"
+    assert central_widget.label_title3.text() == "/"
 
     assert w_f.table_files.rowCount() == 1
     for i in range(5):
@@ -193,15 +181,10 @@ async def test_create_dir_already_exists(
         pass
     assert w_f.table_files.rowCount() == 1
 
-    central_widget = logged_gui.test_get_central_widget()
-    assert central_widget is not None
-
-    add_button = central_widget.widget_taskbar.layout().itemAt(3).widget()
-    assert add_button is not None
+    add_button = w_f.button_create_folder
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("Dir1")),
+        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("Dir1")
     )
     async with aqtbot.wait_signals(
         [w_f.folder_create_success, w_f.folder_stat_success, w_f.fs_synced_qt], timeout=3000
@@ -216,21 +199,23 @@ async def test_create_dir_already_exists(
 
     assert w_f.table_files.rowCount() == 2
 
-    assert autoclose_dialog.dialogs == [("Error", "A folder with this name already exists.")]
+    assert len(autoclose_dialog.dialogs) == 1
+    assert autoclose_dialog.dialogs[0][0] == "Error"
+    assert autoclose_dialog.dialogs[0][1] == "A folder with the same name already exists."
 
 
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
     w_f = logged_gui.test_get_files_widget()
+    central_widget = logged_gui.test_get_central_widget()
 
     assert w_f is not None
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         pass
     assert w_f.table_files.rowCount() == 1
-    assert w_f.label_current_workspace.text() == "Workspace"
-    assert w_f.line_edit_current_directory.text() == "/"
-    assert w_f.label_role.text() == "Owner"
+    assert central_widget.label_title2.text() == "Workspace"
+    assert central_widget.label_title3.text() == "/"
 
     await create_directories(logged_gui, aqtbot, monkeypatch, ["Dir1", "Dir2"])
 
@@ -248,9 +233,8 @@ async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
     assert w_f.table_files.rowCount() == 1
     for i in range(5):
         assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentFolder
-    assert w_f.label_current_workspace.text() == "Workspace"
-    assert w_f.line_edit_current_directory.text() == "/Dir1"
-    assert w_f.label_role.text() == "Owner"
+    assert central_widget.label_title2.text() == "Workspace"
+    assert central_widget.label_title3.text() == "/Dir1"
 
     # Navigate to the workspace root
     async with aqtbot.wait_signal(w_f.folder_stat_success):
@@ -262,9 +246,8 @@ async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
         assert w_f.table_files.item(2, i).data(TYPE_DATA_INDEX) == FileType.Folder
     assert w_f.table_files.item(1, 1).text() == "Dir1"
     assert w_f.table_files.item(2, 1).text() == "Dir2"
-    assert w_f.label_current_workspace.text() == "Workspace"
-    assert w_f.line_edit_current_directory.text() == "/"
-    assert w_f.label_role.text() == "Owner"
+    assert central_widget.label_title2.text() == "Workspace"
+    assert central_widget.label_title3.text() == "/"
 
     # Navigate to workspaces list
     wk_w = logged_gui.test_get_workspaces_widget()
@@ -279,6 +262,8 @@ async def test_navigate(aqtbot, running_backend, logged_gui, monkeypatch):
 async def test_show_inconsistent_dir(
     aqtbot, running_backend, logged_gui, monkeypatch, alice_user_fs, alice2_user_fs
 ):
+    central_widget = logged_gui.test_get_central_widget()
+
     alice2_workspace = await create_inconsistent_workspace(alice2_user_fs)
     await alice2_user_fs.sync()
     await alice_user_fs.sync()
@@ -304,16 +289,14 @@ async def test_show_inconsistent_dir(
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         pass
     assert w_f.table_files.rowCount() == 2
-    assert w_f.label_current_workspace.text() == "w"
-    assert w_f.line_edit_current_directory.text() == "/"
-    assert w_f.label_role.text() == "Owner"
+    assert central_widget.label_title2.text() == "w"
+    assert central_widget.label_title3.text() == "/"
 
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.Folder, "rep")
     assert w_f.table_files.rowCount() == 3
-    assert w_f.label_current_workspace.text() == "w"
-    assert w_f.line_edit_current_directory.text() == "/rep"
-    assert w_f.label_role.text() == "Owner"
+    assert central_widget.label_title2.text() == "w"
+    assert central_widget.label_title3.text() == "/rep"
     for i in range(5):
         assert w_f.table_files.item(0, i).data(TYPE_DATA_INDEX) == FileType.ParentFolder
         assert w_f.table_files.item(1, i).data(TYPE_DATA_INDEX) == FileType.File
@@ -342,7 +325,7 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.ask_question", classmethod(lambda *args: _("BUTTON_YES"))
+        "parsec.core.gui.files_widget.ask_question", lambda *args: _("ACTION_FILE_DELETE")
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
@@ -360,7 +343,7 @@ async def test_delete_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.ask_question", classmethod(lambda *args: _("BUTTON_YES"))
+        "parsec.core.gui.files_widget.ask_question", lambda *args: _("ACTION_FILE_DELETE_MULTIPLE")
     )
     async with aqtbot.wait_signals([w_f.delete_success, w_f.folder_stat_success]):
         w_f.table_files.delete_clicked.emit()
@@ -394,8 +377,7 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("Abcd")),
+        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("Abcd")
     )
     # Rename Dir1 to Abcd
     async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
@@ -417,8 +399,7 @@ async def test_rename_dirs(aqtbot, running_backend, logged_gui, monkeypatch):
     )
     assert len(w_f.table_files.selected_files()) == 2
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("NewName")),
+        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("NewName")
     )
     async with aqtbot.wait_signals([w_f.rename_success, w_f.folder_stat_success]):
         w_f.table_files.rename_clicked.emit()
@@ -466,14 +447,15 @@ async def test_rename_dir_already_exists(
     )
     assert len(w_f.table_files.selected_files()) == 1
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("Dir2")),
+        "parsec.core.gui.files_widget.get_text_input", lambda *args, **kwargs: ("Dir2")
     )
     async with aqtbot.wait_signal(w_f.rename_error):
         w_f.table_files.rename_clicked.emit()
     assert w_f.table_files.item(1, 1).text() == "Dir1"
     assert w_f.table_files.rowCount() == 3
-    assert autoclose_dialog.dialogs == [("Error", "Cannot rename the file.")]
+    assert len(autoclose_dialog.dialogs) == 1
+    assert autoclose_dialog.dialogs[0][0] == "Error"
+    assert autoclose_dialog.dialogs[0][1] == "The file could not be renamed."
 
 
 @pytest.mark.gui

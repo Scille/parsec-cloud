@@ -128,7 +128,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         assert self.claim_device_job.is_finished()
         assert self.claim_device_job.status == "ok"
 
-        self.status = self.claim_device.ret
+        self.status = self.claim_device_job.ret
 
         self.claim_device_job = None
         show_info(self, _("TEXT_CLAIM_DEVICE_SUCCESS"), button_text=_("ACTION_CONTINUE"))

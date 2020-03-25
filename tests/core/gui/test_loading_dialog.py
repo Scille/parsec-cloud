@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from PyQt5 import QtCore
 
 from parsec.core.gui.loading_widget import LoadingWidget
 

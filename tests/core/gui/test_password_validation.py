@@ -3,6 +3,7 @@
 import pytest
 
 from parsec.core.gui.password_validation import get_password_strength, get_password_strength_text
+from parsec.core.gui.lang import switch_language
 
 
 @pytest.mark.gui
@@ -16,10 +17,11 @@ def test_password_validation():
 
 
 @pytest.mark.gui
-def test_password_text():
-    assert get_password_strength_text(0) == "Too short"
-    assert get_password_strength_text(1) == "Very weak"
-    assert get_password_strength_text(2) == "Weak"
-    assert get_password_strength_text(3) == "Average"
-    assert get_password_strength_text(4) == "Good"
-    assert get_password_strength_text(5) == "Strong"
+def test_password_text(core_config):
+    switch_language(core_config, "en")
+    assert get_password_strength_text(0) == "TOO SHORT"
+    assert get_password_strength_text(1) == "VERY WEAK"
+    assert get_password_strength_text(2) == "WEAK"
+    assert get_password_strength_text(3) == "AVERAGE"
+    assert get_password_strength_text(4) == "GOOD"
+    assert get_password_strength_text(5) == "EXCELLENT"

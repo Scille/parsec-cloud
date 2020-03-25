@@ -4,7 +4,6 @@ import pytest
 from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
-from parsec.core.gui.lang import switch_language
 
 
 @pytest.fixture
@@ -15,15 +14,12 @@ async def logged_gui(
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    llw = gui.test_get_login_login_widget()
     tabw = gui.test_get_tab()
 
-    assert llw is not None
-
-    await aqtbot.key_clicks(llw.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
@@ -44,36 +40,10 @@ async def test_list_devices(aqtbot, running_backend, logged_gui):
         pass
     assert d_w.layout_devices.count() == 2
     item = d_w.layout_devices.itemAt(0)
-    assert item.widget().label_device.text() == "dev1\n(current)"
+    assert item.widget().label_device_name.text() == "dev1"
+    assert item.widget().label_is_current.text() == "(current)"
     item = d_w.layout_devices.itemAt(1)
-    assert item.widget().label_device.text() == "dev2"
-
-
-@pytest.mark.gui
-@pytest.mark.trio
-@pytest.mark.parametrize("custom_locale", (False, True))
-async def test_device_info(aqtbot, running_backend, autoclose_dialog, logged_gui, custom_locale):
-    if custom_locale:
-        switch_language(None, "fr")
-    d_w = logged_gui.test_get_devices_widget()
-    assert d_w is not None
-    async with aqtbot.wait_signal(d_w.list_success):
-        pass
-    assert d_w.layout_devices.count() == 2
-    item = d_w.layout_devices.itemAt(0)
-    item.widget().show_device_info()
-    item = d_w.layout_devices.itemAt(1)
-    item.widget().show_device_info()
-    if custom_locale:
-        assert autoclose_dialog.dialogs == [
-            ("Information", "dev1\n\nCréé le samedi 1 janvier 2000 00:00"),
-            ("Information", "dev2\n\nCréé le samedi 1 janvier 2000 00:00"),
-        ]
-    else:
-        assert autoclose_dialog.dialogs == [
-            ("Information", "dev1\n\nCreated on Saturday, January 1, 2000 12:00 AM"),
-            ("Information", "dev2\n\nCreated on Saturday, January 1, 2000 12:00 AM"),
-        ]
+    assert item.widget().label_device_name.text() == "dev2"
 
 
 @pytest.mark.gui

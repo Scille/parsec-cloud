@@ -27,7 +27,6 @@ def test_get_text_dialog_close(qtbot):
 
 @pytest.mark.gui
 def test_get_text_dialog_accept(qtbot):
-
     w = custom_dialogs.TextInputWidget(
         message="Message", placeholder="Placeholder", default_text="Default"
     )
@@ -52,7 +51,7 @@ def test_get_text_dialog_accept(qtbot):
 
 @pytest.mark.gui
 def test_ask_question_no(qtbot):
-    w = custom_dialogs.QuestionWidget(message="Message", button_texts=["OK", "CANCEL"])
+    w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
     qtbot.addWidget(d)
@@ -62,16 +61,17 @@ def test_ask_question_no(qtbot):
     assert w.isVisible() is True
     assert d.label_title.text() == "Title"
     assert w.label_message.text() == "Message"
-    button_no = w.layout_buttons.itemAt(0).widget()
+    button_no = w.layout_buttons.itemAt(1).widget()
+    assert button_no.text() == "NO"
     qtbot.mouseClick(button_no, QtCore.Qt.LeftButton)
     assert d.result() == QtWidgets.QDialog.Accepted
-    assert w.status == "CANCEL"
+    assert w.status == "NO"
     assert w.isVisible() is False
 
 
 @pytest.mark.gui
 def test_ask_question_yes(qtbot):
-    w = custom_dialogs.QuestionWidget(message="Message", button_texts=["OK", "CANCEL"])
+    w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
     qtbot.addWidget(d)
@@ -81,16 +81,17 @@ def test_ask_question_yes(qtbot):
     assert w.isVisible() is True
     assert d.label_title.text() == "Title"
     assert w.label_message.text() == "Message"
-    button_yes = w.layout_buttons.itemAt(1).widget()
+    button_yes = w.layout_buttons.itemAt(2).widget()
+    assert button_yes.text() == "YES"
     qtbot.mouseClick(button_yes, QtCore.Qt.LeftButton)
     assert d.result() == QtWidgets.QDialog.Accepted
-    assert w.status == "OK"
+    assert w.status == "YES"
     assert w.isVisible() is False
 
 
 @pytest.mark.gui
 def test_ask_question_close(qtbot):
-    w = custom_dialogs.QuestionWidget(message="Message", button_texts=["OK", "CANCEL"])
+    w = custom_dialogs.QuestionWidget(message="Message", button_texts=["YES", "NO"])
     d = custom_dialogs.GreyedDialog(w, title="Title", parent=None)
     w.dialog = d
     qtbot.addWidget(d)

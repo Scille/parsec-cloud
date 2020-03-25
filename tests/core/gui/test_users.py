@@ -4,7 +4,7 @@ import pytest
 from PyQt5 import QtCore
 
 from parsec.core.local_device import save_device_with_password
-from parsec.core.gui.lang import switch_language
+from parsec.core.gui.lang import translate as _
 
 
 @pytest.fixture
@@ -15,15 +15,12 @@ async def logged_gui(
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    llw = gui.test_get_login_login_widget()
     tabw = gui.test_get_tab()
 
-    assert llw is not None
-
-    await aqtbot.key_clicks(llw.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
@@ -45,50 +42,18 @@ async def test_list_users(aqtbot, running_backend, logged_gui):
 
     assert u_w.layout_users.count() == 3
     item = u_w.layout_users.itemAt(0)
-    assert item.widget().label_user.text() == "adam"
+    assert item.widget().label_username.text() == "adam"
+    assert item.widget().label_role.text() == "Administrator"
+    assert item.widget().label_revoked.text() == ""
     item = u_w.layout_users.itemAt(1)
-    assert item.widget().label_user.text() == "alice\n(you)"
+    assert item.widget().label_username.text() == "alice"
+    assert item.widget().label_user_is_current.text() == "(you)"
+    assert item.widget().label_role.text() == "Administrator"
+    assert item.widget().label_revoked.text() == ""
     item = u_w.layout_users.itemAt(2)
-    assert item.widget().label_user.text() == "bob"
-
-
-@pytest.mark.gui
-@pytest.mark.trio
-@pytest.mark.parametrize("custom_locale", (False, True))
-async def test_user_info(aqtbot, running_backend, autoclose_dialog, logged_gui, custom_locale):
-    if custom_locale:
-        switch_language(None, "fr")
-    u_w = logged_gui.test_get_users_widget()
-    assert u_w is not None
-
-    async with aqtbot.wait_signal(u_w.list_success):
-        pass
-
-    assert u_w.layout_users.count() == 3
-    item = u_w.layout_users.itemAt(0)
-    item.widget().show_user_info()
-    item = u_w.layout_users.itemAt(1)
-    item.widget().show_user_info()
-    item = u_w.layout_users.itemAt(2)
-    item.widget().show_user_info()
-    if custom_locale:
-        assert autoclose_dialog.dialogs == [
-            ("Information", "adam\n\nCréé le samedi 1 janvier 2000 00:00\n\nAdministrateur"),
-            ("Information", "alice\n\nCréé le samedi 1 janvier 2000 00:00\n\nAdministrateur"),
-            ("Information", "bob\n\nCréé le samedi 1 janvier 2000 00:00"),
-        ]
-    else:
-        assert autoclose_dialog.dialogs == [
-            (
-                "Information",
-                "adam\n\nCreated on Saturday, January 1, 2000 12:00 AM\n\nAdministrator",
-            ),
-            (
-                "Information",
-                "alice\n\nCreated on Saturday, January 1, 2000 12:00 AM\n\nAdministrator",
-            ),
-            ("Information", "bob\n\nCreated on Saturday, January 1, 2000 12:00 AM"),
-        ]
+    assert item.widget().label_username.text() == "bob"
+    assert item.widget().label_role.text() == "Contributor"
+    assert item.widget().label_revoked.text() == ""
 
 
 @pytest.mark.gui
@@ -107,25 +72,32 @@ async def test_revoke_user(
     bob_w = u_w.layout_users.itemAt(2).widget()
     assert bob_w.user_name == "bob"
     assert bob_w.is_revoked is False
+
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.ask_question", classmethod(lambda *args: _("BUTTON_OK"))
+        "parsec.core.gui.users_widget.ask_question",
+        lambda *args: _("ACTION_USER_REVOCATION_CONFIRM"),
     )
 
     if online:
         async with aqtbot.wait_signal(u_w.revoke_success):
             bob_w.revoke_clicked.emit(bob_w)
-        assert autoclose_dialog.dialogs == [
-            ("Information", 'User "bob" has been successfully revoked.')
-        ]
+        assert len(autoclose_dialog.dialogs) == 1
+        assert autoclose_dialog.dialogs[0][0] == ""
+        assert (
+            autoclose_dialog.dialogs[0][1]
+            == "The user <b>bob</b> has been successfully revoked. Do no forget to reencrypt the workspaces that were shared with them."
+        )
         assert bob_w.is_revoked is True
-
     else:
         with running_backend.offline():
             async with aqtbot.wait_signal(u_w.revoke_error):
                 bob_w.revoke_clicked.emit(bob_w)
-            assert autoclose_dialog.dialogs == [
-                ("Error", "Cannot reach the server. Please check your internet connection.")
-            ]
+            assert len(autoclose_dialog.dialogs) == 1
+            assert autoclose_dialog.dialogs[0][0] == "Error"
+            assert (
+                autoclose_dialog.dialogs[0][1]
+                == "The server is offline or you have no access to the internet."
+            )
             assert bob_w.is_revoked is False
 
 

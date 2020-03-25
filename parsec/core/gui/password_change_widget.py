@@ -13,7 +13,7 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.password_change_widget import Ui_PasswordChangeWidget
 
 
-logger = get_logger
+logger = get_logger()
 
 
 class PasswordChangeWidget(QWidget, Ui_PasswordChangeWidget):

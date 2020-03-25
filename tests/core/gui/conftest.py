@@ -217,7 +217,12 @@ def autoclose_dialog(monkeypatch):
     spy = DialogSpy()
 
     def _dialog_exec(dialog):
-        spy.dialogs.append((dialog.label_title.text()))
+        if getattr(dialog.center_widget, "label_message", None):
+            spy.dialogs.append(
+                (dialog.label_title.text(), dialog.center_widget.label_message.text())
+            )
+        else:
+            spy.dialogs.append((dialog.label_title.text(), dialog.center_widget))
 
     monkeypatch.setattr(
         "parsec.core.gui.custom_dialogs.GreyedDialog.exec_", _dialog_exec, raising=False
@@ -251,11 +256,11 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
             main_w = MainWindow(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )
-            main_w.add_instance(start_arg)
-            main_w.show_top()
             qtbot.add_widget(main_w)
             main_w.showMaximized()
+            main_w.show_top()
             windows.append(main_w)
+            main_w.add_instance(start_arg)
             return main_w
 
         return await qt_thread_gateway.send_action(_create_main_window)

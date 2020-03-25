@@ -126,13 +126,18 @@ class InstanceWidget(QWidget):
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
                 show_error(
                     self, _("TEXT_LOGIN_ERROR_DEVICE_REVOKED"), exception=self.running_core_job.exc
+                )
             elif isinstance(self.running_core_job.exc, MountpointWinfspNotAvailable):
                 show_error(
-                    self, _("TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"), exception=self.running_core_job.exc
+                    self,
+                    _("TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"),
+                    exception=self.running_core_job.exc,
                 )
             elif isinstance(self.running_core_job.exc, MountpointFuseNotAvailable):
                 show_error(
-                    self, _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"), exception=self.running_core_job.exc
+                    self,
+                    _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"),
+                    exception=self.running_core_job.exc,
                 )
             else:
                 logger.exception("Unhandled error", exc_info=self.running_core_job.exc)

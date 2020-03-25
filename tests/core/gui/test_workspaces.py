@@ -13,15 +13,14 @@ async def logged_gui(aqtbot, gui_factory, autoclose_dialog, core_config, alice, 
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
-    llw = gui.test_get_login_login_widget()
     tabw = gui.test_get_tab()
 
-    assert llw is not None
+    assert lw is not None
 
-    await aqtbot.key_clicks(llw.line_edit_password, "P@ssw0rd")
+    await aqtbot.key_clicks(lw.line_edit_password, "P@ssw0rd")
 
     async with aqtbot.wait_signals([lw.login_with_password_clicked, tabw.logged_in]):
-        await aqtbot.mouse_click(llw.button_login, QtCore.Qt.LeftButton)
+        await aqtbot.mouse_click(lw.button_login, QtCore.Qt.LeftButton)
 
     central_widget = gui.test_get_central_widget()
     assert central_widget is not None
@@ -43,16 +42,12 @@ async def test_add_workspace(aqtbot, running_backend, logged_gui, monkeypatch, i
     assert w_w.layout_workspaces.count() == 1
     assert w_w.layout_workspaces.itemAt(0).widget().text() == "No workspace has been created yet."
 
-    c_w = logged_gui.test_get_central_widget()
-    assert c_w is not None
-
-    add_button = c_w.widget_taskbar.layout().itemAt(1).widget()
-    assert add_button is not None
+    add_button = w_w.button_add_workspace
+    add_button is not None
 
     workspace_name = ".." if invalid_name else "Workspace1"
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: workspace_name),
+        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
 
     if invalid_name:
@@ -85,15 +80,11 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
     assert w_w.layout_workspaces.count() == 1
     assert w_w.layout_workspaces.itemAt(0).widget().text() == "No workspace has been created yet."
 
-    c_w = logged_gui.test_get_central_widget()
-    assert c_w is not None
-
-    add_button = c_w.widget_taskbar.layout().itemAt(1).widget()
+    add_button = w_w.button_add_workspace
     assert add_button is not None
 
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: ("Workspace1")),
+        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: ("Workspace1")
     )
 
     async with aqtbot.wait_signals([w_w.create_success, w_w.list_success], timeout=2000):
@@ -105,8 +96,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
 
     workspace_name = ".." if invalid_name else "Workspace1_Renamed"
     monkeypatch.setattr(
-        "parsec.core.gui.custom_dialogs.get_text_input",
-        classmethod(lambda *args, **kwargs: workspace_name),
+        "parsec.core.gui.workspaces_widget.get_text_input", lambda *args, **kwargs: (workspace_name)
     )
 
     if invalid_name:
@@ -120,6 +110,7 @@ async def test_rename_workspace(aqtbot, running_backend, logged_gui, monkeypatch
         assert wk_button.name == "Workspace1_Renamed"
 
 
+@pytest.mark.skip("No notification center at the moment")
 @pytest.mark.gui
 @pytest.mark.trio
 async def test_mountpoint_remote_error_event(aqtbot, running_backend, logged_gui):
