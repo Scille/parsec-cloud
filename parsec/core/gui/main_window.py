@@ -486,3 +486,4 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             self.close_all_tabs()
             event.accept()
+            QApplication.quit()

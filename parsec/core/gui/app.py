@@ -165,6 +165,8 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             systray.on_close.connect(win.close_app)
             systray.on_show.connect(win.show_top)
             app.aboutToQuit.connect(before_quit(systray))
+            if config.gui_tray_enabled:
+                app.setQuitOnLastWindowClosed(False)
 
         if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)
