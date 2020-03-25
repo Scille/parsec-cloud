@@ -756,7 +756,7 @@ class UserFS:
             await self._process_message_sharing_revoked(msg)
 
         elif isinstance(msg, PingMessageContent):
-            self.event_bus.send("pinged")
+            self.event_bus.send("pinged", ping=msg.ping)
 
     async def _process_message_sharing_granted(
         self, msg: Union[SharingRevokedMessageContent, SharingReencryptedMessageContent]

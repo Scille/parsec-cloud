@@ -2,6 +2,9 @@
 
 import trio
 
+from parsec.core.fs import FSBackendOfflineError
+from parsec.core.backend_connection import BackendNotAvailable
+
 
 async def freeze_messages_monitor_mockpoint():
     """
@@ -23,11 +26,15 @@ async def monitor_messages(user_fs, event_bus, task_status):
         task_status.awake()
 
     with event_bus.connect_in_context(("backend.message.received", _on_message_received)):
-        await user_fs.process_last_messages()
-        task_status.started()
-        while True:
-            task_status.idle()
-            await wakeup.wait()
-            wakeup = trio.Event()
-            await freeze_messages_monitor_mockpoint()
+        try:
             await user_fs.process_last_messages()
+            task_status.started()
+            while True:
+                task_status.idle()
+                await wakeup.wait()
+                wakeup = trio.Event()
+                await freeze_messages_monitor_mockpoint()
+                await user_fs.process_last_messages()
+
+        except FSBackendOfflineError as exc:
+            raise BackendNotAvailable from exc

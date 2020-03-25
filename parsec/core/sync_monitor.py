@@ -99,8 +99,8 @@ class SyncContext:
         try:
             rep = await self._get_backend_cmds().vlob_poll_changes(self.id, realm_checkpoint)
 
-        except BackendNotAvailable as exc:
-            raise FSBackendOfflineError(str(exc)) from exc
+        except BackendNotAvailable:
+            raise
 
         # Another backend error
         except BackendConnectionError as exc:
@@ -198,6 +198,8 @@ class SyncContext:
             entry_id = self._remote_changes.pop()
             try:
                 await self._sync(entry_id)
+            except FSBackendOfflineError as exc:
+                raise BackendNotAvailable from exc
             except FSWorkspaceNoReadAccess:
                 # We've just lost the read access to the workspace.
                 # This likely means a `sharing.updated` event we soon arrive
@@ -228,6 +230,8 @@ class SyncContext:
                 del self._local_changes[entry_id]
                 try:
                     await self._sync(entry_id)
+                except FSBackendOfflineError as exc:
+                    raise BackendNotAvailable from exc
                 except (FSWorkspaceNoReadAccess, FSWorkspaceNoWriteAccess):
                     # We've just lost the write access to the workspace, and
                     # the corresponding `sharing.updated` event hasn't updated
@@ -356,7 +360,7 @@ async def monitor_sync(user_fs, event_bus, task_status):
     async def _ctx_action(ctx, meth):
         try:
             return await getattr(ctx, meth)()
-        except FSBackendOfflineError:
+        except BackendNotAvailable:
             raise
         except Exception:
             logger.exception("Sync monitor has crashed", workspace_id=ctx.id)
