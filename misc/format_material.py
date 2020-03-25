@@ -26,9 +26,11 @@ def resize_imgs(input_dir):
         shutil.move(str(img), str(dst))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Move material SVG files and resize them")
-    parser.add_argument("-i", "--input", type=pathlib.Path, help="Input material folder", required=True)
+    parser.add_argument(
+        "-i", "--input", type=pathlib.Path, help="Input material folder", required=True
+    )
     parser.add_argument("-o", "--output", type=pathlib.Path, help="Output folder", required=True)
     parser.add_argument("--pattern", default="*_48px.svg", required=False)
     parser.add_argument("--no-copy", action="store_true", help="Does not copy the files")

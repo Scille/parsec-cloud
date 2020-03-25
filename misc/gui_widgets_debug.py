@@ -1,23 +1,38 @@
 #!/usr/bin/env python
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QSpinBox, QLineEdit, QGridLayout, QWidget, QTimeEdit, QComboBox, QCheckBox, QListView
 
-from parsec.core.gui.resources_rc import *
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QPushButton,
+    QSpinBox,
+    QLineEdit,
+    QGridLayout,
+    QWidget,
+    QTimeEdit,
+    QComboBox,
+    QCheckBox,
+    QListView,
+)
+
+from parsec.core.gui.resources_rc import *  # noqa
 from parsec.core.gui import custom_dialogs
 
 
 SMALL_TEXT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-LARGE_TEXT = ("Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br />"
-"Cras aliquet convallis lectus, id euismod turpis. Nunc pulvinar bibendum ante nec ornare.<br />"
-"Mauris vulputate, neque eget pellentesque tristique, ipsum nulla ultricies ex, in vestibulum<br /> "
-"ex diam sed ligula. Donec nec elit turpis. Vivamus venenatis sem nibh.<br />"
-"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vulputate quis mi id "
-"dictum. Sed at lorem quis arcu rutrum maximus. Nulla molestie, ipsum non laoreet cursus, "
-"justo massa egestas dolor, in faucibus nulla nunc at augue. Etiam vel consectetur odio.<br />"
-"Nam libero nisl, tempor quis lorem vel, mattis venenatis tellus.<br />"
-"Aenean fringilla tincidunt urna quis tincidunt. Vivamus at suscipit ante. "
-"Vivamus nisl metus, ornare nec efficitur ac, posuere in lacus.")
+LARGE_TEXT = (
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br />"
+    "Cras aliquet convallis lectus, id euismod turpis. Nunc pulvinar bibendum ante nec ornare.<br />"
+    "Mauris vulputate, neque eget pellentesque tristique, ipsum nulla ultricies ex, in vestibulum<br /> "
+    "ex diam sed ligula. Donec nec elit turpis. Vivamus venenatis sem nibh.<br />"
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vulputate quis mi id "
+    "dictum. Sed at lorem quis arcu rutrum maximus. Nulla molestie, ipsum non laoreet cursus, "
+    "justo massa egestas dolor, in faucibus nulla nunc at augue. Etiam vel consectetur odio.<br />"
+    "Nam libero nisl, tempor quis lorem vel, mattis venenatis tellus.<br />"
+    "Aenean fringilla tincidunt urna quis tincidunt. Vivamus at suscipit ante. "
+    "Vivamus nisl metus, ornare nec efficitur ac, posuere in lacus."
+)
 
 
 class MainWindow(QMainWindow):
@@ -138,11 +153,7 @@ class MainWindow(QMainWindow):
         except ZeroDivisionError as e:
             exc = e
 
-        custom_dialogs.show_error(
-            self,
-            message=SMALL_TEXT,
-            exception=exc,
-        )
+        custom_dialogs.show_error(self, message=SMALL_TEXT, exception=exc)
 
     def open_error_large(self):
         exc = None
@@ -151,25 +162,13 @@ class MainWindow(QMainWindow):
         except ZeroDivisionError as e:
             exc = e
 
-        custom_dialogs.show_error(
-            self,
-            message=LARGE_TEXT,
-            exception=exc,
-        )
+        custom_dialogs.show_error(self, message=LARGE_TEXT, exception=exc)
 
     def open_info_small(self):
-        custom_dialogs.show_info(
-            self,
-            message=SMALL_TEXT,
-            button_text="Continue",
-        )
+        custom_dialogs.show_info(self, message=SMALL_TEXT, button_text="Continue")
 
     def open_info_large(self):
-        custom_dialogs.show_info(
-            self,
-            message=LARGE_TEXT,
-            button_text="Continue",
-        )
+        custom_dialogs.show_info(self, message=LARGE_TEXT, button_text="Continue")
 
     def open_get_text_small(self):
         custom_dialogs.get_text_input(

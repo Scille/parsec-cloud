@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from PyQt5.QtCore import Qt, QRect, QPoint, QSize
 from PyQt5.QtWidgets import QLayout, QStyle, QSizePolicy
 
