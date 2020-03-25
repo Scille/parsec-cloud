@@ -56,8 +56,10 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         if main_win:
             if main_win.isVisible():
                 self.setParent(main_win)
+                self.resize(main_win.size())
+            else:
+                self.showMaximized()
             self.move(0, 0)
-            self.resize(main_win.size())
         else:
             logger.error("GreyedDialog did not find the main window, this is probably a bug")
         self.finished.connect(self.on_finished)
