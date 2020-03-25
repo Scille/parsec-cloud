@@ -232,6 +232,7 @@ QTabBar::tab {
 
 QTabBar::tab:selected {
     background: #FFFFFF;
+    margin-bottom: 1px;
 }
 
 QTabBar::tab:!selected {
