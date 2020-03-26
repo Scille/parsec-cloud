@@ -32,9 +32,17 @@
     border-radius: 4px;
 }
 
+#button_back:hover {
+	background-color: #FBFBFB;
+}
+
 #line_edit_current_directory {
 	background-color: none;
 	border: none;
+}
+
+#button_import_folder:hover, #button_import_files:hover, #button_create_folder:hover {
+	color: #0070DD;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

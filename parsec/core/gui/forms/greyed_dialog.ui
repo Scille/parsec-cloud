@@ -177,7 +177,7 @@
               </spacer>
              </item>
              <item>
-              <widget class="QPushButton" name="button_close">
+              <widget class="Button" name="button_close">
                <property name="minimumSize">
                 <size>
                  <width>32</width>
@@ -214,6 +214,20 @@
                </property>
                <property name="flat">
                 <bool>true</bool>
+               </property>
+               <property name="color" stdset="0">
+                <color>
+                 <red>51</red>
+                 <green>51</green>
+                 <blue>51</blue>
+                </color>
+               </property>
+               <property name="hover_color" stdset="0">
+                <color>
+                 <red>0</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
                </property>
               </widget>
              </item>
@@ -268,6 +282,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

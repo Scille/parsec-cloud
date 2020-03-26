@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import (
     QApplication,
     QStyleOption,
     QStyle,
-    QGraphicsBlurEffect,
 )
 
 from structlog import get_logger
@@ -37,6 +36,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         self.setModal(True)
         self.setObjectName("GreyedDialog")
         self.setWindowModality(Qt.ApplicationModal)
+        self.button_close.apply_style()
         if platform.system() == "Windows":
             # SplashScreen on Windows freezes the Window
             self.setWindowFlags(Qt.FramelessWindowHint)
@@ -62,6 +62,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
             self.move(0, 0)
         else:
             logger.error("GreyedDialog did not find the main window, this is probably a bug")
+        self.setFocus()
         self.finished.connect(self.on_finished)
 
     def paintEvent(self, event):
@@ -76,22 +77,9 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
                 return win
         return None
 
-    def _blur_background(self, blur_enabled):
-        main_win = self._get_main_window()
-        if not main_win:
-            return
-        if blur_enabled:
-            blur = QGraphicsBlurEffect()
-            blur.setBlurRadius(3)
-            blur.setBlurHints(QGraphicsBlurEffect.QualityHint)
-            main_win.setGraphicsEffect(blur)
-        else:
-            main_win.setGraphicsEffect(None)
-
     def on_finished(self, _):
         if self.center_widget and getattr(self.center_widget, "on_close", None):
             getattr(self.center_widget, "on_close")()
-        self._blur_background(False)
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
@@ -110,11 +98,17 @@ class TextInputWidget(QWidget, Ui_InputWidget):
             completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
             self.line_edit_text.setCompleter(completer)
         self.button_ok.clicked.connect(self._on_button_clicked)
+        self.setFocus()
         self.line_edit_text.setFocus()
 
     @property
     def text(self):
         return self.line_edit_text.text()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return:
+            self._on_button_clicked()
+        event.accept()
 
     def _on_button_clicked(self):
         if self.dialog:
@@ -137,6 +131,7 @@ def get_text_input(
     )
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d
+    w.line_edit_text.setFocus()
     result = d.exec_()
     if result == QDialog.Accepted:
         return w.text
@@ -245,4 +240,5 @@ def show_info(parent, message, button_text=None):
     w = InfoWidget(message, button_text)
     d = GreyedDialog(w, title=None, parent=parent, hide_close=True)
     w.dialog = d
+    w.button_ok.setFocus()
     return d.exec_()

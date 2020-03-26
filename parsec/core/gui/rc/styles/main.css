@@ -23,6 +23,10 @@ QPushButton:disabled {
     color: #999999;
 }
 
+QPushButton:hover {
+    background-color: #00B4FF;
+}
+
 /* LineEdit: ENABLED, READONLY, DISABLED */
 
 QLineEdit {

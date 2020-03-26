@@ -14,11 +14,14 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#button_add_device
-{
-background-color: none;
-border: none;
-color: #0092FF;
+   <string notr="true">#button_add_device {
+	background-color: none;
+	border: none;
+	color: #0092FF;
+}
+
+#button_add_device:hover {
+	color: #0070DD;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

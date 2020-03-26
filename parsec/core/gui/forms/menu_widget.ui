@@ -44,6 +44,10 @@
 	color: #FFFFFF;
 }
 
+#button_devices:hover, #button_files:hover, #button_users:hover, #button_logout:hover {
+	color: #EEEEEE;
+}
+
 QWidget#widget_misc {
 	background-color: #333333;
 }
@@ -637,12 +641,12 @@ QWidget#widget_misc {
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>MenuButton</class>
+   <class>Button</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>Button</class>
+   <class>MenuButton</class>
    <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

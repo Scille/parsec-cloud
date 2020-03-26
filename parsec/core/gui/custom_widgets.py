@@ -87,9 +87,23 @@ class Button(QPushButton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.clicked.connect(self._on_clicked)
+        self.current_color = QColor(0, 0, 0)
 
     def _on_clicked(self):
         self.clicked_self.emit(self)
+
+    def enterEvent(self, _):
+        color = self.property("hover_color")
+        if not color:
+            return
+        sizes = self.icon().availableSizes()
+        pixmap = Pixmap(self.icon().pixmap(sizes[-1] if len(sizes) else QSize(144, 144)))
+        pixmap.replace_color(self.current_color, color)
+        self.setIcon(QIcon(pixmap))
+        self.current_color = color
+
+    def leaveEvent(self, _):
+        self.apply_style()
 
     def apply_style(self):
         color = self.property("color")
@@ -97,8 +111,9 @@ class Button(QPushButton):
             return
         sizes = self.icon().availableSizes()
         pixmap = Pixmap(self.icon().pixmap(sizes[-1] if len(sizes) else QSize(144, 144)))
-        pixmap.replace_color(QColor(0, 0, 0), color)
+        pixmap.replace_color(self.current_color, color)
         self.setIcon(QIcon(pixmap))
+        self.current_color = color
 
 
 class MenuButton(Button):
