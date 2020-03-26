@@ -5,6 +5,27 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.10.0 (2020-03-26)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Improved updater now selects the right latest exe file on Windows  (`#1054
+  <https://github.com/Scille/parsec-cloud/issues/1054>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix ``parsec backend init`` cli command crashing due to a missing
+  ``init_tables.sql`` resource. (`#1052 <https://github.com/Scille/parsec-
+  cloud/issues/1052>`__)
+* Fix unhandled error message in GUI that could occur during sync with poor
+  connection. (`#1055 <https://github.com/Scille/parsec-cloud/issues/1055>`__)
+* Fix marker issue when listing many files in a directory.  (`#1039
+  <https://github.com/Scille/parsec-cloud/issues/1039>`__)
+
+
 Parsec 1.9.1 (2020-03-13)
 -------------------------
 

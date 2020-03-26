@@ -1,1 +1,0 @@
-Improved updater now selects the right latest exe file on Windows
