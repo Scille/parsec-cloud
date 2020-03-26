@@ -443,14 +443,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self,
                 _("TEXT_FILE_DELETE_TITLE"),
                 _("TEXT_FILE_DELETE_INSTRUCTIONS_name").format(name=files[0].name),
-                [_("ACTION_CANCEL"), _("ACTION_FILE_DELETE")],
+                [_("ACTION_FILE_DELETE"), _("ACTION_CANCEL")],
             )
         else:
             result = ask_question(
                 self,
                 _("TEXT_FILE_DELETE_MULTIPLE_TITLE_count").format(count=len(files)),
                 _("TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count").format(count=len(files)),
-                [_("ACTION_CANCEL"), _("ACTION_FILE_DELETE_MULTIPLE")],
+                [_("ACTION_FILE_DELETE_MULTIPLE"), _("ACTION_CANCEL")],
             )
         if result != _("ACTION_FILE_DELETE_MULTIPLE") and result != _("ACTION_FILE_DELETE"):
             return
@@ -471,7 +471,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self,
                 _("TEXT_FILE_OPEN_MULTIPLE_TITLE_count").format(count=len(files)),
                 _("TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count").format(count=len(files)),
-                [_("ACTION_CANCEL"), _("ACTION_FILE_OPEN_MULTIPLE")],
+                [_("ACTION_FILE_OPEN_MULTIPLE"), _("ACTION_CANCEL")],
             )
             if result != _("ACTION_FILE_OPEN_MULTIPLE"):
                 return

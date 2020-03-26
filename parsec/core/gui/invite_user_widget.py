@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal, QPoint
-from PyQt5.QtWidgets import QToolTip, QWidget
+from PyQt5.QtWidgets import QToolTip, QWidget, QApplication
+
+from structlog import get_logger
 
 from parsec.api.protocol import UserID
 from parsec.core.invite_claim import (
@@ -11,7 +13,7 @@ from parsec.core.invite_claim import (
     generate_invitation_token as core_generate_invitation_token,
     invite_and_create_user as core_invite_and_create_user,
 )
-from parsec.core.types import BackendOrganizationAddr, BackendOrganizationClaimUserAddr
+from parsec.core.types import BackendOrganizationClaimUserAddr
 
 from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionError
 from parsec.core.gui import desktop
@@ -20,6 +22,9 @@ from parsec.core.gui.custom_dialogs import show_info, show_error, GreyedDialog
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.ui.invite_user_widget import Ui_InviteUserWidget
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
+
+
+logger = get_logger()
 
 
 async def _do_registration(core, device, new_user_id, token, is_admin):
@@ -61,7 +66,6 @@ async def _do_registration(core, device, new_user_id, token, is_admin):
 
 
 class InviteUserWidget(QWidget, Ui_InviteUserWidget):
-    user_registered = pyqtSignal(BackendOrganizationAddr, UserID, str)
     registration_success = pyqtSignal()
     registration_error = pyqtSignal()
 
@@ -69,6 +73,7 @@ class InviteUserWidget(QWidget, Ui_InviteUserWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
+        self.dialog = None
         self.jobs_ctx = jobs_ctx
         self.registration_job = None
         self.widget_registration.hide()
@@ -139,17 +144,13 @@ class InviteUserWidget(QWidget, Ui_InviteUserWidget):
         assert self.registration_job.is_finished()
         assert self.registration_job.status == "ok"
         show_info(self, _("TEXT_INVITE_USER_SUCCESS"))
-        new_user_id, token = self.registration_job.ret
         self.registration_job = None
-        self.user_registered.emit(self.core.device.organization_addr, new_user_id, token)
-        self.registration_job = None
-        self.line_edit_token.setText("")
-        self.line_edit_url.setText("")
-        self.line_edit_user.setText("")
-        self.widget_registration.hide()
-        self.button_register.show()
-        self.line_edit_username.show()
-        self.checkbox_is_admin.show()
+        if self.dialog:
+            self.dialog.accept()
+        elif QApplication.activeModalWidget():
+            QApplication.activeModalWidget().accept()
+        else:
+            logger.warning("Cannot close dialog when inviting user")
 
     def cancel_registration(self):
         if self.registration_job:
@@ -201,4 +202,5 @@ class InviteUserWidget(QWidget, Ui_InviteUserWidget):
     def exec_modal(cls, core, jobs_ctx, parent):
         w = cls(core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(w, title=_("TEXT_INVITE_USER_TITLE"), parent=parent)
+        w.dialog = d
         return d.exec_()

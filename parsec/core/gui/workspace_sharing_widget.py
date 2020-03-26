@@ -330,19 +330,6 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
                 return True
         return False
 
-    # def on_close_requested(self):
-    #     if self.has_changes():
-    #         r = ask_question(
-    #             parent=self,
-    #             title=_("ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"),
-    #             message=_("ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"),
-    #             button_texts=[_("BUTTON_CANCEL"), _("BUTTON_OK")],
-    #         )
-    #         if r == _("BUTTON_OK"):
-    #             self.accept()
-    #     else:
-    #         self.accept()
-
     def _on_share_success(self, job):
         workspace_name, user, role = job.ret
         self.add_participant(user, False, role, is_revoked=False)
