@@ -50,7 +50,8 @@ async def _do_check_new_version(url, api_url):
         else:
             return (latest_from_head, url)
 
-        latest = ((0, 0, 0), "")
+        latest_version = (0, 0, 0)
+        latest_url = ""
 
         for release in json_releases:
             try:
@@ -61,13 +62,14 @@ async def _do_check_new_version(url, api_url):
                 for asset in release["assets"]:
                     if asset["name"].endswith(f"-{win_version}-setup.exe"):
                         asset_version = _extract_version_tuple(release["tag_name"])
-                        if asset_version > latest[0]:
-                            latest = (asset_version, asset["browser_download_url"])
+                        if asset_version > latest_version:
+                            latest_version = asset_version
+                            latest_url = asset["browser_download_url"]
             # In case something went wrong, still better to redirect to GitHub
             except (KeyError, TypeError):
                 return (latest_from_head, url)
-        if latest[0] > current_version:
-            return (_tuple_to_version_number(latest[0]), latest[1])
+        if latest_version > current_version:
+            return (_tuple_to_version_number(latest_version), latest_url)
     return None
 
 
