@@ -26,10 +26,6 @@ def _extract_version_tuple(raw):
         return None
 
 
-def _tuple_to_version_number(version):
-    return ".".join([str(i) for i in version])
-
-
 async def _async_get(url, method="GET"):
     return await trio.to_thread.run_sync(lambda: urlopen(Request(url, method=method)))
 
@@ -69,7 +65,7 @@ async def _do_check_new_version(url, api_url):
             except (KeyError, TypeError):
                 return (latest_from_head, url)
         if latest_version > current_version:
-            return (_tuple_to_version_number(latest_version), latest_url)
+            return (latest_version, latest_url)
     return None
 
 
