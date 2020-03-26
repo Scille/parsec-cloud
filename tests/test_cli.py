@@ -70,7 +70,7 @@ def test_share_workspace(tmpdir, alice, bob):
     share_mock.assert_called_once_with("/ws1", alice.user_id)
 
 
-def _run(cmd, env={}, timeout=10.0, capture=True):
+def _run(cmd, env={}, timeout=20.0, capture=True):
     print(f"========= RUN {cmd} ==============")
     env = {**os.environ.copy(), "DEBUG": "true", **env}
     cooked_cmd = ("python -m parsec.cli " + cmd).split()
