@@ -153,9 +153,10 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
     def on_check_new_version_success(self):
         assert self.version_job.is_finished()
         assert self.version_job.status == "ok"
-        new_version, url = self.version_job.ret
+        version_job_ret = self.version_job.ret
         self.version_job = None
-        if new_version:
+        if version_job_ret:
+            new_version, url = version_job_ret
             self.widget_available.show()
             self.widget_info.hide()
             self.widget_available.set_version(new_version)
