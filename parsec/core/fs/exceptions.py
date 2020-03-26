@@ -13,6 +13,7 @@ Define all the FSError classes, using the following hierarchy:
 
 import os
 import errno
+
 from parsec.core.types import EntryID
 from parsec.core.fs.utils import ntstatus
 

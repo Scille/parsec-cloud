@@ -1,12 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+import trio
 from unittest.mock import ANY
-from pendulum import Pendulum
+from pendulum import Pendulum, now as pendulum_now
 
 from tests.common import create_shared_workspace, freeze_time
 
+from parsec.api.data import PingMessageContent
 from parsec.core.types import WorkspaceEntry, WorkspaceRole
+from parsec.core.backend_connection import BackendConnStatus
 
 
 @pytest.mark.trio
@@ -18,6 +21,59 @@ async def test_monitors_idle(running_backend, alice_core):
     assert not alice_core.are_monitors_idle()
     await alice_core.wait_idle_monitors()
     assert alice_core.are_monitors_idle()
+
+
+async def _send_msg(backend, author, recipient, ping="ping"):
+    now = pendulum_now()
+    message = PingMessageContent(author=author.device_id, timestamp=now, ping=ping)
+    ciphered_message = message.dump_sign_and_encrypt_for(
+        author_signkey=author.signing_key, recipient_pubkey=recipient.public_key
+    )
+    await backend.message.send(
+        organization_id=recipient.organization_id,
+        sender=author.device_id,
+        recipient=recipient.user_id,
+        timestamp=now,
+        body=ciphered_message,
+    )
+
+
+@pytest.mark.trio
+async def test_process_while_offline(
+    mock_clock, running_backend, alice_core, bob_user_fs, alice, bob
+):
+    mock_clock.autojump_threshold = 0
+    assert alice_core.backend_conn.status == BackendConnStatus.READY
+
+    with running_backend.offline():
+        with alice_core.event_bus.listen() as spy:
+            # Force wakeup of the message monitor
+            alice_core.event_bus.send("backend.message.received", index=42)
+            assert not alice_core.are_monitors_idle()
+
+            with trio.fail_after(60):  # autojump, so not *really* 60s
+                await spy.wait(
+                    "backend.connection.changed",
+                    {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
+                )
+                await alice_core.wait_idle_monitors()
+            assert alice_core.backend_conn.status == BackendConnStatus.LOST
+
+        # Send message while alice is offline
+        await _send_msg(
+            backend=running_backend.backend, author=bob, recipient=alice, ping="hello from Bob !"
+        )
+
+    with alice_core.event_bus.listen() as spy:
+        # Alice is back online, should retreive Bob's message fine
+        with trio.fail_after(60):  # autojump, so not *really* 60s
+            await spy.wait(
+                "backend.connection.changed",
+                {"status": BackendConnStatus.READY, "status_exc": None},
+            )
+            await alice_core.wait_idle_monitors()
+        assert alice_core.backend_conn.status == BackendConnStatus.READY
+        spy.assert_event_occured("pinged", {"ping": "hello from Bob !"})
 
 
 @pytest.mark.trio

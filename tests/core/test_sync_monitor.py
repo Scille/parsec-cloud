@@ -22,6 +22,42 @@ async def test_monitors_idle(mock_clock, running_backend, alice_core, alice):
 
 
 @pytest.mark.trio
+async def test_monitor_switch_offline(mock_clock, running_backend, alice_core, alice):
+    mock_clock.autojump_threshold = 0
+
+    assert alice_core.are_monitors_idle()
+
+    # Force wakeup of the sync monitor
+    alice_core.event_bus.send("fs.entry.updated", id=alice.user_manifest_id)
+    assert not alice_core.are_monitors_idle()
+    with trio.fail_after(60):  # autojump, so not *really* 60s
+        await alice_core.wait_idle_monitors()
+    assert alice_core.are_monitors_idle()
+
+
+@pytest.mark.trio
+async def test_process_while_offline(
+    mock_clock, running_backend, alice_core, bob_user_fs, alice, bob
+):
+    mock_clock.autojump_threshold = 0
+    assert alice_core.backend_conn.status == BackendConnStatus.READY
+
+    with running_backend.offline():
+        with alice_core.event_bus.listen() as spy:
+            # Force wakeup of the sync monitor
+            alice_core.event_bus.send("fs.entry.updated", id=alice.user_manifest_id)
+            assert not alice_core.are_monitors_idle()
+
+            with trio.fail_after(60):  # autojump, so not *really* 60s
+                await spy.wait(
+                    "backend.connection.changed",
+                    {"status": BackendConnStatus.LOST, "status_exc": spy.ANY},
+                )
+                await alice_core.wait_idle_monitors()
+            assert alice_core.backend_conn.status == BackendConnStatus.LOST
+
+
+@pytest.mark.trio
 async def test_autosync_on_modification(
     mock_clock, running_backend, alice, alice_core, alice2_user_fs
 ):
