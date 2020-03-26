@@ -14,6 +14,7 @@ variables:
   winfsp.version: '1.7.20038-pre'
   pytest.base_args: |
     --log-level=DEBUG \
+    --durations=10 -v \
     --cov=parsec --cov-config=../setup.cfg --cov-append --cov-report= \
 
 jobs:
