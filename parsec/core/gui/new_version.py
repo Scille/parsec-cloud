@@ -3,9 +3,10 @@
 import re
 import platform
 import trio
+import json
 from urllib.request import urlopen, Request
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QDialog, QWidget
 
 from parsec import __version__
@@ -17,9 +18,6 @@ from parsec.core.gui.ui.new_version_info import Ui_NewVersionInfo
 from parsec.core.gui.ui.new_version_available import Ui_NewVersionAvailable
 
 
-RELEASE_URL = "https://github.com/Scille/parsec-cloud/releases/latest"
-
-
 def _extract_version_tuple(raw):
     match = re.match(r"^.*([0-9]+)\.([0-9]+)\.([0-9]+)", raw)
     if match:
@@ -28,18 +26,47 @@ def _extract_version_tuple(raw):
         return None
 
 
-async def _do_check_new_version(url):
-    # urlopen automatically follows redirections
-    resolved_url = await trio.to_thread.run_sync(
-        lambda: urlopen(Request(url, method="HEAD")).geturl()
-    )
+async def _async_get(url, method="GET"):
+    return await trio.to_thread.run_sync(lambda: urlopen(Request(url, method=method)))
 
-    lastest_version = _extract_version_tuple(resolved_url)
+
+async def _do_check_new_version(url, api_url):
+    # urlopen automatically follows redirections
+    resolved_url = (await _async_get(url, method="HEAD")).geturl()
+    latest_from_head = _extract_version_tuple(resolved_url)
     current_version = _extract_version_tuple(__version__)
-    if lastest_version and current_version and current_version < lastest_version:
-        return lastest_version
-    else:
-        return None
+    if latest_from_head and current_version and current_version < latest_from_head:
+        json_releases = json.loads((await _async_get(api_url)).read())
+
+        current_arch = QSysInfo().currentCpuArchitecture()
+        if current_arch == "x86_64":
+            win_version = "win64"
+        elif current_arch == "i386":
+            win_version = "win32"
+        else:
+            return (latest_from_head, url)
+
+        latest_version = (0, 0, 0)
+        latest_url = ""
+
+        for release in json_releases:
+            try:
+                if release["draft"]:
+                    continue
+                if release["prerelease"]:
+                    continue
+                for asset in release["assets"]:
+                    if asset["name"].endswith(f"-{win_version}-setup.exe"):
+                        asset_version = _extract_version_tuple(release["tag_name"])
+                        if asset_version > latest_version:
+                            latest_version = asset_version
+                            latest_url = asset["browser_download_url"]
+            # In case something went wrong, still better to redirect to GitHub
+            except (KeyError, TypeError):
+                return (latest_from_head, url)
+        if latest_version > current_version:
+            return (latest_version, latest_url)
+    return None
 
 
 class NewVersionInfo(QWidget, Ui_NewVersionInfo):
@@ -117,18 +144,21 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
             ThreadSafeQtSignal(self, "check_new_version_error"),
             _do_check_new_version,
             url=self.config.gui_check_version_url,
+            api_url=self.config.gui_check_version_api_url,
         )
         self.setWindowFlags(Qt.SplashScreen)
 
     def on_check_new_version_success(self):
         assert self.version_job.is_finished()
         assert self.version_job.status == "ok"
-        new_version = self.version_job.ret
+        version_job_ret = self.version_job.ret
         self.version_job = None
-        if new_version:
+        if version_job_ret:
+            new_version, url = version_job_ret
             self.widget_available.show()
             self.widget_info.hide()
             self.widget_available.set_version(new_version)
+            self.download_url = url
             if not self.isVisible():
                 self.exec_()
         else:
@@ -149,7 +179,7 @@ class CheckNewVersion(QDialog, Ui_NewVersionDialog):
         self.widget_info.show_error()
 
     def download(self):
-        desktop.open_url(self.config.gui_check_version_url)
+        desktop.open_url(self.download_url)
         self.accept()
 
     def ignore(self):

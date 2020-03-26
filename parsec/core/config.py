@@ -72,6 +72,7 @@ class CoreConfig:
     gui_last_version: Optional[str] = None
     gui_check_version_at_startup: bool = True
     gui_check_version_url: str = "https://github.com/Scille/parsec-cloud/releases/latest"
+    gui_check_version_api_url: str = "https://api.github.com/repos/Scille/parsec-cloud/releases"
     gui_confirmation_before_close: bool = True
     gui_workspace_color: bool = False
     gui_allow_multiple_instances: bool = False
