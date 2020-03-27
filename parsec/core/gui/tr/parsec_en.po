@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-19 18:11+0100\n"
-"PO-Revision-Date: 2020-03-25 10:00+0100\n"
+"POT-Creation-Date: 2020-03-27 11:49+0100\n"
+"PO-Revision-Date: 2020-03-27 11:49+0100\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -73,11 +73,11 @@ msgstr "Delete a file"
 msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
 msgstr "Are you sure you want to delete the file \"{name}\"?"
 
-msgid "ACTION_CANCEL"
-msgstr "Cancel"
-
 msgid "ACTION_FILE_DELETE"
 msgstr "Delete"
+
+msgid "ACTION_CANCEL"
+msgstr "Cancel"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
 msgstr "Delete multiple files"
@@ -1260,9 +1260,6 @@ msgstr "Error"
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "This device has been revoked and can no longer be used to log in."
 
-msgid "TEXT_LOGIN_UNKNOWN_ERROR"
-msgstr "Cannot log in."
-
 msgid "TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"
 msgstr ""
 "WinFsp could not be loaded. \n"
@@ -1272,6 +1269,9 @@ msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "Fuse could not be loaded. \n"
 "Please check your installation."
+
+msgid "TEXT_LOGIN_UNKNOWN_ERROR"
+msgstr "Cannot log in."
 
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "This device is already logged in, probably in another tab."
@@ -1509,11 +1509,11 @@ msgstr ""
 "\n"
 "Do you allow PARSEC to automatically report errors? This can later be turned ON or OFF in the settings."
 
-msgid "ACTION_NO"
-msgstr "No"
-
 msgid "ACTION_ERROR_REPORTING_ACCEPT"
 msgstr "Allow error reporting"
+
+msgid "ACTION_NO"
+msgstr "No"
 
 msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
 msgstr "Restore compatibility with Acrobat Reader DC"
@@ -1853,6 +1853,9 @@ msgstr "Reencrypt the workspace."
 
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Remove this workspace."
+
+msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
+msgstr "Open the workspace in the file explorer."
 
 msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
 msgstr "Find a user"

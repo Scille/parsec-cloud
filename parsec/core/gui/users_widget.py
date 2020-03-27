@@ -64,7 +64,7 @@ class UserButton(QWidget, Ui_UserButton):
         if value:
             self.label_revoked.setText(_("TEXT_USER_IS_REVOKED"))
             self.setStyleSheet(
-                "#UserButton, #widget { background-color: #DDDDDD; border-radius: 4px; }"
+                "#UserButton, #widget { background-color: #E3E3E3; border-radius: 4px; }"
             )
         else:
             self.label_revoked.setText("")

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-19 18:11+0100\n"
-"PO-Revision-Date: 2020-03-25 10:01+0100\n"
+"POT-Creation-Date: 2020-03-27 11:49+0100\n"
+"PO-Revision-Date: 2020-03-27 11:50+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -73,11 +73,11 @@ msgstr "Supprimer un fichier"
 msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
 msgstr "Êtes-vous sûr de vouloir supprimer le fichier \"{name}\" ?"
 
-msgid "ACTION_CANCEL"
-msgstr "Annuler"
-
 msgid "ACTION_FILE_DELETE"
 msgstr "Supprimer"
+
+msgid "ACTION_CANCEL"
+msgstr "Annuler"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
 msgstr "Supprimer plusieurs fichiers"
@@ -1265,9 +1265,6 @@ msgstr "Erreur"
 msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
 msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 
-msgid "TEXT_LOGIN_UNKNOWN_ERROR"
-msgstr "Impossible de se connecter."
-
 msgid "TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"
 msgstr ""
 "WinFsp n'a pas pu être chargé. \n"
@@ -1277,6 +1274,9 @@ msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "FUSE n'a pas pu être chargé. \n"
 "Merci de vérifier votre installation."
+
+msgid "TEXT_LOGIN_UNKNOWN_ERROR"
+msgstr "Impossible de se connecter."
 
 msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
 msgstr "Cet appareil est déjà connecté, probablement dans un autre onglet."
@@ -1516,11 +1516,11 @@ msgstr ""
 "\n"
 "Autorisez-vous PARSEC à envoyer automatiquement des rapports d'erreur ? Vous pourrez désactiver cette fonctionnalité dans la configuration."
 
-msgid "ACTION_NO"
-msgstr "Non"
-
 msgid "ACTION_ERROR_REPORTING_ACCEPT"
 msgstr "Autoriser les rapports d'erreur"
+
+msgid "ACTION_NO"
+msgstr "Non"
 
 msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
 msgstr "Restaurer la comptabilité avec Acrobat Reader DC"
@@ -1860,6 +1860,9 @@ msgstr "Rechiffrer l'espace de travail."
 
 msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
 msgstr "Supprimer l'espace de travail"
+
+msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
+msgstr "Ouvrir l'espace de travail dans l'explorateur de fichiers."
 
 msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
 msgstr "Trouver un utilisateur"

@@ -144,6 +144,38 @@ QWidget#widget_title {
           </widget>
          </item>
          <item>
+          <widget class="IconLabel" name="label_reencrypting">
+           <property name="minimumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="../rc/resources.qrc">:/icons/images/material/refresh.svg</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+           <property name="color" stdset="0">
+            <color>
+             <red>153</red>
+             <green>153</green>
+             <blue>153</blue>
+            </color>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="IconLabel" name="label_shared">
            <property name="minimumSize">
             <size>
@@ -424,6 +456,48 @@ QWidget#widget_title {
           </spacer>
          </item>
          <item>
+          <widget class="Button" name="button_open">
+           <property name="minimumSize">
+            <size>
+             <width>32</width>
+             <height>32</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>32</width>
+             <height>32</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../rc/resources.qrc">
+             <normaloff>:/icons/images/material/open_in_browser.svg</normaloff>:/icons/images/material/open_in_browser.svg</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+           <property name="color" stdset="0">
+            <color>
+             <red>153</red>
+             <green>153</green>
+             <blue>153</blue>
+            </color>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="Button" name="button_rename">
            <property name="minimumSize">
             <size>
@@ -554,45 +628,6 @@ QWidget#widget_title {
              <red>153</red>
              <green>153</green>
              <blue>153</blue>
-            </color>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="button_reencrypting">
-           <property name="minimumSize">
-            <size>
-             <width>32</width>
-             <height>32</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>32</width>
-             <height>32</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../rc/resources.qrc">
-             <normaloff>:/icons/images/material/refresh.svg</normaloff>:/icons/images/material/refresh.svg</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>32</width>
-             <height>32</height>
-            </size>
-           </property>
-           <property name="color" stdset="0">
-            <color>
-             <red>241</red>
-             <green>150</green>
-             <blue>43</blue>
             </color>
            </property>
           </widget>

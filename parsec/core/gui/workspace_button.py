@@ -30,6 +30,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     delete_clicked = pyqtSignal(WorkspaceFS)
     rename_clicked = pyqtSignal(QWidget)
     remount_ts_clicked = pyqtSignal(WorkspaceFS)
+    open_clicked = pyqtSignal(WorkspaceFS)
 
     def __init__(
         self,
@@ -67,6 +68,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.widget_empty.hide()
 
         if self.timestamped:
+            self.widget_title.setStyleSheet(
+                "background-color: #E3E3E3; border-top-left-radius: 8px; border-top-right-radius: 8px;"
+            )
+            self.widget_actions.setStyleSheet(
+                "background-color: #E3E3E3; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"
+            )
+            self.setStyleSheet("background-color: #E3E3E3; border-radius: 8px;")
             self.button_reencrypt.hide()
             self.button_remount_ts.hide()
             self.button_share.hide()
@@ -74,6 +82,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
             self.label_owner.hide()
         else:
+            self.widget_title.setStyleSheet(
+                "background-color: #FFFFFF; border-top-left-radius: 8px; border-top-right-radius: 8px;"
+            )
+            self.widget_actions.setStyleSheet(
+                "background-color: #FFFFFF; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"
+            )
+            self.setStyleSheet("background-color: #FFFFFF; border-radius: 8px;")
             self.button_delete.hide()
 
         effect = QGraphicsDropShadowEffect(self)
@@ -84,8 +99,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setGraphicsEffect(effect)
         if not self.is_creator:
             self.button_reencrypt.hide()
-            self.button_reencrypting.hide()
-        self.button_reencrypting.hide()
+        self.label_reencrypting.hide()
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_share.apply_style()
         self.button_reencrypt.clicked.connect(self.button_reencrypt_clicked)
@@ -96,13 +110,19 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.button_rename.apply_style()
         self.button_remount_ts.clicked.connect(self.button_remount_ts_clicked)
         self.button_remount_ts.apply_style()
+        self.button_open.clicked.connect(self.button_open_workspace_clicked)
+        self.button_open.apply_style()
         self.label_owner.apply_style()
         self.label_shared.apply_style()
+        self.label_reencrypting.apply_style()
         if not self.is_creator:
             self.label_owner.hide()
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
+
+    def button_open_workspace_clicked(self):
+        self.open_clicked.emit(self.workspace_fs)
 
     def button_share_clicked(self):
         self.share_clicked.emit(self.workspace_fs)
@@ -153,11 +173,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def reencrypting(self, val):
         def _start_reencrypting():
             self.button_reencrypt.hide()
-            self.button_reencrypting.show()
+            self.label_reencrypting.show()
 
         def _stop_reencrypting():
             self.button_reencrypt.hide()
-            self.button_reencrypting.hide()
+            self.label_reencrypting.hide()
 
         self._reencrypting = val
         if not self.is_creator:
@@ -165,7 +185,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if self._reencrypting:
             _start_reencrypting()
             total, done = self._reencrypting
-            self.button_reencrypting.setToolTip(
+            self.label_reencrypting.setToolTip(
                 "{} {}%".format(
                     _("TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"), int(done / total * 100)
                 )

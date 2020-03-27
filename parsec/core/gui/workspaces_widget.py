@@ -337,6 +337,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
         button.remount_ts_clicked.connect(self.remount_workspace_ts)
+        button.open_clicked.connect(self.open_workspace)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
@@ -351,8 +352,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_fs=workspace_fs,
         )
 
+    def open_workspace(self, workspace_fs):
+        self.open_workspace_file(workspace_fs, None)
+
     def open_workspace_file(self, workspace_fs, file_name):
-        file_name = FsPath("/", file_name)
+        file_name = FsPath("/", file_name) if file_name else FsPath("/")
 
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system

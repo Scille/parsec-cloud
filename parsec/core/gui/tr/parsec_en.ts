@@ -154,17 +154,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/devices_widget.ui" line="69"/>
+        <location filename="../forms/devices_widget.ui" line="72"/>
         <source>TEXT_DEVICE_ADD_NEW_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/devices_widget.ui" line="72"/>
+        <location filename="../forms/devices_widget.ui" line="75"/>
         <source>ACTION_DEVICE_ADD_NEW</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/devices_widget.ui" line="59"/>
+        <location filename="../forms/devices_widget.ui" line="62"/>
         <source>TEXT_DEVICE_FILTER_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
@@ -177,7 +177,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/empty_workspace_widget.ui" line="78"/>
+        <location filename="../forms/empty_workspace_widget.ui" line="90"/>
         <source>TEXT_WORKSPACE_EMPTY_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
@@ -268,62 +268,62 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="148"/>
+        <location filename="../forms/files_widget.ui" line="156"/>
         <source>ACTION_FILE_CREATE_FOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="181"/>
+        <location filename="../forms/files_widget.ui" line="189"/>
         <source>ACTION_FILE_IMPORT_FILES</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="214"/>
+        <location filename="../forms/files_widget.ui" line="222"/>
         <source>ACTION_FILE_IMPORT_FOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="361"/>
+        <location filename="../forms/files_widget.ui" line="369"/>
         <source>TEXT_FILE_NAME_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="366"/>
+        <location filename="../forms/files_widget.ui" line="374"/>
         <source>TEXT_FILE_CREATED_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="371"/>
+        <location filename="../forms/files_widget.ui" line="379"/>
         <source>TEXT_FILE_UPDATED_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="376"/>
+        <location filename="../forms/files_widget.ui" line="384"/>
         <source>TEXT_FILE_SIZE_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="135"/>
+        <location filename="../forms/files_widget.ui" line="143"/>
         <source>TEXT_FILE_FILTER_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="94"/>
+        <location filename="../forms/files_widget.ui" line="102"/>
         <source>TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="145"/>
+        <location filename="../forms/files_widget.ui" line="153"/>
         <source>TEXT_FILE_CREATE_FOLDER_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="178"/>
+        <location filename="../forms/files_widget.ui" line="186"/>
         <source>TEXT_FILE_IMPORT_FILES_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="211"/>
+        <location filename="../forms/files_widget.ui" line="219"/>
         <source>TEXT_FILE_IMPORT_FOLDER_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
@@ -336,7 +336,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/greyed_dialog.ui" line="197"/>
+        <location filename="../forms/greyed_dialog.ui" line="200"/>
         <source>TEXT_DIALOG_CLOSE_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
@@ -520,22 +520,22 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="187"/>
+        <location filename="../forms/menu_widget.ui" line="191"/>
         <source>ACTION_MENU_DOCUMENTS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="248"/>
+        <location filename="../forms/menu_widget.ui" line="252"/>
         <source>ACTION_MENU_USERS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="309"/>
+        <location filename="../forms/menu_widget.ui" line="313"/>
         <source>ACTION_MENU_DEVICES</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="386"/>
+        <location filename="../forms/menu_widget.ui" line="390"/>
         <source>ACTION_LOG_OUT</source>
         <translation type="unfinished"></translation>
     </message>
@@ -807,12 +807,12 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="65"/>
+        <location filename="../forms/users_widget.ui" line="68"/>
         <source>TEXT_USERS_FILTER_USERS_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="75"/>
+        <location filename="../forms/users_widget.ui" line="78"/>
         <source>ACTION_USER_INVITE_USER</source>
         <translation type="unfinished"></translation>
     </message>
@@ -825,43 +825,43 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="161"/>
+        <location filename="../forms/workspace_button.ui" line="193"/>
         <source>TEXT_WORKSPACE_IS_SHARED_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="196"/>
+        <location filename="../forms/workspace_button.ui" line="228"/>
         <source>TEXT_WORKSPACE_IS_OWNER_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="444"/>
+        <location filename="../forms/workspace_button.ui" line="518"/>
         <source>TEXT_WORKSPACE_RENAME_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="489"/>
+        <location filename="../forms/workspace_button.ui" line="563"/>
         <source>TEXT_WORKSPACE_OPEN_SHARING_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="534"/>
+        <location filename="../forms/workspace_button.ui" line="608"/>
         <source>TEXT_WORKSPACE_REMOUNT_TIMESTAMPED_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="618"/>
+        <location filename="../forms/workspace_button.ui" line="653"/>
         <source>TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="663"/>
+        <location filename="../forms/workspace_button.ui" line="698"/>
         <source>TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_button.ui" line="576"/>
-        <source>TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP</source>
+        <location filename="../forms/workspace_button.ui" line="473"/>
+        <source>TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -896,17 +896,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspaces_widget.ui" line="56"/>
+        <location filename="../forms/workspaces_widget.ui" line="59"/>
         <source>TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspaces_widget.ui" line="66"/>
+        <location filename="../forms/workspaces_widget.ui" line="69"/>
         <source>ACTION_WORKSPACE_ADD_WORKSPACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspaces_widget.ui" line="96"/>
+        <location filename="../forms/workspaces_widget.ui" line="99"/>
         <source>ACTION_WORKSPACE_GOTO_FILE_LINK</source>
         <translation type="unfinished"></translation>
     </message>
