@@ -4,14 +4,7 @@ import platform
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import (
-    QWidget,
-    QCompleter,
-    QDialog,
-    QApplication,
-    QStyleOption,
-    QStyle,
-)
+from PyQt5.QtWidgets import QWidget, QCompleter, QDialog, QApplication, QStyleOption, QStyle
 
 from structlog import get_logger
 

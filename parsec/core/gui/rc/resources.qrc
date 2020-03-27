@@ -966,5 +966,6 @@
         <file>images/material/wrap_text.svg</file>
         <file>images/material/youtube_searched_for.svg</file>
         <file>images/material/zoom_out_map.svg</file>
+        <file>images/icons/spinner.svg</file>
     </qresource>
 </RCC>
