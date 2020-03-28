@@ -182,4 +182,5 @@ class InviteDeviceWidget(QWidget, Ui_InviteDeviceWidget):
         w = cls(core=core, jobs_ctx=jobs_ctx)
         d = GreyedDialog(w, title=_("TEXT_INVITE_DEVICE_TITLE"), parent=parent)
         w.dialog = d
+        w.line_edit_device_name.setFocus()
         return d.exec_()

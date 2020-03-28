@@ -238,6 +238,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
         d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent)
         w.dialog = d
+        w.line_edit_login.setFocus()
         if d.exec_() == QDialog.Accepted and w.status:
             return w.status
         return None
