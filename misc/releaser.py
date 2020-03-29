@@ -21,6 +21,7 @@ FRAGMENT_TYPES = {
     "doc": "Improved Documentation",
     "removal": "Deprecations and Removals",
     "misc": "Miscellaneous internal changes",
+    "empty": "Miscellaneous internal changes that shouldn't even be collected",
 }
 
 
@@ -136,6 +137,9 @@ def build_release(version, stage_pause):
     issues_per_type = defaultdict(list)
     for fragment in newsfragments:
         issue_id, type, _ = fragment.name.split(".")
+        # Don't add empty fragments. Still needed to be collected as they will be deleted later
+        if type == "empty":
+            continue
         issue_txt = f"{fragment.read_text()} (`#{issue_id} <https://github.com/Scille/parsec-cloud/issues/{issue_id}>`__)\n"
         wrapped_issue_txt = textwrap.fill(
             issue_txt, width=80, break_long_words=False, initial_indent="* ", subsequent_indent="  "
