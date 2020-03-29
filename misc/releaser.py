@@ -29,6 +29,12 @@ class ReleaseError(Exception):
 
 
 Version = namedtuple("Version", "full,short,major,minor,patch,extra")
+Version.__eq__ = lambda self, other: self.full == other.full
+Version.__lt__ = lambda self, other: (self.major, self.minor, self.patch) < (
+    other.major,
+    other.minor,
+    other.patch,
+)
 
 
 def parse_version(raw):
@@ -38,10 +44,10 @@ def parse_version(raw):
     match = re.match(r"^v([0-9]+)\.([0-9]+)\.([0-9]+)(([\-+]\w+)*)$", raw)
     if match:
         major, minor, patch, extra, *_ = match.groups()
-        return Version(raw, f"{major}.{minor}.{patch}", major, minor, patch, extra)
+        return Version(raw, f"{major}.{minor}.{patch}", int(major), int(minor), int(patch), extra)
     else:
         raise ValueError(
-            "Invalid version format, should be `[v]<major>.<minor>.<path>[-<extra>]` (e.g. `v1.0.0`, `1.2.3-dev`)"
+            "Invalid version format, should be `[v]<major>.<minor>.<patch>[-<extra>]` (e.g. `v1.0.0`, `1.2.3-dev`)"
         )
 
 
@@ -101,7 +107,7 @@ def build_release(version, stage_pause):
         raise ReleaseError(f"Invalid release version: `{version.full}`")
     print(f"Build release {version.short}")
     old_version = get_version_from_code()
-    if version.short < old_version.short:
+    if version < old_version:
         raise ReleaseError(
             f"Previous version incompatible with new one ({old_version.short} vs {version.short})"
         )

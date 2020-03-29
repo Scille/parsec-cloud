@@ -1,1 +1,0 @@
-Fix unhandled error message in GUI that could occur during sync with poor connection.
