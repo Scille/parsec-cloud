@@ -48,6 +48,8 @@ jobs:
       for FILENAME in newsfragments/*
       do
         # If file never existed in master, consider as a new newsfragment
+        # Cannot git diff against master branch here given newsfragments removed in master will be considered as
+        # new items in our branch
         if ! git log master --exit-code -- newsfragments/"$FILENAME" > /dev/null
         then exit 0; fi
       done
