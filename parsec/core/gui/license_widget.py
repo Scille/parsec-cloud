@@ -10,4 +10,4 @@ class LicenseWidget(QWidget, Ui_LicenseWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.text_license.setHtml(_("PARSEC_LICENSE_CONTENT"))
+        self.text_license.setHtml(_("TEXT_PARSEC_LICENSE"))

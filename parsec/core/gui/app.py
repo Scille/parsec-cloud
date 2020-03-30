@@ -9,7 +9,7 @@ from contextlib import contextmanager
 import trio
 from structlog import get_logger
 
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QFile
 from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
@@ -110,7 +110,7 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-    app = QApplication([])
+    app = QApplication(["-stylesheet"])
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
@@ -118,6 +118,11 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     QFontDatabase.addApplicationFont(":/fonts/fonts/Roboto-Regular.ttf")
     f = QFont("Roboto")
     app.setFont(f)
+
+    rc = QFile(":/styles/styles/main.css")
+    rc.open(QFile.ReadOnly)
+    content = rc.readAll().data()
+    app.setStyleSheet(str(content, "utf-8"))
 
     lang_key = lang.switch_language(config)
 
@@ -160,6 +165,8 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
             systray.on_close.connect(win.close_app)
             systray.on_show.connect(win.show_top)
             app.aboutToQuit.connect(before_quit(systray))
+            if config.gui_tray_enabled:
+                app.setQuitOnLastWindowClosed(False)
 
         if config.gui_check_version_at_startup and not diagnose:
             CheckNewVersion(jobs_ctx=jobs_ctx, event_bus=event_bus, config=config, parent=win)

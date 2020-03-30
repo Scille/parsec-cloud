@@ -72,7 +72,6 @@ class InstanceWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-
         self.show_login_widget()
 
     @pyqtSlot(object, object)
@@ -125,18 +124,24 @@ class InstanceWidget(QWidget):
             self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
         if self.running_core_job.status is not None:
             if isinstance(self.running_core_job.exc, HandshakeRevokedDevice):
-                show_error(self, _("ERR_LOGIN_DEVICE_REVOKED"), exception=self.running_core_job.exc)
+                show_error(
+                    self, _("TEXT_LOGIN_ERROR_DEVICE_REVOKED"), exception=self.running_core_job.exc
+                )
             elif isinstance(self.running_core_job.exc, MountpointWinfspNotAvailable):
                 show_error(
-                    self, _("ERR_LOGIN_WINFSP_NOT_AVAILABLE"), exception=self.running_core_job.exc
+                    self,
+                    _("TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"),
+                    exception=self.running_core_job.exc,
                 )
             elif isinstance(self.running_core_job.exc, MountpointFuseNotAvailable):
                 show_error(
-                    self, _("ERR_LOGIN_FUSE_NOT_AVAILABLE"), exception=self.running_core_job.exc
+                    self,
+                    _("TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"),
+                    exception=self.running_core_job.exc,
                 )
             else:
                 logger.exception("Unhandled error", exc_info=self.running_core_job.exc)
-                show_error(self, _("ERR_LOGIN_UNKNOWN"), exception=self.running_core_job.exc)
+                show_error(self, _("TEXT_LOGIN_UNKNOWN_ERROR"), exception=self.running_core_job.exc)
         self.running_core_job = None
         self.core_jobs_ctx = None
         self.core = None
@@ -158,7 +163,7 @@ class InstanceWidget(QWidget):
 
     def on_logged_out(self):
         self.state_changed.emit(self, "login")
-        self.show_login_widget(show_meth="show_login_widget")
+        self.show_login_widget()
 
     def on_logged_in(self):
         self.state_changed.emit(self, "connected")
@@ -167,28 +172,25 @@ class InstanceWidget(QWidget):
     def logout(self):
         self.stop_core()
 
-    def on_login_state_changed(self, state):
-        self.state_changed.emit(self, state)
-
     def login_with_password(self, key_file, password):
         message = None
         exception = None
         try:
             device = load_device_with_password(key_file, password)
             if device in InstanceWidget.devices_connected:
-                message = _("ERR_LOGIN_ALREADY_CONNECTED")
+                message = _("TEXT_LOGIN_ERROR_ALREADY_CONNECTED")
             else:
                 self.start_core(device)
         except LocalDeviceError as exc:
-            message = _("ERR_LOGIN_AUTH_FAILED")
+            message = _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED")
             exception = exc
 
         except (RuntimeError, MountpointConfigurationError, MountpointDriverCrash) as exc:
-            message = _("ERR_LOGIN_MOUNTPOINT")
+            message = _("TEXT_LOGIN_MOUNTPOINT_ERROR")
             exception = exc
 
         except Exception as exc:
-            message = _("ERR_LOGIN_UNKNOWN")
+            message = _("TEXT_LOGIN_UNKNOWN_ERROR")
             exception = exc
             logger.exception("Unhandled error during login")
         finally:
@@ -205,16 +207,12 @@ class InstanceWidget(QWidget):
         central_widget.logout_requested.connect(self.logout)
         central_widget.show()
 
-    def show_login_widget(self, show_meth=None, **kwargs):
+    def show_login_widget(self):
         self.clear_widgets()
         login_widget = LoginWidget(
             self.jobs_ctx, self.event_bus, self.config, self.login_failed, parent=self
         )
         self.layout().addWidget(login_widget)
-        login_widget.state_changed.connect(self.on_login_state_changed)
-
-        if show_meth:
-            getattr(login_widget, show_meth)(**kwargs)
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
         login_widget.show()

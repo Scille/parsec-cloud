@@ -1,118 +1,22 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QPoint, QRect
-from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap
 from PyQt5.QtWidgets import (
     QPushButton,
     QLabel,
     QGraphicsDropShadowEffect,
-    QLayout,
-    QSizePolicy,
-    QStyle,
+    QWidget,
+    QListView,
+    QComboBox,
 )
 
 
-class FlowLayout(QLayout):
-    def __init__(self, spacing=10, parent=None):
-        super().__init__(parent)
-        self.spacing = spacing
-        self.items = []
-
-    def addItem(self, item):
-        self.items.append(item)
-
-    def horizontalSpacing(self):
-        if self.spacing >= 0:
-            return self.spacing
-        return self._smart_spacing(QStyle.PM_LayoutHorizontalSpacing)
-
-    def verticalSpacing(self):
-        if self.spacing >= 0:
-            return self.spacing
-        return self._smart_spacing(QStyle.PM_LayoutVerticalSpacing)
-
-    def count(self):
-        return len(self.items)
-
-    def itemAt(self, index):
-        if index >= 0 and index < len(self.items):
-            return self.items[index]
-        return None
-
-    def takeAt(self, index):
-        if index >= 0 and index < len(self.items):
-            return self.items.pop(index)
-        return None
-
-    def clear(self):
-        while self.count() != 0:
-            item = self.takeAt(0)
-            if item:
-                w = item.widget()
-                self.removeWidget(w)
-                w.hide()
-                w.setParent(None)
-
-    def expandingDirections(self):
-        return Qt.Horizontal
-
-    def hasHeightForWidth(self):
-        return True
-
-    def heightForWidth(self, width):
-        height = self._do_layout(QRect(0, 0, width, 0), True)
-        return height
-
-    def setGeometry(self, rect):
-        super().setGeometry(rect)
-        self._do_layout(rect, False)
-
-    def sizeHint(self):
-        return self.minimumSize()
-
-    def minimumSize(self):
-        size = QSize()
-        for item in self.items:
-            size = size.expandedTo(item.minimumSize())
-        return size
-
-    def _do_layout(self, rect, test_only):
-        x = rect.x()
-        y = rect.y()
-        line_height = 0
-
-        for item in self.items:
-            w = item.widget()
-            space_x = self.horizontalSpacing()
-            if space_x == -1:
-                space_x = w.style().layoutSpacing(
-                    QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
-                )
-            space_y = self.verticalSpacing()
-            if space_y == -1:
-                space_y = w.style().layoutSpacing(
-                    QSizePolicy.QPushButton, QSizePolicy.QPushButton, Qt.Vertical
-                )
-            next_x = x + item.sizeHint().width() + space_x
-            if next_x - space_x > rect.right() and line_height > 0:
-                x = rect.x()
-                y = y + line_height + space_y
-                next_x = x + item.sizeHint().width() + space_x
-                line_height = 0
-            if not test_only:
-                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
-            x = next_x
-            line_height = max(line_height, item.sizeHint().height())
-        return y + line_height - rect.x()
-
-    def _smart_spacing(self, pm):
-        parent = self.parent()
-        if not parent:
-            return -1
-        elif parent.isWidgetType():
-            parent.style().pixelMetric(pm, 0, parent)
-        else:
-            parent.spacing()
+class Pixmap(QPixmap):
+    def replace_color(self, old_color, new_color):
+        mask = self.createMaskFromColor(old_color, Qt.MaskOutColor)
+        self.fill(new_color)
+        self.setMask(mask)
 
 
 class FileLabel(QLabel):
@@ -128,96 +32,6 @@ class FileLabel(QLabel):
         if len(text) > 30:
             text = text[:30] + "..."
         super().setText(text)
-
-
-class MenuButton(QPushButton):
-    def __init__(self):
-        super().__init__(QIcon(":/icons/images/icons/settings_bars.png"), "")
-        self.setMinimumSize(32, 32)
-        self.setMaximumSize(32, 32)
-        self.setFixedSize(32, 32)
-        self.setStyleSheet(
-            "QPushButton{"
-            "background-color: rgb(255, 255, 255);"
-            "border: none;"
-            "padding: 10px;"
-            "}"
-        )
-
-
-class TaskbarButton(QPushButton):
-    def __init__(self, icon_path, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.state_string = "default"
-        self.setMinimumSize(64, 64)
-        self.setMaximumSize(64, 64)
-        self.setFixedSize(64, 64)
-        self.setIconPath(icon_path)
-        self.setIconSize(QSize(50, 50))
-        self.setStyleSheet(
-            "QPushButton{background-color: rgba(0, 0, 0, 0); border: 0;}\n"
-            "QToolTip{background-color: rgb(46, 146, 208);"
-            "border: 1px solid rgb(12, 65, 157);color: rgb(255, 255, 255);}"
-        )
-
-    def enterEvent(self, event):
-        self.state_string = "hover"
-        self.reloadIcon()
-
-    def leaveEvent(self, event):
-        self.state_string = "default"
-        self.reloadIcon()
-
-    def setIconPath(self, path):
-        self.icon_path = path
-        self.reloadIcon()
-
-    def reloadIcon(self):
-        self.setIcon(QIcon(self.icon_path.replace("$STATE", self.state_string)))
-
-
-class NotificationTaskbarButton(TaskbarButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            icon_path=":/icons/images/icons/tray_icons/bell-solid-$STATE.svg", *args, **kwargs
-        )
-        self.notif_count = 0
-
-    def inc_notif_count(self):
-        self.notif_count += 1
-
-    def reset_notif_count(self):
-        self.notif_count = 0
-
-    def setChecked(self, val):
-        super().setChecked(val)
-        if val:
-            self.setIconPath(":/icons/images/icons/tray_icons/bell-regular-$STATE.svg")
-            self.setIconSize(QSize(50, 50))
-        else:
-            self.setIconPath(":/icons/images/icons/tray_icons/bell-solid-$STATE.svg")
-            self.setIconSize(QSize(50, 50))
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        if self.notif_count == 0:
-            return
-        text = str(self.notif_count)
-        if self.notif_count >= 100:
-            text = "99+"
-        rect = event.rect()
-        painter = QPainter(self)
-        painter.setPen(QColor(220, 54, 66))
-        painter.setBrush(QColor(220, 54, 66))
-        painter.drawEllipse(rect.right() - 35, 0, 35, 35)
-        painter.setPen(QColor(255, 255, 255))
-        if len(text) == 1:
-            painter.drawText(QPoint(rect.right() - 22, 23), text)
-        elif len(text) == 2:
-            painter.drawText(QPoint(rect.right() - 27, 23), text)
-        elif len(text) == 3:
-            painter.drawText(QPoint(rect.right() - 30, 23), text)
-        painter.end()
 
 
 class PageLabel(QLabel):
@@ -267,13 +81,70 @@ class DeviceLabel(QLabel):
         painter.end()
 
 
-class PointingHandButton(QPushButton):
+class Button(QPushButton):
+    clicked_self = pyqtSignal(QWidget)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.clicked.connect(self._on_clicked)
+        self.current_color = QColor(0, 0, 0)
+
+    def _on_clicked(self):
+        self.clicked_self.emit(self)
+
+    def enterEvent(self, _):
+        color = self.property("hover_color")
+        if not color:
+            return
+        sizes = self.icon().availableSizes()
+        pixmap = Pixmap(self.icon().pixmap(sizes[-1] if len(sizes) else QSize(144, 144)))
+        pixmap.replace_color(self.current_color, color)
+        self.setIcon(QIcon(pixmap))
+        self.current_color = color
+
+    def leaveEvent(self, _):
+        self.apply_style()
+
+    def apply_style(self):
+        color = self.property("color")
+        if not color:
+            return
+        sizes = self.icon().availableSizes()
+        pixmap = Pixmap(self.icon().pixmap(sizes[-1] if len(sizes) else QSize(144, 144)))
+        pixmap.replace_color(self.current_color, color)
+        self.setIcon(QIcon(pixmap))
+        self.current_color = color
 
 
-class ShadowedButton(PointingHandButton):
+class MenuButton(Button):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_color = QColor(0, 0, 0)
+        self.toggled.connect(self.on_toggle)
+
+    def apply_style(self):
+        color = self.property("unchecked_color")
+        if not color:
+            return
+        sizes = self.icon().availableSizes()
+        pixmap = Pixmap(self.icon().pixmap(sizes[-1] if len(sizes) else QSize(144, 144)))
+        pixmap.replace_color(self.current_color, color)
+        self.current_color = color
+        self.setIcon(QIcon(pixmap))
+
+    def on_toggle(self, checked):
+        prop = "checked_color" if checked else "unchecked_color"
+        new_color = self.property(prop)
+        if not new_color:
+            return
+        sizes = self.icon().availableSizes()
+        pixmap = Pixmap(self.icon().pixmap(sizes[-1] if len(sizes) else QSize(144, 144)))
+        pixmap.replace_color(self.current_color, new_color)
+        self.current_color = new_color
+        self.setIcon(QIcon(pixmap))
+
+
+class ShadowedButton(Button):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         effect = QGraphicsDropShadowEffect(self)
@@ -294,3 +165,82 @@ class ClickableLabel(QLabel):
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.text())
+
+
+class IconLabel(QLabel):
+    def apply_style(self):
+        color = self.property("color")
+        if not color:
+            return
+        pixmap = Pixmap(self.pixmap())
+        pixmap.replace_color(QColor(0, 0, 0), color)
+        self.setPixmap(pixmap)
+
+
+class DropDownButton(Button):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.toggled.connect(self.on_toggle)
+
+    def on_toggle(self, checked):
+        color = self.property("color")
+        if not color:
+            return
+        if not checked:
+            pixmap = Pixmap(":/icons/images/material/arrow_drop_down.svg")
+            pixmap.replace_color(QColor(0, 0, 0), color)
+            self.setIcon(QIcon(pixmap))
+        else:
+            pixmap = Pixmap(":/icons/images/material/arrow_drop_up.svg")
+            pixmap.replace_color(QColor(0, 0, 0), color)
+            self.setIcon(QIcon(pixmap))
+
+
+class ComboBox(QComboBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setView(QListView())
+
+
+# class NotificationTaskbarButton(TaskbarButton):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(
+#             icon_path=":/icons/images/icons/tray_icons/bell-solid-$STATE.svg", *args, **kwargs
+#         )
+#         self.notif_count = 0
+
+#     def inc_notif_count(self):
+#         self.notif_count += 1
+
+#     def reset_notif_count(self):
+#         self.notif_count = 0
+
+#     def setChecked(self, val):
+#         super().setChecked(val)
+#         if val:
+#             self.setIconPath(":/icons/images/icons/tray_icons/bell-regular-$STATE.svg")
+#             self.setIconSize(QSize(50, 50))
+#         else:
+#             self.setIconPath(":/icons/images/icons/tray_icons/bell-solid-$STATE.svg")
+#             self.setIconSize(QSize(50, 50))
+
+#     def paintEvent(self, event):
+#         super().paintEvent(event)
+#         if self.notif_count == 0:
+#             return
+#         text = str(self.notif_count)
+#         if self.notif_count >= 100:
+#             text = "99+"
+#         rect = event.rect()
+#         painter = QPainter(self)
+#         painter.setPen(QColor(220, 54, 66))
+#         painter.setBrush(QColor(220, 54, 66))
+#         painter.drawEllipse(rect.right() - 35, 0, 35, 35)
+#         painter.setPen(QColor(255, 255, 255))
+#         if len(text) == 1:
+#             painter.drawText(QPoint(rect.right() - 22, 23), text)
+#         elif len(text) == 2:
+#             painter.drawText(QPoint(rect.right() - 27, 23), text)
+#         elif len(text) == 3:
+#             painter.drawText(QPoint(rect.right() - 30, 23), text)
+#         painter.end()

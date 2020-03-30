@@ -14,14 +14,19 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#DevicesWidget
-{
-background-color: rgb(255, 255, 255);
+   <string notr="true">#button_add_device {
+	background-color: none;
+	border: none;
+	color: #0092FF;
+}
+
+#button_add_device:hover {
+	color: #0070DD;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>10</number>
+    <number>30</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -53,21 +58,56 @@ background-color: rgb(255, 255, 255);
          <pointsize>12</pointsize>
         </font>
        </property>
-       <property name="styleSheet">
-        <string notr="true">background-image: url(:/icons/images/icons/search.png);
-background-repeat: no-repeat;
-background-position: right;
-border: 1px solid rgb(46, 46, 46);
-padding-left: 10px;
-color: rgb(46, 46, 46);</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
        <property name="placeholderText">
-        <string>LABEL_SEARCH_DEVICES</string>
+        <string>TEXT_DEVICE_FILTER_PLACEHOLDER</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="Button" name="button_add_device">
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="toolTip">
+        <string>TEXT_DEVICE_ADD_NEW_TOOLTIP</string>
+       </property>
+       <property name="text">
+        <string>ACTION_DEVICE_ADD_NEW</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../rc/resources.qrc">
+         <normaloff>:/icons/images/material/add_to_queue.svg</normaloff>:/icons/images/material/add_to_queue.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="color" stdset="0">
+        <color>
+         <red>0</red>
+         <green>146</green>
+         <blue>255</blue>
+        </color>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>
@@ -80,53 +120,7 @@ color: rgb(46, 46, 46);</string>
       <number>0</number>
      </property>
      <item>
-      <widget class="QPushButton" name="pushButton_4">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>32</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QPushButton#pushButton_4
-{
-background-color: rgb(46, 46, 46);
-border: 0;
-}</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="flat">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QScrollArea" name="scroll_area">
-       <property name="styleSheet">
-        <string notr="true">#scroll_area
-{
-background-color: rgb(255, 255, 255);
-border: 1px solid rgb(46, 46, 46);
-}
-
-QScrollBar:vertical
-{
-background: rgb(255, 255, 255);
-}
-
-QScrollBar::handle:vertical
-{
-background: rgb(46, 46, 46);
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
-{
-border: none;
-background: none;
-}</string>
-       </property>
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
        </property>
@@ -147,30 +141,42 @@ background: none;
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>473</width>
-          <height>448</height>
+          <width>475</width>
+          <height>442</height>
          </rect>
         </property>
-        <property name="styleSheet">
-         <string notr="true">#widget_content
-{
-background-color: rgb(255, 255, 255);
-}</string>
-        </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <layout class="QVBoxLayout" name="layout_content">
+           <property name="spacing">
+            <number>0</number>
+           </property>
            <property name="leftMargin">
-            <number>20</number>
+            <number>0</number>
            </property>
            <property name="topMargin">
-            <number>20</number>
+            <number>0</number>
            </property>
            <property name="rightMargin">
-            <number>20</number>
+            <number>4</number>
            </property>
            <property name="bottomMargin">
-            <number>20</number>
+            <number>0</number>
            </property>
           </layout>
          </item>
@@ -198,6 +204,15 @@ background-color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
- <resources/>
+ <customwidgets>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

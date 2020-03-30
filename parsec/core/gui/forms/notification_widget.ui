@@ -31,24 +31,6 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">QWidget#NotificationWidget
-{
-background-color: rgb(255, 255, 255);
-border-bottom: 1px solid rgb(11, 65, 155);
-}
-
-#button_close
-{
-background-color: rgb(255, 255, 255);
-border: 0;
-}
-
-QLabel
-{
-color: rgb(12, 65, 157);
-}</string>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
     <number>0</number>
@@ -81,13 +63,7 @@ color: rgb(12, 65, 157);
       </spacer>
      </item>
      <item>
-      <widget class="PointingHandButton" name="button_close">
-       <property name="styleSheet">
-        <string notr="true">QPushButton#button_close
-{
-border: 0;
-}</string>
-       </property>
+      <widget class="QPushButton" name="button_close">
        <property name="text">
         <string/>
        </property>
@@ -199,13 +175,6 @@ border: 0;
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>PointingHandButton</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

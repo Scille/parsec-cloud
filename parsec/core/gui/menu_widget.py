@@ -20,6 +20,12 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_users.clicked.connect(self.users_clicked.emit)
         self.button_devices.clicked.connect(self.devices_clicked.emit)
         self.button_logout.clicked.connect(self.logout_clicked.emit)
+        self.button_files.apply_style()
+        self.button_users.apply_style()
+        self.button_devices.apply_style()
+        self.button_logout.apply_style()
+        self.icon_connection.apply_style()
+        self.icon_user.apply_style()
 
     def paintEvent(self, _):
         opt = QStyleOption()
@@ -43,6 +49,12 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_devices.setChecked(False)
+
+    def set_connection_state(self, text, tooltip, icon):
+        self.label_connection_state.setText(text)
+        self.label_connection_state.setToolTip(tooltip)
+        self.icon_connection.setPixmap(icon)
+        self.icon_connection.apply_style()
 
     @property
     def organization_url(self):

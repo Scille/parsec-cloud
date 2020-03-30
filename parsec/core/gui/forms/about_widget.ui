@@ -80,7 +80,7 @@
       </font>
      </property>
      <property name="text">
-      <string>PARSEC_VERSION_LABEL_{}</string>
+      <string/>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -95,7 +95,7 @@
       </font>
      </property>
      <property name="text">
-      <string>PARSEC_DEVELOPMENT_LABEL</string>
+      <string>TEXT_PARSEC_DEVELOPMENT_INFO</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

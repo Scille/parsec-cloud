@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt
-from PyQt5.QtWidgets import QWidget, QDialog, QLabel
+from PyQt5.QtWidgets import QWidget, QLabel
 
 import pendulum
 
@@ -29,13 +29,13 @@ from parsec.core.gui.trio_thread import (
     JobSchedulerNotAvailable,
 )
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_dialogs import show_error, show_warning, TextInputDialog, QuestionDialog
-from parsec.core.gui.custom_widgets import TaskbarButton, FlowLayout
-from parsec.core.gui.lang import translate as _, format_datetime
+from parsec.core.gui.custom_dialogs import show_error, get_text_input, ask_question
+from parsec.core.gui.flow_layout import FlowLayout
+from parsec.core.gui.lang import translate as _
 from parsec.core.gui.workspace_button import WorkspaceButton
-from parsec.core.gui.ts_ws_dialog import TsWsDialog
+from parsec.core.gui.timestamped_workspace_widget import TimestampedWorkspaceWidget
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
-from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
+from parsec.core.gui.workspace_sharing_widget import WorkspaceSharingWidget
 
 
 async def _get_reencryption_needs(workspace_fs):
@@ -155,19 +155,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
 
-        self.taskbar_buttons = []
+        self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
+        self.button_goto_file.clicked.connect(self.goto_file_clicked)
 
-        button_add_workspace = TaskbarButton(
-            icon_path=":/icons/images/icons/tray_icons/plus-$STATE.svg"
-        )
-        button_add_workspace.clicked.connect(self.create_workspace_clicked)
-        button_add_workspace.setToolTip(_("BUTTON_TASKBAR_ADD_WORKSPACE"))
-
-        button_goto_file = TaskbarButton(
-            icon_path=":/icons/images/icons/tray_icons/file-$STATE.svg"
-        )
-        button_goto_file.clicked.connect(self.goto_file_clicked)
-        button_goto_file.setToolTip(_("BUTTON_GOTO_FILE"))
+        self.button_add_workspace.apply_style()
+        self.button_goto_file.apply_style()
 
         self.fs_updated_qt.connect(self._on_fs_updated_qt)
         self.fs_synced_qt.connect(self._on_fs_synced_qt)
@@ -198,9 +190,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
 
-        self.taskbar_buttons.append(button_goto_file)
-        self.taskbar_buttons.append(button_add_workspace)
-
     def disconnect_all(self):
         pass
 
@@ -223,12 +212,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             pass
 
     def goto_file_clicked(self):
-        file_link = TextInputDialog.get_text(
+        file_link = get_text_input(
             self,
-            _("ASK_FILE_LINK_TITLE"),
-            _("ASK_FILE_LINK_CONTENT"),
-            placeholder=_("ASK_FILE_LINK_PLACEHOLDER"),
+            _("TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"),
+            _("TEXT_WORKSPACE_GOTO_FILE_LINK_INSTRUCTIONS"),
+            placeholder=_("TEXT_WORKSPACE_GOTO_FILE_LINK_PLACEHOLDER"),
             default_text="",
+            button_text=_("ACTION_GOTO_FILE_LINK"),
         )
         if not file_link:
             return
@@ -237,7 +227,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         try:
             url = BackendOrganizationFileLinkAddr.from_url(file_link)
         except ValueError as exc:
-            show_error(self, _("GOTO_FILE_INVALID_LINK"), exception=exc)
+            show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"), exception=exc)
             return
 
         for item in self.layout_workspaces.items:
@@ -245,7 +235,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if w and w.workspace_fs.workspace_id == url.workspace_id:
                 self.load_workspace(w.workspace_fs, path=url.path, selected=True)
                 return
-        show_warning(self, _("GOTO_FILE_NO_WORKSPACE"))
+        show_error(self, _("TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"))
 
     def on_workspace_filter(self, pattern):
         pattern = pattern.lower()
@@ -266,9 +256,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_create_error(self, job):
         if job.status == "invalid-name":
-            show_error(self, _("ERR_WORKSPACE_INVALID_NAME"), exception=job.exc)
+            show_error(self, _("TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"), exception=job.exc)
         else:
-            show_error(self, _("ERR_WORKSPACE_CREATE"), exception=job.exc)
+            show_error(self, _("TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"), exception=job.exc)
 
     def on_rename_success(self, job):
         workspace_button, workspace_name = job.ret
@@ -276,9 +266,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_rename_error(self, job):
         if job.status == "invalid-name":
-            show_error(self, _("ERR_WORKSPACE_INVALID_NAME"), exception=job.exc)
+            show_error(self, _("TEXT_WORKSPACE_RENAME_INVALID_NAME"), exception=job.exc)
         else:
-            show_error(self, _("ERR_WORKSPACE_RENAME"), exception=job.exc)
+            show_error(self, _("TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"), exception=job.exc)
 
     def on_list_success(self, job):
         self.layout_workspaces.clear()
@@ -286,7 +276,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         if not workspaces:
             self.line_edit_search.hide()
-            label = QLabel(_("LABEL_NO_WORKSPACES"))
+            label = QLabel(_("TEXT_WORKSPACE_NO_WORKSPACES"))
             label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.layout_workspaces.addWidget(label)
             return
@@ -304,7 +294,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_list_error(self, job):
         self.layout_workspaces.clear()
-        label = QLabel(_("LABEL_NO_WORKSPACES"))
+        label = QLabel(_("TEXT_WORKSPACE_NO_WORKSPACES"))
         label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout_workspaces.addWidget(label)
 
@@ -313,12 +303,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def on_mount_error(self, job):
         if isinstance(job.status, MountpointConfigurationWorkspaceFSTimestampedError):
-            show_error(
-                self,
-                _("ERR_WORKSPACE_MOUNT_{}").format(
-                    job.status.args[3], format_datetime(job.status.args[2])
-                ),
-            )
+            show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
 
     def on_reencryption_needs_success(self, job):
         workspace_id, reencryption_needs = job.ret
@@ -338,12 +323,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # as they won't block the Qt loop for long
         workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
         button = WorkspaceButton(
-            workspace_name,
-            workspace_fs,
+            workspace_name=workspace_name,
+            workspace_fs=workspace_fs,
             is_shared=len(users_roles) > 1,
             is_creator=ws_entry.role == WorkspaceRole.OWNER,
             files=files[:4],
-            enable_workspace_color=self.core.config.gui_workspace_color,
             timestamped=timestamped,
         )
         self.layout_workspaces.addWidget(button)
@@ -353,6 +337,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
         button.remount_ts_clicked.connect(self.remount_workspace_ts)
+        button.open_clicked.connect(self.open_workspace)
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "mount_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "mount_error", QtToTrioJob),
@@ -367,8 +352,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_fs=workspace_fs,
         )
 
+    def open_workspace(self, workspace_fs):
+        self.open_workspace_file(workspace_fs, None)
+
     def open_workspace_file(self, workspace_fs, file_name):
-        file_name = FsPath("/", file_name)
+        file_name = FsPath("/", file_name) if file_name else FsPath("/")
 
         # The Qt thread should never hit the core directly.
         # Synchronous calls can run directly in the job system
@@ -383,13 +371,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         desktop.open_file(str(path))
 
     def remount_workspace_ts(self, workspace_fs):
-        ts_ws = TsWsDialog(workspace_fs=workspace_fs, jobs_ctx=self.jobs_ctx, parent=self)
-        code = ts_ws.exec_()
-        if code == QDialog.Rejected:
-            return
+        date, time = TimestampedWorkspaceWidget.exec_modal(
+            workspace_fs=workspace_fs, jobs_ctx=self.jobs_ctx, parent=self
+        )
 
-        date = ts_ws.date
-        time = ts_ws.time
+        if not date or not time:
+            return
 
         datetime = pendulum.datetime(
             date.year(),
@@ -412,9 +399,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             timestamp=timestamp,
         )
 
-    def get_taskbar_buttons(self):
-        return self.taskbar_buttons
-
     def delete_workspace(self, workspace_fs):
         if isinstance(workspace_fs, WorkspaceFSTimestamped):
             self.jobs_ctx.submit_job(
@@ -428,22 +412,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
         else:
             workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
-            result = QuestionDialog.ask(
+            result = ask_question(
                 self,
-                _("ASK_WORKSPACE_DELETE_TITLE"),
-                _("ASK_WORKSPACE_DELETE_CONTENT_{}").format(workspace_name),
+                _("TEXT_WORKSPACE_DELETE_TITLE"),
+                _("TEXT_WORKSPACE_DELETE_INSTRUCTIONS_workspace").format(workspace=workspace_name),
+                [_("ACTION_DELETE_WORKSPACE_CONFIRM"), _("ACTION_CANCEL")],
             )
-            if not result:
+            if result != _("ACTION_DELETE_WORKSPACE_CONFIRM"):
                 return
-            show_warning(self, _("WARN_WORKSPACE_DELETE"))
+            # Workspace deletion is not available yet (button should be hidden anyway)
 
     def rename_workspace(self, workspace_button):
-        new_name = TextInputDialog.get_text(
+        new_name = get_text_input(
             self,
-            _("ASK_RENAME_WORKSPACE_TITLE"),
-            _("ASK_RENAME_WORKSPACE_CONTENT"),
-            placeholder=_("ASK_RENAME_WORKSPACE_PLACEHOLDER"),
+            _("TEXT_WORKSPACE_RENAME_TITLE"),
+            _("TEXT_WORKSPACE_RENAME_INSTRUCTIONS"),
+            placeholder=_("TEXT_WORKSPACE_RENAME_PLACEHOLDER"),
             default_text=workspace_button.name,
+            button_text=_("ACTION_WORKSPACE_RENAME_CONFIRM"),
         )
         if not new_name:
             return
@@ -458,10 +444,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def share_workspace(self, workspace_fs):
-        d = WorkspaceSharingDialog(
-            self.core.user_fs, workspace_fs, self.core, self.jobs_ctx, parent=self
+        WorkspaceSharingWidget.exec_modal(
+            user_fs=self.core.user_fs,
+            workspace_fs=workspace_fs,
+            core=self.core,
+            jobs_ctx=self.jobs_ctx,
+            parent=self,
         )
-        d.exec_()
         self.reset()
 
     def reencrypt_workspace(self, workspace_id, user_revoked, role_revoked):
@@ -470,13 +459,18 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         question = ""
         if user_revoked:
-            question += "{}\n".format(_("ASK_WORKSPACE_USER_REVOKED"))
+            question += "{}\n".format(_("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REVOKED"))
         if role_revoked:
-            question += "{}\n".format(_("ASK_WORKSPACE_USER_REMOVED"))
-        question += _("ASK_WORKSPACE_REENCRYPTION_CONTENT")
+            question += "{}\n".format(_("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REMOVED"))
+        question += _("TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS")
 
-        r = QuestionDialog.ask(self, _("ASK_WORKSPACE_REENCRYPTION_TITLE"), question)
-        if not r:
+        r = ask_question(
+            self,
+            _("TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"),
+            question,
+            [_("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"), _("ACTION_CANCEL")],
+        )
+        if r != _("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"):
             return
 
         async def _reencrypt(on_progress, workspace_id):
@@ -489,6 +483,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return workspace_id
 
         self.reencrypting.add(workspace_id)
+
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "workspace_reencryption_success", QtToTrioJob),
             ThreadSafeQtSignal(self, "workspace_reencryption_error", QtToTrioJob),
@@ -518,11 +513,12 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 break
 
     def create_workspace_clicked(self):
-        workspace_name = TextInputDialog.get_text(
-            self,
-            _("ASK_NEW_WORKSPACE_TITLE"),
-            _("ASK_NEW_WORKSPACE_CONTENT"),
-            _("ASK_NEW_WORKSPACE_PLACEHOLDER"),
+        workspace_name = get_text_input(
+            parent=self,
+            title=_("TEXT_WORKSPACE_NEW_TITLE"),
+            message=_("TEXT_WORKSPACE_NEW_INSTRUCTIONS"),
+            placeholder=_("TEXT_WORKSPACE_NEW_PLACEHOLDER"),
+            button_text=_("ACTION_WORKSPACE_NEW_CREATE"),
         )
         if not workspace_name:
             return

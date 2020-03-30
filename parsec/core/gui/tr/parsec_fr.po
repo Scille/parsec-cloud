@@ -1,14 +1,14 @@
 # French translations for PROJECT.
-# Copyright (C) 2019 ORGANIZATION
+# Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-02-26 09:21+0100\n"
-"PO-Revision-Date: 2020-03-13 21:02+0100\n"
+"POT-Creation-Date: 2020-03-27 11:49+0100\n"
+"PO-Revision-Date: 2020-03-27 11:50+0100\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -17,381 +17,418 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.2.1\n"
 
-msgid "WORKSPACE_ROLE_READER"
+msgid "TEXT_WORKSPACE_ROLE_READER"
 msgstr "Lecteur"
 
-msgid "WORKSPACE_ROLE_CONTRIBUTOR"
+msgid "TEXT_WORKSPACE_ROLE_CONTRIBUTOR"
 msgstr "Contributeur"
 
-msgid "WORKSPACE_ROLE_MANAGER"
+msgid "TEXT_WORKSPACE_ROLE_MANAGER"
 msgstr "Gérant"
 
-msgid "WORKSPACE_ROLE_OWNER"
+msgid "TEXT_WORKSPACE_ROLE_OWNER"
 msgstr "Propriétaire"
 
-msgid "BUTTON_TASKBAR_BACK"
-msgstr "Retour à la liste des espaces de travail."
-
-msgid "BUTTON_TASKBAR_IMPORT_FOLDER"
-msgstr "Importer un répertoire."
-
-msgid "BUTTON_TASKBAR_IMPORT_FILES"
-msgstr "Importer des fichiers."
-
-msgid "BUTTON_TASKBAR_CREATE_FOLDER"
-msgstr "Créer un nouveau répertoire."
-
-msgid "FILE_LINK_CONTENT"
+msgid "TEXT_FILE_LINK"
 msgstr "Le lien vers le fichier a été copié dans le presse-papier."
 
-msgid "ERR_FILE_PASTE"
-msgstr "Une erreur est survenue lors du collage d'un fichier."
+msgid "TEXT_FILE_PASTE_ERROR"
+msgstr "Impossible de coller ce fichier à cet endroit."
 
-msgid "ERR_FOLDER_MOVED_INTO_ITSELF"
+msgid "TEXT_FILE_FOLDER_MOVED_INTO_ITSELF_ERROR"
 msgstr "Impossible de déplacer un répertoire dans lui-même."
 
-msgid "ERR_FILE_HISTORY_MONO"
-msgstr "Vous ne pouvez observer l'historique que d'un fichier à la fois."
+msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
+msgstr "Impossible d'afficher l'historique de plusieurs fichiers en une fois. Veuillez ne sélectionner qu'un fichier."
 
-msgid "ASK_FILE_RENAME_TITLE"
-msgstr "Renommer le fichier"
+msgid "TEXT_FILE_RENAME_TITLE"
+msgstr "Renommer un fichier"
 
-msgid "ASK_FILE_RENAME_CONTENT"
-msgstr "Entrez un nouveau nom de fichier"
+msgid "TEXT_FILE_RENAME_INSTRUCTIONS"
+msgstr "Entrez le nouveau nom du fichier."
 
-msgid "ASK_FILE_RENAME_PLACEHOLDER"
-msgstr "Nom de fichier"
+msgid "TEXT_FILE_RENAME_PLACEHOLDER"
+msgstr "Nom du fichier"
 
-msgid "ASK_MULTI_FILE_RENAME_TITLE_{}"
-msgstr "Renommer {} fichiers"
+msgid "ACTION_FILE_RENAME"
+msgstr "Renommer"
 
-msgid "ASK_MULTI_FILE_RENAME_CONTENT_{}"
-msgstr "Entrez le nouveau nom des fichiers (sans extension)."
+msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
+msgstr "Renommer {count} fichiers"
 
-msgid "ASK_MULTI_FILE_RENAME_PLACEHOLDER"
-msgstr "Files name"
+msgid "TEXT_FILE_RENAME_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Entrez le nouveau nom des fichiers. Ils seront renommés selon le format suivant : NOM_NUMERO.EXTENSION."
 
-msgid "ASK_FILE_DELETE_TITLE"
-msgstr "Supprimer le fichier"
+msgid "TEXT_FILE_RENAME_MULTIPLE_PLACEHOLDER"
+msgstr "Nom des fichiers"
 
-msgid "ASK_FILE_DELETE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir supprimer le fichier \"{}\" ?"
+msgid "ACTION_FILE_RENAME_MULTIPLE"
+msgstr "Renommer"
 
-msgid "ASK_MULTI_FILE_DELETE_TITLE_{}"
-msgstr "Supprimer {} fichiers"
+msgid "TEXT_FILE_DELETE_TITLE"
+msgstr "Supprimer un fichier"
 
-msgid "ASK_MULTI_FILE_DELETE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir supprimer les {} fichiers ?"
+msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
+msgstr "Êtes-vous sûr de vouloir supprimer le fichier \"{name}\" ?"
 
-msgid "ASK_OPEN_MULTI_FILE_TITLE_{}"
-msgstr "Ouvrir {} fichiers"
+msgid "ACTION_FILE_DELETE"
+msgstr "Supprimer"
 
-msgid "ASK_OPEN_MULTI_FILE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir ouvrir {} fichiers ?"
+msgid "ACTION_CANCEL"
+msgstr "Annuler"
 
-msgid "ASK_IMPORT_FILES_TITLE"
-msgstr "Sélectionnez les fichiers à importer"
+msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
+msgstr "Supprimer plusieurs fichiers"
 
-msgid "ASK_IMPORT_FOLDER_TITLE"
-msgstr "Sélectionner un répertoire à importer"
+msgid "TEXT_FILE_DELETE_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Êtes-vous sûr de vouloir supprimer les {count} fichiers ?"
 
-msgid "ASK_CREATE_FOLDER_TITLE"
+msgid "ACTION_FILE_DELETE_MULTIPLE"
+msgstr "Supprimer"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_TITLE_count"
+msgstr "Ouvrir plusieurs fichiers"
+
+msgid "TEXT_FILE_OPEN_MULTIPLE_INSTRUCTIONS_count"
+msgstr "Êtes-vous sûr de vouloir ouvrir les {count} fichiers ? Cela peut prendre du temps."
+
+msgid "ACTION_FILE_OPEN_MULTIPLE"
+msgstr "Ouvrir les fichiers"
+
+msgid "TEXT_FILE_IMPORT_LOADING_TITLE"
+msgstr "En cours d'import"
+
+msgid "TEXT_FILE_IMPORT_FILES"
+msgstr "Importer des fichiers"
+
+msgid "TEXT_FILE_IMPORT_FOLDER"
+msgstr "Importer un répertoire"
+
+msgid "TEXT_FILE_CREATE_FOLDER_TITLE"
 msgstr "Créer un répertoire"
 
-msgid "ASK_CREATE_FOLDER_CONTENT"
-msgstr "Entrez le nom du répertoire"
+msgid "TEXT_FILE_CREATE_FOLDER_INSTRUCTIONS"
+msgstr "Entrez le nom du répertoire."
 
-msgid "ASK_CREATE_FOLDER_PLACEHOLDER"
+msgid "TEXT_FILE_CREATE_FOLDER_PLACEHOLDER"
 msgstr "Nom du répertoire"
 
-msgid "ERR_RENAME_MULTI_FILE"
-msgstr "Impossible de renommer les fichiers."
+msgid "ACTION_FILE_CREATE_FOLDER"
+msgstr "Créer un nouveau répertoire"
 
-msgid "ERR_RENAME_FILE"
-msgstr "Impossible de renommer le fichier."
+msgid "TEXT_FILE_RENAME_MULTIPLE_ERROR"
+msgstr "Un problème est survenu lors du renommage des fichiers. Certains fichiers n'ont peut-être pas été renommés."
 
-msgid "ERR_DELETE_MULTI_FILE"
-msgstr "Impossible de supprimer les fichiers."
+msgid "TEXT_FILE_RENAME_ERROR"
+msgstr "Le fichier n'a pas pu être renommé."
 
-msgid "ERR_DELETE_FILE"
-msgstr "Impossible de supprimer le fichier."
+msgid "TEXT_FILE_DELETE_MULTIPLE_ERROR"
+msgstr "Un problème est survenu lors de la suppression des fichiers. Certains fichiers n'ont peut-être pas été supprimés."
 
-msgid "ERR_GOTO_FILE_NOT_FOUND"
-msgstr "Le fichier n'existe pas."
+msgid "TEXT_FILE_DELETE_ERROR"
+msgstr "Ce fichier n'a pas pu être supprimé."
 
-msgid "ERR_DIR_NOT_FOUND"
+msgid "TEXT_FILE_GOTO_LINK_NOT_FOUND"
+msgstr "Le fichier n'a pas été trouvé."
+
+msgid "TEXT_FILE_FOLDER_NOT_FOUND"
 msgstr "Le répertoire n'existe pas."
 
-msgid "ERR_FOLDER_CREATE_ALREADY_EXISTS"
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_ALREADY_EXISTS"
 msgstr "Un répertoire du même nom existe déjà."
 
-msgid "ERR_FOLDER_CREATE_UNKNOWN"
-msgstr "Impossible de créer le répertoire."
+msgid "TEXT_FILE_FOLDER_CREATE_ERROR_UNKNOWN"
+msgstr "Impossible de créer le nouveau répertoire."
 
-msgid "ERR_IMPORT_FILES"
-msgstr "Impossible d'importer les fichiers."
+msgid "TEXT_FILE_IMPORT_ERROR"
+msgstr "Un problème est survenu lors de l'import des fichiers. Certains fichiers n'ont peut-être pas été importés."
 
-msgid "ERR_FILE_SHARING_REVOKED"
-msgstr "Vous n'avez plus l'autorisation d'accéder à cet espace de travail."
+msgid "TEXT_FILE_SHARING_REVOKED"
+msgstr "Vos permissions sur cet espace de travail ont été supprimés. Vous n'avez plus accès à ces fichiers."
 
-msgid "WARN_FILE_SHARING_READER"
-msgstr "Vous êtes maintenant lecteur de cet espace de travail."
+msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
+msgstr ""
+"Votre rôle sur cet espace de travail a été changé en <b>Lecteur</b>. Vous ne pouvez plus ajouter, modifier ou supprimer des fichiers, mais vous pouvez "
+"toujours les visionner."
 
-msgid "LABEL_PASSWORD_STRENGTH_{}"
-msgstr "Force du mot de passe : {}"
+msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
+msgstr "Un problème est survenu lors de la récupération de l'historique du fichier."
 
-msgid "ERR_PASSWORD_MISMATCH"
-msgstr "Les mots de passe ne correspondent pas."
+msgid "TEXT_FILE_HISTORY_TITLE_name"
+msgstr "Historique du fichier {name}"
 
-msgid "INFO_CHANGE_PASSWORD_SUCCESS"
-msgstr "Votre mot de passe a été modifié avec succès."
+msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
+msgstr "Cet utilisateur est révoqué."
 
-msgid "ERR_PASSWORD_CHANGE_INVALID_PASSWORD"
-msgstr "Le mot de passe est invalide."
+msgid "TEXT_WORKSPACE_SHARING_CANNOT_SHARE_WITH_YOURSELF"
+msgstr "Impossible de partager l'espace de travail avec vous-même."
 
-msgid "PARSEC_VERSION_LABEL_{}"
-msgstr "Parsec version {version}"
+msgid "TEXT_WORKSPACE_SHARING_ALREADY_SHARED_user"
+msgstr "Cet espace de travail est déjà partagé avec <b>{user}</b>."
 
-msgid "ASK_FILE_EXISTS_REPLACE"
-msgstr "Un fichier nommé \"{}\" existe déjà. Voulez-vous le remplacer ?"
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_TITLE"
+msgstr "Annuler le partage"
 
-msgid "PASSWORD_STR_TOO_SHORT"
-msgstr "Trop court"
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_INSTRUCTIONS_user"
+msgstr ""
+"Êtes-vous sûr de vouloir annuler le partage de cet espace de travail avec <b>{user}</b> ? L'utilisateur ne pourra plus voir les modifications faites sur cet "
+"espace de travail."
 
-msgid "PASSWORD_STR_VERY_WEAK"
-msgstr "Très faible"
+msgid "ACTION_WORKSPACE_UNSHARE_CONFIRM"
+msgstr "Annuler le partage"
 
-msgid "PASSWORD_STR_WEAK"
-msgstr "Faible"
+msgid "TEXT_WORKSPACE_SHARING_SHARE_ERROR_workspace-user"
+msgstr "Impossible de partager l'espace de travail <b>{workspace}</b> avec l'utilisateur <b>{user}</b>."
 
-msgid "PASSWORD_STR_AVERAGE"
-msgstr "Moyen"
+msgid "TEXT_WORKSPACE_SHARING_UNSHARE_ERROR_workspace-user"
+msgstr "Impossible d'annuler le partage de l'espace de travail <b>{workspace}</b> avec <b>{user}</b>."
 
-msgid "PASSWORD_STR_GOOD"
-msgstr "Bon"
+msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_ERROR_errors"
+msgstr "Un problème est survenu lors de la mise à jour des rôles utilisateurs sur cet espace de travail. Certains rôles n'ont peut-être pas été mis à jour."
 
-msgid "PASSWORD_STR_STRONG"
-msgstr "Fort"
+msgid "TEXT_WORKSPACE_SHARING_UPDATE_ROLES_SUCCESS"
+msgstr "Les rôles des utilisateurs ont été mis à jour avec succès."
 
-msgid "TOOLTIP_WORKSPACE_NEEDS_REENCRYPTION"
-msgstr "Cet espace de travail doit être rechiffré."
+msgid "TEXT_WORKSPACE_SHARING_TITLE"
+msgstr "Partager l'espace de travail"
 
-msgid "WORKSPACE_SHARED_DISPLAY"
+msgid "TEXT_WORKSPACE_TIMESTAMPED_VERSION_RETRIEVAL_FAILED"
+msgstr "Impossible de récupérer l'historique de cet espace de travail."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_TITLE"
+msgstr "Remonter dans le temps"
+
+msgid "TEXT_PARSEC_VERSION_version"
+msgstr "PARSEC version {version}"
+
+msgid "TEXT_PASSWORD_VALIDATION_TOO_SHORT"
+msgstr "TROP COURT"
+
+msgid "TEXT_PASSWORD_VALIDATION_VERY_WEAK"
+msgstr "TRÈS FAIBLE"
+
+msgid "TEXT_PASSWORD_VALIDATION_WEAK"
+msgstr "FAIBLE"
+
+msgid "TEXT_PASSWORD_VALIDATION_AVERAGE"
+msgstr "MOYEN"
+
+msgid "TEXT_PASSWORD_VALIDATION_GOOD"
+msgstr "BON"
+
+msgid "TEXT_PASSWORD_VALIDATION_EXCELLENT"
+msgstr "EXCELLENT"
+
+msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
+msgstr "Force du mot de passe : {strength}"
+
+msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
+msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."
+
+msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
+msgstr "En cours de rechiffrement"
+
+msgid "TEXT_WORKSPACE_IS_SHARED"
 msgstr "partagé"
 
-msgid "WORKSPACE_NAME_TIMESTAMPED_{}"
-msgstr "- à {}"
+msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
+msgstr "temporaire_{date}"
 
-msgid "TOOLTIP_COPIED_TO_CLIPBOARD"
-msgstr "Copié dans le presse-papier."
-
-msgid "ERR_BAD_DEVICE_NAME"
-msgstr "Le nom de l'appareil est invalide."
-
-msgid "ERR_REGISTER_DEVICE_EXISTS"
-msgstr "L'appareil existe déjà."
-
-msgid "ERR_REGISTER_DEVICE_OFFLINE"
-msgstr "Impossible de contacter le serveur."
-
-msgid "ERR_REGISTER_WRONG_PARAMETERS"
-msgstr "L'utilisateur n'a pas fourni les informations correctes."
-
-msgid "ERR_REGISTER_DEVICE_TIMEOUT"
-msgstr "L'appareil a mis trop de temps à s'enregistrer."
-
-msgid "ERR_REGISTER_DEVICE_UNKNOWN"
-msgstr "Impossible d'enregistrer l'appareil."
-
-msgid "INFO_REGISTER_DEVICE_SUCCESS"
-msgstr "L'appareil a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
-
-msgid "WARN_REGISTER_DEVICE_EMPTY"
-msgstr "Le nom de l'appareil ne peut pas être vide."
-
-msgid "LABEL_CLAIM_USER_INSTRUCTIONS"
+msgid "TEXT_CLAIM_USER_INSTRUCTIONS_user-url-organization"
 msgstr ""
-"Enregistrez l'utilisateur \"<b>{user}</b>\" de l'organisation "
-"\"<b>{organization}</b>\" en choisissant un nom d'appareil, un mot de passe, et "
-"en fournissant le jeton de vérification."
+"Un administrateur vous a invité à rejointer l'organisation <b>{organization}</b> avec le nom d'utilisateur <b>{user}</b>.\n"
+"\n"
+"Pour finaliser le processus d'inscription, veuillez fournir le numéro à six chiffres que l'administrateur vous a donnée, ainsi qu'un mot de passe et un nom "
+"d'appareil.\n"
+"\n"
+"Si cette invitation ne vous est pas destinée, veuillez l'ignorer."
 
-msgid "LABEL_USER_REGISTRATION"
-msgstr "Veuillez patienter pendant que l'utilisateur s'enregistre."
+msgid "TEXT_CLAIM_USER_NOT_FOUND"
+msgstr "Aucune invitation n'a été trouvée pour cet utilisateur."
 
-msgid "ERR_CLAIM_USER_NOT_FOUND"
-msgstr "Aucune invitation trouvée pour cet utilisateur."
+msgid "TEXT_CLAIM_USER_PASSWORD_MISMATCH"
+msgstr "Le mot de passe et la confirmation ne correspondent pas."
 
-msgid "ERR_PASSWORD_COMPLEXITY"
-msgstr "Le mot de passe doit faire au moins huit caractères."
+msgid "TEXT_CLAIM_USER_PASSWORD_COMPLEXITY"
+msgstr "Le mot de passe n'est pas assez complexe."
 
-msgid "ERR_BAD_URL"
-msgstr "L'URL est invalide."
+msgid "TEXT_CLAIM_USER_INVALID_URL"
+msgstr "Un problème interne est survenu lors de l'enregistrement de l'utilisateur."
 
-msgid "ERR_BAD_USER_NAME"
-msgstr "Le nom d'utilisateur est invalide."
+msgid "TEXT_CLAIM_USER_BAD_DEVICE_NAME"
+msgstr "Le nom d'appareil n'est pas valide."
 
-msgid "ERR_BACKEND_REFUSED"
-msgstr ""
-"Le serveur a refusé votre requête. Toutes les informations sont-elles "
-"correctes ?"
+msgid "TEXT_CLAIM_USER_BAD_USER_NAME"
+msgstr "Le nom d'utilisateur n'est pas valide."
 
-msgid "ERR_BACKEND_OFFLINE"
-msgstr ""
-"Impossible de contacter le serveur. Veuillez vérifier votre connection à "
-"internet."
+msgid "TEXT_CLAIM_USER_BACKEND_REFUSAL"
+msgstr "Le serveur a refusé l'enregistrement."
 
-msgid "ERR_CLAIM_USER_UNKNOWN"
-msgstr "Impossible d'enregistrer l'utilisateur."
+msgid "TEXT_CLAIM_USER_BACKEND_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas accès à internet."
 
-msgid "DEVICE_CURRENT_TEXT"
+msgid "TEXT_CLAIM_USER_UNKNOWN_FAILURE"
+msgstr "Un problème inconnu est survenu lors de l'enregistrement de l'utilisateur."
+
+msgid "TEXT_CLAIM_USER_SUCCESS"
+msgstr "L'utilisateur a été enregistré avec succès ! Vous pouvez maintenant vous connecter."
+
+msgid "ACTION_CONTINUE"
+msgstr "Continuer"
+
+msgid "TEXT_CLAIM_USER_TITLE"
+msgstr "Enregistrer un utilisateur"
+
+msgid "TEXT_DEVICE_IS_CURRENT"
 msgstr "actuel"
 
-msgid "DEVICE_MENU_SHOW_INFO"
-msgstr "Voir les informations"
+msgid "ACTION_DEVICE_MENU_CHANGE_PASSWORD"
+msgstr "Changer le mot de passe"
 
-msgid "DEVICE_MENU_CHANGE_PASSWORD"
-msgstr "Modifier le mot de passe"
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_TITLE"
+msgstr "Accéder à un fichier par son lien"
 
-msgid "DEVICE_CREATED_ON_{}"
-msgstr "Créé le {}"
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INSTRUCTIONS"
+msgstr "Veuillez fournir un lien vers le fichier."
 
-msgid "DEVICE_IS_REVOKED"
-msgstr "Cet appareil a été révoqué."
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=file_link&workspace_id=xx&path=yy"
 
-msgid "BUTTON_TASKBAR_ADD_DEVICE"
-msgstr "Créer un nouvel appareil."
+msgid "ACTION_GOTO_FILE_LINK"
+msgstr "Accéder au fichier"
 
-msgid "BUTTON_TASKBAR_ADD_WORKSPACE"
-msgstr "Créer un nouvel espace de travail."
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_INVALID_LINK"
+msgstr "Le lien n'est pas valide."
 
-msgid "BUTTON_GOTO_FILE"
-msgstr "Accéder à un fichier par son lien."
+msgid "TEXT_WORKSPACE_GOTO_FILE_LINK_WORKSPACE_NOT_FOUND"
+msgstr "Impossible de trouver l'espace de travail de ce fichier. Peut-être qu'il n'a pas été partagé avec vous."
 
-msgid "ASK_FILE_LINK_TITLE"
-msgstr "Accéder à un fichier"
+msgid "TEXT_WORKSPACE_CREATE_NEW_INVALID_NAME"
+msgstr "Le nom fourni n'est pas un nom d'espace de travail valide."
 
-msgid "ASK_FILE_LINK_CONTENT"
-msgstr "Fournissez le lien vers le fichier."
-
-msgid "ASK_FILE_LINK_PLACEHOLDER"
-msgstr "Lien vers un fichier"
-
-msgid "GOTO_FILE_INVALID_LINK"
-msgstr "Le lien est invalide."
-
-msgid "GOTO_FILE_NO_WORKSPACE"
-msgstr "L'espace de travail n'existe pas."
-
-msgid "ERR_WORKSPACE_INVALID_NAME"
-msgstr "Nom d'espace de travail invalide."
-
-msgid "ERR_WORKSPACE_CREATE"
+msgid "TEXT_WORKSPACE_CREATE_NEW_UNKNOWN_ERROR"
 msgstr "Impossible de créer l'espace de travail."
 
-msgid "ERR_WORKSPACE_RENAME"
+msgid "TEXT_WORKSPACE_RENAME_INVALID_NAME"
+msgstr "Impossible de renommer l'espace de travail. Le nom fourni n'est pas un nom d'espace de travail valide."
+
+msgid "TEXT_WORKSPACE_RENAME_UNKNOWN_ERROR"
 msgstr "Impossible de renommer l'espace de travail."
 
-msgid "LABEL_NO_WORKSPACES"
-msgstr "Aucun espace de travail n'a été créé pour le moment."
+msgid "TEXT_WORKSPACE_NO_WORKSPACES"
+msgstr "Aucun espace de travail n'a été créé."
 
-msgid "ERR_WORKSPACE_MOUNT_{}"
-msgstr "Impossible de voir l'espace de travail \"{}\" tel qu'il était le {}."
+msgid "TEXT_WORKSPACE_CANNOT_MOUNT"
+msgstr "Une erreur interne empêche PARSEC d'accéder aux fichiers de cet espace de travail."
 
-msgid "ASK_WORKSPACE_DELETE_TITLE"
-msgstr "Supprimer un espace de travail"
+msgid "TEXT_WORKSPACE_DELETE_TITLE"
+msgstr "Supprimer l'espace de travail"
 
-msgid "ASK_WORKSPACE_DELETE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir supprimer l'espace de travail \"{}\" ?"
-
-msgid "WARN_WORKSPACE_DELETE"
-msgstr "Non implémenté."
-
-msgid "ASK_RENAME_WORKSPACE_TITLE"
-msgstr "Renommer un espace de travail"
-
-msgid "ASK_RENAME_WORKSPACE_CONTENT"
+msgid "TEXT_WORKSPACE_DELETE_INSTRUCTIONS_workspace"
 msgstr ""
-"Entrez le nouveau nom de l'espace de travail (les changements ne seront pas "
-"visibles par les autres utilisateurs)."
+"L'espace de travail <b>{workspace}</b> sera supprimé. S'il s'agit d'un espace de travail temporaire, ne vous inquiéter pas, vos fichiers sont toujours "
+"accessibles.<br /><br />\n"
+"Voulez-vous continuer ?"
 
-msgid "ASK_RENAME_WORKSPACE_PLACEHOLDER"
+msgid "ACTION_DELETE_WORKSPACE_CONFIRM"
+msgstr "Supprimer"
+
+msgid "TEXT_WORKSPACE_RENAME_TITLE"
+msgstr "Renommer l'espace de travail"
+
+msgid "TEXT_WORKSPACE_RENAME_INSTRUCTIONS"
+msgstr "Le renommage ne sera visible que par vous."
+
+msgid "TEXT_WORKSPACE_RENAME_PLACEHOLDER"
 msgstr "Nom de l'espace de travail"
 
-msgid "ASK_WORKSPACE_USER_REVOKED"
-msgstr "Un utilisateur de cet espace de travail a été révoqué."
+msgid "ACTION_WORKSPACE_RENAME_CONFIRM"
+msgstr "Renommer"
 
-msgid "ASK_WORKSPACE_USER_REMOVED"
-msgstr "Un utilisateur a été retiré du partage de cet espace de travail."
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REVOKED"
+msgstr "Un utilisateur avec qui l'espace de travail est partagé a été révoqué."
 
-msgid "ASK_WORKSPACE_REENCRYPTION_CONTENT"
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REMOVED"
+msgstr "Un utilisateur a été retiré du partage de l'espace de travail."
+
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS"
 msgstr ""
-"Cet espace de travail doit être rechiffré pour assurer la sécurité de vos "
-"données.\n"
-"Cette opération prend du temps et empêchera temporairement la synchronisation "
-"de l'espace de travail.\n"
+"Cette opération va rechiffrer l'espace de travail pour empêcher des utilisateurs qui ne devraient pas y avoir accès de voir les données qu'il contient. Il "
+"s'agit d'une étape très importante pour assurer la sécurité de vos fichiers.<br /><br />\n"
+"\n"
+"L'opérateur peut prendre du temps, selon la taille de votre espace de travail, et la synchronisation sera désactivée le temps du processus.<br /><br />\n"
 "\n"
 "Voulez-vous continuer ?"
 
-msgid "ASK_WORKSPACE_REENCRYPTION_TITLE"
-msgstr "Rechiffrement de l'espace de travail"
+msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"
+msgstr "Rechiffrer l'espace de travail"
 
-msgid "ASK_NEW_WORKSPACE_TITLE"
+msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
+msgstr "Rechiffrer"
+
+msgid "TEXT_WORKSPACE_NEW_TITLE"
 msgstr "Créer un espace de travail"
 
-msgid "ASK_NEW_WORKSPACE_CONTENT"
-msgstr "Entrez le nom de l'espace de travail"
+msgid "TEXT_WORKSPACE_NEW_INSTRUCTIONS"
+msgstr "Veuillez fournir le nom de l'espace de travail"
 
-msgid "ASK_NEW_WORKSPACE_PLACEHOLDER"
-msgstr "Nom de l'espace de travail"
+msgid "TEXT_WORKSPACE_NEW_PLACEHOLDER"
+msgstr "Espace de travail"
 
-msgid "USER_CURRENT_TEXT"
-msgstr "vous"
+msgid "ACTION_WORKSPACE_NEW_CREATE"
+msgstr "Créer"
 
-msgid "USER_MENU_SHOW_INFO"
-msgstr "Voir les informations"
-
-msgid "USER_MENU_REVOKE"
-msgstr "Révoquer"
-
-msgid "USER_CREATED_ON_{}"
-msgstr "Créé le {}"
-
-msgid "USER_IS_ADMIN"
+msgid "TEXT_USER_ROLE_ADMIN"
 msgstr "Administrateur"
 
-msgid "USER_IS_REVOKED"
-msgstr "Cet utilisateur a été révoqué."
+msgid "TEXT_USER_ROLE_CONTRIBUTOR"
+msgstr "Contributeur"
 
-msgid "BUTTON_TASKBAR_ADD_USER"
-msgstr "Créer un nouvel utilisateur."
+msgid "TEXT_USER_IS_CURRENT"
+msgstr "vous"
 
-msgid "INFO_USER_REVOKED_SUCCESS_{}"
-msgstr "L'utilisateur \"{}\" a été révoqué avec succès."
+msgid "TEXT_USER_IS_REVOKED"
+msgstr "Révoqué"
 
-msgid "ERR_USER_REVOKED_ALREADY"
+msgid "ACTION_USER_MENU_REVOKE"
+msgstr "Révoquer"
+
+msgid "TEXT_USER_REVOKE_SUCCESS_user"
+msgstr "L'utilisateur <b>{user}</b> a été révoqué avec succès. N'oubliez pas de rechiffrer les espaces de travail qui étaient partagés avec eux."
+
+msgid "TEXT_USER_REVOCATION_USER_ALREADY_REVOKED"
 msgstr "Cet utilisateur a déjà été révoqué."
 
-msgid "ERR_USER_REVOKED_NOT_FOUND"
-msgstr "Cet utilisateur n'existe pas."
+msgid "TEXT_USER_REVOCATION_USER_NOT_FOUND"
+msgstr "L'utilisateur n'a pas été trouvé."
 
-msgid "ERR_USER_REVOKED_NOT_ENOUGH_PERMISSIONS"
-msgstr "Vous n'avez pas les permissions de révoquer cet utilisateur."
+msgid "TEXT_USER_REVOCATION_NOT_ENOUGH_PERMISSIONS"
+msgstr "Vous n'avez pas la permission de révoquer cet utilisateur."
 
-msgid "ERR_USER_REVOKED_UNKNOWN_ERROR"
+msgid "TEXT_USER_REVOCATION_BACKEND_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_USER_REVOCATION_UNKNOWN_FAILURE"
 msgstr "Impossible de révoquer cet utilisateur."
 
-msgid "ASK_USER_REVOKE_TITLE"
+msgid "TEXT_USER_REVOCATION_TITLE"
 msgstr "Révoquer un utilisateur"
 
-msgid "ASK_USER_REVOKE_CONTENT_{}"
-msgstr "Êtes-vous sûr de vouloir révoquer l'utilisateur \"{}\" ?"
+msgid "TEXT_USER_REVOCATION_INSTRUCTIONS_user"
+msgstr ""
+"Un utilisateur révoqué n'aura plus accès à l'organisation et aux données stockées à l'intérieur.<br /><br />\n"
+"\n"
+"Êtes-vous sûr de vouloir révoquer l'utilisateur <b>{user}</b> ?"
 
-msgid "ERR_USER_LIST_UNKNOWN_ERROR"
-msgstr "Impossible de retrouver la liste des utilisateurs."
+msgid "ACTION_USER_REVOCATION_CONFIRM"
+msgstr "Révoquer l'utilisateur"
 
-msgid "PARSEC_LICENSE_CONTENT"
+msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
+msgstr "Impossible de récupérer la liste des utilisateurs depuis le serveur."
+
+msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
 "    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
@@ -399,8 +436,7 @@ msgstr ""
 "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n"
 "<head>\n"
 " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n"
-" <title>GNU Affero General Public License - GNU Project - Free Software "
-"Foundation (FSF)</title>\n"
+" <title>GNU Affero General Public License - GNU Project - Free Software Foundation (FSF)</title>\n"
 " <link rel=\"alternate\" type=\"application/rdf+xml\"\n"
 "       href=\"http://www.gnu.org/licenses/agpl-3.0.rdf\" /> \n"
 "</head>\n"
@@ -469,29 +505,22 @@ msgstr ""
 "\n"
 "<h4><a name=\"section0\"></a>0. Definitions.</h4>\n"
 "\n"
-"<p>&quot;This License&quot; refers to version 3 of the GNU Affero General "
-"Public\n"
+"<p>&quot;This License&quot; refers to version 3 of the GNU Affero General Public\n"
 "License.</p>\n"
 "\n"
-"<p>&quot;Copyright&quot; also means copyright-like laws that apply to other "
-"kinds\n"
+"<p>&quot;Copyright&quot; also means copyright-like laws that apply to other kinds\n"
 "of works, such as semiconductor masks.</p>\n"
 "\n"
-"<p>&quot;The Program&quot; refers to any copyrightable work licensed under "
-"this\n"
-"License.  Each licensee is addressed as &quot;you&quot;.  &quot;Licensees&quot; "
-"and\n"
+"<p>&quot;The Program&quot; refers to any copyrightable work licensed under this\n"
+"License.  Each licensee is addressed as &quot;you&quot;.  &quot;Licensees&quot; and\n"
 "&quot;recipients&quot; may be individuals or organizations.</p>\n"
 "\n"
-"<p>To &quot;modify&quot; a work means to copy from or adapt all or part of the "
-"work\n"
+"<p>To &quot;modify&quot; a work means to copy from or adapt all or part of the work\n"
 "in a fashion requiring copyright permission, other than the making of an\n"
-"exact copy.  The resulting work is called a &quot;modified version&quot; of "
-"the\n"
+"exact copy.  The resulting work is called a &quot;modified version&quot; of the\n"
 "earlier work or a work &quot;based on&quot; the earlier work.</p>\n"
 "\n"
-"<p>A &quot;covered work&quot; means either the unmodified Program or a work "
-"based\n"
+"<p>A &quot;covered work&quot; means either the unmodified Program or a work based\n"
 "on the Program.</p>\n"
 "\n"
 "<p>To &quot;propagate&quot; a work means to do anything with it that, without\n"
@@ -501,13 +530,11 @@ msgstr ""
 "distribution (with or without modification), making available to the\n"
 "public, and in some countries other activities as well.</p>\n"
 "\n"
-"<p>To &quot;convey&quot; a work means any kind of propagation that enables "
-"other\n"
+"<p>To &quot;convey&quot; a work means any kind of propagation that enables other\n"
 "parties to make or receive copies.  Mere interaction with a user through\n"
 "a computer network, with no transfer of a copy, is not conveying.</p>\n"
 "\n"
-"<p>An interactive user interface displays &quot;Appropriate Legal "
-"Notices&quot;\n"
+"<p>An interactive user interface displays &quot;Appropriate Legal Notices&quot;\n"
 "to the extent that it includes a convenient and prominently visible\n"
 "feature that (1) displays an appropriate copyright notice, and (2)\n"
 "tells the user that there is no warranty for the work (except to the\n"
@@ -522,27 +549,23 @@ msgstr ""
 "for making modifications to it.  &quot;Object code&quot; means any non-source\n"
 "form of a work.</p>\n"
 "\n"
-"<p>A &quot;Standard Interface&quot; means an interface that either is an "
-"official\n"
+"<p>A &quot;Standard Interface&quot; means an interface that either is an official\n"
 "standard defined by a recognized standards body, or, in the case of\n"
 "interfaces specified for a particular programming language, one that\n"
 "is widely used among developers working in that language.</p>\n"
 "\n"
-"<p>The &quot;System Libraries&quot; of an executable work include anything, "
-"other\n"
+"<p>The &quot;System Libraries&quot; of an executable work include anything, other\n"
 "than the work as a whole, that (a) is included in the normal form of\n"
 "packaging a Major Component, but which is not part of that Major\n"
 "Component, and (b) serves only to enable use of the work with that\n"
 "Major Component, or to implement a Standard Interface for which an\n"
 "implementation is available to the public in source code form.  A\n"
-"&quot;Major Component&quot;, in this context, means a major essential "
-"component\n"
+"&quot;Major Component&quot;, in this context, means a major essential component\n"
 "(kernel, window system, and so on) of the specific operating system\n"
 "(if any) on which the executable work runs, or a compiler used to\n"
 "produce the work, or an object code interpreter used to run it.</p>\n"
 "\n"
-"<p>The &quot;Corresponding Source&quot; for a work in object code form means "
-"all\n"
+"<p>The &quot;Corresponding Source&quot; for a work in object code form means all\n"
 "the source code needed to generate, install, and (for an executable\n"
 "work) run the object code and to modify the work, including scripts to\n"
 "control those activities.  However, it does not include the work's\n"
@@ -587,8 +610,7 @@ msgstr ""
 "the conditions stated below.  Sublicensing is not allowed; section 10\n"
 "makes it unnecessary.</p>\n"
 "\n"
-"<h4><a name=\"section3\"></a>3. Protecting Users' Legal Rights From Anti-"
-"Circumvention Law.</h4>\n"
+"<h4><a name=\"section3\"></a>3. Protecting Users' Legal Rights From Anti-Circumvention Law.</h4>\n"
 "\n"
 "<p>No covered work shall be deemed part of an effective technological\n"
 "measure under any applicable law fulfilling obligations under article\n"
@@ -714,8 +736,7 @@ msgstr ""
 "from the Corresponding Source as a System Library, need not be\n"
 "included in conveying the object code work.</p>\n"
 "\n"
-"<p>A &quot;User Product&quot; is either (1) a &quot;consumer product&quot;, "
-"which means any\n"
+"<p>A &quot;User Product&quot; is either (1) a &quot;consumer product&quot;, which means any\n"
 "tangible personal property which is normally used for personal, family,\n"
 "or household purposes, or (2) anything designed or sold for incorporation\n"
 "into a dwelling.  In determining whether a product is a consumer product,\n"
@@ -763,8 +784,7 @@ msgstr ""
 "\n"
 "<h4><a name=\"section7\"></a>7. Additional Terms.</h4>\n"
 "\n"
-"<p>&quot;Additional permissions&quot; are terms that supplement the terms of "
-"this\n"
+"<p>&quot;Additional permissions&quot; are terms that supplement the terms of this\n"
 "License by making exceptions from one or more of its conditions.\n"
 "Additional permissions that are applicable to the entire Program shall\n"
 "be treated as though they were included in this License, to the extent\n"
@@ -858,8 +878,7 @@ msgstr ""
 "reinstated, you do not qualify to receive new licenses for the same\n"
 "material under section 10.</p>\n"
 "\n"
-"<h4><a name=\"section9\"></a>9. Acceptance Not Required for Having Copies.</"
-"h4>\n"
+"<h4><a name=\"section9\"></a>9. Acceptance Not Required for Having Copies.</h4>\n"
 "\n"
 "<p>You are not required to accept this License in order to receive or\n"
 "run a copy of the Program.  Ancillary propagation of a covered work\n"
@@ -870,16 +889,14 @@ msgstr ""
 "not accept this License.  Therefore, by modifying or propagating a\n"
 "covered work, you indicate your acceptance of this License to do so.</p>\n"
 "\n"
-"<h4><a name=\"section10\"></a>10. Automatic Licensing of Downstream Recipients."
-"</h4>\n"
+"<h4><a name=\"section10\"></a>10. Automatic Licensing of Downstream Recipients.</h4>\n"
 "\n"
 "<p>Each time you convey a covered work, the recipient automatically\n"
 "receives a license from the original licensors, to run, modify and\n"
 "propagate that work, subject to this License.  You are not responsible\n"
 "for enforcing compliance by third parties with this License.</p>\n"
 "\n"
-"<p>An &quot;entity transaction&quot; is a transaction transferring control of "
-"an\n"
+"<p>An &quot;entity transaction&quot; is a transaction transferring control of an\n"
 "organization, or substantially all assets of one, or subdividing an\n"
 "organization, or merging organizations.  If propagation of a covered\n"
 "work results from an entity transaction, each party to that\n"
@@ -899,11 +916,9 @@ msgstr ""
 "\n"
 "<h4><a name=\"section11\"></a>11. Patents.</h4>\n"
 "\n"
-"<p>A &quot;contributor&quot; is a copyright holder who authorizes use under "
-"this\n"
+"<p>A &quot;contributor&quot; is a copyright holder who authorizes use under this\n"
 "License of the Program or a work on which the Program is based.  The\n"
-"work thus licensed is called the contributor's &quot;contributor version&quot;."
-"</p>\n"
+"work thus licensed is called the contributor's &quot;contributor version&quot;.</p>\n"
 "\n"
 "<p>A contributor's &quot;essential patent claims&quot; are all patent claims\n"
 "owned or controlled by the contributor, whether already acquired or\n"
@@ -920,8 +935,7 @@ msgstr ""
 "make, use, sell, offer for sale, import and otherwise run, modify and\n"
 "propagate the contents of its contributor version.</p>\n"
 "\n"
-"<p>In the following three paragraphs, a &quot;patent license&quot; is any "
-"express\n"
+"<p>In the following three paragraphs, a &quot;patent license&quot; is any express\n"
 "agreement or commitment, however denominated, not to enforce a patent\n"
 "(such as an express permission to practice a patent or covenant not to\n"
 "sue for patent infringement).  To &quot;grant&quot; such a patent license to a\n"
@@ -936,8 +950,7 @@ msgstr ""
 "available, or (2) arrange to deprive yourself of the benefit of the\n"
 "patent license for this particular work, or (3) arrange, in a manner\n"
 "consistent with the requirements of this License, to extend the patent\n"
-"license to downstream recipients.  &quot;Knowingly relying&quot; means you "
-"have\n"
+"license to downstream recipients.  &quot;Knowingly relying&quot; means you have\n"
 "actual knowledge that, but for the patent license, your conveying the\n"
 "covered work in a country, or your recipient's use of the covered work\n"
 "in a country, would infringe one or more identifiable patents in that\n"
@@ -951,8 +964,7 @@ msgstr ""
 "you grant is automatically extended to all recipients of the covered\n"
 "work and works based on it.</p>\n"
 "\n"
-"<p>A patent license is &quot;discriminatory&quot; if it does not include "
-"within\n"
+"<p>A patent license is &quot;discriminatory&quot; if it does not include within\n"
 "the scope of its coverage, prohibits the exercise of, or is\n"
 "conditioned on the non-exercise of one or more of the rights that are\n"
 "specifically granted under this License.  You may not convey a covered\n"
@@ -983,8 +995,7 @@ msgstr ""
 "the Program, the only way you could satisfy both those terms and this\n"
 "License would be to refrain entirely from conveying the Program.</p>\n"
 "\n"
-"<h4><a name=\"section13\"></a>13. Remote Network Interaction; Use with the GNU "
-"General Public License.</h4>\n"
+"<h4><a name=\"section13\"></a>13. Remote Network Interaction; Use with the GNU General Public License.</h4>\n"
 "\n"
 "<p>Notwithstanding any other provision of this License, if you modify the\n"
 "Program, your modified version must prominently offer all users\n"
@@ -1014,8 +1025,7 @@ msgstr ""
 "\n"
 "<p>Each version is given a distinguishing version number.  If the\n"
 "Program specifies that a certain numbered version of the GNU Affero\n"
-"General Public License &quot;or any later version&quot; applies to it, you "
-"have\n"
+"General Public License &quot;or any later version&quot; applies to it, you have\n"
 "the option of following the terms and conditions either of that\n"
 "numbered version or of any later version published by the Free\n"
 "Software Foundation.  If the Program does not specify a version number\n"
@@ -1036,8 +1046,7 @@ msgstr ""
 "\n"
 "<p>THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\n"
 "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
-"HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM &quot;AS IS&quot; WITHOUT "
-"WARRANTY\n"
+"HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM &quot;AS IS&quot; WITHOUT WARRANTY\n"
 "OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,\n"
 "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n"
 "PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM\n"
@@ -1071,17 +1080,14 @@ msgstr ""
 "\n"
 "<p>If you develop a new program, and you want it to be of the greatest\n"
 "possible use to the public, the best way to achieve this is to make it\n"
-"free software which everyone can redistribute and change under these terms.</"
-"p>\n"
+"free software which everyone can redistribute and change under these terms.</p>\n"
 "\n"
 "<p>To do so, attach the following notices to the program.  It is safest\n"
 "to attach them to the start of each source file to most effectively\n"
 "state the exclusion of warranty; and each file should have at least\n"
-"the &quot;copyright&quot; line and a pointer to where the full notice is found."
-"</p>\n"
+"the &quot;copyright&quot; line and a pointer to where the full notice is found.</p>\n"
 "\n"
-"<pre>    &lt;one line to give the program's name and a brief idea of what it "
-"does.&gt;\n"
+"<pre>    &lt;one line to give the program's name and a brief idea of what it does.&gt;\n"
 "    Copyright (C) &lt;year&gt;  &lt;name of author&gt;\n"
 "\n"
 "    This program is free software: you can redistribute it and/or modify\n"
@@ -1095,857 +1101,786 @@ msgstr ""
 "    GNU Affero General Public License for more details.\n"
 "\n"
 "    You should have received a copy of the GNU Affero General Public License\n"
-"    along with this program.  If not, see &lt;https://www.gnu.org/licenses/"
-"&gt;.\n"
+"    along with this program.  If not, see &lt;https://www.gnu.org/licenses/&gt;.\n"
 "</pre>\n"
 "\n"
-"<p>Also add information on how to contact you by electronic and paper mail.</"
-"p>\n"
+"<p>Also add information on how to contact you by electronic and paper mail.</p>\n"
 "\n"
 "<p>If your software can interact with users remotely through a computer\n"
 "network, you should also make sure that it provides a way for users to\n"
 "get its source.  For example, if your program is a web application, its\n"
-"interface could display a &quot;Source&quot; link that leads users to an "
-"archive\n"
+"interface could display a &quot;Source&quot; link that leads users to an archive\n"
 "of the code.  There are many ways you could offer source, and different\n"
 "solutions will be better for different programs; see section 13 for the\n"
 "specific requirements.</p>\n"
 "\n"
 "<p>You should also get your employer (if you work as a programmer) or school,\n"
-"if any, to sign a &quot;copyright disclaimer&quot; for the program, if "
-"necessary.\n"
+"if any, to sign a &quot;copyright disclaimer&quot; for the program, if necessary.\n"
 "For more information on this, and how to apply and follow the GNU AGPL, see\n"
-"&lt;<a href=\"https://www.gnu.org/licenses/\">https://www.gnu.org/licenses/</"
-"a>&gt;.</p>\n"
+"&lt;<a href=\"https://www.gnu.org/licenses/\">https://www.gnu.org/licenses/</a>&gt;.</p>\n"
 "\n"
 "</body></html>"
 
-msgid "FILE_SIZE_TB"
+msgid "TEXT_FILE_SIZE_TB"
 msgstr "To"
 
-msgid "FILE_SIZE_GB"
+msgid "TEXT_FILE_SIZE_GB"
 msgstr "Go"
 
-msgid "FILE_SIZE_MB"
+msgid "TEXT_FILE_SIZE_MB"
 msgstr "Mo"
 
-msgid "FILE_SIZE_KB"
+msgid "TEXT_FILE_SIZE_KB"
 msgstr "Ko"
 
-msgid "FILE_SIZE_B"
+msgid "TEXT_FILE_SIZE_B"
 msgstr "o"
 
-msgid "LABEL_NEW_VERSION_AVAILABLE_{}"
-msgstr "Une nouvelle version de Parsec ({}) est disponible."
+msgid "TEXT_INVITE_DEVICE_COPIED_TO_CLIPBOARD"
+msgstr "L'information a été copiée dans le presse-papier."
 
-msgid "WORKSPACE_REENCRYPTION_WAIT"
-msgstr ""
-"Veuillez patienter pendant que nous récupérons les versions de cet espace de "
-"travail."
+msgid "TEXT_INVITE_DEVICE_BAD_DEVICE_NAME"
+msgstr "Le nom d'appareil n'est pas valide."
 
-msgid "WORKSPACE_REENCRYPTION_INFO"
-msgstr ""
-"Vous pourrez voir le contenu de l'espace de travail à un moment précis, avec "
-"vos fichiers tels qu'ils apparaissaient à ce moment.\n"
-"Pas d'inquiétude, vous ne perdrez pas vos fichiers actuels."
+msgid "TEXT_INVITE_DEVICE_ALREADY_EXISTS"
+msgstr "Cet appareil existe déjà."
 
-msgid "ERR_WORKSPACE_VERSIONS_ACCESS"
-msgstr "Impossible de récupérer les versions de cet espace de travail."
+msgid "TEXT_INVITE_DEVICE_HOST_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas accès à internet."
 
-msgid "STARTING_GUIDE_WELCOME_TITLE"
-msgstr "Bienvenue !"
+msgid "TEXT_INVITE_DEVICE_WRONG_PARAMETERS"
+msgstr "L'appareil n'a pas pu être invité."
 
-msgid "STARTING_GUIDE_WELCOME_CONTENT"
-msgstr ""
-"Parsec vous permet de stocker vos données avec un très haut niveau de "
-"sécurité.\n"
-"Découvrez l'application en nous laissant vous guider pas à pas."
+msgid "TEXT_INVITE_DEVICE_TIMEOUT"
+msgstr "L'appareil a pris trop de temps à s'enregistrer. Vous pouvez redémarrer le processus d'invitation (seul le jeton changera)."
 
-msgid "STARTING_GUIDE_WELCOME_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/cloud-computing.png"
+msgid "TEXT_INVITE_DEVICE_UNKNOWN_FAILURE"
+msgstr "Cet appareil n'a pas pu être invité."
 
-msgid "STARTING_GUIDE_WORKSPACES_TITLE"
-msgstr "Espaces de travail"
+msgid "TEXT_INVITE_DEVICE_SUCCESS"
+msgstr "L'appareil s'est enregistré avec succès."
 
-msgid "STARTING_GUIDE_WORKSPACES_CONTENT"
-msgstr ""
-"Arrangez tous vos fichiers par espaces de travail, une interface claire pour un "
-"processus simple\n"
-"et facile à utiliser."
+msgid "TEXT_INVITE_DEVICE_EMPTY_DEVICE_NAME"
+msgstr "Veuillez fournir le nom de l'appareil à inviter."
 
-msgid "STARTING_GUIDE_WORKSPACES_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/workspaces.png"
+msgid "TEXT_INVITE_DEVICE_TITLE"
+msgstr "Inviter un nouvel appareil"
 
-msgid "STARTING_GUIDE_DOCUMENTS_TITLE"
-msgstr "Documents"
+msgid "TEXT_PARSEC_NEW_VERSION_AVAILABLE_version"
+msgstr "La version <b>{version}</b> de PARSEC est disponible !"
 
-msgid "STARTING_GUIDE_DOCUMENTS_CONTENT"
-msgstr ""
-"Dans vos espaces de travail, vous avez accès à tous vos fichiers,\n"
-"comme dans votre explorateur favori.\n"
-"Un affichage simple pour améliorer votre productivité !"
+msgid "TEXT_CHANGE_PASSWORD_PASSWORD_MISMATCH"
+msgstr "Le mot de passe et la confirmation ne correspondent pas."
 
-msgid "STARTING_GUIDE_DOCUMENTS_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/documents.png"
+msgid "TEXT_CHANGE_PASSWORD_SUCCESS"
+msgstr "Le mot de passe a été changé avec succès."
 
-msgid "STARTING_GUIDE_SHARING_TITLE"
-msgstr "Partagez"
+msgid "TEXT_CHANGE_PASSWORD_INVALID_PASSWORD"
+msgstr "Vous n'avez pas fourni le bon mot de passe pour cet appareil."
 
-msgid "STARTING_GUIDE_SHARING_CONTENT"
-msgstr ""
-"Partagez vos espaces de travail en quelques clics. Gérer qui y a accès,\n"
-"et découvrez ceux que les autres partagent avec vous.\n"
-"Tout ce qui vous est partagé apparait automatiquement."
+msgid "TEXT_CHANGE_PASSWORD_TITLE"
+msgstr "Modifier le mot de passe"
 
-msgid "STARTING_GUIDE_SHARING_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/page4.png"
-
-msgid "STARTING_GUIDE_DEVICES_TITLE"
-msgstr "Gérez vos appareils"
-
-msgid "STARTING_GUIDE_DEVICES_CONTENT"
-msgstr ""
-"Gérez vos appareils de confiance. Ils sont la clé de la sécurité garantie de\n"
-"vos fichiers."
-
-msgid "STARTING_GUIDE_DEVICES_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/devices.png"
-
-msgid "STARTING_GUIDE_USERS_TITLE"
-msgstr "Gérez vos utilisateurs"
-
-msgid "STARTING_GUIDE_USERS_CONTENT"
-msgstr ""
-"Et pour les administrateurs ? Vous pouvez gérer les utilisateurs et leurs "
-"permissions,\n"
-"en ajouter, ou les révoquer."
-
-msgid "STARTING_GUIDE_USERS_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/users.png"
-
-msgid "STARTING_GUIDE_OFFLINE_TITLE"
-msgstr "Même hors-ligne"
-
-msgid "STARTING_GUIDE_OFFLINE_CONTENT"
-msgstr ""
-"Pas de connexion ? Aucun problème. Vous pouvez accéder à tous vos fichiers.\n"
-"Les modifications seront sauvegardées localement et synchronisées "
-"automatiquement."
-
-msgid "STARTING_GUIDE_OFFLINE_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/offline_fr.png"
-
-msgid "STARTING_GUIDE_YOUR_TURN_TITLE"
-msgstr "À vous de jouer !"
-
-msgid "STARTING_GUIDE_YOUR_TURN_CONTENT"
-msgstr ""
-"Créez votre premier espace de travail, importez vos fichiers, partagez vos "
-"documents.\n"
-"\n"
-"La sécurité n'attend pas !"
-
-msgid "STARTING_GUIDE_YOUR_TURN_SCREENSHOT"
-msgstr ":/screenshots/images/screenshots/your_turn.png"
-
-msgid "BUTTON_END"
-msgstr "Fin"
-
-msgid "BUTTON_CONTINUE"
-msgstr "Continuer"
-
-msgid "BUTTON_START"
-msgstr "Commencer"
-
-msgid "FILE_MENU_OPEN"
+msgid "ACTION_FILE_MENU_OPEN"
 msgstr "Ouvrir"
 
-msgid "FILE_MENU_RENAME"
+msgid "ACTION_FILE_MENU_RENAME"
 msgstr "Renommer"
 
-msgid "FILE_MENU_DELETE"
+msgid "ACTION_FILE_MENU_DELETE"
 msgstr "Supprimer"
 
-msgid "FILE_MENU_COPY"
-msgstr "Copy"
+msgid "ACTION_FILE_MENU_COPY"
+msgstr "Copier"
 
-msgid "FILE_MENU_CUT"
-msgstr "Cut"
+msgid "ACTION_FILE_MENU_CUT"
+msgstr "Couper"
 
-msgid "FILE_MENU_HISTORY"
+msgid "ACTION_FILE_MENU_SHOW_FILE_HISTORY"
 msgstr "Voir l'historique"
 
-msgid "FILE_MENU_GET_LINK"
-msgstr "Obtenir un lien vers le fichier"
+msgid "ACTION_FILE_MENU_GET_FILE_LINK"
+msgstr "Lien vers ce fichier"
 
-msgid "FILE_MENU_PASTE"
-msgstr "Paste"
+msgid "ACTION_FILE_MENU_PASTE"
+msgstr "Coller"
 
-msgid "FILE_TREE_PARENT_FOLDER"
+msgid "TEXT_FILE_TREE_PARENT_FOLDER"
 msgstr "Répertoire parent"
 
-msgid "FILE_TREE_PARENT_FOLDER_TOOLTIP"
-msgstr "Retour au répertoire parent"
+msgid "TEXT_FILE_TREE_PARENT_WORKSPACE"
+msgstr "Liste des espaces de travail"
 
-msgid "FILE_TREE_PARENT_WORKSPACE"
-msgstr "Retourner à la liste des espaces de travail"
-
-msgid "FILE_TREE_PARENT_WORKSPACE_TOOLTIP"
-msgstr "Retour à la liste des espaces de travail"
-
-msgid "LABEL_BOOTSTRAP_INSTRUCTIONS"
+msgid "TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization"
 msgstr ""
-"Pour démarrer l'organisation, choisissez un nom d'utilisateur, un nom "
-"d'appareil, et un mot de passe."
+"Vous allez démarrer l'organisation <b>{organization}</b>. Vous serez le premier administrateur de l'organisation.<br /><br />\n"
+"\n"
+"Pour continuer, veuillez choisir un nom d'utilisateur, un nom d'appareil, ainsi qu'un mot de passe."
 
-msgid "ERR_REGISTER_USER_EXISTS"
-msgstr "Cet utilisateur existe déjà."
+msgid "TEXT_BOOTSTRAP_ORG_INVALID_URL"
+msgstr "L'URL n'est pas valide pour démarrer l'organisation."
 
-msgid "ERR_BAD_API_VERSION"
-msgstr ""
-"La version du serveur est différente de la version de l'application. "
-"L'application est-elle à jour ?"
+msgid "TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED"
+msgstr "Cette organisation a déjà été démarrée."
 
-msgid "ERR_BOOTSTRAP_ORG_UNKNOWN"
-msgstr "Impossible de démarrer cette organisation."
+msgid "TEXT_BOOTSTRAP_ORG_USER_EXISTS"
+msgstr "Ce nom d'utilisateur existe déjà au sein de cette organisation."
 
-msgid "LABEL_USER_NAME"
-msgstr "Nom d'utilisateur"
+msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH"
+msgstr "Le mot de passe et la confirmation ne correspondent pas."
 
-msgid "INFO_DIALOG_TITLE"
-msgstr "Information"
+msgid "TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW"
+msgstr "Le mot de passe n'est pas assez complete."
 
-msgid "WARN_DIALOG_TITLE"
-msgstr "Avertissement"
+msgid "TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME"
+msgstr "Le nom d'appareil n'est pas valide."
 
-msgid "BUTTON_CLOSE"
-msgstr "Fermer"
+msgid "TEXT_BOOTSTRAP_ORG_BAD_USER_NAME"
+msgstr "Le nom d'utilisateur n'est pas valide."
 
-msgid "ERR_DIALOG_TITLE"
+msgid "TEXT_BOOTSTRAP_ORG_BAD_API_VERSION"
+msgstr "Votre application n'est pas compatible avec ce serveur. Veuillez la mettre à jour."
+
+msgid "TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL"
+msgstr "Impossible de démarrer l'organisation."
+
+msgid "TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE"
+msgstr "Impossible de démarrer l'organisation."
+
+msgid "TEXT_BOOTSTRAP_ORG_SUCCESS"
+msgstr "L'organisation a été démarrée avec succès ! Vous pouvez maintenant vous connecter."
+
+msgid "TEXT_BOOTSTRAP_ORG_TITLE"
+msgstr "Démarrer l'organisation"
+
+msgid "ACTION_OK"
+msgstr "OK"
+
+msgid "TEXT_ERR_DIALOG_TITLE"
 msgstr "Erreur"
 
-msgid "ERR_LOGIN_DEVICE_REVOKED"
-msgstr "Cet appareil a été révoqué."
+msgid "TEXT_LOGIN_ERROR_DEVICE_REVOKED"
+msgstr "Cet appareil a été révoqué et ne peut plus se connecter."
 
-msgid "ERR_LOGIN_WINFSP_NOT_AVAILABLE"
+msgid "TEXT_LOGIN_ERROR_WINFSP_NOT_AVAILABLE"
 msgstr ""
 "WinFsp n'a pas pu être chargé. \n"
 "Merci de vérifier votre installation."
 
-msgid "ERR_LOGIN_FUSE_NOT_AVAILABLE"
+msgid "TEXT_LOGIN_ERROR_FUSE_NOT_AVAILABLE"
 msgstr ""
 "FUSE n'a pas pu être chargé. \n"
 "Merci de vérifier votre installation."
 
-msgid "ERR_LOGIN_UNKNOWN"
+msgid "TEXT_LOGIN_UNKNOWN_ERROR"
 msgstr "Impossible de se connecter."
 
-msgid "ERR_LOGIN_ALREADY_CONNECTED"
-msgstr "Cet appareil est déjà connecté."
+msgid "TEXT_LOGIN_ERROR_ALREADY_CONNECTED"
+msgstr "Cet appareil est déjà connecté, probablement dans un autre onglet."
 
-msgid "ERR_LOGIN_AUTH_FAILED"
-msgstr "L'authentification a échoué."
+msgid "TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"
+msgstr "Le mot de passe n'est pas correct."
 
-msgid "ERR_LOGIN_MOUNTPOINT"
-msgstr "Le point de montage est déjà utilisé."
+msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
+msgstr "Impossible de se connecter. Les espaces de travail n'ont pas pu être montés."
 
-msgid "MENU_SHOW_WINDOW"
-msgstr "Ouvrir la fenêtre"
+msgid "ACTION_SYSTRAY_SHOW_WINDOW"
+msgstr "Afficher PARSEC"
 
-msgid "MENU_EXIT"
+msgid "ACTION_SYSTRAY_QUIT_PARSEC"
 msgstr "Quitter"
 
-msgid "BUTTON_LOG_IN"
+msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
 
-msgid "BUTTON_LOGGING_IN"
+msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
 
-msgid "LABEL_ENTER_URL_TITLE"
-msgstr "Fournir une adresse"
-
-msgid "LABEL_ENTER_URL_MESSAGE"
+msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
 msgstr ""
-"L'adresse vous a été fournie par un autre utilisateur ou par le site my.parsec."
-"cloud."
+"Vous pouvez finaliser la création de votre appareil <b>{device}</b> de l'organisation <b>{organization}</b> en choisissant un mot de passe et en fournissant "
+"le jeton à six chiffres."
 
-msgid "INFO_BOOTSTRAP_ORG_SUCCESS_MONO_DEVICE"
-msgstr ""
-"L'organisation et l'utilisateur ont été créés.\n"
-"Vous allez maintenant être connecté."
+msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
+msgstr "Aucune invitation n'a été trouvée pour cet appareil."
 
-msgid "INFO_BOOTRSTRAP_ORG_SUCCESS_MULTI_DEVICE"
-msgstr ""
-"L'organisation et l'utilisateur ont été créés. Vous pouvez maintenant vous "
-"connecter."
+msgid "TEXT_CLAIM_DEVICE_PASSWORD_MISMATCH"
+msgstr "Le mot de passe et la confirmation ne correspondent pas."
 
-msgid "INFO_USER_CREATED_SUCCESS_MONO_DEVICE"
-msgstr ""
-"L'utilisateur a été créé.\n"
-"Vous allez maintenant être connecté."
+msgid "TEXT_CLAIM_DEVICE_PASSWORD_COMPLEXITY_TOO_LOW"
+msgstr "Le mot de passe n'est pas assez complexe."
 
-msgid "INFO_USER_CREATED_SUCCESS_MULTI_DEVICE"
-msgstr "L'utilisateur a été créé. Vous pouvez maintenant vous connecter."
+msgid "TEXT_CLAIM_DEVICE_INVALID_URL"
+msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
 
-msgid "LABEL_CLAIM_DEVICE_INSTRUCTIONS"
-msgstr ""
-"Enregistrer l'appareil \"<b>{device}</b>\" en choisissant un mot de passe et en "
-"fournissant le jeton de vérification."
+msgid "TEXT_CLAIM_DEVICE_BAD_DEVICE_NAME"
+msgstr "Le nom d'appareil n'est pas valide."
 
-msgid "LABEL_DEVICE_REGISTRATION"
-msgstr "Veuillez patienter pendant que l'appareil s'enregistre."
+msgid "TEXT_CLAIM_DEVICE_BAD_USER_NAME"
+msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
 
-msgid "ERR_CLAIM_DEVICE_NOT_FOUND"
-msgstr "Aucune invitation trouvée pour cet appareil."
+msgid "TEXT_CLAIM_DEVICE_BACKEND_REFUSAL"
+msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
 
-msgid "ERR_CLAIM_DEVICE_UNKNOWN"
-msgstr "Impossible d'enregistrer cet appareil."
+msgid "TEXT_CLAIM_DEVICE_BACKEND_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'êtes pas connecté à internet."
 
-msgid "INFO_DEVICE_REGISTERED"
-msgstr "L'appareil a été créé. Vous pouvez maintenant vous connecter."
+msgid "TEXT_CLAIM_DEVICE_UNKNOWN_FAILURE"
+msgstr "Une erreur interne est survenue lors de l'enregistrement de l'appareil."
 
-msgid "ERR_LIST_VERSIONS_ACCESS"
-msgstr "Impossible de récupérer la liste des versions."
+msgid "TEXT_CLAIM_DEVICE_SUCCESS"
+msgstr "Votre appareil a été enregistré avec succès."
 
-msgid "SETTINGS_NEED_RESTART"
-msgstr "La nouvelle configuration sera effective au redémarrage de l'application."
+msgid "TEXT_CLAIM_DEVICE_TITLE"
+msgstr "Enregistrer un appareil"
 
-msgid "BUTTON_TASKBAR_NOTIFICATION"
-msgstr "Afficher les notifications."
+msgid "TEXT_SETTINGS_NEED_RESTART"
+msgstr "Les modification seront prises en compte au redémarrage de l'application."
 
 msgid "NOTIF_WARN_MOUNTPOINT_UNMOUNTED"
-msgstr "Le point de montage a été perdu."
+msgstr ""
 
 msgid "NOTIF_WARN_WORKSPACE_READ_ACCESS_LOST_{}"
 msgstr ""
-"Impossible d'accéder à \"{}\" depuis le serveur car vous avez perdu vos accès "
-"en lecture sur l'espace de travail."
 
 msgid "NOTIF_WARN_WORKSPACE_WRITE_ACCESS_LOST_{}"
 msgstr ""
-"Impossible de synchroniser \"{}\" avec le serveur car vous avez perdu vos accès "
-"en écriture sur l'espace du travail."
 
 msgid "NOTIF_WARN_WORKSPACE_IN_MAINTENANCE_{}"
 msgstr ""
-"Impossible d'accéder à \"{}\" depuis le serveur car l'espace de travail est "
-"actuellement en maintenance."
 
 msgid "NOTIF_WARN_MOUNTPOINT_REMOTE_ERROR_{}_{}"
-msgstr "Impossible d'accéder à \"{}\" depuis le serveur: {}."
+msgstr ""
 
 msgid "NOTIF_ERR_MOUNTPOINT_UNEXPECTED_ERROR_{}_{}_{}"
 msgstr ""
-"Une erreur inattendue est arrivée pendant l'opération \"{}\" sur le chemin "
-"\"{}\": {}."
 
 msgid "NOTIF_INFO_WORKSPACE_SHARED_{}"
-msgstr "L'espace de travail \"{}\" a été partagé avec vous."
+msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_ROLE_UPDATED_{}"
-msgstr "Votre rôle sur l'espace de travail \"{}\" a changé."
+msgstr ""
 
 msgid "NOTIF_INFO_WORKSPACE_UNSHARED_{}"
-msgstr "L'espace de travail \"{}\" n'est plus partagé avec vous."
+msgstr ""
 
 msgid "NOTIF_WARN_SYNC_CONFLICT_{}"
-msgstr "Conflit lors de la synchronisation du fichier \"{}\"."
+msgstr ""
 
-msgid "BACKEND_STATE_CONNECTED"
+msgid "TEXT_BACKEND_STATE_CONNECTED"
 msgstr "Connecté"
 
-msgid "BACKEND_STATE_DISCONNECTED"
+msgid "TEXT_BACKEND_STATE_DISCONNECTED"
 msgstr "Déconnecté"
 
-msgid "BACKEND_STATE_REASON_REFUSED_API_MISMATCH_{}"
-msgstr ""
-"Connection refusée par le serveur.\n"
-"Le client n'a pas une API compatible (version(s) supportées: {})."
+msgid "TEXT_BACKEND_STATE_API_MISMATCH_versions"
+msgstr "L'application n'est pas compatible avec le serveur"
 
-msgid "BACKEND_STATE_REASON_REVOKED_DEVICE"
-msgstr ""
-"Connection refusée par le serveur.\n"
-"Vous avez été révoqué."
+msgid "TEXT_BACKEND_STATE_REVOKED_DEVICE"
+msgstr "Cet appareil a été révoqué"
 
-msgid "BACKEND_STATE_REASON_REFUSED_ORGANIZATION_EXPIRED"
-msgstr ""
-"Connection refusée par le serveur.\n"
-"Votre organisation a expiré."
+msgid "TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED"
+msgstr "L'organisation a expiré"
 
-msgid "BACKEND_STATE_REASON_REFUSED_DEFAULT"
-msgstr "Connexion refusée par le serveur."
+msgid "TEXT_BACKEND_STATE_UNKNOWN"
+msgstr "Inconnu"
 
-msgid "BACKEND_STATE_CRASHED_{}"
-msgstr ""
+msgid "TEXT_BACKEND_STATE_CRASHED_cause"
+msgstr "La connexion au serveur a été perdue"
 
-msgid "MENU_DOCUMENTS"
+msgid "ACTION_MENU_DOCUMENTS"
 msgstr "Documents"
 
-msgid "MENU_USERS"
+msgid "ACTION_MENU_USERS"
 msgstr "Utilisateurs"
 
-msgid "MENU_DEVICES"
+msgid "ACTION_MENU_DEVICES"
 msgstr "Appareils"
 
-msgid "ERR_REGISTER_USER_OFFLINE"
-msgstr "Impossible de contacter le serveur."
+msgid "TEXT_INVITE_USER_COPIED_TO_CLIPBOARD"
+msgstr "L'information a été copiée dans le presse-papier."
 
-msgid "ERR_REGISTER_USER_TIMEOUT"
-msgstr "L'utilisateur a pris trop de temps pour s'enregistrer."
+msgid "TEXT_INVITE_USER_BAD_USER_NAME"
+msgstr "Le nom d'utilisateur n'est pas valide."
 
-msgid "ERR_REGISTER_USER_UNKNOWN"
-msgstr "Impossible d'enregistrer l'utilisateur."
+msgid "TEXT_INVITE_USER_ALREADY_EXISTS"
+msgstr "L'utilisateur existe déjà."
 
-msgid "INFO_REGISTER_USER_SUCCESS"
-msgstr ""
-"L'utilisateur a été enregistré. Vous pouvez maintenant fermer cette fenêtre."
+msgid "TEXT_INVITE_USER_WRONG_PARAMETERS"
+msgstr "L'utilisateur n'a pas pu être invité."
 
-msgid "WARN_REGISTER_USER_EMPTY"
+msgid "TEXT_INVITE_USER_HOST_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas accès à internet."
+
+msgid "TEXT_INVITE_USER_TIMEOUT"
+msgstr "L'utilisateur ne s'est pas enregistré à temps. Vous pouvez relancer l'invitation (seul le jeton changera)."
+
+msgid "TEXT_INVITE_USER_UNKNOWN_FAILURE"
+msgstr "L'utilisateur n'a pas pu être invité."
+
+msgid "TEXT_INVITE_USER_SUCCESS"
+msgstr "L'utilisateur a été enregistré avec succès."
+
+msgid "TEXT_INVITE_USER_EMPTY_USER_NAME"
 msgstr "Le nom d'utilisateur ne peut pas être vide."
 
-msgid "WARN_WORKSPACE_SHARING_WITH_YOURSELF"
-msgstr "Impossible de partager un espace de travail avec vous-même."
+msgid "TEXT_INVITE_USER_TITLE"
+msgstr "Inviter un utilisateur"
 
-msgid "WARN_WORKSPACE_ALREADY_SHARED_{}"
-msgstr "L'espace de travail est déjà partagé avec \"{}\"."
+msgid "TEXT_PARSEC_WINDOW_TITLE_version"
+msgstr "PARSEC {version}"
 
-msgid "ASK_WORKSPACE_UNSHARE_TITLE"
-msgstr "Retirer du partage"
+msgid "ACTION_FEEDBACK_SEND"
+msgstr "Donnez votre avis"
 
-msgid "ASK_WORKSPACE_UNSHARE_CONTENT_{}"
-msgstr ""
-"Êtes-vous sûr de vouloir arrêter de partager l'espace de travail avec \"{}\" ?"
-
-msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_TITLE"
-msgstr "Oublier les modifications"
-
-msgid "ASK_WORKSPACE_SHARE_UNSAVED_MODIFICATIONS_CONTENT"
-msgstr ""
-"Certaines modifications n'ont pas été sauvegardées. Êtes-vous sûr de vouloir "
-"fermer cette fenêtre et de les ignorer ?"
-
-msgid "ERR_WORKSPACE_CANNOT_SHARE_{}"
-msgstr ""
-"Impossible de partager l'espace de travail \"{workspace}\" avec \"{user}\"."
-
-msgid "ERR_WORKSPACE_ROLE_UNSHARE_ERROR_{}"
-msgstr ""
-"Impossible de retirer \"{user}\" du partage de l'espace de travail "
-"\"{workspace}\"."
-
-msgid "ERR_WORKSPACE_ROLE_UPDATE_ERROR_{}"
-msgstr ""
-"Impossible de mettre à jour les rôles des utilisateurs suivants :\n"
-"{}"
-
-msgid "INFO_WORKSPACE_ROLE_UPDATE_SUCCESS"
-msgstr "Les rôles ont été mis à jour."
-
-msgid "PARSEC_WINDOW_TITLE"
-msgstr "Parsec - {}"
-
-msgid "LABEL_FEEDBACK_LINK"
-msgstr "Donner votre avis"
-
-msgid "BUTTON_ADD_INSTANCE"
+msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
 msgstr "Ouvrir un nouvel onglet"
 
-msgid "MENU_SETTINGS"
-msgstr "Configuration"
-
-msgid "BUTTON_DOCUMENTATION"
-msgstr "Documentation"
-
-msgid "BUTTON_ABOUT"
-msgstr "À propos"
-
-msgid "BUTTON_CHANGELOG"
-msgstr "Journal des modifications"
-
-msgid "BUTTON_LICENSE"
-msgstr "License"
-
-msgid "BUTTON_QUIT_PARSEC"
-msgstr "Quitter Parsec"
-
-msgid "LICENSE_TITLE"
-msgstr "License"
-
-msgid "CHANGELOG_TITLE"
-msgstr "Journal des modifications"
-
-msgid "SETTINGS_TITLE"
-msgstr "Configuration"
-
-msgid "ASK_ERROR_REPORTING_TITLE"
-msgstr "Rapport d'erreur"
-
-msgid "ASK_ERROR_REPORTING_CONTENT"
-msgstr ""
-"Autorisez-vous l'application à nous envoyer des données quand elle rencontre "
-"une erreur pour nous aider à améliorer votre expérience ?"
-
-msgid "ASK_DISABLE_ACROBAT_CONTAINER_TITLE"
-msgstr "Autoriser Parsec à restaurer la compatibilité avec Acrobat Reader DC"
-
-msgid "ASK_DISABLE_ACROBAT_CONTAINER_CONTENT"
-msgstr ""
-"La configuration courante d'Acrobat Reader DC n'est pas compatible avec Parsec. "
-"Dans son état actuel, Acrobat ne peut pas ouvrir de fichier PDF depuis les "
-"espaces de travail Parsec.\n"
-"\n"
-"Autorisez-vous Parsec à restaurer cette compatibilité en désactivant la "
-"fonctionnalité \"Exécuter dans le conteneur d'application\" depuis la "
-"configuration d'Acrobat? Cette option est accessible depuis les réglages Parsec "
-"si nécessaire."
-
-msgid "TAB_TITLE_LOG_IN"
-msgstr "Se connecter"
-
-msgid "TAB_TITLE_BOOTSTRAP"
+msgid "ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"
 msgstr "Démarrer une organisation"
 
-msgid "TAB_TITLE_CLAIM_USER"
-msgstr "Créer un utilisateur"
+msgid "ACTION_MAIN_MENU_CLAIM_USER"
+msgstr "Enregistrer un utilisateur"
 
-msgid "TAB_TITLE_CLAIM_DEVICE"
-msgstr "Créer un appareil"
+msgid "ACTION_MAIN_MENU_CLAIM_DEVICE"
+msgstr "Enregistrer un appareil"
 
-msgid "WARN_FILE_LINK_LOG_IN_{}"
-msgstr ""
-"Veuillez vous connecter à un appareil de l'organisation \"{}\" pour accéder à "
-"ce fichier."
-
-msgid "ASK_CLOSE_TAB_TITLE"
-msgstr "Fermer l'onglet"
-
-msgid "ASK_CLOSE_TAB_CONTENT_LOGGED_IN"
-msgstr ""
-"Êtes-vous sûr de vouloir fermer cet onglet ? Vous serez automatiquement "
-"déconnecté."
-
-msgid "ASK_CLOSE_TAB_CONTENT"
-msgstr "Êtes-vous sûr de vouloir fermer cet onglet ?"
-
-msgid "TRAY_PARSEC_RUNNING"
-msgstr "Parsec est toujours ouvert."
-
-msgid "ASK_QUIT_TITLE"
-msgstr "Fermer l'application"
-
-msgid "ASK_QUIT_CONTENT"
-msgstr "Êtes-vous sûr de vouloir quitter l'application ?"
-
-msgid "PARSEC_DEVELOPMENT_LABEL"
-msgstr "Développé par <a href=\"http://scille.eu\">Scille</a>."
-
-msgid "LABEL_DEVICE_NAME"
-msgstr "Nom de l'appareil"
-
-msgid "LABEL_PASSWORD"
-msgstr "Mot de passe"
-
-msgid "LABEL_PASSWORD_CHECK"
-msgstr "Vérification du mot de passe"
-
-msgid "BUTTON_CANCEL"
-msgstr "Annuler"
-
-msgid "BUTTON_BOOTSTRAP_ORG"
-msgstr "Démarrer l'organisation"
-
-msgid "LABEL_TOKEN"
-msgstr "Jeton"
-
-msgid "BUTTON_CLAIM"
-msgstr "Enregistrer"
-
-msgid "LABEL_SEARCH_DEVICES"
-msgstr "Rechercher des appareils"
-
-msgid "LABEL_HISTORY_TITLE"
-msgstr "Historique du fichier"
-
-msgid "LABEL_FILE_TIMESTAMP"
-msgstr "Horodatage"
-
-msgid "LABEL_FILE_USER_ID"
-msgstr "Utilisateur"
-
-msgid "LABEL_FILE_SIZE"
-msgstr "Taille"
-
-msgid "LABEL_FILE_SOURCE"
-msgstr "Source"
-
-msgid "LABEL_FILE_DESTINATION"
-msgstr "Destination"
-
-msgid "BUTTON_LOAD_MORE_ENTRIES"
-msgstr "Afficher plus d'entrées"
-
-msgid "LABEL_SEARCH_FILES"
-msgstr "Rechercher des fichiers ou dossiers"
-
-msgid "LABEL_FILE_NAME"
-msgstr "Nom"
-
-msgid "LABEL_FILE_CREATED"
-msgstr "Créé le"
-
-msgid "LABEL_FILE_UPDATED"
-msgstr "Mis à jour le"
-
-msgid "BUTTON_OK"
-msgstr "OK"
-
-msgid "LABEL_IMPORTING"
-msgstr "En cours d'import"
-
-msgid "LABEL_IDENTIFIER"
-msgstr "Identifiant"
-
-msgid "BUTTON_ENTER_URL"
-msgstr "Fournir une adresse manuellement"
-
-msgid "BUTTON_LOG_OUT"
-msgstr "Se déconnecter"
-
-msgid "BUTTON_DETAILS"
-msgstr "Détails"
-
-msgid "BUTTON_COPY_TO_CLIPBOARD"
-msgstr "Copier dans le presse-papier"
-
-msgid "TITLE_SETTINGS"
+msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Configuration"
 
-msgid "SETTINGS_TITLE_PROXY"
-msgstr "Proxy"
+msgid "ACTION_MAIN_MENU_OPEN_DOCUMENTATION"
+msgstr "Ouvrir la documentation"
 
-msgid "LABEL_PROXY_TYPE"
-msgstr "Type de proxy"
+msgid "ACTION_MAIN_MENU_ABOUT"
+msgstr "À propos"
 
-msgid "LABEL_NO_PROXY"
-msgstr "Aucun proxy"
+msgid "ACTION_MAIN_MENU_CHANGELOG"
+msgstr "Journal des modifications"
 
-msgid "LABEL_PROXY_HTTP"
-msgstr "HTTP"
+msgid "ACTION_MAIN_MENU_LICENSE"
+msgstr "License"
 
-msgid "LABEL_PROXY_SOCKS4"
-msgstr "Socks4"
+msgid "ACTION_MAIN_MENU_FEEDBACK_SEND"
+msgstr "Donnez votre avis"
 
-msgid "LABEL_PROXY_SOCKS5"
-msgstr "Socks5"
+msgid "ACTION_MAIN_MENU_QUIT_PARSEC"
+msgstr "Quitter"
 
-msgid "LABEL_HOST"
-msgstr "Hôte"
+msgid "TEXT_LICENSE_TITLE"
+msgstr "License de PARSEC"
 
-msgid "LABEL_PORT"
-msgstr "Port"
+msgid "TEXT_CHANGELOG_TITLE"
+msgstr "Journal des modifications de PARSEC"
 
-msgid "SETTINGS_TITLE_SPEED_LIMITS"
-msgstr "Limitation de vitesse"
+msgid "TEXT_SETTINGS_TITLE"
+msgstr "Configuration"
 
-msgid "LABEL_UPLOAD"
-msgstr "Montant"
+msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
+msgstr "Démarrer une organisation"
 
-msgid "LABEL_SPEED_NO_LIMIT"
-msgstr "Aucune limite"
+msgid "TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"
+msgstr "Veuillez fournir le lien pour démarrer l'organisation."
 
-msgid "LABEL_SPEED_LIMIT_TO"
-msgstr "Limiter à"
+msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
 
-msgid "LABEL_KB_S"
-msgstr "Ko/s"
+msgid "TEXT_CLAIM_USER_URL_TITLE"
+msgstr "Enregistrer un utilisateur"
 
-msgid "LABEL_DOWNLOAD"
-msgstr "Descendant"
+msgid "TEXT_CLAIM_USER_URL_INSTRUCTIONS"
+msgstr "Veuillez fournir le lien pour enregistrer l'utilisateur. Le lien vous a été fourni par l'administrateur qui vous a invité."
 
-msgid "SETTINGS_TITLE_MISC"
-msgstr "Divers"
+msgid "TEXT_CLAIM_USER_URL_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
 
-msgid "LABEL_SIM_CONNECTIONS"
-msgstr "Nombre de connections simultanées"
+msgid "TEXT_CLAIM_DEVICE_URL_TITLE"
+msgstr "Enregistrer un appareil"
 
-msgid "BUTTON_SAVE"
-msgstr "Sauvegarder"
-
-msgid "BUTTON_DOWNLOAD"
-msgstr "Télécharger"
-
-msgid "BUTTON_IGNORE"
-msgstr "Ignorer"
-
-msgid "LABEL_CHECKING_NEW_VERSION"
-msgstr "Nous recherchons si une nouvelle version est disponible..."
-
-msgid "LABEL_NEW_VERSION_ERROR"
-msgstr "Impossible de vérifier si une nouvelle version est disponible."
-
-msgid "LABEL_VERSION_UPDATE_TO_DATE"
-msgstr "Votre version de Parsec est à jour."
-
-msgid "LABEL_NOTIFICATIONS"
-msgstr "Notifications"
-
-msgid "LABEL_CHANGE_PASSWORD"
-msgstr "Entrez votre mot de passe actuel et le nouveau mot de passe."
-
-msgid "LABEL_PASSWORD_OLD"
-msgstr "Mot de passe actuel"
-
-msgid "BUTTON_CHANGE_PASSWORD"
-msgstr "Modifier le mot de passe"
-
-msgid "BUTTON_NO"
-msgstr "Non"
-
-msgid "BUTTON_YES"
-msgstr "Oui"
-
-msgid "TITLE_REGISTER_NEW_DEVICE"
-msgstr "Enregistrer un nouvel appareil"
-
-msgid "LABEL_REGISTER_NEW_DEVICE"
-msgstr "Enregistrer un nouvel appareil"
-
-msgid "LABEL_REGISTER_DEVICE_INSTRUCTIONS"
+msgid "TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"
 msgstr ""
-"Utilisez les informations suivantes pour enregistrer votre nouvel appareil :"
+"Veuillez fournir le lien pour enregistrer l'appareil. Le lien vous a été fourni quand vous avez démarré le processus d'invitation de votre nouvel appareil."
 
-msgid "LABEL_URL"
-msgstr "URL"
+msgid "TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"
+msgstr "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
 
-msgid "BUTTON_REGISTER_DEVICE"
-msgstr "Enregistrer l'appareil"
-
-msgid "TITLE_REGISTER_NEW_USER"
-msgstr "Enregistrer un nouvel utilisateur"
-
-msgid "LABEL_REGISTER_NEW_USER"
-msgstr "Enregistrer un nouvel utilisateur"
-
-msgid "CHECK_USER_IS_ADMIN"
-msgstr "L'utilisateur est administrateur"
-
-msgid "LABEL_REGISTER_USER_INSTRUCTIONS"
-msgstr ""
-"Utilisez les informations suivantes pour enregistrer votre nouvel utilisateur :"
-
-msgid "BUTTON_REGISTER_USER"
-msgstr "Enregistrer l'utilisateur"
-
-msgid "BUTTON_SKIP"
-msgstr "Ignorer"
-
-msgid "BUTTON_REPLACE"
-msgstr "Remplacer"
-
-msgid "CHECK_DO_THE_SAME"
-msgstr "Appliquer aux fichiers suivants"
-
-msgid "SETTINGS_TITLE_BEHAVIOR"
-msgstr "Comportement"
-
-msgid "CHECK_MINIMIZE_IN_TRAY"
-msgstr "Minimiser dans la barre des tâches"
-
-msgid "SETTINGS_TITLE_LOCALIZATION"
-msgstr "Localisation"
-
-msgid "LABEL_LANGUAGE"
-msgstr "Langues"
-
-msgid "SETTINGS_TITLE_VERSION"
-msgstr "Version"
-
-msgid "CHECK_CHECK_NEW_VERSION"
-msgstr "Vérifier si une nouvelle version est disponible au démarrage"
-
-msgid "BUTTON_CHECK_NEW_VERSION"
-msgstr "Vérifier si une nouvelle version est disponible"
-
-msgid "SETTINGS_TITLE_ERROR_REPORTING"
+msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
 
-msgid "CHECK_SEND_CRASH_INFO"
-msgstr "Envoyer des informations en cas d'erreur"
-
-msgid "SETTINGS_TITLE_INTERFACE"
-msgstr "Interface"
-
-msgid "CHECK_USE_WORKSPACE_COLORS"
-msgstr "Utiliser des couleurs pour les espaces de travail"
-
-msgid "CHECK_DISABLE_ACROBAT_CONTAINER"
+msgid "TEXT_ERROR_REPORTING_INSTRUCTIONS"
 msgstr ""
-"Désactiver la fonctionnalité\n"
-"\"Exécuter dans le conteneur d'application\"\n"
-"d'Acrobat Reader DC"
+"PARSEC peut automatiquement envoyer des données quand une erreur est rencontrée. Cette information nous aide à améliorer votre expérience utilisateur.<br /"
+"><br />\n"
+"\n"
+"Autorisez-vous PARSEC à envoyer automatiquement des rapports d'erreur ? Vous pourrez désactiver cette fonctionnalité dans la configuration."
 
-msgid "BUTTON_BACK"
-msgstr "Retour"
+msgid "ACTION_ERROR_REPORTING_ACCEPT"
+msgstr "Autoriser les rapports d'erreur"
 
-msgid "WORKSPACE_REENCRYPTION_SELECT_DATE"
-msgstr "Sélectionnez une date..."
+msgid "ACTION_NO"
+msgstr "Non"
 
-msgid "WORKSPACE_REENCRYPTION_SELECT_TIME"
-msgstr "...et une heure"
+msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
+msgstr "Restaurer la comptabilité avec Acrobat Reader DC"
 
-msgid "WORKSPACE_REENCRYPTION_MOUNT"
-msgstr "Voir l'espace de travail"
+msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"
+msgstr ""
+"La configuration actuelle d'Acrobat Reader DC n'est pas compatible avec PARSEC.<br />\n"
+"Dans l'état actuel, Acrobat ne sera pas capable d'ouvrir les fichiers PDF stockés dans les espaces de travail.<br /><br />\n"
+"\n"
+"Voulez-vous autoriser Parsec à restaurer la compatibilité en désactivant la fonctionnalité \"Exécuter dans AppContainer\" dans la configuration d'Acrobat ? "
+"Cette option est accessible dans la configuration de PARSER si nécessaire."
 
-msgid "LABEL_SEARCH_USERS"
-msgstr "Rechercher des utilisateurs"
+msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
+msgstr "Désactiver les conteneurs Acrobat"
 
-msgid "LABEL_WORKSPACE_OWNER"
-msgstr "Vous êtes le propriétaire de cet espace de travail."
+msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
+msgstr "Connexion"
 
-msgid "LABEL_WORKSPACE_SHARED"
-msgstr "Cet espace de travail est partagé."
+msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
+msgstr "Le fichier n'a pas pu être trouvé au sein de l'organisation <b>{organization}</b>. Peut-être qu'il n'a pas été partagé avec vous."
 
-msgid "LABEL_WORKSPACE_EMPTY"
+msgid "TEXT_INVALID_URL"
+msgstr "L'URL n'est pas valide."
+
+msgid "TEXT_TAB_CLOSE_TITLE"
+msgstr "Fermer l'onglet"
+
+msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
+msgstr "Êtes-vous sûr de vouloir fermer cet onglet ? Vous serez automatiquement déconnecté."
+
+msgid "ACTION_TAB_CLOSE_CONFIRM"
+msgstr "Fermer l'onglet"
+
+msgid "TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"
+msgstr "PARSEC est toujours ouvert"
+
+msgid "TEXT_PARSEC_QUIT_TITLE"
+msgstr "Fermer PARSEC"
+
+msgid "TEXT_PARSEC_QUIT_INSTRUCTIONS"
+msgstr "Êtes-vous sûr de vouloir fermer PARSEC ?"
+
+msgid "ACTION_PARSEC_QUIT_CONFIRM"
+msgstr "Quitter"
+
+msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
+msgstr "Développé par <a href=\"https://scille.eu\">Scille</a>."
+
+msgid "TEXT_LABEL_USER_NAME"
+msgstr "Nom d'utilisateur"
+
+msgid "TEXT_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
+msgid "TEXT_LABEL_PASSWORD"
+msgstr "Mot de passe"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION"
+msgstr "Confirmation du mot de passe"
+
+msgid "TEXT_BOOTSTRAP_ORG_TOOLTIP"
+msgstr "Démarrer l'organisation"
+
+msgid "ACTION_BOOTSTRAP_ORG"
+msgstr "Démarrer l'organisation"
+
+msgid "TEXT_LABEL_TOKEN"
+msgstr "Jeton"
+
+msgid "TEXT_CLAIM_DEVICE_TOOLTIP"
+msgstr "Enregistrer un nouvel appareil"
+
+msgid "ACTION_CLAIM_DEVICE"
+msgstr "Enregistrer un nouvel appareil"
+
+msgid "TEXT_CLAIM_USER_TOOLTIP"
+msgstr "Enregistrer un nouvel utilisateur"
+
+msgid "ACTION_CLAIM_USER"
+msgstr "Enregistrer un nouvel utilisateur"
+
+msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
+msgstr "Inviter un nouvel appareil"
+
+msgid "ACTION_DEVICE_ADD_NEW"
+msgstr "Inviter un nouvel appareil"
+
+msgid "TEXT_DEVICE_FILTER_PLACEHOLDER"
+msgstr "Filtrer les appareils"
+
+msgid "TEXT_WORKSPACE_EMPTY_WORKSPACE"
 msgstr "Cet espace de travail est vide."
 
-msgid "LABEL_RENAME_WORKSPACE"
+msgid "TEXT_ERROR_SHOW_DETAILS_TOOLTIP"
+msgstr "Voir les détails de l'erreur"
+
+msgid "ACTION_ERROR_SHOW_DETAILS"
+msgstr "Détails"
+
+msgid "TEXT_ERROR_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copier le rapport d'erreur dans le presse-papier."
+
+msgid "ACTION_ERROR_COPY_DETAILS_TO_CLIPBOARD"
+msgstr "Copier dans le presse-papier"
+
+msgid ""
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></"
+"p></body></html>"
+msgstr ""
+
+msgid "TEXT_FILE_HISTORY_VERSION"
+msgstr "Version"
+
+msgid "TEXT_FILE_HISTORY_SIZE"
+msgstr "Taille"
+
+msgid "TEXT_FILE_HISTORY_WHEN"
+msgstr "Le"
+
+msgid "TEXT_FILE_HISTORY_BY"
+msgstr "Par"
+
+msgid "ACTION_FILE_HISTORY_LOAD_MORE_ENTRIES"
+msgstr "Charger plus d'entrées"
+
+msgid "ACTION_FILE_IMPORT_FILES"
+msgstr "Importer des fichiers"
+
+msgid "ACTION_FILE_IMPORT_FOLDER"
+msgstr "Importer un répertoire"
+
+msgid "TEXT_FILE_NAME_HEADER"
+msgstr "Nom"
+
+msgid "TEXT_FILE_CREATED_HEADER"
+msgstr "Créé"
+
+msgid "TEXT_FILE_UPDATED_HEADER"
+msgstr "Mis à jour"
+
+msgid "TEXT_FILE_SIZE_HEADER"
+msgstr "Taille"
+
+msgid "TEXT_FILE_FILTER_PLACEHOLDER"
+msgstr "Filtrer les fichiers"
+
+msgid "TEXT_FILE_BACK_TO_WORKSPACES_TOOLTIP"
+msgstr "Retour à la liste des espaces de travail"
+
+msgid "TEXT_FILE_CREATE_FOLDER_TOOLTIP"
+msgstr "Créer un nouveau répertoire dans cet espace de travail."
+
+msgid "TEXT_FILE_IMPORT_FILES_TOOLTIP"
+msgstr "Importer des fichiers dans cet espace de travail."
+
+msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
+msgstr "Importer un répertoire dans cet espace de travail."
+
+msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
+msgstr "Fermer la fenêtre."
+
+msgid "TEXT_DEVICE_INVITE_DEVICE_NAME_PLACEHOLDER"
+msgstr "Nom d'appareil"
+
+msgid "TEXT_DEVICE_INVITE_INSTRUCTIONS"
+msgstr ""
+"Transmettez les informations suivantes à votre nouvel appareil pour finaliser le processus d'enregistrement. Veuillez ne pas fermer cette fenêtre tant que "
+"votre appareil n'est pas enregistré."
+
+msgid "ACTION_TOKEN_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copier le jeton dans le presse-papier."
+
+msgid "ACTION_URL_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copier l'URL dans le presse-papier."
+
+msgid "ACTION_DEVICE_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copier le nom de l'appareil dans le presse-papier."
+
+msgid "ACTION_DEVICE_INVITE"
+msgstr "Inviter l'appareil"
+
+msgid "TEXT_DEVICE_INVITE_LABEL_URL"
+msgstr "URL d'invitation"
+
+msgid "TEXT_DEVICE_INVITE_LABEL_DEVICE_NAME"
+msgstr "Nom d'appareil"
+
+msgid "TEXT_DEVICE_INVITE_LABEL_TOKEN"
+msgstr "Jeton d'invitation"
+
+msgid "TEXT_USER_INVITE_USER_NAME_PLACEHOLDER"
+msgstr "Nom d'utilisateur"
+
+msgid "TEXT_USER_INVITE_CHECK_IS_ADMIN"
+msgstr "L'utilisateur sera administrateur"
+
+msgid "TEXT_USER_INVITE_INSTRUCTIONS"
+msgstr ""
+"Transmettez les informations suivantes à l'utilisateur. Il est recommandé d'envoyer ces informations par deux canaux différents (par exemple, l'URL par e-"
+"mail and le jeton par téléphone). Veuillez ne pas fermer cette fenêtre tant que l'utilisateur n'est pas enregistré."
+
+msgid "ACTION_USER_NAME_COPY_TO_CLIPBOARD_TOOLTIP"
+msgstr "Copier le nom d'utilisateur dans le presse-papier."
+
+msgid "ACTION_USER_INVITE"
+msgstr "Inviter l'utilisateur"
+
+msgid "TEXT_USER_INVITE_LABEL_URL"
+msgstr "URL d'invitation"
+
+msgid "TEXT_USER_INVITE_LABEL_USERNAME"
+msgstr "Nom d'utilisateur"
+
+msgid "TEXT_USER_INVITE_LABEL_TOKEN"
+msgstr "Jeton d'invitation"
+
+msgid "TEXT_IMPORT_FILES_PROGRESS"
+msgstr "Import du fichier"
+
+msgid "ACTION_LOG_OUT"
+msgstr "Se déconnecter"
+
+msgid "ACTION_PARSEC_DOWNLOAD_NEW_VERSION"
+msgstr "Télécharger la nouvelle version"
+
+msgid "ACTION_PARSEC_IGNORE_NEW_VERSION"
+msgstr "Ignorer"
+
+msgid "TEXT_NEW_VERSION_CHECKING_IN_PROGRESS"
+msgstr "En cours de vérification d'une nouvelle version"
+
+msgid "TEXT_NEW_VERSION_CHECK_FAILED"
+msgstr "Impossible de vérifier si une nouvelle version est disponble."
+
+msgid "ACTION_CLOSE"
+msgstr "Fermer"
+
+msgid "TEXT_NEW_VERSION_UP_TO_DATE"
+msgstr "Votre application est à jour."
+
+msgid "LABEL_NOTIFICATIONS"
+msgstr ""
+
+msgid "TEXT_LABEL_PASSWORD_OLD"
+msgstr "Mot de passe actuel"
+
+msgid "ACTION_CHANGE_PASSWORD"
+msgstr "Modifier le mot de passe"
+
+msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
+msgstr "Comportement"
+
+msgid "TEXT_SETTINGS_CHECK_MINIMIZE_IN_TRAY"
+msgstr "Réduire dans la barre d'état"
+
+msgid "TEXT_SETTINGS_LOCALIZATION_TITLE"
+msgstr "Localisation"
+
+msgid "TEXT_LABEL_LANGUAGE"
+msgstr "Langue"
+
+msgid "TEXT_SETTINGS_VERSION_TITLE"
+msgstr "Version"
+
+msgid "TEXT_SETTINGS_CHECK_NEW_VERSION_ON_STARTUP"
+msgstr "Vérifier la disponibilité d'une nouvelle version au démarrage"
+
+msgid "ACTION_SETTINGS_CHECK_NEW_VERSION"
+msgstr "Vérifier la disponibilité d'une nouvelle version maintenant"
+
+msgid "TEXT_SETTINGS_ERROR_REPORTING_TITLE"
+msgstr "Rapport d'erreur"
+
+msgid "TEXT_SETTINGS_CHECK_SEND_CRASH_REPORT"
+msgstr "Envoyer les rapports d'erreur"
+
+msgid "TEXT_SETTINGS_INTERFACE_TITLE"
+msgstr "Interface"
+
+msgid "TEXT_SETTINGS_CHECK_USE_WORKSPACES_COLORS"
+msgstr "Utiliser des couleurs pour les espaces de travail"
+
+msgid "TEXT_SETTINGS_MISC_TITLE"
+msgstr "Divers"
+
+msgid "TEXT_SETTINGS_CHECK_DISABLE_ACROBAT_CONTAINERS"
+msgstr "Désactiver les conteneurs Acrobat Reader"
+
+msgid "ACTION_SAVE"
+msgstr "Sauvegarder"
+
+msgid "TEXT_WORKSPACE_SHARING_REMOVE_USER_TOOLTIP"
+msgstr "Retirer l'utilisateur de cet espace de travail."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_INSTRUCTIONS"
+msgstr "Vous pourrez naviguer dans l'espace de travail tel qu'il était à un moment donné."
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_DATE"
+msgstr "Sélectionnez une date"
+
+msgid "TEXT_WORKSPACE_TIMESTAMPED_SELECT_TIME"
+msgstr "... et une heure ..."
+
+msgid "ACTION_WORKSPACE_TIMESTAMPED_MOUNT"
+msgstr "Voir l'espace de travail"
+
+msgid "TEXT_USER_LABEL_CREATED"
+msgstr "Créé"
+
+msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
+msgstr "Filtrer les utilisateurs"
+
+msgid "ACTION_USER_INVITE_USER"
+msgstr "Inviter un utilisateur"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
+msgstr "L'espace de travail est partagé."
+
+msgid "TEXT_WORKSPACE_IS_OWNER_TOOLTIP"
+msgstr "Vous êtes le propriétaire de cet espace de travail."
+
+msgid "TEXT_WORKSPACE_RENAME_TOOLTIP"
 msgstr "Renommer l'espace de travail."
 
-msgid "LABEL_SHARE_WORKSPACE"
+msgid "TEXT_WORKSPACE_OPEN_SHARING_TOOLTIP"
 msgstr "Partager l'espace de travail."
 
-msgid "LABEL_MOUNT_TIMESTAMP"
-msgstr "Voir l'espace de travail à un moment précis dans le temps."
+msgid "TEXT_WORKSPACE_REMOUNT_TIMESTAMPED_TOOLTIP"
+msgstr "Voir l'espace de travail tel qu'il était à une date donnée."
 
-msgid "LABEL_ENCRYPT_WORKSPACE"
-msgstr "Re-chiffrer l'espace de travail."
+msgid "TEXT_WORKSPACE_REENCRYPT_WORKSPACE_TOOLTIP"
+msgstr "Rechiffrer l'espace de travail."
 
-msgid "LABEL_DELETE_WORKSPACE"
-msgstr "Supprimer l'espace de travail."
+msgid "TEXT_WORKSPACE_DELETE_WORKSPACE_TOOLTIP"
+msgstr "Supprimer l'espace de travail"
 
-msgid "LABEL_REENCRYPTION_PROGRESS"
-msgstr "En cours de rechiffrement..."
+msgid "TEXT_WORKSPACE_OPEN_WORKSPACE_TOOLTIP"
+msgstr "Ouvrir l'espace de travail dans l'explorateur de fichiers."
 
-msgid "TITLE_WORKSPACE_SHARING"
-msgstr "Partage de l'espace de travail"
+msgid "TEXT_WORKSPACE_SHARING_USER_SEARCH_PLACEHOLDER"
+msgstr "Trouver un utilisateur"
 
-msgid "LABEL_SHARE_WITH"
-msgstr "Partager avec"
+msgid "ACTION_WORKSPACE_SHARING_SHARE"
+msgstr "Partager avec cet utilisateur"
 
-msgid "BUTTON_SHARE"
-msgstr "Partager"
+msgid "TEXT_WORKSPACE_SHARING_CHECK_SHOW_REVOKED_USER"
+msgstr "Voir les utilisateurs révoqués"
 
-msgid "BUTTON_UPDATE"
-msgstr "Mettre à jour"
+msgid "ACTION_WORKSPACE_SHARING_UPDATE_ROLES"
+msgstr "Mettre à jour les rôles"
 
-msgid "CHECK_SHOW_REVOKED"
-msgstr "Afficher les utilisateurs révoqués"
+msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
+msgstr "Filtrer les espaces de travail"
 
-msgid "WORKSPACE_SEARCH"
-msgstr "Rechercher un espace de travail"
+msgid "ACTION_WORKSPACE_ADD_WORKSPACE"
+msgstr "Créer un nouvel espace de travail"
 
-#~ msgid "ASK_ADD_TAB_TITLE"
-#~ msgstr "Nouvelle instance"
-
-#~ msgid "ASK_ADD_TAB_CONTENT"
-#~ msgstr "Voulez-vous ouvrir un nouvel onglet ?"
+msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
+msgstr "Trouver un fichier via son lien"

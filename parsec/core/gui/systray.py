@@ -15,14 +15,14 @@ class Systray(QSystemTrayIcon):
         super().__init__(**kwargs)
 
         self.menu = QMenu()
-        self.show_action = self.menu.addAction(_("MENU_SHOW_WINDOW"))
-        self.close_action = self.menu.addAction(_("MENU_EXIT"))
+        self.show_action = self.menu.addAction(_("ACTION_SYSTRAY_SHOW_WINDOW"))
+        self.close_action = self.menu.addAction(_("ACTION_SYSTRAY_QUIT_PARSEC"))
 
         self.on_show = self.show_action.triggered
         self.on_close = self.close_action.triggered
 
         self.setContextMenu(self.menu)
-        self.setIcon(QIcon(":/icons/images/icons/parsec.png"))
+        self.setIcon(QIcon(":/logos/images/icons/parsec.png"))
         self.activated.connect(self.on_activated)
         self.show()
 

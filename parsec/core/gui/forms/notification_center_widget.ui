@@ -97,7 +97,7 @@ border: 0;
       </spacer>
      </item>
      <item>
-      <widget class="PointingHandButton" name="button_close">
+      <widget class="QPushButton" name="button_close">
        <property name="styleSheet">
         <string notr="true"/>
        </property>
@@ -231,13 +231,6 @@ background-color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>PointingHandButton</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

@@ -3,11 +3,13 @@
 import pendulum
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QApplication, QDialog
+
+from structlog import get_logger
 
 from parsec.crypto import SigningKey
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
-from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import (
     backend_anonymous_cmds_factory,
@@ -21,16 +23,14 @@ from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
 )
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
-from parsec.core.gui.custom_dialogs import show_error
+from parsec.core.gui.custom_dialogs import show_error, GreyedDialog, show_info
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import validators
-from parsec.core.gui.password_validation import (
-    get_password_strength,
-    get_password_strength_text,
-    PASSWORD_CSS,
-)
+from parsec.core.gui.password_validation import PasswordStrengthWidget, get_password_strength
 from parsec.core.gui.ui.bootstrap_organization_widget import Ui_BootstrapOrganizationWidget
+
+logger = get_logger()
 
 
 async def _do_bootstrap_organization(
@@ -84,7 +84,9 @@ async def _do_bootstrap_organization(
                 device_certificate,
             )
 
-            if rep["status"] in ("already_bootstrapped", "not_found"):
+            if rep["status"] == "already_bootstrapped":
+                raise JobResultError("already-bootstrapped", info=str(rep))
+            elif rep["status"] == "not_found":
                 raise JobResultError("invalid-url", info=str(rep))
             elif rep["status"] != "ok":
                 raise JobResultError("refused-by-backend", info=str(rep))
@@ -105,24 +107,24 @@ async def _do_bootstrap_organization(
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_success = pyqtSignal()
     bootstrap_error = pyqtSignal()
-    organization_bootstrapped = pyqtSignal(OrganizationID, DeviceID, str)
 
-    def __init__(self, jobs_ctx, config, addr: BackendOrganizationBootstrapAddr, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, jobs_ctx, config, addr: BackendOrganizationBootstrapAddr):
+        super().__init__()
         self.setupUi(self)
+        self.dialog = None
         self.jobs_ctx = jobs_ctx
         self.config = config
         self.addr = addr
         self.label_instructions.setText(
-            _("LABEL_BOOTSTRAP_INSTRUCTIONS").format(
+            _("TEXT_BOOTSTRAP_ORG_INSTRUCTIONS_url-organization").format(
                 url=self.addr.to_url(), organization=self.addr.organization_id
             )
         )
         self.bootstrap_job = None
-        self.button_cancel.hide()
         self.button_bootstrap.clicked.connect(self.bootstrap_clicked)
-        self.button_cancel.clicked.connect(self.cancel_bootstrap)
-        self.line_edit_password.textChanged.connect(self.password_changed)
+        pwd_str_widget = PasswordStrengthWidget()
+        self.layout_password_strength.addWidget(pwd_str_widget)
+        self.line_edit_password.textChanged.connect(pwd_str_widget.on_password_change)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.check_infos)
@@ -133,8 +135,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.bootstrap_error.connect(self.on_bootstrap_error)
 
         self.line_edit_device.setText(get_default_device())
-        self.button_cancel.hide()
-        self.label_password_strength.hide()
+
+        self.status = None
 
         self.check_infos()
 
@@ -144,28 +146,33 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job.status != "ok"
 
         status = self.bootstrap_job.status
-        if status == "invalid-url":
-            errmsg = _("ERR_BAD_URL")
+
+        if status == "cancelled":
+            self.bootstrap_job = None
+            return
+
+        if status == "invalid-url" or status == "bad-url":
+            errmsg = _("TEXT_BOOTSTRAP_ORG_INVALID_URL")
+        elif status == "already-bootstrapped":
+            errmsg = _("TEXT_BOOTSTRAP_ORG_ALREADY_BOOTSTRAPPED")
         elif status == "user-exists":
-            errmsg = _("ERR_REGISTER_USER_EXISTS")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_USER_EXISTS")
         elif status == "password-mismatch":
-            errmsg = _("ERR_PASSWORD_MISMATCH")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_PASSWORD_MISMATCH")
         elif status == "password-size":
-            errmsg = _("ERR_PASSWORD_COMPLEXITY")
-        elif status == "bad-url" or status == "invalid-url":
-            errmsg = _("ERR_BAD_URL")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_PASSWORD_COMPLEXITY_TOO_LOW")
         elif status == "bad-device_name":
-            errmsg = _("ERR_BAD_DEVICE_NAME")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_BAD_DEVICE_NAME")
         elif status == "bad-user_id":
-            errmsg = _("ERR_BAD_USER_NAME")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_BAD_USER_NAME")
         elif status == "bad-api-version":
-            errmsg = _("ERR_BAD_API_VERSION")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_BAD_API_VERSION")
         elif status == "refused-by-backend":
-            errmsg = _("ERR_BACKEND_REFUSED")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_BACKEND_REFUSAL")
         elif status == "backend-offline":
-            errmsg = _("ERR_BACKEND_OFFLINE")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_BACKEND_OFFLINE")
         else:
-            errmsg = _("ERR_BOOTSTRAP_ORG_UNKNOWN")
+            errmsg = _("TEXT_BOOTSTRAP_ORG_UNKNOWN_FAILURE")
         show_error(self, errmsg, exception=self.bootstrap_job.exc)
         self.bootstrap_job = None
         self.check_infos()
@@ -176,12 +183,18 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         assert self.bootstrap_job.status == "ok"
 
         self.button_bootstrap.setDisabled(False)
-        self.button_cancel.hide()
-        device, password = self.bootstrap_job.ret
+        self.status = self.bootstrap_job.ret
         self.bootstrap_job = None
         self.check_infos()
-
-        self.organization_bootstrapped.emit(device.organization_id, device.device_id, password)
+        show_info(
+            parent=self, message=_("TEXT_BOOTSTRAP_ORG_SUCCESS"), button_text=_("ACTION_CONTINUE")
+        )
+        if self.dialog:
+            self.dialog.accept()
+        elif QApplication.activeModalWidget():
+            QApplication.activeModalWidget().accept()
+        else:
+            logger.warning("Cannot close dialog when bootstraping")
 
     def bootstrap_clicked(self):
         assert not self.bootstrap_job
@@ -199,18 +212,15 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         )
         self.check_infos()
 
+    def on_close(self):
+        self.cancel_bootstrap()
+
     def cancel_bootstrap(self):
         if self.bootstrap_job:
             self.bootstrap_job.cancel_and_join()
-            self.bootstrap_job = None
         self.check_infos()
 
     def check_infos(self, _=""):
-        if self.bootstrap_job:
-            self.button_cancel.show()
-        else:
-            self.button_cancel.hide()
-
         if (
             len(self.line_edit_login.text())
             and len(self.line_edit_device.text())
@@ -223,13 +233,12 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         else:
             self.button_bootstrap.setDisabled(True)
 
-    def password_changed(self, text):
-        if len(text):
-            self.label_password_strength.show()
-            score = get_password_strength(text)
-            self.label_password_strength.setText(
-                _("LABEL_PASSWORD_STRENGTH_{}").format(get_password_strength_text(score))
-            )
-            self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
-        else:
-            self.label_password_strength.hide()
+    @classmethod
+    def exec_modal(cls, jobs_ctx, config, addr, parent):
+        w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
+        d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent)
+        w.dialog = d
+        w.line_edit_login.setFocus()
+        if d.exec_() == QDialog.Accepted and w.status:
+            return w.status
+        return None

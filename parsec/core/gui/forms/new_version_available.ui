@@ -62,7 +62,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="ShadowedButton" name="button_download">
+        <widget class="QPushButton" name="button_download">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -75,6 +75,9 @@
            <bold>true</bold>
           </font>
          </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
          <property name="layoutDirection">
           <enum>Qt::RightToLeft</enum>
          </property>
@@ -82,7 +85,7 @@
           <string notr="true"/>
          </property>
          <property name="text">
-          <string>BUTTON_DOWNLOAD</string>
+          <string>ACTION_PARSEC_DOWNLOAD_NEW_VERSION</string>
          </property>
          <property name="iconSize">
           <size>
@@ -128,7 +131,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="ShadowedButton" name="button_ignore">
+      <widget class="QPushButton" name="button_ignore">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -141,6 +144,9 @@
          <bold>true</bold>
         </font>
        </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
        <property name="layoutDirection">
         <enum>Qt::RightToLeft</enum>
        </property>
@@ -148,7 +154,7 @@
         <string notr="true"/>
        </property>
        <property name="text">
-        <string>BUTTON_IGNORE</string>
+        <string>ACTION_PARSEC_IGNORE_NEW_VERSION</string>
        </property>
        <property name="iconSize">
         <size>
@@ -175,13 +181,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ShadowedButton</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
