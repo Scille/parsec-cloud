@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-# -*- coding: utf-8 -*-
+import os
 
 from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
-
-import os
 
 
 # Awesome hack to load `__version__`
@@ -281,7 +279,7 @@ requirements = [
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
-    "sentry-sdk==0.14.2",
+    "sentry-sdk==0.14.3",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
