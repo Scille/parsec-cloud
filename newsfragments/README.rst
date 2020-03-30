@@ -13,12 +13,17 @@ Each file should be named like ``<ISSUE>.<TYPE>.rst``, where
 * ``doc``
 * ``removal``
 * ``misc``
+* ``empty``
 
 So for example: ``123.feature.rst``, ``456.bugfix.rst``
 
 If your PR fixes an issue, use that number here. If there is no issue,
 then after you submit the PR and get the PR number you can add a
 newsfragment using that instead.
+
+If you want to include a newsfragment, for example to pass the CI, but
+dont't want it to be included in the next release, you can use the
+empty type.
 
 Note that the ``towncrier`` tool will automatically
 reflow your text, so don't try to do any fancy formatting. You can
