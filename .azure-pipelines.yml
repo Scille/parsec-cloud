@@ -55,6 +55,7 @@ jobs:
       done
       echo "NO NEW NEWSFRAGMENT FOUND" >&2
     displayName: 'Newsfragment'
+    failOnStderr: true
   - bash: |
       git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
       python ./misc/releaser.py check --verbose
