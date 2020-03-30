@@ -6,8 +6,6 @@
 from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
 
-import itertools
-import glob
 import os
 
 
@@ -366,21 +364,7 @@ setup(
         "generate_pyqt": build_py_with_pyqt,
         "build_py": build_py_with_pyqt,
     },
-    # As you may know, setuptools is really broken, so we have to roll our
-    # globing ourself to include non-python files...
-    package_data={
-        "parsec.backend.postgresql": glob.glob("parsec/backend/postgresql/*.sql"),
-        "parsec.core.gui": list(
-            itertools.chain(
-                glob.glob("parsec/core/gui/tr/**/*.ts", recursive=True),
-                glob.glob("parsec/core/gui/forms/**/*.ui", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.png", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.qm", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.qrc", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.otf", recursive=True),
-            )
-        ),
-    },
+    package_data={"parsec.backend.postgresql": ["init_tables.sql"]},
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],
