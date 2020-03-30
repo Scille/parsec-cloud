@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.11.0 (2020-03-30)
+--------------------------
+
+Features
+~~~~~~~~
+
+* The overall appearance of the GUI has changed: new icons, new colors, new
+  texts, and a few fixes  (`#952 <https://github.com/Scille/parsec-
+  cloud/issues/952>`__)
+
+
 Parsec 1.10.0 (2020-03-26)
 --------------------------
 
