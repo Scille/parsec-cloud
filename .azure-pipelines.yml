@@ -54,7 +54,6 @@ jobs:
         then exit 0; fi
       done
       echo "NO NEW NEWSFRAGMENT FOUND" >&2
-      exit 1
     displayName: 'Newsfragment'
   - bash: |
       git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
