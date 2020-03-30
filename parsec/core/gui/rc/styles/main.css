@@ -305,9 +305,24 @@ QTabBar::close-button {
 QToolTip {
     background-color: #EEEEEE;
     color: #333333;
-    border: 1px solid #99999980;
+    border: 1px solid #999999;
     border-radius: 4px;
     padding: 5px;
+}
+
+/* BalloonTip (messages shown from the tray, Linux only) */
+
+QBalloonTip {
+    background-color: #EEEEEE;
+    color: #333333;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+QBalloonTip QPushButton, QBalloonTip QPushButton:hover {
+    background-color: none;
+    border: none;
 }
 
 /* Menu: ENABLED, DISABLED */
