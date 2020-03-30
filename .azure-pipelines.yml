@@ -53,7 +53,7 @@ jobs:
         if ! git log origin/master --exit-code -- newsfragments/"$FILENAME" > /dev/null
         then exit 0; fi
       done
-      echo "NO NEW NEWSFRAGMENT FOUND" 1>&2
+      echo "NO NEW NEWSFRAGMENT FOUND" >&2
       exit 1
     displayName: 'Newsfragment'
   - bash: |
