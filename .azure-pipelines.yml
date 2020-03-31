@@ -293,8 +293,10 @@ jobs:
     displayName: 'Test Snap'
   - bash: |
       sudo snap install snapcraft --classic
-      echo $(SNAPCRAFT_CREDENTIALS) | snapcraft login --with -
+      echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
       snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+    env:
+      SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
     displayName: 'Upload Snap'
 
 
