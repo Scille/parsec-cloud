@@ -1,2 +1,0 @@
-Fixed checking on newsfragment from origin/master as it seems master wasn't automatically fetched on CI.
-Also now uses stderr instead of exit 1 as it now prints the error message in CI logs more obviously.
