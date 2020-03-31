@@ -129,12 +129,12 @@ jobs:
       pip install -U codecov
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml
+      codecov --file=coverage.xml --commit=$(Build.SourceVersion) --branch=$(Build.SourceBranchName)
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
-      testResultsFiles: 'empty/test-results-*.xml'
+      testResultsFiles: $(Agent.TempDirectory)/empty/test-results-*.xml
       testRunTitle: 'Linux'
     condition: succeededOrFailed()
 
@@ -214,12 +214,12 @@ jobs:
       pip install -U codecov
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml
+      codecov --file=coverage.xml --commit=$(Build.SourceVersion) --branch=$(Build.SourceBranchName)
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
-      testResultsFiles: 'empty/test-results-*.xml'
+      testResultsFiles: $(Agent.TempDirectory)/empty/test-results-*.xml
       testRunTitle: 'Windows'
     condition: succeededOrFailed()
 
