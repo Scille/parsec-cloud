@@ -129,7 +129,7 @@ jobs:
       pip install -U codecov
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml
+      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
@@ -214,7 +214,7 @@ jobs:
       pip install -U codecov
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml
+      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
     workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
