@@ -43,7 +43,7 @@ jobs:
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
-      if ([[ $(Build.SourcesDirectory) = "refs/heads/master" ]] || [[ $(Build.SourcesDirectory) = "refs/tags/"* ]])
+      if ([[ $(Build.SourceBranch) = "refs/heads/master" ]] || [[ $(Build.SourceBranch) = "refs/tags/"* ]])
       then exit 0; fi
       for FILENAME in newsfragments/*
       do
@@ -295,6 +295,8 @@ jobs:
       sudo snap install snapcraft --classic
       echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
       snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+    env:
+      SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
     displayName: 'Upload Snap'
 
 
