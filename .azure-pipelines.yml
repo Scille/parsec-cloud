@@ -43,8 +43,8 @@ jobs:
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
-      echo $(Build.SourcesDirectory)
-      if ([[ $(Build.SourcesDirectory) = "refs/heads/master" ]] || [[ $(Build.SourcesDirectory) = "refs/tags/"* ]])
+      echo $(Build.SourceBranch)
+      if ([[ $(Build.SourceBranch) = "refs/heads/master" ]] || [[ $(Build.SourceBranch) = "refs/tags/"* ]])
       then exit 0; fi
       for FILENAME in newsfragments/*
       do
