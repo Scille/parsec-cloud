@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-# -*- coding: utf-8 -*-
+import os
 
 from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
-
-import itertools
-import glob
-import os
 
 
 # Awesome hack to load `__version__`
@@ -283,7 +279,7 @@ requirements = [
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
-    "sentry-sdk==0.14.2",
+    "sentry-sdk==0.14.3",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
@@ -366,21 +362,8 @@ setup(
         "generate_pyqt": build_py_with_pyqt,
         "build_py": build_py_with_pyqt,
     },
-    # As you may know, setuptools is really broken, so we have to roll our
-    # globing ourself to include non-python files...
-    package_data={
-        "parsec.backend.postgresql": glob.glob("parsec/backend/postgresql/*.sql"),
-        "parsec.core.gui": list(
-            itertools.chain(
-                glob.glob("parsec/core/gui/tr/**/*.ts", recursive=True),
-                glob.glob("parsec/core/gui/forms/**/*.ui", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.png", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.qm", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.qrc", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.otf", recursive=True),
-            )
-        ),
-    },
+    # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
+    package_data={"parsec.backend.postgresql": ["init_tables.sql"]},
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],
