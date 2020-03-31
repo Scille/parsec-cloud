@@ -50,7 +50,7 @@ jobs:
         # If file never existed in master, consider as a new newsfragment
         # Cannot git diff against master branch here given newsfragments removed in master will be considered as
         # new items in our branch
-        if ! git log origin/master --exit-code -- "$FILENAME" > /dev/null
+        if git log origin/master --exit-code -- "$FILENAME" > /dev/null
         then exit 0; fi
       done
       echo "NO NEW NEWSFRAGMENT FOUND" >&2
