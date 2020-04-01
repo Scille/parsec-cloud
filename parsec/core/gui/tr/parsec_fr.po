@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-27 11:49+0100\n"
-"PO-Revision-Date: 2020-03-27 11:50+0100\n"
+"POT-Creation-Date: 2020-04-01 10:17+0200\n"
+"PO-Revision-Date: 2020-04-01 10:21+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -150,8 +150,8 @@ msgstr "Vos permissions sur cet espace de travail ont été supprimés. Vous n'a
 
 msgid "TEXT_FILE_SHARING_DEMOTED_TO_READER"
 msgstr ""
-"Votre rôle sur cet espace de travail a été changé en <b>Lecteur</b>. Vous ne pouvez plus ajouter, modifier ou supprimer des fichiers, mais vous pouvez "
-"toujours les visionner."
+"Votre rôle sur cet espace de travail a été changé en <b>Lecteur</b>. Vous ne pouvez plus ajouter, modifier ou supprimer des fichiers, mais vous pouvez toujours "
+"les visionner."
 
 msgid "TEXT_FILE_HISTORY_LIST_FAILURE"
 msgstr "Un problème est survenu lors de la récupération de l'historique du fichier."
@@ -1287,6 +1287,36 @@ msgstr "Le mot de passe n'est pas correct."
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Impossible de se connecter. Les espaces de travail n'ont pas pu être montés."
 
+msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
+msgstr "Cet email est déjà utilisé."
+
+msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
+msgstr "Une organisation du même nom existe déjà."
+
+msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
+msgstr "L'email n'est pas valide."
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "Le nom d'organisation n'est pas valide."
+
+msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
+msgstr "Impossible de créer l'organisation."
+
+msgid "TEXT_ORG_WIZARD_OFFLINE"
+msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
+
+msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
+msgstr "Impossible de créer l'organisation."
+
+msgid "ACTION_CREATE_ORGANIZATION"
+msgstr "Créer l'organisation"
+
+msgid "ACTION_NEXT"
+msgstr "Suivant"
+
+msgid "TEXT_ORG_WIZARD_TITLE"
+msgstr "Créer une nouvelle organisation"
+
 msgid "ACTION_SYSTRAY_SHOW_WINDOW"
 msgstr "Afficher PARSEC"
 
@@ -1301,8 +1331,8 @@ msgstr "En cours de connexion..."
 
 msgid "TEXT_CLAIM_DEVICE_INSTRUCTIONS_device-url-organization"
 msgstr ""
-"Vous pouvez finaliser la création de votre appareil <b>{device}</b> de l'organisation <b>{organization}</b> en choisissant un mot de passe et en fournissant "
-"le jeton à six chiffres."
+"Vous pouvez finaliser la création de votre appareil <b>{device}</b> de l'organisation <b>{organization}</b> en choisissant un mot de passe et en fournissant le "
+"jeton à six chiffres."
 
 msgid "TEXT_CLAIM_DEVICE_NOT_FOUND"
 msgstr "Aucune invitation n'a été trouvée pour cet appareil."
@@ -1439,14 +1469,11 @@ msgstr "Donnez votre avis"
 msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
 msgstr "Ouvrir un nouvel onglet"
 
-msgid "ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"
-msgstr "Démarrer une organisation"
+msgid "ACTION_MAIN_MENU_CREATE_ORGANIZATION"
+msgstr "Créer une organisation"
 
-msgid "ACTION_MAIN_MENU_CLAIM_USER"
-msgstr "Enregistrer un utilisateur"
-
-msgid "ACTION_MAIN_MENU_CLAIM_DEVICE"
-msgstr "Enregistrer un appareil"
+msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
+msgstr "Rejoindre une organisation"
 
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Configuration"
@@ -1478,6 +1505,21 @@ msgstr "Journal des modifications de PARSEC"
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Configuration"
 
+msgid "TEXT_JOIN_ORG_URL_TITLE"
+msgstr "Rejoindre une organisation"
+
+msgid "TEXT_JOIN_ORG_URL_INSTRUCTIONS"
+msgstr "Veuillez fournir l'URL pour joindre l'organisation."
+
+msgid "TEXT_JOIN_ORG_URL_PLACEHOLDER"
+msgstr "parsec://hote:port/organisation?action=action&..."
+
+msgid "TEXT_JOIN_ORG_INVALID_URL"
+msgstr "L'URL n'est pas valide."
+
+msgid "TEXT_INVALID_URL"
+msgstr "L'URL n'est pas valide."
+
 msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
 msgstr "Démarrer une organisation"
 
@@ -1486,25 +1528,6 @@ msgstr "Veuillez fournir le lien pour démarrer l'organisation."
 
 msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
 msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
-msgid "TEXT_CLAIM_USER_URL_TITLE"
-msgstr "Enregistrer un utilisateur"
-
-msgid "TEXT_CLAIM_USER_URL_INSTRUCTIONS"
-msgstr "Veuillez fournir le lien pour enregistrer l'utilisateur. Le lien vous a été fourni par l'administrateur qui vous a invité."
-
-msgid "TEXT_CLAIM_USER_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
-
-msgid "TEXT_CLAIM_DEVICE_URL_TITLE"
-msgstr "Enregistrer un appareil"
-
-msgid "TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"
-msgstr ""
-"Veuillez fournir le lien pour enregistrer l'appareil. Le lien vous a été fourni quand vous avez démarré le processus d'invitation de votre nouvel appareil."
-
-msgid "TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
 
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Rapport d'erreur"
@@ -1536,14 +1559,23 @@ msgstr ""
 msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
 msgstr "Désactiver les conteneurs Acrobat"
 
+msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
+msgstr "Bienvenue dans Parsec !"
+
+msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"
+msgstr "Vous n'avez pas d'appareils enregistrés sur cet ordinateur. Que souhaitez-vous faire ?"
+
+msgid "ACTION_NO_DEVICE_CREATE_ORGANIZATION"
+msgstr "Créer une nouvelle organisation"
+
+msgid "ACTION_NO_DEVICE_JOIN_ORGANIZATION"
+msgstr "Rejoindre une organisation existante"
+
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Connexion"
 
 msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
 msgstr "Le fichier n'a pas pu être trouvé au sein de l'organisation <b>{organization}</b>. Peut-être qu'il n'a pas été partagé avec vous."
-
-msgid "TEXT_INVALID_URL"
-msgstr "L'URL n'est pas valide."
 
 msgid "TEXT_TAB_CLOSE_TITLE"
 msgstr "Fermer l'onglet"
@@ -1602,6 +1634,27 @@ msgstr "Enregistrer un nouvel utilisateur"
 msgid "ACTION_CLAIM_USER"
 msgstr "Enregistrer un nouvel utilisateur"
 
+msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
+msgstr "Veuillez choisir :"
+
+msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
+msgstr "Je n'ai pas de compte sur le site web et veux créer une nouvelle organisation"
+
+msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
+msgstr "J'ai déjà un compte sur le site web et une URL pour démarrer mon organisation"
+
+msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
+msgstr "Veuillez saisir votre adresse email et le nom désiré de votre organisation."
+
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
+msgid "TEXT_LABEL_ORG_NAME"
+msgstr "Nom de l'organisation"
+
+msgid "ACTION_PREVIOUS"
+msgstr "Précédent"
+
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Inviter un nouvel appareil"
 
@@ -1631,8 +1684,8 @@ msgid ""
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></"
-"p></body></html>"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></"
+"body></html>"
 msgstr ""
 
 msgid "TEXT_FILE_HISTORY_VERSION"
@@ -1723,8 +1776,8 @@ msgstr "L'utilisateur sera administrateur"
 
 msgid "TEXT_USER_INVITE_INSTRUCTIONS"
 msgstr ""
-"Transmettez les informations suivantes à l'utilisateur. Il est recommandé d'envoyer ces informations par deux canaux différents (par exemple, l'URL par e-"
-"mail and le jeton par téléphone). Veuillez ne pas fermer cette fenêtre tant que l'utilisateur n'est pas enregistré."
+"Transmettez les informations suivantes à l'utilisateur. Il est recommandé d'envoyer ces informations par deux canaux différents (par exemple, l'URL par e-mail "
+"and le jeton par téléphone). Veuillez ne pas fermer cette fenêtre tant que l'utilisateur n'est pas enregistré."
 
 msgid "ACTION_USER_NAME_COPY_TO_CLIPBOARD_TOOLTIP"
 msgstr "Copier le nom d'utilisateur dans le presse-papier."
@@ -1884,3 +1937,37 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+#~ msgid "ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"
+#~ msgstr "Démarrer une organisation"
+
+#~ msgid "ACTION_MAIN_MENU_CLAIM_USER"
+#~ msgstr "Enregistrer un utilisateur"
+
+#~ msgid "ACTION_MAIN_MENU_CLAIM_DEVICE"
+#~ msgstr "Enregistrer un appareil"
+
+#~ msgid "TEXT_CLAIM_USER_URL_TITLE"
+#~ msgstr "Enregistrer un utilisateur"
+
+#~ msgid "TEXT_CLAIM_USER_URL_INSTRUCTIONS"
+#~ msgstr "Veuillez fournir le lien pour enregistrer l'utilisateur. Le lien vous a été fourni par l'administrateur qui vous a invité."
+
+#~ msgid "TEXT_CLAIM_USER_URL_PLACEHOLDER"
+#~ msgstr "parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
+
+#~ msgid "TEXT_CLAIM_DEVICE_URL_TITLE"
+#~ msgstr "Enregistrer un appareil"
+
+#~ msgid "TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"
+#~ msgstr ""
+#~ "Veuillez fournir le lien pour enregistrer l'appareil. Le lien vous a été fourni quand vous avez démarré le processus d'invitation de votre nouvel appareil."
+
+#~ msgid "TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"
+#~ msgstr "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
+
+#~ msgid "ACTION_NO_DEVICE_CLAIM_USER"
+#~ msgstr "Enregistrer un utilisateur au sein d'une organisation existante"
+
+#~ msgid "ACTION_NO_DEVICE_CLAIM_DEVICE"
+#~ msgstr "Enregister un nouvel appareil"

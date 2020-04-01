@@ -106,12 +106,19 @@
     </spacer>
    </item>
    <item>
+    <layout class="QVBoxLayout" name="layout_radios">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="layout_buttons">
      <property name="spacing">
       <number>10</number>
      </property>
      <property name="topMargin">
-      <number>20</number>
+      <number>0</number>
      </property>
      <item>
       <spacer name="horizontalSpacer">

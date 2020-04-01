@@ -139,6 +139,70 @@
     </message>
 </context>
 <context>
+    <name>CreateOrgFirstPageWidget</name>
+    <message>
+        <location filename="../forms/create_org_first_page_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_first_page_widget.ui" line="35"/>
+        <source>TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_first_page_widget.ui" line="42"/>
+        <source>TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_first_page_widget.ui" line="49"/>
+        <source>TEXT_ORG_WIZARD_ALREADY_HAS_URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CreateOrgSecondPageWidget</name>
+    <message>
+        <location filename="../forms/create_org_second_page_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_second_page_widget.ui" line="35"/>
+        <source>TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_second_page_widget.ui" line="54"/>
+        <source>TEXT_LABEL_USER_EMAIL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_second_page_widget.ui" line="96"/>
+        <source>TEXT_LABEL_ORG_NAME</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CreateOrgWidget</name>
+    <message>
+        <location filename="../forms/create_org_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_widget.ui" line="119"/>
+        <source>ACTION_PREVIOUS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_widget.ui" line="129"/>
+        <source>ACTION_NEXT</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DeviceButton</name>
     <message>
         <location filename="../forms/device_button.ui" line="31"/>

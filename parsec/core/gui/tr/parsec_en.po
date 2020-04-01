@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-27 11:49+0100\n"
-"PO-Revision-Date: 2020-03-27 11:49+0100\n"
+"POT-Creation-Date: 2020-04-01 10:17+0200\n"
+"PO-Revision-Date: 2020-04-01 10:19+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -236,8 +236,8 @@ msgid "TEXT_CLAIM_USER_INSTRUCTIONS_user-url-organization"
 msgstr ""
 "An administrator has invited you to join the organization <b>{organization}</b> with the username <b>{user}</b>.\n"
 "\n"
-"To finalize the registration process, please provide the six digits token that has been given to you by the administrator, as well as a password and a "
-"device name.\n"
+"To finalize the registration process, please provide the six digits token that has been given to you by the administrator, as well as a password and a device "
+"name.\n"
 "\n"
 "If this invitation was not meant for you, please ignore this message."
 
@@ -1282,6 +1282,36 @@ msgstr "The password is incorrect."
 msgid "TEXT_LOGIN_MOUNTPOINT_ERROR"
 msgstr "Cannot log in. The workspaces could not be mounted."
 
+msgid "TEXT_ORG_WIZARD_EMAIL_ALREADY_EXISTS"
+msgstr "This email is already used."
+
+msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
+msgstr "This organization name is already used."
+
+msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
+msgstr "The email is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
+msgstr "The organization name is invalid."
+
+msgid "TEXT_ORG_WIZARD_INVALID_RESPONSE"
+msgstr "Could not create the organization."
+
+msgid "TEXT_ORG_WIZARD_OFFLINE"
+msgstr "The server is offline or you have no access to the internet."
+
+msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
+msgstr "Could not create the organization."
+
+msgid "ACTION_CREATE_ORGANIZATION"
+msgstr "Create the organization"
+
+msgid "ACTION_NEXT"
+msgstr "Next"
+
+msgid "TEXT_ORG_WIZARD_TITLE"
+msgstr "Create a new organization"
+
 msgid "ACTION_SYSTRAY_SHOW_WINDOW"
 msgstr "Show PARSEC"
 
@@ -1434,14 +1464,11 @@ msgstr "Give your feedback"
 msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
 msgstr "Open a new tab"
 
-msgid "ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"
-msgstr "Bootstrap an organization"
+msgid "ACTION_MAIN_MENU_CREATE_ORGANIZATION"
+msgstr "Create an organization"
 
-msgid "ACTION_MAIN_MENU_CLAIM_USER"
-msgstr "Register a user"
-
-msgid "ACTION_MAIN_MENU_CLAIM_DEVICE"
-msgstr "Register a device"
+msgid "ACTION_MAIN_MENU_JOIN_ORGANIZATION"
+msgstr "Join an organization"
 
 msgid "ACTION_MAIN_MENU_SETTINGS"
 msgstr "Settings"
@@ -1473,6 +1500,21 @@ msgstr "PARSEC Changelog"
 msgid "TEXT_SETTINGS_TITLE"
 msgstr "Settings"
 
+msgid "TEXT_JOIN_ORG_URL_TITLE"
+msgstr "Join organization"
+
+msgid "TEXT_JOIN_ORG_URL_INSTRUCTIONS"
+msgstr "Please enter the URL to join the organization."
+
+msgid "TEXT_JOIN_ORG_URL_PLACEHOLDER"
+msgstr "parsec://host:port/organization?action=action&..."
+
+msgid "TEXT_JOIN_ORG_INVALID_URL"
+msgstr "The URL is invalid."
+
+msgid "TEXT_INVALID_URL"
+msgstr "The URL is invalid."
+
 msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
 msgstr "Bootstrap an organization"
 
@@ -1481,24 +1523,6 @@ msgstr "Please provide the link to bootstrap the organization."
 
 msgid "TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"
 msgstr "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD"
-
-msgid "TEXT_CLAIM_USER_URL_TITLE"
-msgstr "Register a user"
-
-msgid "TEXT_CLAIM_USER_URL_INSTRUCTIONS"
-msgstr "Please provide the link to register the user. The link should have been given by the person inviting you."
-
-msgid "TEXT_CLAIM_USER_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
-
-msgid "TEXT_CLAIM_DEVICE_URL_TITLE"
-msgstr "Register a device"
-
-msgid "TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"
-msgstr "Please provide the link to register the device. The link should have been given to you when you started the invitation process for your new device."
-
-msgid "TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"
-msgstr "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
 
 msgid "TEXT_ERROR_REPORTING_TITLE"
 msgstr "Error reporting"
@@ -1529,14 +1553,23 @@ msgstr ""
 msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
 msgstr "Disable Acrobat Containers"
 
+msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
+msgstr "Welcome to Parsec!"
+
+msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"
+msgstr "You do not have any device on this computer. What would you like to do?"
+
+msgid "ACTION_NO_DEVICE_CREATE_ORGANIZATION"
+msgstr "Create a new organization"
+
+msgid "ACTION_NO_DEVICE_JOIN_ORGANIZATION"
+msgstr "Join an existing organization"
+
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Log In"
 
 msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
 msgstr "The file could not be found within the organization <b>{organization}</b>. Maybe it was not shared with you."
-
-msgid "TEXT_INVALID_URL"
-msgstr "The URL is invalid."
 
 msgid "TEXT_TAB_CLOSE_TITLE"
 msgstr "Close the tab"
@@ -1595,6 +1628,27 @@ msgstr "Register the user"
 msgid "ACTION_CLAIM_USER"
 msgstr "Register the user"
 
+msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
+msgstr "Please choose:"
+
+msgid "TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH"
+msgstr "I don't have an account on the website and want to create a new organization"
+
+msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
+msgstr "I already have an account on the website and a URL to bootstrap my organization"
+
+msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
+msgstr "Please enter your email and the name you want for your organization."
+
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
+msgid "TEXT_LABEL_ORG_NAME"
+msgstr "Organization name"
+
+msgid "ACTION_PREVIOUS"
+msgstr "Previous"
+
 msgid "TEXT_DEVICE_ADD_NEW_TOOLTIP"
 msgstr "Invite a new device"
 
@@ -1624,8 +1678,8 @@ msgid ""
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'Sans'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></"
-"p></body></html>"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></"
+"body></html>"
 msgstr ""
 
 msgid "TEXT_FILE_HISTORY_VERSION"
@@ -1877,3 +1931,39 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"
+#~ msgstr "Bootstrap an organization"
+
+#~ msgid "ACTION_CREATE_FIRST_ORGANIZATION"
+#~ msgstr "Create a new organization"
+
+#~ msgid "ACTION_MAIN_MENU_CLAIM_USER"
+#~ msgstr "Register a user"
+
+#~ msgid "ACTION_MAIN_MENU_CLAIM_DEVICE"
+#~ msgstr "Register a device"
+
+#~ msgid "TEXT_CLAIM_USER_URL_TITLE"
+#~ msgstr "Register a user"
+
+#~ msgid "TEXT_CLAIM_USER_URL_INSTRUCTIONS"
+#~ msgstr "Please provide the link to register the user. The link should have been given by the person inviting you."
+
+#~ msgid "TEXT_CLAIM_USER_URL_PLACEHOLDER"
+#~ msgstr "parsec://parsec.example.com/my_org?action=claim_user&user_id=John&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
+
+#~ msgid "TEXT_CLAIM_DEVICE_URL_TITLE"
+#~ msgstr "Register a device"
+
+#~ msgid "TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"
+#~ msgstr "Please provide the link to register the device. The link should have been given to you when you started the invitation process for your new device."
+
+#~ msgid "TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"
+#~ msgstr "parsec://parsec.example.com/my_org?action=claim_device&device_id=John%40pc&token=1234ABCD&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
+
+#~ msgid "ACTION_NO_DEVICE_CLAIM_USER"
+#~ msgstr "Register a new user inside an organization"
+
+#~ msgid "ACTION_NO_DEVICE_CLAIM_DEVICE"
+#~ msgstr "Register a new device"

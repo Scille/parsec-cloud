@@ -71,12 +71,24 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         return None
 
     def on_finished(self, _):
-        if self.center_widget and getattr(self.center_widget, "on_close", None):
+        if (
+            self.result() == QDialog.Rejected
+            and self.center_widget
+            and getattr(self.center_widget, "on_close", None)
+        ):
             getattr(self.center_widget, "on_close")()
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
-    def __init__(self, message, placeholder="", default_text="", completion=None, button_text=None):
+    def __init__(
+        self,
+        message,
+        placeholder="",
+        default_text="",
+        completion=None,
+        button_text=None,
+        validator=None,
+    ):
         super().__init__()
         self.setupUi(self)
         self.dialog = None
@@ -85,6 +97,8 @@ class TextInputWidget(QWidget, Ui_InputWidget):
         self.label_message.setText(message)
         self.line_edit_text.setPlaceholderText(placeholder)
         self.line_edit_text.setText(default_text)
+        if validator:
+            self.line_edit_text.setValidator(validator)
         if completion:
             completer = QCompleter(completion)
             completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -113,7 +127,14 @@ class TextInputWidget(QWidget, Ui_InputWidget):
 
 
 def get_text_input(
-    parent, title, message, placeholder="", default_text="", completion=None, button_text=None
+    parent,
+    title,
+    message,
+    placeholder="",
+    default_text="",
+    completion=None,
+    button_text=None,
+    validator=None,
 ):
     w = TextInputWidget(
         message=message,
@@ -121,6 +142,7 @@ def get_text_input(
         default_text=default_text,
         completion=completion,
         button_text=button_text,
+        validator=validator,
     )
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d
@@ -132,7 +154,7 @@ def get_text_input(
 
 
 class QuestionWidget(QWidget, Ui_QuestionWidget):
-    def __init__(self, message, button_texts):
+    def __init__(self, message, button_texts, radio_mode):
         super().__init__()
         self.setupUi(self)
         self.status = None
@@ -142,7 +164,10 @@ class QuestionWidget(QWidget, Ui_QuestionWidget):
             b = Button(text)
             b.clicked_self.connect(self._on_button_clicked)
             b.setCursor(Qt.PointingHandCursor)
-            self.layout_buttons.insertWidget(1, b)
+            if radio_mode:
+                self.layout_radios.addWidget(b)
+            else:
+                self.layout_buttons.insertWidget(1, b)
 
     def _on_button_clicked(self, button):
         self.status = button.text()
@@ -154,8 +179,8 @@ class QuestionWidget(QWidget, Ui_QuestionWidget):
             logger.warning("Cannot close dialog when asking question")
 
 
-def ask_question(parent, title, message, button_texts):
-    w = QuestionWidget(message=message, button_texts=button_texts)
+def ask_question(parent, title, message, button_texts, radio_mode=False):
+    w = QuestionWidget(message=message, button_texts=button_texts, radio_mode=radio_mode)
     d = GreyedDialog(w, title=title, parent=parent)
     w.dialog = d
     status = d.exec_()
