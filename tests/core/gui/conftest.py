@@ -183,6 +183,7 @@ class AsyncQtBot:
         self.mouse_move = _autowrap("mouseMove")
         self.mouse_press = _autowrap("mousePress")
         self.mouse_release = _autowrap("mouseRelease")
+        self.wait_for_window_shown = _autowrap("waitForWindowShown")
 
         self.add_widget = _autowrap("add_widget")
         self.stop = _autowrap("stop")
@@ -261,6 +262,7 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
             main_w.show_top()
             windows.append(main_w)
             main_w.add_instance(start_arg)
+            qtbot.waitForWindowShown(main_w)
             return main_w
 
         return await qt_thread_gateway.send_action(_create_main_window)
