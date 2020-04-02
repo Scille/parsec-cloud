@@ -321,6 +321,10 @@ async def test_file_conflict(alice_sync_transactions):
                     "id": sync_transactions.workspace_id,
                 },
             ),
+            (
+                "fs.entry.file_conflict_resolved",
+                {"workspace_id": sync_transactions.workspace_id, "id": a_id, "backup_id": a2_id},
+            ),
         ]
     )
 
