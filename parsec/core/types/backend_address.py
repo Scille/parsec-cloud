@@ -56,6 +56,9 @@ class BackendAddr:
         if split.scheme != PARSEC_SCHEME:
             raise ValueError(f"Must start with `{PARSEC_SCHEME}://`")
 
+        if not split.hostname:
+            raise ValueError(f"Hostname is missing")
+
         if split.query:
             # Note `parse_qs` takes care of percent-encoding
             params = parse_qs(
