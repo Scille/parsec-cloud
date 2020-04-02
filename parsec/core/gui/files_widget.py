@@ -256,6 +256,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_user_role = ws_entry.role
         # self.label_role.setText(self.ROLES_TEXTS[self.current_user_role])
         self.table_files.current_user_role = self.current_user_role
+        if self.current_user_role == WorkspaceRole.READER:
+            self.button_import_folder.hide()
+            self.button_import_files.hide()
+            self.button_create_folder.hide()
+        else:
+            self.button_import_folder.show()
+            self.button_import_files.show()
+            self.button_create_folder.show()
         self.clipboard = None
         self.reset(default_selection)
 

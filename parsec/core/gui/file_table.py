@@ -112,6 +112,20 @@ class FileTable(QTableWidget):
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
 
+    @property
+    def current_user_role(self):
+        return self._current_user_role
+
+    @current_user_role.setter
+    def current_user_role(self, role):
+        self._current_user_role = role
+        if self.is_read_only():
+            self.setDragEnabled(False)
+            self.setDragDropMode(QTableWidget.NoDragDrop)
+        else:
+            self.setDragEnabled(True)
+            self.setDragDropMode(QTableWidget.DragDrop)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.setColumnWidth(
