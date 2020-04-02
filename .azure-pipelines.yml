@@ -91,6 +91,7 @@ jobs:
       set -eux
       # Build the parsec wheel
       python setup.py bdist_wheel
+      pip uninstall -y docutils
       # Install the parsec wheel with all dependencies
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
