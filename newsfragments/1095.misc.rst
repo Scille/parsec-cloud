@@ -1,0 +1,1 @@
+Add `fs.entry.file_conflict_resolved` internal event to be notified when a file conflict has been resolved by copying and renaming the file with the local changes.
