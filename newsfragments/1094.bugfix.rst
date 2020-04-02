@@ -1,0 +1,1 @@
+Update the S3 client to fix the Forbidden error with some S3 providers

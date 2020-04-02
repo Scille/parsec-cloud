@@ -1,0 +1,1 @@
+Issue fixed using the underlying s3 client, where it was not possible to connect to any s3 service with the CLI option.

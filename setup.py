@@ -314,7 +314,7 @@ test_requirements = [
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
-DOCUTILS_DEP = "docutils==0.14"
+DOCUTILS_DEP = "docutils==0.15"
 extra_requirements = {
     "core": [
         PYQT_DEP,
@@ -329,8 +329,8 @@ extra_requirements = {
         "triopg==0.3.0",
         "trio-asyncio==0.10.0",
         # S3
-        "boto3==1.4.4",
-        "botocore==1.5.46",
+        "boto3==1.12.34",
+        "botocore==1.15.34",
         # Swift
         "python-swiftclient==3.5.0",
         "pbr==4.0.2",
