@@ -20,6 +20,10 @@ def resize_imgs(input_dir):
         root = tree.getroot()
         root.attrib["width"] = "144"
         root.attrib["height"] = "144"
+        for child in root:
+            if child.attrib.get("fill", None) and child.attrib.get("fill", "") != "#000000":
+                print("Yep")
+                child.attrib["fill"] = "#000000"
         with open(img, "w+") as fd:
             fd.write(ElementTree.tostring(root, encoding="unicode", method="xml"))
         dst = img.parent / img.name.replace("_48px", "").replace("ic_", "")
