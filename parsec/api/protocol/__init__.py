@@ -55,6 +55,7 @@ from parsec.api.protocol.user import (
     device_claim_serializer,
     device_cancel_invitation_serializer,
     device_create_serializer,
+    human_find_serializer,
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
@@ -135,6 +136,7 @@ __all__ = (
     "device_claim_serializer",
     "device_cancel_invitation_serializer",
     "device_create_serializer",
+    "human_find_serializer",
     # Message
     "message_get_serializer",
     # Data group

@@ -19,6 +19,7 @@ __all__ = (
     "device_claim_serializer",
     "device_cancel_invitation_serializer",
     "device_create_serializer",
+    "human_find_serializer",
 )
 
 
@@ -206,3 +207,23 @@ class DeviceCreateRepSchema(BaseRepSchema):
 
 
 device_create_serializer = CmdSerializer(DeviceCreateReqSchema, DeviceCreateRepSchema)
+
+
+# Human search API
+
+
+class HumanFindReqSchema(BaseReqSchema):
+    query = fields.String(missing=None)
+    omit_revoked = fields.Boolean(missing=False)
+    page = fields.Int(missing=1, validate=lambda n: n > 0)
+    per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
+
+
+class HumanFindRepSchema(BaseRepSchema):
+    results = fields.List(UserIDField())
+    page = fields.Int(validate=lambda n: n > 0)
+    per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
+    total = fields.Int(validate=lambda n: n >= 0)
+
+
+human_find_serializer = CmdSerializer(HumanFindReqSchema, HumanFindRepSchema)
