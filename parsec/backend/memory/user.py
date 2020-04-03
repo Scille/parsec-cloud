@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict
+from typing import Tuple, List, Dict
 from collections import defaultdict
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
@@ -11,6 +11,7 @@ from parsec.backend.user import (
     User,
     Device,
     Trustchain,
+    HumanFindResultItem,
     UserInvitation,
     DeviceInvitation,
     UserAlreadyExistsError,
@@ -21,6 +22,7 @@ from parsec.backend.user import (
 
 @attr.s
 class OrganizationStore:
+    _human_handle_to_user_id = attr.ib(factory=dict)
     _users = attr.ib(factory=dict)
     _devices = attr.ib(factory=lambda: defaultdict(dict))
     _invitations = attr.ib(factory=dict)
@@ -45,8 +47,16 @@ class MemoryUserComponent(BaseUserComponent):
         if user.user_id in org._users:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
 
+        if user.human_handle and user.human_handle in org._human_handle_to_user_id:
+            raise UserAlreadyExistsError(
+                f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+            )
+
         org._users[user.user_id] = user
         org._devices[first_device.user_id][first_device.device_name] = first_device
+        if user.human_handle:
+            org._human_handle_to_user_id[user.human_handle] = user.user_id
+
         await self._send_event(
             "user.created",
             organization_id=organization_id,
@@ -216,6 +226,59 @@ class MemoryUserComponent(BaseUserComponent):
         sorted_results = sorted(results, key=lambda s: s.lower())
         return sorted_results[(page - 1) * per_page : page * per_page], len(results)
 
+    async def find_humans(
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revoked: bool = False,
+        omit_non_human: bool = False,
+    ) -> Tuple[List[HumanFindResultItem], int]:
+        org = self._organizations[organization_id]
+
+        if query:
+            data = []
+            query_terms = [qt.lower() for qt in query.split()]
+            for user in org._users.values():
+                user_terms = (
+                    *[x.lower() for x in user.human_handle.label.split()],
+                    user.human_handle.email.lower(),
+                    user.user_id.lower(),
+                )
+                for qt in query_terms:
+                    if not any(ut.startswith(qt) for ut in user_terms):
+                        break
+                else:
+                    # All query term have match the current user
+                    data.append(user)
+
+        else:
+            data = org._users.values()
+
+        if omit_revoked:
+            now = pendulum.now()
+            data = [user for user in data if user.revoked_on is not None and user.revoked_on <= now]
+
+        humans = [user for user in data if user.human_handle]
+        non_humans = [user for user in data if not user.human_handle]
+
+        if omit_non_human:
+            # PostgreSQL does case insensitive sort
+            data = sorted(humans, key=lambda u: u.human_handle.label.lower())
+        else:
+            # Sort by human handel label, keeping non-human last
+            data = [
+                *sorted(humans, key=lambda u: u.human_handle.label.lower()),
+                *sorted(non_humans, key=lambda u: u.user_id.lower()),
+            ]
+
+        page_slice = slice((page - 1) * per_page, page * per_page)
+        return (
+            [HumanFindResultItem(user.user_id, user.human_handle) for user in data[page_slice]],
+            len(data),
+        )
+
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation
     ) -> None:
@@ -331,5 +394,7 @@ class MemoryUserComponent(BaseUserComponent):
             revoked_user_certificate=revoked_user_certificate,
             revoked_user_certifier=revoked_user_certifier,
         )
+        if user.human_handle:
+            del org._human_handle_to_user_id[user.human_handle]
 
         await self._send_event("user.revoked", organization_id=organization_id, user_id=user_id)

@@ -1,11 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple
+from typing import Tuple, Optional
 from hashlib import sha256
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
-from parsec.api.protocol import DeviceID, OrganizationID, DeviceIDField
+from parsec.api.protocol import (
+    DeviceID,
+    OrganizationID,
+    HumanHandle,
+    DeviceIDField,
+    HumanHandleField,
+)
 from parsec.api.data import BaseSchema, EntryID, EntryIDField
 from parsec.core.types.base import BaseLocalData
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
@@ -21,6 +27,7 @@ class LocalDevice(BaseLocalData):
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
+        human_handle = HumanHandleField(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
@@ -34,6 +41,7 @@ class LocalDevice(BaseLocalData):
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
+    human_handle: Optional[HumanHandle] = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"

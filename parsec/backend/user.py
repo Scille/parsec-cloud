@@ -21,6 +21,7 @@ from parsec.api.protocol import (
     HumanHandle,
     user_get_serializer,
     user_find_serializer,
+    human_find_serializer,
     user_get_invitation_creator_serializer,
     user_invite_serializer,
     user_claim_serializer,
@@ -97,8 +98,8 @@ class User:
     user_id: UserID
     user_certificate: bytes
     user_certifier: Optional[DeviceID]
-    human_handle = Optional[HumanHandle]
     is_admin: bool = False
+    human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None
     revoked_user_certificate: bytes = None
@@ -112,8 +113,15 @@ class Trustchain:
     devices: Tuple[bytes, ...]
 
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class HumanFindResultItem:
+    user_id: UserID
+    human_handle: Optional[HumanHandle] = None
+
+
 def new_user_factory(
     device_id: DeviceID,
+    human_handle: Optional[HumanHandle],
     is_admin: bool,
     certifier: Optional[DeviceID],
     user_certificate: bytes,
@@ -123,6 +131,7 @@ def new_user_factory(
     now = now or pendulum.now()
     user = User(
         user_id=device_id.user_id,
+        human_handle=human_handle,
         is_admin=is_admin,
         user_certificate=user_certificate,
         user_certifier=certifier,
@@ -203,6 +212,20 @@ class BaseUserComponent:
         msg = user_find_serializer.req_load(msg)
         results, total = await self.find(client_ctx.organization_id, **msg)
         return user_find_serializer.rep_dump(
+            {
+                "status": "ok",
+                "results": results,
+                "page": msg["page"],
+                "per_page": msg["per_page"],
+                "total": total,
+            }
+        )
+
+    @catch_protocol_errors
+    async def api_human_find(self, client_ctx, msg):
+        msg = human_find_serializer.req_load(msg)
+        results, total = await self.find_humans(client_ctx.organization_id, human=True, **msg)
+        return human_find_serializer.rep_dump(
             {
                 "status": "ok",
                 "results": results,
@@ -429,6 +452,7 @@ class BaseUserComponent:
         try:
             user = User(
                 user_id=u_data.user_id,
+                human_handle=u_data.human_handle,
                 is_admin=u_data.is_admin,
                 user_certificate=msg["user_certificate"],
                 user_certifier=u_data.author,
@@ -778,6 +802,17 @@ class BaseUserComponent:
         per_page: int = 100,
         omit_revoked: bool = False,
     ) -> Tuple[List[UserID], int]:
+        raise NotImplementedError()
+
+    async def find_humans(
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revoked: bool = False,
+        omit_non_human: bool = False,
+    ) -> Tuple[List[HumanFindResultItem], int]:
         raise NotImplementedError()
 
     async def create_user_invitation(

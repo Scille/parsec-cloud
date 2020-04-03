@@ -2,7 +2,7 @@
 
 from parsec.serde import BaseSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDField
+from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDField, HumanHandleField
 
 
 __all__ = (
@@ -215,12 +215,18 @@ device_create_serializer = CmdSerializer(DeviceCreateReqSchema, DeviceCreateRepS
 class HumanFindReqSchema(BaseReqSchema):
     query = fields.String(missing=None)
     omit_revoked = fields.Boolean(missing=False)
+    omit_non_human = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 
 
+class HumanFindResultItemSchema(BaseSchema):
+    user_id = UserIDField(required=True)
+    human_handle = HumanHandleField(allow_none=True, missing=None)
+
+
 class HumanFindRepSchema(BaseRepSchema):
-    results = fields.List(UserIDField())
+    results = fields.List(fields.Nested(HumanFindResultItemSchema, required=True))
     page = fields.Int(validate=lambda n: n > 0)
     per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
     total = fields.Int(validate=lambda n: n >= 0)

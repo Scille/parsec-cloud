@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from pathlib import Path
 from uuid import uuid4
 
 from parsec.crypto import SecretKey, SigningKey, PrivateKey
-from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
 from parsec.api.data import DataError
 from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device.exceptions import (
@@ -24,11 +24,15 @@ from parsec.core.local_device.cipher import (
 
 
 def generate_new_device(
-    device_id: DeviceID, organization_addr: BackendOrganizationAddr, is_admin: bool = False
+    device_id: DeviceID,
+    organization_addr: BackendOrganizationAddr,
+    is_admin: bool = False,
+    human_handle: Optional[HumanHandle] = None,
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
         device_id=device_id,
+        human_handle=human_handle,
         signing_key=SigningKey.generate(),
         private_key=PrivateKey.generate(),
         is_admin=is_admin,

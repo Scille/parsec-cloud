@@ -2,8 +2,9 @@
 
 import re
 from collections import namedtuple
+from email.utils import parseaddr
 
-from parsec.serde import fields, validate
+from parsec.serde import fields
 
 
 def _bytes_size(txt: str) -> int:
@@ -72,17 +73,43 @@ DeviceNameField = fields.str_based_field_factory(DeviceName)
 DeviceIDField = fields.str_based_field_factory(DeviceID)
 
 
-class HumanHandle(namedtuple("HumanHandle", "label email")):
+class HumanHandle(namedtuple("HumanHandle", "email label")):
+    def __init__(self, email: str, label: str):
+        # TODO: how to check the email  easily ?
+        if not isinstance(email, str) or not (1 < len(email) < 255):
+            raise ValueError("Invalid email address")
+
+        if not isinstance(label, str) or not (1 < len(label) < 255):
+            raise ValueError("Invalid label")
+
+        parsed_label, parsed_email = parseaddr(str(self))
+        if parsed_email != email:
+            raise ValueError("Invalid email address")
+        if parsed_label != label:
+            raise ValueError("Invalid label")
+
+        # No need to call super().__init__ given namedtuple set attributes during __new__
+        super().__init__()
+
     def __repr__(self):
-        return f"<HumanHandle {self.label} <{self.email}> >"
+        return f"<HumanHandle {str(self)} >"
+
+    def __str__(self):
+        return f"{self.label} <{self.email}>"
+
+    def __eq__(self, other):
+        # Ignore lable field, as it is only for human redability
+        return isinstance(other, HumanHandle) and self.email == other.email
+
+    def __hash__(self):
+        return hash(self.email)
 
 
 class HumanHandleField(fields.Tuple):
     def __init__(self, **kwargs):
-        label = fields.String(required=True, validate=validate.Range(min=0))
-        # TODO: marshmallow uses regex to do that, no sure how reliable it is...
-        email = fields.Email(required=True, validate=validate.Range(min=0))
-        super().__init__(label, email, **kwargs)
+        email = fields.String(required=True)
+        label = fields.String(required=True)
+        super().__init__(email, label, **kwargs)
 
     def _deserialize(self, *args, **kwargs):
         result = super()._deserialize(*args, **kwargs)

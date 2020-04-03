@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -66,3 +66,20 @@ def test_max_bytes_size_device_id(data):
 )
 def test_good_pattern_device_id(data):
     DeviceID(data)
+
+
+def test_human_handle_compare():
+    a = HumanHandle(email="alice@example.com", label="Alice")
+    a2 = HumanHandle(email="alice@example.com", label="Whatever")
+    b = HumanHandle(email="bob@example.com", label="Bob")
+    assert a == a2
+    assert a != b
+    assert b == b
+
+
+@pytest.mark.parametrize(
+    "email,label", (("x" * 256, "alice@example.com"), ("Alice", f"{'@example.com':a>256}"))
+)
+def test_invalid_human_handle(email, label):
+    with pytest.raises(ValueError):
+        HumanHandle(email, label)
