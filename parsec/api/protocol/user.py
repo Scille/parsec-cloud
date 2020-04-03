@@ -46,21 +46,21 @@ class UserGetRepSchema(BaseRepSchema):
 user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
 
 
-class FindUserReqSchema(BaseReqSchema):
+class UserFindReqSchema(BaseReqSchema):
     query = fields.String(missing=None)
     omit_revoked = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 
 
-class FindUserRepSchema(BaseRepSchema):
+class UserFindRepSchema(BaseRepSchema):
     results = fields.List(UserIDField())
     page = fields.Int(validate=lambda n: n > 0)
     per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
     total = fields.Int(validate=lambda n: n >= 0)
 
 
-user_find_serializer = CmdSerializer(FindUserReqSchema, FindUserRepSchema)
+user_find_serializer = CmdSerializer(UserFindReqSchema, UserFindRepSchema)
 
 
 #### User creation API ####
