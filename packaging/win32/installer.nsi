@@ -95,11 +95,15 @@ Var StartMenuFolder
 # --- Functions ---
 
 Function checkParsecRunning
-    System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
-    IntCmp $R0 0 notRunning
-        System::Call 'kernel32::CloseHandle(i $R0)'
-        MessageBox MB_OK|MB_ICONEXCLAMATION "Parsec is running. Please close it first" /SD IDOK
-        Call checkParsecRunning
+    check:
+        System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
+        IntCmp $R0 0 notRunning
+            System::Call 'kernel32::CloseHandle(i $R0)'
+            MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+                "Parsec is running, please close it first.$\n$\n \
+                Click `OK` to retry or `Cancel` to cancel this upgrade." \
+                /SD IDCANCEL IDOK check
+            Abort
     notRunning:
 FunctionEnd
 
