@@ -79,6 +79,6 @@ The documentation is the built (by us) and deployed [here](http://docs.parsec.cl
 
 ## Acknowledgement
 
-This document is based on the [contributing one](https://github.com/Scille/parsec-cloud/blob/master/CONTRIBUTING.md)
+This document is based on the [contributing one](https://github.com/crossbario/crossbar/blob/master/CONTRIBUTING.md)
 of the [Crossbar.io](https://crossbar.io/) project.
 This a cool open source project made by nice people, though not related to Parsec in any way, you should go check a look ;-)
