@@ -304,6 +304,8 @@ test_requirements = [
     # - see pip issues #7096/#6239/#4391/#988
     # Looking forward to the new pip dependency resolver!
     'pywin32==227;platform_system=="Windows"',
+    # Fix botocore and sphinx conflicting requirements on docutils
+    "docutils>=0.12,<0.16",
     # Documentation generation requirements
     "sphinx==2.4.3",
     "sphinx-intl==2.0.0",
@@ -314,7 +316,7 @@ test_requirements = [
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
-DOCUTILS_DEP = "docutils==0.15"
+DOCUTILS_DEP = "docutils==0.16"
 extra_requirements = {
     "core": [
         PYQT_DEP,

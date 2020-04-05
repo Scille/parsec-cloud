@@ -81,7 +81,8 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools twine
+      pip install -U wheel pip setuptools
+      pip --version
       sudo apt-get install \
         postgresql-$(postgresql.version) \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -91,7 +92,6 @@ jobs:
       set -eux
       # Build the parsec wheel
       python setup.py bdist_wheel
-      pip uninstall -y docutils
       # Install the parsec wheel with all dependencies
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
@@ -160,7 +160,8 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools twine
+      pip install -U wheel pip setuptools
+      pip --version
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
