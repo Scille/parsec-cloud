@@ -1,0 +1,1 @@
+Add an action to open the current directory in file explorer

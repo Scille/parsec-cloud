@@ -73,6 +73,7 @@ class FileTable(QTableWidget):
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
     file_path_clicked = pyqtSignal()
+    open_current_dir_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -182,6 +183,8 @@ class FileTable(QTableWidget):
         selected = self.selected_files()
         menu = QMenu(self)
 
+        action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
+        action.triggered.connect(self.open_current_dir_clicked.emit)
         if len(selected):
             action = menu.addAction(_("ACTION_FILE_MENU_OPEN"))
             action.triggered.connect(self.open_clicked.emit)
