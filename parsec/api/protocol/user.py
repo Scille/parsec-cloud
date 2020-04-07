@@ -7,17 +7,17 @@ from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDFiel
 
 __all__ = (
     "user_get_serializer",
-    "user_find_serializer",
-    "user_invite_serializer",
-    "user_get_invitation_creator_serializer",
-    "user_claim_serializer",
-    "user_cancel_invitation_serializer",
+    "apiv1_user_find_serializer",
+    "apiv1_user_invite_serializer",
+    "apiv1_user_get_invitation_creator_serializer",
+    "apiv1_user_claim_serializer",
+    "apiv1_user_cancel_invitation_serializer",
     "user_create_serializer",
     "user_revoke_serializer",
-    "device_invite_serializer",
-    "device_get_invitation_creator_serializer",
-    "device_claim_serializer",
-    "device_cancel_invitation_serializer",
+    "apiv1_device_invite_serializer",
+    "apiv1_device_get_invitation_creator_serializer",
+    "apiv1_device_claim_serializer",
+    "apiv1_device_cancel_invitation_serializer",
     "device_create_serializer",
     "human_find_serializer",
 )
@@ -47,75 +47,80 @@ class UserGetRepSchema(BaseRepSchema):
 user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
 
 
-class UserFindReqSchema(BaseReqSchema):
+class APIV1_UserFindReqSchema(BaseReqSchema):
     query = fields.String(missing=None)
     omit_revoked = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 
 
-class UserFindRepSchema(BaseRepSchema):
+class APIV1_UserFindRepSchema(BaseRepSchema):
     results = fields.List(UserIDField())
     page = fields.Int(validate=lambda n: n > 0)
     per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
     total = fields.Int(validate=lambda n: n >= 0)
 
 
-user_find_serializer = CmdSerializer(UserFindReqSchema, UserFindRepSchema)
+# TODO: remove me once API v1 is deprecated
+apiv1_user_find_serializer = CmdSerializer(APIV1_UserFindReqSchema, APIV1_UserFindRepSchema)
 
 
 #### User creation API ####
 
 
-class UserInviteReqSchema(BaseReqSchema):
+class APIV1_UserInviteReqSchema(BaseReqSchema):
     user_id = UserIDField(required=True)
 
 
-class UserInviteRepSchema(BaseRepSchema):
+class APIV1_UserInviteRepSchema(BaseRepSchema):
     encrypted_claim = fields.Bytes(required=True)
 
 
-user_invite_serializer = CmdSerializer(UserInviteReqSchema, UserInviteRepSchema)
+# TODO: remove me once API v1 is deprecated
+apiv1_user_invite_serializer = CmdSerializer(APIV1_UserInviteReqSchema, APIV1_UserInviteRepSchema)
 
 
-class UserGetInvitationCreatorReqSchema(BaseReqSchema):
+class APIV1_UserGetInvitationCreatorReqSchema(BaseReqSchema):
     invited_user_id = UserIDField(required=True)
 
 
-class UserGetInvitationCreatorRepSchema(BaseRepSchema):
+class APIV1_UserGetInvitationCreatorRepSchema(BaseRepSchema):
     device_certificate = fields.Bytes(required=True)
     user_certificate = fields.Bytes(required=True)
     trustchain = fields.Nested(TrustchainSchema, required=True)
 
 
-user_get_invitation_creator_serializer = CmdSerializer(
-    UserGetInvitationCreatorReqSchema, UserGetInvitationCreatorRepSchema
+# TODO: remove me once API v1 is deprecated
+apiv1_user_get_invitation_creator_serializer = CmdSerializer(
+    APIV1_UserGetInvitationCreatorReqSchema, APIV1_UserGetInvitationCreatorRepSchema
 )
 
 
-class UserClaimReqSchema(BaseReqSchema):
+class APIV1_UserClaimReqSchema(BaseReqSchema):
     invited_user_id = UserIDField(required=True)
     encrypted_claim = fields.Bytes(required=True)
 
 
-class UserClaimRepSchema(BaseRepSchema):
+class APIV1_UserClaimRepSchema(BaseRepSchema):
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
 
 
-user_claim_serializer = CmdSerializer(UserClaimReqSchema, UserClaimRepSchema)
+# TODO: remove me once API v1 is deprecated
+apiv1_user_claim_serializer = CmdSerializer(APIV1_UserClaimReqSchema, APIV1_UserClaimRepSchema)
 
 
-class UserCancelInvitationReqSchema(BaseReqSchema):
+class APIV1_UserCancelInvitationReqSchema(BaseReqSchema):
     user_id = UserIDField(required=True)
 
 
-class UserCancelInvitationRepSchema(BaseRepSchema):
+class APIV1_UserCancelInvitationRepSchema(BaseRepSchema):
     pass
 
 
-user_cancel_invitation_serializer = CmdSerializer(
-    UserCancelInvitationReqSchema, UserCancelInvitationRepSchema
+# TODO: remove me once API v1 is deprecated
+apiv1_user_cancel_invitation_serializer = CmdSerializer(
+    APIV1_UserCancelInvitationReqSchema, APIV1_UserCancelInvitationRepSchema
 )
 
 
@@ -145,61 +150,82 @@ user_revoke_serializer = CmdSerializer(UserRevokeReqSchema, UserRevokeRepSchema)
 #### Device creation API ####
 
 
-class DeviceInviteReqSchema(BaseReqSchema):
+class APIV1_DeviceInviteReqSchema(BaseReqSchema):
     invited_device_name = DeviceNameField(required=True)
 
 
-class DeviceInviteRepSchema(BaseRepSchema):
+class APIV1_DeviceInviteRepSchema(BaseRepSchema):
     encrypted_claim = fields.Bytes(required=True)
 
 
-device_invite_serializer = CmdSerializer(DeviceInviteReqSchema, DeviceInviteRepSchema)
+# TODO: remove me once API v1 is deprecated
+apiv1_device_invite_serializer = CmdSerializer(
+    APIV1_DeviceInviteReqSchema, APIV1_DeviceInviteRepSchema
+)
 
 
-class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
+class APIV1_DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
     invited_device_id = DeviceIDField(required=True)
 
 
-class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
+class APIV1_DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
     device_certificate = fields.Bytes(required=True)
     user_certificate = fields.Bytes(required=True)
     trustchain = fields.Nested(TrustchainSchema, required=True)
 
 
-device_get_invitation_creator_serializer = CmdSerializer(
-    DeviceGetInvitationCreatorReqSchema, DeviceGetInvitationCreatorRepSchema
+# TODO: remove me once API v1 is deprecated
+apiv1_device_get_invitation_creator_serializer = CmdSerializer(
+    APIV1_DeviceGetInvitationCreatorReqSchema, APIV1_DeviceGetInvitationCreatorRepSchema
 )
 
 
-class DeviceClaimReqSchema(BaseReqSchema):
+class APIV1_DeviceClaimReqSchema(BaseReqSchema):
     invited_device_id = DeviceIDField(required=True)
     encrypted_claim = fields.Bytes(required=True)
 
 
-class DeviceClaimRepSchema(BaseRepSchema):
+class APIV1_DeviceClaimRepSchema(BaseRepSchema):
     device_certificate = fields.Bytes(required=True)
     encrypted_answer = fields.Bytes(required=True)
 
 
-device_claim_serializer = CmdSerializer(DeviceClaimReqSchema, DeviceClaimRepSchema)
+# TODO: remove me once API v1 is deprecated
+apiv1_device_claim_serializer = CmdSerializer(
+    APIV1_DeviceClaimReqSchema, APIV1_DeviceClaimRepSchema
+)
 
 
-class DeviceCancelInvitationReqSchema(BaseReqSchema):
+class APIV1_DeviceCancelInvitationReqSchema(BaseReqSchema):
     invited_device_name = DeviceNameField(required=True)
 
 
-class DeviceCancelInvitationRepSchema(BaseRepSchema):
+class APIV1_DeviceCancelInvitationRepSchema(BaseRepSchema):
     pass
 
 
-device_cancel_invitation_serializer = CmdSerializer(
-    DeviceCancelInvitationReqSchema, DeviceCancelInvitationRepSchema
+# TODO: remove me once API v1 is deprecated
+apiv1_device_cancel_invitation_serializer = CmdSerializer(
+    APIV1_DeviceCancelInvitationReqSchema, APIV1_DeviceCancelInvitationRepSchema
+)
+
+
+class APIV1_DeviceCreateReqSchema(BaseReqSchema):
+    device_certificate = fields.Bytes(required=True)
+    encrypted_answer = fields.Bytes(required=True)
+
+
+class APIV1_DeviceCreateRepSchema(BaseRepSchema):
+    pass
+
+
+apiv1_device_create_serializer = CmdSerializer(
+    APIV1_DeviceCreateReqSchema, APIV1_DeviceCreateRepSchema
 )
 
 
 class DeviceCreateReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
-    encrypted_answer = fields.Bytes(required=True)
 
 
 class DeviceCreateRepSchema(BaseRepSchema):

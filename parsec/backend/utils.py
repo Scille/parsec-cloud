@@ -2,13 +2,53 @@
 
 import trio
 from functools import wraps
+from typing import Union, List
 
-from parsec.api.protocol import ProtocolError, InvalidMessageError
+from parsec.api.protocol import (
+    ProtocolError,
+    InvalidMessageError,
+    HandshakeType,
+    APIV1_HandshakeType,
+)
+from parsec.api.version import API_V1_VERSION, API_V2_VERSION
 
 
-def anonymous_api(fn):
-    fn._anonymous_api_allowed = True
-    return fn
+ALLOWED_API_VERSIONS = {API_V1_VERSION.version, API_V2_VERSION.version}
+
+
+def api(
+    cmd: str,
+    *,
+    handshake_types: List[Union[HandshakeType, APIV1_HandshakeType]] = (
+        HandshakeType.AUTHENTICATED,
+        APIV1_HandshakeType.AUTHENTICATED,
+    ),
+):
+    def wrapper(fn):
+        assert not hasattr(fn, "_api_info")
+        fn._api_info = {"cmd": cmd, "handshake_types": handshake_types}
+        return fn
+
+    return wrapper
+
+
+def collect_apis(*components):
+    apis = {}
+    for component in components:
+        for methname in dir(component):
+            meth = getattr(component, methname)
+            info = getattr(meth, "_api_info", None)
+            if not info:
+                continue
+
+            for handshake_type in info["handshake_types"]:
+                if handshake_type not in apis:
+                    apis[handshake_type] = {}
+
+                assert info["cmd"] not in apis[handshake_type]
+                apis[handshake_type][info["cmd"]] = meth
+
+    return apis
 
 
 def check_anonymous_api_allowed(fn):

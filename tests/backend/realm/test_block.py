@@ -16,7 +16,7 @@ from parsec.backend.raid5_blockstore import (
 )
 from parsec.api.protocol import block_create_serializer, block_read_serializer, packb, RealmRole
 
-from tests.backend.conftest import block_create, block_read
+from tests.backend.common import block_create, block_read
 
 
 BLOCK_ID = UUID("00000000000000000000000000000001")

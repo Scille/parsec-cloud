@@ -2,28 +2,28 @@
 
 import trio
 from async_generator import asynccontextmanager
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 from parsec.core.types import BackendOrganizationAddr
-from parsec.core.backend_connection.transport import connect
+from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
-from parsec.api.protocol import ADMINISTRATION_CMDS
+from parsec.api.protocol import APIV1_ADMINISTRATION_CMDS
 
 
-class BackendAdministrationCmds:
+class APIV1_BackendAdministrationCmds:
     def __init__(self, addr, acquire_transport):
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    for cmd_name in ADMINISTRATION_CMDS:
-        vars()[cmd_name] = expose_cmds(cmd_name)
+    for cmd_name in APIV1_ADMINISTRATION_CMDS:
+        vars()[cmd_name] = expose_cmds(cmd_name, apiv1=True)
 
 
 @asynccontextmanager
-async def backend_administration_cmds_factory(
+async def apiv1_backend_administration_cmds_factory(
     addr: BackendOrganizationAddr, token: str, keepalive: Optional[int] = None
-) -> BackendAdministrationCmds:
+) -> AsyncGenerator[APIV1_BackendAdministrationCmds, None]:
     """
     Raises:
         BackendConnectionError
@@ -37,7 +37,7 @@ async def backend_administration_cmds_factory(
         if not transport:
             if closed:
                 raise trio.ClosedResourceError
-            transport = await connect(addr, administration_token=token, keepalive=keepalive)
+            transport = await apiv1_connect(addr, administration_token=token, keepalive=keepalive)
             transport.logger = transport.logger.bind(auth="<administration>")
 
     async def _destroy_transport():
@@ -59,7 +59,7 @@ async def backend_administration_cmds_factory(
                 raise
 
     try:
-        yield BackendAdministrationCmds(addr, _acquire_transport)
+        yield APIV1_BackendAdministrationCmds(addr, _acquire_transport)
 
     finally:
         async with transport_lock:

@@ -1,11 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from uuid import UUID
 import pendulum
 from pendulum import Pendulum
 
-from parsec.crypto import VerifyKey
+from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocol import (
     OrganizationID,
@@ -13,12 +13,30 @@ from parsec.api.protocol import (
     DeviceName,
     DeviceID,
     ProtocolError,
+    InvitationType,
+    InvitationDeletedReason,
+    invite_new_serializer,
+    invite_delete_serializer,
+    invite_list_serializer,
+    invite_info_serializer,
+    invite_1_claimer_wait_peer_serializer,
+    invite_1_greeter_wait_peer_serializer,
+    invite_2a_claimer_send_hashed_nonce_serializer,
+    invite_2a_greeter_get_hashed_nonce_serializer,
+    invite_2b_greeter_send_nonce_serializer,
+    invite_2b_claimer_send_nonce_serializer,
+    invite_3a_greeter_wait_peer_trust_serializer,
+    invite_3b_claimer_wait_peer_trust_serializer,
+    invite_3b_greeter_signify_trust_serializer,
+    invite_3a_claimer_signify_trust_serializer,
+    invite_4_greeter_communicate_serializer,
+    invite_4_claimer_communicate_serializer,
     ping_serializer,
-    organization_create_serializer,
-    organization_stats_serializer,
-    organization_status_serializer,
-    organization_update_serializer,
-    organization_bootstrap_serializer,
+    apiv1_organization_create_serializer,
+    apiv1_organization_stats_serializer,
+    apiv1_organization_status_serializer,
+    apiv1_organization_update_serializer,
+    apiv1_organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
     message_get_serializer,
@@ -38,18 +56,19 @@ from parsec.api.protocol import (
     block_create_serializer,
     block_read_serializer,
     user_get_serializer,
-    user_find_serializer,
     human_find_serializer,
-    user_invite_serializer,
-    user_get_invitation_creator_serializer,
-    user_claim_serializer,
-    user_cancel_invitation_serializer,
+    apiv1_user_find_serializer,
+    apiv1_user_invite_serializer,
+    apiv1_user_get_invitation_creator_serializer,
+    apiv1_user_claim_serializer,
+    apiv1_user_cancel_invitation_serializer,
     user_create_serializer,
     user_revoke_serializer,
-    device_invite_serializer,
-    device_get_invitation_creator_serializer,
-    device_claim_serializer,
-    device_cancel_invitation_serializer,
+    apiv1_device_invite_serializer,
+    apiv1_device_get_invitation_creator_serializer,
+    apiv1_device_claim_serializer,
+    apiv1_device_cancel_invitation_serializer,
+    apiv1_device_create_serializer,
     device_create_serializer,
 )
 from parsec.core.types import EntryID
@@ -314,6 +333,145 @@ async def block_read(transport: Transport, block_id: UUID) -> dict:
     return await _send_cmd(transport, block_read_serializer, cmd="block_read", block_id=block_id)
 
 
+### Invite API ###
+
+
+async def invite_new(
+    transport: Transport, type: InvitationType, send_email: bool = False, claimer_email: str = None
+):
+    return await _send_cmd(
+        transport,
+        invite_new_serializer,
+        cmd="invite_new",
+        type=type,
+        send_email=send_email,
+        claimer_email=claimer_email,
+    )
+
+
+async def invite_list(transport: Transport):
+    return await _send_cmd(transport, invite_list_serializer, cmd="invite_list")
+
+
+async def invite_delete(transport: Transport, token: UUID, reason: InvitationDeletedReason):
+    return await _send_cmd(
+        transport, invite_delete_serializer, cmd="invite_delete", token=token, reason=reason
+    )
+
+
+async def invite_info(transport: Transport):
+    return await _send_cmd(transport, invite_info_serializer, cmd="invite_info")
+
+
+async def invite_1_claimer_wait_peer(transport: Transport, claimer_public_key: PublicKey):
+    return await _send_cmd(
+        transport,
+        invite_1_claimer_wait_peer_serializer,
+        cmd="invite_1_claimer_wait_peer",
+        claimer_public_key=claimer_public_key,
+    )
+
+
+async def invite_1_greeter_wait_peer(
+    transport: Transport, token: UUID, greeter_public_key: PublicKey
+):
+    return await _send_cmd(
+        transport,
+        invite_1_greeter_wait_peer_serializer,
+        cmd="invite_1_greeter_wait_peer",
+        token=token,
+        greeter_public_key=greeter_public_key,
+    )
+
+
+async def invite_2a_claimer_send_hashed_nonce(transport: Transport, claimer_hashed_nonce: bytes):
+    return await _send_cmd(
+        transport,
+        invite_2a_claimer_send_hashed_nonce_serializer,
+        cmd="invite_2a_claimer_send_hashed_nonce",
+        claimer_hashed_nonce=claimer_hashed_nonce,
+    )
+
+
+async def invite_2a_greeter_get_hashed_nonce(transport: Transport, token: UUID):
+    return await _send_cmd(
+        transport,
+        invite_2a_greeter_get_hashed_nonce_serializer,
+        cmd="invite_2a_greeter_get_hashed_nonce",
+        token=token,
+    )
+
+
+async def invite_2b_greeter_send_nonce(transport: Transport, token: UUID, greeter_nonce: bytes):
+    return await _send_cmd(
+        transport,
+        invite_2b_greeter_send_nonce_serializer,
+        cmd="invite_2b_greeter_send_nonce",
+        token=token,
+        greeter_nonce=greeter_nonce,
+    )
+
+
+async def invite_2b_claimer_send_nonce(transport: Transport, claimer_nonce: bytes):
+    return await _send_cmd(
+        transport,
+        invite_2b_claimer_send_nonce_serializer,
+        cmd="invite_2b_claimer_send_nonce",
+        claimer_nonce=claimer_nonce,
+    )
+
+
+async def invite_3a_greeter_wait_peer_trust(transport: Transport, token: UUID):
+    return await _send_cmd(
+        transport,
+        invite_3a_greeter_wait_peer_trust_serializer,
+        cmd="invite_3a_greeter_wait_peer_trust",
+        token=token,
+    )
+
+
+async def invite_3a_claimer_signify_trust(transport: Transport):
+    return await _send_cmd(
+        transport, invite_3a_claimer_signify_trust_serializer, cmd="invite_3a_claimer_signify_trust"
+    )
+
+
+async def invite_3b_claimer_wait_peer_trust(transport: Transport):
+    return await _send_cmd(
+        transport,
+        invite_3b_claimer_wait_peer_trust_serializer,
+        cmd="invite_3b_claimer_wait_peer_trust",
+    )
+
+
+async def invite_3b_greeter_signify_trust(transport: Transport, token: UUID):
+    return await _send_cmd(
+        transport,
+        invite_3b_greeter_signify_trust_serializer,
+        cmd="invite_3b_greeter_signify_trust",
+        token=token,
+    )
+
+
+async def invite_4_greeter_communicate(transport: Transport, token: UUID, payload: Optional[bytes]):
+    return await _send_cmd(
+        transport,
+        invite_4_greeter_communicate_serializer,
+        cmd="invite_4_greeter_communicate",
+        token=token,
+        payload=payload,
+    )
+
+
+async def invite_4_claimer_communicate(transport: Transport, payload: Optional[bytes]):
+    return await _send_cmd(
+        transport,
+        invite_4_claimer_communicate_serializer,
+        cmd="invite_4_claimer_communicate",
+        payload=payload,
+    )
+
+
 ### User API ###
 
 
@@ -321,7 +479,7 @@ async def user_get(transport: Transport, user_id: UserID) -> dict:
     return await _send_cmd(transport, user_get_serializer, cmd="user_get", user_id=user_id)
 
 
-async def user_find(
+async def apiv1_user_find(
     transport: Transport,
     query: str = None,
     page: int = 1,
@@ -330,7 +488,7 @@ async def user_find(
 ) -> dict:
     return await _send_cmd(
         transport,
-        user_find_serializer,
+        apiv1_user_find_serializer,
         cmd="user_find",
         query=query,
         page=page,
@@ -360,17 +518,22 @@ async def human_find(
 
 
 async def user_invite(transport: Transport, user_id: UserID) -> dict:
-    return await _send_cmd(transport, user_invite_serializer, cmd="user_invite", user_id=user_id)
+    return await _send_cmd(
+        transport, apiv1_user_invite_serializer, cmd="user_invite", user_id=user_id
+    )
 
 
 async def user_cancel_invitation(transport: Transport, user_id: UserID) -> dict:
     return await _send_cmd(
-        transport, user_cancel_invitation_serializer, cmd="user_cancel_invitation", user_id=user_id
+        transport,
+        apiv1_user_cancel_invitation_serializer,
+        cmd="user_cancel_invitation",
+        user_id=user_id,
     )
 
 
 async def user_create(
-    transport: Transport, user_certificate: bytes, device_certificate: bytes
+    transport: Transport, user_certificate: bytes, device_certificate: bytes = None
 ) -> dict:
     return await _send_cmd(
         transport,
@@ -393,7 +556,7 @@ async def user_revoke(transport: Transport, revoked_user_certificate: bytes) -> 
 async def device_invite(transport: Transport, invited_device_name: DeviceName) -> dict:
     return await _send_cmd(
         transport,
-        device_invite_serializer,
+        apiv1_device_invite_serializer,
         cmd="device_invite",
         invited_device_name=invited_device_name,
     )
@@ -402,18 +565,27 @@ async def device_invite(transport: Transport, invited_device_name: DeviceName) -
 async def device_cancel_invitation(transport: Transport, invited_device_name: DeviceName) -> dict:
     return await _send_cmd(
         transport,
-        device_cancel_invitation_serializer,
+        apiv1_device_cancel_invitation_serializer,
         cmd="device_cancel_invitation",
         invited_device_name=invited_device_name,
     )
 
 
-async def device_create(
+async def device_create(transport: Transport, device_certificate: bytes) -> dict:
+    return await _send_cmd(
+        transport,
+        device_create_serializer,
+        cmd="device_create",
+        device_certificate=device_certificate,
+    )
+
+
+async def apiv1_device_create(
     transport: Transport, device_certificate: bytes, encrypted_answer: bytes
 ) -> dict:
     return await _send_cmd(
         transport,
-        device_create_serializer,
+        apiv1_device_create_serializer,
         cmd="device_create",
         device_certificate=device_certificate,
         encrypted_answer=encrypted_answer,
@@ -431,7 +603,7 @@ async def organization_create(
 ) -> dict:
     return await _send_cmd(
         transport,
-        organization_create_serializer,
+        apiv1_organization_create_serializer,
         cmd="organization_create",
         organization_id=organization_id,
         expiration_date=expiration_date,
@@ -441,7 +613,7 @@ async def organization_create(
 async def organization_stats(transport: Transport, organization_id: OrganizationID) -> dict:
     return await _send_cmd(
         transport,
-        organization_stats_serializer,
+        apiv1_organization_stats_serializer,
         cmd="organization_stats",
         organization_id=organization_id,
     )
@@ -450,7 +622,7 @@ async def organization_stats(transport: Transport, organization_id: Organization
 async def organization_status(transport: Transport, organization_id: OrganizationID) -> dict:
     return await _send_cmd(
         transport,
-        organization_status_serializer,
+        apiv1_organization_status_serializer,
         cmd="organization_status",
         organization_id=organization_id,
     )
@@ -461,7 +633,7 @@ async def organization_update(
 ) -> dict:
     return await _send_cmd(
         transport,
-        organization_update_serializer,
+        apiv1_organization_update_serializer,
         cmd="organization_update",
         organization_id=organization_id,
         expiration_date=expiration_date,
@@ -478,7 +650,7 @@ async def organization_bootstrap(
 ) -> dict:
     return await _send_cmd(
         transport,
-        organization_bootstrap_serializer,
+        apiv1_organization_bootstrap_serializer,
         cmd="organization_bootstrap",
         organization_id=organization_id,
         bootstrap_token=bootstrap_token,
@@ -491,7 +663,7 @@ async def organization_bootstrap(
 async def user_get_invitation_creator(transport: Transport, invited_user_id: UserID) -> dict:
     return await _send_cmd(
         transport,
-        user_get_invitation_creator_serializer,
+        apiv1_user_get_invitation_creator_serializer,
         cmd="user_get_invitation_creator",
         invited_user_id=invited_user_id,
     )
@@ -500,7 +672,7 @@ async def user_get_invitation_creator(transport: Transport, invited_user_id: Use
 async def user_claim(transport: Transport, invited_user_id: UserID, encrypted_claim: bytes) -> dict:
     return await _send_cmd(
         transport,
-        user_claim_serializer,
+        apiv1_user_claim_serializer,
         cmd="user_claim",
         invited_user_id=invited_user_id,
         encrypted_claim=encrypted_claim,
@@ -510,7 +682,7 @@ async def user_claim(transport: Transport, invited_user_id: UserID, encrypted_cl
 async def device_get_invitation_creator(transport: Transport, invited_device_id: DeviceID) -> dict:
     return await _send_cmd(
         transport,
-        device_get_invitation_creator_serializer,
+        apiv1_device_get_invitation_creator_serializer,
         cmd="device_get_invitation_creator",
         invited_device_id=invited_device_id,
     )
@@ -521,7 +693,7 @@ async def device_claim(
 ) -> dict:
     return await _send_cmd(
         transport,
-        device_claim_serializer,
+        apiv1_device_claim_serializer,
         cmd="device_claim",
         invited_device_id=invited_device_id,
         encrypted_claim=encrypted_claim,

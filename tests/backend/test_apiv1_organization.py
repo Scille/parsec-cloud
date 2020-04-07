@@ -7,13 +7,13 @@ from unittest.mock import ANY
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.api.protocol import (
     UserID,
-    organization_create_serializer,
-    organization_bootstrap_serializer,
+    apiv1_organization_create_serializer,
+    apiv1_organization_bootstrap_serializer,
 )
 from parsec.api.protocol.handshake import HandshakeOrganizationExpired
 
 from tests.common import freeze_time
-from tests.backend.test_events import ping
+from tests.backend.common import ping
 from tests.fixtures import local_device_to_backend_user
 
 
@@ -21,16 +21,16 @@ async def organization_create(sock, organization_id, expiration_date=None):
     req = {"cmd": "organization_create", "organization_id": organization_id}
     if expiration_date:
         req["expiration_date"] = expiration_date
-    raw_rep = await sock.send(organization_create_serializer.req_dumps(req))
+    raw_rep = await sock.send(apiv1_organization_create_serializer.req_dumps(req))
     raw_rep = await sock.recv()
-    return organization_create_serializer.rep_loads(raw_rep)
+    return apiv1_organization_create_serializer.rep_loads(raw_rep)
 
 
 async def organization_bootstrap(
     sock, bootstrap_token, user_certificate, device_certificate, root_verify_key
 ):
     raw_rep = await sock.send(
-        organization_bootstrap_serializer.req_dumps(
+        apiv1_organization_bootstrap_serializer.req_dumps(
             {
                 "cmd": "organization_bootstrap",
                 "bootstrap_token": bootstrap_token,
@@ -41,7 +41,7 @@ async def organization_bootstrap(
         )
     )
     raw_rep = await sock.recv()
-    return organization_bootstrap_serializer.rep_loads(raw_rep)
+    return apiv1_organization_bootstrap_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
@@ -68,7 +68,7 @@ async def test_organization_recreate_and_bootstrap(
     organization_factory,
     local_device_factory,
     administration_backend_sock,
-    backend_sock_factory,
+    apiv1_backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
     rep = await organization_create(administration_backend_sock, neworg.organization_id)
@@ -85,7 +85,7 @@ async def test_organization_recreate_and_bootstrap(
     newalice = local_device_factory(org=neworg)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
-    async with backend_sock_factory(backend, neworg.organization_id) as sock:
+    async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
         # Old token is now invalid
         rep = await organization_bootstrap(
             sock,
@@ -117,7 +117,7 @@ async def test_organization_create_and_bootstrap(
     local_device_factory,
     alice,
     administration_backend_sock,
-    backend_sock_factory,
+    apiv1_backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
 
@@ -134,7 +134,7 @@ async def test_organization_create_and_bootstrap(
     newalice = local_device_factory("alice@dev1", neworg)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
-    async with backend_sock_factory(backend, neworg.organization_id) as sock:
+    async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
             bootstrap_token,
@@ -146,12 +146,12 @@ async def test_organization_create_and_bootstrap(
 
     # 3) Now our new device can connect the backend
 
-    async with backend_sock_factory(backend, newalice) as sock:
+    async with apiv1_backend_sock_factory(backend, newalice) as sock:
         await ping(sock)
 
     # 4) Make sure alice from the other organization is still working
 
-    async with backend_sock_factory(backend, alice) as sock:
+    async with apiv1_backend_sock_factory(backend, alice) as sock:
         await ping(sock)
 
 
@@ -162,7 +162,7 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
     local_device_factory,
     alice,
     administration_backend_sock,
-    backend_sock_factory,
+    apiv1_backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
 
@@ -186,7 +186,7 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
             newalice, neworg
         )
 
-        async with backend_sock_factory(backend, neworg.organization_id) as sock:
+        async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
             rep = await organization_bootstrap(
                 sock,
                 bootstrap_token,
@@ -198,22 +198,22 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
 
         # 3) Now our new device can connect the backend
 
-        async with backend_sock_factory(backend, newalice) as sock:
+        async with apiv1_backend_sock_factory(backend, newalice) as sock:
             await ping(sock)
 
         # 4) Make sure alice from the other organization is still working
 
-        async with backend_sock_factory(backend, alice) as sock:
+        async with apiv1_backend_sock_factory(backend, alice) as sock:
             await ping(sock)
 
     # 5) Now advance after the expiration
     with freeze_time("2000-01-02"):
         # Both anonymous and authenticated connections are refused
         with pytest.raises(HandshakeOrganizationExpired):
-            async with backend_sock_factory(backend, newalice):
+            async with apiv1_backend_sock_factory(backend, newalice):
                 pass
         with pytest.raises(HandshakeOrganizationExpired):
-            async with backend_sock_factory(backend, neworg.organization_id):
+            async with apiv1_backend_sock_factory(backend, neworg.organization_id):
                 pass
 
 
@@ -224,7 +224,7 @@ async def test_organization_expired_create_and_bootstrap(
     local_device_factory,
     alice,
     administration_backend_sock,
-    backend_sock_factory,
+    apiv1_backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
 
@@ -241,14 +241,14 @@ async def test_organization_expired_create_and_bootstrap(
     # 2) Bootstrap is not possible
 
     with pytest.raises(HandshakeOrganizationExpired):
-        async with backend_sock_factory(backend, neworg.organization_id):
+        async with apiv1_backend_sock_factory(backend, neworg.organization_id):
             pass
 
 
 @pytest.mark.trio
 async def test_organization_bootstrap_bad_data(
     backend_data_binder,
-    backend_sock_factory,
+    apiv1_backend_sock_factory,
     organization_factory,
     local_device_factory,
     backend,
@@ -365,11 +365,11 @@ async def test_organization_bootstrap_bad_data(
             ),
         ]
     ):
-        async with backend_sock_factory(backend, organization_id) as sock:
+        async with apiv1_backend_sock_factory(backend, organization_id) as sock:
             rep = await organization_bootstrap(sock, *params)
         assert rep["status"] == status
 
     # Finally cheap test to make sure our "good" data were really good
-    async with backend_sock_factory(backend, good_organization_id) as sock:
+    async with apiv1_backend_sock_factory(backend, good_organization_id) as sock:
         rep = await organization_bootstrap(sock, good_bootstrap_token, good_cu, good_cd, good_rvk)
     assert rep["status"] == "ok"

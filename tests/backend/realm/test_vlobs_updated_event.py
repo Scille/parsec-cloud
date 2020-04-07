@@ -7,7 +7,7 @@ from pendulum import Pendulum
 from parsec.api.protocol import RealmRole
 from parsec.backend.realm import RealmGrantedRole
 
-from tests.backend.test_events import events_subscribe, events_listen_nowait
+from tests.backend.common import events_subscribe, events_listen_nowait
 
 
 NOW = Pendulum(2000, 1, 1)

@@ -8,12 +8,14 @@ from parsec.api.protocol import OrganizationID
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.core.types import BackendAddr, BackendOrganizationBootstrapAddr
-from parsec.core.backend_connection import backend_administration_cmds_factory
+from parsec.core.backend_connection import apiv1_backend_administration_cmds_factory
 
 
 async def _create_organization(debug, name, backend_addr, administration_token, expiration_date):
     async with spinner("Creating organization in backend"):
-        async with backend_administration_cmds_factory(backend_addr, administration_token) as cmds:
+        async with apiv1_backend_administration_cmds_factory(
+            backend_addr, administration_token
+        ) as cmds:
             rep = await cmds.organization_create(name, expiration_date)
             if rep["status"] != "ok":
                 raise RuntimeError(f"Backend refused to create organization: {rep}")

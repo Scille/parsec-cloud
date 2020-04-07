@@ -4,7 +4,7 @@ from uuid import UUID
 
 from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.api.protocol import block_create_serializer, block_read_serializer
-from parsec.backend.utils import catch_protocol_errors
+from parsec.backend.utils import catch_protocol_errors, api
 
 
 class BlockError(Exception):
@@ -32,6 +32,7 @@ class BlockInMaintenanceError(BlockError):
 
 
 class BaseBlockComponent:
+    @api("block_read")
     @catch_protocol_errors
     async def api_block_read(self, client_ctx, msg):
         msg = block_read_serializer.req_load(msg)
@@ -53,6 +54,7 @@ class BaseBlockComponent:
 
         return block_read_serializer.rep_dump({"status": "ok", "block": block})
 
+    @api("block_create")
     @catch_protocol_errors
     async def api_block_create(self, client_ctx, msg):
         msg = block_create_serializer.req_load(msg)

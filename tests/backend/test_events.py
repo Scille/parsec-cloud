@@ -2,55 +2,8 @@
 
 import pytest
 import trio
-from uuid import uuid4
-from async_generator import asynccontextmanager
 
-from parsec.api.protocol import (
-    events_subscribe_serializer,
-    events_listen_serializer,
-    ping_serializer,
-)
-
-
-BEACON_ID = uuid4()
-
-
-async def events_subscribe(sock):
-    await sock.send(events_subscribe_serializer.req_dumps({"cmd": "events_subscribe"}))
-    raw_rep = await sock.recv()
-    rep = events_subscribe_serializer.rep_loads(raw_rep)
-    assert rep == {"status": "ok"}
-
-
-async def events_listen_nowait(sock):
-    await sock.send(events_listen_serializer.req_dumps({"cmd": "events_listen", "wait": False}))
-    raw_rep = await sock.recv()
-    return events_listen_serializer.rep_loads(raw_rep)
-
-
-class Listen:
-    def __init__(self):
-        self.rep = None
-
-
-@asynccontextmanager
-async def events_listen(sock):
-    await sock.send(events_listen_serializer.req_dumps({"cmd": "events_listen"}))
-    listen = Listen()
-
-    yield listen
-
-    with trio.fail_after(1):
-        raw_rep = await sock.recv()
-    listen.rep = events_listen_serializer.rep_loads(raw_rep)
-
-
-async def ping(sock, subject="foo"):
-    raw_req = ping_serializer.req_dumps({"cmd": "ping", "ping": subject})
-    await sock.send(raw_req)
-    raw_rep = await sock.recv()
-    rep = ping_serializer.rep_loads(raw_rep)
-    assert rep == {"status": "ok", "pong": subject}
+from tests.backend.common import events_subscribe, events_listen, events_listen_nowait, ping
 
 
 @pytest.mark.trio

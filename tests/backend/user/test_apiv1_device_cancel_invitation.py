@@ -7,8 +7,8 @@ import trio
 from parsec.backend.user import DeviceInvitation
 from parsec.api.protocol import (
     DeviceID,
-    device_cancel_invitation_serializer,
-    device_claim_serializer,
+    apiv1_device_cancel_invitation_serializer,
+    apiv1_device_claim_serializer,
 )
 
 from tests.common import freeze_time
@@ -25,33 +25,35 @@ async def alice_nd_invitation(backend, alice):
 
 async def device_cancel_invitation(sock, **kwargs):
     await sock.send(
-        device_cancel_invitation_serializer.req_dumps({"cmd": "device_cancel_invitation", **kwargs})
+        apiv1_device_cancel_invitation_serializer.req_dumps(
+            {"cmd": "device_cancel_invitation", **kwargs}
+        )
     )
     raw_rep = await sock.recv()
-    rep = device_cancel_invitation_serializer.rep_loads(raw_rep)
+    rep = apiv1_device_cancel_invitation_serializer.rep_loads(raw_rep)
     return rep
 
 
 async def device_claim_cancelled_invitation(sock, **kwargs):
-    await sock.send(device_claim_serializer.req_dumps({"cmd": "device_claim", **kwargs}))
+    await sock.send(apiv1_device_claim_serializer.req_dumps({"cmd": "device_claim", **kwargs}))
     with trio.fail_after(1):
         raw_rep = await sock.recv()
-    return device_claim_serializer.rep_loads(raw_rep)
+    return apiv1_device_claim_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
 async def test_device_cancel_invitation_ok(
-    alice_backend_sock, alice_nd_invitation, anonymous_backend_sock
+    apiv1_alice_backend_sock, alice_nd_invitation, apiv1_anonymous_backend_sock
 ):
     rep = await device_cancel_invitation(
-        alice_backend_sock, invited_device_name=alice_nd_invitation.device_id.device_name
+        apiv1_alice_backend_sock, invited_device_name=alice_nd_invitation.device_id.device_name
     )
     assert rep == {"status": "ok"}
 
     # Try to use the cancelled invitation
     with freeze_time(alice_nd_invitation.created_on):
         rep = await device_claim_cancelled_invitation(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         )
@@ -59,8 +61,8 @@ async def test_device_cancel_invitation_ok(
 
 
 @pytest.mark.trio
-async def test_device_cancel_invitation_unknown(alice_backend_sock, alice):
-    rep = await device_cancel_invitation(alice_backend_sock, invited_device_name="foo")
+async def test_device_cancel_invitation_unknown(apiv1_alice_backend_sock, alice):
+    rep = await device_cancel_invitation(apiv1_alice_backend_sock, invited_device_name="foo")
     assert rep == {"status": "ok"}
 
 

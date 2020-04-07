@@ -1,7 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.api.protocol import (
+    RealmRole,
+    MaintenanceType,
+    InvitationType,
+    InvitationStatus,
+    InvitationDeletedReason,
+)
+from parsec.backend.invite import ConduitState
 from parsec.backend.postgresql.utils import Query, fn_exists, Table
-from parsec.backend.realm import RealmRole, MaintenanceType
 
 
 ### Organization ###
@@ -155,6 +162,18 @@ def q_insert_user_invitation(
         # .do_update("creator", "excluded.creator")
         # .do_update("created_on", "excluded.created_on")
     )
+
+
+### Invitation ###
+
+
+STR_TO_INVITATION_TYPE = {x.value: x for x in InvitationType}
+STR_TO_INVITATION_STATUS = {x.value: x for x in InvitationStatus}
+STR_TO_INVITATION_DELETED_REASON = {x.value: x for x in InvitationDeletedReason}
+STR_TO_INVITATION_CONDUIT_STATE = {x.value: x for x in ConduitState}
+
+
+t_invitation = Table("invitation")
 
 
 ### Message ###

@@ -177,11 +177,20 @@ class SpiedEventBus(EventBus):
     def __init__(self):
         super().__init__()
         self._spies = []
+        self._muted_events = set()
 
     def send(self, event, **kwargs):
+        if event in self._muted_events:
+            return
         for spy in self._spies:
             spy._on_event_cb(event, **kwargs)
         super().send(event, **kwargs)
+
+    def mute(self, event):
+        self._muted_events.add(event)
+
+    def unmute(self, event):
+        self._muted_events.discard(event)
 
     def create_spy(self):
         spy = EventBusSpy()

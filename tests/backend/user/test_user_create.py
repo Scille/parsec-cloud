@@ -5,17 +5,10 @@ import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
-from parsec.api.protocol import user_create_serializer, DeviceID
+from parsec.api.protocol import DeviceID
 
 from tests.common import freeze_time
-from tests.backend.user.test_user_get import user_get
-
-
-async def user_create(sock, **kwargs):
-    await sock.send(user_create_serializer.req_dumps({"cmd": "user_create", **kwargs}))
-    raw_rep = await sock.recv()
-    rep = user_create_serializer.rep_loads(raw_rep)
-    return rep
+from tests.backend.common import user_get, user_create
 
 
 @pytest.mark.trio

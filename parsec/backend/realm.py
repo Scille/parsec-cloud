@@ -20,7 +20,7 @@ from parsec.api.protocol import (
     realm_finish_reencryption_maintenance_serializer,
 )
 from parsec.api.data import DataError, RealmRoleCertificateContent
-from parsec.backend.utils import catch_protocol_errors
+from parsec.backend.utils import catch_protocol_errors, api
 
 
 class RealmError(Exception):
@@ -92,6 +92,7 @@ class RealmGrantedRole:
 
 
 class BaseRealmComponent:
+    @api("realm_create")
     @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
         msg = realm_create_serializer.req_load(msg)
@@ -146,6 +147,7 @@ class BaseRealmComponent:
 
         return realm_create_serializer.rep_dump({"status": "ok"})
 
+    @api("realm_status")
     @catch_protocol_errors
     async def api_realm_status(self, client_ctx, msg):
         msg = realm_status_serializer.req_load(msg)
@@ -172,6 +174,7 @@ class BaseRealmComponent:
             }
         )
 
+    @api("realm_get_role_certificates")
     @catch_protocol_errors
     async def api_realm_get_role_certificates(self, client_ctx, msg):
         msg = realm_get_role_certificates_serializer.req_load(msg)
@@ -192,6 +195,7 @@ class BaseRealmComponent:
             {"status": "ok", "certificates": certificates}
         )
 
+    @api("realm_update_roles")
     @catch_protocol_errors
     async def api_realm_update_roles(self, client_ctx, msg):
         msg = realm_update_roles_serializer.req_load(msg)
@@ -251,6 +255,7 @@ class BaseRealmComponent:
 
         return realm_update_roles_serializer.rep_dump({"status": "ok"})
 
+    @api("realm_start_reencryption_maintenance")
     @catch_protocol_errors
     async def api_realm_start_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_start_reencryption_maintenance_serializer.req_load(msg)
@@ -296,6 +301,7 @@ class BaseRealmComponent:
 
         return realm_start_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
 
+    @api("realm_finish_reencryption_maintenance")
     @catch_protocol_errors
     async def api_realm_finish_reencryption_maintenance(self, client_ctx, msg):
         msg = realm_finish_reencryption_maintenance_serializer.req_load(msg)

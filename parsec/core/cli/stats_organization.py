@@ -8,11 +8,13 @@ from parsec.api.protocol import OrganizationID
 from parsec.logging import configure_logging
 from parsec.cli_utils import cli_exception_handler
 from parsec.core.types import BackendAddr
-from parsec.core.backend_connection import backend_administration_cmds_factory
+from parsec.core.backend_connection import apiv1_backend_administration_cmds_factory
 
 
 async def _stats_organization(name, backend_addr, administration_token):
-    async with backend_administration_cmds_factory(backend_addr, administration_token) as cmds:
+    async with apiv1_backend_administration_cmds_factory(
+        backend_addr, administration_token
+    ) as cmds:
         stats = await cmds.organization_stats(name)
     for key, value in stats.items():
         click.echo(f"{key}: {value}")

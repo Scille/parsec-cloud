@@ -2,33 +2,85 @@
 
 import pytest
 
-from parsec.api.protocol.base import packb, unpackb
-from parsec.api.protocol import ADMINISTRATION_CMDS, AUTHENTICATED_CMDS, ANONYMOUS_CMDS
+from parsec.api.protocol import (
+    packb,
+    unpackb,
+    HandshakeInvitedOperation,
+    AUTHENTICATED_CMDS,
+    INVITED_CMDS,
+    APIV1_ADMINISTRATION_CMDS,
+    APIV1_AUTHENTICATED_CMDS,
+    APIV1_ANONYMOUS_CMDS,
+)
+from parsec.backend.invite import DeviceInvitation
 
 
 async def check_forbidden_cmds(backend_sock, cmds):
     for cmd in cmds:
-        await backend_sock.send(packb({"cmd": cmd}))
+        if cmd == "events_listen":
+            # Must pass wait option otherwise backend will hang forever
+            await backend_sock.send(packb({"cmd": cmd, "wait": False}))
+        else:
+            await backend_sock.send(packb({"cmd": cmd}))
         rep = await backend_sock.recv()
         assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}
 
 
-@pytest.mark.trio
-async def test_administration_has_limited_access(administration_backend_sock):
-    await check_forbidden_cmds(
-        administration_backend_sock, (ANONYMOUS_CMDS | AUTHENTICATED_CMDS) - ADMINISTRATION_CMDS
-    )
+async def check_allowed_cmds(backend_sock, cmds):
+    for cmd in cmds:
+        if cmd == "events_listen":
+            # Must pass wait option otherwise backend will hang forever
+            await backend_sock.send(packb({"cmd": cmd, "wait": False}))
+        else:
+            await backend_sock.send(packb({"cmd": cmd}))
+        rep = await backend_sock.recv()
+        assert unpackb(rep)["status"] != "unknown_command"
 
 
 @pytest.mark.trio
-async def test_anonymous_has_limited_access(anonymous_backend_sock):
-    await check_forbidden_cmds(
-        anonymous_backend_sock, (ADMINISTRATION_CMDS | AUTHENTICATED_CMDS) - ANONYMOUS_CMDS
+async def test_invited_has_limited_access(backend, backend_invited_sock_factory, alice):
+    invitation = DeviceInvitation(
+        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
     )
+    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
+    async with backend_invited_sock_factory(
+        backend,
+        organization_id=alice.organization_id,
+        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        token=invitation.token,
+    ) as sock:
+        await check_forbidden_cmds(sock, AUTHENTICATED_CMDS - INVITED_CMDS)
+        await check_allowed_cmds(sock, INVITED_CMDS)
 
 
 @pytest.mark.trio
 async def test_authenticated_has_limited_access(alice_backend_sock):
+    await check_forbidden_cmds(alice_backend_sock, INVITED_CMDS - AUTHENTICATED_CMDS)
+    await check_allowed_cmds(alice_backend_sock, AUTHENTICATED_CMDS)
+
+
+@pytest.mark.trio
+async def test_apiv1_administration_has_limited_access(administration_backend_sock):
     await check_forbidden_cmds(
-        alice_backend_sock, (ADMINISTRATION_CMDS | ANONYMOUS_CMDS) - AUTHENTICATED_CMDS
+        administration_backend_sock,
+        (APIV1_ANONYMOUS_CMDS | APIV1_AUTHENTICATED_CMDS) - APIV1_ADMINISTRATION_CMDS,
     )
+    await check_allowed_cmds(administration_backend_sock, APIV1_ADMINISTRATION_CMDS)
+
+
+@pytest.mark.trio
+async def test_apiv1_anonymous_has_limited_access(apiv1_anonymous_backend_sock):
+    await check_forbidden_cmds(
+        apiv1_anonymous_backend_sock,
+        (APIV1_ADMINISTRATION_CMDS | APIV1_AUTHENTICATED_CMDS) - APIV1_ANONYMOUS_CMDS,
+    )
+    await check_allowed_cmds(apiv1_anonymous_backend_sock, APIV1_ANONYMOUS_CMDS)
+
+
+@pytest.mark.trio
+async def test_apiv1_authenticated_has_limited_access(apiv1_alice_backend_sock):
+    await check_forbidden_cmds(
+        apiv1_alice_backend_sock,
+        (APIV1_ADMINISTRATION_CMDS | APIV1_ANONYMOUS_CMDS) - APIV1_AUTHENTICATED_CMDS,
+    )
+    await check_allowed_cmds(apiv1_alice_backend_sock, APIV1_AUTHENTICATED_CMDS)

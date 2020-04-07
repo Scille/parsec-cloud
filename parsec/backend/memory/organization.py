@@ -28,7 +28,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._vlob_component = None
         self._block_component = None
         self._organizations = {}
-        self._organizations_invitations = {}
 
     def register_components(
         self,
@@ -97,7 +96,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             if vlob_organization_id == id:
                 data_size += blockmeta.size
 
-        users = len(self._user_component._organizations[id]._users)
+        users = len(self._user_component._organizations[id].users)
 
         return OrganizationStats(users=users, data_size=data_size, metadata_size=metadata_size)
 

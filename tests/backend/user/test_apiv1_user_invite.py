@@ -4,22 +4,22 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.api.protocol import user_invite_serializer, UserID
+from parsec.api.protocol import apiv1_user_invite_serializer, UserID
 from parsec.backend.user import PEER_EVENT_MAX_WAIT, UserInvitation
 
 
 @asynccontextmanager
 async def user_invite(sock, **kwargs):
     reps = []
-    await sock.send(user_invite_serializer.req_dumps({"cmd": "user_invite", **kwargs}))
+    await sock.send(apiv1_user_invite_serializer.req_dumps({"cmd": "user_invite", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = user_invite_serializer.rep_loads(raw_rep)
+    rep = apiv1_user_invite_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 
 @pytest.mark.trio
-async def test_user_invite(monkeypatch, backend, alice_backend_sock, alice, mallory):
+async def test_user_invite(monkeypatch, backend, apiv1_alice_backend_sock, alice, mallory):
     dummy_user_id = UserID("dummy")
     await backend.user.create_user_invitation(
         alice.organization_id, UserInvitation(dummy_user_id, alice.device_id)
@@ -37,7 +37,7 @@ async def test_user_invite(monkeypatch, backend, alice_backend_sock, alice, mall
     monkeypatch.setattr(backend.user, "create_user_invitation", _mocked_create_user_invitation)
 
     with trio.fail_after(1):
-        async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+        async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Wait for invitation to be created before fetching it !
             await user_invitation_created.wait()
@@ -55,17 +55,17 @@ async def test_user_invite(monkeypatch, backend, alice_backend_sock, alice, mall
 
 
 @pytest.mark.trio
-async def test_user_invite_already_exists(backend, alice_backend_sock, alice, bob):
+async def test_user_invite_already_exists(backend, apiv1_alice_backend_sock, alice, bob):
     with trio.fail_after(1):
-        async with user_invite(alice_backend_sock, user_id=bob.user_id) as prep:
+        async with user_invite(apiv1_alice_backend_sock, user_id=bob.user_id) as prep:
             pass
     assert prep[0] == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
 
 
 @pytest.mark.trio
-async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alice, mallory):
+async def test_user_invite_timeout(mock_clock, backend, apiv1_alice_backend_sock, alice, mallory):
     with backend.event_bus.listen() as spy:
-        async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+        async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep:
 
             await spy.wait_with_timeout("event.connected", {"event_name": "user.claimed"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
@@ -77,22 +77,22 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
 
 
 @pytest.mark.trio
-async def test_user_invite_not_admin(bob_backend_sock, mallory):
+async def test_user_invite_not_admin(apiv1_bob_backend_sock, mallory):
     with trio.fail_after(1):
-        async with user_invite(bob_backend_sock, user_id=mallory.user_id) as prep:
+        async with user_invite(apiv1_bob_backend_sock, user_id=mallory.user_id) as prep:
             pass
     assert prep[0] == {"status": "not_allowed", "reason": "User `bob` is not admin"}
 
 
 @pytest.mark.trio
 async def test_concurrent_user_invite(
-    backend, alice_backend_sock, adam_backend_sock, alice, adam, mallory
+    backend, apiv1_alice_backend_sock, apiv1_adam_backend_sock, alice, adam, mallory
 ):
     with backend.event_bus.listen() as spy, trio.fail_after(1):
-        async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep1:
+        async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep1:
 
             await spy.wait("event.connected", {"event_name": "user.claimed"})
-            async with user_invite(adam_backend_sock, user_id=mallory.user_id) as prep2:
+            async with user_invite(apiv1_adam_backend_sock, user_id=mallory.user_id) as prep2:
 
                 spy.clear()
                 await spy.wait("event.connected", {"event_name": "user.claimed"})
@@ -110,11 +110,11 @@ async def test_concurrent_user_invite(
 
 @pytest.mark.trio
 async def test_user_invite_same_name_different_organizations(
-    backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, mallory
+    backend, apiv1_alice_backend_sock, apiv1_otheralice_backend_sock, alice, otheralice, mallory
 ):
     # Mallory invitation from first organization
     with backend.event_bus.listen() as spy, trio.fail_after(1):
-        async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+        async with user_invite(apiv1_alice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
             await spy.wait("event.connected", {"event_name": "user.claimed"})
@@ -136,7 +136,7 @@ async def test_user_invite_same_name_different_organizations(
 
     # Mallory invitation from second organization
     with backend.event_bus.listen() as spy, trio.fail_after(1):
-        async with user_invite(otheralice_backend_sock, user_id=mallory.user_id) as prep:
+        async with user_invite(apiv1_otheralice_backend_sock, user_id=mallory.user_id) as prep:
 
             # Waiting for user.claimed event
             await spy.wait("event.connected", {"event_name": "user.claimed"})

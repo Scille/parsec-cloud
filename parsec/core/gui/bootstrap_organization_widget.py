@@ -12,7 +12,7 @@ from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import (
-    backend_anonymous_cmds_factory,
+    apiv1_backend_anonymous_cmds_factory,
     BackendNotAvailable,
     BackendConnectionRefused,
     BackendConnectionError,
@@ -75,7 +75,7 @@ async def _do_bootstrap_organization(
     ).dump_and_sign(root_signing_key)
 
     try:
-        async with backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(bootstrap_addr) as cmds:
             rep = await cmds.organization_bootstrap(
                 bootstrap_addr.organization_id,
                 bootstrap_addr.token,

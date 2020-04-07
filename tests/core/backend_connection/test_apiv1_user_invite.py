@@ -4,23 +4,23 @@ import pytest
 import trio
 import pendulum
 
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserClaimContent
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, APIV1_UserClaimContent
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
-    backend_anonymous_cmds_factory,
+    apiv1_backend_anonymous_cmds_factory,
 )
 
 
 @pytest.mark.trio
 async def test_user_invite_then_claim_ok(
-    backend, running_backend, alice, alice_backend_cmds, mallory
+    backend, running_backend, alice, apiv1_alice_backend_cmds, mallory
 ):
     token = "424242"
 
     async def _alice_invite():
-        rep = await alice_backend_cmds.user_invite(mallory.user_id)
+        rep = await apiv1_alice_backend_cmds.user_invite(mallory.user_id)
         assert rep["status"] == "ok"
-        claim = UserClaimContent.decrypt_and_load_for(
+        claim = APIV1_UserClaimContent.decrypt_and_load_for(
             rep["encrypted_claim"], recipient_privkey=alice.private_key
         )
 
@@ -41,18 +41,18 @@ async def test_user_invite_then_claim_ok(
             verify_key=claim.verify_key,
         ).dump_and_sign(alice.signing_key)
         with trio.fail_after(1):
-            rep = await alice_backend_cmds.user_create(user_certificate, device_certificate)
+            rep = await apiv1_alice_backend_cmds.user_create(user_certificate, device_certificate)
             assert rep["status"] == "ok"
 
     async def _mallory_claim():
-        async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
             rep = await cmds.user_get_invitation_creator(mallory.user_id)
             assert rep["trustchain"] == {"devices": [], "revoked_users": [], "users": []}
             creator = UserCertificateContent.unsecure_load(rep["user_certificate"])
             creator_device = DeviceCertificateContent.unsecure_load(rep["device_certificate"])
             assert creator_device.device_id.user_id == creator.user_id
 
-            encrypted_claim = UserClaimContent(
+            encrypted_claim = APIV1_UserClaimContent(
                 device_id=mallory.device_id,
                 token=token,
                 public_key=mallory.public_key,

@@ -2,22 +2,22 @@
 
 import pytest
 
-from parsec.api.protocol import packb, user_find_serializer
+from parsec.api.protocol import packb, apiv1_user_find_serializer
 
 from tests.common import freeze_time
 
 
 async def user_find(sock, **kwargs):
-    await sock.send(user_find_serializer.req_dumps({"cmd": "user_find", **kwargs}))
+    await sock.send(apiv1_user_find_serializer.req_dumps({"cmd": "user_find", **kwargs}))
     raw_rep = await sock.recv()
-    return user_find_serializer.rep_loads(raw_rep)
+    return apiv1_user_find_serializer.rep_loads(raw_rep)
 
 
 @pytest.fixture
 async def access_testbed(
     backend_factory,
     backend_data_binder_factory,
-    backend_sock_factory,
+    apiv1_backend_sock_factory,
     organization_factory,
     local_device_factory,
 ):
@@ -28,18 +28,8 @@ async def access_testbed(
         with freeze_time("2000-01-01"):
             await binder.bind_organization(org, device)
 
-        async with backend_sock_factory(backend, device) as sock:
+        async with apiv1_backend_sock_factory(backend, device) as sock:
             yield binder, org, device, sock
-
-
-@pytest.mark.trio
-async def test_api_user_find_other_organization(
-    backend, alice, sock_from_other_organization_factory
-):
-    # Organizations should be isolated
-    async with sock_from_other_organization_factory(backend) as sock:
-        rep = await user_find(sock, query=alice.user_id)
-        assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
 
 
 @pytest.mark.trio
@@ -128,5 +118,5 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
     for bad in [{"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
         await sock.send(packb({"cmd": "user_find", **bad}))
         raw_rep = await sock.recv()
-        rep = user_find_serializer.rep_loads(raw_rep)
+        rep = apiv1_user_find_serializer.rep_loads(raw_rep)
         assert rep["status"] == "bad_message"

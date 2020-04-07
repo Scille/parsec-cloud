@@ -11,6 +11,7 @@ from parsec.backend.events import EventsComponent
 from parsec.backend.memory.organization import MemoryOrganizationComponent
 from parsec.backend.memory.ping import MemoryPingComponent
 from parsec.backend.memory.user import MemoryUserComponent
+from parsec.backend.memory.invite import MemoryInviteComponent
 from parsec.backend.memory.message import MemoryMessageComponent
 from parsec.backend.memory.realm import MemoryRealmComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
@@ -31,6 +32,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
 
     organization = MemoryOrganizationComponent()
     user = MemoryUserComponent(_send_event, event_bus)
+    invite = MemoryInviteComponent(_send_event, event_bus)
     message = MemoryMessageComponent(_send_event)
     realm = MemoryRealmComponent(_send_event)
     vlob = MemoryVlobComponent(_send_event)
@@ -43,6 +45,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
         "events": events,
         "organization": organization,
         "user": user,
+        "invite": invite,
         "message": message,
         "realm": realm,
         "vlob": vlob,
@@ -50,7 +53,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
         "block": block,
         "blockstore": blockstore,
     }
-    for component in (organization, user, message, realm, vlob, ping, block):
+    for component in (organization, user, invite, message, realm, vlob, ping, block):
         component.register_components(**components)
 
     async with trio.open_service_nursery() as nursery:

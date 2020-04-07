@@ -9,15 +9,16 @@ from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
 from tests.backend.test_message import message_get
-from tests.backend.conftest import (
+from tests.backend.common import (
     realm_status,
     realm_start_reencryption_maintenance,
     realm_finish_reencryption_maintenance,
     vlob_read,
     vlob_maintenance_get_reencryption_batch,
     vlob_maintenance_save_reencryption_batch,
+    events_subscribe,
+    events_listen_nowait,
 )
-from tests.backend.test_events import events_subscribe, events_listen_nowait
 
 
 @pytest.mark.trio

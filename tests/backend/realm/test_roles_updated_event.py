@@ -8,7 +8,7 @@ from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
-from tests.backend.conftest import realm_create, realm_update_roles
+from tests.backend.common import realm_create, realm_update_roles
 
 
 @pytest.mark.trio
