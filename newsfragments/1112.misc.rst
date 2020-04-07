@@ -1,0 +1,2 @@
+Update the windows installer to be less verbose.
+In particular, the Winfsp installation becomes silent.
