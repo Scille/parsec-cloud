@@ -122,13 +122,11 @@ Function .onInit
     /SD IDOK IDOK uninst
     Abort
 
-    ;Run the uninstaller
+    ;Run the uninstaller sequentially and silently
+    ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
     uninst:
       ClearErrors
-      IfSilent +3
-      Exec $R0
-      Goto +2
-      Exec "$R0 /S"
+      ExecWait '"$R0" /S _?=$INSTDIR'
     done:
 
 FunctionEnd
