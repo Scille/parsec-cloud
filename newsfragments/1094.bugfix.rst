@@ -1,0 +1,1 @@
+Fix forbidden error during backend startup when some custom S3 providers

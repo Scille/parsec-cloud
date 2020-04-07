@@ -81,7 +81,7 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools twine
+      pip install -U wheel pip setuptools
       sudo apt-get install \
         postgresql-$(postgresql.version) \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -159,7 +159,7 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools twine
+      pip install -U wheel pip setuptools
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
