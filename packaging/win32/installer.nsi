@@ -234,7 +234,9 @@ SectionEnd
 !macro InstallWinFSP
     SetOutPath "$TEMP"
     File ${WINFSP_INSTALLER}
-    ExecWait "msiexec /i ${WINFSP_INSTALLER}"
+    ; Use /qn to for silent installation
+    ; Use a very high installation level to make sure it runs till the end
+    ExecWait "msiexec /i ${WINFSP_INSTALLER} /qn INSTALLLEVEL=1000"
     Delete ${WINFSP_INSTALLER}
 !macroend
 
