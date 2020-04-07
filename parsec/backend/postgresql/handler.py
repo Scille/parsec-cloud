@@ -1,21 +1,121 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+import datetime
 import triopg
-from triopg import UniqueViolationError
+import collections
+from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
 from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
 from importlib_resources import read_text
 
+
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task
 from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
-
+from parsec.backend.postgresql import migrations
 
 logger = get_logger()
+
+
+async def migrate_db(url: str, migration_files: list, dry_run: bool) -> None:
+    """
+    Returns: A result dict
+    Raises:
+        triopg.exceptions.PostgresError
+    """
+    async with triopg.connect(url) as conn:
+        return await _migrate_db(conn, migration_files, dry_run)
+
+
+async def _migrate_db(conn, migration_files, dry_run):
+
+    errors = []
+    allready_applied = []
+    new_apply = []
+    to_apply = []
+    rows = []
+
+    idx_limit, error = await _idx_limit(conn, migration_files)
+    if not error:
+        for idx, migration in enumerate(migration_files, 1):
+            if idx <= idx_limit:
+                allready_applied.append(migration)
+            else:
+                if not dry_run:
+                    error = await _apply_migration(conn, migration)
+                    if error:
+                        errors.append(error)
+                        break
+                    else:
+                        new_apply.append(migration)
+                        rows.append((migration, datetime.datetime.utcnow()))
+                else:
+                    to_apply.append(migration)
+
+        if rows:
+            statement = "INSERT INTO migration (name, applied) VALUES ($1, $2)"
+            await conn.executemany(statement, rows)
+
+    return collections.OrderedDict(
+        (
+            ("already_applied", allready_applied),
+            ("new_apply", new_apply),
+            ("to_apply", to_apply),
+            ("errors", errors),
+        )
+    )
+
+
+async def _apply_migration(conn, migration_file):
+    async with conn.transaction():
+        query = read_text(migrations, f"{migration_file}")
+        error = None
+        if not query:
+            error = (migration_file, "Empty migration file")
+        else:
+            try:
+                await conn.execute(query)
+            except PostgresError as e:
+                error = (migration_file, e.message)
+    return error
+
+
+async def _last_migration_row(conn):
+    query = """
+        SELECT name FROM migration ORDER BY applied desc LIMIT 1
+    """
+    return await conn.fetchval(query)
+
+
+async def _idx_limit(conn, migration_files):
+    idx_limit = None
+    error = None
+    try:
+        last_migration_row = await _last_migration_row(conn)
+    except UndefinedTableError:
+        idx_limit = 0
+    else:
+        if last_migration_row:
+            idx_limit, error = _last_applied_migration_file_idx(migration_files, last_migration_row)
+        else:
+            idx_limit = 0
+
+    return idx_limit, error
+
+
+def _last_applied_migration_file_idx(migration_files, last_applied_migration):
+    idx = None
+    error = None
+    try:
+        idx = migration_files.index(last_applied_migration) + 1
+    except ValueError:
+        error = ("migrations", "Inconsistent package")
+
+    return idx, error
 
 
 async def init_db(url: str) -> None:
