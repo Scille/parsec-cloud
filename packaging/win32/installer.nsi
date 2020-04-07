@@ -122,13 +122,11 @@ Function .onInit
     /SD IDOK IDOK uninst
     Abort
 
-    ;Run the uninstaller
+    ;Run the uninstaller sequentially and silently
+    ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
     uninst:
       ClearErrors
-      IfSilent +3
-      Exec $R0
-      Goto +2
-      Exec "$R0 /S"
+      ExecWait '"$R0" /S _?=$INSTDIR'
     done:
 
 FunctionEnd
@@ -234,7 +232,9 @@ SectionEnd
 !macro InstallWinFSP
     SetOutPath "$TEMP"
     File ${WINFSP_INSTALLER}
-    ExecWait "msiexec /i ${WINFSP_INSTALLER}"
+    ; Use /qn to for silent installation
+    ; Use a very high installation level to make sure it runs till the end
+    ExecWait "msiexec /i ${WINFSP_INSTALLER} /qn INSTALLLEVEL=1000"
     Delete ${WINFSP_INSTALLER}
 !macroend
 
