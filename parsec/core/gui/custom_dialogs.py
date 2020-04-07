@@ -154,7 +154,7 @@ def get_text_input(
 
 
 class QuestionWidget(QWidget, Ui_QuestionWidget):
-    def __init__(self, message, button_texts, radio_mode):
+    def __init__(self, message, button_texts, radio_mode=False):
         super().__init__()
         self.setupUi(self)
         self.status = None

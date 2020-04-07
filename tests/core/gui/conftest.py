@@ -231,7 +231,7 @@ def autoclose_dialog(monkeypatch):
 
 
 @pytest.fixture
-def gui_factory(qtbot, qt_thread_gateway, core_config):
+def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
     windows = []
 
     async def _gui_factory(event_bus=None, core_config=core_config, start_arg=None):
@@ -253,6 +253,8 @@ def gui_factory(qtbot, qt_thread_gateway, core_config):
             # closing confirmation prompt
 
             switch_language(core_config, "en")
+            monkeypatch.setattr("parsec.core.gui.main_window.list_available_devices",
+                                lambda *args, **kwargs: (['a']))
             main_w = MainWindow(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )

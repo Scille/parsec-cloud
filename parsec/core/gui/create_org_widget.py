@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 from structlog import get_logger
 import trio
 import json
@@ -23,12 +24,11 @@ from parsec.core.gui.ui.create_org_second_page_widget import Ui_CreateOrgSecondP
 
 logger = get_logger()
 
-API_URL = "http://localhost:5000/api/quickjoin"
-
 
 async def _do_api_request(email, organization_id):
     data = json.dumps({"email": email, "organization_id": organization_id}).encode("utf-8")
-    req = Request(API_URL, method="POST", data=data, headers={"Content-Type": "application/json"})
+    url = os.environ.get("BOOTSTRAP_API_URL", "https://bms.parsec.cloud/api/quickjoin")
+    req = Request(url, method="POST", data=data, headers={"Content-Type": "application/json"})
     try:
         response = await trio.to_thread.run_sync(lambda: urlopen(req))
         if response.status != 200:
@@ -42,10 +42,10 @@ async def _do_api_request(email, organization_id):
                 content["account_id"],
                 BackendOrganizationBootstrapAddr.from_url(content["bootstrap_link"]),
             )
-        except (TypeError, KeyError):
-            raise JobResultError("invalid_response")
-    except (HTTPException, URLError):
-        raise JobResultError("offline")
+        except (TypeError, KeyError) as exc:
+            raise JobResultError("invalid_response", exc=exc)
+    except (HTTPException, URLError) as exc:
+        raise JobResultError("offline", exc=exc)
 
 
 class CreateOrgFirstPageWidget(QWidget, Ui_CreateOrgFirstPageWidget):
@@ -132,7 +132,10 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
             errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
         else:
             errmsg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
-        show_error(self, errmsg, exception=self.req_job.exc)
+        exc = self.req_job.exc
+        if exc.params.get("exc"):
+            exc = exc.params.get("exc")
+        show_error(self, errmsg, exception=exc)
         self.req_job = None
         self.button_validate.setEnabled(True)
         self.button_previous.show()
