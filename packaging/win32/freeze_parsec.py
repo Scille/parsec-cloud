@@ -57,12 +57,12 @@ def main(parsec_source):
     if not TOOLS_VENV_DIR.is_dir():
         print(f"### Create tool virtualenv ###")
         run(f"python -m venv {TOOLS_VENV_DIR}")
-        run(f"{ TOOLS_VENV_DIR / 'Scripts/pip' } install wheel")
+        run(f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip install wheel")
 
     if not WHEELS_DIR.is_dir():
         print(f"### Generate wheels from Parsec&dependencies ###")
         run(
-            f"{ TOOLS_VENV_DIR / 'Scripts/pip' } wheel {parsec_source}[core] --wheel-dir {WHEELS_DIR}"
+            f"{ TOOLS_VENV_DIR / 'Scripts/python' } -m pip wheel {parsec_source}[core] --wheel-dir {WHEELS_DIR}"
         )
 
     # Now we actually generate the build target
@@ -80,7 +80,7 @@ def main(parsec_source):
     print(f"### Installing wheels in temporary virtualenv ###")
     run(f"python -m venv {build_venv_dir}")
     wheels = " ".join(map(str, WHEELS_DIR.glob("*.whl")))
-    run(f"{ build_venv_dir / 'Scripts/pip' } install {wheels}")
+    run(f"{ build_venv_dir / 'Scripts/python' } -m pip install {wheels}")
 
     # Move build virtualenv's site-packages to the build and patch imports
     print(f"### Move site-packages to embedded distribution ###")
