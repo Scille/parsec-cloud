@@ -19,22 +19,25 @@ from parsec.api.protocol import (
     UserID,
     DeviceID,
     HumanHandle,
+    HandshakeType,
+    APIV1_HandshakeType,
     user_get_serializer,
-    user_find_serializer,
+    apiv1_user_find_serializer,
     human_find_serializer,
-    user_get_invitation_creator_serializer,
-    user_invite_serializer,
-    user_claim_serializer,
-    user_cancel_invitation_serializer,
+    apiv1_user_get_invitation_creator_serializer,
+    apiv1_user_invite_serializer,
+    apiv1_user_claim_serializer,
+    apiv1_user_cancel_invitation_serializer,
     user_create_serializer,
     user_revoke_serializer,
-    device_get_invitation_creator_serializer,
-    device_invite_serializer,
-    device_claim_serializer,
-    device_cancel_invitation_serializer,
+    apiv1_device_get_invitation_creator_serializer,
+    apiv1_device_invite_serializer,
+    apiv1_device_claim_serializer,
+    apiv1_device_cancel_invitation_serializer,
+    apiv1_device_create_serializer,
     device_create_serializer,
 )
-from parsec.backend.utils import anonymous_api, catch_protocol_errors, run_with_breathing_transport
+from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
 
 
 class UserError(Exception):
@@ -183,6 +186,7 @@ class BaseUserComponent:
 
     #### Access user API ####
 
+    @api("user_get")
     @catch_protocol_errors
     async def api_user_get(self, client_ctx, msg):
         msg = user_get_serializer.req_load(msg)
@@ -208,11 +212,12 @@ class BaseUserComponent:
             }
         )
 
+    @api("user_find", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_find(self, client_ctx, msg):
-        msg = user_find_serializer.req_load(msg)
+        msg = apiv1_user_find_serializer.req_load(msg)
         results, total = await self.find(client_ctx.organization_id, **msg)
-        return user_find_serializer.rep_dump(
+        return apiv1_user_find_serializer.rep_dump(
             {
                 "status": "ok",
                 "results": results,
@@ -222,6 +227,10 @@ class BaseUserComponent:
             }
         )
 
+    @api(
+        "human_find",
+        handshake_types=[HandshakeType.AUTHENTICATED, APIV1_HandshakeType.AUTHENTICATED],
+    )
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
         msg = human_find_serializer.req_load(msg)
@@ -238,6 +247,7 @@ class BaseUserComponent:
 
     #### User creation API ####
 
+    @api("user_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
         if not client_ctx.is_admin:
@@ -246,7 +256,7 @@ class BaseUserComponent:
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
 
-        msg = user_invite_serializer.req_load(msg)
+        msg = apiv1_user_invite_serializer.req_load(msg)
 
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
@@ -261,7 +271,7 @@ class BaseUserComponent:
                 "reason": "Timeout while waiting for new user to be claimed.",
             }
 
-        return user_invite_serializer.rep_dump(rep)
+        return apiv1_user_invite_serializer.rep_dump(rep)
 
     async def _api_user_invite(self, client_ctx, msg):
         invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
@@ -282,10 +292,10 @@ class BaseUserComponent:
 
         return {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
 
-    @anonymous_api
+    @api("user_get_invitation_creator", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
     async def api_user_get_invitation_creator(self, client_ctx, msg):
-        msg = user_get_invitation_creator_serializer.req_load(msg)
+        msg = apiv1_user_get_invitation_creator_serializer.req_load(msg)
 
         try:
             invitation = await self.get_user_invitation(
@@ -301,7 +311,7 @@ class BaseUserComponent:
         except UserNotFoundError:
             return {"status": "not_found"}
 
-        return user_get_invitation_creator_serializer.rep_dump(
+        return apiv1_user_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
                 "device_certificate": creator_device.device_certificate,
@@ -314,10 +324,10 @@ class BaseUserComponent:
             }
         )
 
-    @anonymous_api
+    @api("user_claim", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
     async def api_user_claim(self, client_ctx, msg):
-        msg = user_claim_serializer.req_load(msg)
+        msg = apiv1_user_claim_serializer.req_load(msg)
 
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
@@ -332,7 +342,7 @@ class BaseUserComponent:
                 "reason": "Timeout while waiting for invitation creator to answer.",
             }
 
-        return user_claim_serializer.rep_dump(rep)
+        return apiv1_user_claim_serializer.rep_dump(rep)
 
     async def _api_user_claim(self, client_ctx, msg):
         replied_ok = False
@@ -389,6 +399,7 @@ class BaseUserComponent:
                 "device_certificate": first_device_certificate,
             }
 
+    @api("user_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
         if not client_ctx.is_admin:
@@ -397,12 +408,13 @@ class BaseUserComponent:
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
 
-        msg = user_cancel_invitation_serializer.req_load(msg)
+        msg = apiv1_user_cancel_invitation_serializer.req_load(msg)
 
         await self.cancel_user_invitation(client_ctx.organization_id, msg["user_id"])
 
-        return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
+        return apiv1_user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
+    @api("user_create")
     @catch_protocol_errors
     async def api_user_create(self, client_ctx, msg):
         if not client_ctx.is_admin:
@@ -472,6 +484,7 @@ class BaseUserComponent:
 
         return user_create_serializer.rep_dump({"status": "ok"})
 
+    @api("user_revoke")
     @catch_protocol_errors
     async def api_user_revoke(self, client_ctx, msg):
         if not client_ctx.is_admin:
@@ -523,9 +536,10 @@ class BaseUserComponent:
 
     #### Device creation API ####
 
+    @api("device_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_device_invite(self, client_ctx, msg):
-        msg = device_invite_serializer.req_load(msg)
+        msg = apiv1_device_invite_serializer.req_load(msg)
 
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
@@ -540,7 +554,7 @@ class BaseUserComponent:
                 "reason": "Timeout while waiting for new device to be claimed.",
             }
 
-        return device_invite_serializer.rep_dump(rep)
+        return apiv1_device_invite_serializer.rep_dump(rep)
 
     async def _api_device_invite(self, client_ctx, msg):
         invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
@@ -564,10 +578,10 @@ class BaseUserComponent:
 
         return {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
 
-    @anonymous_api
+    @api("device_get_invitation_creator", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
     async def api_device_get_invitation_creator(self, client_ctx, msg):
-        msg = device_get_invitation_creator_serializer.req_load(msg)
+        msg = apiv1_device_get_invitation_creator_serializer.req_load(msg)
 
         try:
             invitation = await self.get_device_invitation(
@@ -583,7 +597,7 @@ class BaseUserComponent:
         except UserNotFoundError:
             return {"status": "not_found"}
 
-        return device_get_invitation_creator_serializer.rep_dump(
+        return apiv1_device_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
                 "device_certificate": creator_device.device_certificate,
@@ -596,10 +610,10 @@ class BaseUserComponent:
             }
         )
 
-    @anonymous_api
+    @api("device_claim", handshake_types=[APIV1_HandshakeType.ANONYMOUS])
     @catch_protocol_errors
     async def api_device_claim(self, client_ctx, msg):
-        msg = device_claim_serializer.req_load(msg)
+        msg = apiv1_device_claim_serializer.req_load(msg)
 
         # Setting the cancel scope here instead of just were we are waiting
         # for the event make testing easier.
@@ -614,7 +628,7 @@ class BaseUserComponent:
                 "reason": "Timeout while waiting for invitation creator to answer.",
             }
 
-        return device_claim_serializer.rep_dump(rep)
+        return apiv1_device_claim_serializer.rep_dump(rep)
 
     async def _api_device_claim(self, client_ctx, msg):
         replied_ok = False
@@ -658,7 +672,7 @@ class BaseUserComponent:
             return {"status": "denied", "reason": ("Invitation creator rejected us.")}
 
         else:
-            return device_claim_serializer.rep_dump(
+            return apiv1_device_claim_serializer.rep_dump(
                 {
                     "status": "ok",
                     "device_certificate": device_certificate,
@@ -666,19 +680,21 @@ class BaseUserComponent:
                 }
             )
 
+    @api("device_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_device_cancel_invitation(self, client_ctx, msg):
-        msg = device_cancel_invitation_serializer.req_load(msg)
+        msg = apiv1_device_cancel_invitation_serializer.req_load(msg)
 
         invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
 
         await self.cancel_device_invitation(client_ctx.organization_id, invited_device_id)
 
-        return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
+        return apiv1_device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
+    @api("device_create", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
-    async def api_device_create(self, client_ctx, msg):
-        msg = device_create_serializer.req_load(msg)
+    async def apiv1_device_create(self, client_ctx, msg):
+        msg = apiv1_device_create_serializer.req_load(msg)
 
         try:
             data = DeviceCertificateContent.verify_and_load(
@@ -712,6 +728,46 @@ class BaseUserComponent:
             await self.create_device(
                 client_ctx.organization_id, device, encrypted_answer=msg["encrypted_answer"]
             )
+        except UserAlreadyExistsError as exc:
+            return {"status": "already_exists", "reason": str(exc)}
+
+        return apiv1_device_create_serializer.rep_dump({"status": "ok"})
+
+    @api("device_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @catch_protocol_errors
+    async def api_device_create(self, client_ctx, msg):
+        msg = device_create_serializer.req_load(msg)
+
+        try:
+            data = DeviceCertificateContent.verify_and_load(
+                msg["device_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
+
+        except DataError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if not timestamps_in_the_ballpark(data.timestamp, pendulum.now()):
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid timestamp in certification.",
+            }
+
+        if data.device_id.user_id != client_ctx.user_id:
+            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+
+        try:
+            device = Device(
+                device_id=data.device_id,
+                device_certificate=msg["device_certificate"],
+                device_certifier=data.author,
+                created_on=data.timestamp,
+            )
+            await self.create_device(client_ctx.organization_id, device)
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
@@ -779,7 +835,7 @@ class BaseUserComponent:
 
     async def get_user_with_devices_and_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device], Trustchain]:
+    ) -> Tuple[User, Tuple[Device, ...], Trustchain]:
         """
         Raises:
             UserNotFoundError
@@ -875,7 +931,7 @@ class BaseUserComponent:
 
     async def claim_device_invitation(
         self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
-    ) -> UserInvitation:
+    ) -> DeviceInvitation:
         """
         Raises:
             UserAlreadyExistsError

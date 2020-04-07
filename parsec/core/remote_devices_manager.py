@@ -11,7 +11,7 @@ from parsec.api.data import (
 )
 from parsec.core.backend_connection import (
     BackendAuthenticatedCmds,
-    BackendAnonymousCmds,
+    APIV1_BackendAnonymousCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -161,7 +161,7 @@ class RemoteDevicesManager:
 
 
 async def get_device_invitation_creator(
-    backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
+    backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
 ) -> Tuple[
     UserCertificateContent, Optional[RevokedUserCertificateContent], DeviceCertificateContent
 ]:
@@ -203,7 +203,7 @@ async def get_device_invitation_creator(
 
 
 async def get_user_invitation_creator(
-    backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
+    backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
 ) -> Tuple[UserCertificateContent, DeviceCertificateContent]:
     """
     Raises:

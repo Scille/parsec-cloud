@@ -12,13 +12,19 @@ from parsec.core.backend_connection.authenticated import (
     BackendAuthenticatedConn,
     backend_authenticated_cmds_factory,
 )
-from parsec.core.backend_connection.annonymous import (
-    BackendAnonymousCmds,
-    backend_anonymous_cmds_factory,
+from parsec.core.backend_connection.invited import BackendInvitedCmds, backend_invited_cmds_factory
+from parsec.core.backend_connection.apiv1_authenticated import (
+    APIV1_BackendAuthenticatedCmds,
+    APIV1_BackendAuthenticatedConn,
+    apiv1_backend_authenticated_cmds_factory,
 )
-from parsec.core.backend_connection.administration import (
-    BackendAdministrationCmds,
-    backend_administration_cmds_factory,
+from parsec.core.backend_connection.apiv1_annonymous import (
+    APIV1_BackendAnonymousCmds,
+    apiv1_backend_anonymous_cmds_factory,
+)
+from parsec.core.backend_connection.apiv1_administration import (
+    APIV1_BackendAdministrationCmds,
+    apiv1_backend_administration_cmds_factory,
 )
 
 
@@ -33,10 +39,17 @@ __all__ = (
     "BackendConnStatus",
     "BackendAuthenticatedConn",
     "backend_authenticated_cmds_factory",
-    # Annonymous
-    "BackendAnonymousCmds",
-    "backend_anonymous_cmds_factory",
-    # Administration
-    "BackendAdministrationCmds",
-    "backend_administration_cmds_factory",
+    # Invited
+    "BackendInvitedCmds",
+    "backend_invited_cmds_factory",
+    # APIv1 Authenticated
+    "APIV1_BackendAuthenticatedCmds",
+    "APIV1_BackendAuthenticatedConn",
+    "apiv1_backend_authenticated_cmds_factory",
+    # APIv1 Annonymous
+    "APIV1_BackendAnonymousCmds",
+    "apiv1_backend_anonymous_cmds_factory",
+    # APIv1 Administration
+    "APIV1_BackendAdministrationCmds",
+    "apiv1_backend_administration_cmds_factory",
 )

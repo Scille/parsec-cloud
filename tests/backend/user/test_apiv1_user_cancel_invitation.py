@@ -5,7 +5,7 @@ from pendulum import Pendulum
 import trio
 
 from parsec.backend.user import UserInvitation
-from parsec.api.protocol import user_cancel_invitation_serializer, user_claim_serializer
+from parsec.api.protocol import apiv1_user_cancel_invitation_serializer, apiv1_user_claim_serializer
 
 from tests.common import freeze_time
 
@@ -19,31 +19,33 @@ async def mallory_invitation(backend, alice, mallory):
 
 async def user_cancel_invitation(sock, **kwargs):
     await sock.send(
-        user_cancel_invitation_serializer.req_dumps({"cmd": "user_cancel_invitation", **kwargs})
+        apiv1_user_cancel_invitation_serializer.req_dumps(
+            {"cmd": "user_cancel_invitation", **kwargs}
+        )
     )
     raw_rep = await sock.recv()
-    rep = user_cancel_invitation_serializer.rep_loads(raw_rep)
+    rep = apiv1_user_cancel_invitation_serializer.rep_loads(raw_rep)
     return rep
 
 
 async def user_claim_cancelled_invitation(sock, **kwargs):
-    await sock.send(user_claim_serializer.req_dumps({"cmd": "user_claim", **kwargs}))
+    await sock.send(apiv1_user_claim_serializer.req_dumps({"cmd": "user_claim", **kwargs}))
     with trio.fail_after(1):
         raw_rep = await sock.recv()
-    return user_claim_serializer.rep_loads(raw_rep)
+    return apiv1_user_claim_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
 async def test_user_cancel_invitation_ok(
-    alice_backend_sock, mallory_invitation, anonymous_backend_sock
+    apiv1_alice_backend_sock, mallory_invitation, apiv1_anonymous_backend_sock
 ):
-    rep = await user_cancel_invitation(alice_backend_sock, user_id=mallory_invitation.user_id)
+    rep = await user_cancel_invitation(apiv1_alice_backend_sock, user_id=mallory_invitation.user_id)
     assert rep == {"status": "ok"}
 
     # Try to use the cancelled invitation
     with freeze_time(mallory_invitation.created_on):
         rep = await user_claim_cancelled_invitation(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         )
@@ -51,8 +53,8 @@ async def test_user_cancel_invitation_ok(
 
 
 @pytest.mark.trio
-async def test_user_cancel_invitation_unknown(alice_backend_sock, mallory):
-    rep = await user_cancel_invitation(alice_backend_sock, user_id=mallory.user_id)
+async def test_user_cancel_invitation_unknown(apiv1_alice_backend_sock, mallory):
+    rep = await user_cancel_invitation(apiv1_alice_backend_sock, user_id=mallory.user_id)
     assert rep == {"status": "ok"}
 
 
@@ -77,7 +79,7 @@ async def test_user_cancel_invitation_other_organization(
 
 @pytest.mark.trio
 async def test_user_cancel_invitation_ok_author_not_admin(
-    bob_backend_sock, mallory_invitation, anonymous_backend_sock
+    apiv1_bob_backend_sock, mallory_invitation
 ):
-    rep = await user_cancel_invitation(bob_backend_sock, user_id=mallory_invitation.user_id)
+    rep = await user_cancel_invitation(apiv1_bob_backend_sock, user_id=mallory_invitation.user_id)
     assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}

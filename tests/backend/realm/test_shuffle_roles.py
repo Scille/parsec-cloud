@@ -19,7 +19,7 @@ from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import RealmRole
 
 from tests.common import call_with_control
-from tests.backend.conftest import realm_get_role_certificates, realm_update_roles
+from tests.backend.common import realm_get_role_certificates, realm_update_roles
 
 
 @pytest.mark.slow

@@ -5,7 +5,7 @@ from pendulum import Pendulum
 
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.api.protocol import message_get_serializer
-from parsec.backend.utils import catch_protocol_errors
+from parsec.backend.utils import catch_protocol_errors, api
 
 
 class MessageError(Exception):
@@ -13,6 +13,7 @@ class MessageError(Exception):
 
 
 class BaseMessageComponent:
+    @api("message_get")
     @catch_protocol_errors
     async def api_message_get(self, client_ctx, msg):
         msg = message_get_serializer.req_load(msg)

@@ -8,9 +8,11 @@ from nacl.exceptions import CryptoError  # noqa: republishing
 from nacl.public import SealedBox, PrivateKey as _PrivateKey, PublicKey as _PublicKey
 from nacl.signing import SigningKey as _SigningKey, VerifyKey as _VerifyKey
 from nacl.secret import SecretBox
-from nacl.bindings import crypto_sign_BYTES
+from nacl.bindings import crypto_sign_BYTES, crypto_scalarmult
+from nacl.hash import blake2b, BLAKE2B_BYTES
 from nacl.pwhash import argon2i
 from nacl.utils import random
+from nacl.encoding import RawEncoder
 
 
 # Note to simplify things, we adopt `nacl.CryptoError` as our root error cls
@@ -73,6 +75,9 @@ class SecretKey(bytes):
         """
         box = SecretBox(self)
         return box.decrypt(ciphered)
+
+    def hmac(self, data: bytes, digest_size=BLAKE2B_BYTES) -> bytes:
+        return blake2b(data, digest_size=digest_size, key=self, encoder=RawEncoder)
 
 
 class HashDigest(bytes):
@@ -191,3 +196,13 @@ def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tupl
         memlimit=CRYPTO_MEMLIMIT,
     )
     return SecretKey(rawkey), salt
+
+
+def generate_shared_secret_key(
+    our_private_key: PrivateKey, peer_public_key: PublicKey
+) -> SecretKey:
+    return SecretKey(crypto_scalarmult(our_private_key.encode(), peer_public_key.encode()))
+
+
+def generate_nonce(size=64) -> bytes:
+    return random(size=size)

@@ -6,12 +6,7 @@ from pendulum import Pendulum
 from parsec.api.protocol import packb, user_get_serializer
 
 from tests.common import freeze_time
-
-
-async def user_get(sock, user_id):
-    await sock.send(user_get_serializer.req_dumps({"cmd": "user_get", "user_id": user_id}))
-    raw_rep = await sock.recv()
-    return user_get_serializer.rep_loads(raw_rep)
+from tests.backend.common import user_get
 
 
 @pytest.fixture

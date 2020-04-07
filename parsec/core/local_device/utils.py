@@ -28,13 +28,15 @@ def generate_new_device(
     organization_addr: BackendOrganizationAddr,
     is_admin: bool = False,
     human_handle: Optional[HumanHandle] = None,
+    signing_key: Optional[SigningKey] = None,
+    private_key: Optional[PrivateKey] = None,
 ) -> LocalDevice:
     return LocalDevice(
         organization_addr=organization_addr,
         device_id=device_id,
         human_handle=human_handle,
-        signing_key=SigningKey.generate(),
-        private_key=PrivateKey.generate(),
+        signing_key=signing_key or SigningKey.generate(),
+        private_key=private_key or PrivateKey.generate(),
         is_admin=is_admin,
         user_manifest_id=EntryID(uuid4().hex),
         user_manifest_key=SecretKey.generate(),

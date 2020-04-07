@@ -3,7 +3,7 @@
 import trio
 
 from parsec.api.protocol import events_subscribe_serializer, events_listen_serializer
-from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport
+from parsec.backend.utils import catch_protocol_errors, run_with_breathing_transport, api
 from parsec.backend.realm import BaseRealmComponent
 
 
@@ -11,6 +11,7 @@ class EventsComponent:
     def __init__(self, realm_component: BaseRealmComponent):
         self._realm_component = realm_component
 
+    @api("events_subscribe")
     @catch_protocol_errors
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
@@ -53,9 +54,10 @@ class EventsComponent:
             ):
                 return
 
-            msg = {"event": event, "realm_id": realm_id, **kwargs}
             try:
-                client_ctx.send_events_channel.send_nowait(msg)
+                client_ctx.send_events_channel.send_nowait(
+                    {"event": event, "realm_id": realm_id, **kwargs}
+                )
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
@@ -68,6 +70,18 @@ class EventsComponent:
             except trio.WouldBlock:
                 client_ctx.logger.warning(f"event queue is full for {client_ctx}")
 
+        def _on_invite_status_changed(event, organization_id, greeter, token, status):
+            print("EVENT STATUS CHANGED ====>", organization_id, greeter, token, status)
+            if organization_id != client_ctx.organization_id or greeter != client_ctx.user_id:
+                return
+
+            try:
+                client_ctx.send_events_channel.send_nowait(
+                    {"event": event, "token": token, "invitation_status": status}
+                )
+            except trio.WouldBlock:
+                client_ctx.logger.warning(f"event queue is full for {client_ctx}")
+
         # Drop previous event callbacks if any
         client_ctx.event_bus_ctx.clear()
 
@@ -77,6 +91,7 @@ class EventsComponent:
         client_ctx.event_bus_ctx.connect("realm.maintenance_started", _on_realm_events)
         client_ctx.event_bus_ctx.connect("realm.maintenance_finished", _on_realm_events)
         client_ctx.event_bus_ctx.connect("message.received", _on_message_received)
+        client_ctx.event_bus_ctx.connect("invite.status_changed", _on_invite_status_changed)
 
         # Final event to keep up to date the list of realm we should listen on
         client_ctx.event_bus_ctx.connect("realm.roles_updated", _on_roles_updated)
@@ -89,6 +104,7 @@ class EventsComponent:
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
+    @api("events_listen")
     @catch_protocol_errors
     async def api_events_listen(self, client_ctx, msg):
         msg = events_listen_serializer.req_load(msg)

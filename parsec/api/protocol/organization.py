@@ -8,23 +8,39 @@ from parsec.api.protocol.types import OrganizationIDField
 __all__ = "organization_bootstrap_serializer"
 
 
-class OrganizationCreateReqSchema(BaseReqSchema):
+class APIV1_OrganizationCreateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
-class OrganizationCreateRepSchema(BaseRepSchema):
+class APIV1_OrganizationCreateRepSchema(BaseRepSchema):
     bootstrap_token = fields.String(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
-organization_create_serializer = CmdSerializer(
-    OrganizationCreateReqSchema, OrganizationCreateRepSchema
+apiv1_organization_create_serializer = CmdSerializer(
+    APIV1_OrganizationCreateReqSchema, APIV1_OrganizationCreateRepSchema
+)
+
+
+class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
+    bootstrap_token = fields.String(required=True)
+    user_certificate = fields.Bytes(required=True)
+    device_certificate = fields.Bytes(required=True)
+    root_verify_key = fields.VerifyKey(required=True)
+
+
+class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
+    pass
+
+
+# TODO: remove me once API v1 is deprecated
+apiv1_organization_bootstrap_serializer = CmdSerializer(
+    APIV1_OrganizationBootstrapReqSchema, APIV1_OrganizationBootstrapRepSchema
 )
 
 
 class OrganizationBootstrapReqSchema(BaseReqSchema):
-    bootstrap_token = fields.String(required=True)
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
     root_verify_key = fields.VerifyKey(required=True)
@@ -39,44 +55,44 @@ organization_bootstrap_serializer = CmdSerializer(
 )
 
 
-class OrganizationStatsReqSchema(BaseReqSchema):
+class APIV1_OrganizationStatsReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
 
 
-class OrganizationStatsRepSchema(BaseRepSchema):
+class APIV1_OrganizationStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
     metadata_size = fields.Integer(required=True)
     users = fields.Integer(required=True)
 
 
-organization_stats_serializer = CmdSerializer(
-    OrganizationStatsReqSchema, OrganizationStatsRepSchema
+apiv1_organization_stats_serializer = CmdSerializer(
+    APIV1_OrganizationStatsReqSchema, APIV1_OrganizationStatsRepSchema
 )
 
 
-class OrganizationStatusReqSchema(BaseReqSchema):
+class APIV1_OrganizationStatusReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
 
 
-class OrganizationStatusRepSchema(BaseRepSchema):
+class APIV1_OrganizationStatusRepSchema(BaseRepSchema):
     is_bootstrapped = fields.Boolean(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
-organization_status_serializer = CmdSerializer(
-    OrganizationStatusReqSchema, OrganizationStatusRepSchema
+apiv1_organization_status_serializer = CmdSerializer(
+    APIV1_OrganizationStatusReqSchema, APIV1_OrganizationStatusRepSchema
 )
 
 
-class OrganizationUpdateReqSchema(BaseReqSchema):
+class APIV1_OrganizationUpdateReqSchema(BaseReqSchema):
     organization_id = OrganizationIDField(required=True)
     expiration_date = fields.DateTime(allow_none=True, required=False)
 
 
-class OrganizationUpdateRepSchema(BaseRepSchema):
+class APIV1_OrganizationUpdateRepSchema(BaseRepSchema):
     pass
 
 
-organization_update_serializer = CmdSerializer(
-    OrganizationUpdateReqSchema, OrganizationUpdateRepSchema
+apiv1_organization_update_serializer = CmdSerializer(
+    APIV1_OrganizationUpdateReqSchema, APIV1_OrganizationUpdateRepSchema
 )

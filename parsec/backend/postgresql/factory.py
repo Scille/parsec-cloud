@@ -11,6 +11,7 @@ from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.organization import PGOrganizationComponent
 from parsec.backend.postgresql.ping import PGPingComponent
 from parsec.backend.postgresql.user import PGUserComponent
+from parsec.backend.postgresql.invite import PGInviteComponent
 from parsec.backend.postgresql.message import PGMessageComponent
 from parsec.backend.postgresql.realm import PGRealmComponent
 from parsec.backend.postgresql.vlob import PGVlobComponent
@@ -23,6 +24,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
 
     organization = PGOrganizationComponent(dbh)
     user = PGUserComponent(dbh, event_bus)
+    invite = PGInviteComponent(dbh, event_bus)
     message = PGMessageComponent(dbh)
     realm = PGRealmComponent(dbh)
     vlob = PGVlobComponent(dbh)
@@ -36,6 +38,7 @@ async def components_factory(config: BackendConfig, event_bus: EventBus):
         try:
             yield {
                 "user": user,
+                "invite": invite,
                 "message": message,
                 "realm": realm,
                 "vlob": vlob,

@@ -8,8 +8,8 @@ from async_generator import asynccontextmanager
 from parsec.api.protocol import (
     UserID,
     DeviceID,
-    user_get_invitation_creator_serializer,
-    user_claim_serializer,
+    apiv1_user_get_invitation_creator_serializer,
+    apiv1_user_claim_serializer,
 )
 from parsec.backend.user import User, Device, UserInvitation, PEER_EVENT_MAX_WAIT
 
@@ -25,28 +25,28 @@ async def mallory_invitation(backend, alice, mallory):
 
 async def user_get_invitation_creator(sock, **kwargs):
     await sock.send(
-        user_get_invitation_creator_serializer.req_dumps(
+        apiv1_user_get_invitation_creator_serializer.req_dumps(
             {"cmd": "user_get_invitation_creator", **kwargs}
         )
     )
     raw_rep = await sock.recv()
-    rep = user_get_invitation_creator_serializer.rep_loads(raw_rep)
+    rep = apiv1_user_get_invitation_creator_serializer.rep_loads(raw_rep)
     return rep
 
 
 @asynccontextmanager
 async def user_claim(sock, **kwargs):
     reps = []
-    await sock.send(user_claim_serializer.req_dumps({"cmd": "user_claim", **kwargs}))
+    await sock.send(apiv1_user_claim_serializer.req_dumps({"cmd": "user_claim", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = user_claim_serializer.rep_loads(raw_rep)
+    rep = apiv1_user_claim_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 
 @pytest.mark.trio
 async def test_user_claim_ok(
-    monkeypatch, backend, anonymous_backend_sock, coolorg, alice, mallory_invitation
+    monkeypatch, backend, apiv1_anonymous_backend_sock, coolorg, alice, mallory_invitation
 ):
     user_invitation_retreived = trio.Event()
 
@@ -61,7 +61,7 @@ async def test_user_claim_ok(
 
     with freeze_time(mallory_invitation.created_on):
         async with user_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:
@@ -107,10 +107,12 @@ async def test_user_claim_ok(
 
 
 @pytest.mark.trio
-async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, mallory_invitation):
+async def test_user_claim_timeout(
+    mock_clock, backend, apiv1_anonymous_backend_sock, mallory_invitation
+):
     with freeze_time(mallory_invitation.created_on), backend.event_bus.listen() as spy:
         async with user_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:
@@ -125,10 +127,12 @@ async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, m
 
 
 @pytest.mark.trio
-async def test_user_claim_denied(backend, anonymous_backend_sock, coolorg, mallory_invitation):
+async def test_user_claim_denied(
+    backend, apiv1_anonymous_backend_sock, coolorg, mallory_invitation
+):
     with freeze_time(mallory_invitation.created_on), backend.event_bus.listen() as spy:
         async with user_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:
@@ -154,9 +158,9 @@ async def test_user_claim_denied(backend, anonymous_backend_sock, coolorg, mallo
 
 
 @pytest.mark.trio
-async def test_user_claim_unknown(anonymous_backend_sock, mallory):
+async def test_user_claim_unknown(apiv1_anonymous_backend_sock, mallory):
     async with user_claim(
-        anonymous_backend_sock, invited_user_id=mallory.user_id, encrypted_claim=b"<foo>"
+        apiv1_anonymous_backend_sock, invited_user_id=mallory.user_id, encrypted_claim=b"<foo>"
     ) as prep:
 
         pass
@@ -166,7 +170,7 @@ async def test_user_claim_unknown(anonymous_backend_sock, mallory):
 
 @pytest.mark.trio
 async def test_user_claim_already_exists(
-    mock_clock, backend, anonymous_backend_sock, alice, mallory_invitation
+    mock_clock, backend, apiv1_anonymous_backend_sock, alice, mallory_invitation
 ):
     await backend.user.create_user(
         alice.organization_id,
@@ -184,7 +188,7 @@ async def test_user_claim_already_exists(
 
     with freeze_time(mallory_invitation.created_on):
         async with user_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_user_id=mallory_invitation.user_id,
             encrypted_claim=b"<foo>",
         ) as prep:

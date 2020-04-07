@@ -3,254 +3,201 @@
 import pytest
 from uuid import UUID, uuid4
 from pendulum import Pendulum, now as pendulum_now
+from async_generator import asynccontextmanager
 
 from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
+    OrganizationID,
     RealmRole,
-    block_create_serializer,
-    block_read_serializer,
-    realm_create_serializer,
-    realm_status_serializer,
-    realm_get_role_certificates_serializer,
-    realm_update_roles_serializer,
-    realm_start_reencryption_maintenance_serializer,
-    realm_finish_reencryption_maintenance_serializer,
-    vlob_create_serializer,
-    vlob_read_serializer,
-    vlob_update_serializer,
-    vlob_list_versions_serializer,
-    vlob_poll_changes_serializer,
-    vlob_maintenance_get_reencryption_batch_serializer,
-    vlob_maintenance_save_reencryption_batch_serializer,
+    HandshakeInvitedOperation,
+    AuthenticatedClientHandshake,
+    InvitedClientHandshake,
+    APIV1_AuthenticatedClientHandshake,
+    APIV1_AnonymousClientHandshake,
+    APIV1_AdministrationClientHandshake,
 )
+from parsec.api.transport import Transport
 from parsec.backend.realm import RealmGrantedRole
+from parsec.core.types import LocalDevice
+
+from tests.common import FreezeTestOnTransportError
 
 
-VLOB_ID = UUID("10000000000000000000000000000000")
-REALM_ID = UUID("20000000000000000000000000000000")
-OTHER_VLOB_ID = UUID("30000000000000000000000000000000")
+@pytest.fixture
+def backend_raw_transport_factory(server_factory):
+    @asynccontextmanager
+    async def _backend_sock_factory(backend, freeze_on_transport_error=True):
+        async with server_factory(backend.handle_client) as server:
+            stream = server.connection_factory()
+            transport = await Transport.init_for_client(stream, server.addr.hostname)
+            if freeze_on_transport_error:
+                transport = FreezeTestOnTransportError(transport)
+
+            yield transport
+
+    return _backend_sock_factory
 
 
-async def block_create(sock, block_id, realm_id, block, check_rep=True):
-    await sock.send(
-        block_create_serializer.req_dumps(
-            {"cmd": "block_create", "block_id": block_id, "realm_id": realm_id, "block": block}
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = block_create_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+# TODO: legacy fixture, remove this when APIv1 is deprecated
+@pytest.fixture
+def apiv1_backend_sock_factory(backend_raw_transport_factory, coolorg):
+    @asynccontextmanager
+    async def _backend_sock_factory(backend, auth_as, freeze_on_transport_error=True):
+        async with backend_raw_transport_factory(
+            backend, freeze_on_transport_error=freeze_on_transport_error
+        ) as transport:
+            if auth_as:
+                # Handshake
+                if isinstance(auth_as, OrganizationID):
+                    ch = APIV1_AnonymousClientHandshake(auth_as)
+                elif auth_as == "anonymous":
+                    # TODO: for legacy test, refactorise this ?
+                    ch = APIV1_AnonymousClientHandshake(coolorg.organization_id)
+                elif auth_as == "administration":
+                    ch = APIV1_AdministrationClientHandshake(backend.config.administration_token)
+                else:
+                    ch = APIV1_AuthenticatedClientHandshake(
+                        auth_as.organization_id,
+                        auth_as.device_id,
+                        auth_as.signing_key,
+                        auth_as.root_verify_key,
+                    )
+                challenge_req = await transport.recv()
+                answer_req = ch.process_challenge_req(challenge_req)
+                await transport.send(answer_req)
+                result_req = await transport.recv()
+                ch.process_result_req(result_req)
+
+            yield transport
+
+    return _backend_sock_factory
 
 
-async def block_read(sock, block_id):
-    await sock.send(block_read_serializer.req_dumps({"cmd": "block_read", "block_id": block_id}))
-    raw_rep = await sock.recv()
-    return block_read_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def apiv1_anonymous_backend_sock(apiv1_backend_sock_factory, backend):
+    async with apiv1_backend_sock_factory(backend, "anonymous") as sock:
+        yield sock
 
 
-async def realm_create(sock, role_certificate, check_rep=True):
-    raw_rep = await sock.send(
-        realm_create_serializer.req_dumps(
-            {"cmd": "realm_create", "role_certificate": role_certificate}
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = realm_create_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+# TODO: rename into `apiv1_administration_backend_sock`
+@pytest.fixture
+async def administration_backend_sock(apiv1_backend_sock_factory, backend):
+    async with apiv1_backend_sock_factory(backend, "administration") as sock:
+        yield sock
 
 
-async def realm_status(sock, realm_id):
-    raw_rep = await sock.send(
-        realm_status_serializer.req_dumps({"cmd": "realm_status", "realm_id": realm_id})
-    )
-    raw_rep = await sock.recv()
-    return realm_status_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def apiv1_alice_backend_sock(apiv1_backend_sock_factory, backend, alice):
+    async with apiv1_backend_sock_factory(backend, alice) as sock:
+        yield sock
 
 
-async def realm_get_role_certificates(sock, realm_id, since=None):
-    raw_rep = await sock.send(
-        realm_get_role_certificates_serializer.req_dumps(
-            {"cmd": "realm_get_role_certificates", "realm_id": realm_id, "since": since}
-        )
-    )
-    raw_rep = await sock.recv()
-    return realm_get_role_certificates_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def apiv1_alice2_backend_sock(apiv1_backend_sock_factory, backend, alice2):
+    async with apiv1_backend_sock_factory(backend, alice2) as sock:
+        yield sock
 
 
-async def realm_update_roles(sock, role_certificate, recipient_message=None, check_rep=True):
-    raw_rep = await sock.send(
-        realm_update_roles_serializer.req_dumps(
-            {
-                "cmd": "realm_update_roles",
-                "role_certificate": role_certificate,
-                "recipient_message": recipient_message,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = realm_update_roles_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+@pytest.fixture
+async def apiv1_otheralice_backend_sock(apiv1_backend_sock_factory, backend, otheralice):
+    async with apiv1_backend_sock_factory(backend, otheralice) as sock:
+        yield sock
 
 
-async def realm_start_reencryption_maintenance(
-    sock, realm_id, encryption_revision, timestamp, per_participant_message, check_rep=True
-):
-    raw_rep = await sock.send(
-        realm_start_reencryption_maintenance_serializer.req_dumps(
-            {
-                "cmd": "realm_start_reencryption_maintenance",
-                "realm_id": realm_id,
-                "encryption_revision": encryption_revision,
-                "timestamp": timestamp,
-                "per_participant_message": per_participant_message,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = realm_start_reencryption_maintenance_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+@pytest.fixture
+async def apiv1_adam_backend_sock(apiv1_backend_sock_factory, backend, adam):
+    async with apiv1_backend_sock_factory(backend, adam) as sock:
+        yield sock
 
 
-async def realm_finish_reencryption_maintenance(
-    sock, realm_id, encryption_revision, check_rep=True
-):
-    raw_rep = await sock.send(
-        realm_finish_reencryption_maintenance_serializer.req_dumps(
-            {
-                "cmd": "realm_finish_reencryption_maintenance",
-                "realm_id": realm_id,
-                "encryption_revision": encryption_revision,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = realm_finish_reencryption_maintenance_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+@pytest.fixture
+async def apiv1_bob_backend_sock(apiv1_backend_sock_factory, backend, bob):
+    async with apiv1_backend_sock_factory(backend, bob) as sock:
+        yield sock
 
 
-async def vlob_create(
-    sock, realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, check_rep=True
-):
-    timestamp = timestamp or pendulum_now()
-    await sock.send(
-        vlob_create_serializer.req_dumps(
-            {
-                "cmd": "vlob_create",
-                "realm_id": realm_id,
-                "vlob_id": vlob_id,
-                "timestamp": timestamp,
-                "encryption_revision": encryption_revision,
-                "blob": blob,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = vlob_create_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+@pytest.fixture
+def backend_sock_factory(backend_raw_transport_factory, coolorg):
+    # APIv2's anonymous handshake is not compatible with this
+    # fixture because it requires purpose information (operation/token)
+    @asynccontextmanager
+    async def _backend_sock_factory(backend, auth_as: LocalDevice, freeze_on_transport_error=True):
+        async with backend_raw_transport_factory(
+            backend, freeze_on_transport_error=freeze_on_transport_error
+        ) as transport:
+            # Handshake
+            ch = AuthenticatedClientHandshake(
+                auth_as.organization_id,
+                auth_as.device_id,
+                auth_as.signing_key,
+                auth_as.root_verify_key,
+            )
+            challenge_req = await transport.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await transport.send(answer_req)
+            result_req = await transport.recv()
+            ch.process_result_req(result_req)
+
+            yield transport
+
+    return _backend_sock_factory
 
 
-async def vlob_read(sock, vlob_id, version=None, timestamp=None, encryption_revision=1):
-    await sock.send(
-        vlob_read_serializer.req_dumps(
-            {
-                "cmd": "vlob_read",
-                "vlob_id": vlob_id,
-                "version": version,
-                "timestamp": timestamp,
-                "encryption_revision": encryption_revision,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    return vlob_read_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def alice_backend_sock(backend_sock_factory, backend, alice):
+    async with backend_sock_factory(backend, alice) as sock:
+        yield sock
 
 
-async def vlob_update(
-    sock, vlob_id, version, blob, encryption_revision=1, timestamp=None, check_rep=True
-):
-    timestamp = timestamp or pendulum_now()
-    await sock.send(
-        vlob_update_serializer.req_dumps(
-            {
-                "cmd": "vlob_update",
-                "vlob_id": vlob_id,
-                "version": version,
-                "timestamp": timestamp,
-                "encryption_revision": encryption_revision,
-                "blob": blob,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = vlob_update_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep == {"status": "ok"}
-    return rep
+@pytest.fixture
+async def alice2_backend_sock(backend_sock_factory, backend, alice2):
+    async with backend_sock_factory(backend, alice2) as sock:
+        yield sock
 
 
-async def vlob_list_versions(sock, vlob_id, encryption_revision=1):
-    await sock.send(
-        vlob_list_versions_serializer.req_dumps({"cmd": "vlob_list_versions", "vlob_id": vlob_id})
-    )
-    raw_rep = await sock.recv()
-    return vlob_list_versions_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def otheralice_backend_sock(backend_sock_factory, backend, otheralice):
+    async with backend_sock_factory(backend, otheralice) as sock:
+        yield sock
 
 
-async def vlob_poll_changes(sock, realm_id, last_checkpoint):
-    raw_rep = await sock.send(
-        vlob_poll_changes_serializer.req_dumps(
-            {"cmd": "vlob_poll_changes", "realm_id": realm_id, "last_checkpoint": last_checkpoint}
-        )
-    )
-    raw_rep = await sock.recv()
-    return vlob_poll_changes_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def adam_backend_sock(backend_sock_factory, backend, adam):
+    async with backend_sock_factory(backend, adam) as sock:
+        yield sock
 
 
-async def vlob_maintenance_get_reencryption_batch(sock, realm_id, encryption_revision, size=100):
-    raw_rep = await sock.send(
-        vlob_maintenance_get_reencryption_batch_serializer.req_dumps(
-            {
-                "cmd": "vlob_maintenance_get_reencryption_batch",
-                "realm_id": realm_id,
-                "encryption_revision": encryption_revision,
-                "size": size,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    return vlob_maintenance_get_reencryption_batch_serializer.rep_loads(raw_rep)
+@pytest.fixture
+async def bob_backend_sock(backend_sock_factory, backend, bob):
+    async with backend_sock_factory(backend, bob) as sock:
+        yield sock
 
 
-async def vlob_maintenance_save_reencryption_batch(
-    sock, realm_id, encryption_revision, batch, check_rep=True
-):
-    raw_rep = await sock.send(
-        vlob_maintenance_save_reencryption_batch_serializer.req_dumps(
-            {
-                "cmd": "vlob_maintenance_save_reencryption_batch",
-                "realm_id": realm_id,
-                "encryption_revision": encryption_revision,
-                "batch": batch,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    rep = vlob_maintenance_save_reencryption_batch_serializer.rep_loads(raw_rep)
-    if check_rep:
-        assert rep["status"] == "ok"
-    return rep
+@pytest.fixture
+def backend_invited_sock_factory(backend_raw_transport_factory):
+    @asynccontextmanager
+    async def _backend_sock_factory(
+        backend,
+        organization_id: OrganizationID,
+        operation: HandshakeInvitedOperation,
+        token: UUID,
+        freeze_on_transport_error: bool = True,
+    ):
+        async with backend_raw_transport_factory(
+            backend, freeze_on_transport_error=freeze_on_transport_error
+        ) as transport:
+            ch = InvitedClientHandshake(
+                organization_id=organization_id, operation=operation, token=token
+            )
+            challenge_req = await transport.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await transport.send(answer_req)
+            result_req = await transport.recv()
+            ch.process_result_req(result_req)
+
+            yield transport
+
+    return _backend_sock_factory
 
 
 @pytest.fixture

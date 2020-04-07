@@ -3,7 +3,7 @@
 import trio
 from enum import Enum
 from async_generator import asynccontextmanager
-from typing import Optional
+from typing import Optional, List, AsyncGenerator, Callable
 from structlog import get_logger
 from functools import partial
 
@@ -13,7 +13,7 @@ from parsec.api.data import EntryID
 from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import cmds
-from parsec.core.backend_connection.transport import connect, TransportPool
+from parsec.core.backend_connection.transport import connect_as_authenticated, TransportPool
 from parsec.core.backend_connection.exceptions import BackendNotAvailable, BackendConnectionRefused
 from parsec.core.backend_connection.expose_cmds import expose_cmds_with_retrier
 from parsec.api.protocol import AUTHENTICATED_CMDS
@@ -77,7 +77,7 @@ def _handle_event(event_bus: EventBus, rep: dict) -> None:
 
 def _transport_pool_factory(addr, device_id, signing_key, max_pool, keepalive):
     async def _connect():
-        transport = await connect(
+        transport = await connect_as_authenticated(
             addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
         )
         transport.logger = transport.logger.bind(device_id=device_id)
@@ -108,7 +108,7 @@ class BackendAuthenticatedConn:
         self._status_exc = None
         self._cmds = BackendAuthenticatedCmds(addr, self._acquire_transport)
         self._manager_connect_cancel_scope = None
-        self._monitors_cbs = []
+        self._monitors_cbs: List[Callable[..., None]] = []
         self._monitors_idle_event = trio.Event()
         self._monitors_idle_event.set()  # No monitors
         self._backend_connection_failures = 0
@@ -120,7 +120,7 @@ class BackendAuthenticatedConn:
         return self._status
 
     @property
-    def status_exc(self) -> Exception:
+    def status_exc(self) -> Optional[Exception]:
         return self._status_exc
 
     @property
@@ -267,43 +267,12 @@ class BackendAuthenticatedConn:
 
 
 @asynccontextmanager
-async def backend_authenticated_conn_factory(
-    addr: BackendOrganizationAddr,
-    device_id: DeviceID,
-    signing_key: SigningKey,
-    event_bus: EventBus,
-    max_cooldown: int = 30,
-    max_pool: int = 4,
-    keepalive: Optional[int] = None,
-) -> BackendAuthenticatedConn:
-    """
-    Raises: nothing !
-    """
-    if max_pool < 2:
-        raise ValueError("max_pool must be at least 2 (for event listener + query sender)")
-
-    async def _connect():
-        transport = await connect(
-            addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
-        )
-        transport.logger = transport.logger.bind(device_id=device_id)
-        return transport
-
-    transport_pool = TransportPool(_connect, max_pool=max_pool)
-    async with trio.open_service_nursery() as nursery:
-        yield BackendAuthenticatedConn(
-            nursery, transport_pool, addr=addr, event_bus=event_bus, max_cooldown=max_cooldown
-        )
-        nursery.cancel_scope.cancel()
-
-
-@asynccontextmanager
 async def backend_authenticated_cmds_factory(
     addr: BackendOrganizationAddr,
     device_id: DeviceID,
     signing_key: SigningKey,
     keepalive: Optional[int] = None,
-) -> BackendAuthenticatedCmds:
+) -> AsyncGenerator[BackendAuthenticatedCmds, None]:
     """
     Raises:
         BackendConnectionError
@@ -317,7 +286,7 @@ async def backend_authenticated_cmds_factory(
         if not transport:
             if closed:
                 raise trio.ClosedResourceError
-            transport = await connect(
+            transport = await connect_as_authenticated(
                 addr, device_id=device_id, signing_key=signing_key, keepalive=keepalive
             )
             transport.logger = transport.logger.bind(device_id=device_id)

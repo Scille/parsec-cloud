@@ -93,7 +93,7 @@ class TaskStatus:
             status._set_finished()
 
 
-async def start_task(nursery, corofn, *args, name=None):
+async def start_task(nursery, corofn, *args, name=None) -> TaskStatus:
     """Equivalent to nursery.start but return a TaskStatus object.
 
     This object can be used to cancel and/or join the task.

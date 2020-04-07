@@ -4,10 +4,15 @@ import pytest
 import trio
 
 from parsec.api.transport import Transport, BytesMessage, Ping, Pong
+from parsec.api.protocol import HandshakeInvitedOperation
+from parsec.backend.invite import DeviceInvitation
+from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
-    backend_anonymous_cmds_factory,
-    backend_administration_cmds_factory,
+    backend_invited_cmds_factory,
+    apiv1_backend_authenticated_cmds_factory,
+    apiv1_backend_anonymous_cmds_factory,
+    apiv1_backend_administration_cmds_factory,
 )
 
 
@@ -73,19 +78,50 @@ async def test_authenticated_cmd_keepalive(mock_clock, monkeypatch, running_back
 
 
 @pytest.mark.trio
-async def test_anonymous_cmd_keepalive(mock_clock, monkeypatch, running_backend, coolorg):
+async def test_invited_cmd_keepalive(
+    mock_clock, monkeypatch, backend, running_backend, backend_addr, alice
+):
+    invitation = DeviceInvitation(
+        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    )
+    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
+    invitation_addr = BackendInvitationAddr.build(
+        backend_addr=alice.organization_addr,
+        organization_id=alice.organization_id,
+        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        token=invitation.token,
+    )
+
     def _cmds_factory(keepalive):
-        return backend_anonymous_cmds_factory(coolorg.addr, keepalive=keepalive)
+        return backend_invited_cmds_factory(invitation_addr, keepalive=keepalive)
 
     await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
 
 
 @pytest.mark.trio
-async def test_administration_cmd_keepalive(
+async def test_apiv1_authenticated_cmd_keepalive(mock_clock, monkeypatch, running_backend, alice):
+    def _cmds_factory(keepalive):
+        return apiv1_backend_authenticated_cmds_factory(
+            alice.organization_addr, alice.device_id, alice.signing_key, keepalive=keepalive
+        )
+
+    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
+
+
+@pytest.mark.trio
+async def test_apiv1_anonymous_cmd_keepalive(mock_clock, monkeypatch, running_backend, coolorg):
+    def _cmds_factory(keepalive):
+        return apiv1_backend_anonymous_cmds_factory(coolorg.addr, keepalive=keepalive)
+
+    await _test_keepalive(mock_clock, monkeypatch, _cmds_factory)
+
+
+@pytest.mark.trio
+async def test_apiv1_administration_cmd_keepalive(
     mock_clock, monkeypatch, running_backend, backend_addr, backend
 ):
     def _cmds_factory(keepalive):
-        return backend_administration_cmds_factory(
+        return apiv1_backend_administration_cmds_factory(
             backend_addr, backend.config.administration_token, keepalive=keepalive
         )
 

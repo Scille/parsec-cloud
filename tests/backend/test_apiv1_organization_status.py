@@ -5,29 +5,25 @@ from pendulum import Pendulum
 import pytest
 
 from parsec.api.protocol import (
-    organization_status_serializer,
-    organization_update_serializer,
-    ADMINISTRATION_CMDS,
-    AUTHENTICATED_CMDS,
-    ANONYMOUS_CMDS,
+    apiv1_organization_status_serializer,
+    apiv1_organization_update_serializer,
 )
-from parsec.api.protocol.base import packb, unpackb
-from tests.backend.test_organization import organization_create
+from tests.backend.test_apiv1_organization import organization_create
 
 
 async def organization_status(sock, organization_id):
     raw_rep = await sock.send(
-        organization_status_serializer.req_dumps(
+        apiv1_organization_status_serializer.req_dumps(
             {"cmd": "organization_status", "organization_id": organization_id}
         )
     )
     raw_rep = await sock.recv()
-    return organization_status_serializer.rep_loads(raw_rep)
+    return apiv1_organization_status_serializer.rep_loads(raw_rep)
 
 
 async def organization_update(sock, organization_id, expiration_date: Pendulum = None):
     raw_rep = await sock.send(
-        organization_update_serializer.req_dumps(
+        apiv1_organization_update_serializer.req_dumps(
             {
                 "cmd": "organization_update",
                 "organization_id": organization_id,
@@ -36,7 +32,7 @@ async def organization_update(sock, organization_id, expiration_date: Pendulum =
         )
     )
     raw_rep = await sock.recv()
-    return organization_update_serializer.rep_loads(raw_rep)
+    return apiv1_organization_update_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
@@ -93,11 +89,3 @@ async def test_organization_update_expiration_date_unknown_organization(
 async def test_status_unknown_organization(administration_backend_sock):
     rep = await organization_status(administration_backend_sock, organization_id="dummy")
     assert rep == {"status": "not_found"}
-
-
-@pytest.mark.trio
-async def test_non_admin_has_limited_access(alice_backend_sock):
-    for cmd in (ADMINISTRATION_CMDS | ANONYMOUS_CMDS) - AUTHENTICATED_CMDS:
-        await alice_backend_sock.send(packb({"cmd": cmd}))
-        rep = await alice_backend_sock.recv()
-        assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}

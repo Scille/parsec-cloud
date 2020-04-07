@@ -7,8 +7,8 @@ from async_generator import asynccontextmanager
 
 from parsec.api.protocol import (
     DeviceID,
-    device_get_invitation_creator_serializer,
-    device_claim_serializer,
+    apiv1_device_get_invitation_creator_serializer,
+    apiv1_device_claim_serializer,
 )
 from parsec.backend.user import Device, DeviceInvitation, PEER_EVENT_MAX_WAIT
 
@@ -26,28 +26,28 @@ async def alice_nd_invitation(backend, alice):
 
 async def device_get_invitation_creator(sock, **kwargs):
     await sock.send(
-        device_get_invitation_creator_serializer.req_dumps(
+        apiv1_device_get_invitation_creator_serializer.req_dumps(
             {"cmd": "device_get_invitation_creator", **kwargs}
         )
     )
     raw_rep = await sock.recv()
-    rep = device_get_invitation_creator_serializer.rep_loads(raw_rep)
+    rep = apiv1_device_get_invitation_creator_serializer.rep_loads(raw_rep)
     return rep
 
 
 @asynccontextmanager
 async def device_claim(sock, **kwargs):
     reps = []
-    await sock.send(device_claim_serializer.req_dumps({"cmd": "device_claim", **kwargs}))
+    await sock.send(apiv1_device_claim_serializer.req_dumps({"cmd": "device_claim", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = device_claim_serializer.rep_loads(raw_rep)
+    rep = apiv1_device_claim_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 
 @pytest.mark.trio
 async def test_device_claim_ok(
-    monkeypatch, backend, anonymous_backend_sock, alice, alice_nd_invitation
+    monkeypatch, backend, apiv1_anonymous_backend_sock, alice, alice_nd_invitation
 ):
     device_invitation_retreived = trio.Event()
 
@@ -62,7 +62,7 @@ async def test_device_claim_ok(
 
     with freeze_time(alice_nd_invitation.created_on):
         async with device_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:
@@ -101,11 +101,11 @@ async def test_device_claim_ok(
 
 @pytest.mark.trio
 async def test_device_claim_timeout(
-    mock_clock, backend, anonymous_backend_sock, alice_nd_invitation
+    mock_clock, backend, apiv1_anonymous_backend_sock, alice_nd_invitation
 ):
     with freeze_time(alice_nd_invitation.created_on), backend.event_bus.listen() as spy:
         async with device_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:
@@ -120,10 +120,12 @@ async def test_device_claim_timeout(
 
 
 @pytest.mark.trio
-async def test_device_claim_denied(backend, anonymous_backend_sock, alice, alice_nd_invitation):
+async def test_device_claim_denied(
+    backend, apiv1_anonymous_backend_sock, alice, alice_nd_invitation
+):
     with freeze_time(alice_nd_invitation.created_on), backend.event_bus.listen() as spy:
         async with device_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:
@@ -148,9 +150,9 @@ async def test_device_claim_denied(backend, anonymous_backend_sock, alice, alice
 
 
 @pytest.mark.trio
-async def test_device_claim_unknown(anonymous_backend_sock, mallory):
+async def test_device_claim_unknown(apiv1_anonymous_backend_sock, mallory):
     async with device_claim(
-        anonymous_backend_sock, invited_device_id=mallory.device_id, encrypted_claim=b"<foo>"
+        apiv1_anonymous_backend_sock, invited_device_id=mallory.device_id, encrypted_claim=b"<foo>"
     ) as prep:
 
         pass
@@ -160,7 +162,7 @@ async def test_device_claim_unknown(anonymous_backend_sock, mallory):
 
 @pytest.mark.trio
 async def test_device_claim_already_exists(
-    mock_clock, backend, anonymous_backend_sock, alice, alice_nd_invitation
+    mock_clock, backend, apiv1_anonymous_backend_sock, alice, alice_nd_invitation
 ):
     await backend.user.create_device(
         alice.organization_id,
@@ -173,7 +175,7 @@ async def test_device_claim_already_exists(
 
     with freeze_time(alice_nd_invitation.created_on):
         async with device_claim(
-            anonymous_backend_sock,
+            apiv1_anonymous_backend_sock,
             invited_device_id=alice_nd_invitation.device_id,
             encrypted_claim=b"<foo>",
         ) as prep:

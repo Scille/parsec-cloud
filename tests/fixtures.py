@@ -187,7 +187,7 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 
 @pytest.fixture
-def expiredalice(local_device_factory, initial_user_manifest_state, expiredorg):
+def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredorg):
     device = local_device_factory("alice@dev1", expiredorg, is_admin=True)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
@@ -563,9 +563,13 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
     return _backend_data_binder_factory
 
 
+# TODO: should be separated between API v1 and v2
 @pytest.fixture
 def sock_from_other_organization_factory(
-    backend_sock_factory, backend_data_binder_factory, organization_factory, local_device_factory
+    apiv1_backend_sock_factory,
+    backend_data_binder_factory,
+    organization_factory,
+    local_device_factory,
 ):
     @asynccontextmanager
     async def _sock_from_other_organization_factory(
@@ -585,7 +589,7 @@ def sock_from_other_organization_factory(
         else:
             auth_as = other_device
 
-        async with backend_sock_factory(backend, auth_as) as sock:
+        async with apiv1_backend_sock_factory(backend, auth_as) as sock:
             sock.device = other_device
             yield sock
 

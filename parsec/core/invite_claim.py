@@ -10,16 +10,16 @@ from parsec.api.data import (
     DataError,
     UserCertificateContent,
     DeviceCertificateContent,
-    UserClaimContent,
-    DeviceClaimContent,
-    DeviceClaimAnswerContent,
+    APIV1_UserClaimContent,
+    APIV1_DeviceClaimContent,
+    APIV1_DeviceClaimAnswerContent,
 )
 from parsec.api.protocol import UserID, DeviceName, DeviceID
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
 
 from parsec.core.backend_connection import (
-    backend_authenticated_cmds_factory,
-    backend_anonymous_cmds_factory,
+    apiv1_backend_authenticated_cmds_factory,
+    apiv1_backend_anonymous_cmds_factory,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -36,7 +36,7 @@ CANCEL_INVITATION_MAX_WAIT = 3
 
 
 # TODO: wrap exceptions from lower layers
-# TODO: handles backend_anonymous_cmds_factory for caller (just pass backend addr)
+# TODO: handles apiv1_backend_anonymous_cmds_factory for caller (just pass backend addr)
 
 
 class InviteClaimError(Exception):
@@ -89,7 +89,9 @@ async def claim_user(
     new_device = generate_new_device(new_device_id, organization_addr)
 
     try:
-        async with backend_anonymous_cmds_factory(organization_addr, keepalive=keepalive) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(
+            organization_addr, keepalive=keepalive
+        ) as cmds:
             # 1) Retrieve invitation creator
             try:
                 invitation_creator_user, invitation_creator_device = await get_user_invitation_creator(
@@ -104,7 +106,7 @@ async def claim_user(
 
             # 2) Generate claim info for invitation creator
             try:
-                encrypted_claim = UserClaimContent(
+                encrypted_claim = APIV1_UserClaimContent(
                     device_id=new_device_id,
                     token=token,
                     public_key=new_device.public_key,
@@ -167,7 +169,9 @@ async def claim_device(
     answer_private_key = PrivateKey.generate()
 
     try:
-        async with backend_anonymous_cmds_factory(organization_addr, keepalive=keepalive) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(
+            organization_addr, keepalive=keepalive
+        ) as cmds:
             # 1) Retrieve invitation creator
             try:
                 invitation_creator_user, invitation_creator_device = await get_device_invitation_creator(
@@ -182,7 +186,7 @@ async def claim_device(
 
             # 2) Generate claim info for invitation creator
             try:
-                encrypted_claim = DeviceClaimContent(
+                encrypted_claim = APIV1_DeviceClaimContent(
                     token=token,
                     device_id=new_device_id,
                     verify_key=device_signing_key.verify_key,
@@ -210,7 +214,7 @@ async def claim_device(
                 raise InviteClaimCryptoError(str(exc)) from exc
 
             try:
-                answer = DeviceClaimAnswerContent.decrypt_and_load_for(
+                answer = APIV1_DeviceClaimAnswerContent.decrypt_and_load_for(
                     rep["encrypted_answer"], recipient_privkey=answer_private_key
                 )
 
@@ -248,7 +252,7 @@ async def invite_and_create_device(
         InviteClaimInvalidTokenError
     """
     try:
-        async with backend_authenticated_cmds_factory(
+        async with apiv1_backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key, keepalive=keepalive
         ) as cmds:
             try:
@@ -258,7 +262,7 @@ async def invite_and_create_device(
                     raise InviteClaimError(f"Cannot invite device: {rep}")
 
                 try:
-                    claim = DeviceClaimContent.decrypt_and_load_for(
+                    claim = APIV1_DeviceClaimContent.decrypt_and_load_for(
                         rep["encrypted_claim"], recipient_privkey=device.private_key
                     )
 
@@ -286,7 +290,7 @@ async def invite_and_create_device(
                     raise InviteClaimError(f"Cannot generate device certificate: {exc}") from exc
 
                 try:
-                    encrypted_answer = DeviceClaimAnswerContent(
+                    encrypted_answer = APIV1_DeviceClaimAnswerContent(
                         private_key=device.private_key,
                         user_manifest_id=device.user_manifest_id,
                         user_manifest_key=device.user_manifest_key,
@@ -336,7 +340,7 @@ async def invite_and_create_user(
         InviteClaimInvalidTokenError
     """
     try:
-        async with backend_authenticated_cmds_factory(
+        async with apiv1_backend_authenticated_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key, keepalive=keepalive
         ) as cmds:
             try:
@@ -347,7 +351,7 @@ async def invite_and_create_user(
                     raise InviteClaimError(f"Cannot invite user: {rep}")
 
                 try:
-                    claim = UserClaimContent.decrypt_and_load_for(
+                    claim = APIV1_UserClaimContent.decrypt_and_load_for(
                         rep["encrypted_claim"], recipient_privkey=device.private_key
                     )
 

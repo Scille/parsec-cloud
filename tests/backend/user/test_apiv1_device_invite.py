@@ -5,7 +5,7 @@ import trio
 from async_generator import asynccontextmanager
 
 from parsec.backend.user import PEER_EVENT_MAX_WAIT, DeviceInvitation
-from parsec.api.protocol import DeviceID, device_invite_serializer
+from parsec.api.protocol import DeviceID, apiv1_device_invite_serializer
 
 
 @pytest.fixture
@@ -16,15 +16,15 @@ def alice_nd_id(alice):
 @asynccontextmanager
 async def device_invite(sock, **kwargs):
     reps = []
-    await sock.send(device_invite_serializer.req_dumps({"cmd": "device_invite", **kwargs}))
+    await sock.send(apiv1_device_invite_serializer.req_dumps({"cmd": "device_invite", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = device_invite_serializer.rep_loads(raw_rep)
+    rep = apiv1_device_invite_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 
 @pytest.mark.trio
-async def test_device_invite(monkeypatch, backend, alice_backend_sock, alice, alice_nd_id):
+async def test_device_invite(monkeypatch, backend, apiv1_alice_backend_sock, alice, alice_nd_id):
     dummy_device_id = DeviceID(f"{alice.user_id}@pc1")
     await backend.user.create_device_invitation(
         alice.organization_id, DeviceInvitation(dummy_device_id, alice.device_id)
@@ -43,7 +43,7 @@ async def test_device_invite(monkeypatch, backend, alice_backend_sock, alice, al
 
     with trio.fail_after(1):
         async with device_invite(
-            alice_backend_sock, invited_device_name=alice_nd_id.device_name
+            apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
             # Wait for invitation to be created before fetching it !
@@ -62,9 +62,11 @@ async def test_device_invite(monkeypatch, backend, alice_backend_sock, alice, al
 
 
 @pytest.mark.trio
-async def test_device_invite_already_exists(alice_backend_sock, alice):
+async def test_device_invite_already_exists(apiv1_alice_backend_sock, alice):
     with trio.fail_after(1):
-        async with device_invite(alice_backend_sock, invited_device_name=alice.device_name) as prep:
+        async with device_invite(
+            apiv1_alice_backend_sock, invited_device_name=alice.device_name
+        ) as prep:
             pass
     assert prep[0] == {
         "status": "already_exists",
@@ -73,10 +75,12 @@ async def test_device_invite_already_exists(alice_backend_sock, alice):
 
 
 @pytest.mark.trio
-async def test_device_invite_timeout(mock_clock, backend, alice_backend_sock, alice, alice_nd_id):
+async def test_device_invite_timeout(
+    mock_clock, backend, apiv1_alice_backend_sock, alice, alice_nd_id
+):
     with backend.event_bus.listen() as spy:
         async with device_invite(
-            alice_backend_sock, invited_device_name=alice_nd_id.device_name
+            apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
             await spy.wait_with_timeout("event.connected", {"event_name": "device.claimed"})
             mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
@@ -89,18 +93,18 @@ async def test_device_invite_timeout(mock_clock, backend, alice_backend_sock, al
 
 @pytest.mark.trio
 async def test_concurrent_device_invite(
-    backend, alice_backend_sock, alice2_backend_sock, alice, alice_nd_id
+    backend, apiv1_alice_backend_sock, apiv1_alice2_backend_sock, alice, alice_nd_id
 ):
     with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with device_invite(
-            alice_backend_sock, invited_device_name=alice_nd_id.device_name
+            apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
             await spy.wait("event.connected", {"event_name": "device.claimed"})
             spy.clear()
 
             async with device_invite(
-                alice2_backend_sock, invited_device_name=alice_nd_id.device_name
+                apiv1_alice2_backend_sock, invited_device_name=alice_nd_id.device_name
             ) as prep2:
 
                 await spy.wait("event.connected", {"event_name": "device.claimed"})
@@ -118,11 +122,11 @@ async def test_concurrent_device_invite(
 
 @pytest.mark.trio
 async def test_device_invite_same_name_different_organizations(
-    backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, alice_nd_id
+    backend, apiv1_alice_backend_sock, apiv1_otheralice_backend_sock, alice, otheralice, alice_nd_id
 ):
     with backend.event_bus.listen() as spy, trio.fail_after(1):
         async with device_invite(
-            alice_backend_sock, invited_device_name=alice_nd_id.device_name
+            apiv1_alice_backend_sock, invited_device_name=alice_nd_id.device_name
         ) as prep:
 
             await spy.wait("event.connected", {"event_name": "device.claimed"})

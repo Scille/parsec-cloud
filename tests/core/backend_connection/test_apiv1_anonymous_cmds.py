@@ -3,25 +3,27 @@
 import pytest
 import trio
 
+from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
 from parsec.core.types import BackendOrganizationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendConnectionRefused,
-    backend_anonymous_cmds_factory,
+    apiv1_backend_anonymous_cmds_factory,
 )
-from parsec.api.protocol import ADMINISTRATION_CMDS, AUTHENTICATED_CMDS, ANONYMOUS_CMDS
+
+from tests.core.backend_connection.common import ALL_CMDS
 
 
 @pytest.mark.trio
 async def test_backend_offline(coolorg):
     with pytest.raises(BackendNotAvailable):
-        async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(coolorg.addr) as cmds:
             await cmds.ping()
 
 
 @pytest.mark.trio
 async def test_backend_switch_offline(running_backend, coolorg):
-    async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
+    async with apiv1_backend_anonymous_cmds_factory(coolorg.addr) as cmds:
         await cmds.ping()
         with running_backend.offline():
             with pytest.raises(BackendNotAvailable):
@@ -30,7 +32,7 @@ async def test_backend_switch_offline(running_backend, coolorg):
 
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, coolorg):
-    async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
+    async with apiv1_backend_anonymous_cmds_factory(coolorg.addr) as cmds:
         pass
     with pytest.raises(trio.ClosedResourceError):
         await cmds.ping()
@@ -38,7 +40,7 @@ async def test_backend_closed_cmds(running_backend, coolorg):
 
 @pytest.mark.trio
 async def test_ping(running_backend, coolorg):
-    async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
+    async with apiv1_backend_anonymous_cmds_factory(coolorg.addr) as cmds:
         rep = await cmds.ping("Hello World !")
         assert rep == {"status": "ok", "pong": "Hello World !"}
 
@@ -46,7 +48,7 @@ async def test_ping(running_backend, coolorg):
 @pytest.mark.trio
 async def test_handshake_organization_expired(running_backend, expiredorg):
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_anonymous_cmds_factory(expiredorg.addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(expiredorg.addr) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Trial organization has expired"
 
@@ -59,7 +61,7 @@ async def test_handshake_rvk_mismatch(running_backend, coolorg, otherorg):
         root_verify_key=otherorg.root_verify_key,
     )
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_anonymous_cmds_factory(bad_rvk_org_addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(bad_rvk_org_addr) as cmds:
             await cmds.ping()
     assert str(exc.value) == "Root verify key for organization differs between client and server"
 
@@ -70,15 +72,15 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
         backend_addr=coolorg.addr, organization_id="dummy", root_verify_key=coolorg.root_verify_key
     )
     with pytest.raises(BackendConnectionRefused) as exc:
-        async with backend_anonymous_cmds_factory(unknown_org_addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(unknown_org_addr) as cmds:
             await cmds.ping()
-    assert str(exc.value) == "Unknown Organization or Device"
+    assert str(exc.value) == "Invalid handshake information"
 
 
 @pytest.mark.trio
 async def test_anonymous_cmds_has_right_methods(running_backend, coolorg):
-    async with backend_anonymous_cmds_factory(coolorg.addr) as cmds:
-        for method_name in ANONYMOUS_CMDS:
+    async with apiv1_backend_anonymous_cmds_factory(coolorg.addr) as cmds:
+        for method_name in APIV1_ANONYMOUS_CMDS:
             assert hasattr(cmds, method_name)
-        for method_name in (ADMINISTRATION_CMDS | AUTHENTICATED_CMDS) - ANONYMOUS_CMDS:
+        for method_name in ALL_CMDS - APIV1_ANONYMOUS_CMDS:
             assert not hasattr(cmds, method_name)

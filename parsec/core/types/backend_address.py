@@ -1,12 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from uuid import UUID
 from typing import Tuple, Optional
 from urllib.parse import urlsplit, urlunsplit, parse_qs, quote_plus, unquote_plus
 from marshmallow import ValidationError
 
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
-from parsec.api.protocol import OrganizationID, UserID, DeviceID
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, HandshakeInvitedOperation
 from parsec.api.data import EntryID
 from parsec.core.types.base import FsPath
 
@@ -203,6 +204,7 @@ class BackendActionAddr(BackendAddr):
                 BackendOrganizationClaimUserAddr,
                 BackendOrganizationClaimDeviceAddr,
                 BackendOrganizationFileLinkAddr,
+                BackendInvitationAddr,
             ):
                 try:
                     return BackendAddr.from_url.__func__(type, url)
@@ -264,7 +266,7 @@ class BackendOrganizationBootstrapAddr(BackendActionAddr):
     @classmethod
     def build(
         cls, backend_addr: BackendAddr, organization_id: OrganizationID, token: str
-    ) -> "BackendOrganizationAddr":
+    ) -> "BackendOrganizationBootstrapAddr":
         return cls(
             hostname=backend_addr.hostname,
             port=backend_addr.port,
@@ -350,7 +352,7 @@ class BackendOrganizationClaimUserAddr(OrganizationParamsFixture, BackendActionA
             token=token,
         )
 
-    def to_organization_addr(self):
+    def to_organization_addr(self) -> BackendOrganizationAddr:
         return BackendOrganizationAddr.build(
             backend_addr=self,
             organization_id=self.organization_id,
@@ -429,7 +431,7 @@ class BackendOrganizationClaimDeviceAddr(OrganizationParamsFixture, BackendActio
             token=token,
         )
 
-    def to_organization_addr(self):
+    def to_organization_addr(self) -> BackendOrganizationAddr:
         return BackendOrganizationAddr.build(
             backend_addr=self,
             organization_id=self.organization_id,
@@ -508,7 +510,7 @@ class BackendOrganizationFileLinkAddr(OrganizationParamsFixture, BackendActionAd
             path=path,
         )
 
-    def to_organization_addr(self):
+    def to_organization_addr(self) -> BackendOrganizationAddr:
         return BackendOrganizationAddr.build(
             backend_addr=self,
             organization_id=self.organization_id,
@@ -536,3 +538,101 @@ class BackendOrganizationAddrField(fields.Field):
             return None
 
         return value.to_url()
+
+
+class BackendInvitationAddr(BackendActionAddr):
+    """
+    Represent the URL to invite a user or a device
+    (e.g. ``parsec://parsec.example.com/my_org?action=invite_user&token=1234ABCD``)
+    """
+
+    __slots__ = ("_organization_id", "_operation", "_token")
+
+    def __init__(
+        self,
+        organization_id: OrganizationID,
+        operation: HandshakeInvitedOperation,
+        token: UUID,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._organization_id = organization_id
+        self._operation = operation
+        self._token = token
+
+    @classmethod
+    def _from_url_parse_path(cls, path):
+        return {"organization_id": OrganizationID(path[1:])}
+
+    @classmethod
+    def _from_url_parse_and_consume_params(cls, params):
+        kwargs = super()._from_url_parse_and_consume_params(params)
+
+        value = params.pop("action", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `action` param")
+        if value[0] != "invite_user":
+            kwargs["operation"] = HandshakeInvitedOperation.CLAIM_USER
+        elif value[0] != "invite_device":
+            kwargs["operation"] = HandshakeInvitedOperation.CLAIM_DEVICE
+        else:
+            raise ValueError("Expected `action=invite_user` or `action=invite_device` value")
+
+        value = params.pop("token", ())
+        if len(value) != 1:
+            raise ValueError("Missing mandatory `token` param")
+        try:
+            kwargs["token"] = UUID(value[0])
+        except ValueError:
+            raise ValueError("Invalid `token` param value")
+
+        return kwargs
+
+    def _to_url_get_path(self):
+        return str(self.organization_id)
+
+    def _to_url_get_params(self):
+        return [
+            (
+                "action",
+                "invite_user"
+                if self._operation == HandshakeInvitedOperation.CLAIM_USER
+                else "invite_device",
+            ),
+            ("token", self._token.hex),
+            *super()._to_url_get_params(),
+        ]
+
+    @classmethod
+    def build(
+        cls,
+        backend_addr: BackendAddr,
+        organization_id: OrganizationID,
+        operation: HandshakeInvitedOperation,
+        token: UUID,
+    ) -> "BackendInvitationAddr":
+        return cls(
+            hostname=backend_addr.hostname,
+            port=backend_addr.port,
+            use_ssl=backend_addr.use_ssl,
+            organization_id=organization_id,
+            operation=operation,
+            token=token,
+        )
+
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
+        return BackendOrganizationAddr.build(
+            backend_addr=self, organization_id=self.organization_id, root_verify_key=root_verify_key
+        )
+
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
+
+    @property
+    def operation(self) -> HandshakeInvitedOperation:
+        return self._operation
+
+    @property
+    def token(self) -> UUID:
+        return self._token
