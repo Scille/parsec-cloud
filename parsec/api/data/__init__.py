@@ -41,11 +41,7 @@ from parsec.api.data.manifest import (
 )
 
 
-__api_data_version__ = (1, 0)
-
-
 __all__ = (
-    "__api_data_version__",
     # Base
     "DataError",
     "BaseData",
