@@ -118,37 +118,6 @@ def _last_applied_migration_file_idx(migration_files, last_applied_migration):
     return idx, error
 
 
-async def init_db(url: str) -> None:
-    """
-    Returns: if the database was already initialized
-    Raises:
-        triopg.exceptions.PostgresError
-    """
-    async with triopg.connect(url) as conn:
-        return await _init_db(conn)
-
-
-async def _init_db(conn):
-    if await _is_db_initialized(conn):
-        return True
-
-    async with conn.transaction():
-        query = read_text(__package__, f"init_tables.sql")
-        await conn.execute(query)
-    return False
-
-
-async def _is_db_initialized(conn):
-    # TODO: not a really elegant way to determine if the database
-    # is already initialized...
-    root_key = await conn.fetchrow(
-        """
-        SELECT true FROM pg_catalog.pg_tables WHERE tablename = 'user_';
-        """
-    )
-    return bool(root_key)
-
-
 def retry_on_unique_violation(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs):
