@@ -20,6 +20,8 @@ from parsec.backend.postgresql import migrations
 
 logger = get_logger()
 
+CREATE_MIGRATION_TABLE_ID = 2
+
 
 async def migrate_db(url: str, migrations: list, dry_run: bool) -> None:
     """
@@ -37,7 +39,6 @@ async def _migrate_db(conn, migrations, dry_run):
     allready_applied = []
     new_apply = []
     to_apply = []
-    rows = []
 
     idx_limit = await _idx_limit(conn)
     for idx, name, file_name in migrations:
@@ -45,19 +46,18 @@ async def _migrate_db(conn, migrations, dry_run):
             allready_applied.append(file_name)
         else:
             if not dry_run:
-                error = await _apply_migration(conn, file_name)
-                if error:
-                    errors.append(error)
-                    break
-                else:
-                    new_apply.append(file_name)
-                    rows.append((idx, name, datetime.datetime.utcnow()))
+                async with conn.transaction():
+                    error = await _apply_migration(conn, idx, name, file_name)
+                    if error:
+                        errors.append(error)
+                        break
+                    else:
+                        if idx >= CREATE_MIGRATION_TABLE_ID:
+                            # The migration table is created in the second migration
+                            await _add_migration_to_db(conn, idx, name)
+                        new_apply.append(file_name)
             else:
                 to_apply.append(file_name)
-
-    if rows:
-        statement = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
-        await conn.executemany(statement, rows)
 
     return collections.OrderedDict(
         (
@@ -69,18 +69,22 @@ async def _migrate_db(conn, migrations, dry_run):
     )
 
 
-async def _apply_migration(conn, migration_file):
-    async with conn.transaction():
-        query = read_text(migrations, migration_file)
-        error = None
-        if not query:
-            error = (migration_file, "Empty migration file")
-        else:
-            try:
-                await conn.execute(query)
-            except PostgresError as e:
-                error = (migration_file, e.message)
+async def _apply_migration(conn, idx, name, migration_file):
+    query = read_text(migrations, migration_file)
+    error = None
+    if not query:
+        error = (migration_file, "Empty migration file")
+    else:
+        try:
+            await conn.execute(query)
+        except PostgresError as e:
+            error = (migration_file, e.message)
     return error
+
+
+async def _add_migration_to_db(conn, idx, name):
+    statement = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
+    await conn.execute(statement, idx, name, datetime.datetime.utcnow())
 
 
 async def _last_migration_row(conn):
@@ -95,6 +99,7 @@ async def _idx_limit(conn):
     try:
         idx_limit = await _last_migration_row(conn)
     except UndefinedTableError:
+        # The migration table is created in the second migration
         idx_limit = 0
     return idx_limit
 
