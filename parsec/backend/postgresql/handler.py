@@ -4,6 +4,8 @@ import trio
 import datetime
 import triopg
 import collections
+from typing import List
+
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
 from functools import wraps
@@ -21,13 +23,14 @@ from parsec.backend.postgresql import migrations
 logger = get_logger()
 
 CREATE_MIGRATION_TABLE_ID = 2
+MigrationResult = collections.namedtuple(
+    "MigrationResult", ["already_applied", "new_apply", "to_apply", "errors"]
+)
 
 
-async def migrate_db(url: str, migrations: list, dry_run: bool) -> None:
+async def migrate_db(url: str, migrations: List[str], dry_run: bool) -> MigrationResult:
     """
-    Returns: A result dict
-    Raises:
-        triopg.exceptions.PostgresError
+    Returns: MigrationResult
     """
     async with triopg.connect(url) as conn:
         return await _migrate_db(conn, migrations, dry_run)
@@ -36,14 +39,14 @@ async def migrate_db(url: str, migrations: list, dry_run: bool) -> None:
 async def _migrate_db(conn, migrations, dry_run):
 
     errors = []
-    allready_applied = []
+    already_applied = []
     new_apply = []
     to_apply = []
 
     idx_limit = await _idx_limit(conn)
     for idx, name, file_name in migrations:
         if idx <= idx_limit:
-            allready_applied.append(file_name)
+            already_applied.append(file_name)
         else:
             if not dry_run:
                 async with conn.transaction():
@@ -59,14 +62,7 @@ async def _migrate_db(conn, migrations, dry_run):
             else:
                 to_apply.append(file_name)
 
-    return collections.OrderedDict(
-        (
-            ("already_applied", allready_applied),
-            ("new_apply", new_apply),
-            ("to_apply", to_apply),
-            ("errors", errors),
-        )
-    )
+    return MigrationResult(already_applied, new_apply, to_apply, errors)
 
 
 async def _apply_migration(conn, idx, name, migration_file):

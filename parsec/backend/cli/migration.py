@@ -63,7 +63,7 @@ def migrate(db, debug, dry_run):
             async with spinner("Migrate"):
                 result = await migrate_db(db, migrations, dry_run)
                 error = None
-                for key, values in result.items():
+                for key, values in zip(result._fields, result):
                     color = result_colors.get(key, "white")
                     for value in values:
                         if key in ["already_applied", "new_apply"]:
