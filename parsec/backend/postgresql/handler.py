@@ -21,17 +21,17 @@ from parsec.backend.postgresql import migrations
 logger = get_logger()
 
 
-async def migrate_db(url: str, migration_files: list, dry_run: bool) -> None:
+async def migrate_db(url: str, migrations: list, dry_run: bool) -> None:
     """
     Returns: A result dict
     Raises:
         triopg.exceptions.PostgresError
     """
     async with triopg.connect(url) as conn:
-        return await _migrate_db(conn, migration_files, dry_run)
+        return await _migrate_db(conn, migrations, dry_run)
 
 
-async def _migrate_db(conn, migration_files, dry_run):
+async def _migrate_db(conn, migrations, dry_run):
 
     errors = []
     allready_applied = []
@@ -39,26 +39,25 @@ async def _migrate_db(conn, migration_files, dry_run):
     to_apply = []
     rows = []
 
-    idx_limit, error = await _idx_limit(conn, migration_files)
-    if not error:
-        for idx, migration in enumerate(migration_files, 1):
-            if idx <= idx_limit:
-                allready_applied.append(migration)
-            else:
-                if not dry_run:
-                    error = await _apply_migration(conn, migration)
-                    if error:
-                        errors.append(error)
-                        break
-                    else:
-                        new_apply.append(migration)
-                        rows.append((migration, datetime.datetime.utcnow()))
+    idx_limit = await _idx_limit(conn)
+    for idx, name, file_name in migrations:
+        if idx <= idx_limit:
+            allready_applied.append(file_name)
+        else:
+            if not dry_run:
+                error = await _apply_migration(conn, file_name)
+                if error:
+                    errors.append(error)
+                    break
                 else:
-                    to_apply.append(migration)
+                    new_apply.append(file_name)
+                    rows.append((idx, name, datetime.datetime.utcnow()))
+            else:
+                to_apply.append(file_name)
 
-        if rows:
-            statement = "INSERT INTO migration (name, applied) VALUES ($1, $2)"
-            await conn.executemany(statement, rows)
+    if rows:
+        statement = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
+        await conn.executemany(statement, rows)
 
     return collections.OrderedDict(
         (
@@ -72,7 +71,7 @@ async def _migrate_db(conn, migration_files, dry_run):
 
 async def _apply_migration(conn, migration_file):
     async with conn.transaction():
-        query = read_text(migrations, f"{migration_file}")
+        query = read_text(migrations, migration_file)
         error = None
         if not query:
             error = (migration_file, "Empty migration file")
@@ -86,36 +85,18 @@ async def _apply_migration(conn, migration_file):
 
 async def _last_migration_row(conn):
     query = """
-        SELECT name FROM migration ORDER BY applied desc LIMIT 1
+        SELECT _id FROM migration ORDER BY applied desc LIMIT 1
     """
     return await conn.fetchval(query)
 
 
-async def _idx_limit(conn, migration_files):
-    idx_limit = None
-    error = None
+async def _idx_limit(conn):
+    idx_limit = 0
     try:
-        last_migration_row = await _last_migration_row(conn)
+        idx_limit = await _last_migration_row(conn)
     except UndefinedTableError:
         idx_limit = 0
-    else:
-        if last_migration_row:
-            idx_limit, error = _last_applied_migration_file_idx(migration_files, last_migration_row)
-        else:
-            idx_limit = 0
-
-    return idx_limit, error
-
-
-def _last_applied_migration_file_idx(migration_files, last_applied_migration):
-    idx = None
-    error = None
-    try:
-        idx = migration_files.index(last_applied_migration) + 1
-    except ValueError:
-        error = ("migrations", "Inconsistent package")
-
-    return idx, error
+    return idx_limit
 
 
 def retry_on_unique_violation(fn):

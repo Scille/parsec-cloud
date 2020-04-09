@@ -10,18 +10,24 @@ from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.backend.postgresql import migrate_db, migrations
 
 
-MIGRATIONS_FOLDER = "parsec/backend/postgresql/migrations"
-MIGRATION_FILE_PATTERN = r"(?P<idx>\d{4})_\w*.sql$"
+MIGRATION_FILE_PATTERN = r"(?P<id>\d{4})_(?P<name>\w*).sql$"
 
 
 def _sorted_file_migrations():
-    full_file_pattern = r"\S*(?P<name>%s)" % MIGRATION_FILE_PATTERN
     files = []
+    ids = []
     for f in importlib_resources.contents(migrations):
         match = re.search(MIGRATION_FILE_PATTERN, f)
         if match:
-            files.append(f)
-    return sorted(files, key=lambda f: re.sub(full_file_pattern, r"\g<1>", f))
+            idx = int(match.group("id"))
+            if idx in ids:
+                raise click.ClickException(
+                    f"Inconsistent package (multiples migrations with {idx} as id)"
+                )
+            ids.append(idx)
+            files.append((idx, match.group("name"), f))
+
+    return sorted(files, key=lambda f: f[0])
 
 
 def _validate_postgres_db_url(ctx, param, value):
@@ -50,8 +56,8 @@ def migrate(db, debug, dry_run):
         "to_apply": "white",
         "already_applied": "white",
     }
-    migrations = _sorted_file_migrations()
     with cli_exception_handler(debug):
+        migrations = _sorted_file_migrations()
 
         async def _migrate(db):
             async with spinner("Migrate"):
