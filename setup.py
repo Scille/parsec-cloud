@@ -363,7 +363,7 @@ setup(
         "build_py": build_py_with_pyqt,
     },
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
-    package_data={"parsec.backend.postgresql": ["init_tables.sql"]},
+    package_data={"parsec.backend.postgresql.migrations": ["*"]},
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],
