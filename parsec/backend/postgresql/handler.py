@@ -24,7 +24,7 @@ logger = get_logger()
 
 CREATE_MIGRATION_TABLE_ID = 2
 MigrationResult = collections.namedtuple(
-    "MigrationResult", ["already_applied", "new_apply", "to_apply", "errors"]
+    "MigrationResult", ["already_applied", "new_apply", "to_apply", "error"]
 )
 
 
@@ -38,7 +38,7 @@ async def migrate_db(url: str, migrations: List[str], dry_run: bool) -> Migratio
 
 async def _migrate_db(conn, migrations, dry_run):
 
-    errors = []
+    error = None
     already_applied = []
     new_apply = []
     to_apply = []
@@ -52,7 +52,6 @@ async def _migrate_db(conn, migrations, dry_run):
                 async with conn.transaction():
                     error = await _apply_migration(conn, idx, name, file_name)
                     if error:
-                        errors.append(error)
                         break
                     else:
                         if idx >= CREATE_MIGRATION_TABLE_ID:
@@ -61,8 +60,7 @@ async def _migrate_db(conn, migrations, dry_run):
                         new_apply.append(file_name)
             else:
                 to_apply.append(file_name)
-
-    return MigrationResult(already_applied, new_apply, to_apply, errors)
+    return MigrationResult(already_applied, new_apply, to_apply, error)
 
 
 async def _apply_migration(conn, idx, name, migration_file):
@@ -90,13 +88,27 @@ async def _last_migration_row(conn):
     return await conn.fetchval(query)
 
 
+async def _is_initial_migration_applied(conn):
+    query = """
+        SELECT _id FROM organization LIMIT 1
+    """
+    try:
+        await conn.fetchval(query)
+    except UndefinedTableError:
+        return False
+    else:
+        return True
+
+
 async def _idx_limit(conn):
     idx_limit = 0
     try:
         idx_limit = await _last_migration_row(conn)
     except UndefinedTableError:
         # The migration table is created in the second migration
-        idx_limit = 0
+        if await _is_initial_migration_applied(conn):
+            # The initial table may be created before the migrate command with the old way
+            idx_limit = 1
     return idx_limit
 
 
