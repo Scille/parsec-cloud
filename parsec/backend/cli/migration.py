@@ -10,7 +10,7 @@ from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.backend.postgresql import migrate_db, migrations
 
 
-MIGRATION_FILE_PATTERN = r"(?P<id>\d{4})_(?P<name>\w*).sql$"
+MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
 
 
 def _sorted_file_migrations():
