@@ -1,1 +1,0 @@
-Use "localhost" as the default hostname in the cli.

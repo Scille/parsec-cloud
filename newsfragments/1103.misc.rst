@@ -1,1 +1,0 @@
-Add cancel button to "Parsec is already running, please close it" prompt in windows installer.
