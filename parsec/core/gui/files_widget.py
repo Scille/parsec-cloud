@@ -221,6 +221,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.copy_clicked.connect(self.on_copy_clicked)
         self.table_files.cut_clicked.connect(self.on_cut_clicked)
         self.table_files.file_path_clicked.connect(self.on_get_file_path_clicked)
+        self.table_files.open_current_dir_clicked.connect(self.on_open_current_dir_clicked)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self.rename_success.connect(self._on_rename_success)
@@ -470,6 +471,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             files=[(self.current_directory / f.name, f.type) for f in files],
         )
 
+    def on_open_current_dir_clicked(self):
+        self.open_file(None)
+
     def open_files(self):
         files = self.table_files.selected_files()
         if len(files) == 1:
@@ -493,7 +497,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         path = self.jobs_ctx.run_sync(
             self.core.mountpoint_manager.get_path_in_mountpoint,
             self.workspace_fs.workspace_id,
-            self.current_directory / file_name,
+            self.current_directory / file_name if file_name else self.current_directory,
             self.workspace_fs.timestamp
             if isinstance(self.workspace_fs, WorkspaceFSTimestamped)
             else None,
