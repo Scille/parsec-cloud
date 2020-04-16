@@ -127,6 +127,18 @@ def split_multi_error(exc):
     return cancelled_errors, other_exceptions
 
 
+async def check_cancellation(exc):
+    # If the multierror contains a Cancelled(), that means a cancellation
+    # has leaked outside of the nursery. This indicates the current scope
+    # has likely been cancelled. In this case, there is no point in handling
+    # both the cancelled and regular exceptions: simply check for cancellation
+    # and let a new Cancelled() raise if necessary, discarding the original
+    # exception.
+    cancelled_errors, _ = split_multi_error(exc)
+    if cancelled_errors:
+        await trio.hazmat.checkpoint_if_cancelled()
+
+
 def collapse_multi_error(multierror):
     # Pick the first exception as the reference exception
     pick = multierror.exceptions[0]
@@ -156,19 +168,6 @@ def collapse_multi_error(multierror):
         return pick
 
 
-def transform_multi_error(exc):
-    # Cancelled errors must be treated separetely
-    cancelled_errors, other_exceptions = split_multi_error(exc)
-    # No transformation needed
-    if not other_exceptions or not isinstance(other_exceptions, trio.MultiError):
-        return exc
-    # Collapse non-cancelled exceptions
-    collapsed_errors = collapse_multi_error(other_exceptions)
-    if not cancelled_errors:
-        return collapsed_errors
-    return trio.MultiError([cancelled_errors, collapsed_errors])
-
-
 @asynccontextmanager
 async def open_service_nursery():
     """Open a service nursery.
@@ -182,12 +181,18 @@ async def open_service_nursery():
         async with service_nursery.open_service_nursery() as nursery:
             yield nursery
     except trio.MultiError as exc:
-        new_exc = transform_multi_error(exc)
-        if new_exc is exc:
-            raise
+        # Re-raise a Cancelled() if the exception contains a Cancelled()
+        await check_cancellation(exc)
+        # Collapse the MultiError into a single exception
         logger.exception("A MultiError has been detected")
-        raise new_exc
+        raise collapse_multi_error(exc)
+
+
+async def cancel_and_checkpoint(scope):
+    scope.cancel()
+    await trio.hazmat.checkpoint_if_cancelled()
 
 
 # Add it to trio
 trio.open_service_nursery = open_service_nursery
+trio.CancelScope.cancel_and_checkpoint = cancel_and_checkpoint
