@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-27 11:49+0100\n"
-"PO-Revision-Date: 2020-03-27 11:50+0100\n"
+"POT-Creation-Date: 2020-04-02 09:10+0200\n"
+"PO-Revision-Date: 2020-04-02 09:13+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -223,6 +223,24 @@ msgstr "EXCELLENT"
 
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Force du mot de passe : {strength}"
+
+msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
+msgstr "Ouvrir dans l'explorateur de fichiers"
+
+msgid "ACTION_WORKSPACE_RENAME"
+msgstr "Renommer"
+
+msgid "ACTION_WORKSPACE_SHARE"
+msgstr "Partager"
+
+msgid "ACTION_WORKSPACE_SEE_IN_THE_PAST"
+msgstr "Voir à une date précise"
+
+msgid "ACTION_WORKSPACE_REENCRYPT"
+msgstr "Rechiffrer"
+
+msgid "ACTION_WORKSPACE_DELETE"
+msgstr "Effacer"
 
 msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
 msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."

@@ -1,0 +1,1 @@
+Add a contextual menu on workspace buttons
