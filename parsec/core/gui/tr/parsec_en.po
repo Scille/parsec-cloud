@@ -220,6 +220,24 @@ msgstr "EXCELLENT"
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Password strength: {strength}"
 
+msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
+msgstr "Open in file explorer"
+
+msgid "ACTION_WORKSPACE_RENAME"
+msgstr "Rename"
+
+msgid "ACTION_WORKSPACE_SHARE"
+msgstr "Share"
+
+msgid "ACTION_WORKSPACE_SEE_IN_THE_PAST"
+msgstr "See at a given date"
+
+msgid "ACTION_WORKSPACE_REENCRYPT"
+msgstr "Reencrypt"
+
+msgid "ACTION_WORKSPACE_DELETE"
+msgstr "Remove"
+
 msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
 msgstr "Only a workspace owner can reencrypt."
 
