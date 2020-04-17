@@ -7,8 +7,7 @@ import subprocess
 from time import sleep
 from pathlib import Path
 from contextlib import contextmanager
-from unittest.mock import ANY, MagicMock, patch
-
+from unittest.mock import ANY, MagicMock, patch, mock_open
 
 import attr
 import pytest
@@ -136,22 +135,39 @@ def _running(cmd, wait_for=None, env={}):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-def test_init_backend(postgresql_url, unused_tcp_port):
-    _run(f"backend init --db {postgresql_url}")
-    administration_token = "9e57754ddfe62f7f8780edc0"
+@patch("parsec.backend.postgresql.migrations", "toto")
+def test_migrate_backend(postgresql_url, unused_tcp_port, tmpdir):
+    with patch("parsec.backend.cli.migration._sorted_file_migrations") as _sorted_file_migrations:
+        with patch("builtins.open", mock_open(read_data="SELECT current_database();")):
+            _sorted_file_migrations.return_value = [
+                (100001, "migration1", "100001_migration1.sql"),
+                (100002, "migration2", "100002_migration2.sql"),
+            ]
+            runner = CliRunner()
+            dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
+            result = runner.invoke(cli, dry_run_args)
+            assert "100001_migration1.sql [ ]" in result.output
+            assert "100002_migration2.sql [ ]" in result.output
 
-    # Already initialized db is ok
-    p = _run(f"backend init --db {postgresql_url}")
-    assert b"Database already initialized" in p.stdout
+            apply_args = f"backend migrate --db {postgresql_url}"
+            runner = CliRunner()
+            result = runner.invoke(cli, apply_args)
+            assert "100001_migration1.sql [X]" in result.output
+            assert "100002_migration2.sql [X]" in result.output
 
-    # Test backend can run
-    with _running(
-        f"backend run --blockstore=POSTGRESQL"
-        f" --db={postgresql_url} --port={unused_tcp_port}"
-        f" --administration-token={administration_token}",
-        wait_for="Starting Parsec Backend",
-    ):
-        pass
+            _sorted_file_migrations.return_value.append(
+                (100003, "migration3", "100003_migration3.sql")
+            )
+
+            result = runner.invoke(cli, dry_run_args)
+            assert "100001_migration1.sql [X]" in result.output
+            assert "100002_migration2.sql [X]" in result.output
+            assert "100003_migration3.sql [ ]" in result.output
+
+            result = runner.invoke(cli, apply_args)
+            assert "100001_migration1.sql [X]" in result.output
+            assert "100002_migration2.sql [X]" in result.output
+            assert "100003_migration3.sql [X]" in result.output
 
 
 @pytest.fixture(params=(False, True), ids=("no_ssl", "ssl"))
