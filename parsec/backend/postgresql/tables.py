@@ -26,10 +26,32 @@ def q_organization_internal_id(organization_id):
 ### User ###
 
 
+t_human = Table("human")
 t_user = Table("user_")
 t_device = Table("device")
 t_user_invitation = Table("user_invitation")
 t_device_invitation = Table("device_invitation")
+
+
+def q_human(organization_id=None, organization=None, email=None, _id=None, table=t_human):
+    q = Query.from_(table)
+    if _id is not None:
+        return q.where(table._id == _id)
+    else:
+        assert email is not None
+        assert organization_id is not None or organization is not None
+        _q_organization = (
+            organization
+            if organization is not None
+            else q_organization_internal_id(organization_id)
+        )
+        return q.where((table.organization == _q_organization) & (table.email == email))
+
+
+def q_human_internal_id(email, organization_id=None, organization=None, **kwargs):
+    return q_human(
+        organization_id=organization_id, organization=organization, email=email, **kwargs
+    ).select("_id")
 
 
 def q_user(organization_id=None, organization=None, user_id=None, _id=None, table=t_user):
