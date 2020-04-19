@@ -116,6 +116,7 @@ class Trustchain:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class HumanFindResultItem:
     user_id: UserID
+    revoked: bool
     human_handle: Optional[HumanHandle] = None
 
 

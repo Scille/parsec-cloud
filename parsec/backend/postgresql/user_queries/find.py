@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import itertools
-import pendulum
+from pendulum import now as pendulum_now
 from functools import lru_cache
 from typing import Tuple, List
 from pypika import PostgreSQLQuery as Query, Parameter
@@ -41,17 +41,18 @@ def _q_human_factory(query, omit_revoked, omit_non_human):
     def _next_param():
         return Parameter(f"${next(_param_count)}")
 
+    q_revoked = t_user.revoked_on.notnull() & (t_user.revoked_on <= _next_param())
     q = (
         Query.from_(t_user)
         .left_join(t_human)
         .on(t_user.human == t_human._id)
-        .select(t_user.user_id, t_human.email, t_human.label)
+        .select(t_user.user_id, t_human.email, t_human.label, q_revoked.as_("revoked"))
         .where((t_user.organization == q_organization_internal_id(_next_param())))
     )
     if query:
         q = q.where(IRegex(Concat(t_human.label, t_human.email, t_user.user_id), _next_param()))
     if omit_revoked:
-        q = q.where(t_user.revoked_on.isnull() | t_user.revoked_on > _next_param())
+        q = q.where(q_revoked.negate())
     if omit_non_human:
         q = q.where(t_user.human.notnull())
 
@@ -71,7 +72,7 @@ async def query_find(
 
         if omit_revoked:
             q = _q_factory(query=True, omit_revoked=True)
-            args = (organization_id, query, pendulum.now())
+            args = (organization_id, query, pendulum_now())
 
         else:
             q = _q_factory(query=True, omit_revoked=False)
@@ -81,7 +82,7 @@ async def query_find(
 
         if omit_revoked:
             q = _q_factory(query=False, omit_revoked=True)
-            args = (organization_id, pendulum.now())
+            args = (organization_id, pendulum_now())
 
         else:
             q = _q_factory(query=False, omit_revoked=False)
@@ -107,39 +108,41 @@ async def query_find_humans(
 
         if omit_revoked:
             q = _q_human_factory(query=True, omit_revoked=True, omit_non_human=omit_non_human)
-            args = (organization_id, query, pendulum.now())
+            args = (pendulum_now(), organization_id, query)
 
         else:
             q = _q_human_factory(query=True, omit_revoked=False, omit_non_human=omit_non_human)
-            args = (organization_id, query)
+            args = (pendulum_now(), organization_id, query)
 
     else:
 
         if omit_revoked:
             q = _q_human_factory(query=False, omit_revoked=True, omit_non_human=omit_non_human)
-            args = (organization_id, pendulum.now())
+            args = (pendulum_now(), organization_id)
 
         else:
             q = _q_human_factory(query=False, omit_revoked=False, omit_non_human=omit_non_human)
-            args = (organization_id,)
+            args = (pendulum_now(), organization_id)
 
     raw_results = await conn.fetch(q, *args)
 
     humans = [
         HumanFindResultItem(
-            user_id=UserID(user_id), human_handle=HumanHandle(email=email, label=label)
+            user_id=UserID(user_id),
+            human_handle=HumanHandle(email=email, label=label),
+            revoked=revoked,
         )
-        for user_id, email, label in raw_results
+        for user_id, email, label, revoked in raw_results
         if email is not None
     ]
     non_humans = [
-        HumanFindResultItem(user_id=UserID(user_id), human_handle=None)
-        for user_id, email, label in raw_results
+        HumanFindResultItem(user_id=UserID(user_id), human_handle=None, revoked=revoked)
+        for user_id, email, label, revoked in raw_results
         if email is None
     ]
     results = [
-        *sorted(humans, key=lambda x: x.human_handle.label),
-        *sorted(non_humans, key=lambda x: x.user_id),
+        *sorted(humans, key=lambda x: (x.human_handle.label.lower(), x.user_id.lower())),
+        *sorted(non_humans, key=lambda x: x.user_id.lower()),
     ]
     # TODO: should user LIMIT and OFFSET in the SQL query instead
     return results[(page - 1) * per_page : page * per_page], len(results)

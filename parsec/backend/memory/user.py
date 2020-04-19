@@ -260,28 +260,35 @@ class MemoryUserComponent(BaseUserComponent):
         else:
             data = org._users.values()
 
-        if omit_revoked:
-            now = pendulum.now()
-            data = [user for user in data if user.revoked_on is None or user.revoked_on > now]
+        now = pendulum.now()
+        results = [
+            HumanFindResultItem(
+                user_id=user.user_id,
+                human_handle=user.human_handle,
+                revoked=(user.revoked_on is not None and user.revoked_on <= now),
+            )
+            for user in data
+        ]
 
-        humans = [user for user in data if user.human_handle]
-        non_humans = [user for user in data if not user.human_handle]
+        if omit_revoked:
+            results = [res for res in results if not res.revoked]
+
+        # PostgreSQL does case insensitive sort
+        humans = sorted(
+            [res for res in results if res.human_handle],
+            key=lambda r: (r.human_handle.label.lower(), r.user_id.lower()),
+        )
+        non_humans = sorted(
+            [res for res in results if not res.human_handle], key=lambda r: r.user_id.lower()
+        )
 
         if omit_non_human:
-            # PostgreSQL does case insensitive sort
-            data = sorted(humans, key=lambda u: u.human_handle.label.lower())
+            results = humans
         else:
-            # Sort by human handel label, keeping non-human last
-            data = [
-                *sorted(humans, key=lambda u: u.human_handle.label.lower()),
-                *sorted(non_humans, key=lambda u: u.user_id.lower()),
-            ]
+            # Keeping non-human last
+            results = [*humans, *non_humans]
 
-        page_slice = slice((page - 1) * per_page, page * per_page)
-        return (
-            [HumanFindResultItem(user.user_id, user.human_handle) for user in data[page_slice]],
-            len(data),
-        )
+        return (results[(page - 1) * per_page : page * per_page], len(results))
 
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation

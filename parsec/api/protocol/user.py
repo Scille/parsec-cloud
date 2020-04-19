@@ -223,6 +223,7 @@ class HumanFindReqSchema(BaseReqSchema):
 class HumanFindResultItemSchema(BaseSchema):
     user_id = UserIDField(required=True)
     human_handle = HumanHandleField(allow_none=True, missing=None)
+    revoked = fields.Boolean(required=True)
 
 
 class HumanFindRepSchema(BaseRepSchema):

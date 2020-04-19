@@ -7,7 +7,7 @@ from parsec.api.protocol import human_find_serializer
 from tests.common import freeze_time
 
 
-async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False):
+async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False, **kwargs):
     await sock.send(
         human_find_serializer.req_dumps(
             {
@@ -15,6 +15,7 @@ async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False)
                 "query": query,
                 "omit_revoked": omit_revoked,
                 "omit_non_human": omit_non_human,
+                **kwargs,
             }
         )
     )
@@ -70,7 +71,9 @@ async def test_ascii_search_on_unicode_data(
     rep = await human_find(sock, query="cuneyt")
     assert rep == {
         "status": "ok",
-        "results": [{"user_id": cunyet.user_id, "human_handle": cunyet.human_handle}],
+        "results": [
+            {"user_id": cunyet.user_id, "human_handle": cunyet.human_handle, "revoked": False}
+        ],
         "per_page": 100,
         "page": 1,
         "total": 1,
@@ -87,7 +90,9 @@ async def test_unicode_search(access_testbed, organization_factory, local_device
     rep = await human_find(sock, query="황")
     assert rep == {
         "status": "ok",
-        "results": [{"user_id": hwang.user_id, "human_handle": hwang.human_handle}],
+        "results": [
+            {"user_id": hwang.user_id, "human_handle": hwang.human_handle, "revoked": False}
+        ],
         "per_page": 100,
         "page": 1,
         "total": 1,
@@ -122,9 +127,9 @@ async def test_search_multiple_matches(access_testbed, organization_factory, loc
     expected_rep = {
         "status": "ok",
         "results": [
-            {"user_id": lai.user_id, "human_handle": lai.human_handle},
-            {"user_id": le.user_id, "human_handle": le.human_handle},
-            {"user_id": li.user_id, "human_handle": li.human_handle},
+            {"user_id": lai.user_id, "human_handle": lai.human_handle, "revoked": False},
+            {"user_id": le.user_id, "human_handle": le.human_handle, "revoked": False},
+            {"user_id": li.user_id, "human_handle": li.human_handle, "revoked": False},
         ],
         "per_page": 100,
         "page": 1,
@@ -173,9 +178,9 @@ async def test_search_multiple_user_same_human_handle(
     assert rep == {
         "status": "ok",
         "results": [
-            {"user_id": nick1.user_id, "human_handle": nick1.human_handle},
-            {"user_id": nick2.user_id, "human_handle": nick2.human_handle},
-            {"user_id": nick3.user_id, "human_handle": nick3.human_handle},
+            {"user_id": nick2.user_id, "human_handle": nick2.human_handle, "revoked": True},
+            {"user_id": nick1.user_id, "human_handle": nick1.human_handle, "revoked": True},
+            {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False},
         ],
         "per_page": 100,
         "page": 1,
@@ -185,7 +190,9 @@ async def test_search_multiple_user_same_human_handle(
     rep = await human_find(sock, query="Guzman Huerta", omit_revoked=True)
     assert rep == {
         "status": "ok",
-        "results": [{"user_id": nick3.user_id, "human_handle": nick3.human_handle}],
+        "results": [
+            {"user_id": nick3.user_id, "human_handle": nick3.human_handle, "revoked": False}
+        ],
         "per_page": 100,
         "page": 1,
         "total": 1,
@@ -216,11 +223,11 @@ async def test_search_with_non_humans(access_testbed, organization_factory, loca
     assert rep == {
         "status": "ok",
         "results": [
-            {"user_id": hwang.user_id, "human_handle": hwang.human_handle},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle},
+            {"user_id": hwang.user_id, "human_handle": hwang.human_handle, "revoked": False},
+            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
             # Non human should be ordered last no matter what
-            {"user_id": ninja1.user_id, "human_handle": None},
-            {"user_id": ninja2.user_id, "human_handle": None},
+            {"user_id": ninja1.user_id, "human_handle": None, "revoked": False},
+            {"user_id": ninja2.user_id, "human_handle": None, "revoked": False},
         ],
         "per_page": 100,
         "page": 1,
@@ -232,8 +239,8 @@ async def test_search_with_non_humans(access_testbed, organization_factory, loca
     assert rep == {
         "status": "ok",
         "results": [
-            {"user_id": hwang.user_id, "human_handle": hwang.human_handle},
-            {"user_id": richard.user_id, "human_handle": richard.human_handle},
+            {"user_id": hwang.user_id, "human_handle": hwang.human_handle, "revoked": False},
+            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
         ],
         "per_page": 100,
         "page": 1,
@@ -241,140 +248,74 @@ async def test_search_with_non_humans(access_testbed, organization_factory, loca
     }
 
 
-# @pytest.mark.trio
-# async def test_search_with_non_humans(access_testbed, organization_factory, local_device_factory):
-#     binder, org, godfrey1, sock = access_testbed
+@pytest.mark.trio
+async def test_pagination(access_testbed, organization_factory, local_device_factory):
+    binder, org, godfrey1, sock = access_testbed
 
-#     mike = local_device_factory(base_human_handle=f"Mike <gweilo-1@cobra.com>", org=org)
-#     await binder.bind_device(mike, certifier=godfrey1)
+    richard = local_device_factory(base_human_handle=f"Richard <richard@cobra.com>", org=org)
+    await binder.bind_device(richard, certifier=godfrey1)
 
-#     roger = local_device_factory(base_human_handle=f"Roger <gweilo-2@cobra.com>", org=org)
-#     await binder.bind_device(roger, certifier=godfrey1)
+    roger = local_device_factory(base_human_handle=f"Roger <roger@cobra.com>", org=org)
+    await binder.bind_device(roger, certifier=godfrey1)
 
-#     blacky = local_device_factory(base_human_handle=f"Blacky <gweilo-3@cobra.com>", org=org)
-#     await binder.bind_device(blacky, certifier=godfrey1)
+    mike = local_device_factory(base_human_handle=f"Mike <mike@cobra.com>", org=org)
+    await binder.bind_device(mike, certifier=godfrey1)
 
-#     # Search single
-#     rep = await human_find(sock, query="gweilo-1@cobra.com")
-#     assert rep == {"status": "ok", "results": [
-#         {
-#             "user_id": roger.user_id,
-#             "human_handle": roger.human_handle,
-#         },
-#     ], "per_page": 100, "page": 1, "total": 1}
+    blacky = local_device_factory(base_human_handle=f"Blacky <blacky@cobra.com>", org=org)
+    await binder.bind_device(blacky, certifier=godfrey1)
 
-#     # Search multiple
-#     rep = await human_find(sock, query="gweilo")
-#     assert rep == {"status": "ok", "results": [
-#         {
-#             "user_id": mike.user_id,
-#             "human_handle": mike.human_handle,
-#         },
-#         {
-#             "user_id": roger.user_id,
-#             "human_handle": roger.human_handle,
-#         },
-#         {
-#             "user_id": blacky.user_id,
-#             "human_handle": blacky.human_handle,
-#         },
-#     ], "per_page": 100, "page": 1, "total": 3}
+    # Find all
+    rep = await human_find(sock)
+    assert rep == {
+        "status": "ok",
+        "results": [
+            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
+            {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
+            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
+            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
+            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+        ],
+        "per_page": 100,
+        "page": 1,
+        "total": 5,
+    }
+
+    # Find with pagination
+    rep = await human_find(sock, per_page=3)
+    assert rep == {
+        "status": "ok",
+        "results": [
+            {"user_id": blacky.user_id, "human_handle": blacky.human_handle, "revoked": False},
+            {"user_id": godfrey1.user_id, "human_handle": godfrey1.human_handle, "revoked": False},
+            {"user_id": mike.user_id, "human_handle": mike.human_handle, "revoked": False},
+        ],
+        "per_page": 3,
+        "page": 1,
+        "total": 5,
+    }
+
+    # Continue pagination
+    rep = await human_find(sock, page=2, per_page=3)
+    assert rep == {
+        "status": "ok",
+        "results": [
+            {"user_id": richard.user_id, "human_handle": richard.human_handle, "revoked": False},
+            {"user_id": roger.user_id, "human_handle": roger.human_handle, "revoked": False},
+        ],
+        "per_page": 3,
+        "page": 2,
+        "total": 5,
+    }
+
+    # Test out of pagination
+    rep = await human_find(sock, page=3, per_page=3)
+    assert rep == {"status": "ok", "results": [], "per_page": 3, "page": 3, "total": 5}
 
 
-# @pytest.mark.trio
-# async def test_search_by_email(access_testbed, organization_factory, local_device_factory):
-#     binder, org, godfrey1, sock = access_testbed
-
-
-# @pytest.mark.trio
-# async def test_api_human_find(access_testbed, organization_factory, local_device_factory):
-#     binder, org, godfrey1, sock = access_testbed
-
-#     # Populate with cool guys
-#     for name in ["Philippe", "Mike", "Blacky", "Philip_J_Fry"]:
-#         device = local_device_factory(base_human_handle=name, org=org)
-#         await binder.bind_device(device, certifier=godfrey1)
-
-#     device = local_device_factory(human_handle=name, org=org)
-#     await binder.bind_device(device, certifier=godfrey1)
-
-
-#     await binder.bind_revocation("Philip_J_Fry", certifier=godfrey1)
-
-#     # Also create homonyme in different organization, just to be sure...
-#     other_org = organization_factory("FilmMark")
-#     other_device = local_device_factory("Philippe@p1", other_org)
-#     await binder.bind_organization(other_org, other_device)
-
-#     # # Test exact match
-#     # rep = await human_find(sock, query="Mike")
-#     # assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
-
-#     # Test partial search
-#     rep = await human_find(sock, query="Phil")
-#     assert rep == {
-#         "status": "ok",
-#         "results": ["Philip_J_Fry", "Philippe"],
-#         "per_page": 100,
-#         "page": 1,
-#         "total": 2,
-#     }
-
-#     # Test case insensitivity
-#     rep = await human_find(sock, query="phil")
-#     assert rep == {
-#         "status": "ok",
-#         "results": ["Philip_J_Fry", "Philippe"],
-#         "per_page": 100,
-#         "page": 1,
-#         "total": 2,
-#     }
-
-#     # Test partial search while omitting revoked users
-#     rep = await human_find(sock, query="Phil", omit_revoked=True)
-#     assert rep == {"status": "ok", "results": ["Philippe"], "per_page": 100, "page": 1, "total": 1}
-
-#     # Test partial search with invalid query
-#     rep = await human_find(sock, query="p*", omit_revoked=True)
-#     assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
-
-#     # Test pagination
-#     rep = await human_find(sock, query="Phil", page=1, per_page=1)
-#     assert rep == {
-#         "status": "ok",
-#         "results": ["Philip_J_Fry"],
-#         "per_page": 1,
-#         "page": 1,
-#         "total": 2,
-#     }
-
-#     # Test out of pagination
-#     rep = await human_find(sock, query="Phil", page=2, per_page=5)
-#     assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 2}
-
-#     # Test no params
-#     rep = await human_find(sock)
-#     assert rep == {
-#         "status": "ok",
-#         "results": ["Blacky", "Godfrey", "Mike", "Philip_J_Fry", "Philippe"],
-#         "per_page": 100,
-#         "page": 1,
-#         "total": 5,
-#     }
-
-#     # Test omit revoked users
-#     rep = await human_find(sock, omit_revoked=True)
-#     assert rep == {
-#         "status": "ok",
-#         "results": ["Blacky", "Godfrey", "Mike", "Philippe"],
-#         "per_page": 100,
-#         "page": 1,
-#         "total": 4,
-#     }
-
-#     # Test bad params
-#     for bad in [{"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
-#         await sock.send(packb({"cmd": "human_find", **bad}))
-#         raw_rep = await sock.recv()
-#         rep = human_find_serializer.rep_loads(raw_rep)
-#         assert rep["status"] == "bad_message"
+@pytest.mark.trio
+async def test_bad_args(access_testbed, organization_factory, local_device_factory):
+    binder, org, godfrey1, sock = access_testbed
+    # Test bad params
+    for bad in [{"page": 0}, {"per_page": 0}, {"per_page": 101}]:
+        rep = await human_find(sock, **bad)
+        assert rep["status"] == "bad_message"
