@@ -8,7 +8,7 @@ from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.api.protocol import user_create_serializer, DeviceID
 
 from tests.common import freeze_time
-from tests.backend.user.test_access import user_get
+from tests.backend.user.test_user_get import user_get
 
 
 async def user_create(sock, **kwargs):

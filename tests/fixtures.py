@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+import re
 import pytest
 import pendulum
 from collections import defaultdict
@@ -86,7 +87,8 @@ def local_device_factory(coolorg):
         base_device_id: Optional[str] = None,
         org: OrganizationFullData = coolorg,
         is_admin: Optional[bool] = None,
-        has_human_handle: Union[bool, HumanHandle] = True,
+        has_human_handle: bool = True,
+        base_human_handle: Optional[str] = None,
     ):
         nonlocal count
 
@@ -98,16 +100,25 @@ def local_device_factory(coolorg):
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
 
-        if has_human_handle is False:
+        if not has_human_handle:
+            assert base_human_handle is None
             human_handle = None
-        elif has_human_handle is True:
+        elif base_human_handle:
+            if isinstance(base_human_handle, HumanHandle):
+                human_handle = base_human_handle
+            else:
+                match = re.match(r"(.*) <(.*)>", base_human_handle)
+                if match:
+                    label, email = match.groups()
+                else:
+                    label = base_human_handle
+                    email = f"{device_id.user_id}@example.com"
+                human_handle = HumanHandle(email=email, label=label)
+        else:
             name = device_id.user_id.capitalize()
             human_handle = HumanHandle(
                 email=f"{device_id.user_id}@example.com", label=f"{name}y Mc{name}Face"
             )
-        else:
-            assert isinstance(has_human_handle, HumanHandle)
-            human_handle = has_human_handle
 
         parent_device = None
         try:

@@ -241,11 +241,15 @@ class MemoryUserComponent(BaseUserComponent):
             data = []
             query_terms = [qt.lower() for qt in query.split()]
             for user in org._users.values():
-                user_terms = (
-                    *[x.lower() for x in user.human_handle.label.split()],
-                    user.human_handle.email.lower(),
-                    user.user_id.lower(),
-                )
+                if user.human_handle:
+                    user_terms = (
+                        *[x.lower() for x in user.human_handle.label.split()],
+                        user.human_handle.email.lower(),
+                        user.user_id.lower(),
+                    )
+                else:
+                    user_terms = (user.user_id.lower(),)
+
                 for qt in query_terms:
                     if not any(ut.startswith(qt) for ut in user_terms):
                         break
@@ -258,7 +262,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         if omit_revoked:
             now = pendulum.now()
-            data = [user for user in data if user.revoked_on is not None and user.revoked_on <= now]
+            data = [user for user in data if user.revoked_on is None or user.revoked_on > now]
 
         humans = [user for user in data if user.human_handle]
         non_humans = [user for user in data if not user.human_handle]

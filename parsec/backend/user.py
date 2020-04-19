@@ -224,7 +224,7 @@ class BaseUserComponent:
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
         msg = human_find_serializer.req_load(msg)
-        results, total = await self.find_humans(client_ctx.organization_id, human=True, **msg)
+        results, total = await self.find_humans(client_ctx.organization_id, **msg)
         return human_find_serializer.rep_dump(
             {
                 "status": "ok",

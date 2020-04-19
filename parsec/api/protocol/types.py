@@ -98,7 +98,7 @@ class HumanHandle(namedtuple("HumanHandle", "email label")):
         return f"{self.label} <{self.email}>"
 
     def __eq__(self, other):
-        # Ignore lable field, as it is only for human redability
+        # Ignore label field, as it is only for human redability
         return isinstance(other, HumanHandle) and self.email == other.email
 
     def __hash__(self):
