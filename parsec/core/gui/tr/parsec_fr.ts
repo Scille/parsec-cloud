@@ -8,8 +8,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="98"/>
+        <location filename="../forms/about_widget.ui" line="100"/>
         <source>TEXT_PARSEC_DEVELOPMENT_INFO</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="115"/>
+        <source>TEXT_ATTRIBUTE_ICONS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
