@@ -39,7 +39,7 @@ async def _do_api_request(email, organization_id):
             if content.get("error", None):
                 raise JobResultError(content["error"])
             return (
-                content["account_id"],
+                content["parsec_id"],
                 BackendOrganizationBootstrapAddr.from_url(content["bootstrap_link"]),
             )
         except (TypeError, KeyError) as exc:
