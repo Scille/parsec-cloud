@@ -318,8 +318,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         telemetry.init(self.config)
 
     def show_top(self):
-        self.show()
+        self.activateWindow()
+        self.setWindowState((self.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
         self.raise_()
+        self.show()
 
     def on_tab_state_changed(self, tab, state):
         idx = self.tab_center.indexOf(tab)
@@ -419,9 +421,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.switch_to_tab(self.tab_center.count() - 1)
             idx = self.tab_center.count() - 1
 
+        self.show_top()
         if action_addr and isinstance(action_addr, BackendOrganizationFileLinkAddr):
             self.go_to_file_link(action_addr)
-            return
         elif action_addr:
             if isinstance(action_addr, BackendOrganizationBootstrapAddr):
                 self._on_bootstrap_org_clicked(action_addr)
