@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-04-20 11:37+0200\n"
-"PO-Revision-Date: 2020-04-20 11:42+0200\n"
+"POT-Creation-Date: 2020-04-21 09:45+0200\n"
+"PO-Revision-Date: 2020-04-21 09:48+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1559,14 +1559,14 @@ msgstr "The file could not be found within the organization <b>{organization}</b
 msgid "TEXT_INVALID_URL"
 msgstr "The URL is invalid."
 
+msgid "ACTION_TAB_CLOSE_CONFIRM"
+msgstr "Close the tab"
+
 msgid "TEXT_TAB_CLOSE_TITLE"
 msgstr "Close the tab"
 
-msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
-msgstr "Are you sure you want to close this tab? You will be automatically logged out."
-
-msgid "ACTION_TAB_CLOSE_CONFIRM"
-msgstr "Close the tab"
+msgid "TEXT_TAB_CLOSE_INSTRUCTIONS_device"
+msgstr "Are you sure you want to close this tab? The device \"{device}\" will be automatically disconnected."
 
 msgid "TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"
 msgstr "PARSEC is still running."
@@ -1903,3 +1903,6 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
+#~ msgstr "Are you sure you want to close this tab? You will be automatically logged out."

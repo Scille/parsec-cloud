@@ -444,19 +444,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def close_tab(self, index, force=False):
         tab = self.tab_center.widget(index)
         if not force:
-            r = True
+            r = _("ACTION_TAB_CLOSE_CONFIRM")
             if tab and tab.is_logged_in:
                 r = ask_question(
                     self,
                     _("TEXT_TAB_CLOSE_TITLE"),
-                    _("TEXT_TAB_CLOSE_INSTRUCTIONS"),
-                    [_("ACTION_TAB_CLOSE_CONFIRM"), _("ACTION_CANCEL")],
-                )
-            elif self.tab_center.tabText(index) != _("TEXT_TAB_TITLE_LOG_IN_SCREEN"):
-                r = ask_question(
-                    self,
-                    _("TEXT_TAB_CLOSE_TITLE"),
-                    _("TEXT_TAB_CLOSE_INSTRUCTIONS"),
+                    _("TEXT_TAB_CLOSE_INSTRUCTIONS_device").format(
+                        device=tab.core.device.device_id
+                    ),
                     [_("ACTION_TAB_CLOSE_CONFIRM"), _("ACTION_CANCEL")],
                 )
             if r != _("ACTION_TAB_CLOSE_CONFIRM"):

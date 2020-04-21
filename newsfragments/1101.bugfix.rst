@@ -1,0 +1,1 @@
+Allow closing of login in tab

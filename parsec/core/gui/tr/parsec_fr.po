@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-04-20 11:37+0200\n"
-"PO-Revision-Date: 2020-04-20 11:44+0200\n"
+"POT-Creation-Date: 2020-04-21 09:45+0200\n"
+"PO-Revision-Date: 2020-04-21 09:46+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1566,14 +1566,14 @@ msgstr "Le fichier n'a pas pu être trouvé au sein de l'organisation <b>{organi
 msgid "TEXT_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
+msgid "ACTION_TAB_CLOSE_CONFIRM"
+msgstr "Fermer l'onglet"
+
 msgid "TEXT_TAB_CLOSE_TITLE"
 msgstr "Fermer l'onglet"
 
-msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
-msgstr "Êtes-vous sûr de vouloir fermer cet onglet ? Vous serez automatiquement déconnecté."
-
-msgid "ACTION_TAB_CLOSE_CONFIRM"
-msgstr "Fermer l'onglet"
+msgid "TEXT_TAB_CLOSE_INSTRUCTIONS_device"
+msgstr "Êtes-vous sûr de vouloir fermer cet onglet ? L'appareil \"{device}\" sera automatiquement déconnecté."
 
 msgid "TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"
 msgstr "PARSEC est toujours ouvert"
@@ -1910,3 +1910,6 @@ msgstr "Créer un nouvel espace de travail"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Trouver un fichier via son lien"
+
+#~ msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
+#~ msgstr "Êtes-vous sûr de vouloir fermer cet onglet ? Vous serez automatiquement déconnecté."
