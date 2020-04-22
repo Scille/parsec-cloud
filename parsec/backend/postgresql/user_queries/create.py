@@ -3,6 +3,7 @@
 import itertools
 from triopg import UniqueViolationError
 from pypika import Parameter
+from pendulum import now as pendulum_now
 
 from parsec.api.protocol import OrganizationID
 from parsec.backend.user import User, Device, UserError, UserNotFoundError, UserAlreadyExistsError
@@ -11,7 +12,9 @@ from parsec.backend.postgresql.utils import Query, query
 from parsec.backend.postgresql.tables import (
     t_device,
     t_user,
+    t_human,
     q_organization_internal_id,
+    q_human_internal_id,
     q_user_internal_id,
     q_device_internal_id,
 )
@@ -28,6 +31,30 @@ _q_get_user_devices = (
 )
 
 
+_q_get_not_revoked_users_for_human = (
+    Query.from_(t_user)
+    .select(t_user.user_id)
+    .where(
+        (
+            t_user.human
+            == q_human_internal_id(organization_id=Parameter("$1"), email=Parameter("$2"))
+        )
+        & (t_user.revoked_on.isnull() | t_user.revoked_on > Parameter("$3"))
+    )
+    .get_sql()
+)
+
+
+_q_insert_human_if_not_exists = (
+    Query.into(t_human)
+    .columns("organization", "email", "label")
+    .insert(q_organization_internal_id(Parameter("$1")), Parameter("$2"), Parameter("$3"))
+    .on_conflict()
+    .do_nothing()
+    .get_sql()
+)
+
+
 _q_insert_user = (
     Query.into(t_user)
     .columns(
@@ -40,6 +67,30 @@ _q_insert_user = (
         Parameter("$4"),
         q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$5")),
         Parameter("$6"),
+    )
+    .get_sql()
+)
+
+
+_q_insert_user_with_human_handle = (
+    Query.into(t_user)
+    .columns(
+        "organization",
+        "user_id",
+        "is_admin",
+        "user_certificate",
+        "user_certifier",
+        "created_on",
+        "human",
+    )
+    .insert(
+        q_organization_internal_id(Parameter("$1")),
+        Parameter("$2"),
+        Parameter("$3"),
+        Parameter("$4"),
+        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$5")),
+        Parameter("$6"),
+        q_human_internal_id(organization_id=Parameter("$1"), email=Parameter("$7")),
     )
     .get_sql()
 )
@@ -62,7 +113,49 @@ _q_insert_device = (
 )
 
 
-async def _create_user(
+async def _do_create_user_with_human_handle(
+    conn, organization_id: OrganizationID, user: User, first_device: Device
+) -> None:
+    # Create human handle if needed
+    await conn.execute(
+        _q_insert_human_if_not_exists,
+        organization_id,
+        user.human_handle.email,
+        user.human_handle.label,
+    )
+
+    # Now insert the new user
+    try:
+        result = await conn.execute(
+            _q_insert_user_with_human_handle,
+            organization_id,
+            user.user_id,
+            user.is_admin,
+            user.user_certificate,
+            user.user_certifier,
+            user.created_on,
+            user.human_handle.email,
+        )
+
+    except UniqueViolationError:
+        raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
+
+    if result != "INSERT 0 1":
+        raise UserError(f"Insertion error: {result}")
+
+    # Finally make sure there is only one non-revoked user with this human handle
+    now = pendulum_now()
+    not_revoked_users = await conn.fetch(
+        _q_get_not_revoked_users_for_human, organization_id, user.human_handle.email, now
+    )
+    if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id:
+        # Exception cancels the transaction so the user insertion is automatically cancelled
+        raise UserAlreadyExistsError(
+            f"Human handle `{user.human_handle}` already corresponds to a non-revoked user"
+        )
+
+
+async def _do_create_user_without_human_handle(
     conn, organization_id: OrganizationID, user: User, first_device: Device
 ) -> None:
     try:
@@ -75,14 +168,25 @@ async def _create_user(
             user.user_certifier,
             user.created_on,
         )
+
     except UniqueViolationError:
         raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
 
     if result != "INSERT 0 1":
         raise UserError(f"Insertion error: {result}")
 
+
+async def _create_user(
+    conn, organization_id: OrganizationID, user: User, first_device: Device
+) -> None:
+    if user.human_handle:
+        await _do_create_user_with_human_handle(conn, organization_id, user, first_device)
+    else:
+        await _do_create_user_without_human_handle(conn, organization_id, user, first_device)
+
     await _create_device(conn, organization_id, first_device, first_device=True)
 
+    # TODO: should be no longer needed once APIv1 is removed
     await send_signal(
         conn,
         "user.created",

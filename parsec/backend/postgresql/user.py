@@ -11,12 +11,14 @@ from parsec.backend.user import (
     Trustchain,
     UserInvitation,
     DeviceInvitation,
+    HumanFindResultItem,
 )
 from parsec.backend.postgresql.handler import PGHandler
 from parsec.backend.postgresql.user_queries import (
     query_create_user,
     query_create_device,
     query_find,
+    query_find_humans,
     query_get_user,
     query_get_user_with_trustchain,
     query_get_user_with_device_and_trustchain,
@@ -89,6 +91,20 @@ class PGUserComponent(BaseUserComponent):
     ) -> Tuple[List[UserID], int]:
         async with self.dbh.pool.acquire() as conn:
             return await query_find(conn, organization_id, query, page, per_page, omit_revoked)
+
+    async def find_humans(
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revoked: bool = False,
+        omit_non_human: bool = False,
+    ) -> Tuple[List[HumanFindResultItem], int]:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_find_humans(
+                conn, organization_id, query, page, per_page, omit_revoked, omit_non_human
+            )
 
     async def create_user_invitation(
         self, organization_id: OrganizationID, invitation: UserInvitation

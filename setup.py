@@ -283,7 +283,7 @@ requirements = [
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
-    "PyPika==0.29.0",
+    "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
 ]

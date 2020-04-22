@@ -5,10 +5,10 @@ import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
-from parsec.api.protocol import user_create_serializer
+from parsec.api.protocol import user_create_serializer, DeviceID
 
 from tests.common import freeze_time
-from tests.backend.user.test_access import user_get
+from tests.backend.user.test_user_get import user_get
 
 
 async def user_create(sock, **kwargs):
@@ -30,6 +30,7 @@ async def test_user_create_ok(
         user_id=mallory.user_id,
         public_key=mallory.public_key,
         is_admin=is_admin,
+        human_handle=None,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -150,6 +151,59 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
         alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
     )
     assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
+
+
+@pytest.mark.trio
+async def test_user_create_human_handle_already_exists(alice_backend_sock, alice, bob):
+    now = pendulum.now()
+    bob2_device_id = DeviceID("bob2@dev1")
+    user_certificate = UserCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        user_id=bob2_device_id.user_id,
+        public_key=bob.public_key,
+        is_admin=False,
+        human_handle=bob.human_handle,
+    ).dump_and_sign(alice.signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id, timestamp=now, device_id=bob2_device_id, verify_key=bob.verify_key
+    ).dump_and_sign(alice.signing_key)
+
+    rep = await user_create(
+        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+    )
+    assert rep == {
+        "status": "already_exists",
+        "reason": f"Human handle `{bob.human_handle}` already corresponds to a non-revoked user",
+    }
+
+
+@pytest.mark.trio
+async def test_user_create_human_handle_with_revoked_previous_one(
+    alice_backend_sock, alice, bob, backend_data_binder
+):
+    # First revoke bob
+    await backend_data_binder.bind_revocation(user_id=bob.user_id, certifier=alice)
+
+    # Now recreate another user with bob's human handle
+    now = pendulum.now()
+    bob2_device_id = DeviceID("bob2@dev1")
+    user_certificate = UserCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        user_id=bob2_device_id.user_id,
+        public_key=bob.public_key,
+        is_admin=False,
+        human_handle=bob.human_handle,
+    ).dump_and_sign(alice.signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id, timestamp=now, device_id=bob2_device_id, verify_key=bob.verify_key
+    ).dump_and_sign(alice.signing_key)
+
+    rep = await user_create(
+        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+    )
+    assert rep == {"status": "ok"}
 
 
 @pytest.mark.trio

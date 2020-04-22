@@ -2,7 +2,7 @@
 
 from parsec.serde import BaseSchema, fields
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
-from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDField
+from parsec.api.protocol.types import UserIDField, DeviceNameField, DeviceIDField, HumanHandleField
 
 
 __all__ = (
@@ -19,6 +19,7 @@ __all__ = (
     "device_claim_serializer",
     "device_cancel_invitation_serializer",
     "device_create_serializer",
+    "human_find_serializer",
 )
 
 
@@ -46,21 +47,21 @@ class UserGetRepSchema(BaseRepSchema):
 user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
 
 
-class FindUserReqSchema(BaseReqSchema):
+class UserFindReqSchema(BaseReqSchema):
     query = fields.String(missing=None)
     omit_revoked = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 
 
-class FindUserRepSchema(BaseRepSchema):
+class UserFindRepSchema(BaseRepSchema):
     results = fields.List(UserIDField())
     page = fields.Int(validate=lambda n: n > 0)
     per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
     total = fields.Int(validate=lambda n: n >= 0)
 
 
-user_find_serializer = CmdSerializer(FindUserReqSchema, FindUserRepSchema)
+user_find_serializer = CmdSerializer(UserFindReqSchema, UserFindRepSchema)
 
 
 #### User creation API ####
@@ -206,3 +207,30 @@ class DeviceCreateRepSchema(BaseRepSchema):
 
 
 device_create_serializer = CmdSerializer(DeviceCreateReqSchema, DeviceCreateRepSchema)
+
+
+# Human search API
+
+
+class HumanFindReqSchema(BaseReqSchema):
+    query = fields.String(missing=None)
+    omit_revoked = fields.Boolean(missing=False)
+    omit_non_human = fields.Boolean(missing=False)
+    page = fields.Int(missing=1, validate=lambda n: n > 0)
+    per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
+
+
+class HumanFindResultItemSchema(BaseSchema):
+    user_id = UserIDField(required=True)
+    human_handle = HumanHandleField(allow_none=True, missing=None)
+    revoked = fields.Boolean(required=True)
+
+
+class HumanFindRepSchema(BaseRepSchema):
+    results = fields.List(fields.Nested(HumanFindResultItemSchema, required=True))
+    page = fields.Int(validate=lambda n: n > 0)
+    per_page = fields.Integer(validate=lambda n: 0 < n <= 100)
+    total = fields.Int(validate=lambda n: n >= 0)
+
+
+human_find_serializer = CmdSerializer(HumanFindReqSchema, HumanFindRepSchema)

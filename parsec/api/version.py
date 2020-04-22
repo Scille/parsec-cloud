@@ -8,4 +8,4 @@ class ApiVersion(namedtuple("ApiVersion", "version revision")):
         return f"{self.version}.{self.revision}"
 
 
-API_VERSION = ApiVersion(version=1, revision=1)
+API_VERSION = ApiVersion(version=1, revision=2)

@@ -13,6 +13,7 @@ from marshmallow.fields import (
     Nested,
     Integer,
     Boolean,
+    Email,
     Field,
 )
 
@@ -39,6 +40,7 @@ __all__ = (
     "Nested",
     "Integer",
     "Boolean",
+    "Email",
     "Field",
     "Path",
     "Bytes",
@@ -65,9 +67,6 @@ def enum_field_factory(enum):
         return value.value
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         if not isinstance(value, str):
             raise ValidationError("Not string")
 
@@ -90,9 +89,6 @@ def bytes_based_field_factory(value_type):
         return value
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         if not isinstance(value, bytes):
             raise ValidationError("Not bytes")
 
@@ -110,42 +106,42 @@ def bytes_based_field_factory(value_type):
 
 
 def str_based_field_factory(value_type):
-    def _deserialize(self, value, attr, data):
-        try:
-            return value_type(value)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
     def _serialize(self, value, attr, data):
         if value is None:
             return None
 
         return str(value)
 
+    def _deserialize(self, value, attr, data):
+        try:
+            return value_type(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
     return type(
         f"{value_type.__name__}Field",
         (Field,),
-        {"_deserialize": _deserialize, "_serialize": _serialize},
+        {"_serialize": _serialize, "_deserialize": _deserialize},
     )
 
 
 def uuid_based_field_factory(value_type):
-    def _deserialize(self, value, attr, data):
-        try:
-            return value_type(str(value))
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
     def _serialize(self, value, attr, data):
         if value is None:
             return None
 
         return value
 
+    def _deserialize(self, value, attr, data):
+        try:
+            return value_type(str(value))
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
     return type(
         f"{value_type.__name__}Field",
         (Field,),
-        {"_deserialize": _deserialize, "_serialize": _serialize},
+        {"_serialize": _serialize, "_deserialize": _deserialize},
     )
 
 
@@ -156,9 +152,6 @@ class Path(Field):
     """Absolute path"""
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         if not value.startswith("/"):
             raise ValidationError("Path must be absolute")
         if value != "/":
@@ -172,9 +165,6 @@ class UUID(Field):
     """UUID already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         if not isinstance(value, _UUID):
             raise ValidationError("Not an UUID")
         return value
@@ -184,9 +174,6 @@ class DateTime(Field):
     """DateTime already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         if not isinstance(value, Pendulum):
             raise ValidationError("Not a datetime")
 
@@ -202,9 +189,6 @@ class CheckedConstant(Field):
         self.constant = constant
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         if value != self.constant:
             raise ValidationError("Invalid value, should be `%s`" % self.constant)
 
@@ -219,6 +203,17 @@ class Map(Field):
         self.key_field = key_field
         self.nested_field = nested_field
 
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        ret = {}
+        for key, val in value.items():
+            k = self.key_field._serialize(key, attr, obj)
+            v = self.nested_field._serialize(val, key, value)
+            ret[k] = v
+        return ret
+
     def _deserialize(self, value, attr, obj):
 
         if not isinstance(value, Mapping):
@@ -228,14 +223,6 @@ class Map(Field):
         for key, val in value.items():
             k = self.key_field.deserialize(key)
             v = self.nested_field.deserialize(val)
-            ret[k] = v
-        return ret
-
-    def _serialize(self, value, attr, obj):
-        ret = {}
-        for key, val in value.items():
-            k = self.key_field._serialize(key, attr, obj)
-            v = self.nested_field._serialize(val, key, value)
             ret[k] = v
         return ret
 
@@ -257,13 +244,16 @@ class Tuple(Field):
         super().__init__(**kwargs)
         self.args = args
 
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return tuple(self.args[i]._serialize(v, attr, obj) for i, v in enumerate(value))
+
     def _deserialize(self, value, attr, obj):
         if not isinstance(value, (list, tuple)) or len(self.args) != len(value):
             self.fail("invalid")
         return tuple(self.args[i].deserialize(v, attr, obj) for i, v in enumerate(value))
-
-    def _serialize(self, value, attr, obj):
-        return tuple(self.args[i]._serialize(v, attr, obj) for i, v in enumerate(value))
 
 
 class SigningKey(Field):
@@ -274,9 +264,6 @@ class SigningKey(Field):
         return value.encode()
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         try:
             return _SigningKey(value)
 
@@ -292,9 +279,6 @@ class VerifyKey(Field):
         return value.encode()
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         try:
             return _VerifyKey(value)
 
@@ -310,9 +294,6 @@ class PrivateKey(Field):
         return value.encode()
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         try:
             return _PrivateKey(value)
 
@@ -328,9 +309,6 @@ class PublicKey(Field):
         return value.encode()
 
     def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
         try:
             return _PublicKey(value)
 

@@ -39,6 +39,7 @@ from parsec.api.protocol import (
     block_read_serializer,
     user_get_serializer,
     user_find_serializer,
+    human_find_serializer,
     user_invite_serializer,
     user_get_invitation_creator_serializer,
     user_claim_serializer,
@@ -335,6 +336,26 @@ async def user_find(
         page=page,
         per_page=per_page,
         omit_revoked=omit_revoked,
+    )
+
+
+async def human_find(
+    transport: Transport,
+    query: str = None,
+    page: int = 1,
+    per_page: int = 100,
+    omit_revoked: bool = False,
+    omit_non_human: bool = False,
+) -> dict:
+    return await _send_cmd(
+        transport,
+        human_find_serializer,
+        cmd="human_find",
+        query=query,
+        page=page,
+        per_page=per_page,
+        omit_revoked=omit_revoked,
+        omit_non_human=omit_non_human,
     )
 
 
