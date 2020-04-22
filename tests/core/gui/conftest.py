@@ -253,8 +253,10 @@ def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
             # closing confirmation prompt
 
             switch_language(core_config, "en")
-            monkeypatch.setattr("parsec.core.gui.main_window.list_available_devices",
-                                lambda *args, **kwargs: (['a']))
+            monkeypatch.setattr(
+                "parsec.core.gui.main_window.list_available_devices",
+                lambda *args, **kwargs: (["a"]),
+            )
             main_w = MainWindow(
                 qt_thread_gateway._job_scheduler, event_bus, core_config, minimize_on_close=True
             )

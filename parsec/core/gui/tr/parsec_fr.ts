@@ -139,6 +139,34 @@
     </message>
 </context>
 <context>
+    <name>CreateOrgCustomWidget</name>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="35"/>
+        <source>TEXT_ORG_WIZARD_CREATE_ORG_CUSTOM_INSTRUCTIONS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="54"/>
+        <source>TEXT_LABEL_ORG_SERVER_ADDR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="96"/>
+        <source>TEXT_LABEL_ORG_NAME</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_custom_widget.ui" line="132"/>
+        <source>TEXT_LABEL_ORG_SECRET_KEY</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CreateOrgFirstPageWidget</name>
     <message>
         <location filename="../forms/create_org_first_page_widget.ui" line="14"/>
@@ -156,30 +184,35 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_first_page_widget.ui" line="49"/>
+        <location filename="../forms/create_org_first_page_widget.ui" line="56"/>
         <source>TEXT_ORG_WIZARD_ALREADY_HAS_URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/create_org_first_page_widget.ui" line="49"/>
+        <source>TEXT_ORG_WIZARD_CREATE_CUSTOM_SERVER</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>CreateOrgSecondPageWidget</name>
+    <name>CreateOrgSaasWidget</name>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="14"/>
+        <location filename="../forms/create_org_saas_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="35"/>
+        <location filename="../forms/create_org_saas_widget.ui" line="35"/>
         <source>TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="54"/>
+        <location filename="../forms/create_org_saas_widget.ui" line="54"/>
         <source>TEXT_LABEL_USER_EMAIL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/create_org_second_page_widget.ui" line="96"/>
+        <location filename="../forms/create_org_saas_widget.ui" line="96"/>
         <source>TEXT_LABEL_ORG_NAME</source>
         <translation type="unfinished"></translation>
     </message>

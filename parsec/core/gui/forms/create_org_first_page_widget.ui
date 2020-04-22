@@ -34,12 +34,22 @@
      <property name="text">
       <string>TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS</string>
      </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item>
-    <widget class="QRadioButton" name="radio_create_org">
+    <widget class="QRadioButton" name="radio_create_org_saas">
      <property name="text">
       <string>TEXT_ORG_WIZARD_CREATE_FROM_SCRATCH</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QRadioButton" name="radio_create_org_custom">
+     <property name="text">
+      <string>TEXT_ORG_WIZARD_CREATE_CUSTOM_SERVER</string>
      </property>
     </widget>
    </item>

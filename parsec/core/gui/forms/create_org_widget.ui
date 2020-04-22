@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>558</width>
-    <height>395</height>
+    <width>608</width>
+    <height>349</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,8 +60,14 @@
       <widget class="QWidget" name="widget" native="true">
        <property name="minimumSize">
         <size>
-         <width>350</width>
-         <height>200</height>
+         <width>400</width>
+         <height>300</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">

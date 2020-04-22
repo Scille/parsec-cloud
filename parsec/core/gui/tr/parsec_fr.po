@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-04-01 10:17+0200\n"
-"PO-Revision-Date: 2020-04-01 10:21+0200\n"
+"POT-Creation-Date: 2020-04-22 09:49+0200\n"
+"PO-Revision-Date: 2020-04-22 09:51+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1308,8 +1308,14 @@ msgstr "Le serveur est hors-ligne ou vous n'avez pas de connexion internet."
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Impossible de créer l'organisation."
 
+msgid "TEXT_ORG_WIZARD_INVALID_ADMIN_TOKEN"
+msgstr "Le jeton d'administration est invalide."
+
 msgid "ACTION_CREATE_ORGANIZATION"
 msgstr "Créer l'organisation"
+
+msgid "TEXT_INVALID_URL"
+msgstr "L'URL n'est pas valide."
 
 msgid "ACTION_NEXT"
 msgstr "Suivant"
@@ -1517,9 +1523,6 @@ msgstr "parsec://hote:port/organisation?action=action&..."
 msgid "TEXT_JOIN_ORG_INVALID_URL"
 msgstr "L'URL n'est pas valide."
 
-msgid "TEXT_INVALID_URL"
-msgstr "L'URL n'est pas valide."
-
 msgid "TEXT_BOOTSTRAP_ORG_URL_TITLE"
 msgstr "Démarrer une organisation"
 
@@ -1634,6 +1637,18 @@ msgstr "Enregistrer un nouvel utilisateur"
 msgid "ACTION_CLAIM_USER"
 msgstr "Enregistrer un nouvel utilisateur"
 
+msgid "TEXT_ORG_WIZARD_CREATE_ORG_CUSTOM_INSTRUCTIONS"
+msgstr "Pour créer une organisation sur votre serveur, veuillez fournir l'adresse du serveur et le jeton d'administration."
+
+msgid "TEXT_LABEL_ORG_SERVER_ADDR"
+msgstr "Adresse du serveur"
+
+msgid "TEXT_LABEL_ORG_NAME"
+msgstr "Nom de l'organisation"
+
+msgid "TEXT_LABEL_ORG_SECRET_KEY"
+msgstr "Jeton d'administration"
+
 msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
 msgstr "Veuillez choisir :"
 
@@ -1643,14 +1658,16 @@ msgstr "Je n'ai pas de compte sur le site web et veux créer une nouvelle organi
 msgid "TEXT_ORG_WIZARD_ALREADY_HAS_URL"
 msgstr "J'ai déjà un compte sur le site web et une URL pour démarrer mon organisation"
 
+msgid "TEXT_ORG_WIZARD_CREATE_CUSTOM_SERVER"
+msgstr ""
+"Créer une organisation sur mon serveur (vous devez disposer de votre propre\n"
+"serveur de méta-données)."
+
 msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
 msgstr "Veuillez saisir votre adresse email et le nom désiré de votre organisation."
 
 msgid "TEXT_LABEL_USER_EMAIL"
 msgstr "Email"
-
-msgid "TEXT_LABEL_ORG_NAME"
-msgstr "Nom de l'organisation"
 
 msgid "ACTION_PREVIOUS"
 msgstr "Précédent"

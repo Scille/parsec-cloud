@@ -11,7 +11,13 @@ from http.client import HTTPException
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 
-from parsec.core.types import BackendOrganizationBootstrapAddr
+from parsec.api.protocol import OrganizationID
+from parsec.core.types import BackendOrganizationBootstrapAddr, BackendAddr
+
+from parsec.core.backend_connection import (
+    backend_administration_cmds_factory,
+    BackendConnectionRefused,
+)
 
 from parsec.core.gui.custom_dialogs import GreyedDialog, show_error
 from parsec.core.gui.trio_thread import JobResultError, ThreadSafeQtSignal
@@ -19,10 +25,26 @@ from parsec.core.gui.lang import translate as _
 
 from parsec.core.gui.ui.create_org_widget import Ui_CreateOrgWidget
 from parsec.core.gui.ui.create_org_first_page_widget import Ui_CreateOrgFirstPageWidget
-from parsec.core.gui.ui.create_org_second_page_widget import Ui_CreateOrgSecondPageWidget
+from parsec.core.gui.ui.create_org_saas_widget import Ui_CreateOrgSaasWidget
+from parsec.core.gui.ui.create_org_custom_widget import Ui_CreateOrgCustomWidget
 
 
 logger = get_logger()
+
+
+async def _do_create_organization(backend_addr, org_name, admin_token):
+    try:
+        async with backend_administration_cmds_factory(backend_addr, admin_token) as cmds:
+            rep = await cmds.organization_create(org_name, None)
+            if rep["status"] != "ok":
+                raise JobResultError(rep["status"])
+            return BackendOrganizationBootstrapAddr.build(
+                backend_addr, org_name, rep["bootstrap_token"]
+            )
+    except BackendConnectionRefused as exc:
+        if str(exc) == "Invalid administration token":
+            raise JobResultError("invalid-admin-token")
+        raise JobResultError("offline")
 
 
 async def _do_api_request(email, organization_id):
@@ -52,18 +74,26 @@ class CreateOrgFirstPageWidget(QWidget, Ui_CreateOrgFirstPageWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.radio_create_org.setChecked(True)
+        self.radio_create_org_saas.setChecked(True)
 
 
-class CreateOrgSecondPageWidget(QWidget, Ui_CreateOrgSecondPageWidget):
+class CreateOrgSaasWidget(QWidget, Ui_CreateOrgSaasWidget):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+
+class CreateOrgCustomWidget(QWidget, Ui_CreateOrgCustomWidget):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
 
 
 class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
-    req_success = pyqtSignal()
-    req_error = pyqtSignal()
+    req_saas_success = pyqtSignal()
+    req_saas_error = pyqtSignal()
+    req_custom_success = pyqtSignal()
+    req_custom_error = pyqtSignal()
 
     def __init__(self, jobs_ctx):
         super().__init__()
@@ -77,8 +107,10 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_previous.hide()
         self.current_widget = CreateOrgFirstPageWidget()
         self.main_layout.addWidget(self.current_widget)
-        self.req_success.connect(self._on_req_success)
-        self.req_error.connect(self._on_req_error)
+        self.req_saas_success.connect(self._on_req_saas_success)
+        self.req_saas_error.connect(self._on_req_saas_error)
+        self.req_custom_success.connect(self._on_req_custom_success)
+        self.req_custom_error.connect(self._on_req_custom_error)
 
     def _clear_page(self):
         item = self.main_layout.takeAt(0)
@@ -93,7 +125,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if self.req_job:
             self.req_job.cancel_and_join()
 
-    def _on_req_success(self):
+    def _on_req_saas_success(self):
         assert self.req_job
         assert self.req_job.is_finished()
         assert self.req_job.status == "ok"
@@ -107,7 +139,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         else:
             logger.warning("Cannot close dialog when org wizard")
 
-    def _on_req_error(self):
+    def _on_req_saas_error(self):
         assert self.req_job
         assert self.req_job.is_finished()
         assert self.req_job.status != "ok"
@@ -140,6 +172,49 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_validate.setEnabled(True)
         self.button_previous.show()
 
+    def _on_req_custom_success(self):
+        assert self.req_job
+        assert self.req_job.is_finished()
+        assert self.req_job.status == "ok"
+
+        self.status = self.req_job.ret
+        self.req_job = None
+        if self.dialog:
+            self.dialog.accept()
+        elif QApplication.activeModalWidget():
+            QApplication.activeModalWidget().accept()
+        else:
+            logger.warning("Cannot close dialog when org wizard")
+
+    def _on_req_custom_error(self):
+        assert self.req_job
+        assert self.req_job.is_finished()
+        assert self.req_job.status != "ok"
+
+        status = self.req_job.status
+
+        if status == "cancelled":
+            return
+
+        errmsg = None
+        if status == "organization_already_exists":
+            errmsg = _("TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS")
+        elif status == "invalid_organization_id":
+            errmsg = _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID")
+        elif status == "offline":
+            errmsg = _("TEXT_ORG_WIZARD_OFFLINE")
+        elif status == "invalid-admin-token":
+            errmsg = _("TEXT_ORG_WIZARD_INVALID_ADMIN_TOKEN")
+        else:
+            errmsg = _("TEXT_ORG_WIZARD_UNKNOWN_FAILURE")
+        exc = self.req_job.exc
+        if exc.params.get("exc"):
+            exc = exc.params.get("exc")
+        show_error(self, errmsg, exception=exc)
+        self.req_job = None
+        self.button_validate.setEnabled(True)
+        self.button_previous.show()
+
     def _validate_clicked(self):
         if isinstance(self.current_widget, CreateOrgFirstPageWidget):
             if self.current_widget.radio_bootstrap_org.isChecked():
@@ -150,22 +225,61 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                     QApplication.activeModalWidget().accept()
                 else:
                     logger.warning("Cannot close dialog when org wizard")
-            else:
+            elif self.current_widget.radio_create_org_saas.isChecked():
                 self.button_validate.setText(_("ACTION_CREATE_ORGANIZATION"))
                 self.button_previous.show()
                 self._clear_page()
-                self.current_widget = CreateOrgSecondPageWidget()
+                self.current_widget = CreateOrgSaasWidget()
                 self.main_layout.addWidget(self.current_widget)
-                self.current_widget.line_edit_user_email.textChanged.connect(self._check_infos)
-                self.current_widget.line_edit_org_name.textChanged.connect(self._check_infos)
+                self.current_widget.line_edit_user_email.textChanged.connect(self._check_saas_infos)
+                self.current_widget.line_edit_org_name.textChanged.connect(self._check_saas_infos)
                 self.button_validate.setEnabled(False)
-        elif isinstance(self.current_widget, CreateOrgSecondPageWidget):
+            elif self.current_widget.radio_create_org_custom.isChecked():
+                self.button_validate.setText(_("ACTION_CREATE_ORGANIZATION"))
+                self.button_previous.show()
+                self._clear_page()
+                self.current_widget = CreateOrgCustomWidget()
+                self.main_layout.addWidget(self.current_widget)
+                self.current_widget.line_edit_server_addr.textChanged.connect(
+                    self._check_custom_infos
+                )
+                self.current_widget.line_edit_secret_key.textChanged.connect(
+                    self._check_custom_infos
+                )
+                self.current_widget.line_edit_org_name.textChanged.connect(self._check_custom_infos)
+                self.button_validate.setEnabled(False)
+        elif isinstance(self.current_widget, CreateOrgSaasWidget):
             self.req_job = self.jobs_ctx.submit_job(
-                ThreadSafeQtSignal(self, "req_success"),
-                ThreadSafeQtSignal(self, "req_error"),
+                ThreadSafeQtSignal(self, "req_saas_success"),
+                ThreadSafeQtSignal(self, "req_saas_error"),
                 _do_api_request,
                 email=self.current_widget.line_edit_user_email.text(),
                 organization_id=self.current_widget.line_edit_org_name.text(),
+            )
+            self.button_validate.setEnabled(False)
+            self.button_previous.hide()
+        elif isinstance(self.current_widget, CreateOrgCustomWidget):
+            backend_addr = None
+            org_name = None
+            try:
+                backend_addr = BackendAddr.from_url(
+                    self.current_widget.line_edit_server_addr.text()
+                )
+            except:
+                show_error(self, _("TEXT_INVALID_URL"))
+                return
+            try:
+                org_name = OrganizationID(self.current_widget.line_edit_org_name.text())
+            except:
+                show_error(self, _("TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"))
+                return
+            self.req_job = self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "req_custom_success"),
+                ThreadSafeQtSignal(self, "req_custom_error"),
+                _do_create_organization,
+                backend_addr=backend_addr,
+                org_name=org_name,
+                admin_token=self.current_widget.line_edit_secret_key.text(),
             )
             self.button_validate.setEnabled(False)
             self.button_previous.hide()
@@ -178,9 +292,19 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_validate.setText(_("ACTION_NEXT"))
         self.button_validate.setEnabled(True)
 
-    def _check_infos(self):
+    def _check_saas_infos(self):
         if (
             self.current_widget.line_edit_user_email.text()
+            and self.current_widget.line_edit_org_name.text()
+        ):
+            self.button_validate.setEnabled(True)
+        else:
+            self.button_validate.setEnabled(False)
+
+    def _check_custom_infos(self):
+        if (
+            self.current_widget.line_edit_server_addr.text()
+            and self.current_widget.line_edit_secret_key.text()
             and self.current_widget.line_edit_org_name.text()
         ):
             self.button_validate.setEnabled(True)
