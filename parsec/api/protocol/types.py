@@ -74,12 +74,14 @@ DeviceIDField = fields.str_based_field_factory(DeviceID)
 
 
 class HumanHandle(namedtuple("HumanHandle", "email label")):
+    __slots__ = ()
+
     def __init__(self, email: str, label: str):
         # TODO: how to check the email  easily ?
-        if not isinstance(email, str) or not (1 < len(email) < 255):
+        if not isinstance(email, str) or not 0 < _bytes_size(email) < 255:
             raise ValueError("Invalid email address")
 
-        if not isinstance(label, str) or not (1 < len(label) < 255):
+        if not isinstance(label, str) or not 0 < _bytes_size(label) < 255:
             raise ValueError("Invalid label")
 
         parsed_label, parsed_email = parseaddr(str(self))

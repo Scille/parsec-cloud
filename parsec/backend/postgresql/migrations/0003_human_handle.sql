@@ -9,8 +9,8 @@
 CREATE TABLE human (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    label VARCHAR(255) NOT NULL,
+    email VARCHAR(254) NOT NULL,
+    label VARCHAR(254) NOT NULL,
 
     UNIQUE(organization, email)
 );
