@@ -207,7 +207,7 @@ class WinFSPOperations(BaseFileSystemOperations):
     def rename(self, file_context, file_name, new_file_name, replace_if_exists):
         file_name = _winpath_to_parsec(file_name)
         new_file_name = _winpath_to_parsec(new_file_name)
-        self.fs_access.entry_rename(file_name, new_file_name, overwrite=False)
+        self.fs_access.entry_rename(file_name, new_file_name, overwrite=replace_if_exists)
 
     @handle_error
     def open(self, file_name, create_options, granted_access):

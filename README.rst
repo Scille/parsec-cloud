@@ -7,13 +7,9 @@ Parsec
 ======
 
 
-.. image:: https://travis-ci.org/Scille/parsec-cloud.svg?branch=master
-    :target: https://travis-ci.org/Scille/parsec-cloud
-    :alt: Travis CI Status
-
-.. image:: https://ci.appveyor.com/api/projects/status/8v0bdvoc7vc2dc9l/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/touilleMan/parsec-cloud/branch/master
-    :alt: Appveyor CI Status
+.. image:: https://img.shields.io/azure-devops/tests/Scille/parsec/1/master.svg
+    :target: https://dev.azure.com/Scille/parsec/_build?definitionId=1&_a=summary
+    :alt: Azure DevOps tests
 
 .. image:: https://codecov.io/gh/Scille/parsec-cloud/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/Scille/parsec-cloud

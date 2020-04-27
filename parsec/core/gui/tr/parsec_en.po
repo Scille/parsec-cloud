@@ -220,6 +220,24 @@ msgstr "EXCELLENT"
 msgid "TEXT_PASSWORD_VALIDATION_PASSWORD_STRENGTH_strength"
 msgstr "Password strength: {strength}"
 
+msgid "ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"
+msgstr "Open in file explorer"
+
+msgid "ACTION_WORKSPACE_RENAME"
+msgstr "Rename"
+
+msgid "ACTION_WORKSPACE_SHARE"
+msgstr "Share"
+
+msgid "ACTION_WORKSPACE_SEE_IN_THE_PAST"
+msgstr "See at a given date"
+
+msgid "ACTION_WORKSPACE_REENCRYPT"
+msgstr "Reencrypt"
+
+msgid "ACTION_WORKSPACE_DELETE"
+msgstr "Remove"
+
 msgid "TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"
 msgstr "Only a workspace owner can reencrypt."
 
@@ -1176,6 +1194,9 @@ msgstr "You did not provide the right password for this device."
 msgid "TEXT_CHANGE_PASSWORD_TITLE"
 msgstr "Change password"
 
+msgid "ACTION_FILE_OPEN_CURRENT_DIRECTORY"
+msgstr "Open directory in file explorer"
+
 msgid "ACTION_FILE_MENU_OPEN"
 msgstr "Open"
 
@@ -1538,14 +1559,14 @@ msgstr "The file could not be found within the organization <b>{organization}</b
 msgid "TEXT_INVALID_URL"
 msgstr "The URL is invalid."
 
+msgid "ACTION_TAB_CLOSE_CONFIRM"
+msgstr "Close the tab"
+
 msgid "TEXT_TAB_CLOSE_TITLE"
 msgstr "Close the tab"
 
-msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
-msgstr "Are you sure you want to close this tab? You will be automatically logged out."
-
-msgid "ACTION_TAB_CLOSE_CONFIRM"
-msgstr "Close the tab"
+msgid "TEXT_TAB_CLOSE_INSTRUCTIONS_device"
+msgstr "Are you sure you want to close this tab? The device \"{device}\" will be automatically disconnected."
 
 msgid "TEXT_TRAY_PARSEC_STILL_RUNNING_MESSAGE"
 msgstr "PARSEC is still running."
@@ -1560,7 +1581,12 @@ msgid "ACTION_PARSEC_QUIT_CONFIRM"
 msgstr "Quit"
 
 msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
-msgstr "Developped by <a href=\"https://scille.eu\">Scille</a>."
+msgstr "Developped by <a href=\"https://scille.eu\" title=\"Scille\" style=\"color: #0092FF; font-weight: bold;\">Scille</a>"
+
+msgid "TEXT_ATTRIBUTE_ICONS"
+msgstr ""
+"Some icons made by <a href=\"https://www.flaticon.com/authors/freepik\" title=\"Freepik\" style=\"font-weight: bold; color: #0092FF;\">Freepik</a> from <a "
+"href=\"https://www.flaticon.com/\" title=\"Flaticon\" style=\"color: #0092FF; font-weight: bold;\">www.flaticon.com</a>"
 
 msgid "TEXT_LABEL_USER_NAME"
 msgstr "Username"
@@ -1877,3 +1903,6 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "TEXT_TAB_CLOSE_INSTRUCTIONS"
+#~ msgstr "Are you sure you want to close this tab? You will be automatically logged out."

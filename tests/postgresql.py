@@ -6,7 +6,8 @@ import asyncio
 import asyncpg
 from asyncpg.cluster import TempCluster
 
-from parsec.backend.postgresql.handler import _init_db
+from parsec.backend.cli.migration import _sorted_file_migrations
+from parsec.backend.postgresql.handler import _migrate_db
 
 
 def _patch_url_if_xdist(url):
@@ -18,6 +19,10 @@ def _patch_url_if_xdist(url):
 
 
 _pg_db_url = None
+
+
+async def run_migrations(conn):
+    await _migrate_db(conn, _sorted_file_migrations(), False)
 
 
 async def _execute_pg_query(url, query):
@@ -50,7 +55,7 @@ def bootstrap_postgresql_testbed():
     #   another thread just to run the new trio loop.
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(_execute_pg_query(_pg_db_url, _init_db))
+    loop.run_until_complete(_execute_pg_query(_pg_db_url, run_migrations))
     return _pg_db_url
 
 

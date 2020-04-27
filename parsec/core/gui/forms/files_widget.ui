@@ -281,9 +281,6 @@
             <bold>false</bold>
            </font>
           </property>
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>

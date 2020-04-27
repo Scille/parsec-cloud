@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+import re
 import pytest
 import pendulum
 from collections import defaultdict
@@ -15,7 +16,7 @@ from parsec.api.data import (
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, RealmRole
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
 from parsec.api.data import UserManifest
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
@@ -85,7 +86,9 @@ def local_device_factory(coolorg):
     def _local_device_factory(
         base_device_id: Optional[str] = None,
         org: OrganizationFullData = coolorg,
-        is_admin: bool = None,
+        is_admin: Optional[bool] = None,
+        has_human_handle: bool = True,
+        base_human_handle: Optional[str] = None,
     ):
         nonlocal count
 
@@ -96,6 +99,26 @@ def local_device_factory(coolorg):
         org_devices = devices[org.organization_id]
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
+
+        if not has_human_handle:
+            assert base_human_handle is None
+            human_handle = None
+        elif base_human_handle:
+            if isinstance(base_human_handle, HumanHandle):
+                human_handle = base_human_handle
+            else:
+                match = re.match(r"(.*) <(.*)>", base_human_handle)
+                if match:
+                    label, email = match.groups()
+                else:
+                    label = base_human_handle
+                    email = f"{device_id.user_id}@example.com"
+                human_handle = HumanHandle(email=email, label=label)
+        else:
+            name = device_id.user_id.capitalize()
+            human_handle = HumanHandle(
+                email=f"{device_id.user_id}@example.com", label=f"{name}y Mc{name}Face"
+            )
 
         parent_device = None
         try:
@@ -114,7 +137,9 @@ def local_device_factory(coolorg):
         # tcp stream spy can switch offline certains while keeping the others online
         org_addr = addr_with_device_subdomain(org.addr, device_id)
 
-        device = generate_new_device(device_id, org_addr, is_admin=is_admin)
+        device = generate_new_device(
+            device_id, org_addr, is_admin=is_admin, human_handle=human_handle
+        )
         if parent_device is not None:
             device = device.evolve(
                 private_key=parent_device.private_key,
@@ -275,12 +300,14 @@ def local_device_to_backend_user(
         user_id=device.user_id,
         public_key=device.public_key,
         is_admin=device.is_admin,
+        human_handle=device.human_handle,
     ).dump_and_sign(certifier_signing_key)
     device_certificate = DeviceCertificateContent(
         author=certifier_id, timestamp=now, device_id=device.device_id, verify_key=device.verify_key
     ).dump_and_sign(certifier_signing_key)
     return new_backend_user_factory(
         device_id=device.device_id,
+        human_handle=device.human_handle,
         is_admin=device.is_admin,
         certifier=certifier_id,
         user_certificate=user_certificate,

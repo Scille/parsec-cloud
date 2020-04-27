@@ -339,3 +339,6 @@ class SyncTransactions(EntryTransactions):
 
                 self._send_event("fs.entry.updated", id=new_manifest.id)
                 self._send_event("fs.entry.updated", id=parent_id)
+                self._send_event(
+                    "fs.entry.file_conflict_resolved", id=entry_id, backup_id=new_manifest.id
+                )

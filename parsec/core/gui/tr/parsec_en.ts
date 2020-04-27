@@ -8,8 +8,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_widget.ui" line="98"/>
+        <location filename="../forms/about_widget.ui" line="115"/>
         <source>TEXT_PARSEC_DEVELOPMENT_INFO</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/about_widget.ui" line="130"/>
+        <source>TEXT_ATTRIBUTE_ICONS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -283,22 +288,22 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="369"/>
+        <location filename="../forms/files_widget.ui" line="366"/>
         <source>TEXT_FILE_NAME_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="374"/>
+        <location filename="../forms/files_widget.ui" line="371"/>
         <source>TEXT_FILE_CREATED_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="379"/>
+        <location filename="../forms/files_widget.ui" line="376"/>
         <source>TEXT_FILE_UPDATED_HEADER</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="384"/>
+        <location filename="../forms/files_widget.ui" line="381"/>
         <source>TEXT_FILE_SIZE_HEADER</source>
         <translation type="unfinished"></translation>
     </message>

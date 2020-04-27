@@ -1,0 +1,1 @@
+Allows workspace owners to change the role of other owners

@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID
+from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -60,9 +60,47 @@ def test_max_bytes_size_device_id(data):
     (
         "x@x",
         "x" * 32 + "@" + "x" * 32,
-        "飞" * 10 + "xx@xx" + "飞" * 10,  # 64 bytes long utf8 string
+        "飞" * 10 + "xx@xx" + "飞" * 10,  # 65 bytes long utf8 string
         "X1-_é飞@X1-_é飞",  # Mix-and-match
     ),
 )
 def test_good_pattern_device_id(data):
     DeviceID(data)
+
+
+def test_human_handle_compare():
+    a = HumanHandle(email="alice@example.com", label="Alice")
+    a2 = HumanHandle(email="alice@example.com", label="Whatever")
+    b = HumanHandle(email="bob@example.com", label="Bob")
+    assert a == a2
+    assert a != b
+    assert b == b
+
+
+@pytest.mark.parametrize(
+    "email,label",
+    (
+        ("alice@example.com", "Alice"),
+        ("a@x", "A"),  # Smallest size
+        (f"{'a' * 64}@{'x' * 185}.com", "x" * 254),  # Max sizes
+        (f"{'飞' * 21}@{'飞' * 62}.com", f"{'飞' * 84}xx"),  # Unicode & max size
+    ),
+)
+def test_valid_human_handle(email, label):
+    HumanHandle(email, label)
+
+
+@pytest.mark.parametrize(
+    "email,label",
+    (
+        ("alice@example.com", "x" * 255),
+        (f"{'@example.com':a>255}", "Alice"),
+        ("alice@example.com", "飞" * 85),  # 255 bytes long utf8 label
+        (f"{'飞' * 21}@{'飞' * 63}.x", "Alice"),  # 255 bytes long utf8 email
+        ("alice@example.com", ""),  # Empty label
+        ("", "Alice"),  # Empty email
+    ),
+)
+def test_invalid_human_handle(email, label):
+    with pytest.raises(ValueError):
+        HumanHandle(email, label)

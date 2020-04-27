@@ -5,6 +5,32 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.12.0 (2020-04-14)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix forbidden error during backend startup when some custom S3 providers
+  (`#1094 <https://github.com/Scille/parsec-cloud/issues/1094>`__)
+* Use "localhost" as the default hostname in the cli.  (`#1075
+  <https://github.com/Scille/parsec-cloud/issues/1075>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add `fs.entry.file_conflict_resolved` internal event to be notified when a
+  file conflict has been resolved by copying and renaming the file with the
+  local changes.  (`#1095 <https://github.com/Scille/parsec-
+  cloud/issues/1095>`__)
+* Add cancel button to "Parsec is already running, please close it" prompt in
+  windows installer. (`#1103 <https://github.com/Scille/parsec-
+  cloud/issues/1103>`__)
+* Update the windows installer to be less verbose. In particular, the Winfsp
+  installation becomes silent.  (`#1112 <https://github.com/Scille/parsec-
+  cloud/issues/1112>`__)
+
+
 Parsec 1.11.4 (2020-03-31)
 --------------------------
 

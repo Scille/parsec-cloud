@@ -283,7 +283,7 @@ requirements = [
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
-    "PyPika==0.29.0",
+    "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
 ]
@@ -304,6 +304,8 @@ test_requirements = [
     # - see pip issues #7096/#6239/#4391/#988
     # Looking forward to the new pip dependency resolver!
     'pywin32==227;platform_system=="Windows"',
+    # Fix botocore and sphinx conflicting requirements on docutils
+    "docutils>=0.12,<0.16",
     # Documentation generation requirements
     "sphinx==2.4.3",
     "sphinx-intl==2.0.0",
@@ -314,7 +316,7 @@ test_requirements = [
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
-DOCUTILS_DEP = "docutils==0.14"
+DOCUTILS_DEP = "docutils==0.15"
 extra_requirements = {
     "core": [
         PYQT_DEP,
@@ -329,8 +331,8 @@ extra_requirements = {
         "triopg==0.3.0",
         "trio-asyncio==0.10.0",
         # S3
-        "boto3==1.4.4",
-        "botocore==1.5.46",
+        "boto3==1.12.34",
+        "botocore==1.15.34",
         # Swift
         "python-swiftclient==3.5.0",
         "pbr==4.0.2",
@@ -363,7 +365,7 @@ setup(
         "build_py": build_py_with_pyqt,
     },
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
-    package_data={"parsec.backend.postgresql": ["init_tables.sql"]},
+    package_data={"parsec.backend.postgresql.migrations": ["*"]},
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],

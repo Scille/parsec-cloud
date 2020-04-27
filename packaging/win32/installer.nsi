@@ -95,11 +95,15 @@ Var StartMenuFolder
 # --- Functions ---
 
 Function checkParsecRunning
-    System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
-    IntCmp $R0 0 notRunning
-        System::Call 'kernel32::CloseHandle(i $R0)'
-        MessageBox MB_OK|MB_ICONEXCLAMATION "Parsec is running. Please close it first" /SD IDOK
-        Call checkParsecRunning
+    check:
+        System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
+        IntCmp $R0 0 notRunning
+            System::Call 'kernel32::CloseHandle(i $R0)'
+            MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+                "Parsec is running, please close it first.$\n$\n \
+                Click `OK` to retry or `Cancel` to cancel this upgrade." \
+                /SD IDCANCEL IDOK check
+            Abort
     notRunning:
 FunctionEnd
 
@@ -118,13 +122,11 @@ Function .onInit
     /SD IDOK IDOK uninst
     Abort
 
-    ;Run the uninstaller
+    ;Run the uninstaller sequentially and silently
+    ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
     uninst:
       ClearErrors
-      IfSilent +3
-      Exec $R0
-      Goto +2
-      Exec "$R0 /S"
+      ExecWait '"$R0" /S _?=$INSTDIR'
     done:
 
 FunctionEnd
@@ -230,7 +232,9 @@ SectionEnd
 !macro InstallWinFSP
     SetOutPath "$TEMP"
     File ${WINFSP_INSTALLER}
-    ExecWait "msiexec /i ${WINFSP_INSTALLER}"
+    ; Use /qn to for silent installation
+    ; Use a very high installation level to make sure it runs till the end
+    ExecWait "msiexec /i ${WINFSP_INSTALLER} /qn INSTALLLEVEL=1000"
     Delete ${WINFSP_INSTALLER}
 !macroend
 
