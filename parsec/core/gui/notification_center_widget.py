@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout
+from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.notification_widget import create_notification
 from parsec.core.gui.ui.notification_center_widget import Ui_NotificationCenterWidget
