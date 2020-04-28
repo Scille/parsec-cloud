@@ -75,8 +75,12 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         self.button_validate.clicked.connect(self._validate_clicked)
         self.button_previous.clicked.connect(self._previous_clicked)
         self.button_previous.hide()
-        self.current_widget = CreateOrgFirstPageWidget()
+        self.current_widget = CreateOrgSecondPageWidget()
         self.main_layout.addWidget(self.current_widget)
+        self.current_widget.line_edit_user_email.textChanged.connect(self._check_infos)
+        self.current_widget.line_edit_org_name.textChanged.connect(self._check_infos)
+        self.current_widget.check_accept_contract.clicked.connect(self._check_infos)
+        self.button_validate.setEnabled(False)
         self.req_success.connect(self._on_req_success)
         self.req_error.connect(self._on_req_error)
 
@@ -158,6 +162,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
                 self.main_layout.addWidget(self.current_widget)
                 self.current_widget.line_edit_user_email.textChanged.connect(self._check_infos)
                 self.current_widget.line_edit_org_name.textChanged.connect(self._check_infos)
+                self.current_widget.check_accept_contract.clicked.connect(self._check_infos)
                 self.button_validate.setEnabled(False)
         elif isinstance(self.current_widget, CreateOrgSecondPageWidget):
             self.req_job = self.jobs_ctx.submit_job(
@@ -182,6 +187,7 @@ class CreateOrgWidget(QWidget, Ui_CreateOrgWidget):
         if (
             self.current_widget.line_edit_user_email.text()
             and self.current_widget.line_edit_org_name.text()
+            and self.current_widget.check_accept_contract.isChecked()
         ):
             self.button_validate.setEnabled(True)
         else:

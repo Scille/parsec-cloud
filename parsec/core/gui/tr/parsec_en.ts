@@ -183,6 +183,11 @@
         <source>TEXT_LABEL_ORG_NAME</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../forms/create_org_second_page_widget.ui" line="187"/>
+        <source>ACTION_ACCEPT_CONTRACT</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CreateOrgWidget</name>

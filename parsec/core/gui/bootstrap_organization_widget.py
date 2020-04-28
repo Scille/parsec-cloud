@@ -90,8 +90,7 @@ async def _do_bootstrap_organization(
                 raise JobResultError("invalid-url", info=str(rep))
             elif rep["status"] != "ok":
                 raise JobResultError("refused-by-backend", info=str(rep))
-            # TODO: handle `JobResultError("bad-api-version")` ?
-
+        return device, password
     except BackendConnectionRefused as exc:
         raise JobResultError("invalid-url", info=str(exc)) from exc
 
@@ -100,8 +99,6 @@ async def _do_bootstrap_organization(
 
     except BackendConnectionError as exc:
         raise JobResultError("refused-by-backend", info=str(exc)) from exc
-
-    return device, password
 
 
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
@@ -187,7 +184,11 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.bootstrap_job = None
         self.check_infos()
         show_info(
-            parent=self, message=_("TEXT_BOOTSTRAP_ORG_SUCCESS"), button_text=_("ACTION_CONTINUE")
+            parent=self,
+            message=_("TEXT_BOOTSTRAP_ORG_SUCCESS_organization").format(
+                organization=self.addr.organization_id
+            ),
+            button_text=_("ACTION_CONTINUE"),
         )
         if self.dialog:
             self.dialog.accept()

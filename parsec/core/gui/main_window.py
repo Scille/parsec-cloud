@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication, QMenu
 
 from parsec import __version__ as PARSEC_VERSION
 
-from parsec.core.local_device import list_available_devices
+from parsec.core.local_device import list_available_devices, get_key_file
 from parsec.core.config import save_config
 from parsec.core.types import (
     BackendActionAddr,
@@ -216,6 +216,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         if ret:
             self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
 
     def _on_claim_user_clicked(self, action_addr):
         ret = ClaimUserWidget.exec_modal(
@@ -223,6 +224,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         if ret:
             self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
 
     def _on_claim_device_clicked(self, action_addr):
         ret = ClaimDeviceWidget.exec_modal(
@@ -230,6 +232,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         if ret:
             self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
+
+    def try_login(self, device, password):
+        idx = self._get_login_tab_index()
+        tab = None
+        if idx == -1:
+            tab = self.add_new_tab()
+        else:
+            tab = self.tab_center.widget(idx)
+        kf = get_key_file(self.config.config_dir, device)
+        tab.login_with_password(kf, password)
 
     def reload_login_devices(self):
         idx = self._get_login_tab_index()
