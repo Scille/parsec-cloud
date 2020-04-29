@@ -25,6 +25,19 @@ from parsec.core.mountpoint.exceptions import (
 from parsec.core.mountpoint.winify import winify_entry_name
 
 
+# Importing winfspy can take some time (about 0.4 seconds)
+# Let's import those bindings at module level, in order to
+# avoid spending too much time importing them later while the
+# trio loop is running.
+try:
+    if os.name == "nt":
+        import_function("winfspy")
+    else:
+        import_function("fuse")
+except (ImportError, RuntimeError):
+    pass
+
+
 def get_mountpoint_runner():
     # Windows
     if os.name == "nt":

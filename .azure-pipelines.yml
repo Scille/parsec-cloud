@@ -15,7 +15,7 @@ variables:
   pytest.base_args: |
     --log-level=DEBUG \
     --durations=10 -v \
-    --cov=parsec --cov-config=../setup.cfg --cov-append --cov-report= \
+    --cov=parsec --cov-config=setup.cfg --cov-append --cov-report= \
 
 jobs:
 
@@ -43,19 +43,19 @@ jobs:
       pre-commit run --all-files --show-diff-on-failure
     displayName: 'Pre-commit hooks check'
   - bash: |
-      if ([[ $(Build.SourcesDirectory) = "refs/heads/master" ]] || [[ $(Build.SourcesDirectory) = "refs/tags/"* ]])
+      if ([[ $(Build.SourceBranch) = "refs/heads/master" ]] || [[ $(Build.SourceBranch) = "refs/tags/"* ]])
       then exit 0; fi
       for FILENAME in newsfragments/*
       do
         # If file never existed in master, consider as a new newsfragment
         # Cannot git diff against master branch here given newsfragments removed in master will be considered as
         # new items in our branch
-        if ! git log master --exit-code -- newsfragments/"$FILENAME" > /dev/null
+        if git log origin/master --exit-code -- "$FILENAME" > /dev/null
         then exit 0; fi
       done
-      echo "NO NEW NEWSFRAGMENT FOUND"
-      exit 1
+      echo "NO NEW NEWSFRAGMENT FOUND" >&2
     displayName: 'Newsfragment'
+    failOnStderr: true
   - bash: |
       git fetch --tags  # Needed by releaser.py to have a consistent `git describe`
       python ./misc/releaser.py check --verbose
@@ -81,7 +81,7 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools twine
+      pip install -U wheel pip setuptools
       sudo apt-get install \
         postgresql-$(postgresql.version) \
         desktop-file-utils  # Provides `update-desktop-database` used by `tests/scripts/run_testenv.sh`
@@ -95,50 +95,46 @@ jobs:
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
       pip check parsec[all]
-      # Run tests in isolated directory
-      mkdir empty
+      # Create isolated test directory
+      mkdir -p $(Agent.TempDirectory)/empty
+      cp -R tests $(Agent.TempDirectory)/empty
+      cp setup.cfg $(Agent.TempDirectory)/empty
     displayName: 'Install'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runmountpoint --runslow \
+        tests --runmountpoint --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-memory.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests memory'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/backend ../tests/test_cli.py --postgresql --runslow \
+        tests/backend tests/test_cli.py --postgresql --runslow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-postgresql.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests postgresql'
   # TODO: run gui tests with xvfb
   # - bash: |
   #     set -eux
   #     py.test $(pytest.base_args) \
-  #       ../tests/ -m gui --runmountpoint --runslow --rungui -x \
+  #       tests -m gui --runmountpoint --runslow --rungui -x \
   #       --junitxml=test-results-gui.xml
-  #   workingDirectory: $(Build.SourcesDirectory)/empty
+  #   workingDirectory: $(Agent.TempDirectory)/empty
   #   displayName: 'Tests GUI'
   - bash: |
       set -eux
       pip install -U codecov
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
-      # Running the tests from the empty dir messes with package&path by
-      # using absolute path, so we fix this the hard way (Note the regex is
-      # greedy so this doesn't support child folder named parsec)
-      sed -i 's#\(<package .* name="\)[^"]*\.\(parsec[".]\)#\1\2#' coverage.xml
-      sed -i 's#\( filename="\)[^"]*/\(parsec["/]\)#\1\2#' coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
-      testResultsFiles: 'empty/test-results-*.xml'
+      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
       testRunTitle: 'Linux'
     condition: succeededOrFailed()
 
@@ -163,7 +159,7 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools twine
+      pip install -U wheel pip setuptools
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
@@ -179,55 +175,51 @@ jobs:
       pip install $(ls dist/parsec_cloud-*.whl)[all]
       # Check dependency compatibility
       pip check parsec[all]
-      # Run tests in isolated directory
-      mkdir empty
+      # Create isolated test directory
+      mkdir -p "$(Agent.TempDirectory)"\\empty
+      cp -R tests "$(Agent.TempDirectory)"\\empty
+      cp setup.cfg "$(Agent.TempDirectory)"\\empty
     displayName: 'Install'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ -n auto --max-worker-restart=0 -x \
+        tests -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-fast.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests fast'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runmountpoint --runslow -m mountpoint -x \
+        tests --runmountpoint --runslow -m mountpoint -x \
         --junitxml=test-results-mountpoint.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests mountpoint'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runmountpoint --runslow --rungui -m gui -x \
+        tests --runmountpoint --runslow --rungui -m gui -x \
         --junitxml=test-results-gui.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests GUI'
   - bash: |
       set -eux
       py.test $(pytest.base_args) \
-        ../tests/ --runslow -m slow \
+        tests --runslow -m slow \
         -n auto --max-worker-restart=0 -x \
         --junitxml=test-results-slow.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Tests slow'
   - bash: |
       set -eux
       pip install -U codecov
       coverage xml -o coverage.xml
       grep -E '( filename=|<package )' coverage.xml
-      # Running the tests from the empty dir messes with package&path by
-      # using absolute path, so we fix this the hard way (Note the regex is
-      # greedy so this doesn't support child folder named parsec)
-      sed -i 's#\(<package .* name="\)[^"]*\.\(parsec[".]\)#\1\2#' coverage.xml
-      sed -i 's#\( filename="\)[^"]*/\(parsec["/]\)#\1\2#' coverage.xml
-      grep -E '( filename=|<package )' coverage.xml
-      codecov --file=coverage.xml
-    workingDirectory: $(Build.SourcesDirectory)/empty
+      codecov --file=coverage.xml --commit=$(Build.SourceVersion)
+    workingDirectory: $(Agent.TempDirectory)/empty
     displayName: 'Codecov upload'
   - task: PublishTestResults@2
     inputs:
-      testResultsFiles: 'empty/test-results-*.xml'
+      testResultsFiles: '$(Agent.TempDirectory)/empty/test-results-*.xml'
       testRunTitle: 'Windows'
     condition: succeededOrFailed()
 
@@ -300,8 +292,11 @@ jobs:
       # kill %1
     displayName: 'Test Snap'
   - bash: |
+      sudo snap install snapcraft --classic
       echo $SNAPCRAFT_CREDENTIALS | snapcraft login --with -
       snapcraft push --release=edge $(Pipeline.Workspace)/linux_amd64_snap/parsec*.snap
+    env:
+      SNAPCRAFT_CREDENTIALS: $(SNAPCRAFT_CREDENTIALS)
     displayName: 'Upload Snap'
 
 

@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-# -*- coding: utf-8 -*-
+import os
 
 from setuptools import setup, find_packages, distutils, Command
 from setuptools.command.build_py import build_py
-
-import itertools
-import glob
-import os
 
 
 # Awesome hack to load `__version__`
@@ -283,11 +279,11 @@ requirements = [
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
-    "sentry-sdk==0.14.2",
+    "sentry-sdk==0.14.3",
     "structlog==19.2.0",
     "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
-    "PyPika==0.29.0",
+    "PyPika==0.36.5",
     "async_exit_stack==1.0.1",
     "outcome==1.0.0",
 ]
@@ -308,6 +304,8 @@ test_requirements = [
     # - see pip issues #7096/#6239/#4391/#988
     # Looking forward to the new pip dependency resolver!
     'pywin32==227;platform_system=="Windows"',
+    # Fix botocore and sphinx conflicting requirements on docutils
+    "docutils>=0.12,<0.16",
     # Documentation generation requirements
     "sphinx==2.4.3",
     "sphinx-intl==2.0.0",
@@ -318,7 +316,7 @@ test_requirements = [
 PYQT_DEP = "PyQt5==5.13.1"
 BABEL_DEP = "Babel==2.6.0"
 WHEEL_DEP = "wheel==0.34.2"
-DOCUTILS_DEP = "docutils==0.14"
+DOCUTILS_DEP = "docutils==0.15"
 extra_requirements = {
     "core": [
         PYQT_DEP,
@@ -333,8 +331,8 @@ extra_requirements = {
         "triopg==0.3.0",
         "trio-asyncio==0.10.0",
         # S3
-        "boto3==1.4.4",
-        "botocore==1.5.46",
+        "boto3==1.12.34",
+        "botocore==1.15.34",
         # Swift
         "python-swiftclient==3.5.0",
         "pbr==4.0.2",
@@ -366,21 +364,8 @@ setup(
         "generate_pyqt": build_py_with_pyqt,
         "build_py": build_py_with_pyqt,
     },
-    # As you may know, setuptools is really broken, so we have to roll our
-    # globing ourself to include non-python files...
-    package_data={
-        "parsec.backend.postgresql": glob.glob("parsec/backend/postgresql/*.sql"),
-        "parsec.core.gui": list(
-            itertools.chain(
-                glob.glob("parsec/core/gui/tr/**/*.ts", recursive=True),
-                glob.glob("parsec/core/gui/forms/**/*.ui", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.png", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.qm", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.qrc", recursive=True),
-                glob.glob("parsec/core/gui/rc/**/*.otf", recursive=True),
-            )
-        ),
-    },
+    # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
+    package_data={"parsec.backend.postgresql.migrations": ["*"]},
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],

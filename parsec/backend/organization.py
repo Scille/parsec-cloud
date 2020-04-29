@@ -192,6 +192,7 @@ class BaseOrganizationComponent:
 
         user, first_device = new_user_factory(
             device_id=d_data.device_id,
+            human_handle=u_data.human_handle,
             is_admin=True,
             certifier=None,
             user_certificate=msg["user_certificate"],

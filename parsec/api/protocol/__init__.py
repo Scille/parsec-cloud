@@ -12,10 +12,12 @@ from parsec.api.protocol.types import (
     DeviceID,
     DeviceName,
     OrganizationID,
+    HumanHandle,
     UserIDField,
     DeviceIDField,
     DeviceNameField,
     OrganizationIDField,
+    HumanHandleField,
 )
 from parsec.api.protocol.handshake import (
     HandshakeError,
@@ -53,6 +55,7 @@ from parsec.api.protocol.user import (
     device_claim_serializer,
     device_cancel_invitation_serializer,
     device_create_serializer,
+    human_find_serializer,
 )
 from parsec.api.protocol.message import message_get_serializer
 from parsec.api.protocol.realm import (
@@ -102,10 +105,12 @@ __all__ = (
     "DeviceID",
     "DeviceName",
     "OrganizationID",
+    "HumanHandle",
     "UserIDField",
     "DeviceIDField",
     "DeviceNameField",
     "OrganizationIDField",
+    "HumanHandleField",
     # Organization
     "organization_create_serializer",
     "organization_bootstrap_serializer",
@@ -131,6 +136,7 @@ __all__ = (
     "device_claim_serializer",
     "device_cancel_invitation_serializer",
     "device_create_serializer",
+    "human_find_serializer",
     # Message
     "message_get_serializer",
     # Data group

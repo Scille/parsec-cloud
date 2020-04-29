@@ -17,6 +17,8 @@ AUTHENTICATED_CMDS = {
     "device_invite",
     "device_cancel_invitation",
     "device_create",
+    # Human
+    "human_find",
     # Block
     "block_create",
     "block_read",

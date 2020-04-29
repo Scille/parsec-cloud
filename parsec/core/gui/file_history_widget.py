@@ -32,7 +32,7 @@ class FileHistoryButton(QWidget, Ui_FileHistoryButton):
         if not dst:
             self.label_dst.hide()
         else:
-            self.label_dst.setText(dst)
+            self.label_dst.setText(str(dst))
 
 
 class FileHistoryWidget(QWidget, Ui_FileHistoryWidget):

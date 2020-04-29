@@ -732,13 +732,13 @@ QWidget#widget_title {
  </widget>
  <customwidgets>
   <customwidget>
-   <class>IconLabel</class>
-   <extends>QLabel</extends>
+   <class>Button</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
+   <class>IconLabel</class>
+   <extends>QLabel</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

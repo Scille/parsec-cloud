@@ -344,8 +344,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self._on_create_org_clicked()
 
     def show_top(self):
-        self.show()
+        self.activateWindow()
+        self.setWindowState((self.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
         self.raise_()
+        self.show()
 
     def on_tab_state_changed(self, tab, state):
         idx = self.tab_center.indexOf(tab)
@@ -445,9 +447,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.switch_to_tab(self.tab_center.count() - 1)
             idx = self.tab_center.count() - 1
 
+        self.show_top()
         if action_addr and isinstance(action_addr, BackendOrganizationFileLinkAddr):
             self.go_to_file_link(action_addr)
-            return
         elif action_addr:
             if isinstance(action_addr, BackendOrganizationBootstrapAddr):
                 self._on_bootstrap_org_clicked(action_addr)
@@ -468,19 +470,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def close_tab(self, index, force=False):
         tab = self.tab_center.widget(index)
         if not force:
-            r = True
+            r = _("ACTION_TAB_CLOSE_CONFIRM")
             if tab and tab.is_logged_in:
                 r = ask_question(
                     self,
                     _("TEXT_TAB_CLOSE_TITLE"),
-                    _("TEXT_TAB_CLOSE_INSTRUCTIONS"),
-                    [_("ACTION_TAB_CLOSE_CONFIRM"), _("ACTION_CANCEL")],
-                )
-            elif self.tab_center.tabText(index) != _("TEXT_TAB_TITLE_LOG_IN_SCREEN"):
-                r = ask_question(
-                    self,
-                    _("TEXT_TAB_CLOSE_TITLE"),
-                    _("TEXT_TAB_CLOSE_INSTRUCTIONS"),
+                    _("TEXT_TAB_CLOSE_INSTRUCTIONS_device").format(
+                        device=tab.core.device.device_id
+                    ),
                     [_("ACTION_TAB_CLOSE_CONFIRM"), _("ACTION_CANCEL")],
                 )
             if r != _("ACTION_TAB_CLOSE_CONFIRM"):

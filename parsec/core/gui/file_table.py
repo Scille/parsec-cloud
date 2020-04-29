@@ -73,6 +73,7 @@ class FileTable(QTableWidget):
     cut_clicked = pyqtSignal()
     copy_clicked = pyqtSignal()
     file_path_clicked = pyqtSignal()
+    open_current_dir_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -111,6 +112,20 @@ class FileTable(QTableWidget):
         effect.setXOffset(0)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
+
+    @property
+    def current_user_role(self):
+        return self._current_user_role
+
+    @current_user_role.setter
+    def current_user_role(self, role):
+        self._current_user_role = role
+        if self.is_read_only():
+            self.setDragEnabled(False)
+            self.setDragDropMode(QTableWidget.NoDragDrop)
+        else:
+            self.setDragEnabled(True)
+            self.setDragDropMode(QTableWidget.DragDrop)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -168,6 +183,8 @@ class FileTable(QTableWidget):
         selected = self.selected_files()
         menu = QMenu(self)
 
+        action = menu.addAction(_("ACTION_FILE_OPEN_CURRENT_DIRECTORY"))
+        action.triggered.connect(self.open_current_dir_clicked.emit)
         if len(selected):
             action = menu.addAction(_("ACTION_FILE_MENU_OPEN"))
             action.triggered.connect(self.open_clicked.emit)

@@ -1,52 +1,115 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+import datetime
 import triopg
-from triopg import UniqueViolationError
+import collections
+from typing import List
+
+from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
 from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
 from importlib_resources import read_text
 
+
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task
 from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
-
+from parsec.backend.postgresql import migrations
 
 logger = get_logger()
 
+CREATE_MIGRATION_TABLE_ID = 2
+MigrationResult = collections.namedtuple(
+    "MigrationResult", ["already_applied", "new_apply", "to_apply", "error"]
+)
 
-async def init_db(url: str) -> None:
+
+async def migrate_db(url: str, migrations: List[str], dry_run: bool) -> MigrationResult:
     """
-    Returns: if the database was already initialized
-    Raises:
-        triopg.exceptions.PostgresError
+    Returns: MigrationResult
     """
     async with triopg.connect(url) as conn:
-        return await _init_db(conn)
+        return await _migrate_db(conn, migrations, dry_run)
 
 
-async def _init_db(conn):
-    if await _is_db_initialized(conn):
+async def _migrate_db(conn, migrations, dry_run):
+
+    error = None
+    already_applied = []
+    new_apply = []
+    to_apply = []
+
+    idx_limit = await _idx_limit(conn)
+    for idx, name, file_name in migrations:
+        if idx <= idx_limit:
+            already_applied.append(file_name)
+        else:
+            if not dry_run:
+                async with conn.transaction():
+                    error = await _apply_migration(conn, idx, name, file_name)
+                    if error:
+                        break
+                    else:
+                        if idx >= CREATE_MIGRATION_TABLE_ID:
+                            # The migration table is created in the second migration
+                            await _add_migration_to_db(conn, idx, name)
+                        new_apply.append(file_name)
+            else:
+                to_apply.append(file_name)
+    return MigrationResult(already_applied, new_apply, to_apply, error)
+
+
+async def _apply_migration(conn, idx, name, migration_file):
+    query = read_text(migrations, migration_file)
+    error = None
+    if not query:
+        error = (migration_file, "Empty migration file")
+    else:
+        try:
+            await conn.execute(query)
+        except PostgresError as e:
+            error = (migration_file, e.message)
+    return error
+
+
+async def _add_migration_to_db(conn, idx, name):
+    statement = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
+    await conn.execute(statement, idx, name, datetime.datetime.utcnow())
+
+
+async def _last_migration_row(conn):
+    query = """
+        SELECT _id FROM migration ORDER BY applied desc LIMIT 1
+    """
+    return await conn.fetchval(query)
+
+
+async def _is_initial_migration_applied(conn):
+    query = """
+        SELECT _id FROM organization LIMIT 1
+    """
+    try:
+        await conn.fetchval(query)
+    except UndefinedTableError:
+        return False
+    else:
         return True
 
-    async with conn.transaction():
-        query = read_text(__package__, f"init_tables.sql")
-        await conn.execute(query)
-    return False
 
-
-async def _is_db_initialized(conn):
-    # TODO: not a really elegant way to determine if the database
-    # is already initialized...
-    root_key = await conn.fetchrow(
-        """
-        SELECT true FROM pg_catalog.pg_tables WHERE tablename = 'user_';
-        """
-    )
-    return bool(root_key)
+async def _idx_limit(conn):
+    idx_limit = 0
+    try:
+        idx_limit = await _last_migration_row(conn)
+    except UndefinedTableError:
+        # The migration table is created in the second migration
+        if await _is_initial_migration_applied(conn):
+            # The initial table may be created before the migrate command with the old way
+            idx_limit = 1
+    return idx_limit
 
 
 def retry_on_unique_violation(fn):

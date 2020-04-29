@@ -420,6 +420,7 @@ QHeaderView::section {
     font-weight: bold;
     height: 50px;
     text-align: left;
+    padding-left: 15px;
 }
 
 QTableWidget::item {

@@ -216,6 +216,7 @@ def test_iterdir_with_marker(mountpoint_service):
                 await workspace.mkdir(path)
             expected_entries_names.append(path[1:])
 
+    mountpoint_service.execute(_bootstrap)
     expected_entries_names = sorted(expected_entries_names)
 
     # Note `os.listdir()` ignores `.` and `..` entries
@@ -230,3 +231,24 @@ def test_ntstatus_in_fs_errors():
 
     for status in ntstatus:
         assert getattr(NTSTATUS, status.name) == status
+
+
+@pytest.mark.win32
+@pytest.mark.mountpoint
+def test_replace_if_exists(mountpoint_service):
+    async def _bootstrap(user_fs, mountpoint_manager):
+        workspace = user_fs.get_workspace(mountpoint_service.wid)
+        await workspace.touch("/foo.txt")
+        await workspace.touch("/bar.txt")
+        await workspace.write_bytes("/foo.txt", b"foo")
+        await workspace.write_bytes("/bar.txt", b"bar")
+
+    mountpoint_service.execute(_bootstrap)
+
+    foo = mountpoint_service.wpath / "foo.txt"
+    bar = mountpoint_service.wpath / "bar.txt"
+    assert foo.read_bytes() == b"foo"
+    assert bar.read_bytes() == b"bar"
+    foo.replace(bar)
+    assert bar.read_bytes() == b"foo"
+    assert not foo.exists()

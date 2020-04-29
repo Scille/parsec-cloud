@@ -8,9 +8,11 @@ from parsec.serde import fields, post_load
 from parsec.api.protocol import (
     DeviceID,
     UserID,
+    HumanHandle,
     RealmRole,
     DeviceIDField,
     UserIDField,
+    HumanHandleField,
     RealmRoleField,
 )
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
@@ -22,6 +24,7 @@ class UserCertificateContent(BaseAPISignedData):
         user_id = UserIDField(required=True)
         public_key = fields.PublicKey(required=True)
         is_admin = fields.Boolean(required=True)
+        human_handle = HumanHandleField(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
@@ -31,15 +34,24 @@ class UserCertificateContent(BaseAPISignedData):
     user_id: UserID
     public_key: PublicKey
     is_admin: bool
+    human_handle: Optional[HumanHandle] = None
 
     @classmethod
     def verify_and_load(
-        cls, *args, expected_user: Optional[UserID] = None, **kwargs
+        cls,
+        *args,
+        expected_user: Optional[UserID] = None,
+        expected_human_handle: Optional[HumanHandle] = None,
+        **kwargs,
     ) -> "UserCertificateContent":
         data = super().verify_and_load(*args, **kwargs)
         if expected_user is not None and data.user_id != expected_user:
             raise DataValidationError(
                 f"Invalid user ID: expected `{expected_user}`, got `{data.user_id}`"
+            )
+        if expected_human_handle is not None and data.human_handle != expected_human_handle:
+            raise DataValidationError(
+                f"Invalid human handle: expected `{expected_human_handle}`, got `{data.human_handle}`"
             )
         return data
 

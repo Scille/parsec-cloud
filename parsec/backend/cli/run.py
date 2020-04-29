@@ -26,19 +26,43 @@ from parsec.backend.config import (
 logger = get_logger()
 
 
+def _split_with_escaping(txt):
+    parts = []
+    current_part = ""
+    escaping = False
+    for c in txt:
+        if escaping:
+            if c not in ("\\", ":"):
+                current_part += "\\"
+            current_part += c
+        elif c == "\\":
+            escaping = True
+            continue
+        elif c == ":":
+            parts.append(current_part)
+            current_part = ""
+        else:
+            current_part += c
+        escaping = False
+    if escaping:
+        current_part += "\\"
+    parts.append(current_part)
+    return parts
+
+
 def _parse_blockstore_param(value):
     if value.upper() == "MOCKED":
         return MockedBlockStoreConfig()
     elif value.upper() == "POSTGRESQL":
         return PostgreSQLBlockStoreConfig()
     else:
-        parts = value.split(":")
+        parts = _split_with_escaping(value)
         if parts[0].upper() == "S3":
             try:
                 endpoint_url, region, bucket, key, secret = parts[1:]
             except ValueError:
                 raise click.BadParameter(
-                    "Invalid S3 config, must be `s3:<endpoint_url>:<region>:<bucket>:<key>:<secret>`"
+                    "Invalid S3 config, must be `s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`"
                 )
             return S3BlockStoreConfig(
                 s3_endpoint_url=endpoint_url or None,
@@ -192,10 +216,14 @@ Allowed values:
 Allowed values:
 -`MOCKED`: Mocked in memory
 -`POSTGRESQL`: Use the database specified in the `--db` param
--`s3:<endpoint_url>:<region>:<bucket>:<key>:<secret>`: Use S3 storage
+-`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
 -`swift:<authurl>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
+
+Note endpoint_url/auth_url must be escaped (e.g. `s3:https\\://foo.com:[...]`).
+
 On top of that, multiple blockstore configurations can be provided to form a
 RAID0/1/5 cluster.
+
 Each configuration must be provided with the form
 `<raid_type>:<node>:<config>` with `<raid_type>` RAID0/RAID1/RAID5, `<node>` a
 integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.

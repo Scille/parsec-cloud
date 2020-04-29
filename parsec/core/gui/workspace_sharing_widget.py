@@ -258,8 +258,6 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             role == WorkspaceRole.OWNER or role == WorkspaceRole.MANAGER
         ):
             enabled = False
-        if self.current_user_role == WorkspaceRole.OWNER and role == WorkspaceRole.OWNER:
-            enabled = False
 
         w = SharingWidget(
             user=user,

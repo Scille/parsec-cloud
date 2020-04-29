@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
 from PyQt5.QtGui import QColor, QCursor
 
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
@@ -53,6 +53,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.reencrypting = None
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
         files = files or []
 
         if not len(files):
@@ -120,6 +122,28 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
+
+    def show_context_menu(self, pos):
+        global_pos = self.mapToGlobal(pos)
+        menu = QMenu(self)
+
+        action = menu.addAction(_("ACTION_WORKSPACE_OPEN_IN_FILE_EXPLORER"))
+        action.triggered.connect(self.button_open_workspace_clicked)
+        if not self.timestamped:
+            action = menu.addAction(_("ACTION_WORKSPACE_RENAME"))
+            action.triggered.connect(self.button_rename_clicked)
+            action = menu.addAction(_("ACTION_WORKSPACE_SHARE"))
+            action.triggered.connect(self.button_share_clicked)
+            action = menu.addAction(_("ACTION_WORKSPACE_SEE_IN_THE_PAST"))
+            action.triggered.connect(self.button_remount_ts_clicked)
+            if self.reencryption_needs and self.reencryption_needs.need_reencryption:
+                action = menu.addAction(_("ACTION_WORKSPACE_REENCRYPT"))
+                action.triggered.connect(self.button_reencrypt_clicked)
+        else:
+            action = menu.addAction(_("ACTION_WORKSPACE_DELETE"))
+            action.triggered.connect(self.button_delete_clicked)
+
+        menu.exec_(global_pos)
 
     def button_open_workspace_clicked(self):
         self.open_clicked.emit(self.workspace_fs)
