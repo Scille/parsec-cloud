@@ -1,1 +1,0 @@
-Added a way to create an organization on the business website directly from the GUI

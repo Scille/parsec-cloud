@@ -1,1 +1,0 @@
-Fixed alignment problem when displaying users

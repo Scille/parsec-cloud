@@ -5,6 +5,51 @@ History
 .. towncrier release notes start
 
 
+Parsec 1.13.0 (2020-04-29)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Added a way to create an organization on the business website directly from
+  the GUI  (`#1014 <https://github.com/Scille/parsec-cloud/issues/1014>`__)
+* Add one migration tool in the cli.  (`#1116 <https://github.com/Scille/parsec-
+  cloud/issues/1116>`__)
+* Add an action to open the current directory in file explorer  (`#1107
+  <https://github.com/Scille/parsec-cloud/issues/1107>`__)
+* Add a contextual menu on workspace buttons  (`#1085
+  <https://github.com/Scille/parsec-cloud/issues/1085>`__)
+* Updated file icons to reflect the file format  (`#1093
+  <https://github.com/Scille/parsec-cloud/issues/1093>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Allow closing of login in tab  (`#1101 <https://github.com/Scille/parsec-
+  cloud/issues/1101>`__)
+* Fixed GUI staying minimized when an URL is clicked  (`#1100
+  <https://github.com/Scille/parsec-cloud/issues/1100>`__)
+* Fix internal behavior involving cancelled tasks that could lead to unhandled
+  errors logs.  (`#1123 <https://github.com/Scille/parsec-cloud/issues/1123>`__)
+* Fix save operations on windows for some third party applications.  This is
+  related to the mechanism used by third party applications to safely save
+  files. This mechanism might use the `replace_if_exists` flag in the `rename`
+  winfsp operation. This flag is now supported.  (`#1128
+  <https://github.com/Scille/parsec-cloud/issues/1128>`__)
+* Allows workspace owners to change the role of other owners  (`#870
+  <https://github.com/Scille/parsec-cloud/issues/870>`__)
+* Fixed alignment problem when displaying users  (`#1127
+  <https://github.com/Scille/parsec-cloud/issues/1127>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Improve high CPU usage and blocking IO detection.  (`#1124
+  <https://github.com/Scille/parsec-cloud/issues/1124>`__)
+* Update API to version 1.2 which add human handle system  (`#1104
+  <https://github.com/Scille/parsec-cloud/issues/1104>`__)
+
+
 Parsec 1.12.0 (2020-04-14)
 --------------------------
 

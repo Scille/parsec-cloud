@@ -1,3 +1,0 @@
-Fix save operations on windows for some third party applications.
-
-This is related to the mechanism used by third party applications to safely save files. This mechanism might use the `replace_if_exists` flag in the `rename` winfsp operation. This flag is now supported.

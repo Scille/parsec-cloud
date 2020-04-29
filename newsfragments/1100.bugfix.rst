@@ -1,1 +1,0 @@
-Fixed GUI staying minimized when an URL is clicked
