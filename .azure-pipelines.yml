@@ -159,7 +159,7 @@ jobs:
   - bash: |
       set -eux
       python --version
-      pip install -U wheel pip setuptools
+      python -m pip install -U wheel pip setuptools
       choco install -y --limit-output winfsp --pre --version=$(winfsp.version)
       # Install winfsp-test and put it in PATH
       mkdir winfsp-test
