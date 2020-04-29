@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication, QMenu
 
 from parsec import __version__ as PARSEC_VERSION
 
+from parsec.core.local_device import list_available_devices, get_key_file
 from parsec.core.config import save_config
 from parsec.core.types import (
     BackendActionAddr,
@@ -32,6 +33,8 @@ from parsec.core.gui.about_widget import AboutWidget
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.custom_dialogs import ask_question, show_error, GreyedDialog, get_text_input
 from parsec.core.gui.custom_widgets import Button
+from parsec.core.gui.create_org_widget import CreateOrgWidget
+from parsec.core.gui import validators
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
@@ -99,12 +102,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if idx != -1:
             action.setDisabled(True)
 
-        action = menu.addAction(_("ACTION_MAIN_MENU_BOOTSTRAP_ORGANIZATION"))
-        action.triggered.connect(self._on_bootstrap_org_clicked)
-        action = menu.addAction(_("ACTION_MAIN_MENU_CLAIM_USER"))
-        action.triggered.connect(self._on_claim_user_clicked)
-        action = menu.addAction(_("ACTION_MAIN_MENU_CLAIM_DEVICE"))
-        action.triggered.connect(self._on_claim_device_clicked)
+        action = menu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
+        action.triggered.connect(self._on_create_org_clicked)
+        action = menu.addAction(_("ACTION_MAIN_MENU_JOIN_ORGANIZATION"))
+        action.triggered.connect(self._on_join_organization_clicked)
         menu.addSeparator()
 
         action = menu.addAction(_("ACTION_MAIN_MENU_SETTINGS"))
@@ -156,6 +157,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def _on_add_instance_clicked(self):
         self.add_instance()
 
+    def _on_create_org_clicked(self):
+        r = CreateOrgWidget.exec_modal(self.jobs_ctx, self)
+        if r is None:
+            return
+        self._on_bootstrap_org_clicked(r)
+
+    def _on_join_organization_clicked(self):
+        url = get_text_input(
+            parent=self,
+            title=_("TEXT_JOIN_ORG_URL_TITLE"),
+            message=_("TEXT_JOIN_ORG_URL_INSTRUCTIONS"),
+            placeholder=_("TEXT_JOIN_ORG_URL_PLACEHOLDER"),
+        )
+        if url is None:
+            return
+        elif url == "":
+            show_error(self, _("TEXT_JOIN_ORG_INVALID_URL"))
+            return
+
+        action_addr = None
+        try:
+            action_addr = BackendActionAddr.from_url(url)
+        except ValueError as exc:
+            show_error(self, _("TEXT_INVALID_URL"), exception=exc)
+            return
+        if isinstance(action_addr, BackendOrganizationClaimUserAddr):
+            self._on_claim_user_clicked(action_addr)
+        elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
+            self._on_claim_device_clicked(action_addr)
+        else:
+            show_error(self, _("TEXT_INVALID_URL"))
+            return
+
     def _on_bootstrap_org_clicked(self, action_addr=None):
         if not action_addr:
             url = get_text_input(
@@ -163,6 +197,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 title=_("TEXT_BOOTSTRAP_ORG_URL_TITLE"),
                 message=_("TEXT_BOOTSTRAP_ORG_URL_INSTRUCTIONS"),
                 placeholder=_("TEXT_BOOTSTRAP_ORG_URL_PLACEHOLDER"),
+                validator=validators.BackendOrganizationBootstrapAddrValidator(),
             )
             if url is None:
                 return
@@ -181,58 +216,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         if ret:
             self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
 
-    def _on_claim_user_clicked(self, action_addr=None):
-        if not action_addr:
-            url = get_text_input(
-                parent=self,
-                title=_("TEXT_CLAIM_USER_URL_TITLE"),
-                message=_("TEXT_CLAIM_USER_URL_INSTRUCTIONS"),
-                placeholder=_("TEXT_CLAIM_USER_URL_PLACEHOLDER"),
-            )
-            if url is None:
-                return
-            elif url == "":
-                show_error(self, _("TEXT_CLAIM_USER_INVALID_URL"))
-                return
-
-            action_addr = None
-            try:
-                action_addr = BackendOrganizationClaimUserAddr.from_url(url)
-            except ValueError as exc:
-                show_error(self, _("TEXT_CLAIM_USER_INVALID_URL"), exception=exc)
-                return
+    def _on_claim_user_clicked(self, action_addr):
         ret = ClaimUserWidget.exec_modal(
             jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
         )
         if ret:
             self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
 
-    def _on_claim_device_clicked(self, action_addr=None):
-        if not action_addr:
-            url = get_text_input(
-                parent=self,
-                title=_("TEXT_CLAIM_DEVICE_URL_TITLE"),
-                message=_("TEXT_CLAIM_DEVICE_URL_INSTRUCTIONS"),
-                placeholder=_("TEXT_CLAIM_DEVICE_URL_PLACEHOLDER"),
-            )
-            if url is None:
-                return
-            elif url == "":
-                show_error(self, _("TEXT_CLAIM_DEVICE_INVALID_URL"))
-                return
-
-            action_addr = None
-            try:
-                action_addr = BackendOrganizationClaimDeviceAddr.from_url(url)
-            except ValueError as exc:
-                show_error(self, _("TEXT_CLAIM_DEVICE_INVALID_URL"), exception=exc)
-                return
+    def _on_claim_device_clicked(self, action_addr):
         ret = ClaimDeviceWidget.exec_modal(
             jobs_ctx=self.jobs_ctx, config=self.config, addr=action_addr, parent=self
         )
         if ret:
             self.reload_login_devices()
+            self.try_login(ret[0], ret[1])
+
+    def try_login(self, device, password):
+        idx = self._get_login_tab_index()
+        tab = None
+        if idx == -1:
+            tab = self.add_new_tab()
+        else:
+            tab = self.tab_center.widget(idx)
+        kf = get_key_file(self.config.config_dir, device)
+        tab.login_with_password(kf, password)
 
     def reload_login_devices(self):
         idx = self._get_login_tab_index()
@@ -314,8 +324,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Acknowledge the changes
             self.event_bus.send("gui.config.changed", gui_last_version=PARSEC_VERSION)
-
         telemetry.init(self.config)
+
+        devices = list_available_devices(self.config.config_dir)
+        if not len(devices):
+            r = ask_question(
+                self,
+                _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"),
+                _("TEXT_KICKSTART_PARSEC_WHAT_TO_DO_INSTRUCTIONS"),
+                [
+                    _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"),
+                    _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"),
+                ],
+                radio_mode=True,
+            )
+            if r == _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"):
+                self._on_join_organization_clicked()
+            elif r == _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"):
+                self._on_create_org_clicked()
 
     def show_top(self):
         self.activateWindow()

@@ -118,6 +118,31 @@ QCheckBox::indicator:checked {
     image: url(:/icons/images/material/check.svg)
 }
 
+/* RadioButton: ENABLED, DISABLED */
+
+QRadioButton::indicator {
+    width: 20px;
+    height: 20px;
+    background-color: #FFFFFF;
+    border: 1px solid #99999980;
+    border-radius: 10px;
+    color: #333333;
+}
+
+QRadioButton::indicator:disabled {
+    background-color: #DDDDDD;
+    color: #999999;
+}
+
+QRadioButton::indicator:disabled {
+    background-color: #DDDDDD;
+    color: #999999;
+}
+
+QRadioButton::indicator:checked {
+    image: url(:/icons/images/material/lens.svg)
+}
+
 /* TimeEdit: ENABLED, DISABLED */
 
 QTimeEdit {
@@ -334,7 +359,12 @@ QMenu {
 }
 
 QMenu::item {
-    height: 24px;
+    height: 32px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 20px;
+    padding-right: 20px;
+    font-size: 16px;
 }
 
 QMenu::item::disabled {
