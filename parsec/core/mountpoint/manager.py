@@ -229,9 +229,12 @@ async def mountpoint_manager_factory(
 ):
     config["debug"] = debug
 
-    runner = get_mountpoint_runner()
+    bootstrap = get_mountpoint_runner()
 
     async with trio.open_service_nursery() as nursery:
+
+        runner = await nursery.start(bootstrap, user_fs, base_mountpoint_path, config, event_bus)
+
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )

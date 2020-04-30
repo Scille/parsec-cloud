@@ -17,7 +17,6 @@ from parsec.core.fs import FSLocalOperationError, FSRemoteOperationError
 from parsec.core.fs.workspacefs.sync_transactions import DEFAULT_BLOCK_SIZE
 from parsec.core.mountpoint.winify import winify_entry_name, unwinify_entry_name
 
-
 logger = get_logger()
 
 # Taken from https://docs.microsoft.com/en-us/windows/win32/fileio/file-access-rights-constants
@@ -107,7 +106,8 @@ def stat_to_winfsp_attributes(stat):
 
 
 class OpenedFolder:
-    def __init__(self, path):
+    def __init__(self, operations, path):
+        self.operations = operations
         self.path = path
         self.deleted = False
 
@@ -116,7 +116,8 @@ class OpenedFolder:
 
 
 class OpenedFile:
-    def __init__(self, path, fd):
+    def __init__(self, operations, path, fd):
+        self.operations = operations
         self.path = path
         self.fd = fd
         self.deleted = False
@@ -135,7 +136,7 @@ def handle_error(func):
     return wrapper
 
 
-class WinFSPOperations(BaseFileSystemOperations):
+class WinfspOperations(BaseFileSystemOperations):
     def __init__(self, event_bus, volume_label, fs_access):
         super().__init__()
         # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
@@ -188,11 +189,11 @@ class WinFSPOperations(BaseFileSystemOperations):
 
         if create_options & CREATE_FILE_CREATE_OPTIONS.FILE_DIRECTORY_FILE:
             self.fs_access.folder_create(file_name)
-            return OpenedFolder(file_name)
+            return OpenedFolder(self, file_name)
 
         else:
             _, fd = self.fs_access.file_create(file_name, open=True)
-            return OpenedFile(file_name, fd)
+            return OpenedFile(self, file_name, fd)
 
     @handle_error
     def get_security(self, file_context):
@@ -224,9 +225,9 @@ class WinFSPOperations(BaseFileSystemOperations):
         # `granted_access` is already handle by winfsp
         try:
             _, fd = self.fs_access.file_open(file_name, mode=mode)
-            return OpenedFile(file_name, fd)
+            return OpenedFile(self, file_name, fd)
         except IsADirectoryError:
-            return OpenedFolder(file_name)
+            return OpenedFolder(self, file_name)
 
     @handle_error
     def close(self, file_context):
@@ -241,7 +242,12 @@ class WinFSPOperations(BaseFileSystemOperations):
 
     @handle_error
     def get_file_info(self, file_context):
-        stat = self.fs_access.entry_info(file_context.path)
+        # Useful for WinfspBaseOperations
+        if isinstance(file_context, str):
+            path = _winpath_to_parsec(file_context)
+        else:
+            path = file_context.path
+        stat = self.fs_access.entry_info(path)
         return stat_to_winfsp_attributes(stat)
 
     @handle_error
@@ -296,17 +302,18 @@ class WinFSPOperations(BaseFileSystemOperations):
             raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
 
         # NOTE: The "." and ".." directories should ONLY be included
-        # if the queried directory is not root
+        # if the queried directory is not root, but the workspace
+        # directory is actually not the root of the workspace
 
         # Current directory
-        if marker is None and not file_context.path.is_root():
+        if marker is None:
             entry = {"file_name": ".", **stat_to_winfsp_attributes(stat)}
             entries.append(entry)
         elif marker == ".":
             marker = None
 
         # Parent directory
-        if marker is None and not file_context.path.is_root():
+        if marker is None:
             parent_stat = self.fs_access.entry_info(file_context.path.parent)
             entry = {"file_name": "..", **stat_to_winfsp_attributes(parent_stat)}
             entries.append(entry)

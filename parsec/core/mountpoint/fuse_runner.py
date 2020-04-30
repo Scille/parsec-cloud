@@ -84,6 +84,17 @@ async def _teardown_mountpoint(mountpoint_path):
 
 
 async def fuse_mountpoint_runner(
+    user_fs,
+    base_mountpoint_path: PurePath,
+    config: dict,
+    event_bus,
+    *,
+    task_status=trio.TASK_STATUS_IGNORED,
+):
+    task_status.started(_fuse_mountpoint_runner)
+
+
+async def _fuse_mountpoint_runner(
     workspace_fs,
     base_mountpoint_path: PurePath,
     config: dict,
