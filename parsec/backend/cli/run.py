@@ -27,6 +27,13 @@ logger = get_logger()
 
 
 def _split_with_escaping(txt):
+    """
+    Simple colon (i.e. `:`) escaping with backslash
+    Rules (using slash instead of backslash to avoid weird encoding error):
+    `<bs>:` -> `:`
+    `<bs><bs>` -> `<bs>`
+    `<bs>whatever` -> `<bs>whatever`
+    """
     parts = []
     current_part = ""
     escaping = False
@@ -64,6 +71,13 @@ def _parse_blockstore_param(value):
                 raise click.BadParameter(
                     "Invalid S3 config, must be `s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`"
                 )
+            # Provide https by default to avoid anoying escaping for most cases
+            if (
+                endpoint_url
+                and not endpoint_url.startswith("http://")
+                and not endpoint_url.startswith("https://")
+            ):
+                endpoint_url = f"https://{endpoint_url}"
             return S3BlockStoreConfig(
                 s3_endpoint_url=endpoint_url or None,
                 s3_region=region,
@@ -74,13 +88,20 @@ def _parse_blockstore_param(value):
 
         elif parts[0].upper() == "SWIFT":
             try:
-                authurl, tenant, container, user, password = parts[1:]
+                auth_url, tenant, container, user, password = parts[1:]
             except ValueError:
                 raise click.BadParameter(
-                    "Invalid SWIFT config, must be `swift:<authurl>:<tenant>:<container>:<user>:<password>`"
+                    "Invalid SWIFT config, must be `swift:<auth_url>:<tenant>:<container>:<user>:<password>`"
                 )
+            # Provide https by default to avoid anoying escaping for most cases
+            if (
+                auth_url
+                and not auth_url.startswith("http://")
+                and not auth_url.startswith("https://")
+            ):
+                auth_url = f"https://{auth_url}"
             return SWIFTBlockStoreConfig(
-                swift_authurl=authurl,
+                swift_authurl=auth_url,
                 swift_tenant=tenant,
                 swift_container=container,
                 swift_user=user,
@@ -217,9 +238,11 @@ Allowed values:
 -`MOCKED`: Mocked in memory
 -`POSTGRESQL`: Use the database specified in the `--db` param
 -`s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`: Use S3 storage
--`swift:<authurl>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
+-`swift:<auth_url>:<tenant>:<container>:<user>:<password>`: Use SWIFT storage
 
-Note endpoint_url/auth_url must be escaped (e.g. `s3:https\\://foo.com:[...]`).
+Note endpoint_url/auth_url are considered as https by default (e.g.
+`s3:foo.com:[...]` -> https://foo.com).
+Escaping must be used to provide a custom scheme (e.g. `s3:http\\://foo.com:[...]`).
 
 On top of that, multiple blockstore configurations can be provided to form a
 RAID0/1/5 cluster.

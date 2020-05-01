@@ -125,9 +125,11 @@ Allowed values:
 - ``MOCKED``: Mocked in memory
 - ``POSTGRESQL``: Use the database specified in the ``--db`` param
 - ``s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>``: Use Amazon S3 storage
-- ``swift:<authurl>:<tenant>:<container>:<user>:<password>``: Use OpenStack SWIFT storage
+- ``swift:<auth_url>:<tenant>:<container>:<user>:<password>``: Use OpenStack SWIFT storage
 
-Note endpoint_url/auth_url must be escaped (e.g. ``s3:https\\://foo.com:[...]``).
+Note endpoint_url/auth_url are considered as https by default (e.g.
+`s3:foo.com:[...]` -> https://foo.com).
+Escaping must be used to provide a custom scheme (e.g. `s3:http\\://foo.com:[...]`).
 
 On top of that, multiple blockstore configurations can be provided to form a
 RAID0/1/5 cluster.

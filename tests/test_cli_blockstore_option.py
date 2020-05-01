@@ -26,7 +26,7 @@ def test_parse_postgresql():
 def test_parse_s3():
     config = _parse_blockstore_params(["s3:s3.example.com:region1:bucketA:key123:S3cr3t"])
     assert config == S3BlockStoreConfig(
-        s3_endpoint_url="s3.example.com",
+        s3_endpoint_url="https://s3.example.com",
         s3_region="region1",
         s3_bucket="bucketA",
         s3_key="key123",
@@ -45,14 +45,40 @@ def test_parse_s3_with_default_endpoint():
     )
 
 
+def test_parse_s3_with_custom_url_scheme():
+    config = _parse_blockstore_params(
+        ["s3:http\\://s3.example.com:region1:bucketA:key123:\\:S3cr3t\\\\"]
+    )
+    assert config == S3BlockStoreConfig(
+        s3_endpoint_url="http://s3.example.com",
+        s3_region="region1",
+        s3_bucket="bucketA",
+        s3_key="key123",
+        s3_secret=":S3cr3t\\",  # Also test escaping in password
+    )
+
+
 def test_parse_swift():
     config = _parse_blockstore_params(["swift:swift.example.com:tenant2:containerB:user123:S3cr3t"])
     assert config == SWIFTBlockStoreConfig(
-        swift_authurl="swift.example.com",
+        swift_authurl="https://swift.example.com",
         swift_tenant="tenant2",
         swift_container="containerB",
         swift_user="user123",
         swift_password="S3cr3t",
+    )
+
+
+def test_parse_swift_custom_url_scheme():
+    config = _parse_blockstore_params(
+        ["swift:http\\://swift.example.com:tenant2:containerB:user123:\\:S3cr3t\\\\"]
+    )
+    assert config == SWIFTBlockStoreConfig(
+        swift_authurl="http://swift.example.com",
+        swift_tenant="tenant2",
+        swift_container="containerB",
+        swift_user="user123",
+        swift_password=":S3cr3t\\",  # Also test escaping in password
     )
 
 
@@ -70,14 +96,14 @@ def test_parse_simple_raid():
             MockedBlockStoreConfig(),
             PostgreSQLBlockStoreConfig(),
             S3BlockStoreConfig(
-                s3_endpoint_url="s3.example.com",
+                s3_endpoint_url="https://s3.example.com",
                 s3_region="region1",
                 s3_bucket="bucketA",
                 s3_key="key123",
                 s3_secret="S3cr3t",
             ),
             SWIFTBlockStoreConfig(
-                swift_authurl="swift.example.com",
+                swift_authurl="https://swift.example.com",
                 swift_tenant="tenant2",
                 swift_container="containerB",
                 swift_user="user123",
