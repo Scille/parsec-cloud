@@ -18,9 +18,9 @@ Example for Visual Studio 2017 with amd64 target:
 $ "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"  amd64
 ```
 
-Run the `freeze_parsec.py` Python script with the branch/tag to build:
+Run the `freeze_parsec.py` Python script with the path to the Parsec sources to use:
 ```shell
-$ python3.exe freeze_parsec.py v1.4.0
+$ python freeze_parsec.py ../..
 ```
 
 Note the Python version embedded inside the build will be taken from the interpreter
@@ -36,7 +36,7 @@ and `BUILD.tmp` files that will be used by the packaging nsis script.
 
 Run the NSIS script `installer.nsi`:
 ```shell
-$ "C:\\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+$ "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
 ```
 
 This will generate a `build\parsec-<version>-<platform>-setup.exe` installer.

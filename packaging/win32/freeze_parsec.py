@@ -45,7 +45,7 @@ def main(parsec_source):
     global_dict = {}
     exec((parsec_source / "parsec/_version.py").read_text(), global_dict)
     parsec_version = global_dict.get("__version__")
-    print(f"### Patch parsec.__version__ is {parsec_version} ###")
+    print(f"### Detected Parsec version {parsec_version} ###")
 
     # Fetch CPython distrib
     if not CPYTHON_DISTRIB_ARCHIVE.is_file():
