@@ -248,6 +248,20 @@ msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "En cours de rechiffrement"
 
+msgid "TEXT_WORKSPACE_IS_PRIVATE"
+msgstr "privé"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
+msgstr "partagé avec {user}"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS"
+msgstr "partagé avec {n} utilisateurs"
+
+msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
+msgstr "administré par {user}"
+
+msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
+msgstr "temporary_{date}"
 msgid "TEXT_WORKSPACE_IS_SHARED"
 msgstr "partagé"
 

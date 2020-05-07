@@ -10,7 +10,6 @@ import pendulum
 from parsec.core.types import (
     WorkspaceEntry,
     FsPath,
-    WorkspaceRole,
     EntryID,
     EntryName,
     BackendOrganizationFileLinkAddr,
@@ -325,8 +324,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button = WorkspaceButton(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
-            is_shared=len(users_roles) > 1,
-            is_creator=ws_entry.role == WorkspaceRole.OWNER,
+            users_roles=users_roles,
             files=files[:4],
             timestamped=timestamped,
         )

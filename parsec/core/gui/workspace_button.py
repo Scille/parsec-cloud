@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
 from PyQt5.QtGui import QColor, QCursor
 
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
-from parsec.core.types import EntryID
+from parsec.core.types import EntryID, WorkspaceRole
 
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_info
@@ -36,20 +36,18 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self,
         workspace_name,
         workspace_fs,
-        is_shared,
-        is_creator,
+        users_roles,
         files=None,
         reencryption_needs=None,
         timestamped=False,
     ):
         super().__init__()
         self.setupUi(self)
-        self.is_creator = is_creator
+        self.users_roles = users_roles
         self.workspace_name = workspace_name
         self.workspace_fs = workspace_fs
         self.reencryption_needs = reencryption_needs
         self.timestamped = timestamped
-        self.is_shared = is_shared
         self.reencrypting = None
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
@@ -99,7 +97,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
-        if not self.is_creator:
+        if not self.is_owner:
             self.button_reencrypt.hide()
         self.label_reencrypting.hide()
         self.button_share.clicked.connect(self.button_share_clicked)
@@ -117,11 +115,33 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_owner.apply_style()
         self.label_shared.apply_style()
         self.label_reencrypting.apply_style()
-        if not self.is_creator:
+        if not self.is_owner:
             self.label_owner.hide()
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
+
+    @property
+    def is_shared(self):
+        return len(self.users_roles) > 1
+
+    @property
+    def owner(self):
+        for user_id, role in self.users_roles.items():
+            if role == WorkspaceRole.OWNER:
+                return user_id
+        raise ValueError
+
+    @property
+    def others(self):
+        return [
+            user_id for user_id in self.users_roles if user_id != self.workspace_fs.device.user_id
+        ]
+
+    @property
+    def is_owner(self):
+        user_id = self.workspace_fs.device.user_id
+        return self.users_roles[user_id] == WorkspaceRole.OWNER
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
@@ -153,7 +173,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def button_reencrypt_clicked(self):
         if self.reencryption_needs:
-            if not self.is_creator:
+            if not self.is_owner:
                 show_info(self.parent(), message=_("TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"))
                 return
             self.reencrypt_clicked.emit(
@@ -182,7 +202,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @reencryption_needs.setter
     def reencryption_needs(self, val):
         self._reencryption_needs = val
-        if not self.is_creator:
+        if not self.is_owner:
             return
         if self.reencryption_needs and self.reencryption_needs.need_reencryption:
             self.button_reencrypt.show()
@@ -204,7 +224,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_reencrypting.hide()
 
         self._reencrypting = val
-        if not self.is_creator:
+        if not self.is_owner:
             return
         if self._reencrypting:
             _start_reencrypting()
@@ -220,8 +240,20 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name
         display = workspace_name
-        if self.is_shared and self.is_creator:
-            display += " ({})".format(_("TEXT_WORKSPACE_IS_SHARED"))
+
+        if not self.is_shared:
+            shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
+        elif not self.is_owner:
+            shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(user=self.owner)
+        elif len(self.others) == 1:
+            user, = self.others
+            shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(user=user)
+        else:
+            n = len(self.others)
+            assert n > 1
+            shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS").format(n=n)
+        display += " ({})".format(shared_message)
+
         if isinstance(self.workspace_fs, WorkspaceFSTimestamped):
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)

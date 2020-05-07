@@ -260,8 +260,17 @@ msgstr "Only a workspace owner can reencrypt."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "Reencrypting the workspace"
 
-msgid "TEXT_WORKSPACE_IS_SHARED"
-msgstr "shared with others"
+msgid "TEXT_WORKSPACE_IS_PRIVATE"
+msgstr "private"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
+msgstr "shared with {user}"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS"
+msgstr "shared with {n} users"
+
+msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
+msgstr "owned by {user}"
 
 msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
 msgstr "temporary_{date}"
