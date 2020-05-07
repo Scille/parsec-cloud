@@ -64,12 +64,6 @@ async def _do_workspace_rename(core, workspace_id, new_name, button):
         return button, new_name
     except Exception as exc:
         raise JobResultError("rename-error") from exc
-    else:
-        try:
-            await core.mountpoint_manager.unmount_workspace(workspace_id)
-            await core.mountpoint_manager.mount_workspace(workspace_id)
-        except MountpointAlreadyMounted:
-            pass
 
 
 async def _do_workspace_list(core):
@@ -141,6 +135,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     mount_error = pyqtSignal(QtToTrioJob)
     reencryption_needs_success = pyqtSignal(QtToTrioJob)
     reencryption_needs_error = pyqtSignal(QtToTrioJob)
+    ignore_success = pyqtSignal(QtToTrioJob)
+    ignore_error = pyqtSignal(QtToTrioJob)
 
     def __init__(self, core, jobs_ctx, event_bus, **kwargs):
         super().__init__(**kwargs)
@@ -321,6 +317,23 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         # Synchronous calls can run directly in the job system
         # as they won't block the Qt loop for long
         workspace_name = self.jobs_ctx.run_sync(workspace_fs.get_workspace_name)
+
+        # Temporary code to fix the workspace names edited by
+        # the previous naming policy (the userfs used to add
+        # `(shared by <device>)` at the end of the workspace name)
+        token = " (shared by "
+        if token in workspace_name:
+            workspace_name, *_ = workspace_name.split(token)
+            self.jobs_ctx.submit_job(
+                ThreadSafeQtSignal(self, "ignore_success", QtToTrioJob),
+                ThreadSafeQtSignal(self, "ignore_error", QtToTrioJob),
+                _do_workspace_rename,
+                core=self.core,
+                workspace_id=workspace_fs.workspace_id,
+                new_name=workspace_name,
+                button=None,
+            )
+
         button = WorkspaceButton(
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,

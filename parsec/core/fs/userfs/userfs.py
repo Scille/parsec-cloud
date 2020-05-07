@@ -792,7 +792,7 @@ class UserFS:
         # Finally insert the new workspace entry into our user manifest
         workspace_entry = WorkspaceEntry(
             # Name are not required to be unique across workspaces, so no check to do here
-            name=f"{msg.name} (shared by {msg.author.user_id})",
+            name=f"{msg.name}",
             id=msg.id,
             key=msg.key,
             encryption_revision=msg.encryption_revision,
