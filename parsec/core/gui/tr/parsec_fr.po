@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-04-29 13:47+0200\n"
-"PO-Revision-Date: 2020-04-28 12:25+0200\n"
+"POT-Creation-Date: 2020-05-11 13:28+0200\n"
+"PO-Revision-Date: 2020-05-11 11:41+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1483,6 +1483,14 @@ msgstr "Quitter"
 msgid "ACTION_LOG_IN"
 msgstr "Se connecter"
 
+msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
+msgstr ""
+"Vous n'avez pas d'autre appareil avec lequel vous connecter sur cet "
+"ordinateur."
+
+msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
+msgstr "Vous n'avez aucun appareil sur cet ordinateur."
+
 msgid "ACTION_LOGGING_IN"
 msgstr "En cours de connexion..."
 
@@ -2192,4 +2200,7 @@ msgstr "Trouver un fichier via son lien"
 #~ "Êtes-vous sûr de vouloir fermer "
 #~ "cet onglet ? Vous serez automatiquement"
 #~ " déconnecté."
+
+#~ msgid "TEXT_LOGIN_NO_DEVICE_AVAILABLE"
+#~ msgstr ""
 

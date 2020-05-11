@@ -105,7 +105,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         action = menu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
         action.triggered.connect(self._on_create_org_clicked)
         action = menu.addAction(_("ACTION_MAIN_MENU_JOIN_ORGANIZATION"))
-        action.triggered.connect(self._on_join_organization_clicked)
+        action.triggered.connect(self._on_join_org_clicked)
         menu.addSeparator()
 
         action = menu.addAction(_("ACTION_MAIN_MENU_SETTINGS"))
@@ -163,7 +163,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         self._on_bootstrap_org_clicked(r)
 
-    def _on_join_organization_clicked(self):
+    def _on_join_org_clicked(self):
         url = get_text_input(
             parent=self,
             title=_("TEXT_JOIN_ORG_URL_TITLE"),
@@ -251,13 +251,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         w = self.tab_center.widget(idx)
         if not w:
             return
-        item = w.layout().itemAt(0)
-        if not item:
-            return
-        login_w = item.widget()
-        if not login_w:
-            return
-        login_w.reload_devices()
+        w.show_login_widget()
 
     def on_current_tab_changed(self, index):
         for i in range(self.tab_center.tabBar().count()):
@@ -339,7 +333,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 radio_mode=True,
             )
             if r == _("ACTION_NO_DEVICE_JOIN_ORGANIZATION"):
-                self._on_join_organization_clicked()
+                self._on_join_org_clicked()
             elif r == _("ACTION_NO_DEVICE_CREATE_ORGANIZATION"):
                 self._on_create_org_clicked()
 
@@ -382,6 +376,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def add_new_tab(self):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
+        tab.join_organization_clicked.connect(self._on_join_org_clicked)
+        tab.create_organization_clicked.connect(self._on_create_org_clicked)
         self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
         self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
@@ -486,6 +482,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not tab:
             return
         tab.logout()
+        self.reload_login_devices()
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
 

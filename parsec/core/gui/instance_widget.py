@@ -5,7 +5,7 @@ import trio
 from structlog import get_logger
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 
 from parsec.core import logged_core_factory
 from parsec.api.protocol import HandshakeRevokedDevice
@@ -18,6 +18,7 @@ from parsec.core.mountpoint import (
 )
 
 from parsec.core.gui.trio_thread import QtToTrioJobScheduler, ThreadSafeQtSignal
+from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.login_widget import LoginWidget
@@ -50,8 +51,8 @@ class InstanceWidget(QWidget):
     logged_out = pyqtSignal()
     state_changed = pyqtSignal(QWidget, str)
     login_failed = pyqtSignal()
-
-    devices_connected = []
+    join_organization_clicked = pyqtSignal()
+    create_organization_clicked = pyqtSignal()
 
     def __init__(self, jobs_ctx, event_bus, config, **kwargs):
         super().__init__(**kwargs)
@@ -72,7 +73,6 @@ class InstanceWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-        self.show_login_widget()
 
     @pyqtSlot(object, object)
     def _core_ready(self, core, core_jobs_ctx):
@@ -115,7 +115,9 @@ class InstanceWidget(QWidget):
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             ),
         )
-        InstanceWidget.devices_connected.append(self.core.device)
+        ParsecApp.add_connected_device(
+            self.core.device.organization_addr.organization_id, self.core.device.device_id
+        )
         self.logged_in.emit()
 
     def on_core_run_error(self):
@@ -150,7 +152,9 @@ class InstanceWidget(QWidget):
     def on_core_run_done(self):
         assert self.running_core_job.is_finished()
         if self.core:
-            InstanceWidget.devices_connected.remove(self.core.device)
+            ParsecApp.remove_connected_device(
+                self.core.device.organization_addr.organization_id, self.core.device.device_id
+            )
             self.core.event_bus.disconnect("gui.config.changed", self.on_core_config_updated)
         self.running_core_job = None
         self.core_jobs_ctx = None
@@ -177,7 +181,9 @@ class InstanceWidget(QWidget):
         exception = None
         try:
             device = load_device_with_password(key_file, password)
-            if device in InstanceWidget.devices_connected:
+            if ParsecApp.is_device_connected(
+                device.organization_addr.organization_id, device.device_id
+            ):
                 message = _("TEXT_LOGIN_ERROR_ALREADY_CONNECTED")
             else:
                 self.start_core(device)
@@ -215,6 +221,8 @@ class InstanceWidget(QWidget):
         self.layout().addWidget(login_widget)
 
         login_widget.login_with_password_clicked.connect(self.login_with_password)
+        login_widget.join_organization_clicked.connect(self.join_organization_clicked.emit)
+        login_widget.create_organization_clicked.connect(self.create_organization_clicked.emit)
         login_widget.show()
 
     def get_central_widget(self):
@@ -229,3 +237,4 @@ class InstanceWidget(QWidget):
         if item:
             item.widget().hide()
             item.widget().setParent(None)
+        QApplication.processEvents()

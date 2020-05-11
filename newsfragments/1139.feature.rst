@@ -1,0 +1,1 @@
+Hide an already connected device from the list of available devices

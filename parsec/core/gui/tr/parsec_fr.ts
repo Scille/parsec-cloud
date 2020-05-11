@@ -571,18 +571,33 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="198"/>
+        <location filename="../forms/login_widget.ui" line="219"/>
         <source>TEXT_LABEL_USER_NAME</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="215"/>
+        <location filename="../forms/login_widget.ui" line="236"/>
         <source>TEXT_LABEL_PASSWORD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="234"/>
+        <location filename="../forms/login_widget.ui" line="255"/>
         <source>ACTION_LOG_IN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="314"/>
+        <source>ACTION_MAIN_MENU_CREATE_ORGANIZATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="324"/>
+        <source>ACTION_MAIN_MENU_JOIN_ORGANIZATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="298"/>
+        <source>TEXT_LOGIN_NO_AVAILABLE_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

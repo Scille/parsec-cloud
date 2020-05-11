@@ -9,8 +9,7 @@ from contextlib import contextmanager
 import trio
 from structlog import get_logger
 
-from PyQt5.QtCore import QTimer, Qt, QFile
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication
 
 from parsec.core.config import CoreConfig
@@ -24,6 +23,7 @@ from parsec.core.ipcinterface import (
 
 try:
     from parsec.core.gui import lang
+    from parsec.core.gui.parsec_application import ParsecApp
     from parsec.core.gui.new_version import CheckNewVersion
     from parsec.core.gui.systray import systray_available, Systray
     from parsec.core.gui.main_window import MainWindow
@@ -110,19 +110,10 @@ def run_gui(config: CoreConfig, start_arg: str = None, diagnose: bool = False):
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-    app = QApplication(["-stylesheet"])
-    app.setOrganizationName("Scille")
-    app.setOrganizationDomain("parsec.cloud")
-    app.setApplicationName("Parsec")
+    app = ParsecApp()
 
-    QFontDatabase.addApplicationFont(":/fonts/fonts/Roboto-Regular.ttf")
-    f = QFont("Roboto")
-    app.setFont(f)
-
-    rc = QFile(":/styles/styles/main.css")
-    rc.open(QFile.ReadOnly)
-    content = rc.readAll().data()
-    app.setStyleSheet(str(content, "utf-8"))
+    app.load_stylesheet()
+    app.load_font()
 
     lang_key = lang.switch_language(config)
 
