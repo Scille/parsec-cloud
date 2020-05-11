@@ -33,7 +33,7 @@ from parsec.core.types import (
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
+    APIV1_BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -151,7 +151,7 @@ class UserFS:
         self,
         device: LocalDevice,
         path: Path,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: APIV1_BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
     ):

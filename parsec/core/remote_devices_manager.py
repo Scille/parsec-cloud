@@ -10,7 +10,7 @@ from parsec.api.data import (
     RevokedUserCertificateContent,
 )
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
+    APIV1_BackendAuthenticatedCmds,
     APIV1_BackendAnonymousCmds,
     BackendConnectionError,
     BackendNotAvailable,
@@ -53,7 +53,7 @@ class RemoteDevicesManager:
 
     def __init__(
         self,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: APIV1_BackendAuthenticatedCmds,
         root_verify_key: VerifyKey,
         cache_validity: int = DEFAULT_CACHE_VALIDITY,
     ):
