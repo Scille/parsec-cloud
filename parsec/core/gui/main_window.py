@@ -5,8 +5,8 @@ from typing import Optional
 from structlog import get_logger
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication, QMenu
+from PyQt5.QtGui import QColor, QIcon, QKeySequence
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication, QMenu, QShortcut
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -21,6 +21,7 @@ from parsec.core.types import (
 )
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.instance_widget import InstanceWidget
+from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
 from parsec.core.gui import win_registry
@@ -81,7 +82,52 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.menu_button.clicked.connect(self._show_menu)
         self.tab_center.setCornerWidget(self.menu_button, Qt.TopLeftCorner)
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
+        self._define_shortcuts()
         self.ensurePolished()
+
+    def _define_shortcuts(self):
+        self.shortcut_close = QShortcut(QKeySequence(QKeySequence.Close), self)
+        self.shortcut_close.activated.connect(self._shortcut_proxy(self.close_current_tab))
+        self.shortcut_new_tab = QShortcut(QKeySequence(QKeySequence.AddTab), self)
+        self.shortcut_new_tab.activated.connect(self._shortcut_proxy(self._on_add_instance_clicked))
+        self.shortcut_settings = QShortcut(QKeySequence(_("Ctrl+K")), self)
+        self.shortcut_settings.activated.connect(self._shortcut_proxy(self._show_settings))
+        self.shortcut_menu = QShortcut(QKeySequence(_("Alt+E")), self)
+        self.shortcut_menu.activated.connect(self._shortcut_proxy(self._show_menu))
+        self.shortcut_help = QShortcut(QKeySequence(QKeySequence.HelpContents), self)
+        self.shortcut_help.activated.connect(self._shortcut_proxy(self._on_show_doc_clicked))
+        self.shortcut_quit = QShortcut(QKeySequence(QKeySequence.Quit), self)
+        self.shortcut_quit.activated.connect(self._shortcut_proxy(self.close_app))
+        self.shortcut_create_org = QShortcut(QKeySequence(QKeySequence.New), self)
+        self.shortcut_create_org.activated.connect(
+            self._shortcut_proxy(self._on_create_org_clicked)
+        )
+        self.shortcut_join_org = QShortcut(QKeySequence(QKeySequence.Open), self)
+        self.shortcut_join_org.activated.connect(self._shortcut_proxy(self._on_join_org_clicked))
+        shortcut = QShortcut(QKeySequence(QKeySequence.NextChild), self)
+        shortcut.activated.connect(self._shortcut_proxy(self._cycle_tabs(1)))
+        shortcut = QShortcut(QKeySequence(QKeySequence.PreviousChild), self)
+        shortcut.activated.connect(self._shortcut_proxy(self._cycle_tabs(-1)))
+
+    def _shortcut_proxy(self, funct):
+        def _inner_proxy():
+            if ParsecApp.has_active_modal():
+                return
+            funct()
+
+        return _inner_proxy
+
+    def _cycle_tabs(self, offset):
+        def _inner_cycle_tabs():
+            idx = self.tab_center.currentIndex()
+            idx += offset
+            if idx >= self.tab_center.count():
+                idx = 0
+            if idx < 0:
+                idx = self.tab_center.count() - 1
+            self.switch_to_tab(idx)
+
+        return _inner_cycle_tabs
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -98,20 +144,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         idx = self._get_login_tab_index()
         action = menu.addAction(_("ACTION_MAIN_MENU_ADD_INSTANCE"))
         action.triggered.connect(self._on_add_instance_clicked)
+        action.setShortcut(self.shortcut_new_tab.key())
+        action.setShortcutVisibleInContextMenu(True)
 
         if idx != -1:
             action.setDisabled(True)
 
         action = menu.addAction(_("ACTION_MAIN_MENU_CREATE_ORGANIZATION"))
         action.triggered.connect(self._on_create_org_clicked)
+        action.setShortcut(self.shortcut_create_org.key())
+        action.setShortcutVisibleInContextMenu(True)
+
         action = menu.addAction(_("ACTION_MAIN_MENU_JOIN_ORGANIZATION"))
         action.triggered.connect(self._on_join_org_clicked)
+        action.setShortcut(self.shortcut_join_org.key())
+        action.setShortcutVisibleInContextMenu(True)
+
         menu.addSeparator()
 
         action = menu.addAction(_("ACTION_MAIN_MENU_SETTINGS"))
         action.triggered.connect(self._show_settings)
+        action.setShortcut(self.shortcut_settings.key())
+        action.setShortcutVisibleInContextMenu(True)
+
         action = menu.addAction(_("ACTION_MAIN_MENU_OPEN_DOCUMENTATION"))
         action.triggered.connect(self._on_show_doc_clicked)
+        action.setShortcut(self.shortcut_help.key())
+        action.setShortcutVisibleInContextMenu(True)
+
         action = menu.addAction(_("ACTION_MAIN_MENU_ABOUT"))
         action.triggered.connect(self._show_about)
         action = menu.addAction(_("ACTION_MAIN_MENU_CHANGELOG"))
@@ -123,10 +183,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         menu.addSeparator()
         action = menu.addAction(_("ACTION_MAIN_MENU_QUIT_PARSEC"))
         action.triggered.connect(self.close_app)
+        action.setShortcut(self.shortcut_quit.key())
+        action.setShortcutVisibleInContextMenu(True)
+
         pos = self.menu_button.pos()
         pos.setY(pos.y() + self.menu_button.size().height())
         pos = self.mapToGlobal(pos)
         menu.exec_(pos)
+        menu.setParent(None)
 
     def _show_about(self):
         w = AboutWidget()
@@ -388,7 +452,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return tab
 
     def switch_to_tab(self, idx):
-        if not QApplication.activeModalWidget():
+        if not ParsecApp.has_active_modal():
             self.tab_center.setCurrentIndex(idx)
 
     def go_to_file_link(self, action_addr):
@@ -453,6 +517,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self._on_claim_user_clicked(action_addr)
             elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
                 self._on_claim_device_clicked(action_addr)
+
+    def close_current_tab(self, force=False):
+        if self.tab_center.count() == 1:
+            self.close_app()
+        else:
+            idx = self.tab_center.currentIndex()
+            self.close_tab(idx, force=force)
 
     def close_app(self, force=False):
         self.need_close = True

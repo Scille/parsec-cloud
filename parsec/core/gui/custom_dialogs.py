@@ -11,6 +11,7 @@ from structlog import get_logger
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import Button
+from parsec.core.gui.parsec_application import ParsecApp
 
 from parsec.core.gui.ui.error_widget import Ui_ErrorWidget
 from parsec.core.gui.ui.info_widget import Ui_InfoWidget
@@ -45,7 +46,7 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
             self.label_title.setText(title)
         if hide_close:
             self.button_close.hide()
-        main_win = self._get_main_window()
+        main_win = ParsecApp.get_main_window()
         if main_win:
             if main_win.isVisible():
                 self.setParent(main_win)
@@ -56,7 +57,8 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         else:
             logger.error("GreyedDialog did not find the main window, this is probably a bug")
         self.setFocus()
-        self.finished.connect(self.on_finished)
+        self.accepted.connect(self.on_finished)
+        self.rejected.connect(self.on_finished)
 
     def paintEvent(self, event):
         opt = QStyleOption()
@@ -64,19 +66,14 @@ class GreyedDialog(QDialog, Ui_GreyedDialog):
         p = QPainter(self)
         self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
 
-    def _get_main_window(self):
-        for win in QApplication.topLevelWidgets():
-            if win.objectName() == "MainWindow":
-                return win
-        return None
-
-    def on_finished(self, _):
+    def on_finished(self):
         if (
             self.result() == QDialog.Rejected
             and self.center_widget
             and getattr(self.center_widget, "on_close", None)
         ):
             getattr(self.center_widget, "on_close")()
+        self.setParent(None)
 
 
 class TextInputWidget(QWidget, Ui_InputWidget):
