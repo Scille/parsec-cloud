@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-04-29 13:47+0200\n"
-"PO-Revision-Date: 2020-04-28 12:25+0200\n"
+"POT-Creation-Date: 2020-05-11 13:28+0200\n"
+"PO-Revision-Date: 2020-05-11 11:40+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -1462,6 +1462,12 @@ msgstr "Quit"
 msgid "ACTION_LOG_IN"
 msgstr "Log In"
 
+msgid "TEXT_LOGIN_NO_AVAILABLE_DEVICE"
+msgstr "No other device is available on this computer."
+
+msgid "TEXT_LOGIN_NO_DEVICE_ON_MACHINE"
+msgstr "You do not have any device on this computer."
+
 msgid "ACTION_LOGGING_IN"
 msgstr "Logging in..."
 
@@ -2113,4 +2119,7 @@ msgstr "Create a new workspace"
 
 msgid "ACTION_WORKSPACE_GOTO_FILE_LINK"
 msgstr "Go to a file using a link"
+
+#~ msgid "TEXT_LOGIN_NO_DEVICE_AVAILABLE"
+#~ msgstr ""
 

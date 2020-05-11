@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>467</height>
+    <height>594</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -113,7 +113,7 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
-         <number>30</number>
+         <number>10</number>
         </property>
         <property name="leftMargin">
          <number>0</number>
@@ -183,72 +183,150 @@
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="spacing">
-           <number>10</number>
+         <widget class="QWidget" name="widget_login" native="true">
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
           </property>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <property name="spacing">
-             <number>5</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="label_username">
-              <property name="text">
-               <string>TEXT_LABEL_USER_NAME</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="ComboBox" name="combo_username"/>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="spacing">
-             <number>5</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="label_password">
-              <property name="text">
-               <string>TEXT_LABEL_PASSWORD</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="line_edit_password">
-              <property name="echoMode">
-               <enum>QLineEdit::Password</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QPushButton" name="button_login">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>ACTION_LOG_IN</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <property name="spacing">
+              <number>10</number>
+             </property>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <property name="spacing">
+                <number>5</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_username">
+                 <property name="text">
+                  <string>TEXT_LABEL_USER_NAME</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="ComboBox" name="combo_username"/>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_5">
+               <property name="spacing">
+                <number>5</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_password">
+                 <property name="text">
+                  <string>TEXT_LABEL_PASSWORD</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="line_edit_password">
+                 <property name="echoMode">
+                  <enum>QLineEdit::Password</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QPushButton" name="button_login">
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="text">
+                <string>ACTION_LOG_IN</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget_no_device" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <property name="spacing">
+            <number>10</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_no_device">
+             <property name="text">
+              <string>TEXT_LOGIN_NO_AVAILABLE_DEVICE</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="button_create_org">
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
+             <property name="text">
+              <string>ACTION_MAIN_MENU_CREATE_ORGANIZATION</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="button_join_org">
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
+             <property name="text">
+              <string>ACTION_MAIN_MENU_JOIN_ORGANIZATION</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>
