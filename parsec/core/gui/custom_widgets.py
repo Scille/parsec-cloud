@@ -132,6 +132,12 @@ class MenuButton(Button):
         self.current_color = color
         self.setIcon(QIcon(pixmap))
 
+    def enterEvent(self, _):
+        pass
+
+    def leaveEvent(self, _):
+        pass
+
     def on_toggle(self, checked):
         prop = "checked_color" if checked else "unchecked_color"
         new_color = self.property(prop)

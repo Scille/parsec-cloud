@@ -196,8 +196,8 @@ QWidget#widget_misc {
           </property>
           <property name="iconSize">
            <size>
-            <width>24</width>
-            <height>24</height>
+            <width>32</width>
+            <height>32</height>
            </size>
           </property>
           <property name="checkable">
@@ -318,8 +318,8 @@ QWidget#widget_misc {
           </property>
           <property name="iconSize">
            <size>
-            <width>24</width>
-            <height>24</height>
+            <width>32</width>
+            <height>32</height>
            </size>
           </property>
           <property name="checkable">
