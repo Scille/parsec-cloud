@@ -20,9 +20,10 @@ class ParsecApp(QApplication):
         content = rc.readAll().data()
         self.setStyleSheet(str(content, "utf-8"))
 
-    def load_font(self, res=":/fonts/fonts/Roboto-Regular.ttf"):
-        QFontDatabase.addApplicationFont(res)
-        f = QFont("Roboto")
+    def load_font(self, font="Montserrat"):
+        QFontDatabase.addApplicationFont(":/fonts/fonts/Montserrat.ttf")
+        QFontDatabase.addApplicationFont(":/fonts/fonts/Roboto-Regular.ttf")
+        f = QFont(font)
         self.setFont(f)
 
     @classmethod

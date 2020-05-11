@@ -13,6 +13,7 @@
     <qresource prefix="/fonts">
         <file>fonts/ProximaNova.otf</file>
         <file>fonts/Roboto-Regular.ttf</file>
+        <file>fonts/Montserrat.ttf</file>
     </qresource>
     <qresource prefix="/screenshots">
         <file>images/screenshots/devices.png</file>
