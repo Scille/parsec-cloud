@@ -14,7 +14,6 @@ from parsec.api.protocol import (
     InvitationStatus,
     InvitationType,
     InvitationDeletedReason,
-    HandshakeInvitedOperation,
 )
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
@@ -47,7 +46,7 @@ async def _invite_device(config, device):
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr,
         organization_id=device.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=rep["token"],
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")
@@ -81,7 +80,7 @@ async def _invite_user(config, device, email, send_email):
     action_addr = BackendInvitationAddr.build(
         backend_addr=device.organization_addr,
         organization_id=device.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_USER,
+        invitation_type=InvitationType.USER,
         token=rep["token"],
     )
     action_addr_display = click.style(action_addr.to_url(), fg="yellow")

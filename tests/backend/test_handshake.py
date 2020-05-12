@@ -8,7 +8,7 @@ from parsec.api.version import ApiVersion, API_VERSION
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
     AuthenticatedClientHandshake,
-    HandshakeInvitedOperation,
+    InvitationType,
     InvitedClientHandshake,
     HandshakeRVKMismatch,
     HandshakeBadIdentity,
@@ -104,9 +104,9 @@ async def test_authenticated_handshake_bad_rvk(backend, server_factory, alice, o
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("operation", HandshakeInvitedOperation)
-async def test_invited_handshake_good(backend, server_factory, alice, operation):
-    if operation == HandshakeInvitedOperation.CLAIM_USER:
+@pytest.mark.parametrize("invitation_type", InvitationType)
+async def test_invited_handshake_good(backend, server_factory, alice, invitation_type):
+    if invitation_type == InvitationType.USER:
         invitation = UserInvitation(
             greeter_user_id=alice.user_id,
             greeter_human_handle=alice.human_handle,
@@ -119,7 +119,9 @@ async def test_invited_handshake_good(backend, server_factory, alice, operation)
     await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     ch = InvitedClientHandshake(
-        organization_id=alice.organization_id, operation=operation, token=invitation.token
+        organization_id=alice.organization_id,
+        invitation_type=invitation_type,
+        token=invitation.token,
     )
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
@@ -137,10 +139,10 @@ async def test_invited_handshake_good(backend, server_factory, alice, operation)
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("operation", HandshakeInvitedOperation)
-async def test_invited_handshake_bad_token(backend, server_factory, coolorg, operation):
+@pytest.mark.parametrize("invitation_type", InvitationType)
+async def test_invited_handshake_bad_token(backend, server_factory, coolorg, invitation_type):
     ch = InvitedClientHandshake(
-        organization_id=coolorg.organization_id, operation=operation, token=uuid4()
+        organization_id=coolorg.organization_id, invitation_type=invitation_type, token=uuid4()
     )
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
@@ -164,7 +166,7 @@ async def test_invited_handshake_bad_token_type(backend, server_factory, alice):
 
     ch = InvitedClientHandshake(
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_USER,
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
     async with server_factory(backend.handle_client) as server:
@@ -189,7 +191,7 @@ async def test_handshake_unknown_organization(
     if type == "invited":
         ch = InvitedClientHandshake(
             organization_id=bad_org.organization_id,
-            operation=HandshakeInvitedOperation.CLAIM_USER,
+            invitation_type=InvitationType.USER,
             token=uuid4(),
         )
     else:  # authenticated
@@ -219,7 +221,7 @@ async def test_handshake_expired_organization(backend, server_factory, expiredor
     if type == "invited":
         ch = InvitedClientHandshake(
             organization_id=expiredorg.organization_id,
-            operation=HandshakeInvitedOperation.CLAIM_USER,
+            invitation_type=InvitationType.USER,
             token=uuid4(),
         )
     else:  # authenticated

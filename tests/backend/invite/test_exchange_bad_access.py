@@ -8,7 +8,7 @@ from functools import partial
 
 from parsec.crypto import PrivateKey
 from parsec.api.transport import TransportError
-from parsec.api.protocol import InvitationDeletedReason, HandshakeInvitedOperation
+from parsec.api.protocol import InvitationDeletedReason, InvitationType
 from parsec.backend.invite import DeviceInvitation
 
 from tests.backend.common import (
@@ -93,7 +93,7 @@ async def test_invited_connection_closed_on_invitation_deletion(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
         freeze_on_transport_error=False,
     ) as invited_sock:
@@ -134,7 +134,7 @@ async def test_claimer_exchange_bad_access(alice, backend, backend_invited_sock_
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
         freeze_on_transport_error=False,
     ) as invited_sock:

@@ -4,7 +4,7 @@ import pytest
 import trio
 from uuid import uuid4
 
-from parsec.api.protocol import INVITED_CMDS, HandshakeInvitedOperation
+from parsec.api.protocol import INVITED_CMDS, InvitationType
 from parsec.backend.invite import DeviceInvitation
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
@@ -25,7 +25,7 @@ async def invitation_addr(backend, alice):
     return BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -72,7 +72,7 @@ async def test_handshake_organization_expired(running_backend, expiredorg, expir
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=running_backend.addr,
         organization_id=expiredorgalice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -87,7 +87,7 @@ async def test_handshake_unknown_organization(running_backend, coolorg):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=running_backend.addr,
         organization_id=coolorg.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=uuid4(),
     )
     with pytest.raises(BackendConnectionRefused) as exc:

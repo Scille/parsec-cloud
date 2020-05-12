@@ -4,9 +4,12 @@ import pytest
 from unittest.mock import ANY
 from uuid import uuid4
 
-from parsec.api.protocol.types import OrganizationID
-from parsec.api.protocol.base import packb, unpackb, InvalidMessageError
-from parsec.api.protocol.handshake import (
+from parsec.api.protocol import (
+    OrganizationID,
+    packb,
+    unpackb,
+    InvalidMessageError,
+    InvitationType,
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
     HandshakeBadAdministrationToken,
@@ -14,7 +17,6 @@ from parsec.api.protocol.handshake import (
     HandshakeRevokedDevice,
     HandshakeAPIVersionError,
     HandshakeType,
-    HandshakeInvitedOperation,
     ServerHandshake,
     BaseClientHandshake,
     AuthenticatedClientHandshake,
@@ -54,15 +56,15 @@ def test_good_authenticated_handshake(alice):
     assert sh.client_api_version == API_V2_VERSION
 
 
-@pytest.mark.parametrize(
-    "operation", (HandshakeInvitedOperation.CLAIM_USER, HandshakeInvitedOperation.CLAIM_DEVICE)
-)
-def test_good_invited_handshake(coolorg, operation):
+@pytest.mark.parametrize("invitation_type", (InvitationType.USER, InvitationType.DEVICE))
+def test_good_invited_handshake(coolorg, invitation_type):
     organization_id = OrganizationID("Org")
     token = uuid4()
 
     sh = ServerHandshake()
-    ch = InvitedClientHandshake(organization_id=organization_id, operation=operation, token=token)
+    ch = InvitedClientHandshake(
+        organization_id=organization_id, invitation_type=invitation_type, token=token
+    )
     assert sh.state == "stalled"
 
     challenge_req = sh.build_challenge_req()
@@ -76,7 +78,7 @@ def test_good_invited_handshake(coolorg, operation):
     assert sh.answer_data == {
         "client_api_version": API_V2_VERSION,
         "organization_id": organization_id,
-        "operation": operation,
+        "invitation_type": invitation_type,
         "token": token,
     }
 
@@ -291,21 +293,21 @@ def test_process_challenge_req_good_multiple_api_version(
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "operation": HandshakeInvitedOperation.CLAIM_USER.value,
+            "invitation_type": InvitationType.USER.value,
             "organization_id": "d@mmy",  # Invalid OrganizationID
             "token": "<good>",
         },
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "operation": "dummy",  # Invalid operation
+            "invitation_type": "dummy",  # Invalid invitation_type
             "organization_id": "<good>",
             "token": "<good>",
         },
         {
             "handshake": "answer",
             "type": HandshakeType.INVITED.value,
-            "operation": HandshakeInvitedOperation.CLAIM_USER.value,
+            "invitation_type": InvitationType.USER.value,
             "organization_id": "<good>",
             "token": "abc123",  # Invalid token type
         },

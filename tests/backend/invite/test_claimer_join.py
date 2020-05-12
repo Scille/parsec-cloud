@@ -4,7 +4,7 @@ import pytest
 import trio
 from pendulum import Pendulum
 
-from parsec.api.protocol import InvitationType, InvitationStatus, HandshakeInvitedOperation
+from parsec.api.protocol import InvitationType, InvitationStatus
 from parsec.backend.invite import DeviceInvitation
 
 from tests.backend.common import (
@@ -32,7 +32,7 @@ async def test_claimer_join_and_leave(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ):
 

@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, HandshakeInvitedOperation
+from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, InvitationType
 from parsec.backend.invite import DeviceInvitation, UserInvitation
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -31,7 +31,7 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 
@@ -130,7 +130,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_USER,
+        invitation_type=InvitationType.USER,
         token=invitation.token,
     )
 
@@ -233,7 +233,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 

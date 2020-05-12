@@ -5,7 +5,7 @@ import pytest
 from parsec.api.protocol import (
     packb,
     unpackb,
-    HandshakeInvitedOperation,
+    InvitationType,
     AUTHENTICATED_CMDS,
     INVITED_CMDS,
     APIV1_ADMINISTRATION_CMDS,
@@ -46,7 +46,7 @@ async def test_invited_has_limited_access(backend, backend_invited_sock_factory,
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as sock:
         await check_forbidden_cmds(sock, AUTHENTICATED_CMDS - INVITED_CMDS)

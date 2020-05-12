@@ -83,7 +83,7 @@ async def apiv1_connect(
 
 async def connect_as_invited(addr: BackendInvitationAddr, keepalive: Optional[int] = None):
     handshake = InvitedClientHandshake(
-        organization_id=addr.organization_id, operation=addr.operation, token=addr.token
+        organization_id=addr.organization_id, invitation_type=addr.invitation_type, token=addr.token
     )
     return await _connect(addr.hostname, addr.port, addr.use_ssl, keepalive, handshake)
 

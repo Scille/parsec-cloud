@@ -9,6 +9,7 @@ from parsec.crypto import SigningKey, VerifyKey, CryptoError
 from parsec.serde import BaseSchema, OneOfSchema, fields, validate
 from parsec.api.protocol.base import ProtocolError, InvalidMessageError, serializer_factory
 from parsec.api.protocol.types import OrganizationID, DeviceID, OrganizationIDField, DeviceIDField
+from parsec.api.protocol.invite import InvitationType, InvitationTypeField
 from parsec.api.version import ApiVersion, API_V1_VERSION, API_V2_VERSION
 
 
@@ -124,20 +125,12 @@ class HandshakeAuthenticatedAnswerSchema(BaseSchema):
     answer = fields.Bytes(required=True)
 
 
-class HandshakeInvitedOperation(Enum):
-    CLAIM_USER = "CLAIM_USER"
-    CLAIM_DEVICE = "CLAIM_DEVICE"
-
-
-HandshakeInvitedOperationField = fields.enum_field_factory(HandshakeInvitedOperation)
-
-
 class HandshakeInvitedAnswerSchema(BaseSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     type = fields.EnumCheckedConstant(HandshakeType.INVITED, required=True)
     client_api_version = ApiVersionField(required=True)
     organization_id = OrganizationIDField(required=True)
-    operation = HandshakeInvitedOperationField(required=True)
+    invitation_type = InvitationTypeField(required=True)
     token = fields.UUID(required=True)
 
 
@@ -438,10 +431,10 @@ class InvitedClientHandshake(BaseClientHandshake):
     SUPPORTED_API_VERSIONS = (API_V2_VERSION,)
 
     def __init__(
-        self, organization_id: OrganizationID, operation: HandshakeInvitedOperation, token: UUID
+        self, organization_id: OrganizationID, invitation_type: InvitationType, token: UUID
     ):
         self.organization_id = organization_id
-        self.operation = operation
+        self.invitation_type = invitation_type
         self.token = token
 
     def process_challenge_req(self, req: bytes) -> bytes:
@@ -452,7 +445,7 @@ class InvitedClientHandshake(BaseClientHandshake):
                 "type": HandshakeType.INVITED,
                 "client_api_version": self.client_api_version,
                 "organization_id": self.organization_id,
-                "operation": self.operation,
+                "invitation_type": self.invitation_type,
                 "token": self.token,
             }
         )

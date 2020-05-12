@@ -9,7 +9,7 @@ from parsec.api.data import RealmRoleCertificateContent
 from parsec.api.protocol import (
     OrganizationID,
     RealmRole,
-    HandshakeInvitedOperation,
+    InvitationType,
     AuthenticatedClientHandshake,
     InvitedClientHandshake,
     APIV1_AuthenticatedClientHandshake,
@@ -119,7 +119,7 @@ async def apiv1_bob_backend_sock(apiv1_backend_sock_factory, backend, bob):
 @pytest.fixture
 def backend_sock_factory(backend_raw_transport_factory, coolorg):
     # APIv2's invited handshake is not compatible with this
-    # fixture because it requires purpose information (operation/token)
+    # fixture because it requires purpose information (invitation_type/token)
     @asynccontextmanager
     async def _backend_sock_factory(backend, auth_as: LocalDevice, freeze_on_transport_error=True):
         async with backend_raw_transport_factory(
@@ -179,7 +179,7 @@ def backend_invited_sock_factory(backend_raw_transport_factory):
     async def _backend_sock_factory(
         backend,
         organization_id: OrganizationID,
-        operation: HandshakeInvitedOperation,
+        invitation_type: InvitationType,
         token: UUID,
         freeze_on_transport_error: bool = True,
     ):
@@ -187,7 +187,7 @@ def backend_invited_sock_factory(backend_raw_transport_factory):
             backend, freeze_on_transport_error=freeze_on_transport_error
         ) as transport:
             ch = InvitedClientHandshake(
-                organization_id=organization_id, operation=operation, token=token
+                organization_id=organization_id, invitation_type=invitation_type, token=token
             )
             challenge_req = await transport.recv()
             answer_req = ch.process_challenge_req(challenge_req)

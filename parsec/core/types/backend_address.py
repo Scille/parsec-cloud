@@ -7,7 +7,7 @@ from marshmallow import ValidationError
 
 from parsec.serde import fields
 from parsec.crypto import VerifyKey, export_root_verify_key, import_root_verify_key
-from parsec.api.protocol import OrganizationID, UserID, DeviceID, HandshakeInvitedOperation
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, InvitationType
 from parsec.api.data import EntryID
 from parsec.core.types.base import FsPath
 
@@ -543,21 +543,21 @@ class BackendOrganizationAddrField(fields.Field):
 class BackendInvitationAddr(BackendActionAddr):
     """
     Represent the URL to invite a user or a device
-    (e.g. ``parsec://parsec.example.com/my_org?action=invite_user&token=1234ABCD``)
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim&token=1234ABCD``)
     """
 
-    __slots__ = ("_organization_id", "_operation", "_token")
+    __slots__ = ("_organization_id", "_invitation_type", "_token")
 
     def __init__(
         self,
         organization_id: OrganizationID,
-        operation: HandshakeInvitedOperation,
+        invitation_type: InvitationType,
         token: UUID,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._organization_id = organization_id
-        self._operation = operation
+        self._invitation_type = invitation_type
         self._token = token
 
     @classmethod
@@ -571,12 +571,12 @@ class BackendInvitationAddr(BackendActionAddr):
         value = params.pop("action", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `action` param")
-        if value[0] != "invite_user":
-            kwargs["operation"] = HandshakeInvitedOperation.CLAIM_USER
-        elif value[0] != "invite_device":
-            kwargs["operation"] = HandshakeInvitedOperation.CLAIM_DEVICE
+        if value[0] != "claim_user":
+            kwargs["invitation_type"] = InvitationType.USER
+        elif value[0] != "claim_device":
+            kwargs["invitation_type"] = InvitationType.DEVICE
         else:
-            raise ValueError("Expected `action=invite_user` or `action=invite_device` value")
+            raise ValueError("Expected `action=claim_user` or `action=claim_device` value")
 
         value = params.pop("token", ())
         if len(value) != 1:
@@ -592,23 +592,14 @@ class BackendInvitationAddr(BackendActionAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        return [
-            (
-                "action",
-                "invite_user"
-                if self._operation == HandshakeInvitedOperation.CLAIM_USER
-                else "invite_device",
-            ),
-            ("token", self._token.hex),
-            *super()._to_url_get_params(),
-        ]
+        return [("action", "claim"), ("token", self._token.hex), *super()._to_url_get_params()]
 
     @classmethod
     def build(
         cls,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        operation: HandshakeInvitedOperation,
+        invitation_type: InvitationType,
         token: UUID,
     ) -> "BackendInvitationAddr":
         return cls(
@@ -616,7 +607,7 @@ class BackendInvitationAddr(BackendActionAddr):
             port=backend_addr.port,
             use_ssl=backend_addr.use_ssl,
             organization_id=organization_id,
-            operation=operation,
+            invitation_type=invitation_type,
             token=token,
         )
 
@@ -630,8 +621,8 @@ class BackendInvitationAddr(BackendActionAddr):
         return self._organization_id
 
     @property
-    def operation(self) -> HandshakeInvitedOperation:
-        return self._operation
+    def invitation_type(self) -> InvitationType:
+        return self._invitation_type
 
     @property
     def token(self) -> UUID:

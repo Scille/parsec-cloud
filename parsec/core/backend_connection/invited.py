@@ -4,11 +4,11 @@ import trio
 from async_generator import asynccontextmanager
 from typing import Optional, AsyncGenerator
 
+from parsec.api.protocol import INVITED_CMDS
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection.transport import connect_as_invited
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
-from parsec.api.protocol import INVITED_CMDS
 
 
 class BackendInvitedCmds:

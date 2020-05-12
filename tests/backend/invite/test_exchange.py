@@ -5,7 +5,7 @@ import trio
 from pendulum import Pendulum
 
 from parsec.crypto import PrivateKey
-from parsec.api.protocol import HandshakeInvitedOperation
+from parsec.api.protocol import InvitationType
 from parsec.backend.invite import DeviceInvitation
 
 from tests.backend.common import (
@@ -40,7 +40,7 @@ async def invited_sock(backend, backend_invited_sock_factory, alice, invitation)
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_sock:
         yield invited_sock
@@ -513,7 +513,7 @@ async def test_claimer_step_1_retry(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_sock:
         with backend.event_bus.listen() as spy:
@@ -535,7 +535,7 @@ async def test_claimer_step_1_retry(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     ) as invited_sock:
         with trio.fail_after(1):

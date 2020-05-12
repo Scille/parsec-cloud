@@ -7,10 +7,9 @@ from pendulum import Pendulum
 
 from parsec.api.transport import TransportError
 from parsec.api.protocol import (
-    InvitationType,
     InvitationStatus,
     InvitationDeletedReason,
-    HandshakeInvitedOperation,
+    InvitationType,
     HandshakeBadIdentity,
 )
 from parsec.backend.invite import DeviceInvitation
@@ -49,7 +48,7 @@ async def test_user_create_and_info(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_USER,
+        invitation_type=InvitationType.USER,
         token=token,
     ) as invited_sock:
         rep = await invite_info(invited_sock)
@@ -89,7 +88,7 @@ async def test_device_create_and_info(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=token,
     ) as invited_sock:
         rep = await invite_info(invited_sock)
@@ -136,7 +135,7 @@ async def test_delete(alice, backend, alice_backend_sock, backend_invited_sock_f
         async with backend_invited_sock_factory(
             backend,
             organization_id=alice.organization_id,
-            operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+            invitation_type=InvitationType.DEVICE,
             token=invitation.token,
         ):
             pass
@@ -160,14 +159,14 @@ async def test_delete_invitation_while_claimer_connected(
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
         freeze_on_transport_error=False,
     ) as invited_sock:
         async with backend_invited_sock_factory(
             backend,
             organization_id=alice.organization_id,
-            operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+            invitation_type=InvitationType.DEVICE,
             token=other_invitation.token,
             freeze_on_transport_error=False,
         ) as other_invited_sock:
@@ -253,7 +252,7 @@ async def test_isolated_between_organizations(
         async with backend_invited_sock_factory(
             backend,
             organization_id=alice.organization_id,
-            operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+            invitation_type=InvitationType.DEVICE,
             token=invitation.token,
         ):
             pass

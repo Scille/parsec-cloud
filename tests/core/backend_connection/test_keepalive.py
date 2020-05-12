@@ -4,7 +4,7 @@ import pytest
 import trio
 
 from parsec.api.transport import Transport, BytesMessage, Ping, Pong
-from parsec.api.protocol import HandshakeInvitedOperation
+from parsec.api.protocol import InvitationType
 from parsec.backend.invite import DeviceInvitation
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
@@ -88,7 +88,7 @@ async def test_invited_cmd_keepalive(
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
-        operation=HandshakeInvitedOperation.CLAIM_DEVICE,
+        invitation_type=InvitationType.DEVICE,
         token=invitation.token,
     )
 

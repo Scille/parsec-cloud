@@ -6,9 +6,9 @@ from pendulum import now as pendulum_now
 from parsec.api.transport import Transport
 from parsec.api.protocol import (
     ProtocolError,
+    InvitationType,
     HandshakeType,
     APIV1_HandshakeType,
-    HandshakeInvitedOperation,
     ServerHandshake,
 )
 from parsec.backend.client_context import (
@@ -131,7 +131,7 @@ async def _process_invited_answer(
     backend, transport: Transport, handshake: ServerHandshake
 ) -> Tuple[Optional[BaseClientContext], bytes, Optional[Dict]]:
     organization_id = handshake.answer_data["organization_id"]
-    operation = handshake.answer_data["operation"]
+    invitation_type = handshake.answer_data["invitation_type"]
     token = handshake.answer_data["token"]
 
     def _make_error_infos(reason):
@@ -139,7 +139,7 @@ async def _process_invited_answer(
             "reason": reason,
             "handshake_type": HandshakeType.INVITED,
             "organization_id": organization_id,
-            "operation": operation,
+            "invitation_type": invitation_type,
             "token": token,
         }
 
@@ -162,9 +162,9 @@ async def _process_invited_answer(
         result_req = handshake.build_bad_identity_result_req()
         return None, result_req, _make_error_infos("Bad invitation")
 
-    if handshake.answer_data["operation"] == HandshakeInvitedOperation.CLAIM_USER:
+    if handshake.answer_data["invitation_type"] == InvitationType.USER:
         expected_invitation_type = UserInvitation
-    else:  # claim_device
+    else:  # Device
         expected_invitation_type = DeviceInvitation
     if not isinstance(invitation, expected_invitation_type):
         result_req = handshake.build_bad_identity_result_req()
