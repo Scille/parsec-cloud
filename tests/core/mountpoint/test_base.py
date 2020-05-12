@@ -22,6 +22,13 @@ from parsec.core.types import FsPath, WorkspaceRole
 from tests.common import create_shared_workspace
 
 
+# Helper
+
+
+def get_path_in_mountpoint(manager, wid, path):
+    return trio.Path(manager.get_path_in_mountpoint(wid, FsPath(path)))
+
+
 @pytest.mark.trio
 async def test_runner_not_available(monkeypatch, alice_user_fs, event_bus):
     base_mountpoint = Path("/foo")
@@ -55,26 +62,24 @@ async def test_mount_unknown_workspace(base_mountpoint, alice_user_fs, event_bus
 async def test_base_mountpoint_not_created(base_mountpoint, alice_user_fs, event_bus):
     # Path should be created if it doesn' exist
     base_mountpoint = base_mountpoint / "dummy/dummy/dummy"
-    mountpoint = f"{base_mountpoint.absolute()}/w"
 
     wid = await alice_user_fs.workspace_create("w")
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
-
-    bar_txt = trio.Path(f"{mountpoint}/bar.txt")
 
     # Now we can start fuse
 
     async with mountpoint_manager_factory(
         alice_user_fs, event_bus, base_mountpoint
     ) as mountpoint_manager:
-
         await mountpoint_manager.mount_workspace(wid)
+        bar_txt = get_path_in_mountpoint(mountpoint_manager, wid, "/bar.txt")
         assert await bar_txt.exists()
 
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
+@pytest.mark.skipif(os.name == "nt", reason="Windows uses drive")
 async def test_mountpoint_path_already_in_use(
     base_mountpoint, running_backend, alice_user_fs, alice2_user_fs
 ):
@@ -134,7 +139,7 @@ async def test_mount_and_explore_workspace(
         ) as mountpoint_manager:
 
             await mountpoint_manager.mount_workspace(wid)
-            mountpoint_path = base_mountpoint / "w"
+            mountpoint_path = get_path_in_mountpoint(mountpoint_manager, wid, "/")
 
             spy.assert_events_occured(
                 [
@@ -174,15 +179,11 @@ async def test_mount_and_explore_workspace(
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
 async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manual_unmount):
-    mountpoint_path = base_mountpoint / "w"
-
     # Populate a bit the fs first...
 
     wid = await alice_user_fs.workspace_create("w")
     workspace = alice_user_fs.get_workspace(wid)
     await workspace.touch("/bar.txt")
-
-    bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
 
     # Now we can start fuse
 
@@ -191,6 +192,8 @@ async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manua
     ) as mountpoint_manager:
 
         await mountpoint_manager.mount_workspace(wid)
+        bar_txt = get_path_in_mountpoint(mountpoint_manager, wid, "/bar.txt")
+
         assert await bar_txt.exists()
 
         with pytest.raises(MountpointAlreadyMounted):
@@ -212,18 +215,17 @@ async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manua
 @pytest.mark.mountpoint
 async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
-    mountpoint_path = base_mountpoint / "w"
-    bar_txt = trio.Path(f"{mountpoint_path}/bar.txt")
 
     async with logged_core_factory(core_config, alice) as alice_core:
+        manager = alice_core.mountpoint_manager
         wid = await alice_core.user_fs.workspace_create("w")
         workspace = alice_core.user_fs.get_workspace(wid)
         await workspace.touch("/bar.txt")
 
-        assert not await bar_txt.exists()
-
-        await alice_core.mountpoint_manager.mount_workspace(wid)
-
+        with pytest.raises(MountpointNotMounted):
+            get_path_in_mountpoint(manager, wid, "/bar.txt")
+        await manager.mount_workspace(wid)
+        bar_txt = get_path_in_mountpoint(manager, wid, "/bar.txt")
         assert await bar_txt.exists()
 
     assert not await bar_txt.exists()
@@ -275,8 +277,10 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
         bar_path = mountpoint_manager.get_path_in_mountpoint(wid, FsPath("/bar.txt"))
 
         assert isinstance(bar_path, PurePath)
-        expected = base_mountpoint / f"mounted_wksp" / "bar.txt"
-        assert str(bar_path) == str(expected.absolute())
+        # Windows uses drives, not base_mountpoint
+        if os.name != "nt":
+            expected = base_mountpoint / f"mounted_wksp" / "bar.txt"
+            assert str(bar_path) == str(expected.absolute())
         assert await trio.Path(bar_path).exists()
 
         with pytest.raises(MountpointNotMounted):

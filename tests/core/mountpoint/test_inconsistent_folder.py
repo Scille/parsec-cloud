@@ -22,7 +22,6 @@ async def test_inconsistent_folder_no_network(base_mountpoint, running_backend, 
     ) as alice_mountpoint_manager:
         workspace = await create_inconsistent_workspace(alice_user_fs)
         mountpoint_path = await alice_mountpoint_manager.mount_workspace(workspace.workspace_id)
-        assert mountpoint_path == (base_mountpoint / "w").absolute()
         with running_backend.offline():
             await trio.to_thread.run_sync(
                 _os_tests, mountpoint_path, errno.EHOSTUNREACH, WINDOWS_ERROR_HOST_UNREACHABLE
@@ -37,7 +36,6 @@ async def test_inconsistent_folder_with_network(base_mountpoint, running_backend
     ) as alice_mountpoint_manager:
         workspace = await create_inconsistent_workspace(alice_user_fs)
         mountpoint_path = await alice_mountpoint_manager.mount_workspace(workspace.workspace_id)
-        assert mountpoint_path == (base_mountpoint / "w").absolute()
         await trio.to_thread.run_sync(
             _os_tests, mountpoint_path, errno.EACCES, WINDOWS_ERROR_PERMISSION_DENIED
         )
