@@ -4,6 +4,7 @@ import pytest
 from PyQt5 import QtCore
 
 
+from parsec.core.types import WorkspaceRole
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import switch_language
 
@@ -21,35 +22,30 @@ async def workspace_fs(alice_user_fs, running_backend):
 async def test_workspace_button(qtbot, workspace_fs, core_config):
     switch_language(core_config, "en")
 
+    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=False,
-        is_creator=False,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
     qtbot.addWidget(w)
     w.show()
 
     assert w.widget_empty.isVisible() is True
     assert w.widget_files.isVisible() is False
-    assert w.label_owner.isVisible() is False
+    assert w.label_owner.isVisible() is True
     assert w.label_shared.isVisible() is False
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace"
+    assert w.label_title.text().startswith("Workspace")
+    assert w.label_title.toolTip() == "Workspace (private)"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_shared_by(qtbot, workspace_fs, core_config):
+async def test_workspace_button_owned_by(qtbot, workspace_fs, core_config, bob):
     switch_language(core_config, "en")
 
+    roles = {bob.user_id: WorkspaceRole.OWNER, workspace_fs.device.user_id: WorkspaceRole.READER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=True,
-        is_creator=False,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
 
     qtbot.addWidget(w)
@@ -59,20 +55,18 @@ async def test_workspace_button_shared_by(qtbot, workspace_fs, core_config):
     assert w.label_owner.isVisible() is False
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace"
+    assert w.label_title.text().startswith("Workspace")
+    assert w.label_title.toolTip() == "Workspace (owned by bob)"
 
 
 @pytest.mark.gui
 @pytest.mark.trio
-async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config):
+async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config, bob):
     switch_language(core_config, "en")
 
+    roles = {bob.user_id: WorkspaceRole.READER, workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=True,
-        is_creator=True,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
 
     qtbot.addWidget(w)
@@ -82,8 +76,8 @@ async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config):
     assert w.label_owner.isVisible() is True
     assert w.label_shared.isVisible() is True
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace (shared wi..."
-    assert w.label_title.toolTip() == "Workspace (shared with others)"
+    assert w.label_title.text().startswith("Workspace")
+    assert w.label_title.toolTip() == "Workspace (shared with bob)"
 
 
 @pytest.mark.gui
@@ -91,11 +85,11 @@ async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config):
 async def test_workspace_button_files(qtbot, workspace_fs, core_config):
     switch_language(core_config, "en")
 
+    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
-        is_shared=True,
-        is_creator=True,
+        users_roles=roles,
         files=["File1.txt", "File2.txt", "Dir1"],
     )
 
@@ -104,10 +98,8 @@ async def test_workspace_button_files(qtbot, workspace_fs, core_config):
     assert w.widget_empty.isVisible() is False
     assert w.widget_files.isVisible() is True
     assert w.label_owner.isVisible() is True
-    assert w.label_shared.isVisible() is True
+    assert w.label_shared.isVisible() is False
     assert w.name == "Workspace"
-    assert w.label_title.text() == "Workspace (shared wi..."
-    assert w.label_title.toolTip()
     assert w.file1_name.text() == "File1.txt"
     assert w.file2_name.text() == "File2.txt"
     assert w.file3_name.text() == "Dir1"
@@ -119,12 +111,9 @@ async def test_workspace_button_files(qtbot, workspace_fs, core_config):
 async def test_workspace_button_clicked(qtbot, workspace_fs, core_config):
     switch_language(core_config, "en")
 
+    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=True,
-        is_creator=True,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
 
     qtbot.addWidget(w)
@@ -138,12 +127,9 @@ async def test_workspace_button_clicked(qtbot, workspace_fs, core_config):
 async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config):
     switch_language(core_config, "en")
 
+    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=False,
-        is_creator=True,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.share_clicked, timeout=500) as blocker:
@@ -156,12 +142,9 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config):
 async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config):
     switch_language(core_config, "en")
 
+    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=False,
-        is_creator=True,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.rename_clicked, timeout=500) as blocker:
@@ -174,12 +157,9 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config)
 async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config):
     switch_language(core_config, "en")
 
+    roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace",
-        workspace_fs=workspace_fs,
-        is_shared=False,
-        is_creator=True,
-        files=[],
+        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.delete_clicked, timeout=500) as blocker:
