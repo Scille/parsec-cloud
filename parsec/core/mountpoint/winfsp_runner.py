@@ -30,6 +30,24 @@ def _generate_volume_serial_number(device, workspace_id):
     return adler32(f"{device.organization_id}-{device.device_id}-{workspace_id}".encode())
 
 
+async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):
+    trio_mountpoint_path = trio.Path(mountpoint_path)
+
+    # Polling for `timeout` seconds until winfsp is ready
+    with trio.fail_after(timeout):
+        while True:
+            try:
+                if await trio_mountpoint_path.exists():
+                    return
+                await trio.sleep(0.01)
+            # Looks like a revoked workspace has been mounted
+            except PermissionError:
+                return
+            # Might be another OSError like errno 113 (No route to host)
+            except OSError:
+                return
+
+
 async def winfsp_mountpoint_runner(
     workspace_fs,
     base_mountpoint_path: Path,
@@ -96,15 +114,7 @@ async def winfsp_mountpoint_runner(
         # Run fs start in a thread, as a cancellable operation
         # This is because fs.start() might get stuck for while in case of an IRP timeout
         await trio.to_thread.run_sync(fs.start, cancellable=True)
-
-        # Because of reject_irp_prior_to_transact0, the mountpoint isn't ready yet
-        # We have to add a bit of delay here, the tests would fail otherwise
-        # 10 ms is more than enough, although a strict process would be nicer
-        # Still, this is only temporary as avast is working on a fix at the moment
-        # Another way to address this problem would be to migrate to python 3.8,
-        # then use `os.stat` to differentiate between a started and a non-started
-        # file syste.
-        await trio.sleep(0.01)
+        await _wait_for_winfsp_ready(mountpoint_path)
 
         event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
         task_status.started(mountpoint_path)
