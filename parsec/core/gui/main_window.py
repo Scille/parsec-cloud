@@ -76,9 +76,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.menu_button.setCursor(Qt.PointingHandCursor)
         self.menu_button.setIcon(QIcon(":/icons/images/material/menu.svg"))
         self.menu_button.setIconSize(QSize(24, 24))
+        self.menu_button.setText(_("ACTION_MAIN_MENU_SHOW"))
+        self.menu_button.setObjectName("MenuButton")
         self.menu_button.setProperty("color", QColor(0x00, 0x92, 0xFF))
         self.menu_button.setProperty("hover_color", QColor(0x00, 0x70, 0xDD))
-        self.menu_button.setStyleSheet("background: none; border: none;")
+        self.menu_button.setStyleSheet(
+            "#MenuButton {background: none; border: none; color: #0092FF;}"
+            "#MenuButton:hover {color: #0070DD;}"
+        )
         self.menu_button.apply_style()
         self.menu_button.clicked.connect(self._show_menu)
         self.tab_center.setCornerWidget(self.menu_button, Qt.TopRightCorner)
