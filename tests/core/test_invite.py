@@ -102,6 +102,10 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.signing_key != alice.signing_key
     assert new_device.is_admin
 
+    # Now invitation should have been deleted
+    rep = await alice_backend_cmds.invite_list()
+    assert rep == {"status": "ok", "invitations": []}
+
     # Make sure new device can connect to the backend
     async with backend_authenticated_cmds_factory(
         addr=new_device.organization_addr,
@@ -207,6 +211,10 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.human_handle.label == granted_human_handle.label
     assert new_device.human_handle.email == granted_human_handle.email
     assert not new_device.is_admin
+
+    # Now invitation should have been deleted
+    rep = await alice_backend_cmds.invite_list()
+    assert rep == {"status": "ok", "invitations": []}
 
     # Make sure new device can connect to the backend
     async with backend_authenticated_cmds_factory(

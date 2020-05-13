@@ -25,7 +25,7 @@ from parsec.api.data import (
     DeviceCertificateContent,
     UserCertificateContent,
 )
-from parsec.api.protocol import DeviceName, DeviceID, HumanHandle
+from parsec.api.protocol import DeviceName, DeviceID, HumanHandle, InvitationDeletedReason
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice
 from parsec.core.invite.exceptions import InviteError, InvitePeerResetError, InviteNotAvailableError
@@ -325,6 +325,8 @@ class UserGreetInProgress4Ctx:
         elif rep["status"] != "ok":
             raise InviteError(f"Backend error during step 4 (confirmation exchange): {rep}")
 
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
@@ -372,3 +374,5 @@ class DeviceGreetInProgress4Ctx:
             raise InvitePeerResetError()
         elif rep["status"] != "ok":
             raise InviteError(f"Backend error during step 4 (confirmation exchange): {rep}")
+
+        await self._cmds.invite_delete(token=self.token, reason=InvitationDeletedReason.FINISHED)

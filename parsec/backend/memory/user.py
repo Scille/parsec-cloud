@@ -5,7 +5,7 @@ import pendulum
 from typing import Tuple, List, Dict
 from collections import defaultdict
 
-from parsec.api.protocol import UserID, DeviceID, DeviceName, HumanHandle, OrganizationID
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, DeviceName, HumanHandle
 from parsec.backend.user import (
     BaseUserComponent,
     User,

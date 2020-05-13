@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import itertools
+from typing import Optional
 from triopg import UniqueViolationError
 from pypika import Parameter
+from uuid import UUID
 from pendulum import now as pendulum_now
 
 from parsec.api.protocol import OrganizationID
@@ -200,7 +202,11 @@ async def _create_user(
 
 @query(in_transaction=True)
 async def query_create_user(
-    conn, organization_id: OrganizationID, user: User, first_device: Device
+    conn,
+    organization_id: OrganizationID,
+    user: User,
+    first_device: Device,
+    invitation_token: Optional[UUID] = None,
 ) -> None:
     await _create_user(conn, organization_id, user, first_device)
 

@@ -14,25 +14,36 @@ from parsec.api.protocol import (
 )
 
 from tests.common import freeze_time
-from tests.backend.common import invite_new, invite_list, invite_delete, invite_info
+from tests.backend.common import (
+    invite_new,
+    invite_list,
+    invite_delete,
+    invite_info,
+    events_subscribe,
+    events_listen_wait,
+)
 
 
 @pytest.mark.trio
 async def test_user_create_and_info(
-    backend, alice, alice_backend_sock, backend_invited_sock_factory
+    backend, alice, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
 ):
     # Provide other unrelated invatitons that should stay unchanged
-    other_device_invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        created_on=Pendulum(2000, 1, 2),
-    )
-    other_user_invitation = await backend.invite.new_for_user(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        claimer_email="other@example.com",
-        created_on=Pendulum(2000, 1, 3),
-    )
+    with backend.event_bus.listen() as spy:
+        other_device_invitation = await backend.invite.new_for_device(
+            organization_id=alice.organization_id,
+            greeter_user_id=alice.user_id,
+            created_on=Pendulum(2000, 1, 2),
+        )
+        other_user_invitation = await backend.invite.new_for_user(
+            organization_id=alice.organization_id,
+            greeter_user_id=alice.user_id,
+            claimer_email="other@example.com",
+            created_on=Pendulum(2000, 1, 3),
+        )
+        await spy.wait_multiple_with_timeout(["invite.status_changed", "invite.status_changed"])
+
+    await events_subscribe(alice2_backend_sock)
 
     with freeze_time("2000-01-04"):
         rep = await invite_new(
@@ -40,6 +51,15 @@ async def test_user_create_and_info(
         )
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
+
+    with trio.fail_after(1):
+        rep = await events_listen_wait(alice2_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "event": "invite.status_changed",
+        "invitation_status": InvitationStatus.IDLE,
+        "token": token,
+    }
 
     rep = await invite_list(alice_backend_sock)
     assert rep == {
@@ -86,19 +106,33 @@ async def test_user_create_and_info(
 
 @pytest.mark.trio
 async def test_device_create_and_info(
-    backend, alice, alice_backend_sock, backend_invited_sock_factory
+    backend, alice, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
 ):
     # Provide other unrelated invatitons that should stay unchanged
-    other_user_invitation = await backend.invite.new_for_user(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        claimer_email="other@example.com",
-        created_on=Pendulum(2000, 1, 2),
-    )
+    with backend.event_bus.listen() as spy:
+        other_user_invitation = await backend.invite.new_for_user(
+            organization_id=alice.organization_id,
+            greeter_user_id=alice.user_id,
+            claimer_email="other@example.com",
+            created_on=Pendulum(2000, 1, 2),
+        )
+        await spy.wait_multiple_with_timeout(["invite.status_changed"])
+
+    await events_subscribe(alice2_backend_sock)
+
     with freeze_time("2000-01-03"):
         rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
+
+    with trio.fail_after(1):
+        rep = await events_listen_wait(alice2_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "event": "invite.status_changed",
+        "invitation_status": InvitationStatus.IDLE,
+        "token": token,
+    }
 
     rep = await invite_list(alice_backend_sock)
     assert rep == {
@@ -136,18 +170,33 @@ async def test_device_create_and_info(
 
 
 @pytest.mark.trio
-async def test_delete(alice, backend, alice_backend_sock, backend_invited_sock_factory):
-    invitation = await backend.invite.new_for_device(
-        organization_id=alice.organization_id,
-        greeter_user_id=alice.user_id,
-        created_on=Pendulum(2000, 1, 2),
-    )
+async def test_delete(
+    alice, backend, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
+):
+    with backend.event_bus.listen() as spy:
+        invitation = await backend.invite.new_for_device(
+            organization_id=alice.organization_id,
+            greeter_user_id=alice.user_id,
+            created_on=Pendulum(2000, 1, 2),
+        )
+        await spy.wait_multiple_with_timeout(["invite.status_changed"])
+
+    await events_subscribe(alice2_backend_sock)
 
     with freeze_time("2000-01-03"):
         rep = await invite_delete(
             alice_backend_sock, token=invitation.token, reason=InvitationDeletedReason.CANCELLED
         )
     assert rep == {"status": "ok"}
+
+    with trio.fail_after(1):
+        rep = await events_listen_wait(alice2_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "event": "invite.status_changed",
+        "invitation_status": InvitationStatus.DELETED,
+        "token": invitation.token,
+    }
 
     # Deleted invitation are no longer visible
     rep = await invite_list(alice_backend_sock)

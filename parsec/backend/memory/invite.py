@@ -170,7 +170,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_email: str,
         created_on: Optional[Pendulum] = None,
     ) -> UserInvitation:
-        return self._new(
+        return await self._new(
             organization_id=organization_id,
             greeter_user_id=greeter_user_id,
             claimer_email=claimer_email,
@@ -183,11 +183,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeter_user_id: UserID,
         created_on: Optional[Pendulum] = None,
     ) -> DeviceInvitation:
-        return self._new(
+        return await self._new(
             organization_id=organization_id, greeter_user_id=greeter_user_id, created_on=created_on
         )
 
-    def _new(
+    async def _new(
         self,
         organization_id: OrganizationID,
         greeter_user_id: UserID,
@@ -203,6 +203,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             ):
                 # An invitation already exists for what the user has asked for
                 return invitation
+
         else:
             # Must create a new invitation
             created_on = created_on or pendulum_now()
@@ -223,7 +224,15 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_on=created_on,
                 )
             org.invitations[invitation.token] = invitation
-            return invitation
+
+        await self._send_event(
+            "invite.status_changed",
+            organization_id=organization_id,
+            greeter=invitation.greeter_user_id,
+            token=invitation.token,
+            status=invitation.status,
+        )
+        return invitation
 
     async def delete(
         self,

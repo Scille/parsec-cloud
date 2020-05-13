@@ -190,27 +190,24 @@ async def _do_delete_invitation(
     on: Pendulum,
     reason: InvitationDeletedReason,
 ):
-    async with conn.transaction():
-        row = await conn.fetchrow(
-            *_q_delete_invitation_info(
-                organization_id=organization_id, greeter=greeter, token=token
-            )
-        )
-        if not row:
-            raise InvitationNotFoundError(token)
-        row_id, deleted_on = row
-        if deleted_on:
-            raise InvitationAlreadyDeletedError(token)
+    row = await conn.fetchrow(
+        *_q_delete_invitation_info(organization_id=organization_id, greeter=greeter, token=token)
+    )
+    if not row:
+        raise InvitationNotFoundError(token)
+    row_id, deleted_on = row
+    if deleted_on:
+        raise InvitationAlreadyDeletedError(token)
 
-        await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
-        await send_signal(
-            conn,
-            "invite.status_changed",
-            organization_id=organization_id,
-            greeter=greeter,
-            token=token,
-            status_str=InvitationStatus.DELETED.value,
-        )
+    await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.value))
+    await send_signal(
+        conn,
+        "invite.status_changed",
+        organization_id=organization_id,
+        greeter=greeter,
+        token=token,
+        status_str=InvitationStatus.DELETED.value,
+    )
 
 
 _q_human_handle_per_user = f"""
@@ -479,6 +476,57 @@ async def _conduit_listen(conn, ctx: ConduitListenCtx) -> Optional[bytes]:
     return None
 
 
+async def _do_new_user_invitation(
+    conn,
+    organization_id: OrganizationID,
+    greeter_user_id: UserID,
+    claimer_email: Optional[str],
+    created_on: Pendulum,
+) -> UUID:
+    if claimer_email:
+        invitation_type = InvitationType.USER
+        q = _q_retreive_compatible_user_invitation(
+            organization_id=organization_id,
+            type=invitation_type.value,
+            greeter_user_id=greeter_user_id,
+            claimer_email=claimer_email,
+        )
+    else:
+        invitation_type = InvitationType.DEVICE
+        q = _q_retreive_compatible_device_invitation(
+            organization_id=organization_id,
+            type=invitation_type.value,
+            greeter_user_id=greeter_user_id,
+        )
+
+    # Check if no compatible invitations already exists
+    row = await conn.fetchrow(*q)
+    if row:
+        token = row["token"]
+    else:
+        # No risk of UniqueViolationError given token is a uuid4
+        token = uuid4()
+        await conn.execute(
+            *_q_insert_invitation(
+                organization_id=organization_id,
+                type=invitation_type.value,
+                token=token,
+                greeter_user_id=greeter_user_id,
+                claimer_email=claimer_email,
+                created_on=created_on,
+            )
+        )
+    await send_signal(
+        conn,
+        "invite.status_changed",
+        organization_id=organization_id,
+        greeter=greeter_user_id,
+        token=token,
+        status_str=InvitationStatus.IDLE.value,
+    )
+    return token
+
+
 class PGInviteComponent(BaseInviteComponent):
     def __init__(self, dbh: PGHandler, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -495,33 +543,14 @@ class PGInviteComponent(BaseInviteComponent):
         Raise: Nothing
         """
         created_on = created_on or pendulum_now()
-
-        async with self.dbh.pool.acquire() as conn:
-            # Check if no compatible invitations already exists
-            row = await conn.fetchrow(
-                *_q_retreive_compatible_user_invitation(
-                    organization_id=organization_id,
-                    type=InvitationType.USER.value,
-                    greeter_user_id=greeter_user_id,
-                    claimer_email=claimer_email,
-                )
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            token = await _do_new_user_invitation(
+                conn,
+                organization_id=organization_id,
+                greeter_user_id=greeter_user_id,
+                claimer_email=claimer_email,
+                created_on=created_on,
             )
-            if row:
-                token = row["token"]
-            else:
-                # No risk of UniqueViolationError given token is a uuid4
-                token = uuid4()
-                await conn.execute(
-                    *_q_insert_invitation(
-                        organization_id=organization_id,
-                        type=InvitationType.USER.value,
-                        token=token,
-                        greeter_user_id=greeter_user_id,
-                        claimer_email=claimer_email,
-                        created_on=created_on,
-                    )
-                )
-
         return UserInvitation(
             greeter_user_id=greeter_user_id,
             greeter_human_handle=None,
@@ -540,32 +569,14 @@ class PGInviteComponent(BaseInviteComponent):
         Raise: Nothing
         """
         created_on = created_on or pendulum_now()
-
-        async with self.dbh.pool.acquire() as conn:
-            # Check if no compatible invitations already exists
-            row = await conn.fetchrow(
-                *_q_retreive_compatible_device_invitation(
-                    organization_id=organization_id,
-                    type=InvitationType.DEVICE.value,
-                    greeter_user_id=greeter_user_id,
-                )
+        async with self.dbh.pool.acquire() as conn, conn.transaction():
+            token = await _do_new_user_invitation(
+                conn,
+                organization_id=organization_id,
+                greeter_user_id=greeter_user_id,
+                claimer_email=None,
+                created_on=created_on,
             )
-            if row:
-                token = row["token"]
-            else:
-                # No risk of UniqueViolationError given token is a uuid4
-                token = uuid4()
-                await conn.execute(
-                    *_q_insert_invitation(
-                        organization_id=organization_id,
-                        type=InvitationType.DEVICE.value,
-                        token=token,
-                        greeter_user_id=greeter_user_id,
-                        claimer_email=None,
-                        created_on=created_on,
-                    )
-                )
-
         return DeviceInvitation(
             greeter_user_id=greeter_user_id,
             greeter_human_handle=None,
