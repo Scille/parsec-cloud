@@ -543,7 +543,7 @@ class BackendOrganizationAddrField(fields.Field):
 class BackendInvitationAddr(BackendActionAddr):
     """
     Represent the URL to invite a user or a device
-    (e.g. ``parsec://parsec.example.com/my_org?action=claim&token=1234ABCD``)
+    (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=1234ABCD``)
     """
 
     __slots__ = ("_organization_id", "_invitation_type", "_token")
@@ -571,9 +571,9 @@ class BackendInvitationAddr(BackendActionAddr):
         value = params.pop("action", ())
         if len(value) != 1:
             raise ValueError("Missing mandatory `action` param")
-        if value[0] != "claim_user":
+        if value[0] == "claim_user":
             kwargs["invitation_type"] = InvitationType.USER
-        elif value[0] != "claim_device":
+        elif value[0] == "claim_device":
             kwargs["invitation_type"] = InvitationType.DEVICE
         else:
             raise ValueError("Expected `action=claim_user` or `action=claim_device` value")
@@ -592,7 +592,8 @@ class BackendInvitationAddr(BackendActionAddr):
         return str(self.organization_id)
 
     def _to_url_get_params(self):
-        return [("action", "claim"), ("token", self._token.hex), *super()._to_url_get_params()]
+        action = "claim_user" if self._invitation_type == InvitationType.USER else "claim_device"
+        return [("action", action), ("token", self._token.hex), *super()._to_url_get_params()]
 
     @classmethod
     def build(
