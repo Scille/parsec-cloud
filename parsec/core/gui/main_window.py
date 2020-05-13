@@ -6,7 +6,7 @@ from structlog import get_logger
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QIcon, QKeySequence
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QApplication, QMenu, QShortcut
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMenu, QShortcut
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -67,20 +67,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
-        self.button_send_feedback = QPushButton(_("ACTION_FEEDBACK_SEND"))
-        self.button_send_feedback.clicked.connect(self._on_send_feedback_clicked)
-        self.button_send_feedback.setStyleSheet("border: 0; border-radius: 0px;")
-        self.tab_center.setCornerWidget(self.button_send_feedback, Qt.TopRightCorner)
+        # self.button_send_feedback = QPushButton(_("ACTION_FEEDBACK_SEND"))
+        # self.button_send_feedback.clicked.connect(self._on_send_feedback_clicked)
+        # self.button_send_feedback.setStyleSheet("border: 0; border-radius: 0px;")
+        # self.tab_center.setCornerWidget(self.button_send_feedback, Qt.TopRightCorner)
+
         self.menu_button = Button()
         self.menu_button.setCursor(Qt.PointingHandCursor)
         self.menu_button.setIcon(QIcon(":/icons/images/material/menu.svg"))
         self.menu_button.setIconSize(QSize(24, 24))
         self.menu_button.setProperty("color", QColor(0x00, 0x92, 0xFF))
         self.menu_button.setProperty("hover_color", QColor(0x00, 0x70, 0xDD))
-        self.menu_button.setStyleSheet("background-color: none; border: none;")
+        self.menu_button.setStyleSheet("background: none; border: none;")
         self.menu_button.apply_style()
         self.menu_button.clicked.connect(self._show_menu)
-        self.tab_center.setCornerWidget(self.menu_button, Qt.TopLeftCorner)
+        self.tab_center.setCornerWidget(self.menu_button, Qt.TopRightCorner)
+
+        self.add_tab_button = Button()
+        self.add_tab_button.setCursor(Qt.PointingHandCursor)
+        self.add_tab_button.setIcon(QIcon(":/icons/images/material/add.svg"))
+        self.add_tab_button.setIconSize(QSize(24, 24))
+        self.add_tab_button.setProperty("color", QColor(0x00, 0x92, 0xFF))
+        self.add_tab_button.setProperty("hover_color", QColor(0x00, 0x70, 0xDD))
+        self.add_tab_button.setStyleSheet("background: none; border: none;")
+        self.add_tab_button.apply_style()
+        self.add_tab_button.clicked.connect(self._on_add_instance_clicked)
+        self.tab_center.setCornerWidget(self.add_tab_button, Qt.TopLeftCorner)
+
         self.tab_center.currentChanged.connect(self.on_current_tab_changed)
         self._define_shortcuts()
         self.ensurePolished()
@@ -128,6 +141,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.switch_to_tab(idx)
 
         return _inner_cycle_tabs
+
+    def _toggle_add_tab_button(self):
+        if self._get_login_tab_index() == -1:
+            self.add_tab_button.setDisabled(False)
+        else:
+            self.add_tab_button.setDisabled(True)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -424,6 +443,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setTabText(idx, tab_name)
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
+        self._toggle_add_tab_button()
 
     def on_tab_notification(self, widget, event):
         idx = self.tab_center.indexOf(widget)
@@ -442,9 +462,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab = InstanceWidget(self.jobs_ctx, self.event_bus, self.config)
         tab.join_organization_clicked.connect(self._on_join_org_clicked)
         tab.create_organization_clicked.connect(self._on_create_org_clicked)
-        self.tab_center.addTab(tab, "")
+        idx = self.tab_center.addTab(tab, "")
         tab.state_changed.connect(self.on_tab_state_changed)
-        self.tab_center.setCurrentIndex(self.tab_center.count() - 1)
+        self.tab_center.setCurrentIndex(idx)
         if self.tab_center.count() > 1:
             self.tab_center.setTabsClosable(True)
         else:
@@ -556,6 +576,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.reload_login_devices()
         if self.tab_center.count() == 1:
             self.tab_center.setTabsClosable(False)
+        self._toggle_add_tab_button()
 
     def closeEvent(self, event):
         if self.minimize_on_close and not self.need_close:
