@@ -53,8 +53,14 @@ class CentralWidget(QWidget, Ui_CentralWidget):
             self.event_bus.connect(e, self.handle_event)
 
         self.menu.organization = self.core.device.organization_addr.organization_id
-        self.menu.username = self.core.device.user_id
-        self.menu.device = self.core.device.device_name
+        if self.core.device.human_handle:
+            self.menu.username = self.core.device.human_handle.label
+        else:
+            self.menu.username = self.core.device.user_id
+        if self.core.device.device_label:
+            self.menu.device = self.core.device.device_label
+        else:
+            self.menu.device = self.core.device.device_name
         self.menu.organization_url = str(self.core.device.organization_addr)
 
         self.new_notification.connect(self.on_new_notification)

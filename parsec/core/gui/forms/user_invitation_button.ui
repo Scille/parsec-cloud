@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DeviceButton</class>
- <widget class="QWidget" name="DeviceButton">
+ <class>UserInvitationButton</class>
+ <widget class="QWidget" name="UserInvitationButton">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -22,29 +22,22 @@
     <height>280</height>
    </size>
   </property>
-  <property name="font">
-   <font>
-    <pointsize>12</pointsize>
-   </font>
-  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#DeviceButton, #widget
-{
-background-color: #FFFFFF;
-border-radius: 8px;
+   <string notr="true">#label_addr, label_email {
+	color: #999999;
 }
 
-#label_is_current
-{
-color: #999999;
+#UserInvitationButton, #widget {
+	background-color: #FFFFFF;
+	border-radius: 8px;
 }
 
-#label_device_name
-{
-color: #0092FF;
+#button_cancel {
+	border: none;
+	background: none;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -81,6 +74,81 @@ color: #0092FF;
       <property name="bottomMargin">
        <number>10</number>
       </property>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="Button" name="button_cancel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="toolTip">
+           <string>ACTION_CANCEL_USER_INVITATION_TOOLTIP</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/material/block.svg</normaloff>:/icons/images/material/block.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <property name="color" stdset="0">
+           <color>
+            <red>244</red>
+            <green>67</green>
+            <blue>54</blue>
+           </color>
+          </property>
+          <property name="hover_color" stdset="0">
+           <color>
+            <red>249</red>
+            <green>33</green>
+            <blue>36</blue>
+           </color>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
       <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
@@ -127,7 +195,7 @@ color: #0092FF;
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/material/desktop_windows.svg</pixmap>
+           <pixmap resource="../rc/resources.qrc">:/icons/images/material/help.svg</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -157,7 +225,7 @@ color: #0092FF;
        </layout>
       </item>
       <item>
-       <widget class="QLabel" name="label_device_name">
+       <widget class="QLabel" name="label_email">
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -171,15 +239,15 @@ color: #0092FF;
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_is_current">
+       <widget class="QLabel" name="label_addr">
         <property name="text">
          <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
@@ -196,6 +264,43 @@ color: #0092FF;
         </property>
        </spacer>
       </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_greet">
+          <property name="text">
+           <string>BUTTON_GREET_USER</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
      </layout>
     </widget>
    </item>
@@ -205,6 +310,11 @@ color: #0092FF;
   <customwidget>
    <class>IconLabel</class>
    <extends>QLabel</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>

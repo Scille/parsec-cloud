@@ -418,5 +418,5 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
     @classmethod
     def exec_modal(cls, user_fs, workspace_fs, core, jobs_ctx, parent):
         w = cls(user_fs=user_fs, workspace_fs=workspace_fs, core=core, jobs_ctx=jobs_ctx)
-        d = GreyedDialog(w, title=_("TEXT_WORKSPACE_SHARING_TITLE"), parent=parent)
+        d = GreyedDialog(w, title=_("TEXT_WORKSPACE_SHARING_TITLE"), parent=parent, width=1000)
         return d.exec_()

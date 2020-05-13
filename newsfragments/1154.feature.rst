@@ -1,0 +1,1 @@
+Updated user list to look more like the device list

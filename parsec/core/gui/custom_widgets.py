@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import math
+
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap
+from PyQt5.QtGui import QIcon, QPainter, QColor, QPen, QCursor, QPixmap, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
     QPushButton,
     QLabel,
@@ -10,6 +12,74 @@ from PyQt5.QtWidgets import (
     QListView,
     QComboBox,
 )
+
+from parsec.core.gui.ui.code_input_widget import Ui_CodeInputWidget
+
+
+def ensure_string_size(s, size, font):
+    metrics = QFontMetrics(font)
+    if metrics.horizontalAdvance(s) > size:
+        while metrics.horizontalAdvance(s + "...") > size:
+            s = s[:len(s) - 1]
+        s += "..."
+    return s
+
+
+class CodeInputWidget(QWidget, Ui_CodeInputWidget):
+    good_code_clicked = pyqtSignal()
+    wrong_code_clicked = pyqtSignal()
+    none_clicked = pyqtSignal()
+
+    class CodeButton(QPushButton):
+        clicked_with_code = pyqtSignal(str)
+
+        def __init__(self, code):
+            super().__init__(str(code))
+            self.code = code
+            font = self.font()
+            font.setBold(True)
+            font.setPointSize(20)
+            font.setLetterSpacing(QFont.PercentageSpacing, 180)
+            self.setStyleSheet("padding-left: 5px; padding-right: 5px; text-align: center;")
+            self.setFont(font)
+            self.setFixedSize(QSize(120, 120))
+            self.clicked.connect(self._on_clicked)
+
+        def _on_clicked(self):
+            self.clicked_with_code.emit(self.code)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.right_choice = None
+        self.button_none.clicked.connect(self.none_clicked.emit)
+
+    def set_choices(self, choices, right_choice):
+        while self.code_layout.count() != 0:
+            item = self.code_layout.takeAt(0)
+            if item:
+                w = item.widget()
+                if w:
+                    self.code_layout.removeWidget(w)
+                    w.hide()
+                    w.setParent(None)
+
+        if not choices or not right_choice:
+            return
+        self.right_choice = right_choice
+        height = round(math.sqrt(len(choices))) or 1
+        for idx, choice in enumerate(choices):
+            b = self.CodeButton(choice)
+            self.code_layout.addWidget(
+                b, int(idx / height), idx % height, Qt.AlignHCenter | Qt.AlignVCenter
+            )
+            b.clicked_with_code.connect(self._on_button_clicked)
+
+    def _on_button_clicked(self, code):
+        if code != self.right_choice:
+            self.wrong_code_clicked.emit()
+        else:
+            self.good_code_clicked.emit()
 
 
 class Pixmap(QPixmap):
@@ -166,7 +236,6 @@ class ClickableLabel(QLabel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setCursor(QCursor(Qt.PointingHandCursor))
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:

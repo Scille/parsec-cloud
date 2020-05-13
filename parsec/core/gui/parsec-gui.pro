@@ -29,24 +29,38 @@ FORMS += forms/main_window.ui \
          forms/changelog_widget.ui \
          forms/license_widget.ui \
          forms/about_widget.ui \
+         forms/error_widget.ui \
+         forms/info_widget.ui \
     forms/greyed_dialog.ui \
     forms/question_widget.ui \
     forms/input_widget.ui \
     forms/workspace_sharing_widget.ui \
-    forms/invite_user_widget.ui \
-    forms/invite_device_widget.ui \
     forms/file_history_widget.ui \
     forms/password_change_widget.ui \
     forms/timestamped_workspace_widget.ui \
     forms/empty_workspace_widget.ui \
-    forms/error_widget.ui \
-    forms/info_widget.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
     forms/file_history_button.ui \
     forms/create_org_first_page_widget.ui \
     forms/create_org_widget.ui \
-    forms/create_org_second_page_widget.ui
+    forms/create_org_second_page_widget.ui \
+    forms/greet_user_widget.ui \
+    forms/claim_user_code_exchange_widget.ui \
+    forms/claim_user_finalize_widget.ui \
+    forms/claim_user_instructions_widget.ui \
+    forms/claim_user_provide_info_widget.ui \
+    forms/greet_user_instructions_widget.ui \
+    forms/greet_user_code_exchange_widget.ui \
+    forms/greet_user_check_info_widget.ui \
+    forms/code_input_widget.ui \
+    forms/user_invitation_button.ui \
+    forms/greet_device_instructions_widget.ui \
+    forms/greet_device_code_exchange_widget.ui \
+    forms/greet_device_widget.ui \
+    forms/claim_device_instructions_widget.ui \
+    forms/claim_device_code_exchange_widget.ui \
+    forms/claim_device_provide_info_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

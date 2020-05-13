@@ -169,6 +169,23 @@ msgstr "Error while retrieving the file history."
 msgid "TEXT_FILE_HISTORY_TITLE_name"
 msgstr "File history of {name}"
 
+msgid "TEXT_GREET_USER_INVALID_HUMAN_HANDLE"
+msgstr ""
+
+msgid "TEXT_GREET_USER_INVALID_DEVICE_ID"
+msgstr "The device's name is not valid."
+
+msgid "TEXT_GREETER_USER_NONE_CODE_CLICKED"
+msgstr ""
+"If you didn't see the code that was given to you, it could mean that a malicious user "
+"is trying to register in your stead.\n"
+"\n"
+"You can retry the invitation process. If this problem persists, your network may not "
+"be safe."
+
+msgid "TEXT_GREET_USER_TITLE"
+msgstr "Greet a new user"
+
 msgid "TEXT_WORKSPACE_SHARING_USER_IS_REVOKED"
 msgstr "This user is revoked."
 
@@ -275,48 +292,53 @@ msgstr "owned by {user}"
 msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
 msgstr "temporary_{date}"
 
-msgid "TEXT_CLAIM_USER_INSTRUCTIONS_user-url-organization"
+msgid "TEXT_CLAIM_USER_DEVICE_ALREADY_EXISTS"
+msgstr "A device with the same name already exists."
+
+msgid "TEXT_CLAIM_USER_INVALID_CODE_CLICKED"
 msgstr ""
-"An administrator has invited you to join the organization <b>{organization}</b> with "
-"the username <b>{user}</b>.\n"
+"You did not provide the right code. You will have to restart the process. We want to "
+"make absolutely sure that the invitation was meant for you."
+
+msgid "TEXT_CLAIM_USER_NONE_CODE_CLICKED"
+msgstr ""
+"If you didn't see the code that was given to you, it could mean that a malicious user "
+"is trying to register in your stead.\n"
 "\n"
-"To finalize the registration process, please provide the six digits token that has "
-"been given to you by the administrator, as well as a password and a device name.\n"
-"\n"
-"If this invitation was not meant for you, please ignore this message."
+"You can retry the invitation process. If this problem persists, your network may not "
+"be safe."
 
-msgid "TEXT_CLAIM_USER_NOT_FOUND"
-msgstr "No invitation has been found for this user."
+msgid "TEXT_CLAIM_USER_GET_GREETER_SAS_ERROR"
+msgstr "Internal error. Please restart the process."
 
-msgid "TEXT_CLAIM_USER_PASSWORD_MISMATCH"
-msgstr "The password and the password confirmation do no match."
+msgid "TEXT_CLAIM_USER_WAIT_TRUST_ERROR"
+msgstr "Internal error. Please restart the process."
 
-msgid "TEXT_CLAIM_USER_PASSWORD_COMPLEXITY"
-msgstr "The password is not complex enough."
+msgid "TEXT_CLAIM_USER_WAIT_PEER_TRUST_ERROR"
+msgstr "Internal error. Please restart the process."
 
-msgid "TEXT_CLAIM_USER_INVALID_URL"
-msgstr "An internal error occurred while registering the user."
+msgid "TEXT_CLAIM_USER_INVALID_DEVICE_ID"
+msgstr "The device's name is invalid."
 
-msgid "TEXT_CLAIM_USER_BAD_DEVICE_NAME"
-msgstr "The device name is invalid."
+msgid "TEXT_CLAIM_USER_INVALID_HUMAN_HANDLE"
+msgstr ""
 
-msgid "TEXT_CLAIM_USER_BAD_USER_NAME"
-msgstr "The user name is invalid."
+msgid "TEXT_CLAIM_USER_CLAIM_ERROR"
+msgstr "Internal error. Please restart the process."
 
-msgid "TEXT_CLAIM_USER_BACKEND_REFUSAL"
-msgstr "The server refused the registration."
+msgid "TEXT_CLAIM_USER_FAILED_TO_RETRIEVE_INFO"
+msgstr "Failed to retrieve information about the invitation."
 
-msgid "TEXT_CLAIM_USER_BACKEND_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
+msgid "TEXT_CLAIM_USER_SUCCESSFUL"
+msgstr ""
+"The user was successfully created. You will now be logged in.\n"
+"Welcome to Parsec!"
 
-msgid "TEXT_CLAIM_USER_UNKNOWN_FAILURE"
-msgstr "An unknown error occurred while registering the user."
+msgid "TEXT_CLAIM_USER_INVITATION_NOT_FOUND"
+msgstr "The corresponding invitation was not found."
 
-msgid "TEXT_CLAIM_USER_SUCCESS"
-msgstr "The user has been successfully created! You can now log in."
-
-msgid "ACTION_CONTINUE"
-msgstr "Continue"
+msgid "TEXT_CLAIM_USER_UNKNOWN_ERROR"
+msgstr "Internal error. Please restart the process."
 
 msgid "TEXT_CLAIM_USER_TITLE"
 msgstr "Register a user"
@@ -1189,34 +1211,23 @@ msgstr "Kb"
 msgid "TEXT_FILE_SIZE_B"
 msgstr "b"
 
-msgid "TEXT_INVITE_DEVICE_COPIED_TO_CLIPBOARD"
-msgstr "Information has been copied to the clipboard."
+msgid "TEXT_INVITATION_STATUS_READY"
+msgstr "Ready"
 
-msgid "TEXT_INVITE_DEVICE_BAD_DEVICE_NAME"
-msgstr "The device name is invalid."
+msgid "TEXT_INVITATION_STATUS_READY_TOOLTIP"
+msgstr "The invitation is ready"
 
-msgid "TEXT_INVITE_DEVICE_ALREADY_EXISTS"
-msgstr "This device name is already in use."
+msgid "TEXT_INVITATION_STATUS_IDLE"
+msgstr "Idle"
 
-msgid "TEXT_INVITE_DEVICE_HOST_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
+msgid "TEXT_INVITATION_STATUS_IDLE_TOOLTIP"
+msgstr "The invitation is idle"
 
-msgid "TEXT_INVITE_DEVICE_WRONG_PARAMETERS"
-msgstr "The device could not be invited."
+msgid "TEXT_INVITATION_STATUS_CANCELLED"
+msgstr "Cancelled"
 
-msgid "TEXT_INVITE_DEVICE_TIMEOUT"
-msgstr ""
-"The device failed to register in time. You can restart the invitation process (only "
-"the token will change)."
-
-msgid "TEXT_INVITE_DEVICE_UNKNOWN_FAILURE"
-msgstr "The device could not be invited."
-
-msgid "TEXT_INVITE_DEVICE_SUCCESS"
-msgstr "The device has successfully registered."
-
-msgid "TEXT_INVITE_DEVICE_EMPTY_DEVICE_NAME"
-msgstr "Please provide a name for the device to invite."
+msgid "TEXT_INVITATION_STATUS_CANCELLED_TOOLTIP"
+msgstr "The invitation is cancelled"
 
 msgid "TEXT_INVITE_DEVICE_TITLE"
 msgstr "Invite a new device"
@@ -1319,6 +1330,9 @@ msgstr ""
 "<br />\n"
 "To help you start with PARSEC, you can read the <a href=\"https://docs.parsec.cloud/"
 "en/stable/\" title=\"User guide\">user guide</a>."
+
+msgid "ACTION_CONTINUE"
+msgstr "Continue"
 
 msgid "TEXT_BOOTSTRAP_ORG_TITLE"
 msgstr "Bootstrap the organization"
@@ -1503,37 +1517,34 @@ msgstr "Users"
 msgid "ACTION_MENU_DEVICES"
 msgstr "Devices"
 
-msgid "TEXT_INVITE_USER_COPIED_TO_CLIPBOARD"
-msgstr "Information has been copied to the clipboard."
+msgid "ACTION_USER_INVITE_COPY_ADDR"
+msgstr "Copy address"
 
-msgid "TEXT_INVITE_USER_BAD_USER_NAME"
-msgstr "The username is invalid."
+msgid "ACTION_USER_INVITE_COPY_EMAIL"
+msgstr "Copy email"
 
-msgid "TEXT_INVITE_USER_ALREADY_EXISTS"
-msgstr "This username already exists."
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_TITLE"
+msgstr "Cancel the invitation"
 
-msgid "TEXT_INVITE_USER_WRONG_PARAMETERS"
-msgstr "The user could not be invited."
-
-msgid "TEXT_INVITE_USER_HOST_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
-msgid "TEXT_INVITE_USER_TIMEOUT"
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_QUESTION_CONTENT"
 msgstr ""
-"The user failed to register in time. You can restart the invitation process (only the "
-"token will change)."
+"Are you sure you want to cancel this invitation ? The link that was send by email to "
+"the user will become invalid."
 
-msgid "TEXT_INVITE_USER_UNKNOWN_FAILURE"
-msgstr "The user could not be invited."
+msgid "TEXT_USER_INVITE_CANCEL_INVITE_ACCEPT"
+msgstr "Cancel the invitation"
 
-msgid "TEXT_INVITE_USER_SUCCESS"
-msgstr "The user has successfully registered."
+msgid "ACTION_NO"
+msgstr "No"
 
-msgid "TEXT_INVITE_USER_EMPTY_USER_NAME"
-msgstr "The username cannot be empty."
+msgid "TEXT_INVITE_USER_CANCEL_ERROR"
+msgstr "Could not cancel the invitation."
+
+msgid "TEXT_INVITE_USER_INVITE_ERROR"
+msgstr "Could not invite the user."
 
 msgid "TEXT_INVITE_USER_TITLE"
-msgstr "Invite a user"
+msgstr "Manage invitations"
 
 msgid "TEXT_PARSEC_WINDOW_TITLE_version"
 msgstr "PARSEC {version}"
@@ -1719,11 +1730,73 @@ msgstr "Register the device"
 msgid "ACTION_CLAIM_DEVICE"
 msgstr "Register the device"
 
-msgid "TEXT_CLAIM_USER_TOOLTIP"
-msgstr "Register the user"
+msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
+msgstr ""
+"The person who invited you will give you a code. You will have to select the right "
+"code among the four choices below."
 
-msgid "ACTION_CLAIM_USER"
-msgstr "Register the user"
+msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
+msgstr "Perfect! Now please provide the following code to the person:"
+
+msgid "TEXT_CLAIM_USER_CODE_EXCHANGE_WAIT"
+msgstr "We're waiting for the other person to enter the code..."
+
+msgid "TEXT_CLAIM_USER_FINALIZE_INSTRUCTIONS"
+msgstr ""
+"The user was successfully created. To start using Parsec, you will now have to choose "
+"a password."
+
+msgid "TEXT_LABEL_PASSWORD_PLACEHOLDER"
+msgstr "Password"
+
+msgid "TEXT_LABEL_PASSWORD_CONFIRMATION_PLACEHOLDER"
+msgstr "Password confirmation"
+
+msgid "TEXT_CLAIM_USER_INSTRUCTIONS"
+msgstr ""
+"Welcome!\n"
+"\n"
+"If you are reading this, it means that someone has invited you to join Parsec.\n"
+"\n"
+"To prevent any malicious attacks, you will have to be in direct contact with the "
+"person that has invited you (ideally on the phone) during this process.\n"
+"\n"
+"The person that has invited you should go to Users/Invitations and use the Greet "
+"button to start the process.\n"
+"\n"
+"When you are ready to begin, click Start!"
+
+msgid "ACTION_START"
+msgstr "Start"
+
+msgid "TEXT_CLAIM_USER_PROVIDE_INFO_INSTRUCTIONS"
+msgstr "Please provide the following information:"
+
+msgid "TEXT_LABEL_USER_FULL_NAME"
+msgstr "Full name"
+
+msgid "TEXT_LABEL_USER_FULL_NAME_PLACEHOLDER"
+msgstr "John Smith"
+
+msgid "TEXT_LABEL_DEVICE"
+msgstr "Device name"
+
+msgid "TEXT_LABEL_DEVICE_PLACEHOLDER"
+msgstr "device"
+
+msgid "TEXT_LABEL_USER_EMAIL"
+msgstr "Email"
+
+msgid "TEXT_LABEL_USER_EMAIL_PLACEHOLDER"
+msgstr "user@host.com"
+
+msgid "TEXT_CLAIM_USER_WAIT_FOR_USER_INFO"
+msgstr "We are waiting for the person who invited you to confirm these information."
+
+msgid "ACTION_CODE_NONE"
+msgstr ""
+"None of\n"
+"these codes"
 
 msgid "TEXT_ORG_WIZARD_CHOICE_INSTRUCTIONS"
 msgstr "Please choose:"
@@ -1736,9 +1809,6 @@ msgstr "I already have an account on the website and a URL to bootstrap my organ
 
 msgid "TEXT_ORG_WIZARD_CREATE_ORG_INSTRUCTIONS"
 msgstr "Please enter your email and the name you want for your organization."
-
-msgid "TEXT_LABEL_USER_EMAIL"
-msgstr "Email"
 
 msgid "TEXT_LABEL_ORG_NAME"
 msgstr "Organization name"
@@ -1837,66 +1907,67 @@ msgstr "Import new files into this workspace."
 msgid "TEXT_FILE_IMPORT_FOLDER_TOOLTIP"
 msgstr "Import a new folder into this workspace."
 
+msgid "TEXT_GREET_USER_WAITING_FOR_INFO"
+msgstr ""
+"We're waiting for the user to fill out their information. You will be able to review "
+"them."
+
+msgid "TEXT_GREET_USER_IS_ADMIN"
+msgstr "The user will be an administrator"
+
+msgid "ACTION_CREATE_USER"
+msgstr "Finish"
+
+msgid "TEXT_GREET_USER_CODE_EXCHANGE_GIVE_CODE_INSTRUCTIONS"
+msgstr "Please give the following code to the user."
+
+msgid "TEXT_GREET_USER_CODE_EXCHANGE_WAIT"
+msgstr "We are waiting for the user to input the code."
+
+msgid "TEXT_GREET_USER_CODE_EXCHANGE_GET_CODE_INSTRUCTIONS"
+msgstr "The user will give you a code. Please select the right one below."
+
+msgid "TEXT_GREET_USER_INSTRUCTIONS"
+msgstr ""
+"During this process, a new user will be created in your organization.\n"
+"\n"
+"To prevent any malicious attacks, you will have to be in direct contact with the "
+"person you have invited while they register.\n"
+"\n"
+"The person you have invited should follow the instructions in the email they have "
+"received.\n"
+"\n"
+"When you are ready to begin, click Start!"
+
 msgid "TEXT_DIALOG_CLOSE_TOOLTIP"
 msgstr "Close the window."
 
-msgid "TEXT_DEVICE_INVITE_DEVICE_NAME_PLACEHOLDER"
-msgstr "Device name"
-
-msgid "TEXT_DEVICE_INVITE_INSTRUCTIONS"
+msgid "ACTION_INVITE_DEVICE_NEW_INVITE"
 msgstr ""
-"You will have to transmit the following information to your new device to complete "
-"the registration process. Please do not close this window while your new device "
-"registers."
 
-msgid "ACTION_TOKEN_COPY_TO_CLIPBOARD_TOOLTIP"
-msgstr "Copy the token to the clipboard."
-
-msgid "ACTION_URL_COPY_TO_CLIPBOARD_TOOLTIP"
-msgstr "Copy the URL to the clipboard."
-
-msgid "ACTION_DEVICE_COPY_TO_CLIPBOARD_TOOLTIP"
-msgstr "Copy the device name to the clipboard."
-
-msgid "ACTION_DEVICE_INVITE"
-msgstr "Invite the device"
-
-msgid "TEXT_DEVICE_INVITE_LABEL_URL"
-msgstr "Invitation URL"
-
-msgid "TEXT_DEVICE_INVITE_LABEL_DEVICE_NAME"
-msgstr "Device name"
-
-msgid "TEXT_DEVICE_INVITE_LABEL_TOKEN"
-msgstr "Invitation token"
-
-msgid "TEXT_USER_INVITE_USER_NAME_PLACEHOLDER"
-msgstr "Username"
-
-msgid "TEXT_USER_INVITE_CHECK_IS_ADMIN"
-msgstr "User will be and administrator"
-
-msgid "TEXT_USER_INVITE_INSTRUCTIONS"
+msgid "TEXT_INVITE_DEVICE_INSTRUCTIONS"
 msgstr ""
-"You will have to transmit the following information to the user. It is good practice "
-"to provide the transmit the information by two different channels (for exemple, the "
-"URL by email and the six digits token by phone). Please do not close this window "
-"while the user registers."
 
-msgid "ACTION_USER_NAME_COPY_TO_CLIPBOARD_TOOLTIP"
-msgstr "Copy the username to the clipboard."
+msgid "ACTION_CANCEL_INVITATION"
+msgstr "Cancel the invitation"
 
-msgid "ACTION_USER_INVITE"
-msgstr "Invite the user"
+msgid "ACTION_COPY_TO_CLIPBOARD"
+msgstr "Copy to clipboard"
 
-msgid "TEXT_USER_INVITE_LABEL_URL"
-msgstr "Invitation URL"
+msgid "TEXT_USER_INVITATION_EMAIL_LABEL"
+msgstr "Email"
 
-msgid "TEXT_USER_INVITE_LABEL_USERNAME"
-msgstr "Username"
+msgid "TEXT_USER_INVITATION_EMAIL_PLACEHOLDER"
+msgstr "name@host.com"
 
-msgid "TEXT_USER_INVITE_LABEL_TOKEN"
-msgstr "Invitation token"
+msgid "ACTION_INVITE_USER"
+msgstr "Invite a user"
+
+msgid "TEXT_USER_INVITATION_NO_ACTIVE_INVITATION"
+msgstr "No active invitations found."
+
+msgid "TEXT_USER_INVITATION_ACTIVE_INVITATIONS_TITLE"
+msgstr "Currently active invitations"
 
 msgid "TEXT_IMPORT_FILES_PROGRESS"
 msgstr "Importing file"
@@ -1991,11 +2062,22 @@ msgstr "See the workspace"
 msgid "TEXT_USER_LABEL_CREATED"
 msgstr "Created"
 
+msgid "ACTION_GREET_USER"
+msgstr ""
+"Greet\n"
+"the user"
+
+msgid "USER_INVITATION_STATUS_LABEL"
+msgstr "Status"
+
+msgid "ACTION_CANCEL_USER_INVITATION_TOOLTIP"
+msgstr "Cancel the invitation"
+
 msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
 msgstr "Filter users"
 
 msgid "ACTION_USER_INVITE_USER"
-msgstr "Invite a user"
+msgstr "Manage invitations"
 
 msgid "TEXT_WORKSPACE_IS_SHARED_TOOLTIP"
 msgstr "This workspace is shared."
@@ -2049,3 +2131,171 @@ msgstr "Go to a file using a link"
 #~ msgstr ""
 #~ "The file could not be found within the organization <b>{organization}</b>. Maybe "
 #~ "it was not shared with you."
+
+#~ msgid "TEXT_CLAIM_USER_INSTRUCTIONS_user-url-organization"
+#~ msgstr ""
+#~ "An administrator has invited you to join the organization <b>{organization}</b> "
+#~ "with the username <b>{user}</b>.\n"
+#~ "\n"
+#~ "To finalize the registration process, please provide the six digits token that has "
+#~ "been given to you by the administrator, as well as a password and a device name.\n"
+#~ "\n"
+#~ "If this invitation was not meant for you, please ignore this message."
+
+#~ msgid "TEXT_CLAIM_USER_NOT_FOUND"
+#~ msgstr "No invitation has been found for this user."
+
+#~ msgid "TEXT_CLAIM_USER_PASSWORD_MISMATCH"
+#~ msgstr "The password and the password confirmation do no match."
+
+#~ msgid "TEXT_CLAIM_USER_PASSWORD_COMPLEXITY"
+#~ msgstr "The password is not complex enough."
+
+#~ msgid "TEXT_CLAIM_USER_INVALID_URL"
+#~ msgstr "An internal error occurred while registering the user."
+
+#~ msgid "TEXT_CLAIM_USER_BAD_DEVICE_NAME"
+#~ msgstr "The device name is invalid."
+
+#~ msgid "TEXT_CLAIM_USER_BAD_USER_NAME"
+#~ msgstr "The user name is invalid."
+
+#~ msgid "TEXT_CLAIM_USER_BACKEND_REFUSAL"
+#~ msgstr "The server refused the registration."
+
+#~ msgid "TEXT_CLAIM_USER_BACKEND_OFFLINE"
+#~ msgstr "The server is offline or you have no access to the internet."
+
+#~ msgid "TEXT_CLAIM_USER_UNKNOWN_FAILURE"
+#~ msgstr "An unknown error occurred while registering the user."
+
+#~ msgid "TEXT_CLAIM_USER_SUCCESS"
+#~ msgstr "The user has been successfully created! You can now log in."
+
+#~ msgid "TEXT_INVITE_DEVICE_COPIED_TO_CLIPBOARD"
+#~ msgstr "Information has been copied to the clipboard."
+
+#~ msgid "TEXT_INVITE_DEVICE_BAD_DEVICE_NAME"
+#~ msgstr "The device name is invalid."
+
+#~ msgid "TEXT_INVITE_DEVICE_ALREADY_EXISTS"
+#~ msgstr "This device name is already in use."
+
+#~ msgid "TEXT_INVITE_DEVICE_HOST_OFFLINE"
+#~ msgstr "The server is offline or you have no access to the internet."
+
+#~ msgid "TEXT_INVITE_DEVICE_WRONG_PARAMETERS"
+#~ msgstr "The device could not be invited."
+
+#~ msgid "TEXT_INVITE_DEVICE_TIMEOUT"
+#~ msgstr ""
+#~ "The device failed to register in time. You can restart the invitation process "
+#~ "(only the token will change)."
+
+#~ msgid "TEXT_INVITE_DEVICE_UNKNOWN_FAILURE"
+#~ msgstr "The device could not be invited."
+
+#~ msgid "TEXT_INVITE_DEVICE_SUCCESS"
+#~ msgstr "The device has successfully registered."
+
+#~ msgid "TEXT_INVITE_DEVICE_EMPTY_DEVICE_NAME"
+#~ msgstr "Please provide a name for the device to invite."
+
+#~ msgid "TEXT_INVITE_USER_COPIED_TO_CLIPBOARD"
+#~ msgstr "Information has been copied to the clipboard."
+
+#~ msgid "TEXT_INVITE_USER_BAD_USER_NAME"
+#~ msgstr "The username is invalid."
+
+#~ msgid "TEXT_INVITE_USER_ALREADY_EXISTS"
+#~ msgstr "This username already exists."
+
+#~ msgid "TEXT_INVITE_USER_WRONG_PARAMETERS"
+#~ msgstr "The user could not be invited."
+
+#~ msgid "TEXT_INVITE_USER_HOST_OFFLINE"
+#~ msgstr "The server is offline or you have no access to the internet."
+
+#~ msgid "TEXT_INVITE_USER_TIMEOUT"
+#~ msgstr ""
+#~ "The user failed to register in time. You can restart the invitation process (only "
+#~ "the token will change)."
+
+#~ msgid "TEXT_INVITE_USER_UNKNOWN_FAILURE"
+#~ msgstr "The user could not be invited."
+
+#~ msgid "TEXT_INVITE_USER_SUCCESS"
+#~ msgstr "The user has successfully registered."
+
+#~ msgid "TEXT_INVITE_USER_EMPTY_USER_NAME"
+#~ msgstr "The username cannot be empty."
+
+#~ msgid "TEXT_CLAIM_USER_TOOLTIP"
+#~ msgstr "Register the user"
+
+#~ msgid "ACTION_CLAIM_USER"
+#~ msgstr "Register the user"
+
+#~ msgid "TEXT_DEVICE_INVITE_DEVICE_NAME_PLACEHOLDER"
+#~ msgstr "Device name"
+
+#~ msgid "TEXT_DEVICE_INVITE_INSTRUCTIONS"
+#~ msgstr ""
+#~ "You will have to transmit the following information to your new device to complete "
+#~ "the registration process. Please do not close this window while your new device "
+#~ "registers."
+
+#~ msgid "ACTION_TOKEN_COPY_TO_CLIPBOARD_TOOLTIP"
+#~ msgstr "Copy the token to the clipboard."
+
+#~ msgid "ACTION_URL_COPY_TO_CLIPBOARD_TOOLTIP"
+#~ msgstr "Copy the URL to the clipboard."
+
+#~ msgid "ACTION_DEVICE_COPY_TO_CLIPBOARD_TOOLTIP"
+#~ msgstr "Copy the device name to the clipboard."
+
+#~ msgid "ACTION_DEVICE_INVITE"
+#~ msgstr "Invite the device"
+
+#~ msgid "TEXT_DEVICE_INVITE_LABEL_URL"
+#~ msgstr "Invitation URL"
+
+#~ msgid "TEXT_DEVICE_INVITE_LABEL_DEVICE_NAME"
+#~ msgstr "Device name"
+
+#~ msgid "TEXT_DEVICE_INVITE_LABEL_TOKEN"
+#~ msgstr "Invitation token"
+
+#~ msgid "TEXT_USER_INVITE_USER_NAME_PLACEHOLDER"
+#~ msgstr "Username"
+
+#~ msgid "TEXT_USER_INVITE_CHECK_IS_ADMIN"
+#~ msgstr "User will be and administrator"
+
+#~ msgid "TEXT_USER_INVITE_INSTRUCTIONS"
+#~ msgstr ""
+#~ "You will have to transmit the following information to the user. It is good "
+#~ "practice to provide the transmit the information by two different channels (for "
+#~ "exemple, the URL by email and the six digits token by phone). Please do not close "
+#~ "this window while the user registers."
+
+#~ msgid "ACTION_USER_NAME_COPY_TO_CLIPBOARD_TOOLTIP"
+#~ msgstr "Copy the username to the clipboard."
+
+#~ msgid "ACTION_USER_INVITE"
+#~ msgstr "Invite the user"
+
+#~ msgid "TEXT_USER_INVITE_LABEL_URL"
+#~ msgstr "Invitation URL"
+
+#~ msgid "TEXT_USER_INVITE_LABEL_USERNAME"
+#~ msgstr "Username"
+
+#~ msgid "TEXT_USER_INVITE_LABEL_TOKEN"
+#~ msgstr "Invitation token"
+
+#~ msgid "TEXT_LABEL_USERNAME"
+#~ msgstr "Your username"
+
+#~ msgid "TEXT_LABEL_USERNAME_PLACEHOLDER"
+#~ msgstr "username"
