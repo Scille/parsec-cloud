@@ -6,7 +6,6 @@ from pendulum import Pendulum
 
 from parsec.crypto import PrivateKey
 from parsec.api.protocol import InvitationType
-from parsec.backend.invite import DeviceInvitation
 
 from tests.backend.common import (
     invite_1_claimer_wait_peer,
@@ -26,12 +25,11 @@ from tests.backend.common import (
 
 @pytest.fixture
 async def invitation(backend, alice):
-    invitation = DeviceInvitation(
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        greeter_human_handle=alice.human_handle,
         created_on=Pendulum(2000, 1, 2),
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
     return invitation
 
 

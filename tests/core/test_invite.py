@@ -4,7 +4,6 @@ import pytest
 import trio
 
 from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, InvitationType
-from parsec.backend.invite import DeviceInvitation, UserInvitation
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
     backend_authenticated_cmds_factory,
@@ -22,11 +21,8 @@ from parsec.core.invite import (
 
 @pytest.mark.trio
 async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
-    )
-    await running_backend.backend.invite.new(
-        organization_id=alice.organization_id, invitation=invitation
+    invitation = await running_backend.backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
@@ -119,13 +115,10 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
 async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     claimer_email = "zack@example.com"
 
-    invitation = UserInvitation(
-        claimer_email=claimer_email,
+    invitation = await running_backend.backend.invite.new_for_user(
+        organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        greeter_human_handle=alice.human_handle,
-    )
-    await running_backend.backend.invite.new(
-        organization_id=alice.organization_id, invitation=invitation
+        claimer_email=claimer_email,
     )
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
@@ -226,10 +219,9 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
 
 @pytest.mark.trio
 async def test_claimer_handle_reset(backend, running_backend, alice, alice_backend_cmds):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,

@@ -12,7 +12,6 @@ from parsec.api.protocol import (
     InvitationType,
     HandshakeBadIdentity,
 )
-from parsec.backend.invite import DeviceInvitation
 
 from tests.common import freeze_time
 from tests.backend.common import invite_new, invite_list, invite_delete, invite_info
@@ -22,7 +21,20 @@ from tests.backend.common import invite_new, invite_list, invite_delete, invite_
 async def test_user_create_and_info(
     backend, alice, alice_backend_sock, backend_invited_sock_factory
 ):
-    with freeze_time("2000-01-02"):
+    # Provide other unrelated invatitons that should stay unchanged
+    other_device_invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        created_on=Pendulum(2000, 1, 2),
+    )
+    other_user_invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="other@example.com",
+        created_on=Pendulum(2000, 1, 3),
+    )
+
+    with freeze_time("2000-01-04"):
         rep = await invite_new(
             alice_backend_sock, type=InvitationType.USER, claimer_email="zack@example.com"
         )
@@ -34,14 +46,25 @@ async def test_user_create_and_info(
         "status": "ok",
         "invitations": [
             {
+                "type": InvitationType.DEVICE,
+                "token": other_device_invitation.token,
+                "created_on": Pendulum(2000, 1, 2),
+                "status": InvitationStatus.IDLE,
+            },
+            {
+                "type": InvitationType.USER,
+                "token": other_user_invitation.token,
+                "created_on": Pendulum(2000, 1, 3),
+                "claimer_email": "other@example.com",
+                "status": InvitationStatus.IDLE,
+            },
+            {
                 "type": InvitationType.USER,
                 "token": token,
-                "created_on": Pendulum(2000, 1, 2),
+                "created_on": Pendulum(2000, 1, 4),
                 "claimer_email": "zack@example.com",
                 "status": InvitationStatus.IDLE,
-                "deleted_on": None,
-                "deleted_reason": None,
-            }
+            },
         ],
     }
 
@@ -65,7 +88,14 @@ async def test_user_create_and_info(
 async def test_device_create_and_info(
     backend, alice, alice_backend_sock, backend_invited_sock_factory
 ):
-    with freeze_time("2000-01-02"):
+    # Provide other unrelated invatitons that should stay unchanged
+    other_user_invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="other@example.com",
+        created_on=Pendulum(2000, 1, 2),
+    )
+    with freeze_time("2000-01-03"):
         rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
     assert rep == {"status": "ok", "token": ANY}
     token = rep["token"]
@@ -75,13 +105,18 @@ async def test_device_create_and_info(
         "status": "ok",
         "invitations": [
             {
+                "type": InvitationType.USER,
+                "token": other_user_invitation.token,
+                "created_on": Pendulum(2000, 1, 2),
+                "claimer_email": "other@example.com",
+                "status": InvitationStatus.IDLE,
+            },
+            {
                 "type": InvitationType.DEVICE,
                 "token": token,
-                "created_on": Pendulum(2000, 1, 2),
+                "created_on": Pendulum(2000, 1, 3),
                 "status": InvitationStatus.IDLE,
-                "deleted_on": None,
-                "deleted_reason": None,
-            }
+            },
         ],
     }
 
@@ -102,12 +137,11 @@ async def test_device_create_and_info(
 
 @pytest.mark.trio
 async def test_delete(alice, backend, alice_backend_sock, backend_invited_sock_factory):
-    invitation = DeviceInvitation(
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        greeter_human_handle=alice.human_handle,
         created_on=Pendulum(2000, 1, 2),
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     with freeze_time("2000-01-03"):
         rep = await invite_delete(
@@ -115,20 +149,9 @@ async def test_delete(alice, backend, alice_backend_sock, backend_invited_sock_f
         )
     assert rep == {"status": "ok"}
 
+    # Deleted invitation are no longer visible
     rep = await invite_list(alice_backend_sock)
-    assert rep == {
-        "status": "ok",
-        "invitations": [
-            {
-                "type": InvitationType.DEVICE,
-                "token": invitation.token,
-                "created_on": Pendulum(2000, 1, 2),
-                "status": InvitationStatus.DELETED,
-                "deleted_on": Pendulum(2000, 1, 3),
-                "deleted_reason": InvitationDeletedReason.CANCELLED,
-            }
-        ],
-    }
+    assert rep == {"status": "ok", "invitations": []}
 
     # Can no longer use this invitation to connect to the backend
     with pytest.raises(HandshakeBadIdentity):
@@ -142,31 +165,185 @@ async def test_delete(alice, backend, alice_backend_sock, backend_invited_sock_f
 
 
 @pytest.mark.trio
+async def test_user_invitation_double_create(alice, backend, alice_backend_sock):
+    claimer_email = "zack@example.com"
+
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        claimer_email=claimer_email,
+        greeter_user_id=alice.user_id,
+        created_on=Pendulum(2000, 1, 2),
+    )
+
+    # Calling invite_new should be idempotent
+    with freeze_time("2000-01-03"):
+        rep = await invite_new(
+            alice_backend_sock, type=InvitationType.USER, claimer_email=claimer_email
+        )
+        assert rep == {"status": "ok", "token": invitation.token}
+
+        rep = await invite_new(
+            alice_backend_sock, type=InvitationType.USER, claimer_email=claimer_email
+        )
+        assert rep == {"status": "ok", "token": invitation.token}
+
+    rep = await invite_list(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "invitations": [
+            {
+                "type": InvitationType.USER,
+                "token": invitation.token,
+                "created_on": Pendulum(2000, 1, 2),
+                "claimer_email": claimer_email,
+                "status": InvitationStatus.IDLE,
+            }
+        ],
+    }
+
+
+@pytest.mark.trio
+async def test_device_invitation_double_create(
+    alice, backend, alice_backend_sock, backend_invited_sock_factory
+):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        created_on=Pendulum(2000, 1, 2),
+    )
+
+    # Calling invite_new should be idempotent
+    with freeze_time("2000-01-03"):
+        rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
+        assert rep == {"status": "ok", "token": invitation.token}
+
+        rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
+        assert rep == {"status": "ok", "token": invitation.token}
+
+    rep = await invite_list(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "invitations": [
+            {
+                "type": InvitationType.DEVICE,
+                "token": invitation.token,
+                "created_on": Pendulum(2000, 1, 2),
+                "status": InvitationStatus.IDLE,
+            }
+        ],
+    }
+
+
+@pytest.mark.trio
+async def test_user_invitation_recreate_deleted(
+    alice, backend, alice_backend_sock, backend_invited_sock_factory
+):
+    claimer_email = "zack@example.com"
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        claimer_email=claimer_email,
+        greeter_user_id=alice.user_id,
+        created_on=Pendulum(2000, 1, 2),
+    )
+    await backend.invite.delete(
+        organization_id=alice.organization_id,
+        greeter=invitation.greeter_user_id,
+        token=invitation.token,
+        on=Pendulum(2000, 1, 3),
+        reason=InvitationDeletedReason.FINISHED,
+    )
+
+    # Deleted invitation shoudn't prevent from creating a new one
+
+    with freeze_time("2000-01-04"):
+        rep = await invite_new(
+            alice_backend_sock, type=InvitationType.USER, claimer_email=claimer_email
+        )
+    assert rep == {"status": "ok", "token": ANY}
+    new_token = rep["token"]
+    assert new_token != invitation.token
+
+    rep = await invite_list(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "invitations": [
+            {
+                "type": InvitationType.USER,
+                "token": new_token,
+                "created_on": Pendulum(2000, 1, 4),
+                "claimer_email": claimer_email,
+                "status": InvitationStatus.IDLE,
+            }
+        ],
+    }
+
+
+@pytest.mark.trio
+async def test_device_invitation_recreate_deleted(
+    alice, backend, alice_backend_sock, backend_invited_sock_factory
+):
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        created_on=Pendulum(2000, 1, 2),
+    )
+    await backend.invite.delete(
+        organization_id=alice.organization_id,
+        greeter=invitation.greeter_user_id,
+        token=invitation.token,
+        on=Pendulum(2000, 1, 3),
+        reason=InvitationDeletedReason.FINISHED,
+    )
+
+    # Deleted invitation shoudn't prevent from creating a new one
+
+    with freeze_time("2000-01-04"):
+        rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
+    assert rep == {"status": "ok", "token": ANY}
+    new_token = rep["token"]
+    assert new_token != invitation.token
+
+    rep = await invite_list(alice_backend_sock)
+    assert rep == {
+        "status": "ok",
+        "invitations": [
+            {
+                "type": InvitationType.DEVICE,
+                "token": new_token,
+                "created_on": Pendulum(2000, 1, 4),
+                "status": InvitationStatus.IDLE,
+            }
+        ],
+    }
+
+
+@pytest.mark.trio
 async def test_delete_invitation_while_claimer_connected(
     backend, alice, backend_invited_sock_factory
 ):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="zack@example.com",
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
-
-    other_invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    other_invitation = await backend.invite.new_for_user(
+        organization_id=alice.organization_id,
+        greeter_user_id=alice.user_id,
+        claimer_email="kcaz@example.com",
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=other_invitation)
 
     # Invitation is valid so handshake is allowed
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,
-        invitation_type=InvitationType.DEVICE,
+        invitation_type=InvitationType.USER,
         token=invitation.token,
         freeze_on_transport_error=False,
     ) as invited_sock:
         async with backend_invited_sock_factory(
             backend,
             organization_id=alice.organization_id,
-            invitation_type=InvitationType.DEVICE,
+            invitation_type=InvitationType.USER,
             token=other_invitation.token,
             freeze_on_transport_error=False,
         ) as other_invited_sock:
@@ -187,17 +364,16 @@ async def test_delete_invitation_while_claimer_connected(
                         rep = await invite_info(invited_sock)
                         assert rep == {"status": "already_deleted"}
 
-            # However other invitation shouldn't have been affected
+            # However other invitations shouldn't have been affected
             rep = await invite_info(other_invited_sock)
             assert rep["status"] == "ok"
 
 
 @pytest.mark.trio
 async def test_already_deleted(alice, backend, alice_backend_sock, backend_invited_sock_factory):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     await backend.invite.delete(
         organization_id=alice.organization_id,
@@ -217,10 +393,9 @@ async def test_already_deleted(alice, backend, alice_backend_sock, backend_invit
 async def test_isolated_between_users(
     alice, bob, backend, backend_invited_sock_factory, alice_backend_sock
 ):
-    invitation = DeviceInvitation(
-        greeter_user_id=bob.user_id, greeter_human_handle=bob.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=bob.organization_id, greeter_user_id=bob.user_id
     )
-    await backend.invite.new(organization_id=bob.organization_id, invitation=invitation)
 
     rep = await invite_list(alice_backend_sock)
     assert rep == {"status": "ok", "invitations": []}
@@ -235,10 +410,9 @@ async def test_isolated_between_users(
 async def test_isolated_between_organizations(
     alice, otheralice, backend, backend_invited_sock_factory, alice_backend_sock
 ):
-    invitation = DeviceInvitation(
-        greeter_user_id=otheralice.user_id, greeter_human_handle=otheralice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=otheralice.organization_id, greeter_user_id=otheralice.user_id
     )
-    await backend.invite.new(organization_id=otheralice.organization_id, invitation=invitation)
 
     rep = await invite_list(alice_backend_sock)
     assert rep == {"status": "ok", "invitations": []}

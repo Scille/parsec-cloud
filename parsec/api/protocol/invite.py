@@ -105,8 +105,6 @@ class InviteListItemUserSchema(BaseSchema):
     created_on = fields.DateTime(required=True)
     claimer_email = fields.String(required=True)
     status = InvitationStatusField(required=True)
-    deleted_on = fields.DateTime(allow_none=True, missing=None)
-    deleted_reason = InvitationDeletedReasonField(allow_none=True, missing=None)
 
 
 class InviteListItemDeviceSchema(BaseSchema):
@@ -114,8 +112,6 @@ class InviteListItemDeviceSchema(BaseSchema):
     token = fields.UUID(required=True)
     created_on = fields.DateTime(required=True)
     status = InvitationStatusField(required=True)
-    deleted_on = fields.DateTime(allow_none=True, missing=None)
-    deleted_reason = InvitationDeletedReasonField(allow_none=True, missing=None)
 
 
 class InviteListItemSchema(OneOfSchema):

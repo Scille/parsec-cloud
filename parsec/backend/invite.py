@@ -44,10 +44,6 @@ class InvitationError(Exception):
     pass
 
 
-class InvitationAlreadyExistsError(InvitationError):
-    pass
-
-
 class InvitationNotFoundError(InvitationError):
     pass
 
@@ -103,8 +99,6 @@ class UserInvitation:
     token: UUID = attr.ib(factory=uuid4)
     created_on: Pendulum = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
-    deleted_on: Optional[Pendulum] = None
-    deleted_reason: Optional[InvitationDeletedReason] = None
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -117,8 +111,6 @@ class DeviceInvitation:
     token: UUID = attr.ib(factory=uuid4)
     created_on: Pendulum = attr.ib(factory=pendulum_now)
     status: InvitationStatus = InvitationStatus.IDLE
-    deleted_on: Optional[Pendulum] = None
-    deleted_reason: Optional[InvitationDeletedReason] = None
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
@@ -163,24 +155,21 @@ class BaseInviteComponent:
     @catch_protocol_errors
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
+
+        # TODO: implement send email feature
         if msg["type"] == InvitationType.USER:
-            # TODO: implement send email feature
             if msg["send_email"]:
                 return invite_new_serializer.rep_dump({"status": "not_implemented"})
-            invitation = UserInvitation(
+            invitation = await self.new_for_user(
+                organization_id=client_ctx.organization_id,
                 greeter_user_id=client_ctx.user_id,
-                greeter_human_handle=client_ctx.human_handle,
                 claimer_email=msg["claimer_email"],
             )
-        else:  # Device
-            invitation = DeviceInvitation(
-                greeter_user_id=client_ctx.user_id, greeter_human_handle=client_ctx.human_handle
-            )
-        try:
-            await self.new(organization_id=client_ctx.organization_id, invitation=invitation)
 
-        except InvitationAlreadyExistsError:
-            return {"status": "already_exists"}
+        else:  # Device
+            invitation = await self.new_for_device(
+                organization_id=client_ctx.organization_id, greeter_user_id=client_ctx.user_id
+            )
 
         return invite_new_serializer.rep_dump({"status": "ok", "token": invitation.token})
 
@@ -225,8 +214,6 @@ class BaseInviteComponent:
                             item, "claimer_email", None
                         ),  # Only available for user
                         "status": item.status,
-                        "deleted_on": item.deleted_on,
-                        "deleted_reason": item.deleted_reason,
                     }
                     for item in invitations
                 ]
@@ -643,10 +630,26 @@ class BaseInviteComponent:
         """
         raise NotImplementedError()
 
-    async def new(self, organization_id: OrganizationID, invitation: Invitation) -> None:
+    async def new_for_user(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        claimer_email: str,
+        created_on: Optional[Pendulum] = None,
+    ) -> UserInvitation:
         """
-        Raises:
-            InvitationAlreadyExistsError
+        Raise: Nothing
+        """
+        raise NotImplementedError()
+
+    async def new_for_device(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        created_on: Optional[Pendulum] = None,
+    ) -> DeviceInvitation:
+        """
+        Raise: Nothing
         """
         raise NotImplementedError()
 

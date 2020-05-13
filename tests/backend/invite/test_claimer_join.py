@@ -5,7 +5,6 @@ import trio
 from pendulum import Pendulum
 
 from parsec.api.protocol import InvitationType, InvitationStatus
-from parsec.backend.invite import DeviceInvitation
 
 from tests.backend.common import (
     events_subscribe,
@@ -19,12 +18,11 @@ from tests.backend.common import (
 async def test_claimer_join_and_leave(
     alice, backend, bob_backend_sock, alice_backend_sock, backend_invited_sock_factory
 ):
-    invitation = DeviceInvitation(
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
-        greeter_human_handle=alice.human_handle,
         created_on=Pendulum(2000, 1, 2),
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     await events_subscribe(alice_backend_sock)
     await events_subscribe(bob_backend_sock)
@@ -60,8 +58,6 @@ async def test_claimer_join_and_leave(
                     "token": invitation.token,
                     "created_on": Pendulum(2000, 1, 2),
                     "status": InvitationStatus.READY,
-                    "deleted_on": None,
-                    "deleted_reason": None,
                 }
             ],
         }
@@ -85,8 +81,6 @@ async def test_claimer_join_and_leave(
                 "token": invitation.token,
                 "created_on": Pendulum(2000, 1, 2),
                 "status": InvitationStatus.IDLE,
-                "deleted_on": None,
-                "deleted_reason": None,
             }
         ],
     }

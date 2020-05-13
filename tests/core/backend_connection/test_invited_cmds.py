@@ -5,7 +5,6 @@ import trio
 from uuid import uuid4
 
 from parsec.api.protocol import INVITED_CMDS, InvitationType
-from parsec.backend.invite import DeviceInvitation
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     BackendNotAvailable,
@@ -18,10 +17,9 @@ from tests.core.backend_connection.common import ALL_CMDS
 
 @pytest.fixture
 async def invitation_addr(backend, alice):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
     return BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,
@@ -63,11 +61,8 @@ async def test_ping(running_backend, invitation_addr):
 
 @pytest.mark.trio
 async def test_handshake_organization_expired(running_backend, expiredorg, expiredorgalice):
-    invitation = DeviceInvitation(
-        greeter_user_id=expiredorgalice.user_id, greeter_human_handle=expiredorgalice.human_handle
-    )
-    await running_backend.backend.invite.new(
-        organization_id=expiredorgalice.organization_id, invitation=invitation
+    invitation = await running_backend.backend.invite.new_for_device(
+        organization_id=expiredorgalice.organization_id, greeter_user_id=expiredorgalice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=running_backend.addr,

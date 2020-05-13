@@ -12,7 +12,6 @@ from parsec.api.protocol import (
     APIV1_AUTHENTICATED_CMDS,
     APIV1_ANONYMOUS_CMDS,
 )
-from parsec.backend.invite import DeviceInvitation
 
 
 async def check_forbidden_cmds(backend_sock, cmds):
@@ -39,10 +38,9 @@ async def check_allowed_cmds(backend_sock, cmds):
 
 @pytest.mark.trio
 async def test_invited_has_limited_access(backend, backend_invited_sock_factory, alice):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
     async with backend_invited_sock_factory(
         backend,
         organization_id=alice.organization_id,

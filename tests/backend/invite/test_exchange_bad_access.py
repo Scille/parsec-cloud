@@ -9,7 +9,6 @@ from functools import partial
 from parsec.crypto import PrivateKey
 from parsec.api.transport import TransportError
 from parsec.api.protocol import InvitationDeletedReason, InvitationType
-from parsec.backend.invite import DeviceInvitation
 
 from tests.backend.common import (
     ping,
@@ -32,10 +31,9 @@ from tests.backend.common import (
 @pytest.mark.parametrize("type", ("deleted_invitation", "unknown_token"))
 async def test_greeter_exchange_bad_access(alice, backend, alice_backend_sock, type):
     if type == "deleted_invitation":
-        invitation = DeviceInvitation(
-            greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+        invitation = await backend.invite.new_for_device(
+            organization_id=alice.organization_id, greeter_user_id=alice.user_id
         )
-        await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
         await backend.invite.delete(
             organization_id=alice.organization_id,
             greeter=alice.user_id,
@@ -85,10 +83,9 @@ async def test_greeter_exchange_bad_access(alice, backend, alice_backend_sock, t
 async def test_invited_connection_closed_on_invitation_deletion(
     alice, backend, backend_invited_sock_factory
 ):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     async with backend_invited_sock_factory(
         backend,
@@ -126,10 +123,9 @@ async def test_invited_connection_closed_on_invitation_deletion(
     ),
 )
 async def test_claimer_exchange_bad_access(alice, backend, backend_invited_sock_factory, action):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     async with backend_invited_sock_factory(
         backend,

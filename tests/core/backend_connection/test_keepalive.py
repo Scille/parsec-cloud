@@ -5,7 +5,6 @@ import trio
 
 from parsec.api.transport import Transport, BytesMessage, Ping, Pong
 from parsec.api.protocol import InvitationType
-from parsec.backend.invite import DeviceInvitation
 from parsec.core.types import BackendInvitationAddr
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
@@ -81,10 +80,9 @@ async def test_authenticated_cmd_keepalive(mock_clock, monkeypatch, running_back
 async def test_invited_cmd_keepalive(
     mock_clock, monkeypatch, backend, running_backend, backend_addr, alice
 ):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
     invitation_addr = BackendInvitationAddr.build(
         backend_addr=alice.organization_addr,
         organization_id=alice.organization_id,

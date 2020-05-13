@@ -2,9 +2,9 @@
 
 import attr
 from uuid import UUID
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from collections import defaultdict
-from pendulum import Pendulum
+from pendulum import Pendulum, now as pendulum_now
 
 from parsec.api.protocol import OrganizationID, UserID, InvitationStatus, InvitationDeletedReason
 from parsec.backend.invite import (
@@ -13,8 +13,9 @@ from parsec.backend.invite import (
     ConduitListenCtx,
     BaseInviteComponent,
     Invitation,
+    UserInvitation,
+    DeviceInvitation,
     InvitationNotFoundError,
-    InvitationAlreadyExistsError,
     InvitationAlreadyDeletedError,
     InvitationInvalidStateError,
 )
@@ -30,6 +31,7 @@ class Conduit:
 class OrganizationStore:
     def __init__(self):
         self.invitations = {}
+        self.deleted_invitations = {}
         self.conduits = defaultdict(Conduit)
 
 
@@ -38,9 +40,24 @@ class MemoryInviteComponent(BaseInviteComponent):
         super().__init__(*args, **kwargs)
         self._send_event = send_event
         self._organizations = defaultdict(OrganizationStore)
+        self._user_component = None
 
     def register_components(self, **other_components):
-        pass
+        self._user_component = other_components["user"]
+
+    def _get_invitation_and_conduit(
+        self,
+        organization_id: OrganizationID,
+        token: UUID,
+        expected_greeter: Optional[UserID] = None,
+    ) -> Tuple[Invitation, Conduit]:
+        org = self._organizations[organization_id]
+        invitation = org.invitations.get(token)
+        if not invitation or (expected_greeter and invitation.greeter_user_id != expected_greeter):
+            raise InvitationNotFoundError(token)
+        if token in org.deleted_invitations:
+            raise InvitationAlreadyDeletedError(token)
+        return invitation, org.conduits[token]
 
     async def _conduit_talk(
         self,
@@ -51,16 +68,9 @@ class MemoryInviteComponent(BaseInviteComponent):
         payload: bytes,
     ) -> ConduitListenCtx:
         is_greeter = greeter is not None
-        org = self._organizations[organization_id]
-        invitation = org.invitations.get(token)
-
-        if not invitation or (is_greeter and invitation.greeter_user_id != greeter):
-            raise InvitationNotFoundError(token)
-
-        if invitation.status == InvitationStatus.DELETED:
-            raise InvitationAlreadyDeletedError(token)
-
-        conduit = org.conduits[token]
+        _, conduit = self._get_invitation_and_conduit(
+            organization_id, token, expected_greeter=greeter
+        )
         if is_greeter:
             curr_our_payload = conduit.greeter_payload
             curr_peer_payload = conduit.claimer_payload
@@ -106,20 +116,9 @@ class MemoryInviteComponent(BaseInviteComponent):
         )
 
     async def _conduit_listen(self, ctx: ConduitListenCtx) -> Optional[bytes]:
-        if ctx.payload == b"retry nonce":
-            import pdb
-
-            pdb.set_trace()
-        org = self._organizations[ctx.organization_id]
-        invitation = org.invitations.get(ctx.token)
-
-        if not invitation or (ctx.is_greeter and invitation.greeter_user_id != ctx.greeter):
-            raise InvitationNotFoundError(ctx.token)
-
-        if invitation.status == InvitationStatus.DELETED:
-            raise InvitationAlreadyDeletedError(ctx.token)
-
-        conduit = org.conduits[ctx.token]
+        _, conduit = self._get_invitation_and_conduit(
+            ctx.organization_id, ctx.token, expected_greeter=ctx.greeter
+        )
         if ctx.is_greeter:
             curr_our_payload = conduit.greeter_payload
             curr_peer_payload = conduit.claimer_payload
@@ -164,12 +163,67 @@ class MemoryInviteComponent(BaseInviteComponent):
         # Peer hasn't answered yet, we should wait and retry later...
         return None
 
-    async def new(self, organization_id: OrganizationID, invitation: Invitation) -> None:
-        assert invitation.status == InvitationStatus.IDLE  # Sanity check
+    async def new_for_user(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        claimer_email: str,
+        created_on: Optional[Pendulum] = None,
+    ) -> UserInvitation:
+        return self._new(
+            organization_id=organization_id,
+            greeter_user_id=greeter_user_id,
+            claimer_email=claimer_email,
+            created_on=created_on,
+        )
+
+    async def new_for_device(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        created_on: Optional[Pendulum] = None,
+    ) -> DeviceInvitation:
+        return self._new(
+            organization_id=organization_id, greeter_user_id=greeter_user_id, created_on=created_on
+        )
+
+    def _new(
+        self,
+        organization_id: OrganizationID,
+        greeter_user_id: UserID,
+        created_on: Optional[Pendulum],
+        claimer_email: Optional[str] = None,
+    ) -> Invitation:
         org = self._organizations[organization_id]
-        if invitation.token in org.invitations:
-            raise InvitationAlreadyExistsError(invitation.token)
-        org.invitations[invitation.token] = invitation
+        for invitation in org.invitations.values():
+            if (
+                invitation.greeter_user_id == greeter_user_id
+                and getattr(invitation, "claimer_email", None) == claimer_email
+                and invitation.token not in org.deleted_invitations
+            ):
+                # An invitation already exists for what the user has asked for
+                return invitation
+        else:
+            # Must create a new invitation
+            created_on = created_on or pendulum_now()
+            greeter_human_handle = self._user_component._get_user(
+                organization_id, greeter_user_id
+            ).human_handle
+            if claimer_email:
+                invitation = UserInvitation(
+                    greeter_user_id=greeter_user_id,
+                    greeter_human_handle=greeter_human_handle,
+                    claimer_email=claimer_email,
+                    created_on=created_on,
+                )
+            else:  # Device
+                invitation = DeviceInvitation(
+                    greeter_user_id=greeter_user_id,
+                    greeter_human_handle=greeter_human_handle,
+                    created_on=created_on,
+                )
+            org.invitations[invitation.token] = invitation
+            return invitation
 
     async def delete(
         self,
@@ -179,15 +233,9 @@ class MemoryInviteComponent(BaseInviteComponent):
         on: Pendulum,
         reason: InvitationDeletedReason,
     ) -> None:
+        self._get_invitation_and_conduit(organization_id, token, expected_greeter=greeter)
         org = self._organizations[organization_id]
-        invitation = org.invitations.get(token)
-        if not invitation or invitation.greeter_user_id != greeter:
-            raise InvitationNotFoundError(token)
-        if invitation.status == InvitationStatus.DELETED:
-            raise InvitationAlreadyDeletedError(token)
-        org.invitations[token] = invitation.evolve(
-            status=InvitationStatus.DELETED, deleted_on=on, deleted_reason=reason
-        )
+        org.deleted_invitations[token] = (on, reason)
         await self._send_event(
             "invite.status_changed",
             organization_id=organization_id,
@@ -201,24 +249,16 @@ class MemoryInviteComponent(BaseInviteComponent):
         invitations_with_claimer_online = self._claimers_ready[organization_id]
         invitations = []
         for invitation in org.invitations.values():
-            if invitation.greeter_user_id != greeter:
+            if invitation.greeter_user_id != greeter or invitation.token in org.deleted_invitations:
                 continue
-            if (
-                invitation.status != InvitationStatus.DELETED
-                and invitation.token in invitations_with_claimer_online
-            ):
+            if invitation.token in invitations_with_claimer_online:
                 invitations.append(invitation.evolve(status=InvitationStatus.READY))
             else:
                 invitations.append(invitation)
-        return invitations
+        return sorted(invitations, key=lambda x: x.created_on)
 
     async def info(self, organization_id: OrganizationID, token: UUID) -> Invitation:
-        org = self._organizations[organization_id]
-        invitation = org.invitations.get(token)
-        if not invitation:
-            raise InvitationNotFoundError(token)
-        if invitation.status == InvitationStatus.DELETED:
-            raise InvitationAlreadyDeletedError(token)
+        invitation, _ = self._get_invitation_and_conduit(organization_id, token)
         return invitation
 
     async def claimer_joined(

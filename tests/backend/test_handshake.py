@@ -14,7 +14,6 @@ from parsec.api.protocol import (
     HandshakeBadIdentity,
     HandshakeOrganizationExpired,
 )
-from parsec.backend.invite import UserInvitation, DeviceInvitation
 
 
 @pytest.mark.trio
@@ -107,16 +106,15 @@ async def test_authenticated_handshake_bad_rvk(backend, server_factory, alice, o
 @pytest.mark.parametrize("invitation_type", InvitationType)
 async def test_invited_handshake_good(backend, server_factory, alice, invitation_type):
     if invitation_type == InvitationType.USER:
-        invitation = UserInvitation(
+        invitation = await backend.invite.new_for_user(
+            organization_id=alice.organization_id,
             greeter_user_id=alice.user_id,
-            greeter_human_handle=alice.human_handle,
             claimer_email="zack@example.com",
         )
     else:  # Claim device
-        invitation = DeviceInvitation(
-            greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+        invitation = await backend.invite.new_for_device(
+            organization_id=alice.organization_id, greeter_user_id=alice.user_id
         )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     ch = InvitedClientHandshake(
         organization_id=alice.organization_id,
@@ -159,10 +157,9 @@ async def test_invited_handshake_bad_token(backend, server_factory, coolorg, inv
 
 @pytest.mark.trio
 async def test_invited_handshake_bad_token_type(backend, server_factory, alice):
-    invitation = DeviceInvitation(
-        greeter_user_id=alice.user_id, greeter_human_handle=alice.human_handle
+    invitation = await backend.invite.new_for_device(
+        organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
-    await backend.invite.new(organization_id=alice.organization_id, invitation=invitation)
 
     ch = InvitedClientHandshake(
         organization_id=alice.organization_id,
