@@ -70,7 +70,7 @@ class PathElement:
     oracle_root = attr.ib()
 
     def is_workspace(self):
-        return len(Path(self.absolute_path).parts) == 2
+        return len(Path(self.absolute_path).parts) == 1
 
     def to_oracle(self):
         return self.oracle_root / self.absolute_path[1:]
@@ -104,7 +104,7 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
 
             async def _bootstrap(user_fs, mountpoint_manager):
                 wid = await user_fs.workspace_create("w")
-                await mountpoint_manager.mount_workspace(wid)
+                self.parsec_root = await mountpoint_manager.mount_workspace(wid)
 
             self.mountpoint_service = mountpoint_service_factory(_bootstrap)
 
@@ -116,7 +116,7 @@ def test_folder_operations(tmpdir, caplog, hypothesis_settings, mountpoint_servi
             (oracle_root / "w").mkdir()
             oracle_root.chmod(0o500)  # Also protect workspace from deletion
 
-            return PathElement(f"/w", self.mountpoint_service.base_mountpoint, oracle_root)
+            return PathElement(f"/", self.parsec_root, oracle_root / "w")
 
         def teardown(self):
             if hasattr(self, "mountpoint_service"):
