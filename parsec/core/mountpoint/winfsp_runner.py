@@ -19,11 +19,16 @@ __all__ = ("winfsp_mountpoint_runner",)
 logger = get_logger()
 
 
-async def _bootstrap_mountpoint(base_mountpoint_path: Path, workspace_name) -> Path:
-    drives = [Path(f"{chr(letter)}:\\") for letter in range(ord("D"), ord("Z") + 1)]
+async def _find_next_available_drive(starting_from="G") -> Path:
+    letters = map(chr, range(ord(starting_from), ord("Z") + 1))
+    drives = [Path(f"{letter}:\\") for letter in letters]
     for drive in drives:
-        if not await trio.to_thread.run_sync(drive.exists):
-            return drive
+        try:
+            if not await trio.to_thread.run_sync(drive.exists):
+                return drive
+        # Might fail for some unrelated reasons
+        except OSError:
+            continue
 
 
 def _generate_volume_serial_number(device, workspace_id):
@@ -65,7 +70,7 @@ async def winfsp_mountpoint_runner(
     trio_token = trio.hazmat.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
 
-    mountpoint_path = await _bootstrap_mountpoint(base_mountpoint_path, workspace_name)
+    mountpoint_path = await _find_next_available_drive()
 
     if config.get("debug", False):
         enable_debug_log()
