@@ -38,3 +38,22 @@ class ParsecApp(QApplication):
     @classmethod
     def is_device_connected(cls, org_id, device_id):
         return f"{org_id}:{device_id}" in cls.connected_devices
+
+    @classmethod
+    def has_active_modal(cls):
+        if cls.activeModalWidget():
+            return True
+        mw = cls.get_main_window()
+        if not mw:
+            return False
+        for win in mw.children():
+            if win.objectName() == "GreyedDialog":
+                return True
+        return False
+
+    @classmethod
+    def get_main_window(cls):
+        for win in cls.topLevelWidgets():
+            if win.objectName() == "MainWindow":
+                return win
+        return None
