@@ -6,8 +6,10 @@ class InviteError(Exception):
 
 
 class InvitePeerResetError(InviteError):
-    pass
+    def __init__(self, msg="Claim operation reset by peer"):
+        super().__init__(msg)
 
 
 class InviteNotAvailableError(InviteError):
-    pass
+    def __init__(self, msg="Invitation not avaialble"):
+        super().__init__(msg)

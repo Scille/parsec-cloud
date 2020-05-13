@@ -102,13 +102,13 @@ async def start_task(nursery, corofn, *args, name=None) -> TaskStatus:
     return await nursery.start(TaskStatus.wrap_task, corofn, *args, name=name)
 
 
-def trio_run(async_fn, *args, use_asyncio=False):
+def trio_run(async_fn, *args, use_asyncio=False, monitor_tasks=True):
     if use_asyncio:
         # trio_asyncio is an optional dependency
         import trio_asyncio
 
         return trio_asyncio.run(async_fn, *args)
-    instruments = (TaskMonitoringInstrument(),)
+    instruments = (TaskMonitoringInstrument(),) if monitor_tasks else ()
     return trio.run(async_fn, *args, instruments=instruments)
 
 
