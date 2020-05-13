@@ -207,6 +207,14 @@ def winreg_write_user_dword(key, name, value):
         winreg.SetValueEx(key_obj, name, None, winreg.REG_DWORD, value)
 
 
+def winreg_delete_user_dword(key, name):
+    import winreg
+
+    hkcu = winreg.HKEY_CURRENT_USER
+    with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
+        winreg.DeleteValue(key_obj, name)
+
+
 def winreg_has_user_key(key):
     import winreg
 
@@ -247,3 +255,9 @@ def set_acrobat_app_container_enabled(value):
     if not is_acrobat_reader_dc_present():
         return
     winreg_write_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER, value)
+
+
+def del_acrobat_app_container_enabled():
+    if not is_acrobat_reader_dc_present():
+        return
+    winreg_delete_user_dword(ACROBAT_READER_DC_PRIVILEGED, ENABLE_APP_CONTAINER)

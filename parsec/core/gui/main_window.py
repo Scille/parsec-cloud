@@ -42,6 +42,14 @@ from parsec.core.gui.ui.main_window import Ui_MainWindow
 logger = get_logger()
 
 
+# Helper
+
+
+def major_minor(version):
+    major, minor, *_ = version.split(".")
+    return int(major), int(minor)
+
+
 class MainWindow(QMainWindow, Ui_MainWindow):
     foreground_needed = pyqtSignal()
     new_instance_needed = pyqtSignal(object)
@@ -385,22 +393,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
 
         # For each parsec update
-        if self.config.gui_last_version != PARSEC_VERSION:
+        if self.config.gui_last_version and major_minor(self.config.gui_last_version) <= (1, 13):
 
-            # Ask for acrobat reader workaround
+            # Revert the acrobat reader workaround
             if (
                 platform.system() == "Windows"
                 and win_registry.is_acrobat_reader_dc_present()
-                and win_registry.get_acrobat_app_container_enabled()
+                and not win_registry.get_acrobat_app_container_enabled()
             ):
-                r = ask_question(
-                    self,
-                    _("TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"),
-                    _("TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"),
-                    [_("ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"), _("ACTION_NO")],
-                )
-                if r == _("ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"):
-                    win_registry.set_acrobat_app_container_enabled(False)
+                win_registry.del_acrobat_app_container_enabled()
 
             # Acknowledge the changes
             self.event_bus.send("gui.config.changed", gui_last_version=PARSEC_VERSION)

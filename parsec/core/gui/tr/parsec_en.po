@@ -1627,22 +1627,6 @@ msgstr "Allow error reporting"
 msgid "ACTION_NO"
 msgstr "No"
 
-msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
-msgstr "Restore compatibility with Acrobat Reader DC"
-
-msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"
-msgstr ""
-"The current configuration of Acrobat Reader DC is not compatible with PARSEC.<br />\n"
-"In its current state, Acrobat will not be able to open PDF files from the PARSEC "
-"workspaces.<br /><br />\n"
-"\n"
-"Do you allow Parsec to restore compatibility by disabling the \"Run in AppContainer\" "
-"feature from the Acrobat configuration? This option is accessible from the PARSEC "
-"settings if necessary."
-
-msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
-msgstr "Disable Acrobat Containers"
-
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
 msgstr "Welcome to Parsec!"
 

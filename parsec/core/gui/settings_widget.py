@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui import lang
 from parsec.core.gui.lang import translate as _
-from parsec.core.gui import win_registry
 from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.new_version import CheckNewVersion
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
@@ -19,16 +18,13 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.event_bus = event_bus
         self.jobs_ctx = jobs_ctx
         self.setupUi(self)
+
         if platform.system() != "Windows":
             self.widget_version.hide()
-            self.widget_misc.hide()
-        else:
-            if not win_registry.is_acrobat_reader_dc_present():
-                self.widget_misc.hide()
-            else:
-                self.check_acrobat_container.setChecked(
-                    not win_registry.get_acrobat_app_container_enabled()
-                )
+
+        # TODO: remove the old acrobat compatibility section
+        self.widget_misc.hide()
+
         self.button_save.clicked.connect(self.save)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None
@@ -48,11 +44,6 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         d.exec_()
 
     def save(self):
-        if platform.system() == "Windows" and win_registry.is_acrobat_reader_dc_present():
-            win_registry.set_acrobat_app_container_enabled(
-                not self.check_acrobat_container.isChecked()
-            )
-
         self.event_bus.send(
             "gui.config.changed",
             telemetry_enabled=self.check_box_send_data.isChecked(),
