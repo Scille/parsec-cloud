@@ -304,10 +304,9 @@ human_find = CmdSock(
 user_create = CmdSock(
     "user_create",
     user_create_serializer,
-    parse_args=lambda self, user_certificate, device_certificate, invitation_token=None: {
+    parse_args=lambda self, user_certificate, device_certificate: {
         "user_certificate": user_certificate,
         "device_certificate": device_certificate,
-        "invitation_token": invitation_token,
     },
 )
 user_revoke = CmdSock(
@@ -320,10 +319,7 @@ user_revoke = CmdSock(
 device_create = CmdSock(
     "device_create",
     device_create_serializer,
-    parse_args=lambda self, device_certificate, invitation_token=None: {
-        "device_certificate": device_certificate,
-        "invitation_token": invitation_token,
-    },
+    parse_args=lambda self, device_certificate: {"device_certificate": device_certificate},
 )
 
 
