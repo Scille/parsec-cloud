@@ -27,6 +27,9 @@ class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     bootstrap_token = fields.String(required=True)
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    # Same certificates than above, but expurged of human_handle/device_label
+    redacted_user_certificate = fields.Bytes(allow_none=True, missing=None)
+    redacted_device_certificate = fields.Bytes(allow_none=True, missing=None)
     root_verify_key = fields.VerifyKey(required=True)
 
 
@@ -37,21 +40,6 @@ class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
 # TODO: remove me once API v1 is deprecated
 apiv1_organization_bootstrap_serializer = CmdSerializer(
     APIV1_OrganizationBootstrapReqSchema, APIV1_OrganizationBootstrapRepSchema
-)
-
-
-class OrganizationBootstrapReqSchema(BaseReqSchema):
-    user_certificate = fields.Bytes(required=True)
-    device_certificate = fields.Bytes(required=True)
-    root_verify_key = fields.VerifyKey(required=True)
-
-
-class OrganizationBootstrapRepSchema(BaseRepSchema):
-    pass
-
-
-organization_bootstrap_serializer = CmdSerializer(
-    OrganizationBootstrapReqSchema, OrganizationBootstrapRepSchema
 )
 
 

@@ -13,14 +13,13 @@ from parsec.api.protocol import (
     OrganizationID,
     APIV1_HandshakeType,
     apiv1_organization_create_serializer,
-    organization_bootstrap_serializer,
     apiv1_organization_bootstrap_serializer,
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
 )
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError
-from parsec.backend.user import new_user_factory, User, Device
+from parsec.backend.user import User, Device
 from parsec.backend.utils import catch_protocol_errors, api
 
 
@@ -172,11 +171,27 @@ class BaseOrganizationComponent:
                 msg["device_certificate"], author_verify_key=root_verify_key, expected_author=None
             )
 
+            ru_data = rd_data = None
+            if msg["redacted_user_certificate"]:
+                ru_data = UserCertificateContent.verify_and_load(
+                    msg["redacted_user_certificate"],
+                    author_verify_key=client_ctx.verify_key,
+                    expected_author=client_ctx.device_id,
+                )
+            if msg["redacted_device_certificate"]:
+                rd_data = DeviceCertificateContent.verify_and_load(
+                    msg["redacted_device_certificate"],
+                    author_verify_key=client_ctx.verify_key,
+                    expected_author=client_ctx.device_id,
+                )
+
         except DataError as exc:
             return {
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
+        if not u_data.is_admin:
+            return {"status": "invalid_data", "reason": "User certificate must have set is_admin."}
 
         if u_data.timestamp != d_data.timestamp:
             return {
@@ -197,13 +212,46 @@ class BaseOrganizationComponent:
                 "reason": f"Invalid timestamp in certification.",
             }
 
-        user, first_device = new_user_factory(
-            device_id=d_data.device_id,
+        if ru_data:
+            if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted User certificate differs from User certificate.",
+                }
+            if ru_data.human_handle:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted User certificate must not contain a human_handle field.",
+                }
+
+        if rd_data:
+            if rd_data.evolve(device_label=d_data.device_label) != d_data:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted Device certificate differs from Device certificate.",
+                }
+            if ru_data.device_label:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted Device certificate must not contain a device_label field.",
+                }
+
+        user = User(
+            user_id=u_data.user_id,
             human_handle=u_data.human_handle,
-            is_admin=True,
-            certifier=None,
+            is_admin=u_data.is_admin,
             user_certificate=msg["user_certificate"],
+            redacted_user_certificate=msg["redacted_user_certificate"] or msg["user_certificate"],
+            user_certifier=u_data.author,
+            created_on=u_data.timestamp,
+        )
+        first_device = Device(
+            device_id=d_data.device_id,
             device_certificate=msg["device_certificate"],
+            redacted_device_certificate=msg["redacted_device_certificate"]
+            or msg["device_certificate"],
+            device_certifier=d_data.author,
+            created_on=d_data.timestamp,
         )
         try:
             await self.bootstrap(
@@ -219,7 +267,7 @@ class BaseOrganizationComponent:
         # Note: we let OrganizationFirstUserCreationError bobbles up given
         # it should not occurs under normal circumstances
 
-        return organization_bootstrap_serializer.rep_dump({"status": "ok"})
+        return apiv1_organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
     async def create(
         self, id: OrganizationID, bootstrap_token: str, expiration_date: Optional[Pendulum]

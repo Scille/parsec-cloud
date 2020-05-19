@@ -85,6 +85,7 @@ class DeviceCertificateContent(BaseAPISignedData):
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
         verify_key = fields.VerifyKey(required=True)
+        device_label = fields.String(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
@@ -93,6 +94,7 @@ class DeviceCertificateContent(BaseAPISignedData):
 
     device_id: DeviceID
     verify_key: VerifyKey
+    device_label: Optional[str] = None
 
     @classmethod
     def verify_and_load(

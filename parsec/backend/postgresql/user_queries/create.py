@@ -60,15 +60,22 @@ _q_insert_human_if_not_exists = (
 _q_insert_user = (
     Query.into(t_user)
     .columns(
-        "organization", "user_id", "is_admin", "user_certificate", "user_certifier", "created_on"
+        "organization",
+        "user_id",
+        "is_admin",
+        "user_certificate",
+        "redacted_user_certificate",
+        "user_certifier",
+        "created_on",
     )
     .insert(
         q_organization_internal_id(Parameter("$1")),
         Parameter("$2"),
         Parameter("$3"),
         Parameter("$4"),
-        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$5")),
-        Parameter("$6"),
+        Parameter("$5"),
+        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$6")),
+        Parameter("$7"),
     )
     .get_sql()
 )
@@ -81,6 +88,7 @@ _q_insert_user_with_human_handle = (
         "user_id",
         "is_admin",
         "user_certificate",
+        "redacted_user_certificate",
         "user_certifier",
         "created_on",
         "human",
@@ -90,9 +98,10 @@ _q_insert_user_with_human_handle = (
         Parameter("$2"),
         Parameter("$3"),
         Parameter("$4"),
-        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$5")),
-        Parameter("$6"),
-        q_human_internal_id(organization_id=Parameter("$1"), email=Parameter("$7")),
+        Parameter("$5"),
+        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$6")),
+        Parameter("$7"),
+        q_human_internal_id(organization_id=Parameter("$1"), email=Parameter("$8")),
     )
     .get_sql()
 )
@@ -101,15 +110,22 @@ _q_insert_user_with_human_handle = (
 _q_insert_device = (
     Query.into(t_device)
     .columns(
-        "organization", "user_", "device_id", "device_certificate", "device_certifier", "created_on"
+        "organization",
+        "user_",
+        "device_id",
+        "device_certificate",
+        "redacted_device_certificate",
+        "device_certifier",
+        "created_on",
     )
     .insert(
         q_organization_internal_id(Parameter("$1")),
         q_user_internal_id(organization_id=Parameter("$1"), user_id=Parameter("$2")),
         Parameter("$3"),
         Parameter("$4"),
-        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$5")),
-        Parameter("$6"),
+        Parameter("$5"),
+        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$6")),
+        Parameter("$7"),
     )
     .get_sql()
 )
@@ -134,6 +150,7 @@ async def _do_create_user_with_human_handle(
             user.user_id,
             user.is_admin,
             user.user_certificate,
+            user.redacted_user_certificate,
             user.user_certifier,
             user.created_on,
             user.human_handle.email,
@@ -167,6 +184,7 @@ async def _do_create_user_without_human_handle(
             user.user_id,
             user.is_admin,
             user.user_certificate,
+            user.redacted_user_certificate,
             user.user_certifier,
             user.created_on,
         )
@@ -229,6 +247,7 @@ async def _create_device(
             device.user_id,
             device.device_id,
             device.device_certificate,
+            device.redacted_device_certificate,
             device.device_certifier,
             device.created_on,
         )

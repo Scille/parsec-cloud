@@ -76,11 +76,13 @@ async def test_user_claim_ok(
                 User(
                     user_id=UserID("dummy"),
                     user_certificate=b"<user certif>",
+                    redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
                     device_id=DeviceID("dummy@pc1"),
                     device_certificate=b"<device certif>",
+                    redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
                 ),
             )
@@ -90,11 +92,13 @@ async def test_user_claim_ok(
                 User(
                     user_id=mallory_invitation.user_id,
                     user_certificate=b"<user certif>",
+                    redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
                 ),
                 Device(
                     device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
                     device_certificate=b"<device certif>",
+                    redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
                 ),
             )
@@ -177,11 +181,13 @@ async def test_user_claim_already_exists(
         User(
             user_id=mallory_invitation.user_id,
             user_certificate=b"<foo>",
+            redacted_user_certificate=b"<foo>",
             user_certifier=alice.device_id,
         ),
         Device(
             device_id=DeviceID(f"{mallory_invitation.user_id}@pc1"),
             device_certificate=b"<bar>",
+            redacted_device_certificate=b"<bar>",
             device_certifier=alice.device_id,
         ),
     )

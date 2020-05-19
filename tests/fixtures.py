@@ -20,11 +20,7 @@ from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, R
 from parsec.api.data import UserManifest
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
-from parsec.backend.user import (
-    User as BackendUser,
-    Device as BackendDevice,
-    new_user_factory as new_backend_user_factory,
-)
+from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time, addr_with_device_subdomain
@@ -294,6 +290,7 @@ def local_device_to_backend_user(
         certifier_signing_key = certifier.signing_key
 
     now = pendulum.now()
+
     user_certificate = UserCertificateContent(
         author=certifier_id,
         timestamp=now,
@@ -301,18 +298,37 @@ def local_device_to_backend_user(
         public_key=device.public_key,
         is_admin=device.is_admin,
         human_handle=device.human_handle,
-    ).dump_and_sign(certifier_signing_key)
+    )
     device_certificate = DeviceCertificateContent(
-        author=certifier_id, timestamp=now, device_id=device.device_id, verify_key=device.verify_key
-    ).dump_and_sign(certifier_signing_key)
-    return new_backend_user_factory(
+        author=certifier_id,
+        timestamp=now,
         device_id=device.device_id,
+        device_label=device.device_label,
+        verify_key=device.verify_key,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user = BackendUser(
+        user_id=device.user_id,
         human_handle=device.human_handle,
         is_admin=device.is_admin,
-        certifier=certifier_id,
-        user_certificate=user_certificate,
-        device_certificate=device_certificate,
+        user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
+        redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
+        user_certifier=certifier_id,
+        created_on=now,
     )
+    first_device = BackendDevice(
+        device_id=device.device_id,
+        device_certificate=device_certificate.dump_and_sign(certifier_signing_key),
+        redacted_device_certificate=redacted_device_certificate.dump_and_sign(
+            certifier_signing_key
+        ),
+        device_certifier=certifier_id,
+        created_on=now,
+    )
+
+    return user, first_device
 
 
 class CertificatesStore:

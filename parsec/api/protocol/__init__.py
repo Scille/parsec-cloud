@@ -41,7 +41,6 @@ from parsec.api.protocol.handshake import (
 from parsec.api.protocol.organization import (
     apiv1_organization_create_serializer,
     apiv1_organization_bootstrap_serializer,
-    organization_bootstrap_serializer,
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,

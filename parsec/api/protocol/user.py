@@ -127,6 +127,9 @@ apiv1_user_cancel_invitation_serializer = CmdSerializer(
 class UserCreateReqSchema(BaseReqSchema):
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    # Same certificates than above, but expurged of human_handle/device_label
+    redacted_user_certificate = fields.Bytes(allow_none=True, missing=None)
+    redacted_device_certificate = fields.Bytes(allow_none=True, missing=None)
 
 
 class UserCreateRepSchema(BaseRepSchema):
@@ -226,6 +229,8 @@ apiv1_device_create_serializer = CmdSerializer(
 
 class DeviceCreateReqSchema(BaseReqSchema):
     device_certificate = fields.Bytes(required=True)
+    # Same certificate than above, but expurged of device_label
+    redacted_device_certificate = fields.Bytes(allow_none=True, missing=None)
 
 
 class DeviceCreateRepSchema(BaseRepSchema):

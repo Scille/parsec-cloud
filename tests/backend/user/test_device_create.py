@@ -47,16 +47,34 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
 
 
 @pytest.mark.trio
-async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd):
+async def test_device_create_invalid_certified(alice_backend_sock, alice, bob, alice_nd):
     now = pendulum.now()
-    device_certificate = DeviceCertificateContent(
+    good_device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+    ).dump_and_sign(alice.signing_key)
+    bad_device_certificate = DeviceCertificateContent(
         author=bob.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
         verify_key=alice_nd.verify_key,
     ).dump_and_sign(bob.signing_key)
 
-    rep = await device_create(alice_backend_sock, device_certificate=device_certificate)
+    rep = await device_create(alice_backend_sock, device_certificate=bad_device_certificate)
+    assert rep == {
+        "status": "invalid_certification",
+        "reason": "Invalid certification data (Signature was forged or corrupt).",
+    }
+
+    # Same for the redacted part
+
+    rep = await device_create(
+        alice_backend_sock,
+        device_certificate=good_device_certificate,
+        redacted_device_certificate=bad_device_certificate,
+    )
     assert rep == {
         "status": "invalid_certification",
         "reason": "Invalid certification data (Signature was forged or corrupt).",
@@ -110,3 +128,43 @@ async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd
             "status": "invalid_certification",
             "reason": "Invalid timestamp in certification.",
         }
+
+
+@pytest.mark.trio
+async def test_device_create_bad_redacted_device_certificate(alice_backend_sock, alice, alice_nd):
+    now = pendulum.now()
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+        device_label=alice_nd.device_label,
+    )
+    good_redacted_device_certificate = device_certificate.evolve(device_label=None)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    for bad_redacted_device_certificate in (
+        good_redacted_device_certificate.evolve(timestamp=now.add(seconds=1)),
+        good_redacted_device_certificate.evolve(device_id=alice.device_id),
+        good_redacted_device_certificate.evolve(verify_key=alice.verify_key),
+    ):
+        rep = await device_create(
+            alice_backend_sock,
+            device_certificate=device_certificate,
+            redacted_device_certificate=bad_redacted_device_certificate.dump_and_sign(
+                alice.signing_key
+            ),
+        )
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Redacted Device certificate differs from Device certificate.",
+        }
+
+    # Finally just make sure good was really good
+    rep = await device_create(
+        alice_backend_sock,
+        device_certificate=device_certificate,
+        redacted_device_certificate=good_redacted_device_certificate.dump_and_sign(
+            alice.signing_key
+        ),
+    )
+    assert rep == {"status": "ok"}

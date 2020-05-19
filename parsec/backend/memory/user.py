@@ -11,6 +11,7 @@ from parsec.backend.user import (
     User,
     Device,
     Trustchain,
+    GetUserAndDevicesResult,
     HumanFindResultItem,
     UserInvitation,
     DeviceInvitation,
@@ -85,11 +86,16 @@ class MemoryUserComponent(BaseUserComponent):
             encrypted_answer=encrypted_answer,
         )
 
-    async def _get_trustchain(self, organization_id, *devices_ids):
+    async def _get_trustchain(
+        self, organization_id: OrganizationID, *devices_ids, redacted: bool = False
+    ):
         trustchain_devices = set()
         trustchain_users = set()
         trustchain_revoked_users = set()
         in_trustchain = set()
+
+        user_certif_field = "redacted_user_certificate" if redacted else "user_certificate"
+        device_certif_field = "redacted_device_certificate" if redacted else "device_certificate"
 
         async def _recursive_extract_creators(device_id):
             if not device_id or device_id in in_trustchain:
@@ -97,8 +103,8 @@ class MemoryUserComponent(BaseUserComponent):
             in_trustchain.add(device_id)
             user = self._get_user(organization_id, device_id.user_id)
             device = self._get_device(organization_id, device_id)
-            trustchain_devices.add(device.device_certificate)
-            trustchain_users.add(user.user_certificate)
+            trustchain_devices.add(getattr(device, device_certif_field))
+            trustchain_users.add(getattr(user, user_certif_field))
             if user.revoked_user_certificate:
                 trustchain_revoked_users.add(user.revoked_user_certificate)
             await _recursive_extract_creators(device.device_certifier)
@@ -149,8 +155,8 @@ class MemoryUserComponent(BaseUserComponent):
         return user, user_device, trustchain
 
     async def get_user_with_devices_and_trustchain(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device, ...], Trustchain]:
+        self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
+    ) -> GetUserAndDevicesResult:
         user = self._get_user(organization_id, user_id)
         user_devices = self._get_user_devices(organization_id, user_id)
         user_devices_values = tuple(user_devices.values())
@@ -159,8 +165,19 @@ class MemoryUserComponent(BaseUserComponent):
             user.user_certifier,
             user.revoked_user_certifier,
             *[device.device_certifier for device in user_devices_values],
+            redacted=redacted,
         )
-        return user, user_devices_values, trustchain
+        return GetUserAndDevicesResult(
+            user_certificate=user.redacted_user_certificate if redacted else user.user_certificate,
+            revoked_user_certificate=user.revoked_user_certificate,
+            device_certificates=[
+                d.redacted_device_certificate if redacted else d.device_certificate
+                for d in user_devices.values()
+            ],
+            trustchain_device_certificates=trustchain.devices,
+            trustchain_user_certificates=trustchain.users,
+            trustchain_revoked_user_certificates=trustchain.revoked_users,
+        )
 
     def _get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
         org = self._organizations[organization_id]

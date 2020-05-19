@@ -42,6 +42,7 @@ class LocalDevice(BaseLocalData):
     user_manifest_key: SecretKey
     local_symkey: SecretKey
     human_handle: Optional[HumanHandle] = None
+    device_label: Optional[str] = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
