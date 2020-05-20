@@ -28,12 +28,12 @@ from parsec.core.types import LocalDevice, BackendOrganizationAddr
 from parsec.core.invite.exceptions import InviteError, InvitePeerResetError
 
 
-async def claimer_retreive_info(
+async def claimer_retrieve_info(
     cmds: BackendInvitedCmds
 ) -> Union["UserClaimInitialCtx", "DeviceClaimInitialCtx"]:
     rep = await cmds.invite_info()
     if rep["status"] != "ok":
-        raise InviteError(f"Cannot retreive invitation informations: {rep}")
+        raise InviteError(f"Cannot retrieve invitation informations: {rep}")
 
     if rep["type"] == InvitationType.USER:
         return UserClaimInitialCtx(

@@ -11,7 +11,7 @@ from parsec.core.backend_connection import (
 from parsec.core.types import BackendInvitationAddr, LocalDevice
 from parsec.core.invite import (
     InvitePeerResetError,
-    claimer_retreive_info,
+    claimer_retrieve_info,
     DeviceClaimInitialCtx,
     UserClaimInitialCtx,
     DeviceGreetInitialCtx,
@@ -40,7 +40,7 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
 
     async def _run_claimer():
         async with backend_invited_cmds_factory(addr=invitation_addr) as cmds:
-            initial_ctx = await claimer_retreive_info(cmds)
+            initial_ctx = await claimer_retrieve_info(cmds)
             assert isinstance(initial_ctx, DeviceClaimInitialCtx)
             assert initial_ctx.greeter_user_id == alice.user_id
             assert initial_ctx.greeter_human_handle == alice.human_handle
@@ -143,7 +143,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
 
     async def _run_claimer():
         async with backend_invited_cmds_factory(addr=invitation_addr) as cmds:
-            initial_ctx = await claimer_retreive_info(cmds)
+            initial_ctx = await claimer_retrieve_info(cmds)
             assert isinstance(initial_ctx, UserClaimInitialCtx)
             assert initial_ctx.claimer_email == claimer_email
             assert initial_ctx.greeter_user_id == alice.user_id
@@ -241,7 +241,7 @@ async def test_claimer_handle_reset(backend, running_backend, alice, alice_backe
         greeter_initial_ctx = UserGreetInitialCtx(
             cmds=alice_backend_cmds, token=invitation_addr.token
         )
-        claimer_initial_ctx = await claimer_retreive_info(claimer_cmds)
+        claimer_initial_ctx = await claimer_retrieve_info(claimer_cmds)
 
         claimer_in_progress_ctx = None
         greeter_in_progress_ctx = None

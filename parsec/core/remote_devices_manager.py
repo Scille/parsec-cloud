@@ -125,7 +125,7 @@ class RemoteDevicesManager:
     ]:
         """
         Note: unlike `get_user` and `get_device`, this method don't rely on cache
-        considering only part of the devices to retreive could be in cache.
+        considering only part of the devices to retrieve could be in cache.
         Raises:
             RemoteDevicesManagerError
             RemoteDevicesManagerBackendOfflineError

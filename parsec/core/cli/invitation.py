@@ -27,7 +27,7 @@ from parsec.core.invite import (
     DeviceGreetInitialCtx,
     UserClaimInitialCtx,
     UserGreetInitialCtx,
-    claimer_retreive_info,
+    claimer_retrieve_info,
 )
 from parsec.core.local_device import save_device_with_password
 from parsec.core.cli.utils import core_config_and_device_options, core_config_options
@@ -186,7 +186,7 @@ async def _greet_invitation(config, device, token):
         signing_key=device.signing_key,
         keepalive=config.backend_connection_keepalive,
     ) as cmds:
-        async with spinner("Retreiving invitation info"):
+        async with spinner("Retrieving invitation info"):
             rep = await cmds.invite_list()
             if rep["status"] != "ok":
                 raise RuntimeError(f"Backend error: {rep}")
@@ -293,8 +293,8 @@ async def _do_claim_device(initial_ctx):
 async def _claim_invitation(config, addr, password):
     async with backend_invited_cmds_factory(addr=addr) as cmds:
         try:
-            async with spinner("Retreiving invitation info"):
-                initial_ctx = await claimer_retreive_info(cmds)
+            async with spinner("Retrieving invitation info"):
+                initial_ctx = await claimer_retrieve_info(cmds)
         except BackendConnectionRefused:
             raise RuntimeError("Invitation not found")
 

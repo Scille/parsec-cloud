@@ -48,13 +48,13 @@ async def user_claim(sock, **kwargs):
 async def test_user_claim_ok(
     monkeypatch, backend, apiv1_anonymous_backend_sock, coolorg, alice, mallory_invitation
 ):
-    user_invitation_retreived = trio.Event()
+    user_invitation_retrieved = trio.Event()
 
     vanilla_claim_user_invitation = backend.user.claim_user_invitation
 
     async def _mocked_claim_user_invitation(*args, **kwargs):
         ret = await vanilla_claim_user_invitation(*args, **kwargs)
-        user_invitation_retreived.set()
+        user_invitation_retrieved.set()
         return ret
 
     monkeypatch.setattr(backend.user, "claim_user_invitation", _mocked_claim_user_invitation)
@@ -67,8 +67,8 @@ async def test_user_claim_ok(
         ) as prep:
 
             # `backend.user.create_user` will destroy the user invitation,
-            # so make sure we retreived it before
-            await user_invitation_retreived.wait()
+            # so make sure we retrieved it before
+            await user_invitation_retrieved.wait()
 
             # No the user we are waiting for
             await backend.user.create_user(

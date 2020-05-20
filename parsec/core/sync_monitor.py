@@ -89,7 +89,7 @@ class SyncContext:
         if self._changes_loaded:
             return True
 
-        # Initialize due_time so that if we cannot retreive the changes, we
+        # Initialize due_time so that if we cannot retrieve the changes, we
         # will wait until an external event (most likely a `sharing.updated`)
         # make it worth to retry
         self.due_time = math.inf

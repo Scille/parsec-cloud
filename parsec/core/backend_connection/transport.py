@@ -191,7 +191,7 @@ class TransportPool:
             transport = None
             if not force_fresh:
                 try:
-                    # Fifo style to retreive oldest first
+                    # Fifo style to retrieve oldest first
                     transport = self._transports.pop(0)
                 except IndexError:
                     pass

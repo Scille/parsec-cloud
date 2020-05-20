@@ -439,7 +439,7 @@ async def test_sync_remote_changes(running_backend, alice_user_fs, alice2_user_f
     with freeze_time("2000-01-03"):
         await alice2_user_fs.sync()
 
-    # Alice retreive the changes
+    # Alice retrieve the changes
     um = alice_user_fs.get_user_manifest()
     await alice_user_fs.sync()
 

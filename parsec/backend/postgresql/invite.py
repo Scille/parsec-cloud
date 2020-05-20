@@ -31,7 +31,7 @@ from parsec.backend.invite import (
 
 class Q:
     def __init__(self, src, **kwargs):
-        # Retreive variables
+        # retrieve variables
         variables = {}
         for candidate in re.findall(r"\$([a-zA-Z0-9_]+)", src):
             if candidate in variables:
@@ -101,7 +101,7 @@ def q_user_internal_id(user_id, organization_id=None, organization=None, **kwarg
     )
 
 
-_q_retreive_compatible_user_invitation = Q(
+_q_retrieve_compatible_user_invitation = Q(
     f"""
 SELECT
     token
@@ -117,7 +117,7 @@ LIMIT 1
 )
 
 
-_q_retreive_compatible_device_invitation = Q(
+_q_retrieve_compatible_device_invitation = Q(
     f"""
 SELECT
     token
@@ -320,7 +320,7 @@ async def _conduit_talk(
 ) -> ConduitListenCtx:
     is_greeter = greeter is not None
     async with conn.transaction():
-        # On top of retreiving the invitation row, this query lock the row
+        # On top of retrieving the invitation row, this query lock the row
         # in the database for the duration of the transaction.
         # Hence concurrent request will be on hold until the end of the transaction.
 
@@ -485,7 +485,7 @@ async def _do_new_user_invitation(
 ) -> UUID:
     if claimer_email:
         invitation_type = InvitationType.USER
-        q = _q_retreive_compatible_user_invitation(
+        q = _q_retrieve_compatible_user_invitation(
             organization_id=organization_id,
             type=invitation_type.value,
             greeter_user_id=greeter_user_id,
@@ -493,7 +493,7 @@ async def _do_new_user_invitation(
         )
     else:
         invitation_type = InvitationType.DEVICE
-        q = _q_retreive_compatible_device_invitation(
+        q = _q_retrieve_compatible_device_invitation(
             organization_id=organization_id,
             type=invitation_type.value,
             greeter_user_id=greeter_user_id,

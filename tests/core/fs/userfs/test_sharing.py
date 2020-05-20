@@ -41,7 +41,7 @@ async def test_share_bad_recipient(running_backend, alice_user_fs, alice, mallor
 
     with pytest.raises(FSError) as exc:
         await alice_user_fs.workspace_share(wid, mallory.user_id, WorkspaceRole.MANAGER)
-    assert str(exc.value) == "Cannot retreive recipient: User `mallory` doesn't exist in backend"
+    assert str(exc.value) == "Cannot retrieve recipient: User `mallory` doesn't exist in backend"
 
 
 @pytest.mark.trio

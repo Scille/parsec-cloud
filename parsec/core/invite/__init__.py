@@ -2,7 +2,7 @@
 
 from parsec.core.invite.exceptions import InviteError, InvitePeerResetError, InviteNotAvailableError
 from parsec.core.invite.claimer import (
-    claimer_retreive_info,
+    claimer_retrieve_info,
     BaseClaimInitialCtx,
     UserClaimInitialCtx,
     DeviceClaimInitialCtx,
@@ -38,7 +38,7 @@ __all__ = (
     "InvitePeerResetError",
     "InviteNotAvailableError",
     # Claimer
-    "claimer_retreive_info",
+    "claimer_retrieve_info",
     "BaseClaimInitialCtx",
     "UserClaimInitialCtx",
     "DeviceClaimInitialCtx",

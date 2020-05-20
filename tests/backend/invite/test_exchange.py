@@ -303,7 +303,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
     await greeter_ctlr.send_order("2a_get_hashed_nonce")
     await claimer_ctlr.send_order("2a_send_hashed_nonce")
     greeter_rep = await greeter_ctlr.assert_ok_rep()
-    # Greeter reset after retreiving claimer hashed nonce
+    # Greeter reset after retrieving claimer hashed nonce
     await greeter_ctlr.send_order("1_wait_peer")
     claimer_rep = await claimer_ctlr.get_result()
     assert claimer_rep == {"status": "invalid_state"}
@@ -318,7 +318,7 @@ async def test_conduit_exchange_reset(exchange_testbed):
     # Step 2b
     await greeter_ctlr.send_order("2b_send_nonce")
     await claimer_ctlr.assert_ok_rep()
-    # Claimer reset after retreiving greeter nonce
+    # Claimer reset after retrieving greeter nonce
     await claimer_ctlr.send_order("1_wait_peer")
     greeter_rep = await greeter_ctlr.get_result()
     assert greeter_rep == {"status": "invalid_state"}

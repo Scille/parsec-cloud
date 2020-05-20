@@ -204,7 +204,7 @@ class BackendApp:
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
 
     async def _handle_client_loop(self, transport, client_ctx):
-        # Retreive the allowed commands according to api version and auth type
+        # Retrieve the allowed commands according to api version and auth type
         api_cmds = self.apis[client_ctx.handshake_type]
 
         raw_req = None

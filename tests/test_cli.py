@@ -452,7 +452,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
                 greeter_code = None
 
-                print("~~~ Retreive greeter code ~~~")
+                print("~~~ Retrieve greeter code ~~~")
                 stdout_greeter = _wait_for(p_greeter, "Code to provide to claimer: ")
                 greeter_code = re.search(
                     r"Code to provide to claimer: (.*)$", stdout_greeter, re.MULTILINE
@@ -470,7 +470,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
                 claimer_code = None
 
-                print("~~~ Retreive claimer code ~~~")
+                print("~~~ Retrieve claimer code ~~~")
                 stdout_claimer = _wait_for(p_claimer, "Code to provide to greeter: ")
                 claimer_code = re.search(
                     r"Code to provide to greeter: (.*)$", stdout_claimer, re.MULTILINE
@@ -534,7 +534,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
                 greeter_code = None
 
-                print("~~~ Retreive greeter code ~~~")
+                print("~~~ Retrieve greeter code ~~~")
                 stdout_greeter = _wait_for(p_greeter, "Code to provide to claimer: ")
                 greeter_code = re.search(
                     r"Code to provide to claimer: (.*)$", stdout_greeter, re.MULTILINE
@@ -552,7 +552,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
                 claimer_code = None
 
-                print("~~~ Retreive claimer code ~~~")
+                print("~~~ Retrieve claimer code ~~~")
                 stdout_claimer = _wait_for(p_claimer, "Code to provide to greeter: ")
                 claimer_code = re.search(
                     r"Code to provide to greeter: (.*)$", stdout_claimer, re.MULTILINE

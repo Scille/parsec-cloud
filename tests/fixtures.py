@@ -122,7 +122,7 @@ def local_device_factory(coolorg):
 
         parent_device = None
         try:
-            # If the user already exists, we must retreive it data
+            # If the user already exists, we must retrieve it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
             if is_admin is not None and is_admin is not parent_device.is_admin:
                 raise ValueError(

@@ -49,13 +49,13 @@ async def device_claim(sock, **kwargs):
 async def test_device_claim_ok(
     monkeypatch, backend, apiv1_anonymous_backend_sock, alice, alice_nd_invitation
 ):
-    device_invitation_retreived = trio.Event()
+    device_invitation_retrieved = trio.Event()
 
     vanilla_claim_device_invitation = backend.user.claim_device_invitation
 
     async def _mocked_claim_device_invitation(*args, **kwargs):
         ret = await vanilla_claim_device_invitation(*args, **kwargs)
-        device_invitation_retreived.set()
+        device_invitation_retrieved.set()
         return ret
 
     monkeypatch.setattr(backend.user, "claim_device_invitation", _mocked_claim_device_invitation)
@@ -68,8 +68,8 @@ async def test_device_claim_ok(
         ) as prep:
 
             # `backend.user.create_device` will destroy the device invitation,
-            # so make sure we retreived it before
-            await device_invitation_retreived.wait()
+            # so make sure we retrieved it before
+            await device_invitation_retrieved.wait()
 
             # No the device we are waiting for
             await backend.user.create_device(

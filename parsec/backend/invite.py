@@ -581,7 +581,7 @@ class BaseInviteComponent:
         payload: bytes,
     ) -> bytes:
         # Conduit exchange is done in two steps:
-        # First we "talk" by providing our payload and retreive the peer's
+        # First we "talk" by providing our payload and retrieve the peer's
         # payload if he has talked prior to us.
         # Then we "listen" by waiting for the peer to provide his payload if we
         # have talk first, or to confirm us it has received our payload if we
