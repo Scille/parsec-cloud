@@ -136,6 +136,7 @@ class MountpointManager:
     async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
         curried_runner = partial(
             self._runner,
+            self.user_fs,
             workspace_fs,
             self.base_mountpoint_path,
             config=self.config,

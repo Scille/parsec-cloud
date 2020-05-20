@@ -84,6 +84,7 @@ async def _teardown_mountpoint(mountpoint_path):
 
 
 async def fuse_mountpoint_runner(
+    user_fs,
     workspace_fs,
     base_mountpoint_path: PurePath,
     config: dict,

@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import math
 import trio
 import unicodedata
 from zlib import adler32
@@ -19,9 +20,23 @@ __all__ = ("winfsp_mountpoint_runner",)
 logger = get_logger()
 
 
-async def _find_next_available_drive(starting_from="G") -> Path:
-    letters = map(chr, range(ord(starting_from), ord("Z") + 1))
-    drives = [Path(f"{letter}:\\") for letter in letters]
+BASE = "PQRSTUVWXYZHIJKLMNO"
+assert len(BASE) == 19
+
+
+def candidates(index, length, nearest=5):
+    assert 0 <= index < length
+    length = ((length - 1) // nearest + 1) * nearest
+    assert math.gcd(length, len(BASE)) == 1
+    result = ""
+    for _ in BASE:
+        result += BASE[index % len(BASE)]
+        index += length
+    return result
+
+
+async def _get_available_drive(index, length) -> Path:
+    drives = [Path(f"{letter}:\\") for letter in candidates(index, length)]
     for drive in drives:
         try:
             if not await trio.to_thread.run_sync(drive.exists):
@@ -54,6 +69,7 @@ async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):
 
 
 async def winfsp_mountpoint_runner(
+    user_fs,
     workspace_fs,
     base_mountpoint_path: Path,
     config: dict,
@@ -70,7 +86,10 @@ async def winfsp_mountpoint_runner(
     trio_token = trio.hazmat.current_trio_token()
     fs_access = ThreadFSAccess(trio_token, workspace_fs)
 
-    mountpoint_path = await _find_next_available_drive()
+    user_manifest = user_fs.get_user_manifest()
+    workspace_ids = [entry.id for entry in user_manifest.workspaces]
+    workspace_index = workspace_ids.index(workspace_fs.workspace_id)
+    mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))
 
     if config.get("debug", False):
         enable_debug_log()
