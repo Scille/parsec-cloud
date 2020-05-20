@@ -74,7 +74,8 @@ async def _do_workspace_list(core):
         try:
             users_roles = await workspace_fs.get_user_roles()
         except FSBackendOfflineError:
-            users_roles = {}
+            users_roles = {workspace_fs.device.user_id: ws_entry.role}
+
         try:
             root_info = await workspace_fs.path_info("/")
             files = root_info["children"]
