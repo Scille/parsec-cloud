@@ -1,97 +1,120 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
-import datetime
+import attr
+import re
+from pendulum import now as pendulum_now
 import triopg
-import collections
-from typing import List, Optional
+from typing import List, Tuple, Optional
 
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
 from functools import wraps
 from structlog import get_logger
 from base64 import b64decode, b64encode
-from importlib_resources import read_text
+import importlib_resources
 
 
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
 from parsec.utils import start_task, TaskStatus
 from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE, STR_TO_INVITATION_STATUS
-from parsec.backend.postgresql import migrations
+from parsec.backend.postgresql import migrations as migrations_module
+
 
 logger = get_logger()
 
 CREATE_MIGRATION_TABLE_ID = 2
-MigrationResult = collections.namedtuple(
-    "MigrationResult", ["already_applied", "new_apply", "to_apply", "error"]
-)
+MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
 
 
-async def migrate_db(url: str, migrations: List[str], dry_run: bool) -> MigrationResult:
+@attr.s(slots=True, auto_attribs=True)
+class MigrationItem:
+    idx: int
+    name: str
+    file_name: str
+    sql: str
+
+
+def retrieve_migrations() -> List[MigrationItem]:
+    migrations = []
+    ids = []
+    for file_name in importlib_resources.contents(migrations_module):
+        match = re.search(MIGRATION_FILE_PATTERN, file_name)
+        if match:
+            idx = int(match.group("id"))
+            # Sanity check
+            if idx in ids:
+                raise AssertionError(
+                    f"Inconsistent package (multiples migrations with {idx} as id)"
+                )
+            ids.append(idx)
+            sql = importlib_resources.read_text(migrations_module, file_name)
+            if not sql:
+                raise AssertionError(f"Empty migration file {file_name}")
+            migrations.append(
+                MigrationItem(idx=idx, name=match.group("name"), file_name=file_name), sql=sql
+            )
+
+    return sorted(migrations, key=lambda item: item.idx)
+
+
+@attr.s(slots=True, auto_attribs=True)
+class MigrationResult:
+    already_applied: List[MigrationItem]
+    new_apply: List[MigrationItem]
+    error: Optional[Tuple[MigrationItem, str]]
+
+
+async def apply_migrations(
+    url: str, migrations: List[MigrationItem], dry_run: bool
+) -> MigrationResult:
     """
     Returns: MigrationResult
     """
     async with triopg.connect(url) as conn:
-        return await _migrate_db(conn, migrations, dry_run)
+        return await _apply_migrations(conn, migrations, dry_run)
 
 
-async def _migrate_db(conn, migrations, dry_run):
-
+async def _apply_migrations(
+    conn, migrations: Tuple[MigrationItem], dry_run: bool
+) -> MigrationResult:
     error = None
     already_applied = []
     new_apply = []
-    to_apply = []
 
     idx_limit = await _idx_limit(conn)
-    for idx, name, file_name in migrations:
-        if idx <= idx_limit:
-            already_applied.append(file_name)
+    for migration in migrations:
+        if migration.idx <= idx_limit:
+            already_applied.append(migration)
         else:
             if not dry_run:
-                async with conn.transaction():
-                    error = await _apply_migration(conn, idx, name, file_name)
-                    if error:
-                        break
-                    else:
-                        if idx >= CREATE_MIGRATION_TABLE_ID:
-                            # The migration table is created in the second migration
-                            await _add_migration_to_db(conn, idx, name)
-                        new_apply.append(file_name)
-            else:
-                to_apply.append(file_name)
-    return MigrationResult(already_applied, new_apply, to_apply, error)
+                try:
+                    await _apply_migration(conn, migration)
+                except PostgresError as e:
+                    error = (migration, e.message)
+                    break
+            new_apply.append(migration)
+
+    return MigrationResult(already_applied=already_applied, new_apply=new_apply, error=error)
 
 
-async def _apply_migration(conn, idx, name, migration_file):
-    query = read_text(migrations, migration_file)
-    error = None
-    if not query:
-        error = (migration_file, "Empty migration file")
-    else:
-        try:
-            await conn.execute(query)
-        except PostgresError as e:
-            error = (migration_file, e.message)
-    return error
-
-
-async def _add_migration_to_db(conn, idx, name):
-    statement = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
-    await conn.execute(statement, idx, name, datetime.datetime.utcnow())
+async def _apply_migration(conn, migration: MigrationItem):
+    async with conn.transaction():
+        await conn.execute(migration.sql)
+        if migration.idx >= CREATE_MIGRATION_TABLE_ID:
+            # The migration table is created in the second migration
+            sql = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
+            await conn.execute(sql, migration.idx, migration.name, pendulum_now())
 
 
 async def _last_migration_row(conn):
-    query = """
-        SELECT _id FROM migration ORDER BY applied desc LIMIT 1
-    """
+    query = "SELECT _id FROM migration ORDER BY applied desc LIMIT 1"
     return await conn.fetchval(query)
 
 
 async def _is_initial_migration_applied(conn):
-    query = """
-        SELECT _id FROM organization LIMIT 1
-    """
+    query = "SELECT _id FROM organization LIMIT 1"
     try:
         await conn.fetchval(query)
     except UndefinedTableError:

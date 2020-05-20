@@ -12,7 +12,7 @@ import subprocess
 from time import sleep
 from pathlib import Path
 from contextlib import contextmanager
-from unittest.mock import ANY, MagicMock, patch, mock_open
+from unittest.mock import ANY, MagicMock, patch
 
 import attr
 import pytest
@@ -20,7 +20,8 @@ import trustme
 from click.testing import CliRunner
 from async_generator import asynccontextmanager
 
-import parsec
+from parsec import __version__ as parsec_version
+from parsec.backend.postgresql import MigrationItem
 from parsec.cli import cli
 
 
@@ -31,7 +32,7 @@ def test_version():
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
-    assert f"parsec, version {parsec.__version__}\n" in result.output
+    assert f"parsec, version {parsec_version}\n" in result.output
 
 
 def test_share_workspace(tmpdir, alice, bob):
@@ -150,39 +151,48 @@ def _running(cmd, wait_for=None, env={}):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-@patch("parsec.backend.postgresql.migrations", "toto")
-def test_migrate_backend(postgresql_url, unused_tcp_port, tmpdir):
-    with patch("parsec.backend.cli.migration._sorted_file_migrations") as _sorted_file_migrations:
-        with patch("builtins.open", mock_open(read_data="SELECT current_database();")):
-            _sorted_file_migrations.return_value = [
-                (100001, "migration1", "100001_migration1.sql"),
-                (100002, "migration2", "100002_migration2.sql"),
-            ]
-            runner = CliRunner()
-            dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
-            result = runner.invoke(cli, dry_run_args)
-            assert "100001_migration1.sql [ ]" in result.output
-            assert "100002_migration2.sql [ ]" in result.output
+def test_migrate_backend(postgresql_url, unused_tcp_port):
+    sql = "SELECT current_database();"  # Dummy migration content
+    dry_run_args = f"backend migrate --db {postgresql_url} --dry-run"
+    apply_args = f"backend migrate --db {postgresql_url}"
 
-            apply_args = f"backend migrate --db {postgresql_url}"
-            runner = CliRunner()
-            result = runner.invoke(cli, apply_args)
-            assert "100001_migration1.sql [X]" in result.output
-            assert "100002_migration2.sql [X]" in result.output
+    with patch("parsec.backend.cli.migration.retrieve_migrations") as retrieve_migrations:
+        retrieve_migrations.return_value = [
+            MigrationItem(
+                idx=100001, name="migration1", file_name="100001_migration1.sql", sql=sql
+            ),
+            MigrationItem(
+                idx=100002, name="migration2", file_name="100002_migration2.sql", sql=sql
+            ),
+        ]
+        runner = CliRunner()
+        result = runner.invoke(cli, dry_run_args)
+        assert "100001_migration1.sql ✔" in result.output
+        assert "100002_migration2.sql ✔" in result.output
 
-            _sorted_file_migrations.return_value.append(
-                (100003, "migration3", "100003_migration3.sql")
-            )
+        runner = CliRunner()
+        result = runner.invoke(cli, apply_args)
+        assert "100001_migration1.sql ✔" in result.output
+        assert "100002_migration2.sql ✔" in result.output
 
-            result = runner.invoke(cli, dry_run_args)
-            assert "100001_migration1.sql [X]" in result.output
-            assert "100002_migration2.sql [X]" in result.output
-            assert "100003_migration3.sql [ ]" in result.output
+        retrieve_migrations.return_value.append(
+            MigrationItem(idx=100003, name="migration3", file_name="100003_migration3.sql", sql=sql)
+        )
 
-            result = runner.invoke(cli, apply_args)
-            assert "100001_migration1.sql [X]" in result.output
-            assert "100002_migration2.sql [X]" in result.output
-            assert "100003_migration3.sql [X]" in result.output
+        result = runner.invoke(cli, dry_run_args)
+        assert "100001_migration1.sql (already applied)" in result.output
+        assert "100002_migration2.sql (already applied)" in result.output
+        assert "100003_migration3.sql ✔" in result.output
+
+        result = runner.invoke(cli, apply_args)
+        assert "100001_migration1.sql (already applied)" in result.output
+        assert "100002_migration2.sql (already applied)" in result.output
+        assert "100003_migration3.sql ✔" in result.output
+
+        result = runner.invoke(cli, apply_args)
+        assert "100001_migration1.sql (already applied)" in result.output
+        assert "100002_migration2.sql (already applied)" in result.output
+        assert "100003_migration3.sql (already applied)" in result.output
 
 
 @pytest.fixture(params=(False, True), ids=("no_ssl", "ssl"))
