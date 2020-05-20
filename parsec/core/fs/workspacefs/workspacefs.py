@@ -24,6 +24,7 @@ from parsec.core.remote_devices_manager import (
 from parsec.core.fs.exceptions import FSError, FSBackendOfflineError
 from parsec.core.fs.remote_loader import RemoteLoader
 from parsec.core.fs import workspacefs  # Needed to break cyclic import with WorkspaceFSTimestamped
+from parsec.core.fs.workspacefs.entry_transactions import WRITE_RIGHT_ROLES
 from parsec.core.fs.workspacefs.sync_transactions import SyncTransactions
 from parsec.core.fs.workspacefs.versioning_helpers import VersionLister
 from parsec.core.fs.utils import is_file_manifest, is_folderish_manifest
@@ -103,6 +104,9 @@ class WorkspaceFS:
 
     def get_encryption_revision(self) -> int:
         return self.get_workspace_entry().encryption_revision
+
+    def is_read_only(self) -> bool:
+        return self.get_workspace_entry().role not in WRITE_RIGHT_ROLES
 
     # Information
 

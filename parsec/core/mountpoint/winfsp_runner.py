@@ -90,6 +90,7 @@ async def winfsp_mountpoint_runner(
     workspace_ids = [entry.id for entry in user_manifest.workspaces]
     workspace_index = workspace_ids.index(workspace_fs.workspace_id)
     mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))
+    read_only = workspace_fs.is_read_only()
 
     if config.get("debug", False):
         enable_debug_log()
@@ -119,7 +120,7 @@ async def winfsp_mountpoint_runner(
         reparse_points=0,
         reparse_points_access_check=0,
         named_streams=0,
-        read_only_volume=0,
+        read_only_volume=read_only,
         post_cleanup_when_modified_only=1,
         device_control=0,
         um_file_context_is_user_context2=1,
