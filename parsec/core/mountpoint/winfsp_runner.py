@@ -5,6 +5,7 @@ import trio
 import unicodedata
 from zlib import adler32
 from pathlib import Path
+from functools import partial
 from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
@@ -90,7 +91,6 @@ async def winfsp_mountpoint_runner(
     workspace_ids = [entry.id for entry in user_manifest.workspaces]
     workspace_index = workspace_ids.index(workspace_fs.workspace_id)
     mountpoint_path = await _get_available_drive(workspace_index, len(workspace_ids))
-    read_only = workspace_fs.is_read_only()
 
     if config.get("debug", False):
         enable_debug_log()
@@ -120,7 +120,7 @@ async def winfsp_mountpoint_runner(
         reparse_points=0,
         reparse_points_access_check=0,
         named_streams=0,
-        read_only_volume=read_only,
+        read_only_volume=workspace_fs.is_read_only(),
         post_cleanup_when_modified_only=1,
         device_control=0,
         um_file_context_is_user_context2=1,
@@ -136,15 +136,28 @@ async def winfsp_mountpoint_runner(
     try:
         event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
 
-        # Run fs start in a thread, as a cancellable operation
-        # This is because fs.start() might get stuck for while in case of an IRP timeout
-        await trio.to_thread.run_sync(fs.start, cancellable=True)
+        # Run fs start in a thread
+        await trio.to_thread.run_sync(fs.start)
         await _wait_for_winfsp_ready(mountpoint_path)
 
+        # Notify the manager that the mountpoint is ready
         event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
         task_status.started(mountpoint_path)
 
-        await trio.sleep_forever()
+        # Start recording `sharing.updated` events
+        with event_bus.waiter_on("sharing.updated") as waiter:
+
+            # Loop over `sharing.updated` event
+            while True:
+
+                # Restart workspace if necessary
+                if workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]:
+                    restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
+                    await trio.to_thread.run_sync(restart)
+
+                # Wait and reset waiter
+                await waiter.wait()
+                waiter.clear()
 
     except Exception as exc:
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc
@@ -154,4 +167,4 @@ async def winfsp_mountpoint_runner(
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):
             await trio.to_thread.run_sync(fs.stop)
-        event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)
+            event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)
