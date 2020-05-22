@@ -2,6 +2,8 @@
 
 from typing import Optional
 from uuid import UUID
+from enum import Enum
+from marshmallow import ValidationError
 
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.serde import fields, post_load
@@ -18,23 +20,52 @@ from parsec.api.protocol import (
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
 
 
+class UserRole(Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
+    INVITEE = "INVITEE"
+
+
+UserRoleField = fields.enum_field_factory(UserRole)
+
+
 class UserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
         public_key = fields.PublicKey(required=True)
+        # `role` replaces `is_admin` field (which is still required for backward
+        # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
+        role = UserRoleField(allow_none=False)
+        # Human handle can be none in case of redacted certificate
         human_handle = HumanHandleField(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
             data.pop("type")
+
+            # Handle legacy `is_admin` field
+            default_role = UserRole.ADMIN if data.pop("is_admin") else UserRole.USER
+            try:
+                role = data["role"]
+            except KeyError:
+                data["role"] = default_role
+            else:
+                if default_role == UserRole.ADMIN and role != UserRole.ADMIN:
+                    raise ValidationError("Fields `role` and `is_admin` have incompatible values")
+
             return UserCertificateContent(**data)
 
     user_id: UserID
     public_key: PublicKey
-    is_admin: bool
+    role: UserRole
     human_handle: Optional[HumanHandle] = None
+
+    # Only used during schema serialization
+    @property
+    def is_admin(self) -> bool:
+        return self.role == UserRole.ADMIN
 
     @classmethod
     def verify_and_load(
@@ -85,6 +116,7 @@ class DeviceCertificateContent(BaseAPISignedData):
         type = fields.CheckedConstant("device_certificate", required=True)
         device_id = DeviceIDField(required=True)
         verify_key = fields.VerifyKey(required=True)
+        # Device label can be none in case of redacted certificate
         device_label = fields.String(allow_none=True, missing=None)
 
         @post_load

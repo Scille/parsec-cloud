@@ -196,7 +196,10 @@ class UserClaimInProgress3Ctx:
     _cmds: BackendInvitedCmds
 
     async def do_claim_user(
-        self, requested_device_id: DeviceID, requested_human_handle: HumanHandle
+        self,
+        requested_device_id: DeviceID,
+        requested_device_label: Optional[str],
+        requested_human_handle: Optional[HumanHandle],
     ) -> LocalDevice:
         private_key = PrivateKey.generate()
         signing_key = SigningKey.generate()
@@ -204,6 +207,7 @@ class UserClaimInProgress3Ctx:
         try:
             payload = InviteUserData(
                 requested_device_id=requested_device_id,
+                requested_device_label=requested_device_label,
                 requested_human_handle=requested_human_handle,
                 public_key=private_key.public_key,
                 verify_key=signing_key.verify_key,
@@ -239,8 +243,9 @@ class UserClaimInProgress3Ctx:
         new_device = generate_new_device(
             organization_addr=organization_addr,
             device_id=confirmation.device_id,
+            device_label=confirmation.device_label,
             human_handle=confirmation.human_handle,
-            is_admin=confirmation.is_admin,
+            role=confirmation.role,
             private_key=private_key,
             signing_key=signing_key,
         )
@@ -253,12 +258,16 @@ class DeviceClaimInProgress3Ctx:
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_claim_device(self, requested_device_name: DeviceName) -> LocalDevice:
+    async def do_claim_device(
+        self, requested_device_name: DeviceName, requested_device_label: Optional[str]
+    ) -> LocalDevice:
         signing_key = SigningKey.generate()
 
         try:
             payload = InviteDeviceData(
-                requested_device_name=requested_device_name, verify_key=signing_key.verify_key
+                requested_device_name=requested_device_name,
+                requested_device_label=requested_device_label,
+                verify_key=signing_key.verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Cannot generate InviteDeviceData payload") from exc
@@ -291,8 +300,9 @@ class DeviceClaimInProgress3Ctx:
         new_device = generate_new_device(
             organization_addr=organization_addr,
             device_id=confirmation.device_id,
+            device_label=confirmation.device_label,
             human_handle=confirmation.human_handle,
-            is_admin=confirmation.is_admin,
+            role=confirmation.role,
             private_key=confirmation.private_key,
             signing_key=signing_key,
         )

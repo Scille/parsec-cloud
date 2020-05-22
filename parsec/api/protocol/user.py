@@ -124,12 +124,24 @@ apiv1_user_cancel_invitation_serializer = CmdSerializer(
 )
 
 
+class APIV1_UserCreateReqSchema(BaseReqSchema):
+    user_certificate = fields.Bytes(required=True)
+    device_certificate = fields.Bytes(required=True)
+
+
+class APIV1_UserCreateRepSchema(BaseRepSchema):
+    pass
+
+
+apiv1_user_create_serializer = CmdSerializer(APIV1_UserCreateReqSchema, APIV1_UserCreateRepSchema)
+
+
 class UserCreateReqSchema(BaseReqSchema):
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
     # Same certificates than above, but expurged of human_handle/device_label
-    redacted_user_certificate = fields.Bytes(allow_none=True, missing=None)
-    redacted_device_certificate = fields.Bytes(allow_none=True, missing=None)
+    redacted_user_certificate = fields.Bytes(required=True)
+    redacted_device_certificate = fields.Bytes(required=True)
 
 
 class UserCreateRepSchema(BaseRepSchema):

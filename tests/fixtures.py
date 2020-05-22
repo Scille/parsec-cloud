@@ -11,13 +11,14 @@ from pendulum import Pendulum
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
+    UserRole,
     UserCertificateContent,
+    UserManifest,
     RevokedUserCertificateContent,
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
-from parsec.api.data import UserManifest
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
 from parsec.backend.user import User as BackendUser, Device as BackendDevice
@@ -82,9 +83,11 @@ def local_device_factory(coolorg):
     def _local_device_factory(
         base_device_id: Optional[str] = None,
         org: OrganizationFullData = coolorg,
-        is_admin: Optional[bool] = None,
+        role: Optional[UserRole] = None,
         has_human_handle: bool = True,
         base_human_handle: Optional[str] = None,
+        has_device_label: bool = True,
+        base_device_label: Optional[str] = None,
     ):
         nonlocal count
 
@@ -95,6 +98,14 @@ def local_device_factory(coolorg):
         org_devices = devices[org.organization_id]
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
+
+        if not has_device_label:
+            assert base_device_label is None
+            device_label = None
+        elif not base_device_label:
+            device_label = f"My {device_id.device_name} machine"
+        else:
+            device_label = base_device_label
 
         if not has_human_handle:
             assert base_human_handle is None
@@ -120,21 +131,21 @@ def local_device_factory(coolorg):
         try:
             # If the user already exists, we must retrieve it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
-            if is_admin is not None and is_admin is not parent_device.is_admin:
+            if role is not None and role != parent_device.role:
                 raise ValueError(
-                    "is_admin is set but user already exists, with a different is_admin value."
+                    "role is set but user already exists, with a different role value."
                 )
-            is_admin = parent_device.is_admin
+            role = parent_device.role
 
         except StopIteration:
-            is_admin = bool(is_admin)
+            role = role or UserRole.USER
 
         # Force each device to access the backend trough a different hostname so
         # tcp stream spy can switch offline certains while keeping the others online
         org_addr = addr_with_device_subdomain(org.addr, device_id)
 
         device = generate_new_device(
-            device_id, org_addr, is_admin=is_admin, human_handle=human_handle
+            device_id, org_addr, role=role, human_handle=human_handle, device_label=device_label
         )
         if parent_device is not None:
             device = device.evolve(
@@ -167,12 +178,12 @@ def expiredorg(organization_factory):
 
 @pytest.fixture
 def otheralice(local_device_factory, otherorg):
-    return local_device_factory("alice@dev1", otherorg, is_admin=True)
+    return local_device_factory("alice@dev1", otherorg, role=UserRole.ADMIN)
 
 
 @pytest.fixture
 def alice(local_device_factory, initial_user_manifest_state):
-    device = local_device_factory("alice@dev1", is_admin=True)
+    device = local_device_factory("alice@dev1", role=UserRole.ADMIN)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -184,7 +195,7 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 @pytest.fixture
 def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredorg):
-    device = local_device_factory("alice@dev1", expiredorg, is_admin=True)
+    device = local_device_factory("alice@dev1", expiredorg, role=UserRole.ADMIN)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -196,17 +207,17 @@ def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredor
 
 @pytest.fixture
 def alice2(local_device_factory):
-    return local_device_factory("alice@dev2", is_admin=True)
+    return local_device_factory("alice@dev2", role=UserRole.ADMIN)
 
 
 @pytest.fixture
 def adam(local_device_factory):
-    return local_device_factory("adam@dev1", is_admin=True)
+    return local_device_factory("adam@dev1", role=UserRole.ADMIN)
 
 
 @pytest.fixture
 def bob(local_device_factory):
-    return local_device_factory("bob@dev1")
+    return local_device_factory("bob@dev1", role=UserRole.USER)
 
 
 @pytest.fixture
@@ -296,7 +307,7 @@ def local_device_to_backend_user(
         timestamp=now,
         user_id=device.user_id,
         public_key=device.public_key,
-        is_admin=device.is_admin,
+        role=device.role,
         human_handle=device.human_handle,
     )
     device_certificate = DeviceCertificateContent(
@@ -312,12 +323,13 @@ def local_device_to_backend_user(
     user = BackendUser(
         user_id=device.user_id,
         human_handle=device.human_handle,
-        is_admin=device.is_admin,
+        role=device.role,
         user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
         redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
         user_certifier=certifier_id,
         created_on=now,
     )
+
     first_device = BackendDevice(
         device_id=device.device_id,
         device_certificate=device_certificate.dump_and_sign(certifier_signing_key),
@@ -589,15 +601,18 @@ def sock_from_other_organization_factory(
 ):
     @asynccontextmanager
     async def _sock_from_other_organization_factory(
-        backend, mimick=None, anonymous=False, is_admin=False
+        backend,
+        mimick: Optional[str] = None,
+        anonymous: bool = False,
+        role: UserRole = UserRole.USER,
     ):
         binder = backend_data_binder_factory(backend)
 
         other_org = organization_factory()
         if mimick:
-            other_device = local_device_factory(mimick, other_org, is_admin)
+            other_device = local_device_factory(base_device_id=mimick, org=other_org, role=role)
         else:
-            other_device = local_device_factory(org=other_org, is_admin=is_admin)
+            other_device = local_device_factory(org=other_org, role=role)
         await binder.bind_organization(other_org, other_device)
 
         if anonymous:

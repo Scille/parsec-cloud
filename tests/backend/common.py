@@ -305,10 +305,14 @@ user_create = CmdSock(
     "user_create",
     user_create_serializer,
     parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate=None, redacted_device_certificate=None: {
-        "user_certificate": user_certificate,
-        "device_certificate": device_certificate,
-        "redacted_user_certificate": redacted_user_certificate,
-        "redacted_device_certificate": redacted_device_certificate,
+        k: v
+        for k, v in {
+            "user_certificate": user_certificate,
+            "device_certificate": device_certificate,
+            "redacted_user_certificate": redacted_user_certificate,
+            "redacted_device_certificate": redacted_device_certificate,
+        }.items()
+        if v is not None
     },
 )
 user_revoke = CmdSock(

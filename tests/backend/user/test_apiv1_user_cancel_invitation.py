@@ -5,6 +5,7 @@ from pendulum import Pendulum
 import trio
 
 from parsec.backend.user import UserInvitation
+from parsec.api.data import UserRole
 from parsec.api.protocol import apiv1_user_cancel_invitation_serializer, apiv1_user_claim_serializer
 
 from tests.common import freeze_time
@@ -64,7 +65,7 @@ async def test_user_cancel_invitation_other_organization(
 ):
     # Organizations should be isolated
     async with sock_from_other_organization_factory(
-        backend, mimick=alice.device_id, is_admin=True
+        backend, mimick=alice.device_id, role=UserRole.ADMIN
     ) as sock:
         rep = await user_cancel_invitation(sock, user_id=mallory_invitation.user_id)
         # Cancel returns even if no invitation was found

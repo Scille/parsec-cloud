@@ -4,7 +4,7 @@ import pytest
 import pendulum
 from unittest.mock import ANY
 
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserRole
 from parsec.api.protocol import (
     UserID,
     apiv1_organization_create_serializer,
@@ -82,7 +82,7 @@ async def test_organization_recreate_and_bootstrap(
 
     assert bootstrap_token1 != bootstrap_token2
 
-    newalice = local_device_factory(org=neworg, is_admin=True)
+    newalice = local_device_factory(org=neworg, role=UserRole.ADMIN)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
     async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
@@ -131,7 +131,7 @@ async def test_organization_create_and_bootstrap(
     # 2) Bootstrap organization
 
     # Use an existing user name to make sure they didn't mix together
-    newalice = local_device_factory("alice@dev1", neworg, is_admin=True)
+    newalice = local_device_factory("alice@dev1", neworg, role=UserRole.ADMIN)
     backend_newalice, backend_newalice_first_device = local_device_to_backend_user(newalice, neworg)
 
     async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
@@ -181,7 +181,7 @@ async def test_organization_with_expiration_date_create_and_bootstrap(
         # 2) Bootstrap organization
 
         # Use an existing user name to make sure they didn't mix together
-        newalice = local_device_factory("alice@dev1", neworg, is_admin=True)
+        newalice = local_device_factory("alice@dev1", neworg, role=UserRole.ADMIN)
         backend_newalice, backend_newalice_first_device = local_device_to_backend_user(
             newalice, neworg
         )
@@ -281,7 +281,7 @@ async def test_organization_bootstrap_bad_data(
 
     now = pendulum.now()
     good_cu = UserCertificateContent(
-        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, is_admin=True
+        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, role=UserRole.ADMIN
     ).dump_and_sign(root_signing_key)
     good_cd = DeviceCertificateContent(
         author=None, timestamp=now, device_id=good_device_id, verify_key=verify_key
@@ -289,19 +289,23 @@ async def test_organization_bootstrap_bad_data(
 
     bad_now = now - pendulum.interval(seconds=1)
     bad_now_cu = UserCertificateContent(
-        author=None, timestamp=bad_now, user_id=good_user_id, public_key=public_key, is_admin=True
+        author=None,
+        timestamp=bad_now,
+        user_id=good_user_id,
+        public_key=public_key,
+        role=UserRole.ADMIN,
     ).dump_and_sign(root_signing_key)
     bad_now_cd = DeviceCertificateContent(
         author=None, timestamp=bad_now, device_id=good_device_id, verify_key=verify_key
     ).dump_and_sign(root_signing_key)
     bad_id_cu = UserCertificateContent(
-        author=None, timestamp=now, user_id=bad_user_id, public_key=public_key, is_admin=True
+        author=None, timestamp=now, user_id=bad_user_id, public_key=public_key, role=UserRole.ADMIN
     ).dump_and_sign(root_signing_key)
     bad_not_admin_cu = UserCertificateContent(
-        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, is_admin=False
+        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, role=UserRole.USER
     ).dump_and_sign(root_signing_key)
     bad_key_cu = UserCertificateContent(
-        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, is_admin=True
+        author=None, timestamp=now, user_id=good_user_id, public_key=public_key, role=UserRole.ADMIN
     ).dump_and_sign(bad_root_signing_key)
     bad_key_cd = DeviceCertificateContent(
         author=None, timestamp=now, device_id=good_device_id, verify_key=verify_key

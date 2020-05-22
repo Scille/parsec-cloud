@@ -17,6 +17,7 @@ from parsec.crypto import (
 from parsec.api.data import (
     DataError,
     SASCode,
+    UserRole,
     generate_sas_codes,
     generate_sas_code_candidates,
     InviteUserData,
@@ -225,6 +226,7 @@ class UserGreetInProgress3Ctx:
         return UserGreetInProgress4Ctx(
             token=self.token,
             requested_device_id=data.requested_device_id,
+            requested_device_label=data.requested_device_label,
             requested_human_handle=data.requested_human_handle,
             public_key=data.public_key,
             verify_key=data.verify_key,
@@ -260,6 +262,7 @@ class DeviceGreetInProgress3Ctx:
         return DeviceGreetInProgress4Ctx(
             token=self.token,
             requested_device_name=data.requested_device_name,
+            requested_device_label=data.requested_device_label,
             verify_key=data.verify_key,
             shared_secret_key=self._shared_secret_key,
             cmds=self._cmds,
@@ -270,6 +273,7 @@ class DeviceGreetInProgress3Ctx:
 class UserGreetInProgress4Ctx:
     token: UUID
     requested_device_id: DeviceID
+    requested_device_label: Optional[str]
     requested_human_handle: Optional[HumanHandle]
 
     _public_key: PublicKey
@@ -278,7 +282,12 @@ class UserGreetInProgress4Ctx:
     _cmds: BackendInvitedCmds
 
     async def do_create_new_user(
-        self, author: LocalDevice, device_id: DeviceID, human_handle: HumanHandle, is_admin: bool
+        self,
+        author: LocalDevice,
+        device_id: DeviceID,
+        device_label: Optional[str],
+        human_handle: Optional[HumanHandle],
+        role: UserRole,
     ) -> None:
         try:
             now = pendulum_now()
@@ -289,21 +298,34 @@ class UserGreetInProgress4Ctx:
                 user_id=device_id.user_id,
                 human_handle=human_handle,
                 public_key=self._public_key,
-                is_admin=is_admin,
-            ).dump_and_sign(author.signing_key)
+                role=role,
+            )
+            redacted_user_certificate = user_certificate.evolve(human_handle=None)
 
             device_certificate = DeviceCertificateContent(
                 author=author.device_id,
                 timestamp=now,
                 device_id=device_id,
                 verify_key=self._verify_key,
-            ).dump_and_sign(author.signing_key)
+                device_label=device_label,
+            )
+            redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+            user_certificate = user_certificate.dump_and_sign(author.signing_key)
+            redacted_user_certificate = redacted_user_certificate.dump_and_sign(author.signing_key)
+            device_certificate = device_certificate.dump_and_sign(author.signing_key)
+            redacted_device_certificate = redacted_device_certificate.dump_and_sign(
+                author.signing_key
+            )
 
         except DataError as exc:
             raise InviteError(f"Cannot generate device certificate: {exc}") from exc
 
         rep = await self._cmds.user_create(
-            user_certificate=user_certificate, device_certificate=device_certificate
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
         )
         if rep["status"] != "ok":
             raise InviteError(f"Cannot create device: {rep}")
@@ -311,8 +333,9 @@ class UserGreetInProgress4Ctx:
         try:
             payload = InviteUserConfirmation(
                 device_id=device_id,
+                device_label=device_label,
                 human_handle=human_handle,
-                is_admin=is_admin,
+                role=role,
                 root_verify_key=author.root_verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
@@ -333,12 +356,15 @@ class UserGreetInProgress4Ctx:
 class DeviceGreetInProgress4Ctx:
     token: UUID
     requested_device_name: DeviceName
+    requested_device_label: Optional[str]
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(self, author: LocalDevice, device_name: DeviceName) -> None:
+    async def do_create_new_device(
+        self, author: LocalDevice, device_name: DeviceName, device_label: Optional[str]
+    ) -> None:
         device_id = DeviceID(f"{author.user_id}@{device_name}")
         try:
             now = pendulum_now()
@@ -348,20 +374,31 @@ class DeviceGreetInProgress4Ctx:
                 timestamp=now,
                 device_id=device_id,
                 verify_key=self._verify_key,
-            ).dump_and_sign(author.signing_key)
+                device_label=device_label,
+            )
+            redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+            device_certificate = device_certificate.dump_and_sign(author.signing_key)
+            redacted_device_certificate = redacted_device_certificate.dump_and_sign(
+                author.signing_key
+            )
 
         except DataError as exc:
             raise InviteError(f"Cannot generate device certificate: {exc}") from exc
 
-        rep = await self._cmds.device_create(device_certificate=device_certificate)
+        rep = await self._cmds.device_create(
+            device_certificate=device_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
         if rep["status"] != "ok":
             raise InviteError(f"Cannot create device: {rep}")
 
         try:
             payload = InviteDeviceConfirmation(
                 device_id=device_id,
+                device_label=device_label,
                 human_handle=author.human_handle,
-                is_admin=author.is_admin,
+                role=author.role,
                 private_key=author.private_key,
                 root_verify_key=author.root_verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)

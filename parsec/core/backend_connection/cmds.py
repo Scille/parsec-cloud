@@ -62,6 +62,7 @@ from parsec.api.protocol import (
     apiv1_user_get_invitation_creator_serializer,
     apiv1_user_claim_serializer,
     apiv1_user_cancel_invitation_serializer,
+    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
     apiv1_device_invite_serializer,
@@ -533,11 +534,29 @@ async def user_cancel_invitation(transport: Transport, user_id: UserID) -> dict:
 
 
 async def user_create(
-    transport: Transport, user_certificate: bytes, device_certificate: bytes = None
+    transport: Transport,
+    user_certificate: bytes,
+    device_certificate: bytes,
+    redacted_user_certificate: bytes,
+    redacted_device_certificate: bytes,
 ) -> dict:
     return await _send_cmd(
         transport,
         user_create_serializer,
+        cmd="user_create",
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
+    )
+
+
+async def apiv1_user_create(
+    transport: Transport, user_certificate: bytes, device_certificate: bytes
+) -> dict:
+    return await _send_cmd(
+        transport,
+        apiv1_user_create_serializer,
         cmd="user_create",
         user_certificate=user_certificate,
         device_certificate=device_certificate,
@@ -571,12 +590,15 @@ async def device_cancel_invitation(transport: Transport, invited_device_name: De
     )
 
 
-async def device_create(transport: Transport, device_certificate: bytes) -> dict:
+async def device_create(
+    transport: Transport, device_certificate: bytes, redacted_device_certificate: bytes
+) -> dict:
     return await _send_cmd(
         transport,
         device_create_serializer,
         cmd="device_create",
         device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
     )
 
 

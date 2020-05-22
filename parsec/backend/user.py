@@ -9,6 +9,7 @@ from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBus
 from parsec.api.data import (
+    UserRole,
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
@@ -28,6 +29,7 @@ from parsec.api.protocol import (
     apiv1_user_invite_serializer,
     apiv1_user_claim_serializer,
     apiv1_user_cancel_invitation_serializer,
+    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
     apiv1_device_get_invitation_creator_serializer,
@@ -103,7 +105,7 @@ class User:
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
-    is_admin: bool = False
+    role: UserRole = UserRole.USER
     human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None
@@ -235,7 +237,7 @@ class BaseUserComponent:
     @api("user_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+        if client_ctx.role != UserRole.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -387,7 +389,7 @@ class BaseUserComponent:
     @api("user_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+        if client_ctx.role != UserRole.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -399,17 +401,33 @@ class BaseUserComponent:
 
         return apiv1_user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
-    @api("user_create")
+    @api("user_create", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
-    async def api_user_create(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+    async def apiv1_user_create(self, client_ctx, msg):
+        if client_ctx.role != UserRole.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
+        msg = apiv1_user_create_serializer.req_load(msg)
+        msg["redacted_user_certificate"] = msg["user_certificate"]
+        msg["redacted_device_certificate"] = msg["device_certificate"]
+        rep = await self._api_user_create(client_ctx, msg)
+        return apiv1_user_create_serializer.rep_dump(rep)
 
+    @api("user_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @catch_protocol_errors
+    async def api_user_create(self, client_ctx, msg):
+        if client_ctx.role != UserRole.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
         msg = user_create_serializer.req_load(msg)
+        rep = await self._api_user_create(client_ctx, msg)
+        return user_create_serializer.rep_dump(rep)
 
+    async def _api_user_create(self, client_ctx, msg):
         try:
             d_data = DeviceCertificateContent.verify_and_load(
                 msg["device_certificate"],
@@ -489,7 +507,7 @@ class BaseUserComponent:
             user = User(
                 user_id=u_data.user_id,
                 human_handle=u_data.human_handle,
-                is_admin=u_data.is_admin,
+                role=u_data.role,
                 user_certificate=msg["user_certificate"],
                 redacted_user_certificate=msg["redacted_user_certificate"]
                 or msg["user_certificate"],
@@ -509,12 +527,12 @@ class BaseUserComponent:
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
-        return user_create_serializer.rep_dump({"status": "ok"})
+        return {"status": "ok"}
 
     @api("user_revoke")
     @catch_protocol_errors
     async def api_user_revoke(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+        if client_ctx.role != UserRole.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -797,7 +815,7 @@ class BaseUserComponent:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
         if redacted_data:
-            if redacted_data.evolve(device_label=redacted_data.device_label) != data:
+            if redacted_data.evolve(device_label=data.device_label) != data:
                 return {
                     "status": "invalid_data",
                     "reason": "Redacted Device certificate differs from Device certificate.",

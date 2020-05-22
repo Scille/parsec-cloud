@@ -23,6 +23,7 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
         timestamp=now,
         device_id=alice_nd.device_id,
         verify_key=alice_nd.verify_key,
+        device_label=alice_nd.device_label,
     ).dump_and_sign(alice.signing_key)
 
     with backend.event_bus.listen() as spy:
@@ -168,3 +169,28 @@ async def test_device_create_bad_redacted_device_certificate(alice_backend_sock,
         ),
     )
     assert rep == {"status": "ok"}
+
+
+@pytest.mark.trio
+async def test_redacted_certificates_cannot_contain_sensitive_data(
+    alice_backend_sock, alice, alice_nd
+):
+    now = pendulum.now()
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=alice_nd.device_id,
+        verify_key=alice_nd.verify_key,
+        device_label=alice_nd.device_label,
+    ).dump_and_sign(alice.signing_key)
+
+    with freeze_time(now):
+        rep = await device_create(
+            alice_backend_sock,
+            device_certificate=device_certificate,
+            redacted_device_certificate=device_certificate,
+        )
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Redacted Device certificate must not contain a device_label field.",
+        }

@@ -6,6 +6,7 @@ from typing import Optional
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.api.version import ApiVersion
 from parsec.api.transport import Transport
+from parsec.api.data import UserRole
 from parsec.api.protocol import (
     ServerHandshake,
     OrganizationID,
@@ -38,7 +39,7 @@ class AuthenticatedClientContext(BaseClientContext):
         "organization_id",
         "device_id",
         "human_handle",
-        "is_admin",
+        "role",
         "public_key",
         "verify_key",
         "event_bus_ctx",
@@ -55,13 +56,13 @@ class AuthenticatedClientContext(BaseClientContext):
         organization_id: OrganizationID,
         device_id: DeviceID,
         human_handle: Optional[HumanHandle],
-        is_admin: bool,
+        role: UserRole,
         public_key: PublicKey,
         verify_key: VerifyKey,
     ):
         super().__init__(transport, handshake)
         self.organization_id = organization_id
-        self.is_admin = is_admin
+        self.role = role
         self.device_id = device_id
         self.human_handle = human_handle
         self.public_key = public_key

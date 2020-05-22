@@ -8,6 +8,7 @@ import pendulum
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.api.data import (
     DataError,
+    UserRole,
     UserCertificateContent,
     DeviceCertificateContent,
     APIV1_UserClaimContent,
@@ -137,7 +138,7 @@ async def claim_user(
                     expected_device=new_device_id,
                 )
 
-                new_device = new_device.evolve(is_admin=user.is_admin)
+                new_device = new_device.evolve(role=user.role)
 
             except DataError as exc:
                 raise InviteClaimCryptoError(str(exc)) from exc
@@ -232,7 +233,7 @@ async def claim_device(
         device_id=new_device_id,
         signing_key=device_signing_key,
         private_key=answer.private_key,
-        is_admin=invitation_creator_user.is_admin,
+        role=UserRole.ADMIN if invitation_creator_user.is_admin else UserRole.USER,
         user_manifest_id=answer.user_manifest_id,
         user_manifest_key=answer.user_manifest_key,
         local_symkey=SecretKey.generate(),
@@ -373,7 +374,7 @@ async def invite_and_create_user(
                         timestamp=now,
                         user_id=device_id.user_id,
                         public_key=claim.public_key,
-                        is_admin=is_admin,
+                        role=UserRole.ADMIN if is_admin else UserRole.USER,
                     ).dump_and_sign(device.signing_key)
                     device_certificate = DeviceCertificateContent(
                         author=device.device_id,
