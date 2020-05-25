@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import re
 from typing import Optional, Tuple, List
 from random import randint, shuffle
 
@@ -16,9 +17,25 @@ from parsec.api.protocol import (
 from parsec.api.data.base import BaseAPIData, BaseSchema
 
 
+class SASCode(str):
+    __slots__ = ()
+    regex = re.compile(r"^[0-9]{7}$")
+
+    def __init__(self, raw):
+        if not isinstance(raw, str) or not self.regex.match(raw):
+            raise ValueError("Invalid SAS code")
+
+    def __repr__(self):
+        return f"<OrganizationID {super().__repr__()}>"
+
+    @classmethod
+    def from_int(cls, num):
+        return cls(f"{num:0>7}")
+
+
 def generate_sas_codes(
     claimer_nonce: bytes, greeter_nonce: bytes, shared_secret_key: SecretKey
-) -> Tuple[int, int]:
+) -> Tuple[SASCode, SASCode]:
     # Computes combined HMAC
     combined_nonce = claimer_nonce + greeter_nonce
     # Digest size of 5 bytes so we can split it beween two 20bits SAS
@@ -30,13 +47,13 @@ def generate_sas_codes(
     # Big endian number extracted from bits [20, 40[
     greeter_sas = (hmac_as_int >> 20) % 2 ** 20
 
-    return claimer_sas, greeter_sas
+    return SASCode.from_int(claimer_sas), SASCode.from_int(greeter_sas)
 
 
-def generate_sas_code_candidates(valid_sas: int, size: int = 3) -> List[int]:
+def generate_sas_code_candidates(valid_sas: SASCode, size: int = 3) -> List[SASCode]:
     candidates = {valid_sas}
     while len(candidates) < size:
-        candidates.add(randint(0, 2 ** 20 - 1))
+        candidates.add(SASCode.from_int(randint(0, 2 ** 20 - 1)))
     ordered_candidates = list(candidates)
     shuffle(ordered_candidates)
     return ordered_candidates

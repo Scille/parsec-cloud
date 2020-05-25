@@ -22,6 +22,7 @@ from parsec.api.data.invite_claim import (
     APIV1_DeviceClaimAnswerContent,
 )
 from parsec.api.data.invite import (
+    SASCode,
     generate_sas_codes,
     generate_sas_code_candidates,
     InviteUserData,
@@ -73,6 +74,7 @@ __all__ = (
     "APIV1_DeviceClaimContent",
     "APIV1_DeviceClaimAnswerContent",
     # Invite
+    "SASCode",
     "generate_sas_codes",
     "generate_sas_code_candidates",
     "InviteUserData",

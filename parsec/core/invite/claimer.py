@@ -13,6 +13,7 @@ from parsec.crypto import (
 )
 from parsec.api.data import (
     DataError,
+    SASCode,
     generate_sas_codes,
     generate_sas_code_candidates,
     InviteUserData,
@@ -57,7 +58,7 @@ class BaseClaimInitialCtx:
 
     _cmds: BackendInvitedCmds
 
-    async def _do_wait_peer(self) -> Tuple[int, int, SecretKey]:
+    async def _do_wait_peer(self) -> Tuple[SASCode, SASCode, SecretKey]:
         claimer_private_key = PrivateKey.generate()
         rep = await self._cmds.invite_1_claimer_wait_peer(
             claimer_public_key=claimer_private_key.public_key
@@ -121,13 +122,13 @@ class DeviceClaimInitialCtx(BaseClaimInitialCtx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseClaimInProgress1Ctx:
-    greeter_sas: int
+    greeter_sas: SASCode
 
-    _claimer_sas: int
+    _claimer_sas: SASCode
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    def generate_greeter_sas_choices(self, size: int = 3) -> List[int]:
+    def generate_greeter_sas_choices(self, size: int = 3) -> List[SASCode]:
         return generate_sas_code_candidates(self.greeter_sas, size=size)
 
     async def _do_signify_trust(self) -> None:
@@ -162,7 +163,7 @@ class DeviceClaimInProgress1Ctx(BaseClaimInProgress1Ctx):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BaseClaimInProgress2Ctx:
-    claimer_sas: int
+    claimer_sas: SASCode
 
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
