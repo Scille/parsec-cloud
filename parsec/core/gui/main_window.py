@@ -3,6 +3,7 @@
 import platform
 from typing import Optional
 from structlog import get_logger
+from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QIcon, QKeySequence
@@ -40,14 +41,6 @@ from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
 logger = get_logger()
-
-
-# Helper
-
-
-def major_minor(version):
-    major, minor, *_ = version.split(".")
-    return int(major), int(minor)
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -393,18 +386,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
 
         # For each parsec update
-        if self.config.gui_last_version and major_minor(self.config.gui_last_version) <= (1, 13):
+        if self.config.gui_last_version and self.config.gui_last_version != PARSEC_VERSION:
 
-            # Revert the acrobat reader workaround
-            if (
-                platform.system() == "Windows"
-                and win_registry.is_acrobat_reader_dc_present()
-                and not win_registry.get_acrobat_app_container_enabled()
-            ):
-                win_registry.del_acrobat_app_container_enabled()
+            # Update from parsec `<1.13` to `>=1.13`
+            if LooseVersion(self.config.gui_last_version) < "1.13":
+
+                # Revert the acrobat reader workaround
+                if (
+                    platform.system() == "Windows"
+                    and win_registry.is_acrobat_reader_dc_present()
+                    and not win_registry.get_acrobat_app_container_enabled()
+                ):
+                    win_registry.del_acrobat_app_container_enabled()
 
             # Acknowledge the changes
             self.event_bus.send("gui.config.changed", gui_last_version=PARSEC_VERSION)
+
         telemetry.init(self.config)
 
         devices = list_available_devices(self.config.config_dir)
