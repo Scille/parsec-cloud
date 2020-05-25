@@ -6,7 +6,7 @@ from uuid import UUID
 from functools import partial
 
 from parsec.utils import trio_run
-from parsec.cli_utils import cli_exception_handler, spinner, operation
+from parsec.cli_utils import cli_exception_handler, spinner, operation, aprompt, aconfirm
 from parsec.api.protocol import (
     DeviceID,
     DeviceName,
@@ -112,9 +112,9 @@ async def _do_greet_user(device, initial_ctx):
 
     choices = in_progress_ctx.generate_claimer_sas_choices(size=3)
     for i, choice in enumerate(choices):
-        display_choice = click.style(str(choice), fg="yellow")
+        display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = click.prompt(
+    code = await aprompt(
         f"Select code provided by claimer", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.claimer_sas:
@@ -125,16 +125,16 @@ async def _do_greet_user(device, initial_ctx):
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_label = click.prompt(
+    granted_label = await aprompt(
         "New user label", default=in_progress_ctx.requested_human_handle.label
     )
-    granted_email = click.prompt(
+    granted_email = await aprompt(
         "New user email", default=in_progress_ctx.requested_human_handle.email
     )
-    granted_device_id = click.prompt(
+    granted_device_id = await aprompt(
         "New user device ID", default=in_progress_ctx.requested_device_id, type=DeviceID
     )
-    granted_is_admin = click.confirm("New user is admin ?", default=False)
+    granted_is_admin = await aconfirm("New user is admin ?", default=False)
     async with spinner("Creating the user in the backend"):
         await in_progress_ctx.do_create_new_user(
             author=device,
@@ -157,9 +157,9 @@ async def _do_greet_device(device, initial_ctx):
 
     choices = in_progress_ctx.generate_claimer_sas_choices(size=3)
     for i, choice in enumerate(choices):
-        display_choice = click.style(str(choice), fg="yellow")
+        display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = click.prompt(
+    code = await aprompt(
         f"Select code provided by claimer", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.claimer_sas:
@@ -170,7 +170,7 @@ async def _do_greet_device(device, initial_ctx):
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_device_name = click.prompt(
+    granted_device_name = await aprompt(
         "New device name", default=in_progress_ctx.requested_device_name, type=DeviceName
     )
     async with spinner("Creating the device in the backend"):
@@ -223,7 +223,7 @@ def greet_invitation(config, device, token, **kwargs):
     """
     with cli_exception_handler(config.debug):
         # Disable task monitoring given user prompt will block the coroutine
-        trio_run(_greet_invitation, config, device, token, monitor_tasks=False)
+        trio_run(_greet_invitation, config, device, token)
 
 
 async def _do_claim_user(initial_ctx):
@@ -232,9 +232,9 @@ async def _do_claim_user(initial_ctx):
 
     choices = in_progress_ctx.generate_greeter_sas_choices(size=3)
     for i, choice in enumerate(choices):
-        display_choice = click.style(str(choice), fg="yellow")
+        display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = click.prompt(
+    code = await aprompt(
         f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.greeter_sas:
@@ -247,10 +247,10 @@ async def _do_claim_user(initial_ctx):
     async with spinner("Waiting for greeter"):
         in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
 
-    requested_label = click.prompt("User fullname")
+    requested_label = await aprompt("User fullname")
     requested_email = initial_ctx.claimer_email
     default_device_id = f"{requested_email.split('@', 1)[0]}@{platform.node()}"
-    requested_device_id = click.prompt("Device ID", default=default_device_id, type=DeviceID)
+    requested_device_id = await aprompt("Device ID", default=default_device_id, type=DeviceID)
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_user(
             requested_device_id=requested_device_id,
@@ -266,9 +266,9 @@ async def _do_claim_device(initial_ctx):
 
     choices = in_progress_ctx.generate_greeter_sas_choices(size=3)
     for i, choice in enumerate(choices):
-        display_choice = click.style(str(choice), fg="yellow")
+        display_choice = click.style(choice, fg="yellow")
         click.echo(f" {i} - {display_choice}")
-    code = click.prompt(
+    code = await aprompt(
         f"Select code provided by greeter", type=click.Choice([str(x) for x in range(len(choices))])
     )
     if choices[int(code)] != in_progress_ctx.greeter_sas:
@@ -281,7 +281,7 @@ async def _do_claim_device(initial_ctx):
     async with spinner("Waiting for greeter"):
         in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
 
-    requested_device_name = click.prompt("Device name", default=platform.node(), type=DeviceName)
+    requested_device_name = await aprompt("Device name", default=platform.node(), type=DeviceName)
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_device(
             requested_device_name=requested_device_name
@@ -324,14 +324,14 @@ async def _claim_invitation(config, addr, password):
 @click.command(short_help="claim invitation")
 @core_config_options
 @click.argument("addr", type=BackendInvitationAddr.from_url)
-@click.password_option()
+@click.password_option(prompt="Choose a password for the claimed device")
 def claim_invitation(config, addr, password, **kwargs):
     """
     Claim a device or user from a invitation
     """
     with cli_exception_handler(config.debug):
         # Disable task monitoring given user prompt will block the coroutine
-        trio_run(_claim_invitation, config, addr, password, monitor_tasks=False)
+        trio_run(_claim_invitation, config, addr, password)
 
 
 async def _list_invitations(config, device):
