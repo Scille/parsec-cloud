@@ -166,6 +166,13 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
+    # Work around versionning issue with parsec releases:
+    # - v1.12.0, v1.11.4, v1.11.3, v1.11.2, v1.11.1, v1.11.0 and v1.10.0
+    # A `v` has been incorrectly added to `parsec.__version__`, potentially
+    # affecting the `gui_last_version` entry in the configuration file.
+    if data_conf.get("gui_last_version"):
+        data_conf["gui_last_version"] = data_conf["gui_last_version"].lstrip("v")
+
     return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
