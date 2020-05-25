@@ -3,6 +3,7 @@
 import pytest
 
 from parsec.api.protocol import UserID, DeviceID, DeviceName, OrganizationID, HumanHandle
+from parsec.api.data import SASCode
 
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
@@ -104,3 +105,23 @@ def test_valid_human_handle(email, label):
 def test_invalid_human_handle(email, label):
     with pytest.raises(ValueError):
         HumanHandle(email, label)
+
+
+def test_sas_code():
+    assert SASCode.from_int(0x0) == SASCode("AAAA")
+    assert SASCode.from_int(0x1) == SASCode("BAAA")
+    # [...]
+    assert SASCode.from_int(0x84001) == SASCode("BASS")
+    # [...]
+    assert SASCode.from_int(0xFFFFE) == SASCode("8999")
+    assert SASCode.from_int(0xFFFFF) == SASCode("9999")
+
+    with pytest.raises(ValueError):
+        SASCode.from_int(2 ** 20)
+
+    with pytest.raises(ValueError):
+        SASCode.from_int(-1)
+
+    for invalid in ["", "AAA", "AAAAA", "aaaa", "AAAI", "AAAO", "AAA0", "AAA1"]:
+        with pytest.raises(ValueError):
+            SASCode(invalid)

@@ -19,7 +19,9 @@ from parsec.api.data.base import BaseAPIData, BaseSchema
 
 class SASCode(str):
     __slots__ = ()
-    regex = re.compile(r"^[0-9]{7}$")
+    length = 4
+    symbols = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    regex = re.compile(rf"^[{symbols}]{{{length}}}$")
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
@@ -30,7 +32,15 @@ class SASCode(str):
 
     @classmethod
     def from_int(cls, num):
-        return cls(f"{num:0>7}")
+        if num < 0:
+            raise ValueError("Provided integer is negative")
+        result = ""
+        for _ in range(cls.length):
+            result += cls.symbols[num % len(cls.symbols)]
+            num //= len(cls.symbols)
+        if num != 0:
+            raise ValueError("Provided integer is too large")
+        return cls(result)
 
 
 def generate_sas_codes(
