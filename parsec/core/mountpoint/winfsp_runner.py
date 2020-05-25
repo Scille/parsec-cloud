@@ -10,6 +10,7 @@ from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
 
+from parsec.core.win_registry import parsec_drive_icon_context
 from parsec.core.mountpoint.exceptions import MountpointDriverCrash
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
@@ -136,28 +137,32 @@ async def winfsp_mountpoint_runner(
     try:
         event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
 
-        # Run fs start in a thread
-        await trio.to_thread.run_sync(fs.start)
-        await _wait_for_winfsp_ready(mountpoint_path)
+        # Manage drive icon
+        drive_letter, *_ = mountpoint_path.drive
+        with parsec_drive_icon_context(drive_letter):
 
-        # Notify the manager that the mountpoint is ready
-        event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
-        task_status.started(mountpoint_path)
+            # Run fs start in a thread
+            await trio.to_thread.run_sync(fs.start)
+            await _wait_for_winfsp_ready(mountpoint_path)
 
-        # Start recording `sharing.updated` events
-        with event_bus.waiter_on("sharing.updated") as waiter:
+            # Notify the manager that the mountpoint is ready
+            event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
+            task_status.started(mountpoint_path)
 
-            # Loop over `sharing.updated` event
-            while True:
+            # Start recording `sharing.updated` events
+            with event_bus.waiter_on("sharing.updated") as waiter:
 
-                # Restart workspace if necessary
-                if workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]:
-                    restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
-                    await trio.to_thread.run_sync(restart)
+                # Loop over `sharing.updated` event
+                while True:
 
-                # Wait and reset waiter
-                await waiter.wait()
-                waiter.clear()
+                    # Restart workspace if necessary
+                    if workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]:
+                        restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
+                        await trio.to_thread.run_sync(restart)
+
+                    # Wait and reset waiter
+                    await waiter.wait()
+                    waiter.clear()
 
     except Exception as exc:
         raise MountpointDriverCrash(f"WinFSP has crashed on {mountpoint_path}: {exc}") from exc

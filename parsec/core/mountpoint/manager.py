@@ -23,6 +23,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointFuseNotAvailable,
 )
 from parsec.core.mountpoint.winify import winify_entry_name
+from parsec.core.win_registry import cleanup_parsec_drive_icons
 
 
 # Importing winfspy can take some time (about 0.4 seconds)
@@ -50,6 +51,9 @@ def get_mountpoint_runner():
 
         logging.getLogger("winfspy").setLevel(logging.WARNING)
         from parsec.core.mountpoint.winfsp_runner import winfsp_mountpoint_runner
+
+        # Now is a good time to perform some cleanup in the registry
+        cleanup_parsec_drive_icons()
 
         return winfsp_mountpoint_runner
 
