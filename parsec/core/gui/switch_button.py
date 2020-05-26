@@ -1,5 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+"""
+Switch button implementation in PyQt5
+
+Taken from:
+- https://stackoverflow.com/a/51825815/2846140
+"""
+
 from PyQt5.QtCore import QPropertyAnimation, QRectF, QSize, Qt, pyqtProperty
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QAbstractButton, QSizePolicy
