@@ -8,7 +8,7 @@ from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
     APIV1_UserClaimContent,
-    UserRole,
+    UserProfile,
 )
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
@@ -37,7 +37,7 @@ async def test_user_invite_then_claim_ok(
             timestamp=now,
             user_id=claim.device_id.user_id,
             public_key=claim.public_key,
-            role=UserRole.USER,
+            profile=UserProfile.REGULAR,
         ).dump_and_sign(alice.signing_key)
         device_certificate = DeviceCertificateContent(
             author=alice.device_id,

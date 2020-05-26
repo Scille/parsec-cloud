@@ -18,7 +18,7 @@ from parsec.api.protocol import (
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
 )
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserRole
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, DataError, UserProfile
 from parsec.backend.user import User, Device
 from parsec.backend.utils import catch_protocol_errors, api
 
@@ -190,8 +190,11 @@ class BaseOrganizationComponent:
                 "status": "invalid_certification",
                 "reason": f"Invalid certification data ({exc}).",
             }
-        if u_data.role != UserRole.ADMIN:
-            return {"status": "invalid_data", "reason": "Bootstrapping user must have admin role."}
+        if u_data.profile != UserProfile.ADMIN:
+            return {
+                "status": "invalid_data",
+                "reason": "Bootstrapping user must have admin profile.",
+            }
 
         if u_data.timestamp != d_data.timestamp:
             return {
@@ -239,7 +242,7 @@ class BaseOrganizationComponent:
         user = User(
             user_id=u_data.user_id,
             human_handle=u_data.human_handle,
-            role=u_data.role,
+            profile=u_data.profile,
             user_certificate=msg["user_certificate"],
             redacted_user_certificate=msg.get("redacted_user_certificate", msg["user_certificate"]),
             user_certifier=u_data.author,

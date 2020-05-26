@@ -4,7 +4,7 @@ import pytest
 import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserRole
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import DeviceID
 
 from tests.common import freeze_time
@@ -12,9 +12,9 @@ from tests.backend.common import user_get, user_create
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("role", UserRole)
+@pytest.mark.parametrize("profile", UserProfile)
 async def test_user_create_ok(
-    backend, backend_sock_factory, alice_backend_sock, alice, mallory, role
+    backend, backend_sock_factory, alice_backend_sock, alice, mallory, profile
 ):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
@@ -22,7 +22,7 @@ async def test_user_create_ok(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=role,
+        profile=profile,
         human_handle=mallory.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
@@ -63,7 +63,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(alice.signing_key)
     good_device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -76,7 +76,7 @@ async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, m
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(bob.signing_key)
     bad_device_certificate = DeviceCertificateContent(
         author=bob.device_id,
@@ -129,7 +129,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -159,7 +159,7 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -217,7 +217,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
         user_id=mallory.user_id,
         human_handle=mallory.human_handle,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     )
     good_redacted_user_certificate = user_certificate.evolve(human_handle=None)
     user_certificate = user_certificate.dump_and_sign(alice.signing_key)
@@ -225,7 +225,7 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
         good_redacted_user_certificate.evolve(timestamp=now.add(seconds=1)),
         good_redacted_user_certificate.evolve(user_id=alice.user_id),
         good_redacted_user_certificate.evolve(public_key=alice.public_key),
-        good_redacted_user_certificate.evolve(role=UserRole.INVITEE),
+        good_redacted_user_certificate.evolve(profile=UserProfile.OUTSIDER),
     ):
         rep = await user_create(
             alice_backend_sock,
@@ -260,7 +260,7 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
         timestamp=now,
         user_id=bob.user_id,
         public_key=bob.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id, timestamp=now, device_id=bob.device_id, verify_key=bob.verify_key
@@ -285,7 +285,7 @@ async def test_user_create_human_handle_already_exists(alice_backend_sock, alice
         timestamp=now,
         user_id=bob2_device_id.user_id,
         public_key=bob.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
         human_handle=bob.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
@@ -323,7 +323,7 @@ async def test_user_create_human_handle_with_revoked_previous_one(
         timestamp=now,
         user_id=bob2_device_id.user_id,
         public_key=bob.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
         human_handle=bob.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
@@ -352,7 +352,7 @@ async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, 
         timestamp=date1,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -383,7 +383,7 @@ async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallor
         timestamp=too_old,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -430,7 +430,7 @@ async def test_redacted_certificates_cannot_contain_sensitive_data(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        role=UserRole.USER,
+        profile=UserProfile.REGULAR,
         human_handle=mallory.human_handle,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)

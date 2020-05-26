@@ -5,7 +5,7 @@ import trio
 from pendulum import now as pendulum_now, Pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.data import RevokedUserCertificateContent, UserRole
+from parsec.api.data import RevokedUserCertificateContent, UserProfile
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.api.transport import TransportError
 
@@ -141,7 +141,7 @@ async def test_user_revoke_other_organization(
 ):
     # Organizations should be isolated even for organization admins
     async with sock_from_other_organization_factory(
-        backend, mimick=alice.device_id, role=UserRole.ADMIN
+        backend, mimick=alice.device_id, profile=UserProfile.ADMIN
     ) as sock:
 
         revocation = RevokedUserCertificateContent(

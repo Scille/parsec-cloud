@@ -20,13 +20,23 @@ from parsec.api.protocol import (
 from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSignedDataSchema
 
 
-class UserRole(Enum):
+class UserProfile(Enum):
+    """
+    Regular user can create new realms and invite new devices for himself.
+
+    Admin can invite and revoke users and on top of what regular user can do.
+
+    Outsider is only able to collaborate on existing realm and should only
+    access redacted certificates (hence he cannot create new realms or
+    get OWNER/MANAGER role on a realm)
+    """
+
     ADMIN = "ADMIN"
-    USER = "USER"
-    INVITEE = "INVITEE"
+    REGULAR = "REGULAR"
+    OUTSIDER = "OUTSIDER"
 
 
-UserRoleField = fields.enum_field_factory(UserRole)
+UserProfileField = fields.enum_field_factory(UserProfile)
 
 
 class UserCertificateContent(BaseAPISignedData):
@@ -34,10 +44,10 @@ class UserCertificateContent(BaseAPISignedData):
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
         public_key = fields.PublicKey(required=True)
-        # `role` replaces `is_admin` field (which is still required for backward
+        # `profile` replaces `is_admin` field (which is still required for backward
         # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
-        role = UserRoleField(allow_none=False)
+        profile = UserProfileField(allow_none=False)
         # Human handle can be none in case of redacted certificate
         human_handle = HumanHandleField(allow_none=True, missing=None)
 
@@ -46,26 +56,28 @@ class UserCertificateContent(BaseAPISignedData):
             data.pop("type")
 
             # Handle legacy `is_admin` field
-            default_role = UserRole.ADMIN if data.pop("is_admin") else UserRole.USER
+            default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.REGULAR
             try:
-                role = data["role"]
+                profile = data["profile"]
             except KeyError:
-                data["role"] = default_role
+                data["profile"] = default_profile
             else:
-                if default_role == UserRole.ADMIN and role != UserRole.ADMIN:
-                    raise ValidationError("Fields `role` and `is_admin` have incompatible values")
+                if default_profile == UserProfile.ADMIN and profile != UserProfile.ADMIN:
+                    raise ValidationError(
+                        "Fields `profile` and `is_admin` have incompatible values"
+                    )
 
             return UserCertificateContent(**data)
 
     user_id: UserID
     public_key: PublicKey
-    role: UserRole
+    profile: UserProfile
     human_handle: Optional[HumanHandle] = None
 
     # Only used during schema serialization
     @property
     def is_admin(self) -> bool:
-        return self.role == UserRole.ADMIN
+        return self.profile == UserProfile.ADMIN
 
     @classmethod
     def verify_and_load(

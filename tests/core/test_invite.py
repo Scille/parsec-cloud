@@ -3,7 +3,7 @@
 import pytest
 import trio
 
-from parsec.api.data import UserRole
+from parsec.api.data import UserProfile
 from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, InvitationType
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -108,7 +108,7 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.human_handle == alice.human_handle
     assert new_device.private_key == alice.private_key
     assert new_device.signing_key != alice.signing_key
-    assert new_device.role == alice.role
+    assert new_device.profile == alice.profile
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
@@ -146,7 +146,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     granted_device_id = DeviceID("zack@pc1")
     granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
     granted_device_label = "PC1's label"
-    granted_role = UserRole.INVITEE
+    granted_profile = UserProfile.OUTSIDER
     new_device = None
 
     # Simulate out-of-bounds canal
@@ -211,7 +211,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
             device_id=granted_device_id,
             device_label=granted_device_label,
             human_handle=granted_human_handle,
-            role=granted_role,
+            profile=granted_profile,
         )
 
     with trio.fail_after(1):
@@ -225,7 +225,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     # Label is normally ignored when comparing HumanLabel
     assert new_device.human_handle.label == granted_human_handle.label
     assert new_device.human_handle.email == granted_human_handle.email
-    assert new_device.role == granted_role
+    assert new_device.profile == granted_profile
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()

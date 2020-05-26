@@ -11,8 +11,8 @@ from parsec.api.data.base import (
 )
 from parsec.api.data.entry import EntryID, EntryIDField, EntryName, EntryNameField
 from parsec.api.data.certif import (
-    UserRole,
-    UserRoleField,
+    UserProfile,
+    UserProfileField,
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
@@ -67,8 +67,8 @@ __all__ = (
     "EntryName",
     "EntryNameField",
     # Certifs
-    "UserRole",
-    "UserRoleField",
+    "UserProfile",
+    "UserProfileField",
     "UserCertificateContent",
     "DeviceCertificateContent",
     "RevokedUserCertificateContent",

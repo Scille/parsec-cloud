@@ -245,7 +245,7 @@ class UserClaimInProgress3Ctx:
             device_id=confirmation.device_id,
             device_label=confirmation.device_label,
             human_handle=confirmation.human_handle,
-            role=confirmation.role,
+            profile=confirmation.profile,
             private_key=private_key,
             signing_key=signing_key,
         )
@@ -302,7 +302,7 @@ class DeviceClaimInProgress3Ctx:
             device_id=confirmation.device_id,
             device_label=confirmation.device_label,
             human_handle=confirmation.human_handle,
-            role=confirmation.role,
+            profile=confirmation.profile,
             private_key=confirmation.private_key,
             signing_key=signing_key,
         )

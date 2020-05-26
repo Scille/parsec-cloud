@@ -7,7 +7,7 @@ import zlib
 from parsec.serde import packb, unpackb
 from parsec.api.data import (
     DataError,
-    UserRole,
+    UserProfile,
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
@@ -42,7 +42,7 @@ def test_build_user_certificate(alice, bob, mallory):
         timestamp=now,
         user_id=bob.user_id,
         public_key=bob.public_key,
-        role=UserRole.ADMIN,
+        profile=UserProfile.ADMIN,
     ).dump_and_sign(alice.signing_key)
     assert isinstance(certif, bytes)
 
@@ -52,7 +52,7 @@ def test_build_user_certificate(alice, bob, mallory):
     assert unsecure.public_key == bob.public_key
     assert unsecure.timestamp == now
     assert unsecure.author == alice.device_id
-    assert unsecure.role == UserRole.ADMIN
+    assert unsecure.profile == UserProfile.ADMIN
 
     verified = UserCertificateContent.verify_and_load(
         certif, author_verify_key=alice.verify_key, expected_author=alice.device_id
@@ -88,7 +88,7 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
         timestamp=now,
         user_id=alice.user_id,
         public_key=alice.public_key,
-        role=alice.role,
+        profile=alice.profile,
     )
 
     # Manually craft a certificate in legacy format
@@ -115,7 +115,7 @@ def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
     # Manually decode new format to check it is compatible with legacy
     dumped_certif = certif.dump_and_sign(bob.signing_key)
     raw_certif = unpackb(zlib.decompress(bob.verify_key.verify(dumped_certif)))
-    assert raw_certif == {**raw_legacy_certif, "role": alice.role.value, "human_handle": None}
+    assert raw_certif == {**raw_legacy_certif, "profile": alice.profile.value, "human_handle": None}
 
 
 def test_build_device_certificate(alice, bob, mallory):

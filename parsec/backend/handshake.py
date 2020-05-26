@@ -119,7 +119,7 @@ async def _do_process_authenticated_answer(
         organization_id=organization_id,
         device_id=device_id,
         human_handle=user.human_handle,
-        role=user.role,
+        profile=user.profile,
         public_key=user.public_key,
         verify_key=device.verify_key,
     )

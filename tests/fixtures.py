@@ -11,7 +11,7 @@ from pendulum import Pendulum
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
-    UserRole,
+    UserProfile,
     UserCertificateContent,
     UserManifest,
     RevokedUserCertificateContent,
@@ -83,7 +83,7 @@ def local_device_factory(coolorg):
     def _local_device_factory(
         base_device_id: Optional[str] = None,
         org: OrganizationFullData = coolorg,
-        role: Optional[UserRole] = None,
+        profile: Optional[UserProfile] = None,
         has_human_handle: bool = True,
         base_human_handle: Optional[str] = None,
         has_device_label: bool = True,
@@ -131,21 +131,25 @@ def local_device_factory(coolorg):
         try:
             # If the user already exists, we must retrieve it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
-            if role is not None and role != parent_device.role:
+            if profile is not None and profile != parent_device.profile:
                 raise ValueError(
-                    "role is set but user already exists, with a different role value."
+                    "profile is set but user already exists, with a different profile value."
                 )
-            role = parent_device.role
+            profile = parent_device.profile
 
         except StopIteration:
-            role = role or UserRole.USER
+            profile = profile or UserProfile.REGULAR
 
         # Force each device to access the backend trough a different hostname so
         # tcp stream spy can switch offline certains while keeping the others online
         org_addr = addr_with_device_subdomain(org.addr, device_id)
 
         device = generate_new_device(
-            device_id, org_addr, role=role, human_handle=human_handle, device_label=device_label
+            device_id,
+            org_addr,
+            profile=profile,
+            human_handle=human_handle,
+            device_label=device_label,
         )
         if parent_device is not None:
             device = device.evolve(
@@ -178,12 +182,12 @@ def expiredorg(organization_factory):
 
 @pytest.fixture
 def otheralice(local_device_factory, otherorg):
-    return local_device_factory("alice@dev1", otherorg, role=UserRole.ADMIN)
+    return local_device_factory("alice@dev1", otherorg, profile=UserProfile.ADMIN)
 
 
 @pytest.fixture
 def alice(local_device_factory, initial_user_manifest_state):
-    device = local_device_factory("alice@dev1", role=UserRole.ADMIN)
+    device = local_device_factory("alice@dev1", profile=UserProfile.ADMIN)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -195,7 +199,7 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 @pytest.fixture
 def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredorg):
-    device = local_device_factory("alice@dev1", expiredorg, role=UserRole.ADMIN)
+    device = local_device_factory("alice@dev1", expiredorg, profile=UserProfile.ADMIN)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -207,17 +211,17 @@ def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredor
 
 @pytest.fixture
 def alice2(local_device_factory):
-    return local_device_factory("alice@dev2", role=UserRole.ADMIN)
+    return local_device_factory("alice@dev2", profile=UserProfile.ADMIN)
 
 
 @pytest.fixture
 def adam(local_device_factory):
-    return local_device_factory("adam@dev1", role=UserRole.ADMIN)
+    return local_device_factory("adam@dev1", profile=UserProfile.ADMIN)
 
 
 @pytest.fixture
 def bob(local_device_factory):
-    return local_device_factory("bob@dev1", role=UserRole.USER)
+    return local_device_factory("bob@dev1", profile=UserProfile.REGULAR)
 
 
 @pytest.fixture
@@ -307,7 +311,7 @@ def local_device_to_backend_user(
         timestamp=now,
         user_id=device.user_id,
         public_key=device.public_key,
-        role=device.role,
+        profile=device.profile,
         human_handle=device.human_handle,
     )
     device_certificate = DeviceCertificateContent(
@@ -323,7 +327,7 @@ def local_device_to_backend_user(
     user = BackendUser(
         user_id=device.user_id,
         human_handle=device.human_handle,
-        role=device.role,
+        profile=device.profile,
         user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
         redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
         user_certifier=certifier_id,
@@ -604,15 +608,17 @@ def sock_from_other_organization_factory(
         backend,
         mimick: Optional[str] = None,
         anonymous: bool = False,
-        role: UserRole = UserRole.USER,
+        profile: UserProfile = UserProfile.REGULAR,
     ):
         binder = backend_data_binder_factory(backend)
 
         other_org = organization_factory()
         if mimick:
-            other_device = local_device_factory(base_device_id=mimick, org=other_org, role=role)
+            other_device = local_device_factory(
+                base_device_id=mimick, org=other_org, profile=profile
+            )
         else:
-            other_device = local_device_factory(org=other_org, role=role)
+            other_device = local_device_factory(org=other_org, profile=profile)
         await binder.bind_organization(other_org, other_device)
 
         if anonymous:

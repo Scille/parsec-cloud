@@ -15,7 +15,7 @@ from parsec.api.protocol import (
     HumanHandleField,
 )
 from parsec.api.data.base import BaseAPIData, BaseSchema
-from parsec.api.data.certif import UserRole, UserRoleField
+from parsec.api.data.certif import UserProfile, UserProfileField
 
 
 class SASCode(str):
@@ -89,7 +89,7 @@ class InviteUserConfirmation(BaseAPIData):
         device_id = DeviceIDField(required=True)
         device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
-        role = UserRoleField(required=True)
+        profile = UserProfileField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -100,7 +100,7 @@ class InviteUserConfirmation(BaseAPIData):
     device_id: DeviceID
     device_label: Optional[str]
     human_handle: Optional[HumanHandle]
-    role: UserRole
+    profile: UserProfile
     root_verify_key: VerifyKey
 
 
@@ -128,7 +128,7 @@ class InviteDeviceConfirmation(BaseAPIData):
         device_id = DeviceIDField(required=True)
         device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
-        role = UserRoleField(required=True)
+        profile = UserProfileField(required=True)
         private_key = fields.PrivateKey(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
@@ -140,6 +140,6 @@ class InviteDeviceConfirmation(BaseAPIData):
     device_id: DeviceID
     device_label: Optional[str]
     human_handle: Optional[HumanHandle]
-    role: UserRole
+    profile: UserProfile
     private_key: PrivateKey
     root_verify_key: VerifyKey

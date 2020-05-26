@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from parsec.crypto import SecretKey, SigningKey, PrivateKey
 from parsec.api.protocol import OrganizationID, DeviceID, HumanHandle
-from parsec.api.data import DataError, UserRole
+from parsec.api.data import DataError, UserProfile
 from parsec.core.types import EntryID, LocalDevice, BackendOrganizationAddr
 from parsec.core.local_device.exceptions import (
     LocalDeviceError,
@@ -26,7 +26,7 @@ from parsec.core.local_device.cipher import (
 def generate_new_device(
     device_id: DeviceID,
     organization_addr: BackendOrganizationAddr,
-    role: UserRole = UserRole.USER,
+    profile: UserProfile = UserProfile.REGULAR,
     human_handle: Optional[HumanHandle] = None,
     device_label: Optional[str] = None,
     signing_key: Optional[SigningKey] = None,
@@ -39,7 +39,7 @@ def generate_new_device(
         human_handle=human_handle,
         signing_key=signing_key or SigningKey.generate(),
         private_key=private_key or PrivateKey.generate(),
-        role=role,
+        profile=profile,
         user_manifest_id=EntryID(uuid4().hex),
         user_manifest_key=SecretKey.generate(),
         local_symkey=SecretKey.generate(),

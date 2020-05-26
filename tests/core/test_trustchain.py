@@ -7,7 +7,7 @@ from parsec.api.data import (
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
-    UserRole,
+    UserProfile,
 )
 from parsec.core.trustchain import TrustchainContext, TrustchainError
 
@@ -141,7 +141,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
                 timestamp=created_on,
                 user_id=local_user.user_id,
                 public_key=local_user.public_key,
-                role=todo_user.get("role", UserRole.USER),
+                profile=todo_user.get("profile", UserProfile.REGULAR),
             )
             data.add_user_certif(user_certif, user_certif.dump_and_sign(certifier_key))
             # Generate user revocation certificate if needed
@@ -223,7 +223,10 @@ def test_bad_revoked_user_self_signed(trustchain_data_factory):
 def test_invalid_loop_on_device_certif_trustchain_error(trustchain_data_factory):
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1", "certifier": "alice@dev1"}),
-        todo_users=({"id": "alice", "role": UserRole.ADMIN}, {"id": "bob", "role": UserRole.ADMIN}),
+        todo_users=(
+            {"id": "alice", "profile": UserProfile.ADMIN},
+            {"id": "bob", "profile": UserProfile.ADMIN},
+        ),
     )
     # Hack certificates to make the loop
     bob = data.get_local_device("bob@dev1")
@@ -250,8 +253,8 @@ def test_device_signature_while_revoked(trustchain_data_factory):
             {"id": "mallory@dev1", "certifier": "alice@dev1", "created_on": d2},
         ),
         todo_users=(
-            {"id": "alice", "role": UserRole.ADMIN, "revoker": "bob@dev1", "revoked_on": d1},
-            {"id": "bob", "role": UserRole.ADMIN},
+            {"id": "alice", "profile": UserProfile.ADMIN, "revoker": "bob@dev1", "revoked_on": d1},
+            {"id": "bob", "profile": UserProfile.ADMIN},
             {"id": "mallory"},
         ),
     )
@@ -270,8 +273,8 @@ def test_user_signature_while_revoked(trustchain_data_factory):
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}, {"id": "mallory@dev1"}),
         todo_users=(
-            {"id": "alice", "role": UserRole.ADMIN, "revoker": "bob@dev1", "revoked_on": d1},
-            {"id": "bob", "role": UserRole.ADMIN},
+            {"id": "alice", "profile": UserProfile.ADMIN, "revoker": "bob@dev1", "revoked_on": d1},
+            {"id": "bob", "profile": UserProfile.ADMIN},
             {"id": "mallory", "certifier": "alice@dev1", "created_on": d2},
         ),
     )
@@ -290,8 +293,8 @@ def test_revoked_user_signature_while_revoked(trustchain_data_factory):
     data = trustchain_data_factory(
         todo_devices=({"id": "alice@dev1"}, {"id": "bob@dev1"}, {"id": "mallory@dev1"}),
         todo_users=(
-            {"id": "alice", "role": UserRole.ADMIN, "revoker": "bob@dev1", "revoked_on": d1},
-            {"id": "bob", "role": UserRole.ADMIN},
+            {"id": "alice", "profile": UserProfile.ADMIN, "revoker": "bob@dev1", "revoked_on": d1},
+            {"id": "bob", "profile": UserProfile.ADMIN},
             {"id": "mallory", "revoker": "alice@dev1", "revoked_on": d2},
         ),
     )
@@ -338,8 +341,8 @@ def test_verify_user_with_broken_trustchain(trustchain_data_factory):
         ),
         todo_users=(
             {"id": "alice", "revoker": "bob@dev1"},
-            {"id": "bob", "role": UserRole.ADMIN},
-            {"id": "mallory", "role": UserRole.ADMIN},
+            {"id": "bob", "profile": UserProfile.ADMIN},
+            {"id": "mallory", "profile": UserProfile.ADMIN},
         ),
     )
     # Remove a certificate

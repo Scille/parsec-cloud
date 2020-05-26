@@ -9,7 +9,7 @@ from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBus
 from parsec.api.data import (
-    UserRole,
+    UserProfile,
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
@@ -105,7 +105,7 @@ class User:
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
-    role: UserRole = UserRole.USER
+    profile: UserProfile = UserProfile.REGULAR
     human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None
@@ -237,7 +237,7 @@ class BaseUserComponent:
     @api("user_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
-        if client_ctx.role != UserRole.ADMIN:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -389,7 +389,7 @@ class BaseUserComponent:
     @api("user_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
-        if client_ctx.role != UserRole.ADMIN:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -404,7 +404,7 @@ class BaseUserComponent:
     @api("user_create", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def apiv1_user_create(self, client_ctx, msg):
-        if client_ctx.role != UserRole.ADMIN:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -418,7 +418,7 @@ class BaseUserComponent:
     @api("user_create", handshake_types=[HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_create(self, client_ctx, msg):
-        if client_ctx.role != UserRole.ADMIN:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -507,7 +507,7 @@ class BaseUserComponent:
             user = User(
                 user_id=u_data.user_id,
                 human_handle=u_data.human_handle,
-                role=u_data.role,
+                profile=u_data.profile,
                 user_certificate=msg["user_certificate"],
                 redacted_user_certificate=msg["redacted_user_certificate"]
                 or msg["user_certificate"],
@@ -532,7 +532,7 @@ class BaseUserComponent:
     @api("user_revoke")
     @catch_protocol_errors
     async def api_user_revoke(self, client_ctx, msg):
-        if client_ctx.role != UserRole.ADMIN:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",

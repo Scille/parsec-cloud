@@ -17,7 +17,7 @@ from parsec.crypto import (
 from parsec.api.data import (
     DataError,
     SASCode,
-    UserRole,
+    UserProfile,
     generate_sas_codes,
     generate_sas_code_candidates,
     InviteUserData,
@@ -287,7 +287,7 @@ class UserGreetInProgress4Ctx:
         device_id: DeviceID,
         device_label: Optional[str],
         human_handle: Optional[HumanHandle],
-        role: UserRole,
+        profile: UserProfile,
     ) -> None:
         try:
             now = pendulum_now()
@@ -298,7 +298,7 @@ class UserGreetInProgress4Ctx:
                 user_id=device_id.user_id,
                 human_handle=human_handle,
                 public_key=self._public_key,
-                role=role,
+                profile=profile,
             )
             redacted_user_certificate = user_certificate.evolve(human_handle=None)
 
@@ -335,7 +335,7 @@ class UserGreetInProgress4Ctx:
                 device_id=device_id,
                 device_label=device_label,
                 human_handle=human_handle,
-                role=role,
+                profile=profile,
                 root_verify_key=author.root_verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
@@ -398,7 +398,7 @@ class DeviceGreetInProgress4Ctx:
                 device_id=device_id,
                 device_label=device_label,
                 human_handle=author.human_handle,
-                role=author.role,
+                profile=author.profile,
                 private_key=author.private_key,
                 root_verify_key=author.root_verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)
