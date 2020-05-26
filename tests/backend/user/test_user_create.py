@@ -189,6 +189,20 @@ async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, a
             "reason": "Redacted Device certificate differs from Device certificate.",
         }
 
+    # Missing redacted certificate is not allowed as well
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=user_certificate,
+        redacted_device_certificate=None,
+    )
+    assert rep == {
+        "status": "bad_message",
+        "reason": "Invalid message.",
+        "errors": {"redacted_device_certificate": ["Missing data for required field."]},
+    }
+
     # Finally just make sure good was really good
     rep = await user_create(
         alice_backend_sock,
@@ -240,6 +254,20 @@ async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, ali
             "status": "invalid_data",
             "reason": "Redacted User certificate differs from User certificate.",
         }
+
+    # Missing redacted certificate is not allowed as well
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=None,
+        redacted_device_certificate=device_certificate,
+    )
+    assert rep == {
+        "status": "bad_message",
+        "reason": "Invalid message.",
+        "errors": {"redacted_user_certificate": ["Missing data for required field."]},
+    }
 
     # Finally just make sure good was really good
     rep = await user_create(

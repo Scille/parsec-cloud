@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     RealmRole,
     MaintenanceType,
@@ -189,6 +190,7 @@ t_realm = Table("realm")
 t_realm_user_role = Table("realm_user_role")
 
 
+STR_TO_USER_PROFILE = {profile.value: profile for profile in UserProfile}
 STR_TO_REALM_ROLE = {role.value: role for role in RealmRole}
 STR_TO_REALM_MAINTENANCE_TYPE = {type.value: type for type in MaintenanceType}
 

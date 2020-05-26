@@ -95,6 +95,12 @@ class BaseRealmComponent:
     @api("realm_create")
     @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
+        # if client_ctx.profile == UserProfile.INVITED:
+        #     return {
+        #         "status": "not_allowed",
+        #         "reason": f"Invited user cannot create realm",
+        #     }
+
         msg = realm_create_serializer.req_load(msg)
 
         try:

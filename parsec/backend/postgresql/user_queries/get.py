@@ -7,6 +7,7 @@ from parsec.api.protocol import UserID, DeviceID, OrganizationID
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import Query, query
 from parsec.backend.postgresql.tables import (
+    STR_TO_USER_PROFILE,
     t_user,
     t_device,
     q_device,
@@ -18,7 +19,7 @@ from parsec.backend.postgresql.tables import (
 _q_get_user = (
     Query.from_(t_user)
     .select(
-        "is_admin",
+        "profile",
         "user_certificate",
         "redacted_user_certificate",
         q_device(_id=t_user.user_certifier).select(t_device.device_id).as_("user_certifier"),
@@ -133,7 +134,7 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
 
     return User(
         user_id=user_id,
-        is_admin=row["is_admin"],
+        profile=STR_TO_USER_PROFILE[row["profile"]],
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
         user_certifier=row["user_certifier"],
@@ -272,7 +273,7 @@ async def query_get_user_with_device(
     )
     user = User(
         user_id=device_id.user_id,
-        is_admin=u_row["is_admin"],
+        profile=STR_TO_USER_PROFILE[u_row["profile"]],
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
         user_certifier=u_row["user_certifier"],

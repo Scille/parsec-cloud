@@ -53,7 +53,7 @@ def retrieve_migrations() -> List[MigrationItem]:
             if not sql:
                 raise AssertionError(f"Empty migration file {file_name}")
             migrations.append(
-                MigrationItem(idx=idx, name=match.group("name"), file_name=file_name), sql=sql
+                MigrationItem(idx=idx, name=match.group("name"), file_name=file_name, sql=sql)
             )
 
     return sorted(migrations, key=lambda item: item.idx)
