@@ -33,7 +33,7 @@ from parsec.core.types import (
 
 # TODO: handle exceptions status...
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
+    APIV1_BackendAuthenticatedCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -151,7 +151,7 @@ class UserFS:
         self,
         device: LocalDevice,
         path: Path,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: APIV1_BackendAuthenticatedCmds,
         remote_devices_manager: RemoteDevicesManager,
         event_bus: EventBus,
     ):
@@ -596,7 +596,7 @@ class UserFS:
             raise FSBackendOfflineError(str(exc)) from exc
 
         except RemoteDevicesManagerError as exc:
-            raise FSError(f"Cannot retreive recipient: {exc}") from exc
+            raise FSError(f"Cannot retrieve recipient: {exc}") from exc
 
         if revoked_recipient_user:
             raise FSError(f"User {recipient} revoked")
@@ -873,7 +873,7 @@ class UserFS:
                 previous_entry=existing_workspace_entry,
             )
 
-    async def _retreive_participants(self, workspace_id):
+    async def _retrieve_participants(self, workspace_id):
         """
         Raises:
             FSError
@@ -988,7 +988,7 @@ class UserFS:
         while True:
             # In order to provide the new key to each participant, we must
             # encrypt a message for each of them
-            participants = await self._retreive_participants(workspace_entry.id)
+            participants = await self._retrieve_participants(workspace_entry.id)
             reencryption_msgs = self._generate_reencryption_messages(
                 new_workspace_entry, participants, now
             )
@@ -1039,7 +1039,7 @@ class UserFS:
         if rep["encryption_revision"] != workspace_entry.encryption_revision:
             raise FSError("Bad encryption revision")
 
-        # Must retreive the previous encryption revision's key
+        # Must retrieve the previous encryption revision's key
         version_to_fetch = None
         while True:
             previous_user_manifest = await self._fetch_remote_user_manifest(

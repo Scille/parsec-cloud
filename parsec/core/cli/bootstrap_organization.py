@@ -13,7 +13,7 @@ from parsec.api.protocol import DeviceID
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir
-from parsec.core.backend_connection import backend_anonymous_cmds_factory
+from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
 from parsec.core.local_device import generate_new_device, save_device_with_password
 
 
@@ -43,7 +43,7 @@ async def _bootstrap_organization(
     ).dump_and_sign(root_signing_key)
 
     async with spinner(f"Sending {device_display} to server"):
-        async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
+        async with apiv1_backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
                 organization_bootstrap_addr.organization_id,
                 organization_bootstrap_addr.token,

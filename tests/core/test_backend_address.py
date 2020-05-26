@@ -2,6 +2,7 @@
 
 import pytest
 
+from parsec.api.protocol import InvitationType
 from parsec.core.types import (
     BackendAddr,
     BackendOrganizationAddr,
@@ -9,17 +10,19 @@ from parsec.core.types import (
     BackendOrganizationClaimUserAddr,
     BackendOrganizationClaimDeviceAddr,
     BackendOrganizationFileLinkAddr,
+    BackendInvitationAddr,
 )
 
 
 ORG = "MyOrg"
 RVK = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss"
-TOKEN = "1234ABCD"
+TOKEN = "a0000000000000000000000000000001"
 DOMAIN = "parsec.cloud.com"
 USER_ID = "John"
 DEVICE_ID = "John%40Dev42"
 PATH = "%2Fdir%2Ffile"
 WORKSPACE_ID = "2d4ded12-7406-4608-833b-7f57f01156e2"
+INVITATION_TYPE = "claim_user"
 DEFAULT_ARGS = {
     "ORG": ORG,
     "RVK": RVK,
@@ -29,6 +32,7 @@ DEFAULT_ARGS = {
     "DEVICE_ID": DEVICE_ID,
     "PATH": PATH,
     "WORKSPACE_ID": WORKSPACE_ID,
+    "INVITATION_TYPE": INVITATION_TYPE,
 }
 
 
@@ -83,6 +87,11 @@ BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
     BackendOrganizationFileLinkAddr,
     "parsec://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={PATH}&rvk={RVK}",
 )
+BackendInvitationAddrTestbed = AddrTestbed(
+    "org_invitation_addr",
+    BackendInvitationAddr,
+    "parsec://{DOMAIN}/{ORG}?action={INVITATION_TYPE}&token={TOKEN}",
+)
 
 
 @pytest.fixture(
@@ -95,6 +104,7 @@ BackendOrganizationFileLinkAddrTestbed = AddrTestbed(
         BackendOrganizationClaimUserAddrNoTokenTestbed,
         BackendOrganizationClaimDeviceAddrNoTokenTestbed,
         BackendOrganizationFileLinkAddrTestbed,
+        BackendInvitationAddrTestbed,
     ]
 )
 def addr_testbed(request):
@@ -110,6 +120,7 @@ def addr_testbed(request):
         BackendOrganizationClaimUserAddrNoTokenTestbed,
         BackendOrganizationClaimDeviceAddrNoTokenTestbed,
         BackendOrganizationFileLinkAddrTestbed,
+        BackendInvitationAddrTestbed,
     ]
 )
 def addr_with_org_testbed(request):
@@ -121,6 +132,7 @@ def addr_with_org_testbed(request):
         BackendOrganizationBootstrapAddrTestbed,
         BackendOrganizationClaimUserAddrTestbed,
         BackendOrganizationClaimDeviceAddrTestbed,
+        # BackendInvitationAddrTestbed token format is different from apiv1's token
     ]
 )
 def addr_with_token_testbed(request):
@@ -128,8 +140,13 @@ def addr_with_token_testbed(request):
 
 
 @pytest.fixture
-def addr_file_link_testbed(request):
+def addr_file_link_testbed():
     return BackendOrganizationFileLinkAddrTestbed
+
+
+@pytest.fixture
+def addr_invitation_testbed(request):
+    return BackendInvitationAddrTestbed
 
 
 def test_good_addr(addr_testbed):
@@ -206,3 +223,27 @@ def test_file_link_addr_invalid_path(addr_file_link_testbed, invalid_path):
     url = addr_file_link_testbed.generate_url(PATH=invalid_path)
     with pytest.raises(ValueError):
         addr_file_link_testbed.cls.from_url(url)
+
+
+@pytest.mark.parametrize("invalid_type", [None, "claim", "claim_foo"])
+def test_invitation_addr_invalid_type(addr_invitation_testbed, invalid_type):
+    url = addr_invitation_testbed.generate_url(INVITATION_TYPE=invalid_type)
+    with pytest.raises(ValueError):
+        addr_invitation_testbed.cls.from_url(url)
+
+
+@pytest.mark.parametrize("invalid_token", [None, "not_an_uuid", 42])
+def test_invitation_addr_invalid_token(addr_invitation_testbed, invalid_token):
+    url = addr_invitation_testbed.generate_url(TOKEN=invalid_token)
+    with pytest.raises(ValueError):
+        addr_invitation_testbed.cls.from_url(url)
+
+
+@pytest.mark.parametrize(
+    "invitation_type,invitation_type_str",
+    [(InvitationType.USER, "claim_user"), (InvitationType.DEVICE, "claim_device")],
+)
+def test_invitation_addr_types(addr_invitation_testbed, invitation_type, invitation_type_str):
+    url = addr_invitation_testbed.generate_url(INVITATION_TYPE=invitation_type_str)
+    addr = addr_invitation_testbed.cls.from_url(url)
+    assert addr.invitation_type == invitation_type

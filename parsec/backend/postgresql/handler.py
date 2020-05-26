@@ -4,7 +4,7 @@ import trio
 import datetime
 import triopg
 import collections
-from typing import List
+from typing import List, Optional
 
 from triopg import UniqueViolationError, UndefinedTableError, PostgresError
 from uuid import uuid4
@@ -16,8 +16,8 @@ from importlib_resources import read_text
 
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
-from parsec.utils import start_task
-from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE
+from parsec.utils import start_task, TaskStatus
+from parsec.backend.postgresql.tables import STR_TO_REALM_ROLE, STR_TO_INVITATION_STATUS
 from parsec.backend.postgresql import migrations
 
 logger = get_logger()
@@ -131,9 +131,9 @@ class PGHandler:
         self.min_connections = min_connections
         self.max_connections = max_connections
         self.event_bus = event_bus
-        self.pool = None
-        self.notification_conn = None
-        self._task_status = None
+        self.pool: triopg.TrioPoolProxy
+        self.notification_conn: triopg.TrioConnectionProxy
+        self._task_status: Optional[TaskStatus] = None
 
     async def init(self, nursery):
         self._task_status = await start_task(nursery, self._run_connections)
@@ -157,6 +157,8 @@ class PGHandler:
         # Kind of a hack, but fine enough for the moment
         if signal == "realm.roles_updated":
             data["role"] = STR_TO_REALM_ROLE.get(data.pop("role_str"))
+        elif signal == "invite.status_changed":
+            data["status"] = STR_TO_INVITATION_STATUS.get(data.pop("status_str"))
         self.event_bus.send(signal, **data)
 
     async def teardown(self):

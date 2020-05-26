@@ -3,6 +3,7 @@
 import trio
 import click
 import traceback
+from functools import partial
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
 
@@ -107,3 +108,11 @@ def generate_not_available_cmd(exc, hint=None):
         raise SystemExit(error_msg)
 
     return bad_cmd
+
+
+async def aconfirm(*args, **kwargs):
+    return await trio.to_thread.run_sync(partial(click.confirm, *args, **kwargs))
+
+
+async def aprompt(*args, **kwargs):
+    return await trio.to_thread.run_sync(partial(click.prompt, *args, **kwargs))

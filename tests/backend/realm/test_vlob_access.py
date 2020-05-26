@@ -15,7 +15,7 @@ from parsec.api.protocol import (
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
-from tests.backend.conftest import vlob_create, vlob_update, vlob_read, vlob_list_versions
+from tests.backend.common import vlob_create, vlob_update, vlob_read, vlob_list_versions
 
 
 VLOB_ID = UUID("00000000000000000000000000000001")

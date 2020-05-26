@@ -17,9 +17,18 @@ from parsec.api.data.certif import (
     RealmRoleCertificateContent,
 )
 from parsec.api.data.invite_claim import (
-    UserClaimContent,
-    DeviceClaimContent,
-    DeviceClaimAnswerContent,
+    APIV1_UserClaimContent,
+    APIV1_DeviceClaimContent,
+    APIV1_DeviceClaimAnswerContent,
+)
+from parsec.api.data.invite import (
+    SASCode,
+    generate_sas_codes,
+    generate_sas_code_candidates,
+    InviteUserData,
+    InviteUserConfirmation,
+    InviteDeviceData,
+    InviteDeviceConfirmation,
 )
 from parsec.api.data.message import (
     MessageContent,
@@ -41,11 +50,7 @@ from parsec.api.data.manifest import (
 )
 
 
-__api_data_version__ = (1, 0)
-
-
 __all__ = (
-    "__api_data_version__",
     # Base
     "DataError",
     "BaseData",
@@ -65,9 +70,17 @@ __all__ = (
     "RevokedUserCertificateContent",
     "RealmRoleCertificateContent",
     # Invite&Claim
-    "UserClaimContent",
-    "DeviceClaimContent",
-    "DeviceClaimAnswerContent",
+    "APIV1_UserClaimContent",
+    "APIV1_DeviceClaimContent",
+    "APIV1_DeviceClaimAnswerContent",
+    # Invite
+    "SASCode",
+    "generate_sas_codes",
+    "generate_sas_code_candidates",
+    "InviteUserData",
+    "InviteUserConfirmation",
+    "InviteDeviceData",
+    "InviteDeviceConfirmation",
     # Messages
     "MessageContent",
     "SharingGrantedMessageContent",

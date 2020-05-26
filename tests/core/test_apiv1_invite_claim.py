@@ -42,13 +42,13 @@ async def test_invite_claim_non_admin_user(running_backend, backend, alice):
 
     await _invite_and_claim(running_backend, _from_alice, _from_new_device)
 
-    # assert new_device.is_admin is False
+    assert new_device.is_admin is False
 
-    # # Now connect as the new user
-    # async with backend_authenticated_cmds_factory(
-    #     new_device.organization_addr, new_device.device_id, new_device.signing_key
-    # ) as cmds:
-    #     await cmds.ping("foo")
+    # Now connect as the new user
+    async with backend_authenticated_cmds_factory(
+        new_device.organization_addr, new_device.device_id, new_device.signing_key
+    ) as cmds:
+        await cmds.ping("foo")
 
 
 @pytest.mark.trio

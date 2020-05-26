@@ -25,7 +25,7 @@ async def test_win32_mutex():
     mut2 = uuid4().hex
 
     # Test multiple time to make sure we can re-acquire the mutex once released
-    for i in range(2):
+    for _ in range(2):
         with _install_win32_mutex(mut1):
             # Check mutex works
             with pytest.raises(IPCServerAlreadyRunning):
@@ -69,7 +69,7 @@ async def test_posix_file_lock(tmpdir):
     file2 = Path(tmpdir / "missing_parent/missing_child/2.lock")
 
     # Test multiple time to make sure we can re-acquire the mutex once released
-    for i in range(2):
+    for _ in range(2):
         with _install_posix_file_lock(file1):
             # Check mutex works
             with pytest.raises(IPCServerAlreadyRunning):

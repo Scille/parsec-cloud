@@ -3,6 +3,7 @@
 from parsec.serde import OneOfSchema, fields, validate
 from parsec.api.protocol.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 from parsec.api.protocol.realm import RealmRoleField
+from parsec.api.protocol.invite import InvitationStatusField
 
 
 EVENTS = (
@@ -12,24 +13,22 @@ EVENTS = (
     "realm.maintenance_started",
     "realm.maintenance_finished",
     "message.received",
+    "invite.status_changed",
 )
 
 
 class EventsPingedRepSchema(BaseRepSchema):
-    status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("pinged", required=True)
     ping = fields.String(validate=validate.Length(max=64), required=True)
 
 
 class EventsRealmRolesUpdatedRepSchema(BaseRepSchema):
-    status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("realm.roles_updated", required=True)
     realm_id = fields.UUID(required=True)
     role = RealmRoleField(required=True, allow_none=True)
 
 
 class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
-    status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("realm.vlobs_updated", required=True)
     realm_id = fields.UUID(required=True)
     checkpoint = fields.Integer(required=True)
@@ -38,23 +37,26 @@ class EventsRealmVlobsUpdatedRepSchema(BaseRepSchema):
 
 
 class EventsRealmMaintenanceStartedRepSchema(BaseRepSchema):
-    status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("realm.maintenance_started", required=True)
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
 
 
 class EventsRealmMaintenanceFinishedRepSchema(BaseRepSchema):
-    status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("realm.maintenance_finished", required=True)
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
 
 
 class EventsMessageReceivedRepSchema(BaseRepSchema):
-    status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("message.received", required=True)
     index = fields.Integer(required=True)
+
+
+class EventsInviteStatusChangedRepSchema(BaseRepSchema):
+    event = fields.CheckedConstant("invite.status_changed", required=True)
+    token = fields.UUID(required=True)
+    invitation_status = InvitationStatusField(required=True)
 
 
 class EventsListenReqSchema(BaseReqSchema):
@@ -71,6 +73,7 @@ class EventsListenRepSchema(OneOfSchema):
         "realm.maintenance_started": EventsRealmMaintenanceStartedRepSchema(),
         "realm.maintenance_finished": EventsRealmMaintenanceFinishedRepSchema(),
         "message.received": EventsMessageReceivedRepSchema(),
+        "invite.status_changed": EventsInviteStatusChangedRepSchema(),
     }
 
     def get_obj_type(self, obj):

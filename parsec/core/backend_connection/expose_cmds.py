@@ -4,8 +4,11 @@ from parsec.core.backend_connection import cmds
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 
 
-def expose_cmds(name):
-    cmd = getattr(cmds, name)
+def expose_cmds(name: str, apiv1: bool = False):
+    if apiv1:
+        cmd = getattr(cmds, f"apiv1_{name}", None) or getattr(cmds, name)
+    else:
+        cmd = getattr(cmds, name)
 
     async def wrapper(self, *args, **kwargs):
         async with self.acquire_transport() as transport:
@@ -16,8 +19,11 @@ def expose_cmds(name):
     return wrapper
 
 
-def expose_cmds_with_retrier(name):
-    cmd = getattr(cmds, name)
+def expose_cmds_with_retrier(name: str, apiv1: bool = False):
+    if apiv1:
+        cmd = getattr(cmds, f"apiv1_{name}", None) or getattr(cmds, name)
+    else:
+        cmd = getattr(cmds, name)
 
     async def wrapper(self, *args, **kwargs):
         # Reusing the transports expose us to `BackendNotAvaiable` exceptions

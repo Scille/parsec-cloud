@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec.api.protocol import user_get_invitation_creator_serializer
+from parsec.api.protocol import apiv1_user_get_invitation_creator_serializer
 from parsec.backend.user import UserInvitation, INVITATION_VALIDITY
 
 from tests.common import freeze_time
@@ -17,32 +17,36 @@ async def mallory_invitation(backend, alice, mallory):
 
 async def user_get_invitation_creator(sock, **kwargs):
     await sock.send(
-        user_get_invitation_creator_serializer.req_dumps(
+        apiv1_user_get_invitation_creator_serializer.req_dumps(
             {"cmd": "user_get_invitation_creator", **kwargs}
         )
     )
     raw_rep = await sock.recv()
-    return user_get_invitation_creator_serializer.rep_loads(raw_rep)
+    return apiv1_user_get_invitation_creator_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
-async def test_user_get_invitation_creator_too_late(anonymous_backend_sock, mallory_invitation):
+async def test_user_get_invitation_creator_too_late(
+    apiv1_anonymous_backend_sock, mallory_invitation
+):
     with freeze_time(mallory_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await user_get_invitation_creator(
-            anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
+            apiv1_anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
         )
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
-async def test_user_get_invitation_creator_bad_id(anonymous_backend_sock):
-    rep = await user_get_invitation_creator(anonymous_backend_sock, invited_user_id=42)
+async def test_user_get_invitation_creator_bad_id(apiv1_anonymous_backend_sock):
+    rep = await user_get_invitation_creator(apiv1_anonymous_backend_sock, invited_user_id=42)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
-async def test_user_get_invitation_creator_unknown(anonymous_backend_sock, mallory):
-    rep = await user_get_invitation_creator(anonymous_backend_sock, invited_user_id=mallory.user_id)
+async def test_user_get_invitation_creator_unknown(apiv1_anonymous_backend_sock, mallory):
+    rep = await user_get_invitation_creator(
+        apiv1_anonymous_backend_sock, invited_user_id=mallory.user_id
+    )
     assert rep == {"status": "not_found"}
 
 
@@ -51,10 +55,10 @@ async def test_user_get_invitation_creator_unknown(anonymous_backend_sock, mallo
 
 @pytest.mark.trio
 async def test_user_get_invitation_creator_ok(
-    certificates_store, alice, mallory_invitation, anonymous_backend_sock
+    certificates_store, alice, mallory_invitation, apiv1_anonymous_backend_sock
 ):
     rep = await user_get_invitation_creator(
-        anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
+        apiv1_anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
     )
     assert rep == {
         "status": "ok",
@@ -72,7 +76,7 @@ async def test_user_get_invitation_creator_with_trustchain_ok(
     backend,
     alice,
     mallory,
-    anonymous_backend_sock,
+    apiv1_anonymous_backend_sock,
 ):
     binder = backend_data_binder_factory(backend)
 
@@ -87,7 +91,7 @@ async def test_user_get_invitation_creator_with_trustchain_ok(
     await backend.user.create_user_invitation(alice.organization_id, invitation)
 
     rep = await user_get_invitation_creator(
-        anonymous_backend_sock, invited_user_id=invitation.user_id
+        apiv1_anonymous_backend_sock, invited_user_id=invitation.user_id
     )
     cooked_rep = {
         **rep,

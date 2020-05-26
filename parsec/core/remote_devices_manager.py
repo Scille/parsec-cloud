@@ -10,8 +10,8 @@ from parsec.api.data import (
     RevokedUserCertificateContent,
 )
 from parsec.core.backend_connection import (
-    BackendAuthenticatedCmds,
-    BackendAnonymousCmds,
+    APIV1_BackendAuthenticatedCmds,
+    APIV1_BackendAnonymousCmds,
     BackendConnectionError,
     BackendNotAvailable,
 )
@@ -53,7 +53,7 @@ class RemoteDevicesManager:
 
     def __init__(
         self,
-        backend_cmds: BackendAuthenticatedCmds,
+        backend_cmds: APIV1_BackendAuthenticatedCmds,
         root_verify_key: VerifyKey,
         cache_validity: int = DEFAULT_CACHE_VALIDITY,
     ):
@@ -125,7 +125,7 @@ class RemoteDevicesManager:
     ]:
         """
         Note: unlike `get_user` and `get_device`, this method don't rely on cache
-        considering only part of the devices to retreive could be in cache.
+        considering only part of the devices to retrieve could be in cache.
         Raises:
             RemoteDevicesManagerError
             RemoteDevicesManagerBackendOfflineError
@@ -161,7 +161,7 @@ class RemoteDevicesManager:
 
 
 async def get_device_invitation_creator(
-    backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
+    backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_device_id: DeviceID
 ) -> Tuple[
     UserCertificateContent, Optional[RevokedUserCertificateContent], DeviceCertificateContent
 ]:
@@ -203,7 +203,7 @@ async def get_device_invitation_creator(
 
 
 async def get_user_invitation_creator(
-    backend_cmds: BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
+    backend_cmds: APIV1_BackendAnonymousCmds, root_verify_key: VerifyKey, new_user_id: DeviceID
 ) -> Tuple[UserCertificateContent, DeviceCertificateContent]:
     """
     Raises:

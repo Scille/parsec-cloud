@@ -10,7 +10,7 @@ from parsec.api.data import RealmRoleCertificateContent
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time
-from tests.backend.conftest import realm_update_roles, realm_get_role_certificates
+from tests.backend.common import realm_update_roles, realm_get_role_certificates
 
 
 NOW = Pendulum(2000, 1, 1)

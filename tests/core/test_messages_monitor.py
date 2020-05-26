@@ -65,7 +65,7 @@ async def test_process_while_offline(
         )
 
     with alice_core.event_bus.listen() as spy:
-        # Alice is back online, should retreive Bob's message fine
+        # Alice is back online, should retrieve Bob's message fine
         with trio.fail_after(60):  # autojump, so not *really* 60s
             await spy.wait(
                 "backend.connection.changed",

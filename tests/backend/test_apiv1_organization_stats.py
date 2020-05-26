@@ -4,18 +4,18 @@ import pytest
 from uuid import uuid4
 from unittest.mock import ANY
 
-from parsec.api.protocol import organization_stats_serializer
-from tests.backend.conftest import vlob_create, block_create
+from parsec.api.protocol import apiv1_organization_stats_serializer
+from tests.backend.common import vlob_create, block_create
 
 
 async def organization_stats(sock, organization_id):
     raw_rep = await sock.send(
-        organization_stats_serializer.req_dumps(
+        apiv1_organization_stats_serializer.req_dumps(
             {"cmd": "organization_stats", "organization_id": organization_id}
         )
     )
     raw_rep = await sock.recv()
-    return organization_stats_serializer.rep_loads(raw_rep)
+    return apiv1_organization_stats_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio

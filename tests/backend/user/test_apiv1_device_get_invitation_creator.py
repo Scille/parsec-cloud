@@ -3,7 +3,7 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.api.protocol import DeviceID, device_get_invitation_creator_serializer
+from parsec.api.protocol import DeviceID, apiv1_device_get_invitation_creator_serializer
 from parsec.backend.user import DeviceInvitation, INVITATION_VALIDITY
 
 from tests.common import freeze_time
@@ -20,27 +20,29 @@ async def alice_nd_invitation(backend, alice):
 
 async def device_get_invitation_creator(sock, **kwargs):
     await sock.send(
-        device_get_invitation_creator_serializer.req_dumps(
+        apiv1_device_get_invitation_creator_serializer.req_dumps(
             {"cmd": "device_get_invitation_creator", **kwargs}
         )
     )
     raw_rep = await sock.recv()
-    return device_get_invitation_creator_serializer.rep_loads(raw_rep)
+    return apiv1_device_get_invitation_creator_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
-async def test_device_get_invitation_creator_too_late(anonymous_backend_sock, alice_nd_invitation):
+async def test_device_get_invitation_creator_too_late(
+    apiv1_anonymous_backend_sock, alice_nd_invitation
+):
     with freeze_time(alice_nd_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
         rep = await device_get_invitation_creator(
-            anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
+            apiv1_anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
         )
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
-async def test_device_get_invitation_creator_unknown(anonymous_backend_sock, mallory):
+async def test_device_get_invitation_creator_unknown(apiv1_anonymous_backend_sock, mallory):
     rep = await device_get_invitation_creator(
-        anonymous_backend_sock, invited_device_id=mallory.device_id
+        apiv1_anonymous_backend_sock, invited_device_id=mallory.device_id
     )
     assert rep == {"status": "not_found"}
 
@@ -49,8 +51,10 @@ async def test_device_get_invitation_creator_unknown(anonymous_backend_sock, mal
 
 
 @pytest.mark.trio
-async def test_device_get_invitation_creator_bad_id(anonymous_backend_sock):
-    rep = await device_get_invitation_creator(anonymous_backend_sock, invited_device_id="dummy")
+async def test_device_get_invitation_creator_bad_id(apiv1_anonymous_backend_sock):
+    rep = await device_get_invitation_creator(
+        apiv1_anonymous_backend_sock, invited_device_id="dummy"
+    )
     assert rep == {
         "status": "bad_message",
         "reason": "Invalid message.",
@@ -60,13 +64,13 @@ async def test_device_get_invitation_creator_bad_id(anonymous_backend_sock):
 
 @pytest.mark.trio
 async def test_device_get_invitation_creator_ok(
-    backend_data_binder_factory, backend, alice_nd_invitation, alice, anonymous_backend_sock
+    backend_data_binder_factory, backend, alice_nd_invitation, alice, apiv1_anonymous_backend_sock
 ):
     binder = backend_data_binder_factory(backend)
 
     with freeze_time(alice_nd_invitation.created_on):
         rep = await device_get_invitation_creator(
-            anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
+            apiv1_anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
         )
     assert rep == {
         "status": "ok",
@@ -78,7 +82,7 @@ async def test_device_get_invitation_creator_ok(
 
 @pytest.mark.trio
 async def test_device_get_invitation_creator_with_trustchain_ok(
-    backend_data_binder_factory, local_device_factory, backend, alice, anonymous_backend_sock
+    backend_data_binder_factory, local_device_factory, backend, alice, apiv1_anonymous_backend_sock
 ):
     binder = backend_data_binder_factory(backend)
     certificates_store = binder.certificates_store
@@ -96,7 +100,7 @@ async def test_device_get_invitation_creator_with_trustchain_ok(
     await backend.user.create_device_invitation(alice.organization_id, invitation)
 
     rep = await device_get_invitation_creator(
-        anonymous_backend_sock, invited_device_id=invitation.device_id
+        apiv1_anonymous_backend_sock, invited_device_id=invitation.device_id
     )
     cooked_rep = {
         **rep,

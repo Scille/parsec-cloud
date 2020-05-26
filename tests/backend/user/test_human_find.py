@@ -2,25 +2,8 @@
 
 import pytest
 
-from parsec.api.protocol import human_find_serializer
-
 from tests.common import freeze_time
-
-
-async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False, **kwargs):
-    await sock.send(
-        human_find_serializer.req_dumps(
-            {
-                "cmd": "human_find",
-                "query": query,
-                "omit_revoked": omit_revoked,
-                "omit_non_human": omit_non_human,
-                **kwargs,
-            }
-        )
-    )
-    raw_rep = await sock.recv()
-    return human_find_serializer.rep_loads(raw_rep)
+from tests.backend.common import human_find
 
 
 @pytest.fixture

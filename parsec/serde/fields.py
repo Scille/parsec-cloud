@@ -2,6 +2,7 @@
 
 from pendulum import Pendulum
 from uuid import UUID as _UUID
+from enum import Enum
 from collections import Mapping
 from marshmallow import ValidationError
 from marshmallow.fields import (
@@ -180,6 +181,21 @@ class DateTime(Field):
         return value
 
 
+class EnumCheckedConstant(Field):
+    """Make sure the value is present during deserialization"""
+
+    def __init__(self, constant: Enum, **kwargs):
+        kwargs.setdefault("default", constant.value)
+        super().__init__(**kwargs)
+        self.constant = constant
+
+    def _deserialize(self, value, attr, data):
+        if value != self.constant.value:
+            raise ValidationError(f"Invalid value, should be `{self.constant.value}`")
+
+        return self.constant
+
+
 class CheckedConstant(Field):
     """Make sure the value is present during deserialization"""
 
@@ -190,7 +206,7 @@ class CheckedConstant(Field):
 
     def _deserialize(self, value, attr, data):
         if value != self.constant:
-            raise ValidationError("Invalid value, should be `%s`" % self.constant)
+            raise ValidationError(f"Invalid value, should be `{self.constant}`")
 
         return value
 

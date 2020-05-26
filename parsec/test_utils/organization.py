@@ -14,8 +14,8 @@ from parsec.api.protocol import DeviceID
 from parsec.core.types import WorkspaceRole, BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
-    backend_administration_cmds_factory,
-    backend_anonymous_cmds_factory,
+    apiv1_backend_administration_cmds_factory,
+    apiv1_backend_anonymous_cmds_factory,
 )
 from parsec.core.local_device import generate_new_device, save_device_with_password
 from parsec.core.invite_claim import (
@@ -60,7 +60,9 @@ async def initialize_test_organization(
 
     # Create organization
 
-    async with backend_administration_cmds_factory(backend_address, administration_token) as cmds:
+    async with apiv1_backend_administration_cmds_factory(
+        backend_address, administration_token
+    ) as cmds:
 
         rep = await cmds.organization_create(organization_id)
         assert rep["status"] == "ok"
@@ -72,7 +74,7 @@ async def initialize_test_organization(
 
     # Bootstrap organization and Alice user
 
-    async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
+    async with apiv1_backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
         root_signing_key = SigningKey.generate()
         root_verify_key = root_signing_key.verify_key
         organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)

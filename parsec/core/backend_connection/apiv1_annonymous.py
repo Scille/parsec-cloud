@@ -2,28 +2,28 @@
 
 import trio
 from async_generator import asynccontextmanager
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 from parsec.core.types import BackendOrganizationAddr
-from parsec.core.backend_connection.transport import connect
+from parsec.core.backend_connection.transport import apiv1_connect
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.expose_cmds import expose_cmds
-from parsec.api.protocol import ANONYMOUS_CMDS
+from parsec.api.protocol import APIV1_ANONYMOUS_CMDS
 
 
-class BackendAnonymousCmds:
+class APIV1_BackendAnonymousCmds:
     def __init__(self, addr, acquire_transport):
         self.addr = addr
         self.acquire_transport = acquire_transport
 
-    for cmd_name in ANONYMOUS_CMDS:
-        vars()[cmd_name] = expose_cmds(cmd_name)
+    for cmd_name in APIV1_ANONYMOUS_CMDS:
+        vars()[cmd_name] = expose_cmds(cmd_name, apiv1=True)
 
 
 @asynccontextmanager
-async def backend_anonymous_cmds_factory(
+async def apiv1_backend_anonymous_cmds_factory(
     addr: BackendOrganizationAddr, keepalive: Optional[int] = None
-) -> BackendAnonymousCmds:
+) -> AsyncGenerator[APIV1_BackendAnonymousCmds, None]:
     """
     Raises:
         BackendConnectionError
@@ -37,7 +37,7 @@ async def backend_anonymous_cmds_factory(
         if not transport:
             if closed:
                 raise trio.ClosedResourceError
-            transport = await connect(addr, keepalive=keepalive)
+            transport = await apiv1_connect(addr, keepalive=keepalive)
             transport.logger = transport.logger.bind(auth="<anonymous>")
 
     async def _destroy_transport():
@@ -59,7 +59,7 @@ async def backend_anonymous_cmds_factory(
                 raise
 
     try:
-        yield BackendAnonymousCmds(addr, _acquire_transport)
+        yield APIV1_BackendAnonymousCmds(addr, _acquire_transport)
 
     finally:
         async with transport_lock:

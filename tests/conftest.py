@@ -18,13 +18,6 @@ from pathlib import Path
 import sqlite3
 
 from parsec.monitoring import TaskMonitoringInstrument
-from parsec.api.protocol import (
-    OrganizationID,
-    AdministrationClientHandshake,
-    AuthenticatedClientHandshake,
-    AnonymousClientHandshake,
-)
-from parsec.api.transport import Transport
 from parsec.core import CoreConfig
 from parsec.core.types import BackendAddr
 from parsec.core.logged_core import logged_core_factory
@@ -46,7 +39,7 @@ from parsec.backend.config import (
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, FreezeTestOnTransportError, addr_with_device_subdomain
+from tests.common import freeze_time, addr_with_device_subdomain
 from tests.postgresql import (
     get_postgresql_url,
     bootstrap_postgresql_testbed,
@@ -476,7 +469,7 @@ def backend_factory(
     otherorg,
     alice,
     alice2,
-    expiredalice,
+    expiredorgalice,
     otheralice,
     adam,
     bob,
@@ -514,7 +507,7 @@ def backend_factory(
                     binder = backend_data_binder_factory(backend)
                     await binder.bind_organization(coolorg, alice)
                     await binder.bind_organization(
-                        expiredorg, expiredalice, expiration_date=pendulum.now()
+                        expiredorg, expiredorgalice, expiration_date=pendulum.now()
                     )
                     await binder.bind_organization(otherorg, otheralice)
                     await binder.bind_device(alice2)
@@ -563,86 +556,6 @@ async def running_backend(server_factory, backend_addr, backend, running_backend
 
         running_backend_ready.set()
         yield server
-
-
-# TODO: rename to backend_transport_factory
-@pytest.fixture
-def backend_sock_factory(server_factory, coolorg):
-    @asynccontextmanager
-    async def _backend_sock_factory(backend, auth_as, freeze_on_transport_error=True):
-        async with server_factory(backend.handle_client) as server:
-            stream = server.connection_factory()
-            transport = await Transport.init_for_client(stream, server.addr.hostname)
-            if freeze_on_transport_error:
-                transport = FreezeTestOnTransportError(transport)
-
-            if auth_as:
-                # Handshake
-                if isinstance(auth_as, OrganizationID):
-                    ch = AnonymousClientHandshake(auth_as)
-                elif auth_as == "anonymous":
-                    # TODO: for legacy test, refactorise this ?
-                    ch = AnonymousClientHandshake(coolorg.organization_id)
-                elif auth_as == "administration":
-                    ch = AdministrationClientHandshake(backend.config.administration_token)
-                else:
-                    ch = AuthenticatedClientHandshake(
-                        auth_as.organization_id,
-                        auth_as.device_id,
-                        auth_as.signing_key,
-                        auth_as.root_verify_key,
-                    )
-                challenge_req = await transport.recv()
-                answer_req = ch.process_challenge_req(challenge_req)
-                await transport.send(answer_req)
-                result_req = await transport.recv()
-                ch.process_result_req(result_req)
-
-            yield transport
-
-    return _backend_sock_factory
-
-
-@pytest.fixture
-async def anonymous_backend_sock(backend_sock_factory, backend):
-    async with backend_sock_factory(backend, "anonymous") as sock:
-        yield sock
-
-
-@pytest.fixture
-async def administration_backend_sock(backend_sock_factory, backend):
-    async with backend_sock_factory(backend, "administration") as sock:
-        yield sock
-
-
-@pytest.fixture
-async def alice_backend_sock(backend_sock_factory, backend, alice):
-    async with backend_sock_factory(backend, alice) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def alice2_backend_sock(backend_sock_factory, backend, alice2):
-    async with backend_sock_factory(backend, alice2) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def otheralice_backend_sock(backend_sock_factory, backend, otheralice):
-    async with backend_sock_factory(backend, otheralice) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def adam_backend_sock(backend_sock_factory, backend, adam):
-    async with backend_sock_factory(backend, adam) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def bob_backend_sock(backend_sock_factory, backend, bob):
-    async with backend_sock_factory(backend, bob) as sock:
-        yield sock
 
 
 @pytest.fixture

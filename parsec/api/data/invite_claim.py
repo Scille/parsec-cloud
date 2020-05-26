@@ -7,7 +7,7 @@ from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 
 
-class UserClaimContent(BaseAPIData):
+class APIV1_UserClaimContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("user_claim", required=True)
         token = fields.String(required=True)
@@ -19,7 +19,7 @@ class UserClaimContent(BaseAPIData):
         @post_load
         def make_obj(self, data):
             data.pop("type")
-            return UserClaimContent(**data)
+            return APIV1_UserClaimContent(**data)
 
     token: str
     device_id: DeviceID
@@ -27,7 +27,7 @@ class UserClaimContent(BaseAPIData):
     verify_key: VerifyKey
 
 
-class DeviceClaimContent(BaseAPIData):
+class APIV1_DeviceClaimContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("device_claim", required=True)
         token = fields.String(required=True)
@@ -38,7 +38,7 @@ class DeviceClaimContent(BaseAPIData):
         @post_load
         def make_obj(self, data):
             data.pop("type")
-            return DeviceClaimContent(**data)
+            return APIV1_DeviceClaimContent(**data)
 
     token: str
     device_id: DeviceID
@@ -46,7 +46,7 @@ class DeviceClaimContent(BaseAPIData):
     answer_public_key: PublicKey
 
 
-class DeviceClaimAnswerContent(BaseAPIData):
+class APIV1_DeviceClaimAnswerContent(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("device_claim_answer", required=True)
         private_key = fields.PrivateKey(required=True)
@@ -56,7 +56,7 @@ class DeviceClaimAnswerContent(BaseAPIData):
         @post_load
         def make_obj(self, data):
             data.pop("type")
-            return DeviceClaimAnswerContent(**data)
+            return APIV1_DeviceClaimAnswerContent(**data)
 
     private_key: PrivateKey
     user_manifest_id: EntryID

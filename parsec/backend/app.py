@@ -2,10 +2,8 @@
 
 from typing import Optional
 import trio
-import attr
 from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
-from pendulum import now as pendulum_now
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
@@ -17,98 +15,17 @@ from parsec.api.protocol import (
     ProtocolError,
     MessageSerializationError,
     InvalidMessageError,
-    ServerHandshake,
-    ADMINISTRATION_CMDS,
-    AUTHENTICATED_CMDS,
-    ANONYMOUS_CMDS,
+    InvitationStatus,
 )
-from parsec.backend.utils import check_anonymous_api_allowed, CancelledByNewRequest
+from parsec.backend.utils import CancelledByNewRequest, collect_apis
 from parsec.backend.config import BackendConfig
+from parsec.backend.client_context import AuthenticatedClientContext, InvitedClientContext
+from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
-from parsec.backend.user import UserNotFoundError
-from parsec.backend.organization import OrganizationNotFoundError
 
 
 logger = get_logger()
-
-
-@attr.s(slots=True, repr=False)
-class LoggedClientContext:
-    transport = attr.ib()
-    organization_id = attr.ib()
-    is_admin = attr.ib()
-    device_id = attr.ib()
-    public_key = attr.ib()
-    verify_key = attr.ib()
-    event_bus_ctx = attr.ib(default=None)
-    conn_id = attr.ib(init=False)
-    logger = attr.ib(init=False)
-    channels = attr.ib(factory=lambda: trio.open_memory_channel(100))
-    realms = attr.ib(factory=set)
-
-    def __repr__(self):
-        return (
-            f"LoggedClientContext(conn={self.conn_id}, "
-            f"org={self.organization_id}, "
-            f"device={self.device_id})"
-        )
-
-    def __attrs_post_init__(self):
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            organization_id=str(self.organization_id), client_id=str(self.device_id)
-        )
-
-    @property
-    def user_id(self):
-        return self.device_id.user_id
-
-    @property
-    def device_name(self):
-        return self.device_id.device_name
-
-    @property
-    def send_events_channel(self):
-        send_channel, _ = self.channels
-        return send_channel
-
-    @property
-    def receive_events_channel(self):
-        _, receive_channel = self.channels
-        return receive_channel
-
-
-@attr.s(slots=True, repr=False)
-class AnonymousClientContext:
-    transport = attr.ib()
-    organization_id = attr.ib()
-    conn_id = attr.ib(init=False)
-    logger = attr.ib(init=False)
-    device_id = None
-
-    def __repr__(self):
-        return f"AnonymousClientContext(conn={self.conn_id}, org={self.organization_id})"
-
-    def __attrs_post_init__(self):
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            organization_id=str(self.organization_id), client_id="<anonymous>"
-        )
-
-
-@attr.s
-class AdministrationClientContext:
-    transport = attr.ib()
-    conn_id = attr.ib(init=False)
-    logger = attr.ib(init=False)
-    device_id = None
-
-    def __attrs_post_init__(self):
-        self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(
-            client_id="<administration>"
-        )
 
 
 def _filter_binary_fields(data):
@@ -129,6 +46,7 @@ async def backend_app_factory(config: BackendConfig, event_bus: Optional[EventBu
             config=config,
             event_bus=event_bus,
             user=components["user"],
+            invite=components["invite"],
             organization=components["organization"],
             message=components["message"],
             realm=components["realm"],
@@ -146,6 +64,7 @@ class BackendApp:
         config,
         event_bus,
         user,
+        invite,
         organization,
         message,
         realm,
@@ -157,7 +76,9 @@ class BackendApp:
     ):
         self.config = config
         self.event_bus = event_bus
+
         self.user = user
+        self.invite = invite
         self.organization = organization
         self.message = message
         self.realm = realm
@@ -167,152 +88,9 @@ class BackendApp:
         self.block = block
         self.events = events
 
-        api_modules = {block, events, message, organization, ping, realm, vlob, user}
-        api_methods = {}
-        for module in api_modules:
-            for method_name in dir(module):
-                if callable(getattr(module, method_name)) and method_name.startswith("api_"):
-                    if (method_name) in api_methods:
-                        raise AttributeError(
-                            f"The api method {method_name} has been defined more than once in "
-                            f"BackendApp modules."
-                        )
-                    api_methods[method_name] = getattr(module, method_name)
-
-        self.logged_cmds = {name: api_methods[f"api_{name}"] for name in AUTHENTICATED_CMDS}
-        self.anonymous_cmds = {name: api_methods[f"api_{name}"] for name in ANONYMOUS_CMDS}
-        self.administration_cmds = {
-            name: api_methods[f"api_{name}"] for name in ADMINISTRATION_CMDS
-        }
-
-        for fn in self.anonymous_cmds.values():
-            check_anonymous_api_allowed(fn)
-
-    async def _do_handshake(self, transport):
-        context = None
-        error_infos = None
-        try:
-            handshake = transport.handshake = ServerHandshake()
-            challenge_req = handshake.build_challenge_req()
-            await transport.send(challenge_req)
-            answer_req = await transport.recv()
-
-            handshake.process_answer_req(answer_req)
-
-            if handshake.answer_type == "authenticated":
-                organization_id = handshake.answer_data["organization_id"]
-                device_id = handshake.answer_data["device_id"]
-                expected_rvk = handshake.answer_data["rvk"]
-                try:
-                    organization = await self.organization.get(organization_id)
-                    user, device = await self.user.get_user_with_device(organization_id, device_id)
-
-                except (OrganizationNotFoundError, UserNotFoundError, KeyError) as exc:
-                    result_req = handshake.build_bad_identity_result_req()
-                    error_infos = {
-                        "reason": str(exc),
-                        "handshake_type": "authenticated",
-                        "organization_id": organization_id,
-                        "device_id": device_id,
-                    }
-
-                else:
-                    if organization.root_verify_key != expected_rvk:
-                        result_req = handshake.build_rvk_mismatch_result_req()
-                        error_infos = {
-                            "reason": "Bad root verify key",
-                            "handshake_type": "authenticated",
-                            "organization_id": organization_id,
-                            "device_id": device_id,
-                        }
-
-                    elif (
-                        organization.expiration_date is not None
-                        and organization.expiration_date <= pendulum_now()
-                    ):
-                        result_req = handshake.build_organization_expired_result_req()
-                        error_infos = {
-                            "reason": "Expired organization",
-                            "handshake_type": "authenticated",
-                            "organization_id": organization_id,
-                            "device_id": device_id,
-                        }
-
-                    elif user.revoked_on and user.revoked_on <= pendulum_now():
-                        result_req = handshake.build_revoked_device_result_req()
-                        error_infos = {
-                            "reason": "Revoked device",
-                            "handshake_type": "authenticated",
-                            "organization_id": organization_id,
-                            "device_id": device_id,
-                        }
-
-                    else:
-                        context = LoggedClientContext(
-                            transport,
-                            organization_id,
-                            user.is_admin,
-                            device_id,
-                            user.public_key,
-                            device.verify_key,
-                        )
-                        result_req = handshake.build_result_req(device.verify_key)
-
-            elif handshake.answer_type == "anonymous":
-                organization_id = handshake.answer_data["organization_id"]
-                expected_rvk = handshake.answer_data["rvk"]
-                try:
-                    organization = await self.organization.get(organization_id)
-
-                except OrganizationNotFoundError:
-                    result_req = handshake.build_bad_identity_result_req()
-                    error_infos = {
-                        "reason": "Bad organization",
-                        "handshake_type": "anonymous",
-                        "organization_id": organization_id,
-                    }
-
-                else:
-                    if expected_rvk and organization.root_verify_key != expected_rvk:
-                        result_req = handshake.build_rvk_mismatch_result_req()
-                        error_infos = {
-                            "reason": "Bad root verify key",
-                            "handshake_type": "anonymous",
-                            "organization_id": organization_id,
-                        }
-
-                    elif (
-                        organization.expiration_date is not None
-                        and organization.expiration_date <= pendulum_now()
-                    ):
-                        result_req = handshake.build_organization_expired_result_req()
-                        error_infos = {
-                            "reason": "Expired organization",
-                            "handshake_type": "anonymous",
-                            "organization_id": organization_id,
-                        }
-
-                    else:
-                        context = AnonymousClientContext(transport, organization_id)
-                        result_req = handshake.build_result_req()
-
-            elif handshake.answer_type == "administration":
-                if handshake.answer_data["token"] == self.config.administration_token:
-                    context = AdministrationClientContext(transport)
-                    result_req = handshake.build_result_req()
-                else:
-                    result_req = handshake.build_bad_administration_token_result_req()
-                    error_infos = {"reason": "Bad token", "handshake_type": "administration"}
-
-            else:
-                assert False
-
-        except ProtocolError as exc:
-            result_req = handshake.build_bad_protocol_result_req(str(exc))
-            error_infos = {"reason": str(exc), "handshake_type": handshake.answer_type}
-
-        await transport.send(result_req)
-        return context, error_infos
+        self.apis = collect_apis(
+            user, invite, organization, message, realm, vlob, ping, blockstore, block, events
+        )
 
     async def handle_client(self, stream):
         selected_logger = logger
@@ -352,7 +130,7 @@ class BackendApp:
         selected_logger = transport.logger
 
         try:
-            client_ctx, error_infos = await self._do_handshake(transport)
+            client_ctx, error_infos = await do_handshake(self, transport)
             if not client_ctx:
                 # Invalid handshake
                 await stream.aclose()
@@ -362,9 +140,9 @@ class BackendApp:
             selected_logger = client_ctx.logger
             selected_logger.info("Connection established")
 
-            if hasattr(client_ctx, "event_bus_ctx"):
-                with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
-                    with trio.CancelScope() as cancel_scope:
+            if isinstance(client_ctx, AuthenticatedClientContext):
+                with trio.CancelScope() as cancel_scope:
+                    with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
                         def _on_revoked(event, organization_id, user_id):
                             if (
@@ -375,6 +153,38 @@ class BackendApp:
 
                         client_ctx.event_bus_ctx.connect("user.revoked", _on_revoked)
                         await self._handle_client_loop(transport, client_ctx)
+
+            elif isinstance(client_ctx, InvitedClientContext):
+                await self.invite.claimer_joined(
+                    organization_id=client_ctx.organization_id,
+                    greeter=client_ctx.invitation.greeter_user_id,
+                    token=client_ctx.invitation.token,
+                )
+                try:
+                    with trio.CancelScope() as cancel_scope:
+                        with self.event_bus.connection_context() as event_bus_ctx:
+
+                            def _on_invite_status_changed(
+                                event, organization_id, greeter, token, status
+                            ):
+                                if (
+                                    status == InvitationStatus.DELETED
+                                    and organization_id == client_ctx.organization_id
+                                    and token == client_ctx.invitation.token
+                                ):
+                                    cancel_scope.cancel()
+
+                            event_bus_ctx.connect(
+                                "invite.status_changed", _on_invite_status_changed
+                            )
+                            await self._handle_client_loop(transport, client_ctx)
+                finally:
+                    with trio.CancelScope(shield=True):
+                        await self.invite.claimer_left(
+                            organization_id=client_ctx.organization_id,
+                            greeter=client_ctx.invitation.greeter_user_id,
+                            token=client_ctx.invitation.token,
+                        )
 
             else:
                 await self._handle_client_loop(transport, client_ctx)
@@ -394,6 +204,9 @@ class BackendApp:
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
 
     async def _handle_client_loop(self, transport, client_ctx):
+        # Retrieve the allowed commands according to api version and auth type
+        api_cmds = self.apis[client_ctx.handshake_type]
+
         raw_req = None
         while True:
             # raw_req can be already defined if we received a new request
@@ -407,14 +220,7 @@ class BackendApp:
                 if not isinstance(cmd, str):
                     raise KeyError()
 
-                if isinstance(client_ctx, AdministrationClientContext):
-                    cmd_func = self.administration_cmds[cmd]
-
-                elif isinstance(client_ctx, LoggedClientContext):
-                    cmd_func = self.logged_cmds[cmd]
-
-                else:
-                    cmd_func = self.anonymous_cmds[cmd]
+                cmd_func = api_cmds[cmd]
 
             except KeyError:
                 rep = {"status": "unknown_command", "reason": "Unknown command"}

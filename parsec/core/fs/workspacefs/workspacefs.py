@@ -95,7 +95,7 @@ class WorkspaceFS:
         try:
             name = self.get_workspace_name()
         except Exception:
-            name = "<could not retreive name>"
+            name = "<could not retrieve name>"
         return f"<{type(self).__name__}(id={self.workspace_id!r}, name={name!r})>"
 
     def get_workspace_name(self) -> str:
