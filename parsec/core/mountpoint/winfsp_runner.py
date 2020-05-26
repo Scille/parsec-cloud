@@ -135,7 +135,13 @@ async def winfsp_mountpoint_runner(
         # security_timeout=10000,
     )
     try:
-        event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
+        # Prepare event information
+        event_kwargs = {
+            "mountpoint": mountpoint_path,
+            "workspace_id": workspace_fs.workspace_id,
+            "timestamp": getattr(workspace_fs, "timestamp", None),
+        }
+        event_bus.send("mountpoint.starting", **event_kwargs)
 
         # Manage drive icon
         drive_letter, *_ = mountpoint_path.drive
@@ -146,7 +152,7 @@ async def winfsp_mountpoint_runner(
             await _wait_for_winfsp_ready(mountpoint_path)
 
             # Notify the manager that the mountpoint is ready
-            event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
+            event_bus.send("mountpoint.started", **event_kwargs)
             task_status.started(mountpoint_path)
 
             # Start recording `sharing.updated` events
@@ -172,4 +178,4 @@ async def winfsp_mountpoint_runner(
         # to finish so blocking the trio loop can produce a dead lock...
         with trio.CancelScope(shield=True):
             await trio.to_thread.run_sync(fs.stop)
-            event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)
+            event_bus.send("mountpoint.stopped", **event_kwargs)

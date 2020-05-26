@@ -3,7 +3,6 @@
 import os
 import trio
 import logging
-from functools import partial
 from pathlib import PurePath
 from pendulum import Pendulum
 from importlib import __import__ as import_function
@@ -138,16 +137,22 @@ class MountpointManager:
         return new_workspace
 
     async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
-        curried_runner = partial(
-            self._runner,
-            self.user_fs,
-            workspace_fs,
-            self.base_mountpoint_path,
-            config=self.config,
-            event_bus=self.event_bus,
-        )
+        async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
+            try:
+                return await self._runner(
+                    self.user_fs,
+                    workspace_fs,
+                    self.base_mountpoint_path,
+                    config=self.config,
+                    event_bus=self.event_bus,
+                    task_status=task_status,
+                )
+            finally:
+                self._mountpoint_tasks.pop(key, None)
+
+        key = (workspace_fs.workspace_id, timestamp)
         runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[(workspace_fs.workspace_id, timestamp)] = runner_task
+        self._mountpoint_tasks[key] = runner_task
         return runner_task
 
     def get_path_in_mountpoint(
@@ -180,7 +185,6 @@ class MountpointManager:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
-        del self._mountpoint_tasks[(workspace_id, timestamp)]
 
     async def remount_workspace_new_timestamp(
         self, workspace_id: EntryID, original_timestamp: Pendulum, target_timestamp: Pendulum
@@ -203,7 +207,6 @@ class MountpointManager:
                 raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
-            del self._mountpoint_tasks[(workspace_id, original_timestamp)]
         return runner_task.value
 
     async def mount_all(self, timestamp: Pendulum = None):

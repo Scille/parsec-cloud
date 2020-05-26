@@ -68,6 +68,10 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.switch_button.clicked.connect(self.on_switch_clicked)
         self.switch_button.toggled.connect(self.on_switch_toggled)
 
+        # Connect to workspaces_widget signals
+        self.workspaces_widget.mountpoint_started.connect(self.on_mountpoint_started)
+        self.workspaces_widget.mountpoint_stopped.connect(self.on_mountpoint_stopped)
+
         if not len(files):
             self.widget_empty.show()
             self.widget_files.hide()
@@ -191,7 +195,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 show_info(self.parent(), message=_("TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"))
                 return
             self.reencrypt_clicked.emit(
-                self.workspace_fs.workspace_id,
+                self.workspace_id,
                 bool(self.reencryption_needs.user_revoked),
                 bool(self.reencryption_needs.role_revoked),
             )
@@ -215,6 +219,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @property
     def name(self):
         return self.workspace_name
+
+    @property
+    def workspace_id(self):
+        return self.workspace_fs.workspace_id
+
+    @property
+    def timestamp(self):
+        return getattr(self.workspace_fs, "timestamp", None)
 
     @property
     def reencryption_needs(self):
@@ -290,26 +302,31 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def on_switch_clicked(self, state):
         if state:
-            timestamp = self.workspace_fs.timestamp if self.timestamped else None
-            self.workspaces_widget.mount_workspace(self.workspace_fs.workspace_id, timestamp)
+            self.workspaces_widget.mount_workspace(self.workspace_id, self.timestamp)
         else:
-            timestamp = self.workspace_fs.timestamp if self.timestamped else None
-            self.workspaces_widget.unmount_workspace(self.workspace_fs.workspace_id, timestamp)
+            self.workspaces_widget.unmount_workspace(self.workspace_id, self.timestamp)
 
     def on_switch_toggled(self, state):
-        if state:
-            self.button_open.show()
-            if not self.timestamped:
+        self.button_open.setEnabled(state)
+        if not self.timestamped:
+            if state:
                 self.setStyleSheet("background-color: #FFFFFF; border-radius: 8px;")
-        else:
-            self.button_open.hide()
-            if not self.timestamped:
+            else:
                 self.setStyleSheet("background-color: #E3E3E3; border-radius: 8px;")
 
     def reload_workspace_mounted_status(self):
-        timestamp = self.workspace_fs.timestamp if self.timestamped else None
         is_mounted = self.workspaces_widget.is_workspace_mounted(
-            self.workspace_fs.workspace_id, timestamp
+            self.workspace_fs.workspace_id, self.timestamp
         )
         self.switch_button.setChecked(is_mounted)
         self.on_switch_toggled(is_mounted)
+
+    def on_mountpoint_started(self, workspace_id, timestamp):
+        if workspace_id != self.workspace_id or timestamp != self.timestamp:
+            return
+        self.switch_button.setChecked(True)
+
+    def on_mountpoint_stopped(self, workspace_id, timestamp):
+        if workspace_id != self.workspace_id or timestamp != self.timestamp:
+            return
+        self.switch_button.setChecked(False)

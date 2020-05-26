@@ -123,6 +123,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     workspace_reencryption_success = pyqtSignal(QtToTrioJob)
     workspace_reencryption_error = pyqtSignal(QtToTrioJob)
     workspace_reencryption_progress = pyqtSignal(EntryID, int, int)
+    mountpoint_started = pyqtSignal(object, object)
+    mountpoint_stopped = pyqtSignal(object, object)
 
     rename_success = pyqtSignal(QtToTrioJob)
     rename_error = pyqtSignal(QtToTrioJob)
@@ -186,7 +188,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset_timer.timeout.connect(self.list_workspaces)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
-
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
 
     def disconnect_all(self):
@@ -198,6 +199,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.event_bus.connect("sharing.updated", self._on_sharing_updated_trio)
         self.event_bus.connect("fs.entry.downsynced", self._on_entry_downsynced_trio)
+        self.event_bus.connect("mountpoint.started", self._on_mountpoint_started_trio)
+        self.event_bus.connect("mountpoint.stopped", self._on_mountpoint_stopped_trio)
         self.reset()
 
     def hideEvent(self, event):
@@ -207,6 +210,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             self.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
             self.event_bus.disconnect("sharing.updated", self._on_sharing_updated_trio)
             self.event_bus.disconnect("fs.entry.downsynced", self._on_entry_downsynced_trio)
+            self.event_bus.disconnect("mountpoint.started", self._on_mountpoint_started_trio)
+            self.event_bus.disconnect("mountpoint.stopped", self._on_mountpoint_stopped_trio)
         except ValueError:
             pass
 
@@ -598,3 +603,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()
+
+    def _on_mountpoint_started_trio(self, event, mountpoint, workspace_id, timestamp):
+        self.mountpoint_started.emit(workspace_id, timestamp)
+
+    def _on_mountpoint_stopped_trio(self, event, mountpoint, workspace_id, timestamp):
+        self.mountpoint_stopped.emit(workspace_id, timestamp)
