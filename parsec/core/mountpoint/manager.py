@@ -227,6 +227,9 @@ class MountpointManager:
             if workspace_id_and_ts[1] is not None
         }
 
+    def is_workspace_mounted(self, workspace_id, timestamp=None):
+        return (workspace_id, timestamp) in self._mountpoint_tasks
+
 
 @asynccontextmanager
 async def mountpoint_manager_factory(

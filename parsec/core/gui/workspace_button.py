@@ -14,6 +14,7 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 from parsec.core.gui.ui.empty_workspace_widget import Ui_EmptyWorkspaceWidget
 
 from parsec.core.gui.switch_button import SwitchButton
+from parsec.core.gui import workspaces_widget as workspaces_widget_module
 
 
 # Only used because we can't hide widgets in QtDesigner and adding the empty workspace
@@ -42,8 +43,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         files=None,
         reencryption_needs=None,
         timestamped=False,
+        parent=None,
     ):
-        super().__init__()
+        super().__init__(parent=parent)
         self.setupUi(self)
         self.users_roles = users_roles
         self.workspace_name = workspace_name
@@ -63,7 +65,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         bottom_layout = self.button_open.parent().layout()
         bottom_layout.insertWidget(0, self.switch_button)
         bottom_layout.insertSpacing(0, 20)
-        self.switch_button.setChecked(True)
+        self.switch_button.clicked.connect(self.on_switch_clicked)
+        self.switch_button.toggled.connect(self.on_switch_toggled)
 
         if not len(files):
             self.widget_empty.show()
@@ -130,6 +133,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
+        self.reload_workspace_mounted_status()
 
     @property
     def is_shared(self):
@@ -200,6 +204,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def button_remount_ts_clicked(self):
         self.remount_ts_clicked.emit(self.workspace_fs)
+
+    @property
+    def workspaces_widget(self):
+        parent = self.parent()
+        while not isinstance(parent, workspaces_widget_module.WorkspacesWidget):
+            parent = parent.parent()
+        return parent
 
     @property
     def name(self):
@@ -274,5 +285,31 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_title.setText(display)
 
     def mousePressEvent(self, event):
-        if event.button() & Qt.LeftButton:
+        if event.button() & Qt.LeftButton and self.switch_button.isChecked():
             self.clicked.emit(self.workspace_fs)
+
+    def on_switch_clicked(self, state):
+        if state:
+            timestamp = self.workspace_fs.timestamp if self.timestamped else None
+            self.workspaces_widget.mount_workspace(self.workspace_fs.workspace_id, timestamp)
+        else:
+            timestamp = self.workspace_fs.timestamp if self.timestamped else None
+            self.workspaces_widget.unmount_workspace(self.workspace_fs.workspace_id, timestamp)
+
+    def on_switch_toggled(self, state):
+        if state:
+            self.button_open.show()
+            if not self.timestamped:
+                self.setStyleSheet("background-color: #FFFFFF; border-radius: 8px;")
+        else:
+            self.button_open.hide()
+            if not self.timestamped:
+                self.setStyleSheet("background-color: #E3E3E3; border-radius: 8px;")
+
+    def reload_workspace_mounted_status(self):
+        timestamp = self.workspace_fs.timestamp if self.timestamped else None
+        is_mounted = self.workspaces_widget.is_workspace_mounted(
+            self.workspace_fs.workspace_id, timestamp
+        )
+        self.switch_button.setChecked(is_mounted)
+        self.on_switch_toggled(is_mounted)
