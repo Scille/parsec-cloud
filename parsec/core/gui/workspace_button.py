@@ -13,6 +13,8 @@ from parsec.core.gui.custom_dialogs import show_info
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 from parsec.core.gui.ui.empty_workspace_widget import Ui_EmptyWorkspaceWidget
 
+from parsec.core.gui.switch_button import SwitchButton
+
 
 # Only used because we can't hide widgets in QtDesigner and adding the empty workspace
 # button changes the minimum size we can set for the workspace button.
@@ -54,6 +56,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         files = files or []
+
+        # Add switch button
+        # TODO: integrated properly in the .ui files
+        self.switch_button = SwitchButton(parent=self)
+        bottom_layout = self.button_open.parent().layout()
+        bottom_layout.insertWidget(0, self.switch_button)
+        bottom_layout.insertSpacing(0, 20)
+        self.switch_button.setChecked(True)
 
         if not len(files):
             self.widget_empty.show()
