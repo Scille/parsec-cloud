@@ -20,6 +20,7 @@ FRAGMENT_TYPES = {
     "bugfix": "Bugfixes",
     "doc": "Improved Documentation",
     "removal": "Deprecations and Removals",
+    "api": "Client/Backend API evolutions",
     "misc": "Miscellaneous internal changes",
     "empty": "Miscellaneous internal changes that shouldn't even be collected",
 }
