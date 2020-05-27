@@ -33,8 +33,7 @@ else:
 
 async def _run_mountpoint(config, device, timestamp: Pendulum = None):
     config = config.evolve(mountpoint_enabled=True)
-    async with logged_core_factory(config, device) as core:
-        await core.mountpoint_manager.mount_all(timestamp)
+    async with logged_core_factory(config, device):
         display_device = click.style(device.device_id, fg="yellow")
         mountpoint_display = click.style(str(config.mountpoint_base_dir.absolute()), fg="yellow")
         click.echo(f"{display_device}'s drive mounted at {mountpoint_display}")

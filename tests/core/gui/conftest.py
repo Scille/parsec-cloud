@@ -241,7 +241,7 @@ def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
             gui_check_version_at_startup=False,
             gui_first_launch=False,
             gui_last_version=parsec_version,
-            mountpoint_enabled=False,
+            mountpoint_enabled=True,
             gui_language="en",
         )
         event_bus = event_bus or EventBus()

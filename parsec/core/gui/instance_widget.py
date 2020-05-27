@@ -33,8 +33,6 @@ async def _do_run_core(config, device, qt_on_ready):
     # TODO: replace this by a proper generic MultiError handling
     with trio.MultiError.catch(lambda exc: None if isinstance(exc, trio.Cancelled) else exc):
         async with logged_core_factory(config=config, device=device, event_bus=None) as core:
-            if config.mountpoint_enabled:
-                await core.mountpoint_manager.mount_all()
             # Create our own job scheduler allows us to cancel all pending
             # jobs depending on us when we logout
             core_jobs_ctx = QtToTrioJobScheduler()

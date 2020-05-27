@@ -5,6 +5,7 @@ import trio
 import logging
 from pathlib import PurePath
 from pendulum import Pendulum
+from structlog import get_logger
 from importlib import __import__ as import_function
 
 from async_generator import asynccontextmanager
@@ -36,6 +37,8 @@ try:
         import_function("fuse")
 except (ImportError, RuntimeError):
     pass
+
+logger = get_logger()
 
 
 def get_mountpoint_runner():
@@ -209,10 +212,11 @@ class MountpointManager:
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
         return runner_task.value
 
-    async def mount_all(self, timestamp: Pendulum = None):
+    async def mount_all(self, timestamp: Pendulum = None, exclude: list = ()):
+        exclude_set = set(exclude)
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
-            if workspace_entry.role is None:
+            if workspace_entry.role is None or workspace_entry.id in exclude_set:
                 continue
             try:
                 await self.mount_workspace(workspace_entry.id, timestamp=timestamp)
@@ -236,20 +240,68 @@ class MountpointManager:
 
 @asynccontextmanager
 async def mountpoint_manager_factory(
-    user_fs, event_bus, base_mountpoint_path, *, enabled=True, debug: bool = False, **config
+    user_fs,
+    event_bus,
+    base_mountpoint_path,
+    *,
+    debug: bool = False,
+    mount_all: bool = False,
+    mount_on_workspace_created: bool = False,
+    mount_on_workspace_shared: bool = False,
+    exclude_from_mount_all: list = (),
 ):
-    config["debug"] = debug
+    config = {"debug": debug}
 
     runner = get_mountpoint_runner()
 
+    def on_new_workspace(event, new_entry, previous_entry=None):
+        # Only a role update
+        if previous_entry is not None:
+            return
+
+        async def target():
+            try:
+                await mountpoint_manager.mount_workspace(new_entry.id)
+            except MountpointAlreadyMounted:
+                pass
+            except Exception:
+                logger.exception("Unexpected error while mounting new workspace")
+
+        mount_nursery.start_soon(target)
+
+    # Instantiate the mountpoint manager with its own nursery
     async with trio.open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )
-        try:
-            yield mountpoint_manager
 
+        # Exit this context by unmounting all mountpoints
+        try:
+
+            # A nursery dedicated to new workspace events
+            async with trio.open_service_nursery() as mount_nursery:
+
+                # Setup new workspace events
+                events = []
+                if mount_on_workspace_created:
+                    events = [("fs.workspace.created", on_new_workspace)]
+                if mount_on_workspace_shared:
+                    events += [("sharing.updated", on_new_workspace)]
+                with event_bus.connect_in_context(*events):
+
+                    # Mount required workspaces
+                    if mount_all:
+                        await mountpoint_manager.mount_all(exclude=exclude_from_mount_all)
+
+                    # Yield point
+                    yield mountpoint_manager
+
+                    # Cancel current mount_workspace tasks
+                    mount_nursery.cancel_scope.cancel()
+
+        # Unmount all the workspaces (should this be shielded?)
         finally:
             await mountpoint_manager.unmount_all()
 
+        # Cancel the mountpoint tasks (although they should all be finised by now)
         nursery.cancel_scope.cancel()
