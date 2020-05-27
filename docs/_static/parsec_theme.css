@@ -39,9 +39,9 @@ a:visited { color: #121D43; } a:visited:hover { color: #0A0F23; }
 .wy-menu-vertical li.current a:hover { color: #FFFFFF; background-color: #0066FF; }
 .wy-menu-vertical p.caption { color: #006EFF; }
 .wy-side-nav-search input[type=text] { border-color: #006EFF; }
-
 .fa-book { color: #006EFF; } .fa-book:hover { color: #004EDF; }
-
+.wy-menu-vertical li>a span.toctree-expand:before { content: "X"; }
+.wy-menu-vertical li.current>a span.toctree-expand:before { content: "D"; }
 
 h1, h2, h3, h4, h5, h6 { color: #121D43; }
 
@@ -77,5 +77,8 @@ h1, h2, h3, h4, h5, h6 { color: #121D43; }
 .rst-versions .rst-current-version { background: #FFFFFF!important; color: #006EFF!important; }
 .rst-versions .rst-other-versions { background: #FFFFFF!important; color: #AAAAAA!important; }
 .rst-versions .rst-current-version .fa, .rst-versions .rst-current-version .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .rst-versions .rst-current-version span.toctree-expand, .rst-versions .rst-current-version .rst-content .admonition-title, .rst-content .rst-versions .rst-current-version .admonition-title, .rst-versions .rst-current-version .rst-content h1 .headerlink, .rst-content h1 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h2 .headerlink, .rst-content h2 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h3 .headerlink, .rst-content h3 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h4 .headerlink, .rst-content h4 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h5 .headerlink, .rst-content h5 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h6 .headerlink, .rst-content h6 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content dl dt .headerlink, .rst-content dl dt .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content p.caption .headerlink, .rst-content p.caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content table>caption .headerlink, .rst-content table>caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content .code-block-caption .headerlink, .rst-content .code-block-caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content tt.download span:first-child, .rst-content tt.download .rst-versions .rst-current-version span:first-child, .rst-versions .rst-current-version .rst-content code.download span:first-child, .rst-content code.download .rst-versions .rst-current-version span:first-child, .rst-versions .rst-current-version .icon {
+  color: #006EFF;
+}
+.rst-versions .rst-other-versions dd a {
   color: #006EFF;
 }
