@@ -23,7 +23,7 @@ body {
   height: 120px;
   margin-top: 25px;
 }
-.wy-side-nav-search .version { color: #AAAAAA; }
+.wy-side-nav-search>div.version { color: #AAAAAA; }
 
 .wy-nav-top a { color: #006EFF; } .wy-nav-top a:hover { color: #004EDF; }
 .fa-bars { color: #006EFF; } .fa-bars:hover { color: #004EDF; }
