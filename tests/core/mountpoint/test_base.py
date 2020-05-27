@@ -140,12 +140,10 @@ async def test_mount_and_explore_workspace(
 
             await mountpoint_manager.mount_workspace(wid)
             mountpoint_path = get_path_in_mountpoint(mountpoint_manager, wid, "/")
+            expected = {"mountpoint": mountpoint_path, "workspace_id": wid, "timestamp": None}
 
             spy.assert_events_occured(
-                [
-                    ("mountpoint.starting", {"mountpoint": mountpoint_path}),
-                    ("mountpoint.started", {"mountpoint": mountpoint_path}),
-                ]
+                [("mountpoint.starting", expected), ("mountpoint.started", expected)]
             )
 
             # Finally explore the mountpoint
@@ -168,11 +166,11 @@ async def test_mount_and_explore_workspace(
             if manual_unmount:
                 await mountpoint_manager.unmount_workspace(wid)
                 # Mountpoint should be stopped by now
-                spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint_path})])
+                spy.assert_events_occured([("mountpoint.stopped", expected)])
 
         if not manual_unmount:
             # Mountpoint should be stopped by now
-            spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint_path})])
+            spy.assert_events_occured([("mountpoint.stopped", expected)])
 
 
 @pytest.mark.trio

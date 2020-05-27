@@ -14,7 +14,6 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 from parsec.core.gui.ui.empty_workspace_widget import Ui_EmptyWorkspaceWidget
 
 from parsec.core.gui.switch_button import SwitchButton
-from parsec.core.gui import workspaces_widget as workspaces_widget_module
 
 
 # Only used because we can't hide widgets in QtDesigner and adding the empty workspace
@@ -45,7 +44,13 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         timestamped=False,
         parent=None,
     ):
+        self._parent = parent
+        # Only useful for testing,
+        # Qt doesn't like getting a mock object as a parent
+        if not isinstance(parent, QWidget):
+            parent = None
         super().__init__(parent=parent)
+
         self.setupUi(self)
         self.users_roles = users_roles
         self.workspace_name = workspace_name
@@ -211,10 +216,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     @property
     def workspaces_widget(self):
-        parent = self.parent()
-        while not isinstance(parent, workspaces_widget_module.WorkspacesWidget):
-            parent = parent.parent()
-        return parent
+        return self._parent
 
     @property
     def name(self):

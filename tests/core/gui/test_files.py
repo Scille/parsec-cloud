@@ -55,7 +55,8 @@ async def logged_gui(
     )
 
     async with aqtbot.wait_signals(
-        [wk_widget.create_success, wk_widget.list_success], timeout=2000
+        [wk_widget.create_success, wk_widget.list_success, wk_widget.mountpoint_started],
+        timeout=2000,
     ):
         await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
