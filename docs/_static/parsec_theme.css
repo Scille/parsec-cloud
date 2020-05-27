@@ -70,7 +70,7 @@ h1, h2, h3, h4, h5, h6 { color: #121D43; }
   background-color: rgba(0, 0, 0, 0); color: #FFC107;
 }
 
-.ethical-dark-theme div.ethical-sidebar { background-color: rgba(0, 0, 0, 0); border: none!important; color: #c2c2c2 !important; }
+.ethical-dark-theme div.ethical-sidebar { background-color: rgba(0, 0, 0, 0); border: 1px solid #c2c2c2!important; color: #c2c2c2 !important; }
 .ethical-dark-theme div.ethical-sidebar a { background-color: rgba(0, 0, 0, 0); border: none!important; color: #c2c2c2 !important; }
 
 .rst-versions .rst-current-version { background: rgba(0, 0, 0, 0)!important; color: #006EFF!important; }
