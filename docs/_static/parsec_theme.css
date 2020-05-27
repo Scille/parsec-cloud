@@ -73,5 +73,5 @@ h1, h2, h3, h4, h5, h6 { color: #121D43; }
 .ethical-dark-theme div.ethical-sidebar { background-color: rgba(0, 0, 0, 0); border: none!important; color: #c2c2c2 !important; }
 .ethical-dark-theme div.ethical-sidebar a { background-color: rgba(0, 0, 0, 0); border: none!important; color: #c2c2c2 !important; }
 
-.rst-versions .rst-current-version { background-color: rgba(0, 0, 0, 0)!important; color: #006EFF!important; }
-.rst-versions .rst-other-versions { background-color: rgba(0, 0, 0, 0)!important; color: #AAAAAA!important; }
+.rst-versions .rst-current-version { background: rgba(0, 0, 0, 0)!important; color: #006EFF!important; }
+.rst-versions .rst-other-versions { background: rgba(0, 0, 0, 0)!important; color: #AAAAAA!important; }
