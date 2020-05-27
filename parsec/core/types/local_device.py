@@ -31,9 +31,8 @@ class LocalDevice(BaseLocalData):
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
-        # human_handle and device_label Both field should be required
-        human_handle = HumanHandleField(allow_none=False, missing=None)
-        device_label = fields.String(allow_none=False, missing=None)
+        human_handle = HumanHandleField(allow_none=True, missing=None)
+        device_label = fields.String(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
