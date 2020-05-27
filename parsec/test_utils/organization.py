@@ -10,6 +10,7 @@ import pendulum
 from parsec.crypto import SigningKey
 from parsec.logging import configure_logging
 from parsec.core import logged_core_factory
+from parsec.api.data import UserProfile
 from parsec.api.protocol import DeviceID
 from parsec.core.types import WorkspaceRole, BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir, load_config
@@ -79,7 +80,9 @@ async def initialize_test_organization(
         root_verify_key = root_signing_key.verify_key
         organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
 
-        alice_device = generate_new_device(alice_device_id, organization_addr, True)
+        alice_device = generate_new_device(
+            alice_device_id, organization_addr, profile=UserProfile.ADMIN
+        )
 
         save_device_with_password(config_dir, alice_device, password, force=force)
 
@@ -89,7 +92,7 @@ async def initialize_test_organization(
             timestamp=now,
             user_id=alice_device.user_id,
             public_key=alice_device.public_key,
-            is_admin=True,
+            profile=alice_device.profile,
         ).dump_and_sign(author_signkey=root_signing_key)
         device_certificate = DeviceCertificateContent(
             author=None,
