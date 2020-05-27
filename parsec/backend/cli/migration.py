@@ -35,11 +35,11 @@ def migrate(db, debug, dry_run):
                 result = await apply_migrations(db, migrations, dry_run)
 
             for migration in result.already_applied:
-                click.secho(f"{migration.filename} (already applied)", fg="grey")
+                click.secho(f"{migration.file_name} (already applied)", fg="white")
             for migration in result.new_apply:
-                click.secho(f"{migration.filename} {ok}", fg="green")
+                click.secho(f"{migration.file_name} {ok}", fg="green")
             if result.error:
                 migration, msg = result.error
-                click.secho(f"{migration.filename} {ko}: {msg}", fg="red")
+                click.secho(f"{migration.file_name} {ko}: {msg}", fg="red")
 
         trio_run(_migrate, db, use_asyncio=True)
