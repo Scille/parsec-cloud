@@ -27,6 +27,14 @@ from parsec.backend.realm import RealmGrantedRole
 from tests.common import freeze_time, addr_with_device_subdomain
 
 
+@pytest.fixture
+def fixtures_customization(request):
+    try:
+        return request.node.function._fixtures_customization
+    except AttributeError:
+        return {}
+
+
 @attr.s
 class OrganizationFullData:
     bootstrap_addr = attr.ib()
@@ -181,13 +189,16 @@ def expiredorg(organization_factory):
 
 
 @pytest.fixture
-def otheralice(local_device_factory, otherorg):
-    return local_device_factory("alice@dev1", otherorg, profile=UserProfile.ADMIN)
+def otheralice(fixtures_customization, local_device_factory, otherorg):
+    # otheralice should also mimic alice role
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    return local_device_factory("alice@dev1", otherorg, profile=profile)
 
 
 @pytest.fixture
-def alice(local_device_factory, initial_user_manifest_state):
-    device = local_device_factory("alice@dev1", profile=UserProfile.ADMIN)
+def alice(fixtures_customization, local_device_factory, initial_user_manifest_state):
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    device = local_device_factory("alice@dev1", profile=profile)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -198,8 +209,12 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 
 @pytest.fixture
-def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredorg):
-    device = local_device_factory("alice@dev1", expiredorg, profile=UserProfile.ADMIN)
+def expiredorgalice(
+    fixtures_customization, local_device_factory, initial_user_manifest_state, expiredorg
+):
+    # expiredorgalice should also mimic alice role
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    device = local_device_factory("alice@dev1", expiredorg, profile=profile)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -210,23 +225,27 @@ def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredor
 
 
 @pytest.fixture
-def alice2(local_device_factory):
-    return local_device_factory("alice@dev2", profile=UserProfile.ADMIN)
+def alice2(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    return local_device_factory("alice@dev2", profile=profile)
 
 
 @pytest.fixture
-def adam(local_device_factory):
-    return local_device_factory("adam@dev1", profile=UserProfile.ADMIN)
+def adam(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("adam_profile", UserProfile.ADMIN)
+    return local_device_factory("adam@dev1", profile=profile)
 
 
 @pytest.fixture
-def bob(local_device_factory):
-    return local_device_factory("bob@dev1", profile=UserProfile.REGULAR)
+def bob(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("bob_profile", UserProfile.REGULAR)
+    return local_device_factory("bob@dev1", profile=profile)
 
 
 @pytest.fixture
-def mallory(local_device_factory):
-    return local_device_factory("mallory@dev1")
+def mallory(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("mallory_profile", UserProfile.REGULAR)
+    return local_device_factory("mallory@dev1", profile=profile)
 
 
 class InitialUserManifestState:
