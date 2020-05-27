@@ -26,7 +26,7 @@ from parsec.core.local_device.cipher import (
 def generate_new_device(
     device_id: DeviceID,
     organization_addr: BackendOrganizationAddr,
-    profile: UserProfile = UserProfile.REGULAR,
+    profile: UserProfile = UserProfile.STANDARD,
     human_handle: Optional[HumanHandle] = None,
     device_label: Optional[str] = None,
     signing_key: Optional[SigningKey] = None,

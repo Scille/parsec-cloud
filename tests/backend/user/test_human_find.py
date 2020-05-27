@@ -2,7 +2,9 @@
 
 import pytest
 
-from tests.common import freeze_time
+from parsec.api.data import UserProfile
+
+from tests.common import freeze_time, customize_fixture
 from tests.backend.common import human_find
 
 
@@ -39,6 +41,13 @@ async def test_isolation_from_other_organization(
     async with sock_from_other_organization_factory(backend) as sock:
         rep = await human_find(sock, query=alice.user_id)
         assert rep == {"status": "ok", "results": [], "per_page": 100, "page": 1, "total": 0}
+
+
+@pytest.mark.trio
+@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+async def test_not_allowed_for_outsider(alice_backend_sock):
+    rep = await human_find(alice_backend_sock, query="whatever")
+    assert rep == {"status": "not_allowed", "reason": "Not allowed for user with OUTSIDER profile."}
 
 
 @pytest.mark.xfail(reason="not implemented yet")

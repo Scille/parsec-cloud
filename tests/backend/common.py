@@ -139,7 +139,6 @@ realm_create = CmdSock(
     "realm_create",
     realm_create_serializer,
     parse_args=lambda self, role_certificate: {"role_certificate": role_certificate},
-    check_rep_by_default=True,
 )
 realm_status = CmdSock(
     "realm_status",

@@ -146,7 +146,7 @@ def local_device_factory(coolorg):
             profile = parent_device.profile
 
         except StopIteration:
-            profile = profile or UserProfile.REGULAR
+            profile = profile or UserProfile.STANDARD
 
         # Force each device to access the backend trough a different hostname so
         # tcp stream spy can switch offline certains while keeping the others online
@@ -238,13 +238,13 @@ def adam(fixtures_customization, local_device_factory):
 
 @pytest.fixture
 def bob(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("bob_profile", UserProfile.REGULAR)
+    profile = fixtures_customization.get("bob_profile", UserProfile.STANDARD)
     return local_device_factory("bob@dev1", profile=profile)
 
 
 @pytest.fixture
 def mallory(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("mallory_profile", UserProfile.REGULAR)
+    profile = fixtures_customization.get("mallory_profile", UserProfile.STANDARD)
     return local_device_factory("mallory@dev1", profile=profile)
 
 
@@ -372,41 +372,47 @@ class CertificatesStore:
         self._device_certificates = {}
         self._revoked_user_certificates = {}
 
-    def store_user(self, organization_id, user_id, certif):
+    def store_user(self, organization_id, user_id, certif, redacted_certif):
         key = (organization_id, user_id)
         assert key not in self._user_certificates
-        self._user_certificates[key] = certif
+        self._user_certificates[key] = (certif, redacted_certif)
 
-    def store_device(self, organization_id, device_id, certif):
+    def store_device(self, organization_id, device_id, certif, redacted_certif):
         key = (organization_id, device_id)
         assert key not in self._device_certificates
-        self._device_certificates[key] = certif
+        self._device_certificates[key] = (certif, redacted_certif)
 
     def store_revoked_user(self, organization_id, user_id, certif):
         key = (organization_id, user_id)
         assert key not in self._revoked_user_certificates
         self._revoked_user_certificates[key] = certif
 
-    def get_user(self, local_user):
+    def get_user(self, local_user, redacted=False):
         key = (local_user.organization_id, local_user.user_id)
-        return self._user_certificates[key]
+        certif, redacted_certif = self._user_certificates[key]
+        return redacted_certif if redacted else certif
 
-    def get_device(self, local_device):
+    def get_device(self, local_device, redacted=False):
         key = (local_device.organization_id, local_device.device_id)
-        return self._device_certificates[key]
+        certif, redacted_certif = self._device_certificates[key]
+        return redacted_certif if redacted else certif
 
     def get_revoked_user(self, local_user):
         key = (local_user.organization_id, local_user.user_id)
         return self._revoked_user_certificates.get(key)
 
     def translate_certif(self, needle):
-        for (_, user_id), certif in self._user_certificates.items():
+        for (_, user_id), (certif, redacted_certif) in self._user_certificates.items():
             if needle == certif:
                 return f"<{user_id} user certif>"
+            if needle == redacted_certif:
+                return f"<{user_id} redacted user certif>"
 
-        for (_, device_id), certif in self._device_certificates.items():
+        for (_, device_id), (certif, redacted_certif) in self._device_certificates.items():
             if needle == certif:
                 return f"<{device_id} device certif>"
+            if needle == redacted_certif:
+                return f"<{device_id} redacted device certif>"
 
         for (_, user_id), certif in self._revoked_user_certificates.items():
             if needle == certif:
@@ -415,7 +421,7 @@ class CertificatesStore:
         raise RuntimeError("Unknown certificate !")
 
     def translate_certifs(self, certifs):
-        return [self.translate_certif(certif) for certif in certifs]
+        return sorted(self.translate_certif(certif) for certif in certifs)
 
 
 @pytest.fixture
@@ -528,12 +534,16 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     org.root_verify_key,
                 )
                 self.certificates_store.store_user(
-                    org.organization_id, backend_user.user_id, backend_user.user_certificate
+                    org.organization_id,
+                    backend_user.user_id,
+                    backend_user.user_certificate,
+                    backend_user.redacted_user_certificate,
                 )
                 self.certificates_store.store_device(
                     org.organization_id,
                     backend_first_device.device_id,
                     backend_first_device.device_certificate,
+                    backend_first_device.redacted_device_certificate,
                 )
                 self.binded_local_devices.append(first_device)
 
@@ -566,6 +576,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     device.organization_id,
                     backend_device.device_id,
                     backend_device.device_certificate,
+                    backend_device.redacted_device_certificate,
                 )
 
             else:
@@ -574,12 +585,16 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     device.organization_id, backend_user, backend_device
                 )
                 self.certificates_store.store_user(
-                    device.organization_id, backend_user.user_id, backend_user.user_certificate
+                    device.organization_id,
+                    backend_user.user_id,
+                    backend_user.user_certificate,
+                    backend_user.redacted_user_certificate,
                 )
                 self.certificates_store.store_device(
                     device.organization_id,
                     backend_device.device_id,
                     backend_device.device_certificate,
+                    backend_device.redacted_device_certificate,
                 )
 
                 if not initial_user_manifest_in_v0:
@@ -627,7 +642,7 @@ def sock_from_other_organization_factory(
         backend,
         mimick: Optional[str] = None,
         anonymous: bool = False,
-        profile: UserProfile = UserProfile.REGULAR,
+        profile: UserProfile = UserProfile.STANDARD,
     ):
         binder = backend_data_binder_factory(backend)
 

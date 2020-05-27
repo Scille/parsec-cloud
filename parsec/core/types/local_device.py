@@ -38,7 +38,7 @@ class LocalDevice(BaseLocalData):
         @post_load
         def make_obj(self, data):
             # Handle legacy `is_admin` field
-            default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.REGULAR
+            default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.STANDARD
             try:
                 profile = data["profile"]
             except KeyError:

@@ -6,6 +6,7 @@ from unittest.mock import ANY
 from pendulum import Pendulum
 
 from parsec.api.transport import TransportError
+from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     InvitationStatus,
     InvitationDeletedReason,
@@ -13,7 +14,7 @@ from parsec.api.protocol import (
     HandshakeBadIdentity,
 )
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixture
 from tests.backend.common import (
     invite_new,
     invite_list,
@@ -108,7 +109,7 @@ async def test_user_create_and_info(
 async def test_device_create_and_info(
     backend, alice, alice_backend_sock, alice2_backend_sock, backend_invited_sock_factory
 ):
-    # Provide other unrelated invatitons that should stay unchanged
+    # Provide other unrelated invitations that should stay unchanged
     with backend.event_bus.listen() as spy:
         other_user_invitation = await backend.invite.new_for_user(
             organization_id=alice.organization_id,
@@ -167,6 +168,33 @@ async def test_device_create_and_info(
             "greeter_user_id": alice.user_id,
             "greeter_human_handle": alice.human_handle,
         }
+
+
+@pytest.mark.trio
+@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+async def test_invite_new_limited_for_outsider(alice_backend_sock):
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
+    assert rep == {"status": "ok", "token": ANY}
+
+    # Only ADMIN can invite new users
+    rep = await invite_new(
+        alice_backend_sock, type=InvitationType.USER, claimer_email="zack@example.com"
+    )
+    assert rep == {"status": "not_allowed"}
+
+
+@pytest.mark.trio
+@customize_fixture("alice_profile", UserProfile.STANDARD)
+async def test_invite_new_limited_for_standard(alice_backend_sock):
+    # Outsider can only invite new devices
+    rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
+    assert rep == {"status": "ok", "token": ANY}
+
+    # Only ADMIN can invite new users
+    rep = await invite_new(
+        alice_backend_sock, type=InvitationType.USER, claimer_email="zack@example.com"
+    )
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio

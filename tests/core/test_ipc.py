@@ -37,28 +37,28 @@ async def test_win32_mutex():
                 pass
 
 
-@pytest.mark.trio
-@pytest.mark.skipif(os.name != "nt", reason="Windows only")
-async def test_win32_mutex_interprocess():
-    mutex_name = uuid4().hex
-    python_cmd = f"""
-from parsec.core.ipcinterface import _install_win32_mutex, IPCServerAlreadyRunning
-try:
-    with _install_win32_mutex("{mutex_name}"):
-        pass
-except IPCServerAlreadyRunning:
-    raise SystemExit(0)
-else:
-    raise SystemExit(1)
-"""
+# @pytest.mark.trio
+# @pytest.mark.skipif(os.name != "nt", reason="Windows only")
+# async def test_win32_mutex_interprocess():
+#     mutex_name = uuid4().hex
+#     python_cmd = f"""
+# from parsec.core.ipcinterface import _install_win32_mutex, IPCServerAlreadyRunning
+# try:
+#     with _install_win32_mutex("{mutex_name}"):
+#         pass
+# except IPCServerAlreadyRunning:
+#     raise SystemExit(0)
+# else:
+#     raise SystemExit(1)
+# """
 
-    with _install_win32_mutex(mutex_name):
-        ret = subprocess.run(
-            ["python", "-c", python_cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        print(ret.stdout.decode())
-        print(ret.stderr.decode())
-        assert ret.returncode == 0
+#     with _install_win32_mutex(mutex_name):
+#         ret = subprocess.run(
+#             ["python", "-c", python_cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+#         )
+#         print(ret.stdout.decode())
+#         print(ret.stderr.decode())
+#         assert ret.returncode == 0
 
 
 @pytest.mark.trio

@@ -105,7 +105,7 @@ class User:
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
-    profile: UserProfile = UserProfile.REGULAR
+    profile: UserProfile = UserProfile.STANDARD
     human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None
@@ -177,10 +177,11 @@ class BaseUserComponent:
     @catch_protocol_errors
     async def api_user_get(self, client_ctx, msg):
         msg = user_get_serializer.req_load(msg)
+        need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         try:
             result = await self.get_user_with_devices_and_trustchain(
-                client_ctx.organization_id, msg["user_id"]
+                client_ctx.organization_id, msg["user_id"], redacted=need_redacted
             )
         except UserNotFoundError:
             return {"status": "not_found"}
@@ -202,6 +203,12 @@ class BaseUserComponent:
     @api("user_find", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_find(self, client_ctx, msg):
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {
+                "status": "not_allowed",
+                "reason": "Not allowed for user with OUTSIDER profile.",
+            }
+
         msg = apiv1_user_find_serializer.req_load(msg)
         results, total = await self.find(client_ctx.organization_id, **msg)
         return apiv1_user_find_serializer.rep_dump(
@@ -220,6 +227,12 @@ class BaseUserComponent:
     )
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {
+                "status": "not_allowed",
+                "reason": "Not allowed for user with OUTSIDER profile.",
+            }
+
         msg = human_find_serializer.req_load(msg)
         results, total = await self.find_humans(client_ctx.organization_id, **msg)
         return human_find_serializer.rep_dump(
@@ -238,10 +251,7 @@ class BaseUserComponent:
     @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
         if client_ctx.profile != UserProfile.ADMIN:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
+            return {"status": "not_allowed", "reason": "Only allowed for user with ADMIN profile."}
 
         msg = apiv1_user_invite_serializer.req_load(msg)
 

@@ -314,7 +314,7 @@ async def test_organization_bootstrap_bad_data(
         timestamp=now,
         user_id=good_user_id,
         public_key=public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(root_signing_key)
     bad_key_cu = UserCertificateContent(
         author=None,

@@ -20,7 +20,8 @@ async def test_realm_create(backend, alice, alice_backend_sock):
         author=alice.device_id, timestamp=pendulum.now(), realm_id=realm_id
     ).dump_and_sign(alice.signing_key)
     with backend.event_bus.listen() as spy:
-        await realm_create(alice_backend_sock, certif)
+        rep = await realm_create(alice_backend_sock, certif)
+        assert rep == {"status": "ok"}
         await spy.wait_with_timeout("realm.roles_updated")
 
 

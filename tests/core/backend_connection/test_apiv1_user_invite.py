@@ -37,7 +37,7 @@ async def test_user_invite_then_claim_ok(
             timestamp=now,
             user_id=claim.device_id.user_id,
             public_key=claim.public_key,
-            profile=UserProfile.REGULAR,
+            profile=UserProfile.STANDARD,
         ).dump_and_sign(alice.signing_key)
         device_certificate = DeviceCertificateContent(
             author=alice.device_id,

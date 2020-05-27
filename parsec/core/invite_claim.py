@@ -233,7 +233,7 @@ async def claim_device(
         device_id=new_device_id,
         signing_key=device_signing_key,
         private_key=answer.private_key,
-        profile=UserProfile.ADMIN if invitation_creator_user.is_admin else UserProfile.REGULAR,
+        profile=UserProfile.ADMIN if invitation_creator_user.is_admin else UserProfile.STANDARD,
         user_manifest_id=answer.user_manifest_id,
         user_manifest_key=answer.user_manifest_key,
         local_symkey=SecretKey.generate(),
@@ -374,7 +374,7 @@ async def invite_and_create_user(
                         timestamp=now,
                         user_id=device_id.user_id,
                         public_key=claim.public_key,
-                        profile=UserProfile.ADMIN if is_admin else UserProfile.REGULAR,
+                        profile=UserProfile.ADMIN if is_admin else UserProfile.STANDARD,
                     ).dump_and_sign(device.signing_key)
                     device_certificate = DeviceCertificateContent(
                         author=device.device_id,

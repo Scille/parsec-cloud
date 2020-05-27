@@ -229,6 +229,7 @@ async def query_get_user_with_device_and_trustchain(
     return user, user_device, trustchain
 
 
+@query(in_transaction=True)
 async def query_get_user_with_devices_and_trustchain(
     conn, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
 ) -> GetUserAndDevicesResult:

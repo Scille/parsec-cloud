@@ -1,4 +1,4 @@
-Introduce invited profil for user.
-Invited users can read/write on workspaces they are invited to, but are not allowed to create workspaces.
-On top of that invited users cannot see personnal informations (email & user/device name)
+Introduce outsider profil for user.
+Outsider users can read/write on workspaces they are invited to, but are not allowed to create workspaces.
+On top of that outsider users cannot see personnal informations (email & user/device name)
 of other users.

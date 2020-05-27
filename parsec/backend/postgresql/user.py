@@ -74,7 +74,9 @@ class PGUserComponent(BaseUserComponent):
         self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
     ) -> GetUserAndDevicesResult:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_with_devices_and_trustchain(conn, organization_id, user_id)
+            return await query_get_user_with_devices_and_trustchain(
+                conn, organization_id, user_id, redacted=redacted
+            )
 
     async def get_user_with_device(
         self, organization_id: OrganizationID, device_id: DeviceID

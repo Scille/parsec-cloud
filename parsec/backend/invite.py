@@ -9,6 +9,7 @@ from pendulum import Pendulum, now as pendulum_now
 
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
+from parsec.api.data import UserProfile
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -156,10 +157,14 @@ class BaseInviteComponent:
     async def api_invite_new(self, client_ctx, msg):
         msg = invite_new_serializer.req_load(msg)
 
-        # TODO: implement send email feature
         if msg["type"] == InvitationType.USER:
+            if client_ctx.profile != UserProfile.ADMIN:
+                return invite_new_serializer.rep_dump({"status": "not_allowed"})
+
+            # TODO: implement send email feature
             if msg["send_email"]:
                 return invite_new_serializer.rep_dump({"status": "not_implemented"})
+
             invitation = await self.new_for_user(
                 organization_id=client_ctx.organization_id,
                 greeter_user_id=client_ctx.user_id,

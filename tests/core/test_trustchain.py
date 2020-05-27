@@ -141,7 +141,7 @@ def trustchain_data_factory(local_device_factory, coolorg):
                 timestamp=created_on,
                 user_id=local_user.user_id,
                 public_key=local_user.public_key,
-                profile=todo_user.get("profile", UserProfile.REGULAR),
+                profile=todo_user.get("profile", UserProfile.STANDARD),
             )
             data.add_user_certif(user_certif, user_certif.dump_and_sign(certifier_key))
             # Generate user revocation certificate if needed

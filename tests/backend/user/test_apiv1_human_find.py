@@ -2,9 +2,10 @@
 
 import pytest
 
+from parsec.api.data import UserProfile
 from parsec.api.protocol import human_find_serializer
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixture
 
 
 async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False, **kwargs):
@@ -21,6 +22,13 @@ async def human_find(sock, query=None, omit_revoked=False, omit_non_human=False,
     )
     raw_rep = await sock.recv()
     return human_find_serializer.rep_loads(raw_rep)
+
+
+@pytest.mark.trio
+@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+async def test_not_allowed_for_outsider(apiv1_alice_backend_sock):
+    rep = await human_find(apiv1_alice_backend_sock, query="whatever")
+    assert rep == {"status": "not_allowed", "reason": "Not allowed for user with OUTSIDER profile."}
 
 
 @pytest.fixture

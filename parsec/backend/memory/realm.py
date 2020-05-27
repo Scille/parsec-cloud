@@ -5,14 +5,16 @@ import pendulum
 from uuid import UUID
 from typing import List, Dict, Optional
 
-from parsec.api.protocol import RealmRole
+from parsec.api.data import UserProfile
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
 from parsec.backend.realm import (
     MaintenanceType,
     RealmGrantedRole,
     BaseRealmComponent,
+    RealmRole,
     RealmStatus,
     RealmAccessError,
+    RealmIncompatibleProfileError,
     RealmAlreadyExistsError,
     RealmRoleAlreadyGranted,
     RealmNotFoundError,
@@ -136,9 +138,17 @@ class MemoryRealmComponent(BaseRealmComponent):
         assert new_role.granted_by.user_id != new_role.user_id
 
         try:
-            self._user_component._get_user(organization_id, new_role.user_id)
+            user = self._user_component._get_user(organization_id, new_role.user_id)
         except UserNotFoundError:
             raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+
+        if user.profile == UserProfile.OUTSIDER and new_role.role in (
+            RealmRole.MANAGER,
+            RealmRole.OWNER,
+        ):
+            raise RealmIncompatibleProfileError(
+                "User with OUTSIDER profile cannot be MANAGER or OWNER"
+            )
 
         realm = self._get_realm(organization_id, new_role.realm_id)
 

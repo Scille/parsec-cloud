@@ -22,9 +22,9 @@ from parsec.api.data.base import DataValidationError, BaseAPISignedData, BaseSig
 
 class UserProfile(Enum):
     """
-    Regular user can create new realms and invite new devices for himself.
+    Standard user can create new realms and invite new devices for himself.
 
-    Admin can invite and revoke users and on top of what regular user can do.
+    Admin can invite and revoke users and on top of what standard user can do.
 
     Outsider is only able to collaborate on existing realm and should only
     access redacted certificates (hence he cannot create new realms or
@@ -32,7 +32,7 @@ class UserProfile(Enum):
     """
 
     ADMIN = "ADMIN"
-    REGULAR = "REGULAR"
+    STANDARD = "STANDARD"
     OUTSIDER = "OUTSIDER"
 
 
@@ -56,7 +56,7 @@ class UserCertificateContent(BaseAPISignedData):
             data.pop("type")
 
             # Handle legacy `is_admin` field
-            default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.REGULAR
+            default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.STANDARD
             try:
                 profile = data["profile"]
             except KeyError:

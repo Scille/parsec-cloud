@@ -3,10 +3,10 @@
 import pytest
 import pendulum
 
-from parsec.api.data import DeviceCertificateContent
+from parsec.api.data import DeviceCertificateContent, UserProfile
 from parsec.backend.user import INVITATION_VALIDITY
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixture
 from tests.backend.common import device_create, ping
 
 
@@ -16,6 +16,9 @@ def alice_nd(local_device_factory, alice):
 
 
 @pytest.mark.trio
+@customize_fixture(
+    "alice_profile", UserProfile.OUTSIDER
+)  # Any profile is be allowed to create new devices
 async def test_device_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, alice_nd):
     now = pendulum.now()
     device_certificate = DeviceCertificateContent(

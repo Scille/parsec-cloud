@@ -71,7 +71,7 @@ async def test_user_create_invalid_certificate(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     good_device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -84,7 +84,7 @@ async def test_user_create_invalid_certificate(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(bob.signing_key)
     bad_device_certificate = DeviceCertificateContent(
         author=bob.device_id,
@@ -116,7 +116,7 @@ async def test_user_create_not_matching_user_device(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -143,7 +143,7 @@ async def test_user_create_already_exists(backend, apiv1_backend_sock_factory, a
         timestamp=now,
         user_id=bob.user_id,
         public_key=bob.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id, timestamp=now, device_id=bob.device_id, verify_key=bob.verify_key
@@ -166,7 +166,7 @@ async def test_user_create_human_handle_not_allowed(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
         human_handle=mallory.human_handle,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
@@ -197,7 +197,7 @@ async def test_user_create_not_matching_certified_on(
         timestamp=date1,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     cd = DeviceCertificateContent(
         author=alice.device_id,
@@ -223,7 +223,7 @@ async def test_user_create_certify_too_old(backend, apiv1_backend_sock_factory, 
         timestamp=too_old,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     cd = DeviceCertificateContent(
         author=alice.device_id,
@@ -250,7 +250,7 @@ async def test_user_create_author_not_admin(backend, apiv1_backend_sock_factory,
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        profile=UserProfile.REGULAR,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(bob.signing_key)
     device_certificate = DeviceCertificateContent(
         author=bob.device_id,
