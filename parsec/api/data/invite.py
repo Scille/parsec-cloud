@@ -65,8 +65,8 @@ class InviteUserData(BaseAPIData):
         type = fields.CheckedConstant("invite_user_data", required=True)
         # Claimer ask for device_id/human_handle, but greeter has final word on this
         requested_device_id = DeviceIDField(required=True)
-        requested_human_handle = HumanHandleField(allow_none=True, missing=None)
         requested_device_label = fields.String(allow_none=True, missing=None)
+        requested_human_handle = HumanHandleField(allow_none=True, missing=None)
         # Note claiming user also imply creating a first device
         public_key = fields.PublicKey(required=True)
         verify_key = fields.VerifyKey(required=True)

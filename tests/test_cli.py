@@ -505,6 +505,10 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 p_claimer.stdin.write(b"john@dev1\n")
                 p_claimer.stdin.flush()
 
+                stdout_claimer = _wait_for(p_claimer, "Device label")
+                p_claimer.stdin.write(b"D3vIce1\n")
+                p_claimer.stdin.flush()
+
                 print("~~~ Greeter validate info ~~~")
                 stdout_greeter = _wait_for(p_greeter, "New user label [John Doe]:")
                 p_greeter.stdin.write(b"Bob Doe\n")
@@ -518,8 +522,12 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 p_greeter.stdin.write(f"{bob1}\n".encode())
                 p_greeter.stdin.flush()
 
-                stdout_greeter = _wait_for(p_greeter, "New user is admin ?")
-                p_greeter.stdin.write(b"y\n")
+                stdout_greeter = _wait_for(p_greeter, "New user device label [D3vIce1]:")
+                p_greeter.stdin.write(f"Device1\n".encode())
+                p_greeter.stdin.flush()
+
+                stdout_greeter = _wait_for(p_greeter, "New user profile (0, 1, 2) [0]:")
+                p_greeter.stdin.write(b"1\n")
                 p_greeter.stdin.flush()
 
                 print("~~~ Greeter finish invitation ~~~")
@@ -583,9 +591,17 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 p_claimer.stdin.write(b"devB\n")
                 p_claimer.stdin.flush()
 
+                stdout_claimer = _wait_for(p_claimer, "Device label")
+                p_claimer.stdin.write(b"DeviceB\n")
+                p_claimer.stdin.flush()
+
                 print("~~~ Greeter validate info ~~~")
                 stdout_greeter = _wait_for(p_greeter, "New device name [devB]:")
-                p_greeter.stdin.write(f"{alice2.device_name}\n".encode())
+                p_greeter.stdin.write(b"dev2\n")
+                p_greeter.stdin.flush()
+
+                stdout_greeter = _wait_for(p_greeter, "New device label [DeviceB]:")
+                p_greeter.stdin.write(b"Device2\n")
                 p_greeter.stdin.flush()
 
                 print("~~~ Greeter finish invitation ~~~")
