@@ -8,6 +8,7 @@ from parsec.api.protocol import UserID
 from parsec.api.data import (
     DataError,
     UserCertificateContent,
+    UserProfile,
     RevokedUserCertificateContent,
     DeviceCertificateContent,
 )
@@ -222,7 +223,7 @@ class TrustchainContext:
                     raise TrustchainError(
                         f"{path}: Missing user certificate for {author_id.user_id}"
                     )
-                elif not author_user.is_admin:
+                elif author_user.profile != UserProfile.ADMIN:
                     path = _build_signature_path(*sign_chain, author_id)
                     raise TrustchainError(
                         f"{path}:  Invalid signature given {author_user.user_id} is not admin"

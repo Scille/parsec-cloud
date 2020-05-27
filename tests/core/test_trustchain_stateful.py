@@ -15,6 +15,7 @@ from hypothesis.stateful import (
 
 from parsec.api.protocol import UserID, DeviceID
 from parsec.api.data import (
+    UserProfile,
     UserCertificateContent,
     RevokedUserCertificateContent,
     DeviceCertificateContent,
@@ -53,7 +54,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
                 timestamp=pendulum_now(),
                 user_id=local_device.user_id,
                 public_key=local_device.public_key,
-                is_admin=is_admin,
+                profile=UserProfile.ADMIN if is_admin else UserProfile.STANDARD,
             )
             self.users_content[device_id.user_id] = user
             self.users_certifs[device_id.user_id] = user.dump_and_sign(certifier_key)
@@ -129,7 +130,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             possible_authors = [
                 device
                 for device_id, device in self.local_devices.items()
-                if device_id.user_id != user and device.is_admin
+                if device_id.user_id != user and device.profile == UserProfile.ADMIN
             ]
             author = possible_authors[author_rand % len(possible_authors)]
             note(f"revoke user: {user} (author: {author.device_id})")
