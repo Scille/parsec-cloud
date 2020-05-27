@@ -40,8 +40,8 @@ a:visited { color: #121D43; } a:visited:hover { color: #0A0F23; }
 .wy-menu-vertical p.caption { color: #006EFF; }
 .wy-side-nav-search input[type=text] { border-color: #006EFF; }
 .fa-book { color: #006EFF; } .fa-book:hover { color: #004EDF; }
-.wy-menu-vertical li>a span.toctree-expand:before { content: "X"; }
-.wy-menu-vertical li.current>a span.toctree-expand:before { content: "D"; }
+.wy-menu-vertical li span.toctree-expand:before { content: "\f105"; font-weight: bold!important; }
+.wy-menu-vertical li.on a span.toctree-expand:before, .wy-menu-vertical li.current>a span.toctree-expand:before { content: "\f107"; font-weight: bold!important; }
 
 h1, h2, h3, h4, h5, h6 { color: #121D43; }
 
