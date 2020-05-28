@@ -30,6 +30,9 @@ async def logged_gui(
     aqtbot, gui_factory, autoclose_dialog, core_config, alice, running_backend, monkeypatch
 ):
     save_device_with_password(core_config.config_dir, alice, "P@ssw0rd")
+    monkeypatch.setattr(
+        "parsec.core.gui.workspaces_widget.WorkspacesWidget.RESET_TIMER_THRESHOLD", 0
+    )
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()

@@ -113,6 +113,8 @@ async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.Pendulum
 
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
+    RESET_TIMER_THRESHOLD = 1000  # ms
+
     fs_updated_qt = pyqtSignal(str, UUID)
     fs_synced_qt = pyqtSignal(str, UUID)
     entry_downsynced_qt = pyqtSignal(UUID, UUID)
@@ -185,7 +187,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.reset_required = False
         self.reset_timer = QTimer()
-        self.reset_timer.setInterval(1000)
+        self.reset_timer.setInterval(self.RESET_TIMER_THRESHOLD)
         self.reset_timer.setSingleShot(True)
         self.reset_timer.timeout.connect(self.on_timeout)
 
