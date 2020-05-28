@@ -182,10 +182,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
 
+        self.reset_required = False
         self.reset_timer = QTimer()
         self.reset_timer.setInterval(1000)
         self.reset_timer.setSingleShot(True)
-        self.reset_timer.timeout.connect(self.list_workspaces)
+        self.reset_timer.timeout.connect(self.on_timeout)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
@@ -561,9 +562,16 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
 
     def reset(self):
-        if not self.reset_timer.isActive():
+        if self.reset_timer.isActive():
+            self.reset_required = True
+        else:
+            self.reset_required = False
             self.reset_timer.start()
             self.list_workspaces()
+
+    def on_timeout(self):
+        if self.reset_required:
+            self.reset()
 
     def list_workspaces(self):
         self.jobs_ctx.submit_job(
