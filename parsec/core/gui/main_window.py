@@ -388,8 +388,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # For each parsec update
         if self.config.gui_last_version and self.config.gui_last_version != PARSEC_VERSION:
 
-            # Update from parsec `<1.13` to `>=1.13`
-            if LooseVersion(self.config.gui_last_version) < "1.13":
+            # Update from parsec `<1.14` to `>=1.14`
+            if LooseVersion(self.config.gui_last_version) < "1.14":
 
                 # Revert the acrobat reader workaround
                 if (
