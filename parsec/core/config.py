@@ -3,9 +3,11 @@
 import os
 import attr
 import json
-from typing import Optional
+from typing import Optional, FrozenSet
 from pathlib import Path
 from structlog import get_logger
+
+from parsec.api.data import EntryID
 
 
 logger = get_logger()
@@ -61,6 +63,7 @@ class CoreConfig:
     invitation_token_size: int = 8
 
     mountpoint_enabled: bool = False
+    disabled_workspaces: FrozenSet[EntryID] = frozenset()
 
     sentry_url: Optional[str] = None
     telemetry_enabled: bool = True
@@ -90,6 +93,7 @@ def config_factory(
     cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     mountpoint_enabled: bool = False,
+    disabled_workspaces: FrozenSet[EntryID] = frozenset(),
     backend_max_cooldown: int = 30,
     backend_connection_keepalive: Optional[int] = 29,
     backend_max_connections: int = 4,
@@ -113,6 +117,7 @@ def config_factory(
         cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=get_default_mountpoint_base_dir(environ),
         mountpoint_enabled=mountpoint_enabled,
+        disabled_workspaces=disabled_workspaces,
         backend_max_cooldown=backend_max_cooldown,
         backend_connection_keepalive=backend_connection_keepalive,
         backend_max_connections=backend_max_connections,
@@ -166,6 +171,11 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
+    try:
+        data_conf["disabled_workspaces"] = frozenset(map(EntryID, data_conf["disabled_workspaces"]))
+    except (KeyError, ValueError):
+        pass
+
     # Work around versionning issue with parsec releases:
     # - v1.12.0, v1.11.4, v1.11.3, v1.11.2, v1.11.1, v1.11.0 and v1.10.0
     # A `v` has been incorrectly added to `parsec.__version__`, potentially
@@ -191,6 +201,7 @@ def save_config(config: CoreConfig):
                 "data_base_dir": str(config.data_base_dir),
                 "cache_base_dir": str(config.cache_base_dir),
                 "telemetry_enabled": config.telemetry_enabled,
+                "disabled_workspaces": list(map(str, config.disabled_workspaces)),
                 "backend_max_cooldown": config.backend_max_cooldown,
                 "backend_connection_keepalive": config.backend_connection_keepalive,
                 "gui_last_device": config.gui_last_device,

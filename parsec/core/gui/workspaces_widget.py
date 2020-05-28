@@ -149,6 +149,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.jobs_ctx = jobs_ctx
         self.event_bus = event_bus
         self.reencrypting = set()
+        self.disabled_workspaces = self.core.config.disabled_workspaces
 
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
@@ -431,6 +432,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_id=workspace_id,
             timestamp=timestamp,
         )
+
+    def update_workspace_config(self, workspace_id, state):
+        if state:
+            self.disabled_workspaces -= {workspace_id}
+        else:
+            self.disabled_workspaces |= {workspace_id}
+        self.event_bus.send("gui.config.changed", disabled_workspaces=self.disabled_workspaces)
 
     def is_workspace_mounted(self, workspace_id, timestamp=None):
         return self.jobs_ctx.run_sync(

@@ -307,6 +307,8 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.workspaces_widget.mount_workspace(self.workspace_id, self.timestamp)
         else:
             self.workspaces_widget.unmount_workspace(self.workspace_id, self.timestamp)
+        if not self.timestamp:
+            self.workspaces_widget.update_workspace_config(self.workspace_id, state)
 
     def on_switch_toggled(self, state):
         self.button_open.setEnabled(state)

@@ -74,6 +74,7 @@ async def logged_core_factory(
                 mount_all=config.mountpoint_enabled,
                 mount_on_workspace_created=config.mountpoint_enabled,
                 mount_on_workspace_shared=config.mountpoint_enabled,
+                exclude_from_mount_all=config.disabled_workspaces,
             ) as mountpoint_manager:
 
                 yield LoggedCore(
