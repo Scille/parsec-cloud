@@ -212,7 +212,7 @@ async def test_idempotent_mount(base_mountpoint, alice_user_fs, event_bus, manua
 @pytest.mark.trio
 @pytest.mark.mountpoint
 async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpdir):
-    core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
+    core_config = core_config.evolve(mountpoint_base_dir=base_mountpoint)
 
     async with logged_core_factory(core_config, alice) as alice_core:
         manager = alice_core.mountpoint_manager
