@@ -7,7 +7,7 @@
 Parsec Docs
 ===========
 
-.. image:: parsec_banner.png
+.. image:: parsec_doc_logo.png
     :align: center
     :alt: parsec banner
 
