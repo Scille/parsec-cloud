@@ -234,8 +234,34 @@ class MountpointManager:
             if workspace_id_and_ts[1] is not None
         }
 
-    def is_workspace_mounted(self, workspace_id, timestamp=None):
+    def is_workspace_mounted(self, workspace_id: EntryID, timestamp=None) -> bool:
         return (workspace_id, timestamp) in self._mountpoint_tasks
+
+    async def safe_mount(self, workspace_id: EntryID) -> None:
+        try:
+            await self.mount_workspace(workspace_id)
+
+        # The workspace could not be mounted
+        # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
+        except MountpointError:
+            pass
+
+        # Unexpected exception is not a reason to crash the mountpoint manager
+        except Exception:
+            logger.exception("Unexpected error while mounting a new workspace")
+
+    async def safe_unmount(self, workspace_id: EntryID) -> None:
+        try:
+            await self.unmount_workspace(workspace_id)
+
+        # The workspace could not be mounted
+        # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
+        except MountpointError:
+            pass
+
+        # Unexpected exception is not a reason to crash the mountpoint manager
+        except Exception:
+            logger.exception("Unexpected error while unmounting a revoked workspace")
 
 
 @asynccontextmanager
@@ -248,6 +274,7 @@ async def mountpoint_manager_factory(
     mount_all: bool = False,
     mount_on_workspace_created: bool = False,
     mount_on_workspace_shared: bool = False,
+    unmount_on_workspace_revoked: bool = False,
     exclude_from_mount_all: list = (),
 ):
     config = {"debug": debug}
@@ -258,25 +285,24 @@ async def mountpoint_manager_factory(
     if os.name == "nt":
         cleanup_parsec_drive_icons()
 
-    def on_new_workspace(event, new_entry, previous_entry=None):
-        # Only a role update
-        if previous_entry is not None:
+    def on_event(event, new_entry, previous_entry=None):
+        # Workspace created
+        if event == "fs.workspace.created":
+            if mount_on_workspace_created:
+                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
             return
 
-        async def target():
-            try:
-                await mountpoint_manager.mount_workspace(new_entry.id)
+        # Workspace revoked
+        if event == "sharing.updated" and new_entry.role is None:
+            if unmount_on_workspace_revoked:
+                mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
+            return
 
-            # The workspace could not be mounted
-            # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
-            except MountpointError:
-                pass
-
-            # Unexpected exception is not a reason to crash the mountpoint manager
-            except Exception:
-                logger.exception("Unexpected error while mounting new workspace")
-
-        mount_nursery.start_soon(target)
+        # Workspace shared
+        if event == "sharing.updated" and previous_entry is None:
+            if mount_on_workspace_shared:
+                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
+            return
 
     # Instantiate the mountpoint manager with its own nursery
     async with trio.open_service_nursery() as nursery:
@@ -291,12 +317,9 @@ async def mountpoint_manager_factory(
             async with trio.open_service_nursery() as mount_nursery:
 
                 # Setup new workspace events
-                events = []
-                if mount_on_workspace_created:
-                    events = [("fs.workspace.created", on_new_workspace)]
-                if mount_on_workspace_shared:
-                    events += [("sharing.updated", on_new_workspace)]
-                with event_bus.connect_in_context(*events):
+                with event_bus.connect_in_context(
+                    ("fs.workspace.created", on_event), ("sharing.updated", on_event)
+                ):
 
                     # Mount required workspaces
                     if mount_all:
