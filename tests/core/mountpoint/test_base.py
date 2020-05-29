@@ -277,7 +277,7 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice_user_fs, event_bus)
         assert isinstance(bar_path, PurePath)
         # Windows uses drives, not base_mountpoint
         if os.name != "nt":
-            expected = base_mountpoint / f"mounted_wksp" / "bar.txt"
+            expected = base_mountpoint / "mounted_wksp" / "bar.txt"
             assert str(bar_path) == str(expected.absolute())
         assert await trio.Path(bar_path).exists()
 

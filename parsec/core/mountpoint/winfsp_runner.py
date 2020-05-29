@@ -11,9 +11,9 @@ from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
 
 from parsec.core.win_registry import parsec_drive_icon_context
-from parsec.core.mountpoint.exceptions import MountpointDriverCrash
-from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
+from parsec.core.mountpoint.winfsp_operations import WinFSPOperations, winify_entry_name
+from parsec.core.mountpoint.exceptions import MountpointDriverCrash, MountpointNoDriveAvailable
 
 
 __all__ = ("winfsp_mountpoint_runner",)
@@ -22,23 +22,51 @@ __all__ = ("winfsp_mountpoint_runner",)
 logger = get_logger()
 
 
-BASE = "PQRSTUVWXYZHIJKLMNO"
-assert len(BASE) == 19
+# The drive letters that parsec can use for mounting workspaces, sorted by priority.
+# For instance, if a device has 3 workspaces, they will preferably be mounted on
+# `P:\`, `Q:\` and `R:\` respectively. Make sure its length is a prime number so it
+# plays well with the algorithm in `sorted_drive_letters`.
+DRIVE_LETTERS = "PQRSTUVWXYZHIJKLMNO"
+assert len(DRIVE_LETTERS) == 19
 
 
-def candidates(index, length, nearest=5):
+def sorted_drive_letters(index: int, length: int, grouping: int = 5) -> str:
+    """Sort the drive letters for a specific workspace index, by decreasing priority.
+
+    The first letter should preferably be used. If it's not available, then the second
+    letter should be used and so on.
+
+    The number of workspaces (`length`) is also important as this algorithm will round
+    it to the next multiple of 5 and use it to group the workspaces together.
+
+    Example with 3 workspaces (rounded to 5 slots)
+
+    | Candidates | W1 | W2 | W3 | XX | XX |
+    |------------|----|----|----|----|----|
+    | 0          | P  | Q  | R  | S  | T  |
+    | 1          | U  | V  | W  | X  | Y  |
+    | 2          | Z  | H  | I  | J  | K  |
+    | 3          | L  | M  | N  | O  | P  |
+    | 4          | Q  | R  | S  | T  | U  |
+    | ...
+
+    """
     assert 0 <= index < length
-    length = ((length - 1) // nearest + 1) * nearest
-    assert math.gcd(length, len(BASE)) == 1
+    # Round to the next multiple of grouping, i.e 5
+    quotient, remainder = divmod(length, grouping)
+    length = (quotient + bool(remainder)) * grouping
+    # For the algorithm to work well, the lengths should be coprimes
+    assert math.gcd(length, len(DRIVE_LETTERS)) == 1
+    # Get all the letters by circling around the drive letter list
     result = ""
-    for _ in BASE:
-        result += BASE[index % len(BASE)]
+    for _ in DRIVE_LETTERS:
+        result += DRIVE_LETTERS[index % len(DRIVE_LETTERS)]
         index += length
     return result
 
 
 async def _get_available_drive(index, length) -> Path:
-    drives = [Path(f"{letter}:\\") for letter in candidates(index, length)]
+    drives = [Path(f"{letter}:\\") for letter in sorted_drive_letters(index, length)]
     for drive in drives:
         try:
             if not await trio.to_thread.run_sync(drive.exists):
@@ -46,6 +74,8 @@ async def _get_available_drive(index, length) -> Path:
         # Might fail for some unrelated reasons
         except OSError:
             continue
+    # No drive available
+    raise MountpointNoDriveAvailable
 
 
 def _generate_volume_serial_number(device, workspace_id):
@@ -134,13 +164,14 @@ async def winfsp_mountpoint_runner(
         # security_timeout_valid=1,
         # security_timeout=10000,
     )
+
+    # Prepare event information
+    event_kwargs = {
+        "mountpoint": mountpoint_path,
+        "workspace_id": workspace_fs.workspace_id,
+        "timestamp": getattr(workspace_fs, "timestamp", None),
+    }
     try:
-        # Prepare event information
-        event_kwargs = {
-            "mountpoint": mountpoint_path,
-            "workspace_id": workspace_fs.workspace_id,
-            "timestamp": getattr(workspace_fs, "timestamp", None),
-        }
         event_bus.send("mountpoint.starting", **event_kwargs)
 
         # Manage drive icon

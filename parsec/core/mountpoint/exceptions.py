@@ -35,3 +35,7 @@ class MountpointWinfspNotAvailable(MountpointError):
 
 class MountpointFuseNotAvailable(MountpointError):
     pass
+
+
+class MountpointNoDriveAvailable(MountpointError):
+    pass

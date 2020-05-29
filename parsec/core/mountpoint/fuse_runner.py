@@ -106,14 +106,13 @@ async def fuse_mountpoint_runner(
         base_mountpoint_path, workspace_fs
     )
 
+    # Prepare event information
+    event_kwargs = {
+        "mountpoint": mountpoint_path,
+        "workspace_id": workspace_fs.workspace_id,
+        "timestamp": getattr(workspace_fs, "timestamp", None),
+    }
     try:
-
-        # Prepare event information
-        event_kwargs = {
-            "mountpoint": mountpoint_path,
-            "workspace_id": workspace_fs.workspace_id,
-            "timestamp": getattr(workspace_fs, "timestamp", None),
-        }
         event_bus.send("mountpoint.starting", **event_kwargs)
 
         async with trio.open_service_nursery() as nursery:

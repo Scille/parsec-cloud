@@ -3,6 +3,7 @@
 import os
 import trio
 import logging
+from typing import Sequence
 from pathlib import PurePath
 from pendulum import Pendulum
 from structlog import get_logger
@@ -21,6 +22,7 @@ from parsec.core.mountpoint.exceptions import (
     MountpointNotMounted,
     MountpointWinfspNotAvailable,
     MountpointFuseNotAvailable,
+    MountpointError,
 )
 from parsec.core.mountpoint.winify import winify_entry_name
 from parsec.core.win_registry import cleanup_parsec_drive_icons
@@ -53,9 +55,6 @@ def get_mountpoint_runner():
 
         logging.getLogger("winfspy").setLevel(logging.WARNING)
         from parsec.core.mountpoint.winfsp_runner import winfsp_mountpoint_runner
-
-        # Now is a good time to perform some cleanup in the registry
-        cleanup_parsec_drive_icons()
 
         return winfsp_mountpoint_runner
 
@@ -140,6 +139,8 @@ class MountpointManager:
         return new_workspace
 
     async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
+        key = (workspace_fs.workspace_id, timestamp)
+
         async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
             try:
                 return await self._runner(
@@ -153,7 +154,6 @@ class MountpointManager:
             finally:
                 self._mountpoint_tasks.pop(key, None)
 
-        key = (workspace_fs.workspace_id, timestamp)
         runner_task = await start_task(self._nursery, curried_runner)
         self._mountpoint_tasks[key] = runner_task
         return runner_task
@@ -212,7 +212,7 @@ class MountpointManager:
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
         return runner_task.value
 
-    async def mount_all(self, timestamp: Pendulum = None, exclude: list = ()):
+    async def mount_all(self, timestamp: Pendulum = None, exclude: Sequence[EntryID] = ()):
         exclude_set = set(exclude)
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
@@ -254,6 +254,10 @@ async def mountpoint_manager_factory(
 
     runner = get_mountpoint_runner()
 
+    # Now is a good time to perform some cleanup in the registry
+    if os.name == "nt":
+        cleanup_parsec_drive_icons()
+
     def on_new_workspace(event, new_entry, previous_entry=None):
         # Only a role update
         if previous_entry is not None:
@@ -262,8 +266,13 @@ async def mountpoint_manager_factory(
         async def target():
             try:
                 await mountpoint_manager.mount_workspace(new_entry.id)
-            except MountpointAlreadyMounted:
+
+            # The workspace could not be mounted
+            # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
+            except MountpointError:
                 pass
+
+            # Unexpected exception is not a reason to crash the mountpoint manager
             except Exception:
                 logger.exception("Unexpected error while mounting new workspace")
 
