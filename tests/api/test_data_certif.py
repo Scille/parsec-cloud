@@ -2,9 +2,12 @@
 
 import pytest
 from pendulum import now as pendulum_now
+import zlib
 
+from parsec.serde import packb, unpackb
 from parsec.api.data import (
     DataError,
+    UserProfile,
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
@@ -39,7 +42,7 @@ def test_build_user_certificate(alice, bob, mallory):
         timestamp=now,
         user_id=bob.user_id,
         public_key=bob.public_key,
-        is_admin=False,
+        profile=UserProfile.ADMIN,
     ).dump_and_sign(alice.signing_key)
     assert isinstance(certif, bytes)
 
@@ -49,7 +52,7 @@ def test_build_user_certificate(alice, bob, mallory):
     assert unsecure.public_key == bob.public_key
     assert unsecure.timestamp == now
     assert unsecure.author == alice.device_id
-    assert unsecure.is_admin is False
+    assert unsecure.profile == UserProfile.ADMIN
 
     verified = UserCertificateContent.verify_and_load(
         certif, author_verify_key=alice.verify_key, expected_author=alice.device_id
@@ -76,6 +79,43 @@ def test_build_user_certificate(alice, bob, mallory):
             expected_user=mallory.user_id,
         )
     assert str(exc.value) == "Invalid user ID: expected `mallory`, got `bob`"
+
+
+def test_user_certificate_supports_legacy_is_admin_field(alice, bob):
+    now = pendulum_now()
+    certif = UserCertificateContent(
+        author=bob.device_id,
+        timestamp=now,
+        user_id=alice.user_id,
+        public_key=alice.public_key,
+        profile=alice.profile,
+    )
+
+    # Manually craft a certificate in legacy format
+    raw_legacy_certif = {
+        "type": "user_certificate",
+        "author": bob.device_id,
+        "timestamp": now,
+        "user_id": alice.user_id,
+        "public_key": alice.public_key.encode(),
+        "is_admin": True,
+    }
+    dumped_legacy_certif = bob.signing_key.sign(zlib.compress(packb(raw_legacy_certif)))
+
+    # Make sure the legacy format can be loaded
+    legacy_certif = UserCertificateContent.verify_and_load(
+        dumped_legacy_certif,
+        author_verify_key=bob.verify_key,
+        expected_author=bob.device_id,
+        expected_user=alice.user_id,
+        expected_human_handle=None,
+    )
+    assert legacy_certif == certif
+
+    # Manually decode new format to check it is compatible with legacy
+    dumped_certif = certif.dump_and_sign(bob.signing_key)
+    raw_certif = unpackb(zlib.decompress(bob.verify_key.verify(dumped_certif)))
+    assert raw_certif == {**raw_legacy_certif, "profile": alice.profile.value, "human_handle": None}
 
 
 def test_build_device_certificate(alice, bob, mallory):

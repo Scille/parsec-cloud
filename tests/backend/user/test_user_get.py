@@ -3,9 +3,10 @@
 import pytest
 from pendulum import Pendulum
 
+from parsec.api.data import UserProfile
 from parsec.api.protocol import packb, user_get_serializer
 
-from tests.common import freeze_time
+from tests.common import freeze_time, customize_fixture
 from tests.backend.common import user_get
 
 
@@ -39,6 +40,41 @@ async def test_api_user_get_ok(access_testbed):
         "revoked_user_certificate": None,
         "device_certificates": [binder.certificates_store.get_device(device)],
         "trustchain": {"devices": [], "revoked_users": [], "users": []},
+    }
+
+
+@pytest.mark.trio
+@customize_fixture("bob_profile", UserProfile.OUTSIDER)
+async def test_api_user_get_outsider_get_redacted_certifs(
+    certificates_store, bob_backend_sock, alice, alice2, adam, bob
+):
+    # Backend populates CoolOrg trustchain this way:
+    # <root> --> alice@dev1 --> alice@dev2 --> adam@dev1 --> bob@dev1
+    rep = await user_get(bob_backend_sock, bob.user_id)
+    cooked_rep = {
+        **rep,
+        "user_certificate": certificates_store.translate_certif(rep["user_certificate"]),
+        "device_certificates": certificates_store.translate_certifs(rep["device_certificates"]),
+        "trustchain": {
+            **rep["trustchain"],
+            "devices": certificates_store.translate_certifs(rep["trustchain"]["devices"]),
+            "users": certificates_store.translate_certifs(rep["trustchain"]["users"]),
+        },
+    }
+    assert cooked_rep == {
+        "status": "ok",
+        "user_certificate": "<bob redacted user certif>",
+        "revoked_user_certificate": None,
+        "device_certificates": ["<bob@dev1 redacted device certif>"],
+        "trustchain": {
+            "users": ["<adam redacted user certif>", "<alice redacted user certif>"],
+            "revoked_users": [],
+            "devices": [
+                "<adam@dev1 redacted device certif>",
+                "<alice@dev1 redacted device certif>",
+                "<alice@dev2 redacted device certif>",
+            ],
+        },
     }
 
 
@@ -79,10 +115,11 @@ async def test_api_user_get_ok_deep_trustchain(
             rep["revoked_user_certificate"]
         ),
         "trustchain": {
-            "devices": sorted(certificates_store.translate_certifs(rep["trustchain"]["devices"])),
-            "users": sorted(certificates_store.translate_certifs(rep["trustchain"]["users"])),
-            "revoked_users": sorted(
-                certificates_store.translate_certifs(rep["trustchain"]["revoked_users"])
+            **rep["trustchain"],
+            "devices": certificates_store.translate_certifs(rep["trustchain"]["devices"]),
+            "users": certificates_store.translate_certifs(rep["trustchain"]["users"]),
+            "revoked_users": certificates_store.translate_certifs(
+                rep["trustchain"]["revoked_users"]
             ),
         },
     }
@@ -93,24 +130,20 @@ async def test_api_user_get_ok_deep_trustchain(
         "device_certificates": ["<mike@dev1 device certif>", "<mike@dev2 device certif>"],
         "revoked_user_certificate": "<mike revoked user certif>",
         "trustchain": {
-            "devices": sorted(
-                [
-                    "<philippe@dev2 device certif>",
-                    "<philippe@dev1 device certif>",
-                    "<Godfrey@dev1 device certif>",
-                    "<mike@dev1 device certif>",
-                    "<roger@dev1 device certif>",
-                ]
-            ),
-            "users": sorted(
-                [
-                    "<roger user certif>",
-                    "<philippe user certif>",
-                    "<mike user certif>",
-                    "<Godfrey user certif>",
-                ]
-            ),
-            "revoked_users": sorted(["<roger revoked user certif>", "<mike revoked user certif>"]),
+            "devices": [
+                "<Godfrey@dev1 device certif>",
+                "<mike@dev1 device certif>",
+                "<philippe@dev1 device certif>",
+                "<philippe@dev2 device certif>",
+                "<roger@dev1 device certif>",
+            ],
+            "users": [
+                "<Godfrey user certif>",
+                "<mike user certif>",
+                "<philippe user certif>",
+                "<roger user certif>",
+            ],
+            "revoked_users": ["<mike revoked user certif>", "<roger revoked user certif>"],
         },
     }
 

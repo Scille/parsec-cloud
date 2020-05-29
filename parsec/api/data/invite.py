@@ -15,6 +15,7 @@ from parsec.api.protocol import (
     HumanHandleField,
 )
 from parsec.api.data.base import BaseAPIData, BaseSchema
+from parsec.api.data.certif import UserProfile, UserProfileField
 
 
 class SASCode(str):
@@ -74,6 +75,7 @@ class InviteUserData(BaseAPIData):
         type = fields.CheckedConstant("invite_user_data", required=True)
         # Claimer ask for device_id/human_handle, but greeter has final word on this
         requested_device_id = DeviceIDField(required=True)
+        requested_device_label = fields.String(allow_none=True, missing=None)
         requested_human_handle = HumanHandleField(allow_none=True, missing=None)
         # Note claiming user also imply creating a first device
         public_key = fields.PublicKey(required=True)
@@ -85,6 +87,7 @@ class InviteUserData(BaseAPIData):
             return InviteUserData(**data)
 
     requested_device_id: DeviceID
+    requested_device_label: Optional[str]
     requested_human_handle: Optional[HumanHandle]
     public_key: PublicKey
     verify_key: VerifyKey
@@ -94,8 +97,9 @@ class InviteUserConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_confirmation", required=True)
         device_id = DeviceIDField(required=True)
+        device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
-        is_admin = fields.Boolean(required=True)
+        profile = UserProfileField(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -104,8 +108,9 @@ class InviteUserConfirmation(BaseAPIData):
             return InviteUserConfirmation(**data)
 
     device_id: DeviceID
+    device_label: Optional[str]
     human_handle: Optional[HumanHandle]
-    is_admin: bool
+    profile: UserProfile
     root_verify_key: VerifyKey
 
 
@@ -114,6 +119,7 @@ class InviteDeviceData(BaseAPIData):
         type = fields.CheckedConstant("invite_device_data", required=True)
         # Claimer ask for device_name, but greeter has final word on this
         requested_device_name = DeviceNameField(required=True)
+        requested_device_label = fields.String(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -122,6 +128,7 @@ class InviteDeviceData(BaseAPIData):
             return InviteDeviceData(**data)
 
     requested_device_name: DeviceName
+    requested_device_label: Optional[str]
     verify_key: VerifyKey
 
 
@@ -129,8 +136,9 @@ class InviteDeviceConfirmation(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_confirmation", required=True)
         device_id = DeviceIDField(required=True)
+        device_label = fields.String(allow_none=True, missing=None)
         human_handle = HumanHandleField(allow_none=True, missing=None)
-        is_admin = fields.Boolean(required=True)
+        profile = UserProfileField(required=True)
         private_key = fields.PrivateKey(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
@@ -140,7 +148,8 @@ class InviteDeviceConfirmation(BaseAPIData):
             return InviteDeviceConfirmation(**data)
 
     device_id: DeviceID
+    device_label: Optional[str]
     human_handle: Optional[HumanHandle]
-    is_admin: bool
+    profile: UserProfile
     private_key: PrivateKey
     root_verify_key: VerifyKey

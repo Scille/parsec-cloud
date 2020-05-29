@@ -11,23 +11,28 @@ from pendulum import Pendulum
 
 from parsec.crypto import SigningKey
 from parsec.api.data import (
+    UserProfile,
     UserCertificateContent,
+    UserManifest,
     RevokedUserCertificateContent,
     DeviceCertificateContent,
     RealmRoleCertificateContent,
 )
 from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle, RealmRole
-from parsec.api.data import UserManifest
 from parsec.core.types import LocalDevice, LocalUserManifest, BackendOrganizationBootstrapAddr
 from parsec.core.local_device import generate_new_device
-from parsec.backend.user import (
-    User as BackendUser,
-    Device as BackendDevice,
-    new_user_factory as new_backend_user_factory,
-)
+from parsec.backend.user import User as BackendUser, Device as BackendDevice
 from parsec.backend.realm import RealmGrantedRole
 
 from tests.common import freeze_time, addr_with_device_subdomain
+
+
+@pytest.fixture
+def fixtures_customization(request):
+    try:
+        return request.node.function._fixtures_customization
+    except AttributeError:
+        return {}
 
 
 @attr.s
@@ -86,9 +91,11 @@ def local_device_factory(coolorg):
     def _local_device_factory(
         base_device_id: Optional[str] = None,
         org: OrganizationFullData = coolorg,
-        is_admin: Optional[bool] = None,
+        profile: Optional[UserProfile] = None,
         has_human_handle: bool = True,
         base_human_handle: Optional[str] = None,
+        has_device_label: bool = True,
+        base_device_label: Optional[str] = None,
     ):
         nonlocal count
 
@@ -99,6 +106,14 @@ def local_device_factory(coolorg):
         org_devices = devices[org.organization_id]
         device_id = DeviceID(base_device_id)
         assert not any(d for d in org_devices if d.device_id == device_id)
+
+        if not has_device_label:
+            assert base_device_label is None
+            device_label = None
+        elif not base_device_label:
+            device_label = f"My {device_id.device_name} machine"
+        else:
+            device_label = base_device_label
 
         if not has_human_handle:
             assert base_human_handle is None
@@ -124,21 +139,25 @@ def local_device_factory(coolorg):
         try:
             # If the user already exists, we must retrieve it data
             parent_device = next(d for d in org_devices if d.user_id == device_id.user_id)
-            if is_admin is not None and is_admin is not parent_device.is_admin:
+            if profile is not None and profile != parent_device.profile:
                 raise ValueError(
-                    "is_admin is set but user already exists, with a different is_admin value."
+                    "profile is set but user already exists, with a different profile value."
                 )
-            is_admin = parent_device.is_admin
+            profile = parent_device.profile
 
         except StopIteration:
-            is_admin = bool(is_admin)
+            profile = profile or UserProfile.STANDARD
 
         # Force each device to access the backend trough a different hostname so
         # tcp stream spy can switch offline certains while keeping the others online
         org_addr = addr_with_device_subdomain(org.addr, device_id)
 
         device = generate_new_device(
-            device_id, org_addr, is_admin=is_admin, human_handle=human_handle
+            device_id,
+            org_addr,
+            profile=profile,
+            human_handle=human_handle,
+            device_label=device_label,
         )
         if parent_device is not None:
             device = device.evolve(
@@ -170,13 +189,16 @@ def expiredorg(organization_factory):
 
 
 @pytest.fixture
-def otheralice(local_device_factory, otherorg):
-    return local_device_factory("alice@dev1", otherorg, is_admin=True)
+def otheralice(fixtures_customization, local_device_factory, otherorg):
+    # otheralice should also mimic alice role
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    return local_device_factory("alice@dev1", otherorg, profile=profile)
 
 
 @pytest.fixture
-def alice(local_device_factory, initial_user_manifest_state):
-    device = local_device_factory("alice@dev1", is_admin=True)
+def alice(fixtures_customization, local_device_factory, initial_user_manifest_state):
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    device = local_device_factory("alice@dev1", profile=profile)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -187,8 +209,12 @@ def alice(local_device_factory, initial_user_manifest_state):
 
 
 @pytest.fixture
-def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredorg):
-    device = local_device_factory("alice@dev1", expiredorg, is_admin=True)
+def expiredorgalice(
+    fixtures_customization, local_device_factory, initial_user_manifest_state, expiredorg
+):
+    # expiredorgalice should also mimic alice role
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    device = local_device_factory("alice@dev1", expiredorg, profile=profile)
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -199,23 +225,27 @@ def expiredorgalice(local_device_factory, initial_user_manifest_state, expiredor
 
 
 @pytest.fixture
-def alice2(local_device_factory):
-    return local_device_factory("alice@dev2", is_admin=True)
+def alice2(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
+    return local_device_factory("alice@dev2", profile=profile)
 
 
 @pytest.fixture
-def adam(local_device_factory):
-    return local_device_factory("adam@dev1", is_admin=True)
+def adam(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("adam_profile", UserProfile.ADMIN)
+    return local_device_factory("adam@dev1", profile=profile)
 
 
 @pytest.fixture
-def bob(local_device_factory):
-    return local_device_factory("bob@dev1")
+def bob(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("bob_profile", UserProfile.STANDARD)
+    return local_device_factory("bob@dev1", profile=profile)
 
 
 @pytest.fixture
-def mallory(local_device_factory):
-    return local_device_factory("mallory@dev1")
+def mallory(fixtures_customization, local_device_factory):
+    profile = fixtures_customization.get("mallory_profile", UserProfile.STANDARD)
+    return local_device_factory("mallory@dev1", profile=profile)
 
 
 class InitialUserManifestState:
@@ -294,25 +324,46 @@ def local_device_to_backend_user(
         certifier_signing_key = certifier.signing_key
 
     now = pendulum.now()
+
     user_certificate = UserCertificateContent(
         author=certifier_id,
         timestamp=now,
         user_id=device.user_id,
         public_key=device.public_key,
-        is_admin=device.is_admin,
+        profile=device.profile,
         human_handle=device.human_handle,
-    ).dump_and_sign(certifier_signing_key)
-    device_certificate = DeviceCertificateContent(
-        author=certifier_id, timestamp=now, device_id=device.device_id, verify_key=device.verify_key
-    ).dump_and_sign(certifier_signing_key)
-    return new_backend_user_factory(
-        device_id=device.device_id,
-        human_handle=device.human_handle,
-        is_admin=device.is_admin,
-        certifier=certifier_id,
-        user_certificate=user_certificate,
-        device_certificate=device_certificate,
     )
+    device_certificate = DeviceCertificateContent(
+        author=certifier_id,
+        timestamp=now,
+        device_id=device.device_id,
+        device_label=device.device_label,
+        verify_key=device.verify_key,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user = BackendUser(
+        user_id=device.user_id,
+        human_handle=device.human_handle,
+        profile=device.profile,
+        user_certificate=user_certificate.dump_and_sign(certifier_signing_key),
+        redacted_user_certificate=redacted_user_certificate.dump_and_sign(certifier_signing_key),
+        user_certifier=certifier_id,
+        created_on=now,
+    )
+
+    first_device = BackendDevice(
+        device_id=device.device_id,
+        device_certificate=device_certificate.dump_and_sign(certifier_signing_key),
+        redacted_device_certificate=redacted_device_certificate.dump_and_sign(
+            certifier_signing_key
+        ),
+        device_certifier=certifier_id,
+        created_on=now,
+    )
+
+    return user, first_device
 
 
 class CertificatesStore:
@@ -321,41 +372,47 @@ class CertificatesStore:
         self._device_certificates = {}
         self._revoked_user_certificates = {}
 
-    def store_user(self, organization_id, user_id, certif):
+    def store_user(self, organization_id, user_id, certif, redacted_certif):
         key = (organization_id, user_id)
         assert key not in self._user_certificates
-        self._user_certificates[key] = certif
+        self._user_certificates[key] = (certif, redacted_certif)
 
-    def store_device(self, organization_id, device_id, certif):
+    def store_device(self, organization_id, device_id, certif, redacted_certif):
         key = (organization_id, device_id)
         assert key not in self._device_certificates
-        self._device_certificates[key] = certif
+        self._device_certificates[key] = (certif, redacted_certif)
 
     def store_revoked_user(self, organization_id, user_id, certif):
         key = (organization_id, user_id)
         assert key not in self._revoked_user_certificates
         self._revoked_user_certificates[key] = certif
 
-    def get_user(self, local_user):
+    def get_user(self, local_user, redacted=False):
         key = (local_user.organization_id, local_user.user_id)
-        return self._user_certificates[key]
+        certif, redacted_certif = self._user_certificates[key]
+        return redacted_certif if redacted else certif
 
-    def get_device(self, local_device):
+    def get_device(self, local_device, redacted=False):
         key = (local_device.organization_id, local_device.device_id)
-        return self._device_certificates[key]
+        certif, redacted_certif = self._device_certificates[key]
+        return redacted_certif if redacted else certif
 
     def get_revoked_user(self, local_user):
         key = (local_user.organization_id, local_user.user_id)
         return self._revoked_user_certificates.get(key)
 
     def translate_certif(self, needle):
-        for (_, user_id), certif in self._user_certificates.items():
+        for (_, user_id), (certif, redacted_certif) in self._user_certificates.items():
             if needle == certif:
                 return f"<{user_id} user certif>"
+            if needle == redacted_certif:
+                return f"<{user_id} redacted user certif>"
 
-        for (_, device_id), certif in self._device_certificates.items():
+        for (_, device_id), (certif, redacted_certif) in self._device_certificates.items():
             if needle == certif:
                 return f"<{device_id} device certif>"
+            if needle == redacted_certif:
+                return f"<{device_id} redacted device certif>"
 
         for (_, user_id), certif in self._revoked_user_certificates.items():
             if needle == certif:
@@ -364,7 +421,7 @@ class CertificatesStore:
         raise RuntimeError("Unknown certificate !")
 
     def translate_certifs(self, certifs):
-        return [self.translate_certif(certif) for certif in certifs]
+        return sorted(self.translate_certif(certif) for certif in certifs)
 
 
 @pytest.fixture
@@ -477,12 +534,16 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     org.root_verify_key,
                 )
                 self.certificates_store.store_user(
-                    org.organization_id, backend_user.user_id, backend_user.user_certificate
+                    org.organization_id,
+                    backend_user.user_id,
+                    backend_user.user_certificate,
+                    backend_user.redacted_user_certificate,
                 )
                 self.certificates_store.store_device(
                     org.organization_id,
                     backend_first_device.device_id,
                     backend_first_device.device_certificate,
+                    backend_first_device.redacted_device_certificate,
                 )
                 self.binded_local_devices.append(first_device)
 
@@ -515,6 +576,7 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     device.organization_id,
                     backend_device.device_id,
                     backend_device.device_certificate,
+                    backend_device.redacted_device_certificate,
                 )
 
             else:
@@ -523,12 +585,16 @@ def backend_data_binder_factory(request, backend_addr, initial_user_manifest_sta
                     device.organization_id, backend_user, backend_device
                 )
                 self.certificates_store.store_user(
-                    device.organization_id, backend_user.user_id, backend_user.user_certificate
+                    device.organization_id,
+                    backend_user.user_id,
+                    backend_user.user_certificate,
+                    backend_user.redacted_user_certificate,
                 )
                 self.certificates_store.store_device(
                     device.organization_id,
                     backend_device.device_id,
                     backend_device.device_certificate,
+                    backend_device.redacted_device_certificate,
                 )
 
                 if not initial_user_manifest_in_v0:
@@ -573,15 +639,20 @@ def sock_from_other_organization_factory(
 ):
     @asynccontextmanager
     async def _sock_from_other_organization_factory(
-        backend, mimick=None, anonymous=False, is_admin=False
+        backend,
+        mimick: Optional[str] = None,
+        anonymous: bool = False,
+        profile: UserProfile = UserProfile.STANDARD,
     ):
         binder = backend_data_binder_factory(backend)
 
         other_org = organization_factory()
         if mimick:
-            other_device = local_device_factory(mimick, other_org, is_admin)
+            other_device = local_device_factory(
+                base_device_id=mimick, org=other_org, profile=profile
+            )
         else:
-            other_device = local_device_factory(org=other_org, is_admin=is_admin)
+            other_device = local_device_factory(org=other_org, profile=profile)
         await binder.bind_organization(other_org, other_device)
 
         if anonymous:

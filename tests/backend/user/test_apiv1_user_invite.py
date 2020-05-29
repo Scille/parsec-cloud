@@ -81,7 +81,10 @@ async def test_user_invite_not_admin(apiv1_bob_backend_sock, mallory):
     with trio.fail_after(1):
         async with user_invite(apiv1_bob_backend_sock, user_id=mallory.user_id) as prep:
             pass
-    assert prep[0] == {"status": "not_allowed", "reason": "User `bob` is not admin"}
+    assert prep[0] == {
+        "status": "not_allowed",
+        "reason": "Only allowed for user with ADMIN profile.",
+    }
 
 
 @pytest.mark.trio

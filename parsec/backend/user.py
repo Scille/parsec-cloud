@@ -9,6 +9,7 @@ from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import VerifyKey, PublicKey
 from parsec.event_bus import EventBus
 from parsec.api.data import (
+    UserProfile,
     UserCertificateContent,
     DeviceCertificateContent,
     RevokedUserCertificateContent,
@@ -28,6 +29,7 @@ from parsec.api.protocol import (
     apiv1_user_invite_serializer,
     apiv1_user_claim_serializer,
     apiv1_user_cancel_invitation_serializer,
+    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
     apiv1_device_get_invitation_creator_serializer,
@@ -82,6 +84,7 @@ class Device:
 
     device_id: DeviceID
     device_certificate: bytes
+    redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
@@ -100,8 +103,9 @@ class User:
 
     user_id: UserID
     user_certificate: bytes
+    redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
-    is_admin: bool = False
+    profile: UserProfile = UserProfile.STANDARD
     human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: pendulum.Pendulum = None
@@ -116,38 +120,21 @@ class Trustchain:
     devices: Tuple[bytes, ...]
 
 
+@attr.s(slots=True, auto_attribs=True)
+class GetUserAndDevicesResult:
+    user_certificate: bytes
+    device_certificates: bytes
+    revoked_user_certificate: Optional[bytes]
+    trustchain_user_certificates: List[bytes]
+    trustchain_device_certificates: List[bytes]
+    trustchain_revoked_user_certificates: List[bytes]
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class HumanFindResultItem:
     user_id: UserID
     revoked: bool
     human_handle: Optional[HumanHandle] = None
-
-
-def new_user_factory(
-    device_id: DeviceID,
-    human_handle: Optional[HumanHandle],
-    is_admin: bool,
-    certifier: Optional[DeviceID],
-    user_certificate: bytes,
-    device_certificate: bytes,
-    now: pendulum.Pendulum = None,
-) -> Tuple[User, Device]:
-    now = now or pendulum.now()
-    user = User(
-        user_id=device_id.user_id,
-        human_handle=human_handle,
-        is_admin=is_admin,
-        user_certificate=user_certificate,
-        user_certifier=certifier,
-        created_on=now,
-    )
-    first_device = Device(
-        device_id=device_id,
-        device_certificate=device_certificate,
-        device_certifier=certifier,
-        created_on=now,
-    )
-    return user, first_device
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -190,10 +177,11 @@ class BaseUserComponent:
     @catch_protocol_errors
     async def api_user_get(self, client_ctx, msg):
         msg = user_get_serializer.req_load(msg)
+        need_redacted = client_ctx.profile == UserProfile.OUTSIDER
 
         try:
-            user, devices, trustchain = await self.get_user_with_devices_and_trustchain(
-                client_ctx.organization_id, msg["user_id"]
+            result = await self.get_user_with_devices_and_trustchain(
+                client_ctx.organization_id, msg["user_id"], redacted=need_redacted
             )
         except UserNotFoundError:
             return {"status": "not_found"}
@@ -201,13 +189,13 @@ class BaseUserComponent:
         return user_get_serializer.rep_dump(
             {
                 "status": "ok",
-                "user_certificate": user.user_certificate,
-                "revoked_user_certificate": user.revoked_user_certificate,
-                "device_certificates": [device.device_certificate for device in devices],
+                "user_certificate": result.user_certificate,
+                "revoked_user_certificate": result.revoked_user_certificate,
+                "device_certificates": result.device_certificates,
                 "trustchain": {
-                    "devices": trustchain.devices,
-                    "users": trustchain.users,
-                    "revoked_users": trustchain.revoked_users,
+                    "devices": result.trustchain_device_certificates,
+                    "users": result.trustchain_user_certificates,
+                    "revoked_users": result.trustchain_revoked_user_certificates,
                 },
             }
         )
@@ -215,6 +203,12 @@ class BaseUserComponent:
     @api("user_find", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_find(self, client_ctx, msg):
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {
+                "status": "not_allowed",
+                "reason": "Not allowed for user with OUTSIDER profile.",
+            }
+
         msg = apiv1_user_find_serializer.req_load(msg)
         results, total = await self.find(client_ctx.organization_id, **msg)
         return apiv1_user_find_serializer.rep_dump(
@@ -233,6 +227,12 @@ class BaseUserComponent:
     )
     @catch_protocol_errors
     async def api_human_find(self, client_ctx, msg):
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {
+                "status": "not_allowed",
+                "reason": "Not allowed for user with OUTSIDER profile.",
+            }
+
         msg = human_find_serializer.req_load(msg)
         results, total = await self.find_humans(client_ctx.organization_id, **msg)
         return human_find_serializer.rep_dump(
@@ -250,11 +250,8 @@ class BaseUserComponent:
     @api("user_invite", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_invite(self, client_ctx, msg):
-        if not client_ctx.is_admin:
-            return {
-                "status": "not_allowed",
-                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
-            }
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {"status": "not_allowed", "reason": "Only allowed for user with ADMIN profile."}
 
         msg = apiv1_user_invite_serializer.req_load(msg)
 
@@ -402,7 +399,7 @@ class BaseUserComponent:
     @api("user_cancel_invitation", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -414,17 +411,33 @@ class BaseUserComponent:
 
         return apiv1_user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
-    @api("user_create")
+    @api("user_create", handshake_types=[APIV1_HandshakeType.AUTHENTICATED])
     @catch_protocol_errors
-    async def api_user_create(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+    async def apiv1_user_create(self, client_ctx, msg):
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
             }
+        msg = apiv1_user_create_serializer.req_load(msg)
+        msg["redacted_user_certificate"] = msg["user_certificate"]
+        msg["redacted_device_certificate"] = msg["device_certificate"]
+        rep = await self._api_user_create(client_ctx, msg)
+        return apiv1_user_create_serializer.rep_dump(rep)
 
+    @api("user_create", handshake_types=[HandshakeType.AUTHENTICATED])
+    @catch_protocol_errors
+    async def api_user_create(self, client_ctx, msg):
+        if client_ctx.profile != UserProfile.ADMIN:
+            return {
+                "status": "not_allowed",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
         msg = user_create_serializer.req_load(msg)
+        rep = await self._api_user_create(client_ctx, msg)
+        return user_create_serializer.rep_dump(rep)
 
+    async def _api_user_create(self, client_ctx, msg):
         try:
             d_data = DeviceCertificateContent.verify_and_load(
                 msg["device_certificate"],
@@ -437,6 +450,20 @@ class BaseUserComponent:
                 expected_author=client_ctx.device_id,
             )
 
+            ru_data = rd_data = None
+            if msg["redacted_user_certificate"]:
+                ru_data = UserCertificateContent.verify_and_load(
+                    msg["redacted_user_certificate"],
+                    author_verify_key=client_ctx.verify_key,
+                    expected_author=client_ctx.device_id,
+                )
+            if msg["redacted_device_certificate"]:
+                rd_data = DeviceCertificateContent.verify_and_load(
+                    msg["redacted_device_certificate"],
+                    author_verify_key=client_ctx.verify_key,
+                    expected_author=client_ctx.device_id,
+                )
+
         except DataError as exc:
             return {
                 "status": "invalid_certification",
@@ -446,14 +473,14 @@ class BaseUserComponent:
         if u_data.timestamp != d_data.timestamp:
             return {
                 "status": "invalid_data",
-                "reason": "Device and User certifications must have the same timestamp.",
+                "reason": "Device and User certificates must have the same timestamp.",
             }
 
         now = pendulum.now()
         if not timestamps_in_the_ballpark(u_data.timestamp, now):
             return {
                 "status": "invalid_certification",
-                "reason": f"Invalid timestamp in certification.",
+                "reason": f"Invalid timestamp in certificate.",
             }
 
         if u_data.user_id != d_data.device_id.user_id:
@@ -462,32 +489,60 @@ class BaseUserComponent:
                 "reason": "Device and User must have the same user ID.",
             }
 
+        if ru_data:
+            if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted User certificate differs from User certificate.",
+                }
+            if ru_data.human_handle:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted User certificate must not contain a human_handle field.",
+                }
+
+        if rd_data:
+            if rd_data.evolve(device_label=d_data.device_label) != d_data:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted Device certificate differs from Device certificate.",
+                }
+            if rd_data.device_label:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted Device certificate must not contain a device_label field.",
+                }
+
         try:
             user = User(
                 user_id=u_data.user_id,
                 human_handle=u_data.human_handle,
-                is_admin=u_data.is_admin,
+                profile=u_data.profile,
                 user_certificate=msg["user_certificate"],
+                redacted_user_certificate=msg["redacted_user_certificate"]
+                or msg["user_certificate"],
                 user_certifier=u_data.author,
                 created_on=u_data.timestamp,
             )
-            first_devices = Device(
+            first_device = Device(
                 device_id=d_data.device_id,
                 device_certificate=msg["device_certificate"],
+                redacted_device_certificate=msg["redacted_device_certificate"]
+                or msg["device_certificate"],
                 device_certifier=d_data.author,
                 created_on=d_data.timestamp,
             )
-            await self.create_user(client_ctx.organization_id, user, first_devices)
+            await self.create_user(client_ctx.organization_id, user, first_device)
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
-        return user_create_serializer.rep_dump({"status": "ok"})
+        return {"status": "ok"}
 
     @api("user_revoke")
     @catch_protocol_errors
     async def api_user_revoke(self, client_ctx, msg):
-        if not client_ctx.is_admin:
+        if client_ctx.profile != UserProfile.ADMIN:
             return {
                 "status": "not_allowed",
                 "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
@@ -722,6 +777,7 @@ class BaseUserComponent:
             device = Device(
                 device_id=data.device_id,
                 device_certificate=msg["device_certificate"],
+                redacted_device_certificate=msg["device_certificate"],
                 device_certifier=data.author,
                 created_on=data.timestamp,
             )
@@ -745,6 +801,14 @@ class BaseUserComponent:
                 expected_author=client_ctx.device_id,
             )
 
+            redacted_data = None
+            if msg["redacted_device_certificate"]:
+                redacted_data = DeviceCertificateContent.verify_and_load(
+                    msg["redacted_device_certificate"],
+                    author_verify_key=client_ctx.verify_key,
+                    expected_author=client_ctx.device_id,
+                )
+
         except DataError as exc:
             return {
                 "status": "invalid_certification",
@@ -760,10 +824,24 @@ class BaseUserComponent:
         if data.device_id.user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
+        if redacted_data:
+            if redacted_data.evolve(device_label=data.device_label) != data:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted Device certificate differs from Device certificate.",
+                }
+            if redacted_data.device_label:
+                return {
+                    "status": "invalid_data",
+                    "reason": "Redacted Device certificate must not contain a device_label field.",
+                }
+
         try:
             device = Device(
                 device_id=data.device_id,
                 device_certificate=msg["device_certificate"],
+                redacted_device_certificate=msg["redacted_device_certificate"]
+                or msg["device_certificate"],
                 device_certifier=data.author,
                 created_on=data.timestamp,
             )
@@ -834,8 +912,8 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def get_user_with_devices_and_trustchain(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device, ...], Trustchain]:
+        self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
+    ) -> GetUserAndDevicesResult:
         """
         Raises:
             UserNotFoundError

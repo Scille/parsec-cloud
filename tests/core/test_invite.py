@@ -3,6 +3,7 @@
 import pytest
 import trio
 
+from parsec.api.data import UserProfile
 from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, InvitationType
 from parsec.core.backend_connection import (
     backend_invited_cmds_factory,
@@ -32,7 +33,9 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     )
 
     requested_device_name = DeviceName("Foo")
+    requested_device_label = "Foo's label"
     granted_device_name = DeviceName("Bar")
+    granted_device_label = "Bar's label"
     new_device = None
 
     # Simulate out-of-bounds canal
@@ -61,7 +64,8 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
 
             nonlocal new_device
             new_device = await in_progress_ctx.do_claim_device(
-                requested_device_name=requested_device_name
+                requested_device_name=requested_device_name,
+                requested_device_label=requested_device_label,
             )
             assert isinstance(new_device, LocalDevice)
 
@@ -86,8 +90,11 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
         assert in_progress_ctx.requested_device_name == requested_device_name
+        assert in_progress_ctx.requested_device_label == requested_device_label
 
-        await in_progress_ctx.do_create_new_device(author=alice, device_name=granted_device_name)
+        await in_progress_ctx.do_create_new_device(
+            author=alice, device_name=granted_device_name, device_label=granted_device_label
+        )
 
     with trio.fail_after(1):
         async with trio.open_nursery() as nursery:
@@ -97,10 +104,11 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     assert new_device is not None
     assert new_device.user_id == alice.user_id
     assert new_device.device_name == granted_device_name
+    assert new_device.device_label == granted_device_label
     assert new_device.human_handle == alice.human_handle
     assert new_device.private_key == alice.private_key
     assert new_device.signing_key != alice.signing_key
-    assert new_device.is_admin
+    assert new_device.profile == alice.profile
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
@@ -134,8 +142,11 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     # Let's pretent we invited a Fortnite player...
     requested_device_id = DeviceID("xXx_zack_xXx@ultr4_b00st")
     requested_human_handle = HumanHandle(email="ZACK@example.com", label="Z4ck")
+    requested_device_label = "Ultr4 B00st's label"
     granted_device_id = DeviceID("zack@pc1")
     granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
+    granted_device_label = "PC1's label"
+    granted_profile = UserProfile.OUTSIDER
     new_device = None
 
     # Simulate out-of-bounds canal
@@ -166,6 +177,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
             nonlocal new_device
             new_device = await in_progress_ctx.do_claim_user(
                 requested_device_id=requested_device_id,
+                requested_device_label=requested_device_label,
                 requested_human_handle=requested_human_handle,
             )
             assert isinstance(new_device, LocalDevice)
@@ -191,13 +203,15 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
         assert in_progress_ctx.requested_device_id == requested_device_id
+        assert in_progress_ctx.requested_device_label == requested_device_label
         assert in_progress_ctx.requested_human_handle == requested_human_handle
 
         await in_progress_ctx.do_create_new_user(
             author=alice,
             device_id=granted_device_id,
+            device_label=granted_device_label,
             human_handle=granted_human_handle,
-            is_admin=False,
+            profile=granted_profile,
         )
 
     with trio.fail_after(1):
@@ -207,10 +221,11 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
 
     assert new_device is not None
     assert new_device.device_id == granted_device_id
+    assert new_device.device_label == granted_device_label
     # Label is normally ignored when comparing HumanLabel
     assert new_device.human_handle.label == granted_human_handle.label
     assert new_device.human_handle.email == granted_human_handle.email
-    assert not new_device.is_admin
+    assert new_device.profile == granted_profile
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()

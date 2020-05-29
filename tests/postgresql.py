@@ -6,8 +6,7 @@ import asyncio
 import asyncpg
 from asyncpg.cluster import TempCluster
 
-from parsec.backend.cli.migration import _sorted_file_migrations
-from parsec.backend.postgresql.handler import _migrate_db
+from parsec.backend.postgresql.handler import _apply_migrations, retrieve_migrations
 
 
 def _patch_url_if_xdist(url):
@@ -21,8 +20,11 @@ def _patch_url_if_xdist(url):
 _pg_db_url = None
 
 
-async def run_migrations(conn):
-    await _migrate_db(conn, _sorted_file_migrations(), False)
+async def run_migrations(conn) -> None:
+    result = await _apply_migrations(conn, retrieve_migrations(), dry_run=False)
+    if result.error:
+        migration, msg = result.error
+        raise RuntimeError(f"Error while applying migration {migration.file_name}: {msg}")
 
 
 async def _execute_pg_query(url, query):

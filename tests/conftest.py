@@ -510,9 +510,9 @@ def backend_factory(
                         expiredorg, expiredorgalice, expiration_date=pendulum.now()
                     )
                     await binder.bind_organization(otherorg, otheralice)
-                    await binder.bind_device(alice2)
-                    await binder.bind_device(adam)
-                    await binder.bind_device(bob)
+                    await binder.bind_device(alice2, certifier=alice)
+                    await binder.bind_device(adam, certifier=alice2)
+                    await binder.bind_device(bob, certifier=adam)
 
             yield backend
 

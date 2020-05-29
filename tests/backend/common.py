@@ -139,7 +139,6 @@ realm_create = CmdSock(
     "realm_create",
     realm_create_serializer,
     parse_args=lambda self, role_certificate: {"role_certificate": role_certificate},
-    check_rep_by_default=True,
 )
 realm_status = CmdSock(
     "realm_status",
@@ -304,9 +303,15 @@ human_find = CmdSock(
 user_create = CmdSock(
     "user_create",
     user_create_serializer,
-    parse_args=lambda self, user_certificate, device_certificate: {
-        "user_certificate": user_certificate,
-        "device_certificate": device_certificate,
+    parse_args=lambda self, user_certificate, device_certificate, redacted_user_certificate=None, redacted_device_certificate=None: {
+        k: v
+        for k, v in {
+            "user_certificate": user_certificate,
+            "device_certificate": device_certificate,
+            "redacted_user_certificate": redacted_user_certificate,
+            "redacted_device_certificate": redacted_device_certificate,
+        }.items()
+        if v is not None
     },
 )
 user_revoke = CmdSock(
@@ -319,7 +324,10 @@ user_revoke = CmdSock(
 device_create = CmdSock(
     "device_create",
     device_create_serializer,
-    parse_args=lambda self, device_certificate: {"device_certificate": device_certificate},
+    parse_args=lambda self, device_certificate, redacted_device_certificate=None: {
+        "device_certificate": device_certificate,
+        "redacted_device_certificate": redacted_device_certificate,
+    },
 )
 
 

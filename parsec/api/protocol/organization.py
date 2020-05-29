@@ -25,8 +25,19 @@ apiv1_organization_create_serializer = CmdSerializer(
 
 class APIV1_OrganizationBootstrapReqSchema(BaseReqSchema):
     bootstrap_token = fields.String(required=True)
+    root_verify_key = fields.VerifyKey(required=True)
     user_certificate = fields.Bytes(required=True)
     device_certificate = fields.Bytes(required=True)
+    # Same certificates than above, but expurged of human_handle/device_label
+    # Backward compatibility prevent those field to be required, however
+    # they should be considered so by recent version of Parsec (hence the
+    # `allow_none=False`).
+    # Hence only old version of Parsec will provide a payload with missing
+    # redacted fields. In such case we consider the non-redacted can also
+    # be used as redacted given the to-be-redacted fields have been introduce
+    # in later version of Parsec.
+    redacted_user_certificate = fields.Bytes(allow_none=False)
+    redacted_device_certificate = fields.Bytes(allow_none=False)
     root_verify_key = fields.VerifyKey(required=True)
 
 
@@ -37,21 +48,6 @@ class APIV1_OrganizationBootstrapRepSchema(BaseRepSchema):
 # TODO: remove me once API v1 is deprecated
 apiv1_organization_bootstrap_serializer = CmdSerializer(
     APIV1_OrganizationBootstrapReqSchema, APIV1_OrganizationBootstrapRepSchema
-)
-
-
-class OrganizationBootstrapReqSchema(BaseReqSchema):
-    user_certificate = fields.Bytes(required=True)
-    device_certificate = fields.Bytes(required=True)
-    root_verify_key = fields.VerifyKey(required=True)
-
-
-class OrganizationBootstrapRepSchema(BaseRepSchema):
-    pass
-
-
-organization_bootstrap_serializer = CmdSerializer(
-    OrganizationBootstrapReqSchema, OrganizationBootstrapRepSchema
 )
 
 

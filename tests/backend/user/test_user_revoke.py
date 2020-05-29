@@ -2,10 +2,10 @@
 
 import pytest
 import trio
-import pendulum
+from pendulum import now as pendulum_now, Pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.data import RevokedUserCertificateContent
+from parsec.api.data import RevokedUserCertificateContent, UserProfile
 from parsec.api.protocol import HandshakeRevokedDevice
 from parsec.api.transport import TransportError
 
@@ -13,33 +13,20 @@ from tests.common import freeze_time
 from tests.backend.common import user_revoke, ping
 
 
-@pytest.fixture
-def alice_revocation_from_bob(alice, bob):
-    now = pendulum.now()
-    return RevokedUserCertificateContent(
-        author=bob.device_id, timestamp=now, user_id=alice.user_id
-    ).dump_and_sign(bob.signing_key)
-
-
-@pytest.fixture
-def bob_revocation_from_alice(alice, bob):
-    now = pendulum.now()
-    return RevokedUserCertificateContent(
+@pytest.mark.trio
+async def test_backend_close_on_user_revoke(
+    backend, alice_backend_sock, backend_sock_factory, bob, alice
+):
+    now = pendulum_now()
+    bob_revocation = RevokedUserCertificateContent(
         author=alice.device_id, timestamp=now, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
 
-
-@pytest.mark.trio
-async def test_backend_close_on_user_revoke(
-    backend, alice_backend_sock, backend_sock_factory, bob, bob_revocation_from_alice
-):
     async with backend_sock_factory(
         backend, bob, freeze_on_transport_error=False
     ) as bob_backend_sock:
         with backend.event_bus.listen() as spy:
-            rep = await user_revoke(
-                alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice
-            )
+            rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
             assert rep == {"status": "ok"}
             await spy.wait_with_timeout(
                 "user.revoked", {"organization_id": bob.organization_id, "user_id": bob.user_id}
@@ -54,14 +41,13 @@ async def test_backend_close_on_user_revoke(
 
 @pytest.mark.trio
 async def test_user_revoke_ok(backend, backend_sock_factory, adam_backend_sock, alice, adam):
-    now = pendulum.Pendulum(2000, 10, 11)
+    now = pendulum_now()
     alice_revocation = RevokedUserCertificateContent(
         author=adam.device_id, timestamp=now, user_id=alice.user_id
     ).dump_and_sign(adam.signing_key)
 
     with backend.event_bus.listen() as spy:
-        with freeze_time(now):
-            rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
+        rep = await user_revoke(adam_backend_sock, revoked_user_certificate=alice_revocation)
         assert rep == {"status": "ok"}
         await spy.wait_with_timeout(
             "user.revoked", {"organization_id": alice.organization_id, "user_id": alice.user_id}
@@ -74,16 +60,19 @@ async def test_user_revoke_ok(backend, backend_sock_factory, adam_backend_sock, 
 
 
 @pytest.mark.trio
-async def test_user_revoke_not_admin(
-    backend, backend_sock_factory, bob_backend_sock, alice, alice_revocation_from_bob
-):
-    rep = await user_revoke(bob_backend_sock, revoked_user_certificate=alice_revocation_from_bob)
+async def test_user_revoke_not_admin(backend, backend_sock_factory, bob_backend_sock, alice, bob):
+    now = pendulum_now()
+    alice_revocation = RevokedUserCertificateContent(
+        author=bob.device_id, timestamp=now, user_id=alice.user_id
+    ).dump_and_sign(bob.signing_key)
+
+    rep = await user_revoke(bob_backend_sock, revoked_user_certificate=alice_revocation)
     assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}
 
 
 @pytest.mark.trio
 async def test_cannot_self_revoke(backend, backend_sock_factory, alice_backend_sock, alice):
-    now = pendulum.now()
+    now = pendulum_now()
     alice_revocation = RevokedUserCertificateContent(
         author=alice.device_id, timestamp=now, user_id=alice.user_id
     ).dump_and_sign(alice.signing_key)
@@ -95,7 +84,7 @@ async def test_cannot_self_revoke(backend, backend_sock_factory, alice_backend_s
 @pytest.mark.trio
 async def test_user_revoke_unknown(backend, alice_backend_sock, alice, mallory):
     revoked_user_certificate = RevokedUserCertificateContent(
-        author=alice.device_id, timestamp=pendulum.now(), user_id=mallory.user_id
+        author=alice.device_id, timestamp=pendulum_now(), user_id=mallory.user_id
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_revoke(alice_backend_sock, revoked_user_certificate=revoked_user_certificate)
@@ -103,20 +92,23 @@ async def test_user_revoke_unknown(backend, alice_backend_sock, alice, mallory):
 
 
 @pytest.mark.trio
-async def test_user_revoke_already_revoked(
-    backend, alice_backend_sock, bob, bob_revocation_from_alice
-):
-    rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice)
+async def test_user_revoke_already_revoked(backend, alice_backend_sock, bob, alice):
+    now = pendulum_now()
+    bob_revocation = RevokedUserCertificateContent(
+        author=alice.device_id, timestamp=now, user_id=bob.user_id
+    ).dump_and_sign(alice.signing_key)
+
+    rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
     assert rep["status"] == "ok"
 
-    rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation_from_alice)
+    rep = await user_revoke(alice_backend_sock, revoked_user_certificate=bob_revocation)
     assert rep == {"status": "already_revoked", "reason": f"User `{bob.user_id}` already revoked"}
 
 
 @pytest.mark.trio
 async def test_user_revoke_invalid_certified(backend, alice_backend_sock, alice2, bob):
     revoked_user_certificate = RevokedUserCertificateContent(
-        author=alice2.device_id, timestamp=pendulum.now(), user_id=bob.user_id
+        author=alice2.device_id, timestamp=pendulum_now(), user_id=bob.user_id
     ).dump_and_sign(alice2.signing_key)
 
     rep = await user_revoke(alice_backend_sock, revoked_user_certificate=revoked_user_certificate)
@@ -128,7 +120,7 @@ async def test_user_revoke_invalid_certified(backend, alice_backend_sock, alice2
 
 @pytest.mark.trio
 async def test_user_revoke_certify_too_old(backend, alice_backend_sock, alice, bob):
-    now = pendulum.Pendulum(2000, 1, 1)
+    now = Pendulum(2000, 1, 1)
     revoked_user_certificate = RevokedUserCertificateContent(
         author=alice.device_id, timestamp=now, user_id=bob.user_id
     ).dump_and_sign(alice.signing_key)
@@ -149,11 +141,11 @@ async def test_user_revoke_other_organization(
 ):
     # Organizations should be isolated even for organization admins
     async with sock_from_other_organization_factory(
-        backend, mimick=alice.device_id, is_admin=True
+        backend, mimick=alice.device_id, profile=UserProfile.ADMIN
     ) as sock:
 
         revocation = RevokedUserCertificateContent(
-            author=sock.device.device_id, timestamp=pendulum.now(), user_id=bob.user_id
+            author=sock.device.device_id, timestamp=pendulum_now(), user_id=bob.user_id
         ).dump_and_sign(sock.device.signing_key)
 
         rep = await user_revoke(sock, revoked_user_certificate=revocation)

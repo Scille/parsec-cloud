@@ -32,7 +32,7 @@ class BaseSerializer:
         try:
             return self.schema.load(data).data
 
-        except (ValidationError,) as exc:
+        except ValidationError as exc:
             raise self.validation_exc(exc.messages) from exc
 
     def dump(self, data) -> dict:

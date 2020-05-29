@@ -2,6 +2,7 @@
 
 from typing import Tuple, Optional
 from hashlib import sha256
+from marshmallow import ValidationError
 
 from parsec.crypto import SecretKey, PrivateKey, SigningKey
 from parsec.serde import fields, post_load
@@ -12,7 +13,7 @@ from parsec.api.protocol import (
     DeviceIDField,
     HumanHandleField,
 )
-from parsec.api.data import BaseSchema, EntryID, EntryIDField
+from parsec.api.data import BaseSchema, EntryID, EntryIDField, UserProfile, UserProfileField
 from parsec.core.types.base import BaseLocalData
 from parsec.core.types.backend_address import BackendOrganizationAddr, BackendOrganizationAddrField
 
@@ -23,25 +24,47 @@ class LocalDevice(BaseLocalData):
         device_id = DeviceIDField(required=True)
         signing_key = fields.SigningKey(required=True)
         private_key = fields.PrivateKey(required=True)
+        # `profile` replaces `is_admin` field (which is still required for backward
+        # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
+        profile = UserProfileField(allow_none=False)
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
         human_handle = HumanHandleField(allow_none=True, missing=None)
+        device_label = fields.String(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
+            # Handle legacy `is_admin` field
+            default_profile = UserProfile.ADMIN if data.pop("is_admin") else UserProfile.STANDARD
+            try:
+                profile = data["profile"]
+            except KeyError:
+                data["profile"] = default_profile
+            else:
+                if default_profile == UserProfile.ADMIN and profile != UserProfile.ADMIN:
+                    raise ValidationError(
+                        "Fields `profile` and `is_admin` have incompatible values"
+                    )
+
             return LocalDevice(**data)
 
     organization_addr: BackendOrganizationAddr
     device_id: DeviceID
     signing_key: SigningKey
     private_key: PrivateKey
-    is_admin: bool
+    profile: UserProfile
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
     human_handle: Optional[HumanHandle] = None
+    device_label: Optional[str] = None
+
+    # Only used during schema serialization
+    @property
+    def is_admin(self) -> bool:
+        return self.profile == UserProfile.ADMIN
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"

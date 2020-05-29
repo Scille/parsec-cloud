@@ -6,6 +6,7 @@ import pendulum
 import attr
 
 from parsec.utils import timestamps_in_the_ballpark
+from parsec.api.data import DataError, RealmRoleCertificateContent, UserProfile
 from parsec.api.protocol import (
     OrganizationID,
     UserID,
@@ -19,7 +20,6 @@ from parsec.api.protocol import (
     realm_start_reencryption_maintenance_serializer,
     realm_finish_reencryption_maintenance_serializer,
 )
-from parsec.api.data import DataError, RealmRoleCertificateContent
 from parsec.backend.utils import catch_protocol_errors, api
 
 
@@ -28,6 +28,10 @@ class RealmError(Exception):
 
 
 class RealmAccessError(RealmError):
+    pass
+
+
+class RealmIncompatibleProfileError(RealmError):
     pass
 
 
@@ -95,6 +99,9 @@ class BaseRealmComponent:
     @api("realm_create")
     @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
+        if client_ctx.profile == UserProfile.OUTSIDER:
+            return {"status": "not_allowed", "reason": "Outsider user cannot create realm"}
+
         msg = realm_create_serializer.req_load(msg)
 
         try:
@@ -245,6 +252,11 @@ class BaseRealmComponent:
         except RealmAccessError:
             return realm_update_roles_serializer.rep_dump({"status": "not_allowed"})
 
+        except RealmIncompatibleProfileError as exc:
+            return realm_update_roles_serializer.rep_dump(
+                {"status": "incompatible_profile", "reason": str(exc)}
+            )
+
         except RealmNotFoundError as exc:
             return realm_update_roles_serializer.rep_dump(
                 {"status": "not_found", "reason": str(exc)}
@@ -393,6 +405,7 @@ class BaseRealmComponent:
             RealmInMaintenanceError
             RealmNotFoundError
             RealmAccessError
+            RealmIncompatibleProfileError
         """
         raise NotImplementedError()
 

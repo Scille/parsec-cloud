@@ -9,8 +9,8 @@ from parsec.utils import trio_run
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.crypto import SigningKey
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import DeviceID
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.config import get_default_config_dir
 from parsec.core.backend_connection import apiv1_backend_anonymous_cmds_factory
@@ -25,7 +25,7 @@ async def _bootstrap_organization(
     organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
 
     device_display = click.style(device_id, fg="yellow")
-    device = generate_new_device(device_id, organization_addr, True)
+    device = generate_new_device(device_id, organization_addr, profile=UserProfile.ADMIN)
 
     with operation(f"Creating locally {device_display}"):
         save_device_with_password(config_dir, device, password, force=force)
@@ -36,7 +36,7 @@ async def _bootstrap_organization(
         timestamp=now,
         user_id=device.user_id,
         public_key=device.public_key,
-        is_admin=device.is_admin,
+        profile=device.profile,
     ).dump_and_sign(root_signing_key)
     device_certificate = DeviceCertificateContent(
         author=None, timestamp=now, device_id=device_id, verify_key=device.verify_key

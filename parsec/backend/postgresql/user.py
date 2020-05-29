@@ -9,6 +9,7 @@ from parsec.backend.user import (
     User,
     Device,
     Trustchain,
+    GetUserAndDevicesResult,
     UserInvitation,
     DeviceInvitation,
     HumanFindResultItem,
@@ -70,10 +71,12 @@ class PGUserComponent(BaseUserComponent):
             return await query_get_user_with_device_and_trustchain(conn, organization_id, device_id)
 
     async def get_user_with_devices_and_trustchain(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> Tuple[User, Tuple[Device], Trustchain]:
+        self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
+    ) -> GetUserAndDevicesResult:
         async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_with_devices_and_trustchain(conn, organization_id, user_id)
+            return await query_get_user_with_devices_and_trustchain(
+                conn, organization_id, user_id, redacted=redacted
+            )
 
     async def get_user_with_device(
         self, organization_id: OrganizationID, device_id: DeviceID

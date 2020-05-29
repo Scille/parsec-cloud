@@ -4,11 +4,12 @@ from typing import Optional
 from pypika import Parameter
 from pypika.enums import Order
 
-from parsec.api.protocol import RealmRole
-from parsec.api.protocol import OrganizationID
+from parsec.api.data import UserProfile
+from parsec.api.protocol import OrganizationID, RealmRole
 from parsec.backend.realm import (
     RealmGrantedRole,
     RealmAccessError,
+    RealmIncompatibleProfileError,
     RealmRoleAlreadyGranted,
     RealmNotFoundError,
     RealmInMaintenanceError,
@@ -21,9 +22,15 @@ from parsec.backend.postgresql.tables import (
     q_realm_internal_id,
     q_realm,
     q_realm_user_role,
+    q_user,
     q_user_internal_id,
     q_device_internal_id,
 )
+
+
+_q_get_user_profile = (
+    q_user(organization_id=Parameter("$1"), user_id=Parameter("$2")).select("profile")
+).get_sql()
 
 
 _q_get_realm_status = (
@@ -89,6 +96,16 @@ async def query_update_roles(
     if new_role.granted_by.user_id == new_role.user_id:
         raise RealmAccessError("Cannot modify our own role")
 
+    # Make sure user profile is compatible
+    rep = await conn.fetchrow(_q_get_user_profile, organization_id, new_role.user_id)
+    if not rep:
+        raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+    if rep["profile"] == UserProfile.OUTSIDER.value and new_role.role in (
+        RealmRole.MANAGER,
+        RealmRole.OWNER,
+    ):
+        raise RealmIncompatibleProfileError("User with OUTSIDER profile cannot be MANAGER or OWNER")
+
     # Retrieve realm and make sure it is not under maintenance
     rep = await conn.fetchrow(_q_get_realm_status, organization_id, new_role.realm_id)
     if not rep:
@@ -104,8 +121,7 @@ async def query_update_roles(
         (new_role.granted_by.user_id, new_role.user_id),
     )
     assert author_id
-    if not user_id:
-        raise RealmNotFoundError(f"User `{new_role.user_id}` doesn't exist")
+    assert user_id
 
     author_role = STR_TO_REALM_ROLE.get(author_role)
     existing_user_role = STR_TO_REALM_ROLE.get(existing_user_role)

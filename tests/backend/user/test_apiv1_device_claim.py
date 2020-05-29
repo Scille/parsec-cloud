@@ -77,6 +77,7 @@ async def test_device_claim_ok(
                 Device(
                     device_id=DeviceID(f"{alice.user_id}@dummy"),
                     device_certificate=b"<alice@dummy certificate>",
+                    redacted_device_certificate=b"<redacted alice@dummy certificate>",
                     device_certifier=alice.device_id,
                 ),
                 encrypted_answer=b"<alice@dummy answer>",
@@ -87,6 +88,7 @@ async def test_device_claim_ok(
                 Device(
                     device_id=alice_nd_invitation.device_id,
                     device_certificate=b"<alice@new_device certificate>",
+                    redacted_device_certificate=b"<redacted alice@new_device certificate>",
                     device_certifier=alice.device_id,
                 ),
                 encrypted_answer=b"<alice@new_device answer>",
@@ -169,6 +171,7 @@ async def test_device_claim_already_exists(
         Device(
             device_id=alice_nd_invitation.device_id,
             device_certificate=b"<foo>",
+            redacted_device_certificate=b"<foo>",
             device_certifier=alice.device_id,
         ),
     )

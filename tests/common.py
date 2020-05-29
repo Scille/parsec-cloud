@@ -214,3 +214,22 @@ def compare_fs_dumps(entry_1, entry_2):
         for key, child_for_entry_1 in entry_1["children"].items():
             child_for_entry_2 = entry_2["children"][key]
             compare_fs_dumps(child_for_entry_1, child_for_entry_2)
+
+
+_FIXTURES_CUSTOMIZATIONS = {"alice_profile", "bob_profile", "adam_profile", "mallory_profile"}
+
+
+def customize_fixture(key, value):
+    """
+    Should be used as a decorator on tests to provide custom settings to fixtures.
+    """
+    assert key in _FIXTURES_CUSTOMIZATIONS
+
+    def wrapper(fn):
+        try:
+            getattr(fn, "_fixtures_customization")[key] = value
+        except AttributeError:
+            setattr(fn, "_fixtures_customization", {key: value})
+        return fn
+
+    return wrapper

@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QDialog
 from structlog import get_logger
 
 from parsec.crypto import SigningKey
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationBootstrapAddr
 from parsec.core.backend_connection import (
@@ -56,7 +56,7 @@ async def _do_bootstrap_organization(
     organization_addr = bootstrap_addr.generate_organization_addr(root_verify_key)
 
     try:
-        device = generate_new_device(device_id, organization_addr, is_admin=True)
+        device = generate_new_device(device_id, organization_addr, profile=UserProfile.ADMIN)
         save_device_with_password(config_dir, device, password)
 
     except LocalDeviceAlreadyExistsError as exc:
@@ -68,7 +68,7 @@ async def _do_bootstrap_organization(
         timestamp=now,
         user_id=device.user_id,
         public_key=device.public_key,
-        is_admin=device.is_admin,
+        profile=device.profile,
     ).dump_and_sign(root_signing_key)
     device_certificate = DeviceCertificateContent(
         author=None, timestamp=now, device_id=device_id, verify_key=device.verify_key

@@ -41,7 +41,6 @@ from parsec.api.protocol.handshake import (
 from parsec.api.protocol.organization import (
     apiv1_organization_create_serializer,
     apiv1_organization_bootstrap_serializer,
-    organization_bootstrap_serializer,
     apiv1_organization_stats_serializer,
     apiv1_organization_status_serializer,
     apiv1_organization_update_serializer,
@@ -55,6 +54,7 @@ from parsec.api.protocol.user import (
     apiv1_user_get_invitation_creator_serializer,
     apiv1_user_claim_serializer,
     apiv1_user_cancel_invitation_serializer,
+    apiv1_user_create_serializer,
     user_create_serializer,
     user_revoke_serializer,
     apiv1_device_invite_serializer,
@@ -171,6 +171,7 @@ __all__ = (
     "apiv1_user_get_invitation_creator_serializer",
     "apiv1_user_claim_serializer",
     "apiv1_user_cancel_invitation_serializer",
+    "apiv1_user_create_serializer",
     "user_create_serializer",
     "user_revoke_serializer",
     "apiv1_device_invite_serializer",

@@ -4,7 +4,7 @@ import pytest
 import pendulum
 
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.data import UserCertificateContent, DeviceCertificateContent
+from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import DeviceID
 
 from tests.common import freeze_time
@@ -12,9 +12,9 @@ from tests.backend.common import user_get, user_create
 
 
 @pytest.mark.trio
-@pytest.mark.parametrize("is_admin", [True, False])
+@pytest.mark.parametrize("profile", UserProfile)
 async def test_user_create_ok(
-    backend, backend_sock_factory, alice_backend_sock, alice, mallory, is_admin
+    backend, backend_sock_factory, alice_backend_sock, alice, mallory, profile
 ):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
@@ -22,35 +22,32 @@ async def test_user_create_ok(
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=is_admin,
-        human_handle=None,
-    ).dump_and_sign(alice.signing_key)
+        profile=profile,
+        human_handle=mallory.human_handle,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
         verify_key=mallory.verify_key,
-    ).dump_and_sign(alice.signing_key)
+        device_label=mallory.device_label,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
 
-    with backend.event_bus.listen() as spy:
-        rep = await user_create(
-            alice_backend_sock,
-            user_certificate=user_certificate,
-            device_certificate=device_certificate,
-        )
-        assert rep == {"status": "ok"}
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
-        # No guarantees this event occurs before the command's return
-        await spy.wait_with_timeout(
-            "user.created",
-            {
-                "organization_id": alice.organization_id,
-                "user_id": mallory.user_id,
-                "first_device_id": mallory.device_id,
-                "user_certificate": user_certificate,
-                "first_device_certificate": device_certificate,
-            },
-        )
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
+    )
+    assert rep == {"status": "ok"}
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:
@@ -59,14 +56,14 @@ async def test_user_create_ok(
 
 
 @pytest.mark.trio
-async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mallory):
+async def test_user_create_invalid_certificate(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
     good_user_certificate = UserCertificateContent(
         author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     good_device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -79,7 +76,7 @@ async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mal
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(bob.signing_key)
     bad_device_certificate = DeviceCertificateContent(
         author=bob.device_id,
@@ -93,7 +90,31 @@ async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mal
         (bad_user_certificate, good_device_certificate),
         (bad_user_certificate, bad_device_certificate),
     ]:
-        rep = await user_create(alice_backend_sock, user_certificate=cu, device_certificate=cd)
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=cu,
+            device_certificate=cd,
+            redacted_user_certificate=good_user_certificate,
+            redacted_device_certificate=good_device_certificate,
+        )
+        assert rep == {
+            "status": "invalid_certification",
+            "reason": "Invalid certification data (Signature was forged or corrupt).",
+        }
+
+    # Same thing for the redacted part
+    for cu, cd in [
+        (good_user_certificate, bad_device_certificate),
+        (bad_user_certificate, good_device_certificate),
+        (bad_user_certificate, bad_device_certificate),
+    ]:
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=good_user_certificate,
+            device_certificate=good_device_certificate,
+            redacted_user_certificate=cu,
+            redacted_device_certificate=cd,
+        )
         assert rep == {
             "status": "invalid_certification",
             "reason": "Invalid certification data (Signature was forged or corrupt).",
@@ -108,7 +129,7 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id,
@@ -118,12 +139,145 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, b
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=user_certificate,
+        redacted_device_certificate=device_certificate,
     )
     assert rep == {
         "status": "invalid_data",
         "reason": "Device and User must have the same user ID.",
     }
+
+
+@pytest.mark.trio
+async def test_user_create_bad_redacted_device_certificate(alice_backend_sock, alice, mallory):
+    now = pendulum.now()
+    user_certificate = UserCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        user_id=mallory.user_id,
+        public_key=mallory.public_key,
+        profile=UserProfile.STANDARD,
+    ).dump_and_sign(alice.signing_key)
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=mallory.device_id,
+        verify_key=mallory.verify_key,
+        device_label=mallory.device_label,
+    )
+    good_redacted_device_certificate = device_certificate.evolve(device_label=None)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    for bad_redacted_device_certificate in (
+        good_redacted_device_certificate.evolve(timestamp=now.add(seconds=1)),
+        good_redacted_device_certificate.evolve(device_id=alice.device_id),
+        good_redacted_device_certificate.evolve(verify_key=alice.verify_key),
+    ):
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=user_certificate,
+            redacted_device_certificate=bad_redacted_device_certificate.dump_and_sign(
+                alice.signing_key
+            ),
+        )
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Redacted Device certificate differs from Device certificate.",
+        }
+
+    # Missing redacted certificate is not allowed as well
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=user_certificate,
+        redacted_device_certificate=None,
+    )
+    assert rep == {
+        "status": "bad_message",
+        "reason": "Invalid message.",
+        "errors": {"redacted_device_certificate": ["Missing data for required field."]},
+    }
+
+    # Finally just make sure good was really good
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=user_certificate,
+        redacted_device_certificate=good_redacted_device_certificate.dump_and_sign(
+            alice.signing_key
+        ),
+    )
+    assert rep == {"status": "ok"}
+
+
+@pytest.mark.trio
+async def test_user_create_bad_redacted_user_certificate(alice_backend_sock, alice, mallory):
+    now = pendulum.now()
+    device_certificate = DeviceCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        device_id=mallory.device_id,
+        verify_key=mallory.verify_key,
+    ).dump_and_sign(alice.signing_key)
+    user_certificate = UserCertificateContent(
+        author=alice.device_id,
+        timestamp=now,
+        user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
+        public_key=mallory.public_key,
+        profile=UserProfile.STANDARD,
+    )
+    good_redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    for bad_redacted_user_certificate in (
+        good_redacted_user_certificate.evolve(timestamp=now.add(seconds=1)),
+        good_redacted_user_certificate.evolve(user_id=alice.user_id),
+        good_redacted_user_certificate.evolve(public_key=alice.public_key),
+        good_redacted_user_certificate.evolve(profile=UserProfile.OUTSIDER),
+    ):
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=bad_redacted_user_certificate.dump_and_sign(
+                alice.signing_key
+            ),
+            redacted_device_certificate=device_certificate,
+        )
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Redacted User certificate differs from User certificate.",
+        }
+
+    # Missing redacted certificate is not allowed as well
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=None,
+        redacted_device_certificate=device_certificate,
+    )
+    assert rep == {
+        "status": "bad_message",
+        "reason": "Invalid message.",
+        "errors": {"redacted_user_certificate": ["Missing data for required field."]},
+    }
+
+    # Finally just make sure good was really good
+    rep = await user_create(
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=good_redacted_user_certificate.dump_and_sign(alice.signing_key),
+        redacted_device_certificate=device_certificate,
+    )
+    assert rep == {"status": "ok"}
 
 
 @pytest.mark.trio
@@ -134,14 +288,18 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
         timestamp=now,
         user_id=bob.user_id,
         public_key=bob.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id, timestamp=now, device_id=bob.device_id, verify_key=bob.verify_key
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=user_certificate,
+        redacted_device_certificate=device_certificate,
     )
     assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
 
@@ -155,15 +313,22 @@ async def test_user_create_human_handle_already_exists(alice_backend_sock, alice
         timestamp=now,
         user_id=bob2_device_id.user_id,
         public_key=bob.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
         human_handle=bob.human_handle,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id, timestamp=now, device_id=bob2_device_id, verify_key=bob.verify_key
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=device_certificate,
     )
     assert rep == {
         "status": "already_exists",
@@ -186,15 +351,22 @@ async def test_user_create_human_handle_with_revoked_previous_one(
         timestamp=now,
         user_id=bob2_device_id.user_id,
         public_key=bob.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
         human_handle=bob.human_handle,
-    ).dump_and_sign(alice.signing_key)
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
     device_certificate = DeviceCertificateContent(
         author=alice.device_id, timestamp=now, device_id=bob2_device_id, verify_key=bob.verify_key
     ).dump_and_sign(alice.signing_key)
 
     rep = await user_create(
-        alice_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+        alice_backend_sock,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=device_certificate,
     )
     assert rep == {"status": "ok"}
 
@@ -203,39 +375,45 @@ async def test_user_create_human_handle_with_revoked_previous_one(
 async def test_user_create_not_matching_certified_on(alice_backend_sock, alice, mallory):
     date1 = pendulum.Pendulum(2000, 1, 1)
     date2 = date1.add(seconds=1)
-    cu = UserCertificateContent(
+    user_certificate = UserCertificateContent(
         author=alice.device_id,
         timestamp=date1,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    cd = DeviceCertificateContent(
+    device_certificate = DeviceCertificateContent(
         author=alice.device_id,
         timestamp=date2,
         device_id=mallory.device_id,
         verify_key=mallory.verify_key,
     ).dump_and_sign(alice.signing_key)
     with freeze_time(date1):
-        rep = await user_create(alice_backend_sock, user_certificate=cu, device_certificate=cd)
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=user_certificate,
+            redacted_device_certificate=device_certificate,
+        )
         assert rep == {
             "status": "invalid_data",
-            "reason": "Device and User certifications must have the same timestamp.",
+            "reason": "Device and User certificates must have the same timestamp.",
         }
 
 
 @pytest.mark.trio
-async def test_user_create_certify_too_old(alice_backend_sock, alice, mallory):
+async def test_user_create_certificate_too_old(alice_backend_sock, alice, mallory):
     too_old = pendulum.Pendulum(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
-    cu = UserCertificateContent(
+    user_certificate = UserCertificateContent(
         author=alice.device_id,
         timestamp=too_old,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=False,
+        profile=UserProfile.STANDARD,
     ).dump_and_sign(alice.signing_key)
-    cd = DeviceCertificateContent(
+    device_certificate = DeviceCertificateContent(
         author=alice.device_id,
         timestamp=too_old,
         device_id=mallory.device_id,
@@ -243,32 +421,82 @@ async def test_user_create_certify_too_old(alice_backend_sock, alice, mallory):
     ).dump_and_sign(alice.signing_key)
 
     with freeze_time(now):
-        rep = await user_create(alice_backend_sock, user_certificate=cu, device_certificate=cd)
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=user_certificate,
+            redacted_device_certificate=device_certificate,
+        )
         assert rep == {
             "status": "invalid_certification",
-            "reason": "Invalid timestamp in certification.",
+            "reason": "Invalid timestamp in certificate.",
         }
 
 
 @pytest.mark.trio
-async def test_user_create_author_not_admin(backend, bob_backend_sock, bob, mallory):
-    # Unlike alice, bob is not admin
+async def test_user_create_author_not_admin(backend, bob_backend_sock):
+    # No need for valid certificate given given access right should be
+    # checked before payload deserialization
+    rep = await user_create(
+        bob_backend_sock,
+        user_certificate=b"<user_certificate>",
+        device_certificate=b"<device_certificate>",
+        redacted_user_certificate=b"<redacted_user_certificate>",
+        redacted_device_certificate=b"<redacted_device_certificate>",
+    )
+    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}
+
+
+@pytest.mark.trio
+async def test_redacted_certificates_cannot_contain_sensitive_data(
+    alice_backend_sock, alice, mallory
+):
     now = pendulum.now()
     user_certificate = UserCertificateContent(
-        author=bob.device_id,
+        author=alice.device_id,
         timestamp=now,
         user_id=mallory.user_id,
         public_key=mallory.public_key,
-        is_admin=False,
-    ).dump_and_sign(bob.signing_key)
+        profile=UserProfile.STANDARD,
+        human_handle=mallory.human_handle,
+    )
+    redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificateContent(
-        author=bob.device_id,
+        author=alice.device_id,
         timestamp=now,
         device_id=mallory.device_id,
         verify_key=mallory.verify_key,
-    ).dump_and_sign(bob.signing_key)
-
-    rep = await user_create(
-        bob_backend_sock, user_certificate=user_certificate, device_certificate=device_certificate
+        device_label=mallory.device_label,
     )
-    assert rep == {"status": "not_allowed", "reason": "User `bob` is not admin"}
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+
+    user_certificate = user_certificate.dump_and_sign(alice.signing_key)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_user_certificate = redacted_user_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
+
+    with freeze_time(now):
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=user_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Redacted User certificate must not contain a human_handle field.",
+        }
+
+        rep = await user_create(
+            alice_backend_sock,
+            user_certificate=user_certificate,
+            device_certificate=device_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            redacted_device_certificate=device_certificate,
+        )
+        assert rep == {
+            "status": "invalid_data",
+            "reason": "Redacted Device certificate must not contain a device_label field.",
+        }
