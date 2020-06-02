@@ -94,6 +94,8 @@ class InstanceWidget(QWidget):
         assert not self.core
         assert not self.core_jobs_ctx
 
+        self.config = ParsecApp.get_main_window().config
+
         self.running_core_job = self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "run_core_success"),
             ThreadSafeQtSignal(self, "run_core_error"),
