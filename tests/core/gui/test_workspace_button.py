@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from functools import partial
-from unittest.mock import MagicMock
 
 from PyQt5 import QtCore
 
@@ -10,12 +8,6 @@ from PyQt5 import QtCore
 from parsec.core.types import WorkspaceRole
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.lang import switch_language
-
-
-# Disable parent logic from WorkspaceButton
-PARENT_MOCK = MagicMock()
-PARENT_MOCK.is_workspace_mounted.return_value = True
-WorkspaceButton = partial(WorkspaceButton, parent=PARENT_MOCK)
 
 
 @pytest.fixture
@@ -33,7 +25,11 @@ async def test_workspace_button(qtbot, workspace_fs, core_config):
 
     roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
     qtbot.addWidget(w)
     w.show()
@@ -54,7 +50,11 @@ async def test_workspace_button_owned_by(qtbot, workspace_fs, core_config, bob):
 
     roles = {bob.user_id: WorkspaceRole.OWNER, workspace_fs.device.user_id: WorkspaceRole.READER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
 
     qtbot.addWidget(w)
@@ -75,7 +75,11 @@ async def test_workspace_button_shared_with(qtbot, workspace_fs, core_config, bo
 
     roles = {bob.user_id: WorkspaceRole.READER, workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
 
     qtbot.addWidget(w)
@@ -99,6 +103,7 @@ async def test_workspace_button_files(qtbot, workspace_fs, core_config):
         workspace_name="Workspace",
         workspace_fs=workspace_fs,
         users_roles=roles,
+        is_mounted=True,
         files=["File1.txt", "File2.txt", "Dir1"],
     )
 
@@ -122,7 +127,11 @@ async def test_workspace_button_clicked(qtbot, workspace_fs, core_config):
 
     roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
 
     qtbot.addWidget(w)
@@ -138,7 +147,11 @@ async def test_workspace_button_share_clicked(qtbot, workspace_fs, core_config):
 
     roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.share_clicked, timeout=500) as blocker:
@@ -153,7 +166,11 @@ async def test_workspace_button_rename_clicked(qtbot, workspace_fs, core_config)
 
     roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.rename_clicked, timeout=500) as blocker:
@@ -168,7 +185,11 @@ async def test_workspace_button_delete_clicked(qtbot, workspace_fs, core_config)
 
     roles = {workspace_fs.device.user_id: WorkspaceRole.OWNER}
     w = WorkspaceButton(
-        workspace_name="Workspace", workspace_fs=workspace_fs, users_roles=roles, files=[]
+        workspace_name="Workspace",
+        workspace_fs=workspace_fs,
+        users_roles=roles,
+        is_mounted=True,
+        files=[],
     )
     qtbot.addWidget(w)
     with qtbot.waitSignal(w.delete_clicked, timeout=500) as blocker:

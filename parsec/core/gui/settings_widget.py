@@ -22,9 +22,6 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         if platform.system() != "Windows":
             self.widget_version.hide()
 
-        # TODO: remove the old acrobat compatibility section
-        self.widget_misc.hide()
-
         self.button_save.clicked.connect(self.save)
         self.check_box_tray.setChecked(self.core_config.gui_tray_enabled)
         current = None

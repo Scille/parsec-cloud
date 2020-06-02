@@ -52,8 +52,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, self.handle_event)
 
-        self.label_mountpoint.hide()
-
         self.menu.organization = self.core.device.organization_addr.organization_id
         self.menu.username = self.core.device.user_id
         self.menu.device = self.core.device.device_name
@@ -70,8 +68,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.widget_title3.hide()
         self.title2_icon.apply_style()
         self.title3_icon.apply_style()
-
-        self.icon_mountpoint.apply_style()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))

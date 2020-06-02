@@ -191,6 +191,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset_timer.setSingleShot(True)
         self.reset_timer.timeout.connect(self.on_timeout)
 
+        self.mountpoint_started.connect(self._on_mountpoint_stated_qt)
+        self.mountpoint_stopped.connect(self._on_mountpoint_stopped_qt)
+
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
         self._workspace_created_qt.connect(self._on_workspace_created_qt)
 
@@ -358,9 +361,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             workspace_name=workspace_name,
             workspace_fs=workspace_fs,
             users_roles=users_roles,
+            is_mounted=self.is_workspace_mounted(workspace_fs.workspace_id, None),
             files=files[:4],
             timestamped=timestamped,
-            parent=self,
         )
         self.layout_workspaces.addWidget(button)
         button.clicked.connect(self.load_workspace)
@@ -370,6 +373,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.rename_clicked.connect(self.rename_workspace)
         button.remount_ts_clicked.connect(self.remount_workspace_ts)
         button.open_clicked.connect(self.open_workspace)
+        button.switch_clicked.connect(self._on_switch_clicked)
 
         self.jobs_ctx.submit_job(
             ThreadSafeQtSignal(self, "reencryption_needs_success", QtToTrioJob),
@@ -377,6 +381,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             _get_reencryption_needs,
             workspace_fs=workspace_fs,
         )
+
+    def _on_switch_clicked(self, state, workspace_fs, timestamp):
+        if state:
+            self.mount_workspace(workspace_fs.workspace_id, timestamp)
+        else:
+            self.unmount_workspace(workspace_fs.workspace_id, timestamp)
+        if not timestamp:
+            self.update_workspace_config(workspace_fs.workspace_id, state)
 
     def open_workspace(self, workspace_fs):
         self.open_workspace_file(workspace_fs, None)
@@ -543,15 +555,24 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         workspace_id = job.ret
         self.reencrypting.remove(workspace_id)
 
-    def _on_workspace_reencryption_progress(self, workspace_id, total, done):
+    def get_workspace_button(self, workspace_id, timestamp):
         for idx in range(self.layout_workspaces.count()):
             widget = self.layout_workspaces.itemAt(idx).widget()
-            if widget.workspace_fs.workspace_id == workspace_id:
-                if done == total:
-                    widget.reencrypting = None
-                else:
-                    widget.reencrypting = (total, done)
-                break
+            if (
+                widget
+                and not isinstance(widget, QLabel)
+                and widget.workspace_id == workspace_id
+                and timestamp == widget.timestamp
+            ):
+                return widget
+        return None
+
+    def _on_workspace_reencryption_progress(self, workspace_id, total, done):
+        wb = self.get_workspace_button(workspace_id, None)
+        if done == total:
+            wb.reencrypting = None
+        else:
+            wb.reencrypting = (total, done)
 
     def create_workspace_clicked(self):
         workspace_name = get_text_input(
@@ -621,6 +642,16 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()
+
+    def _on_mountpoint_stated_qt(self, workspace_id, timestamp):
+        wb = self.get_workspace_button(workspace_id, timestamp)
+        if wb:
+            wb.set_mountpoint_state(True)
+
+    def _on_mountpoint_stopped_qt(self, workspace_id, timestamp):
+        wb = self.get_workspace_button(workspace_id, timestamp)
+        if wb:
+            wb.set_mountpoint_state(False)
 
     def _on_mountpoint_started_trio(self, event, mountpoint, workspace_id, timestamp):
         self.mountpoint_started.emit(workspace_id, timestamp)

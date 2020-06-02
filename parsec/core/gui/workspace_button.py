@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
 from PyQt5.QtGui import QColor, QCursor
 
-from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
+from parsec.core.fs import WorkspaceFS
 from parsec.core.types import EntryID, WorkspaceRole
 
 from parsec.core.gui.lang import translate as _, format_datetime
@@ -33,24 +33,19 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     rename_clicked = pyqtSignal(QWidget)
     remount_ts_clicked = pyqtSignal(WorkspaceFS)
     open_clicked = pyqtSignal(WorkspaceFS)
+    switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
     def __init__(
         self,
         workspace_name,
         workspace_fs,
         users_roles,
+        is_mounted,
         files=None,
         reencryption_needs=None,
         timestamped=False,
-        parent=None,
     ):
-        self._parent = parent
-        # Only useful for testing,
-        # Qt doesn't like getting a mock object as a parent
-        if not isinstance(parent, QWidget):
-            parent = None
-        super().__init__(parent=parent)
-
+        super().__init__()
         self.setupUi(self)
         self.users_roles = users_roles
         self.workspace_name = workspace_name
@@ -64,18 +59,9 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.customContextMenuRequested.connect(self.show_context_menu)
         files = files or []
 
-        # Add switch button
-        # TODO: integrated properly in the .ui files
-        self.switch_button = SwitchButton(parent=self)
-        bottom_layout = self.button_open.parent().layout()
-        bottom_layout.insertWidget(0, self.switch_button)
-        bottom_layout.insertSpacing(0, 20)
-        self.switch_button.clicked.connect(self.on_switch_clicked)
-        self.switch_button.toggled.connect(self.on_switch_toggled)
-
-        # Connect to workspaces_widget signals
-        self.workspaces_widget.mountpoint_started.connect(self.on_mountpoint_started)
-        self.workspaces_widget.mountpoint_stopped.connect(self.on_mountpoint_stopped)
+        self.switch_button = SwitchButton()
+        self.widget_actions.layout().insertWidget(0, self.switch_button)
+        self.switch_button.clicked.connect(self._on_switch_clicked)
 
         if not len(files):
             self.widget_empty.show()
@@ -90,29 +76,17 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.widget_empty.hide()
 
         if self.timestamped:
-            self.widget_title.setStyleSheet(
-                "background-color: #E3E3E3; border-top-left-radius: 8px; border-top-right-radius: 8px;"
-            )
-            self.widget_actions.setStyleSheet(
-                "background-color: #E3E3E3; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"
-            )
-            self.setStyleSheet("background-color: #E3E3E3; border-radius: 8px;")
+            self.widget_title.setStyleSheet("background-color: #DDDDDD;")
+            self.widget_actions.setStyleSheet("background-color: #DDDDDD;")
+            self.widget.setStyleSheet("background-color: #DDDDDD;")
+            self.switch_button.setChecked(True)
             self.button_reencrypt.hide()
             self.button_remount_ts.hide()
             self.button_share.hide()
             self.button_rename.hide()
             self.label_shared.hide()
             self.label_owner.hide()
-        else:
-            self.widget_title.setStyleSheet(
-                "background-color: #FFFFFF; border-top-left-radius: 8px; border-top-right-radius: 8px;"
-            )
-            self.widget_actions.setStyleSheet(
-                "background-color: #FFFFFF; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"
-            )
-            self.setStyleSheet("background-color: #FFFFFF; border-radius: 8px;")
-            self.button_delete.hide()
-
+            self.switch_button.hide()
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
         effect.setBlurRadius(10)
@@ -142,7 +116,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
-        self.reload_workspace_mounted_status()
+        self.set_mountpoint_state(is_mounted)
 
     @property
     def is_shared(self):
@@ -215,10 +189,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.remount_ts_clicked.emit(self.workspace_fs)
 
     @property
-    def workspaces_widget(self):
-        return self._parent
-
-    @property
     def name(self):
         return self.workspace_name
 
@@ -276,20 +246,20 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.workspace_name = workspace_name
         display = workspace_name
 
-        if not self.is_shared:
-            shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
-        elif not self.is_owner:
-            shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(user=self.owner)
-        elif len(self.others) == 1:
-            user, = self.others
-            shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(user=user)
+        if not self.timestamped:
+            if not self.is_shared:
+                shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
+            elif not self.is_owner:
+                shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(user=self.owner)
+            elif len(self.others) == 1:
+                user, = self.others
+                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(user=user)
+            else:
+                n = len(self.others)
+                assert n > 1
+                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS").format(n=n)
+            display += " ({})".format(shared_message)
         else:
-            n = len(self.others)
-            assert n > 1
-            shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS").format(n=n)
-        display += " ({})".format(shared_message)
-
-        if isinstance(self.workspace_fs, WorkspaceFSTimestamped):
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)
             )
@@ -302,35 +272,19 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         if event.button() & Qt.LeftButton and self.switch_button.isChecked():
             self.clicked.emit(self.workspace_fs)
 
-    def on_switch_clicked(self, state):
+    def _on_switch_clicked(self, state):
+        self.set_mountpoint_state(state)
+        self.switch_clicked.emit(state, self.workspace_fs, self.timestamp)
+
+    def set_mountpoint_state(self, state):
+        if self.timestamped:
+            return
+        self.switch_button.setChecked(state)
         if state:
-            self.workspaces_widget.mount_workspace(self.workspace_id, self.timestamp)
+            self.widget.setStyleSheet("background-color: #FFFFFF;")
+            self.widget_title.setStyleSheet("background-color: #FFFFFF;")
+            self.widget_actions.setStyleSheet("background-color: #FFFFFF;")
         else:
-            self.workspaces_widget.unmount_workspace(self.workspace_id, self.timestamp)
-        if not self.timestamp:
-            self.workspaces_widget.update_workspace_config(self.workspace_id, state)
-
-    def on_switch_toggled(self, state):
-        self.button_open.setEnabled(state)
-        if not self.timestamped:
-            if state:
-                self.setStyleSheet("background-color: #FFFFFF; border-radius: 8px;")
-            else:
-                self.setStyleSheet("background-color: #E3E3E3; border-radius: 8px;")
-
-    def reload_workspace_mounted_status(self):
-        is_mounted = self.workspaces_widget.is_workspace_mounted(
-            self.workspace_fs.workspace_id, self.timestamp
-        )
-        self.switch_button.setChecked(is_mounted)
-        self.on_switch_toggled(is_mounted)
-
-    def on_mountpoint_started(self, workspace_id, timestamp):
-        if workspace_id != self.workspace_id or timestamp != self.timestamp:
-            return
-        self.switch_button.setChecked(True)
-
-    def on_mountpoint_stopped(self, workspace_id, timestamp):
-        if workspace_id != self.workspace_id or timestamp != self.timestamp:
-            return
-        self.switch_button.setChecked(False)
+            self.widget.setStyleSheet("background-color: #DDDDDD;")
+            self.widget_title.setStyleSheet("background-color: #DDDDDD;")
+            self.widget_actions.setStyleSheet("background-color: #DDDDDD;")

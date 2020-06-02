@@ -62,7 +62,7 @@ QWidget#widget_title {
 }
 
 #file1_name, #file2_name, #file3_name, #file4_name {
-	color: #222222;
+	color: #999999;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -431,7 +431,7 @@ QWidget#widget_title {
           <number>10</number>
          </property>
          <property name="leftMargin">
-          <number>0</number>
+          <number>20</number>
          </property>
          <property name="topMargin">
           <number>0</number>
