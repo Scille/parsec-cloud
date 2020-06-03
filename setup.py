@@ -274,7 +274,7 @@ requirements = [
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",
     "pendulum==1.3.1",
-    "PyNaCl==1.2.1",
+    "PyNaCl==1.4.0",
     "trio==0.13.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
