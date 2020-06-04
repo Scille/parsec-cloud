@@ -479,6 +479,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tab_center.setCurrentIndex(idx)
 
     def go_to_file_link(self, action_addr):
+        devices = list_available_devices(self.config.config_dir)
+        found_org = False
+        for org, d, t, kf in devices:
+            if org == action_addr.organization_id:
+                found_org = True
+                break
+
+        if not found_org:
+            show_error(
+                self,
+                _("TEXT_FILE_LINK_NOT_IN_ORG_organization").format(
+                    organization=action_addr.organization_id
+                ),
+            )
+            return
+
         for idx in range(self.tab_center.count()):
             if self.tab_center.tabText(idx) == _("TEXT_TAB_TITLE_LOG_IN_SCREEN"):
                 continue
@@ -490,27 +506,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ):
                 continue
             user_manifest = w.core.user_fs.get_user_manifest()
+            found_workspace = False
             for wk in user_manifest.workspaces:
                 if not wk.role:
                     continue
-                if wk.id != action_addr.workspace_id:
-                    continue
-                central_widget = w.get_central_widget()
-                try:
-                    central_widget.show_mount_widget()
-                    central_widget.mount_widget.show_files_widget(
-                        w.core.user_fs.get_workspace(wk.id), action_addr.path, selected=True
-                    )
-                    self.switch_to_tab(idx)
-                except AttributeError:
-                    logger.exception("Central widget is not available")
+                if wk.id == action_addr.workspace_id:
+                    found_workspace = True
+                    central_widget = w.get_central_widget()
+                    try:
+                        central_widget.show_mount_widget()
+                        central_widget.mount_widget.show_files_widget(
+                            w.core.user_fs.get_workspace(wk.id), action_addr.path, selected=True
+                        )
+                        self.switch_to_tab(idx)
+                    except AttributeError:
+                        logger.exception("Central widget is not available")
+                    return
+            if not found_workspace:
+                show_error(
+                    self,
+                    _("TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization").format(
+                        organization=action_addr.organization_id
+                    ),
+                )
                 return
         show_error(
             self,
-            _("TEXT_FILE_LINK_NOT_FOUND_organization").format(
+            _("TEXT_FILE_LINK_PLEASE_LOG_IN_organization").format(
                 organization=action_addr.organization_id
             ),
         )
+        idx = self._get_login_tab_index()
+        if idx != -1:
+            self.switch_to_tab(idx)
 
     def add_instance(self, start_arg: Optional[str] = None):
         action_addr = None

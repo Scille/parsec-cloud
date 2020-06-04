@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-05-13 11:59+0200\n"
-"PO-Revision-Date: 2020-05-13 12:00+0200\n"
+"POT-Creation-Date: 2020-06-04 09:41+0200\n"
+"PO-Revision-Date: 2020-06-04 09:42+0200\n"
 "Last-Translator: \n"
 "Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -1499,6 +1499,12 @@ msgstr "PARSEC {version}"
 msgid "ACTION_MAIN_MENU_SHOW"
 msgstr "Menu"
 
+msgid "Ctrl+K"
+msgstr ""
+
+msgid "Alt+E"
+msgstr ""
+
 msgid "ACTION_MAIN_MENU_ADD_INSTANCE"
 msgstr "Ouvrir un nouvel onglet"
 
@@ -1607,8 +1613,14 @@ msgstr "Je souhaite rejoindre une organisation existante"
 msgid "TEXT_TAB_TITLE_LOG_IN_SCREEN"
 msgstr "Connexion"
 
-msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
-msgstr "Le fichier n'a pas pu être trouvé au sein de l'organisation <b>{organization}</b>. Peut-être qu'il n'a pas été partagé avec vous."
+msgid "TEXT_FILE_LINK_NOT_IN_ORG_organization"
+msgstr "Vous ne pouvez pas accéder à ce fichier car vous n'avez aucun appareil appartenant à l'organisation {organization} on this machine."
+
+msgid "TEXT_FILE_LINK_WORKSPACE_NOT_FOUND_organization"
+msgstr "Vous n'avez pas accès à l'espace de travail auquel appartient ce fichier. Il n'a peut-être pas été partagé avec vous."
+
+msgid "TEXT_FILE_LINK_PLEASE_LOG_IN_organization"
+msgstr "Veuillez vous connecter à l'organisation {organization} pour accéder à ce fichier."
 
 msgid "ACTION_TAB_CLOSE_CONFIRM"
 msgstr "Fermer l'onglet"
@@ -2023,3 +2035,6 @@ msgstr "Trouver un fichier via son lien"
 
 #~ msgid "ACTION_FEEDBACK_SEND"
 #~ msgstr "Donnez votre avis"
+
+#~ msgid "TEXT_FILE_LINK_NOT_FOUND_organization"
+#~ msgstr "Le fichier n'a pas pu être trouvé au sein de l'organisation <b>{organization}</b>. Peut-être qu'il n'a pas été partagé avec vous."
