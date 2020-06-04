@@ -67,10 +67,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.foreground_needed.connect(self._on_foreground_needed)
         self.new_instance_needed.connect(self._on_new_instance_needed)
         self.tab_center.tabCloseRequested.connect(self.close_tab)
-        # self.button_send_feedback = QPushButton(_("ACTION_FEEDBACK_SEND"))
-        # self.button_send_feedback.clicked.connect(self._on_send_feedback_clicked)
-        # self.button_send_feedback.setStyleSheet("border: 0; border-radius: 0px;")
-        # self.tab_center.setCornerWidget(self.button_send_feedback, Qt.TopRightCorner)
 
         self.menu_button = Button()
         self.menu_button.setCursor(Qt.PointingHandCursor)
@@ -274,6 +270,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self._on_claim_user_clicked(action_addr)
         elif isinstance(action_addr, BackendOrganizationClaimDeviceAddr):
             self._on_claim_device_clicked(action_addr)
+        elif isinstance(action_addr, BackendOrganizationBootstrapAddr):
+            self._on_bootstrap_org_clicked(action_addr)
         else:
             show_error(self, _("TEXT_INVALID_URL"))
             return
