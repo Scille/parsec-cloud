@@ -8,7 +8,7 @@ from parsec.utils import TIMESTAMP_MAX_DT
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.api.protocol import RealmRole
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.test_events import events_subscribe
 from tests.backend.common import realm_create
 
@@ -99,7 +99,7 @@ async def test_create_realm_already_exists(backend, alice, alice_backend_sock, r
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_realm_create_not_allowed_for_outsider(backend, alice, alice_backend_sock):
     realm_id = UUID("C0000000000000000000000000000000")
     certif = RealmRoleCertificateContent.build_realm_root_certif(

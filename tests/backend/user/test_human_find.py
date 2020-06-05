@@ -4,7 +4,7 @@ import pytest
 
 from parsec.api.data import UserProfile
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import human_find
 
 
@@ -44,7 +44,7 @@ async def test_isolation_from_other_organization(
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_not_allowed_for_outsider(alice_backend_sock):
     rep = await human_find(alice_backend_sock, query="whatever")
     assert rep == {"status": "not_allowed", "reason": "Not allowed for user with OUTSIDER profile."}

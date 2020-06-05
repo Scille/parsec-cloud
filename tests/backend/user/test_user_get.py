@@ -6,7 +6,7 @@ from pendulum import Pendulum
 from parsec.api.data import UserProfile
 from parsec.api.protocol import packb, user_get_serializer
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import user_get
 
 
@@ -44,7 +44,7 @@ async def test_api_user_get_ok(access_testbed):
 
 
 @pytest.mark.trio
-@customize_fixture("bob_profile", UserProfile.OUTSIDER)
+@customize_fixtures(bob_profile=UserProfile.OUTSIDER)
 async def test_api_user_get_outsider_get_redacted_certifs(
     certificates_store, bob_backend_sock, alice, alice2, adam, bob
 ):
