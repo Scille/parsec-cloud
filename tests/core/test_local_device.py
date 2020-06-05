@@ -1,8 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
+from uuid import UUID
 from pathlib import Path
 
+from parsec.serde import packb, unpackb
+from parsec.core.types import LocalDevice
 from parsec.core.local_device import (
     get_key_file,
     list_available_devices,
@@ -14,6 +17,8 @@ from parsec.core.local_device import (
     LocalDeviceAlreadyExistsError,
     LocalDevicePackingError,
 )
+
+from tests.common import customize_fixtures
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -138,3 +143,33 @@ def test_change_password(config_dir, alice):
 
     with pytest.raises(LocalDeviceCryptoError):
         load_device_with_password(key_file, old_password)
+
+
+@customize_fixtures(alice_has_human_handle=False, alice_has_device_label=False)
+def test_supports_legacy_is_admin_field(alice):
+    # Manually craft a local user in legacy format
+    raw_legacy_local_user = {
+        "organization_addr": alice.organization_addr.to_url(),
+        "device_id": str(alice.device_id),
+        "signing_key": alice.signing_key.encode(),
+        "private_key": alice.private_key.encode(),
+        "is_admin": True,
+        "user_manifest_id": UUID(alice.user_manifest_id.hex),
+        "user_manifest_key": bytes(alice.user_manifest_key),
+        "local_symkey": bytes(alice.local_symkey),
+    }
+    dumped_legacy_local_user = packb(raw_legacy_local_user)
+
+    # Make sure the legacy format can be loaded
+    legacy_local_user = LocalDevice.load(dumped_legacy_local_user)
+    assert legacy_local_user == alice
+
+    # Manually decode new format to check it is compatible with legacy
+    dumped_local_user = alice.dump()
+    raw_local_user = unpackb(dumped_local_user)
+    assert raw_local_user == {
+        **raw_legacy_local_user,
+        "profile": alice.profile.value,
+        "human_handle": None,
+        "device_label": None,
+    }
