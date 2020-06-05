@@ -28,6 +28,7 @@ def core_cmd():
 
 core_cmd.add_command(run.run_gui, "gui")
 core_cmd.add_command(run.run_mountpoint, "run")
+core_cmd.add_command(run.rsync, "rsync")
 core_cmd.add_command(create_workspace.create_workspace, "create_workspace")
 core_cmd.add_command(share_workspace.share_workspace, "share_workspace")
 core_cmd.add_command(list_devices.list_devices, "list_devices")
