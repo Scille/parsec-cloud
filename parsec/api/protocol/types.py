@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
+from uuid import uuid4
 from collections import namedtuple
 from email.utils import parseaddr
 
@@ -34,6 +35,10 @@ class UserID(str):
     def __repr__(self):
         return f"<UserID {super().__repr__()}>"
 
+    @classmethod
+    def new(cls):
+        return cls(uuid4().hex)
+
 
 class DeviceName(str):
     __slots__ = ()
@@ -45,6 +50,10 @@ class DeviceName(str):
 
     def __repr__(self):
         return f"<DeviceName {super().__repr__()}>"
+
+    @classmethod
+    def new(cls):
+        return cls(uuid4().hex)
 
 
 class DeviceID(str):
@@ -65,6 +74,10 @@ class DeviceID(str):
     @property
     def device_name(self) -> DeviceName:
         return DeviceName(self.split("@")[1])
+
+    @classmethod
+    def new(cls):
+        return cls(f"{uuid4().hex}@{uuid4().hex}")
 
 
 OrganizationIDField = fields.str_based_field_factory(OrganizationID)

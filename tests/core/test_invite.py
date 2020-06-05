@@ -29,7 +29,6 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
         token=invitation.token,
     )
 
-    requested_device_name = DeviceName("Foo")
     requested_device_label = "Foo's label"
     granted_device_name = DeviceName("Bar")
     granted_device_label = "Bar's label"
@@ -61,8 +60,7 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
 
             nonlocal new_device
             new_device = await in_progress_ctx.do_claim_device(
-                requested_device_name=requested_device_name,
-                requested_device_label=requested_device_label,
+                requested_device_label=requested_device_label
             )
             assert isinstance(new_device, LocalDevice)
 
@@ -86,7 +84,6 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
 
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-        assert in_progress_ctx.requested_device_name == requested_device_name
         assert in_progress_ctx.requested_device_label == requested_device_label
 
         await in_progress_ctx.do_create_new_device(
@@ -157,12 +154,11 @@ async def test_good_user_claim(
     )
 
     # Let's pretent we invited a Fortnite player...
-    requested_device_id = DeviceID("xXx_zack_xXx@ultr4_b00st")
-    requested_human_handle = HumanHandle(email="ZACK@example.com", label="Z4ck")
-    requested_device_label = "Ultr4 B00st's label"
+    requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
+    requested_device_label = "Ultr4_B00st"
     granted_device_id = DeviceID("zack@pc1")
     granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
-    granted_device_label = "PC1's label"
+    granted_device_label = "Desktop"
     granted_profile = UserProfile.STANDARD
     new_device = None
 
@@ -193,7 +189,6 @@ async def test_good_user_claim(
 
             nonlocal new_device
             new_device = await in_progress_ctx.do_claim_user(
-                requested_device_id=requested_device_id,
                 requested_device_label=requested_device_label,
                 requested_human_handle=requested_human_handle,
             )
@@ -219,7 +214,6 @@ async def test_good_user_claim(
 
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-        assert in_progress_ctx.requested_device_id == requested_device_id
         assert in_progress_ctx.requested_device_label == requested_device_label
         assert in_progress_ctx.requested_human_handle == requested_human_handle
 

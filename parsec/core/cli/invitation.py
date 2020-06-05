@@ -133,9 +133,7 @@ async def _do_greet_user(device, initial_ctx):
     granted_email = await aprompt(
         "New user email", default=in_progress_ctx.requested_human_handle.email
     )
-    granted_device_id = await aprompt(
-        "New user device ID", default=in_progress_ctx.requested_device_id, type=DeviceID
-    )
+    granted_device_id = DeviceID.new()
     granted_device_label = await aprompt(
         "New user device label", default=in_progress_ctx.requested_device_label
     )
@@ -183,9 +181,7 @@ async def _do_greet_device(device, initial_ctx):
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_device_name = await aprompt(
-        "New device name", default=in_progress_ctx.requested_device_name, type=DeviceName
-    )
+    granted_device_name = DeviceName.new()
     granted_device_label = await aprompt(
         "New device label", default=in_progress_ctx.requested_device_label
     )
@@ -267,12 +263,9 @@ async def _do_claim_user(initial_ctx):
 
     requested_label = await aprompt("User fullname")
     requested_email = initial_ctx.claimer_email
-    default_device_id = f"{requested_email.split('@', 1)[0]}@{platform.node()}"
-    requested_device_id = await aprompt("Device ID", default=default_device_id, type=DeviceID)
     requested_device_label = await aprompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_user(
-            requested_device_id=requested_device_id,
             requested_device_label=requested_device_label,
             requested_human_handle=HumanHandle(email=requested_email, label=requested_label),
         )
@@ -301,12 +294,10 @@ async def _do_claim_device(initial_ctx):
     async with spinner("Waiting for greeter"):
         in_progress_ctx = await in_progress_ctx.do_wait_peer_trust()
 
-    requested_device_name = await aprompt("Device name", default=platform.node(), type=DeviceName)
     requested_device_label = await aprompt("Device label", default=platform.node())
     async with spinner("Waiting for greeter (finalizing)"):
         new_device = await in_progress_ctx.do_claim_device(
-            requested_device_name=requested_device_name,
-            requested_device_label=requested_device_label,
+            requested_device_label=requested_device_label
         )
 
     return new_device
