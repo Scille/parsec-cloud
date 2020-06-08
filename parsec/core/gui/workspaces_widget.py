@@ -191,7 +191,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset_timer.setSingleShot(True)
         self.reset_timer.timeout.connect(self.on_timeout)
 
-        self.mountpoint_started.connect(self._on_mountpoint_stated_qt)
+        self.mountpoint_started.connect(self._on_mountpoint_started_qt)
         self.mountpoint_stopped.connect(self._on_mountpoint_stopped_qt)
 
         self.sharing_updated_qt.connect(self._on_sharing_updated_qt)
@@ -643,7 +643,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_fs_updated_qt(self, event, workspace_id):
         self.reset()
 
-    def _on_mountpoint_stated_qt(self, workspace_id, timestamp):
+    def _on_mountpoint_started_qt(self, workspace_id, timestamp):
         wb = self.get_workspace_button(workspace_id, timestamp)
         if wb:
             wb.set_mountpoint_state(True)
