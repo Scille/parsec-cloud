@@ -67,9 +67,15 @@ async def logged_core_factory(
         backend_conn.register_monitor(partial(monitor_sync, user_fs, event_bus))
 
         async with backend_conn.run():
-
             async with mountpoint_manager_factory(
-                user_fs, event_bus, config.mountpoint_base_dir
+                user_fs,
+                event_bus,
+                config.mountpoint_base_dir,
+                mount_all=config.mountpoint_enabled,
+                mount_on_workspace_created=config.mountpoint_enabled,
+                mount_on_workspace_shared=config.mountpoint_enabled,
+                unmount_on_workspace_revoked=config.mountpoint_enabled,
+                exclude_from_mount_all=config.disabled_workspaces,
             ) as mountpoint_manager:
 
                 yield LoggedCore(

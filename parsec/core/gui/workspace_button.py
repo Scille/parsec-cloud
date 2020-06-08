@@ -4,14 +4,16 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QGraphicsDropShadowEffect, QMenu
 from PyQt5.QtGui import QColor, QCursor
 
-from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped
-from parsec.core.types import EntryID
+from parsec.core.fs import WorkspaceFS
+from parsec.core.types import EntryID, WorkspaceRole
 
 from parsec.core.gui.lang import translate as _, format_datetime
 from parsec.core.gui.custom_dialogs import show_info
 
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 from parsec.core.gui.ui.empty_workspace_widget import Ui_EmptyWorkspaceWidget
+
+from parsec.core.gui.switch_button import SwitchButton
 
 
 # Only used because we can't hide widgets in QtDesigner and adding the empty workspace
@@ -31,31 +33,35 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     rename_clicked = pyqtSignal(QWidget)
     remount_ts_clicked = pyqtSignal(WorkspaceFS)
     open_clicked = pyqtSignal(WorkspaceFS)
+    switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
 
     def __init__(
         self,
         workspace_name,
         workspace_fs,
-        is_shared,
-        is_creator,
+        users_roles,
+        is_mounted,
         files=None,
         reencryption_needs=None,
         timestamped=False,
     ):
         super().__init__()
         self.setupUi(self)
-        self.is_creator = is_creator
+        self.users_roles = users_roles
         self.workspace_name = workspace_name
         self.workspace_fs = workspace_fs
         self.reencryption_needs = reencryption_needs
         self.timestamped = timestamped
-        self.is_shared = is_shared
         self.reencrypting = None
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.widget_empty.layout().addWidget(EmptyWorkspaceWidget())
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         files = files or []
+
+        self.switch_button = SwitchButton()
+        self.widget_actions.layout().insertWidget(0, self.switch_button)
+        self.switch_button.clicked.connect(self._on_switch_clicked)
 
         if not len(files):
             self.widget_empty.show()
@@ -70,36 +76,24 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.widget_empty.hide()
 
         if self.timestamped:
-            self.widget_title.setStyleSheet(
-                "background-color: #E3E3E3; border-top-left-radius: 8px; border-top-right-radius: 8px;"
-            )
-            self.widget_actions.setStyleSheet(
-                "background-color: #E3E3E3; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"
-            )
-            self.setStyleSheet("background-color: #E3E3E3; border-radius: 8px;")
+            self.widget_title.setStyleSheet("background-color: #DDDDDD;")
+            self.widget_actions.setStyleSheet("background-color: #DDDDDD;")
+            self.widget.setStyleSheet("background-color: #DDDDDD;")
+            self.switch_button.setChecked(True)
             self.button_reencrypt.hide()
             self.button_remount_ts.hide()
             self.button_share.hide()
             self.button_rename.hide()
             self.label_shared.hide()
             self.label_owner.hide()
-        else:
-            self.widget_title.setStyleSheet(
-                "background-color: #FFFFFF; border-top-left-radius: 8px; border-top-right-radius: 8px;"
-            )
-            self.widget_actions.setStyleSheet(
-                "background-color: #FFFFFF; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"
-            )
-            self.setStyleSheet("background-color: #FFFFFF; border-radius: 8px;")
-            self.button_delete.hide()
-
+            self.switch_button.hide()
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(0x99, 0x99, 0x99))
         effect.setBlurRadius(10)
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
-        if not self.is_creator:
+        if not self.is_owner:
             self.button_reencrypt.hide()
         self.label_reencrypting.hide()
         self.button_share.clicked.connect(self.button_share_clicked)
@@ -117,11 +111,34 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_owner.apply_style()
         self.label_shared.apply_style()
         self.label_reencrypting.apply_style()
-        if not self.is_creator:
+        if not self.is_owner:
             self.label_owner.hide()
         if not self.is_shared:
             self.label_shared.hide()
         self.reload_workspace_name(self.workspace_name)
+        self.set_mountpoint_state(is_mounted)
+
+    @property
+    def is_shared(self):
+        return len(self.users_roles) > 1
+
+    @property
+    def owner(self):
+        for user_id, role in self.users_roles.items():
+            if role == WorkspaceRole.OWNER:
+                return user_id
+        raise ValueError
+
+    @property
+    def others(self):
+        return [
+            user_id for user_id in self.users_roles if user_id != self.workspace_fs.device.user_id
+        ]
+
+    @property
+    def is_owner(self):
+        user_id = self.workspace_fs.device.user_id
+        return self.users_roles[user_id] == WorkspaceRole.OWNER
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
@@ -153,11 +170,11 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def button_reencrypt_clicked(self):
         if self.reencryption_needs:
-            if not self.is_creator:
+            if not self.is_owner:
                 show_info(self.parent(), message=_("TEXT_WORKSPACE_ONLY_OWNER_CAN_REENCRYPT"))
                 return
             self.reencrypt_clicked.emit(
-                self.workspace_fs.workspace_id,
+                self.workspace_id,
                 bool(self.reencryption_needs.user_revoked),
                 bool(self.reencryption_needs.role_revoked),
             )
@@ -176,13 +193,21 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         return self.workspace_name
 
     @property
+    def workspace_id(self):
+        return self.workspace_fs.workspace_id
+
+    @property
+    def timestamp(self):
+        return getattr(self.workspace_fs, "timestamp", None)
+
+    @property
     def reencryption_needs(self):
         return self._reencryption_needs
 
     @reencryption_needs.setter
     def reencryption_needs(self, val):
         self._reencryption_needs = val
-        if not self.is_creator:
+        if not self.is_owner:
             return
         if self.reencryption_needs and self.reencryption_needs.need_reencryption:
             self.button_reencrypt.show()
@@ -204,7 +229,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_reencrypting.hide()
 
         self._reencrypting = val
-        if not self.is_creator:
+        if not self.is_owner:
             return
         if self._reencrypting:
             _start_reencrypting()
@@ -220,9 +245,21 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def reload_workspace_name(self, workspace_name):
         self.workspace_name = workspace_name
         display = workspace_name
-        if self.is_shared and self.is_creator:
-            display += " ({})".format(_("TEXT_WORKSPACE_IS_SHARED"))
-        if isinstance(self.workspace_fs, WorkspaceFSTimestamped):
+
+        if not self.timestamped:
+            if not self.is_shared:
+                shared_message = _("TEXT_WORKSPACE_IS_PRIVATE")
+            elif not self.is_owner:
+                shared_message = _("TEXT_WORKSPACE_IS_OWNED_BY_user").format(user=self.owner)
+            elif len(self.others) == 1:
+                user, = self.others
+                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_user").format(user=user)
+            else:
+                n = len(self.others)
+                assert n > 1
+                shared_message = _("TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS").format(n=n)
+            display += " ({})".format(shared_message)
+        else:
             display += "-" + _("TEXT_WORKSPACE_IS_TIMESTAMPED_date").format(
                 date=format_datetime(self.workspace_fs.timestamp)
             )
@@ -232,5 +269,22 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.label_title.setText(display)
 
     def mousePressEvent(self, event):
-        if event.button() & Qt.LeftButton:
+        if event.button() & Qt.LeftButton and self.switch_button.isChecked():
             self.clicked.emit(self.workspace_fs)
+
+    def _on_switch_clicked(self, state):
+        self.set_mountpoint_state(state)
+        self.switch_clicked.emit(state, self.workspace_fs, self.timestamp)
+
+    def set_mountpoint_state(self, state):
+        if self.timestamped:
+            return
+        self.switch_button.setChecked(state)
+        if state:
+            self.widget.setStyleSheet("background-color: #FFFFFF;")
+            self.widget_title.setStyleSheet("background-color: #FFFFFF;")
+            self.widget_actions.setStyleSheet("background-color: #FFFFFF;")
+        else:
+            self.widget.setStyleSheet("background-color: #DDDDDD;")
+            self.widget_title.setStyleSheet("background-color: #DDDDDD;")
+            self.widget_actions.setStyleSheet("background-color: #DDDDDD;")

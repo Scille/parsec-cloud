@@ -84,6 +84,7 @@ async def _teardown_mountpoint(mountpoint_path):
 
 
 async def fuse_mountpoint_runner(
+    user_fs,
     workspace_fs,
     base_mountpoint_path: PurePath,
     config: dict,
@@ -105,8 +106,14 @@ async def fuse_mountpoint_runner(
         base_mountpoint_path, workspace_fs
     )
 
+    # Prepare event information
+    event_kwargs = {
+        "mountpoint": mountpoint_path,
+        "workspace_id": workspace_fs.workspace_id,
+        "timestamp": getattr(workspace_fs, "timestamp", None),
+    }
     try:
-        event_bus.send("mountpoint.starting", mountpoint=mountpoint_path)
+        event_bus.send("mountpoint.starting", **event_kwargs)
 
         async with trio.open_service_nursery() as nursery:
 
@@ -155,12 +162,12 @@ async def fuse_mountpoint_runner(
                 )
                 await _wait_for_fuse_ready(mountpoint_path, fuse_thread_started, initial_st_dev)
 
-            event_bus.send("mountpoint.started", mountpoint=mountpoint_path)
+            event_bus.send("mountpoint.started", **event_kwargs)
             task_status.started(mountpoint_path)
 
     finally:
         await _stop_fuse_thread(mountpoint_path, fuse_operations, fuse_thread_stopped)
-        event_bus.send("mountpoint.stopped", mountpoint=mountpoint_path)
+        event_bus.send("mountpoint.stopped", **event_kwargs)
         await _teardown_mountpoint(mountpoint_path)
 
 

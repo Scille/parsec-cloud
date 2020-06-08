@@ -22,11 +22,12 @@ def test_rename_to_another_drive(mountpoint_service):
         yid = await user_fs.workspace_create("y")
         x_path = await mountpoint_manager.mount_workspace(xid)
         y_path = await mountpoint_manager.mount_workspace(yid)
+        print(x_path, y_path)
 
     mountpoint_service.execute(_bootstrap)
 
     with pytest.raises(OSError) as exc:
-        (x_path / "foo.txt").rename(y_path)
+        (x_path / "foo.txt").rename(y_path / "foo.txt")
     assert str(exc.value).startswith(
         "[WinError 17] The system cannot move the file to a different disk drive"
     )
@@ -153,19 +154,14 @@ def test_mount_workspace_with_non_win32_friendly_name(mountpoint_service_factory
             wid = await user_fs.workspace_create(name)
             workspace = user_fs.get_workspace(wid)
             await workspace.touch(f"/{name}")
-        await mountpoint_manager.mount_all()
+            workspaces.append(await mountpoint_manager.mount_workspace(wid))
+        # await mountpoint_manager.mount_all()
 
-    mountpoint_service = mountpoint_service_factory(_bootstrap)
+    workspaces = []
+    mountpoint_service_factory(_bootstrap)
 
-    workspaces = list(mountpoint_service.base_mountpoint.iterdir())
-
-    assert set(x.name for x in workspaces) == {cooked_name for _, cooked_name in items}
-
-    for _, cooked_name in items:
-        workspace = mountpoint_service.base_mountpoint / cooked_name
-        # TODO: currently failed with a `[WinError 1005] The volume does not contain a recognized file system.`
-        # assert workspace.exists()
-
+    for workspace, (_, cooked_name) in zip(workspaces, items):
+        assert workspace.exists()
         entries = list(workspace.iterdir())
         assert [x.name for x in entries] == [cooked_name]
         assert entries[0].exists()
@@ -181,20 +177,15 @@ def test_mount_workspace_with_too_long_name(mountpoint_service_factory):
 
     async def _bootstrap(user_fs, mountpoint_manager):
         wid = await user_fs.workspace_create(too_long)
-        workspace = user_fs.get_workspace(wid)
-        await workspace.touch(f"/foo.txt")
+        workspaces.append(await mountpoint_manager.mount_workspace(wid))
 
         wid = await user_fs.workspace_create(too_long_once_encoded)
-        workspace = user_fs.get_workspace(wid)
-        await workspace.touch(f"/foo.txt")
+        workspaces.append(await mountpoint_manager.mount_workspace(wid))
 
-        await mountpoint_manager.mount_all()
-
-    mountpoint_service = mountpoint_service_factory(_bootstrap)
-
-    # TODO: should be doing a `workspace.exists()` instead
-    assert (mountpoint_service.base_mountpoint / too_long / "foo.txt").exists()
-    assert (mountpoint_service.base_mountpoint / too_long_once_encoded / "foo.txt").exists()
+    workspaces = []
+    mountpoint_service_factory(_bootstrap)
+    for workspace in workspaces:
+        assert workspace.exists()
 
 
 @pytest.mark.win32

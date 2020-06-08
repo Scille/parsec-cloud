@@ -248,6 +248,20 @@ msgstr "Seul le propriétaire d'un espace de travail peut le rechiffrer."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "En cours de rechiffrement"
 
+msgid "TEXT_WORKSPACE_IS_PRIVATE"
+msgstr "privé"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
+msgstr "partagé avec {user}"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS"
+msgstr "partagé avec {n} utilisateurs"
+
+msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
+msgstr "administré par {user}"
+
+msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
+msgstr "temporary_{date}"
 msgid "TEXT_WORKSPACE_IS_SHARED"
 msgstr "partagé"
 
@@ -1583,20 +1597,6 @@ msgstr "Autoriser les rapports d'erreur"
 
 msgid "ACTION_NO"
 msgstr "Non"
-
-msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
-msgstr "Restaurer la comptabilité avec Acrobat Reader DC"
-
-msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"
-msgstr ""
-"La configuration actuelle d'Acrobat Reader DC n'est pas compatible avec PARSEC.<br />\n"
-"Dans l'état actuel, Acrobat ne sera pas capable d'ouvrir les fichiers PDF stockés dans les espaces de travail.<br /><br />\n"
-"\n"
-"Voulez-vous autoriser Parsec à restaurer la compatibilité en désactivant la fonctionnalité \"Exécuter dans AppContainer\" dans la configuration d'Acrobat ? "
-"Cette option est accessible dans la configuration de PARSER si nécessaire."
-
-msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
-msgstr "Désactiver les conteneurs Acrobat"
 
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
 msgstr "Bienvenue dans Parsec !"

@@ -322,7 +322,7 @@ extra_requirements = {
         PYQT_DEP,
         BABEL_DEP,
         'fusepy==3.0.1;platform_system=="Linux"',
-        'winfspy==0.7.4;platform_system=="Windows"',
+        'winfspy==0.7.5;platform_system=="Windows"',
         "zxcvbn==4.4.27",
         "psutil==5.6.3",
     ],
@@ -365,7 +365,10 @@ setup(
         "build_py": build_py_with_pyqt,
     },
     # Omitting GUI resources given they end up packaged in `parsec/core/gui/_resources_rc.py`
-    package_data={"parsec.backend.postgresql.migrations": ["*"]},
+    package_data={
+        "parsec.backend.postgresql.migrations": ["*.sql"],
+        "parsec.core.resources": ["*.ico"],
+    },
     entry_points={
         "console_scripts": ["parsec = parsec.cli:cli"],
         "babel.extractors": ["extract_qt = misc.babel_qt_extractor.extract_qt"],

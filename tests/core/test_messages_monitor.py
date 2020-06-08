@@ -97,7 +97,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
             "sharing.updated",
             {
                 "new_entry": WorkspaceEntry(
-                    name="foo (shared by alice)",
+                    name="foo",
                     id=wid,
                     key=ANY,
                     encryption_revision=1,
@@ -124,7 +124,7 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
             "sharing.updated",
             {
                 "new_entry": WorkspaceEntry(
-                    name="w (shared by alice)",
+                    name="w",
                     id=wid,
                     key=ANY,
                     encryption_revision=1,
@@ -133,7 +133,7 @@ async def test_revoke_sharing_trigger_event(alice_core, bob_core, running_backen
                     role=None,
                 ),
                 "previous_entry": WorkspaceEntry(
-                    name="w (shared by alice)",
+                    name="w",
                     id=wid,
                     key=ANY,
                     encryption_revision=1,
@@ -182,7 +182,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
             "sharing.updated",
             {
                 "new_entry": WorkspaceEntry(
-                    name="w (shared by alice)",
+                    name="w",
                     id=wid,
                     key=ANY,
                     encryption_revision=2,
@@ -191,7 +191,7 @@ async def test_new_reencryption_trigger_event(alice_core, bob_core, running_back
                     role=WorkspaceRole.MANAGER,
                 ),
                 "previous_entry": WorkspaceEntry(
-                    name="w (shared by alice)",
+                    name="w",
                     id=wid,
                     key=ANY,
                     encryption_revision=1,

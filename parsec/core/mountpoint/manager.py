@@ -3,9 +3,10 @@
 import os
 import trio
 import logging
-from functools import partial
+from typing import Sequence
 from pathlib import PurePath
 from pendulum import Pendulum
+from structlog import get_logger
 from importlib import __import__ as import_function
 
 from async_generator import asynccontextmanager
@@ -21,8 +22,10 @@ from parsec.core.mountpoint.exceptions import (
     MountpointNotMounted,
     MountpointWinfspNotAvailable,
     MountpointFuseNotAvailable,
+    MountpointError,
 )
 from parsec.core.mountpoint.winify import winify_entry_name
+from parsec.core.win_registry import cleanup_parsec_drive_icons
 
 
 # Importing winfspy can take some time (about 0.4 seconds)
@@ -36,6 +39,8 @@ try:
         import_function("fuse")
 except (ImportError, RuntimeError):
     pass
+
+logger = get_logger()
 
 
 def get_mountpoint_runner():
@@ -134,15 +139,23 @@ class MountpointManager:
         return new_workspace
 
     async def _mount_workspace_helper(self, workspace_fs, timestamp: Pendulum = None):
-        curried_runner = partial(
-            self._runner,
-            workspace_fs,
-            self.base_mountpoint_path,
-            config=self.config,
-            event_bus=self.event_bus,
-        )
+        key = (workspace_fs.workspace_id, timestamp)
+
+        async def curried_runner(task_status=trio.TASK_STATUS_IGNORED):
+            try:
+                return await self._runner(
+                    self.user_fs,
+                    workspace_fs,
+                    self.base_mountpoint_path,
+                    config=self.config,
+                    event_bus=self.event_bus,
+                    task_status=task_status,
+                )
+            finally:
+                self._mountpoint_tasks.pop(key, None)
+
         runner_task = await start_task(self._nursery, curried_runner)
-        self._mountpoint_tasks[(workspace_fs.workspace_id, timestamp)] = runner_task
+        self._mountpoint_tasks[key] = runner_task
         return runner_task
 
     def get_path_in_mountpoint(
@@ -175,7 +188,6 @@ class MountpointManager:
             raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
         await self._mountpoint_tasks[(workspace_id, timestamp)].cancel_and_join()
-        del self._mountpoint_tasks[(workspace_id, timestamp)]
 
     async def remount_workspace_new_timestamp(
         self, workspace_id: EntryID, original_timestamp: Pendulum, target_timestamp: Pendulum
@@ -198,13 +210,13 @@ class MountpointManager:
                 raise MountpointNotMounted(f"Workspace `{workspace_id}` not mounted.")
 
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
-            del self._mountpoint_tasks[(workspace_id, original_timestamp)]
         return runner_task.value
 
-    async def mount_all(self, timestamp: Pendulum = None):
+    async def mount_all(self, timestamp: Pendulum = None, exclude: Sequence[EntryID] = ()):
+        exclude_set = set(exclude)
         user_manifest = self.user_fs.get_user_manifest()
         for workspace_entry in user_manifest.workspaces:
-            if workspace_entry.role is None:
+            if workspace_entry.role is None or workspace_entry.id in exclude_set:
                 continue
             try:
                 await self.mount_workspace(workspace_entry.id, timestamp=timestamp)
@@ -222,23 +234,106 @@ class MountpointManager:
             if workspace_id_and_ts[1] is not None
         }
 
+    def is_workspace_mounted(self, workspace_id: EntryID, timestamp=None) -> bool:
+        return (workspace_id, timestamp) in self._mountpoint_tasks
+
+    async def safe_mount(self, workspace_id: EntryID) -> None:
+        try:
+            await self.mount_workspace(workspace_id)
+
+        # The workspace could not be mounted
+        # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
+        except MountpointError:
+            pass
+
+        # Unexpected exception is not a reason to crash the mountpoint manager
+        except Exception:
+            logger.exception("Unexpected error while mounting a new workspace")
+
+    async def safe_unmount(self, workspace_id: EntryID) -> None:
+        try:
+            await self.unmount_workspace(workspace_id)
+
+        # The workspace could not be mounted
+        # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
+        except MountpointError:
+            pass
+
+        # Unexpected exception is not a reason to crash the mountpoint manager
+        except Exception:
+            logger.exception("Unexpected error while unmounting a revoked workspace")
+
 
 @asynccontextmanager
 async def mountpoint_manager_factory(
-    user_fs, event_bus, base_mountpoint_path, *, enabled=True, debug: bool = False, **config
+    user_fs,
+    event_bus,
+    base_mountpoint_path,
+    *,
+    debug: bool = False,
+    mount_all: bool = False,
+    mount_on_workspace_created: bool = False,
+    mount_on_workspace_shared: bool = False,
+    unmount_on_workspace_revoked: bool = False,
+    exclude_from_mount_all: list = (),
 ):
-    config["debug"] = debug
+    config = {"debug": debug}
 
     runner = get_mountpoint_runner()
 
+    # Now is a good time to perform some cleanup in the registry
+    if os.name == "nt":
+        cleanup_parsec_drive_icons()
+
+    def on_event(event, new_entry, previous_entry=None):
+        # Workspace created
+        if event == "fs.workspace.created":
+            if mount_on_workspace_created:
+                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
+            return
+
+        # Workspace revoked
+        if event == "sharing.updated" and new_entry.role is None:
+            if unmount_on_workspace_revoked:
+                mount_nursery.start_soon(mountpoint_manager.safe_unmount, new_entry.id)
+            return
+
+        # Workspace shared
+        if event == "sharing.updated" and previous_entry is None:
+            if mount_on_workspace_shared:
+                mount_nursery.start_soon(mountpoint_manager.safe_mount, new_entry.id)
+            return
+
+    # Instantiate the mountpoint manager with its own nursery
     async with trio.open_service_nursery() as nursery:
         mountpoint_manager = MountpointManager(
             user_fs, event_bus, base_mountpoint_path, config, runner, nursery
         )
-        try:
-            yield mountpoint_manager
 
+        # Exit this context by unmounting all mountpoints
+        try:
+
+            # A nursery dedicated to new workspace events
+            async with trio.open_service_nursery() as mount_nursery:
+
+                # Setup new workspace events
+                with event_bus.connect_in_context(
+                    ("fs.workspace.created", on_event), ("sharing.updated", on_event)
+                ):
+
+                    # Mount required workspaces
+                    if mount_all:
+                        await mountpoint_manager.mount_all(exclude=exclude_from_mount_all)
+
+                    # Yield point
+                    yield mountpoint_manager
+
+                    # Cancel current mount_workspace tasks
+                    mount_nursery.cancel_scope.cancel()
+
+        # Unmount all the workspaces (should this be shielded?)
         finally:
             await mountpoint_manager.unmount_all()
 
+        # Cancel the mountpoint tasks (although they should all be finised by now)
         nursery.cancel_scope.cancel()

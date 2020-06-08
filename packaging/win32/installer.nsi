@@ -12,7 +12,7 @@
 !define PROGRAM_NAME "Parsec"
 !define PROGRAM_WEB_SITE "http://parsec.cloud"
 !define APPGUID "6C37F945-7EFC-480A-A444-A6D44A3D107F"
-!define MOUNTPOINT "$PROFILE\Parsec"
+!define OBSOLETE_MOUNTPOINT "$PROFILE\Parsec"
 
 # Detect version from file
 !define BUILD_DIR "build"
@@ -49,7 +49,6 @@ SetCompressorDictSize 64
 !define MUI_HEADERIMAGE_BITMAP "installer-top.bmp"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "installer-side.bmp"
 !define MUI_COMPONENTSPAGE_SMALLDESC
-!define MUI_FINISHPAGE_NOAUTOCLOSE
 !define MUI_ABORTWARNING
 # Start Menu Folder Page Configuration
 !define MUI_STARTMENUPAGE_DEFAULTFOLDER ${PROGRAM_NAME}
@@ -73,13 +72,18 @@ SetCompressorDictSize 64
 
 # --- Start of Modern User Interface ---
 Var StartMenuFolder
-# Welcome, License & Components pages
+
+# Welcome, License
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE ${LICENSE_FILEPATH}
-!insertmacro MUI_PAGE_COMPONENTS
+
+# Skipping the components page
+# !insertmacro MUI_PAGE_COMPONENTS
+
 # Let the user select the installation directory
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
+
 # Run installation
 !insertmacro MUI_PAGE_INSTFILES
 # Popup Message if VC Redist missing
@@ -194,8 +198,9 @@ Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
 OutFile "${BUILD_DIR}\${INSTALLER_FILENAME}"
 InstallDir "$PROGRAMFILES\Parsec"
 
-ShowInstDetails show
-ShowUnInstDetails show
+# No need for such details
+ShowInstDetails hide
+ShowUnInstDetails hide
 
 # Install main application
 Section "Parsec Secure Cloud Sharing" Section1
@@ -205,19 +210,6 @@ Section "Parsec Secure Cloud Sharing" Section1
     SetOverwrite ifnewer
     SetOutPath "$INSTDIR"
     WriteIniStr "$INSTDIR\homepage.url" "InternetShortcut" "URL" "${PROGRAM_WEB_SITE}"
-
-    CreateDirectory "${MOUNTPOINT}"
-
-    FileOpen $1 "${MOUNTPOINT}\desktop.ini" w
-    FileWrite $1 "[.ShellClassInfo]$\r$\n"
-    FileWrite $1 "IconFile=$INSTDIR\parsec.exe$\r$\n"
-    FileWrite $1 "IconIndex=0$\r$\n"
-    FileWrite $1 "InfoTip=Secure Cloud Framework$\r$\n"
-    FileWrite $1 "NoSharing=1$\r$\n"
-    FileClose $1
-
-    SetFileAttributes "${MOUNTPOINT}" SYSTEM
-    SetFileAttributes "${MOUNTPOINT}\desktop.ini" SYSTEM|HIDDEN|READONLY
 
     !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
         SetShellVarContext all
@@ -238,6 +230,7 @@ SectionEnd
     Delete ${WINFSP_INSTALLER}
 !macroend
 
+# Install winfsp if necessary
 Section "WinFSP" Section2
     ClearErrors
     ReadRegStr $0 HKCR "Installer\Dependencies\WinFsp" "Version"
@@ -264,51 +257,31 @@ Section "Associate parsec:// URI links with Parsec" Section3
     WriteRegStr HKCR "Parsec\shell\open\command" "" '"$INSTDIR\parsec.exe" "%1"'
 SectionEnd
 
-Section "Add a link pointing to the mountpoint in Windows Explorer" Section4
+# Hidden: Remove obsolete entries
+Section "-Remove obsolete entries" Section4
+    # Remove obsolete parsec registry configuration
     DeleteRegKey HKCU "Software\Classes\CLSID\{${APPGUID}}"
     DeleteRegKey HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}"
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}}"
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${APPGUID}}"
     ClearErrors
-
-    WriteRegStr HKCU "Software\Classes\CLSID\{${APPGUID}}" "" "Parsec"
-    WriteRegDWORD HKCU "Software\Classes\CLSID\{${APPGUID}}" "SortOrderIndex" 0x42
-    WriteRegDWORD HKCU "Software\Classes\CLSID\{${APPGUID}}" "System.IsPinnedToNamespaceTree" 0x1
-    WriteRegStr HKCU "Software\Classes\CLSID\{${APPGUID}}\DefaultIcon" "" "$INSTDIR\parsec.exe,0"
-    WriteRegExpandStr HKCU "Software\Classes\CLSID\{${APPGUID}}\InProcServer32" "" "%SYSTEMROOT%\system32\shell32.dll"
-    WriteRegStr HKCU "Software\Classes\CLSID\{${APPGUID}}\Instance" "CLSID" "{0E5AAE11-A475-4c5b-AB00-C66DE400274E}"
-    WriteRegDWORD HKCU "Software\Classes\CLSID\{${APPGUID}}\Instance\InitPropertyBag" "Attributes" 0x11
-    WriteRegStr HKCU "Software\Classes\CLSID\{${APPGUID}}\Instance\InitPropertyBag" "TargetFolderPath" "${MOUNTPOINT}"
-    WriteRegDWORD HKCU "Software\Classes\CLSID\{${APPGUID}}\ShellFolder" "Attributes" 0xf080004d
-    WriteRegDWORD HKCU "Software\Classes\CLSID\{${APPGUID}}\ShellFolder" "FolderValueFlags" 0x28
-
-    WriteRegStr HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}" "" "Parsec"
-    WriteRegDWORD HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}" "SortOrderIndex" 0x42
-    WriteRegDWORD HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}" "System.IsPinnedToNamespaceTree" 0x1
-    WriteRegStr HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\DefaultIcon" "" "$INSTDIR\parsec.exe,0"
-    WriteRegExpandStr HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\InProcServer32" "" "%SYSTEMROOT%\SysWow64\shell32.dll"
-    WriteRegStr HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\Instance" "CLSID" "{0E5AAE11-A475-4c5b-AB00-C66DE400274E}"
-    WriteRegDWORD HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\Instance\InitPropertyBag" "Attributes" 0x11
-    WriteRegStr HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\Instance\InitPropertyBag" "TargetFolderPath" "${MOUNTPOINT}"
-    WriteRegDWORD HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\ShellFolder" "Attributes" 0xf080004d
-    WriteRegDWORD HKCU "Software\Classes\Wow6432Node\CLSID\{${APPGUID}}\ShellFolder" "FolderValueFlags" 0x28
-
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}}" "" "Parsec"
-
-    WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" "{${APPGUID}}" 0x1
+    # Remove obsolete mountpoint folder
+    Delete "${OBSOLETE_MOUNTPOINT}\desktop.ini"
+    RMDir "${OBSOLETE_MOUNTPOINT}"
+    ClearErrors
 SectionEnd
 
-LangString DESC_Section1 ${LANG_ENGLISH} "Install Parsec."
-LangString DESC_Section2 ${LANG_ENGLISH} "Install WinFSP."
-LangString DESC_Section3 ${LANG_ENGLISH} "Let Parsec handle parsec:// URI links from the web-browser."
-LangString DESC_Section4 ${LANG_ENGLISH} "Add a link pointing to the mountpoint in the Windows Explorer."
-
-!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${Section1} $(DESC_Section1)
-    !insertmacro MUI_DESCRIPTION_TEXT ${Section2} $(DESC_Section2)
-    !insertmacro MUI_DESCRIPTION_TEXT ${Section3} $(DESC_Section3)
-    !insertmacro MUI_DESCRIPTION_TEXT ${Section4} $(DESC_Section4)
-!insertmacro MUI_FUNCTION_DESCRIPTION_END
+# The components screen is skipped - this is no longer necessary
+# LangString DESC_Section1 ${LANG_ENGLISH} "Install Parsec."
+# LangString DESC_Section2 ${LANG_ENGLISH} "Install WinFSP."
+# LangString DESC_Section3 ${LANG_ENGLISH} "Let Parsec handle parsec:// URI links from the web-browser."
+# LangString DESC_Section4 ${LANG_ENGLISH} "Remove obsolete entries from outdated parsec installation."
+# !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+#     !insertmacro MUI_DESCRIPTION_TEXT ${Section1} $(DESC_Section1)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${Section2} $(DESC_Section2)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${Section3} $(DESC_Section3)
+#     !insertmacro MUI_DESCRIPTION_TEXT ${Section4} $(DESC_Section4)
+# !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 # Create uninstaller.
 Section -Uninstaller

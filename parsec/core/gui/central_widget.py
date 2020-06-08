@@ -4,7 +4,6 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
-from parsec.core.gui import desktop
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -53,8 +52,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         for e in self.NOTIFICATION_EVENTS:
             self.event_bus.connect(e, self.handle_event)
 
-        self.label_mountpoint.setText(str(self.core.config.mountpoint_base_dir))
-        self.label_mountpoint.clicked.connect(self.open_mountpoint)
         self.menu.organization = self.core.device.organization_addr.organization_id
         self.menu.username = self.core.device.user_id
         self.menu.device = self.core.device.device_name
@@ -71,8 +68,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         self.widget_title3.hide()
         self.title2_icon.apply_style()
         self.title3_icon.apply_style()
-
-        self.icon_mountpoint.apply_style()
 
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(100, 100, 100))
@@ -105,9 +100,6 @@ class CentralWidget(QWidget, Ui_CentralWidget):
         else:
             self.widget_title2.hide()
             self.widget_title3.hide()
-
-    def open_mountpoint(self, path):
-        desktop.open_file(path)
 
     def handle_event(self, event, **kwargs):
         if event == "backend.connection.changed":

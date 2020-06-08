@@ -30,6 +30,9 @@ async def logged_gui(
     aqtbot, gui_factory, autoclose_dialog, core_config, alice, running_backend, monkeypatch
 ):
     save_device_with_password(core_config.config_dir, alice, "P@ssw0rd")
+    monkeypatch.setattr(
+        "parsec.core.gui.workspaces_widget.WorkspacesWidget.RESET_TIMER_THRESHOLD", 0
+    )
 
     gui = await gui_factory()
     lw = gui.test_get_login_widget()
@@ -55,12 +58,21 @@ async def logged_gui(
     )
 
     async with aqtbot.wait_signals(
-        [wk_widget.create_success, wk_widget.list_success], timeout=2000
+        [wk_widget.create_success, wk_widget.list_success, wk_widget.mountpoint_started],
+        timeout=2000,
     ):
         await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
     assert wk_widget.layout_workspaces.count() == 1
     wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
+
+    # Try again in case the last `list_success` ended up with no workspace at all
+    if isinstance(wk_button, QtWidgets.QLabel):
+        async with aqtbot.wait_signal(wk_widget.list_success):
+            pass
+        assert wk_widget.layout_workspaces.count() == 1
+        wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
+
     assert wk_button.name == "Workspace"
 
     async with aqtbot.wait_signal(wk_widget.load_workspace_clicked):
@@ -281,6 +293,17 @@ async def test_show_inconsistent_dir(
     assert wk_w.layout_workspaces.count() == 2
     wk_button = wk_w.layout_workspaces.itemAt(1).widget()
     assert wk_button.name == "w"
+
+    # Make sure the workspace is detected as mounted
+    # We can't use `wk_button.switch_button.toggled` here
+    # as `wk_button` might get replaced with a new instance
+    tries = 10
+    while not wk_button.switch_button.isChecked():
+        if not tries:
+            raise RuntimeError("Timeout")
+        tries -= 1
+        await aqtbot.wait(100)
+        wk_button = wk_w.layout_workspaces.itemAt(1).widget()
 
     async with aqtbot.wait_signal(wk_w.load_workspace_clicked):
         await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)

@@ -315,74 +315,6 @@
                 </property>
                </spacer>
               </item>
-              <item>
-               <widget class="IconLabel" name="icon_mountpoint">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="pixmap">
-                 <pixmap resource="../rc/resources.qrc">:/icons/images/material/storage.svg</pixmap>
-                </property>
-                <property name="scaledContents">
-                 <bool>true</bool>
-                </property>
-                <property name="color" stdset="0">
-                 <color>
-                  <red>153</red>
-                  <green>153</green>
-                  <blue>153</blue>
-                 </color>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="ClickableLabel" name="label_mountpoint">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>13</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-                <property name="textInteractionFlags">
-                 <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
-                </property>
-               </widget>
-              </item>
              </layout>
             </item>
             <item>
@@ -481,11 +413,6 @@
  <customwidgets>
   <customwidget>
    <class>IconLabel</class>
-   <extends>QLabel</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
-  <customwidget>
-   <class>ClickableLabel</class>
    <extends>QLabel</extends>
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>

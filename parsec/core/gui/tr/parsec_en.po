@@ -260,8 +260,17 @@ msgstr "Only a workspace owner can reencrypt."
 msgid "TEXT_WORKSPACE_CURRENTLY_REENCRYPTING_TOOLTIP"
 msgstr "Reencrypting the workspace"
 
-msgid "TEXT_WORKSPACE_IS_SHARED"
-msgstr "shared with others"
+msgid "TEXT_WORKSPACE_IS_PRIVATE"
+msgstr "private"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_user"
+msgstr "shared with {user}"
+
+msgid "TEXT_WORKSPACE_IS_SHARED_WITH_n_USERS"
+msgstr "shared with {n} users"
+
+msgid "TEXT_WORKSPACE_IS_OWNED_BY_user"
+msgstr "owned by {user}"
 
 msgid "TEXT_WORKSPACE_IS_TIMESTAMPED_date"
 msgstr "temporary_{date}"
@@ -1617,22 +1626,6 @@ msgstr "Allow error reporting"
 
 msgid "ACTION_NO"
 msgstr "No"
-
-msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"
-msgstr "Restore compatibility with Acrobat Reader DC"
-
-msgid "TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"
-msgstr ""
-"The current configuration of Acrobat Reader DC is not compatible with PARSEC.<br />\n"
-"In its current state, Acrobat will not be able to open PDF files from the PARSEC "
-"workspaces.<br /><br />\n"
-"\n"
-"Do you allow Parsec to restore compatibility by disabling the \"Run in AppContainer\" "
-"feature from the Acrobat configuration? This option is accessible from the PARSEC "
-"settings if necessary."
-
-msgid "ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"
-msgstr "Disable Acrobat Containers"
 
 msgid "TEXT_KICKSTART_PARSEC_WHAT_TO_DO_TITLE"
 msgstr "Welcome to Parsec!"

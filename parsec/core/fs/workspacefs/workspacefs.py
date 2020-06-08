@@ -104,6 +104,12 @@ class WorkspaceFS:
     def get_encryption_revision(self) -> int:
         return self.get_workspace_entry().encryption_revision
 
+    def is_read_only(self) -> bool:
+        return self.get_workspace_entry().role == WorkspaceRole.READER
+
+    def is_revoked(self) -> bool:
+        return self.get_workspace_entry().role is None
+
     # Information
 
     async def path_info(self, path: AnyPath) -> dict:

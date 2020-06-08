@@ -1,0 +1,1 @@
+Workspaces can now be enabled/disabled from the application. The workspace status is stored in the configuration in order to be restored at the next application startup.

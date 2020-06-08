@@ -1,0 +1,1 @@
+The workspaces are now mounted as separated drives on Windows. Also, workspaces with reader access are mounted as read-only volumes. This allows proper compatibility with Acrobat Reader and avoid path-length issues.

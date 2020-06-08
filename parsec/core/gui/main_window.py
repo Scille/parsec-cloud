@@ -3,6 +3,7 @@
 import platform
 from typing import Optional
 from structlog import get_logger
+from distutils.version import LooseVersion
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal, Qt, QSize
 from PyQt5.QtGui import QColor, QIcon, QKeySequence
@@ -24,7 +25,7 @@ from parsec.core.gui.instance_widget import InstanceWidget
 from parsec.core.gui.parsec_application import ParsecApp
 from parsec.core.gui import telemetry
 from parsec.core.gui import desktop
-from parsec.core.gui import win_registry
+from parsec.core import win_registry
 from parsec.core.gui.changelog_widget import ChangelogWidget
 from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
@@ -385,25 +386,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
 
         # For each parsec update
-        if self.config.gui_last_version != PARSEC_VERSION:
+        if self.config.gui_last_version and self.config.gui_last_version != PARSEC_VERSION:
 
-            # Ask for acrobat reader workaround
-            if (
-                platform.system() == "Windows"
-                and win_registry.is_acrobat_reader_dc_present()
-                and win_registry.get_acrobat_app_container_enabled()
-            ):
-                r = ask_question(
-                    self,
-                    _("TEXT_ACROBAT_CONTAINERS_DISABLE_TITLE"),
-                    _("TEXT_ACROBAT_CONTAINERS_DISABLE_INSTRUCTIONS"),
-                    [_("ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"), _("ACTION_NO")],
-                )
-                if r == _("ACTION_ACROBAT_CONTAINERS_DISABLE_ACCEPT"):
-                    win_registry.set_acrobat_app_container_enabled(False)
+            # Update from parsec `<1.14` to `>=1.14`
+            if LooseVersion(self.config.gui_last_version) < "1.14":
+
+                # Revert the acrobat reader workaround
+                if (
+                    platform.system() == "Windows"
+                    and win_registry.is_acrobat_reader_dc_present()
+                    and not win_registry.get_acrobat_app_container_enabled()
+                ):
+                    win_registry.del_acrobat_app_container_enabled()
 
             # Acknowledge the changes
             self.event_bus.send("gui.config.changed", gui_last_version=PARSEC_VERSION)
+
         telemetry.init(self.config)
 
         devices = list_available_devices(self.config.config_dir)
