@@ -1,0 +1,2 @@
+Update windows installer to be less verbose.
+In particular: skip the components panel, hide installation details and advance automatically after completion.
