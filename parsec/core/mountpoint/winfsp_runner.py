@@ -192,8 +192,13 @@ async def winfsp_mountpoint_runner(
                 # Loop over `sharing.updated` event
                 while True:
 
-                    # Restart workspace if necessary
-                    if workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]:
+                    # Restart the mountpoint with the right read_only flag if necessary
+                    # Don't bother with restarting if the workspace has been revoked
+                    # It's the manager's responsibility to unmount the workspace in this case
+                    if (
+                        workspace_fs.is_read_only() != fs.volume_params["read_only_volume"]
+                        and not workspace_fs.is_revoked()
+                    ):
                         restart = partial(fs.restart, read_only_volume=workspace_fs.is_read_only())
                         await trio.to_thread.run_sync(restart)
 
