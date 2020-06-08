@@ -16,6 +16,7 @@ from parsec.core.gui.trio_thread import QtToTrioJobScheduler
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.lang import switch_language
+from parsec.core.gui.parsec_application import ParsecApp
 
 
 class ThreadedTrioTestRunner:
@@ -187,6 +188,7 @@ class AsyncQtBot:
         self.add_widget = _autowrap("add_widget")
         self.stop = _autowrap("stop")
         self.wait = _autowrap("wait")
+        self.wait_until = _autowrap("wait_until")
 
         def _autowrap_ctx_manager(fnname):
             def wrapper(*args, **kwargs):
@@ -265,6 +267,15 @@ def gui_factory(qtbot, qt_thread_gateway, core_config, monkeypatch):
             main_w.show_top()
             windows.append(main_w)
             main_w.add_instance(start_arg)
+
+            def right_main_window():
+                assert ParsecApp.get_main_window() is main_w
+
+            # For some reasons, the main window from the previous test might
+            # still be around. Simply wait for things to settle down until
+            # our freshly created window is detected as the app main window.
+            qtbot.wait_until(right_main_window)
+
             return main_w
 
         return await qt_thread_gateway.send_action(_create_main_window)

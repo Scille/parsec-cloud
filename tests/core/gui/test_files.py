@@ -63,16 +63,13 @@ async def logged_gui(
     ):
         await aqtbot.mouse_click(add_button, QtCore.Qt.LeftButton)
 
-    assert wk_widget.layout_workspaces.count() == 1
-    wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
-
-    # Try again in case the last `list_success` ended up with no workspace at all
-    if isinstance(wk_button, QtWidgets.QLabel):
-        async with aqtbot.wait_signal(wk_widget.list_success):
-            pass
+    def workspace_button_ready():
         assert wk_widget.layout_workspaces.count() == 1
         wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
+        assert not isinstance(wk_button, QtWidgets.QLabel)
 
+    await aqtbot.wait_until(workspace_button_ready)
+    wk_button = wk_widget.layout_workspaces.itemAt(0).widget()
     assert wk_button.name == "Workspace"
 
     async with aqtbot.wait_signal(wk_widget.load_workspace_clicked):
@@ -290,33 +287,32 @@ async def test_show_inconsistent_dir(
     assert wk_w.isVisible() is True
     assert w_f.isVisible() is False
 
-    assert wk_w.layout_workspaces.count() == 2
+    def workspace_button_enabled():
+        assert wk_w.layout_workspaces.count() == 2
+        wk_button = wk_w.layout_workspaces.itemAt(1).widget()
+        assert wk_button.switch_button.isChecked()
+
+    await aqtbot.wait_until(workspace_button_enabled)
+
     wk_button = wk_w.layout_workspaces.itemAt(1).widget()
     assert wk_button.name == "w"
-
-    # Make sure the workspace is detected as mounted
-    # We can't use `wk_button.switch_button.toggled` here
-    # as `wk_button` might get replaced with a new instance
-    tries = 10
-    while not wk_button.switch_button.isChecked():
-        if not tries:
-            raise RuntimeError("Timeout")
-        tries -= 1
-        await aqtbot.wait(100)
-        wk_button = wk_w.layout_workspaces.itemAt(1).widget()
 
     async with aqtbot.wait_signal(wk_w.load_workspace_clicked):
         await aqtbot.mouse_click(wk_button, QtCore.Qt.LeftButton)
 
-    assert w_f is not None
+    assert wk_w.isVisible() is False
+    assert w_f.isVisible() is True
+
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         pass
+
     assert w_f.table_files.rowCount() == 2
     assert central_widget.label_title2.text() == "w"
     assert central_widget.label_title3.text() == "/"
 
     async with aqtbot.wait_signal(w_f.folder_stat_success):
         w_f.table_files.item_activated.emit(FileType.Folder, "rep")
+
     assert w_f.table_files.rowCount() == 3
     assert central_widget.label_title2.text() == "w"
     assert central_widget.label_title3.text() == "/rep"
