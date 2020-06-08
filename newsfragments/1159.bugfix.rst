@@ -1,2 +1,0 @@
-The workspaces are now mounted as separated drives on Windows.
-This allows proper compatibility with Acrobat Reader and avoid path-length issues.
