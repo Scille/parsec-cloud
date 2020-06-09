@@ -75,7 +75,9 @@ async def _get_available_drive(index, length) -> Path:
         except OSError:
             continue
     # No drive available
-    raise MountpointNoDriveAvailable
+    raise MountpointNoDriveAvailable(
+        f"None of the following drives are available: {', '.join(DRIVE_LETTERS)}"
+    )
 
 
 def _generate_volume_serial_number(device, workspace_id):
