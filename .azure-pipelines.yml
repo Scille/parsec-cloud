@@ -269,6 +269,34 @@ jobs:
 #################################################################################
 
 
+- job: 'linux_pypi_build'
+  displayName: 'Linux PyPI build'
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-18.04'
+  steps:
+  - checkout: self
+    submodules: true
+  - bash: |
+      set -eux
+      sudo apt install python python-pip
+      pip install twine
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      python setup.py generate_pyqt sdist
+  - bash: |
+      echo $SNAPCRAFT_CREDENTIALS | twine upload dist/*
+    displayName: 'Build PyPI'
+    workingDirectory: $(Agent.TempDirectory)
+  - publish: $(Agent.TempDirectory)/dist
+    artifact: pypi
+
+
+#################################################################################
+
+
 - job: 'linux_snap_test'
   displayName: 'Never trust a snap'
   dependsOn: linux_snap_build
