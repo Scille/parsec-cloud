@@ -297,7 +297,7 @@ class DeviceClaimInProgress3Ctx:
             root_verify_key=confirmation.root_verify_key,
         )
 
-        new_device = generate_new_device(
+        return LocalDevice(
             organization_addr=organization_addr,
             device_id=confirmation.device_id,
             device_label=confirmation.device_label,
@@ -305,6 +305,7 @@ class DeviceClaimInProgress3Ctx:
             profile=confirmation.profile,
             private_key=confirmation.private_key,
             signing_key=signing_key,
+            user_manifest_id=confirmation.user_manifest_id,
+            user_manifest_key=confirmation.user_manifest_key,
+            local_symkey=SecretKey.generate(),
         )
-
-        return new_device

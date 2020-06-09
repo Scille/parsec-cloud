@@ -109,6 +109,10 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.private_key == alice.private_key
     assert new_device.signing_key != alice.signing_key
     assert new_device.profile == alice.profile
+    assert new_device.user_manifest_id == alice.user_manifest_id
+    assert new_device.user_manifest_key == alice.user_manifest_key
+    # Make sure greeter&claimer data are not mixed
+    assert new_device.local_symkey != alice.local_symkey
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
@@ -226,6 +230,10 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.human_handle.label == granted_human_handle.label
     assert new_device.human_handle.email == granted_human_handle.email
     assert new_device.profile == granted_profile
+    # Extra check to make sure claimer&greeter data are not mixed
+    assert new_device.user_manifest_id != alice.user_manifest_id
+    assert new_device.user_manifest_key != alice.user_manifest_key
+    assert new_device.local_symkey != alice.local_symkey
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()

@@ -15,6 +15,7 @@ from parsec.api.protocol import (
     HumanHandleField,
 )
 from parsec.api.data.base import BaseAPIData, BaseSchema
+from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.certif import UserProfile, UserProfileField
 
 
@@ -140,6 +141,8 @@ class InviteDeviceConfirmation(BaseAPIData):
         human_handle = HumanHandleField(allow_none=True, missing=None)
         profile = UserProfileField(required=True)
         private_key = fields.PrivateKey(required=True)
+        user_manifest_id = EntryIDField(required=True)
+        user_manifest_key = fields.SecretKey(required=True)
         root_verify_key = fields.VerifyKey(required=True)
 
         @post_load
@@ -152,4 +155,6 @@ class InviteDeviceConfirmation(BaseAPIData):
     human_handle: Optional[HumanHandle]
     profile: UserProfile
     private_key: PrivateKey
+    user_manifest_id: EntryID
+    user_manifest_key: SecretKey
     root_verify_key: VerifyKey

@@ -400,6 +400,8 @@ class DeviceGreetInProgress4Ctx:
                 human_handle=author.human_handle,
                 profile=author.profile,
                 private_key=author.private_key,
+                user_manifest_id=author.user_manifest_id,
+                user_manifest_key=author.user_manifest_key,
                 root_verify_key=author.root_verify_key,
             ).dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
