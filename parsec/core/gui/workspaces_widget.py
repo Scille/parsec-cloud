@@ -17,8 +17,8 @@ from parsec.core.types import (
 from parsec.core.fs import WorkspaceFS, WorkspaceFSTimestamped, FSBackendOfflineError
 from parsec.core.mountpoint.exceptions import (
     MountpointAlreadyMounted,
-    MountpointConfigurationError,
-    MountpointConfigurationWorkspaceFSTimestampedError,
+    MountpointNotMounted,
+    MountpointError,
 )
 
 from parsec.core.gui.trio_thread import (
@@ -101,14 +101,12 @@ async def _do_workspace_mount(core, workspace_id, timestamp: pendulum.Pendulum =
         await core.mountpoint_manager.mount_workspace(workspace_id, timestamp)
     except MountpointAlreadyMounted:
         pass
-    except MountpointConfigurationError as exc:
-        raise JobResultError(exc)
 
 
 async def _do_workspace_unmount(core, workspace_id, timestamp: pendulum.Pendulum = None):
     try:
         await core.mountpoint_manager.unmount_workspace(workspace_id, timestamp)
-    except MountpointAlreadyMounted:
+    except MountpointNotMounted:
         pass
 
 
@@ -313,14 +311,19 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.reset()
 
     def on_mount_error(self, job):
-        if isinstance(job.status, MountpointConfigurationWorkspaceFSTimestampedError):
+        if isinstance(job.exc, MountpointError):
+            workspace_id = job.arguments.get("workspace_id")
+            timestamp = job.arguments.get("timestamp")
+            wb = self.get_workspace_button(workspace_id, timestamp)
+            if wb:
+                wb.set_mountpoint_state(False)
             show_error(self, _("TEXT_WORKSPACE_CANNOT_MOUNT"), exception=job.exc)
 
     def on_unmount_success(self, job):
         self.reset()
 
     def on_unmount_error(self, job):
-        if isinstance(job.status, MountpointConfigurationWorkspaceFSTimestampedError):
+        if isinstance(job.exc, MountpointError):
             show_error(self, _("TEXT_WORKSPACE_CANNOT_UNMOUNT"), exception=job.exc)
 
     def on_reencryption_needs_success(self, job):
