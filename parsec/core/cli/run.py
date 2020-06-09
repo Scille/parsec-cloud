@@ -62,7 +62,7 @@ async def _import_file(workspace_fs, src, dest):
     try:
         await workspace_fs.touch(dest)
     except FileExistsError:
-        await workspace_fs.truncate(dest, 0)
+        pass
     with open(src, "rb") as fd:
         read_size = 0
         while True:
@@ -91,31 +91,31 @@ async def _update_file(workspace_fs, entry_id, path, absolute_path):
     local_access_digests = _local_access_digests(workspace_fs, path)
     remote_access_digests = [access.digest for access in remote_file_manifest.blocks]
     if local_access_digests != remote_access_digests:
-        await _import_file(workspace_fs, path, absolute_path)
+        await _import_file(workspace_fs, path, str(absolute_path))
         print("update %s" % absolute_path)
-        await workspace_fs.sync()
+        await workspace_fs.sync_by_id(entry_id, remote_changed=False, recursive=False)
 
 
 async def _create_path(workspace_fs, is_dir, path, absolute_path):
     print("create %s" % absolute_path)
     folder_manifest = None
+    fs_path = FsPath(str(absolute_path))
     if is_dir:
-        fs_path = FsPath(absolute_path)
         await workspace_fs.mkdir(fs_path)
         await workspace_fs.sync()
         rep_info = await workspace_fs.path_info(fs_path)
         folder_manifest = await workspace_fs.local_storage.get_manifest(rep_info["id"])
     else:
-        await _import_file(workspace_fs, path, absolute_path)
+        await _import_file(workspace_fs, path, fs_path)
         await workspace_fs.sync()
     return folder_manifest
 
 
 async def _clear_directory(parent_absolute_path, path, workspace_fs, folder_manifest):
-    local_children_keys = [c.parts[-1] for c in path.iterdir()]
+    local_children_keys = [p.name for p in await path.iterdir()]
     for name, entry_id in folder_manifest.children.items():
         if name not in local_children_keys:
-            absolute_path = f"{parent_absolute_path}{name}"
+            absolute_path = str(await (parent_absolute_path / name).absolute())
             print("delete %s" % absolute_path)
             if await workspace_fs.is_dir(absolute_path):
                 await workspace_fs.rmtree(absolute_path)
@@ -124,53 +124,82 @@ async def _clear_directory(parent_absolute_path, path, workspace_fs, folder_mani
             await workspace_fs.sync()
 
 
+async def _get_or_create_directory(entry_id, workspace_fs, path, absolute_path):
+    if entry_id:
+        folder_manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
+    else:
+        folder_manifest = await _create_path(workspace_fs, True, path, absolute_path)
+    return folder_manifest
+
+
+async def _upsert_file(entry_id, workspace_fs, path, absolute_path):
+    if entry_id:
+        await _update_file(workspace_fs, entry_id, path, absolute_path)
+    else:
+        await _create_path(workspace_fs, False, path, absolute_path)
+
+
 async def _sync_directory_content(parent, source, workspace_fs, manifest):
-    for path in source.iterdir():
-        name = path.parts[-1]
-        absolute_path = f"{parent}{name}"
-        is_dir = path.is_dir()
-        is_dir_updating = False
-        folder_manifest = None
-        if await workspace_fs.exists(absolute_path):
-            entry_id = manifest.children.get(name)
-            if not is_dir:
-                await _update_file(workspace_fs, entry_id, path, absolute_path)
-            else:
-                is_dir_updating = True
-                folder_manifest = await workspace_fs.remote_loader.load_manifest(entry_id)
-        else:
-            folder_manifest = await _create_path(workspace_fs, is_dir, path, absolute_path)
-        if is_dir:
-            absolute_path = f"{absolute_path}/"
+    for path in await source.iterdir():
+        name = path.name
+        absolute_path = await (parent / name).absolute()
+        entry_id = manifest.children.get(name)
+        if await path.is_dir():
+            folder_manifest = await _get_or_create_directory(
+                entry_id, workspace_fs, path, absolute_path
+            )
             await _sync_directory_content(absolute_path, path, workspace_fs, folder_manifest)
-            if is_dir_updating:
+            if entry_id:
                 await _clear_directory(absolute_path, path, workspace_fs, folder_manifest)
-
-
-async def _rsync(config, device, source, workspace_destination):
-    async with logged_core_factory(config, device) as core:
-        workspaces = [
-            w
-            for w in core.user_fs.get_user_manifest().workspaces
-            if w.name == workspace_destination
-        ]
-        try:
-            workspace = workspaces[0]
-        except IndexError:
-            raise SystemExit(f"Unknown workspace ({workspace_destination})")
         else:
-            workspace_fs = core.user_fs.get_workspace(workspace.id)
-            remote_manifest = await workspace_fs.remote_loader.load_manifest(workspace.id)
-            source = Path(source)
-            parent = "/"
-            await _sync_directory_content(parent, source, workspace_fs, remote_manifest)
-            await _clear_directory(parent, source, workspace_fs, remote_manifest)
+            await _upsert_file(entry_id, workspace_fs, path, absolute_path)
+
+
+def _parse_destination(core, destination):
+    try:
+        workspace_name, path = destination.split(":")
+    except ValueError:
+        workspace_name = destination
+        path = None
+    for workspace in core.user_fs.get_user_manifest().workspaces:
+        if workspace.name == workspace_name:
+            break
+    else:
+        raise SystemExit(f"Unknown workspace ({destination})")
+    return workspace, path
+
+
+async def _root_manifest_parent(core, path_destination, parent, workspace_fs, workspace_manifest):
+    if not path_destination:
+        root_manifest = workspace_manifest
+    else:
+        for p in trio.Path(path_destination).parts:
+            parent = trio.Path(parent / p)
+            entry_id = workspace_manifest.children.get(p)
+            root_manifest = await _get_or_create_directory(
+                entry_id, workspace_fs, parent, await parent.absolute()
+            )
+    return root_manifest, parent
+
+
+async def _rsync(config, device, source, destination):
+    async with logged_core_factory(config, device) as core:
+        workspace, path = _parse_destination(core, destination)
+        workspace_fs = core.user_fs.get_workspace(workspace.id)
+        workspace_manifest = await workspace_fs.remote_loader.load_manifest(workspace.id)
+        source = trio.Path(source)
+        root_manifest, parent = await _root_manifest_parent(
+            core, path, trio.Path("/"), workspace_fs, workspace_manifest
+        )
+
+        await _sync_directory_content(parent, source, workspace_fs, root_manifest)
+        await _clear_directory(parent, source, workspace_fs, root_manifest)
 
 
 @click.command(short_help="rsync to parsec")
 @core_config_and_device_options
-@click.option("--source", "-S", type=click.Path(exists=False))
-@click.option("--workspace_destination", "-WS")
-def rsync(config, device, source, workspace_destination, **kwars):
+@click.argument("source")
+@click.argument("destination")
+def rsync(config, device, source, destination, **kwargs):
     with cli_exception_handler(config.debug):
-        trio_run(_rsync, config, device, source, workspace_destination)
+        trio_run(_rsync, config, device, source, destination)
