@@ -5,11 +5,8 @@ import trio
 
 from parsec.api.data import UserProfile
 from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, InvitationType
-from parsec.core.backend_connection import (
-    backend_invited_cmds_factory,
-    backend_authenticated_cmds_factory,
-)
-from parsec.core.types import BackendInvitationAddr, LocalDevice
+from parsec.core.backend_connection import backend_invited_cmds_factory
+from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from parsec.core.invite import (
     InvitePeerResetError,
     claimer_retrieve_info,
@@ -21,7 +18,7 @@ from parsec.core.invite import (
 
 
 @pytest.mark.trio
-async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
+async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds, user_fs_factory):
     invitation = await running_backend.backend.invite.new_for_device(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
@@ -109,25 +106,45 @@ async def test_good_device_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.private_key == alice.private_key
     assert new_device.signing_key != alice.signing_key
     assert new_device.profile == alice.profile
+    assert new_device.user_manifest_id == alice.user_manifest_id
+    assert new_device.user_manifest_key == alice.user_manifest_key
+    # Make sure greeter&claimer data are not mixed
+    assert new_device.local_symkey != alice.local_symkey
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
     assert rep == {"status": "ok", "invitations": []}
 
-    # Make sure new device can connect to the backend
-    async with backend_authenticated_cmds_factory(
-        addr=new_device.organization_addr,
-        device_id=new_device.device_id,
-        signing_key=new_device.signing_key,
-    ) as cmds:
-        await cmds.ping()
+    # Test the behavior of this new device
+    async with user_fs_factory(bob) as bobfs:
+        async with user_fs_factory(alice) as alicefs:
+            async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+                # Old device modify user manifest
+                await alicefs.workspace_create("wa")
+                await alicefs.sync()
+
+                # New sharing from other user
+                wb_id = await bobfs.workspace_create("wb")
+                await bobfs.workspace_share(wb_id, alice.user_id, WorkspaceRole.CONTRIBUTOR)
+
+                # Test new device get access to both new workspaces
+                await newfs.process_last_messages()
+                await newfs.sync()
+                newfs_um = newfs.get_user_manifest()
+
+                # Make sure new and old device have the same view on data
+                await alicefs.sync()
+                alicefs_um = alicefs.get_user_manifest()
+                assert newfs_um == alicefs_um
 
 
 @pytest.mark.trio
-async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
+async def test_good_user_claim(
+    backend, running_backend, alice, alice_backend_cmds, user_fs_factory
+):
     claimer_email = "zack@example.com"
 
-    invitation = await running_backend.backend.invite.new_for_user(
+    invitation = await backend.invite.new_for_user(
         organization_id=alice.organization_id,
         greeter_user_id=alice.user_id,
         claimer_email=claimer_email,
@@ -146,7 +163,7 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     granted_device_id = DeviceID("zack@pc1")
     granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
     granted_device_label = "PC1's label"
-    granted_profile = UserProfile.OUTSIDER
+    granted_profile = UserProfile.STANDARD
     new_device = None
 
     # Simulate out-of-bounds canal
@@ -226,18 +243,47 @@ async def test_good_user_claim(running_backend, alice, alice_backend_cmds):
     assert new_device.human_handle.label == granted_human_handle.label
     assert new_device.human_handle.email == granted_human_handle.email
     assert new_device.profile == granted_profile
+    # Extra check to make sure claimer&greeter data are not mixed
+    assert new_device.user_manifest_id != alice.user_manifest_id
+    assert new_device.user_manifest_key != alice.user_manifest_key
+    assert new_device.local_symkey != alice.local_symkey
 
     # Now invitation should have been deleted
     rep = await alice_backend_cmds.invite_list()
     assert rep == {"status": "ok", "invitations": []}
 
-    # Make sure new device can connect to the backend
-    async with backend_authenticated_cmds_factory(
-        addr=new_device.organization_addr,
-        device_id=new_device.device_id,
-        signing_key=new_device.signing_key,
-    ) as cmds:
-        await cmds.ping()
+    # Verify user&device data in backend
+    user, device, _ = await backend.user.get_user_with_device_and_trustchain(
+        new_device.organization_id, new_device.device_id
+    )
+    assert user.profile == granted_profile
+    assert user.human_handle == granted_human_handle
+    assert user.user_certificate != user.redacted_user_certificate
+    # assert device.device_label == granted_device_label  # TODO: enable this once #1174 is merged
+    assert device.device_certificate != device.redacted_device_certificate
+
+    # Test the behavior of this new user device
+    async with user_fs_factory(alice) as alicefs:
+        async with user_fs_factory(new_device, initialize_in_v0=True) as newfs:
+            # Share a workspace with new user
+            aw_id = await alicefs.workspace_create("alice_workspace")
+            await alicefs.workspace_share(aw_id, new_device.user_id, WorkspaceRole.CONTRIBUTOR)
+
+            # New user cannot create a new workspace
+            zw_id = await newfs.workspace_create("zack_workspace")
+            await newfs.workspace_share(zw_id, alice.user_id, WorkspaceRole.READER)
+
+            # Now both users should have the same workspaces
+            await alicefs.process_last_messages()
+            await newfs.process_last_messages()
+            await newfs.sync()  # Not required, but just to make sure it works
+
+            alice_um = alicefs.get_user_manifest()
+            zack_um = newfs.get_user_manifest()
+
+            assert {(w.id, w.key) for w in alice_um.workspaces} == {
+                (w.id, w.key) for w in zack_um.workspaces
+            }
 
 
 @pytest.mark.trio
