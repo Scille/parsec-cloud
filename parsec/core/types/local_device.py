@@ -70,12 +70,21 @@ class LocalDevice(BaseLocalData):
         return f"{self.__class__.__name__}({self.device_id})"
 
     @property
-    def slug(self):
+    def slug(self) -> str:
         # Add a hash to avoid clash when the backend is reseted
         # and we recreate a device with same organization/device_id
         # organization and device_id than a previous one
         hash_part = sha256(self.root_verify_key.encode()).hexdigest()[:10]
         return f"{hash_part}#{self.organization_id}#{self.device_id}"
+
+    @property
+    def slughash(self) -> str:
+        """
+        Slug is long and not readable enough (given device_id is made of uuids).
+        Hence it's often simpler to rely on it hash instead (e.g. select the
+        device to use in the CLI by providing the beginning of the hash)
+        """
+        return sha256(self.slug.encode()).hexdigest()
 
     @staticmethod
     def load_slug(slug: str) -> Tuple[OrganizationID, DeviceID]:
