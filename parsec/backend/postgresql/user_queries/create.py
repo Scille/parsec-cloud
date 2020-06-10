@@ -113,6 +113,7 @@ _q_insert_device = (
         "organization",
         "user_",
         "device_id",
+        "device_label",
         "device_certificate",
         "redacted_device_certificate",
         "device_certifier",
@@ -124,8 +125,9 @@ _q_insert_device = (
         Parameter("$3"),
         Parameter("$4"),
         Parameter("$5"),
-        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$6")),
-        Parameter("$7"),
+        Parameter("$6"),
+        q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$7")),
+        Parameter("$8"),
     )
     .get_sql()
 )
@@ -246,6 +248,7 @@ async def _create_device(
             organization_id,
             device.user_id,
             device.device_id,
+            device.device_label,
             device.device_certificate,
             device.redacted_device_certificate,
             device.device_certifier,

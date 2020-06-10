@@ -46,6 +46,7 @@ _t_d3 = t_device.as_("d3")
 _q_get_device = (
     Query.from_(_t_d1)
     .select(
+        "device_label",
         "device_certificate",
         "redacted_device_certificate",
         q_device(_id=_t_d1.device_certifier, table=_t_d2)
@@ -65,6 +66,7 @@ _q_get_user_devices = (
     Query.from_(_t_d1)
     .select(
         "device_id",
+        "device_label",
         "device_certificate",
         "redacted_device_certificate",
         q_device(_id=_t_d1.device_certifier, table=_t_d2)
@@ -152,6 +154,7 @@ async def _get_device(conn, organization_id: OrganizationID, device_id: DeviceID
 
     return Device(
         device_id=device_id,
+        device_label=row["device_label"],
         device_certificate=row["device_certificate"],
         redacted_device_certificate=row["redacted_device_certificate"],
         device_certifier=row["device_certifier"],
@@ -190,6 +193,7 @@ async def _get_user_devices(
     return tuple(
         Device(
             device_id=DeviceID(row["device_id"]),
+            device_label=row["device_label"],
             device_certificate=row["device_certificate"],
             redacted_device_certificate=row["redacted_device_certificate"],
             device_certifier=row["device_certifier"],
@@ -267,6 +271,7 @@ async def query_get_user_with_device(
 
     device = Device(
         device_id=device_id,
+        device_label=d_row["device_label"],
         device_certificate=d_row["device_certificate"],
         redacted_device_certificate=d_row["redacted_device_certificate"],
         device_certifier=d_row["device_certifier"],
