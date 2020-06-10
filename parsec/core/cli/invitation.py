@@ -9,8 +9,6 @@ from parsec.utils import trio_run
 from parsec.cli_utils import cli_exception_handler, spinner, operation, aprompt
 from parsec.api.data import UserProfile
 from parsec.api.protocol import (
-    DeviceID,
-    DeviceName,
     HumanHandle,
     InvitationStatus,
     InvitationType,
@@ -133,7 +131,6 @@ async def _do_greet_user(device, initial_ctx):
     granted_email = await aprompt(
         "New user email", default=in_progress_ctx.requested_human_handle.email
     )
-    granted_device_id = DeviceID.new()
     granted_device_label = await aprompt(
         "New user device label", default=in_progress_ctx.requested_device_label
     )
@@ -148,7 +145,6 @@ async def _do_greet_user(device, initial_ctx):
     async with spinner("Creating the user in the backend"):
         await in_progress_ctx.do_create_new_user(
             author=device,
-            device_id=granted_device_id,
             device_label=granted_device_label,
             human_handle=HumanHandle(email=granted_email, label=granted_label),
             profile=granted_profile,
@@ -181,14 +177,11 @@ async def _do_greet_device(device, initial_ctx):
         in_progress_ctx = await in_progress_ctx.do_signify_trust()
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-    granted_device_name = DeviceName.new()
     granted_device_label = await aprompt(
         "New device label", default=in_progress_ctx.requested_device_label
     )
     async with spinner("Creating the device in the backend"):
-        await in_progress_ctx.do_create_new_device(
-            author=device, device_name=granted_device_name, device_label=granted_device_label
-        )
+        await in_progress_ctx.do_create_new_device(author=device, device_label=granted_device_label)
 
     return True
 
@@ -329,8 +322,8 @@ async def _claim_invitation(config, addr, password):
                 click.secho(str(exc), fg="red")
             click.secho("Restarting the invitation process", fg="red")
 
-        device_display = click.style(new_device.device_id, fg="yellow")
-        with operation(f"Saving locally {device_display}"):
+        device_display = click.style(new_device.slughash, fg="yellow")
+        with operation(f"Saving device {device_display}"):
             save_device_with_password(config.config_dir, new_device, password)
 
 
