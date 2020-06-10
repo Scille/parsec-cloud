@@ -43,13 +43,15 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def reload_devices(self):
         while self.combo_username.count():
             self.combo_username.removeItem(0)
-        devices = list_available_devices(self.config.config_dir)
-        # Display devices in `<organization>:<device_id>` format
+        # Display devices in `<organization>:<user>@<device>` format
         self.devices = {}
-        for o, d, t, kf in devices:
-            if not ParsecApp.is_device_connected(o, d):
-                self.combo_username.addItem(f"{o}:{d}")
-                self.devices[f"{o}:{d}"] = (o, d, t, kf)
+        for available_device in list_available_devices(self.config.config_dir):
+            if not ParsecApp.is_device_connected(
+                available_device.organization_id, available_device.device_id
+            ):
+                name = f"{available_device.organization_id}: {available_device.user_display} @ {available_device.device_display}"
+                self.combo_username.addItem(name)
+                self.devices[name] = available_device
         last_device = self.config.gui_last_device
         if last_device and last_device in self.devices:
             self.combo_username.setCurrentText(last_device)
@@ -67,13 +69,12 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def try_login(self):
         if not self.combo_username.currentText():
             return
-        *args, key_file = self.devices[self.combo_username.currentText()]
+        available_device = self.devices[self.combo_username.currentText()]
         self.button_login.setDisabled(True)
         self.button_login.setText(_("ACTION_LOGGING_IN"))
-        self.login_with_password_clicked.emit(key_file, self.line_edit_password.text())
+        self.login_with_password_clicked.emit(
+            available_device.key_file_path, self.line_edit_password.text()
+        )
 
     def disconnect_all(self):
         pass
-
-    def emit_login_with_password(self, key_file, password):
-        self.login_with_password_clicked.emit(key_file, password)

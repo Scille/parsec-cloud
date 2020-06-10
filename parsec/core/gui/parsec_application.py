@@ -6,7 +6,7 @@ from PyQt5.QtGui import QFont, QFontDatabase
 
 
 class ParsecApp(QApplication):
-    connected_devices = []
+    connected_devices = set()
 
     def __init__(self):
         super().__init__(["-stylesheet"])
@@ -28,16 +28,15 @@ class ParsecApp(QApplication):
 
     @classmethod
     def add_connected_device(cls, org_id, device_id):
-        if not cls.is_device_connected(org_id, device_id):
-            cls.connected_devices.append(f"{org_id}:{device_id}")
+        cls.connected_devices.add((org_id, device_id))
 
     @classmethod
     def remove_connected_device(cls, org_id, device_id):
-        cls.connected_devices.remove(f"{org_id}:{device_id}")
+        cls.connected_devices.discard((org_id, device_id))
 
     @classmethod
     def is_device_connected(cls, org_id, device_id):
-        return f"{org_id}:{device_id}" in cls.connected_devices
+        return (org_id, device_id) in cls.connected_devices
 
     @classmethod
     def has_active_modal(cls):
