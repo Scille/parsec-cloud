@@ -26,20 +26,32 @@ async def organization_create(sock, organization_id, expiration_date=None):
     return apiv1_organization_create_serializer.rep_loads(raw_rep)
 
 
+_missing = object()
+
+
 async def organization_bootstrap(
-    sock, bootstrap_token, user_certificate, device_certificate, root_verify_key
+    sock,
+    bootstrap_token,
+    user_certificate,
+    device_certificate,
+    root_verify_key,
+    redacted_user_certificate=_missing,
+    redacted_device_certificate=_missing,
 ):
-    raw_rep = await sock.send(
-        apiv1_organization_bootstrap_serializer.req_dumps(
-            {
-                "cmd": "organization_bootstrap",
-                "bootstrap_token": bootstrap_token,
-                "user_certificate": user_certificate,
-                "device_certificate": device_certificate,
-                "root_verify_key": root_verify_key,
-            }
-        )
-    )
+    data = {
+        "cmd": "organization_bootstrap",
+        "bootstrap_token": bootstrap_token,
+        "user_certificate": user_certificate,
+        "device_certificate": device_certificate,
+        "root_verify_key": root_verify_key,
+    }
+
+    if redacted_user_certificate is not _missing:
+        data["redacted_user_certificate"] = redacted_user_certificate
+    if redacted_device_certificate is not _missing:
+        data["redacted_device_certificate"] = redacted_device_certificate
+
+    raw_rep = await sock.send(apiv1_organization_bootstrap_serializer.req_dumps(data))
     raw_rep = await sock.recv()
     return apiv1_organization_bootstrap_serializer.rep_loads(raw_rep)
 
@@ -137,10 +149,12 @@ async def test_organization_create_and_bootstrap(
     async with apiv1_backend_sock_factory(backend, neworg.organization_id) as sock:
         rep = await organization_bootstrap(
             sock,
-            bootstrap_token,
-            backend_newalice.user_certificate,
-            backend_newalice_first_device.device_certificate,
-            neworg.root_verify_key,
+            bootstrap_token=bootstrap_token,
+            user_certificate=backend_newalice.user_certificate,
+            device_certificate=backend_newalice_first_device.device_certificate,
+            root_verify_key=neworg.root_verify_key,
+            redacted_user_certificate=backend_newalice.redacted_user_certificate,
+            redacted_device_certificate=backend_newalice_first_device.redacted_device_certificate,
         )
     assert rep == {"status": "ok"}
 
@@ -253,7 +267,6 @@ async def test_organization_bootstrap_bad_data(
     local_device_factory,
     backend,
     coolorg,
-    alice,
 ):
     neworg = organization_factory("NewOrg")
     newalice = local_device_factory("alice@dev1", neworg)
@@ -280,52 +293,45 @@ async def test_organization_bootstrap_bad_data(
     verify_key = newalice.verify_key
 
     now = pendulum.now()
+    bad_now = now - pendulum.interval(seconds=1)
+
     good_cu = UserCertificateContent(
         author=None,
         timestamp=now,
         user_id=good_user_id,
         public_key=public_key,
         profile=UserProfile.ADMIN,
-    ).dump_and_sign(root_signing_key)
+        human_handle=newalice.human_handle,
+    )
+    good_redacted_cu = good_cu.evolve(human_handle=None)
     good_cd = DeviceCertificateContent(
-        author=None, timestamp=now, device_id=good_device_id, verify_key=verify_key
-    ).dump_and_sign(root_signing_key)
+        author=None,
+        timestamp=now,
+        device_id=good_device_id,
+        device_label=newalice.device_label,
+        verify_key=verify_key,
+    )
+    good_redacted_cd = good_cd.evolve(device_label=None)
+    bad_now_cu = good_cu.evolve(timestamp=bad_now)
+    bad_now_cd = good_cd.evolve(timestamp=bad_now)
+    bad_now_redacted_cu = good_redacted_cu.evolve(timestamp=bad_now)
+    bad_now_redacted_cd = good_redacted_cd.evolve(timestamp=bad_now)
+    bad_id_cu = good_cu.evolve(user_id=bad_user_id)
+    bad_not_admin_cu = good_cu.evolve(profile=UserProfile.STANDARD)
 
-    bad_now = now - pendulum.interval(seconds=1)
-    bad_now_cu = UserCertificateContent(
-        author=None,
-        timestamp=bad_now,
-        user_id=good_user_id,
-        public_key=public_key,
-        profile=UserProfile.ADMIN,
-    ).dump_and_sign(root_signing_key)
-    bad_now_cd = DeviceCertificateContent(
-        author=None, timestamp=bad_now, device_id=good_device_id, verify_key=verify_key
-    ).dump_and_sign(root_signing_key)
-    bad_id_cu = UserCertificateContent(
-        author=None,
-        timestamp=now,
-        user_id=bad_user_id,
-        public_key=public_key,
-        profile=UserProfile.ADMIN,
-    ).dump_and_sign(root_signing_key)
-    bad_not_admin_cu = UserCertificateContent(
-        author=None,
-        timestamp=now,
-        user_id=good_user_id,
-        public_key=public_key,
-        profile=UserProfile.STANDARD,
-    ).dump_and_sign(root_signing_key)
-    bad_key_cu = UserCertificateContent(
-        author=None,
-        timestamp=now,
-        user_id=good_user_id,
-        public_key=public_key,
-        profile=UserProfile.ADMIN,
-    ).dump_and_sign(bad_root_signing_key)
-    bad_key_cd = DeviceCertificateContent(
-        author=None, timestamp=now, device_id=good_device_id, verify_key=verify_key
-    ).dump_and_sign(bad_root_signing_key)
+    bad_key_cu = good_cu.dump_and_sign(bad_root_signing_key)
+    bad_key_cd = good_cd.dump_and_sign(bad_root_signing_key)
+
+    good_cu = good_cu.dump_and_sign(root_signing_key)
+    good_redacted_cu = good_redacted_cu.dump_and_sign(root_signing_key)
+    good_cd = good_cd.dump_and_sign(root_signing_key)
+    good_redacted_cd = good_redacted_cd.dump_and_sign(root_signing_key)
+    bad_now_cu = bad_now_cu.dump_and_sign(root_signing_key)
+    bad_now_cd = bad_now_cd.dump_and_sign(root_signing_key)
+    bad_now_redacted_cu = bad_now_redacted_cu.dump_and_sign(root_signing_key)
+    bad_now_redacted_cd = bad_now_redacted_cd.dump_and_sign(root_signing_key)
+    bad_id_cu = bad_id_cu.dump_and_sign(root_signing_key)
+    bad_not_admin_cu = bad_not_admin_cu.dump_and_sign(root_signing_key)
 
     for i, (status, organization_id, *params) in enumerate(
         [
@@ -333,10 +339,10 @@ async def test_organization_bootstrap_bad_data(
             (
                 "already_bootstrapped",
                 bad_organization_id,
-                bad_bootstrap_token,
-                bad_key_cu,
-                bad_key_cd,
-                bad_rvk,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
             ),
             (
                 "invalid_certification",
@@ -394,13 +400,103 @@ async def test_organization_bootstrap_bad_data(
                 good_cd,
                 good_rvk,
             ),
+            # Tests with redacted certificates
+            (
+                "invalid_data",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                good_cu,  # Not redacted !
+                good_redacted_cd,
+            ),
+            (
+                "invalid_data",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                good_redacted_cu,
+                good_cd,  # Not redacted !
+            ),
+            (
+                "bad_message",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                None,  # None not allowed
+                good_redacted_cd,
+            ),
+            (
+                "bad_message",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                good_redacted_cu,
+                None,  # None not allowed
+            ),
+            (
+                "invalid_data",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                bad_now_redacted_cu,
+                good_redacted_cd,
+            ),
+            (
+                "invalid_data",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                good_redacted_cu,
+                bad_now_redacted_cd,
+            ),
+            (
+                "invalid_data",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                good_redacted_cu,
+                _missing,  # Must proved redacted_device if redacted user is present
+            ),
+            (
+                "invalid_data",
+                good_organization_id,
+                good_bootstrap_token,
+                good_cu,
+                good_cd,
+                good_rvk,
+                _missing,  # Must proved redacted_device if redacted user is present
+                good_redacted_cd,
+            ),
         ]
     ):
+        print(f"sub test {i}")
         async with apiv1_backend_sock_factory(backend, organization_id) as sock:
             rep = await organization_bootstrap(sock, *params)
         assert rep["status"] == status
 
     # Finally cheap test to make sure our "good" data were really good
     async with apiv1_backend_sock_factory(backend, good_organization_id) as sock:
-        rep = await organization_bootstrap(sock, good_bootstrap_token, good_cu, good_cd, good_rvk)
+        rep = await organization_bootstrap(
+            sock,
+            good_bootstrap_token,
+            good_cu,
+            good_cd,
+            good_rvk,
+            good_redacted_cu,
+            good_redacted_cd,
+        )
     assert rep["status"] == "ok"

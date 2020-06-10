@@ -175,14 +175,14 @@ class BaseOrganizationComponent:
             if "redacted_user_certificate" in msg:
                 ru_data = UserCertificateContent.verify_and_load(
                     msg["redacted_user_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
+                    author_verify_key=root_verify_key,
+                    expected_author=None,
                 )
             if "redacted_device_certificate" in msg:
                 rd_data = DeviceCertificateContent.verify_and_load(
                     msg["redacted_device_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
+                    author_verify_key=root_verify_key,
+                    expected_author=None,
                 )
 
         except DataError as exc:
@@ -233,11 +233,17 @@ class BaseOrganizationComponent:
                     "status": "invalid_data",
                     "reason": "Redacted Device certificate differs from Device certificate.",
                 }
-            if ru_data.device_label:
+            if rd_data.device_label:
                 return {
                     "status": "invalid_data",
                     "reason": "Redacted Device certificate must not contain a device_label field.",
                 }
+
+        if (rd_data and not ru_data) or (ru_data and not rd_data):
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted user&device certificate muste be provided together",
+            }
 
         user = User(
             user_id=u_data.user_id,
