@@ -1,0 +1,1 @@
+Fixed history window not showing when a file has a source.
