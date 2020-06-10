@@ -281,11 +281,11 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_id: DeviceID,
         device_label: Optional[str],
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
+        device_id = DeviceID.new()
         try:
             now = pendulum_now()
 
@@ -358,10 +358,8 @@ class DeviceGreetInProgress4Ctx:
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(
-        self, author: LocalDevice, device_name: DeviceName, device_label: Optional[str]
-    ) -> None:
-        device_id = DeviceID(f"{author.user_id}@{device_name}")
+    async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
+        device_id = DeviceID(f"{author.user_id}@{DeviceName.new()}")
         try:
             now = pendulum_now()
 
