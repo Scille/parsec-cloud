@@ -266,6 +266,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.button_import_files.show()
             self.button_create_folder.show()
         self.clipboard = None
+        self.table_files.paste_disabled = True
         self.reset(default_selection)
 
     def reset(self, default_selection=None):
