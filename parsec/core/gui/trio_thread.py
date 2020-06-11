@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from contextlib import contextmanager
-import trio
 import threading
-from inspect import iscoroutinefunction
+from contextlib import contextmanager
+from inspect import iscoroutinefunction, signature
+
+import trio
 from structlog import get_logger
 from parsec.core.fs import FSError
 from parsec.core.mountpoint import MountpointError
@@ -59,6 +60,12 @@ class QtToTrioJob:
 
     def __str__(self):
         return f"{self._fn.__name__}"
+
+    @property
+    def arguments(self):
+        bound_arguments = signature(self._fn).bind(*self._args, **self._kwargs)
+        bound_arguments.apply_defaults()
+        return bound_arguments.arguments
 
     def is_finished(self):
         return self._done.is_set()

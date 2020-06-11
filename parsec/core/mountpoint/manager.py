@@ -3,10 +3,10 @@
 import os
 import trio
 import logging
-from typing import Sequence
 from pathlib import PurePath
 from pendulum import Pendulum
 from structlog import get_logger
+from typing import Sequence, Optional
 from importlib import __import__ as import_function
 
 from async_generator import asynccontextmanager
@@ -212,21 +212,6 @@ class MountpointManager:
             await self._mountpoint_tasks[(workspace_id, original_timestamp)].cancel_and_join()
         return runner_task.value
 
-    async def mount_all(self, timestamp: Pendulum = None, exclude: Sequence[EntryID] = ()):
-        exclude_set = set(exclude)
-        user_manifest = self.user_fs.get_user_manifest()
-        for workspace_entry in user_manifest.workspaces:
-            if workspace_entry.role is None or workspace_entry.id in exclude_set:
-                continue
-            try:
-                await self.mount_workspace(workspace_entry.id, timestamp=timestamp)
-            except MountpointAlreadyMounted:
-                pass
-
-    async def unmount_all(self):
-        for workspace_id_ts_combination in list(self._mountpoint_tasks.keys()):
-            await self.unmount_workspace(*workspace_id_ts_combination)
-
     async def get_timestamped_mounted(self):
         return {
             workspace_id_and_ts: self._get_workspace_timestamped(*workspace_id_and_ts)
@@ -250,9 +235,11 @@ class MountpointManager:
         except Exception:
             logger.exception("Unexpected error while mounting a new workspace")
 
-    async def safe_unmount(self, workspace_id: EntryID) -> None:
+    async def safe_unmount(
+        self, workspace_id: EntryID, timestamp: Optional[Pendulum] = None
+    ) -> None:
         try:
-            await self.unmount_workspace(workspace_id)
+            await self.unmount_workspace(workspace_id, timestamp)
 
         # The workspace could not be mounted
         # Maybe be a `MountpointAlreadyMounted` or `MountpointNoDriveAvailable`
@@ -262,6 +249,18 @@ class MountpointManager:
         # Unexpected exception is not a reason to crash the mountpoint manager
         except Exception:
             logger.exception("Unexpected error while unmounting a revoked workspace")
+
+    async def safe_mount_all(self, exclude: Sequence[EntryID] = ()):
+        exclude_set = set(exclude)
+        user_manifest = self.user_fs.get_user_manifest()
+        for workspace_entry in user_manifest.workspaces:
+            if workspace_entry.role is None or workspace_entry.id in exclude_set:
+                continue
+            await self.safe_mount(workspace_entry.id)
+
+    async def safe_unmount_all(self):
+        for workspace_id, timestamp in list(self._mountpoint_tasks.keys()):
+            await self.safe_unmount(workspace_id, timestamp=timestamp)
 
 
 @asynccontextmanager
@@ -323,7 +322,7 @@ async def mountpoint_manager_factory(
 
                     # Mount required workspaces
                     if mount_all:
-                        await mountpoint_manager.mount_all(exclude=exclude_from_mount_all)
+                        await mountpoint_manager.safe_mount_all(exclude=exclude_from_mount_all)
 
                     # Yield point
                     yield mountpoint_manager
@@ -333,7 +332,7 @@ async def mountpoint_manager_factory(
 
         # Unmount all the workspaces (should this be shielded?)
         finally:
-            await mountpoint_manager.unmount_all()
+            await mountpoint_manager.safe_unmount_all()
 
         # Cancel the mountpoint tasks (although they should all be finised by now)
         nursery.cancel_scope.cancel()
