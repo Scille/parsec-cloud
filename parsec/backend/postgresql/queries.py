@@ -59,12 +59,13 @@ def _table_q_factory(table, public_id_field):
         if _id is not None:
             condition = f"{table}._id = {_id}"
         else:
-            public_id = kwargs.get(public_id_field)
+            public_id = kwargs.pop(public_id_field, None)
             assert public_id is not None
             assert organization_id is not None or organization is not None
             if not organization:
                 organization = q_organization_internal_id(organization_id)
             condition = f"{table}.organization = {organization} AND {table}.{ public_id_field } = { public_id }"
+        assert not kwargs
         return f"(SELECT {select} FROM {table} WHERE {condition})"
 
     def _q_internal_id(**kwargs):
