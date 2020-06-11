@@ -1,36 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pypika import Parameter
 import pendulum
 
 from parsec.api.protocol import OrganizationID, UserID, DeviceID
 from parsec.backend.user import UserError, UserNotFoundError, UserAlreadyRevokedError
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.tables import (
-    q_user,
+from parsec.backend.postgresql.queries import (
+    Q,
     q_organization_internal_id,
     q_device_internal_id,
+    q_user,
 )
 
 
-_q_revoke_user = """
+_q_revoke_user = Q(
+    f"""
 UPDATE user_ SET
-    revoked_user_certificate = $3,
-    revoked_user_certifier = ({}),
-    revoked_on = $5
+    revoked_user_certificate = $revoked_user_certificate,
+    revoked_user_certifier = { q_device_internal_id(organization_id="$organization_id", device_id="$revoked_user_certifier") },
+    revoked_on = $revoked_on
 WHERE
-    organization = ({})
-    AND user_id = $2
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
     AND revoked_on IS NULL
-""".format(
-    q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$4")),
-    q_organization_internal_id(Parameter("$1")),
+"""
 )
 
 
-_q_revoke_user_error = (
-    q_user(organization_id=Parameter("$1"), user_id=Parameter("$2")).select("revoked_on").get_sql()
+_q_revoke_user_error = Q(
+    q_user(organization_id="$organization_id", user_id="$user_id", select="revoked_on")
 )
 
 
@@ -44,17 +43,20 @@ async def query_revoke_user(
     revoked_on: pendulum.Pendulum = None,
 ) -> None:
     result = await conn.execute(
-        _q_revoke_user,
-        organization_id,
-        user_id,
-        revoked_user_certificate,
-        revoked_user_certifier,
-        revoked_on or pendulum.now(),
+        *_q_revoke_user(
+            organization_id=organization_id,
+            user_id=user_id,
+            revoked_user_certificate=revoked_user_certificate,
+            revoked_user_certifier=revoked_user_certifier,
+            revoked_on=revoked_on or pendulum.now(),
+        )
     )
 
     if result != "UPDATE 1":
         # TODO: avoid having to do another query to find the error
-        err_result = await conn.fetchrow(_q_revoke_user_error, organization_id, user_id)
+        err_result = await conn.fetchrow(
+            *_q_revoke_user_error(organization_id=organization_id, user_id=user_id)
+        )
         if not err_result:
             raise UserNotFoundError(user_id)
 

@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pypika import Parameter
-
 from parsec.api.protocol import OrganizationID, DeviceID, UserID
 from parsec.backend.user import (
     UserError,
@@ -11,25 +9,34 @@ from parsec.backend.user import (
 )
 from parsec.backend.postgresql.handler import send_signal
 from parsec.backend.postgresql.utils import query
-from parsec.backend.postgresql.tables import (
-    q_device,
-    q_device_invitation,
+from parsec.backend.postgresql.queries import (
+    Q,
     q_organization_internal_id,
+    q_device,
     q_device_internal_id,
 )
 
 
-_q_device_exists = (
-    q_device(organization_id=Parameter("$1"), device_id=Parameter("$2")).select(True).get_sql()
+_q_device_exists = Q(
+    f"""
+SELECT true
+FROM device
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND device_id = $device_id
+"""
 )
 
 
 async def _device_exists(conn, organization_id: OrganizationID, device_id: DeviceID):
-    device_result = await conn.fetchrow(_q_device_exists, organization_id, device_id)
+    device_result = await conn.fetchrow(
+        *_q_device_exists(organization_id=organization_id, device_id=device_id)
+    )
     return bool(device_result)
 
 
-_q_insert_invitation = """
+_q_insert_invitation = Q(
+    f"""
 INSERT INTO device_invitation (
     organization,
     creator,
@@ -37,10 +44,10 @@ INSERT INTO device_invitation (
     created_on
 )
 VALUES (
-    ({}),
-    ({}),
-    ({}),
-    ({})
+    { q_organization_internal_id("$organization_id") },
+    { q_device_internal_id(organization_id="$organization_id", device_id="$creator") },
+    $device_id,
+    $created_on
 )
 ON CONFLICT (organization, device_id)
 DO UPDATE
@@ -48,25 +55,30 @@ SET
     organization = excluded.organization,
     creator = excluded.creator,
     created_on = excluded.created_on
-""".format(
-    q_organization_internal_id(organization_id=Parameter("$1")),
-    q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$2")),
-    Parameter("$3"),
-    Parameter("$4"),
+"""
 )
 
 
-_q_get_invitation = (
-    q_device_invitation(organization_id=Parameter("$1"), device_id=Parameter("$2"))
-    .select("device_id", q_device(_id=Parameter("creator")).select("device_id"), "created_on")
-    .get_sql()
+_q_get_invitation = Q(
+    f"""
+SELECT
+    { q_device(_id="device_invitation.creator", select="device_id") } as creator,
+    created_on
+FROM device_invitation
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND device_id = $device_id
+"""
 )
 
 
-_q_delete_invitation = (
-    q_device_invitation(organization_id=Parameter("$1"), device_id=Parameter("$2"))
-    .delete()
-    .get_sql()
+_q_delete_invitation = Q(
+    f"""
+DELETE FROM device_invitation
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND device_id = $device_id
+"""
 )
 
 
@@ -77,11 +89,12 @@ async def _create_device_invitation(
         raise UserAlreadyExistsError(f"Device `{invitation.device_id}` already exists")
 
     result = await conn.execute(
-        _q_insert_invitation,
-        organization_id,
-        invitation.creator,
-        invitation.device_id,
-        invitation.created_on,
+        *_q_insert_invitation(
+            organization_id=organization_id,
+            creator=invitation.creator,
+            device_id=invitation.device_id,
+            created_on=invitation.created_on,
+        )
     )
 
     if result not in ("INSERT 0 1", "UPDATE 1"):
@@ -94,12 +107,14 @@ async def _get_device_invitation(
     if await _device_exists(conn, organization_id, device_id):
         raise UserAlreadyExistsError(f"Device `{device_id}` already exists")
 
-    result = await conn.fetchrow(_q_get_invitation, organization_id, device_id)
+    result = await conn.fetchrow(
+        *_q_get_invitation(organization_id=organization_id, device_id=device_id)
+    )
     if not result:
         raise UserNotFoundError(device_id)
 
     return DeviceInvitation(
-        device_id=DeviceID(result[0]), creator=DeviceID(result[1]), created_on=result[2]
+        device_id=device_id, creator=DeviceID(result["creator"]), created_on=result["created_on"]
     )
 
 
@@ -139,7 +154,9 @@ async def query_cancel_device_invitation(
     if await _device_exists(conn, organization_id, device_id):
         raise UserAlreadyExistsError(f"Device `{device_id}` already exists")
 
-    result = await conn.execute(_q_delete_invitation, organization_id, device_id)
+    result = await conn.execute(
+        *_q_delete_invitation(organization_id=organization_id, device_id=device_id)
+    )
     if result not in ("DELETE 1", "DELETE 0"):
         raise UserError(f"Deletion error: {result}")
 
