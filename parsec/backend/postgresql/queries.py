@@ -55,7 +55,15 @@ def q_organization_internal_id(organization_id, **kwargs):
 
 
 def _table_q_factory(table, public_id_field):
-    def _q(organization_id=None, organization=None, _id=None, table=table, select="*", **kwargs):
+    def _q(
+        organization_id=None,
+        organization=None,
+        _id=None,
+        table=table,
+        select="*",
+        suffix=None,
+        **kwargs,
+    ):
         if _id is not None:
             condition = f"{table}._id = {_id}"
         else:
@@ -66,7 +74,8 @@ def _table_q_factory(table, public_id_field):
                 organization = q_organization_internal_id(organization_id)
             condition = f"{table}.organization = {organization} AND {table}.{ public_id_field } = { public_id }"
         assert not kwargs
-        return f"(SELECT {select} FROM {table} WHERE {condition})"
+        suffix = suffix or ""
+        return f"(SELECT {select} FROM {table} WHERE {condition} {suffix})"
 
     def _q_internal_id(**kwargs):
         return _q(select="_id", **kwargs)
