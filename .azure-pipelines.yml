@@ -274,20 +274,34 @@ jobs:
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
   timeoutInMinutes: 60
   pool:
-    vmImage: 'ubuntu-18.04'
+    vmImage: 'ubuntu-latest'
   steps:
   - checkout: self
     submodules: true
   - bash: |
       set -eux
-      sudo apt install python python-pip
+      sudo apt-get install -y python python-pip xvfb xorg
       pip install twine
     displayName: 'Bootstrap'
   - bash: |
       set -eux
-      python setup.py generate_pyqt sdist
+      python setup.py sdist bdist_wheel
   - bash: |
-      echo $SNAPCRAFT_CREDENTIALS | twine upload dist/*
+      set -eux
+      pip install --user virtualenv
+      python -m venv venv
+      source venv/bin/activate
+      pip install dist/*.whl[all]
+      xvfb run parsec core gui
+      deactivate
+  - bash: |
+      source venv/bin/activate
+      (sleep 3; killall xvfb-run) & xvfb-run parsec core gui; test $? -eq 143 || exit -1
+      deactivate
+  - bash: |
+      echo $PYPI_CREDENTIALS | twine upload dist/*
+    env:
+      PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
     displayName: 'Build PyPI'
     workingDirectory: $(Agent.TempDirectory)
   - publish: $(Agent.TempDirectory)/dist
