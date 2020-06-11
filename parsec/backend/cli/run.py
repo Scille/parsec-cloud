@@ -316,16 +316,6 @@ def run_cmd(
 
     with cli_exception_handler(debug):
 
-        config = BackendConfig(
-            administration_token=administration_token,
-            db_url=db,
-            db_drop_deleted_data=db_drop_deleted_data,
-            db_min_connections=db_min_connections,
-            db_max_connections=db_max_connections,
-            blockstore_config=blockstore,
-            debug=debug,
-        )
-
         if ssl_certfile or ssl_keyfile:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             if ssl_certfile:
@@ -334,6 +324,17 @@ def run_cmd(
                 ssl_context.load_default_certs()
         else:
             ssl_context = None
+
+        config = BackendConfig(
+            administration_token=administration_token,
+            db_url=db,
+            db_drop_deleted_data=db_drop_deleted_data,
+            db_min_connections=db_min_connections,
+            db_max_connections=db_max_connections,
+            blockstore_config=blockstore,
+            ssl_enabled=ssl_context is not None,
+            debug=debug,
+        )
 
         async def _run_backend():
             async with backend_app_factory(config=config) as backend:

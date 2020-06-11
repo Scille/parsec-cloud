@@ -72,6 +72,7 @@ class BackendConfig:
     db_max_connections: int
 
     blockstore_config: BaseBlockStoreConfig
+    ssl_enabled: bool
 
     debug: bool
 
