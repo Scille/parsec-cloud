@@ -96,19 +96,19 @@ async def _do_import(workspace_fs, files, total_size, progress_signal):
             except FileExistsError:
                 await workspace_fs.truncate(dst, 0)
             progress_signal.emit(src.name, current_size)
-            with open(src, "rb") as fd_in:
-                i = 0
+
+            async with await trio.open_file(src, "rb") as f:
                 read_size = 0
                 while True:
-                    chunk = fd_in.read(DEFAULT_BLOCK_SIZE)
+                    chunk = await f.read(DEFAULT_BLOCK_SIZE)
                     if not chunk:
                         break
                     await workspace_fs.write_bytes(dst, chunk, read_size)
                     read_size += len(chunk)
-                    i += 1
                     progress_signal.emit(src.name, current_size + read_size)
-            current_size += src.stat().st_size + 1
+            current_size += read_size + 1
             progress_signal.emit(src.name, current_size)
+
         except trio.Cancelled as exc:
             raise JobResultError("cancelled", last_file=dst) from exc
 
