@@ -299,7 +299,12 @@ jobs:
       (sleep 3; killall xvfb-run) & xvfb-run parsec core gui; test $? -eq 143 || exit -1
       deactivate
   - bash: |
-      echo $PYPI_CREDENTIALS | twine upload dist/*
+      echo "
+      [pypi]
+      username = __token__
+      password = $PYPI_CREDENTIALS
+      " > ~/.pypirc
+      twine upload dist/*
     env:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
     displayName: 'Build PyPI'
