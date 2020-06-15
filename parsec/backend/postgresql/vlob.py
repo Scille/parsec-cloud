@@ -356,146 +356,35 @@ WHERE
         timestamp: pendulum.Pendulum,
         blob: bytes,
     ) -> None:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.dbh.pool.acquire() as conn:
+            while True:
+                try:
+                    return await query_update(
+                        conn,
+                        organization_id,
+                        author,
+                        encryption_revision,
+                        vlob_id,
+                        version,
+                        timestamp,
+                        blob,
+                    )
 
-            realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-            await _check_realm_and_write_access(
-                conn, organization_id, author, realm_id, encryption_revision
-            )
-
-            query = """
-SELECT
-    version,
-    created_on
-FROM vlob_atom
-WHERE
-    organization = ({})
-    AND vlob_id = $2
-ORDER BY version DESC LIMIT 1
-""".format(
-                q_organization_internal_id(Parameter("$1"))
-            )
-
-            previous = await conn.fetchrow(query, organization_id, vlob_id)
-            if not previous:
-                raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
-
-            elif previous["version"] != version - 1:
-                raise VlobVersionError()
-
-            elif previous["created_on"] > timestamp:
-                raise VlobTimestampError()
-
-            query = """
-INSERT INTO vlob_atom (
-    organization,
-    vlob_encryption_revision,
-    vlob_id,
-    version,
-    blob,
-    size,
-    author,
-    created_on
-)
-SELECT
-    ({}),
-    ({}),
-    $5,
-    $9,
-    $6,
-    $7,
-    ({}),
-    $8
-RETURNING _id
-""".format(
-                q_organization_internal_id(Parameter("$1")),
-                q_vlob_encryption_revision_internal_id(
-                    organization_id=Parameter("$1"),
-                    realm_id=Parameter("$3"),
-                    encryption_revision=Parameter("$4"),
-                ),
-                q_device_internal_id(organization_id=Parameter("$1"), device_id=Parameter("$2")),
-            )
-
-            try:
-                vlob_atom_internal_id = await conn.fetchval(
-                    query,
-                    organization_id,
-                    author,
-                    realm_id,
-                    encryption_revision,
-                    vlob_id,
-                    blob,
-                    len(blob),
-                    timestamp,
-                    version,
-                )
-
-            except UniqueViolationError:
-                # Should not occurs in theory given we are in a transaction
-                raise VlobVersionError()
-
-            await _vlob_updated(
-                conn, vlob_atom_internal_id, organization_id, author, realm_id, vlob_id, version
-            )
+                except UniqueViolationError as exc:
+                    logger.warning("unique violation error, retrying...", exc_info=exc)
 
     async def poll_changes(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-
-            await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
-            query = """
-SELECT
-    index,
-    vlob_id,
-    vlob_atom.version
-FROM realm_vlob_update
-LEFT JOIN vlob_atom ON realm_vlob_update.vlob_atom = vlob_atom._id
-WHERE
-    realm = ({})
-    AND index > $3
-ORDER BY index ASC
-""".format(
-                q_realm_internal_id(organization_id=Parameter("$1"), realm_id=Parameter("$2"))
-            )
-
-            ret = await conn.fetch(query, organization_id, realm_id, checkpoint)
-
-        changes_since_checkpoint = {src_id: src_version for _, src_id, src_version in ret}
-        new_checkpoint = ret[-1][0] if ret else checkpoint
-        return (new_checkpoint, changes_since_checkpoint)
+        async with self.dbh.pool.acquire() as conn:
+            return await query_poll_changes(conn, organization_id, author, realm_id, checkpoint)
 
     async def list_versions(
         self, organization_id: OrganizationID, author: DeviceID, vlob_id: UUID
     ) -> Dict[int, Tuple[pendulum.Pendulum, DeviceID]]:
 
         async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-
-                realm_id = await _get_realm_id_from_vlob_id(conn, organization_id, vlob_id)
-                await _check_realm_and_read_access(conn, organization_id, author, realm_id, None)
-
-                query = """
-SELECT
-    version,
-    ({}) as author,
-    created_on
-FROM vlob_atom
-WHERE
-    organization = ({})
-    AND vlob_id = $2
-ORDER BY version DESC
-""".format(
-                    q_device(_id=Parameter("author")).select("device_id"),
-                    q_organization_internal_id(Parameter("$1")),
-                )
-                rows = await conn.fetch(query, organization_id, vlob_id)
-                assert rows
-        if not rows:
-            raise VlobNotFoundError(f"Vlob `{vlob_id}` doesn't exist")
-
-        return {row["version"]: (row["created_on"], row["author"]) for row in rows}
+            return await query_list_versions(conn, organization_id, author, vlob_id)
 
     async def maintenance_get_reencryption_batch(
         self,
@@ -505,47 +394,10 @@ ORDER BY version DESC
         encryption_revision: int,
         size: int,
     ) -> List[Tuple[UUID, int, bytes]]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-
-            await _check_realm_and_maintenance_access(
-                conn, organization_id, author, realm_id, encryption_revision
+        async with self.dbh.pool.acquire() as conn:
+            return await query_maintenance_get_reencryption_batch(
+                conn, organization_id, author, realm_id, encryption_revision, size
             )
-
-            query = """
-WITH cte_to_encrypt AS (
-    SELECT vlob_id, version, blob
-    FROM vlob_atom
-    WHERE vlob_encryption_revision = ({})
-),
-cte_encrypted AS (
-    SELECT vlob_id, version
-    FROM vlob_atom
-    WHERE vlob_encryption_revision = ({})
-)
-SELECT
-    cte_to_encrypt.vlob_id,
-    cte_to_encrypt.version,
-    blob
-FROM cte_to_encrypt
-LEFT JOIN cte_encrypted
-ON cte_to_encrypt.vlob_id = cte_encrypted.vlob_id AND cte_to_encrypt.version = cte_encrypted.version
-WHERE cte_encrypted.vlob_id IS NULL
-LIMIT $4
-""".format(
-                q_vlob_encryption_revision_internal_id(
-                    organization_id=Parameter("$1"),
-                    realm_id=Parameter("$2"),
-                    encryption_revision=Parameter("$3") - 1,
-                ),
-                q_vlob_encryption_revision_internal_id(
-                    organization_id=Parameter("$1"),
-                    realm_id=Parameter("$2"),
-                    encryption_revision=Parameter("$3"),
-                ),
-            )
-
-            rep = await conn.fetch(query, organization_id, realm_id, encryption_revision, size)
-            return [(row["vlob_id"], row["version"], row["blob"]) for row in rep]
 
     async def maintenance_save_reencryption_batch(
         self,
@@ -555,84 +407,7 @@ LIMIT $4
         encryption_revision: int,
         batch: List[Tuple[UUID, int, bytes]],
     ) -> Tuple[int, int]:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-
-            await _check_realm_and_maintenance_access(
-                conn, organization_id, author, realm_id, encryption_revision
+        async with self.dbh.pool.acquire() as conn:
+            return await query_maintenance_save_reencryption_batch(
+                conn, organization_id, author, realm_id, encryption_revision, batch
             )
-            for vlob_id, version, blob in batch:
-                query = """
-INSERT INTO vlob_atom(
-    organization,
-    vlob_encryption_revision,
-    vlob_id,
-    version,
-    blob,
-    size,
-    author,
-    created_on,
-    deleted_on
-)
-SELECT
-    organization,
-    ({}),
-    $3,
-    $4,
-    $6,
-    $7,
-    author,
-    created_on,
-    deleted_on
-FROM vlob_atom
-WHERE
-    organization = ({})
-    AND vlob_id = $3
-    AND version = $4
-ON CONFLICT DO NOTHING
-""".format(
-                    q_vlob_encryption_revision_internal_id(
-                        organization_id=Parameter("$1"),
-                        realm_id=Parameter("$2"),
-                        encryption_revision=Parameter("$5"),
-                    ),
-                    q_organization_internal_id(Parameter("$1")),
-                )
-
-                await conn.execute(
-                    query,
-                    organization_id,
-                    realm_id,
-                    vlob_id,
-                    version,
-                    encryption_revision,
-                    blob,
-                    len(blob),
-                )
-
-            query = """
-SELECT (
-    SELECT COUNT(*)
-    FROM vlob_atom
-    WHERE vlob_encryption_revision = ({})
-),
-(
-    SELECT COUNT(*)
-    FROM vlob_atom
-    WHERE vlob_encryption_revision = ({})
-)
-""".format(
-                q_vlob_encryption_revision_internal_id(
-                    organization_id=Parameter("$1"),
-                    realm_id=Parameter("$2"),
-                    encryption_revision=Parameter("$3") - 1,
-                ),
-                q_vlob_encryption_revision_internal_id(
-                    organization_id=Parameter("$1"),
-                    realm_id=Parameter("$2"),
-                    encryption_revision=Parameter("$3"),
-                ),
-            )
-
-            rep = await conn.fetchrow(query, organization_id, realm_id, encryption_revision)
-
-            return rep[0], rep[1]
