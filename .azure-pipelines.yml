@@ -292,12 +292,9 @@ jobs:
       python -m venv venv
       source venv/bin/activate
       pip install dist/*.whl[all]
-      xvfb run parsec core gui
-      deactivate
   - bash: |
       source venv/bin/activate
       (sleep 3; killall xvfb-run) & xvfb-run parsec core gui; test $? -eq 143 || exit -1
-      deactivate
   - bash: |
       echo "
       [pypi]
