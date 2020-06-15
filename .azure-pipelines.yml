@@ -293,8 +293,15 @@ jobs:
       source venv/bin/activate
       pip install dist/*.whl[all]
   - bash: |
+      set -eu  # with -x we would fail on killall, we need it to exit the gui once launched
       source venv/bin/activate
-      (sleep 3; killall xvfb-run) & xvfb-run parsec core gui; test $? -eq 143 || exit -1
+      (
+        (sleep 3; killall xvfb-run)
+        & xvfb-run parsec core gui
+        ; test $? -eq 143
+        || exit -1
+      )
+    displayName: 'Test GUI do launch'
   - bash: |
       echo "
       [pypi]
