@@ -111,7 +111,7 @@ class AvailableDevice:
     @property
     def slug(self) -> str:
         # Drop the `.keys` suffix
-        return self.key_file_path.name.rsplit(".", 1)[0]
+        return self.key_file_path.stem
 
     @property
     def slughash(self) -> str:
