@@ -11,7 +11,6 @@ class MenuWidget(QWidget, Ui_MenuWidget):
     files_clicked = pyqtSignal()
     users_clicked = pyqtSignal()
     devices_clicked = pyqtSignal()
-    logout_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19,13 +18,10 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.button_files.clicked.connect(self.files_clicked.emit)
         self.button_users.clicked.connect(self.users_clicked.emit)
         self.button_devices.clicked.connect(self.devices_clicked.emit)
-        self.button_logout.clicked.connect(self.logout_clicked.emit)
         self.button_files.apply_style()
         self.button_users.apply_style()
         self.button_devices.apply_style()
-        self.button_logout.apply_style()
         self.icon_connection.apply_style()
-        self.icon_user.apply_style()
 
     def paintEvent(self, _):
         opt = QStyleOption()
@@ -55,35 +51,3 @@ class MenuWidget(QWidget, Ui_MenuWidget):
         self.label_connection_state.setToolTip(tooltip)
         self.icon_connection.setPixmap(icon)
         self.icon_connection.apply_style()
-
-    @property
-    def organization_url(self):
-        return self.label_organization.toolTip()
-
-    @organization_url.setter
-    def organization_url(self, val):
-        self.label_organization.setToolTip(val)
-
-    @property
-    def organization(self):
-        return self.label_organization.text()
-
-    @organization.setter
-    def organization(self, val):
-        self.label_organization.setText(val)
-
-    @property
-    def username(self):
-        return self.label_username.text()
-
-    @username.setter
-    def username(self, val):
-        self.label_username.setText(val)
-
-    @property
-    def device(self):
-        return self.label_device.text()
-
-    @device.setter
-    def device(self, val):
-        self.label_device.setText(val)
