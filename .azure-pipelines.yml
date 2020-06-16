@@ -303,7 +303,10 @@ jobs:
       # Only way to close the GUI from the command line...
       killall xvfb-run
     displayName: 'Test GUI do launch'
+  - publish: $(Agent.TempDirectory)/dist
+    artifact: pypi
   - bash: |
+      set -eux
       echo "
       [pypi]
       username = __token__
@@ -314,8 +317,6 @@ jobs:
       PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
     displayName: 'Build PyPI'
     workingDirectory: $(Agent.TempDirectory)
-  - publish: $(Agent.TempDirectory)/dist
-    artifact: pypi
 
 
 #################################################################################
