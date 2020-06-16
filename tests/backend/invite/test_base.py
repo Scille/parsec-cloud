@@ -14,7 +14,7 @@ from parsec.api.protocol import (
     HandshakeBadIdentity,
 )
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import (
     invite_new,
     invite_list,
@@ -171,7 +171,7 @@ async def test_device_create_and_info(
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.OUTSIDER)
+@customize_fixtures(alice_profile=UserProfile.OUTSIDER)
 async def test_invite_new_limited_for_outsider(alice_backend_sock):
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)
     assert rep == {"status": "ok", "token": ANY}
@@ -184,7 +184,7 @@ async def test_invite_new_limited_for_outsider(alice_backend_sock):
 
 
 @pytest.mark.trio
-@customize_fixture("alice_profile", UserProfile.STANDARD)
+@customize_fixtures(alice_profile=UserProfile.STANDARD)
 async def test_invite_new_limited_for_standard(alice_backend_sock):
     # Outsider can only invite new devices
     rep = await invite_new(alice_backend_sock, type=InvitationType.DEVICE)

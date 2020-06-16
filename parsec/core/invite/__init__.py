@@ -30,6 +30,7 @@ from parsec.core.invite.greeter import (
     UserGreetInProgress4Ctx,
     DeviceGreetInProgress4Ctx,
 )
+from parsec.core.invite.organization import bootstrap_organization
 
 
 __all__ = (
@@ -64,4 +65,6 @@ __all__ = (
     "DeviceGreetInProgress3Ctx",
     "UserGreetInProgress4Ctx",
     "DeviceGreetInProgress4Ctx",
+    # Organization
+    "bootstrap_organization",
 )

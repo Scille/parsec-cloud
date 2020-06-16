@@ -4,7 +4,7 @@ import pytest
 import trio
 
 from parsec.api.data import UserProfile
-from parsec.api.protocol import DeviceID, DeviceName, HumanHandle, InvitationType
+from parsec.api.protocol import HumanHandle, InvitationType
 from parsec.core.backend_connection import backend_invited_cmds_factory
 from parsec.core.types import BackendInvitationAddr, LocalDevice, WorkspaceRole
 from parsec.core.invite import (
@@ -29,9 +29,7 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
         token=invitation.token,
     )
 
-    requested_device_name = DeviceName("Foo")
     requested_device_label = "Foo's label"
-    granted_device_name = DeviceName("Bar")
     granted_device_label = "Bar's label"
     new_device = None
 
@@ -61,8 +59,7 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
 
             nonlocal new_device
             new_device = await in_progress_ctx.do_claim_device(
-                requested_device_name=requested_device_name,
-                requested_device_label=requested_device_label,
+                requested_device_label=requested_device_label
             )
             assert isinstance(new_device, LocalDevice)
 
@@ -86,12 +83,9 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
 
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-        assert in_progress_ctx.requested_device_name == requested_device_name
         assert in_progress_ctx.requested_device_label == requested_device_label
 
-        await in_progress_ctx.do_create_new_device(
-            author=alice, device_name=granted_device_name, device_label=granted_device_label
-        )
+        await in_progress_ctx.do_create_new_device(author=alice, device_label=granted_device_label)
 
     with trio.fail_after(1):
         async with trio.open_nursery() as nursery:
@@ -100,7 +94,7 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
 
     assert new_device is not None
     assert new_device.user_id == alice.user_id
-    assert new_device.device_name == granted_device_name
+    assert new_device.device_name != alice.device_name
     assert new_device.device_label == granted_device_label
     assert new_device.human_handle == alice.human_handle
     assert new_device.private_key == alice.private_key
@@ -157,12 +151,10 @@ async def test_good_user_claim(
     )
 
     # Let's pretent we invited a Fortnite player...
-    requested_device_id = DeviceID("xXx_zack_xXx@ultr4_b00st")
-    requested_human_handle = HumanHandle(email="ZACK@example.com", label="Z4ck")
-    requested_device_label = "Ultr4 B00st's label"
-    granted_device_id = DeviceID("zack@pc1")
+    requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
+    requested_device_label = "Ultr4_B00st"
     granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
-    granted_device_label = "PC1's label"
+    granted_device_label = "Desktop"
     granted_profile = UserProfile.STANDARD
     new_device = None
 
@@ -193,7 +185,6 @@ async def test_good_user_claim(
 
             nonlocal new_device
             new_device = await in_progress_ctx.do_claim_user(
-                requested_device_id=requested_device_id,
                 requested_device_label=requested_device_label,
                 requested_human_handle=requested_human_handle,
             )
@@ -219,13 +210,11 @@ async def test_good_user_claim(
 
         in_progress_ctx = await in_progress_ctx.do_get_claim_requests()
 
-        assert in_progress_ctx.requested_device_id == requested_device_id
         assert in_progress_ctx.requested_device_label == requested_device_label
         assert in_progress_ctx.requested_human_handle == requested_human_handle
 
         await in_progress_ctx.do_create_new_user(
             author=alice,
-            device_id=granted_device_id,
             device_label=granted_device_label,
             human_handle=granted_human_handle,
             profile=granted_profile,
@@ -237,7 +226,7 @@ async def test_good_user_claim(
             nursery.start_soon(_run_greeter)
 
     assert new_device is not None
-    assert new_device.device_id == granted_device_id
+    assert new_device.device_id != alice.device_id
     assert new_device.device_label == granted_device_label
     # Label is normally ignored when comparing HumanLabel
     assert new_device.human_handle.label == granted_human_handle.label
@@ -259,7 +248,7 @@ async def test_good_user_claim(
     assert user.profile == granted_profile
     assert user.human_handle == granted_human_handle
     assert user.user_certificate != user.redacted_user_certificate
-    # assert device.device_label == granted_device_label  # TODO: enable this once #1174 is merged
+    assert device.device_label == granted_device_label
     assert device.device_certificate != device.redacted_device_certificate
 
     # Test the behavior of this new user device

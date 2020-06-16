@@ -1,0 +1,3 @@
+Turn user_id and device_name fields into UUID to anonymize them.
+Personal informations are instead stored in human_handle and device_label
+fields which are not available to users with OUTSIDER profile.

@@ -21,7 +21,7 @@ from parsec.api.data import (
     InviteDeviceData,
     InviteDeviceConfirmation,
 )
-from parsec.api.protocol import UserID, DeviceName, DeviceID, HumanHandle, InvitationType
+from parsec.api.protocol import UserID, HumanHandle, InvitationType
 from parsec.core.local_device import generate_new_device
 from parsec.core.backend_connection import BackendInvitedCmds
 from parsec.core.types import LocalDevice, BackendOrganizationAddr
@@ -196,17 +196,13 @@ class UserClaimInProgress3Ctx:
     _cmds: BackendInvitedCmds
 
     async def do_claim_user(
-        self,
-        requested_device_id: DeviceID,
-        requested_device_label: Optional[str],
-        requested_human_handle: Optional[HumanHandle],
+        self, requested_device_label: Optional[str], requested_human_handle: Optional[HumanHandle]
     ) -> LocalDevice:
         private_key = PrivateKey.generate()
         signing_key = SigningKey.generate()
 
         try:
             payload = InviteUserData(
-                requested_device_id=requested_device_id,
                 requested_device_label=requested_device_label,
                 requested_human_handle=requested_human_handle,
                 public_key=private_key.public_key,
@@ -258,16 +254,12 @@ class DeviceClaimInProgress3Ctx:
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_claim_device(
-        self, requested_device_name: DeviceName, requested_device_label: Optional[str]
-    ) -> LocalDevice:
+    async def do_claim_device(self, requested_device_label: Optional[str]) -> LocalDevice:
         signing_key = SigningKey.generate()
 
         try:
             payload = InviteDeviceData(
-                requested_device_name=requested_device_name,
-                requested_device_label=requested_device_label,
-                verify_key=signing_key.verify_key,
+                requested_device_label=requested_device_label, verify_key=signing_key.verify_key
             ).dump_and_encrypt(key=self._shared_secret_key)
         except DataError as exc:
             raise InviteError("Cannot generate InviteDeviceData payload") from exc

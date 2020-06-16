@@ -9,7 +9,7 @@ from parsec.api.protocol import RealmRole
 from parsec.api.data import RealmRoleCertificateContent, UserProfile
 from parsec.backend.realm import RealmGrantedRole
 
-from tests.common import freeze_time, customize_fixture
+from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import realm_update_roles, realm_get_role_certificates
 
 
@@ -97,7 +97,7 @@ async def test_update_roles_cannot_modify_self(backend, alice, alice_backend_soc
 
 
 @pytest.mark.trio
-@customize_fixture("bob_profile", UserProfile.OUTSIDER)
+@customize_fixtures(bob_profile=UserProfile.OUTSIDER)
 async def test_update_roles_outsider_is_limited(backend, alice, bob, alice_backend_sock, realm):
     for role, is_allowed in [
         (RealmRole.READER, True),

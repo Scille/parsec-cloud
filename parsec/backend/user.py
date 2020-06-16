@@ -87,6 +87,7 @@ class Device:
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    device_label: Optional[str] = None
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -449,20 +450,16 @@ class BaseUserComponent:
                 author_verify_key=client_ctx.verify_key,
                 expected_author=client_ctx.device_id,
             )
-
-            ru_data = rd_data = None
-            if msg["redacted_user_certificate"]:
-                ru_data = UserCertificateContent.verify_and_load(
-                    msg["redacted_user_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
-                )
-            if msg["redacted_device_certificate"]:
-                rd_data = DeviceCertificateContent.verify_and_load(
-                    msg["redacted_device_certificate"],
-                    author_verify_key=client_ctx.verify_key,
-                    expected_author=client_ctx.device_id,
-                )
+            ru_data = UserCertificateContent.verify_and_load(
+                msg["redacted_user_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
+            rd_data = DeviceCertificateContent.verify_and_load(
+                msg["redacted_device_certificate"],
+                author_verify_key=client_ctx.verify_key,
+                expected_author=client_ctx.device_id,
+            )
 
         except DataError as exc:
             return {
@@ -489,29 +486,27 @@ class BaseUserComponent:
                 "reason": "Device and User must have the same user ID.",
             }
 
-        if ru_data:
-            if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted User certificate differs from User certificate.",
-                }
-            if ru_data.human_handle:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted User certificate must not contain a human_handle field.",
-                }
+        if ru_data.evolve(human_handle=u_data.human_handle) != u_data:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted User certificate differs from User certificate.",
+            }
+        if ru_data.human_handle:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted User certificate must not contain a human_handle field.",
+            }
 
-        if rd_data:
-            if rd_data.evolve(device_label=d_data.device_label) != d_data:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate differs from Device certificate.",
-                }
-            if rd_data.device_label:
-                return {
-                    "status": "invalid_data",
-                    "reason": "Redacted Device certificate must not contain a device_label field.",
-                }
+        if rd_data.evolve(device_label=d_data.device_label) != d_data:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate differs from Device certificate.",
+            }
+        if rd_data.device_label:
+            return {
+                "status": "invalid_data",
+                "reason": "Redacted Device certificate must not contain a device_label field.",
+            }
 
         try:
             user = User(
@@ -526,6 +521,7 @@ class BaseUserComponent:
             )
             first_device = Device(
                 device_id=d_data.device_id,
+                device_label=d_data.device_label,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["redacted_device_certificate"]
                 or msg["device_certificate"],

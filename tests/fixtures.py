@@ -190,15 +190,24 @@ def expiredorg(organization_factory):
 
 @pytest.fixture
 def otheralice(fixtures_customization, local_device_factory, otherorg):
-    # otheralice should also mimic alice role
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    return local_device_factory("alice@dev1", otherorg, profile=profile)
+    return local_device_factory(
+        "alice@dev1",
+        otherorg,
+        # otheralice mimics alice
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def alice(fixtures_customization, local_device_factory, initial_user_manifest_state):
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    device = local_device_factory("alice@dev1", profile=profile)
+    device = local_device_factory(
+        "alice@dev1",
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -212,9 +221,14 @@ def alice(fixtures_customization, local_device_factory, initial_user_manifest_st
 def expiredorgalice(
     fixtures_customization, local_device_factory, initial_user_manifest_state, expiredorg
 ):
-    # expiredorgalice should also mimic alice role
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    device = local_device_factory("alice@dev1", expiredorg, profile=profile)
+    device = local_device_factory(
+        "alice@dev1",
+        expiredorg,
+        # expiredorgalice mimics alice
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
     # Force alice user manifest v1 to be signed by user alice@dev1
     # This is needed given backend_factory bind alice@dev1 then alice@dev2,
     # hence user manifest v1 is stored in backend at a time when alice@dev2
@@ -226,26 +240,42 @@ def expiredorgalice(
 
 @pytest.fixture
 def alice2(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("alice_profile", UserProfile.ADMIN)
-    return local_device_factory("alice@dev2", profile=profile)
+    return local_device_factory(
+        "alice@dev2",
+        profile=fixtures_customization.get("alice_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("alice_has_human_handle", True),
+        has_device_label=fixtures_customization.get("alice_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def adam(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("adam_profile", UserProfile.ADMIN)
-    return local_device_factory("adam@dev1", profile=profile)
+    return local_device_factory(
+        "adam@dev1",
+        profile=fixtures_customization.get("adam_profile", UserProfile.ADMIN),
+        has_human_handle=fixtures_customization.get("adam_has_human_handle", True),
+        has_device_label=fixtures_customization.get("adam_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def bob(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("bob_profile", UserProfile.STANDARD)
-    return local_device_factory("bob@dev1", profile=profile)
+    return local_device_factory(
+        "bob@dev1",
+        profile=fixtures_customization.get("bob_profile", UserProfile.STANDARD),
+        has_human_handle=fixtures_customization.get("bob_has_human_handle", True),
+        has_device_label=fixtures_customization.get("bob_has_device_label", True),
+    )
 
 
 @pytest.fixture
 def mallory(fixtures_customization, local_device_factory):
-    profile = fixtures_customization.get("mallory_profile", UserProfile.STANDARD)
-    return local_device_factory("mallory@dev1", profile=profile)
+    return local_device_factory(
+        "mallory@dev1",
+        profile=fixtures_customization.get("mallory_profile", UserProfile.STANDARD),
+        has_human_handle=fixtures_customization.get("mallory_has_human_handle", True),
+        has_device_label=fixtures_customization.get("mallory_has_device_label", True),
+    )
 
 
 class InitialUserManifestState:

@@ -2,6 +2,8 @@
 
 import re
 import os
+from pathlib import Path
+from functools import partial
 
 try:
     import fcntl
@@ -10,7 +12,6 @@ except ModuleNotFoundError:  # Not available on Windows
 import sys
 import subprocess
 from time import sleep
-from pathlib import Path
 from contextlib import contextmanager
 from unittest.mock import ANY, MagicMock, patch
 
@@ -21,9 +22,10 @@ from click.testing import CliRunner
 from async_generator import asynccontextmanager
 
 from parsec import __version__ as parsec_version
+from parsec.api.protocol import OrganizationID, DeviceID
 from parsec.backend.postgresql import MigrationItem
+from parsec.core.local_device import save_device_with_password, list_available_devices
 from parsec.cli import cli
-
 
 CWD = Path(__file__).parent.parent
 
@@ -51,27 +53,23 @@ def test_share_workspace(tmpdir, alice, bob):
 
     factory_mock.return_value.user_fs.workspace_share = share
 
-    with patch("parsec.core.cli.utils.list_available_devices") as list_mock:
-        with patch("parsec.core.cli.utils.load_device_with_password") as load_mock:
-            with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
-                list_mock.return_value = [
-                    (bob.organization_id, bob.device_id, "password", MagicMock())
-                ]
-                runner = CliRunner()
-                args = (
-                    "core share_workspace --password bla "
-                    f"--device={bob.device_id} --config-dir={config_dir} "
-                    f"ws1 {alice.user_id}"
-                )
-                result = runner.invoke(cli, args)
+    password = "S3cr3t"
+    save_device_with_password(Path(config_dir), bob, password)
+
+    with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
+        runner = CliRunner()
+        args = (
+            f"core share_workspace --password {password} "
+            f"--device={bob.slughash} --config-dir={config_dir} "
+            f"ws1 {alice.user_id}"
+        )
+        result = runner.invoke(cli, args)
 
     print(result.output)
     assert result.exit_code == 0
     assert result.output == ""
 
-    list_mock.assert_called_once_with(ANY)
-    load_mock.assert_called_once_with(ANY, "bla")
-    factory_mock.assert_called_once_with(ANY, load_mock.return_value)
+    factory_mock.assert_called_once_with(ANY, bob)
     share_mock.assert_called_once_with("/ws1", alice.user_id)
 
 
@@ -122,6 +120,8 @@ def _running(cmd, wait_for=None, env={}):
         cwd=CWD,
         env=env,
     )
+    p.wait_for = partial(_wait_for, p)
+    p.wait_for_regex = partial(_wait_for_regex, p)
     p.live_stdout = LivingStream(p.stdout)
     p.live_stderr = LivingStream(p.stderr)
     # Turn stdin non-blocking
@@ -148,6 +148,27 @@ def _running(cmd, wait_for=None, env={}):
         p.wait()
         print(p.live_stdout.read())
         print(p.live_stderr.read())
+
+
+def _wait_for(p, wait_txt):
+    for _ in range(10):
+        sleep(0.1)
+        stdout = p.live_stdout.read()
+        if wait_txt in stdout:
+            return stdout
+    else:
+        raise AssertionError("Too slow")
+
+
+def _wait_for_regex(p, regex):
+    for _ in range(10):
+        sleep(0.1)
+        stdout = p.live_stdout.read()
+        match = re.search(regex, stdout, re.MULTILINE)
+        if match:
+            return match
+    else:
+        raise AssertionError("Too slow")
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
@@ -223,16 +244,24 @@ def ssl_conf(request):
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-def test_apiv1_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
+def test_apiv1_full_run(unused_tcp_port, tmpdir, ssl_conf):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
-    org = alice.organization_id
-    alice1_slug = f"{alice.organization_id}:{alice.device_id}"
-    alice2_slug = f"{alice2.organization_id}:{alice2.device_id}"
-    bob1_slug = f"{bob.organization_id}:{bob.device_id}"
-    alice1 = alice.device_id
-    alice2 = alice2.device_id
-    bob1 = bob.device_id
+    org = OrganizationID("org")
+
+    # slughash depends on root verify key, so we cannot determine
+    # it before the organization is created
+    def _retrieve_device_slughash(device_id):
+        availables = list_available_devices(Path(config_dir))
+        for available in availables:
+            if available.device_id == device_id:
+                return available.slughash
+        else:
+            assert False, f"`{device_id}` not among {availables}"
+
+    alice1 = DeviceID("alice@pc1")
+    alice2 = DeviceID("alice@pc2")
+    bob1 = DeviceID("bob@laptop")
     password = "P@ssw0rd."
     administration_token = "9e57754ddfe62f7f8780edc0"
 
@@ -264,15 +293,17 @@ def test_apiv1_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
         print("####### Bootstrap organization #######")
         _run(
-            "core bootstrap_organization "
+            "core apiv1 bootstrap_organization "
             f"{alice1} --addr={url} --config-dir={config_dir} --password={password}",
             env=ssl_conf.client_env,
         )
 
+        alice1_slughash = _retrieve_device_slughash(alice1)
+
         print("####### Create another user #######")
         with _running(
             "core apiv1 invite_user "
-            f"--config-dir={config_dir} --device={alice1_slug} "
+            f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password} {bob1.user_id}",
             wait_for="token:",
             env=ssl_conf.client_env,
@@ -288,10 +319,12 @@ def test_apiv1_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 env=ssl_conf.client_env,
             )
 
+            p.wait()
+
         print("####### Create another device #######")
         with _running(
             "core apiv1 invite_device "
-            f"--config-dir={config_dir} --device={alice1_slug} --password={password}"
+            f"--config-dir={config_dir} --device={alice1_slughash} --password={password}"
             f" {alice2.device_name}",
             wait_for="token:",
             env=ssl_conf.client_env,
@@ -307,22 +340,30 @@ def test_apiv1_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 env=ssl_conf.client_env,
             )
 
+            p.wait()
+
+        alice2_slughash = _retrieve_device_slughash(alice2)
+        bob1_slughash = _retrieve_device_slughash(bob1)
+
         print("####### List users #######")
         p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
         stdout = p.stdout.decode()
-        assert alice1 in stdout
-        assert alice2 in stdout
-        assert bob1 in stdout
+        assert alice1_slughash[:3] in stdout
+        assert f"{org}: {alice1.user_id} @ {alice1.device_name}" in stdout
+        assert alice2_slughash[:3] in stdout
+        assert f"{org}: {alice2.user_id} @ {alice2.device_name}" in stdout
+        assert bob1_slughash[:3] in stdout
+        assert f"{org}: {bob1.user_id} @ {bob1.device_name}" in stdout
 
         print("####### New users can communicate with backend #######")
         _run(
             "core create_workspace wksp1 "
-            f"--config-dir={config_dir} --device={bob1_slug} --password={password}",
+            f"--config-dir={config_dir} --device={bob1_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
         _run(
             "core create_workspace wksp2 "
-            f"--config-dir={config_dir} --device={alice2_slug} --password={password}",
+            f"--config-dir={config_dir} --device={alice2_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
 
@@ -345,16 +386,19 @@ def test_apiv1_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
+def test_full_run(coolorg, unused_tcp_port, tmpdir, ssl_conf):
     # As usual Windows path require a big hack...
     config_dir = tmpdir.strpath.replace("\\", "\\\\")
-    org = alice.organization_id
-    alice1_slug = f"{alice.organization_id}:{alice.device_id}"
-    alice2_slug = f"{alice2.organization_id}:{alice2.device_id}"
-    bob1_slug = f"{bob.organization_id}:{bob.device_id}"
-    alice1 = alice.device_id
-    alice2 = alice2.device_id
-    bob1 = bob.device_id
+    org = coolorg.organization_id
+
+    alice_human_handle_label = "Alice"
+    alice_human_handle_email = "alice@example.com"
+    bob_human_handle_label = "Bob"
+    bob_human_handle_email = "bob@example.com"
+    alice1_device_label = "PC1"
+    alice2_device_label = "PC2"
+    bob_device_label = "Desktop"
+
     password = "P@ssw0rd."
     administration_token = "9e57754ddfe62f7f8780edc0"
 
@@ -385,11 +429,26 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         ).group(1)
 
         print("####### Bootstrap organization #######")
-        _run(
-            "core bootstrap_organization "
-            f"{alice1} --addr={url} --config-dir={config_dir} --password={password}",
+        with _running(
+            "core bootstrap_organization " f"{url} --config-dir={config_dir} --password={password}",
             env=ssl_conf.client_env,
-        )
+            wait_for="User fullname:",
+        ) as p:
+            print("~~~ Bootstrap user fullname ~~~")
+            p.stdin.write(f"{alice_human_handle_label}\n".encode())
+            p.stdin.flush()
+            print("~~~ Bootstrap user email ~~~")
+            p.wait_for("User email:")
+            p.stdin.write(f"{alice_human_handle_email}\n".encode())
+            p.stdin.flush()
+            print("~~~ Bootstrap device label ~~~")
+            p.wait_for("Device label [")
+            p.stdin.write(f"{alice1_device_label}\n".encode())
+            p.stdin.flush()
+            print("~~~ Bootstrap finish invitation ~~~")
+            match = p.wait_for_regex(r"Saving device ([a-zA-Z0-9]+)")
+            alice1_slughash = match.group(1)
+            p.wait()
 
         print("####### Stats organization #######")
         _run(
@@ -410,7 +469,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         print("####### Create user&device invitations #######")
         p = _run(
             "core invite_user "
-            f"--config-dir={config_dir} --device={alice1_slug} "
+            f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password} bob@example.com",
             env=ssl_conf.client_env,
         )
@@ -419,7 +478,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
         p = _run(
             "core invite_device "
-            f"--config-dir={config_dir} --device={alice1_slug} "
+            f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password}",
             env=ssl_conf.client_env,
         )
@@ -430,22 +489,13 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
 
         p = _run(
             "core list_invitations "
-            f"--config-dir={config_dir} --device={alice1_slug} "
+            f"--config-dir={config_dir} --device={alice1_slughash} "
             f"--password={password}",
             env=ssl_conf.client_env,
         )
         stdout = p.stdout.decode()
         assert device_invitation_token in stdout
         assert user_invitation_token in stdout
-
-        def _wait_for(p, wait_txt):
-            for _ in range(10):
-                sleep(0.1)
-                stdout = p.live_stdout.read()
-                if wait_txt in stdout:
-                    return stdout
-            else:
-                raise AssertionError("Too slow")
 
         print("####### Claim user invitation #######")
         with _running(
@@ -455,7 +505,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         ) as p_claimer:
             with _running(
                 "core greet_invitation "
-                f"--config-dir={config_dir} --device={alice1_slug} "
+                f"--config-dir={config_dir} --device={alice1_slughash} "
                 f"--password={password} {user_invitation_token}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
@@ -463,13 +513,11 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 greeter_code = None
 
                 print("~~~ Retrieve greeter code ~~~")
-                stdout_greeter = _wait_for(p_greeter, "Code to provide to claimer: ")
-                greeter_code = re.search(
-                    r"Code to provide to claimer: (.*)$", stdout_greeter, re.MULTILINE
-                ).group(1)
+                match = p_greeter.wait_for_regex(r"Code to provide to claimer: (.*)$")
+                greeter_code = match.group(1)
 
                 print("~~~ Provide greeter code ~~~")
-                stdout_claimer = _wait_for(p_claimer, "Select code provided by greeter")
+                stdout_claimer = p_claimer.wait_for("Select code provided by greeter")
                 assert greeter_code in stdout_claimer
                 code_index = re.search(
                     f"([0-9]) - {greeter_code}", stdout_claimer, re.MULTILINE
@@ -481,13 +529,11 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 claimer_code = None
 
                 print("~~~ Retrieve claimer code ~~~")
-                stdout_claimer = _wait_for(p_claimer, "Code to provide to greeter: ")
-                claimer_code = re.search(
-                    r"Code to provide to greeter: (.*)$", stdout_claimer, re.MULTILINE
-                ).group(1)
+                match = p_claimer.wait_for_regex(r"Code to provide to greeter: (.*)$")
+                claimer_code = match.group(1)
 
                 print("~~~ Provide claimer code ~~~")
-                stdout_greeter = _wait_for(p_greeter, "Select code provided by claimer")
+                stdout_greeter = p_greeter.wait_for("Select code provided by claimer")
                 assert claimer_code in stdout_greeter
                 code_index = re.search(
                     f"([0-9]) - {claimer_code}", stdout_greeter, re.MULTILINE
@@ -497,44 +543,37 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 p_greeter.stdin.flush()
 
                 print("~~~ Claimer fill info ~~~")
-                stdout_claimer = _wait_for(p_claimer, "User fullname")
+                stdout_claimer = p_claimer.wait_for("User fullname")
                 p_claimer.stdin.write(b"John Doe\n")
                 p_claimer.stdin.flush()
 
-                stdout_claimer = _wait_for(p_claimer, "Device ID")
-                p_claimer.stdin.write(b"john@dev1\n")
-                p_claimer.stdin.flush()
-
-                stdout_claimer = _wait_for(p_claimer, "Device label")
+                stdout_claimer = p_claimer.wait_for("Device label")
                 p_claimer.stdin.write(b"D3vIce1\n")
                 p_claimer.stdin.flush()
 
                 print("~~~ Greeter validate info ~~~")
-                stdout_greeter = _wait_for(p_greeter, "New user label [John Doe]:")
-                p_greeter.stdin.write(b"Bob Doe\n")
+                stdout_greeter = p_greeter.wait_for("New user label [John Doe]:")
+                p_greeter.stdin.write(f"{bob_human_handle_label}\n".encode())
                 p_greeter.stdin.flush()
 
-                stdout_greeter = _wait_for(p_greeter, "New user email [bob@example.com]:")
-                p_greeter.stdin.write(b"bob.doe@example.com\n")
+                stdout_greeter = p_greeter.wait_for("New user email [bob@example.com]:")
+                p_greeter.stdin.write(f"{bob_human_handle_email}\n".encode())
                 p_greeter.stdin.flush()
 
-                stdout_greeter = _wait_for(p_greeter, "New user device ID [john@dev1]:")
-                p_greeter.stdin.write(f"{bob1}\n".encode())
+                stdout_greeter = p_greeter.wait_for("New user device label [D3vIce1]:")
+                p_greeter.stdin.write(f"{bob_device_label}\n".encode())
                 p_greeter.stdin.flush()
 
-                stdout_greeter = _wait_for(p_greeter, "New user device label [D3vIce1]:")
-                p_greeter.stdin.write(f"Device1\n".encode())
-                p_greeter.stdin.flush()
-
-                stdout_greeter = _wait_for(p_greeter, "New user profile (0, 1, 2) [0]:")
+                stdout_greeter = p_greeter.wait_for("New user profile (0, 1, 2) [0]:")
                 p_greeter.stdin.write(b"1\n")
                 p_greeter.stdin.flush()
 
                 print("~~~ Greeter finish invitation ~~~")
-                _wait_for(p_greeter, "Creating the user in the backend")
                 p_greeter.wait()
 
                 print("~~~ Claimer finish invitation ~~~")
+                match = p_claimer.wait_for_regex(r"Saving device ([a-zA-Z0-9]+)")
+                bob1_slughash = match.group(1)
                 p_claimer.wait()
 
         print("####### Claim device invitation #######")
@@ -545,7 +584,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
         ) as p_claimer:
             with _running(
                 "core greet_invitation "
-                f"--config-dir={config_dir} --device={alice1_slug} "
+                f"--config-dir={config_dir} --device={alice1_slughash} "
                 f"--password={password} {device_invitation_token}",
                 env=ssl_conf.client_env,
             ) as p_greeter:
@@ -553,13 +592,11 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 greeter_code = None
 
                 print("~~~ Retrieve greeter code ~~~")
-                stdout_greeter = _wait_for(p_greeter, "Code to provide to claimer: ")
-                greeter_code = re.search(
-                    r"Code to provide to claimer: (.*)$", stdout_greeter, re.MULTILINE
-                ).group(1)
+                match = p_greeter.wait_for_regex(r"Code to provide to claimer: (.*)$")
+                greeter_code = match.group(1)
 
                 print("~~~ Provide greeter code ~~~")
-                stdout_claimer = _wait_for(p_claimer, "Select code provided by greeter")
+                stdout_claimer = p_claimer.wait_for("Select code provided by greeter")
                 assert greeter_code in stdout_claimer
                 code_index = re.search(
                     f"([0-9]) - {greeter_code}", stdout_claimer, re.MULTILINE
@@ -571,62 +608,64 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir, ssl_conf):
                 claimer_code = None
 
                 print("~~~ Retrieve claimer code ~~~")
-                stdout_claimer = _wait_for(p_claimer, "Code to provide to greeter: ")
-                claimer_code = re.search(
-                    r"Code to provide to greeter: (.*)$", stdout_claimer, re.MULTILINE
-                ).group(1)
+                match = p_claimer.wait_for_regex(r"Code to provide to greeter: (.*)$")
+                claimer_code = match.group(1)
 
                 print("~~~ Provide claimer code ~~~")
-                stdout_greeter = _wait_for(p_greeter, "Select code provided by claimer")
+                stdout_greeter = p_greeter.wait_for("Select code provided by claimer")
                 assert claimer_code in stdout_greeter
                 code_index = re.search(
-                    f"([0-9]) - {claimer_code}", stdout_greeter, re.MULTILINE
+                    rf"([0-9]) - {claimer_code}", stdout_greeter, re.MULTILINE
                 ).group(1)
-
                 p_greeter.stdin.write(f"{code_index}\n".encode())
                 p_greeter.stdin.flush()
 
                 print("~~~ Claimer fill info ~~~")
-                stdout_claimer = _wait_for(p_claimer, "Device name")
-                p_claimer.stdin.write(b"devB\n")
-                p_claimer.stdin.flush()
-
-                stdout_claimer = _wait_for(p_claimer, "Device label")
+                stdout_claimer = p_claimer.wait_for("Device label [")
                 p_claimer.stdin.write(b"DeviceB\n")
                 p_claimer.stdin.flush()
 
                 print("~~~ Greeter validate info ~~~")
-                stdout_greeter = _wait_for(p_greeter, "New device name [devB]:")
-                p_greeter.stdin.write(b"dev2\n")
-                p_greeter.stdin.flush()
-
-                stdout_greeter = _wait_for(p_greeter, "New device label [DeviceB]:")
-                p_greeter.stdin.write(b"Device2\n")
+                stdout_greeter = p_greeter.wait_for("New device label [DeviceB]:")
+                p_greeter.stdin.write(f"{alice2_device_label}\n".encode())
                 p_greeter.stdin.flush()
 
                 print("~~~ Greeter finish invitation ~~~")
-                _wait_for(p_greeter, "Creating the device in the backend")
                 p_greeter.wait()
 
                 print("~~~ Claimer finish invitation ~~~")
+                match = p_claimer.wait_for_regex(r"Saving device ([a-zA-Z0-9]+)")
+                alice2_slughash = match.group(1)
                 p_claimer.wait()
 
         print("####### List users #######")
         p = _run(f"core list_devices --config-dir={config_dir}", env=ssl_conf.client_env)
         stdout = p.stdout.decode()
-        assert alice1 in stdout
-        assert alice2 in stdout
-        assert bob1 in stdout
+        assert alice1_slughash[:3] in stdout
+        assert (
+            f"{org}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice1_device_label}"
+            in stdout
+        )
+        assert alice2_slughash[:3] in stdout
+        assert (
+            f"{org}: {alice_human_handle_label} <{alice_human_handle_email}> @ {alice2_device_label}"
+            in stdout
+        )
+        assert bob1_slughash[:3] in stdout
+        assert (
+            f"{org}: {bob_human_handle_label} <{bob_human_handle_email}> @ {bob_device_label}"
+            in stdout
+        )
 
         print("####### New users can communicate with backend #######")
         _run(
             "core create_workspace wksp1 "
-            f"--config-dir={config_dir} --device={bob1_slug} --password={password}",
+            f"--config-dir={config_dir} --device={bob1_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
         _run(
             "core create_workspace wksp2 "
-            f"--config-dir={config_dir} --device={alice2_slug} --password={password}",
+            f"--config-dir={config_dir} --device={alice2_slughash} --password={password}",
             env=ssl_conf.client_env,
         )
 

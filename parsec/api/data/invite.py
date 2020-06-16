@@ -6,14 +6,7 @@ from random import randint, shuffle
 
 from parsec.crypto import VerifyKey, PublicKey, PrivateKey, SecretKey
 from parsec.serde import fields, post_load
-from parsec.api.protocol import (
-    DeviceID,
-    DeviceIDField,
-    DeviceName,
-    DeviceNameField,
-    HumanHandle,
-    HumanHandleField,
-)
+from parsec.api.protocol import DeviceID, DeviceIDField, HumanHandle, HumanHandleField
 from parsec.api.data.base import BaseAPIData, BaseSchema
 from parsec.api.data.entry import EntryID, EntryIDField
 from parsec.api.data.certif import UserProfile, UserProfileField
@@ -74,8 +67,7 @@ def generate_sas_code_candidates(valid_sas: SASCode, size: int = 3) -> List[SASC
 class InviteUserData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_user_data", required=True)
-        # Claimer ask for device_id/human_handle, but greeter has final word on this
-        requested_device_id = DeviceIDField(required=True)
+        # Claimer ask for device_label/human_handle, but greeter has final word on this
         requested_device_label = fields.String(allow_none=True, missing=None)
         requested_human_handle = HumanHandleField(allow_none=True, missing=None)
         # Note claiming user also imply creating a first device
@@ -87,7 +79,6 @@ class InviteUserData(BaseAPIData):
             data.pop("type")
             return InviteUserData(**data)
 
-    requested_device_id: DeviceID
     requested_device_label: Optional[str]
     requested_human_handle: Optional[HumanHandle]
     public_key: PublicKey
@@ -118,8 +109,7 @@ class InviteUserConfirmation(BaseAPIData):
 class InviteDeviceData(BaseAPIData):
     class SCHEMA_CLS(BaseSchema):
         type = fields.CheckedConstant("invite_device_data", required=True)
-        # Claimer ask for device_name, but greeter has final word on this
-        requested_device_name = DeviceNameField(required=True)
+        # Claimer ask for device_label, but greeter has final word on this
         requested_device_label = fields.String(allow_none=True, missing=None)
         verify_key = fields.VerifyKey(required=True)
 
@@ -128,7 +118,6 @@ class InviteDeviceData(BaseAPIData):
             data.pop("type")
             return InviteDeviceData(**data)
 
-    requested_device_name: DeviceName
     requested_device_label: Optional[str]
     verify_key: VerifyKey
 

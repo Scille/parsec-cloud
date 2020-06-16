@@ -20,7 +20,10 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
     assert lw is not None
 
     # Available device is automatically selected for login
-    assert lw.combo_username.currentText() == f"{alice.organization_id}:{alice.device_id}"
+    assert (
+        lw.combo_username.currentText()
+        == f"{alice.organization_id}: {alice.human_handle} @ {alice.device_label}"
+    )
 
     await aqtbot.key_clicks(lw.line_edit_password, password)
 

@@ -13,7 +13,7 @@ from parsec.api.data import EntryID
 logger = get_logger()
 
 
-def get_default_data_base_dir(environ: dict):
+def get_default_data_base_dir(environ: dict) -> Path:
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
@@ -23,7 +23,7 @@ def get_default_data_base_dir(environ: dict):
         return Path(path) / "parsec"
 
 
-def get_default_cache_base_dir(environ: dict):
+def get_default_cache_base_dir(environ: dict) -> Path:
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/cache"
     else:
@@ -33,7 +33,7 @@ def get_default_cache_base_dir(environ: dict):
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ: dict):
+def get_default_config_dir(environ: dict) -> Path:
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
@@ -43,7 +43,7 @@ def get_default_config_dir(environ: dict):
         return Path(path) / "parsec"
 
 
-def get_default_mountpoint_base_dir(environ: dict):
+def get_default_mountpoint_base_dir(environ: dict) -> Path:
     return Path.home() / "Parsec"
 
 

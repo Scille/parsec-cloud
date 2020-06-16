@@ -225,7 +225,6 @@ class UserGreetInProgress3Ctx:
 
         return UserGreetInProgress4Ctx(
             token=self.token,
-            requested_device_id=data.requested_device_id,
             requested_device_label=data.requested_device_label,
             requested_human_handle=data.requested_human_handle,
             public_key=data.public_key,
@@ -261,7 +260,6 @@ class DeviceGreetInProgress3Ctx:
 
         return DeviceGreetInProgress4Ctx(
             token=self.token,
-            requested_device_name=data.requested_device_name,
             requested_device_label=data.requested_device_label,
             verify_key=data.verify_key,
             shared_secret_key=self._shared_secret_key,
@@ -272,7 +270,6 @@ class DeviceGreetInProgress3Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserGreetInProgress4Ctx:
     token: UUID
-    requested_device_id: DeviceID
     requested_device_label: Optional[str]
     requested_human_handle: Optional[HumanHandle]
 
@@ -284,11 +281,11 @@ class UserGreetInProgress4Ctx:
     async def do_create_new_user(
         self,
         author: LocalDevice,
-        device_id: DeviceID,
         device_label: Optional[str],
         human_handle: Optional[HumanHandle],
         profile: UserProfile,
     ) -> None:
+        device_id = DeviceID.new()
         try:
             now = pendulum_now()
 
@@ -355,17 +352,14 @@ class UserGreetInProgress4Ctx:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DeviceGreetInProgress4Ctx:
     token: UUID
-    requested_device_name: DeviceName
     requested_device_label: Optional[str]
 
     _verify_key: VerifyKey
     _shared_secret_key: SecretKey
     _cmds: BackendInvitedCmds
 
-    async def do_create_new_device(
-        self, author: LocalDevice, device_name: DeviceName, device_label: Optional[str]
-    ) -> None:
-        device_id = DeviceID(f"{author.user_id}@{device_name}")
+    async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
+        device_id = DeviceID(f"{author.user_id}@{DeviceName.new()}")
         try:
             now = pendulum_now()
 

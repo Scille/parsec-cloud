@@ -2,13 +2,14 @@
 
 import os
 import click
+from typing import List
 from functools import wraps
 from pathlib import Path
 
-from parsec.api.protocol import DeviceID, OrganizationID
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.local_device import (
+    AvailableDevice,
     list_available_devices,
     load_device_with_password,
     LocalDeviceError,
@@ -46,50 +47,61 @@ def core_config_options(fn):
     return wrapper
 
 
-def _unslug(val):
-    parts = val.split(":")
-    if len(parts) == 1:
-        return (None, DeviceID(val), val)
-    elif len(parts) == 2:
-        raw_org, raw_device_id = parts
-        return (OrganizationID(raw_org), DeviceID(raw_device_id), val)
-    else:
-        raise ValueError("Must follow format `[<organization>:]<user_id>@<device_name>`")
+def format_available_devices(devices: List[AvailableDevice]) -> str:
+    # Try to shorten the slughash to make it easier to work with
+    slughashes = [d.slughash for d in devices]
+    for slughash_len in range(3, 64):
+        if len({h[:slughash_len] for h in slughashes}) == len(slughashes):
+            break
+
+    out = []
+    for device in devices:
+        display_slughash = click.style(device.slughash[:slughash_len], fg="yellow")
+        out.append(
+            f"{display_slughash} - {device.organization_id}: {device.user_display} @ {device.device_display}"
+        )
+    return "\n".join(out)
 
 
 def core_config_and_device_options(fn):
     @core_config_options
-    @click.option("--device", "-D", type=_unslug, required=True)
+    @click.option(
+        "--device",
+        "-D",
+        required=True,
+        help="Device to use designed by it ID, see `list_devices` command to get the available IDs",
+    )
     @click.option("--password", "-P")
     @wraps(fn)
     def wrapper(**kwargs):
         config = kwargs["config"]
         password = kwargs["password"]
+        device_slughash = kwargs.pop("device")
 
-        organization_id, device_id, slugname = kwargs["device"]
-        devices = [
-            (o, d, t, kf)
-            for o, d, t, kf in list_available_devices(config.config_dir)
-            if (not organization_id or o == organization_id) and d == device_id
-        ]
+        all_available_devices = list_available_devices(config.config_dir)
+        devices = []
+        for device in all_available_devices:
+            if device.slughash.startswith(device_slughash):
+                devices.append(device)
+
         if not devices:
-            raise SystemExit(f"Device `{slugname}` not found")
+            raise SystemExit(
+                f"Device `{device_slughash}` not found, available devices:\n"
+                f"{format_available_devices(all_available_devices)}"
+            )
         elif len(devices) > 1:
-            found = "\n".join([str(kf.parent) for *_, kf in devices])
-            raise SystemExit(f"Multiple devices found for `{slugname}`:\n{found}")
-        else:
-            _, _, cipher, key_file = devices[0]
+            raise SystemExit(
+                f"Multiple devices found for `{device_slughash}`:\n"
+                f"{format_available_devices(devices)}"
+            )
 
         try:
-            if cipher != "password":
-                raise SystemExit(f"Device {slugname} is ciphered with {cipher}.")
-
             if password is None:
                 password = click.prompt("password", hide_input=True)
-            device = load_device_with_password(key_file, password)
+            device = load_device_with_password(devices[0].key_file_path, password)
 
         except LocalDeviceError as exc:
-            raise SystemExit(f"Cannot load device {slugname}: {exc}")
+            raise SystemExit(f"Cannot load device {device_slughash}: {exc}")
 
         kwargs["device"] = device
         return fn(**kwargs)
