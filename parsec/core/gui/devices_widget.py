@@ -9,9 +9,14 @@ from parsec.core.gui.lang import translate as _
 from parsec.core.gui.password_change_widget import PasswordChangeWidget
 from parsec.core.gui.flow_layout import FlowLayout
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
+from parsec.core.gui.custom_dialogs import show_error
 from parsec.core.gui.invite_device_widget import InviteDeviceWidget
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
 from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.remote_devices_manager import (
+    RemoteDevicesManagerBackendOfflineError,
+    RemoteDevicesManagerError,
+)
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
@@ -54,6 +59,8 @@ async def _do_list_devices(core):
         return await core.get_user_devices_info()
     except BackendNotAvailable as exc:
         raise JobResultError("offline") from exc
+    except RemoteDevicesManagerError as exc:
+        raise JobResultError("error") from exc
     # TODO : handle all errors from the remote_devices_manager and notify GUI
     # Raises:
     #     RemoteDevicesManagerError
@@ -84,7 +91,13 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.list_error.connect(self.on_list_error)
         self.line_edit_search.textChanged.connect(self.filter_timer.start)
         self.filter_timer.timeout.connect(self.on_filter_timer_timeout)
-        self.reset()
+        self.initialized = False
+
+    def show(self):
+        if not self.initialized:
+            self.reset()
+            self.initialized = True
+        super().show()
 
     def on_filter_timer_timeout(self):
         self.filter_devices(self.line_edit_search.text())
@@ -129,7 +142,11 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
             )
 
     def on_list_error(self, job):
-        pass
+        status = job.status
+        if status == "error":
+            self.initialized = False
+            errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
+            show_error(self, errmsg, exception=job.exc)
 
     def reset(self):
         self.jobs_ctx.submit_job(

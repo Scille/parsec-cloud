@@ -135,7 +135,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.revoke_error.connect(self.on_revoke_error)
         self.list_success.connect(self.on_list_success)
         self.list_error.connect(self.on_list_error)
-        self.reset()
+        self.initialized = False
+
+    def show(self):
+        if not self.initialized:
+            self.reset()
+            self.initialized = True
+        super().show()
 
     def on_filter_timer_timeout(self):
         self.filter_users(self.line_edit_search.text())
@@ -236,6 +242,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if status == "offline":
             return
         else:
+            if status == "error":
+                self.initialized = False
             errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
         show_error(self, errmsg, exception=job.exc)
 
