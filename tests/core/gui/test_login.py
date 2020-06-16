@@ -32,3 +32,5 @@ async def test_login(aqtbot, gui_factory, autoclose_dialog, core_config, alice):
 
     cw = gui.test_get_central_widget()
     assert cw is not None
+
+    assert cw.button_user.text() == f"{alice.organization_id}\n{alice.device_id.user_id}"

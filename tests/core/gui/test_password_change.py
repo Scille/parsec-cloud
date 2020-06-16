@@ -128,8 +128,11 @@ async def test_change_password_success(
     tabw = logged_gui.test_get_tab()
     assert central_widget is not None
 
+    def _trigger_logout_menu():
+        central_widget.button_user.menu().actions()[0].trigger()
+
     async with aqtbot.wait_signal(tabw.logged_out):
-        await aqtbot.mouse_click(central_widget.menu.button_logout, QtCore.Qt.LeftButton)
+        await qt_thread_gateway.send_action(_trigger_logout_menu)
 
     lw = logged_gui.test_get_login_widget()
     tabw = logged_gui.test_get_tab()
