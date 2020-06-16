@@ -10,7 +10,6 @@ from parsec.api.data import (
     APIV1_DeviceClaimContent,
     APIV1_DeviceClaimAnswerContent,
 )
-from parsec.api.protocol import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.core.backend_connection import (
     backend_authenticated_cmds_factory,
@@ -20,7 +19,7 @@ from parsec.core.backend_connection import (
 
 @pytest.mark.trio
 async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, running_backend):
-    nd_id = DeviceID(f"{alice.user_id}@new_device")
+    nd_id = alice.user_id.to_device_id("new_device")
     nd_signing_key = SigningKey.generate()
     token = "123456"
     device_certificate = None

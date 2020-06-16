@@ -130,7 +130,7 @@ async def test_invite_claim_3_chained_users(running_backend, backend, alice):
 
 @pytest.mark.trio
 async def test_invite_claim_device(running_backend, backend, alice):
-    new_device_id = DeviceID(f"{alice.user_id}@NewDevice")
+    new_device_id = alice.user_id.to_device_id("NewDevice")
     new_device = None
     token = generate_invitation_token()
 
@@ -303,7 +303,7 @@ async def test_device_claim_invalid_returned_certificate(
     async def _do_test():
         nonlocal device_count
         device_count += 1
-        new_device_id = DeviceID(f"{alice.user_id}@newdev{device_count}")
+        new_device_id = alice.user_id.to_device_id(f"newdev{device_count}")
         token = generate_invitation_token()
         exception_occured = False
 
@@ -346,7 +346,7 @@ async def test_device_claim_invalid_returned_certificate(
 
 @pytest.mark.trio
 async def test_device_invite_claim_invalid_token(running_backend, backend, alice):
-    new_device_id = DeviceID(f"{alice.user_id}@NewDevice")
+    new_device_id = alice.user_id.to_device_id("NewDevice")
     token = generate_invitation_token()
     bad_token = generate_invitation_token()
     invite_exception_occured = False
@@ -441,7 +441,7 @@ async def test_user_invite_claim_cancel_invitation(monitor, running_backend, bac
 
 @pytest.mark.trio
 async def test_device_invite_claim_cancel_invitation(running_backend, backend, alice):
-    new_device_id = DeviceID(f"{alice.user_id}@NewDevice")
+    new_device_id = alice.user_id.to_device_id("NewDevice")
     token = generate_invitation_token()
 
     invite_and_claim_cancel_scope = None

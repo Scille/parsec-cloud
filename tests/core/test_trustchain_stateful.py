@@ -13,7 +13,7 @@ from hypothesis.stateful import (
     RuleBasedStateMachine,
 )
 
-from parsec.api.protocol import UserID, DeviceID
+from parsec.api.protocol import UserID
 from parsec.api.data import (
     UserProfile,
     UserCertificateContent,
@@ -41,7 +41,7 @@ def test_workspace_reencryption_need(hypothesis_settings, caplog, local_device_f
             nonlocal name_count
             user_id = user_id or self.next_user_id()
             name_count += 1
-            return DeviceID(f"{user_id}@dev{name_count}")
+            return user_id.to_device_id(f"dev{name_count}")
 
         def new_user_and_device(self, is_admin, certifier_id, certifier_key):
             device_id = self.next_device_id()

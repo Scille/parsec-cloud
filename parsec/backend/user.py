@@ -608,7 +608,7 @@ class BaseUserComponent:
         return apiv1_device_invite_serializer.rep_dump(rep)
 
     async def _api_device_invite(self, client_ctx, msg):
-        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
+        invited_device_id = client_ctx.device_id.user_id.to_device_id(msg["invited_device_name"])
         invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
 
         def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
@@ -736,7 +736,7 @@ class BaseUserComponent:
     async def api_device_cancel_invitation(self, client_ctx, msg):
         msg = apiv1_device_cancel_invitation_serializer.req_load(msg)
 
-        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
+        invited_device_id = client_ctx.device_id.user_id.to_device_id(msg["invited_device_name"])
 
         await self.cancel_device_invitation(client_ctx.organization_id, invited_device_id)
 

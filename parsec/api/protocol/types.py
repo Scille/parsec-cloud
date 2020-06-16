@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
+from typing import Union
 from uuid import uuid4
 from collections import namedtuple
 from email.utils import parseaddr
@@ -38,6 +39,9 @@ class UserID(str):
     @classmethod
     def new(cls):
         return cls(uuid4().hex)
+
+    def to_device_id(self, device_name: Union[str, "DeviceName"]) -> "DeviceID":
+        return DeviceID(f"{self}@{device_name}")
 
 
 class DeviceName(str):

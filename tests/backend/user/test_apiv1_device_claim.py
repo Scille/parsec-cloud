@@ -6,7 +6,6 @@ from pendulum import Pendulum
 from async_generator import asynccontextmanager
 
 from parsec.api.protocol import (
-    DeviceID,
     apiv1_device_get_invitation_creator_serializer,
     apiv1_device_claim_serializer,
 )
@@ -18,7 +17,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def alice_nd_invitation(backend, alice):
     invitation = DeviceInvitation(
-        DeviceID(f"{alice.user_id}@new_device"), alice.device_id, Pendulum(2000, 1, 2)
+        alice.user_id.to_device_id("new_device"), alice.device_id, Pendulum(2000, 1, 2)
     )
     await backend.user.create_device_invitation(alice.organization_id, invitation)
     return invitation
@@ -75,7 +74,7 @@ async def test_device_claim_ok(
             await backend.user.create_device(
                 alice.organization_id,
                 Device(
-                    device_id=DeviceID(f"{alice.user_id}@dummy"),
+                    device_id=alice.user_id.to_device_id("dummy"),
                     device_certificate=b"<alice@dummy certificate>",
                     redacted_device_certificate=b"<redacted alice@dummy certificate>",
                     device_certifier=alice.device_id,

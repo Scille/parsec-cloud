@@ -3,7 +3,7 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.api.protocol import DeviceID, apiv1_device_get_invitation_creator_serializer
+from parsec.api.protocol import apiv1_device_get_invitation_creator_serializer
 from parsec.backend.user import DeviceInvitation, INVITATION_VALIDITY
 
 from tests.common import freeze_time
@@ -12,7 +12,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def alice_nd_invitation(backend, alice):
     invitation = DeviceInvitation(
-        DeviceID(f"{alice.user_id}@new_device"), alice.device_id, Pendulum(2000, 1, 2)
+        alice.user_id.to_device_id("new_device"), alice.device_id, Pendulum(2000, 1, 2)
     )
     await backend.user.create_device_invitation(alice.organization_id, invitation)
     return invitation
@@ -95,7 +95,7 @@ async def test_device_get_invitation_creator_with_trustchain_ok(
     await binder.bind_revocation(roger1.user_id, certifier=mike1)
 
     invitation = DeviceInvitation(
-        device_id=DeviceID(f"{alice.user_id}@new"), creator=mike1.device_id
+        device_id=alice.user_id.to_device_id("new"), creator=mike1.device_id
     )
     await backend.user.create_device_invitation(alice.organization_id, invitation)
 
