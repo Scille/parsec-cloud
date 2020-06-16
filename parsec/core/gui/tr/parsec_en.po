@@ -475,6 +475,10 @@ msgstr "Revoke the user"
 msgid "TEXT_USER_LIST_RETRIEVABLE_FAILURE"
 msgstr "Failed to retrieve the user list from the server."
 
+msgid "TEXT_DEVICE_LIST_RETRIEVABLE_FAILURE"
+msgstr "Failed to retrieve the device list from the server."
+
+
 msgid "TEXT_PARSEC_LICENSE"
 msgstr ""
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QMenu, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtGui import QColor
 
 from parsec.api.data import UserProfile
@@ -135,12 +135,9 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.revoke_error.connect(self.on_revoke_error)
         self.list_success.connect(self.on_list_success)
         self.list_error.connect(self.on_list_error)
-        self.initialized = False
 
     def show(self):
-        if not self.initialized:
-            self.reset()
-            self.initialized = True
+        self.reset()
         super().show()
 
     def on_filter_timer_timeout(self):
@@ -215,9 +212,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             button=user_button,
         )
 
-    def on_list_success(self, job):
+    def _flush_users_list(self):
         self.users = []
-
         while self.layout_users.count() != 0:
             item = self.layout_users.takeAt(0)
             if item:
@@ -226,6 +222,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.hide()
                 w.setParent(None)
 
+    def on_list_success(self, job):
+        self._flush_users_list()
         current_user = self.core.device.user_id
         for user in job.ret:
             self.add_user(
@@ -241,9 +239,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         status = job.status
         if status == "offline":
             return
+        elif status == "error":
+            self._flush_users_list()
+            label = QLabel(_("TEXT_USER_LIST_RETRIEVABLE_FAILURE"))
+            label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            self.layout_users.addWidget(label)
+            return
         else:
-            if status == "error":
-                self.initialized = False
             errmsg = _("TEXT_USER_LIST_RETRIEVABLE_FAILURE")
         show_error(self, errmsg, exception=job.exc)
 
