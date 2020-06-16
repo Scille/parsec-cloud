@@ -269,6 +269,59 @@ jobs:
 #################################################################################
 
 
+- job: 'linux_pypi_build'
+  displayName: 'Linux PyPI build'
+  condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  timeoutInMinutes: 60
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+    submodules: true
+  - bash: |
+      set -eux
+      sudo apt-get install -y python python-pip xvfb xorg
+      pip install twine
+    displayName: 'Bootstrap'
+  - bash: |
+      set -eux
+      python setup.py sdist bdist_wheel
+  - bash: |
+      set -eux
+      pip install --user virtualenv
+      python -m venv venv
+      source venv/bin/activate
+      pip install dist/*.whl[all]
+  - bash: |
+      set -eux
+      source venv/bin/activate
+      # Run Parsec GUI in background and log it return code
+      xvfb-run parsec core gui &
+      # Make sure the GUI hasn't crashed during startup
+      sleep 3
+      jobs | grep Running
+      # Only way to close the GUI from the command line...
+      killall xvfb-run
+    displayName: 'Test GUI do launch'
+  - publish: $(Agent.TempDirectory)/dist
+    artifact: pypi
+  - bash: |
+      set -eux
+      echo "
+      [pypi]
+      username = __token__
+      password = $PYPI_CREDENTIALS
+      " > ~/.pypirc
+      twine upload dist/*
+    env:
+      PYPI_CREDENTIALS: $(PYPI_CREDENTIALS)
+    displayName: 'Build PyPI'
+    workingDirectory: $(Agent.TempDirectory)
+
+
+#################################################################################
+
+
 - job: 'linux_snap_test'
   displayName: 'Never trust a snap'
   dependsOn: linux_snap_build
