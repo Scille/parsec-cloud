@@ -19,6 +19,14 @@
     </message>
 </context>
 <context>
+    <name>AccountButton</name>
+    <message>
+        <location filename="../forms/account_button.ui" line="26"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BootstrapOrganizationWidget</name>
     <message>
         <location filename="../forms/bootstrap_organization_widget.ui" line="14"/>
@@ -808,40 +816,59 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
-    <name>LoginWidget</name>
+    <name>LoginAccountsWidget</name>
     <message>
-        <location filename="../forms/login_widget.ui" line="26"/>
+        <location filename="../forms/login_accounts_widget.ui" line="26"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LoginNoDevicesWidget</name>
+    <message>
+        <location filename="../forms/login_no_devices_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="219"/>
-        <source>TEXT_LABEL_USER_NAME</source>
+        <location filename="../forms/login_no_devices_widget.ui" line="48"/>
+        <source>TEXT_LOGIN_NO_AVAILABLE_DEVICE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="236"/>
-        <source>TEXT_LABEL_PASSWORD</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="255"/>
-        <source>ACTION_LOG_IN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="314"/>
+        <location filename="../forms/login_no_devices_widget.ui" line="64"/>
         <source>ACTION_MAIN_MENU_CREATE_ORGANIZATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="324"/>
+        <location filename="../forms/login_no_devices_widget.ui" line="74"/>
         <source>ACTION_MAIN_MENU_JOIN_ORGANIZATION</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>LoginPasswordInputWidget</name>
     <message>
-        <location filename="../forms/login_widget.ui" line="298"/>
-        <source>TEXT_LOGIN_NO_AVAILABLE_DEVICE</source>
+        <location filename="../forms/login_password_input_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_password_input_widget.ui" line="79"/>
+        <source>ACTION_BACK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_password_input_widget.ui" line="99"/>
+        <source>ACTION_LOG_IN</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LoginWidget</name>
+    <message>
+        <location filename="../forms/login_widget.ui" line="26"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

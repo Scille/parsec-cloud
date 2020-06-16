@@ -5,6 +5,7 @@
         <file>images/logos/parsec_white_small.png</file>
         <file>images/logos/parsec_white_medium.png</file>
         <file>images/icons/parsec.png</file>
+        <file>images/logos/parsec_new.png</file>
     </qresource>
     <qresource prefix="/translations">
         <file>translations/parsec_en.mo</file>
