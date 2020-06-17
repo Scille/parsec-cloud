@@ -76,7 +76,7 @@ class OrganizationStats:
 
 
 class BaseOrganizationComponent:
-    def __init__(self, bootstrap_token_size: int = 32):
+    def __init__(self, bootstrap_token_size: int = 16):
         self.bootstrap_token_size = bootstrap_token_size
 
     @api("organization_create", handshake_types=[APIV1_HandshakeType.ADMINISTRATION])
