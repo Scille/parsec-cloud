@@ -91,9 +91,9 @@ async def _wait_for_winfsp_ready(mountpoint_path, timeout=1.0):
     with trio.fail_after(timeout):
         while True:
             try:
+                await trio.sleep(0.01)
                 if await trio_mountpoint_path.exists():
                     return
-                await trio.sleep(0.01)
             # Looks like a revoked workspace has been mounted
             except PermissionError:
                 return
