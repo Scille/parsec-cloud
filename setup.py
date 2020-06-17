@@ -329,7 +329,7 @@ extra_requirements = {
     "backend": [
         # PostgreSQL
         "triopg==0.3.0",
-        "trio-asyncio==0.10.0",
+        "trio-asyncio==0.11.0",
         # S3
         "boto3==1.12.34",
         "botocore==1.15.34",
