@@ -259,6 +259,21 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     help="Secret token to access the administration api",
 )
 @click.option(
+    "--invite-mail-server", envvar="PARSEC_INVITE_SERVER", help="SMTP server for the invite mail"
+)
+@click.option(
+    "--invite-mail-port",
+    envvar="PARSEC_INVITE_PORT",
+    type=int,
+    help="SMTP port for the invite mail",
+)
+@click.option(
+    "--invite-mail-addr", envvar="PARSEC_INVITE_ADDRESS", help="Email address for the invite mail"
+)
+@click.option(
+    "--invite-mail-password", envvar="PARSEC_INVITE_PASSWORD", help="Password for the invite mail"
+)
+@click.option(
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
@@ -300,6 +315,10 @@ def run_cmd(
     db_max_connections,
     blockstore,
     administration_token,
+    invite_mail_addr,
+    invite_mail_server,
+    invite_mail_port,
+    invite_mail_password,
     ssl_keyfile,
     ssl_certfile,
     log_level,
@@ -333,6 +352,10 @@ def run_cmd(
             db_max_connections=db_max_connections,
             blockstore_config=blockstore,
             ssl_enabled=ssl_context is not None,
+            invite_mail_server=invite_mail_server,
+            invite_mail_port=invite_mail_port,
+            invite_mail_sender_addr=invite_mail_addr,
+            invite_mail_sender_password=invite_mail_password,
             debug=debug,
         )
 

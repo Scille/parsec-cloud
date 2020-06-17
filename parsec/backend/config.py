@@ -72,7 +72,14 @@ class BackendConfig:
     db_max_connections: int
 
     blockstore_config: BaseBlockStoreConfig
+
+    # Added parameters for invite mail
     ssl_enabled: bool
+    invite_mail_server: str
+    invite_mail_port: int
+    invite_mail_sender_addr: str
+    invite_mail_sender_password: str
+    # TODO add invite link parameter here
 
     debug: bool
 

@@ -2,11 +2,19 @@
 
 from parsec.backend.backend_events import BackendEvent
 import attr
+import trio
+import smtplib
+import ssl
+import importlib_resources
+import sys
 from enum import Enum
 from uuid import UUID, uuid4
 from collections import defaultdict
 from typing import Dict, List, Optional, Union, Set
 from pendulum import Pendulum, now as pendulum_now
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from socket import gaierror
 
 from parsec.crypto import PublicKey
 from parsec.event_bus import EventBus
@@ -37,17 +45,7 @@ from parsec.api.protocol import (
     invite_4_claimer_communicate_serializer,
 )
 from parsec.backend.utils import catch_protocol_errors, api
-
-import ssl
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-import importlib_resources
 from parsec.backend import mail as module
-
-import trio
-
 from parsec.backend.config import BackendConfig
 
 
@@ -134,10 +132,9 @@ Invitation = Union[UserInvitation, DeviceInvitation]
 
 
 async def send_invite_email(invitation: Invitation, config: BackendConfig) -> None:
-    # Temporary infos for testing
-    sender_email = "pytestmailtest@gmail.com"
-    receiver_email = "pytestmailtest@gmail.com"
-    password = "mailtest"
+    sender_email = config.invite_mail_sender_addr
+    receiver_email = invitation.claimer_email
+    password = config.invite_mail_sender_password
 
     # mail settings
     message = MIMEMultipart("alternative")
@@ -147,14 +144,13 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
 
     # These strings are subject to changes, especially to cover
     # multiple languages (at least english & french)
-    line1 = "Hi,"
-    line2 = (
+    line1 = (
         f"You have received an invitation from {invitation.greeter_user_id} to "
         "join their workspace on Parsec.\nDownload now via the following link : "
     )
-    line3 = "Once installed, open the next link with Parsec"
-    line4 = "Or if it doesn't work, copy and paste it in the concerned section"
-    line5 = (
+    line2 = "Once installed, open the next link with Parsec"
+    line3 = "Or if it doesn't work, copy and paste it in the concerned section"
+    line4 = (
         f"Lastly, get in touch with {invitation.greeter_user_id} "
         "and follow the next steps on Parsec to become part of their workspace."
     )
@@ -166,7 +162,7 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
     invite_link = f"parsec://localhost:6888/corp?action=claim_user&token={invitation.token.hex}&no_ssl={no_ssl}"
 
     # Plain-text version used as backup if the html doesn't work for the client
-    text = f"{line1}\n{line2}{parsec_url}\n{line3}\n{invite_link}\n{line5}"
+    text = f"{line1}{parsec_url}\n{line2}\n{invite_link}\n{line4}"
 
     # HTML version
     html = importlib_resources.read_text(module, "invite_mail.tmpl.html")
@@ -175,7 +171,6 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
         line2=line2,
         line3=line3,
         line4=line4,
-        line5=line5,
         button1=button1,
         button2=button2,
         parsec_url=parsec_url,
@@ -196,9 +191,20 @@ async def send_invite_email(invitation: Invitation, config: BackendConfig) -> No
     ):
         # Create secure connection with server and send email
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
+        try:
+            with smtplib.SMTP_SSL(
+                config.invite_mail_server, config.invite_mail_port, context=context
+            ) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message.as_string())
+        except (gaierror, ConnectionRefusedError):
+            print("Failed to connect to the server. Bad connection settings?", file=sys.stderr)
+        except smtplib.SMTPServerDisconnected:
+            print("Failed to connect to the server. Wrong user/password?", file=sys.stderr)
+        except smtplib.SMTPException as e:
+            print("SMTP error occurred: " + str(e), file=sys.stderr)
+        # Added try / except statements in case of errors
+        # print, raise or return in the except statements ?
 
     await trio.to_thread.run_sync(
         _thread_target_send_email, sender_email, receiver_email, password, message
