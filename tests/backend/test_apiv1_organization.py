@@ -168,6 +168,13 @@ async def test_organization_create_and_bootstrap(
     async with apiv1_backend_sock_factory(backend, alice) as sock:
         await ping(sock)
 
+    # 5) Finally, check the resulting data in the backend
+    backend_user, backend_device = await backend.user.get_user_with_device(
+        newalice.organization_id, newalice.device_id
+    )
+    assert backend_user == backend_newalice
+    assert backend_device == backend_newalice_first_device
+
 
 @pytest.mark.trio
 async def test_organization_with_expiration_date_create_and_bootstrap(

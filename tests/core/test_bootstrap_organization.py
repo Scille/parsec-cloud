@@ -53,7 +53,15 @@ async def test_good(
     assert backend_user.human_handle == new_device.human_handle
     assert backend_user.profile == new_device.profile
     assert backend_user.user_certifier is None
+    if with_labels:
+        assert backend_user.user_certificate != backend_user.redacted_user_certificate
+    else:
+        assert backend_user.user_certificate == backend_user.redacted_user_certificate
 
     assert backend_device.device_id == new_device.device_id
     assert backend_device.device_label == new_device.device_label
     assert backend_device.device_certifier is None
+    if with_labels:
+        assert backend_device.device_certificate != backend_device.redacted_device_certificate
+    else:
+        assert backend_device.device_certificate == backend_device.redacted_device_certificate
