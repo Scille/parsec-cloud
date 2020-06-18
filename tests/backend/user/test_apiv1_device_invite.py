@@ -5,12 +5,12 @@ import trio
 from async_generator import asynccontextmanager
 
 from parsec.backend.user import PEER_EVENT_MAX_WAIT, DeviceInvitation
-from parsec.api.protocol import DeviceID, apiv1_device_invite_serializer
+from parsec.api.protocol import apiv1_device_invite_serializer
 
 
 @pytest.fixture
 def alice_nd_id(alice):
-    return DeviceID(f"{alice.user_id}@new_device")
+    return alice.user_id.to_device_id("new_device")
 
 
 @asynccontextmanager
@@ -25,7 +25,7 @@ async def device_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_invite(monkeypatch, backend, apiv1_alice_backend_sock, alice, alice_nd_id):
-    dummy_device_id = DeviceID(f"{alice.user_id}@pc1")
+    dummy_device_id = alice.user_id.to_device_id("pc1")
     await backend.user.create_device_invitation(
         alice.organization_id, DeviceInvitation(dummy_device_id, alice.device_id)
     )

@@ -4,7 +4,6 @@ import pytest
 import trio
 from PyQt5 import QtCore
 
-from parsec.api.protocol import DeviceID
 from parsec.core.types import BackendOrganizationClaimDeviceAddr
 from parsec.core.invite_claim import invite_and_create_device
 
@@ -14,7 +13,7 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 @pytest.fixture
 async def alice_invite(running_backend, backend, alice):
-    device_id = DeviceID(f"{alice.user_id}@pc1")
+    device_id = alice.user_id.to_device_id("pc1")
     # Modify address subdomain to be able to switch it offline whithout
     # disconnecting the inviter
     organization_addr = addr_with_device_subdomain(alice.organization_addr, device_id)

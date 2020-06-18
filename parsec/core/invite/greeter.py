@@ -359,7 +359,7 @@ class DeviceGreetInProgress4Ctx:
     _cmds: BackendInvitedCmds
 
     async def do_create_new_device(self, author: LocalDevice, device_label: Optional[str]) -> None:
-        device_id = DeviceID(f"{author.user_id}@{DeviceName.new()}")
+        device_id = author.user_id.to_device_id(DeviceName.new())
         try:
             now = pendulum_now()
 

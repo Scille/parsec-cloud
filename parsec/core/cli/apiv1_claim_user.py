@@ -5,7 +5,6 @@ import click
 import platform
 
 from parsec.utils import trio_run
-from parsec.api.protocol import DeviceID
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.core.types import BackendOrganizationClaimUserAddr
 from parsec.core.cli.utils import core_config_options
@@ -36,7 +35,7 @@ async def _claim_user(config, organization_addr, new_device_id, token, password)
 @click.password_option()
 def claim_user(config, addr, device_name, token, password, **kwargs):
     try:
-        new_device_id = DeviceID(f"{addr.user_id}@{device_name}")
+        new_device_id = addr.user_id.to_device_id(device_name)
     except ValueError:
         raise SystemExit(f"Invalid device name value `{device_name}`")
 
