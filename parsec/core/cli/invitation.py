@@ -305,7 +305,7 @@ async def _claim_invitation(config, addr, password):
             raise RuntimeError("Invitation not found")
 
         if initial_ctx.greeter_human_handle:
-            display_greeter = click.style(initial_ctx.greeter_human_handle, fg="yellow")
+            display_greeter = click.style(str(initial_ctx.greeter_human_handle), fg="yellow")
         else:
             display_greeter = click.style(initial_ctx.greeter_user_id, fg="yellow")
         click.echo(f"Invitation greeter: {display_greeter}")
