@@ -3,7 +3,7 @@
 from typing import Tuple
 from pypika import Parameter
 
-from parsec.api.protocol import UserID, DeviceID, OrganizationID
+from parsec.api.protocol import OrganizationID, UserID, DeviceID, HumanHandle
 from parsec.backend.user import User, Device, Trustchain, UserNotFoundError, GetUserAndDevicesResult
 from parsec.backend.postgresql.utils import Query, query
 from parsec.backend.postgresql.tables import (
@@ -13,12 +13,16 @@ from parsec.backend.postgresql.tables import (
     q_device,
     q_organization_internal_id,
     q_user_internal_id,
+    t_human,
+    q_human,
 )
 
 
 _q_get_user = (
     Query.from_(t_user)
     .select(
+        q_human(_id=t_user.human).select(t_human.email).as_("human_email"),
+        q_human(_id=t_user.human).select(t_human.label).as_("human_label"),
         "profile",
         "user_certificate",
         "redacted_user_certificate",
@@ -134,8 +138,14 @@ async def _get_user(conn, organization_id: OrganizationID, user_id: UserID) -> U
     if not row:
         raise UserNotFoundError(user_id)
 
+    if row["human_email"]:
+        human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
+    else:
+        human_handle = None
+
     return User(
         user_id=user_id,
+        human_handle=human_handle,
         profile=STR_TO_USER_PROFILE[row["profile"]],
         user_certificate=row["user_certificate"],
         redacted_user_certificate=row["redacted_user_certificate"],
@@ -269,6 +279,11 @@ async def query_get_user_with_device(
     if not u_row or not d_row:
         raise UserNotFoundError(device_id)
 
+    if u_row["human_email"]:
+        human_handle = HumanHandle(email=u_row["human_email"], label=u_row["human_label"])
+    else:
+        human_handle = None
+
     device = Device(
         device_id=device_id,
         device_label=d_row["device_label"],
@@ -279,6 +294,7 @@ async def query_get_user_with_device(
     )
     user = User(
         user_id=device_id.user_id,
+        human_handle=human_handle,
         profile=STR_TO_USER_PROFILE[u_row["profile"]],
         user_certificate=u_row["user_certificate"],
         redacted_user_certificate=u_row["redacted_user_certificate"],
