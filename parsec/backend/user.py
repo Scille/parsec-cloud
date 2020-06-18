@@ -109,9 +109,9 @@ class User:
     profile: UserProfile = UserProfile.STANDARD
     human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    revoked_on: pendulum.Pendulum = None
-    revoked_user_certificate: bytes = None
-    revoked_user_certifier: DeviceID = None
+    revoked_on: Optional[pendulum.Pendulum] = None
+    revoked_user_certificate: Optional[bytes] = None
+    revoked_user_certifier: Optional[DeviceID] = None
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -835,6 +835,7 @@ class BaseUserComponent:
         try:
             device = Device(
                 device_id=data.device_id,
+                device_label=data.device_label,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["redacted_device_certificate"]
                 or msg["device_certificate"],
