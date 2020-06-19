@@ -83,11 +83,11 @@ class Device:
         return DeviceCertificateContent.unsecure_load(self.device_certificate).verify_key
 
     device_id: DeviceID
+    device_label: Optional[str]
     device_certificate: bytes
     redacted_device_certificate: bytes
     device_certifier: Optional[DeviceID]
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    device_label: Optional[str] = None
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -772,6 +772,7 @@ class BaseUserComponent:
         try:
             device = Device(
                 device_id=data.device_id,
+                device_label=None,
                 device_certificate=msg["device_certificate"],
                 redacted_device_certificate=msg["device_certificate"],
                 device_certifier=data.author,

@@ -81,6 +81,7 @@ async def test_user_claim_ok(
                 ),
                 Device(
                     device_id=DeviceID("dummy@pc1"),
+                    device_label=None,
                     device_certificate=b"<device certif>",
                     redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
@@ -97,6 +98,7 @@ async def test_user_claim_ok(
                 ),
                 Device(
                     device_id=mallory_invitation.user_id.to_device_id("pc1"),
+                    device_label=None,
                     device_certificate=b"<device certif>",
                     redacted_device_certificate=b"<redacted device certif>",
                     device_certifier=alice.device_id,
@@ -186,6 +188,7 @@ async def test_user_claim_already_exists(
         ),
         Device(
             device_id=mallory_invitation.user_id.to_device_id("pc1"),
+            device_label=None,
             device_certificate=b"<bar>",
             redacted_device_certificate=b"<bar>",
             device_certifier=alice.device_id,
