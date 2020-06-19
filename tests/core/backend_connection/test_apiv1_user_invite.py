@@ -36,6 +36,7 @@ async def test_user_invite_then_claim_ok(
             author=alice.device_id,
             timestamp=now,
             user_id=claim.device_id.user_id,
+            human_handle=None,
             public_key=claim.public_key,
             profile=UserProfile.STANDARD,
         ).dump_and_sign(alice.signing_key)
@@ -43,6 +44,7 @@ async def test_user_invite_then_claim_ok(
             author=alice.device_id,
             timestamp=now,
             device_id=claim.device_id,
+            device_label=None,
             verify_key=claim.verify_key,
         ).dump_and_sign(alice.signing_key)
         with trio.fail_after(1):

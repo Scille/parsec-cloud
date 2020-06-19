@@ -39,6 +39,7 @@ async def test_device_invite_then_claim_ok(alice, apiv1_alice_backend_cmds, runn
             author=alice.device_id,
             timestamp=pendulum.now(),
             device_id=claim.device_id,
+            device_label=None,
             verify_key=claim.verify_key,
         ).dump_and_sign(alice.signing_key)
         encrypted_answer = APIV1_DeviceClaimAnswerContent(
