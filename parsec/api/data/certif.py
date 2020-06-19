@@ -43,13 +43,13 @@ class UserCertificateContent(BaseAPISignedData):
     class SCHEMA_CLS(BaseSignedDataSchema):
         type = fields.CheckedConstant("user_certificate", required=True)
         user_id = UserIDField(required=True)
+        # Human handle can be none in case of redacted certificate
+        human_handle = HumanHandleField(allow_none=True, missing=None)
         public_key = fields.PublicKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
         # compatibility), hence `None` is not allowed
         is_admin = fields.Boolean(required=True)
         profile = UserProfileField(allow_none=False)
-        # Human handle can be none in case of redacted certificate
-        human_handle = HumanHandleField(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
@@ -70,9 +70,9 @@ class UserCertificateContent(BaseAPISignedData):
             return UserCertificateContent(**data)
 
     user_id: UserID
+    human_handle: Optional[HumanHandle]
     public_key: PublicKey
     profile: UserProfile
-    human_handle: Optional[HumanHandle] = None
 
     # Only used during schema serialization
     @property
