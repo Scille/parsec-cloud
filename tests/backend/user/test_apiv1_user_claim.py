@@ -75,6 +75,7 @@ async def test_user_claim_ok(
                 alice.organization_id,
                 User(
                     user_id=UserID("dummy"),
+                    human_handle=None,
                     user_certificate=b"<user certif>",
                     redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
@@ -92,6 +93,7 @@ async def test_user_claim_ok(
                 alice.organization_id,
                 User(
                     user_id=mallory_invitation.user_id,
+                    human_handle=None,
                     user_certificate=b"<user certif>",
                     redacted_user_certificate=b"<redacted user certif>",
                     user_certifier=alice.device_id,
@@ -182,6 +184,7 @@ async def test_user_claim_already_exists(
         alice.organization_id,
         User(
             user_id=mallory_invitation.user_id,
+            human_handle=None,
             user_certificate=b"<foo>",
             redacted_user_certificate=b"<foo>",
             user_certifier=alice.device_id,

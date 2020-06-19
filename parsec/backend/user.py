@@ -103,11 +103,11 @@ class User:
         return UserCertificateContent.unsecure_load(self.user_certificate).public_key
 
     user_id: UserID
+    human_handle: Optional[HumanHandle]
     user_certificate: bytes
     redacted_user_certificate: bytes
     user_certifier: Optional[DeviceID]
     profile: UserProfile = UserProfile.STANDARD
-    human_handle: Optional[HumanHandle] = None
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revoked_on: Optional[pendulum.Pendulum] = None
     revoked_user_certificate: Optional[bytes] = None
