@@ -1,0 +1,2 @@
+Restrict read access for parsec directories to the current user.
+This includes configuration, data, config and workspace directories.
