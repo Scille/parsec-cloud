@@ -231,6 +231,8 @@ async def claim_device(
     return LocalDevice(
         organization_addr=organization_addr,
         device_id=new_device_id,
+        device_label=None,
+        human_handle=None,
         signing_key=device_signing_key,
         private_key=answer.private_key,
         profile=UserProfile.ADMIN if invitation_creator_user.is_admin else UserProfile.STANDARD,

@@ -22,6 +22,8 @@ class LocalDevice(BaseLocalData):
     class SCHEMA_CLS(BaseSchema):
         organization_addr = BackendOrganizationAddrField(required=True)
         device_id = DeviceIDField(required=True)
+        device_label = fields.String(allow_none=True, missing=None)
+        human_handle = HumanHandleField(allow_none=True, missing=None)
         signing_key = fields.SigningKey(required=True)
         private_key = fields.PrivateKey(required=True)
         # `profile` replaces `is_admin` field (which is still required for backward
@@ -31,8 +33,6 @@ class LocalDevice(BaseLocalData):
         user_manifest_id = EntryIDField(required=True)
         user_manifest_key = fields.SecretKey(required=True)
         local_symkey = fields.SecretKey(required=True)
-        human_handle = HumanHandleField(allow_none=True, missing=None)
-        device_label = fields.String(allow_none=True, missing=None)
 
         @post_load
         def make_obj(self, data):
@@ -52,14 +52,14 @@ class LocalDevice(BaseLocalData):
 
     organization_addr: BackendOrganizationAddr
     device_id: DeviceID
+    device_label: Optional[str]
+    human_handle: Optional[HumanHandle]
     signing_key: SigningKey
     private_key: PrivateKey
     profile: UserProfile
     user_manifest_id: EntryID
     user_manifest_key: SecretKey
     local_symkey: SecretKey
-    human_handle: Optional[HumanHandle] = None
-    device_label: Optional[str] = None
 
     # Only used during schema serialization
     @property
