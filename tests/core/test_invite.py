@@ -18,8 +18,11 @@ from parsec.core.invite import (
 
 
 @pytest.mark.trio
-async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds, user_fs_factory):
-    invitation = await running_backend.backend.invite.new_for_device(
+@pytest.mark.parametrize("with_labels", [False, True])
+async def test_good_device_claim(
+    backend, running_backend, alice, bob, alice_backend_cmds, user_fs_factory, with_labels
+):
+    invitation = await backend.invite.new_for_device(
         organization_id=alice.organization_id, greeter_user_id=alice.user_id
     )
     invitation_addr = BackendInvitationAddr.build(
@@ -29,8 +32,12 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
         token=invitation.token,
     )
 
-    requested_device_label = "Foo's label"
-    granted_device_label = "Bar's label"
+    if with_labels:
+        requested_device_label = "Foo's label"
+        granted_device_label = "Bar's label"
+    else:
+        requested_device_label = None
+        granted_device_label = None
     new_device = None
 
     # Simulate out-of-bounds canal
@@ -109,6 +116,16 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
     rep = await alice_backend_cmds.invite_list()
     assert rep == {"status": "ok", "invitations": []}
 
+    # Verify user&device data in backend
+    _, device = await backend.user.get_user_with_device(
+        new_device.organization_id, new_device.device_id
+    )
+    assert device.device_label == granted_device_label
+    if with_labels:
+        assert device.device_certificate != device.redacted_device_certificate
+    else:
+        assert device.device_certificate == device.redacted_device_certificate
+
     # Test the behavior of this new device
     async with user_fs_factory(bob) as bobfs:
         async with user_fs_factory(alice) as alicefs:
@@ -133,8 +150,9 @@ async def test_good_device_claim(running_backend, alice, bob, alice_backend_cmds
 
 
 @pytest.mark.trio
+@pytest.mark.parametrize("with_labels", [False, True])
 async def test_good_user_claim(
-    backend, running_backend, alice, alice_backend_cmds, user_fs_factory
+    backend, running_backend, alice, alice_backend_cmds, user_fs_factory, with_labels
 ):
     claimer_email = "zack@example.com"
 
@@ -150,11 +168,17 @@ async def test_good_user_claim(
         token=invitation.token,
     )
 
-    # Let's pretent we invited a Fortnite player...
-    requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
-    requested_device_label = "Ultr4_B00st"
-    granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
-    granted_device_label = "Desktop"
+    if with_labels:
+        # Let's pretent we invited a Fortnite player...
+        requested_human_handle = HumanHandle(email="ZACK@example.com", label="xXx_Z4ck_xXx")
+        requested_device_label = "Ultr4_B00st"
+        granted_human_handle = HumanHandle(email="zack@example.com", label="Zack")
+        granted_device_label = "Desktop"
+    else:
+        requested_human_handle = None
+        requested_device_label = None
+        granted_human_handle = None
+        granted_device_label = None
     granted_profile = UserProfile.STANDARD
     new_device = None
 
@@ -229,8 +253,11 @@ async def test_good_user_claim(
     assert new_device.device_id != alice.device_id
     assert new_device.device_label == granted_device_label
     # Label is normally ignored when comparing HumanLabel
-    assert new_device.human_handle.label == granted_human_handle.label
-    assert new_device.human_handle.email == granted_human_handle.email
+    if with_labels:
+        assert new_device.human_handle.label == granted_human_handle.label
+        assert new_device.human_handle.email == granted_human_handle.email
+    else:
+        assert new_device.human_handle is None
     assert new_device.profile == granted_profile
     # Extra check to make sure claimer&greeter data are not mixed
     assert new_device.user_manifest_id != alice.user_manifest_id
@@ -242,14 +269,18 @@ async def test_good_user_claim(
     assert rep == {"status": "ok", "invitations": []}
 
     # Verify user&device data in backend
-    user, device, _ = await backend.user.get_user_with_device_and_trustchain(
+    user, device = await backend.user.get_user_with_device(
         new_device.organization_id, new_device.device_id
     )
     assert user.profile == granted_profile
     assert user.human_handle == granted_human_handle
-    assert user.user_certificate != user.redacted_user_certificate
     assert device.device_label == granted_device_label
-    assert device.device_certificate != device.redacted_device_certificate
+    if with_labels:
+        assert user.user_certificate != user.redacted_user_certificate
+        assert device.device_certificate != device.redacted_device_certificate
+    else:
+        assert user.user_certificate == user.redacted_user_certificate
+        assert device.device_certificate == device.redacted_device_certificate
 
     # Test the behavior of this new user device
     async with user_fs_factory(alice) as alicefs:

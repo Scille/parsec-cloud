@@ -3,7 +3,7 @@
 import pytest
 import pendulum
 
-from parsec.backend.user import INVITATION_VALIDITY
+from parsec.backend.user import INVITATION_VALIDITY, User, Device
 from parsec.api.data import UserCertificateContent, DeviceCertificateContent, UserProfile
 from parsec.api.protocol import DeviceID
 
@@ -53,6 +53,28 @@ async def test_user_create_ok(
     async with backend_sock_factory(backend, mallory) as sock:
         rep = await user_get(sock, user_id=mallory.user_id)
         assert rep["status"] == "ok"
+
+    # Check the resulting data in the backend
+    backend_user, backend_device = await backend.user.get_user_with_device(
+        mallory.organization_id, mallory.device_id
+    )
+    assert backend_user == User(
+        user_id=mallory.user_id,
+        human_handle=mallory.human_handle,
+        profile=profile,
+        user_certificate=user_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        user_certifier=alice.device_id,
+        created_on=now,
+    )
+    assert backend_device == Device(
+        device_id=mallory.device_id,
+        device_label=mallory.device_label,
+        device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
+        device_certifier=alice.device_id,
+        created_on=now,
+    )
 
 
 @pytest.mark.trio

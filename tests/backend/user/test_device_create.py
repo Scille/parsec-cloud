@@ -4,7 +4,7 @@ import pytest
 import pendulum
 
 from parsec.api.data import DeviceCertificateContent, UserProfile
-from parsec.backend.user import INVITATION_VALIDITY
+from parsec.backend.user import INVITATION_VALIDITY, Device
 
 from tests.common import freeze_time, customize_fixtures
 from tests.backend.common import device_create, ping
@@ -25,12 +25,19 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
         author=alice.device_id,
         timestamp=now,
         device_id=alice_nd.device_id,
-        verify_key=alice_nd.verify_key,
         device_label=alice_nd.device_label,
-    ).dump_and_sign(alice.signing_key)
+        verify_key=alice_nd.verify_key,
+    )
+    redacted_device_certificate = device_certificate.evolve(device_label=None)
+    device_certificate = device_certificate.dump_and_sign(alice.signing_key)
+    redacted_device_certificate = redacted_device_certificate.dump_and_sign(alice.signing_key)
 
     with backend.event_bus.listen() as spy:
-        rep = await device_create(alice_backend_sock, device_certificate=device_certificate)
+        rep = await device_create(
+            alice_backend_sock,
+            device_certificate=device_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
         assert rep == {"status": "ok"}
 
         # No guarantees this event occurs before the command's return
@@ -48,6 +55,19 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
     async with backend_sock_factory(backend, alice_nd) as sock:
         rep = await ping(sock, ping="Hello world !")
         assert rep == {"status": "ok", "pong": "Hello world !"}
+
+    # Check the resulting data in the backend
+    _, backend_device = await backend.user.get_user_with_device(
+        alice_nd.organization_id, alice_nd.device_id
+    )
+    assert backend_device == Device(
+        device_id=alice_nd.device_id,
+        device_label=alice_nd.device_label,
+        device_certificate=device_certificate,
+        redacted_device_certificate=redacted_device_certificate,
+        device_certifier=alice.device_id,
+        created_on=now,
+    )
 
 
 @pytest.mark.trio

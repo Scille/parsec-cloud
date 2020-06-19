@@ -256,6 +256,7 @@ class BaseOrganizationComponent:
         )
         first_device = Device(
             device_id=d_data.device_id,
+            device_label=d_data.device_label,
             device_certificate=msg["device_certificate"],
             redacted_device_certificate=msg.get(
                 "redacted_device_certificate", msg["device_certificate"]

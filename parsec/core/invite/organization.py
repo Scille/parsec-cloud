@@ -38,12 +38,17 @@ async def bootstrap_organization(
         author=None,
         timestamp=now,
         user_id=device.user_id,
+        human_handle=device.human_handle,
         public_key=device.public_key,
         profile=device.profile,
     )
     redacted_user_certificate = user_certificate.evolve(human_handle=None)
     device_certificate = DeviceCertificateContent(
-        author=None, timestamp=now, device_id=device.device_id, verify_key=device.verify_key
+        author=None,
+        timestamp=now,
+        device_id=device.device_id,
+        device_label=device.device_label,
+        verify_key=device.verify_key,
     )
     redacted_device_certificate = device_certificate.evolve(device_label=None)
 

@@ -385,6 +385,7 @@ def local_device_to_backend_user(
 
     first_device = BackendDevice(
         device_id=device.device_id,
+        device_label=device.device_label,
         device_certificate=device_certificate.dump_and_sign(certifier_signing_key),
         redacted_device_certificate=redacted_device_certificate.dump_and_sign(
             certifier_signing_key
