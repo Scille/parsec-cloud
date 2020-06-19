@@ -137,10 +137,13 @@ def config_factory(
     )
 
     # Make sure the directories exist on the system
-    core_config.config_dir.mkdir(parents=True, exist_ok=True)
-    core_config.data_base_dir.mkdir(parents=True, exist_ok=True)
-    core_config.cache_base_dir.mkdir(parents=True, exist_ok=True)
-    core_config.mountpoint_base_dir.mkdir(parents=True, exist_ok=True)
+    core_config.config_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    core_config.data_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    core_config.cache_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+    # Mountpoint base directory is not used on windows
+    if os.name != "nt":
+        core_config.mountpoint_base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 
     return core_config
 
@@ -192,7 +195,7 @@ def reload_config(config: CoreConfig) -> CoreConfig:
 
 def save_config(config: CoreConfig):
     config_path = config.config_dir
-    config_path.mkdir(parents=True, exist_ok=True)
+    config_path.mkdir(mode=0o700, parents=True, exist_ok=True)
     config_path /= "config.json"
     config_path.touch(exist_ok=True)
     config_path.write_text(
